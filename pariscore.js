@@ -6700,6 +6700,69 @@ function openTennisAnalysisModal(matchId) {
       } else {
         document.getElementById('h2h-p2-form-l10').textContent = 'N/A';
       }
+
+      // 5) Indice Serveur
+      var si1 = p1.serve_index, si2 = p2.serve_index;
+      if (si1 != null) {
+        document.getElementById('h2h-p1-serve-idx').textContent = si1 + '/100';
+        document.getElementById('h2h-p1-serve-idx').className = 'h2h-cell p1-val ' + (si1 >= 60 ? 'green-text' : (si1 >= 40 ? 'cyan-text' : 'muted-text'));
+      }
+      if (si2 != null) {
+        document.getElementById('h2h-p2-serve-idx').textContent = si2 + '/100';
+        document.getElementById('h2h-p2-serve-idx').className = 'h2h-cell p2-val ' + (si2 >= 60 ? 'green-text' : (si2 >= 40 ? 'cyan-text' : 'muted-text'));
+      }
+
+      // 6) Indice Receveur
+      var ri1 = p1.receive_index, ri2 = p2.receive_index;
+      if (ri1 != null) {
+        document.getElementById('h2h-p1-recv-idx').textContent = ri1 + '/100';
+        document.getElementById('h2h-p1-recv-idx').className = 'h2h-cell p1-val ' + (ri1 >= 60 ? 'green-text' : (ri1 >= 40 ? 'cyan-text' : 'muted-text'));
+      }
+      if (ri2 != null) {
+        document.getElementById('h2h-p2-recv-idx').textContent = ri2 + '/100';
+        document.getElementById('h2h-p2-recv-idx').className = 'h2h-cell p2-val ' + (ri2 >= 60 ? 'green-text' : (ri2 >= 40 ? 'cyan-text' : 'muted-text'));
+      }
+
+      // ═══ Player Metrics Row: ELO + SPS ═══
+      var metricsRow = document.getElementById('tam-metrics-row');
+      var p1 = data.players && data.players.p1 || {};
+      var p2 = data.players && data.players.p2 || {};
+
+      function _populatePlayerMetrics(prefix, player) {
+        var eloEl = document.getElementById('tam-' + prefix + '-elo-val');
+        var eloSubEl = document.getElementById('tam-' + prefix + '-elo-sub');
+        var spsEl = document.getElementById('tam-' + prefix + '-sps-val');
+        var spsSubEl = document.getElementById('tam-' + prefix + '-sps-sub');
+        if (!eloEl || !spsEl) return false;
+        var hasData = false;
+        if (player.elo_surface != null) {
+          eloEl.textContent = Number(player.elo_surface).toLocaleString() + ' pts';
+          if (player.rank != null) {
+            eloSubEl.textContent = 'ATP #' + player.rank;
+          } else {
+            eloSubEl.textContent = '';
+          }
+          hasData = true;
+        } else {
+          eloEl.textContent = '—';
+        }
+        if (player.powerscore != null) {
+          spsEl.textContent = Number(player.powerscore).toFixed(0) + '/100';
+          if (player.ps_rank != null) {
+            spsSubEl.textContent = 'Rang surface #' + player.ps_rank + (player.ps_total != null ? '/' + player.ps_total : '');
+          } else {
+            spsSubEl.textContent = '';
+          }
+          hasData = true;
+        } else {
+          spsEl.textContent = '—';
+        }
+        return hasData;
+      }
+
+      var hasP1 = _populatePlayerMetrics('p1', p1);
+      var hasP2 = _populatePlayerMetrics('p2', p2);
+      if (metricsRow) metricsRow.style.display = (hasP1 || hasP2) ? 'flex' : 'none';
     })
     .catch(function(err) {
       console.error('[TennisAnalysisModal]', err);

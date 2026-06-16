@@ -21821,7 +21821,7 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
             surf_rank: (e.player1 && e.player1.surf_rank) || null, surf_form: (e.player1 && e.player1.surf_form) || null,
             powerscore: (e.player1 && e.player1.powerscore) || null,
             l5_pts: (e.player1 && e.player1.l5_pts != null) ? e.player1.l5_pts : null, l10_pts: (e.player1 && e.player1.l10_pts != null) ? e.player1.l10_pts : null,
-            ps_rank: (e.player1 && e.player1.ps_rank != null) ? e.player1.ps_rank : null, ps_total: (e.player1 && e.player1.ps_total != null) ? e.player1.ps_total : null, id: (e.player1 && e.player1.id) || null,
+            ps_rank: (e.player1 && e.player1.ps_rank != null) ? e.player1.ps_rank : null, ps_total: (e.player1 && e.player1.ps_total != null) ? e.player1.ps_total : null, serve_index: (e.player1 && e.player1.serve_index) || null, receive_index: (e.player1 && e.player1.receive_index) || null, id: (e.player1 && e.player1.id) || null,
           },
           p2: {
             name: (e.player2 && e.player2.name) || null, rank: (e.player2 && e.player2.rank) || null,
@@ -21829,7 +21829,7 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
             surf_rank: (e.player2 && e.player2.surf_rank) || null, surf_form: (e.player2 && e.player2.surf_form) || null,
             powerscore: (e.player2 && e.player2.powerscore) || null,
             l5_pts: (e.player2 && e.player2.l5_pts != null) ? e.player2.l5_pts : null, l10_pts: (e.player2 && e.player2.l10_pts != null) ? e.player2.l10_pts : null,
-            ps_rank: (e.player2 && e.player2.ps_rank != null) ? e.player2.ps_rank : null, ps_total: (e.player2 && e.player2.ps_total != null) ? e.player2.ps_total : null, id: (e.player2 && e.player2.id) || null,
+            ps_rank: (e.player2 && e.player2.ps_rank != null) ? e.player2.ps_rank : null, ps_total: (e.player2 && e.player2.ps_total != null) ? e.player2.ps_total : null, serve_index: (e.player2 && e.player2.serve_index) || null, receive_index: (e.player2 && e.player2.receive_index) || null, id: (e.player2 && e.player2.id) || null,
           },
         },
         predictions: e.predictions || null,
@@ -25537,6 +25537,8 @@ function detectTennisMatchFixing(m) {
 let _tnTop10Cache = { viewer: null, bettor: null, ts_viewer: 0, ts_bettor: 0 };
 const _TN_TOP10_TTL_VIEWER = 5 * 60 * 1000;  // 5 minutes (était 60s)
 const _TN_TOP10_TTL_BETTOR = 3 * 60 * 1000;  // 3 minutes (était 30s)
+let _tnTop10RefreshTimer = null;              // Timer du cron refresh Top10
+const _TN_TOP10_REFRESH_INTERVAL = 5 * 60 * 1000; // Intervalle de refresh périodique (5min)
 
 function _tnT10Clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, isFinite(v) ? v : lo)); }
 
@@ -25921,6 +25923,61 @@ function _initTennisTaSchema() {
     fetched_at INTEGER NOT NULL,
     PRIMARY KEY (name_key, tour, surface)
   )`);
+}
+
+function _initTennisSpsWeeklySchema() {
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS tennis_sps_weekly (
+    player_name TEXT NOT NULL,
+    tour TEXT NOT NULL,
+    surface TEXT NOT NULL,
+    sps_score REAL,
+    l5_pts REAL,
+    l10_pts REAL,
+    elo_norm REAL,
+    win_rate REAL,
+    form_factor REAL,
+    surface_score REAL,
+    elo_momentum REAL,
+    fatigue REAL,
+    recent_form REAL,
+    minutes_45d REAL,
+    surf_rank INTEGER,
+    surf_total INTEGER,
+    ps_rank INTEGER,
+    ps_total INTEGER,
+    sample INTEGER DEFAULT 0,
+    take_set_rate REAL,
+    sweep_rate REAL,
+    ta_sample INTEGER,
+    ta_source TEXT,
+    serve_pct REAL,
+    bp_pct REAL,
+    computed_at INTEGER NOT NULL,
+    week_tag TEXT NOT NULL,
+    PRIMARY KEY (player_name, tour, surface, week_tag)
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_spsw_tour_surf_score ON tennis_sps_weekly(tour, surface, sps_score DESC)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_spsw_player ON tennis_sps_weekly(player_name, tour)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_spsw_week ON tennis_sps_weekly(week_tag)`);
+
+  // Colonnes TA — idempotent via PRAGMA (pattern _initTennisInternalSchema)
+  try {
+    var taCols = sqldb.prepare('PRAGMA table_info(tennis_sps_weekly)').all();
+    var taColNames = new Set(taCols.map(function(c) { return c.name; }));
+    var extraCols = [
+      ['take_set_rate', 'REAL'],
+      ['sweep_rate', 'REAL'],
+      ['ta_sample', 'INTEGER'],
+      ['ta_source', 'TEXT'],
+      ['serve_pct', 'REAL'],
+      ['bp_pct', 'REAL'],
+    ];
+    for (var i = 0; i < extraCols.length; i++) {
+      if (!taColNames.has(extraCols[i][0])) {
+        sqldb.exec('ALTER TABLE tennis_sps_weekly ADD COLUMN ' + extraCols[i][0] + ' ' + extraCols[i][1]);
+      }
+    }
+  } catch (e) { console.warn('[SPS weekly] ALTER TA cols:', e.message); }
 }
 
 function _taNameKey(name) {
@@ -26574,6 +26631,96 @@ function computePlayerAceRate(playerName, tour, surface = 'ALL', lastN = TENNIS_
     return res;
   } catch (e) {
     console.warn('  [Tennis] ace rate error:', e.message);
+    return null;
+  }
+}
+
+// bd ceo — Serve/Receive Index computed from tennis_matches (Sackmann) aggregated stats per surface/player.
+function computePlayerServeReceiveIndex(playerName, tour, surface = 'ALL', lastN = TENNIS_SERVE_LASTN) {
+  if (!playerName || !tour) return null;
+  const cacheKey = `SRI|${tour}|${playerName.toLowerCase()}|${surface}|${lastN}`;
+  if (_TENNIS_SERVE_STATS_CACHE.has(cacheKey)) return _TENNIS_SERVE_STATS_CACHE.get(cacheKey);
+  try {
+    _initTennisSackmannSchema();
+    const rows = sqldb.prepare(`
+      SELECT
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_svpt ELSE l_svpt END AS svpt,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_1stIn ELSE l_1stIn END AS firstIn,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_1stWon ELSE l_1stWon END AS firstWon,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_2ndWon ELSE l_2ndWon END AS secondWon,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN w_ace ELSE l_ace END AS ace,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN l_svpt ELSE w_svpt END AS oppSvpt,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN l_1stWon ELSE w_1stWon END AS oppFirstWon,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN l_2ndWon ELSE w_2ndWon END AS oppSecondWon,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN l_bpFaced ELSE w_bpFaced END AS oppBpFaced,
+        CASE WHEN LOWER(winner_name) = LOWER(?) THEN l_bpSaved ELSE w_bpSaved END AS oppBpSaved
+      FROM tennis_matches
+      WHERE (LOWER(winner_name) = LOWER(?) OR LOWER(loser_name) = LOWER(?))
+        AND tour = ?
+        AND (? = 'ALL' OR surface = ?)
+        AND w_svpt IS NOT NULL
+      ORDER BY tourney_date DESC, match_num DESC
+      LIMIT ?
+    `).all(playerName, playerName, playerName, playerName, playerName,
+           playerName, playerName, playerName, playerName, playerName,
+           playerName, playerName, tour, surface, surface, lastN);
+
+    if (rows.length < 5) {
+      _TENNIS_SERVE_STATS_CACHE.set(cacheKey, null);
+      return null;
+    }
+
+    let totalSvpt = 0, totalFirstIn = 0, totalFirstWon = 0, totalSecondWon = 0, totalAce = 0;
+    let totalOppSvpt = 0, totalOppFirstWon = 0, totalOppSecondWon = 0, totalOppBpFaced = 0, totalOppBpSaved = 0;
+    let validRows = 0;
+
+    for (const r of rows) {
+      if (!r.svpt || r.svpt <= 0 || !r.oppSvpt || r.oppSvpt <= 0) continue;
+      totalSvpt += r.svpt;
+      totalFirstIn += r.firstIn || 0;
+      totalFirstWon += r.firstWon || 0;
+      totalSecondWon += r.secondWon || 0;
+      totalAce += r.ace || 0;
+      totalOppSvpt += r.oppSvpt;
+      totalOppFirstWon += r.oppFirstWon || 0;
+      totalOppSecondWon += r.oppSecondWon || 0;
+      totalOppBpFaced += r.oppBpFaced || 0;
+      totalOppBpSaved += r.oppBpSaved || 0;
+      validRows++;
+    }
+
+    if (totalSvpt === 0 || validRows < 5) {
+      _TENNIS_SERVE_STATS_CACHE.set(cacheKey, null);
+      return null;
+    }
+
+    const firstWonPct = totalFirstIn > 0 ? (totalFirstWon / totalFirstIn) * 100 : 0;
+    const secondPts = totalSvpt - totalFirstIn;
+    const secondWonPct = secondPts > 0 ? (totalSecondWon / secondPts) * 100 : 0;
+    const acePct = (totalAce / totalSvpt) * 100;
+
+    const serveIndex = Math.round(firstWonPct * 0.5 + secondWonPct * 0.3 + acePct * 0.2);
+
+    const oppServeWon = totalOppFirstWon + totalOppSecondWon;
+    const rpwPct = totalOppSvpt > 0 ? ((totalOppSvpt - oppServeWon) / totalOppSvpt) * 100 : 0;
+    const bpConvertedPct = totalOppBpFaced > 0 ? ((totalOppBpFaced - totalOppBpSaved) / totalOppBpFaced) * 100 : 0;
+
+    const receiveIndex = Math.round(rpwPct * 0.6 + bpConvertedPct * 0.4);
+
+    const result = {
+      serve_index: Math.min(100, Math.max(0, serveIndex)),
+      receive_index: Math.min(100, Math.max(0, receiveIndex)),
+      first_won_pct: parseFloat(firstWonPct.toFixed(2)),
+      second_won_pct: parseFloat(secondWonPct.toFixed(2)),
+      ace_pct: parseFloat(acePct.toFixed(2)),
+      rpw_pct: parseFloat(rpwPct.toFixed(2)),
+      bp_converted_pct: parseFloat(bpConvertedPct.toFixed(2)),
+      sample_size: validRows,
+    };
+    _TENNIS_SERVE_STATS_CACHE.set(cacheKey, result);
+    return result;
+  } catch (e) {
+    console.warn('  [Tennis] serve/receive index error:', e.message);
     return null;
   }
 }
@@ -27329,7 +27476,8 @@ function _buildTennisPowerRankIdx() {
 // surface = valeur capitalisée (Hard/Clay/Grass/Carpet) ; null → indicateur neutre.
 function getTennisSurfStats(playerName, tour, surface) {
   const out = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null,
-                powerscore: null, ps_rank: null, ps_total: null };
+                powerscore: null, ps_rank: null, ps_total: null,
+                serve_index: null, receive_index: null };
   if (!playerName || !tour || !surface || !TENNIS_ELO_SURFACES.includes(surface)) return out;
   const T = String(tour).toUpperCase();
   const idx = _buildTennisSurfRankIdx().get(`${T}|${surface}`);
@@ -35198,28 +35346,24 @@ async function buildTennisValueBets(opts = {}) {
 // closure → on expose la fn via globalThis pour le warm-up.
 try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */ }
 
-// ── WARMER TOP 10 AU BOOT — pré-calcul pour éviter le cold build bloquant ─
-// Le premier appel à /api/v1/tennis/top10 déclenche un buildTennisValueBets()
-// qui prend ~15-20s (420 matchs × Elo/Glicko/Momentum/Markov/odds BSD).
-// Ce warmer pré-remplit le cache _tnTop10Cache après 10s (le temps que le
-// server soit prêt) → le premier utilisateur voit les données instantanément.
-(async function _warmTop10Cache() {
-  console.log('[WarmTop10] IIFE started, waiting 60s before first attempt...');
+// ── WARMER TOP 10 AU BOOT + CRON REFRESH 5min ──────────────────────────
+// Le warmer pré-remplit le cache _tnTop10Cache après 60s (boot), puis
+// se ré-exécute toutes les 5 minutes via _tnTop10RefreshTimer.
+// Cela garantit que le cache n'est jamais froid et que le premier
+// appel utilisateur voit les données instantanément.
+
+async function _refreshTop10Cache() {
+  const _tStart = Date.now();
   try {
-    // Boot delay — attendre que le server soit complètement initialisé
-      await new Promise(r => setTimeout(r, 60_000)); // 60s après boot (le temps du chargement BSD/ESPN)
-    console.log('[WarmTop10] 60s elapsed, attempting warm-up...');
     const _tnVbFn = globalThis.__tennisVBWarm;
     if (typeof _tnVbFn !== 'function') {
-      console.warn('[WarmTop10] tennisVBWarm non disponible, retry dans 30s');
-      setTimeout(_warmTop10Cache, 30_000);
-      return;
+      console.warn('[Top10Refresh] tennisVBWarm non disponible');
+      return false;
     }
     const vb = await _tnVbFn({});
     if (!vb || vb.status !== 200) {
-      console.warn('[WarmTop10] buildTennisValueBets échec, retry dans 30s');
-      setTimeout(_warmTop10Cache, 30_000);
-      return;
+      console.warn('[Top10Refresh] buildTennisValueBets échec');
+      return false;
     }
     const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
     const active = ((vb.body && vb.body.matches) || []).filter(e =>
@@ -35296,13 +35440,56 @@ try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */
       _tnTop10Cache[mode] = payload;
       _tnTop10Cache[`ts_${mode}`] = now;
     }
-    console.log(`[WarmTop10] Cache pré-rempli : ${active.length} matchs actifs, TOP 10 prêt`);
+    const ms = Date.now() - _tStart;
+    console.log(`[Top10Refresh] Cache rafraîchi : ${active.length} matchs actifs, TOP 10 prêt (${ms}ms)`);
+    return true;
   } catch (err) {
-    console.error('[WarmTop10] Erreur:', err.message);
-    // Retry dans 30s en cas d'erreur
-    setTimeout(_warmTop10Cache, 30_000);
+    console.error('[Top10Refresh] Erreur:', err.message);
+    return false;
   }
+}
+
+// Initial warm-up au boot (avec délai) + démarrage du cron 5min
+(async function _bootWarmTop10() {
+  console.log('[WarmTop10] Attente 60s avant le premier warm-up...');
+  await new Promise(r => setTimeout(r, 60_000));
+  console.log('[WarmTop10] 60s écoulées, warm-up initial...');
+
+  const ok = await _refreshTop10Cache();
+  if (!ok) {
+    console.warn('[WarmTop10] Échec au boot, nouvelle tentative dans 30s');
+    setTimeout(async () => {
+      const retryOk = await _refreshTop10Cache();
+      if (retryOk) {
+        console.log('[WarmTop10] Première initialisation réussie au second essai');
+        _tnTop10RefreshTimer = setInterval(_refreshTop10Cache, _TN_TOP10_REFRESH_INTERVAL);
+      }
+    }, 30_000);
+    return;
+  }
+
+  console.log('[WarmTop10] Première initialisation réussie. Démarrage du cron 5min...');
+  _tnTop10RefreshTimer = setInterval(_refreshTop10Cache, _TN_TOP10_REFRESH_INTERVAL);
+  console.log(`[WarmTop10] Cron refresh actif : intervalle=${_TN_TOP10_REFRESH_INTERVAL/1000}s`);
 })();
+
+// Nettoyer le timer au graceful shutdown (si process.on('SIGTERM')/('SIGINT') existe déjà)
+if (typeof process !== 'undefined' && process.on) {
+  const _cleanTop10Timer = () => {
+    if (_tnTop10RefreshTimer) {
+      clearInterval(_tnTop10RefreshTimer);
+      _tnTop10RefreshTimer = null;
+      console.log('[Top10Refresh] Timer nettoyé (shutdown)');
+    }
+  };
+  // S'attacher sans écraser les handlers existants
+  if (!process.listeners('SIGTERM').some(l => l.name === '_cleanTop10Timer')) {
+    process.on('SIGTERM', _cleanTop10Timer);
+  }
+  if (!process.listeners('SIGINT').some(l => l.name === '_cleanTop10Timer')) {
+    process.on('SIGINT', _cleanTop10Timer);
+  }
+}
 
 // ── BSD Tennis Predictions (ML CatBoost) — bulk → Map (PAS de N+1) ───────────
 // Branche les prédictions BSD au tableau : proba ML, confiance, O/U sets/jeux,
@@ -36070,12 +36257,16 @@ async function _buildTennisValueBetsCore({ date }) {
     } catch (e) { /* signaux S2 omis pour ce match — build continue */ }
 
     // _getPlayerRank is hoisted above the loop (CR-01 fix — was N+1 prepare() per match)
-    let _p1ss = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
-    let _p2ss = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null };
+    let _p1ss = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null, serve_index: null, receive_index: null };
+    let _p2ss = { rk: null, total: null, form: null, l5_pts: null, l10_pts: null, powerscore: null, ps_rank: null, ps_total: null, serve_index: null, receive_index: null };
     if (tourGuess && surfaceClean) {
       try {
         _p1ss = getTennisSurfStats(p1Name, tourGuess, surfaceClean);
         _p2ss = getTennisSurfStats(p2Name, tourGuess, surfaceClean);
+        const _sri1 = computePlayerServeReceiveIndex(p1Name, tourGuess, surfaceClean);
+        const _sri2 = computePlayerServeReceiveIndex(p2Name, tourGuess, surfaceClean);
+        if (_sri1) { _p1ss.serve_index = _sri1.serve_index; _p1ss.receive_index = _sri1.receive_index; }
+        if (_sri2) { _p2ss.serve_index = _sri2.serve_index; _p2ss.receive_index = _sri2.receive_index; }
         // Joueurs ITF/Challenger non couverts par tennis_elo (source Sackmann ATP/WTA uniquement)
         // → log debug silencieux, pas une erreur (bd dl49 Phase 4+ pour couverture élargie)
         if (!_p1ss.rk && !_p2ss.rk) {
@@ -36109,6 +36300,7 @@ async function _buildTennisValueBetsCore({ date }) {
         surf_rank: _p1ss.rk, surf_rank_total: _p1ss.total, surf_form: _p1ss.form,
         l5_pts: _p1ss.l5_pts, l10_pts: _p1ss.l10_pts,
         powerscore: _p1ss.powerscore, ps_rank: _p1ss.ps_rank, ps_total: _p1ss.ps_total,
+        serve_index: _p1ss.serve_index, receive_index: _p1ss.receive_index,
         // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
         rank: _getPlayerRank(p1Name, tourGuess) ?? (m.player1?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb (p1_surface is {elo, matches, surface} object)
@@ -36118,6 +36310,7 @@ async function _buildTennisValueBetsCore({ date }) {
         surf_rank: _p2ss.rk, surf_rank_total: _p2ss.total, surf_form: _p2ss.form,
         l5_pts: _p2ss.l5_pts, l10_pts: _p2ss.l10_pts,
         powerscore: _p2ss.powerscore, ps_rank: _p2ss.ps_rank, ps_total: _p2ss.ps_total,
+        serve_index: _p2ss.serve_index, receive_index: _p2ss.receive_index,
         // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
         rank: _getPlayerRank(p2Name, tourGuess) ?? (m.player2?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb
@@ -47213,21 +47406,26 @@ if (TA_SERVE_STATS_SYNC) {
 }
 
 (function _scheduleSPSUpdater() {
-  const delayMs = _msUntilNextParisHour(2) + 5 * 60 * 1000;
+  const delayMs = _msUntilNextParisHour(12);
   const nextRun = new Date(Date.now() + delayMs);
-  console.log(`  [Cron:SPS] schedulé · prochain run ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min)`);
+  console.log(`  [Cron:SPS] schedulé · prochain check ${nextRun.toISOString()} (~${Math.round(delayMs/60000)}min) · exécution le lundi 12h Paris`);
   function _runSPS() {
+    const today = new Date().getDay();
+    if (today !== 1) {
+      console.log('  [Cron:SPS] pas lundi — skip.');
+      return;
+    }
     const cp = require('child_process');
-    const spsPath = require('path').join(__dirname, 'cron_sps_updater.py');
-    console.log('  [Cron:SPS] démarrage cron_sps_updater.py…');
-    const spsEnv = Object.assign({}, process.env, { PARISCORE_LOOKAHEAD_MIN: '0', PARISCORE_LOOKAHEAD_MAX: '48' });
-    const child = cp.spawn('python3', [spsPath], { cwd: __dirname, env: spsEnv, stdio: ['ignore', 'pipe', 'pipe'] });
-    child.stdout.on('data', d => process.stdout.write('[Cron:SPS] ' + d));
-    child.stderr.on('data', d => process.stderr.write('[Cron:SPS] ' + d));
-    child.on('exit', code => console.log(`  [Cron:SPS] terminé (exit ${code})`));
-    child.on('error', err => console.warn('  [Cron:SPS] spawn error:', err.message));
+    const path = require('path');
+    const spsScript = path.join(__dirname, 'tools', 'build-tennis-sps-weekly.js');
+    console.log('  [Cron:SPS] démarrage build-tennis-sps-weekly.js…');
+    const child = cp.spawn('node', [spsScript], { cwd: __dirname, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stdout.on('data', function(d) { process.stdout.write('[Cron:SPS] ' + d); });
+    child.stderr.on('data', function(d) { process.stderr.write('[Cron:SPS] ' + d); });
+    child.on('exit', function(code) { console.log('  [Cron:SPS] terminé (exit ' + code + ')'); });
+    child.on('error', function(err) { console.warn('  [Cron:SPS] spawn error:', err.message); });
   }
-  setTimeout(() => { _runSPS(); setInterval(_runSPS, 24 * 3600 * 1000).unref(); }, delayMs).unref();
+  setTimeout(function() { _runSPS(); setInterval(_runSPS, 24 * 3600 * 1000).unref(); }, delayMs).unref();
 })();
 
 // BetMines v10.14 — refresh 30min today + tomorrow (skip if BETMINES_ENABLED=0)
@@ -47279,6 +47477,7 @@ if (MATCHSTAT_ENABLED) {
       try {
         _initTennisEloSchema();
         _initTennisTaSchema();
+        _initTennisSpsWeeklySchema();
         const eloRow = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_elo').get();
         const matchesRow = sqldb.prepare(`SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='tennis_matches'`).get();
         if (matchesRow && matchesRow.n > 0 && (!eloRow || eloRow.n === 0)) {
@@ -47303,6 +47502,7 @@ if (MATCHSTAT_ENABLED) {
       try {
         _initTennisEloSchema();
         _initTennisTaSchema();
+        _initTennisSpsWeeklySchema();
         const eloRow = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_elo').get();
         if (!eloRow || eloRow.n === 0) {
           console.log('  [Elo] Boot compute (tennis_elo vide, data Sackmann présente)…');

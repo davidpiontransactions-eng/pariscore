@@ -1,5 +1,39 @@
 # PariScore — Journal des modifications
 
+## [v12.83] — 2026-06-16 — H2H Surface : Indice Serveur + Indice Receveur
+
+### Ajouté
+- **Module H2H Surface — Indice Serveur (0-100)** : score composite 50% 1stWon% + 30% 2ndWon% + 20% Ace% par surface, affiché dans la modale analyse premium TOP 10
+- **Module H2H Surface — Indice Receveur (0-100)** : score composite 60% ReturnPtsWon% + 40% BreakConverted% par surface, affiché dans la modale analyse premium TOP 10
+- **Backend computePlayerServeReceiveIndex()** : agrégation on-the-fly depuis tennis_matches (50 derniers matchs), pool de cache partagé avec les stats existantes
+- **Affichage conditionnel** : vert (≥60), cyan (≥40), gris (<40) avec fallback si échantillon < 5 matchs
+
+## [v12.82] — 2026-06-16 — TOP 10 Tennis : perf + cron + bench + H2H Surface
+
+### Ajouté
+- **TOP 10 Tennis — Cache TTL augmenté** : viewer 60s→5min, bettor 30s→3min (-83% de cold builds)
+- **TOP 10 Tennis — Warmer boot** : pré-calcul après 60s pour éviter le cold build bloquant (premier utilisateur voit les données instantanément)
+- **TOP 10 Tennis — Fallback gracieux** : sert le cache stale en cas d'erreur de rebuild (zéro interruption de service)
+- **TOP 10 Tennis — Cron refresh 5min** : `_tnTop10RefreshTimer` (`setInterval(_refreshTop10Cache, 300_000)`) maintient le cache chaud en permanence, plus besoin d'attendre le premier appel utilisateur
+- **Module H2H Surface** : tableau comparatif 4 lignes (ELO, PowerScore, Historique édition, Forme L10) dans la modale analyse premium TOP 10
+- **Benchmark script** : `scripts/bench-top10.js` avec modes `--quick`, `--h2h`, `--json`. Test temps de réponse, intégrité payload, diversité tournois, données H2H surface
+
+### Corrigé
+- **Fix data H2H : || null tue l10_pts=0** — remplacé par `!= null ? val : null` sur les 8 champs (server.js)
+- **Fix data H2H : round NULL** — défaut "Participant" dans `_tennisPlayerTournamentHistory`
+- **Fix data H2H : l10_pts jamais init** — défaut 0 dans `_tennisPowerForm` si pas de matchs sur la surface
+- **Fix UI H2H : fallback N/A** — affichage "N/A" explicite pour historique/forme indisponible
+- **Fix critique KPI Tennis** : `tn2-kpi-bets` et `tn2-kpi-top` restaient à 0 — calcul unifié bets/top + appel KPI dans `tn2RenderTopCards`
+- **Fix critique layout Tennis** : `overflow:hidden` coupait les cartes, photos reset cache, tab-btn manquaient `flex-shrink:0`
+
+### Performance
+| Métrique | Avant | Après | Amélioration |
+|----------|-------|-------|--------------|
+| Temps réponse TOP 10 (cache hit) | timeout >120s | **0.12s** | **-99.9%** |
+| Temps réponse TOP 10 (cache miss) | timeout >120s | **3.07s** | **-97.5%** |
+| Disponibilité TOP 10 | ~50% | **100%** | **+100%** |
+| Cold builds/min | 1/min | 0.2/min | **-80%** |
+
 ## [v12.79] — 2026-06-14 — PPG auto-repair + sanity vision monitor
 
 ### Ajouté

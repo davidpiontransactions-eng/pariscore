@@ -15578,6 +15578,35 @@ function psSetLang(v) {
         </div>
       </div>
 
+      <!-- ═══ Player Metrics Row: ELO + SPS ═══ -->
+      <div class="tam-metrics-row" id="tam-metrics-row" style="display:none;">
+        <div class="tam-metrics-player" id="tam-metrics-p1">
+          <div class="tam-metric-block">
+            <span class="tam-metric-label">ELO</span>
+            <span class="tam-metric-value tam-cyan" id="tam-p1-elo-val">—</span>
+            <span class="tam-metric-sub" id="tam-p1-elo-sub"></span>
+          </div>
+          <div class="tam-metric-block">
+            <span class="tam-metric-label">SPS</span>
+            <span class="tam-metric-value tam-green" id="tam-p1-sps-val">—</span>
+            <span class="tam-metric-sub" id="tam-p1-sps-sub"></span>
+          </div>
+        </div>
+        <div class="tam-metrics-divider"></div>
+        <div class="tam-metrics-player" id="tam-metrics-p2">
+          <div class="tam-metric-block">
+            <span class="tam-metric-label">ELO</span>
+            <span class="tam-metric-value tam-cyan" id="tam-p2-elo-val">—</span>
+            <span class="tam-metric-sub" id="tam-p2-elo-sub"></span>
+          </div>
+          <div class="tam-metric-block">
+            <span class="tam-metric-label">SPS</span>
+            <span class="tam-metric-value tam-green" id="tam-p2-sps-val">—</span>
+            <span class="tam-metric-sub" id="tam-p2-sps-sub"></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Data Grid 2×2 -->
       <div class="tam-grid">
         <div class="tam-cell">
@@ -15647,6 +15676,20 @@ function psSetLang(v) {
           <div class="h2h-cell p1-val" id="h2h-p1-form-l10">—</div>
           <div class="h2h-cell label-cell">Forme L10 Surface (3 mois)</div>
           <div class="h2h-cell p2-val" id="h2h-p2-form-l10">—</div>
+        </div>
+
+        <!-- Ligne 5 : Indice Serveur -->
+        <div class="h2h-row-contour">
+          <div class="h2h-cell p1-val" id="h2h-p1-serve-idx">—</div>
+          <div class="h2h-cell label-cell">Indice Serveur</div>
+          <div class="h2h-cell p2-val" id="h2h-p2-serve-idx">—</div>
+        </div>
+
+        <!-- Ligne 6 : Indice Receveur -->
+        <div class="h2h-row-contour">
+          <div class="h2h-cell p1-val" id="h2h-p1-recv-idx">—</div>
+          <div class="h2h-cell label-cell">Indice Receveur</div>
+          <div class="h2h-cell p2-val" id="h2h-p2-recv-idx">—</div>
         </div>
       </div>
 
@@ -18945,77 +18988,6 @@ window.tn2SetupH2H = function() {
 
   /* [FIX BUG #4] Force Dark Theme Tennis tn2 — éradication du fond blanc */
   /* Applique la charte graphique immersive sur TOUS les conteneurs tn2 */
-  #page-tennis,
-  .tn2-main,
-  .tn2-tab-panel,
-  .tn2-kpi-bar,
-  .tn2-card-grid,
-  #page-tennis .tn2-section-header,
-  #page-tennis .tn2-tab-nav {
-    background-color: #0e1420 !important;
-    color: #ffffff !important;
-  }
-  #page-tennis .tn2-match-card,
-  #page-tennis .tn2-card-grid .tn2-match-card {
-    background: #172132 !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
-    color: #ffffff !important;
-  }
-  #page-tennis .tn2-tab-btn {
-    color: #94a3b8 !important;
-    flex-shrink: 0 !important;
-  }
-  #page-tennis .tn2-tab-btn.active {
-    color: #0077ff !important;
-    border-bottom-color: #0077ff !important;
-  }
-  #page-tennis .tn2-kpi-item {
-    background: #172132 !important;
-    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-    border-radius: 8px !important;
-  }
-  #page-tennis .tn2-kpi-num {
-    color: #ffffff !important;
-  }
-  #page-tennis .tn2-kpi-lbl {
-    color: #94a3b8 !important;
-  }
-  #page-tennis .tn2-player-name {
-    color: #ffffff !important;
-  }
-  #page-tennis .tn2-player-rank {
-    color: #64748b !important;
-  }
-  #page-tennis .tn2-card-tournament {
-    color: #ffffff !important;
-    font-weight: 700 !important;
-  }
-  #page-tennis .tn2-card-ev {
-    color: #00e676 !important;
-  }
-  #page-tennis .tn2-card-duration {
-    color: #64748b !important;
-  }
-  #page-tennis .tn2-card-badge {
-    color: #ffffff !important;
-  }
-  /* Forcer le fond sombre sur les tableaux de données legacy aussi */
-  #page-tennis .table-responsive-wrapper,
-  #page-tennis #tennis-vb-table,
-  #page-tennis #tennis-live-table {
-    background: #0e1420 !important;
-    color: #e8eaed !important;
-  }
-  /* Surcharger les overrides light theme qui mettent du blanc */
-  body[data-cf-light="1"] #page-tennis,
-  body[data-cf-light="1"] .tn2-main,
-  body[data-cf-light="1"] .tn2-tab-panel,
-  body[data-cf-light="1"] .tn2-kpi-bar,
-  body[data-cf-light="1"] .tn2-card-grid {
-    background-color: #0e1420 !important;
-  }
 
   /* ═══ DESIGN TOKENS — Tennis Dark Betting Premium (v12.81) ═══ */
   :root {
@@ -19080,28 +19052,6 @@ window.tn2SetupH2H = function() {
     font-family: "Inter",sans-serif !important;
   }
 
-  /* Hover global subtil sur toutes les cartes tn2 */
-  #page-tennis .tn2-match-card:hover {
-    background: rgba(255,255,255,0.02) !important;
-  }
-
-  /* Force #111a28 sur les nested layout (en-têtes) */
-  #page-tennis .tn2-section-header {
-    background-color: #111a28 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-    border-radius: 8px 8px 0 0 !important;
-  }
-
-  /* Normaliser les border-radius */
-  #page-tennis .tn2-match-card,
-  #page-tennis .tn2-kpi-item {
-    border-radius: 8px !important;
-  }
-
-  /* Bordures fines semi-transparentes cohérentes */
-  #page-tennis .tn2-tab-btn.active {
-    box-shadow: inset 0 -2px 0 #0077ff !important;
-  }
   /* Photos athlètes cartes Live Tennis */
   .athlete-live-img {
     width: 32px !important;
@@ -22005,15 +21955,16 @@ body[data-page="mma"] footer { display: none !important; }
 
 /* ── Custom Properties ── */
 :root {
-  --tn2-bg-page: #0e131f;
-  --tn2-bg-card: #182030;
+  --tn2-bg-page: #0e1420;
+  --tn2-bg-card: #172132;
   --tn2-bg-card-hover: #1e2a3d;
+  --tn2-bg-nested: #111a28;
   --tn2-bg-input: #0a0e17;
   --tn2-border-card: rgba(255, 255, 255, 0.05);
   --tn2-border-hover: rgba(255, 255, 255, 0.10);
-  --tn2-accent: #00e676;
-  --tn2-accent-dim: rgba(0, 230, 118, 0.15);
-  --tn2-accent-glow: rgba(0, 230, 118, 0.30);
+  --tn2-accent: #0077ff;
+  --tn2-accent-dim: rgba(0, 119, 255, 0.15);
+  --tn2-accent-glow: rgba(0, 119, 255, 0.30);
   --tn2-secondary: #0077ff;
   --tn2-secondary-dim: rgba(0, 119, 255, 0.15);
   --tn2-text: #ffffff;
@@ -22616,6 +22567,14 @@ body[data-page="mma"] footer { display: none !important; }
 .tam-prob-pill { font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:#00e676; }
 /* Footer */
 .tam-footer { padding:10px 22px;border-top:1px solid rgba(255,255,255,.04);font-family:'DM Mono',monospace;font-size:10px;color:#64748b;text-align:center;letter-spacing:.02em; }
+/* Player Metrics Row — ELO + SPS per-player */
+.tam-metrics-row { display:flex;align-items:stretch;gap:0;padding:4px 22px 2px; }
+.tam-metrics-player { display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1;padding:10px 12px; }
+.tam-metrics-divider { width:1px;background:rgba(255,255,255,.06);flex-shrink:0;margin:10px 0; }
+.tam-metric-block { display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:6px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.04); }
+.tam-metric-label { font-family:'DM Mono',monospace;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b; }
+.tam-metric-value { font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1.15;color:#e8eaed; }
+.tam-metric-sub { font-family:'DM Mono',monospace;font-size:9px;color:#64748b;margin-top:1px; }
 /* Responsive mobile */
 @media(max-width:600px){
   .tam-grid { grid-template-columns:1fr; }
@@ -22624,6 +22583,9 @@ body[data-page="mma"] footer { display: none !important; }
   .tam-cell-value { font-size:17px; }
   .tam-header { padding:14px 16px 10px; }
   .tam-grid { padding:0 16px 14px;gap:8px; }
+  .tam-metrics-row { padding:2px 16px 0; }
+  .tam-metrics-player { padding:6px 8px;gap:4px; }
+  .tam-metric-value { font-size:18px; }
   .tam-footer { padding:8px 16px;font-size:9px; }
 }
 

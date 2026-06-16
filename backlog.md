@@ -21,9 +21,9 @@ Le clic sur l'onglet 'TOP' subit une latence serveur désastreuse qui affiche 'D
 | P1 | Augmenter TTL cache TOP 10 : 60s→5min (viewer), 30s→3min (bettor) | CRITICAL | 15min | ✅ DONE |
 | P2 | Implémenter warmer boot TOP 10 (pré-calcul après 120s) | CRITICAL | 30min | ✅ DONE |
 | P3 | Ajouter fallback gracieux sur ancien cache en cas d'erreur rebuild | HIGH | 20min | ✅ DONE |
-| P4 | Cron background refresh 5min pour rafraîchir cache TOP 10 | MEDIUM | 30min |  TODO |
-| P5 | Tests performance (avant/après) — mesurer temps de réponse | HIGH | 45min | ⏳ TODO |
-| P6 | Documentation CHANGELOG.md v12.82 | LOW | 15min | ⏳ TODO |
+| P4 | Cron background refresh 5min pour rafraîchir cache TOP 10 | MEDIUM | 30min | ✅ DONE |
+| P5 | Tests performance (avant/après) — mesurer temps de réponse | HIGH | 45min | ✅ DONE |
+| P6 | Documentation CHANGELOG.md v12.82 | LOW | 15min | ✅ DONE |
 
 ---
 
@@ -45,7 +45,9 @@ Module d'analyse avancée spécifique à la surface dans la modale Premium TOP 1
 | H7 | **FIX DATA : round NULL dans tennis_matches_internal — défaut "Participant"** | CRITICAL | 5min | ✅ DONE |
 | H8 | **FIX DATA : l10_pts/l5_pts jamais init si 0 matchs — défaut 0** | CRITICAL | 5min | ✅ DONE |
 | H9 | **FIX UI : fallback N/A pour historique et forme si null** | MEDIUM | 10min | ✅ DONE |
-| H10 | Tests performance avant/après H2H | LOW | 30min | ⏳ TODO |
+| H10 | Tests performance avant/après H2H | LOW | 30min | ✅ DONE |
+| H11 | Backend : fonction computePlayerServeReceiveIndex() + injection buildTennisValueBets | MEDIUM | 30min | ✅ DONE |
+| H12 | UI : 2 lignes HTML Indice Serveur / Indice Receveur dans modale TAM + JS populate/couleurs | MEDIUM | 20min | ✅ DONE |
 
 ### Critères de Validation Performance
 - [ ] Temps de réponse TOP 10 < 100ms (cache hit)
@@ -107,6 +109,9 @@ Module d'analyse avancée spécifique à la surface dans la modale Premium TOP 1
 | - | **FIX DATA H2H : round NULL historique** — tennis_matches_internal.round NULL → défaut "Participant" pour éviter affichage vide | 2026-06-16 |
 | - | **FIX DATA H2H : l10_pts jamais init** — _tennisPowerForm ne settait pas l10_pts=0 si aucun match sur la surface | 2026-06-16 |
 | - | **FIX UI H2H : fallback N/A** — Affichage "N/A" explicite quand données historiques/disponibles manquantes | 2026-06-16 |
+| - | **Cron refresh 5min TOP 10** — setInterval 300s maintient le cache chaud (P4) | 2026-06-16 |
+| - | **Benchmark script** — scripts/bench-top10.js (P5+H10) | 2026-06-16 |
+| - | **CHANGELOG v12.82** — documentation complète (P6) | 2026-06-16 |
 
 ---
 
