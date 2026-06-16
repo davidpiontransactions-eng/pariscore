@@ -1809,24 +1809,7 @@ function _tnIntegrityBadge(m) {
 }
 
 // bd — Status bar showing active AI models on tennis page
-function _tnUpdateModelsBar(matches) {
-  var bar = document.getElementById('tn-models-bar');
-  if (!bar) return;
-  var withGlicko = 0, withMomentum = 0, withOdds = 0;
-  for (var i = 0; i < (matches || []).length; i++) {
-    var m = matches[i];
-    if (m.glicko2) withGlicko++;
-    if (m.momentum) withMomentum++;
-    if (m.odds_player1 && m.odds_player2) withOdds++;
-  }
-  var parts = [];
-  if (withGlicko) parts.push('<span style="color:#0ea5e9;">⬡ Glicko-2</span>');
-  if (withMomentum) parts.push('<span style="color:#22c55e;">⚡ Momentum</span>');
-  if (withOdds) parts.push('<span style="color:#ffa726;">💰 Odds BSD</span>');
-  parts.push('<span style="color:#ec4899;">🧠 Elo</span>');
-  bar.innerHTML = parts.join(' <span style="color:#5a6068;">|</span> ');
-  bar.style.display = 'inline-block';
-}
+
 window._tennisSourceFilter = window._tennisSourceFilter || 'ALL';
 function setTennisSourceFilter(f) {
   const allowed = ['ALL', 'BSD', 'ESPN', 'LIVESCORE', 'AISCORE'];
@@ -2220,7 +2203,6 @@ async function tickTennisLive() {
     }
     window._tennisLastFetch = list;
     renderTennisLive(window._tennisLastFetch);
-    _tnUpdateModelsBar(list);
     try { patchTennisLive(); } catch (_) {}/*TN_UNIFY_TICK*/
     if (statusEl) statusEl.textContent = `${list.length} match(s) · ${srcLabel} · ${new Date().toLocaleTimeString('fr-FR')}`;
   } catch (e) {
@@ -4426,7 +4408,20 @@ function _tnTop10Card(m, rank) {
     </div>`;
   }
 
-  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisDetail==='function')openTennisDetail('${safeId}')">
+  // ── Odds boxes (colonne droite, design chirurgical) ──
+  var oddsHtml = '';
+  if (m.odds_p1 && m.odds_p2) {
+    oddsHtml = '<div class="tn-t10-odds-wrapper">'
+      + '<div class="tn-t10-odds-box" title="Cote ' + _tnEsc(m.player1||'J1') + '"><span class="tn-t10-odds-label">' + _tnEsc(m.player1||'J1').split(' ').pop() + '</span><span class="tn-t10-odds-value">' + Number(m.odds_p1).toFixed(2) + '</span></div>'
+      + '<div class="tn-t10-odds-box" title="Cote ' + _tnEsc(m.player2||'J2') + '"><span class="tn-t10-odds-label">' + _tnEsc(m.player2||'J2').split(' ').pop() + '</span><span class="tn-t10-odds-value">' + Number(m.odds_p2).toFixed(2) + '</span></div>'
+      + '</div>';
+  } else {
+    oddsHtml = '<div class="tn-t10-odds-wrapper">'
+      + '<div class="tn-t10-odds-box"><span class="tn-t10-odds-label">—</span><span class="tn-t10-odds-value">—</span></div>'
+      + '</div>';
+  }
+
+  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')">
   <div class="tn-t10-card-top">
     <span class="tn-t10-rank">#${rank}</span>
     <span class="tn-t10-score-badge ${scoreColor}">${m.score_top10.toFixed(1)}<span>/100</span></span>
@@ -4442,10 +4437,11 @@ function _tnTop10Card(m, rank) {
   ${dateBadge}
   ${probBar}
   <div class="tn-t10-chips">
-    <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🤖</button>
+    <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
     ${chipsHtml}
   </div>
   ${betsHtml}
+  ${oddsHtml}
 </div>`;
 }
 
@@ -4552,7 +4548,7 @@ function _renderTennisAbstractTable(data, bodyId, metaId) {
   const meta = document.getElementById(metaId);
   if (!body) return;
   if (!data || !Array.isArray(data.players) || !data.players.length) {
-    body.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Aucune donnée disponible.</div>';
+    body.innerHTML = '';
     if (meta) meta.textContent = '—';
     return;
   }
@@ -5068,6 +5064,7 @@ async function openTexPlayerModal(slug) {
 }
 
 async function loadTennisAbstractRome() {
+  const section = document.getElementById('tennis-abstract-section');
   const statusEl = document.getElementById('ta-rome-status');
   const upcomingEl = document.getElementById('ta-rome-upcoming');
   if (statusEl) statusEl.textContent = I18N.t('status.loading');
@@ -5076,20 +5073,43 @@ async function loadTennisAbstractRome() {
       apiFetch('/api/v1/tennis-abstract?event=atp-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
       apiFetch('/api/v1/tennis-abstract?event=wta-rome-2026').then(r => r.json()).catch(e => ({ error: e.message })),
     ]);
+    const hasAtp = atpRes && Array.isArray(atpRes.players) && atpRes.players.length > 0;
+    const hasWta = wtaRes && Array.isArray(wtaRes.players) && wtaRes.players.length > 0;
+    if (!hasAtp && !hasWta) {
+      if (section) section.classList.add('is-empty');
+      if (statusEl) statusEl.textContent = '—';
+      return;
+    }
+    if (section) section.classList.remove('is-empty');
+    var grid = document.getElementById('ta-rome-grid');
+    if (!grid) return;
+    if (hasAtp && !document.getElementById('ta-rome-atp-body')) {
+      var c1 = document.createElement('div');
+      c1.className = 'ta-rome-card';
+      c1.style.cssText = 'background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;';
+      c1.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><h3 style="margin:0;font-family:Syne,sans-serif;font-weight:700;font-size:16px;">ATP Rome</h3><span id="ta-rome-atp-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;">—</span></div><div id="ta-rome-atp-body" style="overflow:auto;max-height:520px;"><div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement...</div></div>';
+      grid.appendChild(c1);
+    }
+    if (hasWta && !document.getElementById('ta-rome-wta-body')) {
+      var c2 = document.createElement('div');
+      c2.className = 'ta-rome-card';
+      c2.style.cssText = 'background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;';
+      c2.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;"><h3 style="margin:0;font-family:Syne,sans-serif;font-weight:700;font-size:16px;">WTA Rome</h3><span id="ta-rome-wta-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;">—</span></div><div id="ta-rome-wta-body" style="overflow:auto;max-height:520px;"><div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Chargement...</div></div>';
+      grid.appendChild(c2);
+    }
     _renderTennisAbstractTable(atpRes, 'ta-rome-atp-body', 'ta-rome-atp-meta');
     _renderTennisAbstractTable(wtaRes, 'ta-rome-wta-body', 'ta-rome-wta-meta');
-    // Fetch DR data for all players in the table
     _loadTennisDR(atpRes, wtaRes);
     if (upcomingEl) {
-      const upATP = (atpRes.upcoming_matches || []).slice(0, 3);
-      const upWTA = (wtaRes.upcoming_matches || []).slice(0, 3);
-      const blocks = [];
-      if (upATP.length) blocks.push(`<strong style="color:var(--text,#e8eaed);">ATP à venir :</strong> ${upATP.map(_escapeHtmlSafe).join(' · ')}`);
-      if (upWTA.length) blocks.push(`<strong style="color:var(--text,#e8eaed);">WTA à venir :</strong> ${upWTA.map(_escapeHtmlSafe).join(' · ')}`);
+      var upATP = (atpRes.upcoming_matches || []).slice(0, 3);
+      var upWTA = (wtaRes.upcoming_matches || []).slice(0, 3);
+      var blocks = [];
+      if (upATP.length) blocks.push('<strong style="color:var(--text,#e8eaed);">ATP à venir :</strong> ' + upATP.map(_escapeHtmlSafe).join(' · '));
+      if (upWTA.length) blocks.push('<strong style="color:var(--text,#e8eaed);">WTA à venir :</strong> ' + upWTA.map(_escapeHtmlSafe).join(' · '));
       upcomingEl.innerHTML = blocks.join('<br/>');
     }
     if (statusEl) {
-      const ts = atpRes.fetched_at || wtaRes.fetched_at;
+      var ts = atpRes.fetched_at || wtaRes.fetched_at;
       statusEl.textContent = ts ? 'MAJ ' + fmtKickoffTime(ts) : 'OK';
     }
   } catch (e) {
@@ -6492,6 +6512,211 @@ function closePsLiveTennisSheet() {
   if (window._psLtsTimer) { clearInterval(window._psLtsTimer); window._psLtsTimer = null; }
   window._psLtsCurrentId = null;
   window._psLtsInsights = null;
+}
+
+// ── Modal Analyse Premium TOP 10 (gstack sprint) ──
+function openTennisAnalysisModal(matchId) {
+  if (!matchId) return;
+  var modal = document.getElementById('tennis-analysis-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  // Reset fields
+  document.getElementById('tam-tournament').textContent = 'Chargement...';
+  document.getElementById('tam-surface').textContent = '';
+  document.getElementById('tam-round').textContent = '';
+  document.getElementById('tam-p1-name').textContent = '—';
+  document.getElementById('tam-p2-name').textContent = '—';
+  document.getElementById('tam-p1-rank').textContent = '';
+  document.getElementById('tam-p2-rank').textContent = '';
+  document.getElementById('tam-p1-img').src = '';
+  document.getElementById('tam-p2-img').src = '';
+  document.getElementById('tam-glicko').textContent = '—';
+  document.getElementById('tam-glicko-sub').textContent = '';
+  document.getElementById('tam-momentum').textContent = '—';
+  document.getElementById('tam-momentum-sub').textContent = '';
+  document.getElementById('tam-probability').textContent = '—';
+  document.getElementById('tam-probability').className = 'tam-cell-value';
+  document.getElementById('tam-prob-pill').textContent = '';
+  document.getElementById('tam-prob-pill').style.display = 'none';
+  var fillEl = document.getElementById('tam-prob-fill');
+  if (fillEl) fillEl.style.width = '0%';
+  document.getElementById('tam-rho').textContent = '—';
+  document.getElementById('tam-rho').className = 'tam-cell-value';
+  document.getElementById('tam-rho-sub').textContent = '';
+  document.getElementById('tam-footer').textContent = '';
+
+  fetch('/api/v1/tennis/detail/' + encodeURIComponent(String(matchId)))
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data) {
+      // Meta
+      document.getElementById('tam-tournament').textContent = data.meta.tournament || 'Match Tennis';
+      document.getElementById('tam-surface').textContent = data.meta.surface || '';
+      document.getElementById('tam-round').textContent = data.meta.round || '';
+      // Players
+      var p1 = data.players && data.players.p1 ? data.players.p1 : {};
+      var p2 = data.players && data.players.p2 ? data.players.p2 : {};
+      document.getElementById('tam-p1-name').textContent = p1.name || '—';
+      document.getElementById('tam-p2-name').textContent = p2.name || '—';
+      document.getElementById('tam-p1-rank').textContent = p1.rank ? 'ATP #' + p1.rank : '';
+      document.getElementById('tam-p2-rank').textContent = p2.rank ? 'ATP #' + p2.rank : '';
+      var url1 = p1.id ? tennisPlayerPhotoURL(p1.id) : '';
+      var url2 = p2.id ? tennisPlayerPhotoURL(p2.id) : '';
+      document.getElementById('tam-p1-img').src = url1;
+      document.getElementById('tam-p2-img').src = url2;
+      // Glicko-2 → elo_surface
+      var elo1 = p1.elo_surface, elo2 = p2.elo_surface;
+      if (elo1 != null && elo2 != null) {
+        document.getElementById('tam-glicko').textContent = elo1 + ' | ' + elo2;
+        var best = Math.max(elo1, elo2);
+        document.getElementById('tam-glicko-sub').textContent = 'P1 ' + elo1 + ' · P2 ' + elo2 + ' — Max ' + best;
+      } else if (elo1 != null) {
+        document.getElementById('tam-glicko').textContent = elo1;
+        document.getElementById('tam-glicko-sub').textContent = 'Joueur 1 uniquement';
+      } else if (elo2 != null) {
+        document.getElementById('tam-glicko').textContent = elo2;
+        document.getElementById('tam-glicko-sub').textContent = 'Joueur 2 uniquement';
+      }
+      // Momentum → surf_form
+      var m1 = p1.surf_form, m2 = p2.surf_form;
+      if (m1 != null && m2 != null) {
+        document.getElementById('tam-momentum').textContent = m1 + '% | ' + m2 + '%';
+        var t1 = m1 >= 60 ? '\u2197' : (m1 >= 40 ? '\u2192' : '\u2198');
+        var t2 = m2 >= 60 ? '\u2197' : (m2 >= 40 ? '\u2192' : '\u2198');
+        document.getElementById('tam-momentum-sub').textContent = t1 + ' P1 \u00B7 ' + t2 + ' P2';
+      } else if (m1 != null) {
+        document.getElementById('tam-momentum').textContent = m1 + '%';
+        document.getElementById('tam-momentum-sub').textContent = m1 >= 60 ? '\u2197 Forme positive' : (m1 >= 40 ? '\u2192 Stable' : '\u2198 En baisse');
+      } else if (m2 != null) {
+        document.getElementById('tam-momentum').textContent = m2 + '%';
+        document.getElementById('tam-momentum-sub').textContent = m2 >= 60 ? '\u2197 Forme positive' : (m2 >= 40 ? '\u2192 Stable' : '\u2198 En baisse');
+      }
+      // Probabilité de Gain
+      var pred = data.predictions;
+      if (pred && pred.blended && pred.blended.p1 != null) {
+        var pct = Math.round(pred.blended.p1 * 100);
+        var probEl = document.getElementById('tam-probability');
+        probEl.textContent = pct + '%';
+        probEl.className = 'tam-cell-value';
+        probEl.classList.add(pct >= 60 ? 'tam-green' : (pct >= 45 ? 'tam-orange' : 'tam-red'));
+        var fill = document.getElementById('tam-prob-fill');
+        if (fill) { setTimeout(function(){ fill.style.width = pct + '%'; }, 50); }
+        var pill = document.getElementById('tam-prob-pill');
+        if (pill) {
+          pill.textContent = pct >= 60 ? 'FAVORI' : (pct >= 45 ? 'BALANC\u00C9' : 'OPPRESS\u00C9');
+          pill.style.display = 'inline';
+          pill.style.background = pct >= 60 ? 'rgba(0,230,118,.08)' : (pct >= 45 ? 'rgba(251,146,60,.08)' : 'rgba(239,68,68,.08)');
+          pill.style.borderColor = pct >= 60 ? 'rgba(0,230,118,.2)' : (pct >= 45 ? 'rgba(251,146,60,.2)' : 'rgba(239,68,68,.2)');
+          pill.style.color = pct >= 60 ? '#00e676' : (pct >= 45 ? '#fb923c' : '#ef4444');
+        }
+      }
+      // Rho → confidence_badge
+      var badge = data.confidence_badge || {};
+      var rhoScore = badge.score;
+      var rhoLevel = badge.level || '';
+      if (rhoScore != null) {
+        var rhoEl = document.getElementById('tam-rho');
+        rhoEl.textContent = rhoScore + '/100';
+        rhoEl.className = 'tam-cell-value';
+        rhoEl.classList.add(rhoScore >= 70 ? 'tam-green' : (rhoScore >= 45 ? 'tam-orange' : 'tam-red'));
+        document.getElementById('tam-rho-sub').textContent = rhoLevel || '—';
+      } else if (rhoLevel) {
+        document.getElementById('tam-rho').textContent = rhoLevel;
+      }
+      // Footer : edge + verdict
+      var edge = data.best_edge || {};
+      var parts = [];
+      if (edge.edge != null) parts.push('Edge: +' + Number(edge.edge).toFixed(1) + '%');
+      if (data.predictive && data.predictive.kpi && data.predictive.kpi.verdict) parts.push('Verdict: ' + data.predictive.kpi.verdict);
+      if (data.confidence_badge && data.confidence_badge.level) parts.push('Confiance: ' + data.confidence_badge.level);
+      if (data.meta && data.meta.is_live) parts.push('\uD83D\uDD34 EN DIRECT');
+      document.getElementById('tam-footer').textContent = parts.length ? parts.join(' \u00B7 ') : 'Analyse IA · PariScore';
+
+      // ── H2H Surface Comparative Table ──
+      // 1) ELO + Classement Surface
+      var eloP1 = p1.elo_surface, eloP2 = p2.elo_surface;
+      var srP1 = p1.surf_rank, srP2 = p2.surf_rank;
+      if (eloP1 != null && srP1 != null) {
+        document.getElementById('h2h-p1-elo-surface').textContent = eloP1 + ' (Rank #' + srP1 + ')';
+      } else if (eloP1 != null) {
+        document.getElementById('h2h-p1-elo-surface').textContent = eloP1;
+      } else if (srP1 != null) {
+        document.getElementById('h2h-p1-elo-surface').textContent = 'Rank #' + srP1;
+      }
+      if (eloP2 != null && srP2 != null) {
+        document.getElementById('h2h-p2-elo-surface').textContent = eloP2 + ' (Rank #' + srP2 + ')';
+      } else if (eloP2 != null) {
+        document.getElementById('h2h-p2-elo-surface').textContent = eloP2;
+      } else if (srP2 != null) {
+        document.getElementById('h2h-p2-elo-surface').textContent = 'Rank #' + srP2;
+      }
+
+      // 2) PowerScore
+      var ps1 = p1.powerscore, ps2 = p2.powerscore;
+      var pr1 = p1.ps_rank, pr2 = p2.ps_rank;
+      var pt1 = p1.ps_total, pt2 = p2.ps_total;
+      if (ps1 != null) {
+        var ps1Str = Number(ps1).toFixed(1);
+        if (pr1 != null) ps1Str += ' (#' + pr1 + '/' + (pt1 || '—') + ')';
+        document.getElementById('h2h-p1-powerscore').textContent = ps1Str;
+      }
+      if (ps2 != null) {
+        var ps2Str = Number(ps2).toFixed(1);
+        if (pr2 != null) ps2Str += ' (#' + pr2 + '/' + (pt2 || '—') + ')';
+        document.getElementById('h2h-p2-powerscore').textContent = ps2Str;
+      }
+
+      // 3) Historique Édition Précédente
+      var th = data.tournament_history || {};
+      var h1 = th.p1, h2 = th.p2;
+      if (h1 && h1.round) {
+        var h1El = document.getElementById('h2h-p1-history');
+        h1El.textContent = h1.round;
+        if (h1.isWinner) { h1El.className = 'h2h-cell p1-val green-text'; h1El.textContent = '\uD83C\uDFC6 ' + h1.round; }
+      } else {
+        document.getElementById('h2h-p1-history').textContent = 'N/A';
+      }
+      if (h2 && h2.round) {
+        var h2El = document.getElementById('h2h-p2-history');
+        h2El.textContent = h2.round;
+        if (h2.isWinner) { h2El.className = 'h2h-cell p2-val green-text'; h2El.textContent = '\uD83C\uDFC6 ' + h2.round; }
+      } else {
+        document.getElementById('h2h-p2-history').textContent = 'N/A';
+      }
+
+      // 4) Forme L10 Surface (3 mois) — depuis l5_pts/l10_pts converti en ratio W/L approximé
+      var l10_1 = p1.l10_pts, l10_2 = p2.l10_pts;
+      if (l10_1 != null) {
+        var w1 = Math.round(l10_1 / 10); var l1 = 10 - w1;
+        var el1 = document.getElementById('h2h-p1-form-l10');
+        el1.innerHTML = '<span class="' + (w1 >= 6 ? 'green-text' : 'muted-text') + '">' + w1 + '-' + l1 + '</span> <span class="muted-text">(90j)</span>';
+      } else {
+        document.getElementById('h2h-p1-form-l10').textContent = 'N/A';
+      }
+      if (l10_2 != null) {
+        var w2 = Math.round(l10_2 / 10); var l2 = 10 - w2;
+        var el2 = document.getElementById('h2h-p2-form-l10');
+        el2.innerHTML = '<span class="' + (w2 >= 6 ? 'green-text' : 'muted-text') + '">' + w2 + '-' + l2 + '</span> <span class="muted-text">(90j)</span>';
+      } else {
+        document.getElementById('h2h-p2-form-l10').textContent = 'N/A';
+      }
+    })
+    .catch(function(err) {
+      console.error('[TennisAnalysisModal]', err);
+      document.getElementById('tam-tournament').textContent = 'Erreur de chargement';
+    });
+}
+
+function closeTennisAnalysisModal() {
+  var modal = document.getElementById('tennis-analysis-modal');
+  if (!modal) return;
+  modal.style.animation = 'psModalOut 0.15s ease forwards';
+  setTimeout(function() {
+    modal.style.display = 'none';
+    modal.style.animation = '';
+    var fill = document.getElementById('tam-prob-fill');
+    if (fill) fill.style.width = '0%';
+  }, 150);
 }
 
 // Hook : route mobile + match live → nouveau sheet, sinon modal legacy

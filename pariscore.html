@@ -11661,8 +11661,6 @@
     .tbl-scroll > table { min-width: max-content; }
     /* OLD_TENNIS_DEPRECATED 2026-06: replaced by tn2-* system */
     /* #tennis-abstract-section [style*="grid-template-columns"] { grid-template-columns: 1fr !important; } */
-    /* #page-tennis .ta-rome-card { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; } */
-
     /* Chantier 1 — accueil mobile épurée : hero-stats masqué */
     .hero-stats {
       display: none !important;
@@ -15550,6 +15548,113 @@ function psSetLang(v) {
     </div>
   </div>
 
+  <!-- ═══ MODAL ANALYSE PREMIUM TOP 10 (gstack sprint) ═══ -->
+  <div id="tennis-analysis-modal" class="tn2-modal" style="display:none;">
+    <div class="tn2-modal-bd" onclick="closeTennisAnalysisModal()"></div>
+    <div class="tn2-modal-card" role="dialog" aria-modal="true" style="max-width:640px;padding:0;overflow:hidden;background:linear-gradient(180deg,#182030,#0f1622);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 40px rgba(0,0,0,.6);">
+      <button class="tn2-modal-x" onclick="closeTennisAnalysisModal()" aria-label="Fermer" style="top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#94a3b8;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:3;position:absolute;">✕</button>
+
+      <!-- Header : tournoi + surface -->
+      <div class="tam-header">
+        <span class="tam-tournament" id="tam-tournament">—</span>
+        <span class="tam-surface-badge" id="tam-surface"></span>
+      </div>
+
+      <!-- Hero VS -->
+      <div class="tam-hero">
+        <div class="tam-player-col">
+          <div class="tam-avatar-ring"><img id="tam-p1-img" src="" class="athlete-live-img" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:var(--bg4,#243045);border:2px solid rgba(255,255,255,.08);" alt=""></div>
+          <span class="tam-player-name" id="tam-p1-name">—</span>
+          <span class="tam-player-rank" id="tam-p1-rank"></span>
+        </div>
+        <div class="tam-vs-col">
+          <div class="tam-vs-circle">VS</div>
+          <span class="tam-round-badge" id="tam-round"></span>
+        </div>
+        <div class="tam-player-col">
+          <div class="tam-avatar-ring"><img id="tam-p2-img" src="" class="athlete-live-img" style="width:54px;height:54px;border-radius:50%;object-fit:cover;background:var(--bg4,#243045);border:2px solid rgba(255,255,255,.08);" alt=""></div>
+          <span class="tam-player-name" id="tam-p2-name">—</span>
+          <span class="tam-player-rank" id="tam-p2-rank"></span>
+        </div>
+      </div>
+
+      <!-- Data Grid 2×2 -->
+      <div class="tam-grid">
+        <div class="tam-cell">
+          <div class="tam-cell-icon">📊</div>
+          <div class="tam-cell-body">
+            <span class="tam-cell-label">Indice Glicko-2</span>
+            <span class="tam-cell-value tam-cyan" id="tam-glicko">—</span>
+            <span class="tam-cell-sub" id="tam-glicko-sub"></span>
+          </div>
+        </div>
+        <div class="tam-cell">
+          <div class="tam-cell-icon">⚡</div>
+          <div class="tam-cell-body">
+            <span class="tam-cell-label">Momentum (3 Derniers)</span>
+            <span class="tam-cell-value tam-orange" id="tam-momentum">—</span>
+            <span class="tam-cell-sub" id="tam-momentum-sub"></span>
+          </div>
+        </div>
+        <div class="tam-cell">
+          <div class="tam-cell-icon">🎯</div>
+          <div class="tam-cell-body">
+            <span class="tam-cell-label">Probabilité de Gain</span>
+            <div style="display:flex;align-items:baseline;gap:10px;">
+              <span class="tam-cell-value tam-green" id="tam-probability">—</span>
+              <span class="tam-prob-pill" id="tam-prob-pill"></span>
+            </div>
+            <div class="tam-prob-track" id="tam-prob-track"><div class="tam-prob-fill" id="tam-prob-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="tam-cell">
+          <div class="tam-cell-icon">🔮</div>
+          <div class="tam-cell-body">
+            <span class="tam-cell-label">Indice de Confiance (ρ)</span>
+            <span class="tam-cell-value" id="tam-rho">—</span>
+            <span class="tam-cell-sub" id="tam-rho-sub"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Grille Comparative Spécifique Surface H2H (Sprint Module Comparatif) ═══ -->
+      <div class="tennis-surface-h2h-table">
+        <div class="h2h-table-title">Analyse Avancée — Spécifique Surface</div>
+
+        <!-- Ligne 1 : ELO & Classement Surface -->
+        <div class="h2h-row-contour">
+          <div class="h2h-cell p1-val" id="h2h-p1-elo-surface">—</div>
+          <div class="h2h-cell label-cell">ELO / Classement Surface</div>
+          <div class="h2h-cell p2-val" id="h2h-p2-elo-surface">—</div>
+        </div>
+
+        <!-- Ligne 2 : PowerScore -->
+        <div class="h2h-row-contour">
+          <div class="h2h-cell p1-val cyan-text" id="h2h-p1-powerscore">—</div>
+          <div class="h2h-cell label-cell">PowerScore</div>
+          <div class="h2h-cell p2-val cyan-text" id="h2h-p2-powerscore">—</div>
+        </div>
+
+        <!-- Ligne 3 : Même Tournoi l'An Dernier -->
+        <div class="h2h-row-contour">
+          <div class="h2h-cell p1-val" id="h2h-p1-history">—</div>
+          <div class="h2h-cell label-cell">Édition Précédente (Historique)</div>
+          <div class="h2h-cell p2-val" id="h2h-p2-history">—</div>
+        </div>
+
+        <!-- Ligne 4 : Forme L10 Surface (3 mois) -->
+        <div class="h2h-row-contour">
+          <div class="h2h-cell p1-val" id="h2h-p1-form-l10">—</div>
+          <div class="h2h-cell label-cell">Forme L10 Surface (3 mois)</div>
+          <div class="h2h-cell p2-val" id="h2h-p2-form-l10">—</div>
+        </div>
+      </div>
+
+      <!-- Footer data -->
+      <div class="tam-footer" id="tam-footer"></div>
+    </div>
+  </div>
+
   <!-- Player profile modal (Tennis Explorer) -->
   <div id="tex-player-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9999;align-items:center;justify-content:center;padding:20px;">
     <div style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:10px;max-width:520px;width:100%;padding:20px;position:relative;">
@@ -15560,8 +15665,8 @@ function psSetLang(v) {
 
   <!-- ═══ LEGACY SECTIONS (préservées pour rétrocompatibilité) ═══ -->
 
-  <!-- Tennis Abstract Rome forecasts -->
-  <section class="tn2-legacy-section" id="tennis-abstract-section">
+  <!-- Tennis Abstract Rome forecasts — injecté dynamiquement par loadTennisAbstractRome() -->
+  <section class="tn2-legacy-section is-empty" id="tennis-abstract-section">
     <div class="tn2-section-header">
       <h2>🏛️ Rome 2026 — Forecasts</h2>
       <div class="tn2-header-controls">
@@ -15569,26 +15674,7 @@ function psSetLang(v) {
         <button class="tn2-btn-glass" onclick="loadTennisAbstractRome()">🔄</button>
       </div>
     </div>
-    <div class="tn2-legacy-grid">
-      <div class="ta-rome-card" style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <h3 style="margin:0;font-family:Syne,sans-serif;font-weight:700;font-size:16px;">ATP Rome</h3>
-          <span id="ta-rome-atp-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">—</span>
-        </div>
-        <div id="ta-rome-atp-body" style="overflow:auto;max-height:520px;">
-          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement...</div>
-        </div>
-      </div>
-      <div class="ta-rome-card" style="background:var(--bg2,#111417);border:1px solid var(--bg4,#1e2328);border-radius:8px;padding:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <h3 style="margin:0;font-family:Syne,sans-serif;font-weight:700;font-size:16px;">WTA Rome</h3>
-          <span id="ta-rome-wta-meta" style="font-size:11px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;">—</span>
-        </div>
-        <div id="ta-rome-wta-body" style="overflow:auto;max-height:520px;">
-          <div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">Chargement...</div>
-        </div>
-      </div>
-    </div>
+    <div class="tn2-legacy-grid" id="ta-rome-grid"></div>
     <div id="ta-rome-upcoming" style="margin-top:14px;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;"></div>
   </section>
 
@@ -15799,23 +15885,48 @@ function psSetLang(v) {
       var p2 = m.player2 || m.away || {};
       var p1Name = p1.name || p1.nom || p1.shortName || 'Joueur 1';
       var p2Name = p2.name || p2.nom || p2.shortName || 'Joueur 2';
-      var p1Rank = p1.rank || p1.classement || '—';
-      var p2Rank = p2.rank || p2.classement || '—';
+      var p1Rank = p1.rank || p1.classement || (m.glicko2 ? Math.round(m.glicko2.p1_serve) : '—');
+      var p2Rank = p2.rank || p2.classement || (m.glicko2 ? Math.round(m.glicko2.p2_serve) : '—');
       var p1Init = (p1Name.charAt(0) || '').toUpperCase();
       var p2Init = (p2Name.charAt(0) || '').toUpperCase();
       var p1Color = p1.color || '#1e88e5';
       var p2Color = p2.color || '#e53935';
       var tourney = m.tournament || m.tournoi || m.league || '';
       var tourneyName = typeof tourney === 'object' ? (tourney.name || tourney.nom || '') : tourney;
-      var score = m.score || m.sets || {};
-      var setsStr = score.sets ? score.sets.join(' ') : (score.current || '');
-      var gamesStr = score.games || '';
-      var point = m.point || m.currentPoint || '';
-      var prob = m.probability || m.proba || 50;
-      var ev = m.ev || m.expectedValue || 0;
+      var setsArr = Array.isArray(m.sets) ? m.sets : [];
+      var setsStr = '';
+      for (var si = 0; si < setsArr.length; si++) {
+        setsStr += (si > 0 ? ' ' : '') + (setsArr[si].p1 || 0) + '-' + (setsArr[si].p2 || 0);
+      }
+      var _curSetIdx = Number.isFinite(m.current_set_index) ? m.current_set_index : (setsArr.length - 1);
+      var gamesStr = '';
+      if (_curSetIdx >= 0 && _curSetIdx < setsArr.length) {
+        gamesStr = (setsArr[_curSetIdx].p1 || 0) + '-' + (setsArr[_curSetIdx].p2 || 0);
+      } else {
+        gamesStr = (m.player1_sets || 0) + '-' + (m.player2_sets || 0);
+      }
+      var point = m.current_point || gamesStr;
+      var prob = 50;
+      if (m.glicko2 && m.glicko2.p1_serve && m.glicko2.p2_serve) {
+        var _p1R = m.glicko2.p1_serve + m.glicko2.p1_return;
+        var _p2R = m.glicko2.p2_serve + m.glicko2.p2_return;
+        prob = Math.round((_p1R / (_p1R + _p2R)) * 100);
+      } else if (m.odds_player1 && m.odds_player2) {
+        var _imp1 = 1 / m.odds_player1;
+        var _imp2 = 1 / m.odds_player2;
+        prob = Math.round((_imp1 / (_imp1 + _imp2)) * 100);
+      } else if (m.momentum && m.momentum.p1 != null && m.momentum.p2 != null) {
+        var _mTotal = m.momentum.p1 + m.momentum.p2 || 1;
+        prob = Math.round((m.momentum.p1 / _mTotal) * 100);
+      }
+      var ev = 0;
+      if (m.odds_player1 && m.odds_player2) {
+        var _fairP1 = (1 / m.odds_player1) / (1 / m.odds_player1 + 1 / m.odds_player2);
+        ev = parseFloat(((_fairP1 - 0.5) * 200).toFixed(1));
+      }
       var evStr = (ev >= 0 ? '+' : '') + Number(ev).toFixed(1);
-      var verdict = m.verdict || m.bet_verdict || 'valeur';
-      var duration = m.duration || m.time || '';
+      var verdict = m.verdict || m.bet_verdict || (ev >= 3 ? 'vapeur' : ev > 0 ? 'valeur' : 'neutre');
+      var duration = m.duration || m.time || m.status || '';
       var serving = m.serving || 1;
       html += '<div class="tn2-match-card">';
       html += '<div class="tn2-card-top">';
@@ -16286,13 +16397,6 @@ window.tn2SetupH2H = function() {
 <style>
   /* OLD_TENNIS_DEPRECATED 2026-06: replaced by tn2-* system */
   /* @keyframes tennisAISpin { to { transform: rotate(360deg); } } */
-  /* .ta-rome-table { width:100%; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; } */
-  /* .ta-rome-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:0.05em; } */
-  /* .ta-rome-table td { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.04); color:var(--text,#e8eaed); } */
-  /* .ta-rome-table tr.ta-elim td { color:var(--text3,#5a6068); text-decoration:line-through; } */
-  /* .ta-rome-table td.ta-prob { text-align:right; font-weight:600; } */
-  /* .ta-rome-table td.ta-prob-w { color:var(--green,#00e676); } */
-  /* .ta-rome-seed { display:inline-block; min-width:24px; padding:1px 5px; background:var(--bg3,#181c20); border-radius:3px; text-align:center; font-size:10px; color:var(--blue,#29b6f6); margin-right:6px; } */
   /* .tex-tour-btn.is-active { background:var(--bg3,#181c20) !important; color:var(--text,#e8eaed) !important; } */
   /* .tex-table { width:100%; min-width:780px; border-collapse:collapse; font-family:'DM Mono',monospace; font-size:11px; } */
   /* .tex-table th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--bg4,#1e2328); color:var(--text3,#5a6068); font-weight:600; text-transform:uppercase; font-size:10px; letter-spacing:0.05em; position:sticky; top:0; background:var(--bg2,#111417); } */
@@ -19064,66 +19168,175 @@ window.tn2SetupH2H = function() {
     white-space: nowrap !important;
   }
 
-  /* ═══ TENNIS TOP 10 CARDS — Premium XL Design ═══ */
-  /* Cartes agrandies avec avatars 48px, grille 2 colonnes */
+  /* ═══ TENNIS TOP 10 CARDS — Premium Design v2 (contours nets, charte sombre) ═══ */
   #tn2-top-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+
+  /* ── Carte principale : fond double-teinte, contour néon, ombre encastrée ── */
   .tn-t10-card {
-    background: var(--bg2,#182030) !important;
-    border: 1px solid rgba(255,255,255,.07) !important;
-    border-left-width: 4px !important;
-    border-left-color: rgba(255,255,255,.15) !important;
-    border-radius: 12px !important;
-    padding: 20px 24px 18px !important;
+    background: linear-gradient(145deg, #182030, #121824) !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-left: 3px solid #00e676 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-bottom: 14px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,255,255,.02) !important;
+    transition: transform .2s ease, border-color .2s ease !important;
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
     cursor: pointer !important;
-    transition: transform .2s, box-shadow .2s !important;
     position: relative !important;
     overflow: hidden !important;
   }
-  .tn-t10-card:hover { transform: translateY(-4px) !important; box-shadow: 0 12px 36px rgba(0,0,0,.5) !important; }
+  .tn-t10-card:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(0,230,118,.4) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,.6) !important;
+  }
+  /* Raisons → couleur de la bordure gauche (surcharge la règle générique #00e676) */
   .tn-t10-card[data-reason="EN DIRECT"]{border-left-color:#f44336!important}
   .tn-t10-card[data-reason="VALEUR"]   {border-left-color:#00e676!important}
   .tn-t10-card[data-reason="VAPEUR"]   {border-left-color:#ff9800!important}
   .tn-t10-card[data-reason="CLASSIQUE"]{border-left-color:#e8b84b!important}
   .tn-t10-card[data-reason="DRAMA"]    {border-left-color:#ce93d8!important}
   .tn-t10-card[data-reason="UPSET"]    {border-left-color:#00bcd4!important}
-  .tn-t10-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .tn-t10-rank { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text3,#64748b); font-weight: 700; }
-  .tn-t10-score-badge { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 800; color: var(--text,#e8eaed); line-height: 1; }
+
+  /* ── Bloc info (colonne de gauche dans la grid) ── */
+  .tn-t10-card-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px; grid-column: 1 / -1;
+  }
+  .tn-t10-rank {
+    font-family: 'DM Mono', monospace; font-size: 13px;
+    color: var(--text3,#94a3b8); font-weight: 700;
+  }
+  .tn-t10-score-badge {
+    font-family: 'DM Mono', monospace; font-size: 24px;
+    font-weight: 800; color: var(--text,#e8eaed); line-height: 1;
+  }
   .tn-t10-score-badge span { font-size: 11px; color: var(--text3,#64748b); font-weight: 400; }
   .tn-t10-score-badge.high { color: #00e676; }
-  .tn-t10-score-badge.med { color: #fbbf24; }
-  .tn-t10-tag { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; padding: 4px 9px; border-radius: 5px; border: 1px solid; }
+  .tn-t10-score-badge.med  { color: #fbbf24; }
+
+  /* ── Tag de raison (VALEUR, EN DIRECT, etc.) ── */
+  .tn-t10-tag {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    font-weight: 800; letter-spacing: .8px; text-transform: uppercase;
+    padding: 4px 9px; border-radius: 5px; border: 1px solid;
+  }
   .tn-t10-tag-ENDIRECT { background: rgba(244,67,54,.12); border-color: rgba(244,67,54,.4); color: #f44336; }
-  .tn-t10-tag-VALEUR   { background: rgba(0,230,118,.1); border-color: rgba(0,230,118,.35); color: #00e676; }
-  .tn-t10-tag-VAPEUR   { background: rgba(255,152,0,.1); border-color: rgba(255,152,0,.35); color: #ff9800; }
+  .tn-t10-tag-VALEUR   { background: rgba(0,230,118,.1);  border-color: rgba(0,230,118,.35); color: #00e676; }
+  .tn-t10-tag-VAPEUR   { background: rgba(255,152,0,.1);  border-color: rgba(255,152,0,.35); color: #ff9800; }
   .tn-t10-tag-CLASSIQUE{ background: rgba(232,184,75,.1); border-color: rgba(232,184,75,.35); color: #e8b84b; }
   .tn-t10-tag-DRAMA    { background: rgba(156,39,176,.1); border-color: rgba(156,39,176,.35); color: #ce93d8; }
-  .tn-t10-tag-UPSET    { background: rgba(0,188,212,.1); border-color: rgba(0,188,212,.35); color: #00bcd4; }
+  .tn-t10-tag-UPSET    { background: rgba(0,188,212,.1);  border-color: rgba(0,188,212,.35); color: #00bcd4; }
   .tn-t10-tag-ANALYSE  { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); color: var(--text3,#64748b); }
-  .tn-t10-live-score { font-family: 'DM Mono', monospace; font-size: 14px; color: #f44336; font-weight: 700; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tn-t10-players { margin-bottom: 12px; }
+
+  /* ── Live score ── */
+  .tn-t10-live-score {
+    font-family: 'DM Mono', monospace; font-size: 14px; color: #f44336;
+    font-weight: 700; margin-bottom: 6px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Zone joueurs (gauche de la grid) ── */
+  .tn-t10-players { margin-bottom: 8px; }
   .tn-t10-player { display: flex; align-items: center; gap: 12px; line-height: 1.6; min-width: 0; }
-  .tn-t10-player-name { font-family: 'Instrument Sans', sans-serif; font-size: 16px; font-weight: 700; color: var(--text,#ffffff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .tn-t10-player-name {
+    font-family: 'Instrument Sans', sans-serif; font-size: 16px;
+    font-weight: 700; color: #ffffff; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; min-width: 0;
+  }
   .tn-t10-vs { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b); margin: 3px 0; }
-  .tn-t10-rank-badge { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b); background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 4px; padding: 2px 5px; flex-shrink: 0; white-space: nowrap; }
-  .tn-t10-surface { display: inline-flex; align-items: center; gap: 6px; font-family: 'Instrument Sans', sans-serif; font-size: 12px; font-weight: 600; color: var(--text3,#64748b); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 6px; padding: 4px 10px; margin-bottom: 12px; }
-  .tn-t10-prob-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .tn-t10-prob-bar { flex: 1; height: 8px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; }
-  .tn-t10-prob-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #667eea, #a78bfa); transition: width .5s ease; }
+  .tn-t10-rank-badge {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b);
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 4px; padding: 2px 5px; flex-shrink: 0; white-space: nowrap;
+  }
+
+  /* ── Surface + round pill ── */
+  .tn-t10-surface {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Instrument Sans', sans-serif; font-size: 11px;
+    font-weight: 800; color: #94a3b8; text-transform: uppercase;
+    letter-spacing: .05em; margin-bottom: 8px;
+  }
+
+  /* ── Barre de probabilité ── */
+  .tn-t10-prob-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tn-t10-prob-bar { flex: 1; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+  .tn-t10-prob-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #667eea, #a78bfa); transition: width .5s ease; }
   .tn-t10-prob-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3,#64748b); white-space: nowrap; }
-  .tn-t10-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
-  .tn-t10-chip { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 4px; padding: 3px 8px; white-space: nowrap; }
-  .tn-t10-chip.ev   { color: #00e676; border-color: rgba(0,230,118,.2); background: rgba(0,230,118,.06); }
-  .tn-t10-chip.steam{ color: #ff9800; border-color: rgba(255,152,0,.2); background: rgba(255,152,0,.06); }
-  .tn-t10-chip.rlm  { color: #f44336; border-color: rgba(244,67,54,.25); background: rgba(244,67,54,.07); }
+
+  /* ── Badge date ── */
+  .tn-t10-date-badge {
+    display: inline-flex; align-items: center;
+    font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3,#64748b);
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 4px; padding: 3px 9px; margin-bottom: 6px;
+  }
+
+  /* ── Confiance ── */
   .tn-t10-conf { font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 5px; border-radius: 3px; border: 1px solid; }
   .tn-t10-conf-high   { background: rgba(0,230,118,.08); border-color: rgba(0,230,118,.3); color: #00e676; }
   .tn-t10-conf-medium { background: rgba(255,183,77,.08); border-color: rgba(255,183,77,.3); color: #ffb74d; }
   .tn-t10-conf-low, .tn-t10-conf-sparse { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); color: var(--text3,#64748b); }
-  .tn-t10-date-badge { display: inline-flex; align-items: center; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3,#64748b); background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 4px; padding: 3px 9px; margin-bottom: 8px; }
-  @keyframes tn-t10-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,.22)} 60%{box-shadow:0 0 0 5px rgba(244,67,54,0)} }
-  .tn-t10-card:has(.tn-t10-live-score) { animation: tn-t10-pulse 2.2s ease-in-out infinite; }
-  .tn-t10-bets { margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.08); }
+
+  /* ── Chips (EV, steam, RLM, etc.) ── */
+  .tn-t10-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+  .tn-t10-chip {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b);
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+    border-radius: 4px; padding: 3px 8px; white-space: nowrap;
+  }
+  .tn-t10-chip.ev   { color: #00e676; border-color: rgba(0,230,118,.2); background: rgba(0,230,118,.06); }
+  .tn-t10-chip.steam{ color: #ff9800; border-color: rgba(255,152,0,.2); background: rgba(255,152,0,.06); }
+  .tn-t10-chip.rlm  { color: #f44336; border-color: rgba(244,67,54,.25); background: rgba(244,67,54,.07); }
+
+  /* ── Bouton IA Discord ── */
+  .tn-t10-ai {
+    width: 28px; height: 28px; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 6px; background: rgba(255,255,255,.02); cursor: pointer;
+    font-size: 11px; display: inline-flex; align-items: center; justify-content: center;
+    opacity: 0.5; transition: opacity .2s, background .15s;
+  }
+  .tn-t10-ai:hover { opacity: 1; background: rgba(255,255,255,.06); }
+
+  /* ── Odds box (colonne droite de la grid) — boîte chirurgicale ── */
+  .tn-t10-odds-wrapper {
+    display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
+    grid-column: 2; grid-row: 1 / span 4;
+  }
+  .tn-t10-odds-box {
+    background: #0e1420 !important;
+    border: 1px solid rgba(255,255,255,.05) !important;
+    border-radius: 6px !important;
+    min-width: 60px !important;
+    height: 36px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px 10px !important;
+    transition: all .15s ease !important;
+  }
+  .tn-t10-odds-box:hover {
+    background: #0055cc !important;
+    border-color: rgba(255,255,255,.2) !important;
+    cursor: pointer !important;
+  }
+  .tn-t10-odds-label {
+    font-family: 'DM Mono', monospace; font-size: 8px;
+    color: #94a3b8; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .tn-t10-odds-value {
+    font-family: 'DM Mono', monospace; font-size: 14px;
+    font-weight: 800; color: #ffffff; line-height: 1;
+  }
+
+  /* ── BETS PRÉDICTIFS ── */
+  .tn-t10-bets { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,.08); grid-column: 1 / -1; }
   .tn-t10-bets-head { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text3,#64748b); margin-bottom: 6px; }
   .tn-t10-verdict { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; border: 1px solid; }
   .tn-t10-verdict-strong { background: rgba(0,230,118,.12); border-color: rgba(0,230,118,.4); color: #00e676; }
@@ -19135,9 +19348,13 @@ window.tn2SetupH2H = function() {
   .tn-t10-bet-odds { color: #64b5f6; flex-shrink: 0; min-width: 46px; text-align: right; }
   .tn-t10-bet-odds.tn-t10-bet-fair { color: var(--text3,#64748b); font-style: italic; }
   .tn-t10-bet-ev { color: #00e676; font-weight: 700; flex-shrink: 0; }
+
+  /* ── États vides/loading ── */
   .tn-t10-empty, .tn-t10-loading { padding: 32px 0; color: var(--text3,#64748b); font-family: 'DM Mono', monospace; font-size: 12px; text-align: center; }
-  .tn-t10-ai { width: 28px; height: 28px; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; background: rgba(255,255,255,.04); cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: background .15s; }
-  .tn-t10-ai:hover { background: rgba(255,255,255,.1); }
+
+  /* ── Animation live pulse ── */
+  @keyframes tn-t10-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,.22)} 60%{box-shadow:0 0 0 5px rgba(244,67,54,0)} }
+  .tn-t10-card:has(.tn-t10-live-score) { animation: tn-t10-pulse 2.2s ease-in-out infinite; }
 
   /* -- 10. Cards/wrappers internes : .pbet-wrap, .t3c-wrap, .vb-hero-value -- */
   body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .pbet-wrap,
@@ -22366,6 +22583,101 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--tn2-border-card); }
 .tn2-modal-x { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border: 1px solid var(--tn2-border-card); border-radius: var(--tn2-radius-xs); background: var(--tn2-bg-card); color: var(--tn2-text-muted); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all var(--tn2-transition); z-index: 2; }
 .tn2-modal-x:hover { background: var(--tn2-live); color: #fff; border-color: var(--tn2-live); }
+
+/* ═══ MODAL ANALYSE PREMIUM TOP 10 (tam-*) ═══ */
+.tam-header { display:flex;align-items:center;gap:10px;padding:18px 22px 12px;border-bottom:1px solid rgba(255,255,255,.04); }
+.tam-tournament { font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#e8eaed;letter-spacing:-.01em; }
+.tam-surface-badge { font-family:'DM Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:3px 9px;border-radius:4px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#94a3b8;margin-left:auto; }
+.tam-hero { display:flex;align-items:center;justify-content:center;gap:20px;padding:22px 22px 18px; }
+.tam-player-col { display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;flex:1; }
+.tam-avatar-ring { position:relative; }
+.tam-avatar-ring::after { content:'';position:absolute;inset:-3px;border-radius:50%;border:1.5px solid rgba(255,255,255,.06); }
+.tam-player-name { font-family:'Instrument Sans',sans-serif;font-size:15px;font-weight:700;color:#fff;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; }
+.tam-player-rank { font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:#64748b; }
+.tam-vs-col { display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0; }
+.tam-vs-circle { width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:800;color:#64748b;letter-spacing:.5px; }
+.tam-round-badge { font-family:'DM Mono',monospace;font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.4px;font-weight:600; }
+.tam-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 22px 18px; }
+.tam-cell { display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:8px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.05);transition:border-color .15s; }
+.tam-cell:hover { border-color:rgba(255,255,255,.1); }
+.tam-cell-icon { width:32px;height:32px;border-radius:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0; }
+.tam-cell-body { display:flex;flex-direction:column;gap:3px;min-width:0;flex:1; }
+.tam-cell-label { font-family:'DM Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b; }
+.tam-cell-value { font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#e8eaed;line-height:1.2; }
+.tam-cell-sub { font-family:'DM Mono',monospace;font-size:9px;color:#64748b; }
+/* Couleurs sémantiques */
+.tam-cyan { color:#22d3ee !important; }
+.tam-orange { color:#fb923c !important; }
+.tam-green { color:#00e676 !important; }
+.tam-red { color:#ef4444 !important; }
+/* Barre probabilité */
+.tam-prob-track { height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-top:6px; }
+.tam-prob-fill { height:100%;border-radius:2px;background:linear-gradient(90deg,#667eea,#a78bfa);transition:width .6s cubic-bezier(.4,0,.2,1); }
+.tam-prob-pill { font-family:'DM Mono',monospace;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2);color:#00e676; }
+/* Footer */
+.tam-footer { padding:10px 22px;border-top:1px solid rgba(255,255,255,.04);font-family:'DM Mono',monospace;font-size:10px;color:#64748b;text-align:center;letter-spacing:.02em; }
+/* Responsive mobile */
+@media(max-width:600px){
+  .tam-grid { grid-template-columns:1fr; }
+  .tam-hero { gap:12px;padding:16px 16px 14px; }
+  .tam-player-name { font-size:13px; }
+  .tam-cell-value { font-size:17px; }
+  .tam-header { padding:14px 16px 10px; }
+  .tam-grid { padding:0 16px 14px;gap:8px; }
+  .tam-footer { padding:8px 16px;font-size:9px; }
+}
+
+/* ═══ MODAL ANALYSE PREMIUM — TABLE H2H SURFACE COMPARATIVE ═══ */
+.tennis-surface-h2h-table {
+    background: #121824 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    padding: 14px !important;
+    margin: 20px 22px 0 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important;
+}
+.h2h-table-title {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #94a3b8 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 12px;
+    padding-left: 4px;
+}
+.h2h-row-contour {
+    display: grid !important;
+    grid-template-columns: 1fr 1.5fr 1fr !important;
+    align-items: center !important;
+    background: #172132 !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    border-radius: 6px !important;
+    margin-bottom: 8px !important;
+    padding: 10px 14px !important;
+    transition: background-color 0.15s ease;
+}
+.h2h-row-contour:hover {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+.h2h-cell {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+.h2h-cell.p1-val { text-align: left !important; }
+.h2h-cell.p2-val { text-align: right !important; }
+.h2h-cell.label-cell {
+    text-align: center !important;
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+/* Couleurs utilitaires */
+.cyan-text { color: #38bdf8 !important; }
+.green-text { color: #00e676 !important; }
+.muted-text { color: #64748b !important; font-size: 11px; }
+
 .tn2-card-player { display: flex; align-items: center; gap: 8px; }
 .tn2-card-player-right { display: flex; align-items: center; gap: 8px; flex-direction: row-reverse; text-align: right; }
 .tn2-card-footer { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: rgba(0,0,0,0.2); border-top: 1px solid var(--tn2-border-card); font-size: 10px; color: var(--tn2-text-muted); }
@@ -22387,6 +22699,7 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-h2h-results { margin-top: 10px; }
 .tn2-kpi-lbl { font-size: 10px; color: var(--tn2-text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
 .tn2-legacy-grid { display: grid; gap: 8px; margin-top: 10px; }
+.tn2-legacy-section.is-empty { display: none !important; }
 .tn2-timeline { display: flex; flex-direction: column; gap: 2px; }
 .tn2-timeline-month-header { position: sticky; top: 52px; z-index: 5; background: rgba(8,12,22,0.92); backdrop-filter: blur(12px); padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--tn2-text); border-bottom: 1px solid var(--tn2-border-card); }
 

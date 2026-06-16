@@ -1,4 +1,70 @@
+﻿## ✅ CRITICAL_BUG_FIX — RESOLVED 2026-06-15
+
+Layout Tennis réparé. Causes identifiées :
+1. overflow:hidden sur .tn2-card-grid coupait les cartes
+2. Code photo dans tn2SwitchTab resetait le cache à chaque onglet
+3. Les tab-btn manquaient de flex-shrink:0
+
+**FIX KPI TENNIS (2026-06-15)** : 	n2-kpi-bets et 	n2-kpi-top bloqués à 0.
+Causes :
+1. 	n2UpdateKPI(data) appelée avec objets partiels — chaque appel ne passait qu'UN champ
+2. 	n2RenderTopCards n'appelait jamais 	n2UpdateKPI → top restait à 0
+3. Aucune fonction ne passait ets → bets restait à 0
+Fixes :
+1. 	n2RenderLiveCards calcule désormais _betsCount (odds + predictive keys) + _topCount (confidence>75)
+2. 	n2RenderTopCards appelle 	n2UpdateKPI({ top: ... }) avant render
+3. 	n2RenderTournaments préserve les KPIs live/bets/top existants via lecture DOM
 # 🏟️ PariScore — Poste de Pilotage (v12.80 — bd-driven)
+
+## 📊 MODULE H2H SURFACE — 2026-06-16
+
+Module comparatif 4 lignes implémenté et 4 bugs de flux de données corrigés :
+
+### Composants livrés
+- **Backend** : payload enrichi (l5_pts, l10_pts, ps_rank, ps_total, tournament_history)
+- **Fonction** : `_tennisPlayerTournamentHistory()` — requête SQL tennis_matches_internal
+- **HTML/CSS** : Table `.tennis-surface-h2h-table` dans modale analyse premium
+- **JS** : populate 4 métriques avec couleurs conditionnelles (cyan/gris/vert)
+
+### Bugs corrigés ce sprint
+1. `|| null` → `!= null ? val : null` sur les 8 champs (server.js L21823-21832)
+2. round NULL → défaut "Participant" dans _tennisPlayerTournamentHistory (server.js L26443)
+3. l10_pts = 0 par défaut dans _tennisPowerForm si pas de matchs sur la surface (server.js L27240)
+4. Ajout fallback N/A dans JS pour historique/forme indisponible (pariscore.js L6672-6693)
+
+### Risques résiduels
+- Matching tournoi par LIKE approximatif (`'%roland garros%'`) peut rater si noms trop divergents entre sources
+- tennis_matches_internal doit être populate par le cron ETL quotidien (02:00 Paris)
+
+## 🔄 SPS POWERSCORE — REFONTE FORMULE 2026-06-16
+
+### Nouvelle formule SPS
+SPS = (Score Aptitude Surface × 0.70) + (Forme Récente Générale × 0.30)
+
+### Score Aptitude Surface (70%) — pondérations dynamiques
+| Surface | EloNorm | WinRate52s | FormFactor |
+|---------|:-------:|:----------:|:----------:|
+| **Grass** | 50% | 35% | 15% |
+| **Clay** | 35% | 40% | 25% |
+| **Hard/Carpet** | 45% | 35% | 20% |
+
+### Forme Récente Générale (30%)
+- **Momentum (60%)** : ratio winRate 30j / winRate 52sem (même surface). 0.5 si pas de données.
+- **Fatigue (40%)** : SUM(minutes) 45j / 720min. Tous surfaces confondues. 0 = reposé, 1 = épuisé.
+- `recentForm = 0.60 × momentum + 0.40 × (1 - fatigue)`
+
+### Détail implémentation
+- Fonction : `_tennisPowerForm()` dans server.js (L27204-27287)
+- Ancienne formule (50/30/20) → remplacée par SPS (70/30 avec sous-pondérations)
+- **1 nouvelle requête SQL** : fatigue (SUM minutes, tous surfaces, 45j)
+- **1 requête étendue** : momentum (winRate 30j surface, ajoutée à la winRate 52sem existante)
+- Cache `_tennisSurfFormCache` inchangé (TTL `_TENNIS_SURF_RANK_TTL_MS`)
+- Le catch silencieux est remplacé par `console.warn('[TennisPowerForm] err:')`
+
+### Impact
+- **`powerscore` change de valeur** pour tous les joueurs → `_buildTennisPowerRankIdx` recalcule automatiquement
+- **`l5_pts` / `l10_pts` inchangés** — même logique
+- **Classement PS (`ps_rank`)** peut changer suite aux nouveaux scores
 
 ## 🎭 IDENTITÉ ET POSTURE DE L'AGENT
 Tu es le **CTO & Lead Data Scientist (Quant)** de PariScore.
