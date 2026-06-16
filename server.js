@@ -19259,6 +19259,9 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/tennis/wom-analyze') return false;
   // tennis-abstract/dr = historical charted match stats from public GitHub CSVs (JeffSackmann). Same class as /upcoming: public metadata.
   if (pathname === '/api/v1/tennis-abstract/dr') return false;
+  // tennis-abstract (event) + report + tennis/tex — données publiques historiques
+  if (pathname === '/api/v1/tennis-abstract' || pathname === '/api/v1/tennis-abstract/report') return false;
+  if (pathname === '/api/v1/tennis/tex/matches' || pathname === '/api/v1/tennis/tex/calendar') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -21624,24 +21627,34 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
 
   // GET /api/v1/tennis/top10?mode=viewer|bettor
   if (pathname === '/api/v1/tennis/top10' && req.method === 'GET') {
+    const _t10start = Date.now();
+    console.log(`[TennisTop10] === ROUTE ENTERED === mode=${query.mode} ts=${_t10start}`);
     const mode = query.mode === 'bettor' ? 'bettor' : 'viewer';
     const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : _TN_TOP10_TTL_VIEWER;
     const now  = Date.now();
+    console.log(`[TennisTop10] Cache check: hasCache=${!!_tnTop10Cache[mode]} age=${_tnTop10Cache[`ts_${mode}`] ? now - _tnTop10Cache[`ts_${mode}`] : 'N/A'}ms ttl=${ttl}ms`);
     if (_tnTop10Cache[mode] && (now - _tnTop10Cache[`ts_${mode}`]) < ttl) {
+      console.log(`[TennisTop10] CACHE HIT — responding in ${Date.now() - _t10start}ms`);
       return jsonResponse(res, 200, _tnTop10Cache[mode]);
     }
+    console.log(`[TennisTop10] CACHE MISS — calling buildTennisValueBets...`);
     try {
       const _tnVbFn = globalThis.__tennisVBWarm;
+      console.log(`[TennisTop10] __tennisVBWarm type=${typeof _tnVbFn}`);
       if (typeof _tnVbFn !== 'function') return jsonResponse(res, 503, { error: 'tennis_data_unavailable', detail: 'VB engine not ready' });
       const vb = await _tnVbFn({});
+      console.log(`[TennisTop10] VB returned: status=${vb && vb.status} matches=${vb && vb.body && vb.body.matches && vb.body.matches.length} loading=${vb && vb.body && vb.body.meta && vb.body.meta.loading} — ${Date.now() - _t10start}ms`);
       if (!vb || vb.status !== 200) return jsonResponse(res, 503, { error: 'tennis_data_unavailable' });
       const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
       const active = ((vb.body && vb.body.matches) || []).filter(e =>
         !_FINISHED_RX.test(String(e.status || ''))
       );
+      console.log(`[TennisTop10] Active matches: ${active.length} — ${Date.now() - _t10start}ms`);
       // Batch-enrich BSD odds for matches missing movement data.
       // _bsdTennisOddsCache (TTL 3h) means live/recently-viewed matches hit instantly.
       // Unknown matches get a parallel fetch with 2s timeout — non-blocking via allSettled.
+      const _enrichCount = active.filter(e => !e.bsd_odds_summary && !(e._live && e._live._bsd_odds) && !e._bsd_odds && e._bsd_match_id).length;
+      console.log(`[TennisTop10] Batch enrich: ${_enrichCount} matches need BSD odds fetch — ${Date.now() - _t10start}ms`);
       await Promise.allSettled(active.map(async e => {
         const alreadyHas = e.bsd_odds_summary
           || (e._live && e._live._bsd_odds) || e._bsd_odds;
@@ -21657,6 +21670,7 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
           }
         } catch (_) {}
       }));
+      console.log(`[TennisTop10] Batch enrich DONE — ${Date.now() - _t10start}ms`);
       const scored = active.map(e => {
         const s = computeScoreTop10Tennis(e, mode);
         const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
@@ -21711,9 +21725,20 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       const payload = { top10, mode, computed_at: now, total_active: active.length };
       _tnTop10Cache[mode] = payload;
       _tnTop10Cache[`ts_${mode}`] = now;
+      console.log(`[TennisTop10] === ROUTE COMPLETE === scored=${scored.length} top10=${top10.length} totalMs=${Date.now() - _t10start}`);
       return jsonResponse(res, 200, payload);
     } catch (err) {
-      console.error('[TennisTop10]', err.message);
+      console.error(`[TennisTop10] ERROR after ${Date.now() - _t10start}ms:`, err.message);
+      // Fallback gracieux : servir l'ancien cache même périmé
+      const staleViewer = _tnTop10Cache.viewer;
+      const staleBettor = _tnTop10Cache.bettor;
+      if (staleViewer || staleBettor) {
+        console.warn('[TennisTop10] Fallback sur cache stale (viewer:', !!staleViewer, 'bettor:', !!staleBettor, ')');
+        const stalePayload = mode === 'bettor' ? staleBettor : staleViewer;
+        if (stalePayload) {
+          return jsonResponse(res, 200, { ...stalePayload, stale: true, error: err.message });
+        }
+      }
       return jsonResponse(res, 500, { error: 'top10_compute_error', detail: err.message });
     }
   }
@@ -21776,6 +21801,11 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
         }
       } catch (_) { ageFeatures = null; }
 
+      // Historique tournoi édition précédente (via tennis_matches_internal)
+      var tourneyName = e.tournament || e.tourney_name || null;
+      var p1Hist = tourneyName ? _tennisPlayerTournamentHistory(e.player1 && e.player1.name, e.tour || e.tour, tourneyName) : null;
+      var p2Hist = tourneyName ? _tennisPlayerTournamentHistory(e.player2 && e.player2.name, e.tour || e.tour, tourneyName) : null;
+
       const payload = {
         id: e.id,
         meta: {
@@ -21789,13 +21819,17 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
             name: (e.player1 && e.player1.name) || null, rank: (e.player1 && e.player1.rank) || null,
             elo_surface: (e.player1 && e.player1.elo_surface) || null,
             surf_rank: (e.player1 && e.player1.surf_rank) || null, surf_form: (e.player1 && e.player1.surf_form) || null,
-            powerscore: (e.player1 && e.player1.powerscore) || null, id: (e.player1 && e.player1.id) || null,
+            powerscore: (e.player1 && e.player1.powerscore) || null,
+            l5_pts: (e.player1 && e.player1.l5_pts != null) ? e.player1.l5_pts : null, l10_pts: (e.player1 && e.player1.l10_pts != null) ? e.player1.l10_pts : null,
+            ps_rank: (e.player1 && e.player1.ps_rank != null) ? e.player1.ps_rank : null, ps_total: (e.player1 && e.player1.ps_total != null) ? e.player1.ps_total : null, id: (e.player1 && e.player1.id) || null,
           },
           p2: {
             name: (e.player2 && e.player2.name) || null, rank: (e.player2 && e.player2.rank) || null,
             elo_surface: (e.player2 && e.player2.elo_surface) || null,
             surf_rank: (e.player2 && e.player2.surf_rank) || null, surf_form: (e.player2 && e.player2.surf_form) || null,
-            powerscore: (e.player2 && e.player2.powerscore) || null, id: (e.player2 && e.player2.id) || null,
+            powerscore: (e.player2 && e.player2.powerscore) || null,
+            l5_pts: (e.player2 && e.player2.l5_pts != null) ? e.player2.l5_pts : null, l10_pts: (e.player2 && e.player2.l10_pts != null) ? e.player2.l10_pts : null,
+            ps_rank: (e.player2 && e.player2.ps_rank != null) ? e.player2.ps_rank : null, ps_total: (e.player2 && e.player2.ps_total != null) ? e.player2.ps_total : null, id: (e.player2 && e.player2.id) || null,
           },
         },
         predictions: e.predictions || null,
@@ -21816,6 +21850,7 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
         predictive: e.predictive || null,
         uqd,
         age_features: ageFeatures,
+        tournament_history: { p1: p1Hist, p2: p2Hist },
         sources: e.sources || null,
         computed_at: now,
       };
@@ -25500,8 +25535,8 @@ function detectTennisMatchFixing(m) {
 // Route: GET /api/v1/tennis/top10?mode=viewer|bettor
 // ═══════════════════════════════════════════════════════════════════════════
 let _tnTop10Cache = { viewer: null, bettor: null, ts_viewer: 0, ts_bettor: 0 };
-const _TN_TOP10_TTL_VIEWER = 60_000;
-const _TN_TOP10_TTL_BETTOR = 30_000;
+const _TN_TOP10_TTL_VIEWER = 5 * 60 * 1000;  // 5 minutes (était 60s)
+const _TN_TOP10_TTL_BETTOR = 3 * 60 * 1000;  // 3 minutes (était 30s)
 
 function _tnT10Clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, isFinite(v) ? v : lo)); }
 
@@ -26388,6 +26423,29 @@ function _tennisSurfaceSeasonCount(playerName, tour, surface) {
   } catch (_) { return null; }
 }
 
+// Historique d'un joueur sur le même tournoi l'année précédente (via tennis_matches_internal)
+function _tennisPlayerTournamentHistory(playerName, tour, tourneyName) {
+  if (!playerName || !tour || !tourneyName) return null;
+  try {
+    var prevYear = new Date().getUTCFullYear() - 1;
+    var yStart = prevYear * 10000 + 101;
+    var yEnd = prevYear * 10000 + 1231;
+    var tnLow = '%' + String(tourneyName).toLowerCase().replace(/[^a-z0-9\s]/g, '').slice(0, 25).trim() + '%';
+    var r = sqldb.prepare(`
+      SELECT round, winner_name FROM tennis_matches_internal
+      WHERE (LOWER(winner_name)=LOWER(?) OR LOWER(loser_name)=LOWER(?))
+        AND tour=? AND tourney_date >= ? AND tourney_date <= ?
+        AND LOWER(tourney_name) LIKE ?
+      ORDER BY tourney_date DESC LIMIT 1
+    `).get(playerName, playerName, tour, yStart, yEnd, tnLow);
+    if (!r) return null;
+    return {
+      round: r.round || 'Participant',
+      isWinner: String(r.winner_name).toLowerCase() === String(playerName).toLowerCase(),
+    };
+  } catch (e) { console.warn('[TennisHist] hist err:', e.message); return null; }
+}
+
 // Minutes du dernier match (tous tournois confondus) → fatigue set 2.
 function _tennisLastMatchMinutes(playerName, tour) {
   try {
@@ -27143,8 +27201,10 @@ function _tnRankPts(oppRank) {
   return 0.5; // victoire vs >100 ou rang inconnu
 }
 
-// Forme pondérée (L5/L10 pts, même surface) + PowerScore surface /100.
-// PowerScore = 0.5·EloNorm + 0.3·WinRate52s + 0.2·FacteurFormePts.
+// Forme pondérée (L5/L10 pts, même surface) + SPS Surface /100.
+// SPS = (Score Aptitude Surface × 0.70) + (Forme Récente Générale × 0.30)
+//   Score Aptitude Surface : pondérations dynamiques selon surface
+//   Forme Récente Générale : momentum winRate + fatigue accumulée
 function _tennisPowerForm(playerId, surface, eloRow) {
   const r = { l5_pts: null, l10_pts: null, powerscore: null };
   if (!playerId || !surface) return r;
@@ -27158,15 +27218,17 @@ function _tennisPowerForm(playerId, surface, eloRow) {
        ORDER BY tourney_date DESC, match_num DESC LIMIT 10`
     ).all(surface, playerId, playerId);
     if (rows.length) {
-      let l5 = 0, l10 = 0;
+      var l5 = 0, l10 = 0;
       rows.forEach((m, i) => {
-        const won = m.winner_id === playerId;
-        const pts = won ? _tnRankPts(won ? m.loser_rank : m.winner_rank) : 0;
+        var won = m.winner_id === playerId;
+        var pts = won ? _tnRankPts(won ? m.loser_rank : m.winner_rank) : 0;
         l10 += pts; if (i < 5) l5 += pts;
       });
       r.l5_pts = Math.round(l5 * 10) / 10;
       r.l10_pts = Math.round(l10 * 10) / 10;
-      // WinRate surface 52 sem.
+
+      // ── Score Aptitude Surface (70%) ──
+      // WinRate 52 sem. surface
       const cut364 = _ymdNDaysAgo(364);
       const wr = sqldb.prepare(
         `SELECT SUM(CASE WHEN winner_id = ? THEN 1 ELSE 0 END) AS wins, COUNT(*) AS tot
@@ -27176,11 +27238,50 @@ function _tennisPowerForm(playerId, surface, eloRow) {
       const winRate = (wr && wr.tot > 0) ? wr.wins / wr.tot : 0;
       const eloNorm = eloRow && eloRow.elo
         ? Math.max(0, Math.min(1, (eloRow.elo - 1500) / 900)) : 0;
-      const formFactor = Math.max(0, Math.min(1, l10 / 30)); // max L10 = 10×3
-      const power = Math.round(100 * (0.5 * eloNorm + 0.3 * winRate + 0.2 * formFactor));
+      const formFactor = Math.max(0, Math.min(1, l10 / 30));
+
+      // Pondérations dynamiques selon surface
+      var surfaceScore;
+      var s = String(surface).toLowerCase();
+      if (s === 'grass') {
+        // Gazon : service dominant → elo surpondéré
+        surfaceScore = Math.min(1, 0.50 * eloNorm + 0.35 * winRate + 0.15 * formFactor);
+      } else if (s === 'clay') {
+        // Terre battue : constance → winRate + forme surpondérés
+        surfaceScore = Math.min(1, 0.35 * eloNorm + 0.40 * winRate + 0.25 * formFactor);
+      } else {
+        // Dur / Carpet : équilibré
+        surfaceScore = Math.min(1, 0.45 * eloNorm + 0.35 * winRate + 0.20 * formFactor);
+      }
+
+      // ── Forme Récente Générale (30%) : momentum + fatigue ──
+      // Momentum : winRate 30j surface / winRate 52 sem. surface (ratio → 0..1)
+      var cut30 = _ymdNDaysAgo(30);
+      var recentWr = sqldb.prepare(
+        `SELECT SUM(CASE WHEN winner_id = ? THEN 1 ELSE 0 END) AS wins, COUNT(*) AS tot
+         FROM tennis_matches
+         WHERE surface = ? AND tourney_date >= ? AND (winner_id = ? OR loser_id = ?)`
+      ).get(playerId, surface, cut30, playerId, playerId);
+      var recentRate = (recentWr && recentWr.tot > 0) ? recentWr.wins / recentWr.tot : -1;
+      var eloMomentum = recentRate >= 0 && winRate > 0
+        ? Math.min(1, Math.max(0, recentRate / winRate)) : 0.5;
+
+      // Fatigue : total minutes jouées (tous surfaces) sur 45 derniers jours
+      var cut45 = _ymdNDaysAgo(45);
+      var fatRow = sqldb.prepare(
+        `SELECT COALESCE(SUM(minutes), 0) AS total_min
+         FROM tennis_matches
+         WHERE (winner_id = ? OR loser_id = ?) AND tourney_date >= ?`
+      ).get(playerId, playerId, cut45);
+      var fatigue = Math.min(1, (fatRow ? fatRow.total_min : 0) / 720);
+
+      var recentForm = Math.min(1, 0.60 * eloMomentum + 0.40 * (1 - fatigue));
+
+      // ── SPS Final ──
+      var power = Math.round(100 * (0.70 * surfaceScore + 0.30 * recentForm));
       r.powerscore = Math.max(0, Math.min(100, power));
-    }
-  } catch (_) { /* tennis_matches absent — power/form indispo */ }
+    } else { r.l5_pts = 0; r.l10_pts = 0; }
+  } catch (e) { console.warn('[TennisPowerForm] err:', e.message); }
   _tennisSurfFormCache.set(ck, { ts: Date.now(), val: r });
   return r;
 }
@@ -35096,6 +35197,112 @@ async function buildTennisValueBets(opts = {}) {
 // Pont scope : le warm-up boot (_sackmannBootSync IIFE) ne voit pas cette
 // closure → on expose la fn via globalThis pour le warm-up.
 try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */ }
+
+// ── WARMER TOP 10 AU BOOT — pré-calcul pour éviter le cold build bloquant ─
+// Le premier appel à /api/v1/tennis/top10 déclenche un buildTennisValueBets()
+// qui prend ~15-20s (420 matchs × Elo/Glicko/Momentum/Markov/odds BSD).
+// Ce warmer pré-remplit le cache _tnTop10Cache après 10s (le temps que le
+// server soit prêt) → le premier utilisateur voit les données instantanément.
+(async function _warmTop10Cache() {
+  console.log('[WarmTop10] IIFE started, waiting 60s before first attempt...');
+  try {
+    // Boot delay — attendre que le server soit complètement initialisé
+      await new Promise(r => setTimeout(r, 60_000)); // 60s après boot (le temps du chargement BSD/ESPN)
+    console.log('[WarmTop10] 60s elapsed, attempting warm-up...');
+    const _tnVbFn = globalThis.__tennisVBWarm;
+    if (typeof _tnVbFn !== 'function') {
+      console.warn('[WarmTop10] tennisVBWarm non disponible, retry dans 30s');
+      setTimeout(_warmTop10Cache, 30_000);
+      return;
+    }
+    const vb = await _tnVbFn({});
+    if (!vb || vb.status !== 200) {
+      console.warn('[WarmTop10] buildTennisValueBets échec, retry dans 30s');
+      setTimeout(_warmTop10Cache, 30_000);
+      return;
+    }
+    const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
+    const active = ((vb.body && vb.body.matches) || []).filter(e =>
+      !_FINISHED_RX.test(String(e.status || ''))
+    );
+    // Batch-enrich BSD odds (même logique que la route)
+    await Promise.allSettled(active.map(async e => {
+      const alreadyHas = e.bsd_odds_summary
+        || (e._live && e._live._bsd_odds) || e._bsd_odds;
+      if (alreadyHas || !e._bsd_match_id) return;
+      try {
+        const raw = await Promise.race([
+          _fetchBSDTennisOdds(e._bsd_match_id),
+          new Promise(r => setTimeout(() => r(null), 2000)),
+        ]);
+        if (raw) {
+          const s = _extractTennisOddsSummary(raw);
+          if (s) e._bsd_odds = s;
+        }
+      } catch (_) {}
+    }));
+    // Pré-calculer les deux modes
+    const now = Date.now();
+    for (const mode of ['viewer', 'bettor']) {
+      const scored = active.map(e => {
+        const s = computeScoreTop10Tennis(e, mode);
+        const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
+        const lv = e._live || {};
+        return {
+          matchId: e.id,
+          player1: (e.player1 && e.player1.name) || null,
+          player2: (e.player2 && e.player2.name) || null,
+          tournament: e.tournament || null,
+          tour: e.tour || null,
+          surface: e.surface || null,
+          round: e.round || null,
+          start_time: e.start_time || null,
+          status: e.status || null,
+          is_live: isLive,
+          score_top10: s.score,
+          reason: s.reason,
+          data_completeness: s.data_completeness,
+          dims: s.dims,
+          elo_p1: (e.player1 && e.player1.elo_surface) || null,
+          elo_p2: (e.player2 && e.player2.elo_surface) || null,
+          rank_p1: (e.player1 && e.player1.rank) || null,
+          rank_p2: (e.player2 && e.player2.rank) || null,
+          player_id_p1: (e.player1 && e.player1.id) || null,
+          player_id_p2: (e.player2 && e.player2.id) || null,
+          best_edge_ev: (e.best_edge && e.best_edge.edge != null) ? Number(e.best_edge.edge) : null,
+          blended_p1: (e.predictions && e.predictions.blended && e.predictions.blended.p1 != null)
+            ? Math.round(e.predictions.blended.p1 * 100) : null,
+          sets_live: Array.isArray(lv.sets) ? lv.sets.map(s => `${s.p1 ?? 0}-${s.p2 ?? 0}`) : [],
+          player1_sets: lv.player1_sets ?? null,
+          player2_sets: lv.player2_sets ?? null,
+          movement_p1: (e.bsd_odds_summary && e.bsd_odds_summary.movement_p1) || null,
+          movement_p2: (e.bsd_odds_summary && e.bsd_odds_summary.movement_p2) || null,
+          books_count: (e.bsd_odds_summary && e.bsd_odds_summary.books_count) || null,
+          confidence_level: (e.confidence_badge && e.confidence_badge.level) || null,
+          rlm: (() => {
+            const _ods = e.bsd_odds_summary || (e._live && e._live._bsd_odds) || e._bsd_odds;
+            const _ev = (e.best_edge && e.best_edge.edge) || 0;
+            const _bl = e.predictions && e.predictions.blended;
+            if (!_ods || !_bl || _ev <= 5) return false;
+            const _fp1 = (_bl.p1 || 0) > 0.5;
+            return (_fp1 && _ods.movement_p1 === 'DRIFTING') || (!_fp1 && _ods.movement_p2 === 'DRIFTING');
+          })(),
+          predictive: e.predictive || null,
+        };
+      });
+      scored.sort((a, b) => b.score_top10 - a.score_top10);
+      const top10 = _applyTop10DiversityFilter(scored).slice(0, 10);
+      const payload = { top10, mode, computed_at: now, total_active: active.length };
+      _tnTop10Cache[mode] = payload;
+      _tnTop10Cache[`ts_${mode}`] = now;
+    }
+    console.log(`[WarmTop10] Cache pré-rempli : ${active.length} matchs actifs, TOP 10 prêt`);
+  } catch (err) {
+    console.error('[WarmTop10] Erreur:', err.message);
+    // Retry dans 30s en cas d'erreur
+    setTimeout(_warmTop10Cache, 30_000);
+  }
+})();
 
 // ── BSD Tennis Predictions (ML CatBoost) — bulk → Map (PAS de N+1) ───────────
 // Branche les prédictions BSD au tableau : proba ML, confiance, O/U sets/jeux,
