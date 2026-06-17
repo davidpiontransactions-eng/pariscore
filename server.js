@@ -21672,9 +21672,14 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
     const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : _TN_TOP10_TTL_VIEWER;
     const now  = Date.now();
     console.log(`[TennisTop10] Cache check: hasCache=${!!_tnTop10Cache[mode]} age=${_tnTop10Cache[`ts_${mode}`] ? now - _tnTop10Cache[`ts_${mode}`] : 'N/A'}ms ttl=${ttl}ms`);
+    const _rebuilding = !!globalThis.__top10RebuildPromise;
     if (_tnTop10Cache[mode] && (now - _tnTop10Cache[`ts_${mode}`]) < ttl) {
       console.log(`[TennisTop10] CACHE HIT — responding in ${Date.now() - _t10start}ms`);
-      return jsonResponse(res, 200, _tnTop10Cache[mode]);
+      return jsonResponse(res, 200, {
+        ..._tnTop10Cache[mode],
+        status: _rebuilding ? 'building' : 'ready',
+        estimated_seconds: _rebuilding ? 60 : 0
+      });
     }
     // P1.2: NE JAMAIS rebuild ici. Servir le cache uniquement.
     console.log(`[TennisTop10] CACHE MISS — returning loading indicator (no rebuild)`);
@@ -21684,7 +21689,9 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       top10: [],
       mode,
       computed_at: null,
-      message: 'Analyse en cours...'
+      message: 'Analyse en cours...',
+      status: _rebuilding ? 'building' : 'stale',
+      estimated_seconds: _rebuilding ? 60 : 0
     });
   }
 
