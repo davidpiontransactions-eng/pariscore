@@ -1,0 +1,28 @@
+{
+  "tournaments": [
+    {
+      "surface": "Grass",
+      "name": "Halle",
+      "prize": "2,583,330 €",
+      "url": "https://www.tennisexplorer.com/halle/2026/atp-men/",
+      "doubles_draw": 16,
+      "start_date": "15.06.2026",
+      "singles_draw": 32,
+      "category": "atp_500"
+    },
+    {
+      "surface": "Grass",
+      "name": "Queen's Club",
+      "prize": "2,583,330 €",
+      "url": "https://www.tennisexplorer.com/queen-s-club/2026/atp-men/",
+      "doubles_draw": 16,
+      "start_date": "15.06.2026",
+      "singles_draw": 32,
+      "category": "atp_500"
+    }
+  ],
+  "source_url": "https://www.tennisexplorer.com/calendar/atp-men/",
+  "tour": "ATP",
+  "fetched_at": "2026-06-17T12:47:12.994Z",
+  "count": 4
+}

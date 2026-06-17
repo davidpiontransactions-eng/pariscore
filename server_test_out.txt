@@ -8,18 +8,17 @@
   [BetMines] DISABLED (Cloudflare 403 — set USE_CURL_IMPERSONATE=1 ou BETMINES_ENABLED=1). Consensus: Sofascore/Forebet.
   i  GA_PID absent — seeds Gambling-Affiliation skip (fallback direct uniquement)
   ✓ SQLite initialisé (WAL mode) — C:\Users\david\Documents\dev PariScore\ParisScorebis\pariscore.db
-  ✓ SQLite chargé (55 matchs, 1555 équipes, 55 stats avancées)
-  [Sync] Synchronisation des buffers mémoire (55 matchs)...
+  ✓ SQLite chargé (13 matchs, 1555 équipes, 56 stats avancées)
+  [Sync] Synchronisation des buffers mémoire (13 matchs)...
   [Sync] ✓ Buffers mis à jour. Version: 1
-  [Backfill] ✓ 8 champs home_form/away_form synthétisés depuis PPG
-  ✓ Historique SQLite chargé (49380 matchs archivés)
-  ✓ Historique Tennis SQLite chargé (783 matchs archivés)
+  ✓ Historique SQLite chargé (49457 matchs archivés)
+  ✓ Historique Tennis SQLite chargé (991 matchs archivés)
   ✓ ETL seed merge (football-data.co.uk): 23126/23126 matchs ajoutes a db.archive_matches (stats + closing odds)
   ✓ ETL seed merge (international): 4567/4568 matchs selections ajoutes a db.archive_matches (CC0)
   ✓ AI Cache chargé per-entry (0 analyses valides)
   ✓ FBref advanced stats : 20 équipes (100 stat rows) depuis 1 fichiers
   [WOM:AutoPublish] activé — Δ≥12pts · vol≥8000€ · 10min · cap 8/j · sports football · provider on
-  [DailyRefresh] Next forced refresh: 2026-06-13T06:00:00.000Z (in 1089 min)
+  [DailyRefresh] Next forced refresh: 2026-06-17T06:00:00.000Z (in 740 min)
   [BSD-WS] activé — connexion sports.bzzoiro.com/ws/live/
   [DailyPicks] cron armé — premier tick à 8h00 Europe/Paris (EV+ ≥ +10%, top 3)
   [MorningPicks:Discord] cron armé — 8h00 Paris, 16 stratégies, conf ≥ 60%, cote ≥ 1.2
@@ -31,10 +30,10 @@
   [CS2] poll armé — 30 s interval
   [OddsPapi:Alert] cron armé — 2h interval · Over7.5/8.5 + Under12.5 ∈ [1.10-1.25] → Discord BREAK_SET
   [Sackmann] cron DÉSACTIVÉ (SACKMANN_SYNC_DISABLED=true) — CC-BY-NC-SA bd 8uoc.
-  [Cron:TennisInternalETL] schedulé · prochain run 2026-06-13T00:00:00.294Z (~729min)
-  [Cron:SPS] schedulé · prochain run 2026-06-13T00:05:00.296Z (~734min)
-  [Matchstat] Resolver index : 1855 joueurs, sync 140h ago.
-  [Tennis internal] schema OK · 21281 rows (ETL tool: node tools/build-tennis-internal-history.js)
+  [Cron:TennisInternalETL] schedulé · prochain run 2026-06-17T00:00:00.340Z (~380min)
+  [Cron:SPS] schedulé · prochain check 2026-06-17T10:00:00.341Z (~980min) · exécution le lundi 12h Paris
+  [Matchstat] Resolver index : 1855 joueurs, sync 72h ago.
+  [Tennis internal] schema OK · 23197 rows (ETL tool: node tools/build-tennis-internal-history.js)
   [Sackmann] boot sync skip — SACKMANN_SYNC_DISABLED actif (bd 8uoc CC-BY-NC-SA).
 
   ✓ PariScore Server running on port 3000 [env: development]
@@ -45,59 +44,115 @@
 ════════════════════════════════════════════════════════════
   [Cron:Odds] Lancement du routing intelligent (BSD-First)...
   [Routing] L1 : Récupération des matchs via BSD...
-  [TennisSnap] loaded 889 entries from SQLite on startup
+  [Tennis] Serve/receive rank index ready: 717 players in 154ms
   [TT-OOP] ✓ 2 joueurs/courts pour "roland garros"
   [TT-OOP] prefetch — 1/1 tournoi(s) mis en cache (24h)
+[CS2/Highlights] 865 clips loaded
+[Liquipedia] FRAG TAP Reloaded 2026: 0 matches
 [CS2/MapStats] HLTV map winrates: 20 teams
 [CS2/HLTV] Rankings loaded from file — 30 teams
-[Liquipedia] FRAG TAP Reloaded 2026: 0 matches
 [CS2/Players] 20 players | 0 teams indexed
+  [TennisSnap] loaded 2885 entries from SQLite on startup
+[WarmTop10] Attente 60s avant le premier warm-up...
+[CS2/OverModel] 331 teams in rankings
+[CS2/BSD-Teams] 0 teams with ELO loaded (0 pages)
+[CS2Service] 6 matches (2 live, 1 predictions)
 [CS2/OverModel] 10 matches fetched from csapi.de
-[CS2/OverModel] 326 teams in rankings
-[CS2/Highlights] 865 clips loaded
-  [NatElo] Loaded 139 teams from seed file (2026-05-31)
-[Berserk] 0 recent + 3 upcoming matches
-[CS2/BSD-Teams] 491 teams with ELO loaded (10 pages)
-[CS2Service] 20 matches (4 live, 1 predictions)
-[Liquipedia] Exort Series: 48 matches
-[betwatch] transport: browse C:\Users\david\.claude\skills\gstack\browse\dist\browse.exe
-  [Challenger ATP] 49 matchs chargés (The Odds API + Tennis Explorer)
-  [Challenger ATP] 73 matchs chargés (The Odds API + Tennis Explorer)
-  [Tennis DR Var] bsd_t_37670 sets=2 var=0.160 stdev=0.400
-  [Tennis DR Var] bsd_t_37824 sets=2 var=0.173 stdev=0.416
-  [Tennis DR Var] bsd_t_37152 sets=2 var=0.250 stdev=0.500
-  [Tennis DR Diff] bsd_t_37152 gap=0.25 dominant=Gabriella Goyins ratio=1.25
-  [Tennis DR Var] bsd_t_37148 sets=2 var=0.173 stdev=0.416
-  [Tennis DR Var] bsd_t_37815 sets=2 var=0.444 stdev=0.666
-  [Tennis DR Diff] bsd_t_37815 gap=0.66 dominant=Daniil Medvedev ratio=1.66
-  [Tennis DR Diff] bsd_t_37843 gap=0.51 dominant=Tristan Boyer ratio=1.51
-  [Tennis DR Diff] bsd_t_37848 gap=0.54 dominant=Katarzyna Kawa ratio=0.46
-  [Tennis:DomOdds13] bsd_t_37870 dominant=Andreas Messis DR=1.629 cote=1.28
-  [Tennis:BreakSet] bsd_t_37870 dom=Andreas Messis drAvg=0.6 set=3-5 cote=1.28
-  [Tennis DR Diff] bsd_t_37870 gap=0.28 dominant=Andreas Messis ratio=0.72
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
-  [Tennis Odds] Discovered 1 active tennis sports: tennis_wta_queens_club_champ
-  [Tennis Odds] tennis_wta_queens_club_champ → 1 matches
-  [TennisVB] build start — 151 matchs (src=bsd)
-  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+[CacheBuffer] Updated bsd/bsd_bulk_2026-06-16_2026-06-23
+  [Routing] ✓ 75 matchs trouvés via BSD.
+  [Routing] L1.5 : Enrichissement cotes via odds-api1 (RapidAPI)...
+[CS2/Stickers] 1415 teams indexed
+[CS2/BSD-Teams] 150 teams with ELO loaded (3 pages)
 [CS2/MapRank] Loaded from hltv_map_rankings.json (window=all)
-[Liquipedia] Total: 48 matches across 2 tournaments
-  [BetfairWOM] tennis index: 0 markets
-  [BetfairWOM] tennis index: 0 markets
-[betwatch] CF OK — "Betwatch | Betfair Money - Dropping Odds - Suspicious Bets"
-[betwatch] football — 0 marchés, 0 WOM
-[betwatch] tennis — 0 marchés, 0 WOM
-[betwatch] pas d'évolution WOM notable
-[betwatch] écrit C:\Users\david\Documents\dev PariScore\ParisScorebis\data\betwatch_wom.json — 0 matchs, 0 avec WOM
-  [LiveDBG] idle-skip #1 — matchsEnBase=55 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
-  [Sync] Synchronisation des buffers mémoire (55 matchs)...
+  [RapidFree] A-League (rapid 113) → 0 matchs fenêtre
+  [Routing] L2 : Football-Data.org fixtures (top 12 free forever)...
+  [Routing] ✓ Football-Data : 5 ajoutés, 23 enrichis (_fd_match_id/referee) sur 28 total.
+  [Routing] L3 : Enrichissement des cotes via ESPN (zéro quota)...
+  [ESPN odds] ✓ bra.2 → 9 matchs (zéro quota)
+  [ESPN odds] ✓ esp.2 → 1 matchs (zéro quota)
+  [ESPN odds] ✓ irl.1 → 5 matchs (zéro quota)
+  [ESPN odds] ✓ usa.usl.1 → 7 matchs (zéro quota)
+  [ESPN odds] ✓ chi.1 → 1 matchs (zéro quota)
+  [Routing] ✓ ESPN : 7 matchs ajoutés, 0 enrichis (cotes) sur 23 total.
+  [Routing] L4 : OpenFootball GitHub (zero-key fallback)...
+  [Routing] OpenFootball : aucun match dans la fenêtre.
+  ✓ FD stats index: 716 équipes (23125 matchs football-data + 4567 internationaux, saison ref 2025-2026)
+  [xG-λ] France λ %.3f→%.3f (xG:%.3f ε=%.3f n=2.077777777777778) | 1.252 λ %.3f→%.3f (xG:%.3f ε=%.3f n=0.701) 0.4 3 Senegal 0.9598600382914106 1.196 1.353 0.4 7
+  [Sync] Synchronisation des buffers mémoire (13 matchs)...
   [Sync] ✓ Buffers mis à jour. Version: 2
   ✓ WElo Tennis initialized — 0 joueurs chargés depuis SQLite
   ✓ Glicko-2 Tennis initialized — fresh (0 joueurs)
   ✓ K-Flow + SM Momentum Tennis + Player Momentum initialized
   [Backfill] Aucun match exploitable dans db.archive_matches (27693 entrées scannées)
-  [Archive] 80 matchs non vérifiés à re-tenter…
-  [FootBets:Matchday] Nouvelles dates détectées: 2026-06-12,2026-06-13 → envoi picks
+  [Archive] 79 matchs non vérifiés à re-tenter…
+  [Challenger ATP] 24 matchs chargés (The Odds API + Tennis Explorer)
+[Liquipedia] Exort Series: 48 matches
+  ✓ [BSD-WS] connecté (push live <5s) — démarrage subscribe loop
+  [BSD-WS] subscribeAll → 0 subs envoyés (0/10, pending=0)
+[Berserk] 0 recent + 2 upcoming matches
+[Liquipedia] Total: 48 matches across 2 tournaments
+  [NatElo] Loaded 139 teams from seed file (2026-05-31)
+  [Tennis DR Var] bsd_t_38642 sets=3 var=1.285 stdev=1.133
+  [Tennis:BreakSet] bsd_t_38642 dom=Karolína Plíšková drAvg=0.4 set=2-5 cote=1.30
+  [Tennis DR Var] bsd_t_38618 sets=2 var=5.290 stdev=2.300
+  [Tennis DR Diff] bsd_t_38618 gap=0.40 dominant=Jon Gamble ratio=1.40
+  [Tennis DR Var] bsd_t_38500 sets=3 var=0.500 stdev=0.707
+  [Tennis DR Var] bsd_t_38604 sets=2 var=0.340 stdev=0.584
+  [Tennis DR Var] bsd_t_38658 sets=2 var=0.444 stdev=0.666
+  [Tennis:DomOdds13] bsd_t_38658 dominant=Enrico Dalla Valle DR=1.523 cote=1.26
+  [Tennis:BreakSet] bsd_t_38658 dom=Enrico Dalla Valle drAvg=1.667 set=5-3 cote=1.26
+  [Tennis DR Diff] bsd_t_38658 gap=0.29 dominant=Enrico Dalla Valle ratio=1.29
+  [Tennis DR Var] bsd_t_38392 sets=2 var=0.134 stdev=0.366
+  [Tennis:DomOdds13] bsd_t_38382 dominant=Gustavo Heide DR=2.333 cote=1.34
+  [Tennis:BreakSet] bsd_t_38382 dom=Gustavo Heide drAvg=3 set=3-1 cote=1.34
+  [Tennis DR Diff] bsd_t_38382 gap=0.50 dominant=Gustavo Heide ratio=1.50
+  [Tennis DR Var] bsd_t_38538 sets=2 var=0.250 stdev=0.500
+  [Tennis DR Diff] bsd_t_38538 gap=0.96 dominant=Alina Korneeva ratio=1.96
+  [Tennis DR Var] bsd_t_38525 sets=2 var=0.563 stdev=0.750
+  [Tennis:BreakSet] bsd_t_38525 dom=Ane Mintegi Del Olmo drAvg=1.667 set=5-3 cote=1.38
+  [Tennis DR Diff] bsd_t_38501 gap=0.31 dominant=Thiago Seyboth Wild ratio=1.31
+  [Tennis DR Var] bsd_t_38649 sets=2 var=0.111 stdev=0.334
+  [Tennis DR Var] bsd_t_38650 sets=2 var=1.000 stdev=1.000
+  [Tennis:DomOdds13] bsd_t_38650 dominant=Roman Safiullin DR=2.879 cote=1.40
+  [Tennis:BreakSet] bsd_t_38650 dom=Roman Safiullin drAvg=4 set=4-1 cote=1.40
+  [Tennis DR Diff] bsd_t_38650 gap=0.87 dominant=Roman Safiullin ratio=1.87
+  [Tennis DR Diff] bsd_t_37920 gap=0.44 dominant=Serafima Elizarova ratio=0.56
+  [Tennis:BreakSet] bsd_t_38545 dom=Martyna Kubka drAvg=2.5 set=5-2 cote=2.65
+  [Tennis DR Diff] bsd_t_38545 gap=1.65 dominant=Martyna Kubka ratio=2.65
+  [Tennis:DomOdds13] bsd_t_38671 dominant=Titouan Droguet DR=1.714 cote=1.67
+  [Tennis DR Diff] bsd_t_38671 gap=0.27 dominant=Titouan Droguet ratio=1.27
+  [Tennis DR Diff] bsd_t_38721 gap=0.53 dominant=Ignacio Monzon ratio=1.53
+  [Tennis DR Diff] bsd_t_38298 gap=0.38 dominant=Jiri Lehečka ratio=0.63
+  [TennisLive] BSD=22 ESPN=357 merged=259 live=24 fetched+2aiscore_ondemand
+[betwatch] transport: flaresolverr http://localhost:8191
+[betwatch] football — 0 marchés, 0 WOM
+[betwatch] tennis — 0 marchés, 0 WOM
+[betwatch] pas d'évolution WOM notable
+[betwatch] écrit C:\Users\david\Documents\dev PariScore\ParisScorebis\data\betwatch_wom.json — 0 matchs, 0 avec WOM
+  [TennisPBP] fetched+3aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x7
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [AutoPurge] Aucun match à purger (13 actifs)
+  [Boot] ✓ Système prêt.
+  [Boot] Tennis Abstract Elo scraper DISABLED (CC BY-NC-SA license — bd h6a + 8uoc legal DG pending).
+  [Boot] fetchStats différé 30s (HTTP responsive immédiat, ETL démarre à T+30s).
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631625989
+[TennisTop10] Cache check: hasCache=false age=N/Ams ttl=300000ms
+[TennisTop10] CACHE MISS — calling buildTennisValueBets...
+[TennisTop10] __tennisVBWarm type=function
+[TennisTop10] VB returned: status=200 matches=0 loading=true — 4ms
+[TennisTop10] Active matches: 0 — 5ms
+[TennisTop10] Batch enrich: 0 matches need BSD odds fetch — 5ms
+[TennisTop10] Batch enrich DONE — 7ms
+[TennisTop10] === ROUTE COMPLETE === scored=0 top10=0 totalMs=7
+  [Tennis Odds] Discovered 3 active tennis sports: tennis_atp_halle_open, tennis_atp_queens_club_champ, tennis_wta_german_open
+  [TennisVB] build start — 224 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [FootBets:Matchday] Nouvelles dates détectées: 2026-06-16,2026-06-17 → envoi picks
   [MorningPicks:Discord] HOME_WIN — 0 picks conf ≥ 60%
   [MorningPicks:Discord] AWAY_WIN — 0 picks conf ≥ 60%
   [MorningPicks:Discord] DRAW — 0 picks conf ≥ 60%
@@ -105,92 +160,36 @@
   [MorningPicks:Discord] GOLDEN_PPG_GAP — 0 picks conf ≥ 60%
   [MorningPicks:Discord] HT_HOME_FT_HOME — 0 picks conf ≥ 60%
   [MorningPicks:Discord] HT_UNDER_FT_OVER — 0 picks conf ≥ 60%
-  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
-  [Cron:TexOdds] Snapshot tour ATP+WTA…
-[CS2Service] 20 matches (4 live, 1 predictions)
-  [TennisVB] build done — 158 matchs en 59978ms · snap_stored=151 · live_rehydrated=7 · live_orphans=6 · snap_map_size=889
-  [Cron:TexOdds] ✓ 123 matchs traités, 119 matchs avec historique
-  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
-[CacheBuffer] Updated bsd/bsd_bulk_2026-06-12_2026-06-19
-  [Routing] ✓ 74 matchs trouvés via BSD.
-  [Routing] L1.5 : Enrichissement cotes via odds-api1 (RapidAPI)...
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
-  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
-  [Routing] L2 : Football-Data.org fixtures (top 12 free forever)...
-  [Routing] ✓ Football-Data : 5 ajoutés, 21 enrichis (_fd_match_id/referee) sur 26 total.
-  [Routing] L3 : Enrichissement des cotes via ESPN (zéro quota)...
-  [ESPN odds] ✓ bra.2 → 10 matchs (zéro quota)
-  [ESPN odds] ✓ esp.2 → 1 matchs (zéro quota)
-  [ESPN odds] ✓ irl.1 → 5 matchs (zéro quota)
-  [ESPN odds] ✓ usa.usl.1 → 12 matchs (zéro quota)
-  [ESPN odds] ✓ chi.1 → 8 matchs (zéro quota)
-  [Routing] ✓ ESPN : 15 matchs ajoutés, 0 enrichis (cotes) sur 36 total.
-  [Routing] L4 : OpenFootball GitHub (zero-key fallback)...
-  [Routing] OpenFootball : aucun match dans la fenêtre.
-  ✓ FD stats index: 716 équipes (23125 matchs football-data + 4567 internationaux, saison ref 2025-2026)
-  [FATIGUE] Fallback archive_matches pour Bosnia & Herzegovina: 163h depuis dernier match
-  ✓ stadiums_geo.json chargé (192 stades — Travel Factor BD-DATA-009)
-  [FATIGUE] Fallback archive_matches pour Morocco: 166h depuis dernier match
-  [FATIGUE] Fallback archive_matches pour Netherlands: 164h depuis dernier match
-  [FATIGUE] Fallback archive_matches pour Saudi Arabia: 166h depuis dernier match
-  [Cron:Odds] ✅ Succès : 57 matchs injectés.
-  [Archive] 1 matchs terminés à archiver…
-  [Archive] 80 matchs non vérifiés à re-tenter…
-  [BSD-TV] pre-fetch FR 2026-06-12→2026-06-19: 31 broadcasts
-[MMA] DRatings: 23 fights indexed
-  [TennisRank BSD] 1000 joueurs indexés
-  [TennisRank BSD] 1000 joueurs indexés
-[CS2Service] 20 matches (4 live, 1 predictions)
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
-  [TM Squads] Derry City vs Bohemians — ? vs ?
-  [WOM:AutoPublish] tick: 46 foot · 0 avec WOM · 0 candidat(s) ≥12pts · 0 à poster (jour 0/8)
-  [TM Squads] Galway United FC vs Dundalk — ? vs ?
-  [TM Squads] St Patrick's Athletic vs Drogheda United — ? vs ?
-  [TM Squads] Waterford vs Sligo Rovers — ? vs ?
-  [TM Squads] Canada vs Bosnia & Herzegovina — ? vs ?
-  [TM Squads] Shelbourne vs Shamrock Rovers — ? vs ?
-  [TM Squads] Atlético Goianiense vs CRB — ? vs ?
-  [TM Squads] Audax Italiano vs La Serena — ? vs ?
-  [AutoPurge] Aucun match à purger (56 actifs)
-  [Boot] ✓ Système prêt.
-  [Boot] Tennis Abstract Elo scraper DISABLED (CC BY-NC-SA license — bd h6a + 8uoc legal DG pending).
-  [Boot] fetchStats différé 30s (HTTP responsive immédiat, ETL démarre à T+30s).
-  [TM Squads] USA vs Paraguay — ? vs ?
-  [AutoPurge] Aucun match à purger (56 actifs)
-  [Sync] Synchronisation des buffers mémoire (56 matchs)...
-  [Sync] ✓ Buffers mis à jour. Version: 3
-  [BetfairWOM] football index: 0 markets
-  [Tennis DR Diff] bsd_t_37148 gap=0.27 dominant=Divna Ratkovic ratio=1.27
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
-  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
-  [TM Squads] United States vs Paraguay — ? vs ?
-  [TennisRank BSD] 1000 joueurs indexés
-  [TM Squads Cron] 10 matchs enrichis
-  [LiveDBG] idle-skip #6 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [BSD-WS] raw#1 {"type":"pong"}
+[CS2Service] 6 matches (2 live, 1 predictions)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
 
 ════════════════════════════════════════════════════════════
   [Cron:Stats] Mise à jour des stats équipes…
   [Cron:Stats] Phase 1: BSD standings (ligues couvertes)…
   [DATA AUDIT] "CONCACAF Gold Cup 2025" (BSD 69 / config 1) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 69 (config 1)…
-[CS2Service] 20 matches (4 live, 1 predictions)
+  [TennisVB] build done — 247 matchs en 21979ms · snap_stored=224 · live_rehydrated=23 · live_orphans=0 · snap_map_size=2885
+  [Tennis:BreakSet] bsd_t_38500 dom=Paulo Andre Saraiva Dos Santos drAvg=0.333 set=1-3 cote=1.71
+  [TennisLive] BSD=22 ESPN=357 merged=259 live=24
   [DEBUG STANDINGS] BSD 69 → 16 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
   [DATA MAPPING] BSD sample: team=Panama, played=3, gf=10, ga=3, form=DWWW
   [BSD] Splits estimés (50/50 ratio) pour Panama — BSD ne fournit pas played_home/played_away
   [DATA MAPPING] Buts extraits pour Panama : 3.33 marqués, 1 encaissés (home) | 5 marqués, 1 encaissés (away) | form: DWWW
-  [BSD] Splits estimés (50/50 ratio) pour USA — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Canada — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Mexico — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Costa Rica — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour USA — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Guatemala — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Honduras — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mexico — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Costa Rica — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Jamaica — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Trinidad and Tobago — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Dominican Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Dominican Republic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Suriname — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour El Salvador — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Guadeloupe — BSD ne fournit pas played_home/played_away
@@ -244,6 +243,7 @@
   [DATA AUDIT] "Europa League" (BSD 8 / config 3) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 8 (config 3)…
   [DEBUG STANDINGS] BSD 8 → seasonId=280
+  [BSD Enrich] 5 matchs enrichis (odds+pred+polymarket)
   [DEBUG STANDINGS] BSD 8 → 36 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
   [DATA MAPPING] BSD sample: team=Olympique Lyonnais, played=8, gf=18, ga=5, form=LDWWW
@@ -290,7 +290,6 @@
   [DEBUG STANDINGS] Fetching league BSD 66 (config 4)…
   [DATA AUDIT] "UEFA Nations League" (BSD 64 / config 5) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 64 (config 5)…
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
   [DATA AUDIT] "Africa Cup of Nations" (BSD 30 / config 6) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 30 (config 6)…
   [DEBUG STANDINGS] BSD 30 → seasonId=211
@@ -800,6 +799,11 @@
   [DEBUG STANDINGS] Fetching league BSD 63 (config 35)…
   [DATA AUDIT] "AFC Asian Cup 2023" (BSD 68 / config 36) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 68 (config 36)…
+  [TennisPBP] fetched+3aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x3
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [BSD-WS] raw#2 {"type":"pong"}
   [DATA AUDIT] "Premier League" (BSD 1 / config 39) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 1 (config 39)…
   [DEBUG STANDINGS] BSD 1 → seasonId=337
@@ -866,6 +870,7 @@
   [DEBUG STANDINGS] Fetching league BSD 39 (config 45)…
   [DATA AUDIT] "Carabao Cup" (BSD 40 / config 48) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 40 (config 48)…
+  [Cron:TexOdds] Snapshot tour ATP+WTA…
   [DATA AUDIT] "Ligue 1" (BSD 6 / config 61) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 6 (config 61)…
   [DEBUG STANDINGS] BSD 6 → seasonId=317
@@ -926,35 +931,38 @@
   [BSD] Ligue 71 → OK (20 équipes)
   [DATA AUDIT] "Serie B" (BSD 34 / config 72) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 34 (config 72)…
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (6ms)
   [DEBUG STANDINGS] BSD 34 → seasonId=52
   [DEBUG STANDINGS] BSD 34 → 20 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
-  [DATA MAPPING] BSD sample: team=Vila Nova FC, played=12, gf=18, ga=11, form=WWWWL
-  [BSD] Splits estimés (50/50 ratio) pour Vila Nova FC — BSD ne fournit pas played_home/played_away
-  [DATA MAPPING] Buts extraits pour Vila Nova FC : 1.5 marqués, 0.92 encaissés (home) | 1.5 marqués, 0.83 encaissés (away) | form: WWWWL
+  [DATA MAPPING] BSD sample: team=São Bernardo, played=13, gf=20, ga=10, form=DWDWD
   [BSD] Splits estimés (50/50 ratio) pour São Bernardo — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour São Bernardo : 1.54 marqués, 0.77 encaissés (home) | 1.67 marqués, 0.83 encaissés (away) | form: DWDWD
+  [BSD] Splits estimés (50/50 ratio) pour Vila Nova FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Sport Recife — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Fortaleza — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Grêmio Novorizontino — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Criciúma — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Fortaleza — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Náutico — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Operário-PR — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Athletic Club — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Goiás — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Juventude — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Cuiabá — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Ceará — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Athletic Club — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Operário-PR — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Goiás — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Atlético Goianiense — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Ceará — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Clube De Regatas Brasil — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Botafogo-SP — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Avaí — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Londrina — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Avaí — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Ponte Preta — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour América Mineiro — BSD ne fournit pas played_home/played_away
 [CacheBuffer] Updated bsd_standings/34_72
   [BSD] Ligue 72 → OK (20 équipes)
   [DATA AUDIT] "Copa do Brasil" (BSD 35 / config 73) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 35 (config 73)…
+  [Cron:TexOdds] ✓ 594 matchs traités, 509 matchs avec historique
   [DEBUG STANDINGS] BSD 35 → seasonId=78
   [DATA AUDIT] "Bundesliga" (BSD 5 / config 78) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 5 (config 78)…
@@ -985,6 +993,8 @@
   [BSD] Ligue 78 → OK (18 équipes)
   [DATA AUDIT] "DFB Pokal" (BSD 43 / config 81) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 43 (config 81)…
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
   [DATA AUDIT] "Eredivisie" (BSD 10 / config 88) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 10 (config 88)…
   [DEBUG STANDINGS] BSD 10 → seasonId=279
@@ -1178,23 +1188,26 @@
   [BSD] Ligue 135 → OK (20 équipes)
   [DATA AUDIT] "Coppa Italia" (BSD 42 / config 137) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 42 (config 137)…
+  [Tennis:Integrity] bsd_t_38538 score=42/100 level=amber odds=30 spw=0 cross=0 vol=12
+  [Tennis:Integrity] bsd_t_38501 score=47/100 level=amber odds=35 spw=0 cross=0 vol=12
+  [Tennis:BreakSet] bsd_t_38649 dom=Remy Bertola drAvg=1.667 set=5-3 cote=3.40
+  [Tennis DR Diff] bsd_t_38649 gap=0.23 dominant=Remy Bertola ratio=1.23
+  [TennisLive] BSD=22 ESPN=357 merged=259 live=24
+  [TennisAlerts] ✓ alert#4043 integrity_amber setnull 6-2 → VOID
+  [TennisAlerts] ✓ alert#4042 integrity_amber setnull 6-2 → VOID
   [DATA AUDIT] "La Liga" (BSD 3 / config 140) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 3 (config 140)…
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
-  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
-  [TennisRank BSD] 1000 joueurs indexés
   [DEBUG LIGA] /events/?league=3 → 1000 matchs parsés, 20 équipes agrégées
 [DEBUG LIGA] Classement récupéré avec succès via l'endpoint Events (ID 3)
 [CacheBuffer] Updated bsd_standings/3_140
   [BSD] Ligue 140 → OK (20 équipes)
   [DATA AUDIT] "Segunda Division" (BSD 38 / config 141) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 38 (config 141)…
-[CS2Service] 20 matches (4 live, 1 predictions)
   [DEBUG STANDINGS] BSD 38 → 23 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
-  [DATA MAPPING] BSD sample: team=Real Racing Club, played=43, gf=91, ga=65, form=WDWWW
+  [DATA MAPPING] BSD sample: team=Real Racing Club, played=42, gf=90, ga=61, form=WDWWW
   [BSD] Splits estimés (50/50 ratio) pour Real Racing Club — BSD ne fournit pas played_home/played_away
-  [DATA MAPPING] Buts extraits pour Real Racing Club : 2.12 marqués, 1.51 encaissés (home) | 2.14 marqués, 1.52 encaissés (away) | form: WDWWW
+  [DATA MAPPING] Buts extraits pour Real Racing Club : 2.14 marqués, 1.45 encaissés (home) | 2.14 marqués, 1.43 encaissés (away) | form: WDWWW
   [BSD] Splits estimés (50/50 ratio) pour Deportivo de La Coruña — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Almería — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Málaga CF — BSD ne fournit pas played_home/played_away
@@ -1211,8 +1224,8 @@
   [BSD] Splits estimés (50/50 ratio) pour Real Sociedad B U21 — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Leganés — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Real Valladolid — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Mirandés — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Cádiz — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Mirandés — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Huesca — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Cultural Leonesa — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Real Zaragoza — BSD ne fournit pas played_home/played_away
@@ -1224,9 +1237,6 @@
   [DATA AUDIT] "Jupiler Pro League" (BSD 14 / config 144) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 14 (config 144)…
   [DEBUG STANDINGS] BSD 14 → seasonId=338
-  [Tennis DR Diff] bsd_t_37788 gap=0.22 dominant=Oriol Roca Batalla ratio=0.78
-  [Tennis DR Diff] bsd_t_37839 gap=0.49 dominant=Harriet Dart ratio=1.49
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
   [DEBUG STANDINGS] BSD 14 → 16 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
   [DATA MAPPING] BSD sample: team=Club Brugge KV, played=40, gf=91, ga=45, form=WDWWW
@@ -1324,13 +1334,13 @@
   [DEBUG STANDINGS] Fetching league BSD 53 (config 200)…
   [DEBUG STANDINGS] BSD 53 → 16 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
-  [DATA MAPPING] BSD sample: team=RS Berkane, played=23, gf=34, ga=20, form=WWWWW
-  [BSD] Splits estimés (50/50 ratio) pour RS Berkane — BSD ne fournit pas played_home/played_away
-  [DATA MAPPING] Buts extraits pour RS Berkane : 1.48 marqués, 0.87 encaissés (home) | 1.55 marqués, 0.91 encaissés (away) | form: WWWWW
+  [DATA MAPPING] BSD sample: team=AS FAR Rabat, played=24, gf=36, ga=14, form=WDWDW
   [BSD] Splits estimés (50/50 ratio) pour AS FAR Rabat — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour AS FAR Rabat : 1.5 marqués, 0.58 encaissés (home) | 1.5 marqués, 0.58 encaissés (away) | form: WDWDW
   [BSD] Splits estimés (50/50 ratio) pour MAS de Fès — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Wydad Casablanca — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour RS Berkane — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Raja Club Athletic — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Wydad Casablanca — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Difaâ Hassani El-Jadidi — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour CODM Meknès — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Kawkab Athletic Club Marrakech — BSD ne fournit pas played_home/played_away
@@ -1340,12 +1350,14 @@
   [BSD] Splits estimés (50/50 ratio) pour Hassania d'Agadir — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Union Touarga Sport — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Olympique Dcheira — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Union Sportive Yacoub El Mansour — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Olympic Safi — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Union Sportive Yacoub El Mansour — BSD ne fournit pas played_home/played_away
 [CacheBuffer] Updated bsd_standings/53_200
   [BSD] Ligue 200 → OK (16 équipes)
   [DATA AUDIT] "Tunisian Ligue Pro 1" (BSD 47 / config 202) — Standings sync started.
   [DEBUG STANDINGS] Fetching league BSD 47 (config 202)…
+  [TennisPBP] fetched+3aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x3
   [DEBUG STANDINGS] BSD 47 → 16 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
   [DATA MAPPING] BSD sample: team=Club Africain, played=30, gf=43, ga=10, form=DWWDW
@@ -1447,19 +1459,19 @@
   [DEBUG STANDINGS] Fetching league BSD 55 (config 244)…
   [DEBUG STANDINGS] BSD 55 → 12 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
-  [DATA MAPPING] BSD sample: team=Inter Turku, played=11, gf=17, ga=8, form=DWWWW
+  [DATA MAPPING] BSD sample: team=Inter Turku, played=12, gf=17, ga=8, form=DDWWW
   [BSD] Splits estimés (50/50 ratio) pour Inter Turku — BSD ne fournit pas played_home/played_away
-  [DATA MAPPING] Buts extraits pour Inter Turku : 1.55 marqués, 0.73 encaissés (home) | 1.6 marqués, 0.8 encaissés (away) | form: DWWWW
+  [DATA MAPPING] Buts extraits pour Inter Turku : 1.42 marqués, 0.67 encaissés (home) | 1.33 marqués, 0.67 encaissés (away) | form: DDWWW
   [BSD] Splits estimés (50/50 ratio) pour AC Oulu — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Kuopion Palloseura — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour HJK — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Turun Palloseura — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour VPS — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour FC Lahti — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour IF Gnistan — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour VPS — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Ilves — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour FF Jaro — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Lahti — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour SJK — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FF Jaro — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour IFK Mariehamn — BSD ne fournit pas played_home/played_away
 [CacheBuffer] Updated bsd_standings/55_244
   [BSD] Ligue 244 → OK (12 équipes)
@@ -1508,28 +1520,28 @@
   [DEBUG STANDINGS] Fetching league BSD 57 (config 254)…
   [DEBUG STANDINGS] BSD 57 → 25 équipes reçues
   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
-  [DATA MAPPING] BSD sample: team=FC Tampa Bay Rowdies, played=12, gf=21, ga=7, form=DWWWD
+  [DATA MAPPING] BSD sample: team=FC Tampa Bay Rowdies, played=13, gf=21, ga=8, form=LDWWW
   [BSD] Splits estimés (50/50 ratio) pour FC Tampa Bay Rowdies — BSD ne fournit pas played_home/played_away
-  [DATA MAPPING] Buts extraits pour FC Tampa Bay Rowdies : 1.75 marqués, 0.58 encaissés (home) | 1.67 marqués, 0.5 encaissés (away) | form: DWWWD
-  [BSD] Splits estimés (50/50 ratio) pour San Antonio FC — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Louisville City FC — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Orange County SC — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Indy Eleven — BSD ne fournit pas played_home/played_away
+  [DATA MAPPING] Buts extraits pour FC Tampa Bay Rowdies : 1.62 marqués, 0.62 encaissés (home) | 1.67 marqués, 0.67 encaissés (away) | form: LDWWW
   [BSD] Splits estimés (50/50 ratio) pour Detroit City FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Louisville City FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour San Antonio FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Charleston Battery — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour FC Tulsa — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Orange County SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Pittsburgh Riverhounds — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Indy Eleven — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Oakland Roots SC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Phoenix Rising FC — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Pittsburgh Riverhounds — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Miami FC — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour El Paso Locomotive FC — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour New Mexico United — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Hartford Athletic — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Colorado Springs Switchbacks FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Miami FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Sacramento Republic FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour El Paso Locomotive FC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour FC Tulsa — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Rhode Island FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Lexington SC — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour New Mexico United — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Las Vegas Lights — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Colorado Springs Switchbacks FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Birmingham Legion FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Monterey Bay FC — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Loudoun United FC — BSD ne fournit pas played_home/played_away
@@ -1706,30 +1718,30 @@
   [BSD] Splits estimés (50/50 ratio) pour Canada — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Qatar — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Switzerland — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Brazil — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Morocco — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Scotland — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Australia — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Paraguay — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Türkiye — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Brazil — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Morocco — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Haiti — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour USA — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Australia — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Türkiye — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Paraguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Germany — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Côte d'Ivoire — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Ecuador — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Germany — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Curaçao — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Sweden — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Japan — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Netherlands — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Sweden — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Tunisia — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Belgium — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Egypt — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Iran — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour New Zealand — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Cabo Verde — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Belgium — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Egypt — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Saudi Arabia — BSD ne fournit pas played_home/played_away
-  [BSD] Splits estimés (50/50 ratio) pour Spain — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Uruguay — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Cabo Verde — BSD ne fournit pas played_home/played_away
+  [BSD] Splits estimés (50/50 ratio) pour Spain — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour France — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Iraq — BSD ne fournit pas played_home/played_away
   [BSD] Splits estimés (50/50 ratio) pour Norway — BSD ne fournit pas played_home/played_away
@@ -1769,34 +1781,401 @@
   [ESPN] A-League (aus.1) → OK (12 équipes, saison en cours)
   [ESPN] Ligue 900 → OK (slug aus.1)
   [DATA AUDIT] League sizes computed: 1:1, 2:6, 3:6, 10:49, 11:12, 12:12, 13:14, 30:4, 31:43, 32:6, 33:12, 34:38, 39:20, 40:24, 45:32, 48:48, 61:18, 63:181, 71:20, 72:19, 73:89, 78:18, 81:46, 88:18, 94:18, 98:20, 99:15, 103:16, 106:18, 113:16, 119:12, 128:30, 135:20, 136:20, 137:5, 140:12, 141:23, 143:87, 144:16, 169:16, 172:16, 188:12, 200:16, 202:16, 203:18, 207:12, 210:9, 218:18, 239:20, 240:16, 244:12, 253:30, 254:25, 262:12, 265:16, 269:14, 283:16, 292:12, 307:18, 318:14, 333:14, 345:15, 383:13, 436:20, 480:12, 558:16, 900:12, 999:42
-  [Sync] Synchronisation des buffers mémoire (56 matchs)...
-  [Sync] ✓ Buffers mis à jour. Version: 4
+  [SANITY] ✓ Auto-repair sevilla away ppg: 0 → 0.8 (from _raw)
+  [SANITY] ✓ Auto-repair mallorca away ppg: 0 → 0.75 (from _raw)
+  [Sync] Synchronisation des buffers mémoire (13 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 3
   [Cron:Stats] ✓ 1292 équipes mises à jour (BSD: 1292, Fallback: 0)
 ════════════════════════════════════════════════════════════
 ✅ [OPTIMISATION] Données Injuries mappées directement via le flux principal (Appel API tiers supprimé).
-  [Cron:Stats] Phase 3: Sofascore supplement — 6 équipes sans stats réelles…
-  [LiveDBG] idle-skip #11 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
-  [Cron:Odds] ⚡ Données fraîches en cache (56 matchs) — skip API [key=odds_raw_matches]
-  [EnrichHistory] 0 enrichis sur 49380 (skipped: 48436)
-  [TennisLive] BSD=16 ESPN=284 merged=274 live=13
+  [Cron:Odds] ⚡ Données fraîches en cache (13 matchs) — skip API [key=odds_raw_matches]
+  [EnrichHistory] 0 enrichis sur 49457 (skipped: 48504)
+  [Sync] Synchronisation des buffers mémoire (13 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 4
+  [Boot] ✓ Enrichissement stats terminé.
+  [EnrichHistory] 0 enrichis sur 49457 (skipped: 48504)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631700340
+[TennisTop10] Cache check: hasCache=true age=14ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+  [BSD-WS] raw#3 {"type":"pong"}
+[CS2Service] 6 matches (2 live, 1 predictions)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [BSD-TV] pre-fetch FR 2026-06-16→2026-06-23: 27 broadcasts
+  [Tennis DR Var] bsd_t_38501 sets=2 var=0.250 stdev=0.500
+  [TennisLive] BSD=22 ESPN=357 merged=259 live=24
+[MMA] DRatings: 25 fights indexed
+  [TennisPBP] fetched+3aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x3
   [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
   [TennisRank BSD] 1000 joueurs indexés
-  [TennisPred BSD] 102 prédictions chargées (upcoming)
-[CS2Service] 20 matches (4 live, 1 predictions)
-  [Tennis DR Var] bsd_t_37824 sets=3 var=0.117 stdev=0.342
-  [Tennis DR Var] bsd_t_37815 sets=3 var=5.135 stdev=2.266
-  [Tennis DR Var] bsd_t_37843 sets=2 var=2.250 stdev=1.500
-  [Tennis:BreakSet] bsd_t_37843 dom=Tristan Boyer drAvg=6 set=2-0 cote=1.92
-  [Tennis DR Diff] bsd_t_37127 gap=4.00 dominant=Raghav Jaisinghani ratio=5.00
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
-  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
-  [Challenger ATP] 73 matchs chargés (The Odds API + Tennis Explorer)
-  [Tennis DR Var] bsd_t_37670 sets=2 var=0.250 stdev=0.500
-  [Tennis DR Var] bsd_t_37152 sets=2 var=0.250 stdev=0.500
-  [Tennis DR Diff] bsd_t_37152 gap=0.21 dominant=Gabriella Goyins ratio=1.21
-  [Tennis DR Diff] bsd_t_37815 gap=0.69 dominant=Daniil Medvedev ratio=1.69
-  [Tennis DR Diff] bsd_t_37843 gap=0.28 dominant=Tristan Boyer ratio=1.28
-  [Tennis DR Diff] bsd_t_37848 gap=0.50 dominant=Katarzyna Kawa ratio=0.50
-  [Tennis DR Diff] bsd_t_37870 gap=0.22 dominant=Andreas Messis ratio=0.78
-  [TennisLive] BSD=16 ESPN=338 merged=309 live=13
+  ✓ [BSD-WS] connecté (push live <5s) — démarrage subscribe loop
+  [BSD-WS] subscribeAll → 0 subs envoyés (0/10, pending=0)
+  [WOM:AutoPublish] tick: 33 foot · 0 avec WOM · 0 candidat(s) ≥12pts · 0 à poster (jour 0/8)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (4ms)
+  [Tennis DR Var] bsd_t_38382 sets=2 var=0.250 stdev=0.500
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+  [Tennis Archive] 1 matchs finished archives vers tennisHistory (+db.archive_matches) — persisté
+  [BSD-WS] raw#1 {"type":"pong"}
+  [TennisPBP] fetched+2aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x1
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631755484
+[TennisTop10] Cache check: hasCache=true age=25147ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 0ms
+  [BSD-WS] raw#2 {"type":"pong"}
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[CS2Service] 6 matches (2 live, 1 predictions)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [Tennis:BreakSet] bsd_t_38392 dom=Manas Dhamne drAvg=0.5 set=2-4 cote=1.36
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
   [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [TM Squads] Argentina vs Algeria — ? vs ?
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [BSD-WS] raw#3 {"type":"pong"}
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (5ms)
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+[WarmTop10] Attente 60s avant le premier warm-up...
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+[WarmTop10] Attente 60s avant le premier warm-up...
+  [TennisRank BSD] 1000 joueurs indexés
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631793416
+[TennisTop10] Cache check: hasCache=true age=3067ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 0ms
+[WarmTop10] Attente 60s avant le premier warm-up...
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [BSD-WS] raw#4 {"type":"pong"}
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (5ms)
+  [TM Squads] Austria vs Jordan — ? vs ?
+[CS2Service] 6 matches (2 live, 1 predictions)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [BSD-WS] raw#5 {"type":"pong"}
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (4ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (4ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (6ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (6ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (5ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631853987
+[TennisTop10] Cache check: hasCache=true age=556ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TM Squads] Portugal vs DR Congo — ? vs ?
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[CS2Service] 6 matches (2 live, 1 predictions)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (4ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (1ms)
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (3ms)
+  [TennisRank BSD] 1000 joueurs indexés
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (5ms)
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (2ms)
+  [TM Squads] England vs Croatia — ? vs ?
+  [BSD Enrich] 5 matchs enrichis (odds+pred+polymarket)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TM Squads] Ghana vs Panama — ? vs ?
+  [Challenger ATP] 24 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_38618 sets=2 var=0.090 stdev=0.300
+  [Tennis DR Diff] bsd_t_38618 gap=0.34 dominant=Jon Gamble ratio=1.34
+  [Tennis DR Var] bsd_t_38500 sets=3 var=0.562 stdev=0.750
+  [Tennis DR Var] bsd_t_38604 sets=2 var=0.563 stdev=0.750
+  [Tennis DR Var] bsd_t_38392 sets=2 var=0.202 stdev=0.450
+  [Tennis DR Diff] bsd_t_38382 gap=0.52 dominant=Gustavo Heide ratio=1.52
+  [Tennis DR Var] bsd_t_38525 sets=2 var=0.293 stdev=0.541
+  [Tennis DR Var] bsd_t_38538 sets=2 var=0.695 stdev=0.834
+  [Tennis DR Diff] bsd_t_38538 gap=0.65 dominant=Alina Korneeva ratio=1.65
+  [Tennis DR Diff] bsd_t_38501 gap=0.35 dominant=Thiago Seyboth Wild ratio=1.35
+  [Tennis DR Diff] bsd_t_38650 gap=0.73 dominant=Roman Safiullin ratio=1.73
+  [Tennis DR Diff] bsd_t_37920 gap=0.37 dominant=Serafima Elizarova ratio=0.63
+  [Tennis DR Diff] bsd_t_38545 gap=1.40 dominant=Martyna Kubka ratio=2.40
+  [Tennis DR Diff] bsd_t_38671 gap=0.25 dominant=Titouan Droguet ratio=1.25
+  [Tennis DR Diff] bsd_t_38298 gap=0.26 dominant=Jiri Lehečka ratio=0.74
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 247 matchs actifs, TOP 10 prêt (9ms)
+  [TennisVB] build start — 224 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631916956
+[TennisTop10] Cache check: hasCache=true age=2957ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TM Squads] Uzbekistan vs Colombia — ? vs ?
+  [TennisVB] build done — 245 matchs en 24364ms · snap_stored=224 · live_rehydrated=21 · live_orphans=0 · snap_map_size=2885
+[CS2Service] 5 matches (1 live, 1 predictions)
+  [Tennis DR Diff] bsd_t_38721 gap=0.30 dominant=Ignacio Monzon ratio=1.30
+  [TennisLive] BSD=20 ESPN=357 merged=258 live=22
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (3ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TM Squads] Czechia vs South Africa — ? vs ?
+  [TennisLive] BSD=19 ESPN=357 merged=257 live=21
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781631973992
+[TennisTop10] Cache check: hasCache=true age=29985ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (3ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[CS2Service] 5 matches (1 live, 1 predictions)
+  [Tennis DR Var] bsd_t_38501 sets=2 var=0.250 stdev=0.500
+  [Tennis:BreakSet] bsd_t_38721 dom=Juan Manuel La Serna drAvg=0.5 set=2-4 cote=1.21
+  [Tennis DR Diff] bsd_t_38609 gap=0.67 dominant=Danial Rakhmatullayev ratio=0.33
+  [TennisLive] BSD=19 ESPN=357 merged=257 live=21
+  [TennisAlerts] ✓ alert#4035 gagne_set set2 6-4 → WIN
+  [TennisAlerts] ✓ alert#4034 under_12.5 set2 6-4 → WIN
+  [TennisAlerts] ✓ alert#4020 under_12.5 set2 6-4 → WIN
+  [TennisAlerts] ✓ alert#4021 gagne_set set2 6-4 → WIN
+  [TennisAlerts] ✓ alert#4006 gagne_set set2 6-4 → WIN
+  [TennisAlerts] ✓ alert#4005 under_12.5 set2 6-4 → WIN
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (5ms)
+  [TennisRank BSD] 1000 joueurs indexés
+  [TM Squads] Switzerland vs Bosnia & Herzegovina — ? vs ?
+  [TM Squads Cron] 8 matchs enrichis
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TennisLive] BSD=19 ESPN=357 merged=257 live=21
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781632033989
+[TennisTop10] Cache check: hasCache=true age=27028ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (3ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[CS2Service] 5 matches (1 live, 1 predictions)
+  [Tennis DR Var] bsd_t_38382 sets=2 var=0.250 stdev=0.500
+  [TennisLive] BSD=18 ESPN=357 merged=256 live=20
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (2ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TennisLive] BSD=18 ESPN=357 merged=256 live=20
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781632093982
+[TennisTop10] Cache check: hasCache=true age=29985ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (2ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[CS2Service] 5 matches (1 live, 1 predictions)
+  [Tennis DR Diff] bsd_t_38389 gap=0.29 dominant=Eliakim Coulibaly ratio=1.29
+  [TennisLive] BSD=18 ESPN=357 merged=256 live=20
+  [TennisAlerts] ✓ alert#4038 under_12.5 set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#4039 gagne_set set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#4024 under_12.5 set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#4025 gagne_set set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#3998 under_12.5 set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#3999 gagne_set set1 6-3 → WIN
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (3ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+  [TennisLive] BSD=18 ESPN=357 merged=256 live=20
+  [TennisPred BSD] 262 prédictions chargées (upcoming)
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781632153982
+[TennisTop10] Cache check: hasCache=true age=29970ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 0ms
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (2ms)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[CS2Service] 5 matches (1 live, 1 predictions)
+  [Tennis DR Var] bsd_t_38671 sets=2 var=0.250 stdev=0.500
+  [TennisLive] BSD=18 ESPN=357 merged=256 live=20
+  [TennisAlerts] ✓ alert#4046 under_12.5 set2 2-6 → WIN
+  [TennisAlerts] ✓ alert#4047 gagne_set set2 2-6 → WIN
+  [TennisAlerts] ✓ alert#4003 under_12.5 set2 2-6 → WIN
+  [TennisAlerts] ✓ alert#4004 gagne_set set2 2-6 → WIN
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[Top10Refresh] Cache rafraîchi : 245 matchs actifs, TOP 10 prêt (6ms)
+  [TennisVB] build start — 224 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [TennisVB] build done — 243 matchs en 15322ms · snap_stored=224 · live_rehydrated=19 · live_orphans=0 · snap_map_size=2885
+  [BSD Enrich] 5 matchs enrichis (odds+pred+polymarket)
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0
+[WarmTop10] 60s écoulées, warm-up initial...
+[Top10Refresh] Cache rafraîchi : 243 matchs actifs, TOP 10 prêt (2ms)
+  [Tennis DR Var] bsd_t_38618 sets=2 var=0.090 stdev=0.300
+  [Tennis DR Diff] bsd_t_38618 gap=0.34 dominant=Jon Gamble ratio=1.34
+  [Tennis DR Var] bsd_t_38500 sets=3 var=0.451 stdev=0.671
+  [Tennis DR Var] bsd_t_38604 sets=2 var=0.563 stdev=0.750
+  [Tennis DR Diff] bsd_t_38382 gap=0.56 dominant=Gustavo Heide ratio=1.56
+  [Tennis DR Var] bsd_t_38392 sets=2 var=0.285 stdev=0.533
+  [Tennis DR Var] bsd_t_38525 sets=2 var=0.444 stdev=0.666
+  [Tennis DR Var] bsd_t_38538 sets=2 var=0.766 stdev=0.875
+  [Tennis DR Diff] bsd_t_38538 gap=0.84 dominant=Alina Korneeva ratio=1.84
+  [Tennis DR Diff] bsd_t_38501 gap=0.35 dominant=Thiago Seyboth Wild ratio=1.35
+  [Tennis DR Diff] bsd_t_37920 gap=0.32 dominant=Serafima Elizarova ratio=0.68
+  [Tennis DR Diff] bsd_t_38545 gap=1.40 dominant=Martyna Kubka ratio=2.40
+  [Tennis DR Diff] bsd_t_38298 gap=0.39 dominant=Jiri Lehečka ratio=0.61
+  [TennisLive] BSD=18 ESPN=357 merged=256 live=20 fetched+2aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x4
+[WarmTop10] Attente 60s avant le premier warm-up...
+[TennisTop10] === ROUTE ENTERED === mode=viewer ts=1781632216984
+[TennisTop10] Cache check: hasCache=true age=2993ms ttl=300000ms
+[TennisTop10] CACHE HIT — responding in 1ms
+  [LiveDBG] build=livefix-v3 date=2026-06-16 bsdEvents=6 avecLiveScore=0 matchedEnBase=2 statuts={"finished":3,"notstarted":3}
+  [LiveDBG] matchés(cross-provider)=0 (dont sig=0) patches=0

@@ -4984,28 +4984,24 @@
     "snippet": "font-size:12px;\">Chargement…</div>\n        </div>\n      </div>\n    </div>\n    <div id=\"ta-rome-upcoming\""
   },
   {
-    "key": "tennis.tex_title",
     "fr": "Odds Drift",
     "file": "pariscore.html",
     "wrap": "html-text",
     "snippet": "font-size:24px;\">📈 Odds Drift</h2>"
   },
   {
-    "key": "tennis.tex_subtitle",
     "fr": "Open vs Current odds (player 1) · Δ% positif = chute favori · Cache 30min · Clic joueur = profil",
     "file": "pariscore.html",
     "wrap": "html-text",
     "snippet": "Open vs Current odds (player 1) · Δ% positif = chute favori"
   },
   {
-    "key": "tennis.tex_tour_atp_double_title",
     "fr": "Doubles ATP",
     "file": "pariscore.html",
     "wrap": "html-attr-title",
     "snippet": "onclick=\"setTexTour('atp-double')\" style=\"padding:6px 12px;background:var(--bg2"
   },
   {
-    "key": "tennis.tex_tour_wta_double_title",
     "fr": "Doubles WTA",
     "file": "pariscore.html",
     "wrap": "html-attr-title",
@@ -9779,7 +9775,6 @@
     "snippet": "tvb-pred-kpi '+(lead!==0?'live':'pass')+'\">LIVE · "
   },
   {
-    "key": "tennis.tex.empty_no_match",
     "fr": "Aucun match disponible.",
     "file": "pariscore.js",
     "wrap": "html-text",
@@ -10101,28 +10096,24 @@
     "snippet": "<th style=\"text-align:right;\">Titre</th>"
   },
   {
-    "key": "tennis.tex.empty_no_match",
     "fr": "Aucun match disponible.",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "font-size:12px;\">Aucun match disponible.</div>"
   },
   {
-    "key": "tennis.tex.status_summary",
     "fr": "{0} matchs · {1} avec drift · MAJ {2}",
     "file": "pariscore.js",
     "wrap": "js-template",
     "snippet": "status.textContent = `${matches.length} matchs · ${driftCount} avec drift · MAJ"
   },
   {
-    "key": "tennis.tex.books_button_tooltip",
     "fr": "Multi-books comparison",
     "file": "pariscore.js",
     "wrap": "html-attr-title",
     "snippet": "font-family:'DM Mono',monospace;\" title=\"Multi-books comparison\">📊"
   },
   {
-    "key": "tennis.tex.col_time",
     "fr": "Heure",
     "file": "pariscore.js",
     "wrap": "html-text",
@@ -10262,21 +10253,18 @@
     "snippet": "Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }\n}\n\nfunction _texRenderMarketTable"
   },
   {
-    "key": "tennis.tex.books_view_full_detail",
     "fr": "Voir détail complet ↗",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "color:var(--blue,#29b6f6);\">Voir détail complet ↗</a>"
   },
   {
-    "key": "tennis.tex.books_empty_no_odds",
     "fr": "Aucune cote disponible pour ce match.",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "Aucune cote disponible pour ce match.</div>"
   },
   {
-    "key": "tennis.tex.market_over_under_sets",
     "fr": "Over / Under (sets)",
     "file": "pariscore.js",
     "wrap": "js-literal",
@@ -10290,14 +10278,12 @@
     "snippet": "Erreur: ${_escapeHtmlSafe(e.message)}</div>`;\n  }\n}\n\nasync function openTexPlayerModal"
   },
   {
-    "key": "tennis.tex.player_lottery_label",
     "fr": "Lottery (7j)",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Lottery (7j)</td>"
   },
   {
-    "key": "tennis.tex.player_lottery_value",
     "fr": "{0}W / {1}L · {2} close matches",
     "file": "pariscore.js",
     "wrap": "js-template",
@@ -10311,70 +10297,60 @@
     "snippet": "var(--text3,#5a6068);\">Pays</td><td style=\"padding:4px 8px;\">${_escapeHtmlSafe(p.country"
   },
   {
-    "key": "tennis.tex.player_dob",
     "fr": "Date naissance",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Date naissance</td>"
   },
   {
-    "key": "tennis.tex.player_age_suffix",
     "fr": "{0} ans",
     "file": "pariscore.js",
     "wrap": "js-template",
     "snippet": "${_escapeHtmlSafe(p.dob || '—')} · ${age} ans</td>"
   },
   {
-    "key": "tennis.tex.player_sex",
     "fr": "Sexe",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Sexe</td>"
   },
   {
-    "key": "tennis.tex.player_hand",
     "fr": "Main",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Main</td>"
   },
   {
-    "key": "tennis.tex.player_height_weight",
     "fr": "Taille/Poids",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Taille/Poids</td>"
   },
   {
-    "key": "tennis.tex.player_rank_singles",
     "fr": "Rank simple",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Rank simple</td>"
   },
   {
-    "key": "tennis.tex.player_rank_doubles",
     "fr": "Rank double",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "var(--text3,#5a6068);\">Rank double</td>"
   },
   {
-    "key": "tennis.tex.player_rank_highest",
     "fr": "haut: {0}",
     "file": "pariscore.js",
     "wrap": "js-template",
     "snippet": "${p.rank_singles.current ?? '—'} (haut: ${p.rank_singles.highest"
   },
   {
-    "key": "tennis.tex.player_career_by_surface",
     "fr": "Career W/L par surface",
     "file": "pariscore.js",
     "wrap": "html-text",
     "snippet": "font-size:12px;margin-bottom:6px;\">🎾 Career W/L par surface</div>"
   },
   {
-    "key": "tennis.tex.player_view_full_profile",
     "fr": "Voir profile complet ↗",
     "file": "pariscore.js",
     "wrap": "html-text",
@@ -12327,7 +12303,6 @@
     "snippet": "{ label: 'Note Moy.', val: base.avg_rating != null"
   },
   {
-    "key": "tennis.tex.player_age_suffix",
     "fr": "{0} ans",
     "file": "pariscore.js",
     "wrap": "js-template",
@@ -22372,7 +22347,6 @@
     "snippet": "g.innerHTML = '<div class=\"comp-empty\">Aucun match pour ces filtres.</div>';"
   },
   {
-    "key": "tennis.tex.col_time",
     "fr": "Heure",
     "file": "pariscore.js",
     "wrap": "js-template",

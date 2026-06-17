@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta name="ga-site-verification" content="SmmkqlT_jyUQZaKKREF6z87c" />
@@ -3479,7 +3479,7 @@
     0% { opacity: .85; transform: scale(.5); }
     70%,100% { opacity: 0; transform: scale(1.55); }
   }
-  .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
+  .nav-links { display: flex; align-items: stretch; gap: 0; height: 100%; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -webkit-overflow-scrolling: touch; } .nav-links::-webkit-scrollbar { display: none; }
   .nav-links::-webkit-scrollbar { height: 4px; }
   .nav-links::-webkit-scrollbar-thumb { background: var(--bg4, #1e2328); border-radius: 2px; }
   .nav-links a { flex: 0 0 auto; white-space: nowrap; }
@@ -12108,6 +12108,10 @@ function psSetLang(v) {
   <span data-i18n="live.update_bar">Mise à jour en continu — 3 200+ ligues couvertes</span>
 </div>
 
+<!-- INLINE showPage FALLBACK (v240617-1) — garanti que les liens navbar fonctionnent meme si pariscore.js est stale en cache SW -->
+<script>
+(function(){if(window.showPage)return;window.showPage=function(p,l){try{document.body.dataset.page=p;var el=document.getElementById('page-'+p);if(el){document.querySelectorAll('div[data-page]').forEach(function(d){d.style.display='none'});el.style.display='block'}if(l&&l.closest){var nav=l.closest('nav');if(nav){nav.querySelectorAll('.nav-links a').forEach(function(a){a.classList.remove('active')});l.classList.add('active')}}try{sessionStorage.setItem('ps_user_navigated','1')}catch(e){}window.scrollTo(0,0);console.log('[showPage fallback] '+p)}catch(e){console.warn('[showPage fallback] error',e)}}})();
+</script>
 <!-- NAVIGATION -->
 <nav aria-label="Navigation principale">
   <div class="logo">

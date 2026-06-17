@@ -989,28 +989,24 @@
     },
     {
       "fr": "Odds Drift",
-      "key": "tennis.tex_title",
       "file": "pariscore.html",
       "wrap": "html-text",
       "snippet": "font-size:24px;\">📈 Odds Drift</h2>"
     },
     {
       "fr": "Open vs Current odds (player 1) · Δ% positif = chute favori · Cache 30min · Clic joueur = profil",
-      "key": "tennis.tex_subtitle",
       "file": "pariscore.html",
       "wrap": "html-text",
       "snippet": "Open vs Current odds (player 1) · Δ% positif = chute favori"
     },
     {
       "fr": "Doubles ATP",
-      "key": "tennis.tex_tour_atp_double_title",
       "file": "pariscore.html",
       "wrap": "html-attr-title",
       "snippet": "onclick=\"setTexTour('atp-double')\" style=\"padding:6px 12px;background:var(--bg2"
     },
     {
       "fr": "Doubles WTA",
-      "key": "tennis.tex_tour_wta_double_title",
       "file": "pariscore.html",
       "wrap": "html-attr-title",
       "snippet": "onclick=\"setTexTour('wta-double')\" style=\"padding:6px 12px;background:var(--bg2"

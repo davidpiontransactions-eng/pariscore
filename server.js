@@ -36083,6 +36083,13 @@ try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */
 // appel utilisateur voit les données instantanément.
 
 async function _refreshTop10Cache() {
+  // Stale-while-revalidate: si SPS a run récemment, ne pas rebuild
+  const spsLastSync = getSackmannLastSync();
+  const spsAge = spsLastSync ? Date.now() - spsLastSync : Infinity;
+  if (spsAge < _TN_TOP10_REFRESH_INTERVAL) {
+    console.log('[SPS_CACHE] SPS sync trop récent (' + Math.round(spsAge/1000) + 's), skip rebuild');
+    return _tnTop10Cache;
+  }
   if (globalThis.__top10RebuildPromise) {
     return globalThis.__top10RebuildPromise;
   }
