@@ -16,44 +16,70 @@ Basée sur : `gstack-plan-eng-review` session (2026-06-17)
 
 - [x] **B1** Nouveau polling : `fetchTennisTop10()` lit `status`, `estimated_seconds` ; boucle tant que `building` ; timeout 10min ; max 3 erreurs consécutives
 
-## Bugfix — Investigations sur « maj HS sur tous les onglets »
+---
 
-Découvert lors de la revue post-implémentation. Le bug est probablement causé par des effets de bord des changes A2 qui ont embarqué des modifs hors-scope (fallback showPage + BOM).
+## Bugfix — Correctifs appliqués (2026-06-17)
 
 ### P0 — Fallback showPage dans pariscore.html ⚠️ PRIORITAIRE
 - **Fichier** : `pariscore.html` — script inline ajouté dans le commit A2
-- **Problème** : `window.showPage` est override avec une version simplifiée **avant** que `pariscore.js` ne charge. Si le Service Worker sert un HTML avec le fallback mais que `pariscore.js` est stale/délayé (ou que le wrapper lignes 26575-26586 ne s'exécute pas), le fallback reste actif → hubs cassés, scroll perdu, verrous ignorés, arrêt des polls live, navigation dégradée sur TOUS les onglets.
-- **Action** : Supprimer le script inline fallback et le remplacer par un mécanisme plus robuste (ou le retirer carrément si le SW ne sert pas de stale HTML sans JS)
-- **Réf** : `pariscore.html` ligne ~12110, `pariscore.js` ligne 842 + 26575
+- **Problème** : `window.showPage` override avec une version simplifiée **avant** que `pariscore.js` ne charge
+- **Action** : Script inline supprimé (lignes 12111-12114 retirées)
+- **Statut** : ✅ **FAIT**
 
 ### P1 — Dedup perdu dans buildTennisValueBets (server.js)
-- **Fichier** : `server.js` — commit A4
-- **Problème** : A4 a supprimé le Set `_tennisVBRebuilding` dans `buildTennisValueBets()` sans remplacement. Tous les appels concurrents pour la même key déclenchent désormais un rebuild en parallèle → rate limits API externes, saturation.
-- **Action** : Remettre un guard de déduplication (nouveau Set ou flag) avant `_buildTennisValueBetsCore()`
-- **Réf** : `server.js` lignes 36056-36067
+- **Fichier** : `server.js`
+- **Problème** : A4 a supprimé le Set `_tennisVBRebuilding` dans `buildTennisValueBets()` sans remplacement
+- **Action** : `globalThis.__tennisVBGuard` (Set) ajouté avec `.add(key)` avant rebuild et `.delete(key)` dans `.then()`/`.catch()`
+- **Statut** : ✅ **FAIT**
 
 ### P2 — _refreshTop10Cache() retourne type incohérent (server.js)
-- **Fichier** : `server.js` — commit A4
-- **Problème** : Le guard singleton retourne `_tnTop10Cache` (un objet) au lieu d'une Promise.
-  ```js
-  if (globalThis.__top10RebuildPromise) { return _tnTop10Cache; }  // ← objet, pas Promise !
-  ```
-  L'appelant ligne 47435 fait `.catch()` → `TypeError: .catch is not a function` si l'objet atterrit dans le catch.
-- **Action** : Retourner `Promise.resolve(_tnTop10Cache)` pour uniformiser
-- **Réf** : `server.js` ligne 36098
+- **Fichier** : `server.js`
+- **Problème** : `return _tnTop10Cache` retourne un objet. L'appelant `.catch()` attend une Promise.
+- **Action** : `return Promise.resolve(_tnTop10Cache)` (ligne 36107)
+- **Statut** : ✅ **FAIT**
 
 ### P3 — BOM (U+FEFF) dans pariscore.html + sw.js
-- **Fichier** : `pariscore.html` + `sw.js` — commit A2
-- **Problème** : Caractère BOM (`﻿`) ajouté devant `<!DOCTYPE html>` et en tête de sw.js. Ne casse rien dans les navigateurs modernes mais peut causer mode quirks IE, erreurs silencieuses SW, ou problèmes SEO.
-- **Action** : Supprimer le BOM des deux fichiers
-- **Réf** : `pariscore.html` ligne 1, `sw.js` ligne 1
+- **Fichier** : `pariscore.html` + `sw.js`
+- **Problème** : BOM devant `<!DOCTYPE html>` et en tête de sw.js
+- **Action** : BOM retiré des deux fichiers (premiers octets `EF BB BF` supprimés)
+- **Statut** : ✅ **FAIT**
+
+---
 
 ## Post-implementation
 
-- [ ] **C1** Logs diagnostic `[SPS_CACHE]`, `[TOP10_STATUS]`, `[REBUILD]`, `[POLLING]`
-- [ ] **C2** Vérification manuelle : lancer le serveur, tester le flow complet
-- [ ] **C3** Enlever les logs diagnostic
+- [ ] **C1** Vérifier que les logs diagnostic sont bien en place :
+  - `[SPS_CACHE]` → `_refreshTop10Cache()` ligne 36106 ✅ présent
+  - `[REBUILD]` → dans `_refreshTop10Cache()` via `console.log` intégré ✅
+  - `[POLLING]` → dans `fetchTennisTop10()` (pariscore.js) ✅ présent
+  - `[TOP10_STATUS]` → dans la route (ligne ~21670) ✅ présent
+- [ ] **C2** Vérification manuelle : `node --check server.js && node server.js`, tester le flow complet
+- [ ] **C3** Enlever les logs diagnostic une fois la vérification faite
 - [ ] **C4** Mettre à jour `PATCH_LOG.md`
+- [ ] **C5** Synthaxe : `node --check server.js && node --check pariscore.html` (JS inline)
+
+---
+
+## Session suivante recommandée
+
+```bash
+# 1. Vérifier que les fichiers passent le check syntaxique
+node --check server.js
+node --check pariscore.html    # vérifie le JS inline
+
+# 2. Lancer le serveur et tester manuellement
+node server.js
+# curl http://localhost:3000/api/v1/tennis/top10?mode=viewer
+
+# 3. Mettre à jour PATCH_LOG.md avec le statut des correctifs
+
+# 4. Commit & push
+git add -A
+git commit -m "fix(eng-review): P0-P3 post-review bugfixes"
+git push
+```
+
+---
 
 ## Références
 
@@ -64,6 +90,6 @@ Découvert lors de la revue post-implémentation. Le bug est probablement causé
 | Route `/api/v1/tennis/top10` | server.js:21668 |
 | `getSackmannLastSync()` | server.js:24595 (lit `tennis_sackmann_last_sync`) |
 | `spsHeartbeat` / `sps_last_run` | server.js:32019 |
-| `_refreshTop10Cache()` | server.js:36094 |
-| `_tennisVBRebuilding` Map | server.js (à remplacer) |
+| `_refreshTop10Cache()` | server.js:36101 |
+| `globalThis.__tennisVBGuard` | server.js:36059 (nouveau Set dedup) |
 | `fetchTennisTop10()` | pariscore.js |

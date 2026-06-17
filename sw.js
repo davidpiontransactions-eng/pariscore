@@ -1,4 +1,4 @@
-﻿/* PariScore Service Worker — shell offline + bypass API/SSE.
+/* PariScore Service Worker — shell offline + bypass API/SSE.
    Bump CACHE version à chaque release frontend pour invalider. */
 // v10 (2026-05-19) : invalide v9 — embarque fix mobile bug page blanche post
 // param filtres (commit 18e5616 + radar BSD Live WS 3f3cc41).

@@ -21667,14 +21667,11 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
   // GET /api/v1/tennis/top10?mode=viewer|bettor
   if (pathname === '/api/v1/tennis/top10' && req.method === 'GET') {
     const _t10start = Date.now();
-    console.log(`[TennisTop10] === ROUTE ENTERED === mode=${query.mode} ts=${_t10start}`);
     const mode = query.mode === 'bettor' ? 'bettor' : 'viewer';
     const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : _TN_TOP10_TTL_VIEWER;
     const now  = Date.now();
-    console.log(`[TennisTop10] Cache check: hasCache=${!!_tnTop10Cache[mode]} age=${_tnTop10Cache[`ts_${mode}`] ? now - _tnTop10Cache[`ts_${mode}`] : 'N/A'}ms ttl=${ttl}ms`);
     const _rebuilding = !!globalThis.__top10RebuildPromise;
     if (_tnTop10Cache[mode] && (now - _tnTop10Cache[`ts_${mode}`]) < ttl) {
-      console.log(`[TennisTop10] CACHE HIT — responding in ${Date.now() - _t10start}ms`);
       return jsonResponse(res, 200, {
         ..._tnTop10Cache[mode],
         status: _rebuilding ? 'building' : 'ready',
@@ -21682,7 +21679,6 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       });
     }
     // P1.2: NE JAMAIS rebuild ici. Servir le cache uniquement.
-    console.log(`[TennisTop10] CACHE MISS — returning loading indicator (no rebuild)`);
     return jsonResponse(res, 200, {
       loading: true,
       total_active: 0,
@@ -36055,28 +36051,37 @@ if (!globalThis.__tnSnapJanitorOn) {
 async function buildTennisValueBets(opts = {}) {
   const dateClean = opts.date ? String(opts.date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   const key = dateClean || 'today';
+  // Dedup guard: si un rebuild pour cette key est deja en cours, on sert le cache sans lancer un 2e build
+  const _vbGuard = globalThis.__tennisVBGuard || (globalThis.__tennisVBGuard = new Set());
+  if (_vbGuard.has(key)) {
+    const hit = _tennisVBCache.get(key);
+    if (hit) return hit.result;
+    return { status: 200, body: { count: 0, matches: [], meta: { loading: true, building: true } } };
+  }
   const hit = _tennisVBCache.get(key);
   if (hit) {
-    // Build dégradé ESPN (BSD KO ce cycle) : TTL court 60 s → réessaie BSD vite
+    // Build degrade ESPN (BSD KO ce cycle) : TTL court 60 s -> reessaie BSD vite
     // au lieu de figer des ids ESPN (detail mort) pendant 4 min.
     const _deg = hit.result && hit.result.body && hit.result.body.meta && hit.result.body.meta.match_source && hit.result.body.meta.match_source !== 'bsd';
     const _ttl = _deg ? 60 * 1000 : _TENNIS_VB_TTL_MS;
     if (Date.now() - hit.ts < _ttl) return hit.result;
-    // Périmé : sert le stale tout de suite, rebuild en tâche de fond.
+    // Perime : sert le stale tout de suite, rebuild en tache de fond.
+    _vbGuard.add(key);
     _buildTennisValueBetsCore(opts)
-      .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
-      .catch(e => console.warn('  [TennisVB] rebuild bg échec:', e.message));
+      .then(r => { _vbGuard.delete(key); if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
+      .catch(e => { _vbGuard.delete(key); console.warn('  [TennisVB] rebuild bg echec:', e.message); });
     return hit.result;
   }
-  // [FIX bug onglet tennis — v4] Aucun cache : NE PLUS bloquer la requête.
-  // Le build cold (~20 s, ~420 matchs, boucle CPU) dépassait le timeout
-  // proxy/UI → connexion coupée → "Erreur réseau" + Chargement figé, et la
-  // boucle synchrone empêchait tout Promise.race/timeout de tirer.
-  // → build lancé EN FOND (avec yields event-loop), réponse "loading"
-  //   immédiate. Le front ré-essaie ; dès cache prêt → vraies données.
+  // [FIX bug onglet tennis - v4] Aucun cache : NE PLUS bloquer la requete.
+  // Le build cold (~20 s, ~420 matchs, boucle CPU) depassait le timeout
+  // proxy/UI -> connexion coupee -> 'Erreur reseau' + Chargement fige, et la
+  // boucle synchrone empechait tout Promise.race/timeout de tirer.
+  // -> build lance EN FOND (avec yields event-loop), reponse 'loading'
+  //   immediate. Le front re-essaie ; des cache pret -> vraies donnees.
+  _vbGuard.add(key);
   _buildTennisValueBetsCore(opts)
-    .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
-    .catch(e => console.warn('  [TennisVB] cold build bg échec:', e && e.message || e));
+    .then(r => { _vbGuard.delete(key); if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
+    .catch(e => { _vbGuard.delete(key); console.warn('  [TennisVB] cold build bg echec:', e && e.message || e); });
   return { status: 200, body: { count: 0, matches: [], meta: { loading: true, building: true } } };
 }
 // Pont scope : le warm-up boot (_sackmannBootSync IIFE) ne voit pas cette
@@ -36095,7 +36100,7 @@ async function _refreshTop10Cache() {
   const spsAge = spsLastSync ? Date.now() - spsLastSync : Infinity;
   if (spsAge < _TN_TOP10_REFRESH_INTERVAL) {
     console.log('[SPS_CACHE] SPS sync trop récent (' + Math.round(spsAge/1000) + 's), skip rebuild');
-    return _tnTop10Cache;
+    return Promise.resolve(_tnTop10Cache);
   }
   if (globalThis.__top10RebuildPromise) {
     return globalThis.__top10RebuildPromise;

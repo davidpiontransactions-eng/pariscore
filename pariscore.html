@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta name="ga-site-verification" content="SmmkqlT_jyUQZaKKREF6z87c" />
@@ -12107,11 +12107,6 @@ function psSetLang(v) {
   <div class="live-dot"></div>
   <span data-i18n="live.update_bar">Mise à jour en continu — 3 200+ ligues couvertes</span>
 </div>
-
-<!-- INLINE showPage FALLBACK (v240617-1) — garanti que les liens navbar fonctionnent meme si pariscore.js est stale en cache SW -->
-<script>
-(function(){if(window.showPage)return;window.showPage=function(p,l){try{document.body.dataset.page=p;var el=document.getElementById('page-'+p);if(el){document.querySelectorAll('div[data-page]').forEach(function(d){d.style.display='none'});el.style.display='block'}if(l&&l.closest){var nav=l.closest('nav');if(nav){nav.querySelectorAll('.nav-links a').forEach(function(a){a.classList.remove('active')});l.classList.add('active')}}try{sessionStorage.setItem('ps_user_navigated','1')}catch(e){}window.scrollTo(0,0);console.log('[showPage fallback] '+p)}catch(e){console.warn('[showPage fallback] error',e)}}})();
-</script>
 <!-- NAVIGATION -->
 <nav aria-label="Navigation principale">
   <div class="logo">
