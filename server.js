@@ -544,9 +544,10 @@ function safeFloat(v, dflt = 0) {
 // safeFixed (bd izsn): wrapper anti-crash pour .toFixed() — protège des null/undefined/NaN.
 // Signature alignée avec frontend pariscore.html (digits=2, fallback='—').
 function safeFixed(val, digits = 2, fallback = '—') {
-  if (val == null) return fallback;
+  if (val == null) { console.warn("[safeFixed] val=null", new Error().stack); return fallback; }
   const n = Number(val);
-  return Number.isFinite(n) ? n.toFixed(digits) : fallback;
+  if (!Number.isFinite(n)) { console.warn("[safeFixed] val non fini:", val, new Error().stack); return fallback; }
+  return n.toFixed(digits);
 }
 
 // ─── KELLY CRITERION — Sizing helper pour module Mes Paris ────────────────────
@@ -49000,27 +49001,28 @@ globalThis.__tennisPlayerMatches = function(playerName) {
     }).slice(-10).map(function(m) {
       var isP1 = m.player1 && String(m.player1.name).toLowerCase().trim() === nameLower;
       var playerSide = isP1 ? m.player1 : (m.player2 || {});
-      var srvIdx = playerSide.serve_index != null ? playerSide.serve_index : 30;
-      var retIdx = playerSide.receive_index != null ? playerSide.receive_index : 20;
+      var srvIdx = playerSide.serve_index;
+      var retIdx = playerSide.receive_index;
       var opp = isP1 ? (m.player2 || {}) : (m.player1 || {});
-      var oppSrv = opp.serve_index != null ? opp.serve_index : 28;
-      var oppRet = opp.receive_index != null ? opp.receive_index : 22;
+      var oppSrv = opp.serve_index;
+      var oppRet = opp.receive_index;
+      if (srvIdx == null || retIdx == null) { console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); }
       var winner = m.winner;
       if (!winner) {
-        var scr = m.status;
-        winner = scr ? (isP1 ? playerName : opp.name) : null;
+      	var scr = m.status;
+      	winner = scr ? (isP1 ? playerName : opp.name) : null;
       }
       return {
-        svr_pts_won: srvIdx,
-        svr_pts_lost: 35 - Math.min(35, srvIdx),
-        ret_pts_won: retIdx,
-        ret_pts_lost: 35 - Math.min(35, retIdx),
-        bp_won: playerSide.bp_won || 3,
-        bp_lost: playerSide.bp_lost || 4,
-        bp_saved: playerSide.bp_saved || 2,
-        bp_faced: playerSide.bp_faced || 5,
-        tb_won: playerSide.tb_won || 1,
-        tb_lost: playerSide.tb_lost || 1,
+      	svr_pts_won: srvIdx,
+      	svr_pts_lost: srvIdx != null ? 35 - Math.min(35, srvIdx) : null,
+      	ret_pts_won: retIdx,
+      	ret_pts_lost: retIdx != null ? 35 - Math.min(35, retIdx) : null,
+      	bp_won: playerSide.bp_won,
+      	bp_lost: playerSide.bp_lost,
+      	bp_saved: playerSide.bp_saved,
+      	bp_faced: playerSide.bp_faced,
+      	tb_won: playerSide.tb_won,
+      	tb_lost: playerSide.tb_lost,
         surface: m.surface || 'hard',
         date: m.start_time || new Date().toISOString(),
         winner_id: winner || playerName,
