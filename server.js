@@ -40,13 +40,13 @@ const cs2Service        = require('./services/cs2Service');        // CS2/CSGO B
 const berserkService    = require('./services/berserkService');    // Berserk League 1v1 scraper
 const liquipediaService = require('./services/liquipediaService'); // Liquipedia tier3 CS2 matches
 const mmaService        = require('./services/mmaService')
-const nlpInjuryScraper = require('./tools/nlp-injury-scraper');        // MMA/UFC pipeline bd 8gz3
+let nlpInjuryScraper = null; try { nlpInjuryScraper = require('./tools/nlp-injury-scraper'); } catch (_) {} // MMA/UFC pipeline bd 8gz3
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
 const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
 const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
 const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
-const MetricsCache = require('./metrics-cache');
+let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catch (_) {}
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
