@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sketch 001: Spider Chart Premium</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+#variant-nav { position:fixed;top:0;left:0;right:0;z-index:9998;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;gap:8px; }
+.variant-tab { background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:var(--radius);cursor:pointer;font-family:var(--font-ui);font-size:12px;font-weight:600;transition:all .15s; }
+.variant-tab.active { background:var(--blue);color:#fff;border-color:var(--blue); }
+.variant-tab.winner { background:var(--green);color:#0b0e17;border-color:var(--green); }
+.variant { display:none; padding:24px; }
+.variant.active { display:block; }
+.chart-wrap { max-width:520px; margin:0 auto; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); padding:24px; }
+.chart-title { font-family:var(--font-data);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:16px; }
+.chart-container { position:relative;width:100%;height:320px; }
+.label-row { display:flex;justify-content:space-between;margin-top:12px;font-family:var(--font-data);font-size:9px;color:var(--text2);text-transform:uppercase; }
+.metric-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px; }
+.metric-card { background:rgba(0,0,0,.18);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px; }
+.metric-card .m-label { font-family:var(--font-data);font-size:8px;font-weight:700;text-transform:uppercase;color:var(--text3);letter-spacing:.6px; }
+.metric-card .m-values { display:flex;justify-content:space-between;margin-top:4px;font-family:var(--font-data);font-size:18px;font-weight:800; }
+.metric-card .m-p1 { color:var(--blue); }
+.metric-card .m-p2 { color:var(--green); }
+#sketch-tools { position:fixed;bottom:12px;right:12px;z-index:9999;font-family:system-ui;font-size:11px;background:rgba(0,0,0,0.75);color:#fff;padding:8px 12px;border-radius:8px;opacity:0.35;transition:opacity .2s; }
+#sketch-tools:hover { opacity:1; }
+#sketch-tools button { background:rgba(255,255,255,0.1);border:none;color:#fff;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px;margin:0 2px; }
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a')">A: Chart.js Radar</button>
+  <button class="variant-tab" onclick="showVariant('b')">B: SVG Custom Glow ★ Selected</button>
+  <button class="variant-tab" onclick="showVariant('c')">C: Horizontal Bars</button>
+</div>
+
+<!-- ====== VARIANT A: Chart.js Radar ====== -->
+<div id="variant-a" class="variant active">
+  <div class="chart-wrap">
+    <div class="chart-title">Analyse Multidimensionnelle — Learner Tien vs Felix Auger-Aliassime (Halle, Grass)</div>
+    <div class="chart-container"><canvas id="radarA"></canvas></div>
+    <div class="label-row"><span>Learner Tien</span><span>vs</span><span>F. Auger-Aliassime</span></div>
+    <div class="metric-grid">
+      <div class="metric-card"><span class="m-label">ELO Surface</span><div class="m-values"><span class="m-p1">1820</span><span class="m-p2">2150</span></div></div>
+      <div class="metric-card"><span class="m-label">PowerScore</span><div class="m-values"><span class="m-p1">62</span><span class="m-p2">78</span></div></div>
+      <div class="metric-card"><span class="m-label">Hold %</span><div class="m-values"><span class="m-p1">78%</span><span class="m-p2">89%</span></div></div>
+      <div class="metric-card"><span class="m-label">Break %</span><div class="m-values"><span class="m-p1">24%</span><span class="m-p2">18%</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== VARIANT B: SVG Custom Glow ★ Selected ====== -->
+<div id="variant-b" class="variant">
+  <div class="chart-wrap">
+    <div class="chart-title">Radar Comparatif — Glow Néon SVG</div>
+    <div id="svgRadar" style="width:100%;height:320px;"></div>
+    <div class="label-row"><span style="color:var(--blue)">◆ Learner Tien</span><span style="color:var(--green)">◆ F. Auger-Aliassime</span></div>
+    <div class="metric-grid">
+      <div class="metric-card"><span class="m-label">ELO Surface</span><div class="m-values"><span class="m-p1">1820</span><span class="m-p2">2150</span></div></div>
+      <div class="metric-card"><span class="m-label">PowerScore</span><div class="m-values"><span class="m-p1">62</span><span class="m-p2">78</span></div></div>
+      <div class="metric-card"><span class="m-label">Clutch</span><div class="m-values"><span class="m-p1">55%</span><span class="m-p2">68%</span></div></div>
+      <div class="metric-card"><span class="m-label">TB Win</span><div class="m-values"><span class="m-p1">4-2</span><span class="m-p2">8-3</span></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== VARIANT C: Horizontal Bars ====== -->
+<div id="variant-c" class="variant">
+  <div class="chart-wrap">
+    <div class="chart-title">Comparaison par Barres — Layout Horizontal</div>
+    <div id="barChart" style="width:100%;"></div>
+    <div class="metric-grid" style="margin-top:24px">
+      <div class="metric-card"><span class="m-label">Niveau (ATP Rank)</span><div class="m-values"><span class="m-p1">#45</span><span class="m-p2">#12</span></div></div>
+      <div class="metric-card"><span class="m-label">Experience (L10)</span><div class="m-values"><span class="m-p1">6-4</span><span class="m-p2">8-2</span></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="sketch-tools" onmouseenter="this.style.opacity='1'" onmouseleave="this.style.opacity='0.35'">
+  <button onclick="responsiveTest(375)">375px</button>
+  <button onclick="responsiveTest(768)">768px</button>
+  <button onclick="responsiveTest(1280)">1280px</button>
+  <span style="margin:0 4px;color:rgba(255,255,255,.2)">|</span>
+  <span>Sketch 001</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"><\/script>
+<script>
+function showVariant(id) {
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='a') initRadarA();
+  if(id==='b') initRadarB();
+}
+
+function responsiveTest(w) {
+  var c = document.querySelector('.variant.active .chart-wrap');
+  if(c) c.style.maxWidth = w+'px';
+}
+
+// Variant A: Chart.js
+function initRadarA() {
+  var ctx = document.getElementById('radarA');
+  if (!ctx || ctx._init) return;
+  ctx._init = true;
+  new Chart(ctx, { type:'radar', data:{
+    labels:['ELO Surf.','PowerSc.','Momentum','Niveau','Experience','Efficacite'],
+    datasets:[
+      { label:'L. Tien', data:[62,62,55,68,60,58], backgroundColor:'rgba(0,119,255,0.18)', borderColor:'#0077ff', borderWidth:2, pointBackgroundColor:'#0077ff', pointRadius:3 },
+      { label:'F. Auger', data:[80,78,72,85,80,82], backgroundColor:'rgba(0,230,118,0.12)', borderColor:'#00e676', borderWidth:2, pointBackgroundColor:'#00e676', pointRadius:3 }
+    ]}, options:{ responsive:true, maintainAspectRatio:false, scales:{ r:{ min:0, max:100, grid:{ color:'rgba(255,255,255,0.05)' }, angleLines:{ color:'rgba(255,255,255,0.05)' }, pointLabels:{ color:'#94a3b8', font:{ size:10, family:"'DM Mono',monospace", weight:'600' } }, ticks:{ display:false, stepSize:25 } } }, plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#94a3b8', font:{ size:10 }, usePointStyle:true, padding:12 } } } }
+  });
+}
+
+// Variant B: SVG Custom
+function initRadarB() {
+  var svg = document.getElementById('svgRadar');
+  if(!svg || svg._init) return;
+  svg._init = true;
+  var w=400,h=300,cx=200,cy=150,R=110,axes=['ELO','PS','Mom.','Niv.','Exp.','Eff.'];
+  var n=6, d1=[62,62,55,68,60,58], d2=[80,78,72,85,80,82];
+  var angle=function(i){ return -Math.PI/2 + (2*Math.PI*i/n); };
+  var html='<svg width="100%" height="320" viewBox="0 0 '+w+' '+h+'">';
+  for(var l=1;l<=4;l++){
+    var pts=''; for(var i=0;i<n;i++){ var a=angle(i); pts+=(cx+Math.cos(a)*R*l/4)+','+(cy+Math.sin(a)*R*l/4)+' '; }
+    html+='<polygon points="'+pts+'" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>';
+  }
+  for(var i=0;i<n;i++){ var a=angle(i); html+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+Math.cos(a)*R)+'" y2="'+(cy+Math.sin(a)*R)+'" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>'; }
+  for(var i=0;i<n;i++){ var a=angle(i),lx=cx+Math.cos(a)*(R+16),ly=cy+Math.sin(a)*(R+16); html+='<text x="'+lx+'" y="'+ly+'" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace" font-weight="600">'+axes[i]+'</text>'; }
+  var pts1=''; for(var i=0;i<n;i++){ var a=angle(i),r=R*d1[i]/100; pts1+=(cx+Math.cos(a)*r)+','+(cy+Math.sin(a)*r)+' '; }
+  html+='<polygon points="'+pts1+'" fill="rgba(0,119,255,0.18)" stroke="#0077ff" stroke-width="2" filter="url(#glow1)"/>';
+  var pts2=''; for(var i=0;i<n;i++){ var a=angle(i),r=R*d2[i]/100; pts2+=(cx+Math.cos(a)*r)+','+(cy+Math.sin(a)*r)+' '; }
+  html+='<polygon points="'+pts2+'" fill="rgba(0,230,118,0.12)" stroke="#00e676" stroke-width="2" filter="url(#glow2)"/>';
+  html+='<defs><filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="glow2"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  for(var i=0;i<n;i++){ var a=angle(i),r1=R*d1[i]/100,r2=R*d2[i]/100; html+='<circle cx="'+(cx+Math.cos(a)*r1)+'" cy="'+(cy+Math.sin(a)*r1)+'" r="3" fill="#0077ff"/>'; html+='<circle cx="'+(cx+Math.cos(a)*r2)+'" cy="'+(cy+Math.sin(a)*r2)+'" r="3" fill="#00e676"/>'; }
+  html+='</svg>'; svg.innerHTML=html;
+}
+
+// Variant C: Bars
+(function() {
+  var el = document.getElementById('barChart');
+  var metrics = [
+    { label:'ELO Surface', p1:62, p2:80 },
+    { label:'PowerScore', p1:62, p2:78 },
+    { label:'Momentum', p1:55, p2:72 },
+    { label:'Niveau', p1:68, p2:85 },
+    { label:'Experience', p1:60, p2:80 },
+    { label:'Efficacite', p1:58, p2:82 }
+  ];
+  var html = '';
+  metrics.forEach(function(m) {
+    var diff = m.p2 - m.p1;
+    html += '<div style="margin-bottom:12px">';
+    html += '<div style="display:flex;justify-content:space-between;font-family:var(--font-data);font-size:10px;color:var(--text3);margin-bottom:4px;text-transform:uppercase"><span>'+m.label+'</span><span style="color:var(--text2)">'+m.p1+' vs '+m.p2+'</span></div>';
+    html += '<div style="display:flex;align-items:center;gap:6px">';
+    html += '<div style="flex:1;height:20px;background:rgba(255,255,255,.03);border-radius:4px;overflow:hidden;display:flex">';
+    html += '<div style="width:'+m.p1+'%;height:100%;background:linear-gradient(90deg,rgba(0,119,255,.4),#0077ff);border-radius:4px 0 0 4px;transition:width .4s ease"></div>';
+    html += '<div style="width:'+(m.p2-m.p1)+'%;height:100%;background:rgba(255,255,255,.06);border-right:2px solid #00e676"></div>';
+    html += '<div style="width:'+(100-m.p2)+'%;height:100%;background:transparent"></div>';
+    html += '</div></div></div>';
+  });
+  el.innerHTML = html;
+})();
+
+// Init on load
+initRadarA();
+</script>
+</body></html>
+

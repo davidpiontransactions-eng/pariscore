@@ -840,11 +840,18 @@ const AppCache = {
 
 // ─── PAGE ROUTER ─────────────────────────────────────────────────────────────
 function showPage(pageId, linkEl) {
+  try {
+  // Sauvegarde scroll de la page courante AVANT d'ecraser dataset.page (fix R4)
+  var _prevPageId = document.body.dataset.page;
+  if (_prevPageId && _prevPageId !== pageId) {
+    var _prevPage = document.getElementById('page-' + _prevPageId);
+    if (_prevPage) _prevPage._scrollY = window.scrollY;
+  }
   document.body.dataset.page = pageId;
-  // Flag user-navigated : empêche DCL handler de re-router vers accueil après
+  // Flag user-navigated : empeche DCL handler de re-router vers accueil apres
   // un confirmStrategy rapide (race ParisScorebis-amc Fix A).
   try { sessionStorage.setItem('ps_user_navigated', '1'); } catch (e) {}
-  // Anti hub stuck : force fermeture sport-hub + strategy-setup à chaque nav
+  // Anti hub stuck : force fermeture sport-hub + strategy-setup a chaque nav
   // hors flow d'init mobile (ParisScorebis-amc Fix D).
   try {
     if (pageId !== 'accueil') {
@@ -855,17 +862,18 @@ function showPage(pageId, linkEl) {
     }
   } catch (e) {}
   // Stop tennis poll quand on quitte l'onglet
-  if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive();
-  if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets();
-  if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10();
-
-
-  // Sauvegarde scroll de la page courante avant de la cacher
-  var _prevPageId = document.body.dataset.page;
+  try { if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive(); } catch(e) {}
+  try { if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets(); } catch(e) {}
+  try { if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10(); } catch(e) {}
   if (_prevPageId) {
     var _prevPage = document.getElementById('page-' + _prevPageId);
     if (_prevPage) _prevPage._scrollY = window.scrollY;
   }
+
+  // Anti-stuck : toujours cacher le lock avant de naviguer
+  // (sinon z-index 7000 bloque les clics nav vers pages ouvertes)
+  var _lk = document.getElementById('page-locked');
+  if (_lk) _lk.style.display = 'none';
 
   // Verrou tier/sport — bloque les modules non accessibles
   if (typeof psPageBlocked === 'function') {
@@ -878,8 +886,7 @@ function showPage(pageId, linkEl) {
   const _qfb = document.getElementById('ps-quick-filters');
   const _dpk = document.getElementById('ps-date-picker');
   [_fc, _qfb, _dpk].forEach(function(el) { if (el) el.style.display = 'none'; });
-  const _lk = document.getElementById('page-locked');
-  if (_lk) _lk.style.display = 'none';
+  // page-locked already hidden at top of showPage
   const page = document.getElementById('page-' + pageId);
   if (page) {
     page.style.display = (['matchs','tennis','cs2'].includes(pageId) && document.documentElement.classList.contains('ps-desktop-v1')) ? 'grid' : 'block';
@@ -906,36 +913,42 @@ function showPage(pageId, linkEl) {
   if (linkEl) { linkEl.classList.add('active'); linkEl.setAttribute('aria-current', 'page'); }
   else { const l = document.querySelector(`.nav-links a[data-page="${pageId}"]`); if(l) { l.classList.add('active'); l.setAttribute('aria-current', 'page'); } }
   if (pageId === 'accueil') { initAccueilTopMatches(); loadHeroAccuracy(); loadPartnerBookmakers(); }
-  if (pageId === 'hot-picks' && !hotPicksLoaded) { hotPicksLoaded = true; loadHotPicks(); }
-  if (pageId === 'sure-bets' && !sureBetsLoaded) { sureBetsLoaded = true; loadSureBets(); }
-  if (pageId === 'matchs' && !matchesLoaded) { matchesLoaded = true; loadMatches(); }
-  if (pageId === 'matchs') initMatchdayBanner();
-  if (pageId === 'predictions') { loadPredictions(); loadBetminesPicks(); }
-  if (pageId === 'historique')  initHistoriquePage();
-  if (pageId === 'paris')       initParisPage();
-  if (pageId === 'strategies')  initStrategiesPage();
-  if (pageId === 'tendances')   loadTrends();
-  if (pageId === 'alertes')    initAlertesPage();
-  if (pageId === 'comparateur') initComparateur();
-  if (pageId === 'guide')    initStaticGuideNav();
-  if (pageId === 'tennis')   { tn2SwitchTab('live'); loadTennisAbstractRome(); loadTexMatches(); loadTexCalendar(); loadTaEloIndices().then(enrichTennisVbWithTA); loadTaLotteryIndices(); loadTaMCPLadder('men'); loadTaBirthdaysRibbon(); }
-  if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page();
-  if (pageId === 'cs2') initCs2Page();
-  if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage();
-  if (pageId === 'mma') initMMAPage();
-  if (pageId === 'tennis-alerts') loadTennisAlerts();
-  if (pageId !== 'nba' && typeof stopNbaPage === 'function') stopNbaPage();
-  if (pageId === 'nba') initNbaPage();
-  if (pageId !== 'wnba' && typeof stopWnbaPage === 'function') stopWnbaPage();
-  if (pageId === 'wnba') initWnbaPage();
-  if (pageId !== 'f1' && typeof stopF1Page === 'function') stopF1Page();
-  if (pageId === 'f1') initF1Page();
+  if (pageId === 'hot-picks' && !hotPicksLoaded) { try { hotPicksLoaded = true; loadHotPicks(); } catch(e) { console.warn('hot-picks init:', e); } }
+  if (pageId === 'sure-bets' && !sureBetsLoaded) { try { sureBetsLoaded = true; loadSureBets(); } catch(e) { console.warn('sure-bets init:', e); } }
+  if (pageId === 'matchs' && !matchesLoaded) { try { matchesLoaded = true; loadMatches(); } catch(e) { console.warn('matchs init:', e); } }
+  if (pageId === 'matchs') try { initMatchdayBanner(); } catch(e) {}
+  if (pageId === 'predictions') { try { loadPredictions(); } catch(e){}; try { loadBetminesPicks(); } catch(e){} }
+  if (pageId === 'historique')  try { initHistoriquePage(); } catch(e) {}
+  if (pageId === 'paris')       try { initParisPage(); } catch(e) {}
+  if (pageId === 'strategies')  try { initStrategiesPage(); } catch(e) {}
+  if (pageId === 'tendances')   try { loadTrends(); } catch(e) {}
+  if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
+  if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
+  if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
+  if (pageId === 'tennis')   { try { tn2SwitchTab('live'); } catch(e){}; try { startTennisTop10(); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
+  try { if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page(); } catch(e) {}
+  if (pageId === 'cs2') try { initCs2Page(); } catch(e) {}
+  try { if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage(); } catch(e) {}
+  if (pageId === 'mma') try { initMMAPage(); } catch(e) {}
+  if (pageId === 'tennis-alerts') try { loadTennisAlerts(); } catch(e) {}
+  try { if (pageId !== 'nba' && typeof stopNbaPage === 'function') stopNbaPage(); } catch(e) {}
+  if (pageId === 'nba') try { initNbaPage(); } catch(e) {}
+  try { if (pageId !== 'wnba' && typeof stopWnbaPage === 'function') stopWnbaPage(); } catch(e) {}
+  if (pageId === 'wnba') try { initWnbaPage(); } catch(e) {}
+  try { if (pageId !== 'f1' && typeof stopF1Page === 'function') stopF1Page(); } catch(e) {}
+  if (pageId === 'f1') try { initF1Page(); } catch(e) {}
   // Met à jour le titre dynamique selon la page
   setPageTitle(pageId);
   // Restaure la position scroll sauvegardée ou scroll en haut
   var _newPageEl = document.getElementById('page-' + pageId);
   var _savedY = _newPageEl ? (_newPageEl._scrollY || 0) : 0;
   window.scrollTo({ top: _savedY, behavior: _savedY > 0 ? 'auto' : 'smooth' });
+  } catch(e) {
+    console.error('[showPage] CRITICAL NAV ERROR on page=' + pageId, e);
+    // Fallback: force navigation via location hash
+    try { window.location.hash = '#' + pageId; } catch(_) {}
+    return;
+  }
 }
 
 function setPageTitle(sportName) {
@@ -4274,7 +4287,7 @@ function _tnEsc(s) {
 
 function _tnTop10SetMode(mode, btn) {
   _tnTop10Mode = mode;
-  document.querySelectorAll('.tn-t10-mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.tn2-mode-btn').forEach(b => b.classList.toggle('active', b === btn));
   fetchTennisTop10();
 }
 
@@ -4342,7 +4355,7 @@ function _tnTop10Card(m, rank) {
 
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   const av1 = m.player_id_p1
-    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)" crossorigin="anonymous">`
     : `<span style="width:48px;height:48px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">${playerInitials(m.player1||'?')}</span>`;
   const av2 = m.player_id_p2
     ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
@@ -4421,17 +4434,61 @@ function _tnTop10Card(m, rank) {
       + '</div>';
   }
 
+  // DATA_PIPELINE_V3 : MetricCardXXL (SRV, RET, H2H)
+  let metricsHtml = '';
+  if (m.metrics && m.metrics.srv_pts_won_s && m.metrics.srv_pts_won_s.a != null) {
+    const srvA = (m.metrics.srv_pts_won_s.a * 100).toFixed(1);
+    const srvB = (m.metrics.srv_pts_won_s.b * 100).toFixed(1);
+    const retA = (m.metrics.ret_pts_won_s.a * 100).toFixed(1);
+    const retB = (m.metrics.ret_pts_won_s.b * 100).toFixed(1);
+    const h2h = m.metrics.h2h_surface || {};
+    const h2hStr = h2h.total ? h2h.wins_a+'-'+h2h.wins_b : 'N/A';
+    const h2hTrend = h2h.momentum > 0.1 ? ' ↗' : h2h.momentum < -0.1 ? ' ↘' : ' →';
+    const motA = (m.metrics.motivation.a * 100).toFixed(0);
+    const motB = (m.metrics.motivation.b * 100).toFixed(0);
+    const p1 = _tnEsc(m.player1 || 'J1');
+    const p2 = _tnEsc(m.player2 || 'J2');
+
+    metricsHtml = '<div class="ps-metrics-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
+      + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')">'
+        + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-service)">🟦 SERVICE</span><span class="ps-metric-xxl-badge service">Noyau</span></div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
+          + '<span class="ps-metric-xxl-value">'+srvA+'%</span>'
+          + '<span style="font-family:var(--ps-font-body);font-size:11px;color:var(--ps-text-tertiary)">vs '+srvB+'%</span></div>'
+        + '<div class="ps-metric-xxl-context"> Moy. Top 10: 68.2%</div>' + (m.metrics.srv_sparkline ? '<div style="height:28px;margin-top:2px">'+_psSparkline(m.metrics.srv_sparkline,120,28,'#38bdf8')+'</div>' : '')
+      + '</div>'
+      + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')">'
+        + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-return)">🟩 RETOUR</span><span class="ps-metric-xxl-badge return">Noyau</span></div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
+          + '<span class="ps-metric-xxl-value">'+retA+'%</span>'
+          + '<span style="font-family:var(--ps-font-body);font-size:11px;color:var(--ps-text-tertiary)">vs '+retB+'%</span></div>'
+        + '<div class="ps-metric-xxl-context"> Moy. Top 10: 36.8%</div>' + (m.metrics.ret_sparkline ? '<div style="height:28px;margin-top:2px">'+_psSparkline(m.metrics.ret_sparkline,120,28,'#10b981')+'</div>' : '')
+      + '</div>'
+      + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')">'
+        + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-global)">⬜ H2H SURFACE</span><span class="ps-metric-xxl-badge global">Noyau</span></div>'
+        + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
+          + '<span class="ps-metric-xxl-value">'+h2hStr+'</span>'
+          + '<span style="font-family:var(--ps-font-body);font-size:11px;color:'+(h2h.momentum > 0 ? 'var(--ps-accent-green)' : 'var(--ps-text-tertiary)')+'">'+h2hTrend+'</span></div>'
+        + '<div class="ps-metric-xxl-context">'+(h2h.total ? (h2h.wins_a > h2h.wins_b ? p1+' domine' : p2+' domine') : 'Pas assez de donnees')+'</div>'
+      + '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
+      + '<span class="ps-metric-s"> Motivation <span class="ps-metric-s-value">'+motA+'%</span> vs <span class="ps-metric-s-value">'+motB+'%</span></span>'
+      + '<span class="ps-metric-s"> Public <span class="ps-metric-s-value">'+(m.metrics.public.a > 1 ? 'Domicile' : 'Exterieur')+'</span></span>'
+      + '<span class="ps-metric-s"> AGE.30 <span class="ps-metric-s-value">'+m.metrics.age_30.a+'</span></span>' + (m.metrics.bp_conv && m.metrics.bp_conv.a != null ? '<span class="ps-metric-s"> BP Conv <span class="ps-metric-s-value">'+(m.metrics.bp_conv.a*100).toFixed(1)+'%</span></span>' : '') + (m.metrics.bp_saved && m.metrics.bp_saved.a != null ? '<span class="ps-metric-s"> BP Saved <span class="ps-metric-s-value">'+(m.metrics.bp_saved.a*100).toFixed(1)+'%</span></span>' : '') + (m.metrics.pressure_index && m.metrics.pressure_index.a != null ? '<span class="ps-metric-s"> Pressure <span class="ps-metric-s-value">'+(m.metrics.pressure_index.a*100).toFixed(1)+'%</span></span>' : '')
+    + '</div>';
+  }
   return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')">
   <div class="tn-t10-card-top">
     <span class="tn-t10-rank">#${rank}</span>
-    <span class="tn-t10-score-badge ${scoreColor}">${m.score_top10.toFixed(1)}<span>/100</span></span>
+    <span class="tn-t10-score-badge ${scoreColor}">${m.score_top10 != null ? m.score_top10.toFixed(1) : '—'}<span>/100</span></span>
   </div>
   <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
   ${liveScore}
   <div class="tn-t10-players">
-    <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc(m.player1 || '—')}</span>${r1}</div>
+    <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc( (!m.player1 || m.player1 === '?') ? '—' : m.player1 )}</span>${r1}</div>
     <div class="tn-t10-vs">vs</div>
-    <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc(m.player2 || '—')}</span>${r2}</div>
+    <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc( (!m.player2 || m.player2 === '?') ? '—' : m.player2 )}</span>${r2}</div>
   </div>
   ${surfacePill}
   ${dateBadge}
@@ -4440,7 +4497,9 @@ function _tnTop10Card(m, rank) {
     <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
     ${chipsHtml}
   </div>
+  <button class="p-bets-btn" data-fixture-id="${safeId}" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" title="Bets prédictifs IA" aria-label="P_BETS">P_BETS</button>
   ${betsHtml}
+  ${metricsHtml}
   ${oddsHtml}
 </div>`;
 }
@@ -4465,33 +4524,144 @@ function _tnTop10AlertNewEntry(top10) {
   }
 }
 
+
+// ── DATA_PIPELINE_V3 : showMetricDetail (drawer détail métrique) ──
+
+
+// DATA_PIPELINE_V3 : SVG Sparkline render
+function _psSparkline(values, w, h, color) {
+  if (!values || values.length < 2) return '';
+  var min = Math.min.apply(null, values);
+  var max = Math.max.apply(null, values);
+  var range = max - min || 1;
+  var pts = values.map(function(v, i) {
+    var x = (i / (values.length - 1)) * w;
+    var y = h - ((v - min) / range) * (h - 4) - 2;
+    return x + ',' + y;
+  }).join(' ');
+  var fill = '<polygon points="' + pts + ' ' + w + ',' + h + ' 0,' + h + '" fill="' + color + '20" />';
+  var line = '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />';
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block;width:100%;height:' + h + 'px">' + fill + line + '</svg>';
+}
+
+function showMetricDetail(matchId, metric) {
+  const labels = { srv: 'SRV_PTS_WON_S — % Points Service Gagnés', ret: 'RET_PTS_WON_S — % Points Retour Gagnés', h2h: 'H2H SURFACE — Head-to-Head par surface' };
+  const catColors = { srv: 'var(--ps-cat-service)', ret: 'var(--ps-cat-return)', h2h: 'var(--ps-cat-global)' };
+  const icons = { srv: '🟦', ret: '🟩', h2h: '⬜' };
+
+  // Create or get detail drawer
+  let drawer = document.getElementById('ps-metric-drawer');
+  if (!drawer) {
+    drawer = document.createElement('div');
+    drawer.id = 'ps-metric-drawer';
+    drawer.innerHTML = '<div id="ps-drawer-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99998;background:rgba(0,0,0,0.6)" onclick="closeMetricDrawer()"></div><div id="ps-drawer-content" style="position:fixed;top:0;right:0;width:420px;max-width:90vw;height:100vh;z-index:99999;background:var(--ps-card,#131722);border-left:1px solid var(--ps-border,rgba(255,255,255,0.05));overflow-y:auto;transform:translateX(100%);transition:transform 0.3s ease;padding:24px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><h3 style="font-family:var(--ps-font-display);font-weight:700;font-size:18px;color:var(--ps-text-primary);margin:0" id="ps-drawer-title">Détail</h3><button onclick="closeMetricDrawer()" style="background:none;border:none;color:var(--ps-text-secondary);font-size:24px;cursor:pointer;padding:4px 8px">✕</button></div><div id="ps-drawer-body" style="font-family:var(--ps-font-body);color:var(--ps-text-secondary);font-size:13px;line-height:1.6">Charge...</div></div>';
+    document.body.appendChild(drawer);
+    // Trigger slide-in
+    requestAnimationFrame(() => {
+      document.getElementById('ps-drawer-content').style.transform = 'translateX(0)';
+    });
+  }
+
+  // Update title
+  document.getElementById('ps-drawer-title').innerHTML = icons[metric] + ' ' + labels[metric] || metric;
+
+  // Build detail content
+  document.getElementById('ps-drawer-body').innerHTML = '<p style="color:var(--ps-text-tertiary);font-size:13px">Les données détaillées EWMA par match seront disponibles avec l\'activation du module BSD.</p><div style="margin-top:16px;padding:12px;background:var(--ps-bg-secondary,#0e121e);border-radius:8px"><p style="font-size:12px;color:var(--ps-text-tertiary);margin:0"><strong style="color:var(--ps-text-secondary)">Métrique :</strong> ' + (labels[metric] || metric) + '</p></div>';
+}
+
+function closeMetricDrawer() {
+  const content = document.getElementById('ps-drawer-content');
+  if (content) {
+    content.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      const drawer = document.getElementById('ps-metric-drawer');
+      if (drawer) drawer.remove();
+    }, 300);
+  }
+}
+
+// ── DATA_PIPELINE_V3 : Mode Tracker Live ──
+function toggleTrackerMode() {
+  var btn = document.querySelector('.ps-tracker-btn-toggle');
+  var grid = document.getElementById('tn2-top-grid') || document.getElementById('tn2-live-grid');
+  if (!btn || !grid) return;
+  var isTracker = grid.classList.toggle('ps-tracker-mode');
+  btn.textContent = isTracker ? '📊 COMPLET' : '🎯 TRACKER';
+  btn.style.background = isTracker ? 'rgba(0,230,118,0.15)' : '';
+  btn.style.color = isTracker ? 'var(--ps-accent-green,#00e676)' : '';
+  // Save preference
+  try { localStorage.setItem('ps_tracker_mode', isTracker ? 'tracker' : 'complet'); } catch(e) {}
+}
+
+// Restore tracker preference on load
+(function() {
+  try {
+    if (localStorage.getItem('ps_tracker_mode') === 'tracker') {
+      var grid = document.getElementById('tn2-top-grid') || document.getElementById('tn2-live-grid');
+      if (grid) {
+        grid.classList.add('ps-tracker-mode');
+        var btn = document.querySelector('.ps-tracker-btn-toggle');
+        if (btn) { btn.textContent = '📊 COMPLET'; btn.style.background = 'rgba(0,230,118,0.15)'; btn.style.color = '#00e676'; }
+      }
+    }
+  } catch(e) {}
+})();
 async function fetchTennisTop10() {
-  // [FIX BUG #2] Recherche le conteneur tn2-first (système tn2), sinon legacy
   var container = document.getElementById('tn2-top-grid') || document.getElementById('tn-top10-container');
   var statusEl  = document.getElementById('tn-top10-status');
   if (!container) return;
+  
+  // Compteur de retry global par session
+  if (fetchTennisTop10._retry === undefined) fetchTennisTop10._retry = 0;
+  
   try {
-    // Vérifier le cache pour affichage immédiat
-    const res = await fetch(`/api/v1/tennis/top10?mode=${_tnTop10Mode}`);
+    // Afficher le spinner au premier chargement
+    var isEmpty = container.innerHTML === '' || container.innerHTML.includes('tn-t10-empty') || container.innerHTML.includes('tn-t10-loading');
+    if (isEmpty && fetchTennisTop10._retry === 0) {
+      container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
+    }
+    
+    // Cache-busting
+    const res = await fetch(`/api/v1/tennis/top10?mode=${_tnTop10Mode}&_=${Date.now()}`);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
+    
+    // Si loading:true (cache froid en cours), retry avec backoff
+    if (data && data.loading === true) {
+      fetchTennisTop10._retry++;
+      if (fetchTennisTop10._retry <= 5) {
+        var delay = Math.min(1000 * Math.pow(2, fetchTennisTop10._retry - 1), 15000);
+        container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Analyse en cours... (tentative ' + fetchTennisTop10._retry + '/5)</div>';
+        setTimeout(fetchTennisTop10, delay);
+        return;
+      }
+    }
+    fetchTennisTop10._retry = 0;
+    
     try { AppCache.set('/api/v1/tennis/top10', data, 30000, 120000); } catch(e) {}
     if (statusEl) {
       const t = new Date(data.computed_at || Date.now());
-      statusEl.textContent = `${data.total_active || 0} matchs · ${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+      statusEl.textContent = data.total_active + ' matchs · ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
     }
     const top10 = data.top10 || [];
-    // [FIX BUG #3] Mise à jour des KPIs
     if (window.tn2UpdateKPI) tn2UpdateKPI({ top: top10.length });
     if (!top10.length) {
       container.innerHTML = '<div class="tn-t10-empty">Aucun match disponible pour le moment</div>';
       return;
     }
     _tnTop10AlertNewEntry(top10);
-    container.innerHTML = top10.map((m, i) => _tnTop10Card(m, i + 1)).join('');
+    container.innerHTML = top10.map(function(m, i) { return _tnTop10Card(m, i + 1); }).join('');
   } catch (err) {
-    if (statusEl) statusEl.textContent = 'Indisponible';
-    if (container) container.innerHTML = '<div class="tn-t10-empty">Données indisponibles</div>';
+    fetchTennisTop10._retry++;
+    if (fetchTennisTop10._retry <= 3) {
+      var delay = Math.min(2000 * Math.pow(2, fetchTennisTop10._retry - 1), 15000);
+      if (statusEl) statusEl.textContent = 'Tentative ' + fetchTennisTop10._retry + '/3...';
+      setTimeout(fetchTennisTop10, delay);
+    } else {
+      fetchTennisTop10._retry = 0;
+      if (statusEl) statusEl.textContent = 'Indisponible';
+      if (container) container.innerHTML = '<div class="tn-t10-empty">Données indisponibles</div>';
+    }
   }
 }
 
@@ -4581,97 +4751,6 @@ function _escapeHtmlSafe(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 }
 
-// ─── Tennis Explorer — Odds Drift & Player Profile (v10.9 MVP A+B + T2/T4/T6 v10.13) ──────
-let _texCurrentTour = 'atp-single';
-let _texCurrentDayOffset = 0;
-
-function setTexTour(tour) {
-  _texCurrentTour = (tour || 'atp-single').toLowerCase();
-  document.querySelectorAll('.tex-tour-btn').forEach(b => {
-    b.classList.toggle('is-active', b.dataset.tour === _texCurrentTour);
-  });
-  loadTexMatches();
-}
-
-function setTexDay(offset) {
-  _texCurrentDayOffset = parseInt(offset, 10) || 0;
-  loadTexMatches();
-}
-
-function _texFmtDrift(pct) {
-  if (pct == null || !Number.isFinite(pct)) return '<span class="tex-drift-flat">—</span>';
-  const abs = Math.abs(pct);
-  const cls = abs < 2 ? 'tex-drift-flat' : (pct > 0 ? 'tex-drift-up' : 'tex-drift-down');
-  const arrow = abs < 2 ? '→' : (pct > 0 ? '▲' : '▼');
-  return `<span class="${cls}">${arrow} ${(pct > 0 ? '+' : '')}${safeFixed(pct, 1)}%</span>`;
-}
-
-function _texFmtOdds(v) {
-  return v == null ? '—' : Number(v).toFixed(2);
-}
-
-async function loadTexMatches() {
-  const body = document.getElementById('tex-body');
-  const status = document.getElementById('tex-status');
-  if (status) status.textContent = I18N.t('status.loading');
-  try {
-    const tour = _texCurrentTour;
-    let dateParam = '';
-    if (_texCurrentDayOffset > 0) {
-      const d = new Date();
-      d.setDate(d.getDate() + _texCurrentDayOffset);
-      dateParam = `&date=${d.toISOString().slice(0, 10)}`;
-    }
-    const res = await apiFetch(`/api/v1/tennis/tex/matches?tour=${tour}${dateParam}`).then(r => r.json());
-    if (res.error) throw new Error(res.detail || res.error);
-    const matches = res.matches || [];
-    if (!matches.length) {
-      body.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Aucun match disponible.</div>';
-      if (status) status.textContent = '0 matchs';
-      return;
-    }
-    // Sort: matchs avec drift en premier, ordre = ampleur abs desc
-    const sorted = [...matches].sort((a, b) => {
-      const da = Math.abs(a.odds_drift_pct?.p1 ?? -1);
-      const db = Math.abs(b.odds_drift_pct?.p1 ?? -1);
-      if (da === -1 && db === -1) return 0;
-      if (da === -1) return 1;
-      if (db === -1) return -1;
-      return db - da;
-    });
-    const rows = sorted.map(m => {
-      const p1 = m.player1, p2 = m.player2;
-      const open = m.odds_open?.p1, curr = m.odds_current?.p1;
-      const drift = m.odds_drift_pct?.p1;
-      const fav = (curr != null && curr < 2) ? `<span style="color:var(--green,#00e676);font-size:9px;margin-left:4px;">FAV</span>` : '';
-      return `<tr>
-        <td style="white-space:nowrap;color:var(--text2,#8d9399);">${_escapeHtmlSafe(m.time_utc || '—')} UTC</td>
-        <td><a class="tex-player-link" onclick="openTexPlayerModal('${_escapeHtmlSafe(p1.slug)}')">${_escapeHtmlSafe(p1.name)}</a>${fav}</td>
-        <td style="color:var(--text2,#8d9399);">vs</td>
-        <td><a class="tex-player-link" onclick="openTexPlayerModal('${_escapeHtmlSafe(p2.slug)}')">${_escapeHtmlSafe(p2.name)}</a></td>
-        <td style="text-align:right;">${_texFmtOdds(open)}</td>
-        <td style="text-align:right;font-weight:600;">${_texFmtOdds(curr)}</td>
-        <td style="text-align:right;">${_texFmtDrift(drift)}</td>
-        <td>${m.tex_match_id ? `<button onclick="openTexBooksModal('${m.tex_match_id}')" style="padding:2px 6px;background:var(--bg3,#181c20);color:var(--text,#e8eaed);border:1px solid var(--bg4,#1e2328);border-radius:3px;cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;" title="Multi-books comparison">📊</button>` : ''}</td>
-      </tr>`;
-    }).join('');
-    body.innerHTML = `<table class="tex-table">
-      <thead><tr>
-        <th>Heure</th><th>Joueur 1</th><th></th><th>Joueur 2</th>
-        <th style="text-align:right;">Open</th><th style="text-align:right;">Current</th>
-        <th style="text-align:right;">Δ P1</th><th></th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-    if (status) {
-      const driftCount = matches.filter(m => m.odds_drift_pct?.p1 != null).length;
-      status.textContent = `${matches.length} matchs · ${driftCount} avec drift · MAJ ${fmtKickoffTime(res.fetched_at)}`;
-    }
-  } catch (e) {
-    body.innerHTML = `<div style="padding:32px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
-    if (status) status.textContent = 'Erreur';
-  }
-}
 
 // ─── BetMines integration v10.14 ──────────────────────────────────────────
 const BM_MARKET_LABELS = {
@@ -4854,215 +4933,75 @@ async function loadTexCalendar() {
   const body = document.getElementById('tex-cal-body');
   const status = document.getElementById('tex-cal-status');
   if (!body) return;
-  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">${I18N.t('status.loading')}</div>`;
+  body.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">${I18N.t('status.loading')}</div>`;
   try {
     const r = await apiFetch(`/api/v1/tennis/tex/calendar?tour=${_texCalTour}`).then(r => r.json());
     if (r.error) throw new Error(r.detail || r.error);
-    const surfColor = (s) => ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068';
-    const rows = (r.tournaments || []).map(t => `<tr>
-      <td style="white-space:nowrap;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:10px;">${_escapeHtmlSafe(t.start_date || '—')}</td>
-      <td><a href="${_escapeHtmlSafe(t.url || '#')}" target="_blank" rel="noopener" style="color:var(--text,#e8eaed);">${_escapeHtmlSafe(t.name || '—')}</a></td>
-      <td style="text-align:center;"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;background:${surfColor(t.surface)};vertical-align:middle;" title="${_escapeHtmlSafe(t.surface || '')}"></span> <span style="font-size:10px;color:var(--text2,#8d9399);">${_escapeHtmlSafe(t.surface || '')}</span></td>
-      <td style="text-align:right;font-family:'DM Mono',monospace;color:var(--green,#00e676);">${_escapeHtmlSafe(t.prize || '—')}</td>
-      <td style="text-align:right;">${t.singles_draw || '—'}<span style="color:var(--text3,#5a6068);font-size:9px;"> s</span></td>
-      <td style="text-align:right;">${t.doubles_draw || '—'}<span style="color:var(--text3,#5a6068);font-size:9px;"> d</span></td>
-    </tr>`).join('');
-    body.innerHTML = `<table class="tex-table" style="min-width:0;">
-      <thead><tr><th>Start</th><th>Tournoi</th><th style="text-align:center;">Surface</th><th style="text-align:right;">Prize</th><th style="text-align:right;">S Draw</th><th style="text-align:right;">D Draw</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-    if (status) status.textContent = `${r.count} actifs · MAJ ${fmtKickoffTime(r.fetched_at)}`;
-  } catch (e) {
-    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
-  }
-}
-
-function _texRenderMarketTable(market, label) {
-  if (!market || !market.bookmakers?.length) return '';
-  const fmtO = v => v == null ? '—' : Number(v).toFixed(2);
-  const hasLine = !!market.bookmakers[0]?.line;
-  const rows = market.bookmakers.slice(0, 30).map(b => `<tr>
-    <td>${_escapeHtmlSafe(b.bookmaker)}</td>
-    ${hasLine ? `<td style="color:var(--text2,#8d9399);">${_escapeHtmlSafe(b.line || '')}</td>` : ''}
-    <td style="text-align:right;${b.best_p1 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p1)}</td>
-    <td style="text-align:right;${b.best_p2 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p2)}</td>
-  </tr>`).join('');
-  return `<div style="margin-top:18px;padding-top:12px;border-top:1px solid var(--bg4,#1e2328);">
-    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:13px;margin-bottom:6px;">${_escapeHtmlSafe(label)} <span style="color:var(--text3,#5a6068);font-size:10px;font-family:'DM Mono',monospace;font-weight:400;">${_escapeHtmlSafe(market.title || '')} · ${market.book_count} books · avg ${fmtO(market.avg_odds?.p1)}/${fmtO(market.avg_odds?.p2)}</span></div>
-    <table class="tex-table" style="min-width:0;">
-      <thead><tr><th>Bookmaker</th>${hasLine ? '<th>Line</th>' : ''}<th style="text-align:right;">Odd 1</th><th style="text-align:right;">Odd 2</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>`;
-}
-
-function _texRenderOddsHistory(history) {
-  if (!history || !history.snapshots?.length || history.snapshots.length < 2) return '';
-  const snaps = history.snapshots;
-  const min = Math.min(...snaps.map(s => s.p1_curr));
-  const max = Math.max(...snaps.map(s => s.p1_curr));
-  const range = max - min || 1;
-  const width = 240, height = 48;
-  const step = width / (snaps.length - 1);
-  const points = snaps.map((s, i) => `${(i * step).toFixed(1)},${(height - ((s.p1_curr - min) / range) * height).toFixed(1)}`).join(' ');
-  const first = snaps[0].p1_curr;
-  const last = snaps[snaps.length - 1].p1_curr;
-  const trend = last > first ? 'up' : last < first ? 'down' : 'flat';
-  const color = trend === 'up' ? '#ff4d4d' : trend === 'down' ? '#00e676' : '#5a6068';
-  const arrow = trend === 'up' ? '▲' : trend === 'down' ? '▼' : '→';
-  const pct = ((last - first) / first * 100);
-  const firstTs = new Date(snaps[0].ts).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  const lastTs = new Date(snaps[snaps.length - 1].ts).toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-  return `<div style="margin-top:14px;padding:10px;background:var(--bg3,#181c20);border-radius:6px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;">📈 Odds P1 Drift (${snaps.length} snapshots)</div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:${color};font-weight:600;">${arrow} ${pct >= 0 ? '+' : ''}${safeFixed(pct, 1)}%</div>
-    </div>
-    <svg width="${width}" height="${height}" style="display:block;">
-      <polyline points="${points}" fill="none" stroke="${color}" stroke-width="1.5"/>
-    </svg>
-    <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3,#5a6068);margin-top:4px;">
-      <span>${firstTs} · ${safeFixed(first, 2)}</span>
-      <span>${lastTs} · ${safeFixed(last, 2)}</span>
-    </div>
-  </div>`;
-}
-
-async function openTexBooksModal(matchId) {
-  const modal = document.getElementById('tex-books-modal');
-  const body = document.getElementById('tex-books-modal-body');
-  if (!modal || !body || !matchId) return;
-  modal.style.display = 'flex';
-  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
-  trapFocus(modal);
-  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
-  try {
-    const [r, history] = await Promise.all([
-      apiFetch(`/api/v1/tennis/tex/match-detail?id=${encodeURIComponent(matchId)}`).then(r => r.json()),
-      apiFetch(`/api/v1/tennis/tex/odds-history?id=${encodeURIComponent(matchId)}`).then(r => r.json()).catch(() => null),
-    ]);
-    if (r.error) throw new Error(r.detail || r.error);
-    const books = r.bookmakers || [];
-    const fmtO = v => v == null ? '—' : Number(v).toFixed(2);
-    const fmtD = d => {
-      if (d == null) return '<span class="tex-drift-flat">—</span>';
-      const cls = Math.abs(d) < 2 ? 'tex-drift-flat' : (d > 0 ? 'tex-drift-up' : 'tex-drift-down');
-      return `<span class="${cls}">${d > 0 ? '+' : ''}${safeFixed(d, 1)}%</span>`;
+    const list = r.tournaments || [];
+    // Catégories badges
+    const catMeta = {
+      grand_slam:    { label: 'Grand Chelem', color: '#FFD700', bg: 'rgba(255,215,0,0.15)' },
+      masters_1000:  { label: 'Masters 1000', color: '#0077ff', bg: 'rgba(0,119,255,0.15)' },
+      wta_1000:      { label: 'WTA 1000',     color: '#E91E63', bg: 'rgba(233,30,99,0.15)' },
+      atp_500:       { label: 'ATP 500',      color: '#9C27B0', bg: 'rgba(156,39,176,0.15)' },
+      wta_500:       { label: 'WTA 500',      color: '#FF9800', bg: 'rgba(255,152,0,0.15)' },
+      atp_250:       { label: 'ATP 250',      color: '#4CAF50', bg: 'rgba(76,175,80,0.15)' },
+      wta_250:       { label: 'WTA 250',      color: '#00BCD4', bg: 'rgba(0,188,212,0.15)' },
     };
-    const rows = books.map(b => `<tr>
-      <td>${_escapeHtmlSafe(b.bookmaker)}</td>
-      <td style="text-align:right;${b.best_p1 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p1)}</td>
-      <td style="text-align:right;color:var(--text3,#5a6068);">${fmtO(b.open_p1)}</td>
-      <td style="text-align:right;">${fmtD(b.drift_p1_pct)}</td>
-      <td style="text-align:right;${b.best_p2 ? 'color:var(--green,#00e676);font-weight:600;' : ''}">${fmtO(b.odd_p2)}</td>
-      <td style="text-align:right;color:var(--text3,#5a6068);">${fmtO(b.open_p2)}</td>
-      <td style="text-align:right;">${fmtD(b.drift_p2_pct)}</td>
-    </tr>`).join('');
-    const bestStr = (b) => b ? `<strong style="color:var(--green,#00e676);">${safeFixed(b.odd, 2)}</strong> @ ${_escapeHtmlSafe(b.book)}` : '—';
-    body.innerHTML = `
-      <h3 style="margin:0 0 10px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;">📊 ${_escapeHtmlSafe(r.player1)} vs ${_escapeHtmlSafe(r.player2)}</h3>
-      <div style="margin-bottom:14px;font-size:11px;color:var(--text2,#8d9399);">
-        ${r.book_count} bookmaker(s) · H2H: ${_escapeHtmlSafe(r.h2h_summary || '—')}
-      </div>
-      <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:200px;background:var(--bg3,#181c20);padding:8px 12px;border-radius:6px;">
-          <div style="color:var(--text3,#5a6068);font-size:10px;text-transform:uppercase;">Best Player 1</div>
-          <div>${bestStr(r.best_odds?.p1)}</div>
-          <div style="color:var(--text3,#5a6068);font-size:10px;margin-top:4px;">avg ${r.avg_odds?.p1?.toFixed(2) || '—'}</div>
-        </div>
-        <div style="flex:1;min-width:200px;background:var(--bg3,#181c20);padding:8px 12px;border-radius:6px;">
-          <div style="color:var(--text3,#5a6068);font-size:10px;text-transform:uppercase;">Best Player 2</div>
-          <div>${bestStr(r.best_odds?.p2)}</div>
-          <div style="color:var(--text3,#5a6068);font-size:10px;margin-top:4px;">avg ${r.avg_odds?.p2?.toFixed(2) || '—'}</div>
-        </div>
-      </div>
-      ${books.length ? `<table class="tex-table" style="min-width:0;">
-        <thead><tr>
-          <th>Bookmaker</th>
-          <th style="text-align:right;">P1 odd</th>
-          <th style="text-align:right;">Open</th>
-          <th style="text-align:right;">Δ</th>
-          <th style="text-align:right;">P2 odd</th>
-          <th style="text-align:right;">Open</th>
-          <th style="text-align:right;">Δ</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>` : '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">Aucune cote disponible pour ce match.</div>'}
-      ${_texRenderOddsHistory(history)}
-      ${_texRenderMarketTable(r.markets?.over_under, '🎯 Over / Under (sets)')}
-      ${_texRenderMarketTable(r.markets?.asian_handicap, '⚖️ Asian Handicap')}
-      ${_texRenderMarketTable(r.markets?.correct_score, '🔢 Correct Score')}
-      <div style="margin-top:12px;font-size:10px;color:var(--text3,#5a6068);">
-        <a href="${r.source_url}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir détail complet ↗</a>
-      </div>
-    `;
-  } catch (e) {
-    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
-  }
-}
-
-async function openTexPlayerModal(slug) {
-  const modal = document.getElementById('tex-player-modal');
-  const body = document.getElementById('tex-player-modal-body');
-  if (!modal || !body || !slug) return;
-  modal.style.display = 'flex';
-  modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
-  trapFocus(modal);
-  body.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);">${I18N.t('status.loading')}</div>`;
-  try {
-    const p = await apiFetch(`/api/v1/tennis/tex/player?slug=${encodeURIComponent(slug)}`).then(r => r.json());
-    if (p.error) throw new Error(p.detail || p.error);
-    const rankS = p.rank_singles ? `${p.rank_singles.current ?? '—'} (haut: ${p.rank_singles.highest ?? '—'})` : '—';
-    const rankD = p.rank_doubles ? `${p.rank_doubles.current ?? '—'} (haut: ${p.rank_doubles.highest ?? '—'})` : '—';
-    const age = p.dob ? (() => {
-      const d = new Date(p.dob);
-      const now = new Date();
-      let a = now.getFullYear() - d.getFullYear();
-      if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) a--;
-      return a;
-    })() : '—';
-    const hw = (p.height_cm && p.weight_kg) ? `${p.height_cm} cm / ${p.weight_kg} kg` : '—';
-    // UC-3 : Lottery profile depuis indices TA pré-chargés
-    const lot = getTaLotteryProfile(p.name || slug.replace(/-/g, ' '));
-    const lotLine = lot
-      ? `<tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Lottery (7j)</td><td style="padding:4px 8px;color:var(--amber,#ffa726);">${lot.wins}W / ${lot.losses}L · ${lot.total} close matches</td></tr>`
+    const catDefault = { label: '—', color: 'var(--text3,#5a6068)', bg: 'transparent' };
+    const surfColor = (s) => ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068';
+    let gsCount = 0, m1000Count = 0;
+    const rows = list.map(t => {
+      const cat = catMeta[t.category] || catDefault;
+      if (t.category === 'grand_slam') gsCount++;
+      if (t.category === 'masters_1000' || t.category === 'wta_1000') m1000Count++;
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;" onmouseenter="this.style.background='rgba(0,119,255,0.06)'" onmouseleave="this.style.background=''">
+        <td style="padding:10px 10px 10px 16px;white-space:nowrap;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;font-size:11px;">${_escapeHtmlSafe(t.start_date || '—')}</td>
+        <td style="padding:10px 8px;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:${cat.color};background:${cat.bg};margin-right:8px;vertical-align:middle;">${cat.label}</span>
+          <a href="${_escapeHtmlSafe(t.url || '#')}" target="_blank" rel="noopener" style="color:var(--text,#e8eaed);text-decoration:none;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:500;vertical-align:middle;">${_escapeHtmlSafe(t.name || '—')}</a>
+        </td>
+        <td style="padding:10px 8px;text-align:center;white-space:nowrap;">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${surfColor(t.surface)};vertical-align:middle;margin-right:5px;"></span>
+          <span style="font-size:11px;color:var(--text2,#8d9399);vertical-align:middle;">${_escapeHtmlSafe(t.surface || '—')}</span>
+        </td>
+        <td style="padding:10px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;color:var(--green,#00e676);font-weight:600;white-space:nowrap;">${_escapeHtmlSafe(t.prize || '—')}</td>
+        <td style="padding:10px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text,#e8eaed);">${t.singles_draw || '—'}<span style="color:var(--text3,#5a6068);font-size:9px;margin-left:2px;">S</span></td>
+        <td style="padding:10px 16px 10px 8px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2,#8d9399);">${t.doubles_draw || '—'}<span style="color:var(--text3,#5a6068);font-size:9px;margin-left:2px;">D</span></td>
+      </tr>`;
+    }).join('');
+    const catRow = gsCount || m1000Count
+      ? `<tr><td colspan="6" style="padding:8px 12px;font-size:10px;color:var(--text3,#5a6068);border-bottom:none;">${gsCount ? `<span style="color:#FFD700;">🏆 ${gsCount} Grand Chelem</span>` : ''}${gsCount && m1000Count ? ' · ' : ''}${m1000Count ? `<span style="color:#0077ff;">🔵 ${m1000Count} Masters 1000 / WTA 1000</span>` : ''}</td></tr>`
       : '';
-    body.innerHTML = `
-      <h3 style="margin:0 0 12px;font-family:Syne,sans-serif;font-weight:700;font-size:18px;color:var(--text,#e8eaed);">${_escapeHtmlSafe(p.name || slug)}</h3>
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Pays</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.country || '—')}</td></tr>
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Date naissance</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.dob || '—')} · ${age} ans</td></tr>
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Sexe</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.sex || '—')}</td></tr>
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Main</td><td style="padding:4px 8px;">${_escapeHtmlSafe(p.plays || '—')}</td></tr>
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Taille/Poids</td><td style="padding:4px 8px;">${hw}</td></tr>
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank simple</td><td style="padding:4px 8px;color:var(--green,#00e676);font-weight:600;">${rankS}</td></tr>
-        <tr><td style="padding:4px 8px;color:var(--text3,#5a6068);">Rank double</td><td style="padding:4px 8px;">${rankD}</td></tr>
-        ${lotLine}
+    body.innerHTML = `<div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#111a28;">
+            <th style="padding:10px 10px 10px 16px;text-align:left;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Date</th>
+            <th style="padding:10px 8px;text-align:left;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Tournoi</th>
+            <th style="padding:10px 8px;text-align:center;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Surface</th>
+            <th style="padding:10px 8px;text-align:right;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Prize</th>
+            <th style="padding:10px 8px;text-align:right;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Simple</th>
+            <th style="padding:10px 16px 10px 8px;text-align:right;font-family:'Instrument Sans',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Double</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${catRow}
+          ${rows || '<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3,#5a6068);font-family:\'DM Mono\',monospace;font-size:12px;">Aucun tournoi cette semaine.</td></tr>'}
+        </tbody>
       </table>
-      ${(() => {
-        const sr = p.surface_record;
-        if (!sr) return '';
-        const fmtSurf = (s) => s ? `${s.wins}/${s.losses} <span style="color:var(--text3,#5a6068);">(${(s.wins/(s.wins+s.losses)*100).toFixed(0)}%)</span>` : '—';
-        return `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--bg4,#1e2328);">
-          <div style="font-family:Syne,sans-serif;font-weight:700;font-size:12px;margin-bottom:6px;">🎾 Career W/L par surface</div>
-          <table style="width:100%;border-collapse:collapse;font-size:11px;">
-            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">All</td><td style="padding:3px 6px;color:var(--green,#00e676);font-weight:600;">${fmtSurf(sr.all)}</td></tr>
-            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">🟫 Clay</td><td style="padding:3px 6px;">${fmtSurf(sr.clay)}</td></tr>
-            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">⚡ Hard</td><td style="padding:3px 6px;">${fmtSurf(sr.hard)}</td></tr>
-            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">🏢 Indoors</td><td style="padding:3px 6px;">${fmtSurf(sr.indoors)}</td></tr>
-            <tr><td style="padding:3px 6px;color:var(--text3,#5a6068);">🌱 Grass</td><td style="padding:3px 6px;">${fmtSurf(sr.grass)}</td></tr>
-          </table>
-        </div>`;
-      })()}
-      <div style="margin-top:14px;font-size:11px;color:var(--text3,#5a6068);">
-        <a href="${_escapeHtmlSafe(p.source_url || '#')}" target="_blank" rel="noopener" style="color:var(--blue,#29b6f6);">Voir profile complet ↗</a>
-      </div>
-    `;
+    </div>`;
+    if (status) {
+      const parts = [`${list.length} tournois`];
+      if (gsCount) parts.push(`${gsCount} Grand Chelem`);
+      if (m1000Count) parts.push(`${m1000Count} M1000`);
+      status.textContent = parts.join(' · ') + ` · MAJ ${fmtKickoffTime(r.fetched_at)}`;
+    }
   } catch (e) {
-    body.innerHTML = `<div style="padding:20px;color:var(--red,#ff4d4d);">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
+    body.innerHTML = `<div style="padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
+    if (status) status.textContent = 'Erreur';
   }
 }
-
 async function loadTennisAbstractRome() {
   const section = document.getElementById('tennis-abstract-section');
   const statusEl = document.getElementById('ta-rome-status');
@@ -6531,22 +6470,12 @@ function openTennisAnalysisModal(matchId) {
   document.getElementById('tam-p2-rank').textContent = '';
   document.getElementById('tam-p1-img').src = '';
   document.getElementById('tam-p2-img').src = '';
-  document.getElementById('tam-glicko').textContent = '—';
-  document.getElementById('tam-glicko-sub').textContent = '';
-  document.getElementById('tam-momentum').textContent = '—';
-  document.getElementById('tam-momentum-sub').textContent = '';
-  document.getElementById('tam-probability').textContent = '—';
-  document.getElementById('tam-probability').className = 'tam-cell-value';
-  document.getElementById('tam-prob-pill').textContent = '';
-  document.getElementById('tam-prob-pill').style.display = 'none';
-  var fillEl = document.getElementById('tam-prob-fill');
-  if (fillEl) fillEl.style.width = '0%';
-  document.getElementById('tam-rho').textContent = '—';
-  document.getElementById('tam-rho').className = 'tam-cell-value';
-  document.getElementById('tam-rho-sub').textContent = '';
+
   document.getElementById('tam-footer').textContent = '';
 
-  fetch('/api/v1/tennis/detail/' + encodeURIComponent(String(matchId)))
+  if (window.__tnAnalysisAbort) { window.__tnAnalysisAbort.abort(); }
+  var __tnAbort = new AbortController(); window.__tnAnalysisAbort = __tnAbort;
+  fetch('/api/v1/tennis/detail/' + encodeURIComponent(String(matchId)), { signal: __tnAbort.signal })
     .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function(data) {
       // Meta
@@ -6562,67 +6491,15 @@ function openTennisAnalysisModal(matchId) {
       document.getElementById('tam-p2-rank').textContent = p2.rank ? 'ATP #' + p2.rank : '';
       var url1 = p1.id ? tennisPlayerPhotoURL(p1.id) : '';
       var url2 = p2.id ? tennisPlayerPhotoURL(p2.id) : '';
-      document.getElementById('tam-p1-img').src = url1;
-      document.getElementById('tam-p2-img').src = url2;
-      // Glicko-2 → elo_surface
-      var elo1 = p1.elo_surface, elo2 = p2.elo_surface;
-      if (elo1 != null && elo2 != null) {
-        document.getElementById('tam-glicko').textContent = elo1 + ' | ' + elo2;
-        var best = Math.max(elo1, elo2);
-        document.getElementById('tam-glicko-sub').textContent = 'P1 ' + elo1 + ' · P2 ' + elo2 + ' — Max ' + best;
-      } else if (elo1 != null) {
-        document.getElementById('tam-glicko').textContent = elo1;
-        document.getElementById('tam-glicko-sub').textContent = 'Joueur 1 uniquement';
-      } else if (elo2 != null) {
-        document.getElementById('tam-glicko').textContent = elo2;
-        document.getElementById('tam-glicko-sub').textContent = 'Joueur 2 uniquement';
-      }
-      // Momentum → surf_form
-      var m1 = p1.surf_form, m2 = p2.surf_form;
-      if (m1 != null && m2 != null) {
-        document.getElementById('tam-momentum').textContent = m1 + '% | ' + m2 + '%';
-        var t1 = m1 >= 60 ? '\u2197' : (m1 >= 40 ? '\u2192' : '\u2198');
-        var t2 = m2 >= 60 ? '\u2197' : (m2 >= 40 ? '\u2192' : '\u2198');
-        document.getElementById('tam-momentum-sub').textContent = t1 + ' P1 \u00B7 ' + t2 + ' P2';
-      } else if (m1 != null) {
-        document.getElementById('tam-momentum').textContent = m1 + '%';
-        document.getElementById('tam-momentum-sub').textContent = m1 >= 60 ? '\u2197 Forme positive' : (m1 >= 40 ? '\u2192 Stable' : '\u2198 En baisse');
-      } else if (m2 != null) {
-        document.getElementById('tam-momentum').textContent = m2 + '%';
-        document.getElementById('tam-momentum-sub').textContent = m2 >= 60 ? '\u2197 Forme positive' : (m2 >= 40 ? '\u2192 Stable' : '\u2198 En baisse');
-      }
-      // Probabilité de Gain
-      var pred = data.predictions;
-      if (pred && pred.blended && pred.blended.p1 != null) {
-        var pct = Math.round(pred.blended.p1 * 100);
-        var probEl = document.getElementById('tam-probability');
-        probEl.textContent = pct + '%';
-        probEl.className = 'tam-cell-value';
-        probEl.classList.add(pct >= 60 ? 'tam-green' : (pct >= 45 ? 'tam-orange' : 'tam-red'));
-        var fill = document.getElementById('tam-prob-fill');
-        if (fill) { setTimeout(function(){ fill.style.width = pct + '%'; }, 50); }
-        var pill = document.getElementById('tam-prob-pill');
-        if (pill) {
-          pill.textContent = pct >= 60 ? 'FAVORI' : (pct >= 45 ? 'BALANC\u00C9' : 'OPPRESS\u00C9');
-          pill.style.display = 'inline';
-          pill.style.background = pct >= 60 ? 'rgba(0,230,118,.08)' : (pct >= 45 ? 'rgba(251,146,60,.08)' : 'rgba(239,68,68,.08)');
-          pill.style.borderColor = pct >= 60 ? 'rgba(0,230,118,.2)' : (pct >= 45 ? 'rgba(251,146,60,.2)' : 'rgba(239,68,68,.2)');
-          pill.style.color = pct >= 60 ? '#00e676' : (pct >= 45 ? '#fb923c' : '#ef4444');
-        }
-      }
-      // Rho → confidence_badge
-      var badge = data.confidence_badge || {};
-      var rhoScore = badge.score;
-      var rhoLevel = badge.level || '';
-      if (rhoScore != null) {
-        var rhoEl = document.getElementById('tam-rho');
-        rhoEl.textContent = rhoScore + '/100';
-        rhoEl.className = 'tam-cell-value';
-        rhoEl.classList.add(rhoScore >= 70 ? 'tam-green' : (rhoScore >= 45 ? 'tam-orange' : 'tam-red'));
-        document.getElementById('tam-rho-sub').textContent = rhoLevel || '—';
-      } else if (rhoLevel) {
-        document.getElementById('tam-rho').textContent = rhoLevel;
-      }
+      var img1 = document.getElementById('tam-p1-img');
+      var img2 = document.getElementById('tam-p2-img');
+      img1.src = url1; img1.dataset.playerId = p1.id || ''; img1.dataset.name = p1.name || '';
+      img1.setAttribute('onerror', 'fixBrokenPlayerPhoto(this)');
+      img1.crossOrigin = 'anonymous';
+      img2.src = url2; img2.dataset.playerId = p2.id || ''; img2.dataset.name = p2.name || '';
+      img2.setAttribute('onerror', 'fixBrokenPlayerPhoto(this)');
+      img2.crossOrigin = 'anonymous';
+
       // Footer : edge + verdict
       var edge = data.best_edge || {};
       var parts = [];
@@ -6633,6 +6510,36 @@ function openTennisAnalysisModal(matchId) {
       document.getElementById('tam-footer').textContent = parts.length ? parts.join(' \u00B7 ') : 'Analyse IA · PariScore';
 
       // ── H2H Surface Comparative Table ──
+      // H2H Widget
+      var h2h = data.h2h_record;
+      if (h2h && h2h.all && h2h.all.total > 0) {
+        var wEl = document.getElementById('tam-h2h-widget');
+        if (wEl) { wEl.style.display = 'block'; }
+        var allEl = document.getElementById('tam-h2h-all');
+        var surfEl = document.getElementById('tam-h2h-surface');
+        var p1n = p1.name || 'J1', p2n = p2.name || 'J2';
+        if (allEl) allEl.textContent = 'H2H: ' + p1n + ' ' + h2h.all.p1 + '-' + h2h.all.p2 + ' ' + p2n;
+        if (surfEl && h2h.surface) surfEl.textContent = (data.meta.surface || 'Surface') + ': ' + (h2h.surface.p1 ?? '?') + '-' + (h2h.surface.p2 ?? '?');
+        else if (surfEl) surfEl.textContent = 'Aucun match sur cette surface';
+      }
+      // Avg Set Score H2H
+      var avgH2H = data.avg_set_score_h2h;
+      if (avgH2H && avgH2H.sets > 0) {
+        var avgElH2H = document.getElementById('tam-h2h-avg-set');
+        if (avgElH2H) avgElH2H.textContent = '(' + avgH2H.sets + ' sets, moy: ' + avgH2H.p1avg + '-' + avgH2H.p2avg + ')';
+      }
+
+      // Percentile ELO
+      var ep1 = p1.elo_percentile, ep2 = p2.elo_percentile;
+      if (ep1 && ep1.pct) {
+        var r1El = document.getElementById('tam-p1-rank');
+        if (r1El) r1El.textContent = (r1El.textContent||'') + ' \u00b7 Elo Top ' + ep1.pct + '%';
+      }
+      if (ep2 && ep2.pct) {
+        var r2El = document.getElementById('tam-p2-rank');
+        if (r2El) r2El.textContent = (r2El.textContent||'') + ' \u00b7 Elo Top ' + ep2.pct + '%';
+      }
+
       // 1) ELO + Classement Surface
       var eloP1 = p1.elo_surface, eloP2 = p2.elo_surface;
       var srP1 = p1.surf_rank, srP2 = p2.surf_rank;
@@ -6641,14 +6548,31 @@ function openTennisAnalysisModal(matchId) {
       } else if (eloP1 != null) {
         document.getElementById('h2h-p1-elo-surface').textContent = eloP1;
       } else if (srP1 != null) {
-        document.getElementById('h2h-p1-elo-surface').textContent = 'Rank #' + srP1;
+        document.getElementById('h2h-p1-elo-surface').textContent = (srP1 === 1 ? '1er' : (srP1 > 150 ? 'NC' : srP1 + 'e')) + ' sur la surface';
       }
       if (eloP2 != null && srP2 != null) {
-        document.getElementById('h2h-p2-elo-surface').textContent = eloP2 + ' (Rank #' + srP2 + ')';
+        document.getElementById('h2h-p2-elo-surface').textContent = eloP2 + ' (' + (srP2 === 1 ? '1er' : (srP2 > 150 ? 'NC' : srP2 + 'e')) + ' sur la surface)';
       } else if (eloP2 != null) {
         document.getElementById('h2h-p2-elo-surface').textContent = eloP2;
       } else if (srP2 != null) {
-        document.getElementById('h2h-p2-elo-surface').textContent = 'Rank #' + srP2;
+        document.getElementById('h2h-p2-elo-surface').textContent = (srP2 === 1 ? '1er' : (srP2 > 150 ? 'NC' : srP2 + 'e')) + ' sur la surface';
+      }
+
+      // 1b) Tournament Rank (Seed 1-32)
+      var tr1 = p1.tournament_rank, tr2 = p2.tournament_rank;
+      if (tr1 && tr1.rank) {
+        var trEl1 = document.getElementById('h2h-p1-tourn-rank');
+        if (trEl1) {
+          trEl1.textContent = '#' + tr1.rank + ' / ' + tr1.total;
+          trEl1.className = 'h2h-cell p1-val ' + (tr1.rank <= 8 ? 'green-text' : (tr1.rank <= 16 ? 'text-white' : 'muted-text'));
+        }
+      }
+      if (tr2 && tr2.rank) {
+        var trEl2 = document.getElementById('h2h-p2-tourn-rank');
+        if (trEl2) {
+          trEl2.textContent = '#' + tr2.rank + ' / ' + tr2.total;
+          trEl2.className = 'h2h-cell p2-val ' + (tr2.rank <= 8 ? 'green-text' : (tr2.rank <= 16 ? 'text-white' : 'muted-text'));
+        }
       }
 
       // 2) PowerScore
@@ -6657,13 +6581,15 @@ function openTennisAnalysisModal(matchId) {
       var pt1 = p1.ps_total, pt2 = p2.ps_total;
       if (ps1 != null) {
         var ps1Str = Number(ps1).toFixed(1);
-        if (pr1 != null) ps1Str += ' (#' + pr1 + '/' + (pt1 || '—') + ')';
+        if (pr1 != null) ps1Str += ' (' + (pr1 === 1 ? '1er' : (pr1 > 150 ? 'NC' : pr1 + 'eme')) + ')';
         document.getElementById('h2h-p1-powerscore').textContent = ps1Str;
+        document.getElementById('h2h-p1-powerscore').className = 'h2h-cell p1-val ' + (ps1 >= 60 ? 'green-text' : (ps1 >= 40 ? 'text-white' : 'muted-text'));
       }
       if (ps2 != null) {
         var ps2Str = Number(ps2).toFixed(1);
-        if (pr2 != null) ps2Str += ' (#' + pr2 + '/' + (pt2 || '—') + ')';
+        if (pr2 != null) ps2Str += ' (' + (pr2 === 1 ? '1er' : (pr2 > 150 ? 'NC' : pr2 + 'eme')) + ')';
         document.getElementById('h2h-p2-powerscore').textContent = ps2Str;
+        document.getElementById('h2h-p2-powerscore').className = 'h2h-cell p2-val ' + (ps2 >= 60 ? 'green-text' : (ps2 >= 40 ? 'text-white' : 'muted-text'));
       }
 
       // 3) Historique Édition Précédente
@@ -6701,26 +6627,211 @@ function openTennisAnalysisModal(matchId) {
         document.getElementById('h2h-p2-form-l10').textContent = 'N/A';
       }
 
+      function _serveColorClass(val) {
+        return val >= 60 ? 'green-text' : (val >= 40 ? 'text-white' : 'muted-text');
+      }
+
+            // 4b) DR Moyen Tournoi — Avg Elo des adversaires rencontrés
+      var dr1 = p1.avg_dr, dr2 = p2.avg_dr;
+      if (dr1 != null) {
+        document.getElementById('h2h-p1-dr-moyen').textContent = Number(dr1).toFixed(0) + ' pts';
+        document.getElementById('h2h-p1-dr-moyen').className = 'h2h-cell p1-val ' + (dr1 >= 1800 ? 'green-text' : (dr1 >= 1500 ? 'text-white' : 'muted-text'));
+      }
+      if (dr2 != null) {
+        document.getElementById('h2h-p2-dr-moyen').textContent = Number(dr2).toFixed(0) + ' pts';
+        document.getElementById('h2h-p2-dr-moyen').className = 'h2h-cell p2-val ' + (dr2 >= 1800 ? 'green-text' : (dr2 >= 1500 ? 'text-white' : 'muted-text'));
+      }
+
+      // 4c) Surf Form (0-100)
+      var sf1 = p1.surf_form, sf2 = p2.surf_form;
+      if (sf1 != null) {
+        var sfEl1 = document.getElementById('h2h-p1-surf-form');
+        if (sfEl1) { sfEl1.textContent = Number(sf1).toFixed(0) + '/100'; sfEl1.className = 'h2h-cell p1-val ' + (sf1 >= 60 ? 'green-text' : (sf1 >= 40 ? 'text-white' : 'muted-text')); }
+      }
+      if (sf2 != null) {
+        var sfEl2 = document.getElementById('h2h-p2-surf-form');
+        if (sfEl2) { sfEl2.textContent = Number(sf2).toFixed(0) + '/100'; sfEl2.className = 'h2h-cell p2-val ' + (sf2 >= 60 ? 'green-text' : (sf2 >= 40 ? 'text-white' : 'muted-text')); }
+      }
+
+      // 4d) First Serve Won% — depuis serve_dominance (48w avg sur surface)
+      var sd = data.serve_dominance || {};
+      var fsw1 = (sd.p1 && sd.p1.serve_pts_won_pct != null) ? sd.p1.serve_pts_won_pct : null;
+      var fsw2 = (sd.p2 && sd.p2.serve_pts_won_pct != null) ? sd.p2.serve_pts_won_pct : null;
+      if (fsw1 != null) {
+        var fwEl1 = document.getElementById('h2h-p1-1st-won');
+        if (fwEl1) { fwEl1.textContent = Number(fsw1).toFixed(1) + '%'; fwEl1.className = 'h2h-cell p1-val ' + (fsw1 >= 65 ? 'green-text' : (fsw1 >= 58 ? 'text-white' : 'muted-text')); }
+      }
+      if (fsw2 != null) {
+        var fwEl2 = document.getElementById('h2h-p2-1st-won');
+        if (fwEl2) { fwEl2.textContent = Number(fsw2).toFixed(1) + '%'; fwEl2.className = 'h2h-cell p2-val ' + (fsw2 >= 65 ? 'green-text' : (fsw2 >= 58 ? 'text-white' : 'muted-text')); }
+      }
+
+      // 4e) Aces / DF — ratio de dominance au service
+      var ace1 = (sd.p1 && sd.p1.ace_pct != null) ? sd.p1.ace_pct : (p1.ace_pct || null);
+      var ace2 = (sd.p2 && sd.p2.ace_pct != null) ? sd.p2.ace_pct : (p2.ace_pct || null);
+      if (ace1 != null) {
+        var adEl1 = document.getElementById('h2h-p1-aces-df');
+        if (adEl1) { adEl1.textContent = ((Number(ace1) * 100).toFixed(1)) + '% aces'; adEl1.className = 'h2h-cell p1-val ' + (ace1 >= 0.12 ? 'green-text' : (ace1 >= 0.08 ? 'text-white' : 'muted-text')); }
+      }
+      if (ace2 != null) {
+        var adEl2 = document.getElementById('h2h-p2-aces-df');
+        if (adEl2) { adEl2.textContent = ((Number(ace2) * 100).toFixed(1)) + '% aces'; adEl2.className = 'h2h-cell p2-val ' + (ace2 >= 0.12 ? 'green-text' : (ace2 >= 0.08 ? 'text-white' : 'muted-text')); }
+      }
+
+      // 4h) Form Trend 3 mois
+      (function(){ var ft1=p1.form_trend, ft2=p2.form_trend;
+        if(ft1){ var el=document.getElementById('h2h-p1-form-trend'); if(el){ var html=''; for(var k=0;k<ft1.trend.length;k++){ html+='<span style="color:'+(ft1.trend[k]==='W'?'#00e676':'#ef4444')+';font-weight:700;margin:0 1px;">'+ft1.trend[k]+'</span>'; } html+=' <span style="color:#94a3b8;font-size:10px;">'+ft1.wins+'/'+ft1.total+'</span>'; el.innerHTML=html; } }
+        if(ft2){ var el=document.getElementById('h2h-p2-form-trend'); if(el){ var html=''; for(var k=0;k<ft2.trend.length;k++){ html+='<span style="color:'+(ft2.trend[k]==='W'?'#00e676':'#ef4444')+';font-weight:700;margin:0 1px;">'+ft2.trend[k]+'</span>'; } html+=' <span style="color:#94a3b8;font-size:10px;">'+ft2.wins+'/'+ft2.total+'</span>'; el.innerHTML=html; } }
+      })();
+
+      // 4g) Win% Carriere Surface
+      var cs1 = p1.surface_career, cs2 = p2.surface_career;
+      if (cs1 && cs1.pct) {
+        var csEl1 = document.getElementById('h2h-p1-career-surf');
+        if (csEl1) { csEl1.textContent = cs1.pct + '% (' + cs1.wins + '-' + (cs1.total-cs1.wins) + ')'; csEl1.className = 'h2h-cell p1-val ' + (Number(cs1.pct) >= 65 ? 'green-text' : (Number(cs1.pct) >= 55 ? 'text-white' : 'muted-text')); }
+      }
+      if (cs2 && cs2.pct) {
+        var csEl2 = document.getElementById('h2h-p2-career-surf');
+        if (csEl2) { csEl2.textContent = cs2.pct + '% (' + cs2.wins + '-' + (cs2.total-cs2.wins) + ')'; csEl2.className = 'h2h-cell p2-val ' + (Number(cs2.pct) >= 65 ? 'green-text' : (Number(cs2.pct) >= 55 ? 'text-white' : 'muted-text')); }
+      }
+
+      // 4f) Age + Fatigue
+      var af = data.age_features || {};
+      var fg = data.fatigue || {};
+      var age1 = (af.p1 && af.p1.age30 != null) ? af.p1.age30 : null;
+      var age2 = (af.p2 && af.p2.age30 != null) ? af.p2.age30 : null;
+      var ageDiff = af.age30_diff;
+      var fat1 = (fg.p1 != null) ? Number(fg.p1).toFixed(1) : null;
+      var fat2 = (fg.p2 != null) ? Number(fg.p2).toFixed(1) : null;
+      if (age1 != null || fat1 != null) {
+        var ageEl1 = document.getElementById('h2h-p1-age');
+        var parts1 = [];
+        if (age1 != null) parts1.push(Number(age1).toFixed(1) + ' ans');
+        if (fat1 != null) parts1.push((fat1 >= 0 ? 'Fresh ' : 'Heavy ') + Math.abs(fat1));
+        if (ageEl1 && parts1.length) { ageEl1.textContent = parts1.join(' | '); ageEl1.className = 'h2h-cell p1-val ' + (fat1 != null && fat1 >= 0 ? 'green-text' : 'text-white'); }
+      }
+      if (age2 != null || fat2 != null) {
+        var ageEl2 = document.getElementById('h2h-p2-age');
+        var parts2 = [];
+        if (age2 != null) parts2.push(Number(age2).toFixed(1) + ' ans');
+        if (fat2 != null) parts2.push((fat2 >= 0 ? 'Fresh ' : 'Heavy ') + Math.abs(fat2));
+        if (ageEl2 && parts2.length) { ageEl2.textContent = parts2.join(' | '); ageEl2.className = 'h2h-cell p2-val ' + (fat2 != null && fat2 >= 0 ? 'green-text' : 'text-white'); }
+      }
+      if (ageDiff != null) {
+        var adLabel = document.querySelector('.h2h-cell.label-cell:has(+ #h2h-p2-age)') || document.querySelector('#h2h-p1-age')?.parentElement?.querySelector('.label-cell');
+        if (!adLabel) {
+          var row = document.getElementById('h2h-p1-age')?.closest('.h2h-row-contour');
+          if (row) adLabel = row.querySelector('.label-cell');
+        }
+        if (adLabel && ageDiff !== 0) {
+          adLabel.textContent = (ageDiff > 0 ? 'Âge (P2 +' + ageDiff.toFixed(1) + ' ans)' : 'Âge (P1 +' + Math.abs(ageDiff).toFixed(1) + ' ans)');
+        }
+      }
+
       // 5) Indice Serveur
       var si1 = p1.serve_index, si2 = p2.serve_index;
       if (si1 != null) {
-        document.getElementById('h2h-p1-serve-idx').textContent = si1 + '/100';
-        document.getElementById('h2h-p1-serve-idx').className = 'h2h-cell p1-val ' + (si1 >= 60 ? 'green-text' : (si1 >= 40 ? 'cyan-text' : 'muted-text'));
+        document.getElementById('h2h-p1-serve-idx').innerHTML = si1 + '<span class="si-slash muted-text">/100</span>';
+        document.getElementById('h2h-p1-serve-idx').className = 'h2h-cell p1-val ' + _serveColorClass(si1);
+        var sr1 = document.getElementById('h2h-p1-serve-rank');
+        var st1 = document.getElementById('h2h-p1-serve-trend');
+        if (sr1 && p1.serve_rank != null) { sr1.textContent = (p1.serve_rank === 1 ? '1er' : (p1.serve_rank > 150 ? 'NC' : p1.serve_rank + 'e')); if(sr1) sr1.style.display = ''; }
+        if (st1 && p1.serve_delta != null) { st1.innerHTML = (p1.serve_delta >= 0 ? '<span class="green-text">▲ ' + p1.serve_delta.toFixed(1) + '</span>' : '<span class="red-text">▼ ' + Math.abs(p1.serve_delta).toFixed(1) + '</span>'); if(st1) st1.style.display = ''; }
       }
       if (si2 != null) {
-        document.getElementById('h2h-p2-serve-idx').textContent = si2 + '/100';
-        document.getElementById('h2h-p2-serve-idx').className = 'h2h-cell p2-val ' + (si2 >= 60 ? 'green-text' : (si2 >= 40 ? 'cyan-text' : 'muted-text'));
+        document.getElementById('h2h-p2-serve-idx').innerHTML = si2 + '<span class="si-slash muted-text">/100</span>';
+        document.getElementById('h2h-p2-serve-idx').className = 'h2h-cell p2-val ' + _serveColorClass(si2);
+        var sr2 = document.getElementById('h2h-p2-serve-rank');
+        var st2 = document.getElementById('h2h-p2-serve-trend');
+        if (sr2 && p2.serve_rank != null) { sr2.textContent = (p2.serve_rank === 1 ? '1er' : (p2.serve_rank > 150 ? 'NC' : p2.serve_rank + 'e')); if(sr2) sr2.style.display = ''; }
+        if (st2 && p2.serve_delta != null) { st2.innerHTML = (p2.serve_delta >= 0 ? '<span class="green-text">▲ ' + p2.serve_delta.toFixed(1) + '</span>' : '<span class="red-text">▼ ' + Math.abs(p2.serve_delta).toFixed(1) + '</span>'); if(st2) st2.style.display = ''; }
       }
+
+      // 5b) Hold % (52w)
+      var hb1 = p1.hold_break, hb2 = p2.hold_break;
+      if (hb1 && hb1.hold != null) {
+        var hEl1 = document.getElementById('h2h-p1-hold-pct');
+        if (hEl1) { hEl1.textContent = hb1.hold + '%'; hEl1.className = 'h2h-cell p1-val ' + (hb1.hold >= 85 ? 'green-text' : (hb1.hold >= 78 ? 'text-white' : 'muted-text')); }
+      }
+      if (hb2 && hb2.hold != null) {
+        var hEl2 = document.getElementById('h2h-p2-hold-pct');
+        if (hEl2) { hEl2.textContent = hb2.hold + '%'; hEl2.className = 'h2h-cell p2-val ' + (hb2.hold >= 85 ? 'green-text' : (hb2.hold >= 78 ? 'text-white' : 'muted-text')); }
+      }
+
+
+      // 7) Pressure Index (Mental) — clutch_score + bp_saved_pct + tb_win_pct
+      (function(){ var pr1 = p1, pr2 = p2;
+        var el1 = document.getElementById('h2h-p1-pressure'), el2 = document.getElementById('h2h-p2-pressure');
+        if (el1) {
+          var parts = [];
+          if (pr1.clutch_score != null) parts.push('Clutch: ' + Number(pr1.clutch_score).toFixed(0) + '%');
+          if (pr1.bp_saved_pct != null) parts.push('BP Saved: ' + Number(pr1.bp_saved_pct).toFixed(0) + '%');
+          if (pr1.tb_win_pct != null) parts.push('TB Win: ' + Number(pr1.tb_win_pct).toFixed(0) + '%');
+          el1.textContent = parts.length > 0 ? parts.join(' · ') : '—';
+          el1.style.color = (pr1.clutch_score >= 50 || pr1.bp_saved_pct >= 60) ? '#00e676' : '#94a3b8';
+        }
+        if (el2) {
+          var parts = [];
+          if (pr2.clutch_score != null) parts.push('Clutch: ' + Number(pr2.clutch_score).toFixed(0) + '%');
+          if (pr2.bp_saved_pct != null) parts.push('BP Saved: ' + Number(pr2.bp_saved_pct).toFixed(0) + '%');
+          if (pr2.tb_win_pct != null) parts.push('TB Win: ' + Number(pr2.tb_win_pct).toFixed(0) + '%');
+          el2.textContent = parts.length > 0 ? parts.join(' · ') : '—';
+          el2.style.color = (pr2.clutch_score >= 50 || pr2.bp_saved_pct >= 60) ? '#00e676' : '#94a3b8';
+        }
+      })();
+
+      // 7b) TB Record 52w
+      (function(){ var tb1 = p1.tb_record, tb2 = p2.tb_record;
+        if (tb1) { var el = document.getElementById('h2h-p1-tb-record'); if (el) { el.textContent = tb1.won + '-' + tb1.lost + ' (' + tb1.pct + '%)'; el.className = 'h2h-cell p1-val ' + (tb1.pct >= 60 ? 'green-text' : (tb1.pct >= 40 ? 'text-white' : 'muted-text')); } }
+        if (tb2) { var el = document.getElementById('h2h-p2-tb-record'); if (el) { el.textContent = tb2.won + '-' + tb2.lost + ' (' + tb2.pct + '%)'; el.className = 'h2h-cell p2-val ' + (tb2.pct >= 60 ? 'green-text' : (tb2.pct >= 40 ? 'text-white' : 'muted-text')); } }
+      })();
+
+      // 7c) Deciding Set Record 52w
+      (function(){ var ds1 = p1.deciding_set, ds2 = p2.deciding_set;
+        if (ds1) { var el = document.getElementById('h2h-p1-ds-record'); if (el) { el.textContent = ds1.won + '-' + ds1.lost + ' (' + ds1.pct + '%)'; el.className = 'h2h-cell p1-val ' + (ds1.pct >= 60 ? 'green-text' : (ds1.pct >= 40 ? 'text-white' : 'muted-text')); } }
+        if (ds2) { var el = document.getElementById('h2h-p2-ds-record'); if (el) { el.textContent = ds2.won + '-' + ds2.lost + ' (' + ds2.pct + '%)'; el.className = 'h2h-cell p2-val ' + (ds2.pct >= 60 ? 'green-text' : (ds2.pct >= 40 ? 'text-white' : 'muted-text')); } }
+      })();
+
+      // 8) Break Points Ratio
+      (function(){ var bp1 = p1, bp2 = p2;
+        var el1 = document.getElementById('h2h-p1-bp-ratio'), el2 = document.getElementById('h2h-p2-bp-ratio');
+        if (el1 && bp1.bp_converted != null) {
+          var opp1 = bp1.bp_opportunities || 0;
+          var ratio1 = opp1 > 0 ? Math.round((bp1.bp_converted / opp1) * 100) : null;
+          el1.textContent = ratio1 != null ? bp1.bp_converted + '/' + opp1 + ' (' + ratio1 + '%)' : 'BP: ' + bp1.bp_converted;
+          el1.style.color = ratio1 >= 45 ? '#00e676' : (ratio1 >= 35 ? '#f59e0b' : '#94a3b8');
+        }
+        if (el2 && bp2.bp_converted != null) {
+          var opp2 = bp2.bp_opportunities || 0;
+          var ratio2 = opp2 > 0 ? Math.round((bp2.bp_converted / opp2) * 100) : null;
+          el2.textContent = ratio2 != null ? bp2.bp_converted + '/' + opp2 + ' (' + ratio2 + '%)' : 'BP: ' + bp2.bp_converted;
+          el2.style.color = ratio2 >= 45 ? '#00e676' : (ratio2 >= 35 ? '#f59e0b' : '#94a3b8');
+        }
+      })();
+
+      // 5c) Return Won % 52w
+      (function(){ var r1=p1.return_won_pct, r2=p2.return_won_pct;
+        if(r1!=null){ var el=document.getElementById('h2h-p1-ret-won'); if(el){ el.textContent=r1+'%'; el.className='h2h-cell p1-val '+(r1>=42?'green-text':(r1>=36?'text-white':'muted-text')); } }
+        if(r2!=null){ var el=document.getElementById('h2h-p2-ret-won'); if(el){ el.textContent=r2+'%'; el.className='h2h-cell p2-val '+(r2>=42?'green-text':(r2>=36?'text-white':'muted-text')); } }
+      })();
 
       // 6) Indice Receveur
       var ri1 = p1.receive_index, ri2 = p2.receive_index;
       if (ri1 != null) {
-        document.getElementById('h2h-p1-recv-idx').textContent = ri1 + '/100';
-        document.getElementById('h2h-p1-recv-idx').className = 'h2h-cell p1-val ' + (ri1 >= 60 ? 'green-text' : (ri1 >= 40 ? 'cyan-text' : 'muted-text'));
+        document.getElementById('h2h-p1-recv-idx').innerHTML = ri1 + '<span class="ri-slash muted-text">/100</span>';
+        document.getElementById('h2h-p1-recv-idx').className = 'h2h-cell p1-val ' + _serveColorClass(ri1);
+        var rr1 = document.getElementById('h2h-p1-recv-rank');
+        var rt1 = document.getElementById('h2h-p1-recv-trend');
+        if (rr1 && p1.receive_rank != null) { rr1.textContent = (p1.receive_rank === 1 ? '1er' : (p1.receive_rank > 150 ? 'NC' : p1.receive_rank + 'e')); rr1.style.display = ''; }
+        if (rt1 && p1.receive_delta != null) { rt1.innerHTML = (p1.receive_delta >= 0 ? '<span class="green-text">▲ ' + p1.receive_delta.toFixed(1) + '</span>' : '<span class="red-text">▼ ' + Math.abs(p1.receive_delta).toFixed(1) + '</span>'); rt1.style.display = ''; }
       }
       if (ri2 != null) {
-        document.getElementById('h2h-p2-recv-idx').textContent = ri2 + '/100';
-        document.getElementById('h2h-p2-recv-idx').className = 'h2h-cell p2-val ' + (ri2 >= 60 ? 'green-text' : (ri2 >= 40 ? 'cyan-text' : 'muted-text'));
+        document.getElementById('h2h-p2-recv-idx').innerHTML = ri2 + '<span class="ri-slash muted-text">/100</span>';
+        document.getElementById('h2h-p2-recv-idx').className = 'h2h-cell p2-val ' + _serveColorClass(ri2);
+        var rr2 = document.getElementById('h2h-p2-recv-rank');
+        var rt2 = document.getElementById('h2h-p2-recv-trend');
+        if (rr2 && p2.receive_rank != null) { rr2.textContent = (p2.receive_rank === 1 ? '1er' : (p2.receive_rank > 150 ? 'NC' : p2.receive_rank + 'e')); rr2.style.display = ''; }
+        if (rt2 && p2.receive_delta != null) { rt2.innerHTML = (p2.receive_delta >= 0 ? '<span class="green-text">▲ ' + p2.receive_delta.toFixed(1) + '</span>' : '<span class="red-text">▼ ' + Math.abs(p2.receive_delta).toFixed(1) + '</span>'); rt2.style.display = ''; }
       }
 
       // ═══ Player Metrics Row: ELO + SPS ═══
@@ -6749,7 +6860,7 @@ function openTennisAnalysisModal(matchId) {
         if (player.powerscore != null) {
           spsEl.textContent = Number(player.powerscore).toFixed(0) + '/100';
           if (player.ps_rank != null) {
-            spsSubEl.textContent = 'Rang surface #' + player.ps_rank + (player.ps_total != null ? '/' + player.ps_total : '');
+            spsSubEl.textContent = (player.ps_rank === 1 ? '1er' : (player.ps_rank > 150 ? 'NC' : player.ps_rank + 'eme'));
           } else {
             spsSubEl.textContent = '';
           }
@@ -6763,6 +6874,7 @@ function openTennisAnalysisModal(matchId) {
       var hasP1 = _populatePlayerMetrics('p1', p1);
       var hasP2 = _populatePlayerMetrics('p2', p2);
       if (metricsRow) metricsRow.style.display = (hasP1 || hasP2) ? 'flex' : 'none';
+      renderTn2Radar(p1, p2, data);
     })
     .catch(function(err) {
       console.error('[TennisAnalysisModal]', err);
@@ -6773,13 +6885,144 @@ function openTennisAnalysisModal(matchId) {
 function closeTennisAnalysisModal() {
   var modal = document.getElementById('tennis-analysis-modal');
   if (!modal) return;
+  if (window.__tnAnalysisAbort) { try { window.__tnAnalysisAbort.abort(); } catch(_) {} window.__tnAnalysisAbort = null; }
+  if (window.__tn2RadarChart) { window.__tn2RadarChart.destroy(); window.__tn2RadarChart = null; }
   modal.style.animation = 'psModalOut 0.15s ease forwards';
   setTimeout(function() {
     modal.style.display = 'none';
     modal.style.animation = '';
-    var fill = document.getElementById('tam-prob-fill');
-    if (fill) fill.style.width = '0%';
+
   }, 150);
+}
+
+// ─── Radar 6 Axes Tennis (Chart.js) ──────────────────────────────────────
+function renderTn2Radar(p1, p2, data) {
+  var canvas = document.getElementById('tn2-radar-canvas');
+  if (!canvas) return;
+  // Détruire chart existant
+  if (window.__tn2RadarChart) { window.__tn2RadarChart.destroy(); window.__tn2RadarChart = null; }
+
+  // Normalisation des 6 axes sur /100
+  function norm(val, min, max) {
+    if (val == null) return 50;  // fallback milieu de jauge — ne casse pas la géométrie radar
+    var v = Math.round(((val - min) / (max - min)) * 100);
+    return Math.max(5, Math.min(100, v));  // clamp 5-100, jamais 0
+  }
+
+  // 1) ELO Surface — échelle 0-2500
+  var elo1 = norm(p1.elo_surface, 0, 2500);
+  var elo2 = norm(p2.elo_surface, 0, 2500);
+
+  // 2) PowerScore — déjà /100
+  var ps1 = p1.powerscore != null ? Math.round(Math.min(100, p1.powerscore)) : 50;
+  var ps2 = p2.powerscore != null ? Math.round(Math.min(100, p2.powerscore)) : 50;
+
+  // 3) Momentum — surf_form (0-100)
+  var m1 = p1.surf_form != null ? Math.round(Math.min(100, p1.surf_form)) : 50;
+  var m2 = p2.surf_form != null ? Math.round(Math.min(100, p2.surf_form)) : 50;
+
+  // 4) Niveau — inverse du rang ATP (plus petit = meilleur)
+  function rankScore(r) {
+    if (r == null) return 50;  // fallback milieu de jauge
+    return Math.max(5, Math.round(100 - (r / 20)));
+  }
+  var r1 = rankScore(p1.rank);
+  var r2 = rankScore(p2.rank);
+
+  // 5) Expérience — l10_pts (0-100)
+  var l1 = p1.l10_pts != null ? Math.round(Math.min(100, p1.l10_pts)) : 50;
+  var l2 = p2.l10_pts != null ? Math.round(Math.min(100, p2.l10_pts)) : 50;
+
+  // 6) Efficacité Globale — moyenne Serveur + Receveur
+  var eff1 = p1.serve_index != null && p1.receive_index != null
+    ? Math.round((p1.serve_index + p1.receive_index) / 2) : 50;
+  var eff2 = p2.serve_index != null && p2.receive_index != null
+    ? Math.round((p2.serve_index + p2.receive_index) / 2) : 50;
+
+  var name1 = p1.name || 'Joueur 1';
+  var name2 = p2.name || 'Joueur 2';
+  // Tronquer les noms longs
+  function shortName(n) { return n.length > 18 ? n.substring(0, 16) + '…' : n; }
+
+  window.__tn2RadarChart = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels: ['ELO Surface', 'PowerScore', 'Momentum', 'Niveau', 'Expérience', 'Efficacité'],
+      datasets: [
+        {
+          label: shortName(name1),
+          data: [elo1, ps1, m1, r1, l1, eff1],
+          backgroundColor: 'rgba(0, 230, 118, 0.12)',
+          borderColor: 'rgba(0, 230, 118, 0.8)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(0, 230, 118, 1)',
+          pointBorderColor: '#fff',
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        },
+        {
+          label: shortName(name2),
+          data: [elo2, ps2, m2, r2, l2, eff2],
+          backgroundColor: 'rgba(99, 102, 241, 0.12)',
+          borderColor: 'rgba(99, 102, 241, 0.8)',
+          borderWidth: 2,
+          pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+          pointBorderColor: '#fff',
+          pointRadius: 3,
+          pointHoverRadius: 5,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        r: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            stepSize: 25,
+            backdropColor: 'transparent',
+            color: 'rgba(255,255,255,0.35)',
+            font: { size: 9, family: "'DM Mono',monospace" }
+          },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          angleLines: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: {
+            color: 'rgba(255,255,255,0.7)',
+            font: { size: 11, family: "'Plus Jakarta Sans',sans-serif", weight: '600' }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: {
+            color: 'rgba(255,255,255,0.75)',
+            font: { size: 11, family: "'Plus Jakarta Sans',sans-serif" },
+            padding: 10,
+            usePointStyle: true,
+            pointStyle: 'circle'
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(12, 16, 24, 0.95)',
+          titleColor: '#fff',
+          bodyColor: 'rgba(255,255,255,0.8)',
+          borderColor: 'rgba(255,255,255,0.1)',
+          borderWidth: 1,
+          padding: 8,
+          displayColors: true,
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': ' + ctx.parsed.r + '/100';
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 // Hook : route mobile + match live → nouveau sheet, sinon modal legacy
@@ -7933,7 +8176,7 @@ function renderTennisProDashboard(d) {
 function initTennisProCharts(d) {
   if (typeof Chart === 'undefined') return;
   if (!window._tnProCharts) window._tnProCharts = {};
-  if (window._tnProCharts.radar) { try { window._tnProCharts.radar.destroy(); } catch (_) {} window._tnProCharts.radar = null; }
+  if (window._tnProCharts && window._tnProCharts.radar) { try { window._tnProCharts.radar.destroy(); } catch (_) {} window._tnProCharts.radar = null; }
   const ctx = document.getElementById('tn-pro-radar');
   if (!ctx) return;
   const P = d.players || {}, p1 = P.p1 || {}, p2 = P.p2 || {};
@@ -14635,14 +14878,23 @@ function fixBrokenPlayerPhoto(img) {
     img.src = `https://sports.bzzoiro.com/img/tennis-player/${playerId}/?bg=transparent`;
     return;
   }
-  // Fallback final: initiales dans span coloré
-  const name = img.alt || img.dataset.name || '?';
-  const initials = playerInitials(name);
-  const bg = img.dataset.bg || 'var(--green)';
-  const span = document.createElement('span');
-  span.style.cssText = `width:32px;height:32px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font:700 9px/1 var(--font-mono);color:#fff;flex-shrink:0`;
-  span.textContent = initials;
-  if (img.parentNode) img.parentNode.replaceChild(span, img);
+  // [FIX CRITICAL 2026-06-17] Fallback ui-avatars avant le span final (vrai visage)
+  const name = img.alt || img.dataset.name || '';
+  if (tried === 2 && name && name !== '?' && name.length > 1) {
+    img.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name.trim()) + '&background=172132&color=fff&size=96&bold=true&font-size=0.33';
+    return;
+  }
+  // Fallback final: SVG data URI inline - garde img (pas de replaceChild)
+  var displayName = (name && name !== '?' && name.length > 0) ? name : (playerId ? 'Joueur' : '?');
+  var initials = playerInitials(displayName);
+  var bgc = (img.dataset.bg || '#131722').replace('var(--green)','#00e676').replace('var(--blue)','#0077ff').replace('var(--bg4)','#1e2328');
+  var curW = 32;
+  try { var w = parseInt(img.style.width,10) || parseInt(img.getAttribute('width'),10) || 32; if (w > 0) curW = w; } catch(e) {}
+  var fontSize = curW >= 48 ? 16 : (curW >= 38 ? 12 : 9);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'+curW+'" height="'+curW+'" viewBox="0 0 '+curW+' '+curW+'"><circle cx="'+(curW/2)+'" cy="'+(curW/2)+'" r="'+(curW/2-1)+'" fill="'+bgc+'" stroke="rgba(255,255,255,0.08)" stroke-width="2"/><text x="'+(curW/2)+'" y="'+(curW/2)+'" dy="'+(fontSize*0.35)+'" text-anchor="middle" fill="#fff" font-family="monospace" font-weight="700" font-size="'+fontSize+'">'+(initials||'?')+'</text></svg>';
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+  img.onerror = null;
+  img.style.borderRadius = '50%';
 }
 
 // ── Radar Fullscreen Lightbox (v62.0) ───────────────────────────────────────────
@@ -24279,7 +24531,7 @@ function psAccess() {
 }
 
 // Pages toujours ouvertes (marketing / compte / doc)
-const PS_OPEN_PAGES = ['accueil', 'tarifs', 'parametres', 'guide'];
+const PS_OPEN_PAGES = ['accueil', 'tarifs', 'parametres', 'guide', 'matchs', 'hot-picks', 'sure-bets', 'tendances'];
 
 // Retourne null si autorisé, sinon { need:'register'|'pro', sport? }
 function psPageBlocked(pageId) {
@@ -26254,6 +26506,10 @@ function renderComparateur(d) {
 (function () {
   var MQ = window.matchMedia('(max-width: 768px)');
   function isMobile() { return MQ.matches; }
+  // DEFENSIVE R5: toujours appliquer ps-mobile-v2 sur mobile
+  function _applyMobPS() { document.documentElement.classList.toggle('ps-mobile-v2', MQ.matches); }
+  _applyMobPS();
+  MQ.addEventListener('change', _applyMobPS);
 
   /* — Bottom nav : navigation — */
   window.bnGo = function (page, el) {
@@ -26309,7 +26565,7 @@ function renderComparateur(d) {
   window.psWrapWideTables = function () {
     if (!isMobile()) return;
     try {
-      _wrapScroll('#tennis-vb-table, #tennis-live-table, .tex-table, ' +
+      _wrapScroll('#tennis-vb-table, #tennis-live-table, ' +
         '#page-paris .hist-table, #page-historique .hist-table, ' +
         '#page-predictions .bm-table');
     } catch (e) {}
@@ -29792,3 +30048,7 @@ async function loadFootAlerts() {
 
 
 }());
+
+
+
+

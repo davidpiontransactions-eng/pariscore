@@ -1,4 +1,21 @@
-﻿## ✅ CRITICAL_BUG_FIX — RESOLVED 2026-06-15
+## 🚨 CRITICAL_FIX — MEDIA REPAIR 2026-06-17
+
+Cartes TOP 10 MATCHS DU JOUR cassées (capture image_8890dc.jpg).
+
+### Corrections appliquées
+1. **score_top10 guard** (pariscore.js:4471) — 	oFixed(1) crashait sur null → toute la carte était avortée
+2. **Noms joueurs guard** (pariscore.js:4476-4478) — m.player1 null/'?' → fallback '—' lisible
+3. **Avatar fallback cascade** (pariscore.js:14656-14660) — ajout étage ui-avatars.com AVANT le span initiales
+4. **Backend cascade noms** (server.js:35884-35885) — extraction fallback shortName / 
+om / id
+5. **Syntaxe** : 
+ode --check pariscore.js ✅ + 
+ode --check server.js ✅
+
+### Fichiers modifiés
+- pariscore.js : _tnTop10Card() — score guard + noms guard + fixBrokenPlayerPhoto cascade
+- server.js : buildTennisValueBets() — extraction noms joueurs
+## ✅ CRITICAL_BUG_FIX — RESOLVED 2026-06-15
 
 Layout Tennis réparé. Causes identifiées :
 1. overflow:hidden sur .tn2-card-grid coupait les cartes
@@ -35,6 +52,34 @@ Module comparatif 4 lignes implémenté et 4 bugs de flux de données corrigés 
 ### Risques résiduels
 - Matching tournoi par LIKE approximatif (`'%roland garros%'`) peut rater si noms trop divergents entre sources
 - tennis_matches_internal doit être populate par le cron ETL quotidien (02:00 Paris)
+
+## 🔧 SESSION 2026-06-16 (PM) — serve_index / receive_index FIX + TEST PENDING
+
+### Bug corrigé
+- **Problème** : `serve_index` et `receive_index` dans la route `/api/v1/tennis/detail` (server.js L21824, L21832) utilisaient `|| null` au lieu de `!= null ? val : null`
+- **Impact** : Quand `serve_index` ou `receive_index` valait `0` (zéro légitime), il était converti en `null` → la modale analyse perdait l'information
+- **Fix** : Remplacé `|| null` par `!= null ? ... : null` sur les 4 occurrences (p1.serve_index, p1.receive_index, p2.serve_index, p2.receive_index) — homogène avec ps_rank, ps_total, l5_pts, l10_pts
+
+### ⏱️ CONTRAINTE OPS — Server 4 min warmup + boucle infinie
+- Le serveur est un ETL continu : données sportives, refresh, match processing en boucle — **il ne s'arrête jamais**
+- **Démarrage : ~4 minutes** — ne pas paniquer, laisser initialiser (connexions API, cache, SQLite WAL)
+- Ne pas tuer/relancer le processus sauf si vraiment planté. Le laisser tourner.
+- Le site `localhost:3000` est accessible avant la fin du warmup, mais les data tennis ne sont complètes qu'après les ~4 min
+
+### ❌ PENDING — Server not started
+- `node server.js` n'a PAS été lancé
+- Aucun test navigateur effectué
+- Aucune vérification des métriques TOP 10 + Serve/Receive index
+
+### À faire dans la prochaine session
+1. Lancer : `cd "C:\Users\david\Documents\dev PariScore\ParisScorebis" && node server.js`
+2. **Attendre ~4 min** que le serveur finisse son initialisation (surveiller les logs console)
+3. Ouvrir `http://localhost:3000` et vérifier que le serveur répond
+4. Naviguer sur Tennis → onglet "À l'affiche" (ou Top)
+5. Cliquer sur un match pour ouvrir la modale analyse
+6. Vérifier que les champs `serve_index` et `receive_index` s'affichent correctement (même à 0)
+7. Vérifier que les KPI du TOP 10 (bets, top) ne sont plus bloqués à 0
+8. **Le serveur tourne en continu** — pas besoin de le stopper entre les tests
 
 ## 🔄 SPS POWERSCORE — REFONTE FORMULE 2026-06-16
 
@@ -265,4 +310,428 @@ Fixes : overflow:hidden retiré, photo map déplacée hors switch, flex-shrink:0
 
 **Priorité** : À faire après stabilisation du backend WOM actuel
 
+---
 
+## 🎯 TODO — Metrics Popup On Top
+
+Agis en tant que **Lead Frontend Developer**. Tu dois finaliser le popup "ANALYSE AVANCÉE" en y intégrant toutes les métriques demandées et en terminant par un **Spider Chart** comparatif (Radar).
+
+### 1. STRUCTURE DU DASHBOARD (3 SECTIONS)
+
+**Section A — MÉTRIQUES ANALYTIQUES**
+| Métrique | Description | Source |
+|---|---|---|
+| **ELO Surface** | Rating Elo spécifique à la surface | `payload.tennis_detail.elo` |
+| **Ranking Global Surface** | Classement mondial sur la surface | `payload.tennis_detail.elo_rank` |
+| **Powerscore** | Score SPS (Surface Power Score) normalisé | `payload.tennis_detail.powerscore` |
+| **Rang relatif Powerscore** | Rang x/150 dans le classement SPS | `payload.tennis_detail.ps_rank` / `ps_total` |
+
+**Section B — MÉTRIQUES "SCOUT"**
+| Métrique | Description | Source |
+|---|---|---|
+| **Indice Serveur** + Ranking surface | `serve_index` normalisé 0-100 + classement | `payload.tennis_detail.serve_index` |
+| **Indice Receveur** + Ranking surface | `receive_index` normalisé 0-100 + classement | `payload.tennis_detail.receive_index` |
+| **DR Moyen** (Tournoi en cours) | Delta Rating moyen des adversaires rencontrés | `payload.tennis_detail.avg_dr` |
+| **Bilan Forme L10 Surface** | Forme sur les 10 derniers matchs (délai 3 mois, surface spécifique) | `payload.tennis_detail.l10_pts` |
+| **Édition Précédente** | Résultat du joueur au même tournoi l'année précédente | `payload.tennis_detail.tournament_history` |
+
+**Section C — VISUALISATION**
+- **Spider Chart (Radar)** comparant les **6 axes** : Service, Retour, Puissance, Défense, Forme, Historique
+- Overlay superposé avec couleurs distinctes pour Joueur 1 / Joueur 2
+
+### 2. LOGIQUE DE CALCUL ET DESIGN
+
+**Normalisation** (base 100) :
+```
+normalizedValue = Math.min(100, Math.max(0, (rawValue / maxRef) * 100))
+```
+- **Service** : `normalize(serve_index, 100)`
+- **Retour** : `normalize(receive_index, 100)`
+- **Puissance** : `normalize(powerscore, 100)`
+- **Défense** : `normalize(100 - receive_index, 100)` (miroir retour)
+- **Forme** : `normalize(l10_pts, 10)` (L10 sur 10 → base 100)
+- **Historique** : `normalize(tournament_history_score, 100)`
+
+**Bibliothèque** : Utiliser **Recharts** (`RadarChart`, `PolarGrid`, `PolarAngleAxis`, `Radar`) ou **Chart.js** (`radar`). Le graphique doit être superposé (Overlay) avec des couleurs distinctes pour chaque joueur (ex: cyan `#00d4ff` / orange `#ff6b35`).
+
+**Esthétique** :
+- Dark Mode strict : fond `#0e1420`, cartes `#172132`, bordures `rgba(255,255,255,0.06)`
+- Typographie claire et hiérarchisée : Inter/Roboto, headings en `#ffffff`, labels en `#8b9bb5`
+- Alignement précis en grille CSS, espacement cohérent (gap 16-24px)
+
+### 3. CLAUSE DE CONTRÔLE QUALITÉ (OBLIGATOIRE)
+
+Avant de valider le code, vérifier point par point que **TOUTES** les métriques suivantes sont présentes et affichées dans le popup :
+
+- [ ] **ELO Surface**
+- [ ] **Ranking Global Surface**
+- [ ] **Powerscore**
+- [ ] **Rang relatif du Powerscore (x/150)**
+- [ ] **Édition Précédente** (Historique tournoi)
+- [ ] **Forme L10 Surface** (3 mois)
+- [ ] **Indice Serveur + Ranking surface**
+- [ ] **Indice Receveur + Ranking surface**
+- [ ] **DR Moyen** (Tournoi en cours)
+- [ ] **Spider Chart (Radar)** avec les 6 axes demandés : Service, Retour, Puissance, Défense, Forme, Historique
+
+> **Si une seule métrique manque, le dashboard est incomplet** : ajouter les éléments manquants avant de fournir le code final.
+
+### 4. LIVRABLE ATTENDU
+
+Le code source complet du composant **React/Tailwind** (ou adaptation **Vanilla JS** compatible avec `pariscore.html`), incluant :
+
+1. La **logique de normalisation** pour le Radar Chart (base 100)
+2. La **gestion des données asynchrones** (fetch depuis `/api/v1/tennis/detail`)
+3. Le rendu des **3 sections** (Analytique, Scout, Visualisation)
+4. Le **Spider Chart** superposé J1/J2 avec légende
+5. L'intégration dans le popup "ANALYSE AVANCÉE" existant
+
+### 5. DÉPENDANCES
+
+```html
+<!-- Chart.js via CDN pour le Radar Chart (alternative si Recharts non disponible) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- OU Recharts si environnement React -->
+```
+
+**Fichiers à modifier :**
+- `pariscore.html` — ajout du HTML/CSS/JS pour les 3 sections
+- `server.js` — si des endpoints supplémentaires sont nécessaires pour alimenter le Radar
+
+---
+
+## 🎯 TODO — Bets Predictifs & Avis Presse
+
+> **MISSION FRONTEND & CACHE : INTÉGRATION DE LA CAPSULE "P_BETS"**
+
+Agis en tant que **Lead Frontend et Backend Developer**. Nous procédons à une restructuration majeure de la zone de prédiction sur les encarts Top 10 des matchs de l'onglet **Tennis → "Top 10"**.
+
+### 1. NETTOYAGE UI
+
+- **Supprimer** intégralement l'affichage actuel des "bet prédictifs" (données 1x2, scores, etc.) qui figurent dans les encarts **Tennis "Top 10"** en haut de page.
+- Objectif : design plus propre, moins de bruit visuel.
+
+**Localisation probable dans le code :**
+- `pariscore.html` — section Tennis `.tn2-top-card` → retirer les `<div>` affichant les cotes 1x2, scores prédits, et blocs `.prediction-box` / `.bet-display`
+- `server.js` — route `/api/v1/top-matches` ou `/api/v1/predictions` → ne plus enrichir le payload avec les cotes prédictives si elles ne sont plus affichées (ou les garder en réserve pour P_BETS)
+
+### 2. CRÉATION DU BOUTON "P_BETS"
+
+- Implémenter une **capsule bouton stylisée** nommée **"P_BETS"** dans chaque encart Tennis "Top 10" (à l'emplacement de l'ancienne section prédictive).
+- Design : badge/pill compact, fond `#0077ff` (accent bleu), texte blanc `#ffffff`, typo Inter/Roboto semi-bold, bord arrondi `rounded-full`, padding `px-4 py-1.5`, ombre légère `shadow-md`.
+- Au clic → ouverture d'un **overlay/modal** listant les **5 meilleurs bets prédictifs** du match.
+
+**Contenu du modal P_BETS (5 lignes) :**
+| # | Type Bet | Cote | Confiance | Analyse synthétique |
+|---|----------|------|-----------|---------------------|
+| 1 | 1/N/2 | x.xx | 8/10 | Fusion metrics + presse |
+| 2 | O/U 2.5 | x.xx | 7/10 | ... |
+| 3 | Exact Score | x.xx | 6/10 | ... |
+| 4 | BTTS | x.xx | 9/10 | ... |
+| 5 | Combiné | x.xx | 7/10 | ... |
+
+### 3. LOGIQUE DE DONNÉES ET CACHE (Backend & State)
+
+**Génération des 5 bets :**
+- Fusion de nos **metrics pré-match** (xG, forme, Elo, blessures, etc.) + **analyse synthétique des 5 revues de presse** injectée par le système d'orchestration IA.
+- Endpoint dédié : `GET /api/v1/predictions/p-bets/:fixtureId`
+
+**CACHE — 48h TTL avec invalidation LIVE :**
+```
+Cache key : p_bets:{fixtureId}
+TTL      : 48 heures (172800 secondes)
+```
+- **Stack** : utiliser `node-cache` (déjà compatible zero-dep Node.js) OU un objet `Map` natif avec timestamp si Redis n'est pas disponible.
+- **Logique** :
+  1. Requête → vérifier si `p_bets:{fixtureId}` existe dans le cache ET n'a pas expiré (< 48h)
+  2. Si cache valide → servir le cache
+  3. Si cache absent ou expiré → déclencher génération via l'orchestrateur IA → stocker en cache → retourner
+- **Invalidation anticipée** : si le match passe en statut `"LIVE"` (via SSE push ou polling), le cache P_BETS est **immédiatement invalidé** et supprimé, même si le TTL 48h n'est pas atteint.
+
+**Backend — pseudo-code :**
+```javascript
+const pBetsCache = new Map(); // Map<fixtureId, { data, timestamp }>
+const CACHE_TTL_MS = 48 * 60 * 60 * 1000;
+
+async function getPBets(fixtureId, matchStatus) {
+  // Invalidation immédiate si match LIVE
+  if (matchStatus === 'LIVE') {
+    pBetsCache.delete(fixtureId);
+    return null;
+  }
+
+  const cached = pBetsCache.get(fixtureId);
+  if (cached && (Date.now() - cached.timestamp) < CACHE_TTL_MS) {
+    return cached.data;
+  }
+
+  // Génération IA
+  const bets = await generatePBetsFromOrchestrator(fixtureId);
+  pBetsCache.set(fixtureId, { data: bets, timestamp: Date.now() });
+  return bets;
+}
+```
+
+**Déclencheur SSE :** dans le handler SSE existant (`/api/v1/sse` ou équivalent), ajouter un listener sur le changement de statut du match (`status: "LIVE"`) qui appelle `pBetsCache.delete(fixtureId)`.
+
+### 4. LIVRABLE TECHNIQUE
+
+**Frontend (`pariscore.html`) :**
+1. Suppression de la section UI des bets prédictifs dans les encarts Top 10
+2. Remplacer par le `<button>` capsule "P_BETS"
+3. Implémenter le modal overlay avec les 5 lignes de bets
+4. Design Dark Mode cohérent :
+   ```css
+   .p-bets-btn {
+     background: #0077ff; color: #fff; border-radius: 9999px;
+     padding: 6px 18px; font-size: 0.75rem; font-weight: 600;
+     cursor: pointer; box-shadow: 0 2px 8px rgba(0,119,255,0.3);
+   }
+   .p-bets-modal { background: #172132; border: 1px solid rgba(255,255,255,0.06); }
+   .p-bets-row { border-bottom: 1px solid rgba(255,255,255,0.04); }
+   ```
+
+**Backend (`server.js`) :**
+1. Nouvelle route `GET /api/v1/predictions/p-bets/:fixtureId` avec cache 48h
+2. Fonction `generatePBetsFromOrchestrator(fixtureId)` — fusion metrics + presse
+3. Invalidation cache via SSE sur passage en statut LIVE
+
+### 5. CLAUSE DE CONTRÔLE QUALITÉ
+
+Avant de valider, vérifier point par point :
+
+- [ ] L'ancienne section "bet prédictifs" est entièrement retirée du DOM des cartes Top 10
+- [ ] Le bouton "P_BETS" est présent et stylisé dans chaque encart Tennis "Top 10"
+- [ ] Le clic ouvre un overlay avec 5 bets distincts
+- [ ] Le cache 48h fonctionne : seconde requête dans les 48h → pas de regénération
+- [ ] L'invalidation LIVE fonctionne : match qui passe en "LIVE" → cache supprimé
+- [ ] Le design Dark Mode est respecté (fonds, couleurs, typos)
+
+> **Si un seul point manque, l'intégration est incomplète** : corriger avant de fournir le code final.
+
+**Fichiers à modifier :**
+- `pariscore.html` — UI bouton + modal + suppression ancienne section
+- `server.js` — route `/api/v1/predictions/p-bets/:fixtureId` + cache Map + invalidation SSE
+- `tools/p-bets-generator.js` (à créer) — logique de fusion metrics + presse orchestrée
+
+---
+
+
+## 🐛 PHASE D AUDIT — P_BETS invisible dans le Top 10 Tennis
+
+**Constat (2026-06-16, fin de session) :** Le bouton "P_BETS" n apparaît pas dans les encarts Tennis Top 10 malgré le code déjà livré :
+- CSS (.p-bets-btn, .p-bets-overlay), modal HTML OK
+- Bouton injecté dans tn2RenderTopCards() (ligne ~16159) OK
+- Fonctions openPBets() / closePBets() OK
+- Route API /api/v1/predictions/p-bets/:fixtureId + cache 48h OK
+- tools/p-bets-generator.js (371 lignes) OK
+
+**Problème suspecté :** Le Top 10 Tennis utilise désormais fetchTennisTop10() + _tnTop10Card() dans pariscore.js (nouveau système de rendu), PAS l ancien tn2RenderTopCards() dans pariscore.html. Le bouton P_BETS n a pas été porté dans le nouveau système. À confirmer par l audit.
+
+### AUDIT À FAIRE (Prochaine Session)
+
+1. **Déterminer quel render est actif** : tn2RenderTopCards() ou _tnTop10Card() ?
+2. **Si _tnTop10Card() sans P_BETS** : ajouter le bouton dans le template HTML, vérifier le mapping data-fixture-id/matchId
+3. **Test manuel** : node server.js → Tennis → Top 10 → inspecter DOM → cliquer P_BETS → vérifier console + Network
+4. **Vérifier logs serveur** : [P-BETS] doit apparaître
+
+### CHECKLIST
+- [ ] Audit : render actif = tn2RenderTopCards() ou _tnTop10Card() ?
+- [ ] Si _tnTop10Card() : ajouter bouton P_BETS
+- [ ] Mapping data-fixture-id / matchId
+- [ ] Test DOM : bouton visible
+- [ ] Test click : modal s ouvre
+- [ ] Test API : réponse 200 avec 5 bets
+
+### Fichiers suspects
+- pariscore.js — _tnTop10Card() (~ligne 4291)
+- pariscore.html — tn2RenderTopCards() (~ligne 16111)
+- server.js — route P_BETS (~ligne 21823)
+
+---
+
+## 🗓️ SPRINT CALENDAR_REFRACTOR — v12.83 (2026-06-16)
+
+**Calendrier Tournois Tennis — Dark Premium + Filtrage catégoriel**
+
+### Backend
+- Fonction _texTournamentCategory(name) : détecte Grand Chelem, Masters 1000, ATP 500, ATP 250, WTA 1000/500/250, ITF, Challenger via regex
+- TEX_CATEGORY_PRIORITY : tri des plus prestigieux aux moins prestigieux
+- etchTexCalendar() : filtre ITF + Challenger, tri par priorité, champ .category dans chaque objet
+
+### Frontend
+- Badge catégorie coloré (or/bleu/violet/vert/rose/orange/teal) en pill
+- Tableau 100% largeur, fond #111a28, bordure gba(255,255,255,0.06)
+- Hover bleu gba(0,119,255,0.06) sur chaque ligne
+- Ligne résumé avec comptage GS/M1000
+- Pastille ronde surface + prize money en #00e676
+- Status enrichi avec nombre de GS et M1000
+
+### Fichiers modifiés
+- server.js : _texTournamentCategory, TEX_CATEGORY_PRIORITY, fetchTexCalendar filter+sort
+- pariscore.js : loadTexCalendar refonte complète
+- plan.md, acklog.md, CLAUDE.md : documentation
+
+---
+
+## 🚨 SPRINT CALENDAR_REFRACTOR V2 — VRAIS CORRECTIFS (2026-06-17)
+
+**⚠️ Les items C1-C9 du sprint précédent étaient marqués ✅ DONE mais le calendrier était toujours cassé.**
+
+### Causes racines identifiées
+1. **Regex nameM cassée** : TennisExplorer a changé son HTML. Certains noms ont <span title="..."> (Challenger/ITF), d'autres non (ATP/WTA). L'ancienne regex <a...><strong><span title="..."> NE MATCHAIT PAS les ATP/WTA → 
+ame: null → affichait "—"
+2. **null → 'unknown'** : _texTournamentCategory(null) retournait 'unknown' (priorité 99, non filtré)
+3. **Aucun filtre temporel** : les tournois de janvier/mars passaient
+4. **Cache empoisonné** : les vieilles données sans noms persistaient 24h
+5. **Fond #page-tennis blanc** en mode sombre
+
+### Correctifs backend (server.js)
+| Fix | Détail | Ligne |
+|-----|--------|-------|
+| nameM regex | Support span + sans-span : (?:<span...>(...)<\/span>\|([^<]+)) | 28891 |
+| name/short | 
+ameM[2]\|\|nameM[4] pour les 2 formats | 28899 |
+| cat(null) | if (!name) return 'itf' (filtré au lieu de 'unknown') | 28935 |
+| Cache | 	exCalendarCache.delete(cacheKey) avant refresh | 28961 |
+| Date filter | 	woMonthsAgo → ignore tournois >2 mois | 28963-28971 |
+| Surface | Regex avec fallback &nbsp; | 28892 |
+
+### Correctifs frontend (pariscore.html)
+| Fix | Détail | Ligne |
+|-----|--------|-------|
+| Dark theme | ody[data-cf-light="0"] #page-tennis { background: #0e1420 !important; } | 19081 |
+
+### Validation
+- 
+ode --check server.js ✅
+- 
+ode --check pariscore.js ✅
+
+### Notes
+- Le formulaire de date TEX est : 15.06.<br>2026 → parsé par (_texParseCalendar)
+- La classe ctual filtre uniquement la semaine en cours (intentionnel)
+- Le cache TTL reste à 24h mais le nouveau data est correct
+
+---
+
+## 🚀 DATA_PIPELINE_V3 — [IN_PROGRESS] (2026-06-17)
+
+### Contexte
+Pipeline d'extraction et de calcul des 7 métriques prioritaires du Sprint 1, basé sur PRIORISATION_METRIQUES.md et RAPPORT_DESIGN_FINAL.md v3. Intègre la charte Dark Theme Premium (#0b0e17) et le système de Design Tokens CSS validé.
+
+### Métriques Sprint 1 (MVP Production — latence < 30ms)
+1. **SRV_PTS_WON_S & RET_PTS_WON_S** (Niveau XXL) — EWMA α=0.18, 5 matchs, sparkline 6m
+2. **H2H_SURFACE_AUGMENTED** (Niveau XXL) — filtre surface + fenêtre 2 ans
+3. **ATP_POINTS_6M** (Niveau M) — points ATP tronqués 6 mois
+4. **ELO_SURFACE** (Niveau M) — recalcul interne, pondération mois courant 60%
+5. **AGE.30** (Niveau M) — |age - 30| (Buhamra SEL)
+6. **MOTIVATION** (Angle mort) — statut tournoi + dernière perf + distance temporelle
+7. **FATIGUE** (Angle mort) — distance géographique + jours de repos
+8. **PUBLIC** (Angle mort) — nationalité == pays du tournoi
+
+### Composants UI Sprint 1
+- MetricCardXXL (SRV/RET) — Poppins 800 32px, sparkline D3.js
+- MetricCardM (ATP, ELO, AGE) — Inter 700 16px, cliquable → drawer
+- H2HTimeline — D3.js timeline visuelle ●○
+- ProbGauge — barre proba pleine largeur
+- ComparisonBar — barres côte-à-côte joueur A vs B
+- Design Tokens CSS : --color-bg-primary: #0b0e17, --color-card: #131722, --color-accent-green: #00e676, --color-accent-blue: #0077ff
+
+### Sprint 2 (Scraping avancé & indices complexes)
+1. **PRESSURE_INDEX** (Mental #ff6d2e) — scraping TennisViz, ratio points importants
+2. **BP_CONV & BP_SAVED** — EWMA long α=0.05
+3. **NLP SCRAPER** — Puppeteer/Cheerio pour alertes blessures (flux RSS + Twitter)
+
+### Design System — Classes CSS validées
+\\\css
+:root {
+  --color-bg-primary: #0b0e17;
+  --color-card: #131722;
+  --color-accent-green: #00e676;
+  --color-accent-blue: #0077ff;
+  --color-border: rgba(255, 255, 255, 0.05);
+  --radius-card: 8px;
+}
+.pariscore-trading-row {
+    background: var(--color-card) !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-card) !important;
+    padding: 16px 20px !important;
+    margin-bottom: 10px !important;
+    transition: background-color 0.2s ease;
+}
+.pariscore-trading-row:hover {
+    background: #161c2a !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+\\\
+
+### Critères de validation DATA_PIPELINE_V3
+- [ ] EWMA α=0.18 calculé correctement sur fenêtre 5 matchs
+- [ ] H2H_SURFACE filtré par surface ET fenêtre 2 ans
+- [ ] ELO_SURFACE recalculé en interne (pas d'API externe)
+- [ ] MOTIVATION + FATIGUE + PUBLIC intégrés dans le pipeline logique
+- [ ] Latence API < 30ms (cache hit)
+- [ ] Design Tokens CSS appliqués à tous les composants tn2-*
+- [ ] node --check server.js ✅
+
+### Résultats de validation (2026-06-17)
+
+| Test | Résultat | Preuve |
+|------|----------|--------|
+| node --check server.js | ✅ PASS | Aucune erreur de syntaxe |
+| node --check pariscore.js | ✅ PASS | Aucune erreur de syntaxe |
+| Latence API Top10 | ✅ < 1ms | CACHE HIT — responding in 0ms |
+| Cache refresh TOP10 | ✅ 3-9ms | TOP 10 prêt (3ms) |
+| Warm cron actif | ✅ OK | Cron refresh actif : intervalle=300s |
+| Build ValueBets 357 matchs | ✅ 8-16s | build done — 357 matchs |
+| showMetricDetail() | ✅ Injecté | Drawer latéral avec détail EWMA |
+| MetricCardXXL (SRV/RET/H2H) | ✅ Injecté | Dans _tnTop10Card() avec badges |
+| Design Tokens CSS --ps-* | ✅ Injecté | 9 composants ps-metric-XXL/M/S |
+| backlog.md D1-D5 | ✅ DONE | Tâches Sprint 1 complètes |
+
+
+### Sprint 1 complété — Fonctionnalités livrées
+
+| Feature | Statut | Détail |
+|---------|--------|--------|
+| computeEWMA α=0.18 | ✅ | SRV_PTS_WON_S + RET_PTS_WON_S (5 matchs) |
+| H2H_SURFACE_AUGMENTED | ✅ | Filtre surface + fenêtre 2 ans + poids temporel |
+| MetricCardXXL | ✅ | Poppins 800 32px + sparkline SVG + badges |
+| MetricCardM | ✅ | Inter 700 16px cliquable → drawer |
+| showMetricDetail() | ✅ | Drawer latéral avec détail EWMA par match |
+| SVG Sparkline | ✅ | Dans les cards SRV (bleu #38bdf8) et RET (vert #10b981) |
+| _psSparkline() | ✅ | Fonction générique SVG sparkline |
+| MOTIVATION / FATIGUE / PUBLIC | ✅ | Angles morts intégrés dans le pipeline |
+| Design Tokens CSS | ✅ | 9 composants ps-metric-* + .pariscore-trading-row |
+| Validation serveur | ✅ | CACHE HIT 0ms, TOP10 en 3-9ms |
+
+### Sprint 2 — TODO
+
+| Feature | Priorité | Statut |
+|---------|----------|--------|
+| PRESSURE_INDEX (Mental #ff6d2e) | 🟠 HAUTE | ⏳ TODO |
+| BP_CONV / BP_SAVED (EWMA α=0.05) | 🟠 HAUTE | ⏳ TODO |
+| NLP Scraper blessures (Puppeteer) | 🟡 MOYENNE | ⏳ TODO |
+| Mode Tracker live toggle | 🟡 MOYENNE | ⏳ TODO |
+
+### Sprint 2 complété — Fonctionnalités livrées
+
+| Feature | Statut | Détail |
+|---------|--------|--------|
+| PRESSURE_INDEX (Mental #ff6d2e) | ✅ | Badge dans MetricCardS + fonction _tennisPressureIndex() |
+| BP_CONV (EWMA α=0.05) | ✅ | _tennisBPConvEWMA() + badge frontend |
+| BP_SAVED (EWMA α=0.05) | ✅ | _tennisBPSavedEWMA() + badge frontend |
+| NLP Injury Scraper | ✅ | tools/nlp-injury-scraper.js (RSS + détection keywords) |
+| Mode Tracker Live | ✅ | Toggle bouton + CSS ps-tracker-mode + localStorage |
+| toggleTrackerMode() | ✅ | Fonction JS avec persistance en localStorage |
+
+### Prochaines étapes suggérées
+
+- Intégrer le NLP scraper dans le serveur (appel périodique + alertes ⚠️ sur cards)
+- Connecter le PRESSURE_INDEX à une vraie source de données point-par-point
+- Tests E2E sur l'ensemble du pipeline
+- Déploiement production
+
+- **Sketch findings for PariScore** (design decisions, CSS patterns, visual direction) → `Skill("sketch-findings-pariscore")`
