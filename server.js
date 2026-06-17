@@ -50,7 +50,7 @@ let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catc
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-const metricsCache = new MetricsCache(path.join(DATA_DIR, 'metrics-cache.db'));
+const metricsCache = MetricsCache ? new MetricsCache(path.join(DATA_DIR, 'metrics-cache.db')) : null;
 globalThis.__metricsCache = metricsCache;
 
 // ─── CONFIGURATION ──────────────────────────────────────────────────────────
