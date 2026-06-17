@@ -14811,9 +14811,11 @@ function cmpBar(label, homeVal, awayVal, unit = '', decimals = 1, lowerBetter = 
 
 // v51.0: Utilitaire safeFixed — blindage universel contre les crashs .toFixed()
 function safeFixed(val, digits = 2) {
-  if (val == null || isNaN(val)) return '—';
+  if (val == null) { console.warn("[safeFixed] val=null", new Error().stack); return "—"; }
+  if (typeof val === "number" && isNaN(val)) { console.warn("[safeFixed] val=NaN", new Error().stack); return "—"; }
   const n = Number(val);
-  return isFinite(n) ? n.toFixed(digits) : '—';
+  if (!Number.isFinite(n)) { console.warn("[safeFixed] val non fini:", val, new Error().stack); return "—"; }
+  return n.toFixed(digits);
 }
 // QA fix MAJ-1 (rapport_qa_foot_tennis.md): parseInt/parseFloat peuvent retourner NaN
 // et se propager silencieusement dans calculs (IC90, EV, fatigue meta). Wrappers sûrs.
