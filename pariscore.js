@@ -4611,13 +4611,16 @@ async function fetchTennisTop10() {
   var statusEl  = document.getElementById('tn-top10-status');
   if (!container) return;
   
-  // Compteur de retry global par session
+  // Compteurs de retry et polling
   if (fetchTennisTop10._retry === undefined) fetchTennisTop10._retry = 0;
+  if (fetchTennisTop10._errorCount === undefined) fetchTennisTop10._errorCount = 0;
+  if (fetchTennisTop10._pollStart === undefined) fetchTennisTop10._pollStart = 0;
+  if (fetchTennisTop10._pollCount === undefined) fetchTennisTop10._pollCount = 0;
   
   try {
-    // Afficher le spinner au premier chargement
+    // Afficher le spinner au premier chargement (hors polling)
     var isEmpty = container.innerHTML === '' || container.innerHTML.includes('tn-t10-empty') || container.innerHTML.includes('tn-t10-loading');
-    if (isEmpty && fetchTennisTop10._retry === 0) {
+    if (isEmpty && fetchTennisTop10._retry === 0 && fetchTennisTop10._pollCount === 0) {
       container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
     }
     
@@ -4626,7 +4629,32 @@ async function fetchTennisTop10() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     
-    // Si loading:true (cache froid en cours), retry avec backoff
+    // --- B1: Polling status "building" ---
+    if (data && data.status === 'building') {
+      fetchTennisTop10._retry = 0;
+      fetchTennisTop10._errorCount = 0;
+      if (fetchTennisTop10._pollStart === 0) fetchTennisTop10._pollStart = Date.now();
+      fetchTennisTop10._pollCount++;
+      
+      var elapsed = Date.now() - fetchTennisTop10._pollStart;
+      if (elapsed >= 600000) {
+        fetchTennisTop10._pollStart = 0;
+        fetchTennisTop10._pollCount = 0;
+        container.innerHTML = '<div class="tn-t10-empty" style="text-align:center;padding:40px;color:var(--danger,#ff5252);font-size:14px;">⏰ Rebuild trop long, réessaie plus tard</div>';
+        if (statusEl) statusEl.textContent = 'Timeout';
+        return;
+      }
+      
+      var pollInterval = (data.estimated_seconds && data.estimated_seconds > 0) ? data.estimated_seconds * 1000 : 5000;
+      container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent,#ffd700);animation:tn2-pulse-dot 1.2s ease-in-out infinite;margin-right:8px;vertical-align:middle;"></span>Rebuild du cache tennis en cours...</div>';
+      if (statusEl) statusEl.textContent = 'Rebuild...';
+      
+      setTimeout(fetchTennisTop10, pollInterval);
+      return;
+    }
+    // --- Fin B1 ---
+    
+    // Si loading:true (cache froid en cours, legacy), retry avec backoff
     if (data && data.loading === true) {
       fetchTennisTop10._retry++;
       if (fetchTennisTop10._retry <= 5) {
@@ -4637,6 +4665,9 @@ async function fetchTennisTop10() {
       }
     }
     fetchTennisTop10._retry = 0;
+    fetchTennisTop10._pollStart = 0;
+    fetchTennisTop10._pollCount = 0;
+    fetchTennisTop10._errorCount = 0;
     
     try { AppCache.set('/api/v1/tennis/top10', data, 30000, 120000); } catch(e) {}
     if (statusEl) {
@@ -4652,13 +4683,16 @@ async function fetchTennisTop10() {
     _tnTop10AlertNewEntry(top10);
     container.innerHTML = top10.map(function(m, i) { return _tnTop10Card(m, i + 1); }).join('');
   } catch (err) {
-    fetchTennisTop10._retry++;
-    if (fetchTennisTop10._retry <= 3) {
-      var delay = Math.min(2000 * Math.pow(2, fetchTennisTop10._retry - 1), 15000);
-      if (statusEl) statusEl.textContent = 'Tentative ' + fetchTennisTop10._retry + '/3...';
+    fetchTennisTop10._errorCount++;
+    if (fetchTennisTop10._errorCount <= 3) {
+      var delay = Math.min(2000 * Math.pow(2, fetchTennisTop10._errorCount - 1), 15000);
+      if (statusEl) statusEl.textContent = 'Tentative ' + fetchTennisTop10._errorCount + '/3...';
       setTimeout(fetchTennisTop10, delay);
     } else {
       fetchTennisTop10._retry = 0;
+      fetchTennisTop10._pollStart = 0;
+      fetchTennisTop10._pollCount = 0;
+      fetchTennisTop10._errorCount = 0;
       if (statusEl) statusEl.textContent = 'Indisponible';
       if (container) container.innerHTML = '<div class="tn-t10-empty">Données indisponibles</div>';
     }
