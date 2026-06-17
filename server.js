@@ -35907,9 +35907,8 @@ function computePlayerFatigue(playerName, tour) {
 const _TENNIS_VB_TTL_MS = 4 * 60 * 1000;
 // ⚠ Ces déclarations vivent dans la closure requête (ré-évaluées par appel).
 // Singleton via globalThis pour persister le cache sur la vie du process.
-const _tnsVBState = (globalThis.__tnsVBState ||= { cache: new Map(), rebuilding: new Set() });
+const _tnsVBState = (globalThis.__tnsVBState ||= { cache: new Map() });
 const _tennisVBCache = _tnsVBState.cache;
-const _tennisVBRebuilding = _tnsVBState.rebuilding;
 
 // ─── Enrichment Snapshot (Solution A — Backend invincible) ──────────────────
 // BSD scheduled list DROP les matchs qui passent in_progress → `enriched[]`
@@ -36057,13 +36056,9 @@ async function buildTennisValueBets(opts = {}) {
     const _ttl = _deg ? 60 * 1000 : _TENNIS_VB_TTL_MS;
     if (Date.now() - hit.ts < _ttl) return hit.result;
     // Périmé : sert le stale tout de suite, rebuild en tâche de fond.
-    if (!_tennisVBRebuilding.has(key)) {
-      _tennisVBRebuilding.add(key);
-      _buildTennisValueBetsCore(opts)
-        .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
-        .catch(e => console.warn('  [TennisVB] rebuild bg échec:', e.message))
-        .finally(() => _tennisVBRebuilding.delete(key));
-    }
+    _buildTennisValueBetsCore(opts)
+      .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
+      .catch(e => console.warn('  [TennisVB] rebuild bg échec:', e.message));
     return hit.result;
   }
   // [FIX bug onglet tennis — v4] Aucun cache : NE PLUS bloquer la requête.
@@ -36072,13 +36067,9 @@ async function buildTennisValueBets(opts = {}) {
   // boucle synchrone empêchait tout Promise.race/timeout de tirer.
   // → build lancé EN FOND (avec yields event-loop), réponse "loading"
   //   immédiate. Le front ré-essaie ; dès cache prêt → vraies données.
-  if (!_tennisVBRebuilding.has(key)) {
-    _tennisVBRebuilding.add(key);
-    _buildTennisValueBetsCore(opts)
-      .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
-      .catch(e => console.warn('  [TennisVB] cold build bg échec:', e && e.message || e))
-      .finally(() => _tennisVBRebuilding.delete(key));
-  }
+  _buildTennisValueBetsCore(opts)
+    .then(r => { if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
+    .catch(e => console.warn('  [TennisVB] cold build bg échec:', e && e.message || e));
   return { status: 200, body: { count: 0, matches: [], meta: { loading: true, building: true } } };
 }
 // Pont scope : le warm-up boot (_sackmannBootSync IIFE) ne voit pas cette
@@ -36092,134 +36083,142 @@ try { globalThis.__tennisVBWarm = buildTennisValueBets; } catch (_) { /* noop */
 // appel utilisateur voit les données instantanément.
 
 async function _refreshTop10Cache() {
-  const _tStart = Date.now();
-  try {
-    const _tnVbFn = globalThis.__tennisVBWarm;
-    if (typeof _tnVbFn !== 'function') {
-      console.warn('[Top10Refresh] tennisVBWarm non disponible');
-      return false;
-    }
-    const vb = await _tnVbFn({});
-    if (!vb || vb.status !== 200) {
-      console.warn('[Top10Refresh] buildTennisValueBets échec');
-      return false;
-    }
-    const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
-    const active = ((vb.body && vb.body.matches) || []).filter(e =>
-      !_FINISHED_RX.test(String(e.status || ''))
-    );
-    // Batch-enrich BSD odds (même logique que la route)
-    await Promise.allSettled(active.map(async e => {
-      const alreadyHas = e.bsd_odds_summary
-        || (e._live && e._live._bsd_odds) || e._bsd_odds;
-      if (alreadyHas || !e._bsd_match_id) return;
-      try {
-        const raw = await Promise.race([
-          _fetchBSDTennisOdds(e._bsd_match_id),
-          new Promise(r => setTimeout(() => r(null), 2000)),
-        ]);
-        if (raw) {
-          const s = _extractTennisOddsSummary(raw);
-          if (s) e._bsd_odds = s;
-        }
-      } catch (_) {}
-    }));
-    // Pré-calculer les deux modes
-    const now = Date.now();
-    // D1-D6 identiques pour viewer et bettor → calcul unique par match
-    const _preDim = active.map(e => ({ e, d: _precomputeTop10Dims(e) }));
-    for (const mode of ['viewer', 'bettor']) {
-      const scored = _preDim.map(({ e, d }) => {
-        const s = computeScoreTop10Tennis(e, mode, d);
-        const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
-        const lv = e._live || {};
-        return {
-          matchId: e.id,
-          player1: (e.player1 && (e.player1.name || e.player1.shortName || e.player1.nom)) || (e.player1 ? String(e.player1.id || "") : null),
-          player2: (e.player2 && (e.player2.name || e.player2.shortName || e.player2.nom)) || (e.player2 ? String(e.player2.id || "") : null),
-          tournament: e.tournament || null,
-          tour: e.tour || null,
-          surface: e.surface || null,
-          round: e.round || null,
-          start_time: e.start_time || null,
-          status: e.status || null,
-          is_live: isLive,
-          score_top10: s.score,
-          reason: s.reason,
-          data_completeness: s.data_completeness,
-          dims: s.dims,
-          elo_p1: (e.player1 && e.player1.elo_surface) || null,
-          elo_p2: (e.player2 && e.player2.elo_surface) || null,
-          rank_p1: (e.player1 && e.player1.rank) || null,
-          rank_p2: (e.player2 && e.player2.rank) || null,
-          player_id_p1: (e.player1 && e.player1.id) || null,
-          player_id_p2: (e.player2 && e.player2.id) || null,
-          best_edge_ev: (e.best_edge && e.best_edge.edge != null) ? Number(e.best_edge.edge) : null,
-          blended_p1: (e.predictions && e.predictions.blended && e.predictions.blended.p1 != null)
-            ? Math.round(e.predictions.blended.p1 * 100) : null,
-          sets_live: Array.isArray(lv.sets) ? lv.sets.map(s => `${s.p1 ?? 0}-${s.p2 ?? 0}`) : [],
-          player1_sets: lv.player1_sets ?? null,
-          player2_sets: lv.player2_sets ?? null,
-          movement_p1: (e.bsd_odds_summary && e.bsd_odds_summary.movement_p1) || null,
-          movement_p2: (e.bsd_odds_summary && e.bsd_odds_summary.movement_p2) || null,
-          books_count: (e.bsd_odds_summary && e.bsd_odds_summary.books_count) || null,
-          confidence_level: (e.confidence_badge && e.confidence_badge.level) || null,
-          rlm: (() => {
-            const _ods = e.bsd_odds_summary || (e._live && e._live._bsd_odds) || e._bsd_odds;
-            const _ev = (e.best_edge && e.best_edge.edge) || 0;
-            const _bl = e.predictions && e.predictions.blended;
-            if (!_ods || !_bl || _ev <= 5) return false;
-            const _fp1 = (_bl.p1 || 0) > 0.5;
-            return (_fp1 && _ods.movement_p1 === 'DRIFTING') || (!_fp1 && _ods.movement_p2 === 'DRIFTING');
-          })(),
-          predictive: e.predictive || null,
-          metrics: e.metrics || null,
-        };
-      });
-      scored.sort((a, b) => b.score_top10 - a.score_top10);
-      // Filtre: exclure les matchs où le mieux classé (P1 ou P2) est en dessous du Top 120 ATP/WTA
-      var filtered = scored.filter(function(m) {
-        var r1 = m.rank_p1, r2 = m.rank_p2;
-        if (r1 == null && r2 == null) return true;
-        var bestRank = (r1 != null && r2 != null) ? Math.min(r1, r2) : (r1 != null ? r1 : r2);
-        return bestRank <= 120;
-      });
-      const top10 = _applyTop10DiversityFilter(filtered).slice(0, 10);
-      const payload = { top10, mode, computed_at: now, total_active: active.length };
-      _tnTop10Cache[mode] = payload;
-      _tnTop10Cache[`ts_${mode}`] = now;
-    }
-    const ms = Date.now() - _tStart;
-    console.log(`[Top10Refresh] Cache rafraîchi : ${active.length} matchs actifs, TOP 10 prêt (${ms}ms)`);
-    // After-match detection : invalider le cache des joueurs dont le match vient de se terminer
-    const cache = globalThis.__metricsCache;
-    if (cache && globalThis.__previousTennisMatches) {
-      const previous = globalThis.__previousTennisMatches;
-      const current = active;
-      for (const match of current) {
-        const wasLive = previous.has(match.id) && (previous.get(match.id).isLive || previous.get(match.id).status !== 'finished');
-        const isNowFinished = /finish|ft\b|ended|terminated/i.test(String(match.status || ''));
-        if (wasLive && isNowFinished) {
-          if (match.player1) cache.invalidatePlayer(match.player1);
-          if (match.player2) cache.invalidatePlayer(match.player2);
-          console.log(`[MetricsCache] Match terminé: ${match.player1} vs ${match.player2} — cache invalidé`);
-        }
-      }
-    }
-    // Sauvegarder l'état courant pour la prochaine passe
-    const state = new Map();
-    if (globalThis.__tennisVBWarm) {
-      for (const m of active) {
-        state.set(m.id, { status: m.status, isLive: m._isLive });
-      }
-    }
-    globalThis.__previousTennisMatches = state;
-    globalThis.__tennisVBWarmMatches = active; // Sprint: stocker pour itération boot warmer
-    return true;
-  } catch (err) {
-    console.error('[Top10Refresh] Erreur:', err.message);
-    return false;
+  if (globalThis.__top10RebuildPromise) {
+    return globalThis.__top10RebuildPromise;
   }
+  globalThis.__top10RebuildPromise = (async () => {
+    const _tStart = Date.now();
+    try {
+      const _tnVbFn = globalThis.__tennisVBWarm;
+      if (typeof _tnVbFn !== 'function') {
+        console.warn('[Top10Refresh] tennisVBWarm non disponible');
+        return false;
+      }
+      const vb = await _tnVbFn({});
+      if (!vb || vb.status !== 200) {
+        console.warn('[Top10Refresh] buildTennisValueBets échec');
+        return false;
+      }
+      const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
+      const active = ((vb.body && vb.body.matches) || []).filter(e =>
+        !_FINISHED_RX.test(String(e.status || ''))
+      );
+      // Batch-enrich BSD odds (même logique que la route)
+      await Promise.allSettled(active.map(async e => {
+        const alreadyHas = e.bsd_odds_summary
+          || (e._live && e._live._bsd_odds) || e._bsd_odds;
+        if (alreadyHas || !e._bsd_match_id) return;
+        try {
+          const raw = await Promise.race([
+            _fetchBSDTennisOdds(e._bsd_match_id),
+            new Promise(r => setTimeout(() => r(null), 2000)),
+          ]);
+          if (raw) {
+            const s = _extractTennisOddsSummary(raw);
+            if (s) e._bsd_odds = s;
+          }
+        } catch (_) {}
+      }));
+      // Pré-calculer les deux modes
+      const now = Date.now();
+      // D1-D6 identiques pour viewer et bettor → calcul unique par match
+      const _preDim = active.map(e => ({ e, d: _precomputeTop10Dims(e) }));
+      for (const mode of ['viewer', 'bettor']) {
+        const scored = _preDim.map(({ e, d }) => {
+          const s = computeScoreTop10Tennis(e, mode, d);
+          const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
+          const lv = e._live || {};
+          return {
+            matchId: e.id,
+            player1: (e.player1 && (e.player1.name || e.player1.shortName || e.player1.nom)) || (e.player1 ? String(e.player1.id || "") : null),
+            player2: (e.player2 && (e.player2.name || e.player2.shortName || e.player2.nom)) || (e.player2 ? String(e.player2.id || "") : null),
+            tournament: e.tournament || null,
+            tour: e.tour || null,
+            surface: e.surface || null,
+            round: e.round || null,
+            start_time: e.start_time || null,
+            status: e.status || null,
+            is_live: isLive,
+            score_top10: s.score,
+            reason: s.reason,
+            data_completeness: s.data_completeness,
+            dims: s.dims,
+            elo_p1: (e.player1 && e.player1.elo_surface) || null,
+            elo_p2: (e.player2 && e.player2.elo_surface) || null,
+            rank_p1: (e.player1 && e.player1.rank) || null,
+            rank_p2: (e.player2 && e.player2.rank) || null,
+            player_id_p1: (e.player1 && e.player1.id) || null,
+            player_id_p2: (e.player2 && e.player2.id) || null,
+            best_edge_ev: (e.best_edge && e.best_edge.edge != null) ? Number(e.best_edge.edge) : null,
+            blended_p1: (e.predictions && e.predictions.blended && e.predictions.blended.p1 != null)
+              ? Math.round(e.predictions.blended.p1 * 100) : null,
+            sets_live: Array.isArray(lv.sets) ? lv.sets.map(s => `${s.p1 ?? 0}-${s.p2 ?? 0}`) : [],
+            player1_sets: lv.player1_sets ?? null,
+            player2_sets: lv.player2_sets ?? null,
+            movement_p1: (e.bsd_odds_summary && e.bsd_odds_summary.movement_p1) || null,
+            movement_p2: (e.bsd_odds_summary && e.bsd_odds_summary.movement_p2) || null,
+            books_count: (e.bsd_odds_summary && e.bsd_odds_summary.books_count) || null,
+            confidence_level: (e.confidence_badge && e.confidence_badge.level) || null,
+            rlm: (() => {
+              const _ods = e.bsd_odds_summary || (e._live && e._live._bsd_odds) || e._bsd_odds;
+              const _ev = (e.best_edge && e.best_edge.edge) || 0;
+              const _bl = e.predictions && e.predictions.blended;
+              if (!_ods || !_bl || _ev <= 5) return false;
+              const _fp1 = (_bl.p1 || 0) > 0.5;
+              return (_fp1 && _ods.movement_p1 === 'DRIFTING') || (!_fp1 && _ods.movement_p2 === 'DRIFTING');
+            })(),
+            predictive: e.predictive || null,
+            metrics: e.metrics || null,
+          };
+        });
+        scored.sort((a, b) => b.score_top10 - a.score_top10);
+        // Filtre: exclure les matchs où le mieux classé (P1 ou P2) est en dessous du Top 120 ATP/WTA
+        var filtered = scored.filter(function(m) {
+          var r1 = m.rank_p1, r2 = m.rank_p2;
+          if (r1 == null && r2 == null) return true;
+          var bestRank = (r1 != null && r2 != null) ? Math.min(r1, r2) : (r1 != null ? r1 : r2);
+          return bestRank <= 120;
+        });
+        const top10 = _applyTop10DiversityFilter(filtered).slice(0, 10);
+        const payload = { top10, mode, computed_at: now, total_active: active.length };
+        _tnTop10Cache[mode] = payload;
+        _tnTop10Cache[`ts_${mode}`] = now;
+      }
+      const ms = Date.now() - _tStart;
+      console.log(`[Top10Refresh] Cache rafraîchi : ${active.length} matchs actifs, TOP 10 prêt (${ms}ms)`);
+      // After-match detection : invalider le cache des joueurs dont le match vient de se terminer
+      const cache = globalThis.__metricsCache;
+      if (cache && globalThis.__previousTennisMatches) {
+        const previous = globalThis.__previousTennisMatches;
+        const current = active;
+        for (const match of current) {
+          const wasLive = previous.has(match.id) && (previous.get(match.id).isLive || previous.get(match.id).status !== 'finished');
+          const isNowFinished = /finish|ft\b|ended|terminated/i.test(String(match.status || ''));
+          if (wasLive && isNowFinished) {
+            if (match.player1) cache.invalidatePlayer(match.player1);
+            if (match.player2) cache.invalidatePlayer(match.player2);
+            console.log(`[MetricsCache] Match terminé: ${match.player1} vs ${match.player2} — cache invalidé`);
+          }
+        }
+      }
+      // Sauvegarder l'état courant pour la prochaine passe
+      const state = new Map();
+      if (globalThis.__tennisVBWarm) {
+        for (const m of active) {
+          state.set(m.id, { status: m.status, isLive: m._isLive });
+        }
+      }
+      globalThis.__previousTennisMatches = state;
+      globalThis.__tennisVBWarmMatches = active; // Sprint: stocker pour itération boot warmer
+      return true;
+    } catch (err) {
+      console.error('[Top10Refresh] Erreur:', err.message);
+      return false;
+    }
+  })().finally(() => {
+    globalThis.__top10RebuildPromise = null;
+  });
+  return globalThis.__top10RebuildPromise;
 }
 
 // Initial warm-up au boot (avec délai) + démarrage du cron 5min
