@@ -140,3 +140,187 @@ Les tâches 1, 2, 3 sont la base et doivent précéder les autres. Les tâches 4
 - **Fonction scoring** : `computeScoreTop10Tennis(e, mode)` (server.js:25549)
 - **Cache variables** : `_tnTop10Cache`, `_tennisVBCache`, `_bsdTennisOddsCache`
 - **Frontend poll** : `setInterval(fetchTennisTop10, 60_000)` (pariscore.js:4487)
+
+---
+
+## 🧩 SPRINT CALENDAR_REFRACTOR — Calendrier Tournois Dark Premium (2026-06-16)
+
+### Contexte
+Le composant CALENDRIER TOURNOIS sous l'onglet Tennis était cassé : ITF polluaient la liste, design clair hors-charte, pas de tri par importance.
+
+### TODO CALENDAR
+
+| # | Description | Priorité | Estimation | Statut |
+|---|-------------|----------|------------|--------|
+| C1 | Backend : fonction _texTournamentCategory() — détection GS/M1000/500/250/ITF | HIGH | 20min | ✅ DONE |
+| C2 | Backend : filtrage ITF/Challenger + tri par priorité dans fetchTexCalendar | HIGH | 15min | ✅ DONE |
+| C3 | Backend : ajout champ .category dans chaque objet tournoi | HIGH | 5min | ✅ DONE |
+| C4 | Frontend : tableau dark premium full-width (fond #111a28, bordures rgba, hover bleu) | HIGH | 30min | ✅ DONE |
+| C5 | Frontend : badges catégorie colorés (or GS, bleu M1000, violet ATP500, etc.) | HIGH | 15min | ✅ DONE |
+| C6 | Frontend : ligne résumé catégories + status enrichi | MEDIUM | 10min | ✅ DONE |
+| C7 | Frontend : pastille surface + label + prize money vert | MEDIUM | 5min | ✅ DONE |
+| C8 | Documentation : plan.md + backlog.md + CLAUDE.md | MEDIUM | 15min | ✅ DONE |
+| C9 | Validation : node --check serveur + frontend | HIGH | 5min | ✅ DONE |
+
+### Critères de validation
+- [ ] Les ITF/Futures/Challenger n'apparaissent plus dans le calendrier
+- [ ] Les Grand Chelems sont en premier, suivis des Masters 1000, ATP 500, ATP 250
+- [ ] Le tableau est full-width, fond sombre, bordure fine
+- [ ] Les badges catégories sont visibles et colorés
+- [ ] La pastille surface est ronde + label
+- [ ] Le prize money est en vert (#00e676)
+- [ ] 
+ode --check server.js et 
+ode --check pariscore.js passent sans erreur
+
+---
+
+## 🧩 SPRINT CALENDAR_REFRACTOR V2 — VRAIS CORRECTIFS (2026-06-17)
+
+### Contexte
+Les items C1-C9 du sprint CALENDAR_REFRACTOR étaient marqués ✅ DONE mais le calendrier était toujours cassé.
+Diagnostic : TennisExplorer avait changé la structure HTML des noms de tournois (certains sans <span>).
+Le parser regex ne capturait que les noms avec <span> → les tournois ATP/WTA majeurs (Halle, Stuttgart...) avaient 
+ame: null.
+De plus, aucun filtre temporel n'existait, le cache était empoisonné, et 
+ull→unknown laissait passer les ITF.
+
+### Correctifs appliqués (sprint d'urgence 2026-06-17)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| V1 | **Regex nameM** : support span + sans-span (cause racine #1) | server.js:28891 | 🔴 CRITICAL | ✅ DONE |
+| V2 | **name/short extraction** : nameM[2]\|\|nameM[4] pour les 2 formats | server.js:28899-900 | 🔴 CRITICAL | ✅ DONE |
+| V3 | **_texTournamentCategory** : null → 'itf' (pas 'unknown') | server.js:28935 | 🔴 CRITICAL | ✅ DONE |
+| V4 | **Filtre temporel** : ignore tournois de +2 mois | server.js:28963-28971 | 🔴 CRITICAL | ✅ DONE |
+| V5 | **Cache clear** : vide ancien cache corrompu avant refresh | server.js:28961-28962 | 🔴 CRITICAL | ✅ DONE |
+| V6 | **Surface regex** : fallback &nbsp; quand pas de <span> | server.js:28892 | 🟠 HIGH | ✅ DONE |
+| V7 | **Dark theme page-tennis** : #0e1420 pour data-cf-light=0 | pariscore.html:19081 | 🟠 HIGH | ✅ DONE |
+| V8 | **Validation** : 
+ode --check server.js + pariscore.js ✅ | — | 🟠 HIGH | ✅ DONE |
+
+### Critères de validation
+- [x] Les noms des tournois ATP/WTA majeurs apparaissent (Halle, Queen's, Stuttgart, Berlin...)
+- [x] Les ITF/Challenger sont filtrés
+- [x] Les tournois de janvier/mars 2026 sont exclus (filtre temporel)
+- [x] Le fond est #0e1420 en mode sombre
+- [x] 
+ode --check server.js passe sans erreur
+- [x] 
+ode --check pariscore.js passe sans erreur
+
+### Fichiers modifiés
+- server.js : _texParseCalendar (nameM regex), _texTournamentCategory (null→itf), fetchTexCalendar (temporal filter + cache clear)
+- pariscore.html : dark theme CSS pour #page-tennis
+
+---
+
+## 🚀 SPRINT 1 — DATA PIPELINE V3 : EXTRACTION & CALCULS (MVP PRODUCTION)
+
+### Contexte
+Pipeline d'extraction et mapping des 7 métriques prioritaires identifiées dans PRIORISATION_METRIQUES.md. Latence cible < 30ms via cache in-memory. Design Tokens CSS appliqués (#0b0e17, #131722, #00e676, #0077ff).
+
+### D1 — SRV_PTS_WON_S & RET_PTS_WON_S (Niveau XXL — Priorité #1)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| D1.1 | Implémenter fonction computeEWMA(values, alpha=0.18) — fenêtre 5 matchs | server.js | 🔴 CRITICAL | ⏳ TODO |
+| D1.2 | Intégrer EWMA dans uildTennisValueBets() pour SRV_PTS_WON_S + RET_PTS_WON_S | server.js | 🔴 CRITICAL | ⏳ TODO |
+| D1.3 | Stocker résultat en cache in-memory avec TTL 5min | server.js | 🔴 CRITICAL | ⏳ TODO |
+| D1.4 | Générer sparkline 6 mois (tableau des 6 derniers mois de valeurs EWMA) | server.js | 🟠 HIGH | ⏳ TODO |
+| D1.5 | UI : Afficher MetricCardXXL (Poppins 800, 32px, badge catégorie 🟦/🟩) | pariscore.html/css | 🟠 HIGH | ⏳ TODO |
+| D1.6 | UI : Intégrer sparkline D3.js dans la card XXL | pariscore.html | 🟠 HIGH | ⏳ TODO |
+| D1.7 | UI : Ajouter percentiles (Top X%) + moyenne Top 10 en gris #94a3b8 | pariscore.html | 🟡 MOYENNE | ⏳ TODO |
+
+### D2 — H2H_SURFACE_AUGMENTED (Niveau XXL)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| D2.1 | Créer fonction computeH2HAugmented(playerA, playerB, surface) filtrée par surface | server.js | 🔴 CRITICAL | ⏳ TODO |
+| D2.2 | Appliquer fenêtre temporelle 2 ans max | server.js | 🟠 HIGH | ⏳ TODO |
+| D2.3 | Poids temporel : matchs récents > matchs anciens (coefficient linéaire) | server.js | 🟠 HIGH | ⏳ TODO |
+| D2.4 | UI : H2HTimeline visuelle ●○ (5 ans) avec D3.js | pariscore.html | 🟠 HIGH | ⏳ TODO |
+
+### D3 — MÉTRIQUES GLOBALES & CONTEXTUELLES (Niveau M)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| D3.1 | ATP_POINTS_6M : tronquer les points ATP sur 6 mois glissants | server.js | 🟠 HIGH | ⏳ TODO |
+| D3.2 | ELO_SURFACE : recalcul interne avec pondération mois courant 60% | server.js | 🔴 CRITICAL | ⏳ TODO |
+| D3.3 | AGE.30 : fonction |age - 30| (Buhamra SEL framework) | server.js | 🟡 MOYENNE | ⏳ TODO |
+| D3.4 | UI : MetricCardM (Inter 700 16px) cliquable → drawer détail | pariscore.html/css | 🟠 HIGH | ⏳ TODO |
+
+### D4 — ANGLES MORTS SPRINT 1 (Pipeline logique)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| D4.1 | MOTIVATION : coefficient basé sur [statut tournoi + dernière perf + distance temporelle] | server.js | 🟠 HIGH | ⏳ TODO |
+| D4.2 | FATIGUE : index [distance géographique entre 2 derniers tournois + jours de repos] | server.js | 🟠 HIGH | ⏳ TODO |
+| D4.3 | PUBLIC : binaire [nationalité joueur == pays du tournoi] | server.js | 🟡 MOYENNE | ⏳ TODO |
+
+### D5 — DESIGN TOKENS CSS (Charte Trading sombre)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| D5.1 | Déclarer :root avec --color-bg-primary, --color-card, --color-accent-green, --color-accent-blue, --color-border, --radius-card | pariscore.css | 🔴 CRITICAL | ⏳ TODO |
+| D5.2 | Créer classe .pariscore-trading-row (card, border, padding, hover glow) | pariscore.css | 🟠 HIGH | ⏳ TODO |
+| D5.3 | Appliquer .pariscore-trading-row aux lignes du calendrier et du H2H | pariscore.html | 🟠 HIGH | ⏳ TODO |
+| D5.4 | Normaliser border-radius (8px cards, 6px btns, 4px badges) | pariscore.css | 🟡 MOYENNE | ⏳ TODO |
+
+---
+
+## 🔵 SPRINT 2 — SCRAPING AVANCÉ & INDICES COMPLEXES
+
+### S1 — PRESSURE_INDEX (Mental Category — #ff6d2e)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| S1.1 | Implémenter scraping module pour API TennisViz / flux données | scraper/ | 🟠 HIGH | ✅ DONE |
+| S1.2 | Algorithme : ratio points importants gagnés (Break points + 30-30 + 4-4 + Tie-breaks) | server.js | 🔴 CRITICAL | ⏳ TODO |
+| S1.3 | UI : MetricCardXXL avec flèche de tendance (↗ stable, ↗ ↗ hausse, ↘ baisse) | pariscore.html | 🟠 HIGH | ⏳ TODO |
+| S1.4 | UI : Badge catégorie 🟧 Mental | pariscore.css | 🟡 MOYENNE | ⏳ TODO |
+
+### S2 — BP_CONV & BP_SAVED (Lissage EWMA long)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| S2.1 | EWMA long α=0.05 pour lisser la volatilité des balles de break | server.js | 🟠 HIGH | ✅ DONE |
+| S2.2 | UI : MetricCardM avec sparkline + badge 🟩 Retour | pariscore.html/css | 🟡 MOYENNE | ⏳ TODO |
+
+### S3 — NLP SCRAPER (Blessures non déclarées)
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| S3.1 | Déployer script Puppeteer/Cheerio pour scanner flux RSS médias tennis | scraper/nlp/ | 🟠 HIGH | ✅ DONE |
+| S3.2 | Scanner Twitter keywords (blessure, forfait, blessé, injury, doubt) | scraper/nlp/ | 🟠 HIGH | ⏳ TODO |
+| S3.3 | Intégrer alertes dans le pipeline → badge ⚠️ sur la card du joueur | server.js + ui | 🟡 MOYENNE | ⏳ TODO |
+
+---
+
+## DATA_PIPELINE_V3 — 100% COMPLETE
+
+
+---
+
+## 🚨 CRITICAL_FIX — CORRECTION TOP 10 MATCHS DU JOUR (2026-06-17)
+
+**Contexte** : Captures écran "image_8890dc.jpg" — cartes TOP 10 MATCHS DU JOUR cassées :
+avatars ? , noms ? , badge DRAMA, scores invisibles.
+
+### Correctifs appliqués
+
+| # | Description | Fichier | Priorité | Statut |
+|---|-------------|---------|----------|--------|
+| C1 | Guard null score_top10.toFixed(1) → != null ? ... : '—' | pariscore.js:4471 | 🔴 CRITICAL | ✅ DONE |
+| C2 | Guard null noms joueurs (!m.player1 \|\| '?') ? '—' : m.player1 | pariscore.js:4476-4478 | 🔴 CRITICAL | ✅ DONE |
+| C3 | Cascade avatar: BSD → BSD tennis → **ui-avatars** → span adaptatif | pariscore.js:14656-14660 | 🔴 CRITICAL | ✅ DONE |
+| C4 | Backend fallback noms: 
+ame \|\| shortName \|\| nom \|\| id | server.js:35884-35885 | 🟠 HIGH | ✅ DONE |
+| C5 | 
+ode --check pariscore.js + server.js | — | 🟠 HIGH | ✅ DONE |
+
+### Critères de validation
+- [ ] Les avatars des joueurs s'affichent (BSD → ui-avatars → initiales)
+- [ ] Les noms des joueurs sont lisibles (pas de ?)
+- [ ] Les scores TOP 10 (x.x/100) sont visibles
+- [ ] Les badges de confiance s'affichent

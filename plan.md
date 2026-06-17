@@ -171,3 +171,79 @@ Layout stabilisé. Causes :
 - overflow:hidden sur la grille → retiré
 - Code photo dans tn2SwitchTab resetant le cache → déplacé hors switch
 - Tab-btn compressibles → flex-shrink:0 ajouté
+
+---
+
+## 10. Sprint CALENDAR_REFRACTOR — Tennis Calendar Dark Premium v12.83
+
+**Date** : 2026-06-16  
+**Version** : v12.83  
+**Porteur** : CTO/Lead Data Scientist  
+
+### 10.1 Problème
+Le composant CALENDRIER TOURNOIS affichait :
+- Tournois ITF/Futures mineurs polluant la liste
+- Aucun ordre logique (les plus gros tournois noyés dans la masse)
+- Design clair hors-charte (fond blanc, données compressées à gauche)
+- Aucune indication visuelle de l'importance du tournoi
+
+### 10.2 Corrections Backend
+- **Fonction** _texTournamentCategory(name) — détection ITF/Challenger/GS/M1000/ATP500/ATP250/WTA1000/WTA500/WTA250
+- **Constante** TEX_CATEGORY_PRIORITY — tri Grand Chelem → Masters 1000 → ATP 500 → ATP 250
+- **Filtrage** : ITF et Challenger exclus du calendrier
+- **Tri** : les tournois les plus prestigieux apparaissent en premier
+- **Champ** .category ajouté à chaque tournoi (consommé par le frontend)
+
+### 10.3 Corrections Frontend
+- Badge catégorie coloré (🏆 or Grand Chelem, 🔵 bleu M1000, 🟣 violet ATP 500, etc.)
+- Tableau 100% largeur, fond #111a28, bordures gba(255,255,255,0.06)
+- Ligne résumé : "🏆 2 Grand Chelem · 🔵 4 Masters 1000"
+- Hover bleu gba(0,119,255,0.06) sur les lignes
+- Status enrichi : "6 tournois · 2 Grand Chelem · 4 M1000 · MAJ 14:30"
+- Pastille de surface + label lisible
+
+### 10.4 Fichiers modifiés
+| Fichier | Modification |
+|---------|-------------|
+| server.js | _texTournamentCategory + filter/sort + champ category |
+| pariscore.js | loadTexCalendar refonte complète |
+| plan.md | Ce document |
+| backlog.md | Ajout tâches calendrier |
+
+---
+
+## 11. 🚨 CRITICAL_FIX — Correction Liens Cassés & Avatars (2026-06-17)
+
+**Version** : v12.84  
+**Référence** : Screenshot image_8890dc.jpg — cartes TOP 10 MATCHS DU JOUR cassées
+
+### 11.1 Problème
+Les cartes TOP 10 Tennis affichaient :
+- Cercles colorés (bleu/violet) avec ? au lieu des photos des athlètes
+- Noms des joueurs remplacés par ?
+- Badge 'DRAMA' indiquant une classification foireuse
+- Scores/confiance invisibles (tirets —)
+
+### 11.2 Causes racines
+| Cause | Fichier | Impact |
+|-------|---------|--------|
+| m.score_top10.toFixed(1) crashait si score_top10 === null | pariscore.js:4471 | Template entière avortait → score invisible |
+| Pas de fallback nom sur player1/player2 nulls | pariscore.js:4476-4478 | Noms remplacés par ? |
+| ixBrokenPlayerPhoto() passait direct au span initiales sans fallback ui-avatars | pariscore.js:14656 | Avatar = rond ? au lieu d'un visage stylé |
+| .player1.name pas cascadé sur shortName/
+om | server.js:35884 | Backend renvoyait 
+ull comme nom joueur |
+
+### 11.3 Correctifs appliqués
+| # | Fix | Fichier:ligne |
+|---|-----|--------------|
+| 1 | Guard score_top10 != null ? .toFixed(1) : '—' | pariscore.js:4471 |
+| 2 | Guard (!m.player1 \|\| m.player1 === '?') ? '—' : m.player1 | pariscore.js:4476-4478 |
+| 3 | Cascade ixBrokenPlayerPhoto: BSD → BSD tennis → **ui-avatars** → span taille dynamique | pariscore.js:14656-14660 |
+| 4 | Backend: .player1.name \|\| shortName \|\| nom \|\| id | server.js:35884-35885 |
+
+### 11.4 Validation
+- 
+ode --check pariscore.js ✅ PASS
+- 
+ode --check server.js ✅ PASS

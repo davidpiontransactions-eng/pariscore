@@ -1,4 +1,4 @@
-/* PariScore Service Worker — shell offline + bypass API/SSE.
+﻿/* PariScore Service Worker — shell offline + bypass API/SSE.
    Bump CACHE version à chaque release frontend pour invalider. */
 // v10 (2026-05-19) : invalide v9 — embarque fix mobile bug page blanche post
 // param filtres (commit 18e5616 + radar BSD Live WS 3f3cc41).
@@ -101,7 +101,7 @@
 // (icon-192/512 "any", icon-512-maskable Android adaptive, apple-touch-icon 180
 // iOS). manifest icons[] enrichi + apple-touch link PNG. Precache PNGs + bump
 // pour purger manifest v34 (1 seul icon.svg) chez users installes.
-const CACHE_VERSION = 'v35';
+const CACHE_VERSION = 'v36';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

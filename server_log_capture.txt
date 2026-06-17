@@ -1,0 +1,200 @@
+  [ESPN] Ligue 119 → OK (slug den.1)
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [ESPN] Liga Profesional (arg.1) → OK (30 équipes, saison en cours)
+  [ESPN] Ligue 128 → OK (slug arg.1)
+  [ESPN] Serie B (ita.2) → OK (20 équipes, saison en cours)
+  [ESPN] Ligue 136 → OK (slug ita.2)
+  [ESPN] Liga BetPlay (col.1) → OK (20 équipes, saison en cours)
+  [ESPN] Ligue 239 → OK (slug col.1)
+  [ESPN] LigaPro (ecu.1) → OK (16 équipes, saison en cours)
+  [ESPN] Ligue 240 → OK (slug ecu.1)
+  [ESPN] Austrian Bundesliga (aut.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 262 → OK (slug aut.1)
+  [ESPN] Campeonato Nacional (chi.1) → OK (16 équipes, saison en cours)
+  [ESPN] Ligue 265 → OK (slug chi.1)
+  [TennisRank BSD] 1000 joueurs indexés
+  [ESPN] División Profesional (par.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 480 → OK (slug par.1)
+  [ESPN] A-League (aus.1) → OK (12 équipes, saison en cours)
+  [ESPN] Ligue 900 → OK (slug aus.1)
+  [DATA AUDIT] League sizes computed: 1:1, 2:6, 3:6, 10:49, 11:12, 12:12, 13:14, 30:4, 31:43, 32:6, 33:12, 34:38, 39:20, 40:24, 45:32, 48:48, 61:18, 63:181, 71:20, 72:19, 73:89, 78:18, 81:46, 88:18, 94:18, 98:20, 99:15, 103:16, 106:18, 113:16, 119:12, 128:30, 135:20, 136:20, 137:5, 140:12, 141:23, 143:87, 144:16, 169:16, 172:16, 188:12, 200:16, 202:16, 203:18, 207:12, 210:9, 218:18, 239:20, 240:16, 244:12, 253:30, 254:25, 262:12, 265:16, 269:14, 283:16, 292:12, 307:18, 318:14, 333:14, 345:15, 383:13, 436:20, 480:12, 558:16, 900:12, 999:42
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 4
+  [Cron:Stats] ✓ 1292 équipes mises à jour (BSD: 1292, Fallback: 0)
+════════════════════════════════════════════════════════════
+✅ [OPTIMISATION] Données Injuries mappées directement via le flux principal (Appel API tiers supprimé).
+  [Cron:Stats] Phase 3: Sofascore supplement — 6 équipes sans stats réelles…
+  [Cron:Odds] ⚡ Données fraîches en cache (56 matchs) — skip API [key=odds_raw_matches]
+  [EnrichHistory] 0 enrichis sur 49380 (skipped: 48436)
+  [Sync] Synchronisation des buffers mémoire (56 matchs)...
+  [Sync] ✓ Buffers mis à jour. Version: 5
+  [Boot] ✓ Enrichissement stats terminé.
+  [EnrichHistory] 0 enrichis sur 49380 (skipped: 48436)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #11 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisLive] BSD=16 ESPN=338 merged=285 live=13
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [Challenger ATP] 50 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.391 stdev=0.625
+  [Tennis DR Diff] bsd_t_37148 gap=0.48 dominant=Divna Ratkovic ratio=1.48
+  [Tennis DR Var] bsd_t_37815 sets=3 var=5.135 stdev=2.266
+  [Tennis DR Diff] bsd_t_37815 gap=0.68 dominant=Daniil Medvedev ratio=1.68
+  [Tennis DR Var] bsd_t_37843 sets=2 var=0.250 stdev=0.500
+  [Tennis DR Diff] bsd_t_37848 gap=0.51 dominant=Katarzyna Kawa ratio=0.49
+  [Tennis DR Diff] bsd_t_37839 gap=0.25 dominant=Harriet Dart ratio=1.25
+  [Tennis DR Diff] bsd_t_37127 gap=0.54 dominant=Raghav Jaisinghani ratio=1.54
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.250 stdev=0.500
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.302 stdev=0.550
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis:BreakSet] bsd_t_37152 dom=Styliani Roussopoulou drAvg=0.6 set=3-5 cote=2.30
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisVB] build start — 152 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [LiveDBG] idle-skip #16 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisVB] build done — 160 matchs en 58864ms · snap_stored=152 · live_rehydrated=8 · live_orphans=5 · snap_map_size=889
+[CS2Service] 18 matches (4 live, 0 predictions)
+  [TennisLive] BSD=0 ESPN=338 merged=277 live=6 fetched+5aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x5
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis:BreakSet] bsd_t_37829 dom=Petr Brunclik drAvg=2 set=4-2 cote=1.88
+  [Tennis DR Diff] bsd_t_37829 gap=0.73 dominant=Petr Brunclik ratio=1.73
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisPBP] SSE pbp_update broadcast x5
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #21 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [Tennis DR Diff] bsd_t_37830 gap=0.86 dominant=Zdenek Kolar ratio=1.86
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis DR Var] bsd_t_37781 sets=3 var=5.323 stdev=2.307
+  [Tennis:BreakSet] bsd_t_37781 dom=Elena Rybakina drAvg=6 set=2-0 cote=1.19
+  [Tennis:DomOdds13] bsd_t_37830 dominant=Federico Cinà DR=1.667 cote=1.43
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [LiveDBG] idle-skip #26 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=16 ESPN=338 merged=286 live=13
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Challenger ATP] 74 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.490 stdev=0.700
+  [Tennis DR Diff] bsd_t_37148 gap=0.52 dominant=Divna Ratkovic ratio=1.52
+  [Tennis DR Var] bsd_t_37815 sets=3 var=1.876 stdev=1.370
+  [Tennis DR Diff] bsd_t_37815 gap=0.58 dominant=Daniil Medvedev ratio=1.58
+  [Tennis DR Var] bsd_t_37843 sets=2 var=1.000 stdev=1.000
+  [Tennis DR Diff] bsd_t_37848 gap=0.52 dominant=Katarzyna Kawa ratio=0.48
+  [Tennis DR Diff] bsd_t_37127 gap=0.74 dominant=Raghav Jaisinghani ratio=1.74
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.154 stdev=0.393
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.327 stdev=0.572
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisPBP] fetched+3aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x3
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisLive] BSD=15 ESPN=338 merged=311 live=12
+  [Tennis Archive] 1 matchs finished archives vers tennisHistory (+db.archive_matches) — persisté
+  [TennisPBP] fetched+1aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x1
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #31 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisLive] BSD=15 ESPN=338 merged=311 live=12
+  [TennisAlerts] ✓ alert#1700 gagne_set set2 3-6 → WIN
+  [TennisAlerts] ✓ alert#1699 under_12.5 set2 3-6 → WIN
+  [WOM:AutoPublish] tick: 46 foot · 0 avec WOM · 0 candidat(s) ≥12pts · 0 à poster (jour 0/8)
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisVB] build start — 176 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [Tennis DR Diff] bsd_t_37829 gap=0.73 dominant=Petr Brunclik ratio=1.73
+  [TennisLive] BSD=15 ESPN=0 merged=89 live=12
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+[CS2Service] 18 matches (4 live, 1 predictions)
+  [TennisVB] build done — 184 matchs en 55255ms · snap_stored=176 · live_rehydrated=8 · live_orphans=4 · snap_map_size=889
+  [TennisRank BSD] 1000 joueurs indexés
+  [Tennis DR Diff] bsd_t_37839 gap=0.34 dominant=Harriet Dart ratio=1.34
+  [TennisLive] BSD=15 ESPN=338 merged=311 live=13 fetched+1aiscore_ondemand
+  [TennisPBP] SSE pbp_update broadcast x1
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [LiveDBG] idle-skip #36 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [Tennis:BreakSet] bsd_t_37824 dom=Ajla Tomljanović drAvg=2 set=4-2 cote=2.30
+  [Tennis DR Diff] bsd_t_37773 gap=0.40 dominant=Mary Stoiana ratio=0.60
+  [TennisLive] BSD=16 ESPN=338 merged=311 live=14
+  [TennisPBP] SSE pbp_update broadcast x1
+  [Tennis DR Diff] bsd_t_37830 gap=0.24 dominant=Zdenek Kolar ratio=1.24
+  [TennisLive] BSD=16 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [TennisPred BSD] 97 prédictions chargées (upcoming)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [Tennis DR Var] bsd_t_37781 sets=3 var=5.323 stdev=2.307
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+  [Archive] 80 matchs non vérifiés à re-tenter…
+[betwatch] transport: browse C:\Users\david\.claude\skills\gstack\browse\dist\browse.exe
+  [BSD Enrich] 2 matchs enrichis (odds+pred+polymarket)
+[betwatch] CF OK — "Betwatch | Betfair Money - Dropping Odds - Suspicious Bets"
+[betwatch] football — 0 marchés, 0 WOM
+[betwatch] tennis — 0 marchés, 0 WOM
+[betwatch] pas d'évolution WOM notable
+[betwatch] écrit C:\Users\david\Documents\dev PariScore\ParisScorebis\data\betwatch_wom.json — 0 matchs, 0 avec WOM
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [LiveDBG] idle-skip #41 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [TennisRank BSD] 1000 joueurs indexés
+  [AutoPurge] Aucun match à purger (56 actifs)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [Challenger ATP] 74 matchs chargés (The Odds API + Tennis Explorer)
+  [Tennis DR Var] bsd_t_37152 sets=2 var=0.563 stdev=0.750
+  [Tennis DR Var] bsd_t_37815 sets=3 var=0.395 stdev=0.628
+  [Tennis DR Diff] bsd_t_37815 gap=0.49 dominant=Daniil Medvedev ratio=1.49
+  [Tennis DR Var] bsd_t_37843 sets=2 var=1.361 stdev=1.167
+  [Tennis DR Diff] bsd_t_37870 gap=0.25 dominant=Andreas Messis ratio=0.75
+  [Tennis DR Diff] bsd_t_37127 gap=0.62 dominant=Raghav Jaisinghani ratio=1.62
+  [Tennis DR Var] bsd_t_37670 sets=2 var=0.327 stdev=0.572
+  [Tennis DR Var] bsd_t_37824 sets=3 var=0.302 stdev=0.550
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [LiveDBG] idle-skip #46 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+  [Tennis DR Var] bsd_t_37670 sets=3 var=0.259 stdev=0.508
+  [TennisLive] BSD=17 ESPN=284 merged=276 live=14
+  [TennisAlerts] ✓ alert#1702 gagne_set set1 6-3 → WIN
+  [TennisAlerts] ✓ alert#1701 under_12.5 set1 6-3 → WIN
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisAlerts] ✓ alert#1697 under_12.5 set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1698 gagne_set set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1690 gagne_set set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1689 under_12.5 set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1687 under_12.5 set1 5-7 → WIN
+  [TennisAlerts] ✓ alert#1688 gagne_set set1 5-7 → WIN
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
+  [TennisRank BSD] 1000 joueurs indexés
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisVB] build start — 176 matchs (src=bsd)
+  ✓ tennis_tournament_aliases.json chargé (79 tournois · 228 alias)
+  [LiveDBG] idle-skip #51 — matchsEnBase=56 kickoff<4h=0 (aucun in-play / kickoff proche / fini récent → poll live NON exécuté)
+[CS2Service] 19 matches (5 live, 1 predictions)
+  [TennisVB] build done — 185 matchs en 45599ms · snap_stored=176 · live_rehydrated=9 · live_orphans=5 · snap_map_size=889
+  [Tennis DR Diff] bsd_t_37829 gap=0.50 dominant=Petr Brunclik ratio=1.50
+  [Tennis DR Var] bsd_t_37773 sets=2 var=0.111 stdev=0.334
+  [Tennis DR Diff] bsd_t_37773 gap=0.35 dominant=Mary Stoiana ratio=0.65
+  [TennisLive] BSD=17 ESPN=338 merged=311 live=14
+  [TennisCalib BSD] n=151 acc=62.9% brier=0.2084 | sets=– games=–
