@@ -1,3 +1,43 @@
+## ✅ SESSION 2026-06-18 — RESTAURATION COMPLÈTE (Navbar + Auth + Freemium)
+
+### Commits : `590a2d7` → `b2e8be2` → `b61e488` → `2d3cfc1` → `22e17b7`
+
+### 1. Navbar — showPage + bnGo restaurés
+- **Cause** : `pariscore.js` sur le VPS avait un `else if` orphelin ligne 6529 (corruption fichier)
+- **Fix** : SCP du fichier local → VPS + `node --check` OK
+- **bnGo** créé comme alias `showPage` pour la barre mobile
+- **Cache bust** : `?v=240617-1` → `?v=240618-1` dans `pariscore.html`
+
+### 2. Login admin — pariscore.html + admin.html
+- **Bug pariscore.html** : validation `!email.includes('@')` bloquait le login admin (username sans @)
+  - Fix : suppression de la validation bloquante, le payload détecte déjà username vs email
+- **Bug admin.html** : le `catch(e)` générique affichait "Serveur inaccessible" même si le login réussissait
+  - Fix : message d'erreur réel + hide login form AVANT showDashboard (défensif)
+  - `showDashboard` wrapper protégé par try/catch (EDA ne casse plus le dashboard)
+  - `edaLoadTables` protégé contre élément manquant
+
+### 3. Système Freemium — bannière + essai gratuit 24h
+- **Backend existant** : gate freemium (5 ligues, 10 vues/jour), `PS_FREE_LEAGUES`, `incrementMatchesView`
+- **Bannière frontend** : insérée dans `#page-matchs`, gérée par `updateNavAuthState`
+  - Essai actif → 🎉 vert "Essai gratuit — Xh restant"
+  - Essai expiré → 🔒 orange "Mode Gratuit — 5 ligues, 10/jour"
+  - Admin/Pro → masquée
+- **Essai gratuit 24h** : inscription → `premium_until = now + 86400`, token `matchday`
+  - `requireUserAuth` fixé pour accepter `matchday`
+  - `/api/v1/bets`, `/api/v1/matches` accessibles en essai
+- **Rapport OddAlerts** : `.context/ANALYSE-ODDALERTS-FREEMIUM.md`
+
+### Fichiers modifiés
+- `pariscore.js` : showPage/bnGo, submitLogin fix, updateNavAuthState (bannière), submitRegister (trial_until)
+- `pariscore.html` : cache bust, bannière freemium avec compte à rebours
+- `admin.html` : login error handling, showDashboard défensif, edaLoadTables guard
+- `server.js` : register → trial matchday token + premium_until, requireUserAuth +matchday
+
+### Restant
+- Day Pass payant (£2.99 style OddAlerts) via Stripe (checkout/matchday existe déjà)
+- Compteur de vues restantes visible dans l'UI
+- Bannière freemium sur pages Tennis/CS2/MMA
+
 ## 🚨 CRITICAL_FIX — MEDIA REPAIR 2026-06-17
 
 Cartes TOP 10 MATCHS DU JOUR cassées (capture image_8890dc.jpg).

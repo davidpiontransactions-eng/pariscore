@@ -1,6 +1,32 @@
 # TODO — Corrections P0 (Audit Chaîne de Synchronisation)
 
 > Généré le 17/06/2026 — Audit DATA_PIPELINE_V3
+> Mis à jour le 18/06/2026 — Session restauration (5 commits)
+
+---
+
+## ✅ SESSION 18/06/2026 — TERMINÉ
+
+| Commit | Description |
+|--------|-------------|
+| `590a2d7` | 🔧 Navbar : showPage + bnGo restaurés + cache bust v240618-1 |
+| `b2e8be2` | 🔧 Login admin pariscore.html : accepte username sans @ |
+| `b61e488` | 🔧 Admin login : error handling défensif, showDashboard isolé |
+| `2d3cfc1` | 🆕 Bannière freemium "Mode Gratuit" sur page matchs |
+| `22e17b7` | 🆕 Essai gratuit 24h auto à l'inscription + fix requireUserAuth |
+| **Rapport** | `.context/ANALYSE-ODDALERTS-FREEMIUM.md` |
+
+### Contexte technique
+- **Navbar** : `pariscore.js` corrompu sur VPS (else if orphelin L6529) → SCP + fix
+- **Auth admin** : validation `!includes('@')` bloquait username, catch générique masquait erreurs
+- **Freemium** : backend gate existant (5 ligues, 10 vues/j), ajout bannière frontend + essai 24h matchday
+- **requireUserAuth** : ne listait pas `matchday` → bloquait l'accès Pro pendant l'essai
+
+### Fichiers modifiés
+- `pariscore.js` : showPage, bnGo, submitLogin, updateNavAuthState, submitRegister
+- `pariscore.html` : cache bust, bannière freemium
+- `admin.html` : login error handling, showDashboard défensif
+- `server.js` : register trial, requireUserAuth +matchday
 
 ---
 
