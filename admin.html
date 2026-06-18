@@ -189,19 +189,27 @@ let adminData = null;
 async function login() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value;
-  document.getElementById('login-error').textContent = '';
+  const el = document.getElementById('login-error');
+  el.textContent = '';
   try {
     const res = await fetch('/api/v1/auth/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: u, password: p })
     });
     const data = await res.json();
-    if (!res.ok) { document.getElementById('login-error').textContent = data.error || 'Erreur de connexion'; return; }
+    if (!res.ok) { el.textContent = data.error || 'Erreur de connexion'; return; }
     token = data.token;
     localStorage.setItem('pariscore_admin_token', token);
-    document.getElementById('nav-info').textContent = `${data.username} · rôle: ${data.role}`;
-    showDashboard();
-  } catch(e) { document.getElementById('login-error').textContent = 'Serveur inaccessible. Lancez node server.js'; }
+    const ni = document.getElementById('nav-info');
+    if (ni) ni.textContent = `${data.username} · rôle: ${data.role}`;
+    // Masquer le formulaire AVANT d'appeler showDashboard (sinon l'erreur laisse le form visible)
+    var lf = document.getElementById('login-form');
+    var db = document.getElementById('dashboard');
+    if (lf) lf.style.display = 'none';
+    if (db) db.style.display = 'block';
+    // Isoler showDashboard : si elle échoue, le dashboard est déjà visible
+    try { showDashboard(); } catch(e2) { console.error('showDashboard:', e2); el.textContent = ''; }
+  } catch(e) { el.textContent = 'Connexion échouée : ' + (e.message || 'serveur injoignable'); }
 }
 
 function logout() {
@@ -392,6 +400,7 @@ function edaLog(msg, color) {
 
 async function edaLoadTables() {
   const sel = document.getElementById('eda-table-select');
+  if (!sel) return; // EDA panel pas encore chargé
   sel.innerHTML = '<option value="">Chargement…</option>';
   try {
     const r = await fetch('/api/v1/admin/eda/tables', { headers: { Authorization: 'Bearer ' + token } });
@@ -450,8 +459,11 @@ async function edaChat() {
 }
 
 // Charger les tables EDA dès que le dashboard est visible
-const _origShowDashboard = showDashboard;
-function showDashboard() { _origShowDashboard(); edaLoadTables(); }
+// Wrapped in try/catch pour éviter de casser le login si edaLoadTables échoue
+(function(){
+  var _orig = showDashboard;
+  showDashboard = function() { _orig(); try { edaLoadTables(); } catch(e) { console.warn('EDA load failed:', e.message); } };
+})();
 </script>
 </body>
 </html>
