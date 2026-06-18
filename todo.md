@@ -172,28 +172,31 @@ curl http://localhost:3000/api/v1/status
 
 ---
 
-## 🔴 P0-P2 — SPIDER CHART CORRECTIONS (Session 2026-06-18 NIGHT)
+## ✅ SESSION 2026-06-18 (NIGHT) — SPIDER CHART — TERMINÉE
 
-### 7 bugs corrigés dans renderTn2Radar()
+### 7 bugs corrigés + commit c04a5a5 poussé vers origin/main
 
 | Bug | Sévérité | Fichier | Correction | Statut |
 |-----|----------|---------|-----------|--------|
-| **B1** | 🔴 P0 | pariscore.js:7070 | eginAtZero: true → eginAtZero: false, min: 20, max: 100 | ✅ CORRIGÉ |
-| **B3** | 🟡 P1 | pariscore.js:7020-7023 | Guards serve_index/eceive_index tolèrent 1 null (?? 50) | ✅ CORRIGÉ |
-| **B4** | 🟡 P1 | pariscore.js:7015-7016 | console.warn() sur l10_pts null | ✅ CORRIGÉ |
-| **B2** | 🟡 P2 | pariscore.html | Classes mortes .spider-polygon-p1/p2 retirées | ✅ CORRIGÉ |
-| **B5** | 🟢 P2 | pariscore.js:7025-7029 | Détection ≥4/6 axes à 50 → warn structuré | ✅ CORRIGÉ |
-| **B6** | 🟢 P3 | pariscore.html | CSS .recharts-* legacy supprimée | ✅ CORRIGÉ |
-| **B7** | 🟢 P3 | pariscore.js:7007-7009 | ankScore() sécurisé  > 2000 + Math.min(100, ...) | ✅ CORRIGÉ |
+| B1 | P0 | pariscore.js:7070 | beginAtZero: true -> beginAtZero: false, min: 20, max: 100 | CORRIGÉ |
+| B3 | P1 | pariscore.js:7020-7023 | Guards serve_index/receive_index tolèrent 1 null (?? 50) | CORRIGÉ |
+| B4 | P1 | pariscore.js:7015-7016 | console.warn() sur l10_pts null | CORRIGÉ |
+| B2 | P2 | pariscore.html | Classes mortes .spider-polygon-p1/p2 retirées | CORRIGÉ |
+| B5 | P2 | pariscore.js:7025-7029 | Détection >=4/6 axes à 50 -> warn structuré | CORRIGÉ |
+| B6 | P3 | pariscore.html | CSS .recharts-* legacy supprimée | CORRIGÉ |
+| B7 | P3 | pariscore.js:7007-7009 | rankScore() sécurisé (r > 2000, Math.min(100, ...)) | CORRIGÉ |
 
-### Fichiers modifiés
+### Bonus
+- B1 cascadé sur renderTeamRadar() + renderAttributesRadar() — 3 radars fixés au lieu d'1
+- Backend vérifié (server.js) : pipeline l10_pts, serve_index, receive_index sain
+
+### Fichiers commités
 - pariscore.js : renderTn2Radar() — 6 corrections (L6988-7116)
 - pariscore.html : CSS mort remplacé par commentaires
-- spider_chart_issue.md : nouveau rapport d'audit
-- CLAUDE.md : session audit ajoutée
+- spider_chart_issue.md : nouveau rapport d'audit (107 lignes)
+- CLAUDE.md, todo.md : documentation session
 
-### Action requise
-- [ ] Lancer 
-ode server.js (~4min warmup) et tester visuellement le radar
+### Actions post-session (backlog)
+- [ ] Tests fonctionnels : lancer node server.js (~4min warmup) et tester visuellement le radar tennis
+- [ ] Déploiement VPS : ssh pariscore -> bash scripts/update_vps.sh
 - [ ] Planifier migration Variant B (SVG natif glow) dans un sprint séparé
-
