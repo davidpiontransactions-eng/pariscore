@@ -7005,21 +7005,27 @@ function renderTn2Radar(p1, p2, data) {
 
   // 4) Niveau — inverse du rang ATP (plus petit = meilleur)
   function rankScore(r) {
-    if (r == null) return 50;  // fallback milieu de jauge
-    return Math.max(5, Math.round(100 - (r / 20)));
+    if (r == null || r > 2000) return 50;  // fallback milieu de jauge (null ou rank hors classement)
+    return Math.max(5, Math.min(100, Math.round(100 - (r / 20))));
   }
   var r1 = rankScore(p1.rank);
   var r2 = rankScore(p2.rank);
 
   // 5) Expérience — l10_pts (0-100)
-  var l1 = p1.l10_pts != null ? Math.round(Math.min(100, p1.l10_pts)) : 50;
-  var l2 = p2.l10_pts != null ? Math.round(Math.min(100, p2.l10_pts)) : 50;
+  var l1 = p1.l10_pts != null ? Math.round(Math.min(100, p1.l10_pts)) : (console.warn('[SpiderChart] l10_pts manquant pour', p1.name || 'J1'), 50);
+  var l2 = p2.l10_pts != null ? Math.round(Math.min(100, p2.l10_pts)) : (console.warn('[SpiderChart] l10_pts manquant pour', p2.name || 'J2'), 50);
 
-  // 6) Efficacité Globale — moyenne Serveur + Receveur
-  var eff1 = p1.serve_index != null && p1.receive_index != null
-    ? Math.round((p1.serve_index + p1.receive_index) / 2) : 50;
-  var eff2 = p2.serve_index != null && p2.receive_index != null
-    ? Math.round((p2.serve_index + p2.receive_index) / 2) : 50;
+  // 6) Efficacité Globale — moyenne Serveur + Receveur (tolère un null)
+  var eff1 = (p1.serve_index != null || p1.receive_index != null)
+    ? Math.round(((p1.serve_index ?? 50) + (p1.receive_index ?? 50)) / 2) : 50;
+  var eff2 = (p2.serve_index != null || p2.receive_index != null)
+    ? Math.round(((p2.serve_index ?? 50) + (p2.receive_index ?? 50)) / 2) : 50;
+
+  // Détection données insuffisantes
+  var p1Missing = [elo1, ps1, m1, r1, l1, eff1].filter(function(v) { return v === 50; }).length;
+  var p2Missing = [elo2, ps2, m2, r2, l2, eff2].filter(function(v) { return v === 50; }).length;
+  if (p1Missing >= 4) console.warn('[SpiderChart] Données insuffisantes pour', p1.name || 'J1', '(' + p1Missing + '/6 axes)');
+  if (p2Missing >= 4) console.warn('[SpiderChart] Données insuffisantes pour', p2.name || 'J2', '(' + p2Missing + '/6 axes)');
 
   var name1 = p1.name || 'Joueur 1';
   var name2 = p2.name || 'Joueur 2';
@@ -7060,7 +7066,8 @@ function renderTn2Radar(p1, p2, data) {
       maintainAspectRatio: false,
       scales: {
         r: {
-          beginAtZero: true,
+          beginAtZero: false,
+          min: 20,
           max: 100,
           ticks: {
             stepSize: 25,
@@ -19111,7 +19118,8 @@ function renderTeamRadar(m) {
       maintainAspectRatio: true,
       scales: {
         r: {
-          beginAtZero: true,
+          beginAtZero: false,
+          min: 20,
           max: 100,
           ticks: {
             stepSize: 20,
@@ -19221,7 +19229,8 @@ function renderAttributesRadar(m) {
       maintainAspectRatio: false,
       scales: {
         r: {
-          beginAtZero: true,
+          beginAtZero: false,
+          min: 20,
           max: 100,
           ticks: {
             stepSize: 20,
@@ -19668,6 +19677,7 @@ function _animateModalOut(modalId, cb) {
 function openAuthModal(tab = 'login') {
   switchAuthTab(tab);
   document.getElementById('auth-modal').classList.add('open');
+  attachAuthBlurValidators();
   trapFocus(document.getElementById('auth-modal'));
   setTimeout(() => {
     const f = tab === 'login' ? document.getElementById('login-email') : document.getElementById('reg-email');
@@ -19713,6 +19723,55 @@ function clearAllInlineErrors(formId) {
   if (!form) return;
   form.querySelectorAll('.inline-error').forEach(function(el) { el.remove(); });
   form.querySelectorAll('.input-error').forEach(function(el) { el.classList.remove('input-error'); el.removeAttribute('aria-invalid'); });
+}
+
+// ── Blur validation temps réel ──────────────────────────────────────────────
+function validateEmailField(inputId) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var val = input.value.trim();
+  input.classList.remove('input-valid');
+  showInlineError(inputId, ''); // clear
+  if (!val) { showInlineError(inputId, 'Email requis'); return false; }
+  if (!val.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+    // Admin login sans "@" = accepté
+    if (!val.includes('@')) { input.classList.add('input-valid'); return true; }
+    showInlineError(inputId, 'Format email invalide'); return false;
+  }
+  input.classList.add('input-valid');
+  return true;
+}
+function validatePasswordField(inputId) {
+  var input = document.getElementById(inputId);
+  if (!input) return;
+  var val = input.value;
+  input.classList.remove('input-valid');
+  showInlineError(inputId, ''); // clear
+  if (!val) { showInlineError(inputId, 'Mot de passe requis'); return false; }
+  if (val.length < 8 && inputId === 'reg-password') { showInlineError(inputId, '8 caractères minimum'); return false; }
+  input.classList.add('input-valid');
+  return true;
+}
+function attachAuthBlurValidators() {
+  var loginEmail = document.getElementById('login-email');
+  var loginPwd   = document.getElementById('login-password');
+  var regEmail   = document.getElementById('reg-email');
+  var regPwd     = document.getElementById('reg-password');
+  if (loginEmail) { loginEmail.removeEventListener('blur', loginEmail._blurHandler); loginEmail._blurHandler = function() { validateEmailField('login-email'); }; loginEmail.addEventListener('blur', loginEmail._blurHandler); }
+  if (loginPwd)   { loginPwd.removeEventListener('blur', loginPwd._blurHandler); loginPwd._blurHandler = function() { validatePasswordField('login-password'); }; loginPwd.addEventListener('blur', loginPwd._blurHandler); }
+  if (regEmail)   { regEmail.removeEventListener('blur', regEmail._blurHandler); regEmail._blurHandler = function() { validateEmailField('reg-email'); }; regEmail.addEventListener('blur', regEmail._blurHandler); }
+  if (regPwd)     { regPwd.removeEventListener('blur', regPwd._blurHandler); regPwd._blurHandler = function() { validatePasswordField('reg-password'); }; regPwd.addEventListener('blur', regPwd._blurHandler); }
+}
+function showForgotPassword() {
+  // Toast temporaire — route /api/v1/auth/forgot-password à implémenter côté serveur
+  var toast = document.createElement('div');
+  toast.className = 'ps-toast';
+  toast.innerHTML = '&#128231; Fonctionnalité à venir — contacte support@pariscore.fr pour réinitialiser ton mot de passe.';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--accent);color:var(--text);padding:12px 20px;border-radius:12px;font-size:13px;font-family:var(--font-body);z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,.5);animation:psFadeIn .2s ease;max-width:90vw;text-align:center;';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.style.opacity = '0'; toast.style.transition = 'opacity .3s'; setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300); }, 4000);
 }
 
 async function devQuickLogin() {
@@ -30164,6 +30223,8 @@ async function loadFootAlerts() {
 
 
 }());
+
+
 
 
 

@@ -5,6 +5,37 @@
 
 ---
 
+
+## ✅ SESSION 18/06/2026 (PM) — REDESIGN MODAL AUTH — TERMINÉ
+
+### Commits à venir : redesign auth modal (CSS + HTML + JS)
+
+| Tâche | Détail | Fichier |
+|-------|--------|---------|
+| CSS h2 | Text-shadow 3D supprimé → style propre 32px | `pariscore.html` |
+| CSS .auth-logo | Logo SVG 160px, drop-shadow | `pariscore.html` |
+| CSS .auth-forgot | Lien "Mot de passe oublié", hover vert | `pariscore.html` |
+| CSS .input-valid | Bordure verte validation temps réel | `pariscore.html` |
+| CSS .btn-spinner | Animation rotation + .is-loading | `pariscore.html` |
+| HTML logo | `<img>` au-dessus du titre h2 | `pariscore.html` |
+| HTML forgot | `<a class="auth-forgot">` sous password | `pariscore.html` |
+| JS validateEmailField | Validation onblur + .input-valid | `pariscore.js` |
+| JS validatePasswordField | Validation onblur, 8 chars register | `pariscore.js` |
+| JS attachAuthBlurValidators | Listeners blur sur 4 champs | `pariscore.js` |
+| JS openAuthModal | Appelle attachAuthBlurValidators() | `pariscore.js` |
+| JS showForgotPassword | Toast temporaire | `pariscore.js` |
+| **Rapport** | Audit concurrentiel + 2 propositions | `.context/audit-auth-redesign-2026-06-18.md` |
+
+### Backend — déjà conforme
+- Rate limiting actif (5 tentatives/15min/IP)
+- Message d''erreur uniforme (`Email ou mot de passe incorrect`)
+- SQL parameterized (injection impossible)
+
+### Restant (backlog)
+- [ ] Route `/api/v1/auth/forgot-password` — nécessite config SMTP
+- [ ] Migration JWT localStorage → httpOnly cookie
+- [ ] Password breach check (HIBP k-anonymity)
+
 ## ✅ SESSION 18/06/2026 — TERMINÉ
 
 | Commit | Description |
@@ -138,3 +169,31 @@ curl http://localhost:3000/api/v1/status
 | Cache _tnTop10Cache | 🟢 OK (corrigé) | N/A | TTL 5min/3min + warmer 5s |
 | BUG-001 (métriques fictives) | 🟢 CORRIGÉ | N/A | Plus de fausses données |
 | safeFixed() logging | 🔴 À FAIRE | N/A | Patch en attente |
+
+---
+
+## 🔴 P0-P2 — SPIDER CHART CORRECTIONS (Session 2026-06-18 NIGHT)
+
+### 7 bugs corrigés dans renderTn2Radar()
+
+| Bug | Sévérité | Fichier | Correction | Statut |
+|-----|----------|---------|-----------|--------|
+| **B1** | 🔴 P0 | pariscore.js:7070 | eginAtZero: true → eginAtZero: false, min: 20, max: 100 | ✅ CORRIGÉ |
+| **B3** | 🟡 P1 | pariscore.js:7020-7023 | Guards serve_index/eceive_index tolèrent 1 null (?? 50) | ✅ CORRIGÉ |
+| **B4** | 🟡 P1 | pariscore.js:7015-7016 | console.warn() sur l10_pts null | ✅ CORRIGÉ |
+| **B2** | 🟡 P2 | pariscore.html | Classes mortes .spider-polygon-p1/p2 retirées | ✅ CORRIGÉ |
+| **B5** | 🟢 P2 | pariscore.js:7025-7029 | Détection ≥4/6 axes à 50 → warn structuré | ✅ CORRIGÉ |
+| **B6** | 🟢 P3 | pariscore.html | CSS .recharts-* legacy supprimée | ✅ CORRIGÉ |
+| **B7** | 🟢 P3 | pariscore.js:7007-7009 | ankScore() sécurisé  > 2000 + Math.min(100, ...) | ✅ CORRIGÉ |
+
+### Fichiers modifiés
+- pariscore.js : renderTn2Radar() — 6 corrections (L6988-7116)
+- pariscore.html : CSS mort remplacé par commentaires
+- spider_chart_issue.md : nouveau rapport d'audit
+- CLAUDE.md : session audit ajoutée
+
+### Action requise
+- [ ] Lancer 
+ode server.js (~4min warmup) et tester visuellement le radar
+- [ ] Planifier migration Variant B (SVG natif glow) dans un sprint séparé
+

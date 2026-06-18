@@ -8273,6 +8273,8 @@
     text-shadow:0 2px 8px rgba(0,0,0,.35); }
   .auth-box h2::after { content:""; display:block; width:64px; height:4px; margin:10px auto 0;
     background:#E2001A; border-radius:2px; box-shadow:0 1px 4px rgba(226,0,26,.55); }
+
+.auth-logo { display:block; margin:0 auto 12px; width:160px; height:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,.35)); }
   .auth-subtitle { font-size:12px; color:var(--text3); margin:0 auto 26px; max-width:300px;
     text-transform:uppercase; letter-spacing:1px; font-family:var(--font-mono); font-weight:600;
     line-height:1.6; }
@@ -12289,6 +12291,7 @@ function psSetLang(v) {
 <div id="auth-modal">
   <div class="auth-box">
     <button class="auth-close" onclick="closeAuthModal()">×</button>
+    <img class="auth-logo" src="/assets/pariscore-logo.svg" alt="PariScore" width="160" height="49">
     <h2>PariScore</h2>
     <p class="auth-subtitle" data-i18n="auth.title_subtitle">Le sport décodé par les chiffres — détectez l'edge avant les bookmakers</p>
     <div class="auth-tabs">
@@ -12309,6 +12312,7 @@ function psSetLang(v) {
           <button type="button" class="pwd-eye" aria-label="Afficher le mot de passe" onclick="togglePwd(this,'login-password')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
       </div>
+      <a class="auth-forgot" onclick="showForgotPassword()" data-i18n="auth.forgot_password">Mot de passe oublié ?</a>
       <div class="auth-error" id="login-error"></div>
       <button class="auth-submit" id="login-btn" onclick="submitLogin()" data-i18n="auth.login_btn">Se connecter →</button>
     </div>
@@ -23114,33 +23118,15 @@ body[data-page="mma"] footer { display: none !important; }
     border-radius: 8px;
     padding: 10px;
 }
-/* ═══ Stylisation Ultra-Discrète de la Toile d'Araignée (Grid Lines) ═══ */
+/* ═══ Chart.js Radar — Stylisation discrète des grilles ═══ */
 .tn2-radar-container canvas + .recharts-polar-grid-concentric-polygon,
 .recharts-polar-grid-concentric-polygon,
 .recharts-polar-grid-angle-line {
     stroke: rgba(255, 255, 255, 0.05) !important;
 }
-/* ═══ Textes des axes (Labels extérieurs) ═══ */
-.recharts-polar-angle-axis-ticker text {
-    fill: #94a3b8 !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase;
-}
-/* ═══ Polygone Joueur 1 — Bleu Électrique Translucide avec lueur (#0077ff) ═══ */
-.spider-polygon-p1 {
-    fill: rgba(0, 119, 255, 0.20) !important;
-    stroke: #0077ff !important;
-    stroke-width: 2px !important;
-    filter: drop-shadow(0 0 6px rgba(0, 119, 255, 0.3));
-}
-/* ═══ Polygone Joueur 2 — Vert Néon Translucide avec lueur (#00e676) ═══ */
-.spider-polygon-p2 {
-    fill: rgba(0, 230, 118, 0.15) !important;
-    stroke: #00e676 !important;
-    stroke-width: 2px !important;
-    filter: drop-shadow(0 0 6px rgba(0, 230, 118, 0.3));
-}
+/* (Labels gérés par Chart.js options.scales.r.pointLabels) */
+/* (Couleurs gérées par Chart.js dans datasets.backgroundColor/borderColor) */
+
 @media(max-width:600px){ .tn2-radar-container { height:200px; } }
 @media (max-width:600px){
   .tennis-surface-h2h-table { padding: 8px !important; margin: 12px 8px 0 !important; }
@@ -23517,6 +23503,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 </script>
 </body>
 </html>
+
 
 
 
