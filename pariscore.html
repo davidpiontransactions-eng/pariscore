@@ -23450,6 +23450,21 @@ body[data-page="mma"] footer { display: none !important; }
 .ps-tracker-mode .tn-t10-player-name { font-size:15px !important }
 .ps-tracker-mode .tn-t10-score-badge { font-size:13px !important }
 /* ═══════════════════════ END DATA_PIPELINE_V3 ═══════════════════════ */
+
+/* UI-4 fix: focus visible pour navigation clavier accessible */
+[tabindex]:focus-visible,
+button:focus-visible,
+a:focus-visible,
+.rg-player-clickable:focus-visible,
+.tn-t10-card:focus-visible {
+  outline: 2px solid var(--ps-accent, #e2700a);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* UI-5 fix: support daltonisme - underline + weight pour distinguer green/red */
+.green-text { text-decoration-style: solid; font-weight: 600; }
+.red-text { text-decoration-style: wavy; }
 </style>
 
 <div class="mma-header">

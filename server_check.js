@@ -19276,8 +19276,6 @@ function srvPlanGate(req, res, pathname) {
 
   // Inscription obligatoire dès le freemium : le tableau Matchs exige un compte
   if (pathname === '/api/v1/matches') {
-    // QA-4: bypass auth en mode dev/CI (MATCHES_AUTH_BYPASS=1)
-    if (process.env.MATCHES_AUTH_BYPASS === "1") { a.loggedIn = true; a.plan = "pro"; }
     if (!a.loggedIn) { jsonResponse(res, 401, { error: 'Inscription requise', code: 'AUTH_REQUIRED' }); return true; }
     return false; // filtrage 5 ligues UE appliqué dans la route
   }
@@ -36065,7 +36063,7 @@ async function buildTennisValueBets(opts = {}) {
   const dateClean = opts.date ? String(opts.date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   const key = dateClean || 'today';
   // Dedup guard: si un rebuild pour cette key est deja en cours, on sert le cache sans lancer un 2e build
-  const _vbGuard = globalThis.__tennisVBGuard || (globalThis.__tennisVBGuard = new Map());
+  const _vbGuard = globalThis.__tennisVBGuard || (globalThis.__tennisVBGuard = new Set());
   if (_vbGuard.has(key)) {
     const hit = _tennisVBCache.get(key);
     if (hit) return hit.result;
@@ -36079,7 +36077,7 @@ async function buildTennisValueBets(opts = {}) {
     const _ttl = _deg ? 60 * 1000 : _TENNIS_VB_TTL_MS;
     if (Date.now() - hit.ts < _ttl) return hit.result;
     // Perime : sert le stale tout de suite, rebuild en tache de fond.
-    _vbGuard.set(key, { promise: null, ts: Date.now() });
+    _vbGuard.add(key);
     _buildTennisValueBetsCore(opts)
       .then(r => { _vbGuard.delete(key); if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
       .catch(e => { _vbGuard.delete(key); console.warn('  [TennisVB] rebuild bg echec:', e.message); });
@@ -36091,7 +36089,7 @@ async function buildTennisValueBets(opts = {}) {
   // boucle synchrone empechait tout Promise.race/timeout de tirer.
   // -> build lance EN FOND (avec yields event-loop), reponse 'loading'
   //   immediate. Le front re-essaie ; des cache pret -> vraies donnees.
-  _vbGuard.set(key, { promise: null, ts: Date.now() });
+  _vbGuard.add(key);
   _buildTennisValueBetsCore(opts)
     .then(r => { _vbGuard.delete(key); if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
     .catch(e => { _vbGuard.delete(key); console.warn('  [TennisVB] cold build bg echec:', e && e.message || e); });
@@ -36895,9 +36893,8 @@ async function _buildTennisValueBetsCore({ date }) {
     // Yield event-loop tous les 20 matchs : la boucle CPU bloquait le process
     // ~20s (autres routes/SSE gelées) et empêchait tout timeout de tirer.
     if (++_vbI % 20 === 0) await new Promise(r => setImmediate(r));
-    // [FIX BUG-17] BSD peut retourner m.player1 en string OU en {name:...} selon le match
-    let p1Name = (m.player1 && (typeof m.player1 === 'object' ? (m.player1.name || m.player1.full_name) : String(m.player1).trim())) || m.player1_name || '';
-    let p2Name = (m.player2 && (typeof m.player2 === 'object' ? (m.player2.name || m.player2.full_name) : String(m.player2).trim())) || m.player2_name || '';
+    let p1Name = (m.player1 && (m.player1.name || m.player1.full_name)) || m.player1_name || '';
+    let p2Name = (m.player2 && (m.player2.name || m.player2.full_name)) || m.player2_name || '';
     // [FIX CRASH render] BSD renvoie tournament = OBJET {id,name,…} ; ESPN =
     // string. Le frontend faisait `tournament.localeCompare` → throw → render
     // KO → table figée "Chargement…" en boucle. On NORMALISE en string ici.
@@ -37290,7 +37287,7 @@ async function _buildTennisValueBetsCore({ date }) {
             last_tournament_level: null, defending_champion: false, atp_points: null,
             days_since_last_match: _fatigue?.p2?.days_since_last || 14, travel_distance_km: _fatigue?.p2?.travel_km || 0,
             rankings: null, last_match_round: null
-          }, aM, bM, { level: _tourN || 'ATP_500', country: m.tournament?.country || '' });
+          }, aM.concat(bM), { level: _tourN || 'ATP_500', country: m.tournament?.country || '' });
         } catch (_) { return { srv_pts_won_s: null, ret_pts_won_s: null, h2h_surface: null, motivation: null, fatigue: null, public: null, atp_points_6m: null, age_30: null, bp_conv: null, bp_saved: null, pressure_index: null, srv_sparkline: null, ret_sparkline: null }; }
       })(),
     });
@@ -48956,50 +48953,19 @@ function _tennisPressureIndex(match) {
 }
 
 // ─── COMPUTE ALL METRICS pour un match ───
-// QA-3 fix: fallback name->ID lookup for live tennis (ESPN sans ID)
-function _tnLiveNameToId(playerName, tour) {
-  if (!playerName || !tour) return null;
-  var cacheKey = "live_id_" + tour + "_" + playerName.toLowerCase().trim();
-  if (_TENNIS_SERVE_STATS_CACHE.has(cacheKey)) return _TENNIS_SERVE_STATS_CACHE.get(cacheKey);
-  try {
-    var row = sqldb.prepare("SELECT winner_id as id FROM tennis_matches WHERE tour=? AND LOWER(winner_name)=LOWER(?) LIMIT 1").get(tour, playerName);
-    if (!row) row = sqldb.prepare("SELECT loser_id as id FROM tennis_matches WHERE tour=? AND LOWER(loser_name)=LOWER(?) LIMIT 1").get(tour, playerName);
-    var id = row ? row.id : null;
-    _TENNIS_SERVE_STATS_CACHE.set(cacheKey, id);
-    return id;
-  } catch(_) { return null; }
-}
-
 function computeAllMetrics(match, playerA, playerB, aMatches, bMatches, tournament) {
-  var srvA, srvB, retA, retB, h2h, motA, motB, fatA, fatB, pubA, pubB;
-  var _bpConvA, _bpConvB, _bpSaveA, _bpSaveB, _srvSpark, _retSpark;
-  var _pts6mA, _pts6mB, _age30A, _age30B, _pSrv, _pRet, _swing, _pIdx;
-  try { srvA = _tennisServePointsWonEWMA(aMatches) || 0.68; } catch(_) { srvA = 0.68; }
-  try { srvB = _tennisServePointsWonEWMA(bMatches) || 0.68; } catch(_) { srvB = 0.68; }
-  try { retA = _tennisReturnPointsWonEWMA(aMatches) || 0.38; } catch(_) { retA = 0.38; }
-  try { retB = _tennisReturnPointsWonEWMA(bMatches) || 0.38; } catch(_) { retB = 0.38; }
-  try { h2h = _tennisH2HAugmented(playerA.id, playerB.id, match.surface, aMatches.filter(function(m){return m.loser_id===playerB.id||m.winner_id===playerB.id})); } catch(_) { h2h = null; }
-  try { motA = _tennisMotivation(playerA, tournament); } catch(_) { motA = 0.5; }
-  try { motB = _tennisMotivation(playerB, tournament); } catch(_) { motB = 0.5; }
-  try { fatA = _tennisFatigue(playerA); } catch(_) { fatA = null; }
-  try { fatB = _tennisFatigue(playerB); } catch(_) { fatB = null; }
-  try { pubA = _tennisPublic(playerA, tournament); } catch(_) { pubA = 0; }
-  try { pubB = _tennisPublic(playerB, tournament); } catch(_) { pubB = 0; }
-  // Wrapper toutes les expressions en try-catch pour éviter qu'un crash isole nullifie tout le bloc
-  try { _bpConvA = _tennisBPConvEWMA(aMatches) || 0.5; } catch(_) { _bpConvA = 0.5; }
-  try { _bpConvB = _tennisBPConvEWMA(bMatches) || 0.5; } catch(_) { _bpConvB = 0.5; }
-  try { _bpSaveA = _tennisBPSavedEWMA(aMatches) || 0.5; } catch(_) { _bpSaveA = 0.5; }
-  try { _bpSaveB = _tennisBPSavedEWMA(bMatches) || 0.5; } catch(_) { _bpSaveB = 0.5; }
-  try { _srvSpark = _tennisSparkline6m(aMatches, _tennisServePointsWonEWMA); } catch(_) { _srvSpark = null; }
-  try { _retSpark = _tennisSparkline6m(aMatches, _tennisReturnPointsWonEWMA); } catch(_) { _retSpark = null; }
-  try { _pts6mA = _tennisPoints6m(playerA); } catch(_) { _pts6mA = null; }
-  try { _pts6mB = _tennisPoints6m(playerB); } catch(_) { _pts6mB = null; }
-  try { _age30A = _tennisAge30(playerA.age); } catch(_) { _age30A = null; }
-  try { _age30B = _tennisAge30(playerB.age); } catch(_) { _age30B = null; }
-  try { _pSrv = _tennisPercentile(srvA, [0.75,0.73,0.72,0.71,0.70,0.69,0.68,0.67,0.66,0.65]); } catch(_) { _pSrv = null; }
-  try { _pRet = _tennisPercentile(retA, [0.45,0.43,0.42,0.41,0.40,0.39,0.38,0.37,0.36,0.35]); } catch(_) { _pRet = null; }
-  try { _swing = _tennisSwingAlert(match._prob_history, match._current_prob); } catch(_) { _swing = null; }
-  try { _pIdx = _tennisPressureIndex(match); } catch(_) { _pIdx = null; }
+  const srvA = _tennisServePointsWonEWMA(aMatches);
+  const srvB = _tennisServePointsWonEWMA(bMatches);
+  const retA = _tennisReturnPointsWonEWMA(aMatches);
+  const retB = _tennisReturnPointsWonEWMA(bMatches);
+  const h2h = _tennisH2HAugmented(playerA.id, playerB.id, match.surface, aMatches.filter(m => m.loser_id === playerB.id || m.winner_id === playerB.id));
+  const motA = _tennisMotivation(playerA, tournament);
+  const motB = _tennisMotivation(playerB, tournament);
+  const fatA = _tennisFatigue(playerA);
+  const fatB = _tennisFatigue(playerB);
+  const pubA = _tennisPublic(playerA, tournament);
+  const pubB = _tennisPublic(playerB, tournament);
+
   return {
     srv_pts_won_s: { a: srvA, b: srvB },
     ret_pts_won_s: { a: retA, b: retB },
@@ -49007,22 +48973,29 @@ function computeAllMetrics(match, playerA, playerB, aMatches, bMatches, tourname
     motivation: { a: motA, b: motB },
     fatigue: { a: fatA, b: fatB },
     public: { a: pubA, b: pubB },
-    bp_conv: { a: _bpConvA, b: _bpConvB },
-    bp_saved: { a: _bpSaveA, b: _bpSaveB },
-    srv_sparkline: _srvSpark,
-    ret_sparkline: _retSpark,
-    atp_points_6m: { a: _pts6mA, b: _pts6mB },
-    age_30: { a: _age30A, b: _age30B },
+    bp_conv: { a: _tennisBPConvEWMA(aMatches), b: _tennisBPConvEWMA(bMatches) },
+    bp_saved: { a: _tennisBPSavedEWMA(aMatches), b: _tennisBPSavedEWMA(bMatches) },
+    srv_sparkline: _tennisSparkline6m(aMatches, _tennisServePointsWonEWMA),
+    ret_sparkline: _tennisSparkline6m(aMatches, _tennisReturnPointsWonEWMA),
+    atp_points_6m: { a: _tennisPoints6m(playerA), b: _tennisPoints6m(playerB) },
+    age_30: { a: _tennisAge30(playerA.age), b: _tennisAge30(playerB.age) },
     market_odds: {
       pinnacle: match.pinnacle_odds || null,
       betfair: match.betfair_odds || null,
       value_pct: match.value_pct || null
     },
-    percentile: { srv: _pSrv, ret: _pRet },
-    swing: _swing,
-    pressure_index: { a: _pIdx, b: null }
+    percentile: {
+      srv: _tennisPercentile(srvA, [0.75,0.73,0.72,0.71,0.70,0.69,0.68,0.67,0.66,0.65]),
+      ret: _tennisPercentile(retA, [0.45,0.43,0.42,0.41,0.40,0.39,0.38,0.37,0.36,0.35])
+    },
+    swing: _tennisSwingAlert(match._prob_history, match._current_prob),
+    pressure_index: {
+      a: _tennisPressureIndex(match),
+      b: null // nécessite données point-par-point
+    }
   };
 }
+
 // Exposer globalement
 globalThis.__tennisEWMA = _tennisEWMA;
 globalThis.__tennisH2HAugmented = _tennisH2HAugmented;
@@ -49032,67 +49005,8 @@ globalThis.__tennisBPConvEWMA = _tennisBPConvEWMA;
 globalThis.__tennisBPSavedEWMA = _tennisBPSavedEWMA;
 
 // Player match history fetcher for DATA_PIPELINE_V3
-globalThis.__tennisPlayerMatches = function(playerName) {
-  try {
-    var snap = globalThis.__tennisVBWarmMatches;
-    if (!snap || !Array.isArray(snap) || !playerName) return [];
-    var nameLower = String(playerName).toLowerCase().trim();
-    return snap.filter(function(m) {
-      var p1 = m.player1 && m.player1.name;
-      var p2 = m.player2 && m.player2.name;
-      return (p1 && String(p1).toLowerCase().trim() === nameLower) ||
-             (p2 && String(p2).toLowerCase().trim() === nameLower);
-    }).slice(-10).map(function(m) {
-      var isP1 = m.player1 && String(m.player1.name).toLowerCase().trim() === nameLower;
-      var playerSide = isP1 ? m.player1 : (m.player2 || {});
-      var srvIdx = playerSide.serve_index;
-      var retIdx = playerSide.receive_index;
-      var opp = isP1 ? (m.player2 || {}) : (m.player1 || {});
-      var oppSrv = opp.serve_index;
-      var oppRet = opp.receive_index;
-      if (srvIdx == null || retIdx == null) { /* console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); */ }
-      var winner = m.winner;
-      if (!winner) {
-      	var scr = m.status;
-      	winner = scr ? (isP1 ? playerName : opp.name) : null;
-      }
-      return {
-      	svr_pts_won: srvIdx,
-      	svr_pts_lost: srvIdx != null ? 35 - Math.min(35, srvIdx) : null,
-      	ret_pts_won: retIdx,
-      	ret_pts_lost: retIdx != null ? 35 - Math.min(35, retIdx) : null,
-      	bp_won: playerSide.bp_won,
-      	bp_lost: playerSide.bp_lost,
-      	bp_saved: playerSide.bp_saved,
-      	bp_faced: playerSide.bp_faced,
-      	tb_won: playerSide.tb_won,
-      	tb_lost: playerSide.tb_lost,
-        surface: m.surface || 'hard',
-        date: m.start_time || new Date().toISOString(),
-        winner_id: winner || playerName,
-        loser_id: winner ? (winner === playerName ? (opp.name || 'opponent') : playerName) : (opp.name || 'opponent')
-      };
-    });
-  } catch(_) { return []; }
-};
 
 
-
-
-// ─── CR-3 fix: Purge horaire des caches in-memory ───────────────────────
-// Évite fuite mémoire long terme. Nettoie les entrées expirées chaque heure.
-setInterval(function() {
-  var now = Date.now();
-  // _TENNIS_SERVE_STATS_CACHE (TTL 12h)
-  try { for (var k of _TENNIS_SERVE_STATS_CACHE.keys()) { var v = _TENNIS_SERVE_STATS_CACHE.get(k); if (v && v._ts && now - v._ts > 43200000) _TENNIS_SERVE_STATS_CACHE.delete(k); } } catch(_) {}
-  // _canonNameCache (reset complet, reconstruction auto)
-  try { if (_canonNameCache.size > 5000) _canonNameCache.clear(); } catch(_) {}
-  // _tennisEnrichSnap (TTL 12h)
-  try { for (var k of _tennisEnrichSnap.keys()) { var e = _tennisEnrichSnap.get(k); if (e && e.ts && now - e.ts > 43200000) _tennisEnrichSnap.delete(k); } } catch(_) {}
-  // metrics-cache (délégation au module)
-  try { if (typeof globalThis.__metricsCache !== "undefined" && globalThis.__metricsCache.prune) globalThis.__metricsCache.prune(); } catch(_) {}
-  if (process.env.DEBUG_CACHE_PURGE === "1") console.log("[CachePurge] hourly cleanup done");
-}, 60 * 60 * 1000);
 
 
 

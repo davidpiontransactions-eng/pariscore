@@ -98,10 +98,21 @@ class MetricsCache {
     return null;
   }
 
+
+// CR-2 fix: recursive sanitize NaN/Infinity -> null before JSON serialization
+function _sanitizeForJSON(obj) {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj === 'number') return Number.isFinite(obj) ? obj : null;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(_sanitizeForJSON);
+  var out = {};
+  for (var k of Object.keys(obj)) { var v = _sanitizeForJSON(obj[k]); if (v !== undefined) out[k] = v; }
+  return out;
+}
   set(metricName, playerName, tour, surface, value) {
     const key = makeKey(playerName, tour, surface, metricName);
     const now = Date.now();
-    const serialized = JSON.stringify(value);
+    const serialized = JSON.stringify(_sanitizeForJSON(value));
 
     if (this.db) {
       try {
@@ -131,7 +142,7 @@ class MetricsCache {
         const batch = this.db.transaction((items) => {
           for (const [metricName, val] of items) {
             const key = makeKey(playerName, tour, surface, metricName);
-            insert.run(key, JSON.stringify(val), now);
+            insert.run(key, JSON.stringify(_sanitizeForJSON(val)), now);
           }
         });
         batch(entries);
@@ -142,7 +153,7 @@ class MetricsCache {
 
     for (const [metricName, val] of entries) {
       const key = makeKey(playerName, tour, surface, metricName);
-      this.memory.set(key, { value: JSON.stringify(val), updated_at: now });
+      this.memory.set(key, { value: JSON.stringify(_sanitizeForJSON(val)), updated_at: now });
     }
   }
 
@@ -219,6 +230,22 @@ class MetricsCache {
 
     for (const key of this.memory.keys()) {
       if (key.startsWith(prefix)) {
+        this.memory.delete(key);
+      }
+    }
+  }
+
+
+  prune(maxAgeMs = 43200000) {
+    var now = Date.now();
+    if (this.db) {
+      try {
+        this._run('DELETE FROM metrics_cache WHERE updated_at < ?', [now - maxAgeMs]);
+      } catch (err) { /* best-effort */ }
+    }
+    for (var key of this.memory.keys()) {
+      var entry = this.memory.get(key);
+      if (entry && now - entry.updated_at > maxAgeMs) {
         this.memory.delete(key);
       }
     }

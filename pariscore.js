@@ -199,7 +199,7 @@ function _pClr(v){
   if(v>=1.5)return'#FF9800';
   return'rgba(255,255,255,0.25)';
 }
-function _pFmt(v){return v==null||isNaN(v)?'—':v.toFixed(v>=10?1:1)+'%';}
+function _pFmt(v){if(v==null||!isFinite(v))return'—';var n=Number(v);if(n>100)n=100;return n.toFixed(1)+'%';}
 
 function _paintWCPred(el,data){
   if(!data||!data.teams||!data.teams.length){
@@ -253,8 +253,10 @@ function _paintWCPred(el,data){
     return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   }
   function _rgFmtPct(n) {
-    if (n == null || isNaN(n)) return '—';
-    return (Number(n) >= 10 ? Number(n).toFixed(1) : Number(n).toFixed(2)) + '%';
+    if (n == null || !isFinite(n)) return '—';
+    var v = Number(n);
+    if (v > 100) v = 100;
+    return (v >= 10 ? v.toFixed(1) : v.toFixed(2)) + '%';
   }
   function _rgPctClass(pct) {
     if (pct == null || isNaN(pct)) return 'cool';
@@ -4374,8 +4376,8 @@ function _tnTop10Card(m, rank) {
   // ── POWERSCORE MODE : barre comparative J1 vs J2 ──
   let psHtml = '';
   if (typeof _tnTop10Mode !== 'undefined' && _tnTop10Mode === 'powerscore') {
-    const ps1 = m.player1_powerscore != null ? Math.round(m.player1_powerscore) : null;
-    const ps2 = m.player2_powerscore != null ? Math.round(m.player2_powerscore) : null;
+    const ps1 = m.powerscore_p1 != null ? Math.round(m.powerscore_p1) : null;
+    const ps2 = m.powerscore_p2 != null ? Math.round(m.powerscore_p2) : null;
     if (ps1 != null && ps2 != null) {
       const total = ps1 + ps2;
       const pct1 = total > 0 ? (ps1 / total * 100) : 50;
@@ -4482,6 +4484,7 @@ function _tnTop10Card(m, rank) {
       + '</div>';
   }
 
+  // UI-2 audit: innerHTML uses _tnEsc for player names. If adding new fields, always wrap with _tnEsc.
   // DATA_PIPELINE_V3 : MetricCardXXL (SRV, RET, H2H)
   let metricsHtml = '';
   if (m.metrics && m.metrics.srv_pts_won_s && m.metrics.srv_pts_won_s.a != null) {
@@ -4525,6 +4528,10 @@ function _tnTop10Card(m, rank) {
       + '<span class="ps-metric-s"> Public <span class="ps-metric-s-value">'+(m.metrics.public.a > 1 ? 'Domicile' : 'Exterieur')+'</span></span>'
       + '<span class="ps-metric-s"> AGE.30 <span class="ps-metric-s-value">'+m.metrics.age_30.a+'</span></span>' + (m.metrics.bp_conv && m.metrics.bp_conv.a != null ? '<span class="ps-metric-s"> BP Conv <span class="ps-metric-s-value">'+(m.metrics.bp_conv.a*100).toFixed(1)+'%</span></span>' : '') + (m.metrics.bp_saved && m.metrics.bp_saved.a != null ? '<span class="ps-metric-s"> BP Saved <span class="ps-metric-s-value">'+(m.metrics.bp_saved.a*100).toFixed(1)+'%</span></span>' : '') + (m.metrics.pressure_index && m.metrics.pressure_index.a != null ? '<span class="ps-metric-s"> Pressure <span class="ps-metric-s-value">'+(m.metrics.pressure_index.a*100).toFixed(1)+'%</span></span>' : '')
     + '</div>';
+  }
+  } else if (m.metrics) {
+    // UI-3: placeholder quand metrics presents mais vides (Challenger/ITF)
+    metricsHtml = '<div class="tn-t10-empty-metrics" style="margin-top:10px;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;color:var(--ps-text-tertiary)">📊 Statistiques avancées indisponibles pour ce niveau de tournoi (circuit ATP/WTA requis).</div>';
   }
   return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')">
   <div class="tn-t10-card-top">
@@ -6783,21 +6790,24 @@ function openTennisAnalysisModal(matchId) {
       var age1 = (af.p1 && af.p1.age30 != null) ? af.p1.age30 : null;
       var age2 = (af.p2 && af.p2.age30 != null) ? af.p2.age30 : null;
       var ageDiff = af.age30_diff;
-      var fat1 = (fg.p1 != null) ? Number(fg.p1).toFixed(1) : null;
-      var fat2 = (fg.p2 != null) ? Number(fg.p2).toFixed(1) : null;
+      // FIX Heavy NaN — fatigue est un objet {days_since_last, matches_14d, ...}, pas un number
+      var _fatVal1 = (fg.p1 && typeof fg.p1 === 'object') ? (fg.p1.days_since_last != null && Number.isFinite(fg.p1.days_since_last) ? fg.p1.days_since_last : null) : (fg.p1 != null && Number.isFinite(Number(fg.p1)) ? Number(fg.p1) : null);
+      var _fatVal2 = (fg.p2 && typeof fg.p2 === 'object') ? (fg.p2.days_since_last != null && Number.isFinite(fg.p2.days_since_last) ? fg.p2.days_since_last : null) : (fg.p2 != null && Number.isFinite(Number(fg.p2)) ? Number(fg.p2) : null);
+      var fat1 = _fatVal1 != null ? _fatVal1.toFixed(1) : null;
+      var fat2 = _fatVal2 != null ? _fatVal2.toFixed(1) : null;
       if (age1 != null || fat1 != null) {
         var ageEl1 = document.getElementById('h2h-p1-age');
         var parts1 = [];
         if (age1 != null) parts1.push(Number(age1).toFixed(1) + ' ans');
-        if (fat1 != null) parts1.push((fat1 >= 0 ? 'Fresh ' : 'Heavy ') + Math.abs(fat1));
-        if (ageEl1 && parts1.length) { ageEl1.textContent = parts1.join(' | '); ageEl1.className = 'h2h-cell p1-val ' + (fat1 != null && fat1 >= 0 ? 'green-text' : 'text-white'); }
+        if (fat1 != null) parts1.push((_fatVal1 >= 0 ? 'Fresh ' : 'Heavy ') + Math.abs(_fatVal1));
+        if (ageEl1 && parts1.length) { ageEl1.textContent = parts1.join(' | '); ageEl1.className = 'h2h-cell p1-val ' + (_fatVal1 != null && _fatVal1 >= 0 ? 'green-text' : 'text-white'); }
       }
       if (age2 != null || fat2 != null) {
         var ageEl2 = document.getElementById('h2h-p2-age');
         var parts2 = [];
         if (age2 != null) parts2.push(Number(age2).toFixed(1) + ' ans');
-        if (fat2 != null) parts2.push((fat2 >= 0 ? 'Fresh ' : 'Heavy ') + Math.abs(fat2));
-        if (ageEl2 && parts2.length) { ageEl2.textContent = parts2.join(' | '); ageEl2.className = 'h2h-cell p2-val ' + (fat2 != null && fat2 >= 0 ? 'green-text' : 'text-white'); }
+        if (fat2 != null) parts2.push((_fatVal2 >= 0 ? 'Fresh ' : 'Heavy ') + Math.abs(_fatVal2));
+        if (ageEl2 && parts2.length) { ageEl2.textContent = parts2.join(' | '); ageEl2.className = 'h2h-cell p2-val ' + (_fatVal2 != null && _fatVal2 >= 0 ? 'green-text' : 'text-white'); }
       }
       if (ageDiff != null) {
         var adLabel = document.querySelector('.h2h-cell.label-cell:has(+ #h2h-p2-age)') || document.querySelector('#h2h-p1-age')?.parentElement?.querySelector('.label-cell');
