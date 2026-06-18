@@ -19708,8 +19708,8 @@ async function submitLogin() {
   const btn      = document.getElementById('login-btn');
   errEl.textContent = '';
   var hasError = false;
-  if (!email) { showInlineError('login-email', 'Email requis'); hasError = true; }
-  if (email && !email.includes('@')) { showInlineError('login-email', 'Email ou identifiant invalide'); hasError = true; }
+  if (!email) { showInlineError('login-email', 'Email ou identifiant requis'); hasError = true; }
+  // Note: login sans "@" = admin (username), accepté volontairement (pas d'erreur)
   if (!password) { showInlineError('login-password', 'Mot de passe requis'); hasError = true; }
   if (hasError) return;
   btn.disabled = true; btn.textContent = 'Connexion…';
