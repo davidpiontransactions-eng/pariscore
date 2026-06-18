@@ -1,3 +1,81 @@
+## ✅ SESSION 2026-06-18 (NIGHT) — SPIDER CHART AUDIT & CORRECTIONS (7 BUGS)
+
+### Audit realise
+- **Composant audite** : enderTn2Radar() dans pariscore.js:6981-7108 (Chart.js radar)
+- **Pipeline data** : 6 axes traces (ELO Surface, PowerScore, Momentum, Niveau, Experience, Efficacite)
+- **7 bugs classes** : B1 (HIGH), B2-B4 (MED), B5-B7 (LOW)
+- **Design reference** : sketch 001, Variant B (SVG Glow) identifie comme winner mais backlogge
+
+### Corrections appliquees et verifyees (
+ode --check OK)
+
+| Bug | Severite | Correction | Fichier:Ligne |
+|-----|----------|-----------|---------------|
+| B1 | HIGH | eginAtZero: true -> eginAtZero: false, min: 20, max: 100 | pariscore.js:7070 |
+| B2 | MED | Classes mortes .spider-polygon-p1/p2 remplacees par commentaire | pariscore.html |
+| B3 | MED | Guards serve_index/eceive_index tolerent 1 null (?? 50) | pariscore.js:7020-7023 |
+| B4 | MED | console.warn() ajoute sur l10_pts null | pariscore.js:7015-7016 |
+| B5 | LOW | Detection >=4/6 axes a 50 -> warn structure | pariscore.js:7025-7029 |
+| B6 | LOW | CSS .recharts-* legacy supprime | pariscore.html |
+| B7 | LOW | ankScore() securise (|| r > 2000, Math.min(100, ...)) | pariscore.js:7007-7009 |
+
+### Rapports generes
+- spider_chart_issue.md : rapport complet d'audit avec localisation, impact, correction, plan priorise
+
+### Restant (backlog)
+- Tests fonctionnels : lancer 
+ode server.js (~4min warmup), ouvrir pariscore.html, verifier le radar
+- Migration SVG natif (Variant B) : zero Chart.js, effet glow neon, animations fluides
+- Audit UX complet des tooltips, animations, etats vides du composant
+
+### Fichiers modifies cette session
+- pariscore.js : renderTn2Radar() — 6 corrections P0-P3 dans la meme zone (L6988-7116)
+- pariscore.html : CSS mort (spider-polygon, recharts legacy) remplace par commentaires
+- spider_chart_issue.md : nouveau rapport d'audit
+
+
+## ✅ SESSION 2026-06-18 (PM) — REDESIGN MODAL AUTH + AUDIT CONCURRENTIEL
+
+### Audit & Analyse
+- **Veille concurrentielle** : 10 sites analysés (Betclic, Winamax, Unibet, FDJ, Sofascore, Flashscore, Stake, DraftKings, Bet365 ❌, SportyTrader ❌)
+- **Brainstorming équipe IA** : CEO (stratégie), UI/UX (design), QA (edge cases), Security (vulnérabilités)
+- **Rapport complet** : `.context/audit-auth-redesign-2026-06-18.md` (21 Ko, 310 lignes)
+- **Décision** : Auth OPTIONNELLE, pas de social login, pas de colonne promo — version épurée validée par le client
+
+### Modifications CSS (`pariscore.html`)
+- **h2** : suppression du text-shadow 3D rouge → style propre (32px, ombre légère)
+- **`.auth-logo`** : ajout du logo SVG PariScore (160px, drop-shadow)
+- **`.auth-forgot`** : lien "Mot de passe oublié" (gris → hover vert)
+- **`.input-valid`** : bordure verte `#00e676` pour champ valide
+- **`.btn-spinner`** + `@keyframes psSpin` + `.auth-submit.is-loading`
+
+### Modifications HTML (`pariscore.html`)
+- **`<img class="auth-logo">`** : logo PariScore inséré au-dessus du titre h2
+- **`<a class="auth-forgot">`** : lien "Mot de passe oublié ?" sous le champ password
+
+### Modifications JS (`pariscore.js`)
+- **`validateEmailField()`** : validation onblur avec `.input-valid` (tolère admin sans @)
+- **`validatePasswordField()`** : validation onblur, 8 chars min pour register
+- **`attachAuthBlurValidators()`** : pose les listeners blur sur les 4 champs auth
+- **`openAuthModal()`** : appelle `attachAuthBlurValidators()` automatiquement
+- **`showForgotPassword()`** : toast temporaire redirigeant vers support@pariscore.fr
+
+### Backend — déjà OK
+- **Rate limiting** : déjà actif (`checkLoginRateLimit`, 5/15min par IP)
+- **Message d''erreur uniforme** : `"Email ou mot de passe incorrect"` (pas de distinction email vs password)
+- **JWT** : httpOnly à prévoir (actuellement localStorage → risque XSS)
+
+### Restant
+- Route `/api/v1/auth/forgot-password` avec envoi email SMTP
+- Migration JWT localStorage → httpOnly cookie + refresh token rotation
+- Password breach check (k-anonymity via HIBP API)
+- Test visuel dans le navigateur (localhost:3000)
+
+### Fichiers modifiés cette session
+- `pariscore.html` : CSS auth (L8263-8330) + HTML auth (L12290-12320)
+- `pariscore.js` : fonctions auth (L19668-19770) + blur validators + showForgotPassword
+- `.context/audit-auth-redesign-2026-06-18.md` : rapport d''audit complet
+
 ## ✅ SESSION 2026-06-18 — RESTAURATION COMPLÈTE (Navbar + Auth + Freemium)
 
 ### Commits : `590a2d7` → `b2e8be2` → `b61e488` → `2d3cfc1` → `22e17b7`
@@ -775,3 +853,4 @@ Pipeline d'extraction et de calcul des 7 métriques prioritaires du Sprint 1, ba
 - Déploiement production
 
 - **Sketch findings for PariScore** (design decisions, CSS patterns, visual direction) → `Skill("sketch-findings-pariscore")`
+
