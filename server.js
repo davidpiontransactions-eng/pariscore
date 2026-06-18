@@ -19212,7 +19212,7 @@ function requireAuth(req, res, allowedRoles = PS_ALL_ROLES) {
 
 // Variante stricte : exige un user.userId (exclut admin/matchday qui n'ont pas d'ID utilisateur).
 function requireUserAuth(req, res) {
-  const user = requireAuth(req, res, ['freemium', 'premium', 'admin', 'pro_foot', 'pro_tennis', 'pro_all']);
+  const user = requireAuth(req, res, ['freemium', 'premium', 'admin', 'pro_foot', 'pro_tennis', 'pro_all', 'matchday']);
   if (!user) return null;
   if (!user.userId) {
     jsonResponse(res, 403, { error: 'Compte membre requis pour les paris', code: 'MEMBER_REQUIRED' });
@@ -21665,11 +21665,11 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
     return jsonResponse(res, 200, mom);
   }
 
-  // GET /api/v1/tennis/top10?mode=viewer|bettor
+  // GET /api/v1/tennis/top10?mode=viewer|bettor|pwscr
   if (pathname === '/api/v1/tennis/top10' && req.method === 'GET') {
     const _t10start = Date.now();
-    const mode = query.mode === 'bettor' ? 'bettor' : 'viewer';
-    const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : _TN_TOP10_TTL_VIEWER;
+    const mode = query.mode === 'bettor' ? 'bettor' : query.mode === 'pwscr' ? 'pwscr' : 'viewer';
+    const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : mode === 'pwscr' ? _TN_TOP10_TTL_PWSCR : _TN_TOP10_TTL_VIEWER;
     const now  = Date.now();
     const _rebuilding = !!globalThis.__top10RebuildPromise;
     if (_tnTop10Cache[mode] && (now - _tnTop10Cache[`ts_${mode}`]) < ttl) {
@@ -25569,11 +25569,12 @@ function detectTennisMatchFixing(m) {
 // TOP 10 MATCHS DU JOUR — Tennis Scoring Engine
 // Formule composite 6 dimensions × dual mode (viewer/bettor).
 // Source: buildTennisValueBets() enriched match objects.
-// Route: GET /api/v1/tennis/top10?mode=viewer|bettor
+// Route: GET /api/v1/tennis/top10?mode=viewer|bettor|pwscr
 // ═══════════════════════════════════════════════════════════════════════════
-let _tnTop10Cache = { viewer: null, bettor: null, ts_viewer: 0, ts_bettor: 0 };
+let _tnTop10Cache = { viewer: null, bettor: null, pwscr: null, ts_viewer: 0, ts_bettor: 0, ts_pwscr: 0 };
 const _TN_TOP10_TTL_VIEWER = 5 * 60 * 1000;  // 5 minutes (était 60s)
 const _TN_TOP10_TTL_BETTOR = 3 * 60 * 1000;  // 3 minutes (était 30s)
+const _TN_TOP10_TTL_PWSCR  = 5 * 60 * 1000;  // 5 minutes
 let _tnTop10RefreshTimer = null;              // Timer du cron refresh Top10
 const _TN_TOP10_REFRESH_INTERVAL = 5 * 60 * 1000; // Intervalle de refresh périodique (5min)
 
@@ -32859,9 +32860,11 @@ if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
       if (password.length < 8) return jsonResponse(res, 400, { error: 'Mot de passe trop court (8 caractères minimum)' });
       const { hash, salt } = hashPasswordSync(password);
       try {
-        const result = sqldb.prepare('INSERT INTO users (email, password_hash, salt, role) VALUES (?, ?, ?, ?)').run(email.trim().toLowerCase(), hash, salt, 'freemium');
+        const result = sqldb.prepare('INSERT INTO users (email, password_hash, salt, role, premium_until) VALUES (?, ?, ?, ?, ?)').run(email.trim().toLowerCase(), hash, salt, 'freemium', Math.floor(Date.now()/1000) + 86400);
+        // Essai gratuit 24h : token matchday (Pro complet) pendant 24h
+        const trialToken = jwtSign({ userId: result.lastInsertRowid, email: email.trim().toLowerCase(), role: 'matchday' }, JWT_TTL_MATCHDAY);
         const token = jwtSign({ userId: result.lastInsertRowid, email: email.trim().toLowerCase(), role: 'freemium' }, JWT_TTL_USER);
-        return jsonResponse(res, 201, { token, email: email.trim().toLowerCase(), role: 'freemium', expires_in: JWT_TTL_USER });
+        return jsonResponse(res, 201, { token: trialToken, email: email.trim().toLowerCase(), role: 'matchday', trial: true, trial_until: Math.floor(Date.now()/1000) + 86400, expires_in: JWT_TTL_MATCHDAY });
       } catch (e) {
         if (e.message.includes('UNIQUE')) return jsonResponse(res, 409, { error: 'Cet email est déjà utilisé' });
         throw e;
@@ -36149,9 +36152,9 @@ async function _refreshTop10Cache() {
         const now = Date.now();
         // D1-D6 identiques pour viewer et bettor → calcul unique par match
         const _preDim = active.map(e => ({ e, d: _precomputeTop10Dims(e) }));
-        for (const mode of ['viewer', 'bettor']) {
+        for (const mode of ['viewer', 'bettor', 'pwscr']) {
           const scored = _preDim.map(({ e, d }) => {
-            const s = computeScoreTop10Tennis(e, mode, d);
+            const s = computeScoreTop10Tennis(e, mode === 'pwscr' ? 'viewer' : mode, d);
             const isLive = !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || '')));
             const lv = e._live || {};
             return {
@@ -36194,10 +36197,16 @@ async function _refreshTop10Cache() {
                 return (_fp1 && _ods.movement_p1 === 'DRIFTING') || (!_fp1 && _ods.movement_p2 === 'DRIFTING');
               })(),
               predictive: e.predictive || null,
+              powerscore_p1: (e.player1 && e.player1.powerscore != null) ? e.player1.powerscore : null,
+              powerscore_p2: (e.player2 && e.player2.powerscore != null) ? e.player2.powerscore : null,
               metrics: e.metrics || null,
             };
           });
-          scored.sort((a, b) => b.score_top10 - a.score_top10);
+          if (mode === 'pwscr') {
+            scored.sort((a, b) => Math.max(b.powerscore_p1||0, b.powerscore_p2||0) - Math.max(a.powerscore_p1||0, a.powerscore_p2||0));
+          } else {
+            scored.sort((a, b) => b.score_top10 - a.score_top10);
+          }
           // Filtre: exclure les matchs où le mieux classé (P1 ou P2) est en dessous du Top 120 ATP/WTA
           var filtered = scored.filter(function(m) {
             var r1 = m.rank_p1, r2 = m.rank_p2;
