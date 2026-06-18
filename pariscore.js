@@ -4528,7 +4528,6 @@ function _tnTop10Card(m, rank) {
       + '<span class="ps-metric-s"> Public <span class="ps-metric-s-value">'+(m.metrics.public.a > 1 ? 'Domicile' : 'Exterieur')+'</span></span>'
       + '<span class="ps-metric-s"> AGE.30 <span class="ps-metric-s-value">'+m.metrics.age_30.a+'</span></span>' + (m.metrics.bp_conv && m.metrics.bp_conv.a != null ? '<span class="ps-metric-s"> BP Conv <span class="ps-metric-s-value">'+(m.metrics.bp_conv.a*100).toFixed(1)+'%</span></span>' : '') + (m.metrics.bp_saved && m.metrics.bp_saved.a != null ? '<span class="ps-metric-s"> BP Saved <span class="ps-metric-s-value">'+(m.metrics.bp_saved.a*100).toFixed(1)+'%</span></span>' : '') + (m.metrics.pressure_index && m.metrics.pressure_index.a != null ? '<span class="ps-metric-s"> Pressure <span class="ps-metric-s-value">'+(m.metrics.pressure_index.a*100).toFixed(1)+'%</span></span>' : '')
     + '</div>';
-  }
   } else if (m.metrics) {
     // UI-3: placeholder quand metrics presents mais vides (Challenger/ITF)
     metricsHtml = '<div class="tn-t10-empty-metrics" style="margin-top:10px;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;color:var(--ps-text-tertiary)">📊 Statistiques avancées indisponibles pour ce niveau de tournoi (circuit ATP/WTA requis).</div>';
@@ -6760,11 +6759,11 @@ function openTennisAnalysisModal(matchId) {
       var ace2 = (sd.p2 && sd.p2.ace_pct != null) ? sd.p2.ace_pct : (p2.ace_pct || null);
       if (ace1 != null) {
         var adEl1 = document.getElementById('h2h-p1-aces-df');
-        if (adEl1) { adEl1.textContent = ((Number(ace1) * 100).toFixed(1)) + '% aces'; adEl1.className = 'h2h-cell p1-val ' + (ace1 >= 0.12 ? 'green-text' : (ace1 >= 0.08 ? 'text-white' : 'muted-text')); }
+        if (adEl1) { adEl1.textContent = (Number(ace1).toFixed(1)) + '% aces'; adEl1.className = 'h2h-cell p1-val ' + (ace1 >= 12 ? 'green-text' : (ace1 >= 8 ? 'text-white' : 'muted-text')); }
       }
       if (ace2 != null) {
         var adEl2 = document.getElementById('h2h-p2-aces-df');
-        if (adEl2) { adEl2.textContent = ((Number(ace2) * 100).toFixed(1)) + '% aces'; adEl2.className = 'h2h-cell p2-val ' + (ace2 >= 0.12 ? 'green-text' : (ace2 >= 0.08 ? 'text-white' : 'muted-text')); }
+        if (adEl2) { adEl2.textContent = (Number(ace2).toFixed(1)) + '% aces'; adEl2.className = 'h2h-cell p2-val ' + (ace2 >= 12 ? 'green-text' : (ace2 >= 8 ? 'text-white' : 'muted-text')); }
       }
 
       // 4h) Form Trend 3 mois
@@ -6967,11 +6966,220 @@ function openTennisAnalysisModal(matchId) {
       var hasP2 = _populatePlayerMetrics('p2', p2);
       if (metricsRow) metricsRow.style.display = (hasP1 || hasP2) ? 'flex' : 'none';
       renderTn2Radar(p1, p2, data);
+      renderWinGauge(p1, p2, data.meta ? data.meta.surface : '');
     })
     .catch(function(err) {
       console.error('[TennisAnalysisModal]', err);
       document.getElementById('tam-tournament').textContent = 'Erreur de chargement';
     });
+}
+
+
+// ─── Win Probability Gauge ──────────────────────────────────────────
+// Implémentation basée sur WINPROB_FORMULA_REPORT.md (§5 — Pseudo-code)
+// Formule Premium (6 metrics) avec fallback Light (3 metrics)
+// Logit k=4.0, capping [15%,85%], pondération variable selon surface
+
+const WINP_NORM_PARAMS = {
+  elo_surface:  { mu: 1700, sigma: 200 },
+  powerscore:   { mu: 50,   sigma: 15  },
+};
+
+const WINP_WEIGHTS = {
+  clay: { elo_surface:0.25, powerscore:0.20, serve_index:0.10, return_won_pct:0.20, clutch_score:0.15, form_trend:0.10 },
+  grass:{ elo_surface:0.25, powerscore:0.20, serve_index:0.25, return_won_pct:0.10, clutch_score:0.15, form_trend:0.05 },
+  hard: { elo_surface:0.25, powerscore:0.20, serve_index:0.15, return_won_pct:0.15, clutch_score:0.15, form_trend:0.10 },
+};
+
+const WINP_WEIGHTS_LIGHT = {
+  elo_surface: 0.50, powerscore: 0.30, serve_index: 0.20,
+};
+
+const WINP_K = 4.0;
+const WINP_PROBA_MIN = 0.15;
+const WINP_PROBA_MAX = 0.85;
+const WINP_MISSING_THRESHOLD = 0.40;
+
+function winpClamp(v, min, max) {
+  return v < min ? min : v > max ? max : v;
+}
+
+function winpNormalize(value, metric) {
+  if (value == null || !isFinite(value)) return null;
+
+  // % metrics: /100
+  var pctMetrics = {
+    serve_index:1, receive_index:1, return_won_pct:1, clutch_score:1,
+    bp_saved_pct:1
+  };
+  if (pctMetrics[metric] === 1) return winpClamp(value / 100, 0, 1);
+
+  // Sigmoid metrics (ELO, PowerScore)
+  var p = WINP_NORM_PARAMS[metric];
+  if (p) return 1 / (1 + Math.exp(-(value - p.mu) / p.sigma));
+
+  // Rescale metrics (-1..+1) — form_trend, momentum
+  if (metric === 'form_trend' || metric === 'momentum')
+    return winpClamp((value + 1) / 2, 0, 1);
+
+  return null;
+}
+
+function winpCompositeScore(player, weights) {
+  var sum = 0, totalW = 0, missing = 0, total = 0;
+  for (var key in weights) {
+    if (!weights.hasOwnProperty(key)) continue;
+    total++;
+    var raw = player[key];
+    var norm = winpNormalize(raw, key);
+    if (norm == null) { missing++; continue; }
+    sum += weights[key] * norm;
+    totalW += weights[key];
+  }
+  if (missing / total > WINP_MISSING_THRESHOLD || totalW === 0) return null;
+  return sum / totalW;
+}
+
+function computeWinProbability(p1, p2, surface, mode) {
+  surface = surface || 'hard';
+  mode = mode || 'premium';
+  surface = surface.toLowerCase();
+
+  // Map surface aliases (FR/EN)
+  var surfMap = { 'dur':'hard', 'hard':'hard', 'clay':'clay', 'terre':'clay', 'grass':'grass', 'gazon':'grass' };
+  var surfaceKey = surfMap[surface] || 'hard';
+
+  var weights = (mode === 'light') ? WINP_WEIGHTS_LIGHT
+    : (WINP_WEIGHTS[surfaceKey] || WINP_WEIGHTS.hard);
+
+  var scoreP1 = winpCompositeScore(p1, weights);
+  var scoreP2 = winpCompositeScore(p2, weights);
+
+  if (scoreP1 == null || scoreP2 == null) {
+    return { prob: 50, delta: null, mode: '50/50', warning: 'Données insuffisantes' };
+  }
+
+  var delta = scoreP1 - scoreP2;
+  var prob = 1 / (1 + Math.exp(-WINP_K * delta));
+  prob = winpClamp(prob, WINP_PROBA_MIN, WINP_PROBA_MAX);
+
+  return {
+    prob:     Math.round(prob * 10000) / 100,
+    scoreP1:  scoreP1,
+    scoreP2:  scoreP2,
+    delta:    delta,
+    mode:     mode,
+    surface:  surfaceKey,
+    weights:  weights,
+    compositeScores: { p1: Math.round(scoreP1 * 10000) / 10000, p2: Math.round(scoreP2 * 10000) / 10000 }
+  };
+}
+
+function renderWinGauge(p1, p2, surface) {
+  var container = document.getElementById('win-gauge-container');
+  if (!container) return;
+
+  var p1Name = (p1.name || 'J1').split(' ').pop(); // surname only
+  var p2Name = (p2.name || 'J2').split(' ').pop();
+
+  // Try Premium first, fallback to Light
+  var result = computeWinProbability(p1, p2, surface, 'premium');
+  if (result.warning) {
+    result = computeWinProbability(p1, p2, surface, 'light');
+  }
+
+  var prob = result.prob;
+  var isInsufficient = result.warning && result.delta == null;
+
+  container.style.display = 'block';
+
+  // Player names
+  document.getElementById('win-gauge-p1-name').textContent = p1Name;
+  document.getElementById('win-gauge-p2-name').textContent = p2Name;
+
+  // Percentages
+  document.getElementById('win-gauge-p1-pct').textContent = prob + '%';
+  document.getElementById('win-gauge-p2-pct').textContent = (100 - prob) + '%';
+
+  // Bar fill
+  var fillEl = document.getElementById('win-gauge-fill');
+  var handleEl = document.getElementById('win-gauge-handle');
+  fillEl.style.width = prob + '%';
+  handleEl.style.left = prob + '%';
+
+  // Subtitle (mode · surface · delta)
+  var subEl = document.getElementById('win-gauge-subtitle');
+  if (isInsufficient) {
+    subEl.textContent = '\u26A0\uFE0F ' + result.warning;
+  } else {
+    var modeLabel = result.mode === 'light' ? 'Light' : 'Premium';
+    var surfLabel = result.surface ? result.surface.charAt(0).toUpperCase() + result.surface.slice(1) : '—';
+    subEl.textContent = modeLabel + ' \u00B7 ' + surfLabel + ' \u00B7 \u0394' + (result.delta >= 0 ? '+' : '') + result.delta.toFixed(4);
+  }
+
+  // Store data for detail popup
+  container.dataset.prob = prob;
+  container.dataset.p1Name = p1Name;
+  container.dataset.p2Name = p2Name;
+  container.dataset.result = JSON.stringify(result);
+  container.dataset.p1Json = JSON.stringify(p1);
+  container.dataset.p2Json = JSON.stringify(p2);
+  container.dataset.mode = result.mode;
+}
+
+function toggleWinGaugeDetail() {
+  var detailEl = document.getElementById('win-gauge-detail');
+  if (!detailEl) return;
+  if (detailEl.style.display !== 'none') { detailEl.style.display = 'none'; return; }
+
+  var container = document.getElementById('win-gauge-container');
+  if (!container) return;
+
+  var p1 = JSON.parse(container.dataset.p1Json || '{}');
+  var p2 = JSON.parse(container.dataset.p2Json || '{}');
+  var result = JSON.parse(container.dataset.result || '{}');
+  var p1Name = container.dataset.p1Name || 'J1';
+  var p2Name = container.dataset.p2Name || 'J2';
+  var mode = container.dataset.mode || 'premium';
+
+  // Build metrics table
+  var weights = result.weights || WINP_WEIGHTS.hard;
+  var html = '<table>';
+  html += '<tr><th>Crit\u00E8re</th><th>' + p1Name + '</th><th>' + p2Name + '</th><th>Poids</th></tr>';
+
+  var metricLabels = {
+    elo_surface:'ELO Surface', powerscore:'PowerScore', serve_index:'Serve Index',
+    return_won_pct:'Retour %', clutch_score:'Clutch', form_trend:'Tendance'
+  };
+
+  for (var key in weights) {
+    if (!weights.hasOwnProperty(key)) continue;
+    var label = metricLabels[key] || key;
+    var raw1 = p1[key], raw2 = p2[key];
+    var v1 = raw1 != null ? raw1 : '—';
+    var v2 = raw2 != null ? raw2 : '—';
+    var w = (weights[key] * 100).toFixed(0) + '%';
+    html += '<tr><td>' + label + '</td><td>' + v1 + '</td><td>' + v2 + '</td><td>' + w + '</td></tr>';
+  }
+
+  html += '</table>';
+
+  // Summary
+  html += '<div style="margin-top:6px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);">';
+  if (result.compositeScores) {
+    html += '<span>Score compos\u00E9 : ' + p1Name + ' ' + result.compositeScores.p1.toFixed(4) + ' \u2014 ' + p2Name + ' ' + result.compositeScores.p2.toFixed(4) + '</span><br>';
+  }
+  if (result.delta != null) {
+    html += '<span>Delta : ' + (result.delta >= 0 ? '+' : '') + result.delta.toFixed(4) + '</span><br>';
+  }
+  html += '<span>Probabilit\u00E9 : ' + result.prob + '% \u2014 ' + (100 - result.prob) + '%</span><br>';
+  html += '</div>';
+
+  // Footer
+  html += '<div class="wg-footer">Surface: ' + (result.surface || '—') + ' &middot; Mode: ' + mode + ' &middot; k=4.0 &middot; Capping [15%,85%]</div>';
+
+  detailEl.innerHTML = html;
+  detailEl.style.display = 'block';
 }
 
 function closeTennisAnalysisModal() {

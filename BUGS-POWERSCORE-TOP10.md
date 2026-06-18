@@ -14,8 +14,9 @@ Le mode PowerScore (`⚡ PW SCR`) de la page Tennis Top 10 est **non fonctionnel
 |-----|----------|--------|
 | [BUG-001](#bug-001--mismatch-nom-champ-powerscore) | 🔴 Critique | Aucun PowerScore affiché |
 | [BUG-002](#bug-002--commentaire--et-accolade--sur-meme-ligne) | 🔴 Critique | Serveur ne démarre pas |
-| [BUG-003](#bug-003--filtre-rank--120-non-appliqué-côté-frontend) | 🟡 Moyen | Données incohérentes possibles |
-| [BUG-004](#bug-004--pas-de-gestion-détat-null-pour-ps1ps2) | 🟡 Moyen | Affichage cassé si données manquantes |
+| [BUG-003](#bug-003--accolade--en-trop-avant-else-if) | 🔴 Critique | Tout le JS frontend cassé (SyntaxError) |
+| [BUG-004](#bug-004--filtre-rank--120-non-appliqué-côté-frontend) | 🟡 Moyen | Données incohérentes possibles |
+| [BUG-005](#bug-005--pas-de-gestion-détat-null-pour-ps1ps2) | 🟡 Moyen | Affichage cassé si données manquantes |
 
 ---
 
@@ -113,7 +114,51 @@ node server.js          # ✅ Démarre sur port 3000
 
 ---
 
-## BUG-003 : Filtre rank ≤ 120 non appliqué côté frontend
+## BUG-003 : Accolade `}` en trop avant `else if`
+
+**Sévérité :** 🔴 Critique — Tout le JS frontend cassé (SyntaxError)
+**Fichier :** `pariscore.js` ligne 4531-4532
+**Statut :** ✅ Corrigé
+
+### Description
+
+Une accolade `}` en double avant `else if` provoque un `SyntaxError: Unexpected token 'else'` qui tue **l'intégralité du fichier `pariscore.js`**. Comme tout le code frontend est dans une IIFE, aucune fonction globale n'est définie (`showPage`, `tn2Top10Mode`, `bnGo`, etc.).
+
+### Code défectueux
+
+```javascript
+// pariscore.js:4530-4532 (AVANT FIX)
+    + '</div>';
+  }           // ← ferme le bloc if de la ligne 4490
+  } else if (m.metrics) {  // ← ❌ } en trop = SyntaxError
+```
+
+### Impact
+
+- `pariscore.js` ne s'exécute **pas du tout** — le parser s'arrête à la ligne 4532
+- `window.tn2Top10Mode` jamais défini → bouton PW SCR inopérant
+- `showPage()`, `bnGo()`, `startTennisTop10()` jamais définis → navigation cassée
+- **Aucune carte Tennis ne s'affiche** en mode quelconque
+
+### Correction appliquée
+
+```javascript
+// pariscore.js:4531 (APRÈS FIX)
+  } else if (m.metrics) {  // ← accolade supplémentaire supprimée
+```
+
+### Vérification
+
+```
+Test: python test-find-error.py
+→ JS errors caught: 0  ✅
+→ window.tn2Top10Mode: function  ✅
+→ window.showPage: function  ✅
+```
+
+---
+
+## BUG-004 : Filtre rank ≤ 120 non appliqué côté frontend
 
 **Sévérité :** 🟡 Moyen — Données potentiellement incohérentes
 **Fichier :** `server.js` lignes 36219-36225 vs `pariscore.js` ligne 4683
@@ -144,7 +189,7 @@ Vérifier que le filtre est cohérent avec le mode `pwscr`. Si le mode PowerScor
 
 ---
 
-## BUG-004 : Pas de gestion d'état null pour ps1/ps2
+## BUG-005 : Pas de gestion d'état null pour ps1/ps2
 
 **Sévérité :** 🟡 Moyen — Affichage cassé si données manquantes
 **Fichier :** `pariscore.js` lignes 4381-4416
