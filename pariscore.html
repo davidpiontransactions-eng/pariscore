@@ -8267,11 +8267,10 @@
   .auth-box { background:var(--bg2); border:1px solid var(--bg3); border-radius:24px;
     padding:32px; width:380px; max-width:95vw; text-align:center;
     box-shadow:0 18px 50px rgba(0,0,0,.45), 0 2px 0 rgba(255,255,255,.04) inset; }
-  .auth-box h2 { font-family:var(--font-head); font-size:44px; line-height:1; margin:0 0 12px;
-    font-weight:800; text-transform:uppercase; letter-spacing:-1.5px; color:var(--text);
+  .auth-box h2 { font-family:var(--font-head); font-size:32px; line-height:1.1; margin:0 0 8px;
+    font-weight:800; text-transform:uppercase; letter-spacing:-0.5px; color:var(--text);
     display:block; text-align:center; position:relative;
-    text-shadow:0 1px 0 #c8000f, 0 2px 0 #b3000d, 0 3px 0 #9c000b,
-      0 4px 0 #850009, 0 5px 8px rgba(226,0,26,.45), 0 8px 18px rgba(0,0,0,.40); }
+    text-shadow:0 2px 8px rgba(0,0,0,.35); }
   .auth-box h2::after { content:""; display:block; width:64px; height:4px; margin:10px auto 0;
     background:#E2001A; border-radius:2px; box-shadow:0 1px 4px rgba(226,0,26,.55); }
   .auth-subtitle { font-size:12px; color:var(--text3); margin:0 auto 26px; max-width:300px;
@@ -8306,6 +8305,17 @@
   .auth-submit:active { transform:translateY(1px); }
   .auth-submit:disabled { opacity:.5; cursor:not-allowed; }
   .auth-error { color:var(--red); font-size:12px; margin-top:8px; min-height:16px; }
+
+.auth-forgot { display:block; text-align:right; font-size:11px; color:var(--text3); margin:-10px 0 16px;
+  text-decoration:none; font-family:var(--font-body); transition:color .15s; cursor:pointer; }
+.auth-forgot:hover { color:var(--accent); }
+.input-valid { border-color:var(--green) !important; box-shadow:0 0 0 1px rgba(0,230,118,0.25) !important; }
+.btn-spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,.25);
+  border-top-color:#000; border-radius:50%; animation:psSpin .6s linear infinite; vertical-align:middle;
+  margin-right:6px; }
+@keyframes psSpin { to { transform:rotate(360deg); } }
+.auth-submit.is-loading { opacity:.7; cursor:wait; }
+.auth-submit.is-loading .btn-spinner { border-color:rgba(0,0,0,.15); border-top-color:#000; }
   .inline-error { display:block; color:#ef4444; font-size:13px; font-weight:500; margin-top:4px;
     padding:4px 8px; background:rgba(239,68,68,0.08); border-radius:var(--radius-sm, 6px);
     animation:psFadeIn .15s ease; }
@@ -13456,12 +13466,12 @@ function psSetLang(v) {
 
 <!-- PAGE : MATCHS -->
 <div id="page-matchs" data-page="matchs" style="display:none;">
-<!-- Bannière Freemium -->
-<div id="freemium-banner" style="display:none;background:linear-gradient(135deg,rgba(249,168,37,0.12),rgba(237,28,36,0.08));border:1px solid rgba(249,168,37,0.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:none;align-items:center;gap:12px;font-size:13px;">
-  <span style="font-size:20px;">🔒</span>
-  <div style="flex:1;">
-    <strong style="color:#f9a825;">Mode Gratuit</strong>
-    <span style="color:#94a3b8;margin-left:8px;">— 5 ligues majeures · 10 consultations/jour</span>
+<!-- Bannière Freemium / Essai -->
+<div id="freemium-banner" style="display:none;background:linear-gradient(135deg,rgba(0,230,118,0.08),rgba(249,168,37,0.12));border:1px solid rgba(0,230,118,0.25);border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;gap:12px;font-size:13px;">
+  <span id="freemium-icon" style="font-size:20px;">🎉</span>
+  <div style="flex:1;" id="freemium-text">
+    <strong style="color:#00e676;">Essai gratuit</strong>
+    <span style="color:#94a3b8;margin-left:8px;" id="freemium-countdown">— 24h d'accès Pro</span>
   </div>
   <a href="javascript:void(0)" onclick="showPage('tarifs')" style="background:var(--accent,#E2001A);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap;">Passer Pro →</a>
 </div>
@@ -15478,7 +15488,7 @@ function psSetLang(v) {
           <div class="tn2-mode-toggle">
             <button class="tn2-mode-btn active" onclick="tn2Top10Mode('viewer')">FAN</button>
             <button class="tn2-mode-btn" onclick="tn2Top10Mode('bettor')">PARIEUR</button>
-            <button class="tn2-mode-btn ps-tracker-btn-toggle" onclick="toggleTrackerMode()" style="margin-left:4px;font-size:10px">🎯 TRACKER</button>
+            <button class="tn2-mode-btn" onclick="tn2Top10Mode('powerscore')" style="margin-left:4px;font-size:10px">⚡ PW SCR</button>
           </div>
         </div>
       </div>
@@ -19607,6 +19617,24 @@ window.tn2SetupH2H = function() {
   @keyframes tn-t10-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,.22)} 60%{box-shadow:0 0 0 5px rgba(244,67,54,0)} }
   .tn-t10-card:has(.tn-t10-live-score) { animation: tn-t10-pulse 2.2s ease-in-out infinite; }
 
+
+  /* ── POWERSCORE MODE ── */
+  .tn-t10-ps-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tn-t10-ps-score { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 800; line-height: 1; }
+  .tn-t10-ps-score.p1 { color: var(--accent,#00e676); }
+  .tn-t10-ps-score.p2 { color: #64748b; }
+  .tn-t10-ps-score.winner { text-shadow: 0 0 8px rgba(0,230,118,.3); }
+  .tn-t10-ps-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b); text-transform: uppercase; letter-spacing: .5px; }
+  .tn-t10-ps-bar { flex: 1; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; display: flex; }
+  .tn-t10-ps-fill-p1 { height: 100%; background: linear-gradient(90deg, #00e676, #66bb6a); border-radius: 3px 0 0 3px; transition: width .5s ease; }
+  .tn-t10-ps-fill-p2 { height: 100%; background: linear-gradient(90deg, #607d8b, #455a64); border-radius: 0 3px 3px 0; transition: width .5s ease; }
+  .tn-t10-ps-fav { font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 5px; border-radius: 3px; background: rgba(0,230,118,.12); border: 1px solid rgba(0,230,118,.4); color: #00e676; }
+  .tn-t10-ps-dims { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .tn-t10-ps-dim { font-family: 'DM Mono', monospace; font-size: 9px; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); color: var(--text3,#64748b); }
+  .tn-t10-ps-dim .dim-val { font-weight: 700; margin-left: 3px; }
+  .tn-t10-ps-dim.dim-high .dim-val { color: #00e676; }
+  .tn-t10-ps-dim.dim-mid .dim-val  { color: #fbbf24; }
+  .tn-t10-ps-dim.dim-low .dim-val  { color: #f44336; }
   /* -- 10. Cards/wrappers internes : .pbet-wrap, .t3c-wrap, .vb-hero-value -- */
   body[data-cf-light="1"] #vb-table:not(#__cf__):not(#__cf2__):not(#__cf3__) .pbet-wrap,
   body[data-cf-light="1"] .pbet-wrap {

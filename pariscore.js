@@ -4371,6 +4371,49 @@ function _tnTop10Card(m, rank) {
   const probBar = probPct != null
     ? `<div class="tn-t10-prob-row"><div class="tn-t10-prob-bar"><div class="tn-t10-prob-fill" style="width:${probPct}%"></div></div><span class="tn-t10-prob-label">${probPct}%</span></div>` : '';
 
+  // ── POWERSCORE MODE : barre comparative J1 vs J2 ──
+  let psHtml = '';
+  if (typeof _tnTop10Mode !== 'undefined' && _tnTop10Mode === 'powerscore') {
+    const ps1 = m.player1_powerscore != null ? Math.round(m.player1_powerscore) : null;
+    const ps2 = m.player2_powerscore != null ? Math.round(m.player2_powerscore) : null;
+    if (ps1 != null && ps2 != null) {
+      const total = ps1 + ps2;
+      const pct1 = total > 0 ? (ps1 / total * 100) : 50;
+      const pct2 = total > 0 ? (ps2 / total * 100) : 50;
+      const isP1Winner = ps1 > ps2;
+      const favBadge = isP1Winner
+        ? `<span class="tn-t10-ps-fav">⚡ FAVORI</span>`
+        : `<span class="tn-t10-ps-fav" style="background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.4);color:#64748b">⚡ FAVORI</span>`;
+      const d2 = m.dims || {};
+      const dimLabels = { entropy: 'Équilibre', ev: 'Valeur EV', stakes: 'Prestige', urgency: 'Urgence', movement: 'Mouvement' };
+      const dimHtml = Object.keys(dimLabels).map(k => {
+        if (d2[k] == null) return '';
+        const v = Number(d2[k]);
+        const cls = v >= 70 ? 'dim-high' : v >= 40 ? 'dim-mid' : 'dim-low';
+        return `<span class="tn-t10-ps-dim ${cls}">${dimLabels[k]}<span class="dim-val">${v}</span></span>`;
+      }).filter(Boolean).join('');
+      psHtml = `
+        <div class="tn-t10-ps-row">
+          <div style="text-align:right;min-width:40px">
+            <div class="tn-t10-ps-score p1 ${isP1Winner ? 'winner' : ''}">${ps1}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px">
+            <span class="tn-t10-ps-label">PW SCR</span>
+            <div class="tn-t10-ps-bar">
+              <div class="tn-t10-ps-fill-p1" style="width:${pct1}%"></div>
+              <div class="tn-t10-ps-fill-p2" style="width:${pct2}%"></div>
+            </div>
+          </div>
+          <div style="min-width:40px">
+            <div class="tn-t10-ps-score p2 ${!isP1Winner ? 'winner' : ''}">${ps2}</div>
+          </div>
+          ${favBadge}
+        </div>
+        ${dimHtml ? '<div class="tn-t10-ps-dims">' + dimHtml + '</div>' : ''}
+      `;
+    }
+  }
+
   // Surface + round pill
   const surfacePill = (m.surface || m.round)
     ? `<div class="tn-t10-surface">${surfaceIcon} ${_tnEsc([m.surface, m.round].filter(Boolean).join(' · '))}</div>` : '';
@@ -4497,7 +4540,7 @@ function _tnTop10Card(m, rank) {
   </div>
   ${surfacePill}
   ${dateBadge}
-  ${probBar}
+  ${_tnTop10Mode === 'powerscore' ? psHtml : probBar}
   <div class="tn-t10-chips">
     <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
     ${chipsHtml}
@@ -19766,6 +19809,7 @@ async function submitRegister() {
     const data = await r.json();
     if (!r.ok) { errEl.textContent = data.error || "Erreur lors de l'inscription"; return; }
     psSetToken(data.token);
+    if (data.trial_until) localStorage.setItem('ps_trial_until', data.trial_until);
     closeAuthModal();
     updateNavAuthState();
   } catch { errEl.textContent = 'Erreur réseau'; }
@@ -19788,11 +19832,36 @@ function psLogout() {
 function updateNavAuthState() {
   const user = psGetUser();
   const area = document.getElementById('nav-auth-area');
-  // Bannière freemium
+  // Bannière freemium / essai
   const fb = document.getElementById('freemium-banner');
   if (fb) {
-    if (user && user.role === 'freemium') fb.style.display = 'flex';
-    else fb.style.display = 'none';
+    if (!user) { fb.style.display = 'none'; }
+    else if (user.role === 'matchday' || user.role === 'freemium') {
+      fb.style.display = 'flex';
+      // Vérifier essai gratuit actif
+      const trialUntil = parseInt(localStorage.getItem('ps_trial_until') || '0');
+      const now = Math.floor(Date.now() / 1000);
+      if (trialUntil > now) {
+        // Essai actif — compte à rebours
+        document.getElementById('freemium-icon').textContent = '🎉';
+        var remaining = trialUntil - now;
+        var h = Math.floor(remaining / 3600);
+        var m = Math.floor((remaining % 3600) / 60);
+        document.getElementById('freemium-countdown').textContent = '— ' + h + 'h' + (m < 10 ? '0' : '') + m + ' d\'essai Pro restant';
+        fb.style.background = 'linear-gradient(135deg,rgba(0,230,118,0.08),rgba(249,168,37,0.12))';
+        fb.style.borderColor = 'rgba(0,230,118,0.25)';
+        document.getElementById('freemium-text').querySelector('strong').style.color = '#00e676';
+        document.getElementById('freemium-text').querySelector('strong').textContent = 'Essai gratuit';
+      } else {
+        // Essai expiré — mode gratuit
+        document.getElementById('freemium-icon').textContent = '🔒';
+        document.getElementById('freemium-countdown').textContent = '— 5 ligues majeures · 10 consultations/jour';
+        fb.style.background = 'linear-gradient(135deg,rgba(249,168,37,0.12),rgba(237,28,36,0.08))';
+        fb.style.borderColor = 'rgba(249,168,37,0.25)';
+        document.getElementById('freemium-text').querySelector('strong').style.color = '#f9a825';
+        document.getElementById('freemium-text').querySelector('strong').textContent = 'Mode Gratuit';
+      }
+    } else { fb.style.display = 'none'; }
   }
   if (!area) return;
   if (!user) {
