@@ -19788,6 +19788,12 @@ function psLogout() {
 function updateNavAuthState() {
   const user = psGetUser();
   const area = document.getElementById('nav-auth-area');
+  // Bannière freemium
+  const fb = document.getElementById('freemium-banner');
+  if (fb) {
+    if (user && user.role === 'freemium') fb.style.display = 'flex';
+    else fb.style.display = 'none';
+  }
   if (!area) return;
   if (!user) {
     area.innerHTML = `<button class="nav-auth-btn" onclick="openAuthModal('login')">Se connecter</button>`;
