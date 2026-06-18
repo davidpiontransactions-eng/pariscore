@@ -1,38 +1,47 @@
-## ✅ SESSION 2026-06-18 (NIGHT) — SPIDER CHART AUDIT & CORRECTIONS (7 BUGS)
+## ✅ SESSION 2026-06-18 (NIGHT) — SPIDER CHART AUDIT & CORRECTIONS (7 BUGS) — TERMINÉE
 
-### Audit realise
-- **Composant audite** : enderTn2Radar() dans pariscore.js:6981-7108 (Chart.js radar)
-- **Pipeline data** : 6 axes traces (ELO Surface, PowerScore, Momentum, Niveau, Experience, Efficacite)
-- **7 bugs classes** : B1 (HIGH), B2-B4 (MED), B5-B7 (LOW)
-- **Design reference** : sketch 001, Variant B (SVG Glow) identifie comme winner mais backlogge
+### Audit réalisé
+- **Composant audité** : renderTn2Radar() dans pariscore.js:6981-7108 (Chart.js radar)
+- **Pipeline data** : 6 axes tracés (ELO Surface, PowerScore, Momentum, Niveau, Expérience, Efficacité)
+- **7 bugs classés** : B1 (HIGH), B2-B4 (MED), B5-B7 (LOW)
+- **Design reference** : sketch 001, Variant B (SVG Glow) identifié comme winner mais backloggé
 
-### Corrections appliquees et verifyees (
-ode --check OK)
+### Corrections appliquées et vérifiées (node --check OK)
 
-| Bug | Severite | Correction | Fichier:Ligne |
+| Bug | Sévérité | Correction | Fichier:Ligne |
 |-----|----------|-----------|---------------|
-| B1 | HIGH | eginAtZero: true -> eginAtZero: false, min: 20, max: 100 | pariscore.js:7070 |
-| B2 | MED | Classes mortes .spider-polygon-p1/p2 remplacees par commentaire | pariscore.html |
-| B3 | MED | Guards serve_index/eceive_index tolerent 1 null (?? 50) | pariscore.js:7020-7023 |
-| B4 | MED | console.warn() ajoute sur l10_pts null | pariscore.js:7015-7016 |
-| B5 | LOW | Detection >=4/6 axes a 50 -> warn structure | pariscore.js:7025-7029 |
-| B6 | LOW | CSS .recharts-* legacy supprime | pariscore.html |
-| B7 | LOW | ankScore() securise (|| r > 2000, Math.min(100, ...)) | pariscore.js:7007-7009 |
+| B1 | HIGH | beginAtZero: true -> beginAtZero: false, min: 20, max: 100 | pariscore.js:7070 |
+| B2 | MED | Classes mortes .spider-polygon-p1/p2 remplacées par commentaire | pariscore.html |
+| B3 | MED | Guards serve_index/receive_index tolèrent 1 null (?? 50) | pariscore.js:7020-7023 |
+| B4 | MED | console.warn() ajouté sur l10_pts null | pariscore.js:7015-7016 |
+| B5 | LOW | Détection >=4/6 axes à 50 -> warn structuré | pariscore.js:7025-7029 |
+| B6 | LOW | CSS .recharts-* legacy supprimée | pariscore.html |
+| B7 | LOW | rankScore() sécurisé (r > 2000, Math.min(100, ...)) | pariscore.js:7007-7009 |
 
-### Rapports generes
-- spider_chart_issue.md : rapport complet d'audit avec localisation, impact, correction, plan priorise
+### Commits & Push
+- **Commit** : c04a5a5
+- **Message** : bugfix: spider chart 7 bugs B1-B7 + cascade 2 autres radars
+- **Push** : origin/main — up to date ✅
 
-### Restant (backlog)
-- Tests fonctionnels : lancer 
-ode server.js (~4min warmup), ouvrir pariscore.html, verifier le radar
-- Migration SVG natif (Variant B) : zero Chart.js, effet glow neon, animations fluides
-- Audit UX complet des tooltips, animations, etats vides du composant
+### Bonus
+- B1 cascadé sur renderTeamRadar() + renderAttributesRadar() — 3 radars fixés au lieu d'1
+- Backend vérifié (server.js) : l10_pts, serve_index, receive_index — pipeline sain
+- Quality gate : node --check pariscore.js + server.js — OK
 
-### Fichiers modifies cette session
-- pariscore.js : renderTn2Radar() — 6 corrections P0-P3 dans la meme zone (L6988-7116)
-- pariscore.html : CSS mort (spider-polygon, recharts legacy) remplace par commentaires
-- spider_chart_issue.md : nouveau rapport d'audit
+### Rapports générés
+- spider_chart_issue.md : rapport complet d'audit avec localisation, impact, correction, plan priorisé
 
+### Restant (backlog — prochaine session)
+1. Tests fonctionnels : lancer node server.js (~4min warmup), ouvrir http://localhost:3000, vérifier le radar tennis
+2. Déploiement VPS : ssh pariscore -> bash scripts/update_vps.sh
+3. Migration SVG natif (Variant B) : zéro Chart.js, glow néon, animations fluides
+
+### Fichiers commités cette session
+- pariscore.js : renderTn2Radar() — 6 corrections P0-P3 (L6988-7116) + cascade 2 autres radars
+- pariscore.html : CSS mort (.spider-polygon-*, .recharts-*) remplacé par commentaires
+- spider_chart_issue.md : nouveau rapport d'audit (107 lignes)
+- CLAUDE.md : cette session
+- todo.md : section P0-P2 spider chart ajoutée
 
 ## ✅ SESSION 2026-06-18 (PM) — REDESIGN MODAL AUTH + AUDIT CONCURRENTIEL
 
@@ -679,8 +688,10 @@ Avant de valider, vérifier point par point :
 
 ### Frontend
 - Badge catégorie coloré (or/bleu/violet/vert/rose/orange/teal) en pill
-- Tableau 100% largeur, fond #111a28, bordure gba(255,255,255,0.06)
-- Hover bleu gba(0,119,255,0.06) sur chaque ligne
+- Tableau 100% largeur, fond #111a28, bordure 
+gba(255,255,255,0.06)
+- Hover bleu 
+gba(0,119,255,0.06) sur chaque ligne
 - Ligne résumé avec comptage GS/M1000
 - Pastille ronde surface + prize money en #00e676
 - Status enrichi avec nombre de GS et M1000
@@ -853,4 +864,5 @@ Pipeline d'extraction et de calcul des 7 métriques prioritaires du Sprint 1, ba
 - Déploiement production
 
 - **Sketch findings for PariScore** (design decisions, CSS patterns, visual direction) → `Skill("sketch-findings-pariscore")`
+
 
