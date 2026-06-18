@@ -951,6 +951,11 @@ function showPage(pageId, linkEl) {
   }
 }
 
+// Alias pour barre de navigation mobile (bottom nav)
+window.bnGo = window.bnGo || function showPageBnav(pageId, linkEl) {
+  return showPage(pageId, linkEl);
+};
+
 function setPageTitle(sportName) {
   var titles = {
     'football':    'Football - Scores & Cotes',
@@ -30084,6 +30089,7 @@ async function loadFootAlerts() {
 
 
 }());
+
 
 
 
