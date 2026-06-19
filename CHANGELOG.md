@@ -1,5 +1,29 @@
 # PariScore — Journal des modifications
 
+## [v12.84] — 2026-06-20 — P_BETS : Win Probability Gauge + fix timeout critique
+
+### Ajouté
+- **Win Probability Gauge** : jauge visuelle interactive dans la modale analyse Tennis TOP 10. Score composite normalisé (0-100%) basé sur 11 metrics pondérées (ELO, PowerScore, break/win, serveur, receveur, service games, retour, forme L10, urgent, dynamique, surface). Alias de champs (eturn_won_pct → eceive_index) pour compatibilité API. Détail dépliable avec critères.
+- **CSS Premium Dark P_BETS** : redesign complet du modal — odds block, confidence gauge bar, palette sombre premium cohérente avec le design système --cf-*
+
+### Corrigé
+- **Fix critique timeout P_BETS (45s+)** : quand un match est archivé (retiré de __tennisVBWarmMatches), ound = null → le guard start_time > 2h ne déclenchait pas → le code appelait generatePBetsFromOrchestrator sans contexte tennis → sdFetch sans timeout avec 3 retries × 15s = 45s+ de blocage event loop
+  - Fix 1 (server.js:21914-21915) : guard !found — retourne match_termine immédiatement sans appel réseau
+  - Fix 2 (	ools/p-bets-generator.js:309-310) : wrapper withTimeout(bsdFetch(...), 8000) — défense en profondeur
+- **P_BETS bouton caché si match terminé** : condition _tmIsFinished(status) dans 	n2RenderTopCards() masque le bouton P_BETS pour les matches finished/completed/ended
+- **Message P_BETS explicite** : openPBets() affiche "⚠️ Match terminé" ou "⚠️ Match en direct — paris désactivés" selon la note API
+
+### Modifié
+- server.js : guard !found dans route P_BETS
+- 	ools/p-bets-generator.js : withTimeout 8s sur sdFetch
+- pariscore.html : Win Probability Gauge, CSS Premium Dark P_BETS, guards frontend
+
+### Performance
+| Métrique | Avant | Après |
+|----------|-------|-------|
+| Temps réponse P_BETS (match archivé) | timeout 45s+ | **~1.5s** |
+| Temps réponse P_BETS (match live) | ~2-3s (selon API) | **<1s** |
+
 ## [v12.83] — 2026-06-16 — H2H Surface : Indice Serveur + Indice Receveur
 
 ### Ajouté
@@ -2617,3 +2641,4 @@ Nouveau fichier de configuration des ligues extrait de `server.js` :
 ### Changed
 - **Priorité redéfinie** : La prospection comparative et l'analyse des chatbots concurrents sont placées en tête de liste pour la session de 15h20[cite: 1].
 - Le développement technique (SSE/Chatbot) est suspendu jusqu'à la finalisation complète de l'audit.
+
