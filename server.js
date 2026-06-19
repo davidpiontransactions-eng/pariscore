@@ -21893,6 +21893,26 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       found = db.matches.find(m => String(m.id) === fixtureId || String(m._bsd_event_id) === fixtureId); if (found) canonId = String(found.id);
       if (found) matchStatus = found.live_status || found.status || found.match_status || found.fixture_status;
     }
+    // Fallback tennis VB si pas trouvé dans db.matches (Top10 IDs)
+    if (!found) {
+      const tennisMatches = globalThis.__tennisVBWarmMatches;
+      if (tennisMatches && tennisMatches.length > 0) {
+        found = tennisMatches.find(m => String(m.id) === fixtureId);
+        if (found) {
+          canonId = String(found.id);
+          matchStatus = found.status;
+          // Stocker contexte tennis pour le générateur
+          found._pBetsTennisCtx = {
+            p1: (found.player1 && found.player1.name) || (found.players && found.players.p1 && found.players.p1.name) || null,
+            p2: (found.player2 && found.player2.name) || (found.players && found.players.p2 && found.players.p2.name) || null,
+            surface: found.surface || null,
+            tour: found.tour || null
+          };
+        }
+      }
+    }
+    // Match non trouvé dans aucune source → terminé / archivé
+    if (!found) { _pBetsCache.delete(canonId); return jsonResponse(res, 200, { bets: [], note: 'match_termine' }); }
     if (found && found.start_time) { var ms = typeof found.start_time === 'number' ? found.start_time * 1000 : new Date(found.start_time).getTime(); if (!isNaN(ms) && (Date.now() - ms) > 2 * 60 * 60 * 1000) { _pBetsCache.delete(canonId); return jsonResponse(res, 200, { bets: [], note: 'match_termine' }); } }
     if (matchStatus && (matchStatus.includes('LIVE') || matchStatus.includes('IN_PLAY') || matchStatus.includes('1ST_HALF') || matchStatus.includes('2ND_HALF'))) {
       _pBetsCache.delete(canonId);
@@ -21908,7 +21928,8 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
     // Générer via l'orchestrator
     try {
       const { generatePBetsFromOrchestrator } = require('./tools/p-bets-generator');
-      const bets = await generatePBetsFromOrchestrator(fixtureId, sqldb || db, bsdFetch);
+      const tennisPbetsCtx = found && found._pBetsTennisCtx || null;
+      const bets = await generatePBetsFromOrchestrator(fixtureId, sqldb || db, bsdFetch, tennisPbetsCtx);
       if (bets && bets.length > 0) {
         _pBetsCache.set(canonId, { data: bets, timestamp: Date.now() });
       }
@@ -44429,6 +44450,148 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
         }
     }
 
+    /* -------------------------------------------------
+       4d  FORECASTS TimesFM (tendances IA)
+       Routes pour les tendances generes par timesfm_forecast.py
+       Stockees dans la table timesfm_forecasts de pariscore.db
+       ------------------------------------------------- */
+
+    // GET /api/v1/forecasts/tennis?player=&surface=
+    if (pathname === '/api/v1/forecasts/tennis') {
+        try {
+            const player = query.player || '';
+            const surface = query.surface || '';
+            let sql = "SELECT * FROM timesfm_forecasts WHERE sport='tennis'";
+            const params = [];
+            if (player) { sql += ' AND entity_id = ?'; params.push(player); }
+            if (surface) { sql += ' AND context = ?'; params.push(surface); }
+            sql += ' ORDER BY entity_label, context';
+            const rows = sqldb.prepare(sql).all(...params);
+            const parsed = rows.map(r => ({
+                id: r.id,
+                sport: r.sport,
+                entity_type: r.entity_type,
+                entity_id: r.entity_id,
+                entity_label: r.entity_label,
+                context: r.context,
+                series_label: r.series_label,
+                horizon: r.horizon,
+                forecast: JSON.parse(r.forecast_raw || '[]'),
+                quantile_labels: r.quantile_labels ? JSON.parse(r.quantile_labels) : null,
+                input_tail: r.input_tail ? JSON.parse(r.input_tail) : null,
+                forecast_ts: r.forecast_ts,
+                expires_at: r.expires_at
+            }));
+            jsonResponse(res, 200, parsed);
+        } catch (e) {
+            console.error('[Forecasts:Tennis]', e.message);
+            jsonResponse(res, 500, { error: e.message });
+        }
+        return;
+    }
+
+    // GET /api/v1/forecasts/football?team=
+    if (pathname === '/api/v1/forecasts/football') {
+        try {
+            const team = query.team || '';
+            let sql = "SELECT * FROM timesfm_forecasts WHERE sport='football'";
+            const params = [];
+            if (team) { sql += ' AND entity_id = ?'; params.push(team); }
+            sql += ' ORDER BY entity_label';
+            const rows = sqldb.prepare(sql).all(...params);
+            const parsed = rows.map(r => ({
+                id: r.id,
+                sport: r.sport,
+                entity_type: r.entity_type,
+                entity_id: r.entity_id,
+                entity_label: r.entity_label,
+                context: r.context,
+                series_label: r.series_label,
+                horizon: r.horizon,
+                forecast: JSON.parse(r.forecast_raw || '[]'),
+                quantile_labels: r.quantile_labels ? JSON.parse(r.quantile_labels) : null,
+                forecast_ts: r.forecast_ts,
+                expires_at: r.expires_at
+            }));
+            jsonResponse(res, 200, parsed);
+        } catch (e) {
+            console.error('[Forecasts:Football]', e.message);
+            jsonResponse(res, 500, { error: e.message });
+        }
+        return;
+    }
+
+    // GET /api/v1/forecasts/tennis/trending?limit=10
+    if (pathname === '/api/v1/forecasts/tennis/trending') {
+        try {
+            const limit = parseInt(query.limit || '10', 10);
+            const rows = sqldb.prepare("SELECT * FROM timesfm_forecasts WHERE sport='tennis'").all();
+            const trends = [];
+            for (const r of rows) {
+                try {
+                    const fr = JSON.parse(r.forecast_raw || '[]');
+                    const tail = JSON.parse(r.input_tail || '[]');
+                    if (!fr.length || !tail.length) continue;
+                    const lastVal = tail[tail.length - 1];
+                    const q50 = fr.length >= 3 ? fr[2] : fr[0];
+                    if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
+                    trends.push({
+                        entity_id: r.entity_id,
+                        entity_label: r.entity_label,
+                        context: r.context,
+                        series_label: r.series_label,
+                        current: Math.round(lastVal * 10) / 10,
+                        forecast: Math.round(q50 * 10) / 10,
+                        delta: Math.round((q50 - lastVal) * 10) / 10
+                    });
+                } catch (_) {}
+            }
+            trends.sort((a, b) => b.delta - a.delta);
+            const topUp = trends.slice(0, limit);
+            const topDown = trends.slice(-limit).reverse();
+            jsonResponse(res, 200, { top_risers: topUp, top_decliners: topDown });
+        } catch (e) {
+            console.error('[Forecasts:Tennis:Trending]', e.message);
+            jsonResponse(res, 500, { error: e.message });
+        }
+        return;
+    }
+
+    // GET /api/v1/forecasts/football/trending?limit=10
+    if (pathname === '/api/v1/forecasts/football/trending') {
+        try {
+            const limit = parseInt(query.limit || '10', 10);
+            const rows = sqldb.prepare("SELECT * FROM timesfm_forecasts WHERE sport='football'").all();
+            const trends = [];
+            for (const r of rows) {
+                try {
+                    const fr = JSON.parse(r.forecast_raw || '[]');
+                    const tail = JSON.parse(r.input_tail || '[]');
+                    if (!fr.length || !tail.length) continue;
+                    const lastVal = tail[tail.length - 1];
+                    const q50 = fr.length >= 3 ? fr[2] : fr[0];
+                    if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
+                    trends.push({
+                        entity_id: r.entity_id,
+                        entity_label: r.entity_label,
+                        context: r.context,
+                        series_label: r.series_label,
+                        current: Math.round(lastVal * 10) / 10,
+                        forecast: Math.round(q50 * 10) / 10,
+                        delta: Math.round((q50 - lastVal) * 10) / 10
+                    });
+                } catch (_) {}
+            }
+            trends.sort((a, b) => b.delta - a.delta);
+            const topUp = trends.slice(0, limit);
+            const topDown = trends.slice(-limit).reverse();
+            jsonResponse(res, 200, { top_risers: topUp, top_decliners: topDown });
+        } catch (e) {
+            console.error('[Forecasts:Football:Trending]', e.message);
+            jsonResponse(res, 500, { error: e.message });
+        }
+        return;
+    }
     /* -------------------------------------------------
        5️⃣  SERVIR LES FICHIERS STATIQUES (Front-end)
        ------------------------------------------------- */
