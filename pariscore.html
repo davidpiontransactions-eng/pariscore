@@ -4653,6 +4653,7 @@
     box-shadow: 0 2px 8px rgba(0,119,255,0.3);
     transition: all 0.2s; width: 100%;
     font-family: inherit;
+    grid-column: 1 / -1;
   }
   .p-bets-btn:hover {
     background: #0066dd;
@@ -4661,23 +4662,24 @@
   }
 
   /* ─── P_BETS Modal ─── */
+  /* ─── P_BETS Modal — Premium Dark ─── */
   .p-bets-overlay {
     display: none; position: fixed; inset: 0; z-index: 10000;
-    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
     align-items: center; justify-content: center;
   }
   .p-bets-overlay.active { display: flex; }
   .p-bets-modal {
-    background: var(--bg2, #182030);
+    background: #131722;
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius: var(--radius-lg, 12px);
+    border-radius: 12px;
     max-width: 620px; width: 92%;
     max-height: 85vh; overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    animation: pBetsFadeIn 0.2s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(0,230,118,0.04);
+    animation: pBetsFadeIn 0.25s ease;
   }
   @keyframes pBetsFadeIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .p-bets-modal-header {
@@ -4689,51 +4691,86 @@
     letter-spacing: 0.3px;
   }
   .p-bets-modal-header span::before {
-    content: '🎯 '; 
+    content: '🎯 ';
   }
   .p-bets-close {
-    background: rgba(255,255,255,0.08); border: none; color: var(--text2, #94a3b8);
+    background: rgba(255,255,255,0.06); border: none; color: #64748b;
     width: 32px; height: 32px; border-radius: 50%;
     font-size: 18px; cursor: pointer; display: flex;
     align-items: center; justify-content: center;
     transition: all 0.15s;
   }
-  .p-bets-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
-  .p-bets-modal-body { padding: 12px 20px 20px; }
+  .p-bets-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .p-bets-modal-body { padding: 8px 20px 20px; }
+
+  /* ─── Premium Row Layout ─── */
   .p-bets-row {
-    display: grid; grid-template-columns: 120px 70px 60px 1fr;
-    gap: 12px; align-items: center;
-    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: grid;
+    grid-template-columns: 100px 1fr 1.4fr;
+    gap: 16px; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
   }
   .p-bets-row:last-child { border-bottom: none; }
-  .p-bets-type {
-    font-weight: 600; font-size: 13px; color: #ffffff;
+
+  /* ─── Column 1: Odds + Probability ─── */
+  .pbet-odds-block {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
   }
-  .p-bets-cote {
-    font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700;
-    color: #00e676; text-align: center;
+  .pbet-odds-value {
+    font-family: 'DM Mono', 'Poppins', monospace;
+    font-size: 22px; font-weight: 800; color: #00e676;
+    line-height: 1.1; letter-spacing: -0.5px;
   }
-  .p-bets-confidence { text-align: center; }
-  .p-bets-conf-badge {
-    display: inline-block; padding: 2px 8px; border-radius: var(--radius-pill, 999px);
-    font-size: 11px; font-weight: 700; color: #fff;
+  .pbet-prob-badge {
+    font-size: 10px; font-weight: 600; color: #64748b;
+    background: rgba(100,116,139,0.15);
+    padding: 1px 8px; border-radius: 4px;
+    text-transform: uppercase; letter-spacing: 0.5px;
   }
-  .p-bets-conf-high { background: #00e676; color: #000; }
-  .p-bets-conf-med { background: #ff9800; }
-  .p-bets-conf-low { background: #e53935; }
-  .p-bets-analysis {
-    font-size: 12px; color: var(--text2, #94a3b8); line-height: 1.4;
+
+  /* ─── Column 2: Confidence Gauge Bar ─── */
+  .pbet-conf-block {
+    display: flex; flex-direction: column; gap: 4px; width: 100%;
   }
+  .pbet-bar-track {
+    width: 100%; height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px; overflow: hidden;
+  }
+  .pbet-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .pbet-bar-label {
+    font-size: 10px; font-weight: 500; color: #64748b;
+    text-align: left; letter-spacing: 0.3px;
+  }
+
+  /* ─── Column 3: Description ─── */
+  .pbet-desc {
+    font-size: 12px; color: #94a3b8;
+    line-height: 1.5; letter-spacing: 0.1px;
+  }
+
+  /* ─── State messages ─── */
   .p-bets-loading {
-    text-align: center; padding: 32px; color: var(--text2, #94a3b8);
-    font-size: 14px;
+    text-align: center; padding: 40px;
+    color: #64748b; font-size: 14px;
   }
   .p-bets-error {
-    text-align: center; padding: 32px; color: #e53935; font-size: 14px;
+    text-align: center; padding: 40px;
+    color: #ff1744; font-size: 14px;
   }
   .p-bets-empty {
-    text-align: center; padding: 32px; color: var(--text2, #94a3b8); font-size: 14px;
+    text-align: center; padding: 40px;
+    color: #64748b; font-size: 14px;
   }
+
+  /* ─── Scrollbar styling ─── */
+  .p-bets-modal::-webkit-scrollbar { width: 4px; }
+  .p-bets-modal::-webkit-scrollbar-track { background: transparent; }
+  .p-bets-modal::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+  .p-bets-modal::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
   .kpi-gold { background:radial-gradient(circle at 35% 35%, #ffd700, #b8860b); color:#000; font-weight:900; text-shadow:0 1px 2px rgba(255,255,255,.3); }
   .kpi-silver { background:radial-gradient(circle at 35% 35%, #e8e8e8, #909090); color:#000; font-weight:900; text-shadow:0 1px 2px rgba(255,255,255,.3); }
@@ -15748,9 +15785,9 @@ function psSetLang(v) {
         </div>
       </div>
 
+      <div id="tam-gauge-anchor"></div>
 
-
-      <!-- ═══ Grille Comparative Spécifique Surface H2H (Sprint Module Comparatif) ═══ -->
+<!-- ═══ Grille Comparative Spécifique Surface H2H (Sprint Module Comparatif) ═══ -->
       <div class="tennis-surface-h2h-table">
         <div class="h2h-table-title">Analyse Avancée — Spécifique Surface</div>
 
@@ -16170,7 +16207,8 @@ function psSetLang(v) {
       var verdict = m.verdict || m.bet_verdict || (ev >= 3 ? 'vapeur' : ev > 0 ? 'valeur' : 'neutre');
       var duration = m.duration || m.time || m.status || '';
       var serving = m.serving || 1;
-      html += '<div class="tn2-match-card">';
+      var matchId = escapeHtml(String(m.id || m.match_id || m.bsd_id || m.event_id || ''));
+      html += '<div class="tn2-match-card" data-match-id="' + matchId + '" onclick="openTennisDetail(\'' + matchId + '\')" style="cursor:pointer;">';
       html += '<div class="tn2-card-top">';
       html += '<span class="tn2-card-tournament">' + escapeHtml(tourneyName) + '</span>';
       if (m.is_live) html += '<span class="tn2-card-live-badge">🔴 LIVE</span>';
@@ -16268,33 +16306,49 @@ function psSetLang(v) {
     grid.innerHTML = html;
   };
 
-  // ─── P_BETS Modal ───
+  // ─── P_BETS Modal — Premium Dark ───
   window.openPBets = function(fixtureId) {
     var overlay = document.getElementById('pBetsOverlay');
     var body = document.getElementById('pBetsBody');
     if (!overlay || !body || !fixtureId) return;
-    body.innerHTML = '<div class="p-bets-loading">Génération des bets prédictifs...</div>';
+    body.innerHTML = '<div class="p-bets-loading">Génération des prédictions...</div>';
     overlay.classList.add('active');
     
     (async function() {
       try {
         var res = await fetch('/api/v1/predictions/p-bets/' + encodeURIComponent(fixtureId));
         var data = await res.json();
+        if (data && data.note === 'match_termine') {
+          body.innerHTML = '<div class="p-bets-empty" style="color:#ff9800;">⚠️ Match terminé — prédictions indisponibles</div>';
+          return;
+        }
+        if (data && data.note === 'match_en_direct') {
+          body.innerHTML = '<div class="p-bets-empty" style="color:#ff9800;">🔴 Match en direct — indisponible</div>';
+          return;
+        }
         if (!data || !data.bets || !data.bets.length) {
-          body.innerHTML = '<div class="p-bets-empty">Aucun bet disponible pour ce match</div>';
+          body.innerHTML = '<div class="p-bets-empty">Aucun pari disponible pour ce match</div>';
           return;
         }
         var html = '';
         for (var i = 0; i < data.bets.length; i++) {
           var b = data.bets[i];
-          var confClass = 'p-bets-conf-med';
-          if (b.confidence >= 8) confClass = 'p-bets-conf-high';
-          else if (b.confidence <= 4) confClass = 'p-bets-conf-low';
+          var odds = parseFloat(b.cote || b.odds || 0);
+          var probPct = b.probability_pct != null ? b.probability_pct : (odds > 0 ? Math.round((1 / odds) * 100) : 0);
+          var conf = b.confidence || 5;
+          var desc = b.analyse || b.analysis || b.description || '';
+          var confPct = Math.min(100, conf * 10);
+          var barColor = conf >= 8 ? '#00e676' : (conf >= 5 ? '#ff9800' : '#ff1744');
           html += '<div class="p-bets-row">';
-          html += '<span class="p-bets-type">' + escapeHtml(b.type) + '</span>';
-          html += '<span class="p-bets-cote">' + escapeHtml(b.cote || '—') + '</span>';
-          html += '<span class="p-bets-confidence"><span class="p-bets-conf-badge ' + confClass + '">' + (b.confidence || '?') + '/10</span></span>';
-          html += '<span class="p-bets-analysis">' + escapeHtml(b.analyse || b.analysis || '') + '</span>';
+          html += '<div class="pbet-odds-block">';
+          html += '<span class="pbet-odds-value">' + odds.toFixed(2) + '</span>';
+          html += '<span class="pbet-prob-badge">' + probPct + '%</span>';
+          html += '</div>';
+          html += '<div class="pbet-conf-block">';
+          html += '<div class="pbet-bar-track"><div class="pbet-bar-fill" style="width:' + confPct + '%;background:' + barColor + '"></div></div>';
+          html += '<span class="pbet-bar-label">' + conf + '/10</span>';
+          html += '</div>';
+          html += '<div class="pbet-desc">' + escapeHtml(desc) + '</div>';
           html += '</div>';
         }
         body.innerHTML = html;
@@ -16676,8 +16730,8 @@ window.tn2ToggleTournamentMatches = function(tournamentId, btnEl) {
         html += '</div>';
         html += '<div class="tn2-tm-actions">';
         if (status && status.toLowerCase().includes('live')) html += '<span class="tn2-tm-live">LIVE</span>';
-        if (matchId) html += '<button class="tn2-tm-pbets-btn" onclick="openPBets(\'' + matchId + '\')">P_BETS</button>';
-        html += '</div></div>';
+        var _tmIsFinished = status && (status.toLowerCase().includes('finish') || status.toLowerCase().includes('completed') || status.toLowerCase().includes('ended'));
+        if (matchId && !_tmIsFinished) html += '<button class="tn2-tm-pbets-btn" onclick="openPBets(\'' + matchId + '\')">P_BETS</button>';
       }
       html += '</div>';
       container.innerHTML = html;
@@ -19452,7 +19506,7 @@ window.tn2SetupH2H = function() {
     box-sizing: border-box !important;
     cursor: pointer !important;
     position: relative !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
   .tn-t10-card:hover {
     transform: translateY(-2px) !important;
@@ -23167,6 +23221,118 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-timeline-month-header { position: sticky; top: 52px; z-index: 5; background: rgba(8,12,22,0.92); backdrop-filter: blur(12px); padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--tn2-text); border-bottom: 1px solid var(--tn2-border-card); }
 
 
+
+/* ═══ Win Probability Gauge ═══ */
+.win-gauge-wrapper {
+  margin: 2px 20px 6px;
+  padding: 8px 14px 10px;
+  background: rgba(19,23,34,0.6);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px;
+  position: relative;
+}
+.win-gauge-wrapper.show { display: block; }
+.win-gauge-bar-track {
+  position: relative;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: visible;
+  margin: 4px 0;
+}
+.win-gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #00e676, #38bdf8);
+  transition: width 0.6s ease;
+  position: relative;
+}
+.win-gauge-handle {
+  position: absolute;
+  top: -3px;
+  width: 4px;
+  height: 12px;
+  background: #fff;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  transition: left 0.6s ease;
+  box-shadow: 0 0 6px rgba(255,255,255,0.3);
+  z-index: 2;
+}
+.win-gauge-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  gap: 6px;
+}
+.win-gauge-p1, .win-gauge-p2 {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+.win-gauge-p1 { text-align: left; }
+.win-gauge-p2 { text-align: right; }
+.win-gauge-subtitle {
+  font-size: 9px;
+  color: #64748b;
+  text-align: center;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.win-gauge-detail-toggle {
+  text-align: center;
+  margin-top: 4px;
+  font-size: 10px;
+  color: #38bdf8;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.win-gauge-detail-toggle:hover { opacity: 1; }
+.win-gauge-detail {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 6px;
+  font-size: 10px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+.win-gauge-detail table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.win-gauge-detail th,
+.win-gauge-detail td {
+  padding: 2px 4px;
+  text-align: right;
+  font-size: 10px;
+}
+.win-gauge-detail th:first-child,
+.win-gauge-detail td:first-child {
+  text-align: left;
+}
+.win-gauge-detail th {
+  color: #64748b;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.win-gauge-detail .wg-summary td {
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.wg-footer {
+  text-align: center;
+  margin-top: 4px;
+  font-size: 9px;
+  color: #475569;
+}
+
 /* ═══════════════════════ DATA_PIPELINE_V3 — DESIGN TOKENS ═══════════════════════ */
 /* Charte Pariscore v3 — #0b0e17 / #131722 / #00e676 / #0077ff                  */
 /* Basé sur PRIORISATION_METRIQUES.md + RAPPORT_DESIGN_FINAL.md v3              */
@@ -23518,6 +23684,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 </script>
 </body>
 </html>
+
+
 
 
 
