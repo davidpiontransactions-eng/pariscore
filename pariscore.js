@@ -4358,7 +4358,7 @@ function _tnTop10Card(m, rank) {
     + (d.urgency  != null ? `\nUrgence: ${d.urgency}` : '')
     + (d.movement != null ? `\nMouvement: ${d.movement}` : '');
 
-  const safeId = _tnEsc(String(m.matchId || ''));
+  const safeId = _tnEsc(String(m.matchId || m.fixtureId || m.id || m.match_id || ''));
 
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   const av1 = m.player_id_p1
@@ -6966,7 +6966,12 @@ function openTennisAnalysisModal(matchId) {
       var hasP2 = _populatePlayerMetrics('p2', p2);
       if (metricsRow) metricsRow.style.display = (hasP1 || hasP2) ? 'flex' : 'none';
       renderTn2Radar(p1, p2, data);
-      renderWinGauge(p1, p2, data.meta ? data.meta.surface : '');
+      // Inject win gauge container into anchor point
+      var gaugeAnchor = document.getElementById('tam-gauge-anchor');
+      if (gaugeAnchor) {
+        gaugeAnchor.innerHTML = '<div id="win-gauge-container" class="win-gauge-wrapper" style="display:none;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Win Probability</span></div><div class="win-gauge-bar-track"><div class="win-gauge-fill" id="win-gauge-fill" style="width:50%;"></div><div class="win-gauge-handle" id="win-gauge-handle" style="left:50%;"></div></div><div class="win-gauge-labels"><span class="win-gauge-p1" id="win-gauge-p1-name">J1</span><span class="win-gauge-p1" id="win-gauge-p1-pct" style="font-size:13px;color:#00e676;">50%</span><span class="win-gauge-subtitle" id="win-gauge-subtitle">—</span><span class="win-gauge-p2" id="win-gauge-p2-pct" style="font-size:13px;color:#38bdf8;">50%</span><span class="win-gauge-p2" id="win-gauge-p2-name">J2</span></div><div class="win-gauge-detail-toggle" id="win-gauge-toggle" onclick="toggleWinGaugeDetail()">&#x24D8; Voir les crit\u00e8res</div><div class="win-gauge-detail" id="win-gauge-detail" style="display:none;"></div></div>';
+      }
+      renderWinGauge(p1, p2, data);
     })
     .catch(function(err) {
       console.error('[TennisAnalysisModal]', err);
@@ -7000,6 +7005,11 @@ const WINP_PROBA_MIN = 0.15;
 const WINP_PROBA_MAX = 0.85;
 const WINP_MISSING_THRESHOLD = 0.40;
 
+// Alias de champs : certains noms diffèrent entre l'API et les poids
+const WINP_FIELD_ALIASES = {
+  return_won_pct: 'receive_index',
+};
+
 function winpClamp(v, min, max) {
   return v < min ? min : v > max ? max : v;
 }
@@ -7031,6 +7041,10 @@ function winpCompositeScore(player, weights) {
     if (!weights.hasOwnProperty(key)) continue;
     total++;
     var raw = player[key];
+    // Fallback alias si le champ est absent (ex: return_won_pct → receive_index)
+    if (raw == null && WINP_FIELD_ALIASES[key]) {
+      raw = player[WINP_FIELD_ALIASES[key]];
+    }
     var norm = winpNormalize(raw, key);
     if (norm == null) { missing++; continue; }
     sum += weights[key] * norm;
@@ -7075,12 +7089,40 @@ function computeWinProbability(p1, p2, surface, mode) {
   };
 }
 
-function renderWinGauge(p1, p2, surface) {
+function renderWinGauge(p1, p2, data) {
   var container = document.getElementById('win-gauge-container');
   if (!container) return;
 
+  var surface = (data && data.meta) ? data.meta.surface : '';
   var p1Name = (p1.name || 'J1').split(' ').pop(); // surname only
   var p2Name = (p2.name || 'J2').split(' ').pop();
+
+  // ── Dériver les métriques manquantes depuis les données disponibles ──
+
+  // form_trend : ratio pts/match l5 vs l10 (tendance récente)
+  [p1, p2].forEach(function(pl) {
+    if (pl.form_trend == null && pl.l5_pts != null && pl.l10_pts != null && pl.l10_pts > 0) {
+      var pp5 = pl.l5_pts / 5;
+      var pp10 = pl.l10_pts / 10;
+      pl.form_trend = Math.max(-1, Math.min(1, (pp5 - pp10) / pp10));
+    }
+  });
+
+  // clutch_score : proxy via predictions.set_probs.p?hold ou serve_dominance
+  if (p1.clutch_score == null) {
+    if (data && data.predictions && data.predictions.set_probs && data.predictions.set_probs.p1_hold != null) {
+      p1.clutch_score = data.predictions.set_probs.p1_hold * 100;
+    } else if (data && data.serve_dominance && data.serve_dominance.p1 && data.serve_dominance.p1.serve_pts_won_pct != null) {
+      p1.clutch_score = data.serve_dominance.p1.serve_pts_won_pct;
+    }
+  }
+  if (p2.clutch_score == null) {
+    if (data && data.predictions && data.predictions.set_probs && data.predictions.set_probs.p2_hold != null) {
+      p2.clutch_score = data.predictions.set_probs.p2_hold * 100;
+    } else if (data && data.serve_dominance && data.serve_dominance.p2 && data.serve_dominance.p2.serve_pts_won_pct != null) {
+      p2.clutch_score = data.serve_dominance.p2.serve_pts_won_pct;
+    }
+  }
 
   // Try Premium first, fallback to Light
   var result = computeWinProbability(p1, p2, surface, 'premium');
@@ -7155,7 +7197,9 @@ function toggleWinGaugeDetail() {
   for (var key in weights) {
     if (!weights.hasOwnProperty(key)) continue;
     var label = metricLabels[key] || key;
-    var raw1 = p1[key], raw2 = p2[key];
+    var alias = WINP_FIELD_ALIASES[key];
+    var raw1 = p1[key] != null ? p1[key] : (alias ? p1[alias] : null);
+    var raw2 = p2[key] != null ? p2[key] : (alias ? p2[alias] : null);
     var v1 = raw1 != null ? raw1 : '—';
     var v2 = raw2 != null ? raw2 : '—';
     var w = (weights[key] * 100).toFixed(0) + '%';
@@ -7520,8 +7564,11 @@ async function _fetchAndRenderTennisDetail(matchId) {
         const PBP  = `<div id="tennis-pbp-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:20px;"></div>`;
         const SETO = `<div id="tennis-set-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:20px;"></div>`;
         const BSDO = `<div id="tennis-bsd-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:16px;"></div>`;
-        body.innerHTML = renderTennisProDashboard(detail) + MS + SOFA + PBP + SETO + BSDO;
+        const WGAUGE = '<div id="win-gauge-container" class="win-gauge-wrapper" style="display:none;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Win Probability</span></div><div class="win-gauge-bar-track"><div class="win-gauge-fill" id="win-gauge-fill" style="width:50%;"></div><div class="win-gauge-handle" id="win-gauge-handle" style="left:50%;"></div></div><div class="win-gauge-labels"><span class="win-gauge-p1" id="win-gauge-p1-name">J1</span><span class="win-gauge-p1" id="win-gauge-p1-pct" style="font-size:13px;color:#00e676;">50%</span><span class="win-gauge-subtitle" id="win-gauge-subtitle">—</span><span class="win-gauge-p2" id="win-gauge-p2-pct" style="font-size:13px;color:#38bdf8;">50%</span><span class="win-gauge-p2" id="win-gauge-p2-name">J2</span></div><div class="win-gauge-detail-toggle" id="win-gauge-toggle" onclick="toggleWinGaugeDetail()">&#x24D8; Voir les crit\u00e8res</div><div class="win-gauge-detail" id="win-gauge-detail" style="display:none;"></div></div>';
+        body.innerHTML = renderTennisProDashboard(detail) + MS + SOFA + PBP + SETO + BSDO + WGAUGE;
         try { initTennisProCharts(detail); } catch (_) {}
+        const _P = detail.players || {};
+        if (typeof renderWinGauge === 'function') renderWinGauge(_P.p1 || {}, _P.p2 || {}, detail);
         fetchTennisMatchstatEnrich(matchId);
         fetchTennisSofaProfile({ id: matchId, player1: { name: detail.players && detail.players.p1 && detail.players.p1.name }, player2: { name: detail.players && detail.players.p2 && detail.players.p2.name } });
         fetchTennisPBP(matchId);
@@ -7588,7 +7635,9 @@ async function _fetchAndRenderTennisDetail(matchId) {
     const SET_ODDS_PLACEHOLDER = `<div id="tennis-set-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:24px;"></div>`;
     // BSD multi-bookmaker odds — 14+ books SHORTENING/DRIFTING
     const BSD_ODDS_PLACEHOLDER = `<div id="tennis-bsd-odds-enrich" data-match-id="${_escTennis(matchId)}" style="margin-top:16px;"></div>`;
-    body.innerHTML = renderTennisDashboard(matchData, predData) + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER + SET_ODDS_PLACEHOLDER + BSD_ODDS_PLACEHOLDER;
+    const WGAUGE = '<div id="win-gauge-container" class="win-gauge-wrapper" style="display:none;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;"><span style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Win Probability</span></div><div class="win-gauge-bar-track"><div class="win-gauge-fill" id="win-gauge-fill" style="width:50%;"></div><div class="win-gauge-handle" id="win-gauge-handle" style="left:50%;"></div></div><div class="win-gauge-labels"><span class="win-gauge-p1" id="win-gauge-p1-name">J1</span><span class="win-gauge-p1" id="win-gauge-p1-pct" style="font-size:13px;color:#00e676;">50%</span><span class="win-gauge-subtitle" id="win-gauge-subtitle">—</span><span class="win-gauge-p2" id="win-gauge-p2-pct" style="font-size:13px;color:#38bdf8;">50%</span><span class="win-gauge-p2" id="win-gauge-p2-name">J2</span></div><div class="win-gauge-detail-toggle" id="win-gauge-toggle" onclick="toggleWinGaugeDetail()">&#x24D8; Voir les crit\u00e8res</div><div class="win-gauge-detail" id="win-gauge-detail" style="display:none;"></div></div>';
+    body.innerHTML = renderTennisDashboard(matchData, predData) + WGAUGE + ENRICH_PLACEHOLDER + SOFA_PROFILE_PLACEHOLDER + PBP_PLACEHOLDER + SET_ODDS_PLACEHOLDER + BSD_ODDS_PLACEHOLDER;
+    if (typeof renderWinGauge === 'function') renderWinGauge(matchData.player1 || {}, matchData.player2 || {}, matchData);
     fetchTennisMatchstatEnrich(matchId);
     fetchTennisSofaProfile(matchData);
     fetchTennisPBP(matchId);

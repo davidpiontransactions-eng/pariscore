@@ -286,7 +286,7 @@ function _generateFallbackBets(p1, p2, surface, elo1, elo2, metrics1, metrics2, 
 
 // ─── Point d'entrée principal ─────────────────────────────────────────────────
 
-async function generatePBetsFromOrchestrator(fixtureId, db, bsdFetch) {
+async function generatePBetsFromOrchestrator(fixtureId, db, bsdFetch, tennisCtx) {
     console.log(`[P-BETS] Génération bets pour fixture ${fixtureId}`);
 
     // 1 — Récupérer les infos match depuis la DB
@@ -303,10 +303,11 @@ async function generatePBetsFromOrchestrator(fixtureId, db, bsdFetch) {
         }
     } catch (_) { /* pas de table matches */ }
 
-    // 2 — Fallback: chercher via bsdFetch si pas trouvé en DB
+    // 2 — Fallback: chercher via bsdFetch si pas trouvé en DB (timeout 8s)
     if (!p1Name && typeof bsdFetch === 'function') {
         try {
-            const r = await bsdFetch(`/api/v2/matches/${encodeURIComponent(String(fixtureId))}/`);
+            const withTimeout = (p, ms = 8000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('bsdFetch timeout')), ms))]);
+            const r = await withTimeout(bsdFetch(`/api/v2/matches/${encodeURIComponent(String(fixtureId))}/`));
             if (r && r.status === 200 && r.data) {
                 const d = r.data;
                 p1Name = d.home_team?.name || d.home_name || d.home || d.team1?.name;
@@ -317,6 +318,14 @@ async function generatePBetsFromOrchestrator(fixtureId, db, bsdFetch) {
         } catch (e) {
             console.warn(`[P-BETS] bsdFetch échec pour ${fixtureId}: ${e.message}`);
         }
+    }
+
+    // 2b — Fallback tennisCtx passé par le endpoint (Top10 tennis)
+    if (!p1Name && tennisCtx) {
+        p1Name = tennisCtx.p1 || null;
+        p2Name = tennisCtx.p2 || null;
+        surface = tennisCtx.surface || null;
+        tour = tennisCtx.tour || null;
     }
 
     if (!p1Name || !p2Name) {
