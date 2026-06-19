@@ -36249,10 +36249,30 @@ async function _refreshTop10Cache() {
           console.warn('[Top10Refresh] tennisVBWarm non disponible');
           return false;
         }
-        const vb = await _tnVbFn({});
+        let vb = await _tnVbFn({});
         if (!vb || vb.status !== 200) {
-          console.warn('[Top10Refresh] buildTennisValueBets échec');
+          console.warn('[Top10Refresh] buildTennisValueBets echec');
           return false;
+        }
+        // [FIX cold-start] buildTennisValueBets retourne {building:true,count:0}
+        // si le cache est froid et que _buildTennisValueBetsCore tourne en fond.
+        // On poll _tennisVBCache jusqua avoir les vraies donnees pour le Top10.
+        if (vb.body && vb.body.meta && vb.body.meta.building === true && (!vb.body.matches || vb.body.matches.length === 0)) {
+          const _waitStart = Date.now();
+          console.log('[Top10Refresh] Build cold en fond, polling...');
+          while (Date.now() - _waitStart < 30000) {
+            await new Promise(r => setTimeout(r, 2000));
+            const _hit = _tennisVBCache.get('today');
+            if (_hit && _hit.result && _hit.result.body && _hit.result.body.matches && _hit.result.body.matches.length > 0) {
+              vb = _hit.result;
+              console.log('[Top10Refresh] Poll ok apres ' + (Date.now() - _waitStart) + 'ms');
+              break;
+            }
+          }
+          if (vb.body && vb.body.meta && vb.body.meta.building === true) {
+            console.warn('[Top10Refresh] Build toujours pas fini apres 30s, abandon');
+            return false;
+          }
         }
         const _FINISHED_RX = /finish|ft\b|ended|cancel|walkover|retired|abandon/i;
         const active = ((vb.body && vb.body.matches) || []).filter(e =>
