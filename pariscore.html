@@ -23431,27 +23431,44 @@ body[data-page="mma"] footer { display: none !important; }
   color: var(--ps-text-primary);
   line-height: 1;
 }
+}
+
+/* ── Insight Trading Text (remplace valeurs brutes SERVICE/RETOUR) ── */
+.insight-metric-body {
+    margin-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.insight-highlight-text {
+    color: #e2e8f0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0;
+}
+.insight-highlight-text .player-highlight {
+    color: #ffffff;
+    font-weight: 700;
+}
+.insight-highlight-text .percent-neon {
+    color: #00e676;
+    font-family: var(--ps-font-display), 'DM Mono', monospace;
+    font-weight: 700;
+}
+.insight-subtext {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin: 2px 0 0 0;
+    line-height: 1.3;
+}
+.ps-metric-m:hover {
+  border-color: var(--ps-accent-blue);
+}
 .ps-metric-xxl-context {
   font-family: var(--ps-font-body);
   font-size: 11px;
   color: var(--ps-text-tertiary);
-}
-
-
-/* ── MetricCardM (ATP, ELO, AGE — Niveau M) ── */
-.ps-metric-m {
-  background: var(--ps-card);
-  border: 1px solid var(--ps-border);
-  border-radius: var(--ps-radius-card);
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-.ps-metric-m:hover {
-  border-color: var(--ps-accent-blue);
 }
 .ps-metric-m-left {
   display: flex;
@@ -23684,6 +23701,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 </script>
 </body>
 </html>
+
 
 
 

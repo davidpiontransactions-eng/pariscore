@@ -29,6 +29,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Temp / dump
+timesfm_forecasts_dump.sql
 server*.log
 
 # Cache
