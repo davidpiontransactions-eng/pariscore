@@ -1,0 +1,1 @@
+"""API Pariscore — FastAPI."""

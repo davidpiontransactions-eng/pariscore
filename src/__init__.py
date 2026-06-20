@@ -1,0 +1,1 @@
+"""Pariscore — Tennis prediction application."""
