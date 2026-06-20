@@ -92,3 +92,16 @@ betwatchService.js
 tools/scrape-betwatch-wom.js
 .context/betwatch-wom-analysis.md
 wom.local.js
+
+# Screenshots & test artifacts
+*.png
+*.bmp
+server.err
+
+# Python test/QA scripts
+test-*.py
+qa-*.py
+
+# Python cache
+__pycache__/
+*.pyc
