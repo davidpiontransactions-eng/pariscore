@@ -222,3 +222,32 @@ curl http://localhost:3000/api/v1/status
 - [ ] Tester rendu Tennis dans le navigateur (ouvrir site → onglet Tennis, vérifier Top10 + value bets)
 - [ ] Restaurer stash des changements TimesFM (migration colonnes player_name→entity_label, surface→context, generated_at→forecast_ts)
 - [ ] Vérifier stabilité mémoire serveur post-2GB (process sous 1.5GB en régime)
+
+---
+
+## 🧠 SESSION 20/06/2026 — TIMESFM FORECAST ROUTES — FIX TERMINÉ
+
+### Routes API déployées dans server.js (commit existant)
+| Route | Statut | Données |
+|-------|--------|---------|
+| \GET /api/v1/forecasts/tennis\ | ✅ 200 | 354 prévisions joueurs |
+| \GET /api/v1/forecasts/tennis/trending\ | ✅ 200 | Krajinovic +6.1%, Stearns -4.2% |
+| \GET /api/v1/forecasts/football\ | ✅ 200 | 437 prévisions équipes |
+| \GET /api/v1/forecasts/football/trending\ | ✅ 200 | Freiburg +403%, Volendam -86.8% |
+
+### Problème corrigé
+Routes placées après l'appel à handleAPI() dans http.createServer → dead code. Déplacées dans handleAPI() + fix noms colonnes (player_name→entity_label, surface→context, db.sqlite?→sqldb, safeJsonParse→JSON.parse).
+
+### 🔲 P2 — UI TimesFM (frontend dans pariscore.html + pariscore.js)
+- [ ] Badge tendance (\↑ +X%\ / \↓ -X%\) sur cartes joueurs/équipes
+- [ ] Sparkline SVG (courbe des 6 points forecast) dans les cartes
+- [ ] Alimenter la section "Tendances du moment" (\#page-tendances\) avec les données \/trending\ — top risers + top decliners
+- [ ] Rafraîchissement périodique (polling 5min) ou au changement d'onglet
+- [ ] Test visuel dans le navigateur après déploiement
+
+### 🔲 Déploiement VPS
+- [ ] \git push origin main\ → GitHub
+- [ ] \ssh ubuntu@51.75.21.239\ → \cd /path/to/pariscore && git pull && pm2 restart pariscore\
+- [ ] Vérifier logs : \pm2 logs --lines 50\
+- [ ] Tester curl les 4 routes sur le VPS
+- [ ] Vérifier que la tâche CRON TimesFM tourne (build quotidien 03:00)
