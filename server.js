@@ -6547,7 +6547,16 @@ function initSQLite() {
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_tennis_alerts_outcome ON tennis_alerts(outcome)`);
   // Migration : ajouter colonne integrity_score pour le détecteur match-fixing (idempotent)
   try { sqldb.exec(`ALTER TABLE tennis_alerts ADD COLUMN integrity_score INTEGER DEFAULT 0`); } catch (_) {}
-  // Historique alertes foot — tracking outcomes par type de pari
+  // Historique alertes foot
+  sqldb.exec(CREATE TABLE IF NOT EXISTS player_photos (
+    player_id TEXT PRIMARY KEY,
+    player_name TEXT,
+    source TEXT NOT NULL DEFAULT 'wikipedia',
+    local_path TEXT,
+    width INTEGER DEFAULT 0,
+    height INTEGER DEFAULT 0,
+    fetched_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )); — tracking outcomes par type de pari
   sqldb.exec(`CREATE TABLE IF NOT EXISTS foot_alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fired_at INTEGER NOT NULL,
@@ -19300,7 +19309,7 @@ function srvPlanGate(req, res, pathname) {
   // Multi-bookmaker odds, H2H, player profile, tournament — raw BSD data, public
   if (pathname.endsWith('/odds') && pathname.startsWith('/api/v1/tennis/match/')) return false;
    if (pathname.startsWith('/api/v1/tennis/h2h') || pathname.startsWith('/api/v1/tennis/player/') ||
-      pathname.startsWith('/api/v1/tennis/players/') || pathname.startsWith('/api/v1/tennis/tournament/') || pathname === '/api/v1/tennis/player-photos') return false;
+      pathname.startsWith('/api/v1/tennis/players/') || pathname.startsWith('/api/v1/tennis/tournament/') || pathname === '/api/v1/tennis/player-photos' || pathname.startsWith('/api/v1/tennis/player-photo/')) return false;
   // wom-analyze (bd ab6s) = analyse IA Gemini déclenchée depuis le panneau WOM.
   // Résultat mis en cache mémoire avec start_time du match → expire après fin du match.
   // Protégé par la limite de débit Gemini côté serveur (pas par paywall). Ouvert en public

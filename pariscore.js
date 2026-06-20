@@ -4369,7 +4369,7 @@ function _tnTop10Card(m, rank) {
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   // [FIX 2026-06-20] Fallback ui-avatars quand player_id manquant → cascade fixBrokenPlayerPhoto
   const av1 = m.player_id_p1
-    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)" crossorigin="anonymous">`
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)" >`
     : (m.player1 && m.player1 !== '?'
         ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player1)}&background=172132&color=fff&size=96" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
         : `<span style="width:48px;height:48px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">?</span>`);
@@ -15190,7 +15190,7 @@ const BSD_IMG_BASE = 'https://sports.bzzoiro.com/img/player';
 function playerPhotoURL(id) { return id ? `${BSD_IMG_BASE}/${id}/?bg=transparent` : ''; }
 // bd patch BSD 29 mai — Nouvelle route directe pour les avatars tennis
 // Accepte l'ID joueur BSD directement, plus besoin de lookup complexe
-function tennisPlayerPhotoURL(id) { return id ? `https://sports.bzzoiro.com/img/tennis-player/${id}/?bg=transparent` : ''; }
+function tennisPlayerPhotoURL(id) { return id ? '/api/v1/tennis/player-photo/' + encodeURIComponent(id) : ''; }
 function playerImgURL(p) { return p.photo || playerPhotoURL(p.id); }
 function playerInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -15198,29 +15198,17 @@ function playerInitials(name) {
 // [FIX - 2026-05-11] Cascade multi-sources: BSD → initiales (SofaScore/API-Sports bloqués CORS)
 function fixBrokenPlayerPhoto(img) {
   const tried = parseInt(img.dataset.tryCount || 0);
-  const playerId = img.dataset.playerId || img.dataset.id || null;
   img.dataset.tryCount = tried + 1;
-
-  // Cascade: BSD /img/player/{id}/ + /img/tennis-player/{id}/ (bd patch 29 mai)
-  if (tried === 0 && playerId) {
-    img.src = `https://sports.bzzoiro.com/img/player/${playerId}/?bg=transparent`;
-    return;
-  }
-  // bd patch BSD 29 mai — tennis player route directe
-  if (tried === 1 && playerId) {
-    img.src = `https://sports.bzzoiro.com/img/tennis-player/${playerId}/?bg=transparent`;
-    return;
-  }
-  // [FIX CRITICAL 2026-06-17] Fallback ui-avatars avant le span final (vrai visage)
+  // [FIX 2026-06-20] Proxy BSD+Wikipedia côté serveur. Si onerror arrive, proxy a échoué → fallback direct
   const name = img.alt || img.dataset.name || '';
-  if (tried === 2 && name && name !== '?' && name.length > 1) {
+  if (tried === 0 && name && name !== '?' && name.length > 1) {
     img.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name.trim()) + '&background=172132&color=fff&size=96&bold=true&font-size=0.33';
     return;
   }
-  // Fallback final: SVG data URI inline - garde img (pas de replaceChild)
-  var displayName = (name && name !== '?' && name.length > 0) ? name : (playerId ? 'Joueur' : '?');
+  // Fallback final: SVG data URI inline
+  var displayName = (name && name !== '?' && name.length > 0) ? name : '?';
   var initials = playerInitials(displayName);
-  var bgc = (img.dataset.bg || '#131722').replace('var(--green)','#00e676').replace('var(--blue)','#0077ff').replace('var(--bg4)','#1e2328');
+  var bgc = '#1e2328';
   var curW = 32;
   try { var w = parseInt(img.style.width,10) || parseInt(img.getAttribute('width'),10) || 32; if (w > 0) curW = w; } catch(e) {}
   var fontSize = curW >= 48 ? 16 : (curW >= 38 ? 12 : 9);
