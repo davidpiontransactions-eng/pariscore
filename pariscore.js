@@ -4308,6 +4308,12 @@ function _tnTop10SurfaceIcon(surface) {
   return _tnSurfaceImg(surface, 16);
 }
 
+// [GLOBAL probBar] Barre de probabilite colorée (utilisee par _tnTop10Card, buildCornersTab, etc.)
+window._tnProbBar = function(pct) {
+  var cls = pct >= 65 ? 'g' : pct >= 50 ? 'a' : 'r';
+  return '<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-' + cls + '" style="width:' + Math.max(0, Math.min(100, Number(pct) || 0)) + '%"></div></div>';
+};
+
 function _tnTop10Card(m, rank) {
   const reasonRaw = String(m.reason || 'ANALYSE');
   const tagCss = 'tn-t10-tag-' + reasonRaw.replace(/ /g, '');
@@ -4361,62 +4367,18 @@ function _tnTop10Card(m, rank) {
   const safeId = _tnEsc(String(m.matchId || m.fixtureId || m.id || m.match_id || ''));
 
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
+  // [FIX 2026-06-20] Fallback ui-avatars quand player_id manquant → cascade fixBrokenPlayerPhoto
   const av1 = m.player_id_p1
     ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)" crossorigin="anonymous">`
-    : `<span style="width:48px;height:48px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">${playerInitials(m.player1||'?')}</span>`;
+    : (m.player1 && m.player1 !== '?'
+        ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player1)}&background=172132&color=fff&size=96" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+        : `<span style="width:48px;height:48px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">?</span>`);
   const av2 = m.player_id_p2
     ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
-    : `<span style="width:48px;height:48px;border-radius:50%;background:var(--violet,#9c27b0);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">${playerInitials(m.player2||'?')}</span>`;
+    : (m.player2 && m.player2 !== '?'
+        ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player2)}&background=172132&color=fff&size=96" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+        : `<span style="width:48px;height:48px;border-radius:50%;background:var(--violet,#9c27b0);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">?</span>`);
 
-  // Win prob bar
-  const probPct = m.blended_p1 != null ? m.blended_p1 : null;
-  const probBar = probPct != null
-    ? `<div class="tn-t10-prob-row"><div class="tn-t10-prob-bar"><div class="tn-t10-prob-fill" style="width:${probPct}%"></div></div><span class="tn-t10-prob-label">${probPct}%</span></div>` : '';
-
-  // ── POWERSCORE MODE : barre comparative J1 vs J2 ──
-  let psHtml = '';
-  if (typeof _tnTop10Mode !== 'undefined' && _tnTop10Mode === 'powerscore') {
-    const ps1 = m.powerscore_p1 != null ? Math.round(m.powerscore_p1) : null;
-    const ps2 = m.powerscore_p2 != null ? Math.round(m.powerscore_p2) : null;
-    if (ps1 != null && ps2 != null) {
-      const total = ps1 + ps2;
-      const pct1 = total > 0 ? (ps1 / total * 100) : 50;
-      const pct2 = total > 0 ? (ps2 / total * 100) : 50;
-      const isP1Winner = ps1 > ps2;
-      const favBadge = isP1Winner
-        ? `<span class="tn-t10-ps-fav">⚡ FAVORI</span>`
-        : `<span class="tn-t10-ps-fav" style="background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.4);color:#64748b">⚡ FAVORI</span>`;
-      const d2 = m.dims || {};
-      const dimLabels = { entropy: 'Équilibre', ev: 'Valeur EV', stakes: 'Prestige', urgency: 'Urgence', movement: 'Mouvement' };
-      const dimHtml = Object.keys(dimLabels).map(k => {
-        if (d2[k] == null) return '';
-        const v = Number(d2[k]);
-        const cls = v >= 70 ? 'dim-high' : v >= 40 ? 'dim-mid' : 'dim-low';
-        return `<span class="tn-t10-ps-dim ${cls}">${dimLabels[k]}<span class="dim-val">${v}</span></span>`;
-      }).filter(Boolean).join('');
-      psHtml = `
-        <div class="tn-t10-ps-row">
-          <div style="text-align:right;min-width:40px">
-            <div class="tn-t10-ps-score p1 ${isP1Winner ? 'winner' : ''}">${ps1}</div>
-          </div>
-          <div style="display:flex;flex-direction:column;align-items:center;gap:2px;min-width:50px">
-            <span class="tn-t10-ps-label">PW SCR</span>
-            <div class="tn-t10-ps-bar">
-              <div class="tn-t10-ps-fill-p1" style="width:${pct1}%"></div>
-              <div class="tn-t10-ps-fill-p2" style="width:${pct2}%"></div>
-            </div>
-          </div>
-          <div style="min-width:40px">
-            <div class="tn-t10-ps-score p2 ${!isP1Winner ? 'winner' : ''}">${ps2}</div>
-          </div>
-          ${favBadge}
-        </div>
-        ${dimHtml ? '<div class="tn-t10-ps-dims">' + dimHtml + '</div>' : ''}
-      `;
-    }
-  }
-
-  // Surface + round pill
   const surfacePill = (m.surface || m.round)
     ? `<div class="tn-t10-surface">${surfaceIcon} ${_tnEsc([m.surface, m.round].filter(Boolean).join(' · '))}</div>` : '';
 
@@ -4484,8 +4446,8 @@ function _tnTop10Card(m, rank) {
       + '</div>';
   }
 
-  // UI-2 audit: innerHTML uses _tnEsc for player names. If adding new fields, always wrap with _tnEsc.
-  // DATA_PIPELINE_V3 : MetricCardXXL (SRV, RET, H2H)
+  // UI-2 audit: innerHTML uses _tnEsc. For new fields, always wrap with _tnEsc.
+  // [FIX 2026-06-20] SERVICE/RETOUR → Trading insights phrases (plus de raw vs)
   let metricsHtml = '';
   if (m.metrics && m.metrics.srv_pts_won_s && m.metrics.srv_pts_won_s.a != null) {
     const srvA = (m.metrics.srv_pts_won_s.a * 100).toFixed(1);
@@ -4497,30 +4459,43 @@ function _tnTop10Card(m, rank) {
     const h2hTrend = h2h.momentum > 0.1 ? ' ↗' : h2h.momentum < -0.1 ? ' ↘' : ' →';
     const motA = (m.metrics.motivation.a * 100).toFixed(0);
     const motB = (m.metrics.motivation.b * 100).toFixed(0);
-    const p1 = _tnEsc(m.player1 || 'J1');
-    const p2 = _tnEsc(m.player2 || 'J2');
+    const p1Name = _tnEsc(m.player1 || 'J1');
+    const p2Name = _tnEsc(m.player2 || 'J2');
+    const p1Last = p1Name.split(' ').pop();
+    const p2Last = p2Name.split(' ').pop();
+
+    // Insight trading : meilleur serveur / receveur
+    const bestServer = +srvA >= +srvB ? p1Last : p2Last;
+    const bestSrvPct = Math.max(+srvA, +srvB);
+    const bestReturner = +retA >= +retB ? p1Last : p2Last;
+    const bestRetPct = Math.max(+retA, +retB);
 
     metricsHtml = '<div class="ps-metrics-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
+      // SERVICE — Insight
       + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-service)">🟦 SERVICE</span><span class="ps-metric-xxl-badge service">Noyau</span></div>'
-        + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
-          + '<span class="ps-metric-xxl-value">'+srvA+'%</span>'
-          + '<span style="font-family:var(--ps-font-body);font-size:11px;color:var(--ps-text-tertiary)">vs '+srvB+'%</span></div>'
-        + '<div class="ps-metric-xxl-context"> Moy. Top 10: 68.2%</div>' + (m.metrics.srv_sparkline ? '<div style="height:28px;margin-top:2px">'+_psSparkline(m.metrics.srv_sparkline,120,28,'#38bdf8')+'</div>' : '')
+        + '<div class="insight-metric-body">'
+          + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestServer)+'</span> meilleure serveuse <span class="percent-neon">'+bestSrvPct+'%</span></p>'
+          + '<p class="insight-subtext">Moy. Top 10: 68.2%</p>'
+          + (m.metrics.srv_sparkline ? '<div style="height:28px;margin-top:2px">'+_psSparkline(m.metrics.srv_sparkline,120,28,'#38bdf8')+'</div>' : '')
+        + '</div>'
       + '</div>'
+      // RETOUR — Insight
       + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-return)">🟩 RETOUR</span><span class="ps-metric-xxl-badge return">Noyau</span></div>'
-        + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
-          + '<span class="ps-metric-xxl-value">'+retA+'%</span>'
-          + '<span style="font-family:var(--ps-font-body);font-size:11px;color:var(--ps-text-tertiary)">vs '+retB+'%</span></div>'
-        + '<div class="ps-metric-xxl-context"> Moy. Top 10: 36.8%</div>' + (m.metrics.ret_sparkline ? '<div style="height:28px;margin-top:2px">'+_psSparkline(m.metrics.ret_sparkline,120,28,'#10b981')+'</div>' : '')
+        + '<div class="insight-metric-body">'
+          + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestReturner)+'</span> meilleure receveuse <span class="percent-neon">'+bestRetPct+'%</span></p>'
+          + '<p class="insight-subtext">Moy. Top 10: 36.8%</p>'
+          + (m.metrics.ret_sparkline ? '<div style="height:28px;margin-top:2px">'+_psSparkline(m.metrics.ret_sparkline,120,28,'#10b981')+'</div>' : '')
+        + '</div>'
       + '</div>'
+      // H2H SURFACE — inchangé
       + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-global)">⬜ H2H SURFACE</span><span class="ps-metric-xxl-badge global">Noyau</span></div>'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
           + '<span class="ps-metric-xxl-value">'+h2hStr+'</span>'
           + '<span style="font-family:var(--ps-font-body);font-size:11px;color:'+(h2h.momentum > 0 ? 'var(--ps-accent-green)' : 'var(--ps-text-tertiary)')+'">'+h2hTrend+'</span></div>'
-        + '<div class="ps-metric-xxl-context">'+(h2h.total ? (h2h.wins_a > h2h.wins_b ? p1+' domine' : p2+' domine') : 'Pas assez de donnees')+'</div>'
+        + '<div class="ps-metric-xxl-context">'+(h2h.total ? (h2h.wins_a > h2h.wins_b ? _tnEsc(p1Name)+' domine' : _tnEsc(p2Name)+' domine') : 'Pas assez de donnees')+'</div>'
       + '</div>'
     + '</div>'
     + '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">'
@@ -4546,7 +4521,7 @@ function _tnTop10Card(m, rank) {
   </div>
   ${surfacePill}
   ${dateBadge}
-  ${_tnTop10Mode === 'powerscore' ? psHtml : probBar}
+  ${_tnTop10Mode === 'powerscore' ? '<div style="display:flex;gap:12px;justify-content:center;margin:8px 0;font-size:13px"><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p1)+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+(m.powerscore_p1!=null?m.powerscore_p1:'?')+'%</b></span><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p2)+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+(m.powerscore_p2!=null?m.powerscore_p2:'?')+'%</b></span></div>' : _tnProbBar(m.score_top10)}
   <div class="tn-t10-chips">
     <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
     ${chipsHtml}
@@ -17603,7 +17578,7 @@ async function buildCornersTab(matchId) {
       ? d.away_corner_history : null;
 
     const probCls = (pct) => pct >= 65 ? 'g' : pct >= 50 ? 'a' : 'r';
-    const probBar = (pct) =>
+    const probBar = window._tnProbBar || (function(pct) { var cls = pct >= 65 ? 'g' : pct >= 50 ? 'a' : 'r'; return '<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-' + cls + '" style="width:' + Math.max(0, Math.min(100, Number(pct) || 0)) + '%"></div></div>'; })
       `<div class="cr-prob-track"><div class="cr-prob-fill cr-prob-fill-${probCls(pct)}" style="width:${Math.max(0, Math.min(100, Number(pct) || 0))}%"></div></div>`;
 
     // CORNERS-ODDS-UI: extract odds from prediction object (backend sends pred.odds)
