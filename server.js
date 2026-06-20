@@ -6548,7 +6548,7 @@ function initSQLite() {
   // Migration : ajouter colonne integrity_score pour le détecteur match-fixing (idempotent)
   try { sqldb.exec(`ALTER TABLE tennis_alerts ADD COLUMN integrity_score INTEGER DEFAULT 0`); } catch (_) {}
   // Historique alertes foot
-  sqldb.exec(CREATE TABLE IF NOT EXISTS player_photos (
+    sqldb.exec(`CREATE TABLE IF NOT EXISTS player_photos (
     player_id TEXT PRIMARY KEY,
     player_name TEXT,
     source TEXT NOT NULL DEFAULT 'wikipedia',
@@ -6556,7 +6556,8 @@ function initSQLite() {
     width INTEGER DEFAULT 0,
     height INTEGER DEFAULT 0,
     fetched_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
-  )); — tracking outcomes par type de pari
+  )`);
+  // Historique alertes foot — tracking outcomes par type de pari — tracking outcomes par type de pari
   sqldb.exec(`CREATE TABLE IF NOT EXISTS foot_alerts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     fired_at INTEGER NOT NULL,
