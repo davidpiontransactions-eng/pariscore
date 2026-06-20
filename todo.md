@@ -200,3 +200,25 @@ curl http://localhost:3000/api/v1/status
 - [ ] Tests fonctionnels : lancer node server.js (~4min warmup) et tester visuellement le radar tennis
 - [ ] Déploiement VPS : ssh pariscore -> bash scripts/update_vps.sh
 - [ ] Planifier migration Variant B (SVG natif glow) dans un sprint séparé
+
+---
+
+## 🔴 SESSION 19/06/2026 — CORRECTIF TOP10 TENNIS COLD-START + CRASH LOOP — DÉPLOYÉ
+
+| Commit | Description |
+|--------|-------------|
+| \1186db3\ | 🆕 Fix Top10 cold-start : polling \_refreshTop10Cache()\ quand build en fond (30s max, intervalle 2s) |
+| PM2 | Fix crash loop : \max_memory_restart\ 1GB → 2GB (pic boot 1.18GB) |
+
+### Logs production vérifiés
+\\\
+[Top10Refresh] Build cold en fond, polling...
+[Top10Refresh] Poll ok apres 13139ms
+[Top10Refresh] Cache rafraîchi : 153 matchs actifs, TOP 10 prêt
+[WarmTop10] Première initialisation réussie. Démarrage du cron 5min...
+\\\
+
+### Restant à faire
+- [ ] Tester rendu Tennis dans le navigateur (ouvrir site → onglet Tennis, vérifier Top10 + value bets)
+- [ ] Restaurer stash des changements TimesFM (migration colonnes player_name→entity_label, surface→context, generated_at→forecast_ts)
+- [ ] Vérifier stabilité mémoire serveur post-2GB (process sous 1.5GB en régime)
