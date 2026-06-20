@@ -21348,6 +21348,121 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/tennis/player-photo/ID — Proxy photo joueur avec cache disque + fallback Wikipedia
+  if (pathname.startsWith('/api/v1/tennis/player-photo/') && req.method === 'GET') {
+    const playerId = decodeURIComponent(pathname.slice('/api/v1/tennis/player-photo/'.length));
+    if (!playerId || playerId.indexOf('/') >= 0) { res.writeHead(400); res.end(); return; }
+    const cacheDir = __dirname + '/cache/player-photos';
+    const fs2 = require('fs');
+    const https2 = require('https');
+    // 1) Cache disque
+    try {
+      var files = fs2.readdirSync(cacheDir);
+      for (var i = 0; i < files.length; i++) {
+        var base = files[i].replace(/\.[^.]+$/, '');
+        if (base === playerId) {
+          var data = fs2.readFileSync(cacheDir + '/' + files[i]);
+          var isPng = data[0] === 137 && data[1] === 80 && data[2] === 78;
+          res.writeHead(200, { 'Content-Type': isPng ? 'image/png' : 'image/jpeg', 'Cache-Control': 'max-age=86400', 'Access-Control-Allow-Origin': '*' });
+          res.end(data);
+          return;
+        }
+      }
+    } catch (_) {}
+    // 2) Proxy BSD direct
+    var bsdUrl = 'https://sports.bzzoiro.com/img/tennis-player/' + encodeURIComponent(playerId) + '/?bg=transparent';
+    try {
+      var bsdOk = await new Promise(function(resolve) {
+        var req = https2.get(bsdUrl, { timeout: 5000 }, function(bsdRes) {
+          var ct = bsdRes.headers['content-type'] || '';
+          if (bsdRes.statusCode === 200 && ct.indexOf('image/') >= 0) {
+            var chunks = [];
+            bsdRes.on('data', function(c) { chunks.push(c); });
+            bsdRes.on('end', function() {
+              var buf = Buffer.concat(chunks);
+              try {
+                if (!fs2.existsSync(cacheDir)) fs2.mkdirSync(cacheDir, { recursive: true });
+                fs2.writeFileSync(cacheDir + '/' + playerId + '.png', buf);
+              } catch (_) {}
+              res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'max-age=86400', 'Access-Control-Allow-Origin': '*' });
+              res.end(buf);
+              resolve(true);
+            });
+          } else {
+            bsdRes.resume();
+            resolve(false);
+          }
+        });
+        req.on('error', function() { resolve(false); });
+        req.setTimeout(5000, function() { req.destroy(); resolve(false); });
+      });
+      if (bsdOk) return;
+    } catch (_) {}
+    // 3) Fallback Wikipedia
+    try {
+      var playerName = null;
+      try { var row = sqldb.prepare("SELECT player_name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row) playerName = row.player_name; } catch (_) {}
+      if (!playerName) { try { var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
+      if (playerName) {
+        var wikiUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(playerName.replace(/ +/g, '_'));
+        var wikiOk = await new Promise(function(resolve) {
+          var req2 = https2.get(wikiUrl, { headers: { 'User-Agent': 'ParisScore/1.0' }, timeout: 8000 }, function(wikiRes) {
+            if (wikiRes.statusCode !== 200) { wikiRes.resume(); resolve(false); return; }
+            var data = [];
+            wikiRes.on('data', function(c) { data.push(c); });
+            wikiRes.on('end', function() {
+              try {
+                var info = JSON.parse(Buffer.concat(data).toString());
+                if (info.thumbnail && info.thumbnail.source) {
+                  https2.get(info.thumbnail.source, { timeout: 8000 }, function(imgRes) {
+                    if (imgRes.statusCode !== 200) { imgRes.resume(); resolve(false); return; }
+                    var chunks = [];
+                    imgRes.on('data', function(c) { chunks.push(c); });
+                    imgRes.on('end', function() {
+                      var buf = Buffer.concat(chunks);
+                      try {
+                        if (!fs2.existsSync(cacheDir)) fs2.mkdirSync(cacheDir, { recursive: true });
+                        var ext = info.thumbnail.source.indexOf('.png') >= 0 ? '.png' : '.jpg';
+                        fs2.writeFileSync(cacheDir + '/' + playerId + ext, buf);
+                      } catch (_) {}
+                      var ct = imgRes.headers['content-type'] || 'image/jpeg';
+                      res.writeHead(200, { 'Content-Type': ct, 'Cache-Control': 'max-age=86400', 'Access-Control-Allow-Origin': '*' });
+                      res.end(buf);
+                    });
+                  }).on('error', function() { resolve(false); });
+                } else { resolve(false); }
+              } catch(e) { resolve(false); }
+            });
+          });
+          req2.on('error', function() { resolve(false); });
+          req2.setTimeout(8000, function() { req2.destroy(); resolve(false); });
+        });
+        if (wikiOk) return;
+      }
+    } catch (_) {}
+    // 4) Fallback ui-avatars
+    try {
+      var row = sqldb.prepare("SELECT player_name FROM tennis_players_elo WHERE player_id = ?").get(playerId);
+      if (row && row.player_name) {
+        res.writeHead(302, { 'Location': 'https://ui-avatars.com/api/?name=' + encodeURIComponent(row.player_name.trim()) + '&background=172132&color=fff&size=96&bold=true' });
+        res.end();
+        return;
+      }
+    } catch (_) {}
+    try {
+      var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId);
+      if (row2 && row2.name) {
+        res.writeHead(302, { 'Location': 'https://ui-avatars.com/api/?name=' + encodeURIComponent(row2.name.trim()) + '&background=172132&color=fff&size=96&bold=true' });
+        res.end();
+        return;
+      }
+    } catch (_) {}
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+
   if (pathname === '/api/v1/cs2/liquipedia/tournaments' && req.method === 'GET') {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
