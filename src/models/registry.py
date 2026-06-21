@@ -120,7 +120,7 @@ class SportModelRegistry:
         try:
             # Extraire les features dans l'ordre des colonnes du modèle
             cols = entry.feature_columns
-            x = np.array([[features.get(col, 0.0) for col in cols]], dtype=np.float64)
+            x = np.array([[(0.0 if features.get(col) is None else features[col]) for col in cols]], dtype=np.float64)
 
             # Prédiction
             prob = float(entry.model.predict_proba(x)[0, 1])
