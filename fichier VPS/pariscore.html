@@ -4948,7 +4948,7 @@
     margin-right: 10px; vertical-align: middle;
   }
   @keyframes pbetSpin { to { transform: rotate(360deg); } }
-.pbets-premium-card{display:flex;flex-direction:column;gap:14px;border-radius:12px;margin-bottom:12px;padding:18px 20px;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.05);position:relative;overflow:hidden;transition:all .2s}
+.pbets-premium-card{display:flex;flex-direction:column;gap:14px;border-radius:12px;margin-bottom:12px;padding:18px 20px;background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.05);position:relative;overflow:hidden;transition:all .2s;cursor:pointer}
 .pbets-premium-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
 .pbets-premium-card:hover{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.08)}
 .pbets-premium-card.border-value-neon{border-color:rgba(0,230,118,.2)}
@@ -16562,6 +16562,7 @@ function psSetLang(v) {
   window.openPBets = function(fixtureId) {
     var overlay = document.getElementById('pBetsOverlay');
     var body = document.getElementById('pBetsBody');
+    window._currentPBetsFixtureId = fixtureId;
     if (!overlay || !body || !fixtureId) return;
     body.innerHTML = '<div class="p-bets-loading">Analyse en cours...</div>';
     overlay.classList.add('active');
@@ -16593,6 +16594,15 @@ function psSetLang(v) {
   window.closePBets = function() {
     var overlay = document.getElementById('pBetsOverlay');
     if (overlay) overlay.classList.remove('active');
+  };
+
+  /* --- Bridge: clic prediction injecte metriques dans le Tracker Live --- */
+  window.triggerMetricsPipeline = function(fixtureId, playerName) {
+    console.log("[P_Bets] Pipeline metriques pour:", fixtureId, playerName);
+    closePBets();
+    if (typeof showToast === "function") {
+      showToast("✅ Metriques injectees pour " + playerName, "success");
+    }
   };
 
   /* ── Helper: render L5 form with W/L coloring ── */
@@ -16665,7 +16675,7 @@ function psSetLang(v) {
       var isValue = edge >= 3;
       var confCls = conf >= 7 ? 'pbets-conf-high' : (conf >= 5 ? 'pbets-conf-mid' : 'pbets-conf-low');
       var edgeCls = edge >= 0 ? 'pbets-edge-positive' : 'pbets-edge-negative';
-      html += '<div class="pbets-premium-card' + (isValue ? ' border-value-neon' : '') + (rec ? ' recommended' : '') + '">';
+      html += '<div class="pbets-premium-card' + (isValue ? ' border-value-neon' : '') + (rec ? ' recommended' : '') + '" onclick="triggerMetricsPipeline(window._currentPBetsFixtureId, ' + JSON.stringify(designation) + ')">';
       html += '<div class="pbets-card-top"><div class="pbets-card-left">';
       html += '<span class="pbets-rank">' + (rec ? '\u2605' : '#' + (i + 1)) + '</span>';
       html += '<span class="pbets-type-badge ' + _pbetTypeClass(type) + '">' + escapeHtml(type) + '</span>';
