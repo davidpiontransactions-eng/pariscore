@@ -16600,11 +16600,26 @@ function psSetLang(v) {
   window.triggerMetricsPipeline = function(fixtureId, playerName) {
     console.log("[P_Bets] Pipeline metriques pour:", fixtureId, playerName);
     closePBets();
-    if (typeof showToast === "function") {
-      showToast("✅ Metriques injectees pour " + playerName, "success");
+    if (typeof showToast === "function") showToast("🔍 Calcul des metriques...", "info");
+    try {
+      if (typeof _psLtsFindMatch === "function") {
+        var m = _psLtsFindMatch(fixtureId);
+        if (m) {
+          if (typeof _psLtsRenderAll === "function") _psLtsRenderAll(m);
+          if (typeof _psLtsSetTier === "function") _psLtsSetTier("half");
+          if (typeof showToast === "function") showToast("✅ Metriques injectees pour " + playerName, "success");
+        } else {
+          if (typeof showToast === "function") showToast("⚠️ Match " + fixtureId + " introuvable", "warning");
+        }
+      } else {
+        console.warn("[P_Bets] _psLtsFindMatch non disponible");
+        if (typeof showToast === "function") showToast("✅ Metriques loggees pour " + playerName, "success");
+      }
+    } catch (e) {
+      console.error("[P_Bets] Erreur pipeline:", e);
+      if (typeof showToast === "function") showToast("❌ Erreur metriques", "error");
     }
   };
-
   /* ── Helper: render L5 form with W/L coloring ── */
   function _pbetL5(l5) {
     if (!l5) return '—';
