@@ -21,6 +21,8 @@
 
 const http = require('http');
 const https = require('https');
+const net = require('net');
+const tls = require('tls');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -7367,107 +7369,135 @@ function formatDateOnly(date) {
 // ── Multi-provider streaming for Deep Analysis ───────────────────────────────
 // Streams text chunks via SSE events: chunk | done | error
 // Tries providers in order, falls back on 429/401/5xx
+// P1.4 refactor — retourne un handle { abort } pour permettre à l'appelant
+// de détruire la requête HTTP sous-jacente quand le client ferme la connexion.
 function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
-  if (providerIdx >= AI_DEEP_PROVIDERS.length) {
-    try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Tous les providers IA sont indisponibles ou non configurés' })}\n\n`); res.end(); } catch { }
-    return;
-  }
-  const prov = AI_DEEP_PROVIDERS[providerIdx];
-  console.log(`  [AI-AL] Tentative ${prov.name} (idx ${providerIdx})`);
-
-  const tryNext = (reason) => {
-    console.log(`  [AI-AL] ${prov.name} → fallback (${reason})`);
-    streamDeepWithProviders(promptText, res, onDone, providerIdx + 1);
+  // Handle collectant les requêtes HTTP actives pour abort propre
+  const handle = {
+    _activeReq: null,
+    _aborted: false,
+    abort() {
+      this._aborted = true;
+      if (this._activeReq) {
+        try { this._activeReq.destroy(); } catch (_) {}
+        this._activeReq = null;
+      }
+    },
   };
+  function _run(idx) {
+    if (handle._aborted) return; // client déjà déconnecté, ne lance pas de nouvelle requête
+    if (idx >= AI_DEEP_PROVIDERS.length) {
+      try { res.write(`event: error\ndata: ${JSON.stringify({ message: 'Tous les providers IA sont indisponibles ou non configurés' })}\n\n`); res.end(); } catch { }
+      return;
+    }
+    const prov = AI_DEEP_PROVIDERS[idx];
+    console.log(`  [AI-AL] Tentative ${prov.name} (idx ${idx})`);
 
-  if (prov.type === 'gemini') {
-    // ── Gemini SSE ──────────────────────────────────────────────────────────
-    const payload = JSON.stringify({
-      contents: [{ parts: [{ text: promptText }] }],
-      generationConfig: { temperature: 0.8, maxOutputTokens: 2800 },
-      safetySettings: GEMINI_SAFETY_SETTINGS,
-    });
-    const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
-    const opts = { hostname: gemUrl.hostname, path: gemUrl.pathname + gemUrl.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } };
-    let fullText = '';
-    const req = https.request(opts, gemRes => {
-      if (gemRes.statusCode === 429 || gemRes.statusCode === 401) {
-        gemRes.resume();
-        return tryNext(gemRes.statusCode);
-      }
-      let buf = '';
-      gemRes.on('data', chunk => {
-        buf += chunk.toString();
-        const lines = buf.split('\n'); buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            const txt = JSON.parse(raw)?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch { } }
-          } catch { }
-        }
-      });
-      gemRes.on('end', () => {
-        if (!fullText) return tryNext('vide');
-        onDone(fullText, prov.name);
-      });
-      gemRes.on('error', () => tryNext('erreur réseau'));
-    });
-    req.on('error', () => tryNext('erreur req'));
-    req.write(payload); req.end();
-
-  } else {
-    // ── OpenAI-compatible SSE (Groq / Grok / OpenRouter) ────────────────────
-    const payload = JSON.stringify({
-      model: prov.model,
-      messages: [{ role: 'user', content: promptText }],
-      temperature: 0.8,
-      max_tokens: 5500,
-      stream: true,
-    });
-    const opts = {
-      hostname: prov.host,
-      path: prov.path,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${prov.key}`,
-        'Content-Length': Buffer.byteLength(payload),
-        'HTTP-Referer': 'https://pariscore.io',
-        'X-Title': 'PariScore AI-AL',
-      },
+    const tryNext = (reason) => {
+      console.log(`  [AI-AL] ${prov.name} → fallback (${reason})`);
+      handle._activeReq = null;
+      _run(idx + 1);
     };
-    let fullText = '';
-    const req = https.request(opts, apiRes => {
-      if (apiRes.statusCode === 429 || apiRes.statusCode === 401 || apiRes.statusCode >= 500) {
-        apiRes.resume();
-        return tryNext(apiRes.statusCode);
-      }
-      let buf = '';
-      apiRes.on('data', chunk => {
-        buf += chunk.toString();
-        const lines = buf.split('\n'); buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const raw = line.slice(6).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            const txt = JSON.parse(raw)?.choices?.[0]?.delta?.content || '';
-            if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch { } }
-          } catch { }
+
+    if (prov.type === 'gemini') {
+      // ── Gemini SSE ──────────────────────────────────────────────────────────
+      const payload = JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 2800 },
+        safetySettings: GEMINI_SAFETY_SETTINGS,
+      });
+      const gemUrl = new URL(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`);
+      const opts = { hostname: gemUrl.hostname, path: gemUrl.pathname + gemUrl.search, method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } };
+      let fullText = '';
+      const req = https.request(opts, gemRes => {
+        if (handle._aborted) { try { gemRes.destroy(); } catch (_) {} return; }
+        if (gemRes.statusCode === 429 || gemRes.statusCode === 401) {
+          gemRes.resume();
+          return tryNext(gemRes.statusCode);
         }
+        let buf = '';
+        gemRes.on('data', chunk => {
+          if (handle._aborted) return;
+          buf += chunk.toString();
+          const lines = buf.split('\n'); buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]') continue;
+            try {
+              const txt = JSON.parse(raw)?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch { } }
+            } catch { }
+          }
+        });
+        gemRes.on('end', () => {
+          if (handle._aborted) return;
+          if (!fullText) return tryNext('vide');
+          onDone(fullText, prov.name);
+        });
+        gemRes.on('error', () => { if (!handle._aborted) tryNext('erreur réseau'); });
       });
-      apiRes.on('end', () => {
-        if (!fullText) return tryNext('vide');
-        onDone(fullText, prov.name);
+      handle._activeReq = req;
+      req.on('error', () => { if (!handle._aborted) tryNext('erreur req'); });
+      req.write(payload); req.end();
+
+    } else {
+      // ── OpenAI-compatible SSE (Groq / Grok / OpenRouter) ────────────────────
+      const payload = JSON.stringify({
+        model: prov.model,
+        messages: [{ role: 'user', content: promptText }],
+        temperature: 0.8,
+        max_tokens: 5500,
+        stream: true,
       });
-      apiRes.on('error', () => tryNext('erreur réseau'));
-    });
-    req.on('error', () => tryNext('erreur req'));
-    req.write(payload); req.end();
+      const opts = {
+        hostname: prov.host,
+        path: prov.path,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${prov.key}`,
+          'Content-Length': Buffer.byteLength(payload),
+          'HTTP-Referer': 'https://pariscore.io',
+          'X-Title': 'PariScore AI-AL',
+        },
+      };
+      let fullText = '';
+      const req = https.request(opts, apiRes => {
+        if (handle._aborted) { try { apiRes.destroy(); } catch (_) {} return; }
+        if (apiRes.statusCode === 429 || apiRes.statusCode === 401 || apiRes.statusCode >= 500) {
+          apiRes.resume();
+          return tryNext(apiRes.statusCode);
+        }
+        let buf = '';
+        apiRes.on('data', chunk => {
+          if (handle._aborted) return;
+          buf += chunk.toString();
+          const lines = buf.split('\n'); buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const raw = line.slice(6).trim();
+            if (raw === '[DONE]') continue;
+            try {
+              const txt = JSON.parse(raw)?.choices?.[0]?.delta?.content || '';
+              if (txt) { fullText += txt; try { res.write(`event: chunk\ndata: ${JSON.stringify({ text: txt, provider: prov.name })}\n\n`); } catch { } }
+            } catch { }
+          }
+        });
+        apiRes.on('end', () => {
+          if (handle._aborted) return;
+          if (!fullText) return tryNext('vide');
+          onDone(fullText, prov.name);
+        });
+        apiRes.on('error', () => { if (!handle._aborted) tryNext('erreur réseau'); });
+      });
+      handle._activeReq = req;
+      req.on('error', () => { if (!handle._aborted) tryNext('erreur req'); });
+      req.write(payload); req.end();
+    }
   }
+  _run(providerIdx);
+  return handle;
 }
 
 function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
@@ -9799,7 +9829,7 @@ function buildMatchRecord(raw) {
     kvSet(snapKey, [...arr, snap].slice(-12));
     // bd a8n — Post snapshot, check market divergence (delta+slope 15min) → SSE.
     // Debounce 30s per matchId garantit absence spam si fetchOdds cron tape.
-    try { broadcastMarketDivergence(record.id); } catch (_) {}
+    try { broadcastMarketDivergence(record.id); } catch (e) { _trackCatch('matchs', 'broadcast_market_divergence', e); }
 
     // bd 040 — Capture per-bookmaker snapshot pour steam detection.
     // record.all_bookmakers = rows processAllBookmakers (home/draw/away par bk).
@@ -13416,8 +13446,8 @@ async function getTransfermarktBio(name, hints = {}) {
   const id = await tmResolvePlayerId(name, hints);
   if (!id) return null;
   let prof = null, inj = null;
-  try { prof = await fetchTransfermarkt('profile', id); } catch (_) {}
-  try { inj = await fetchTransfermarkt('injuries', id); } catch (_) {}
+  try { prof = await fetchTransfermarkt('profile', id); } catch (e) { _trackCatch('matchs', 'tm_fetch_profile', e); }
+  try { inj = await fetchTransfermarkt('injuries', id); } catch (e) { _trackCatch('matchs', 'tm_fetch_injuries', e); }
   const p = (prof && prof.data) ? prof.data : null;
   const out = { tm_id: id };
   if (p) {
@@ -28410,7 +28440,7 @@ function backtestTennisStrategies({ years_back = 1, min_matches_general = 10, mi
       };
     }
 
-    try { kvSet('tennis_backtest_last', result); } catch (_) { /* swallow */ }
+    try { kvSet('tennis_backtest_last', result); } catch (e) { _trackCatch('tennis', 'backtest_kv_set', e); }
     console.log(`  [Backtest] ✓ Tennis: ${result.test_matches} test matchs, accuracy ${(result.accuracy * 100).toFixed(1)}%, brier ${result.brier_score} (${result.elapsed_ms} ms)`);
     return result;
   } finally {
@@ -28510,7 +28540,7 @@ function _tennisSurfaceForm(playerId, surface) {
        LIMIT 3`
     ).all(surface, cut90, playerId, playerId);
     form = rows.map(r => (r.winner_id === playerId ? 'W' : 'L'));
-  } catch (_) { form = []; }
+  } catch (e) { form = []; _trackCatch('tennis', 'surface_form_load', e); }
   _tennisSurfFormCache.set(ck, { ts: Date.now(), form });
   return form;
 }
@@ -28685,7 +28715,7 @@ function _loadTennisPStatsDisk() {
   if (_tennisPStatsDisk) return _tennisPStatsDisk;
   try {
     _tennisPStatsDisk = JSON.parse(fs.readFileSync(_TENNIS_PSTATS_FILE, 'utf8')) || {};
-  } catch (_) { _tennisPStatsDisk = {}; }
+  } catch (e) { _tennisPStatsDisk = {}; _trackCatch('tennis', 'pstats_disk_load', e); }
   return _tennisPStatsDisk;
 }
 
@@ -28706,7 +28736,7 @@ function _loadTennisServeDeltas() {
   if (_tennisServeDeltaCache) return _tennisServeDeltaCache;
   try {
     _tennisServeDeltaCache = JSON.parse(fs.readFileSync(_TENNIS_SERVE_DELTA_FILE, 'utf8')) || {};
-  } catch (_) { _tennisServeDeltaCache = {}; }
+  } catch (e) { _tennisServeDeltaCache = {}; _trackCatch('tennis', 'serve_delta_load', e); }
   return _tennisServeDeltaCache;
 }
 
@@ -33441,6 +33471,161 @@ if (pathname === '/api/v1/auth/logout' && req.method === 'POST') {
 // SMTP : si SMTP_URL env configuré → envoi réel ; sinon log dev + retourne token (dev only)
 const PASSWORD_RESET_TTL = 15 * 60; // 15 minutes
 const PASSWORD_RESET_SMTP_FROM = process.env.SMTP_FROM || 'support@pariscore.fr';
+
+// ─── P1 secu — CLIENT SMTP ZERO-DEP (tls + crypto natifs) ────────────────────
+// Format SMTP_URL : smtps://user:pass@host:port (TLS direct) ou
+//                  smtp://user:pass@host:port (STARTTLS, port 587 typique)
+// Implémente : EHLO, AUTH PLAIN, MAIL FROM, RCPT TO, DATA, QUIT.
+// Pas de pièces jointes, pas de HTML (text/plain only) — suffisant pour reset emails.
+const SMTP_TIMEOUT_MS = 15000;
+function _parseSmtpUrl(url) {
+  try {
+    const u = new URL(url);
+    const secure = u.protocol === 'smtps:';
+    return {
+      secure,
+      host: u.hostname,
+      port: parseInt(u.port || (secure ? '465' : '587'), 10),
+      username: decodeURIComponent(u.username || ''),
+      password: decodeURIComponent(u.password || ''),
+    };
+  } catch (e) { return null; }
+}
+function _smtpLine(socket, line) {
+  return new Promise((resolve, reject) => {
+    let buf = '';
+    const onData = (chunk) => {
+      buf += chunk.toString();
+      let idx;
+      while ((idx = buf.indexOf('\r\n')) !== -1) {
+        const line = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        // SMTP multi-line : "250-OK" continue, "250 OK" termine
+        if (line.length >= 4 && (line[3] === ' ' || line[3] === '\t')) {
+          socket.off('data', onData);
+          socket.off('error', onError);
+          const code = parseInt(line.slice(0, 3), 10);
+          resolve({ code, message: line.slice(4) });
+          return;
+        }
+      }
+    };
+    const onError = (err) => {
+      socket.off('data', onData);
+      reject(err);
+    };
+    socket.on('data', onData);
+    socket.on('error', onError);
+    socket.write(line + '\r\n');
+  });
+}
+function _smtpConnect(cfg) {
+  return new Promise((resolve, reject) => {
+    const socket = cfg.secure
+      ? tls.connect({ host: cfg.host, port: cfg.port, servername: cfg.host, rejectUnauthorized: true }, () => resolve(socket))
+      : net.connect(cfg.port, cfg.host, () => resolve(socket));
+    socket.setTimeout(SMTP_TIMEOUT_MS);
+    socket.once('error', reject);
+    socket.once('timeout', () => { socket.destroy(new Error('smtp_connect_timeout')); reject(new Error('smtp_connect_timeout')); });
+  });
+}
+async function _smtpSendMail({ to, subject, textBody, htmlBody = null }) {
+  const smtpUrl = process.env.SMTP_URL;
+  if (!smtpUrl) return { sent: false, error: 'SMTP_URL not configured' };
+  const cfg = _parseSmtpUrl(smtpUrl);
+  if (!cfg) return { sent: false, error: 'invalid SMTP_URL' };
+  const from = PASSWORD_RESET_SMTP_FROM;
+  let socket = null;
+  try {
+    socket = await _smtpConnect(cfg);
+    // 1. Read greeting
+    await new Promise((resolve, reject) => {
+      let buf = '';
+      const onData = (chunk) => {
+        buf += chunk.toString();
+        const idx = buf.indexOf('\r\n');
+        if (idx !== -1 && buf.length >= 4 && (buf[3] === ' ' || buf[3] === '\t')) {
+          socket.off('data', onData);
+          const code = parseInt(buf.slice(0, 3), 10);
+          if (code === 220) resolve();
+          else reject(new Error('smtp_greeting_' + code));
+        }
+      };
+      socket.on('data', onData);
+      socket.once('error', reject);
+    });
+    // 2. EHLO
+    const ehlo = await _smtpLine(socket, `EHLO pariscore.fr`);
+    if (ehlo.code !== 250) throw new Error('smtp_ehlo_' + ehlo.code);
+    // 3. STARTTLS si mode non sécurisé
+    if (!cfg.secure) {
+      const starttls = await _smtpLine(socket, 'STARTTLS');
+      if (starttls.code !== 220) throw new Error('smtp_starttls_' + starttls.code);
+      // Upgrade vers TLS
+      socket = await new Promise((resolve, reject) => {
+        const tlsSocket = tls.connect({ socket, servername: cfg.host, rejectUnauthorized: true }, () => resolve(tlsSocket));
+        tlsSocket.once('error', reject);
+      });
+    }
+    // 4. AUTH PLAIN (base64 \0user\0pass)
+    if (cfg.username) {
+      const authStr = Buffer.from('\0' + cfg.username + '\0' + cfg.password).toString('base64');
+      const auth = await _smtpLine(socket, `AUTH PLAIN ${authStr}`);
+      if (auth.code !== 235) throw new Error('smtp_auth_' + auth.code + ': ' + auth.message);
+    }
+    // 5. MAIL FROM
+    const mailFrom = await _smtpLine(socket, `MAIL FROM:<${from}>`);
+    if (mailFrom.code !== 250) throw new Error('smtp_mail_from_' + mailFrom.code);
+    // 6. RCPT TO
+    const rcpt = await _smtpLine(socket, `RCPT TO:<${to}>`);
+    if (rcpt.code !== 250 && rcpt.code !== 251) throw new Error('smtp_rcpt_to_' + rcpt.code);
+    // 7. DATA
+    const data = await _smtpLine(socket, 'DATA');
+    if (data.code !== 354) throw new Error('smtp_data_' + data.code);
+    // 8. Headers + body
+    const headers = [
+      `From: PariScore <${from}>`,
+      `To: <${to}>`,
+      `Subject: =?UTF-8?B?${Buffer.from(subject).toString('base64')}?=`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
+      'Date: ' + new Date().toUTCString(),
+      'Message-ID: <' + crypto.randomUUID() + '@pariscore.fr>',
+      '',
+    ];
+    socket.write(headers.join('\r\n') + '\r\n');
+    // Body — escape dot lines (RFC 5321 section 4.5.2)
+    const escapedBody = textBody.replace(/^\./gm, '..');
+    socket.write(escapedBody + '\r\n.\r\n');
+    // 9. Lire la réponse du serveur au ".\r\n" final (code 250 = OK)
+    const finalResp = await new Promise((resolve, reject) => {
+      let buf = '';
+      const onData = (chunk) => {
+        buf += chunk.toString();
+        const idx = buf.indexOf('\r\n');
+        if (idx !== -1 && buf.length >= 4 && (buf[3] === ' ' || buf[3] === '\t')) {
+          socket.off('data', onData);
+          socket.off('error', onError);
+          const code = parseInt(buf.slice(0, 3), 10);
+          resolve({ code, message: buf.slice(4, idx) });
+        }
+      };
+      const onError = (err) => { socket.off('data', onData); reject(err); };
+      socket.on('data', onData);
+      socket.on('error', onError);
+    });
+    if (finalResp.code !== 250) throw new Error('smtp_data_end_' + finalResp.code + ': ' + finalResp.message);
+    // 9. QUIT
+    try { await _smtpLine(socket, 'QUIT'); } catch (_) {}
+    socket.end();
+    return { sent: true, message_id: headers.find(h => h.startsWith('Message-ID:')) };
+  } catch (e) {
+    if (socket) { try { socket.destroy(); } catch (_) {} }
+    console.error('[SMTP] error:', e.message);
+    return { sent: false, error: e.message };
+  }
+}
 async function _sendPasswordResetEmail(toEmail, resetUrl) {
   const smtpUrl = process.env.SMTP_URL;
   if (!smtpUrl) {
@@ -33448,10 +33633,29 @@ async function _sendPasswordResetEmail(toEmail, resetUrl) {
     console.log(`[forgot-password:DEV] Pas de SMTP_URL — lien reset pour ${toEmail}: ${resetUrl}`);
     return { sent: false, dev_mode: true, reset_url: resetUrl };
   }
-  // TODO : implémenter envoi SMTP réel via nodemailer ou équivalent zero-dep
-  // Pour l'instant on log + retourne ok pour ne pas casser le flux
-  console.log(`[forgot-password:SMTP] Tentative envoi à ${toEmail} via ${smtpUrl} (implémentation à finaliser)`);
-  return { sent: true, dev_mode: false };
+  // Envoi SMTP réel via client zero-dep
+  const subject = 'PariScore — Réinitialisation de votre mot de passe';
+  const body = [
+    'Bonjour,',
+    '',
+    'Vous avez demandé la réinitialisation de votre mot de passe PariScore.',
+    '',
+    'Cliquez sur le lien suivant pour choisir un nouveau mot de passe :',
+    resetUrl,
+    '',
+    'Ce lien expirera dans 15 minutes.',
+    '',
+    'Si vous n\'êtes pas à l\'origine de cette demande, ignorez cet email — votre mot de passe restera inchangé.',
+    '',
+    '— L\'équipe PariScore',
+  ].join('\r\n');
+  const result = await _smtpSendMail({ to: toEmail, subject, textBody: body });
+  if (result.sent) {
+    console.log(`[forgot-password:SMTP] Email envoyé à ${toEmail} — ${result.message_id}`);
+  } else {
+    console.error(`[forgot-password:SMTP] Échec envoi à ${toEmail}: ${result.error}`);
+  }
+  return { sent: result.sent, dev_mode: false, error: result.error || null };
 }
 if (pathname === '/api/v1/auth/forgot-password' && req.method === 'POST') {
   const ip = req.socket?.remoteAddress || 'unknown';
@@ -42091,10 +42295,10 @@ if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') 
   if (!m) return jsonResponse(res, 404, { error: 'match_not_found' });
   // Force enrichissement on-demand si pas déjà fait
   if (!m.bsd_odds_summary) {
-    try { await enrichMatchWithBSDFullStack(m); } catch (_) {}
+    try { await enrichMatchWithBSDFullStack(m); } catch (e) { _trackCatch('matchs', 'enrich_bsd_fullstack', e); }
   }
   if (!m.home_manager && !m.away_manager) {
-    try { await enrichMatchWithManagers(m); } catch (_) {}
+    try { await enrichMatchWithManagers(m); } catch (e) { _trackCatch('matchs', 'enrich_managers', e); }
   }
   return jsonResponse(res, 200, {
     match_id: matchId,
@@ -44448,7 +44652,7 @@ ${dataBlock}${bsdEnrichBlock || ''}${fcBlock || ''}${pressBlock}`;
     clearInterval(dsHeartbeat);
     console.warn('  [DeepStream] TIMEOUT 90s — réponse fermée');
   }, 90000);
-  streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
+  const dsHandle = streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
     clearTimeout(dsTimeout);
     clearInterval(dsHeartbeat);
     // === MOUCHARD : audit brut sortie LLM ===
@@ -44463,10 +44667,10 @@ ${dataBlock}${bsdEnrichBlock || ''}${fcBlock || ''}${pressBlock}`;
     console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
     try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName, hasRevue })}\n\n`); res.end(); } catch { }
   });
-  // P1.4 — cleanup sur fermeture client : clear heartbeat + timeout
-  // (la requête Gemini interne ne peut pas être détruite sans refactor de
-  // streamDeepWithProviders — backlog. Le timeout 90s agit comme filet de sécurité.)
+  // P1.4 refactor — cleanup sur fermeture client : abort requête Gemini + clear timers
+  // dsHandle.abort() détruit la requête HTTP sous-jacente + empêche les fallbacks ultérieurs
   req.on('close', () => {
+    if (dsHandle) try { dsHandle.abort(); } catch (_) {}
     clearInterval(dsHeartbeat);
     clearTimeout(dsTimeout);
   });
@@ -47351,7 +47555,7 @@ function _bsdWsDTOEvent(msg, m, alertHook) {
     if (msg.time.added_time != null) _wsGuardedPatch(m, 'live_added_time', Number(msg.time.added_time));
   }
   _bsdWsApplyEventStats(m, msg.stats);
-  if (typeof alertHook === 'function') try { alertHook(m, prevScore); } catch (_) {}
+  if (typeof alertHook === 'function') try { alertHook(m, prevScore); } catch (e) { _trackCatch('matchs', 'alert_hook_invoke', e); }
   return prevScore;
 }
 
@@ -47550,7 +47754,7 @@ function _checkLiveAlerts(m, prevScoreStr) {
             best_edge_pct: (m.best_edge && m.best_edge.edge) || null,
           },
         });
-      } catch (_) { /* swallow */ }
+      } catch (e) { _trackCatch('matchs', 'alert_favorite_trap_sse', e); }
     }
   }
 
@@ -47572,7 +47776,7 @@ function _checkLiveAlerts(m, prevScoreStr) {
             away_team: m.away_team || null,
           },
         });
-      } catch (_) { /* swallow */ }
+      } catch (e) { _trackCatch('matchs', 'alert_goal_flood_sse', e); }
     }
   }
 }
@@ -47684,7 +47888,7 @@ function _bsdWsHandleJSON(msg) {
   if (p.score && /^\d+-\d+$/.test(String(p.score))) m.live_score = String(p.score);
   if (p.minute != null) m.live_minute = parseInt(p.minute) || m.live_minute;
   if (p.status) m.status = p.status;
-  try { _checkLiveAlerts(m, _vl02_prevScore); } catch (_) { /* swallow */ }
+  try { _checkLiveAlerts(m, _vl02_prevScore); } catch (e) { _trackCatch('matchs', 'live_alerts_check', e); }
   m.live_ws = {
     ball: p.ball || (m.live_ws && m.live_ws.ball) || null,
     situation: p.situation || null,
