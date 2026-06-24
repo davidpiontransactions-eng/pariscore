@@ -1,7 +1,7 @@
 # ️ Architecture PariScore — Feuille de Route Technique
 
-**Version** : v12.81  
-**Date** : 2026-06-16  
+**Version** : v12.85  
+**Date** : 2026-06-24  
 **Auteur** : CTO & Lead Data Scientist  
 **Statut** : Document de référence pour le sprint performance
 
@@ -205,9 +205,10 @@ ParisScorebis/
 │  GET /api/v1/hot-picks        │  GET /api/v1/tennis/predictions/:id         │
 │  GET /api/v1/sure-bets        │  GET /api/v1/tennis/h2h                     │
 │  GET /api/v1/arbitrage        │  GET /api/v1/tennis/tex/*                   │
-│  GET /api/v1/trends           │  GET /api/v1/tennis-abstract/*              │
-│  GET /api/v1/league-hub/:key  │  GET /api/v1/tennis/uqd                     │
-│  ...                          │  ...                                        │
+│  GET /api/v1/trends           │  GET /api/v1/forecasts/tennis                │
+│  GET /api/v1/league-hub/:key  │  GET /api/v1/forecasts/football              │
+│  ...                          │  GET /api/v1/forecasts/tennis/trending       │
+│                               │  GET /api/v1/forecasts/football/trending     │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼
@@ -300,6 +301,7 @@ ParisScorebis/
 | `sessions` | Sessions JWT | ~500 rows |
 | `match_timeline_snapshots` | Snapshots minute-par-minute (cron live) | ~20k rows |
 | `player_surface_scores` | SPS computed by cron_sps_updater.py | ~3k rows |
+| `timesfm_forecasts` | Prévisions TimesFM (Élo tennis, xG foot) avec quantiles | ~5k rows |
 
 ---
 
@@ -566,24 +568,235 @@ else → 'ANALYSE'
 
 ## 5. 📋 Prochaines Étapes
 
-### Sprint Performance (2026-06-16)
+### Sprint Performance — Phase 1 (2026-06-16, ✅ Terminé)
+
+| # | Tâche | Priorité | Statut |
+|---|-------|----------|--------|
+| 1 | Augmenter TTL cache TOP 10 (5min/3min) | HIGH | ✅ Terminé |
+| 2 | Implémenter warmer boot TOP 10 | HIGH | ✅ Terminé |
+| 3 | Ajouter fallback gracieux sur ancien cache | HIGH | ✅ Terminé |
+| 4 | Cron background refresh 5min | MEDIUM | ✅ Terminé |
+| 5 | Tests performance (avant/après) | HIGH | ✅ Terminé |
+| 6 | Documentation CHANGELOG.md | LOW | ✅ Terminé |
+
+### Module TimesFM — Déploiement (2026-06-24, ✅ Terminé)
+
+| # | Tâche | Priorité | Statut |
+|---|-------|----------|--------|
+| 1 | Script `tools/timesfm_forecast.py` (CLI build-tennis/build-football) | HIGH | ✅ Terminé |
+| 2 | Table `timesfm_forecasts` + index dans `pariscore.db` | HIGH | ✅ Terminé |
+| 3 | Routes API GET /forecasts/{tennis,football} + /trending | HIGH | ✅ Terminé |
+| 4 | Cron horaire sur Render pour mise à jour batch | MEDIUM | ✅ Terminé |
+| 5 | Documentation technique `timesfm_analysis.md` | LOW | ✅ Terminé |
+| 6 | Mise à jour architecture_pariscore.md (section 6) | LOW | ✅ Terminé |
+
+### Sprint à Venir — Optimisations & Extension
 
 | # | Tâche | Priorité | Estimation |
 |---|-------|----------|------------|
-| 1 | Augmenter TTL cache TOP 10 (5min/3min) | HIGH | 15min |
-| 2 | Implémenter warmer boot TOP 10 | HIGH | 30min |
-| 3 | Ajouter fallback gracieux sur ancien cache | HIGH | 20min |
-| 4 | Cron background refresh 5min | MEDIUM | 30min |
-| 5 | Tests performance (avant/après) | HIGH | 45min |
-| 6 | Documentation CHANGELOG.md | LOW | 15min |
-
-### Critères de Validation
-
-- Temps de réponse TOP 10 < 100ms (cache hit)
-- Temps de réponse TOP 10 < 5s (cache miss avec fallback)
-- Zéro affichage "Données indisponibles" en conditions normales
-- Cache rafraîchi toutes les 5min maximum
+| 1 | Ajouter le badge "Tendance TimesFM" dans le frontend pariscore.html | MEDIUM | 2h |
+| 2 | Étendre au football xG (séries temporelles de Expected Goals par équipe) | MEDIUM | 3h |
+| 3 | Intégrer le score de tendance TimesFM dans le scoring 6D (dimension bonus) | LOW | 4h |
+| 4 | Dashboard admin pour visualiser les prévisions (admin.html) | LOW | 3h |
+| 5 | Alerter quand un joueur sort de l'intervalle [q10, q90] (détection downswing) | LOW | 2h |
 
 ---
 
-**Document généré le 2026-06-16 par l'agent CTO Pariscore**
+**Document généré le 2026-06-24 par l'agent CTO Pariscore**
+
+
+## 6. 🤖 Module TimesFM — Prévisions IA
+
+> **Statut** : ✅ Production — 4 routes API, cron batch, 10 quantiles de confiance
+> **Date de déploiement** : 2026-06-19
+> **Modèle** : Google TimesFM 2.5 200M (zero-shot, pas de training)
+> **Script** : `tools/timesfm_forecast.py`
+> **Documentation détaillée** : `timesfm_analysis.md`
+
+### 6.1 Pipeline
+
+```
+[pariscore.db] séries historiques (Elo tennis, xG football)
+       ↓
+[tools/timesfm_forecast.py] CLI build-tennis / build-football
+       ├─ Charge le modèle Google TimesFM 2.5 200M (PyTorch)
+       ├─ Construit les séries temporelles par joueur/équipe/surface
+       ├─ Infer en batch tous les joueurs d'un sport en un seul call model.forecast()
+       └─ Écrit les prévisions dans la table timesfm_forecasts
+       ↓
+[pariscore.db] table `timesfm_forecasts`
+       ↓
+[API REST] 4 routes de consultation
+       ├─ GET /api/v1/forecasts/tennis?player=&surface=
+       ├─ GET /api/v1/forecasts/football?team=
+       ├─ GET /api/v1/forecasts/tennis/trending?limit=10
+       └─ GET /api/v1/forecasts/football/trending?limit=10
+       ↓
+[Frontend / Client] affichage tendances
+```
+
+**Fréquence de mise à jour** : toutes les 1h (cron horaire sur Render)
+**Durée d'inférence** : ~2s pour 50 joueurs tennis en une seule passe batch
+
+### 6.2 Table `timesfm_forecasts`
+
+```sql
+CREATE TABLE timesfm_forecasts (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    sport           TEXT NOT NULL,        -- 'tennis' | 'football'
+    entity_type     TEXT NOT NULL,        -- 'player' | 'team'
+    entity_id       TEXT NOT NULL,        -- player_id ou team_id
+    entity_label    TEXT,                 -- Nom lisible (ex: 'Jannik Sinner')
+    context         TEXT,                 -- Contexte (ex: 'ATP ALL', 'ATP Clay', 'WTA Hard')
+    series_label    TEXT,                 -- Type de série ('elo', 'xg', ...)
+    horizon         INTEGER NOT NULL,     -- Nombre de pas de prévision
+    forecast_raw    TEXT NOT NULL,        -- JSON: [input_tail_array, forecast_matrix]
+    quantile_labels TEXT,                 -- JSON: ["mean","q10","q20",...,"q90"]
+    input_tail      TEXT,                 -- JSON: dernières 10 valeurs de la série historique
+    forecast_ts     INTEGER NOT NULL,     -- Timestamp de génération (Unix)
+    expires_at      INTEGER,              -- Expiration du cache (forecast_ts + 86400)
+    UNIQUE(sport, entity_type, entity_id, context, series_label)
+);
+CREATE INDEX idx_timesfm_sport_entity
+    ON timesfm_forecasts(sport, entity_type, entity_id);
+```
+
+### 6.3 Structure des Données
+
+#### `forecast_raw`
+
+Colonne JSON contenant un tableau `[input_tail, forecast_matrix]` :
+
+| Index | Contenu | Dimensions | Description |
+|-------|---------|------------|-------------|
+| `[0]` | **input_tail** | `(horizon,)` | Les `horizon` premiers pas de la prévision ponctuelle (médiane) |
+| `[1]` | **forecast_matrix** | `(horizon, 10)` | Matrice complète : 10 tranches quantiles par pas |
+
+Où les 10 colonnes de la matrice sont indexées dans l'ordre :
+
+| Index | Quantile | Signification |
+|-------|----------|---------------|
+| 0 | **mean** | Moyenne prédite |
+| 1 | **q10** | Borne inférieure (10%) |
+| 2 | **q20** | 20% |
+| 3 | **q30** | 30% |
+| 4 | **q40** | 40% |
+| 5 | **q50** | Médiane |
+| 6 | **q60** | 60% |
+| 7 | **q70** | 70% |
+| 8 | **q80** | 80% |
+| 9 | **q90** | Borne supérieure (90%) |
+
+#### `quantile_labels`
+
+Tableau JSON constant : `["mean","q10","q20","q30","q40","q50","q60","q70","q80","q90"]`
+
+#### `input_tail`
+
+Tableau JSON des **10 dernières valeurs** de la série historique d'entrée (utilisé pour le calcul de tendance et les graphiques).
+
+### 6.4 Routes API
+
+#### `GET /api/v1/forecasts/tennis`
+
+Retourne toutes les prévisions tennis, avec filtres optionnels.
+
+| Paramètre | Type | Description | Défaut |
+|-----------|------|-------------|--------|
+| `player` | string | Filtre par `entity_id` (player_id) | tous |
+| `surface` | string | Filtre par `context` (ex: "ATP Clay", "WTA Hard") | tous |
+
+**Réponse** : `200 OK` — tableau d'objets :
+
+```json
+[
+  {
+    "id": 3,
+    "sport": "tennis",
+    "entity_type": "player",
+    "entity_id": "206173",
+    "entity_label": "Jannik Sinner",
+    "context": "ATP ALL",
+    "series_label": "elo",
+    "horizon": 24,
+    "forecast": [
+      1914.20, 1911.60, 1911.59, 1911.11, 1910.87,
+      1910.64, 1912.09, 1911.75, 1912.39, 1913.71,
+      1914.67, 1915.34, 1916.45, 1917.12, 1919.10,
+      1918.83, 1919.25, 1920.17, 1920.13, 1921.51,
+      1921.72, 1921.28, 1922.15, 1922.17
+    ],
+    "quantile_labels": ["mean","q10","q20","q30","q40","q50","q60","q70","q80","q90"],
+    "input_tail": [1531.26, 1545.83, 1559.73, 1573.01, 1585.69, 1597.82, 1609.43, 1620.56, 1631.22, 1641.45],
+    "forecast_ts": 1781902583,
+    "expires_at": 1781988983
+  }
+]
+```
+
+#### `GET /api/v1/forecasts/football`
+
+Même structure que tennis, mais pour le football.
+
+| Paramètre | Type | Description | Défaut |
+|-----------|------|-------------|--------|
+| `team` | string | Filtre par `entity_id` (team_id) | tous |
+
+**Réponse** : identique à tennis avec `sport: "football"`.
+
+#### `GET /api/v1/forecasts/tennis/trending?limit=10`
+
+Calcule les top hausses et top baisses attendues pour tous les joueurs tennis.
+
+| Paramètre | Type | Description | Défaut |
+|-----------|------|-------------|--------|
+| `limit` | int | Nombre de résultats par catégorie (risers + decliners) | 10 |
+
+**Algorithme** : Pour chaque ligne, lit `input_tail[-1]` (dernière valeur réelle) et `forecast_matrix[0][5]` (q50 au premier pas). Calcule `delta = q50 - last_val`.
+
+**Réponse** : `200 OK`
+
+```json
+{
+  "top_risers": [
+    { "entity_id": "206173", "entity_label": "Jannik Sinner",
+      "context": "ATP ALL", "series_label": "elo",
+      "current": 1901.3, "forecast": 1914.2, "delta": 12.9 },
+    ...
+  ],
+  "top_decliners": [
+    { "entity_id": "104925", "entity_label": "Novak Djokovic",
+      "context": "ATP ALL", "series_label": "elo",
+      "current": 1728.4, "forecast": 1707.6, "delta": -20.8 },
+    ...
+  ]
+}
+```
+
+#### `GET /api/v1/forecasts/football/trending?limit=10`
+
+Même logique que tennis/trending, appliquée au sport `'football'`.
+
+### 6.5 Processus d'Inférence
+
+Le script `timesfm_forecast.py` expose 4 commandes CLI :
+
+| Commande | Description |
+|----------|-------------|
+| `build-tennis` | Prédit l'Élo des top 50 joueurs (toutes surfaces : ALL, Hard, Clay, Grass) |
+| `build-tennis --all` | Tous les joueurs avec 10+ matchs |
+| `build-football` | Prédit les xG des équipes des top ligues |
+| `build-all` | Exécute les deux |
+| `list [sport]` | Affiche les prévisions stockées |
+| `status` | Vérifie le modèle et la base |
+
+**Détails techniques** :
+- **Modèle** : `google/timesfm-2.5-200m-pytorch` (800 Mo sur disque, ~1,5 Go RAM)
+- **Contexte max** : 512 points (`MAX_SERIES_LEN`)
+- **Horizon** : 24 pas max, ajusté à `min(24, len(series)//2)` pour chaque série
+- **Batch** : toutes les séries d'un sport sont inférées en un seul appel `model.forecast()`
+- **Tennis** : série temporelle d'Élo calculée avec K=32, base=1500, par tour et surface
+- **Football** : série temporelle de Expected Goals (xG) par équipe
+- **Stockage** : `INSERT OR REPLACE` avec contrainte `UNIQUE(sport, entity_type, entity_id, context, series_label)`
+- **Expiration** : 24h (`forecast_ts + 86400`)
+- **Temps d'inférence** : ~2s pour 50 joueurs tennis (4 surfaces = ~200 séries)
