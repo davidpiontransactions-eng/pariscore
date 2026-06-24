@@ -1,5 +1,28 @@
 # PariScore — Journal des modifications
 
+## [v12.85] — 2026-06-24 — TimesFM : fix bug routing + fix mediane trending
+
+### Corrigé
+- **Bug routing TimesFM (toutes les routes retournaient 404)** : les 4 routes correctes
+  (`/forecasts/tennis`, `/forecasts/football`, `/forecasts/tennis/trending`,
+  `/forecasts/football/trending`) avec `SELECT * FROM timesfm_forecasts` etaient placees
+  dans le handler HTTP externe, APRES l'appel a `handleAPI()` qui les attrapait en 404
+  avant qu'elles puissent etre atteintes. Deplacees dans `handleAPI()` juste avant le
+  fallback 404 final.
+- **Bug calcul trending (top_risers/top_decliners toujours vides)** : `forecast_raw` est
+  stocke comme `[input_history, forecast_matrix]` (2 elements). Le code lisait `fr[2]`
+  ou fallback `fr[0]` (= un tableau, pas un nombre), echouant le guard `typeof !==
+  'number'` pour toutes les lignes. Correction : lire la mediane dans
+  `forecastMatrix[0][5]` (step 0, p50). Labels quantiles confirmes : [mean, q10...q90].
+
+### Routes API restaurées
+| Route | Avant | Apres |
+|---|---|---|
+| GET /api/v1/forecasts/tennis | 404 | 200 (354 rows) |
+| GET /api/v1/forecasts/football | 404 | 200 |
+| GET /api/v1/forecasts/tennis/trending | 404 → [] | 200 (10 risers + 10 decliners) |
+| GET /api/v1/forecasts/football/trending | 404 → [] | 200 (10 risers + 10 decliners) |
+
 ## [v12.84] — 2026-06-20 — P_BETS : Win Probability Gauge + fix timeout critique
 
 ### Ajouté
