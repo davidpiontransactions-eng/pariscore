@@ -923,7 +923,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'historique')  try { initHistoriquePage(); } catch(e) {}
   if (pageId === 'paris')       try { initParisPage(); } catch(e) {}
   if (pageId === 'strategies')  try { initStrategiesPage(); } catch(e) {}
-  if (pageId === 'tendances')   try { loadTrends(); } catch(e) {}
+  if (pageId === 'tendances')   try { loadTrends(); } catch(e) {} try { _renderTrendingSection('tennis'); } catch(e) {}
   if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
   if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
   if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
@@ -24197,7 +24197,49 @@ async function loadTrends() {
   }
 }
 // ═══════════════════════════════════════════════════════════════════════════════
-//  PAGE GUIDE / DOCUMENTATION
+//  
+// ════════════════════════════════════════════════════════════════════════════════════════
+//  TRENDING — section sport-specific risers/decliners (x2ez)
+// ════════════════════════════════════════════════════════════════════════════════════════
+let _trendingPollTimer = null;
+
+function _renderTrendingSection(sport) {
+  var el = document.getElementById('trending-risers');
+  if (!el) return;
+  el.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;">Chargement…</div>';
+  apiFetch('/api/v1/trends?sport=' + encodeURIComponent(sport || ''))
+    .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
+    .then(function(data) {
+      el.innerHTML = _buildTrendingHtml(data.risers || [], data.decliners || []);
+    })
+    .catch(function() {
+      el.innerHTML = '<div style="color:#888;padding:20px;font-size:13px;">⚠ Lancez node server.js pour charger les tendances.</div>';
+    });
+  if (_trendingPollTimer) clearInterval(_trendingPollTimer);
+  _trendingPollTimer = setInterval(function() { _renderTrendingSection(sport); }, 300000);
+}
+
+function _buildTrendingHtml(risers, decliners) {
+  var html = '';
+  if (risers.length) {
+    html += '<div style="margin-bottom:16px;"><h3 style="font-size:14px;margin:0 0 8px;color:#22c55e;">📈 Risers</h3>';
+    risers.forEach(function(r) {
+      html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">' +
+        '<span>' + (r.name || '') + '</span><span style="color:#22c55e;font-weight:600;">+' + (r.change || 0) + '</span></div>';
+    });
+    html += '</div>';
+  }
+  if (decliners.length) {
+    html += '<div><h3 style="font-size:14px;margin:0 0 8px;color:#ef4444;">📉 Decliners</h3>';
+    decliners.forEach(function(d) {
+      html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">' +
+        '<span>' + (d.name || '') + '</span><span style="color:#ef4444;font-weight:600;">' + (d.change || 0) + '</span></div>';
+    });
+    html += '</div>';
+  }
+  return html || '<div style="color:#888;font-size:13px;padding:20px;">Aucune tendance disponible.</div>';
+}
+PAGE GUIDE / DOCUMENTATION
 // ═══════════════════════════════════════════════════════════════════════════════
 let guideLoaded = false;
 

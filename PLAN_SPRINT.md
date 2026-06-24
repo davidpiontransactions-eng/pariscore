@@ -31,9 +31,9 @@ TimesFM dans l'interface utilisateur.
 |----------|--------|-------|--------|--------|
 | P1 | beads fez0 | A2: Stale-while-revalidate (déjà implémenté) | B — Engineering | ✅ Fermer sans code |
 | P1 | todo P0.4 | safeFixed() — déjà implémenté avec stack trace | B — Engineering | ✅ Fermer sans code |
-| P1 | todo P0.5 | Vérifier peuplement __tennisVBWarmMatches | B — Engineering | ~10min (logs + curl) |
-| P1 | — | UI TimesFM — section Tendances du moment (JS manquant) | C — Design | ~30min |
-| P1 | todo P1.3 | Timeout Monte Carlo RG >60s | B — Engineering | ~30min |
+| P1 | beads 28km | Vérifier peuplement __tennisVBWarmMatches | B — Engineering | ~10min (logs + curl) |
+| P1 | beads x2ez | UI TimesFM — section Tendances du moment (JS manquant) | C — Design | ~30min |
+| P1 | beads cslx | Timeout Monte Carlo RG >60s | B — Engineering | ~30min |
 | P1 | beads bphz/q6jl/6hlh | A3/A4/A5 déjà fermés | — | ✅ Rien |
 | P1 | commit 63c4e0f | P1.1 logger catch silencieux déjà commité | — | ✅ Rien |
 
