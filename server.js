@@ -22182,8 +22182,10 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
           const fr = JSON.parse(r.forecast_raw || '[]');
           const tail = JSON.parse(r.input_tail || '[]');
           if (!fr.length || !tail.length) continue;
+          const forecastMatrix = fr[1];
+          if (!forecastMatrix || !forecastMatrix.length) continue;
           const lastVal = tail[tail.length - 1];
-          const q50 = fr.length >= 3 ? fr[2] : fr[0];
+          const q50 = forecastMatrix[0][5]; // step 0, p50 (index 5 dans mean/q10..q90)
           if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
           trends.push({
             entity_id: r.entity_id,
@@ -22217,8 +22219,10 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
           const fr = JSON.parse(r.forecast_raw || '[]');
           const tail = JSON.parse(r.input_tail || '[]');
           if (!fr.length || !tail.length) continue;
+          const forecastMatrix = fr[1];
+          if (!forecastMatrix || !forecastMatrix.length) continue;
           const lastVal = tail[tail.length - 1];
-          const q50 = fr.length >= 3 ? fr[2] : fr[0];
+          const q50 = forecastMatrix[0][5]; // step 0, p50 (index 5 dans mean/q10..q90)
           if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
           trends.push({
             entity_id: r.entity_id,
