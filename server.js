@@ -38901,7 +38901,9 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
     }
   } catch (e) {
     console.warn('  [RG worker fallback]', e && e.message);
-    sim = _monteCarloRG(playerStats, simN);
+    // Fallback inline limité à 1000 sims (évite blocage >60s).
+    // Le worker off-thread reste la voie normale avec 30s timeout + N=simN.
+    sim = _monteCarloRG(playerStats, Math.min(simN, 1000));
   }
   const playerMap = new Map();
   for (const p of playerStats) {
@@ -48849,11 +48851,7 @@ if (MATCHSTAT_ENABLED) {
         // utilisateur tape le cache, jamais le build froid → pas de timeout UI.
         // buildTennisValueBets vit dans la closure requête (hors scope ici) →
         // pont via globalThis (enregistré à sa définition).
-        // [FIX bug onglet tennis — ROOT] Le pont globalThis.__tennisVBWarm est
-        // posé DANS la closure requête → indisponible tant qu'aucune requête
-        // HTTP n'a tourné. L'ancien one-shot 22s ratait toujours (boot < 1ère
-        // requête) → cache JAMAIS pré-chauffé → chaque restart = users cold
-        // path → timeout → "Erreur réseau". On RETRY + self-ping interne pour
+        // pont prêt via self-ping interne (retry jusqu'à 24×)
         // armer la closure, jusqu'à ce que le pont soit prêt, puis warm.
         let _vbWarmTries = 0;
         const _vbWarmTick = () => {
@@ -49397,7 +49395,7 @@ globalThis.__tennisPlayerMatches = function(playerName) {
       var opp = isP1 ? (m.player2 || {}) : (m.player1 || {});
       var oppSrv = opp.serve_index;
       var oppRet = opp.receive_index;
-      if (srvIdx == null || retIdx == null) { /* console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); */ }
+      if (srvIdx == null || retIdx == null) { console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); }
       var winner = m.winner;
       if (!winner) {
       	var scr = m.status;
