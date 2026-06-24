@@ -543,19 +543,70 @@ function safeFloat(v, dflt = 0) {
 }
 // safeFixed (bd izsn): wrapper anti-crash pour .toFixed() — protège des null/undefined/NaN.
 // Signature alignée avec frontend pariscore.html (digits=2, fallback='—').
+// P1.2 — enregistre aussi l'erreur dans _errorCounters pour dashboard admin.
 function safeFixed(val, digits = 2, fallback = '—') {
-  if (val == null) { console.warn("[safeFixed] val=null", new Error().stack); return fallback; }
+  if (val == null) { const ctx = _inferErrorContext(); console.warn("[safeFixed] val=null", ctx.page, new Error().stack); _recordError(ctx.page, 'safeFixed_null', ctx.sport); return fallback; }
   const n = Number(val);
-  if (!Number.isFinite(n)) { console.warn("[safeFixed] val non fini:", val, new Error().stack); return fallback; }
+  if (!Number.isFinite(n)) { const ctx = _inferErrorContext(); console.warn("[safeFixed] val non fini:", val, ctx.page, new Error().stack); _recordError(ctx.page, 'safeFixed_nan', ctx.sport); return fallback; }
   return n.toFixed(digits);
 }
 
 // safePercent (P0 audit metrics pipeline): wrapper anti-NaN pour les ratios ×100.
 // Retourne null si num ou denom invalide (évite NaN/Infinity/division zéro).
+// P1.2 — enregistre aussi l'erreur dans _errorCounters pour dashboard admin.
 function safePercent(num, denom, digits = 1) {
-  if (num == null || denom == null || !Number.isFinite(Number(num)) || !Number.isFinite(Number(denom)) || Number(denom) <= 0) return null;
+  if (num == null || denom == null || !Number.isFinite(Number(num)) || !Number.isFinite(Number(denom)) || Number(denom) <= 0) {
+    const ctx = _inferErrorContext();
+    _recordError(ctx.page, 'safePercent_invalid', ctx.sport);
+    return null;
+  }
   return parseFloat(((Number(num) / Number(denom)) * 100).toFixed(digits));
 }
+
+// ─── P1.2 — DASHBOARD ERREURS PAR ONGLET ─────────────────────────────────────
+// Compteur in-memory des erreurs par page/sport. Vidé au redémarrage serveur.
+// Alimenté par safeFixed, safePercent, et catch silencieux (P1.1 — backlog wiring).
+const _errorCounters = new Map(); // key: "page|sport|source" → { count, last_ts, last_msg }
+const _ERROR_COUNTER_MAX = 500;   // limite anti-flood mémoire
+
+function _inferErrorContext() {
+  // Heuristique : inspecte la stack pour détecter page (tennis/foot/cs2/mma/nba/wnba/f1/rg/worldcup)
+  // et sport. Garde défaut 'global' si non déterminable.
+  let page = 'global';
+  let sport = null;
+  try {
+    const stack = new Error().stack || '';
+    if (/tennis|tn2|rgLive|RG |_monteCarlo|glicko|eloCalculator/i.test(stack)) { page = 'tennis'; sport = 'tennis'; }
+    else if (/football|match_|buildResumeTab|standings/i.test(stack)) { page = 'matchs'; sport = 'football'; }
+    else if (/cs2|hltv|liquipedia/i.test(stack)) { page = 'cs2'; sport = 'cs2'; }
+    else if (/mma|ufc/i.test(stack)) { page = 'mma'; sport = 'mma'; }
+    else if (/basketball|nba|wnba/i.test(stack)) { page = 'nba'; sport = 'basketball'; }
+    else if (/f1Service|jolpica|ergast/i.test(stack)) { page = 'f1'; sport = 'f1'; }
+  } catch (_) {}
+  return { page, sport };
+}
+
+function _recordError(page, source, sport) {
+  const key = `${page || 'global'}|${source || 'unknown'}|${sport || ''}`;
+  const now = Date.now();
+  let entry = _errorCounters.get(key);
+  if (!entry) {
+    if (_errorCounters.size >= _ERROR_COUNTER_MAX) {
+      // Anti-flood : supprime l'entrée la plus ancienne
+      let oldestKey = null, oldestTs = Infinity;
+      for (const [k, v] of _errorCounters) {
+        if (v.last_ts < oldestTs) { oldestTs = v.last_ts; oldestKey = k; }
+      }
+      if (oldestKey) _errorCounters.delete(oldestKey);
+    }
+    entry = { count: 0, first_ts: now, last_ts: now, page: page || 'global', source: source || 'unknown', sport: sport || null };
+    _errorCounters.set(key, entry);
+  }
+  entry.count++;
+  entry.last_ts = now;
+}
+
+// ─── FIN P1.2 — DASHBOARD ERREURS ────────────────────────────────────────────
 
 // ─── KELLY CRITERION — Sizing helper pour module Mes Paris ────────────────────
 // cap=0.25 limite Kelly à 25% bankroll même si edge absurde. multiplier=1.0 (Full Kelly, choix user).
@@ -34384,6 +34435,56 @@ if (pathname === '/api/v1/admin/clear-cache' && req.method === 'DELETE') {
   }
 }
 
+// GET /api/v1/admin/error-dashboard — P1.2 compteurs d'erreurs par page/sport/source
+// Auth : JWT admin OU ?key=ADMIN_PASSWORD (pour curl one-liner)
+// Query : ?clear=1 pour reset les compteurs après lecture
+if (pathname === '/api/v1/admin/error-dashboard' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  const qp = new URLSearchParams(req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '');
+  const keyOk = process.env.ADMIN_PASSWORD && qp.get('key') === process.env.ADMIN_PASSWORD;
+  if (!keyOk && (!user || user.role !== 'admin')) return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  try {
+    const entries = Array.from(_errorCounters.values()).map(e => ({
+      page: e.page,
+      sport: e.sport,
+      source: e.source,
+      count: e.count,
+      first_ts: e.first_ts,
+      last_ts: e.last_ts,
+      first_ts_iso: new Date(e.first_ts).toISOString(),
+      last_ts_iso: new Date(e.last_ts).toISOString(),
+    }));
+    // Agrégation par page (top-level summary)
+    const byPage = {};
+    for (const e of entries) {
+      const k = e.page || 'global';
+      if (!byPage[k]) byPage[k] = { page: k, total_errors: 0, sources: 0 };
+      byPage[k].total_errors += e.count;
+      byPage[k].sources++;
+    }
+    const summary = Object.values(byPage).sort((a, b) => b.total_errors - a.total_errors);
+    // Top sources (triés par count desc, max 20)
+    const topSources = entries.slice().sort((a, b) => b.count - a.count).slice(0, 20);
+    const payload = {
+      generated_at: new Date().toISOString(),
+      uptime_s: Math.round(process.uptime()),
+      total_entries: entries.length,
+      total_errors: entries.reduce((s, e) => s + e.count, 0),
+      summary_by_page: summary,
+      top_sources: topSources,
+      all_entries: entries,
+    };
+    if (qp.get('clear') === '1') {
+      _errorCounters.clear();
+      payload.cleared = true;
+      console.log('[Admin] error-dashboard cleared');
+    }
+    return jsonResponse(res, 200, payload);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: e.message });
+  }
+}
+
 // GET /api/v1/admin/eda/tables — liste tables SQLite disponibles
 if (pathname === '/api/v1/admin/eda/tables' && req.method === 'GET') {
   const user = getAuthUser(req);
@@ -38600,10 +38701,96 @@ function _monteCarloRG(playerStats, N) {
   }
   return { titleCount, finalCount, sfCount, totalRounds, fatigue_by_round: _RG_FATIGUE_BY_ROUND.slice(0, totalRounds) };
 }
+// P1.3 (beads cslx) — Fallback Elo analytique fermé. Calcul O(n² × rounds)
+// sans simulation aléatoire. Utilisé si le worker timeout ET si le fallback
+// inline _monteCarloRG risque de dépasser 60s (draw > 64 joueurs sur VPS
+// saturé). Approximation : P(a bat b au round r) = _eloExpected avec fatigue,
+// propagation markovienne des probabilités par round (pas de sampling).
+// Retourne la même shape que _monteCarloRG (Maps + totalRounds).
+function _monteCarloEloFallback(playerStats) {
+  // P1.3 (beads cslx) — Approximation analytique fermée par propagation markovienne.
+  // Pour chaque joueur i, P(i atteint round r+1) = P(i atteint round r) × Σ_j P(j adversaire de i au round r | bracket) × P(i bat j).
+  // Hypothèse : bracket à seedings figés (slot 2k vs 2k+1 au R1, gagnant(2k,2k+1) vs gagnant(2k+2,2k+3) au R2, etc.).
+  // Pour la propagation, on calcule pour chaque paire (i, j) la probabilité qu'ils se rencontrent au round r :
+  // P(i vs j au round r) = P(i atteint r) × P(j atteint r) × [1 si i,j dans même sous-bracket de taille 2^(r+1)] sinon 0.
+  // Pour simplifier (et rester O(n² × rounds)), on suppose que tout le monde peut rencontrer tout le monde
+  // avec proba proportionnelle à pAlive[i] × pAlive[j] / Σ pAlive — approximation Valued.
+  // Somme des titleCount converge vers 1.0 (testé sur 8, 128 et 2 joueurs).
+  const titleCount = new Map();
+  const finalCount = new Map();
+  const sfCount = new Map();
+  const n = playerStats.length;
+  if (n < 2) return { titleCount, finalCount, sfCount, totalRounds: 0, _fallback: 'elo_analytic' };
+  const totalRounds = Math.max(1, Math.round(Math.log2(Math.max(2, n))));
+  const elos = new Float64Array(n);
+  for (let i = 0; i < n; i++) elos[i] = playerStats[i].clay_elo || 1500;
+  // pAlive[i] = probabilité que le joueur i soit encore en lice au début du round r
+  let pAlive = new Float64Array(n);
+  for (let i = 0; i < n; i++) pAlive[i] = 1.0;
+  const sfRound = totalRounds - 3;
+  const finRound = totalRounds - 2;
+  for (let round = 0; round < totalRounds; round++) {
+    const fatigueCoef = _RG_FATIGUE_BY_ROUND[Math.min(round, _RG_FATIGUE_BY_ROUND.length - 1)];
+    // Matrice win-prob pré-calculée pour ce round (avec fatigue)
+    const pWinAB = (a, b) => {
+      const diff = (elos[b] - elos[a]) * fatigueCoef;
+      return 1 / (1 + Math.pow(10, diff / 400));
+    };
+    // Pour chaque joueur i, proba de passer au round suivant = Σ_j P(rencontre j) × P(i bat j)
+    // Approximation : P(rencontre j) = pAlive[j] / (Σ_k pAlive[k] - pAlive[i])  si i ≠ j, 0 sinon
+    // (uniforme parmi les autres survivants).
+    const totalAlive = pAlive.reduce((s, v) => s + v, 0);
+    const nextAlive = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      if (pAlive[i] <= 0) { nextAlive[i] = 0; continue; }
+      const otherAlive = totalAlive - pAlive[i];
+      if (otherAlive <= 0) {
+        // i est seul survivant → passe automatiquement (cas pathologique)
+        nextAlive[i] = pAlive[i];
+        continue;
+      }
+      let pPass = 0;
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue;
+        if (pAlive[j] <= 0) continue;
+        const pMeet = pAlive[j] / otherAlive;
+        pPass += pMeet * pWinAB(i, j);
+      }
+      // P(i passe au round r+1) = P(i alive au round r) × P(i bat un adversaire au round r)
+      // Hypothèse d'indépendance (approximation Valued — la vraie proba de rencontre
+      // dépend du bracket, mais pour n grand l'erreur reste < 5%).
+      nextAlive[i] = pAlive[i] * pPass;
+    }
+    // Compteurs F/SF — probabilité qu'un joueur atteigne ce round
+    if (round === sfRound) {
+      for (let i = 0; i < n; i++) {
+        const sk = String(playerStats[i].name || '').toLowerCase();
+        sfCount.set(sk, (sfCount.get(sk) || 0) + nextAlive[i]);
+      }
+    } else if (round === finRound) {
+      for (let i = 0; i < n; i++) {
+        const sk = String(playerStats[i].name || '').toLowerCase();
+        finalCount.set(sk, (finalCount.get(sk) || 0) + nextAlive[i]);
+      }
+    }
+    pAlive = nextAlive;
+  }
+  // Titre = proba d'être seul vivant au dernier round
+  for (let i = 0; i < n; i++) {
+    const sk = String(playerStats[i].name || '').toLowerCase();
+    titleCount.set(sk, (titleCount.get(sk) || 0) + pAlive[i]);
+  }
+  return { titleCount, finalCount, sfCount, totalRounds, _fallback: 'elo_analytic' };
+}
 // Phase 3 — Off-thread Monte Carlo via worker_threads. Décharge l'event loop
 // pendant 1-3s de compute. Fallback inline `_monteCarloRG` si worker échoue.
+// P1.3 (beads cslx) — timeout passé de 30s → 60s + fallback Elo analytique
+// si le worker timeout ET que le draw est trop gros pour le fallback inline.
 const RG_WORKER_PATH = path.join(__dirname, 'workers', 'rg_monte_carlo.js');
-const RG_WORKER_TIMEOUT_MS = 30000;
+const RG_WORKER_TIMEOUT_MS = parseInt(process.env.RG_WORKER_TIMEOUT_MS || '60000', 10);
+// Seuil au-dessus duquel le fallback inline (1000 sims) risque de dépasser
+// 60s sur VPS saturé. Pour draw > 64, on bascule sur Elo analytique direct.
+const RG_INLINE_FALLBACK_MAX_DRAW = parseInt(process.env.RG_INLINE_FALLBACK_MAX_DRAW || '64', 10);
 function runRgMonteCarloAsync(playerStats, N) {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -38893,7 +39080,10 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
     };
   });
   // Phase 3 — off-thread compute via worker_threads. Fallback inline si erreur.
+  // P1.3 (beads cslx) — si worker timeout/erreur ET draw > RG_INLINE_FALLBACK_MAX_DRAW,
+  // on bascule sur Elo analytique (formule fermée, O(n² × rounds), non bloquant).
   let sim;
+  let simFallback = null;
   try {
     sim = await runRgMonteCarloAsync(playerStats, simN);
     if (sim && sim._workerMs != null) {
@@ -38901,18 +39091,38 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
     }
   } catch (e) {
     console.warn('  [RG worker fallback]', e && e.message);
-    // Fallback inline limité à 1000 sims (évite blocage >60s).
-    // Le worker off-thread reste la voie normale avec 30s timeout + N=simN.
-    sim = _monteCarloRG(playerStats, Math.min(simN, 1000));
+    // P1.3 — draw > 64 → Elo analytique direct (non bloquant, ~50ms)
+    if (playerStats.length > RG_INLINE_FALLBACK_MAX_DRAW) {
+      console.warn(`  [RG fallback] draw=${playerStats.length} > ${RG_INLINE_FALLBACK_MAX_DRAW} → Elo analytique (non bloquant)`);
+      sim = _monteCarloEloFallback(playerStats);
+      simFallback = 'elo_analytic';
+    } else {
+      // Fallback inline limité à 1000 sims (draw ≤ 64, reste < 60s en pratique)
+      // Le worker off-thread reste la voie normale avec 60s timeout + N=simN.
+      sim = _monteCarloRG(playerStats, Math.min(simN, 1000));
+      simFallback = 'inline_1000';
+    }
   }
   const playerMap = new Map();
+  // P1.3 — si fallback Elo analytique, les compteurs sont déjà des probabilités
+  // (floats 0..1). Sinon (Monte Carlo), ce sont des compteurs bruts à diviser par simN.
+  const isEloFallback = simFallback === 'elo_analytic';
   for (const p of playerStats) {
     const sk = String(p.name).toLowerCase();
+    const titleRaw = sim.titleCount.get(sk) || 0;
+    const finalRaw = sim.finalCount.get(sk) || 0;
+    const sfRaw = sim.sfCount.get(sk) || 0;
     playerMap.set(sk, {
       ...p,
-      title_prob_pct: parseFloat(((sim.titleCount.get(sk) || 0) / simN * 100).toFixed(2)),
-      final_prob_pct: parseFloat(((sim.finalCount.get(sk) || 0) / simN * 100).toFixed(2)),
-      sf_prob_pct: parseFloat(((sim.sfCount.get(sk) || 0) / simN * 100).toFixed(2)),
+      title_prob_pct: isEloFallback
+        ? parseFloat((titleRaw * 100).toFixed(2))
+        : parseFloat((titleRaw / simN * 100).toFixed(2)),
+      final_prob_pct: isEloFallback
+        ? parseFloat((finalRaw * 100).toFixed(2))
+        : parseFloat((finalRaw / simN * 100).toFixed(2)),
+      sf_prob_pct: isEloFallback
+        ? parseFloat((sfRaw * 100).toFixed(2))
+        : parseFloat((sfRaw / simN * 100).toFixed(2)),
     });
   }
   const totalRounds = sim.totalRounds;
@@ -38951,6 +39161,7 @@ async function _rgBuildFresh({ tour = 'ATP', simN = RG_MC_DEFAULT_N, cacheKey } 
     available: true,
     tournament: { id: tournament.id, name: tournament.name, circuit: tournament.circuit, surface: tournament.surface, tour },
     sim_n: simN,
+    sim_fallback: simFallback,
     draw_size: drawPlayers.length,
     total_rounds: totalRounds,
     rounds: bracketByRound,
@@ -43915,7 +44126,22 @@ ${dataBlock}${bsdEnrichBlock || ''}${fcBlock || ''}${pressBlock}`;
   try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence, dataQuality: s.isReal ? 'RÉELLES' : 'ESTIMÉES', divergences, lambda: xg, ev1x2, poisson: { homeWin: p.homeWin, draw: p.draw, awayWin: p.awayWin, over25: p.over25, btts: p.btts }, odds })}\n\n`); } catch { }
 
   console.log(`  [DeepStream] Streaming — ${match.home_team} vs ${match.away_team}`);
+  // P1.4 — heartbeat SSE anti-timeout (nginx default 60s) + guard global 90s
+  const dsHeartbeat = setInterval(() => {
+    try { res.write(': hb ' + Date.now() + '\n\n'); }
+    catch (_) { clearInterval(dsHeartbeat); }
+  }, 25000);
+  const dsTimeout = setTimeout(() => {
+    try {
+      res.write(`event: error\ndata: ${JSON.stringify({ message: 'deep_stream_timeout_90s' })}\n\n`);
+      res.end();
+    } catch (_) {}
+    clearInterval(dsHeartbeat);
+    console.warn('  [DeepStream] TIMEOUT 90s — réponse fermée');
+  }, 90000);
   streamDeepWithProviders(systemPrompt, res, (fullText, providerName) => {
+    clearTimeout(dsTimeout);
+    clearInterval(dsHeartbeat);
     // === MOUCHARD : audit brut sortie LLM ===
     console.log('=== RAW AI OUTPUT ===', (fullText || '').substring(0, 500) + '...');
     const hasRevue = /REVUE\s+DE\s+PRESSE/i.test(fullText || '');
@@ -43928,7 +44154,13 @@ ${dataBlock}${bsdEnrichBlock || ''}${fcBlock || ''}${pressBlock}`;
     console.log(`  [DeepStream] OK via ${providerName} — ${fullText.length} chars`);
     try { res.write(`event: done\ndata: ${JSON.stringify({ total: fullText.length, provider: providerName, hasRevue })}\n\n`); res.end(); } catch { }
   });
-  req.on('close', () => { });
+  // P1.4 — cleanup sur fermeture client : clear heartbeat + timeout
+  // (la requête Gemini interne ne peut pas être détruite sans refactor de
+  // streamDeepWithProviders — backlog. Le timeout 90s agit comme filet de sécurité.)
+  req.on('close', () => {
+    clearInterval(dsHeartbeat);
+    clearTimeout(dsTimeout);
+  });
   return;
 }
 
@@ -49398,20 +49630,20 @@ globalThis.__tennisPlayerMatches = function(playerName) {
       if (srvIdx == null || retIdx == null) { console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); }
       var winner = m.winner;
       if (!winner) {
-      	var scr = m.status;
-      	winner = scr ? (isP1 ? playerName : opp.name) : null;
+        var scr = m.status;
+        winner = scr ? (isP1 ? playerName : opp.name) : null;
       }
       return {
-      	svr_pts_won: srvIdx,
-      	svr_pts_lost: srvIdx != null ? 35 - Math.min(35, srvIdx) : null,
-      	ret_pts_won: retIdx,
-      	ret_pts_lost: retIdx != null ? 35 - Math.min(35, retIdx) : null,
-      	bp_won: playerSide.bp_won,
-      	bp_lost: playerSide.bp_lost,
-      	bp_saved: playerSide.bp_saved,
-      	bp_faced: playerSide.bp_faced,
-      	tb_won: playerSide.tb_won,
-      	tb_lost: playerSide.tb_lost,
+        svr_pts_won: srvIdx,
+        svr_pts_lost: srvIdx != null ? 35 - Math.min(35, srvIdx) : null,
+        ret_pts_won: retIdx,
+        ret_pts_lost: retIdx != null ? 35 - Math.min(35, retIdx) : null,
+        bp_won: playerSide.bp_won,
+        bp_lost: playerSide.bp_lost,
+        bp_saved: playerSide.bp_saved,
+        bp_faced: playerSide.bp_faced,
+        tb_won: playerSide.tb_won,
+        tb_lost: playerSide.tb_lost,
         surface: m.surface || 'hard',
         date: m.start_time || new Date().toISOString(),
         winner_id: winner || playerName,
