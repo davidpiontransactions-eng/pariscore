@@ -19918,7 +19918,7 @@ async function apiFetch(url, opts = {}) {
       if (age > cached.ttl && !cached._refreshing) {
         cached._refreshing = true;
         AppCache._refresh(url, function() {
-          return fetch(url, { ...opts, headers }).then(function(r) {
+          return fetch(url, { ...opts, headers, credentials: 'include' }).then(function(r) {
             if (!r.ok) throw new Error('Status ' + r.status);
             return r.clone().json();
           });
@@ -19933,7 +19933,7 @@ async function apiFetch(url, opts = {}) {
     }
   }
 
-  const res = await fetch(url, { ...opts, headers });
+  const res = await fetch(url, { ...opts, headers, credentials: 'include' });
 
   // Mettre en cache les réponses GET réussies
   if (isGet && res.ok && !opts.skipCache) {
@@ -20208,6 +20208,8 @@ function psLogout() {
   // Forensic trace : capture toute remise à zéro de session (cf. CR-F rapport
   // bug mobile 2026-05-19). À retirer une fois le chemin auto-logout identifié.
   try { console.warn('[psLogout] called from:', new Error().stack); } catch (e) {}
+  // P1 secu — appel serveur pour clearer le cookie httpOnly (best-effort, sans attendre)
+  try { fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' }).catch(function(){}); } catch (e) {}
   psClearToken();
   updateNavAuthState();
   // Reset état matchs pour forcer re-auth au prochain accès
