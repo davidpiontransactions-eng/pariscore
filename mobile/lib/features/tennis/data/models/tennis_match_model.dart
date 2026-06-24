@@ -14,6 +14,11 @@ class TennisMatchModel extends TennisMatch {
     super.servingPlayer,
     super.edge,
     super.betfairWom,
+    super.dominanceRatioP1,
+    super.dominanceRatioP2,
+    super.pressure,
+    super.intensity,
+    super.odds,
   });
 
   factory TennisMatchModel.fromJson(Map<String, dynamic> j) {
@@ -33,14 +38,22 @@ class TennisMatchModel extends TennisMatch {
       sets: _parseSets(j['sets']),
       edge: _parseEdge(j),
       betfairWom: _parseWom(j['betfair_wom']),
+      dominanceRatioP1: _toDouble(j['dr_p1'] ?? j['dominance_ratio_p1']),
+      dominanceRatioP2: _toDouble(j['dr_p2'] ?? j['dominance_ratio_p2']),
+      pressure: _toInt(j['pressure']),
+      intensity: j['intensity'] as String?,
+      odds: _parseOdds(j['odds']),
     );
   }
 
   static TennisPlayer _parsePlayer(Map<String, dynamic> p) => TennisPlayer(
         name: p['name'] as String? ?? '',
         country: p['country'] as String?,
-        eloRating: _toDouble(p['elo']),
+        eloRating: _toDouble(p['elo'] ?? p['elo_rating']),
         winProb: _toDouble(p['win_prob']),
+        rank: _toInt(p['rank'] ?? p['rk']),
+        photoUrl: p['photo_url'] as String?,
+        eloDelta: _toInt(p['elo_delta']),
       );
 
   static List<TennisSet> _parseSets(dynamic raw) {
@@ -82,6 +95,21 @@ class TennisMatchModel extends TennisMatch {
       marketId: m['market_id']?.toString(),
       ts: _toInt(m['ts']),
     );
+  }
+
+  /// Parse la liste de cotes trading
+  static List<TennisOdds>? _parseOdds(dynamic raw) {
+    if (raw == null) return null;
+    final list = raw as List<dynamic>;
+    if (list.isEmpty) return null;
+    return list.map((o) {
+      final m = o as Map<String, dynamic>;
+      return TennisOdds(
+        label: m['label'] as String? ?? '',
+        probability: _toDouble(m['probability']) ?? 0,
+        cote: _toDouble(m['cote']) ?? 1.0,
+      );
+    }).toList();
   }
 
   static double? _toDouble(dynamic v) =>

@@ -42,8 +42,15 @@ class _TennisPageState extends State<TennisPage> {
   }
 }
 
-class _TennisView extends StatelessWidget {
+class _TennisView extends StatefulWidget {
   const _TennisView();
+
+  @override
+  State<_TennisView> createState() => _TennisViewState();
+}
+
+class _TennisViewState extends State<_TennisView> {
+  bool _useMock = false;
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +58,29 @@ class _TennisView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Tennis'),
         actions: [
+          if (_useMock)
+            IconButton(
+              icon: Icon(Icons.science, size: 20, color: Color(0xFFffa726)),
+              onPressed: () {
+                setState(() => _useMock = false);
+                context.read<TennisCubit>().loadMatches();
+              },
+              tooltip: 'Recharger API réelle',
+            )
+          else
+            IconButton(
+              icon: Icon(Icons.science_outlined, size: 20),
+              onPressed: () {
+                setState(() => _useMock = true);
+                context.read<TennisCubit>().loadMockData();
+              },
+              tooltip: 'Charger données mock DR',
+            ),
           IconButton(
             icon: const Icon(Icons.refresh_outlined, size: 20),
-            onPressed: () => context.read<TennisCubit>().loadMatches(),
+            onPressed: () => _useMock
+                ? context.read<TennisCubit>().loadMockData()
+                : context.read<TennisCubit>().loadMatches(),
           ),
         ],
       ),
@@ -67,13 +94,17 @@ class _TennisView extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.wifi_off_outlined,
-                        size: 48, color: AppColors.text3,),
+                    const Icon(
+                      Icons.wifi_off_outlined,
+                      size: 48,
+                      color: AppColors.text3,
+                    ),
                     const SizedBox(height: 12),
                     Text(message, style: AppTextStyles.bodyMedium),
                     TextButton(
-                      onPressed: () =>
-                          context.read<TennisCubit>().loadMatches(),
+                      onPressed: () => _useMock
+                          ? context.read<TennisCubit>().loadMockData()
+                          : context.read<TennisCubit>().loadMatches(),
                       child: const Text('Réessayer'),
                     ),
                   ],
@@ -82,7 +113,10 @@ class _TennisView extends StatelessWidget {
             TennisLoaded(:final matches) => RefreshIndicator(
                 color: AppColors.blue,
                 backgroundColor: AppColors.bg2,
-                onRefresh: () => context.read<TennisCubit>().loadMatches(),
+                onRefresh: () => _useMock
+                    ? Future.sync(
+                        () => context.read<TennisCubit>().loadMockData())
+                    : context.read<TennisCubit>().loadMatches(),
                 child: matches.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -92,11 +126,16 @@ class _TennisView extends StatelessWidget {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.sports_tennis_outlined,
-                                    size: 48, color: AppColors.text3,),
+                                const Icon(
+                                  Icons.sports_tennis_outlined,
+                                  size: 48,
+                                  color: AppColors.text3,
+                                ),
                                 const SizedBox(height: 12),
-                                Text('Aucun match en cours',
-                                    style: AppTextStyles.bodyMedium,),
+                                Text(
+                                  'Aucun match en cours',
+                                  style: AppTextStyles.bodyMedium,
+                                ),
                               ],
                             ),
                           ),
@@ -110,8 +149,7 @@ class _TennisView extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: TweenAnimationBuilder<double>(
                             tween: Tween(begin: 0, end: 1),
-                            duration:
-                                Duration(milliseconds: 300 + index * 40),
+                            duration: Duration(milliseconds: 300 + index * 40),
                             curve: Curves.easeOut,
                             builder: (context, v, child) => Opacity(
                               opacity: v,

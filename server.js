@@ -21486,6 +21486,19 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
+  // GET /api/v1/mma/odds-1xbet — cotes 1xBet (scrapées localement, push SCP)
+  if (pathname === '/api/v1/mma/odds-1xbet' && req.method === 'GET') {
+    try {
+      const data = await mmaService.getOdds1xBet();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify(data));
+    } catch (e) {
+      console.error('[1xBet MMA route]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: '1xBet odds fetch failed' }));
+    }
+  }
+
   // GET /api/v1/mma/fight-analysis?fa=Belal+Muhammad&fb=Gabriel+Bonfim&prob_a=0.51&prob_b=0.49&dr_prob_a=0.508&ev_a=3.2&ev_b=-1.1
   // Returns Gemini AI fight analysis: press review + bet recommendation
   if (pathname === '/api/v1/mma/fight-analysis' && req.method === 'GET') {
@@ -22055,10 +22068,33 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       const { generatePBetsFromOrchestrator } = require('./tools/p-bets-generator');
       const tennisPbetsCtx = found && found._pBetsTennisCtx || null;
       const bets = await generatePBetsFromOrchestrator(fixtureId, sqldb || db, bsdFetch, tennisPbetsCtx);
+      
+      // FIELD MAPPING: generator fields -> renderer expected fields (bug #2 fix)
+      const _p1n = (tennisPbetsCtx && tennisPbetsCtx.p1) || "";
+      const _p2n = (tennisPbetsCtx && tennisPbetsCtx.p2) || "";
+      const _ctxLabel = _p1n + " vs " + _p2n;
+      const mapped = bets.map(function(b) {
+        var oddsNum = parseFloat(b.cote || b.odds || 0);
+        var probPct = b.probability_pct != null ? b.probability_pct : (oddsNum > 0 ? Math.round((1 / oddsNum) * 100) : 50);
+        return {
+          type: b.type || "VICTOIRE",
+          designation: b.designation || (b.type ? b.type + " -- " + _ctxLabel : _ctxLabel || "Match"),
+          odds: oddsNum,
+          confidence: b.confidence != null ? b.confidence : 5,
+          rationale: b.analyse || b.rationale || b.description || "",
+          probability_pct: probPct,
+          edge_pct: b.edge_pct != null ? b.edge_pct : 0,
+          risk: b.risk || "MODERE",
+          sources: b.sources || [],
+          recommended: b.recommended === true
+        };
+      });
+      bets.splice(0, bets.length, ...mapped);
       if (bets && bets.length > 0) {
         _pBetsCache.set(canonId, { data: bets, timestamp: Date.now() });
       }
-      return jsonResponse(res, 200, { fixtureId, bets: bets || [], generated_at: new Date().toISOString() });
+      var matchCtx = tennisPbetsCtx ? { p1: _p1n, p2: _p2n, surface: tennisPbetsCtx.surface || null, tour: tennisPbetsCtx.tour || null } : null;
+      return jsonResponse(res, 200, { fixtureId: fixtureId, match: matchCtx, bets: bets || [], generated_at: new Date().toISOString() });
     } catch (e) {
       console.error('[PBets] Erreur génération:', e.message);
       return jsonResponse(res, 500, { error: 'generation_failed', message: e.message });
