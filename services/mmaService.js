@@ -308,6 +308,37 @@ function mmaModelBand(nameA, nameB) {
 }
 function mmaModelInfo() { return MMA_MODEL ? { test_accuracy: MMA_MODEL.test_accuracy, n_train: MMA_MODEL.n_train, fighters: Object.keys(MMA_FEATS).length } : null; }
 
+// ─── 1xBet → Odds-API format bridge ─────────────────────────────────────────
+// When The Odds API quota is exhausted, read the 1xBet scraper output and
+// format it identically to what getMMAFights expects (home_team, away_team,
+// bookmakers[].markets[].outcomes). That way the entire devig/DRatings/ML
+// pipeline works unchanged.
+function _1xBetOddsToISO(ts) {
+  if (!ts) return null;
+  try { return new Date(ts * 1000).toISOString(); } catch (_) { return null; }
+}
+
+function _fetchOdds1xBet() {
+  const raw = getOdds1xBet();
+  if (!raw || !Array.isArray(raw.fights) || !raw.fights.length) return [];
+  
+  return raw.fights.map(f => ({
+    home_team:    f.fighter1 || '',
+    away_team:    f.fighter2 || '',
+    commence_time: _1xBetOddsToISO(f.start_time) || null,
+    bookmakers:   [{
+      title:    '1xBet',
+      markets:  [{
+        key: 'h2h',
+        outcomes: [
+          { name: f.fighter1, price: f.odds_f1 },
+          { name: f.fighter2, price: f.odds_f2 },
+        ],
+      }],
+    }],
+  })).filter(f => f.home_team && f.away_team);
+}
+
 // ─── Public: getMMAFights ─────────────────────────────────────────────────────
 async function getMMAFights(apiKey) {
   if (_fullCache.data && (Date.now() - _fullCache.ts) < CACHE_TTL_FULL) {
@@ -317,8 +348,16 @@ async function getMMAFights(apiKey) {
   _isFetching = true;
 
   try {
-    const [rawFights, drIdx] = await Promise.all([
-      _fetchOdds(apiKey),
+    let rawFights = await _fetchOdds(apiKey);
+    // If The Odds API returned nothing (quota exhausted), fallback to 1xBet
+    if (!rawFights || rawFights.length === 0) {
+      const fb = _fetchOdds1xBet();
+      if (fb && fb.length) {
+        console.log('[MMA] Odds API empty — fallback 1xBet:', fb.length, 'fights');
+        rawFights = fb;
+      }
+    }
+    const [drIdx] = await Promise.all([
       _fetchDRatings(),
     ]);
     const enriched = [];
@@ -887,13 +926,38 @@ function getMMAPerformance(sqldb) {
 function computeMMAWinProb() { return 0.5; }
 
 function getCacheStatus() {
+  const has1xBet = getOdds1xBet() !== null;
   return {
     full_age_s:      _fullCache.ts ? Math.round((Date.now() - _fullCache.ts) / 1000) : null,
     odds_cached:     !!_oddsCache.data,
     dratings_cached: !!_dratingsCache.data,
     fights_cached:   _fullCache.data ? _fullCache.data.reduce((n, e) => n + e.fights.length, 0) : 0,
-    source:          'the-odds-api + dratings.com',
+    source:          _oddsCache.data ? 'the-odds-api + dratings.com' : (has1xBet ? '1xbet (fallback) + dratings.com' : 'the-odds-api + dratings.com'),
   };
 }
 
-module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance };
+
+// ─── 1xBet odds reader ────────────────────────────────────────────────────
+// Lit le JSON pousser par tools/push-odds-1xbet.ps1 (VPN Serbie).
+// Returns { scraped_at, fights_count, fights: [...] } ou null si fichier absent.
+const FS_1XBET = require('fs');
+const PATH_1XBET = require('path').join(__dirname, '..', 'data', 'odds_1xbet_mma.json');
+const _1xbetCache = { data: null, ts: 0 };
+
+function getOdds1xBet() {
+  const now = Date.now();
+  // Cache 5min (same as scraper interval)
+  if (_1xbetCache.data && (now - _1xbetCache.ts) < 300 * 1000) return _1xbetCache.data;
+  try {
+    if (!FS_1XBET.existsSync(PATH_1XBET)) return null;
+    const raw = FS_1XBET.readFileSync(PATH_1XBET, 'utf-8');
+    const data = JSON.parse(raw);
+    if (data && Array.isArray(data.fights)) {
+      _1xbetCache.data = data;
+      _1xbetCache.ts = now;
+      return data;
+    }
+  } catch (_) {}
+  return null;
+}
+module.exports = { getMMAFights, computeMMAWinProb, getCacheStatus, getFighterPhoto, fighterSlug, getFightBreakdown, blendProbs, mmaModelPredict, mmaModelBand, mmaModelInfo, logMMAPredictions, reconcileMMAOutcomes, getMMAPerformance, getOdds1xBet };

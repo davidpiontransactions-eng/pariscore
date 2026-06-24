@@ -1,0 +1,478 @@
+{
+  "scraped_at": "2026-06-20T17:29:35.556416+00:00",
+  "sport": "UFC",
+  "source": "1xBet.rs (via VPN Serbie)",
+  "fights_count": 47,
+  "fights": [
+    {
+      "game_id": 730411064,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Shane Collins",
+      "fighter2": "Otari Tanzilovi",
+      "odds_f1": 1.48,
+      "odds_f2": 2.571,
+      "start_time": 1781989200
+    },
+    {
+      "game_id": 729591882,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Karol Rosa",
+      "fighter2": "Luana Santos",
+      "odds_f1": 1.83,
+      "odds_f2": 1.93,
+      "start_time": 1781990700
+    },
+    {
+      "game_id": 729591885,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Leon Shahbazyan",
+      "fighter2": "Levan Chokheli",
+      "odds_f1": 3.91,
+      "odds_f2": 1.24,
+      "start_time": 1781992200
+    },
+    {
+      "game_id": 728638870,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Gaston Bolanos",
+      "fighter2": "Michael Aswell",
+      "odds_f1": 4.35,
+      "odds_f2": 1.204,
+      "start_time": 1781993700
+    },
+    {
+      "game_id": 729280556,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Allan Nascimento",
+      "fighter2": "Mitch Raposo",
+      "odds_f1": 1.55,
+      "odds_f2": 2.394,
+      "start_time": 1781995200
+    },
+    {
+      "game_id": 728638868,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Beatriz Mesquita",
+      "fighter2": "Melissa Mullins",
+      "odds_f1": 1.129,
+      "odds_f2": 5.35,
+      "start_time": 1781996700
+    },
+    {
+      "game_id": 728638874,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Andre Luis Lima Cardoso",
+      "fighter2": "Kevin Borjas",
+      "odds_f1": 1.13,
+      "odds_f2": 5.9,
+      "start_time": 1781998500
+    },
+    {
+      "game_id": 728641467,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Andre Fili",
+      "fighter2": "Vinicius Oliveira",
+      "odds_f1": 3.42,
+      "odds_f2": 1.295,
+      "start_time": 1782000000
+    },
+    {
+      "game_id": 728640489,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Melsik Bagdasaryan",
+      "fighter2": "Murtazali Magomedov",
+      "odds_f1": 3.76,
+      "odds_f2": 1.28,
+      "start_time": 1782002400
+    },
+    {
+      "game_id": 728638865,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Hyder Amil",
+      "fighter2": "Christian Rodriguez",
+      "odds_f1": 2.544,
+      "odds_f2": 1.53,
+      "start_time": 1782004200
+    },
+    {
+      "game_id": 728832643,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Ion Cutelaba",
+      "fighter2": "Navajo Stirling",
+      "odds_f1": 3.625,
+      "odds_f2": 1.295,
+      "start_time": 1782006000
+    },
+    {
+      "game_id": 728638872,
+      "event_name": "UFC Fight Night. 21.06.26",
+      "league_id": 3015965,
+      "fighter1": "Manel Kape",
+      "fighter2": "Kyoji Horiguchi",
+      "odds_f1": 1.62,
+      "odds_f2": 2.316,
+      "start_time": 1782007200
+    },
+    {
+      "game_id": 730608213,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Farman Hasanov",
+      "fighter2": "Eric Nolan",
+      "odds_f1": 1.611,
+      "odds_f2": 2.32,
+      "start_time": 1782561600
+    },
+    {
+      "game_id": 730607632,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Bekzat Almakhan",
+      "fighter2": "Jean Matsumoto",
+      "odds_f1": 2.188,
+      "odds_f2": 1.684,
+      "start_time": 1782565200
+    },
+    {
+      "game_id": 730618764,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Daniil Donchenko",
+      "fighter2": "Theodor Berggren",
+      "odds_f1": 1.193,
+      "odds_f2": 4.7,
+      "start_time": 1782567600
+    },
+    {
+      "game_id": 730608227,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Andrey Pulyaev",
+      "fighter2": "Nursulton Ruziboev",
+      "odds_f1": 2.857,
+      "odds_f2": 1.425,
+      "start_time": 1782568800
+    },
+    {
+      "game_id": 730607621,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Kaan Ofli",
+      "fighter2": "Javier Reyes",
+      "odds_f1": 2.259,
+      "odds_f2": 1.642,
+      "start_time": 1782568800
+    },
+    {
+      "game_id": 730633410,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "AbdulRakhman Yakhyaev",
+      "fighter2": "Julius Walker",
+      "odds_f1": 1.208,
+      "odds_f2": 4.485,
+      "start_time": 1782571200
+    },
+    {
+      "game_id": 730607634,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Abusupiyan Magomedov",
+      "fighter2": "Michal Oleksiejczuk",
+      "odds_f1": 1.684,
+      "odds_f2": 2.188,
+      "start_time": 1782576000
+    },
+    {
+      "game_id": 730607623,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Ikram Aliskerov",
+      "fighter2": "Brunno Ferreira",
+      "odds_f1": 1.383,
+      "odds_f2": 3.035,
+      "start_time": 1782577800
+    },
+    {
+      "game_id": 730607625,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Asu Almabaev",
+      "fighter2": "Charles Johnson",
+      "odds_f1": 1.425,
+      "odds_f2": 2.857,
+      "start_time": 1782579600
+    },
+    {
+      "game_id": 730607631,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Nazim Sadykhov",
+      "fighter2": "Matheus Camilo",
+      "odds_f1": 1.425,
+      "odds_f2": 2.857,
+      "start_time": 1782581400
+    },
+    {
+      "game_id": 730608219,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Sharabutdin Magomedov",
+      "fighter2": "Michel Pereira",
+      "odds_f1": 1.28,
+      "odds_f2": 3.69,
+      "start_time": 1782583200
+    },
+    {
+      "game_id": 730576503,
+      "event_name": "UFC Fight Night. 27.06.26",
+      "league_id": 3017306,
+      "fighter1": "Rafael Fiziev",
+      "fighter2": "Manuel Torres",
+      "odds_f1": 1.801,
+      "odds_f2": 2.073,
+      "start_time": 1782585000
+    },
+    {
+      "game_id": 728388163,
+      "event_name": "UFC 329",
+      "league_id": 3003541,
+      "fighter1": "Lone'er Kavanagh",
+      "fighter2": "Brandon Royval",
+      "odds_f1": 1.507,
+      "odds_f2": 2.573,
+      "start_time": 1783818000
+    },
+    {
+      "game_id": 728388164,
+      "event_name": "UFC 329",
+      "league_id": 3003541,
+      "fighter1": "Gable Steveson",
+      "fighter2": "Elisha Ellison",
+      "odds_f1": 1.027,
+      "odds_f2": 11.7,
+      "start_time": 1783818900
+    },
+    {
+      "game_id": 722104365,
+      "event_name": "UFC 329",
+      "league_id": 3003541,
+      "fighter1": "Benoit Saint-Denis",
+      "fighter2": "Paddy Pimblett",
+      "odds_f1": 1.667,
+      "odds_f2": 2.305,
+      "start_time": 1783821600
+    },
+    {
+      "game_id": 728388970,
+      "event_name": "UFC 329",
+      "league_id": 3003541,
+      "fighter1": "Cory Sandhagen",
+      "fighter2": "Mario Bautista",
+      "odds_f1": 1.642,
+      "odds_f2": 2.259,
+      "start_time": 1783822200
+    },
+    {
+      "game_id": 722102275,
+      "event_name": "UFC 329",
+      "league_id": 3003541,
+      "fighter1": "Conor McGregor",
+      "fighter2": "Max Holloway",
+      "odds_f1": 2.865,
+      "odds_f2": 1.459,
+      "start_time": 1783825800
+    },
+    {
+      "game_id": 725859132,
+      "event_name": "UFC Fight Night. 25.07.26",
+      "league_id": 3010429,
+      "fighter1": "Umar Nurmagomedov",
+      "fighter2": "David Martinez",
+      "odds_f1": 1.1,
+      "odds_f2": 7.1,
+      "start_time": 1785006000
+    },
+    {
+      "game_id": 725859133,
+      "event_name": "UFC Fight Night. 25.07.26",
+      "league_id": 3010429,
+      "fighter1": "Magomed Ankalaev",
+      "fighter2": "Khalil Rountree",
+      "odds_f1": 1.23,
+      "odds_f2": 4.25,
+      "start_time": 1785009600
+    },
+    {
+      "game_id": 730576501,
+      "event_name": "UFC 330",
+      "league_id": 3020229,
+      "fighter1": "Mackenzie Dern",
+      "fighter2": "Gillian Robertson",
+      "odds_f1": 1.563,
+      "odds_f2": 2.537,
+      "start_time": 1786847400
+    },
+    {
+      "game_id": 730575788,
+      "event_name": "UFC 330",
+      "league_id": 3020229,
+      "fighter1": "Islam Makhachev",
+      "fighter2": "Ian Garry",
+      "odds_f1": 1.335,
+      "odds_f2": 3.51,
+      "start_time": 1786849200
+    },
+    {
+      "game_id": 684993649,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Tom Aspinall",
+      "fighter2": "Ciryl Gane",
+      "odds_f1": 1.635,
+      "odds_f2": 2.347,
+      "start_time": 1798675200
+    },
+    {
+      "game_id": 684285728,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Alex Pereira",
+      "fighter2": "Israel Adesanya",
+      "odds_f1": 1.945,
+      "odds_f2": 1.883,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 684986496,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Alex Pereira",
+      "fighter2": "Jon Jones",
+      "odds_f1": 2.892,
+      "odds_f2": 1.437,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 684986499,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Alex Pereira",
+      "fighter2": "Carlos Ulberg",
+      "odds_f1": 1.489,
+      "odds_f2": 2.713,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 684986498,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Alexandre Pantoja",
+      "fighter2": "Joshua Van",
+      "odds_f1": 1.749,
+      "odds_f2": 2.144,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 684986497,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Bo Nickal",
+      "fighter2": "Khamzat Chimaev",
+      "odds_f1": 3.415,
+      "odds_f2": 1.334,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 720450724,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Brandon Moreno",
+      "fighter2": "Deiveson Figueiredo",
+      "odds_f1": 1.841,
+      "odds_f2": 1.998,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 720453276,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Dustin Poirier",
+      "fighter2": "Michael Chandler",
+      "odds_f1": 1.489,
+      "odds_f2": 2.713,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 679112978,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Ilia Topuria",
+      "fighter2": "Arman Tsarukyan",
+      "odds_f1": 1.74,
+      "odds_f2": 2.179,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 684285729,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Ilia Topuria",
+      "fighter2": "Bryce Mitchell",
+      "odds_f1": 1.396,
+      "odds_f2": 3.1,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 679112965,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Islam Makhachev",
+      "fighter2": "Beneil Dariush",
+      "odds_f1": 1.21,
+      "odds_f2": 4.805,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 679112966,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Islam Makhachev",
+      "fighter2": "Ilia Topuria",
+      "odds_f1": 1.18,
+      "odds_f2": 5.4,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 679112968,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Islam Makhachev",
+      "fighter2": "Khamzat Chimaev",
+      "odds_f1": 2.276,
+      "odds_f2": 1.68,
+      "start_time": 1798693200
+    },
+    {
+      "game_id": 679112974,
+      "event_name": "Prospective fights",
+      "league_id": 1826608,
+      "fighter1": "Islam Makhachev",
+      "fighter2": "Charles Oliveira",
+      "odds_f1": 1.13,
+      "odds_f2": 6.5,
+      "start_time": 1798693200
+    }
+  ]
+}

@@ -281,7 +281,22 @@ function _generateFallbackBets(p1, p2, surface, elo1, elo2, metrics1, metrics2, 
   bets[3].analyse = `Les deux joueurs devraient remporter au moins un jeu sur ${surface || 'cette surface'}`;
   bets[4].analyse = `Pari combiné joueur ${p1} + under games basé sur domination service`;
 
-  return bets;
+  // Ajouter risque et recommandé
+  return bets.map(function(b, idx) {
+    var c = b.confidence || 5;
+    var risk;
+    if (c >= 8) risk = 'FAIBLE';
+    else if (c >= 6) risk = 'MODERE';
+    else risk = 'ELEVE';
+    return {
+      type: b.type,
+      cote: b.cote,
+      confidence: b.confidence,
+      analyse: b.analyse,
+      risk: risk,
+      recommended: idx === 0 && c >= 6
+    };
+  });
 }
 
 // ─── Point d'entrée principal ─────────────────────────────────────────────────
