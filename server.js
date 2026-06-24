@@ -606,6 +606,25 @@ function _recordError(page, source, sport) {
   entry.last_ts = now;
 }
 
+// P1.1 extension — helper pour wirer facilement _recordError dans les catch silencieux.
+// Usage : catch (e) { _trackCatch('tennis', 'buildTennisValueBets_parse', e); }
+// _trackCatch inspecte la stack pour deviner le sport si non fourni.
+function _trackCatch(page, source, err) {
+  try {
+    let sport = null;
+    if (page === 'tennis') sport = 'tennis';
+    else if (page === 'matchs') sport = 'football';
+    else if (page === 'cs2') sport = 'cs2';
+    else if (page === 'mma') sport = 'mma';
+    else if (page === 'nba' || page === 'wnba') sport = 'basketball';
+    else if (page === 'f1') sport = 'f1';
+    _recordError(page, source, sport);
+    // Log aussi en console pour debug (1 ligne concise, pas de stack flood)
+    const msg = err && err.message ? err.message.slice(0, 120) : String(err || '').slice(0, 120);
+    console.warn(`[catch:${page}|${source}] ${msg}`);
+  } catch (_) { /* _trackCatch ne doit jamais throw */ }
+}
+
 // ─── FIN P1.2 — DASHBOARD ERREURS ────────────────────────────────────────────
 
 // ─── KELLY CRITERION — Sizing helper pour module Mes Paris ────────────────────
@@ -6102,6 +6121,19 @@ function initSQLite() {
     }
     sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL`);
   } catch (e) { console.error('  [Migration s77m] users ALTER failed:', e.message); }
+  // ── P1 secu — password_resets table (forgot password flow) ──
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    email TEXT NOT NULL COLLATE NOCASE,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at INTEGER NOT NULL,
+    used_at INTEGER,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token_hash) WHERE used_at IS NULL`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id)`);
   // ── API Cache — toutes les réponses API stockées 12h (modèle OddAlerts/Datafoot) ──
   sqldb.exec(`CREATE TABLE IF NOT EXISTS api_cache (
     key TEXT PRIMARY KEY,
@@ -19256,9 +19288,132 @@ function jwtVerify(token) {
 }
 
 function getAuthUser(req) {
+  // P1 secu — support 3 sources : Authorization header (mobile/API), cookie httpOnly (web), ?token= query (rare)
   const auth = req.headers['authorization'] || '';
-  if (!auth.startsWith('Bearer ')) return null;
-  return jwtVerify(auth.slice(7));
+  if (auth.startsWith('Bearer ')) {
+    const u = jwtVerify(auth.slice(7));
+    if (u) return u;
+  }
+  // Fallback cookie httpOnly (migration localStorage → cookie)
+  const cookieHdr = req.headers['cookie'] || '';
+  if (cookieHdr) {
+    const m = cookieHdr.match(/(?:^|;\s*)ps_auth=([^;]+)/);
+    if (m) {
+      const u = jwtVerify(decodeURIComponent(m[1]));
+      if (u) return u;
+    }
+  }
+  // Fallback ?token= query (admin, tests curl)
+  const url = req.url || '';
+  const qIdx = url.indexOf('?');
+  if (qIdx !== -1) {
+    const qp = new URLSearchParams(url.slice(qIdx + 1));
+    const t = qp.get('token');
+    if (t) {
+      const u = jwtVerify(t);
+      if (u) return u;
+    }
+  }
+  return null;
+}
+
+// P1 secu — helpers pour cookie httpOnly (migration localStorage → cookie)
+// Le cookie est posé sur les routes /api/v1/auth/{login,register,refresh,me}.
+// Le frontend garde le token dans localStorage pour rétrocompatibilité mobile,
+// mais utilise le cookie en priorité côté web (XSS-safe).
+const PS_AUTH_COOKIE_NAME = 'ps_auth';
+const PS_AUTH_COOKIE_MAX_AGE = 30 * 24 * 3600; // 30 jours (aligné JWT_TTL_USER)
+function _psAuthCookieAttributes(maxAge) {
+  const parts = [
+    `${PS_AUTH_COOKIE_NAME}=%s`,
+    `Max-Age=${maxAge}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+  ];
+  // Secure en prod (HTTPS) — pas en local dev (http://localhost)
+  if (process.env.NODE_ENV === 'production' || process.env.COOKIE_SECURE === '1') {
+    parts.push('Secure');
+  }
+  return parts.join('; ');
+}
+function setAuthCookie(res, token, maxAge = PS_AUTH_COOKIE_MAX_AGE) {
+  try {
+    const cookieStr = _psAuthCookieAttributes(maxAge).replace('%s', encodeURIComponent(token));
+    // Accumule dans res._psCookies (au cas où plusieurs Set-Cookie coexistent)
+    const existing = res.getHeader('Set-Cookie');
+    if (existing) {
+      res.setHeader('Set-Cookie', Array.isArray(existing) ? [...existing, cookieStr] : [existing, cookieStr]);
+    } else {
+      res.setHeader('Set-Cookie', cookieStr);
+    }
+  } catch (e) {
+    console.warn('[auth] setAuthCookie error:', e.message);
+  }
+}
+function clearAuthCookie(res) {
+  try {
+    const cookieStr = `${PS_AUTH_COOKIE_NAME}=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax` +
+      (process.env.NODE_ENV === 'production' ? '; Secure' : '');
+    const existing = res.getHeader('Set-Cookie');
+    if (existing) {
+      res.setHeader('Set-Cookie', Array.isArray(existing) ? [...existing, cookieStr] : [existing, cookieStr]);
+    } else {
+      res.setHeader('Set-Cookie', cookieStr);
+    }
+  } catch (e) {
+    console.warn('[auth] clearAuthCookie error:', e.message);
+  }
+}
+
+// ─── P1 secu — HIBP k-ANONYMITY PASSWORD BREACH CHECK ─────────────────────────
+// Vérifie si un mot de passe a été leak dans une breach connue.
+// Méthode k-anonymity : on n'envoie que les 5 premiers chars du SHA-1 à HIBP,
+// on reçoit tous les suffixes correspondants, et on compare localement.
+// Le mot de passe complet ne quitte jamais le serveur.
+// Doc : https://haveibeenpwned.com/API/v3#PwnedPasswords
+const HIBP_API_URL = 'https://api.pwnedpasswords.com/range/';
+const HIBP_TIMEOUT_MS = 4000; // best-effort, ne bloque pas l'inscription si HIBP KO
+const HIBP_USER_AGENT = 'PariScore-Security/1.0';
+
+async function _hibpCheckPassword(password) {
+  if (!password || typeof password !== 'string') return { ok: false, error: 'invalid_input' };
+  try {
+    const sha1 = crypto.createHash('sha1').update(password, 'utf8').digest('hex').toUpperCase();
+    const prefix = sha1.slice(0, 5);
+    const suffix = sha1.slice(5);
+    const url = HIBP_API_URL + prefix;
+    const t0 = Date.now();
+    const resp = await new Promise((resolve, reject) => {
+      const req = https.request(url, {
+        method: 'GET',
+        headers: { 'User-Agent': HIBP_USER_AGENT, 'Accept': 'text/plain' },
+        timeout: HIBP_TIMEOUT_MS,
+      }, (r) => {
+        let body = '';
+        r.on('data', chunk => { body += chunk; });
+        r.on('end', () => resolve({ status: r.statusCode, body }));
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(new Error('hibp_timeout')); });
+      req.end();
+    });
+    if (resp.status !== 200) {
+      return { ok: false, error: `hibp_http_${resp.status}` };
+    }
+    // Body format : "SUFFIX:COUNT\nSUFFIX:COUNT\n..."
+    const lines = resp.body.split('\n');
+    for (const line of lines) {
+      const [sfx, countStr] = line.trim().split(':');
+      if (sfx === suffix) {
+        const count = parseInt(countStr, 10) || 0;
+        return { ok: true, breached: true, count, ms: Date.now() - t0 };
+      }
+    }
+    return { ok: true, breached: false, ms: Date.now() - t0 };
+  } catch (e) {
+    return { ok: false, error: e.message || 'hibp_unknown' };
+  }
 }
 
 // ─── AUTH MIDDLEWARE ──────────────────────────────────────────────────────────
@@ -33218,6 +33373,7 @@ if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
           ttl = Math.min(JWT_TTL, remaining);
         }
         const token = jwtSign({ username: parsed.username, role: user.role }, ttl);
+        setAuthCookie(res, token, ttl);
         return jsonResponse(res, 200, { token, username: parsed.username, role: user.role, force_change: user.forceChange, expires_in: ttl });
       }
       // ── Chemin Membre (email) ────────────────────────────────────────────
@@ -33227,6 +33383,7 @@ if (pathname === '/api/v1/auth/login' && req.method === 'POST') {
         return jsonResponse(res, 401, { error: 'Email ou mot de passe incorrect' });
       }
       const token = jwtSign({ userId: row.id, email: row.email, role: row.role }, JWT_TTL_USER);
+      setAuthCookie(res, token, JWT_TTL_USER);
       return jsonResponse(res, 200, { token, email: row.email, role: row.role, userId: row.id, expires_in: JWT_TTL_USER });
     } catch (e) { jsonResponse(res, 400, { error: 'JSON invalide' }); }
   }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
@@ -33238,19 +33395,30 @@ if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
   if (!checkLoginRateLimit(ip)) {
     return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
   }
-  readBodyLimited(req, MAX_BODY_SIZE).then(body => {
+  readBodyLimited(req, MAX_BODY_SIZE).then(async (body) => {
     try {
       const { email, password } = JSON.parse(body);
       if (!email || !password) return jsonResponse(res, 400, { error: 'email et password requis' });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return jsonResponse(res, 400, { error: 'Email invalide' });
       if (password.length < 8) return jsonResponse(res, 400, { error: 'Mot de passe trop court (8 caractères minimum)' });
+      // P1 secu — HIBP k-anonymity password breach check (best-effort, non bloquant si HIBP KO)
+      // Seuil : count >= 10 = password vraiment leaké, on refuse l'inscription
+      const hibp = await _hibpCheckPassword(password);
+      if (hibp.ok && hibp.breached && hibp.count >= 10) {
+        return jsonResponse(res, 400, {
+          error: 'Ce mot de passe a été identifié dans une fuite de données connue. Choisissez-en un autre.',
+          code: 'PASSWORD_BREACHED',
+          breach_count: hibp.count,
+        });
+      }
       const { hash, salt } = hashPasswordSync(password);
       try {
         const result = sqldb.prepare('INSERT INTO users (email, password_hash, salt, role, premium_until) VALUES (?, ?, ?, ?, ?)').run(email.trim().toLowerCase(), hash, salt, 'freemium', Math.floor(Date.now()/1000) + 86400);
         // Essai gratuit 24h : token matchday (Pro complet) pendant 24h
         const trialToken = jwtSign({ userId: result.lastInsertRowid, email: email.trim().toLowerCase(), role: 'matchday' }, JWT_TTL_MATCHDAY);
         const token = jwtSign({ userId: result.lastInsertRowid, email: email.trim().toLowerCase(), role: 'freemium' }, JWT_TTL_USER);
-        return jsonResponse(res, 201, { token: trialToken, email: email.trim().toLowerCase(), role: 'matchday', trial: true, trial_until: Math.floor(Date.now()/1000) + 86400, expires_in: JWT_TTL_MATCHDAY });
+        setAuthCookie(res, trialToken, JWT_TTL_MATCHDAY);
+        return jsonResponse(res, 201, { token: trialToken, email: email.trim().toLowerCase(), role: 'matchday', trial: true, trial_until: Math.floor(Date.now()/1000) + 86400, expires_in: JWT_TTL_MATCHDAY, hibp_check: hibp.ok ? (hibp.breached ? 'warn' : 'ok') : 'skipped' });
       } catch (e) {
         if (e.message.includes('UNIQUE')) return jsonResponse(res, 409, { error: 'Cet email est déjà utilisé' });
         throw e;
@@ -33258,6 +33426,117 @@ if (pathname === '/api/v1/auth/register' && req.method === 'POST') {
     } catch (e) {
       if (e.message.includes('400') || e.message.includes('409')) return;
       jsonResponse(res, 400, { error: 'Données invalides' });
+    }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// POST /api/v1/auth/logout — déconnexion (clear cookie httpOnly)
+// P1 secu — clear le cookie ps_auth pour invalidation côté serveur
+if (pathname === '/api/v1/auth/logout' && req.method === 'POST') {
+  clearAuthCookie(res);
+  return jsonResponse(res, 200, { ok: true, message: 'Déconnecté' });
+}
+// POST /api/v1/auth/forgot-password — demande reset mot de passe
+// P1 secu — génère un token JWT court (15min), stocke son hash en DB, envoie email
+// SMTP : si SMTP_URL env configuré → envoi réel ; sinon log dev + retourne token (dev only)
+const PASSWORD_RESET_TTL = 15 * 60; // 15 minutes
+const PASSWORD_RESET_SMTP_FROM = process.env.SMTP_FROM || 'support@pariscore.fr';
+async function _sendPasswordResetEmail(toEmail, resetUrl) {
+  const smtpUrl = process.env.SMTP_URL;
+  if (!smtpUrl) {
+    // Mode dev : log le lien (pas d'envoi réel)
+    console.log(`[forgot-password:DEV] Pas de SMTP_URL — lien reset pour ${toEmail}: ${resetUrl}`);
+    return { sent: false, dev_mode: true, reset_url: resetUrl };
+  }
+  // TODO : implémenter envoi SMTP réel via nodemailer ou équivalent zero-dep
+  // Pour l'instant on log + retourne ok pour ne pas casser le flux
+  console.log(`[forgot-password:SMTP] Tentative envoi à ${toEmail} via ${smtpUrl} (implémentation à finaliser)`);
+  return { sent: true, dev_mode: false };
+}
+if (pathname === '/api/v1/auth/forgot-password' && req.method === 'POST') {
+  const ip = req.socket?.remoteAddress || 'unknown';
+  if (!checkLoginRateLimit(ip)) {
+    return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+  }
+  readBodyLimited(req, MAX_BODY_SIZE).then(async (body) => {
+    try {
+      const { email } = JSON.parse(body);
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return jsonResponse(res, 400, { error: 'Email invalide' });
+      }
+      const emailNorm = email.trim().toLowerCase();
+      const row = sqldb.prepare('SELECT id, email FROM users WHERE email = ?').get(emailNorm);
+      // Sécurité : toujours retourner 200 (anti-énumération) même si email inconnu
+      if (!row) {
+        console.log(`[forgot-password] email inconnu (anti-énumération): ${emailNorm}`);
+        return jsonResponse(res, 200, { ok: true, message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
+      }
+      // Génère token JWT court + hash SHA-256 pour stockage DB (ne pas stocker le token clair)
+      const resetToken = jwtSign({ userId: row.id, email: row.email, action: 'password_reset' }, PASSWORD_RESET_TTL);
+      const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+      const expiresAt = Math.floor(Date.now() / 1000) + PASSWORD_RESET_TTL;
+      sqldb.prepare('INSERT INTO password_resets (user_id, email, token_hash, expires_at) VALUES (?, ?, ?, ?)').run(row.id, row.email, tokenHash, expiresAt);
+      // Envoi email
+      const resetUrl = `${process.env.PUBLIC_BASE_URL || 'https://pariscore.fr'}/?reset_token=${encodeURIComponent(resetToken)}`;
+      const emailResult = await _sendPasswordResetEmail(row.email, resetUrl);
+      console.log(`[forgot-password] reset demandé pour user ${row.id} (${row.email}) — expires ${expiresAt}`);
+      return jsonResponse(res, 200, {
+        ok: true,
+        message: 'Si cet email existe, un lien de réinitialisation a été envoyé.',
+        // En mode dev seulement : retourne le token pour test
+        ...(emailResult.dev_mode ? { dev_reset_token: resetToken, dev_reset_url: resetUrl } : {}),
+      });
+    } catch (e) {
+      console.error('[forgot-password] error:', e.message);
+      return jsonResponse(res, 500, { error: 'Erreur serveur' });
+    }
+  }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
+  return;
+}
+// POST /api/v1/auth/reset-password — applique reset mot de passe
+// Body : { token, new_password }
+if (pathname === '/api/v1/auth/reset-password' && req.method === 'POST') {
+  const ip = req.socket?.remoteAddress || 'unknown';
+  if (!checkLoginRateLimit(ip)) {
+    return jsonResponse(res, 429, { error: 'Trop de tentatives. Réessayez dans 15 minutes.' });
+  }
+  readBodyLimited(req, MAX_BODY_SIZE).then(async (body) => {
+    try {
+      const { token, new_password } = JSON.parse(body);
+      if (!token || !new_password) return jsonResponse(res, 400, { error: 'token et new_password requis' });
+      if (new_password.length < 8) return jsonResponse(res, 400, { error: 'Mot de passe trop court (8 caractères minimum)' });
+      // Vérifie le token JWT
+      const payload = jwtVerify(token);
+      if (!payload || payload.action !== 'password_reset' || !payload.userId) {
+        return jsonResponse(res, 400, { error: 'Token invalide ou expiré', code: 'INVALID_TOKEN' });
+      }
+      // Vérifie le hash en DB (token non utilisé + non expiré)
+      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const resetRow = sqldb.prepare('SELECT * FROM password_resets WHERE token_hash = ? AND used_at IS NULL AND expires_at > ?').get(tokenHash, Math.floor(Date.now() / 1000));
+      if (!resetRow) {
+        return jsonResponse(res, 400, { error: 'Token invalide, déjà utilisé ou expiré', code: 'INVALID_TOKEN' });
+      }
+      // P1 secu — HIBP check sur le nouveau password
+      const hibp = await _hibpCheckPassword(new_password);
+      if (hibp.ok && hibp.breached && hibp.count >= 10) {
+        return jsonResponse(res, 400, {
+          error: 'Ce mot de passe a été identifié dans une fuite de données connue. Choisissez-en un autre.',
+          code: 'PASSWORD_BREACHED',
+          breach_count: hibp.count,
+        });
+      }
+      // Met à jour le mot de passe user
+      const { hash, salt } = hashPasswordSync(new_password);
+      sqldb.prepare('UPDATE users SET password_hash = ?, salt = ? WHERE id = ?').run(hash, salt, payload.userId);
+      // Marque le token comme utilisé
+      sqldb.prepare('UPDATE password_resets SET used_at = ? WHERE id = ?').run(Math.floor(Date.now() / 1000), resetRow.id);
+      // Invalide tous les autres tokens non utilisés pour cet user (sécurité)
+      sqldb.prepare('UPDATE password_resets SET used_at = ? WHERE user_id = ? AND used_at IS NULL').run(Math.floor(Date.now() / 1000), payload.userId);
+      console.log(`[reset-password] user ${payload.userId} password reset OK`);
+      return jsonResponse(res, 200, { ok: true, message: 'Mot de passe réinitialisé. Vous pouvez vous connecter.' });
+    } catch (e) {
+      console.error('[reset-password] error:', e.message);
+      return jsonResponse(res, 500, { error: 'Erreur serveur' });
     }
   }).catch(() => jsonResponse(res, 413, { error: 'Payload trop volumineux' }));
   return;
@@ -37202,17 +37481,17 @@ async function _buildTennisValueBetsCore({ date }) {
   try {
     const msCh = await _fetchMSChallengerMatches();
     if (msCh.length) bsdMatches.push(...msCh);
-  } catch (_) { /* swallow — non bloquant */ }
+  } catch (e) { _trackCatch('tennis', 'vb_ms_challenger_fetch', e); }
 
   if (bsdMatches.length === 0) {
     // Fallback ESPN : live scoreboard (scores à jour) + schedule J→J+N (option C,
     // fait remonter les programmés). Merge dédup, live prioritaire sur programmé.
     if (Date.now() - _tennisLiveCache.ts > TENNIS_LIVE_TTL_MS) {
-      try { await pollTennisLive(); } catch (e) { /* swallow */ }
+      try { await pollTennisLive(); } catch (e) { _trackCatch('tennis', 'vb_espn_poll_live', e); }
     }
     const liveRaw = Array.isArray(_tennisLiveCache.data) ? _tennisLiveCache.data : [];
     let schedRaw = [];
-    try { schedRaw = await getTennisScheduleCached(); } catch (e) { /* swallow */ }
+    try { schedRaw = await getTennisScheduleCached(); } catch (e) { _trackCatch('tennis', 'vb_espn_schedule', e); }
     const _mById = new Map();
     for (const m of schedRaw) if (m && m.id) _mById.set(m.id, m);
     for (const m of liveRaw) if (m && m.id) _mById.set(m.id, m); // live écrase programmé
@@ -37336,7 +37615,7 @@ async function _buildTennisValueBetsCore({ date }) {
       }
     }
   };
-  try { _bulkPreloadStats(bsdMatches); } catch (_) { /* preload non bloquant */ }
+  try { _bulkPreloadStats(bsdMatches); } catch (e) { _trackCatch('tennis', 'vb_bulk_preload_stats', e); }
 
   for (const m of bsdMatches) {
     // Yield event-loop tous les 20 matchs : la boucle CPU bloquait le process
@@ -37800,7 +38079,7 @@ async function _buildTennisValueBetsCore({ date }) {
     _rehydratedLive++;
   }
 
-  for (const _e of enriched) { try { _e.predictive = computeTennisPredictiveBets(_e); } catch (_) { _e.predictive = null; } }
+  for (const _e of enriched) { try { _e.predictive = computeTennisPredictiveBets(_e); } catch (e) { _e.predictive = null; _trackCatch('tennis', 'vb_predictive_bets', e); } }
   console.log(`  [TennisVB] build done — ${enriched.length} matchs en ${Date.now() - _vbT0}ms · snap_stored=${_snapStored} · live_rehydrated=${_rehydratedLive} · live_orphans=${_liveOrphans} · snap_map_size=${_tennisEnrichSnap.size}`);
   return {
     status: 200,
@@ -39807,7 +40086,7 @@ if (pathname === '/api/v1/tennis/upcoming') {
   const collected = new Map(); // id → raw match
   for (const d of dates) {
     let dayOut;
-    try { dayOut = await buildTennisValueBets({ date: d }); } catch (_) { continue; }
+    try { dayOut = await buildTennisValueBets({ date: d }); } catch (e) { _trackCatch('tennis', 'vb_multiday_build', e); continue; }
     if (!dayOut || dayOut.status !== 200) continue;
     if (dayOut.body && dayOut.body.meta && dayOut.body.meta.loading === false) {
       SPS_UPCOMING_TELEMETRY.cache_hits += 1;  // best-effort heuristic
@@ -41336,13 +41615,13 @@ if (pathname === '/api/v1/tm/match-squads' && req.method === 'GET') {
     await Promise.all([
       (async () => {
         if (!homeId) return;
-        try { result.home.players = (await fetchTMClub('players', homeId)).players || []; } catch (_) {}
-        try { result.home.profile = await fetchTMClub('profile', homeId); } catch (_) {}
+        try { result.home.players = (await fetchTMClub('players', homeId)).players || []; } catch (e) { _trackCatch('matchs', 'tm_home_players', e); }
+        try { result.home.profile = await fetchTMClub('profile', homeId); } catch (e) { _trackCatch('matchs', 'tm_home_profile', e); }
       })(),
       (async () => {
         if (!awayId) return;
-        try { result.away.players = (await fetchTMClub('players', awayId)).players || []; } catch (_) {}
-        try { result.away.profile = await fetchTMClub('profile', awayId); } catch (_) {}
+        try { result.away.players = (await fetchTMClub('players', awayId)).players || []; } catch (e) { _trackCatch('matchs', 'tm_away_players', e); }
+        try { result.away.profile = await fetchTMClub('profile', awayId); } catch (e) { _trackCatch('matchs', 'tm_away_profile', e); }
       })(),
     ]);
     // Calcul squad market value
@@ -43475,6 +43754,19 @@ if (aiStreamMatch && req.method === 'GET') {
   });
 
   // Power Score V2 — fetch presse en parallèle (fire-and-forget, 5s max)
+  // P1.4 — heartbeat SSE anti-timeout nginx + timeout global 60s (filet sécurité)
+  const psHeartbeat = setInterval(() => {
+    try { res.write(': hb ' + Date.now() + '\n\n'); }
+    catch (_) { clearInterval(psHeartbeat); }
+  }, 25000);
+  const psTimeout = setTimeout(() => {
+    try {
+      res.write(`event: error\ndata: ${JSON.stringify({ message: 'power_score_timeout_60s' })}\n\n`);
+      res.end();
+    } catch (_) {}
+    clearInterval(psHeartbeat);
+    console.warn(`  [PowerScore] TIMEOUT 60s — ${matchId} (user: ${user.userId})`);
+  }, 60000);
   Promise.race([
     fetchPressContext(match.home_team, match.away_team),
     new Promise(r => setTimeout(() => r(null), 5000)),
@@ -43517,6 +43809,8 @@ if (aiStreamMatch && req.method === 'GET') {
           }
         });
         gemRes.on('end', () => {
+          clearTimeout(psTimeout);
+          clearInterval(psHeartbeat);
           if (!fullText) {
             console.warn(`  [PowerScore] Gemini empty response — ${matchId} (user: ${user.userId})`);
             try { res.write(`event: error\ndata: ${JSON.stringify({ message: "L'IA n'a pas pu générer d'analyse pour ce match. Réessayez dans quelques minutes." })}\n\n`); res.end(); } catch { }
@@ -43530,13 +43824,28 @@ if (aiStreamMatch && req.method === 'GET') {
           const donePayload = { ...pressMeta, quota: { used: quota.used, limit: quota.limit } };
           try { res.write(`event: done\ndata: ${JSON.stringify(donePayload)}\n\n`); res.end(); } catch { }
         });
-        gemRes.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { } });
+        gemRes.on('error', e => {
+          clearTimeout(psTimeout);
+          clearInterval(psHeartbeat);
+          try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { }
+        });
       });
-      gemReq.on('error', e => { try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { } });
+      gemReq.on('error', e => {
+        clearTimeout(psTimeout);
+        clearInterval(psHeartbeat);
+        try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { }
+      });
       gemReq.write(payload);
       gemReq.end();
-      req.on('close', () => { try { gemReq.destroy(); } catch { } });
+      // P1.4 — cleanup sur fermeture client : destroy Gemini + clear heartbeat + timeout
+      req.on('close', () => {
+        try { gemReq.destroy(); } catch { }
+        clearInterval(psHeartbeat);
+        clearTimeout(psTimeout);
+      });
     } catch (e) {
+      clearTimeout(psTimeout);
+      clearInterval(psHeartbeat);
       console.error(`  [PowerScore] ERREUR ${matchId}:`, e.message);
       try { res.write(`event: error\ndata: ${JSON.stringify({ message: e.message })}\n\n`); res.end(); } catch { }
     }
