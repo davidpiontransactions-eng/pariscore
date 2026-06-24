@@ -2339,7 +2339,7 @@ async function _refreshSofaDREvent(eventId) {
     const out = { ts: Date.now(), home: all.home, away: all.away, dr_home: all.dr_home, _periods: periods };
     _sofaDREvCache.set(eventId, out);
     return out;
-  } catch (_) { return null; }
+  } catch (_) { console.warn('[sofa] getSofascoreMatchDR', _?.message); return null; }
 }
 
 // Sert le DR exact en cache (non bloquant) ; déclenche un refresh async.
@@ -4581,7 +4581,7 @@ function getFlashscoreStandings(configId) {
     const d = JSON.parse(row.data || '{}');
     if (!Array.isArray(d.rows) || !d.rows.length) return null;
     return d;
-  } catch (_) { return null; }
+  } catch (_) { console.warn('[flashscore] getCachedStandings', _?.message); return null; }
 }
 
 // ─── Helper BSD Tennis : requête GET authentifiée ────────────────────────────
@@ -16853,7 +16853,7 @@ function rapidFreeToOddsApiFormat(rm, cfg) {
       status: st.started ? 'inprogress' : 'notstarted',
       bookmakers: [],
     };
-  } catch (_) { return null; }
+  } catch (_) { console.warn('[rapidfree] fetchRapidFreeFootballMatch', _?.message); return null; }
 }
 
 async function fetchRapidFreeFootballMatches(dateFrom, dateTo) {
@@ -37116,7 +37116,7 @@ async function _buildTennisValueBetsCore({ date }) {
       return sqldb.prepare(
         `SELECT atp_rank, wta_rank FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND tour = ? LIMIT 1`
       );
-    } catch (_) { return null; }
+    } catch (_) { console.warn('[vb] _stmtPlayerRank prepare', _?.message); return null; }
   })();
   const _getPlayerRank = (name, tour) => {
     if (!name || !tour || !_stmtPlayerRank) return null;
@@ -37589,7 +37589,7 @@ async function _buildTennisValueBetsCore({ date }) {
             days_since_last_match: _fatigue?.p2?.days_since_last || 14, travel_distance_km: _fatigue?.p2?.travel_km || 0,
             rankings: null, last_match_round: null
           }, aM, bM, { level: _tourN || 'ATP_500', country: m.tournament?.country || '' });
-        } catch (_) { return { srv_pts_won_s: null, ret_pts_won_s: null, h2h_surface: null, motivation: null, fatigue: null, public: null, atp_points_6m: null, age_30: null, bp_conv: null, bp_saved: null, pressure_index: null, srv_sparkline: null, ret_sparkline: null }; }
+        } catch (_) { console.warn('[vb] tennisMetrics IIFE', _?.message); return { srv_pts_won_s: null, ret_pts_won_s: null, h2h_surface: null, motivation: null, fatigue: null, public: null, atp_points_6m: null, age_30: null, bp_conv: null, bp_saved: null, pressure_index: null, srv_sparkline: null, ret_sparkline: null }; }
       })(),
     });
 
@@ -37853,7 +37853,7 @@ function computeTennisPredictiveBets(e) {
       kpi: { verdict, tone, conf_pct: conf && Number.isFinite(conf.accuracy) ? Math.round(conf.accuracy) : null },
       prematch: top,
     };
-  } catch (_) { return null; }
+  } catch (_) { console.warn('[vb] buildPredictionKPI', _?.message); return null; }
 }
 
 function toCanonicalTennisMatch(e) {
@@ -42478,9 +42478,9 @@ if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {
 
       // Paralléliser les 3 appels async lents (referee + météo + travel) → -1.5 à 3s latence
       const [_insReferee, _insWeather, _insTravel] = await Promise.all([
-        (async () => { try { return await fetchBSDRefereeForMatch(match); } catch (_) { return null; } })(),
-        (async () => { try { return await fetchWeatherForMatch(match); } catch (_) { return null; } })(),
-        (async () => { try { return await computeMatchTravelDistance(match); } catch (_) { return null; } })(),
+        (async () => { try { return await fetchBSDRefereeForMatch(match); } catch (_) { console.warn('[enrich] fetchReferee', _?.message); return null; } })(),
+        (async () => { try { return await fetchWeatherForMatch(match); } catch (_) { console.warn('[enrich] fetchWeather', _?.message); return null; } })(),
+        (async () => { try { return await computeMatchTravelDistance(match); } catch (_) { console.warn('[enrich] computeTravel', _?.message); return null; } })(),
       ]);
 
       jsonResponse(res, 200, {
