@@ -4288,6 +4288,69 @@ function stopTennisValueBets() {
 let _tnTop10Mode = 'viewer';
 let _tnTop10Timer = null;
 
+// [TIMESFM] Cache forecasts tennis — lookup par joueur + surface
+let _forecastTennisCache = null;   // [{entity_label, context, forecast, input_tail, point, trend_pct}]
+let _forecastFootballCache = null;
+let _forecastTimer = null;
+let _forecastCacheTTL = 300_000;   // 5min
+
+async function _fetchForecastCache(sport) {
+  if (sport === 'tennis' && _forecastTennisCache) return _forecastTennisCache;
+  if (sport === 'football' && _forecastFootballCache) return _forecastFootballCache;
+  try {
+    const res = await fetch('/api/v1/forecasts/' + sport + '?_=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const forecasts = json.forecasts || json || [];
+    // Build lookup map: entity_label+context -> { trend_pct, point, last_value }
+    const map = {};
+    for (const f of forecasts) {
+      const name = f.player || f.team || f.entity_label || '';
+      const ctx = f.surface || f.metric || f.context || '';
+      if (!name) continue;
+      const key = (name + '|' + ctx).toLowerCase();
+      const tail = f.input_tail || [];
+      const point = f.point || (Array.isArray(f.forecast_raw) && f.forecast_raw[0]) || f.forecast || [];
+      const lastVal = Array.isArray(tail) && tail.length > 0 ? tail[tail.length - 1] : null;
+      const finalVal = Array.isArray(point) && point.length > 0 ? point[point.length - 1] : null;
+      const trendPct = (lastVal && finalVal) ? Math.round((finalVal - lastVal) / lastVal * 100 * 10) / 10 : null;
+      map[key] = { trend_pct: trendPct, point: point, last_value: lastVal, forecast_final: finalVal };
+    }
+    if (sport === 'tennis') _forecastTennisCache = map;
+    else _forecastFootballCache = map;
+    return map;
+  } catch (e) {
+    console.warn('[TimesFM] Erreur chargement forecasts ' + sport + ':', e.message);
+    return {};
+  }
+}
+
+function _getPlayerForecast(name, surface) {
+  const map = _forecastTennisCache || {};
+  const key = ((name || '') + '|' + (surface || '')).toLowerCase();
+  return map[key] || null;
+}
+
+function _getTeamForecast(name) {
+  const map = _forecastFootballCache || {};
+  const key = ((name || '')).toLowerCase();
+  // Try exact match first, then startsWith
+  return map[key] || map[Object.keys(map).find(k => k.startsWith(key))] || null;
+}
+
+function _renderForecastBadge(fc) {
+  if (!fc || fc.trend_pct == null) return '';
+  const isUp = fc.trend_pct > 0;
+  const cls = isUp ? 'fc-badge-up' : 'fc-badge-down';
+  const arrow = isUp ? '&#9650;' : '&#9660;';
+  return '<span class="fc-badge ' + cls + '">' + arrow + ' ' + (isUp ? '+' : '') + fc.trend_pct + '%</span>';
+}
+
+function _renderForecastSparkline(fc, w, h) {
+  if (!fc || !fc.point || fc.point.length < 2) return '';
+  return _psSparkline(fc.point, w || 80, h || 20, fc.trend_pct > 0 ? '#10b981' : '#ef4444');
+}
+
 function _tnEsc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -4515,17 +4578,19 @@ function _tnTop10Card(m, rank) {
   <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
   ${liveScore}
   <div class="tn-t10-players">
-    <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc( (!m.player1 || m.player1 === '?') ? '—' : m.player1 )}</span>${r1}</div>
+    <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc( (!m.player1 || m.player1 === '?') ? '—' : m.player1 )}</span>${m.fc_p1 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p1)+'</span>' : ''}${r1}</div>
     <div class="tn-t10-vs">vs</div>
-    <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc( (!m.player2 || m.player2 === '?') ? '—' : m.player2 )}</span>${r2}</div>
+    <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc( (!m.player2 || m.player2 === '?') ? '—' : m.player2 )}</span>${m.fc_p2 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p2)+'</span>' : ''}${r2}</div>
   </div>
   ${surfacePill}
+  ${ m.fc_p1 && m.fc_p1.point && m.fc_p1.point.length > 1 ? '<div class="tn-t10-fc-line"><span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player1||'J1').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p1,80,16)+'</span>' : '' }
+  ${ m.fc_p2 && m.fc_p2.point && m.fc_p2.point.length > 1 ? '<span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player2||'J2').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p2,80,16)+'</span></div>' : '' }
   ${dateBadge}
+
   ${_tnTop10Mode === 'powerscore' ? '<div style="display:flex;gap:12px;justify-content:center;margin:8px 0;font-size:13px"><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p1)+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+(m.powerscore_p1!=null?m.powerscore_p1:'?')+'%</b></span><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p2)+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+(m.powerscore_p2!=null?m.powerscore_p2:'?')+'%</b></span></div>' : _tnProbBar(m.score_top10)}
   <div class="tn-t10-chips">
     <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
     ${chipsHtml}
-  </div>
   <button class="p-bets-btn" data-fixture-id="${safeId}" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" title="Bets prédictifs IA" aria-label="P_BETS">P_BETS</button>
   ${betsHtml}
   ${metricsHtml}
@@ -4709,6 +4774,17 @@ async function fetchTennisTop10() {
       container.innerHTML = '<div class="tn-t10-empty">Aucun match disponible pour le moment</div>';
       return;
     }
+        // [TimesFM] Preload forecast cache and enrich top10 matches
+    try {
+      var _fcMap = await _fetchForecastCache('tennis');
+      if (Object.keys(_fcMap).length > 0) {
+        for (var _fi = 0; _fi < top10.length; _fi++) {
+          var _fm = top10[_fi];
+          _fm.fc_p1 = _getPlayerForecast(_fm.player1, _fm.surface);
+          _fm.fc_p2 = _getPlayerForecast(_fm.player2, _fm.surface);
+        }
+      }
+    } catch(_fe) { /* TimesFM enrichment non-bloquant */ }
     _tnTop10AlertNewEntry(top10);
     container.innerHTML = top10.map(function(m, i) { return _tnTop10Card(m, i + 1); }).join('');
   } catch (err) {
@@ -4732,6 +4808,13 @@ function startTennisTop10() {
   fetchTennisTop10();
   if (_tnTop10Timer) clearInterval(_tnTop10Timer);
   _tnTop10Timer = setInterval(fetchTennisTop10, 60_000);
+  // [TimesFM] Preload forecast cache on start + polling 5min
+  _fetchForecastCache('tennis').catch(function(){});
+  if (_forecastTimer) clearInterval(_forecastTimer);
+  _forecastTimer = setInterval(function() {
+    _forecastTennisCache = null; // force refresh
+    _fetchForecastCache('tennis').catch(function(){});
+  }, 300_000);
 }
 
 function stopTennisTop10() {
@@ -30453,6 +30536,7 @@ async function loadFootAlerts() {
 
 
 }());
+
 
 
 
