@@ -22102,6 +22102,145 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
   }
 
 
+  /* -------------------------------------------------
+      FORECASTS TimesFM (tendances IA)
+      Routes pour les tendances generes par timesfm_forecast.py
+      Stockees dans la table timesfm_forecasts de pariscore.db
+      ------------------------------------------------- */
+
+  // GET /api/v1/forecasts/tennis?player=&surface=
+  if (pathname === '/api/v1/forecasts/tennis') {
+    try {
+      const player = query.player || '';
+      const surface = query.surface || '';
+      let sql = "SELECT * FROM timesfm_forecasts WHERE sport='tennis'";
+      const params = [];
+      if (player) { sql += ' AND entity_id = ?'; params.push(player); }
+      if (surface) { sql += ' AND context = ?'; params.push(surface); }
+      sql += ' ORDER BY entity_label, context';
+      const rows = sqldb.prepare(sql).all(...params);
+      const parsed = rows.map(r => ({
+        id: r.id,
+        sport: r.sport,
+        entity_type: r.entity_type,
+        entity_id: r.entity_id,
+        entity_label: r.entity_label,
+        context: r.context,
+        series_label: r.series_label,
+        horizon: r.horizon,
+        forecast: JSON.parse(r.forecast_raw || '[]'),
+        quantile_labels: r.quantile_labels ? JSON.parse(r.quantile_labels) : null,
+        input_tail: r.input_tail ? JSON.parse(r.input_tail) : null,
+        forecast_ts: r.forecast_ts,
+        expires_at: r.expires_at
+      }));
+      return jsonResponse(res, 200, parsed);
+    } catch (e) {
+      console.error('[Forecasts:Tennis]', e.message);
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
+  // GET /api/v1/forecasts/football?team=
+  if (pathname === '/api/v1/forecasts/football') {
+    try {
+      const team = query.team || '';
+      let sql = "SELECT * FROM timesfm_forecasts WHERE sport='football'";
+      const params = [];
+      if (team) { sql += ' AND entity_id = ?'; params.push(team); }
+      sql += ' ORDER BY entity_label';
+      const rows = sqldb.prepare(sql).all(...params);
+      const parsed = rows.map(r => ({
+        id: r.id,
+        sport: r.sport,
+        entity_type: r.entity_type,
+        entity_id: r.entity_id,
+        entity_label: r.entity_label,
+        context: r.context,
+        series_label: r.series_label,
+        horizon: r.horizon,
+        forecast: JSON.parse(r.forecast_raw || '[]'),
+        quantile_labels: r.quantile_labels ? JSON.parse(r.quantile_labels) : null,
+        forecast_ts: r.forecast_ts,
+        expires_at: r.expires_at
+      }));
+      return jsonResponse(res, 200, parsed);
+    } catch (e) {
+      console.error('[Forecasts:Football]', e.message);
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
+  // GET /api/v1/forecasts/tennis/trending?limit=10
+  if (pathname === '/api/v1/forecasts/tennis/trending') {
+    try {
+      const limit = parseInt(query.limit || '10', 10);
+      const rows = sqldb.prepare("SELECT * FROM timesfm_forecasts WHERE sport='tennis'").all();
+      const trends = [];
+      for (const r of rows) {
+        try {
+          const fr = JSON.parse(r.forecast_raw || '[]');
+          const tail = JSON.parse(r.input_tail || '[]');
+          if (!fr.length || !tail.length) continue;
+          const lastVal = tail[tail.length - 1];
+          const q50 = fr.length >= 3 ? fr[2] : fr[0];
+          if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
+          trends.push({
+            entity_id: r.entity_id,
+            entity_label: r.entity_label,
+            context: r.context,
+            series_label: r.series_label,
+            current: Math.round(lastVal * 10) / 10,
+            forecast: Math.round(q50 * 10) / 10,
+            delta: Math.round((q50 - lastVal) * 10) / 10
+          });
+        } catch (_) {}
+      }
+      trends.sort((a, b) => b.delta - a.delta);
+      const topUp = trends.slice(0, limit);
+      const topDown = trends.slice(-limit).reverse();
+      return jsonResponse(res, 200, { top_risers: topUp, top_decliners: topDown });
+    } catch (e) {
+      console.error('[Forecasts:Tennis:Trending]', e.message);
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
+  // GET /api/v1/forecasts/football/trending?limit=10
+  if (pathname === '/api/v1/forecasts/football/trending') {
+    try {
+      const limit = parseInt(query.limit || '10', 10);
+      const rows = sqldb.prepare("SELECT * FROM timesfm_forecasts WHERE sport='football'").all();
+      const trends = [];
+      for (const r of rows) {
+        try {
+          const fr = JSON.parse(r.forecast_raw || '[]');
+          const tail = JSON.parse(r.input_tail || '[]');
+          if (!fr.length || !tail.length) continue;
+          const lastVal = tail[tail.length - 1];
+          const q50 = fr.length >= 3 ? fr[2] : fr[0];
+          if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
+          trends.push({
+            entity_id: r.entity_id,
+            entity_label: r.entity_label,
+            context: r.context,
+            series_label: r.series_label,
+            current: Math.round(lastVal * 10) / 10,
+            forecast: Math.round(q50 * 10) / 10,
+            delta: Math.round((q50 - lastVal) * 10) / 10
+          });
+        } catch (_) {}
+      }
+      trends.sort((a, b) => b.delta - a.delta);
+      const topUp = trends.slice(0, limit);
+      const topDown = trends.slice(-limit).reverse();
+      return jsonResponse(res, 200, { top_risers: topUp, top_decliners: topDown });
+    } catch (e) {
+      console.error('[Forecasts:Football:Trending]', e.message);
+      return jsonResponse(res, 500, { error: e.message });
+    }
+  }
+
   // Fallback API interne
   return jsonResponse(res, 404, { error: 'Route inconnue: ' + pathname });
 }
@@ -44632,148 +44771,7 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
         }
     }
 
-    /* -------------------------------------------------
-       4d  FORECASTS TimesFM (tendances IA)
-       Routes pour les tendances generes par timesfm_forecast.py
-       Stockees dans la table timesfm_forecasts de pariscore.db
-       ------------------------------------------------- */
 
-    // GET /api/v1/forecasts/tennis?player=&surface=
-    if (pathname === '/api/v1/forecasts/tennis') {
-        try {
-            const player = query.player || '';
-            const surface = query.surface || '';
-            let sql = "SELECT * FROM timesfm_forecasts WHERE sport='tennis'";
-            const params = [];
-            if (player) { sql += ' AND entity_id = ?'; params.push(player); }
-            if (surface) { sql += ' AND context = ?'; params.push(surface); }
-            sql += ' ORDER BY entity_label, context';
-            const rows = sqldb.prepare(sql).all(...params);
-            const parsed = rows.map(r => ({
-                id: r.id,
-                sport: r.sport,
-                entity_type: r.entity_type,
-                entity_id: r.entity_id,
-                entity_label: r.entity_label,
-                context: r.context,
-                series_label: r.series_label,
-                horizon: r.horizon,
-                forecast: JSON.parse(r.forecast_raw || '[]'),
-                quantile_labels: r.quantile_labels ? JSON.parse(r.quantile_labels) : null,
-                input_tail: r.input_tail ? JSON.parse(r.input_tail) : null,
-                forecast_ts: r.forecast_ts,
-                expires_at: r.expires_at
-            }));
-            jsonResponse(res, 200, parsed);
-        } catch (e) {
-            console.error('[Forecasts:Tennis]', e.message);
-            jsonResponse(res, 500, { error: e.message });
-        }
-        return;
-    }
-
-    // GET /api/v1/forecasts/football?team=
-    if (pathname === '/api/v1/forecasts/football') {
-        try {
-            const team = query.team || '';
-            let sql = "SELECT * FROM timesfm_forecasts WHERE sport='football'";
-            const params = [];
-            if (team) { sql += ' AND entity_id = ?'; params.push(team); }
-            sql += ' ORDER BY entity_label';
-            const rows = sqldb.prepare(sql).all(...params);
-            const parsed = rows.map(r => ({
-                id: r.id,
-                sport: r.sport,
-                entity_type: r.entity_type,
-                entity_id: r.entity_id,
-                entity_label: r.entity_label,
-                context: r.context,
-                series_label: r.series_label,
-                horizon: r.horizon,
-                forecast: JSON.parse(r.forecast_raw || '[]'),
-                quantile_labels: r.quantile_labels ? JSON.parse(r.quantile_labels) : null,
-                forecast_ts: r.forecast_ts,
-                expires_at: r.expires_at
-            }));
-            jsonResponse(res, 200, parsed);
-        } catch (e) {
-            console.error('[Forecasts:Football]', e.message);
-            jsonResponse(res, 500, { error: e.message });
-        }
-        return;
-    }
-
-    // GET /api/v1/forecasts/tennis/trending?limit=10
-    if (pathname === '/api/v1/forecasts/tennis/trending') {
-        try {
-            const limit = parseInt(query.limit || '10', 10);
-            const rows = sqldb.prepare("SELECT * FROM timesfm_forecasts WHERE sport='tennis'").all();
-            const trends = [];
-            for (const r of rows) {
-                try {
-                    const fr = JSON.parse(r.forecast_raw || '[]');
-                    const tail = JSON.parse(r.input_tail || '[]');
-                    if (!fr.length || !tail.length) continue;
-                    const lastVal = tail[tail.length - 1];
-                    const q50 = fr.length >= 3 ? fr[2] : fr[0];
-                    if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
-                    trends.push({
-                        entity_id: r.entity_id,
-                        entity_label: r.entity_label,
-                        context: r.context,
-                        series_label: r.series_label,
-                        current: Math.round(lastVal * 10) / 10,
-                        forecast: Math.round(q50 * 10) / 10,
-                        delta: Math.round((q50 - lastVal) * 10) / 10
-                    });
-                } catch (_) {}
-            }
-            trends.sort((a, b) => b.delta - a.delta);
-            const topUp = trends.slice(0, limit);
-            const topDown = trends.slice(-limit).reverse();
-            jsonResponse(res, 200, { top_risers: topUp, top_decliners: topDown });
-        } catch (e) {
-            console.error('[Forecasts:Tennis:Trending]', e.message);
-            jsonResponse(res, 500, { error: e.message });
-        }
-        return;
-    }
-
-    // GET /api/v1/forecasts/football/trending?limit=10
-    if (pathname === '/api/v1/forecasts/football/trending') {
-        try {
-            const limit = parseInt(query.limit || '10', 10);
-            const rows = sqldb.prepare("SELECT * FROM timesfm_forecasts WHERE sport='football'").all();
-            const trends = [];
-            for (const r of rows) {
-                try {
-                    const fr = JSON.parse(r.forecast_raw || '[]');
-                    const tail = JSON.parse(r.input_tail || '[]');
-                    if (!fr.length || !tail.length) continue;
-                    const lastVal = tail[tail.length - 1];
-                    const q50 = fr.length >= 3 ? fr[2] : fr[0];
-                    if (typeof lastVal !== 'number' || typeof q50 !== 'number') continue;
-                    trends.push({
-                        entity_id: r.entity_id,
-                        entity_label: r.entity_label,
-                        context: r.context,
-                        series_label: r.series_label,
-                        current: Math.round(lastVal * 10) / 10,
-                        forecast: Math.round(q50 * 10) / 10,
-                        delta: Math.round((q50 - lastVal) * 10) / 10
-                    });
-                } catch (_) {}
-            }
-            trends.sort((a, b) => b.delta - a.delta);
-            const topUp = trends.slice(0, limit);
-            const topDown = trends.slice(-limit).reverse();
-            jsonResponse(res, 200, { top_risers: topUp, top_decliners: topDown });
-        } catch (e) {
-            console.error('[Forecasts:Football:Trending]', e.message);
-            jsonResponse(res, 500, { error: e.message });
-        }
-        return;
-    }
     /* -------------------------------------------------
        5️⃣  SERVIR LES FICHIERS STATIQUES (Front-end)
        ------------------------------------------------- */
