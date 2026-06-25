@@ -4368,7 +4368,8 @@ function _renderForecastSparkline(fc, w, h) {
 }
 
 function _tnEsc(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // H7 fix — échapper aussi l'apostrophe pour les contextes onclick='...'
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function _tnTop10SetMode(mode, btn) {
@@ -4404,13 +4405,17 @@ function _tnTop10Card(m, rank) {
   const scoreColor = m.score_top10 >= 70 ? 'high' : m.score_top10 >= 45 ? 'med' : '';
   const surfaceIcon = _tnTop10SurfaceIcon(m.surface);
 
-  // Live score row
+  // Live score row — M10 fix : placeholder si sets_live vide
   let liveScore = '';
-  if (m.is_live && m.sets_live && m.sets_live.length) {
-    const setsStr = m.sets_live.join('  ');
-    const setsLabel = (m.player1_sets != null && m.player2_sets != null)
-      ? ` (${m.player1_sets}-${m.player2_sets})` : '';
-    liveScore = `<div class="tn-t10-live-score">🔴 ${_tnEsc(setsStr)}${_tnEsc(setsLabel)}</div>`;
+  if (m.is_live) {
+    if (m.sets_live && m.sets_live.length) {
+      const setsStr = m.sets_live.join(' ');
+      const setsLabel = (m.player1_sets != null && m.player2_sets != null)
+        ? ` (${m.player1_sets}-${m.player2_sets})` : '';
+      liveScore = `<div class="tn-t10-live-score">🔴 ${_tnEsc(setsStr)} ${_tnEsc(setsLabel)}</div>`;
+    } else {
+      liveScore = `<div class="tn-t10-live-score">🔴 Score live en attente…</div>`;
+    }
   }
 
   // Player rank suffix
@@ -4418,8 +4423,9 @@ function _tnTop10Card(m, rank) {
   const r2 = m.rank_p2 ? `<span class="tn-t10-rank-badge">#${m.rank_p2}</span>` : '';
 
   // Confidence badge
+  // L13 fix — guard String() pour éviter crash si confidence_level est non-string
   const confBadge = m.confidence_level
-    ? `<span class="tn-t10-conf tn-t10-conf-${m.confidence_level.toLowerCase()}">${m.confidence_level}</span>` : '';
+    ? `<span class="tn-t10-conf tn-t10-conf-${String(m.confidence_level).toLowerCase()}">${_tnEsc(m.confidence_level)}</span>` : '';
 
   // Chips
   const chips = [];
@@ -4431,14 +4437,15 @@ function _tnTop10Card(m, rank) {
   if (m.movement_p2 === 'SHORTENING')  chips.push('📈 J2 steam');
   if (m.rlm)                           chips.push('⚡ RLM');
 
-  // Meta line
-  const meta = [surfaceIcon + ' ' + (m.surface || ''), m.round].filter(Boolean).join(' · ');
+  // M15 fix — variable 'meta' supprimée (jamais utilisée dans le template)
 
   // Explainability tooltip (title attr = accessible, zero JS needed)
   const d = m.dims || {};
+  // L9 fix — inclure la 6e dimension 'elo' dans le tooltip
   const tooltipText = m.tournament
     + (d.entropy  != null ? `\nÉquilibre: ${d.entropy}` : '')
     + (d.ev       != null ? `\nValeur EV: ${d.ev}` : '')
+    + (d.elo      != null ? `\nElo: ${d.elo}` : '')
     + (d.stakes   != null ? `\nPrestige: ${d.stakes}` : '')
     + (d.urgency  != null ? `\nUrgence: ${d.urgency}` : '')
     + (d.movement != null ? `\nMouvement: ${d.movement}` : '');
@@ -4448,14 +4455,14 @@ function _tnTop10Card(m, rank) {
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   // [FIX 2026-06-20] Fallback ui-avatars quand player_id manquant → cascade fixBrokenPlayerPhoto
   const av1 = m.player_id_p1
-    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)" >`
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p1)}" loading="lazy" decoding="async" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-player-id="${m.player_id_p1}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)" >`
     : (m.player1 && m.player1 !== '?'
-        ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player1)}&background=172132&color=fff&size=96" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+        ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player1)}&background=172132&color=fff&size=96" loading="lazy" decoding="async" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player1||'')}" data-name="${_tnEsc(m.player1||'')}" onerror="fixBrokenPlayerPhoto(this)">`
         : `<span style="width:48px;height:48px;border-radius:50%;background:var(--blue,#2196f3);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">?</span>`);
   const av2 = m.player_id_p2
-    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+    ? `<img src="${tennisPlayerPhotoURL(m.player_id_p2)}" loading="lazy" decoding="async" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-player-id="${m.player_id_p2}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
     : (m.player2 && m.player2 !== '?'
-        ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player2)}&background=172132&color=fff&size=96" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
+        ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(m.player2)}&background=172132&color=fff&size=96" loading="lazy" decoding="async" style="width:48px;height:48px;border-radius:50%;object-fit:cover;background:var(--bg4);flex-shrink:0;border:2px solid rgba(255,255,255,.08)" alt="${_tnEsc(m.player2||'')}" data-name="${_tnEsc(m.player2||'')}" onerror="fixBrokenPlayerPhoto(this)">`
         : `<span style="width:48px;height:48px;border-radius:50%;background:var(--violet,#9c27b0);display:flex;align-items:center;justify-content:center;font:700 16px/1 var(--font-mono);color:#fff;flex-shrink:0;border:2px solid rgba(255,255,255,.08)">?</span>`);
 
   const surfacePill = (m.surface || m.round)
@@ -4516,8 +4523,8 @@ function _tnTop10Card(m, rank) {
   var oddsHtml = '';
   if (m.odds_p1 && m.odds_p2) {
     oddsHtml = '<div class="tn-t10-odds-wrapper">'
-      + '<div class="tn-t10-odds-box" title="Cote ' + _tnEsc(m.player1||'J1') + '"><span class="tn-t10-odds-label">' + _tnEsc(m.player1||'J1').split(' ').pop() + '</span><span class="tn-t10-odds-value">' + Number(m.odds_p1).toFixed(2) + '</span></div>'
-      + '<div class="tn-t10-odds-box" title="Cote ' + _tnEsc(m.player2||'J2') + '"><span class="tn-t10-odds-label">' + _tnEsc(m.player2||'J2').split(' ').pop() + '</span><span class="tn-t10-odds-value">' + Number(m.odds_p2).toFixed(2) + '</span></div>'
+      + '<div class="tn-t10-odds-box" role="group" aria-label="Cote ' + _tnEsc(m.player1||'J1') + '" title="Cote ' + _tnEsc(m.player1||'J1') + '"><span class="tn-t10-odds-label">' + _tnEsc(m.player1||'J1').split(' ').pop() + '</span><span class="tn-t10-odds-value">' + Number(m.odds_p1).toFixed(2) + '</span></div>'
+      + '<div class="tn-t10-odds-box" role="group" aria-label="Cote ' + _tnEsc(m.player2||'J2') + '" title="Cote ' + _tnEsc(m.player2||'J2') + '"><span class="tn-t10-odds-label">' + _tnEsc(m.player2||'J2').split(' ').pop() + '</span><span class="tn-t10-odds-value">' + Number(m.odds_p2).toFixed(2) + '</span></div>'
       + '</div>';
   } else {
     oddsHtml = '<div class="tn-t10-odds-wrapper">'
@@ -4592,7 +4599,7 @@ function _tnTop10Card(m, rank) {
   // crash visuel complet (cartes illisibles, données écrasées).
   // Maintenant : flex column sur .tn-t10-card, avec .tn-t10-card-body en grid 2 col
   // (players | odds) pour isoler le layout des cotes à droite.
-  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')">
+  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" tabindex="0" role="button" aria-label="Match ${_tnEsc(m.player1||'J1')} vs ${_tnEsc(m.player2||'J2')}, score ${m.score_top10!=null?m.score_top10.toFixed(1):'—'}/100, ${reasonLabel}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')}">
   <div class="tn-t10-card-header">
     <div class="tn-t10-card-top">
       <span class="tn-t10-rank">#${rank}</span>
@@ -4610,8 +4617,17 @@ function _tnTop10Card(m, rank) {
         <div class="tn-t10-vs">vs</div>
         <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc( (!m.player2 || m.player2 === '?') ? '—' : m.player2 )}</span>${m.fc_p2 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p2)+'</span>' : ''}${r2}</div>
       </div>
-      ${ m.fc_p1 && m.fc_p1.point && m.fc_p1.point.length > 1 ? '<div class="tn-t10-fc-line"><span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player1||'J1').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p1,80,16)+'</span>' : '' }
-      ${ m.fc_p2 && m.fc_p2.point && m.fc_p2.point.length > 1 ? '<span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player2||'J2').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p2,80,16)+'</span></div>' : '' }
+      ${(() => {
+        // H2/H8 fix — template unique pour éviter div non fermé si un seul joueur a un forecast
+        const hasFc1 = m.fc_p1 && m.fc_p1.point && m.fc_p1.point.length > 1;
+        const hasFc2 = m.fc_p2 && m.fc_p2.point && m.fc_p2.point.length > 1;
+        if (!hasFc1 && !hasFc2) return '';
+        let html = '<div class="tn-t10-fc-line">';
+        if (hasFc1) html += '<span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player1||'J1').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p1,80,16)+'</span>';
+        if (hasFc2) html += '<span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player2||'J2').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p2,80,16)+'</span>';
+        html += '</div>';
+        return html;
+      })()}
       ${_tnTop10Mode === 'powerscore' ? '<div class="tn-t10-prob-row"><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p1)+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+(m.powerscore_p1!=null?m.powerscore_p1:'?')+'%</b></span><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p2)+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+(m.powerscore_p2!=null?m.powerscore_p2:'?')+'%</b></span></div>' : _tnProbBar(m.score_top10)}
     </div>
     <div class="tn-t10-odds-block">
@@ -4737,6 +4753,11 @@ async function fetchTennisTop10() {
   var statusEl  = document.getElementById('tn-top10-status');
   if (!container) return;
   
+  // H6 fix — AbortController pour annuler les requêtes concurrentes (mode switch mid-flight)
+  if (fetchTennisTop10._abort) { try { fetchTennisTop10._abort.abort(); } catch(_) {} }
+  fetchTennisTop10._abort = new AbortController();
+  var _abort = fetchTennisTop10._abort;
+  
   // Compteurs de retry et polling
   if (fetchTennisTop10._retry === undefined) fetchTennisTop10._retry = 0;
   if (fetchTennisTop10._errorCount === undefined) fetchTennisTop10._errorCount = 0;
@@ -4750,10 +4771,12 @@ async function fetchTennisTop10() {
       container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
     }
     
-    // Cache-busting
-    const res = await fetch(`/api/v1/tennis/top10?mode=${_tnTop10Mode}&_=${Date.now()}`);
+    // Cache-busting + signal AbortController
+    const res = await fetch(`/api/v1/tennis/top10?mode=${_tnTop10Mode}&_=${Date.now()}`, { signal: _abort.signal });
+    if (_abort.signal.aborted) return; // une requête plus récente a pris le relais
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
+    if (_abort.signal.aborted) return;
     
     // --- B1: Polling status "building" ---
     if (data && data.status === 'building') {
@@ -4788,6 +4811,11 @@ async function fetchTennisTop10() {
         container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Analyse en cours... (tentative ' + fetchTennisTop10._retry + '/5)</div>';
         setTimeout(fetchTennisTop10, delay);
         return;
+      } else {
+        // M11 fix — message explicite au lieu de "Aucun match disponible"
+        container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Cache en construction, réessaie dans 1 min…</div>';
+        if (statusEl) statusEl.textContent = 'Cache en construction';
+        return;
       }
     }
     fetchTennisTop10._retry = 0;
@@ -4817,6 +4845,19 @@ async function fetchTennisTop10() {
         }
       }
     } catch(_fe) { /* TimesFM enrichment non-bloquant */ }
+    // H6 fix — skip render si une requête plus récente a pris le relais
+    if (_abort.signal.aborted) return;
+    // M13 fix — skip render si le payload n'a pas changé (évite flicker + perte hover)
+    const _sig = JSON.stringify(top10.map(m => [m.matchId || m.id, m.score_top10, m.is_live, m.player1_sets, m.player2_sets, m.live_score]));
+    if (_sig === fetchTennisTop10._lastSig && container.innerHTML && !container.innerHTML.includes('tn-t10-loading') && !container.innerHTML.includes('tn-t10-empty')) {
+      // Skip render — données identiques, on juste update le status
+      if (statusEl) {
+        const t = new Date(data.computed_at || Date.now());
+        statusEl.textContent = (data.total_active || top10.length) + ' matchs · ' + String(t.getHours()).padStart(2,'0') + ':' + String(t.getMinutes()).padStart(2,'0');
+      }
+      return;
+    }
+    fetchTennisTop10._lastSig = _sig;
     _tnTop10AlertNewEntry(top10);
     container.innerHTML = top10.map(function(m, i) { return _tnTop10Card(m, i + 1); }).join('');
   } catch (err) {
@@ -4850,7 +4891,11 @@ function startTennisTop10() {
 }
 
 function stopTennisTop10() {
+  // M7 fix — clear aussi _forecastTimer pour éviter leak polling TimesFM
   if (_tnTop10Timer) { clearInterval(_tnTop10Timer); _tnTop10Timer = null; }
+  if (typeof _forecastTimer !== 'undefined' && _forecastTimer) { clearInterval(_forecastTimer); _forecastTimer = null; }
+  // H6 fix — abort toute requête fetch en cours
+  if (fetchTennisTop10._abort) { try { fetchTennisTop10._abort.abort(); } catch(_) {} fetchTennisTop10._abort = null; }
 }
 
 // Envoi prédiction IA → Discord (bouton 🤖 Top 10 + 📡 WOM) — bd 57f3
@@ -4875,15 +4920,15 @@ async function aiSendToDiscord(btn) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
     if (data.already_sent) {
-      if (typeof showNotification === 'function') showNotification('✅ Déjà envoyé sur Discord', 'green');
+      if (typeof showToast === 'function') showToast('✅ Déjà envoyé sur Discord', 'success');
     } else if (data.discord_sent) {
-      if (typeof showNotification === 'function') showNotification('✅ Prédiction envoyée sur Discord', 'green');
+      if (typeof showToast === 'function') showToast('✅ Prédiction envoyée sur Discord', 'success');
     } else {
-      if (typeof showNotification === 'function') showNotification('⚠ Prédiction générée mais webhook Discord indisponible', 'orange');
+      if (typeof showToast === 'function') showToast('⚠️ Prédiction générée mais webhook Discord indisponible', 'warning');
     }
   } catch (e) {
     console.warn('[aiSendToDiscord] erreur:', e.message);
-    if (typeof showNotification === 'function') showNotification('❌ Erreur : ' + (e.message || e), 'red');
+    if (typeof showToast === 'function') showToast('❌ Erreur : ' + (e.message || e), 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = btn.dataset.wasEmoji || '🤖';
@@ -25073,7 +25118,7 @@ async function openBillingPortal() {
       const d = await res.json();
       if (d && d.role && d.role.startsWith('pro')) {
         if (d.token_refreshed && d.token) psSetToken(d.token);
-        if (typeof showNotification === 'function') showNotification('Abonnement actif ! Bienvenue dans la version Pro.', 'green');
+        if (typeof showToast === 'function') showToast('Abonnement actif ! Bienvenue dans la version Pro.', 'success');
         if (typeof updateNavAuthState === 'function') updateNavAuthState();
         return;
       }
@@ -25100,7 +25145,7 @@ async function openBillingPortal() {
         localStorage.setItem(MATCHDAY_EXP, d.expires_at);
         sessionStorage.removeItem('ps_stripe_session');
         initMatchdayBanner();
-        showNotification('Matchday Pass active ! Acces Pro pendant 24h.', 'green');
+        showToast('Matchday Pass active ! Acces Pro pendant 24h.', 'success');
         return;
       }
     } catch(e) {}
@@ -26227,8 +26272,8 @@ document.addEventListener('keydown', function(e) {
     window._psAudio.enabled = !window._psAudio.enabled;
     localStorage.setItem('cf_audio_enabled', window._psAudio.enabled ? '1' : '0');
     if (window._psAudio.enabled) _psAudioUnlock();
-    if (typeof showNotification === 'function') {
-      showNotification(window._psAudio.enabled ? '🔊 ' + I18N.t('alerts.sound_on') : '🔇 ' + I18N.t('alerts.sound_off'), 'green');
+    if (typeof showToast === 'function') {
+      showToast(window._psAudio.enabled ? '🔊 ' + I18N.t('alerts.sound_on') : '🔇 ' + I18N.t('alerts.sound_off'), 'success');
     }
     document.querySelectorAll('[data-audio-toggle]').forEach(b => {
       b.textContent = window._psAudio.enabled ? '🔊' : '🔇';
@@ -27237,7 +27282,7 @@ function renderComparateur(d) {
       }
     } catch (e) {}
     try {
-      if (typeof showNotification === 'function') showNotification('Filtres appliqués', 'green');
+      if (typeof showToast === 'function') showToast('Filtres appliqués', 'success');
     } catch (e) {}
   };
   window.mfsSyncCount = function () {

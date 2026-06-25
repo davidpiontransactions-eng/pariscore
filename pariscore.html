@@ -4656,9 +4656,11 @@
     padding: 6px 18px; font-size: 0.7rem; font-weight: 800;
     letter-spacing: 0.8px; cursor: pointer;
     box-shadow: 0 2px 12px rgba(0,230,118,0.25);
-    transition: all 0.2s; width: 100%;
+    transition: all 0.2s;
+    width: auto;
+    flex-shrink: 0;
+    margin-left: auto;
     font-family: inherit; text-transform: uppercase;
-    grid-column: 1 / -1;
   }
   .p-bets-btn:hover {
     background: linear-gradient(135deg, #00e676, #69f0ae);
@@ -19830,7 +19832,13 @@ window.tn2SetupH2H = function() {
   }
 
   /* ═══ TENNIS TOP 10 CARDS — Premium Design v2 (contours nets, charte sombre) ═══ */
-  #tn2-top-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+  #tn2-top-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (max-width: 768px) {
+    #tn2-top-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  }
+  @media (max-width: 480px) {
+    #tn2-top-grid { gap: 10px !important; }
+  }
 
   /* ── HOTFIX v12.86 : Carte restructurée en 3 zones (header / body / footer) ──
      Avant : display:grid 2 colonnes sur .tn-t10-card → 12+ enfants en zigzag → crash visuel.
@@ -19843,7 +19851,7 @@ window.tn2SetupH2H = function() {
     padding: 16px !important;
     margin-bottom: 14px !important;
     box-shadow: 0 4px 12px rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,255,255,.02) !important;
-    transition: transform .2s ease, border-color .2s ease !important;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
@@ -19981,13 +19989,13 @@ window.tn2SetupH2H = function() {
     display: inline-flex; align-items: center; gap: 6px;
     font-family: 'Instrument Sans', sans-serif; font-size: 11px;
     font-weight: 800; color: #94a3b8; text-transform: uppercase;
-    letter-spacing: .05em; margin-bottom: 8px;
+    letter-spacing: .05em; margin-bottom: 0;
   }
 
   /* ── Barre de probabilité ── */
-  .tn-t10-prob-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tn-t10-prob-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
   .tn-t10-prob-bar { flex: 1; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
-  .tn-t10-prob-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #667eea, #a78bfa); transition: width .5s ease; }
+  .tn-t10-prob-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #0077ff, #00e676); transition: width .5s ease; }
   .tn-t10-prob-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3,#64748b); white-space: nowrap; }
 
   /* ── Badge date ── */
@@ -19999,7 +20007,7 @@ window.tn2SetupH2H = function() {
   }
 
   /* ── Confiance ── */
-  .tn-t10-conf { font-family: 'DM Mono', monospace; font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 5px; border-radius: 3px; border: 1px solid; }
+  .tn-t10-conf { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 5px; border-radius: 3px; border: 1px solid; }
   .tn-t10-conf-high   { background: rgba(0,230,118,.08); border-color: rgba(0,230,118,.3); color: #00e676; }
   .tn-t10-conf-medium { background: rgba(255,183,77,.08); border-color: rgba(255,183,77,.3); color: #ffb74d; }
   .tn-t10-conf-low, .tn-t10-conf-sparse { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); color: var(--text3,#64748b); }
@@ -20027,7 +20035,6 @@ window.tn2SetupH2H = function() {
   /* ── Odds box (colonne droite de la grid) — boîte chirurgicale ── */
   .tn-t10-odds-wrapper {
     display: flex; flex-direction: column; gap: 4px; align-items: flex-end;
-    grid-column: 2; grid-row: 1 / span 4;
   }
   .tn-t10-odds-box {
     background: #0e1420 !important;
@@ -20043,12 +20050,13 @@ window.tn2SetupH2H = function() {
     transition: all .15s ease !important;
   }
   .tn-t10-odds-box:hover {
-    background: #0055cc !important;
-    border-color: rgba(255,255,255,.2) !important;
+    background: #0077ff !important;
+    border-color: rgba(0,119,255,.4) !important;
+    box-shadow: 0 0 10px rgba(0,119,255,.35);
     cursor: pointer !important;
   }
   .tn-t10-odds-label {
-    font-family: 'DM Mono', monospace; font-size: 8px;
+    font-family: 'DM Mono', monospace; font-size: 10px;
     color: #94a3b8; text-transform: uppercase; letter-spacing: .04em;
   }
   .tn-t10-odds-value {
@@ -20057,7 +20065,7 @@ window.tn2SetupH2H = function() {
   }
 
   /* ── BETS PRÉDICTIFS ── */
-  .tn-t10-bets { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,.08); grid-column: 1 / -1; }
+  .tn-t10-bets { margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,.08); }
   .tn-t10-bets-head { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--text3,#64748b); margin-bottom: 6px; }
   .tn-t10-verdict { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 3px; border: 1px solid; }
   .tn-t10-verdict-strong { background: rgba(0,230,118,.12); border-color: rgba(0,230,118,.4); color: #00e676; }
@@ -20066,7 +20074,7 @@ window.tn2SetupH2H = function() {
   .tn-t10-bet-row { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; padding: 3px 0; }
   .tn-t10-bet-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text2,#94a3b8); }
   .tn-t10-bet-prob { color: var(--text1,#e8eaed); font-weight: 700; flex-shrink: 0; }
-  .tn-t10-bet-odds { color: #64b5f6; flex-shrink: 0; min-width: 46px; text-align: right; }
+  .tn-t10-bet-odds { color: #38bdf8; flex-shrink: 0; min-width: 46px; text-align: right; }
   .tn-t10-bet-odds.tn-t10-bet-fair { color: var(--text3,#64748b); font-style: italic; }
   .tn-t10-bet-ev { color: #00e676; font-weight: 700; flex-shrink: 0; }
 
@@ -23833,7 +23841,7 @@ body[data-page="mma"] footer { display: none !important; }
   color: var(--ps-text-primary);
   line-height: 1;
 }
-}
+
 
 /* ── Insight Trading Text (remplace valeurs brutes SERVICE/RETOUR) ── */
 .insight-metric-body {
@@ -24532,7 +24540,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-2"></script>
+<script src="/pariscore.js?v=250625-3"></script>
 <script>
 (function(){
 var b=document.createElement('div');
