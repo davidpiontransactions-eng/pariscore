@@ -4517,6 +4517,14 @@ function _tnTop10Card(m, rank) {
       <div class="tn-t10-bets-head">🎯 BETS PRÉDICTIFS ${verdictBadge}</div>
       ${rows}
     </div>`;
+  } else if (pred && pred.kpi && pred.kpi.verdict) {
+    // E11 fix — afficher le verdict même sans prematch (kpi seul)
+    const kpi = pred.kpi;
+    const verdictTone = String(kpi.tone || 'pass');
+    const verdictBadge = `<span class="tn-t10-verdict tn-t10-verdict-${_tnEsc(verdictTone)}">${_tnEsc(kpi.verdict)}${kpi.conf_pct != null ? ` · ${kpi.conf_pct}%` : ''}</span>`;
+    betsHtml = `<div class="tn-t10-bets">
+      <div class="tn-t10-bets-head">🎯 VERDICT ${verdictBadge}</div>
+    </div>`;
   }
 
   // ── Odds boxes (colonne droite, design chirurgical) ──
@@ -4628,7 +4636,16 @@ function _tnTop10Card(m, rank) {
         html += '</div>';
         return html;
       })()}
-      ${_tnTop10Mode === 'powerscore' ? '<div class="tn-t10-prob-row"><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p1)+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+(m.powerscore_p1!=null?m.powerscore_p1:'?')+'%</b></span><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p2)+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+(m.powerscore_p2!=null?m.powerscore_p2:'?')+'%</b></span></div>' : _tnProbBar(m.score_top10)}
+      ${_tnTop10Mode === 'powerscore' ? (() => {
+        // E10 fix — PowerScore null → afficher 'PS indispo' au lieu de barre 0% trompeuse
+        const ps1Null = m.powerscore_p1 == null;
+        const ps2Null = m.powerscore_p2 == null;
+        const ps1Bar = ps1Null ? '<span class="tn-t10-prob-bar"><span class="tn-t10-prob-fill" style="width:100%;background:rgba(255,255,255,.08)"></span></span>' : _tnProbBar(m.powerscore_p1);
+        const ps2Bar = ps2Null ? '<span class="tn-t10-prob-bar"><span class="tn-t10-prob-fill" style="width:100%;background:rgba(255,255,255,.08)"></span></span>' : _tnProbBar(m.powerscore_p2);
+        const ps1Val = ps1Null ? 'indispo' : m.powerscore_p1+'%';
+        const ps2Val = ps2Null ? 'indispo' : m.powerscore_p2+'%';
+        return '<div class="tn-t10-prob-row">'+ps1Bar+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+ps1Val+'</b> '+ps2Bar+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+ps2Val+'</b></div>';
+      })() : _tnProbBar(m.score_top10)}
     </div>
     <div class="tn-t10-odds-block">
       ${oddsHtml}
