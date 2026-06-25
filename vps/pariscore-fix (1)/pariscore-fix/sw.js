@@ -105,14 +105,7 @@
 // 'PAGE GUIDE / DOCUMENTATION' (manquait // commentaire). Sans ce fix, parser JS
 // reject tout le fichier → showPage non défini → navbar liens cassés. Bump cache
 // busting pariscore.js?v=250625-1 pour forcer reload navigateurs.
-// v38 (2026-06-25) : HOTFIX cards Top Matchs Tennis — restructuration 3 zones
-// (header/body/footer) au lieu de grid 2 col sur .tn-t10-card qui écrasait les
-// 12+ enfants en zigzag. Bump pariscore.js?v=250625-2.
-// v39 (2026-06-25) : Sprint audit TOP Tennis — 7 bugs HIGH + 12 bugs MED fixés
-// (H1 responsive mobile, H2 sparkline template, H3 p-bets-btn, H4 alias powerscore,
-// H5 showToast, H6 AbortController, H7 _tnEsc apostrophe, M1-M15 charte + perf + a11y).
-// Bump pariscore.js?v=250625-3.
-const CACHE_VERSION = 'v39';
+const CACHE_VERSION = 'v37';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

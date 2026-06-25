@@ -22090,8 +22090,7 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
   // GET /api/v1/tennis/top10?mode=viewer|bettor|pwscr
   if (pathname === '/api/v1/tennis/top10' && req.method === 'GET') {
     const _t10start = Date.now();
-    // H4 fix — accepter 'powerscore' comme alias de 'pwscr' (frontend envoie les deux)
-    const mode = query.mode === 'bettor' ? 'bettor' : (query.mode === 'pwscr' || query.mode === 'powerscore') ? 'pwscr' : 'viewer';
+    const mode = query.mode === 'bettor' ? 'bettor' : query.mode === 'pwscr' ? 'pwscr' : 'viewer';
     const ttl  = mode === 'bettor' ? _TN_TOP10_TTL_BETTOR : mode === 'pwscr' ? _TN_TOP10_TTL_PWSCR : _TN_TOP10_TTL_VIEWER;
     const now  = Date.now();
     const _rebuilding = !!globalThis.__top10RebuildPromise;
