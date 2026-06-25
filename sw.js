@@ -108,11 +108,11 @@
 // v38 (2026-06-25) : HOTFIX cards Top Matchs Tennis — restructuration 3 zones
 // (header/body/footer) au lieu de grid 2 col sur .tn-t10-card qui écrasait les
 // 12+ enfants en zigzag. Bump pariscore.js?v=250625-2.
-// v39 (2026-06-25) : Sprint audit TOP Tennis — 7 bugs HIGH + 12 bugs MED fixés
-// (H1 responsive mobile, H2 sparkline template, H3 p-bets-btn, H4 alias powerscore,
-// H5 showToast, H6 AbortController, H7 _tnEsc apostrophe, M1-M15 charte + perf + a11y).
-// Bump pariscore.js?v=250625-3.
-const CACHE_VERSION = 'v39';
+// v40 (2026-06-25) : Sprint audit TOP Tennis MED+LOW — 6 MED + 8 LOW fixes
+// (M8 startTennisTop10, M9 SWR AppCache, M12 ESC modales, M16 diversité, M17 status, M18 debounce toast,
+//  L1 responsive card-body, L2 ps-metrics-row, L5 prob-row dup, L10 aria-live, L11 métriques a11y,
+//  L16 disabled visuel, L17 focus outline). Bump pariscore.js?v=250625-4.
+const CACHE_VERSION = 'v40';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
