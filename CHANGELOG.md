@@ -1,5 +1,93 @@
 # PariScore — Journal des modifications
 
+## [v12.86] — 2026-06-25 — Sprint stabilisation P0/P1 + fix navbar critique
+
+### CRITIQUE — Fix navbar (bug production)
+- **Root cause** : commit e6a654a (24/06) a introduit une erreur de syntaxe fatale
+  dans pariscore.js ligne 24242 : `PAGE GUIDE / DOCUMENTATION` (manquait le
+  préfixe `//` commentaire). Parser JS reject tout le fichier → showPage non
+  défini → tous les liens navbar onclick="showPage(...)" ne répondent plus.
+- **Fix** : ajout `//` devant `PAGE GUIDE / DOCUMENTATION` (pariscore.js:24309)
+- **Cache busting** : `pariscore.html?v=240618-1` → `?v=250625-1` (force reload)
+- **Service worker** : `CACHE_VERSION = 'v36'` → `'v37'` (invalide precache)
+
+### Ajouté — Sprint stabilisation (14 tâches P0/P1/backlog)
+
+**P1.2 — Dashboard erreurs par onglet**
+- Nouvelle route `GET /api/v1/admin/error-dashboard[?clear=1]` (auth admin)
+- Helpers `_errorCounters` + `_inferErrorContext()` + `_recordError()` + `_trackCatch()`
+- 30 catch silencieux wirés (tennis + football + alerts)
+
+**P1.3 — Timeout Monte Carlo RG (beads cslx)**
+- Nouvelle fonction `_monteCarloEloFallback()` : approximation analytique O(n² × rounds)
+- `RG_WORKER_TIMEOUT_MS` : 30s → 60s (env overridable)
+- `RG_INLINE_FALLBACK_MAX_DRAW=64` : seuil bascule Elo analytique vs fallback inline
+
+**P1.4 — Audit SSE connection leak (rapport P1_4_SSE_AUDIT_REPORT.md)**
+- Deep Stream v2 : `req.on('close')` vide → heartbeat 25s + timeout 90s + cleanup
+- Power Score live : heartbeat 25s + timeout 60s + cleanup
+- Refactor `streamDeepWithProviders` : handle `{ abort() }` pour détruire requête Gemini
+- Frontend : cleanup EventSource `_rgLiveEs` / `_psLtsEs` sur navigation hors page
+
+**UI — Section Tendances du moment (beads x2ez)**
+- `_renderTrendingSection` : appelle `/api/v1/forecasts/{sport}/trending` (bonne route)
+- Switcher tennis/football dans `#page-tendances`
+
+**Sécurité — JWT → httpOnly cookie**
+- Cookie `ps_auth` : HttpOnly + SameSite=Lax + Secure (prod) + Max-Age=30j
+- `getAuthUser(req)` : support 3 sources (Bearer, cookie, ?token=)
+- Routes login + register + logout posent/clairent le cookie
+- Frontend : `apiFetch()` credentials:'include' + `psLogout()` appelle /auth/logout
+
+**Sécurité — HIBP k-anonymity password breach check**
+- Helper `_hibpCheckPassword()` via api.pwnedpasswords.com (seul prefix SHA-1 envoyé)
+- Wiré dans /auth/register + /auth/reset-password (refuse si count >= 10)
+
+**Sécurité — Route forgot-password + reset-password**
+- Table `password_resets` (token_hash UNIQUE, expires_at, used_at)
+- Anti-énumération : 200 même si email inconnu
+- Token JWT 15min + hash SHA-256 DB + invalidation autres tokens après usage
+
+**Sécurité — SMTP réel zero-dep (tls + crypto natifs)**
+- Client SMTP complet (EHLO, STARTTLS, AUTH PLAIN, DATA, QUIT)
+- Support smtps:// (port 465) + smtp:// (STARTTLS port 587)
+- Headers RFC 5322 + body dot-escaping (RFC 5321)
+
+**Sécurité — Rate limiting global API (reco #2 audit)**
+- 100 req/min/IP (env `API_RATE_LIMIT_MAX` overridable)
+- LRU cap 10k IPs, exempt SSE streams
+- Headers `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Window` sur 429
+
+**Sécurité — CORS Allow-Credentials (reco #3 audit)**
+- `jsonResponse()` + preflight OPTIONS : `Allow-Credentials: true`
+- Méthodes `DELETE, PATCH` ajoutées
+
+**Repository cleanup (reco #1 et #5 audit)**
+- Supprimé du tracking : cookies.txt, =, =1.20, *.bak, *.bak2, server_*.txt,
+  dr_response.json, cache_profiles.json, __pycache__/, 12 scripts debug one-shot
+- `.gitignore` enrichi avec patterns anti-récidive
+
+### Audit sécurité complet — SECURITY_AUDIT_REPORT.md
+- 12 domaines audités, score global 8.5/10, aucune vulnérabilité critique
+
+### Tests unitaires (4 fichiers scripts/)
+- test_monte_carlo_fallback.js, test_error_dashboard.js, test_hibp.js, test_smtp_parser.js
+
+### Nouveaux endpoints API (5)
+- `GET /api/v1/admin/error-dashboard[?clear=1]`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/reset-password`
+- Rate limiting global sur /api/* (429 si > 100 req/min/IP)
+
+### Env vars nouvelles (8)
+- RG_WORKER_TIMEOUT_MS (60000), RG_INLINE_FALLBACK_MAX_DRAW (64)
+- COOKIE_SECURE=1, SMTP_URL, SMTP_FROM, PUBLIC_BASE_URL
+- API_RATE_LIMIT_MAX (100)
+
+---
+
+
 ## [v12.85] — 2026-06-24 — TimesFM : fix bug routing + fix mediane trending
 
 ### Corrigé
@@ -26,7 +114,9 @@
 ## [v12.84] — 2026-06-20 — P_BETS : Win Probability Gauge + fix timeout critique
 
 ### Ajouté
-- **Win Probability Gauge** : jauge visuelle interactive dans la modale analyse Tennis TOP 10. Score composite normalisé (0-100%) basé sur 11 metrics pondérées (ELO, PowerScore, break/win, serveur, receveur, service games, retour, forme L10, urgent, dynamique, surface). Alias de champs (eturn_won_pct → eceive_index) pour compatibilité API. Détail dépliable avec critères.
+- **Win Probability Gauge** : jauge visuelle interactive dans la modale analyse Tennis TOP 10. Score composite normalisé (0-100%) basé sur 11 metrics pondérées (ELO, PowerScore, break/win, serveur, receveur, service games, retour, forme L10, urgent, dynamique, surface). Alias de champs (
+eturn_won_pct → 
+eceive_index) pour compatibilité API. Détail dépliable avec critères.
 - **CSS Premium Dark P_BETS** : redesign complet du modal — odds block, confidence gauge bar, palette sombre premium cohérente avec le design système --cf-*
 
 ### Corrigé
