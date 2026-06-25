@@ -4586,31 +4586,47 @@ function _tnTop10Card(m, rank) {
     // UI-3: placeholder quand metrics presents mais vides (Challenger/ITF)
     metricsHtml = '<div class="tn-t10-empty-metrics" style="margin-top:10px;padding:8px;background:rgba(255,255,255,0.03);border-radius:6px;font-size:11px;color:var(--ps-text-tertiary)">📊 Statistiques avancées indisponibles pour ce niveau de tournoi (circuit ATP/WTA requis).</div>';
   }
+  // ── HOTFIX v12.86 : restructuration card en 3 zones (header / body / footer) ──
+  // Avant : 12+ enfants directs dans .tn-t10-card avec display:grid 2 colonnes →
+  // les éléments se plaçaient en zigzag (joueurs col 1, surface col 2, etc.) →
+  // crash visuel complet (cartes illisibles, données écrasées).
+  // Maintenant : flex column sur .tn-t10-card, avec .tn-t10-card-body en grid 2 col
+  // (players | odds) pour isoler le layout des cotes à droite.
   return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')">
-  <div class="tn-t10-card-top">
-    <span class="tn-t10-rank">#${rank}</span>
-    <span class="tn-t10-score-badge ${scoreColor}">${m.score_top10 != null ? m.score_top10.toFixed(1) : '—'}<span>/100</span></span>
+  <div class="tn-t10-card-header">
+    <div class="tn-t10-card-top">
+      <span class="tn-t10-rank">#${rank}</span>
+      <span class="tn-t10-score-badge ${scoreColor}">${m.score_top10 != null ? m.score_top10.toFixed(1) : '—'}<span>/100</span></span>
+    </div>
+    <div class="tn-t10-tag-row">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
+    ${liveScore}
+    ${surfacePill}
+    ${dateBadge}
   </div>
-  <div style="display:flex;align-items:center;gap:4px;margin-bottom:6px;">${confBadge}<span class="tn-t10-tag ${tagCss}">${reasonLabel}</span></div>
-  ${liveScore}
-  <div class="tn-t10-players">
-    <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc( (!m.player1 || m.player1 === '?') ? '—' : m.player1 )}</span>${m.fc_p1 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p1)+'</span>' : ''}${r1}</div>
-    <div class="tn-t10-vs">vs</div>
-    <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc( (!m.player2 || m.player2 === '?') ? '—' : m.player2 )}</span>${m.fc_p2 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p2)+'</span>' : ''}${r2}</div>
+  <div class="tn-t10-card-body">
+    <div class="tn-t10-players-block">
+      <div class="tn-t10-players">
+        <div class="tn-t10-player">${av1}<span class="tn-t10-player-name">${_tnEsc( (!m.player1 || m.player1 === '?') ? '—' : m.player1 )}</span>${m.fc_p1 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p1)+'</span>' : ''}${r1}</div>
+        <div class="tn-t10-vs">vs</div>
+        <div class="tn-t10-player">${av2}<span class="tn-t10-player-name">${_tnEsc( (!m.player2 || m.player2 === '?') ? '—' : m.player2 )}</span>${m.fc_p2 ? '<span class="fc-inline">'+_renderForecastBadge(m.fc_p2)+'</span>' : ''}${r2}</div>
+      </div>
+      ${ m.fc_p1 && m.fc_p1.point && m.fc_p1.point.length > 1 ? '<div class="tn-t10-fc-line"><span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player1||'J1').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p1,80,16)+'</span>' : '' }
+      ${ m.fc_p2 && m.fc_p2.point && m.fc_p2.point.length > 1 ? '<span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player2||'J2').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p2,80,16)+'</span></div>' : '' }
+      ${_tnTop10Mode === 'powerscore' ? '<div class="tn-t10-prob-row"><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p1)+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+(m.powerscore_p1!=null?m.powerscore_p1:'?')+'%</b></span><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p2)+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+(m.powerscore_p2!=null?m.powerscore_p2:'?')+'%</b></span></div>' : _tnProbBar(m.score_top10)}
+    </div>
+    <div class="tn-t10-odds-block">
+      ${oddsHtml}
+    </div>
   </div>
-  ${surfacePill}
-  ${ m.fc_p1 && m.fc_p1.point && m.fc_p1.point.length > 1 ? '<div class="tn-t10-fc-line"><span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player1||'J1').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p1,80,16)+'</span>' : '' }
-  ${ m.fc_p2 && m.fc_p2.point && m.fc_p2.point.length > 1 ? '<span class="tn-t10-fc-single"><span class="tn-t10-fc-label">'+_tnEsc(m.player2||'J2').split(' ').pop()+'</span>'+_renderForecastSparkline(m.fc_p2,80,16)+'</span></div>' : '' }
-  ${dateBadge}
-
-  ${_tnTop10Mode === 'powerscore' ? '<div style="display:flex;gap:12px;justify-content:center;margin:8px 0;font-size:13px"><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p1)+' <b>'+_tnEsc(m.player1||'J1').split(' ').pop()+' '+(m.powerscore_p1!=null?m.powerscore_p1:'?')+'%</b></span><span class="tn-t10-prob">'+_tnProbBar(m.powerscore_p2)+' <b>'+_tnEsc(m.player2||'J2').split(' ').pop()+' '+(m.powerscore_p2!=null?m.powerscore_p2:'?')+'%</b></span></div>' : _tnProbBar(m.score_top10)}
-  <div class="tn-t10-chips">
-    <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
-    ${chipsHtml}
-  <button class="p-bets-btn" data-fixture-id="${safeId}" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" title="Bets prédictifs IA" aria-label="P_BETS">P_BETS</button>
-  ${betsHtml}
-  ${metricsHtml}
-  ${oddsHtml}
+  <div class="tn-t10-card-footer">
+    <div class="tn-t10-chips">
+      <button class="tn-t10-ai" data-p1="${_tnEsc(m.player1||'')}" data-p2="${_tnEsc(m.player2||'')}" data-tournament="${_tnEsc(m.tournament||'')}" data-surface="${_tnEsc(m.surface||'')}" data-source="top10" onclick="event.stopPropagation();aiSendToDiscord(this)" title="Prédiction IA → Discord" aria-label="Prédiction IA Discord">🎯</button>
+      ${chipsHtml}
+      <button class="p-bets-btn" data-fixture-id="${safeId}" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" title="Bets prédictifs IA" aria-label="P_BETS">P_BETS</button>
+    </div>
+    ${betsHtml}
+    ${metricsHtml}
+  </div>
 </div>`;
 }
 

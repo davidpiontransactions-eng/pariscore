@@ -19832,7 +19832,9 @@ window.tn2SetupH2H = function() {
   /* ═══ TENNIS TOP 10 CARDS — Premium Design v2 (contours nets, charte sombre) ═══ */
   #tn2-top-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
 
-  /* ── Carte principale : fond double-teinte, contour néon, ombre encastrée ── */
+  /* ── HOTFIX v12.86 : Carte restructurée en 3 zones (header / body / footer) ──
+     Avant : display:grid 2 colonnes sur .tn-t10-card → 12+ enfants en zigzag → crash visuel.
+     Maintenant : flex column sur la carte, grid 2 col isolée dans .tn-t10-card-body. */
   .tn-t10-card {
     background: linear-gradient(145deg, #182030, #121824) !important;
     border: 1px solid rgba(255,255,255,.08) !important;
@@ -19842,9 +19844,9 @@ window.tn2SetupH2H = function() {
     margin-bottom: 14px !important;
     box-shadow: 0 4px 12px rgba(0,0,0,.5), inset 1px 1px 0 rgba(255,255,255,.02) !important;
     transition: transform .2s ease, border-color .2s ease !important;
-    display: grid !important;
-    grid-template-columns: 1fr auto !important;
-    align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
     box-sizing: border-box !important;
     cursor: pointer !important;
     position: relative !important;
@@ -19863,10 +19865,19 @@ window.tn2SetupH2H = function() {
   .tn-t10-card[data-reason="DRAMA"]    {border-left-color:#ce93d8!important}
   .tn-t10-card[data-reason="UPSET"]    {border-left-color:#00bcd4!important}
 
-  /* ── Bloc info (colonne de gauche dans la grid) ── */
+  /* ── Zone header (full width) : rank, score, tag, surface, date ── */
+  .tn-t10-card-header {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding-bottom: 10px !important;
+    border-bottom: 1px solid rgba(255,255,255,.05) !important;
+  }
   .tn-t10-card-top {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 6px; grid-column: 1 / -1;
+    display: flex !important; align-items: center !important; justify-content: space-between !important;
+  }
+  .tn-t10-tag-row {
+    display: flex !important; align-items: center !important; gap: 6px !important;
   }
   .tn-t10-rank {
     font-family: 'DM Mono', monospace; font-size: 13px;
@@ -19879,6 +19890,38 @@ window.tn2SetupH2H = function() {
   .tn-t10-score-badge span { font-size: 11px; color: var(--text3,#64748b); font-weight: 400; }
   .tn-t10-score-badge.high { color: #00e676; }
   .tn-t10-score-badge.med  { color: #fbbf24; }
+
+  /* ── Zone body (grid 2 col : players | odds) ── */
+  .tn-t10-card-body {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 16px !important;
+    align-items: center !important;
+  }
+  .tn-t10-players-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+  }
+  .tn-t10-odds-block {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    padding-left: 16px !important;
+    border-left: 1px solid rgba(255,255,255,.05) !important;
+    align-self: stretch !important;
+    justify-content: center !important;
+  }
+
+  /* ── Zone footer (full width) : chips, bets, metrics ── */
+  .tn-t10-card-footer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(255,255,255,.05) !important;
+  }
 
   /* ── Tag de raison (VALEUR, EN DIRECT, etc.) ── */
   .tn-t10-tag {
@@ -19897,12 +19940,12 @@ window.tn2SetupH2H = function() {
   /* ── Live score ── */
   .tn-t10-live-score {
     font-family: 'DM Mono', monospace; font-size: 14px; color: #f44336;
-    font-weight: 700; margin-bottom: 6px; white-space: nowrap;
+    font-weight: 700; margin-bottom: 0; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
   }
 
-  /* ── Zone joueurs (gauche de la grid) ── */
-  .tn-t10-players { margin-bottom: 8px; }
+  /* ── Zone joueurs (gauche de la grid body) ── */
+  .tn-t10-players { margin-bottom: 0; }
   .tn-t10-player { display: flex; align-items: center; gap: 12px; line-height: 1.6; min-width: 0; }
   .tn-t10-player-name {
     font-family: 'Instrument Sans', sans-serif; font-size: 16px;
@@ -19910,6 +19953,7 @@ window.tn2SetupH2H = function() {
     overflow: hidden; text-overflow: ellipsis; min-width: 0;
   }
   .tn-t10-vs { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b); margin: 3px 0; }
+  .tn-t10-prob-row { display: flex; gap: 12px; justify-content: center; margin: 6px 0 0 0; font-size: 13px; }
   /* ── TimesFM Forecast Badges ── */
   .fc-badge { display:inline-flex; align-items:center; gap:2px; font-size:11px; font-weight:700; padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; line-height:1.4; }
   .fc-badge-up { color:#10b981; background:rgba(16,185,129,0.15); }
@@ -19919,6 +19963,11 @@ window.tn2SetupH2H = function() {
   .tn-t10-fc-single { display:inline-flex; align-items:center; gap:4px; }
   .tn-t10-fc-label { font-size:10px; color:var(--text2,#8d9399); }
   .tn-t10-rank-badge {
+    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b);
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 4px; padding: 2px 5px; flex-shrink: 0; white-space: nowrap;
+  }
+
   /* ── TimesFM Trending Section ── */
   .trending-list { display:flex; flex-direction:column; gap:6px; }
   .trending-item { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:8px; }
@@ -19926,10 +19975,6 @@ window.tn2SetupH2H = function() {
   .trending-pct { font-family:'DM Mono',monospace; font-size:13px; font-weight:700; }
   .trending-up { color:#10b981; }
   .trending-down { color:#ef4444; }
-    font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b);
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
-    border-radius: 4px; padding: 2px 5px; flex-shrink: 0; white-space: nowrap;
-  }
 
   /* ── Surface + round pill ── */
   .tn-t10-surface {
@@ -24487,7 +24532,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-1"></script>
+<script src="/pariscore.js?v=250625-2"></script>
 <script>
 (function(){
 var b=document.createElement('div');
