@@ -15768,6 +15768,7 @@ function psSetLang(v) {
       <div class="tn2-section-header">
         <h2>Top 10 Matchs du Jour</h2>
         <div class="tn2-header-controls">
+          <span class="tn2-refresh-time" id="tn-top10-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#64748b);margin-right:8px;">—</span>
           <div class="tn2-mode-toggle">
             <button class="tn2-mode-btn active" onclick="tn2Top10Mode('viewer')">FAN</button>
             <button class="tn2-mode-btn" onclick="tn2Top10Mode('bettor')">PARIEUR</button>
@@ -15775,7 +15776,7 @@ function psSetLang(v) {
           </div>
         </div>
       </div>
-      <div id="tn2-top-grid" class="tn2-card-grid tn2-grid-3">
+      <div id="tn2-top-grid" class="tn2-card-grid tn2-grid-3" role="list" aria-live="polite" aria-atomic="false">
         <div class="tn2-loading">Chargement...</div>
       </div>
     </div>
@@ -19839,6 +19840,26 @@ window.tn2SetupH2H = function() {
   @media (max-width: 480px) {
     #tn2-top-grid { gap: 10px !important; }
   }
+  /* L1 — responsive .tn-t10-card-body : 1 col sur mobile, odds en row */
+  @media (max-width: 540px) {
+    .tn-t10-card-body { grid-template-columns: 1fr !important; gap: 10px !important; }
+    .tn-t10-odds-block {
+      padding-left: 0 !important; border-left: none !important;
+      border-top: 1px solid rgba(255,255,255,.05) !important; padding-top: 10px;
+      flex-direction: row !important; justify-content: space-around !important; align-self: auto !important;
+    }
+  }
+  /* L2 — .ps-metrics-row responsive */
+  @media (max-width: 1100px) and (min-width: 769px) {
+    .ps-metrics-row { grid-template-columns: 1fr 1fr !important; }
+  }
+  @media (max-width: 768px) {
+    .ps-metrics-row { grid-template-columns: 1fr !important; }
+  }
+  /* L17 — focus outline charte-compliant */
+  .tn-t10-card:focus-visible { outline: 2px solid #0077ff !important; outline-offset: 2px !important; }
+  /* L16 — bouton 🎯 état disabled visuel */
+  .tn-t10-ai:disabled { opacity: 0.6; cursor: wait !important; }
 
   /* ── HOTFIX v12.86 : Carte restructurée en 3 zones (header / body / footer) ──
      Avant : display:grid 2 colonnes sur .tn-t10-card → 12+ enfants en zigzag → crash visuel.
@@ -19961,7 +19982,7 @@ window.tn2SetupH2H = function() {
     overflow: hidden; text-overflow: ellipsis; min-width: 0;
   }
   .tn-t10-vs { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text3,#64748b); margin: 3px 0; }
-  .tn-t10-prob-row { display: flex; gap: 12px; justify-content: center; margin: 6px 0 0 0; font-size: 13px; }
+  .tn-t10-prob-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0; }
   /* ── TimesFM Forecast Badges ── */
   .fc-badge { display:inline-flex; align-items:center; gap:2px; font-size:11px; font-weight:700; padding:1px 5px; border-radius:4px; margin-left:4px; vertical-align:middle; line-height:1.4; }
   .fc-badge-up { color:#10b981; background:rgba(16,185,129,0.15); }
@@ -24540,7 +24561,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-3"></script>
+<script src="/pariscore.js?v=250625-4"></script>
 <script>
 (function(){
 var b=document.createElement('div');

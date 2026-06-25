@@ -927,7 +927,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
   if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
   if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
-  if (pageId === 'tennis')   { try { tn2SwitchTab('live'); } catch(e){}; try { startTennisTop10(); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
+  if (pageId === 'tennis')   { try { tn2SwitchTab('live'); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
   try { if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page(); } catch(e) {}
   if (pageId === 'cs2') try { initCs2Page(); } catch(e) {}
   try { if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage(); } catch(e) {}
@@ -4558,7 +4558,7 @@ function _tnTop10Card(m, rank) {
 
     metricsHtml = '<div class="ps-metrics-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
       // SERVICE — Insight
-      + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Service" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-service)">🟦 SERVICE</span><span class="ps-metric-xxl-badge service">Noyau</span></div>'
         + '<div class="insight-metric-body">'
           + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestServer)+'</span> meilleure serveuse <span class="percent-neon">'+bestSrvPct+'%</span></p>'
@@ -4567,7 +4567,7 @@ function _tnTop10Card(m, rank) {
         + '</div>'
       + '</div>'
       // RETOUR — Insight
-      + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Retour" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-return)">🟩 RETOUR</span><span class="ps-metric-xxl-badge return">Noyau</span></div>'
         + '<div class="insight-metric-body">'
           + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestReturner)+'</span> meilleure receveuse <span class="percent-neon">'+bestRetPct+'%</span></p>'
@@ -4576,7 +4576,7 @@ function _tnTop10Card(m, rank) {
         + '</div>'
       + '</div>'
       // H2H SURFACE — inchangé
-      + '<div class="ps-metric-xxl" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique H2H Surface" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-global)">⬜ H2H SURFACE</span><span class="ps-metric-xxl-badge global">Noyau</span></div>'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
           + '<span class="ps-metric-xxl-value">'+h2hStr+'</span>'
@@ -4650,13 +4650,16 @@ let _tnTop10PrevTop3 = [];
 
 function _tnTop10AlertNewEntry(top10) {
   if (!top10 || !top10.length) return;
-  const newTop3Ids = top10.slice(0, 3).map(m => String(m.matchId));
+  // M18 fix — debounce 30s pour éviter spam pendant rebuilds
+  if (_tnTop10AlertNewEntry._lastTs && (Date.now() - _tnTop10AlertNewEntry._lastTs) < 30000) return;
+  const newTop3Ids = top10.slice(0, 3).map(m => String(m.matchId || m.id || ''));
   const prevIds    = new Set(_tnTop10PrevTop3);
   const newEntries = newTop3Ids.filter(id => !prevIds.has(id));
   _tnTop10PrevTop3 = newTop3Ids;
   if (!newEntries.length || prevIds.size === 0) return; // skip first load
-  const m = top10.find(x => newEntries.includes(String(x.matchId)));
+  const m = top10.find(x => newEntries.includes(String(x.matchId || x.id || '')));
   if (!m) return;
+  _tnTop10AlertNewEntry._lastTs = Date.now();
   const msg = `🏆 Top 3 Tennis : ${m.player1} vs ${m.player2} — ${m.reason}`;
   // Show existing toast system if available, else console
   if (typeof showToast === 'function') {
@@ -4765,7 +4768,17 @@ async function fetchTennisTop10() {
   if (fetchTennisTop10._pollCount === undefined) fetchTennisTop10._pollCount = 0;
   
   try {
-    // Afficher le spinner au premier chargement (hors polling)
+    // M9 fix — stale-while-revalidate : render immédiat depuis cache si dispo
+    var cached = null;
+    try { cached = AppCache.get('/api/v1/tennis/top10'); } catch(_) {}
+    var _isEmpty = container.innerHTML === '' || container.innerHTML.includes('tn-t10-empty') || container.innerHTML.includes('tn-t10-loading');
+    if (cached && cached.data && cached.data.top10 && cached.data.top10.length && _isEmpty) {
+      // Render immédiat depuis cache (évite flash "Chargement...")
+      var top10Cached = cached.data.top10 || [];
+      container.innerHTML = top10Cached.map(function(m, i) { return _tnTop10Card(m, i + 1); }).join('');
+      if (window.tn2UpdateKPI) tn2UpdateKPI({ top: top10Cached.length });
+    }
+    // Afficher le spinner au premier chargement (hors polling) si pas de cache
     var isEmpty = container.innerHTML === '' || container.innerHTML.includes('tn-t10-empty') || container.innerHTML.includes('tn-t10-loading');
     if (isEmpty && fetchTennisTop10._retry === 0 && fetchTennisTop10._pollCount === 0) {
       container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
@@ -6683,6 +6696,24 @@ function openTennisAnalysisModal(matchId) {
   if (!modal) return;
   modal.style.display = 'flex';
   modal.style.animation = ''; void modal.offsetHeight; modal.style.animation = 'psModalIn 0.2s ease';
+  // M12 fix — handler ESC pour fermer la modale
+  if (!window._tnAnalysisEscHandler) {
+    window._tnAnalysisEscHandler = function(e) {
+      if (e.key === 'Escape') {
+        var m = document.getElementById('tennis-analysis-modal');
+        if (m && m.style.display !== 'none') {
+          if (typeof closeTennisAnalysisModal === 'function') closeTennisAnalysisModal();
+          else m.style.display = 'none';
+        }
+        var pb = document.getElementById('pBetsOverlay');
+        if (pb && pb.style.display !== 'none') {
+          if (typeof closePBets === 'function') closePBets();
+          else pb.style.display = 'none';
+        }
+      }
+    };
+    document.addEventListener('keydown', window._tnAnalysisEscHandler);
+  }
   // Reset fields
   document.getElementById('tam-tournament').textContent = 'Chargement...';
   document.getElementById('tam-surface').textContent = '';

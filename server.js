@@ -37195,8 +37195,11 @@ async function _refreshTop10Cache() {
             var bestRank = (r1 != null && r2 != null) ? Math.min(r1, r2) : (r1 != null ? r1 : r2);
             return bestRank <= 120;
           });
+          // M16 fix — compter les matchs filtrés par diversité pour informer l'utilisateur
+          const _beforeDiversity = filtered.length;
           const top10 = _applyTop10DiversityFilter(filtered).slice(0, 10);
-          const payload = { top10, mode, computed_at: now, total_active: active.length };
+          const _filteredOutByDiversity = Math.max(0, _beforeDiversity - top10.length - (filtered.length - _beforeDiversity));
+          const payload = { top10, mode, computed_at: now, total_active: active.length, filtered_out_by_diversity: _filteredOutByDiversity };
           _tnTop10Cache[mode] = payload;
           _tnTop10Cache[`ts_${mode}`] = now;
         }
