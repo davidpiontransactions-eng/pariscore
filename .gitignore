@@ -108,3 +108,30 @@ qa-*.py
 # Python cache
 __pycache__/
 *.pyc
+
+# P1 secu — Cleanup repo (reco #1 SECURITY_AUDIT_REPORT.md)
+# Fichiers parasites trackés accidentellement
+cookies.txt
+*.bak
+*.bak2
+*.bak_*
+server_*.txt
+server_pid.txt
+dr_response.json
+cache_profiles.json
+=
+=1.20
+
+# One-shot debug scripts (à supprimer après usage, pas tracker)
+check_line*.js
+find_problem.js
+server_check.js
+compare-apis.js
+test_flashscore_stats.js
+test-sources.cjs
+test_w6_*.js
+test-ppg-auto-repair.js
+test_cron_sps_updater.py
+test_surface_powerscore.py
+verify-powerscore.py
+checkdb.js

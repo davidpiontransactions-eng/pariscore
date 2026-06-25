@@ -19083,6 +19083,43 @@ function checkLoginRateLimit(ip) {
   return e.count <= 10; // max 10 tentatives / 15 min
 }
 
+// ─── P1 secu — RATE LIMITER GLOBAL API ───────────────────────────────────────
+// Reco #2 rapport SECURITY_AUDIT_REPORT.md : protéger contre le scraping et DoS.
+// 100 req/min/IP sur routes /api/v1/* (sauf static + SSE qui ont leur propre flux).
+// Anti-flood mémoire : Map ip → { count, resetAt }, LRU eviction si > 10k IPs.
+const API_RATE_LIMIT_WINDOW_MS = 60 * 1000;        // 1 minute
+const API_RATE_LIMIT_MAX = parseInt(process.env.API_RATE_LIMIT_MAX || '100', 10);
+const API_RATE_LIMIT_MAX_IPS = 10000;              // LRU cap
+const _apiRateLimitMap = new Map();                // ip → { count, resetAt }
+function checkApiRateLimit(ip) {
+  if (!ip) return true; // pas d'IP = requête locale, on autorise
+  const now = Date.now();
+  let e = _apiRateLimitMap.get(ip);
+  if (!e || now > e.resetAt) {
+    e = { count: 0, resetAt: now + API_RATE_LIMIT_WINDOW_MS };
+    // LRU eviction si la map grossit trop
+    if (_apiRateLimitMap.size >= API_RATE_LIMIT_MAX_IPS) {
+      let oldestKey = null, oldestTs = Infinity;
+      for (const [k, v] of _apiRateLimitMap) {
+        if (v.resetAt < oldestTs) { oldestTs = v.resetAt; oldestKey = k; }
+      }
+      if (oldestKey) _apiRateLimitMap.delete(oldestKey);
+    }
+  }
+  e.count++;
+  _apiRateLimitMap.set(ip, e);
+  return e.count <= API_RATE_LIMIT_MAX;
+}
+// Helper pour extraire l'IP client (gère proxy/nginx X-Forwarded-For)
+function getClientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) {
+    const ips = String(xff).split(',');
+    return ips[0].trim();
+  }
+  return req.socket?.remoteAddress || req.connection?.remoteAddress || '';
+}
+
 // ─── JWT (HMAC-SHA256, natif Node.js crypto) ─────────────────────────────────
 // JWT_SECRET : env prioritaire. Sinon secret PERSISTÉ sur disque (.jwt_secret,
 // gitignored, mode 600) — sans ça chaque restart pm2 régénérait un secret
@@ -20989,8 +21026,10 @@ function jsonResponse(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
     'Access-Control-Allow-Origin': allowedOrigin,
+    // P1 secu — Allow-Credentials pour cookie httpOnly cross-origin (frontend sur domaine différent du VPS)
+    'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PATCH',
     'X-Frame-Options': 'DENY',
     'X-Content-Type-Options': 'nosniff',
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
@@ -31908,7 +31947,9 @@ const server = http.createServer(async (req, res) => {
         const _preflightOrigin = process.env.ALLOWED_ORIGIN || '*';
         return res.writeHead(204, {
             'Access-Control-Allow-Origin': _preflightOrigin,
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            // P1 secu — Allow-Credentials pour cookie httpOnly cross-origin
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PATCH',
             'Access-Control-Allow-Headers': 'Content-Type, Authorization',
             'Access-Control-Max-Age': '86400'
         }).end();
@@ -36949,7 +36990,7 @@ function _tnSrvJanitor() {
   for (const [k, v] of _tennisEnrichSnap) {
     if (now - v.ts > _TN_ENRICH_TTL_MS) { _tennisEnrichSnap.delete(k); dropped++; }
   }
-  try { sqldb.prepare('DELETE FROM tennis_enrich_snap WHERE ts <= ?').run(now - _TN_ENRICH_TTL_MS); } catch (_) {}
+  try { sqldb.prepare('DELETE FROM tennis_enrich_snap WHERE ts <= ?').run(now - _TN_ENRICH_TTL_MS); } catch (e) { _trackCatch('tennis', 'snap_janitor_delete', e); }
   if (dropped) console.log(`  [TennisSnap] janitor — ${dropped} entrées expirées`);
 }
 if (!globalThis.__tnSnapJanitorOn) {
@@ -37769,7 +37810,7 @@ async function _buildTennisValueBetsCore({ date }) {
       const tm = await _fetchTTOopForTournament(t);
       if (tm && tm.size) _ttAllMaps.push(tm);
     }
-  } catch (_) {}
+  } catch (e) { _trackCatch('tennis', 'tt_oop_prefetch', e); }
   const _ttLookupAll = (...names) => {
     for (const m of _ttAllMaps) { const r = _ttLookupCourt(m, ...names); if (r) return r; }
     return null;
@@ -37790,7 +37831,7 @@ async function _buildTennisValueBetsCore({ date }) {
         if (_n1 && _n2) _liveWomCache.set(_n1 + '|' + _n2, _lm.betfair_wom);
       }
     }
-  } catch (_) {}
+  } catch (e) { _trackCatch('tennis', 'vb_live_wom_cache', e); }
   // P0.1: Bulk preload stats pour tous les joueurs AVANT la boucle (évite N+1 SQL)
   const _bulkPreloadStats = (matches) => {
     const seen = new Set();
@@ -38250,7 +38291,7 @@ async function _buildTennisValueBetsCore({ date }) {
   // drop de la liste scheduled lors du passage in_progress.
   let _snapStored = 0;
   for (const _e of enriched) {
-    try { _tnSrvStoreSnap(_e); _snapStored++; } catch (_) { /* snap non bloquant */ }
+    try { _tnSrvStoreSnap(_e); _snapStored++; } catch (e) { _trackCatch('tennis', 'tn_srv_store_snap', e); }
   }
 
   // Recall live-only : pour chaque match du live cache absent de enriched,
@@ -38274,7 +38315,7 @@ async function _buildTennisValueBetsCore({ date }) {
     const snap = _tnSrvLookupSnap(lo);
     if (!snap) { _liveOrphans++; continue; }
     let rehydrated;
-    try { rehydrated = JSON.parse(JSON.stringify(snap)); } catch (_) { continue; }
+    try { rehydrated = JSON.parse(JSON.stringify(snap)); } catch (e) { _trackCatch('tennis', 'snap_rehydrate_parse', e); continue; }
     rehydrated.status = lo.status || 'LIVE';
     rehydrated._live = lo;
     rehydrated._isLive = true;
@@ -45015,6 +45056,28 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
 
     // --- Cas B : Routes API inside handleAPI (Matchs, Leagues, etc.) ---
     if (pathname.startsWith('/api/') || pathname.startsWith('/tennis/')) {
+        // P1 secu — Rate limiting global API (100 req/min/IP, env API_RATE_LIMIT_MAX overridable)
+        // Sauf SSE streams (qui ont leur propre flux long) — détecté via Accept: text/event-stream
+        const isSse = (req.headers['accept'] || '').includes('text/event-stream');
+        if (!isSse) {
+          const clientIp = getClientIp(req);
+          if (!checkApiRateLimit(clientIp)) {
+            res.writeHead(429, {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Retry-After': '60',
+              'X-RateLimit-Limit': String(API_RATE_LIMIT_MAX),
+              'X-RateLimit-Window': '60s',
+            });
+            res.end(JSON.stringify({
+              error: 'Trop de requêtes. Réessayez dans 1 minute.',
+              code: 'RATE_LIMITED',
+              retry_after_s: 60,
+              limit: API_RATE_LIMIT_MAX,
+              window_s: 60,
+            }));
+            return;
+          }
+        }
         try {
             await handleAPI(req, res, pathname, query);
             if (!res.headersSent) {
