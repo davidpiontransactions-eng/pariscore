@@ -6045,22 +6045,22 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
   html += '<div style="display:flex;flex-direction:column;gap:4px;">';
   // Badge source
   if (bsdData) {
-    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(0,230,118,0.10);color:var(--tex-green,#00e676);font-size:9px;font-weight:700;text-transform:uppercase;">Source BSD</span>';
+    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(0,230,118,0.10);color:#00e676;font-size:9px;font-weight:700;text-transform:uppercase;">Source BSD</span>';
   } else {
-    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(255,193,7,0.10);color:var(--tex-amber,#fbbf24);font-size:9px;font-weight:700;text-transform:uppercase;">Source TennisExplorer</span>';
+    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(255,193,7,0.10);color:#fbbf24;font-size:9px;font-weight:700;text-transform:uppercase;">Source TennisExplorer</span>';
   }
   if (surface) {
     var sCol = ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[surface] || '#5a6068';
-    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:' + sCol + ';">' + _tnEsc(surface) + (round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;">· ' + _tnEsc(round) + '</span>' : '') + '</div>';
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:' + sCol + ';">' + _tnEsc(surface) + (round ? ' <span style="color:#5a6068;font-weight:400;">· ' + _tnEsc(round) + '</span>' : '') + '</div>';
   }
   if (matchData.time_utc) {
-    html += '<div style="font-size:10px;color:var(--text3,#5a6068);">Heure : <span style="font-family:\'DM Mono\',monospace;color:var(--text2,#8d9399);">' + _tnEsc(_localTime(matchData.time_utc)) + '</span></div>';
+    html += '<div style="font-size:10px;color:#5a6068;">Heure : <span style="font-family:\'DM Mono\',monospace;color:#8d9399;">' + _tnEsc(_localTime(matchData.time_utc)) + '</span></div>';
   }
   html += '</div>';
   // Score qualité
   if (scoreVal != null) {
-    var sc = scoreVal >= 70 ? '#ffc107' : scoreVal >= 50 ? 'var(--tex-green,#00e676)' : scoreVal >= 30 ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-    html += '<div style="text-align:right;"><span style="font-family:\'DM Mono\',monospace;font-size:26px;font-weight:800;color:' + sc + ';">' + scoreVal + '</span><span style="color:var(--text3,#5a6068);font-size:12px;">/100</span></div>';
+    var sc = scoreVal >= 70 ? '#ffc107' : scoreVal >= 50 ? '#00e676' : scoreVal >= 30 ? '#fbbf24' : '#8d9399';
+    html += '<div style="text-align:right;"><span style="font-family:\'DM Mono\',monospace;font-size:26px;font-weight:800;color:' + sc + ';">' + scoreVal + '</span><span style="color:#5a6068;font-size:12px;">/100</span></div>';
   }
   html += '</div>';
 
@@ -6068,13 +6068,13 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">';
   html += '<div style="display:flex;flex-direction:column;gap:6px;">';
   // P1
-  html += '<div style="display:flex;align-items:center;gap:8px;"><img src="' + p1Photo + '" data-name="' + _tnEsc(p1Name) + '" alt="' + _tnEsc(p1Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);background:var(--bg4,#172132);"><span style="color:var(--text,#e8eaed);font-weight:700;font-size:13px;">' + _tnEsc(p1Name) + '</span>' + (p1Rank ? '<span style="font-size:10px;color:var(--text3,#5a6068);background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:2px;">#' + p1Rank + '</span>' : '') + '</div>';
-  html += '<div style="font-size:10px;color:var(--text3,#5a6068);padding-left:4px;">vs</div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;"><img src="' + p1Photo + '" data-name="' + _tnEsc(p1Name) + '" alt="' + _tnEsc(p1Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);background:#172132;"><span style="color:#e8eaed;font-weight:700;font-size:13px;">' + _tnEsc(p1Name) + '</span>' + (p1Rank ? '<span style="font-size:10px;color:#5a6068;background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:2px;">#' + p1Rank + '</span>' : '') + '</div>';
+  html += '<div style="font-size:10px;color:#5a6068;padding-left:4px;">vs</div>';
   // P2
-  html += '<div style="display:flex;align-items:center;gap:8px;"><img src="' + p2Photo + '" data-name="' + _tnEsc(p2Name) + '" alt="' + _tnEsc(p2Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);background:var(--bg4,#172132);"><span style="color:var(--text,#e8eaed);font-weight:700;font-size:13px;">' + _tnEsc(p2Name) + '</span>' + (p2Rank ? '<span style="font-size:10px;color:var(--text3,#5a6068);background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:2px;">#' + p2Rank + '</span>' : '') + '</div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;"><img src="' + p2Photo + '" data-name="' + _tnEsc(p2Name) + '" alt="' + _tnEsc(p2Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);background:#172132;"><span style="color:#e8eaed;font-weight:700;font-size:13px;">' + _tnEsc(p2Name) + '</span>' + (p2Rank ? '<span style="font-size:10px;color:#5a6068;background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:2px;">#' + p2Rank + '</span>' : '') + '</div>';
   html += '</div>';
   // Bouton collapse
-  html += '<button onclick="var r=this.closest(&quot;tr&quot;);if(r) r.remove();" style="background:#1c2030;border:1px solid rgba(255,255,255,0.1);width:32px;height:28px;border-radius:4px;color:var(--text,#e8eaed);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" title="Fermer">−</button>';
+  html += '<button onclick="var r=this.closest(&quot;tr&quot;);if(r) r.remove();" style="background:#1c2030;border:1px solid rgba(255,255,255,0.1);width:32px;height:28px;border-radius:4px;color:#e8eaed;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" title="Fermer">−</button>';
   html += '</div>';
 
   // ── Ligne 3 : Metrics (ELO + J1% + P_BETS) ──
@@ -6082,72 +6082,73 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
   html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
   html += '<span style="font-size:12px;">🎯</span>';
   if (p1Elo != null && p2Elo != null) {
-    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--text3,#8d9399);border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:3px;">ELO ' + p1Elo + '/' + p2Elo + '</span>';
+    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:#8d9399;border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:3px;">ELO ' + p1Elo + '/' + p2Elo + '</span>';
   }
   if (bsdData && bsdData.predictive && bsdData.predictive.probabilities && bsdData.predictive.probabilities.p1 != null) {
-    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--text3,#8d9399);border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:3px;">J1 ' + Math.round(bsdData.predictive.probabilities.p1 * 100) + '%</span>';
+    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:#8d9399;border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:3px;">J1 ' + Math.round(bsdData.predictive.probabilities.p1 * 100) + '%</span>';
   }
   // P_BETS button
   var safeId = bsdMatchId || String(matchData.tex_match_id || '');
-  html += '<button class="p-bets-btn" data-fixture-id="' + _tnEsc(safeId) + '" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" style="font-size:10px;font-weight:700;background:rgba(0,230,118,0.20);color:var(--tex-green,#00e676);padding:2px 8px;border-radius:3px;border:none;cursor:pointer;text-transform:uppercase;box-shadow:0 0 8px rgba(0,230,118,0.3);" title="Bets prédictifs IA">P_BETS</button>';
+  html += '<button class="p-bets-btn" data-fixture-id="' + _tnEsc(safeId) + '" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" style="font-size:10px;font-weight:700;background:rgba(0,230,118,0.20);color:#00e676;padding:2px 8px;border-radius:3px;border:none;cursor:pointer;text-transform:uppercase;box-shadow:0 0 8px rgba(0,230,118,0.3);" title="Bets prédictifs IA">P_BETS</button>';
   html += '</div>';
 
   // ── Ligne 4 : Prédiction ──
   if (bsdData && (verdict || edgeVal != null || confLevel)) {
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;border-bottom:1px dashed rgba(255,255,255,0.05);">';
     html += '<div>';
-    html += '<span style="font-size:9px;font-weight:700;color:var(--text3,#5a6068);letter-spacing:0.05em;">BETS PREDICTIFS';
+    html += '<span style="font-size:9px;font-weight:700;color:#5a6068;letter-spacing:0.05em;">BETS PREDICTIFS';
     if (confLevel) {
-      var cbC = confLevel === 'HIGH' ? 'var(--tex-green,#00e676)' : confLevel === 'MEDIUM' ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
+      var cbC = confLevel === 'HIGH' ? '#00e676' : confLevel === 'MEDIUM' ? '#fbbf24' : '#8d9399';
       html += ' <span style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:2px;color:' + cbC + ';">' + _tnEsc(confLevel) + '</span>';
     }
     html += '</span>';
     if (verdict) {
-      var vC = verdict === 'P1' || verdict === 'HOME' ? 'var(--tex-green,#00e676)' : verdict === 'P2' || verdict === 'AWAY' ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-      html += '<div style="font-size:11px;color:var(--text2,#8d9399);margin-top:2px;">Verdict : <span style="color:' + vC + ';font-weight:700;">' + _tnEsc(verdict) + '</span></div>';
+      var vC = verdict === 'P1' || verdict === 'HOME' ? '#00e676' : verdict === 'P2' || verdict === 'AWAY' ? '#fbbf24' : '#8d9399';
+      html += '<div style="font-size:11px;color:#8d9399;margin-top:2px;">Verdict : <span style="color:' + vC + ';font-weight:700;">' + _tnEsc(verdict) + '</span></div>';
     }
     html += '</div>';
     if (edgeVal != null) {
-      html += '<div style="text-align:right;"><span style="color:var(--text,#e8eaed);font-weight:700;font-size:13px;">+' + Number(edgeVal).toFixed(1) + '%</span><span style="color:var(--text3,#5a6068);font-size:10px;margin-left:6px;">Edge</span></div>';
+      html += '<div style="text-align:right;"><span style="color:#e8eaed;font-weight:700;font-size:13px;">+' + Number(edgeVal).toFixed(1) + '%</span><span style="color:#5a6068;font-size:10px;margin-left:6px;">Edge</span></div>';
     }
     html += '</div>';
   }
 
-  // ── Ligne 5 : Grille Insights (3 colonnes) ──
-  if (bsdData || matchData) {
+  // ── Ligne 5 : Grille Insights (3 colonnes) — seulement si on a des données BSD ──
+  var hasInsights = (sdP1 != null && sdP2 != null) || (retP1 != null && retP2 != null) || (bsdData && bsdData.h2h_record && bsdData.h2h_record.all && bsdData.h2h_record.all.total > 0) || (texDetail && texDetail.h2h_summary);
+  if (hasInsights) {
     html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">';
     // Service
-    html += '<div style="background:#1c2030;border:1px solid rgba(255,255,255,0.03);border-radius:6px;padding:8px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#0077ff;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#0077ff;display:inline-block;"></span>SERVICE</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:var(--text3,#5a6068);padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
+    html += '<div style="background:#1c2030 !important;border:1px solid rgba(255,255,255,0.05) !important;border-radius:6px;padding:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#0077ff;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#0077ff;display:inline-block;"></span>SERVICE</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:#5a6068;padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
     if (sdP1 != null && sdP2 != null) {
       var bestServer = sdP1 > sdP2 ? p1Name.split(' ').pop() : p2Name.split(' ').pop();
       var bestVal = Math.max(sdP1, sdP2);
-      html += '<div style="color:var(--text,#e8eaed);font-weight:700;font-size:11px;line-height:1.2;margin-bottom:2px;">' + _tnEsc(bestServer) + ' meilleure serveuse <span style="color:var(--tex-green,#00e676);">' + bestVal.toFixed(1) + '%</span></div>';
+      html += '<div style="color:#e8eaed;font-weight:700;font-size:11px;line-height:1.2;margin-bottom:2px;">' + _tnEsc(bestServer) + ' meilleure serveuse <span style="color:#00e676;">' + bestVal.toFixed(1) + '%</span></div>';
     } else {
-      html += '<div style="color:var(--text3,#5a6068);font-size:11px;">N/A</div>';
+      html += '<div style="color:#5a6068;font-size:11px;">N/A</div>';
     }
     html += '</div>';
     // Retour
-    html += '<div style="background:#1c2030;border:1px solid rgba(255,255,255,0.03);border-radius:6px;padding:8px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:var(--tex-green,#00e676);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:var(--tex-green,#00e676);display:inline-block;"></span>RETOUR</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:var(--text3,#5a6068);padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
+    html += '<div style="background:#1c2030 !important;border:1px solid rgba(255,255,255,0.05) !important;border-radius:6px;padding:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#00e676;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#00e676;display:inline-block;"></span>RETOUR</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:#5a6068;padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
     if (retP1 != null && retP2 != null) {
       var bestReturner = retP1 > retP2 ? p1Name.split(' ').pop() : p2Name.split(' ').pop();
       var bestRet = Math.max(retP1, retP2);
-      html += '<div style="color:var(--text,#e8eaed);font-weight:700;font-size:11px;line-height:1.2;margin-bottom:2px;">' + _tnEsc(bestReturner) + ' meilleure receveuse <span style="color:var(--tex-green,#00e676);">' + bestRet.toFixed(1) + '%</span></div>';
+      html += '<div style="color:#e8eaed;font-weight:700;font-size:11px;line-height:1.2;margin-bottom:2px;">' + _tnEsc(bestReturner) + ' meilleure receveuse <span style="color:#00e676;">' + bestRet.toFixed(1) + '%</span></div>';
     } else {
-      html += '<div style="color:var(--text3,#5a6068);font-size:11px;">N/A</div>';
+      html += '<div style="color:#5a6068;font-size:11px;">N/A</div>';
     }
     html += '</div>';
     // H2H Surface
-    html += '<div style="background:#1c2030;border:1px solid rgba(255,255,255,0.03);border-radius:6px;padding:8px;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#d8b4fe;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#d8b4fe;display:inline-block;"></span>H2H SURFACE</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:var(--text3,#5a6068);padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
+    html += '<div style="background:#1c2030 !important;border:1px solid rgba(255,255,255,0.05) !important;border-radius:6px;padding:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#d8b4fe;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#d8b4fe;display:inline-block;"></span>H2H SURFACE</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:#5a6068;padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
     var h2hVal = 'N/A';
     if (bsdData && bsdData.h2h_record && bsdData.h2h_record.all && bsdData.h2h_record.all.total > 0) {
       h2hVal = (bsdData.h2h_record.all.p1_wins || 0) + '-' + (bsdData.h2h_record.all.p2_wins || 0);
     } else if (texDetail && texDetail.h2h_summary) {
       h2hVal = _tnEsc(texDetail.h2h_summary).substring(0, 20);
     }
-    html += '<div style="color:var(--text,#e8eaed);font-weight:800;font-size:18px;line-height:1.2;margin-bottom:2px;">' + h2hVal + '</div>';
+    html += '<div style="color:#e8eaed;font-weight:800;font-size:18px;line-height:1.2;margin-bottom:2px;">' + h2hVal + '</div>';
     html += '</div>';
     html += '</div>';
   }
@@ -6155,19 +6156,19 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
   // ── Ligne 6 : Cotes multi-bookmakers (si TE) ──
   if (texDetail && texDetail.books && texDetail.books.length) {
     html += '<div style="margin-bottom:10px;">';
-    html += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:4px;letter-spacing:0.05em;">Cotes multi-bookmakers</div>';
+    html += '<div style="font-size:9px;text-transform:uppercase;color:#5a6068;margin-bottom:4px;letter-spacing:0.05em;">Cotes multi-bookmakers</div>';
     html += '<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#111a28;"><th style="padding:4px 6px;text-align:left;">Book</th><th style="padding:4px 6px;text-align:right;">' + _tnEsc(p1Name.split(' ').pop()) + '</th><th style="padding:4px 6px;text-align:right;">' + _tnEsc(p2Name.split(' ').pop()) + '</th></tr></thead><tbody>';
     texDetail.books.forEach(function(b, i) {
       var bg = i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent';
       var p1o = b.odd_p1 != null ? b.odd_p1.toFixed(2) : '—';
       var p2o = b.odd_p2 != null ? b.odd_p2.toFixed(2) : '—';
-      var bp1 = b.best_p1 ? 'color:var(--tex-green,#00e676);font-weight:700;' : '';
-      var bp2 = b.best_p2 ? 'color:var(--tex-green,#00e676);font-weight:700;' : '';
+      var bp1 = b.best_p1 ? 'color:#00e676;font-weight:700;' : '';
+      var bp2 = b.best_p2 ? 'color:#00e676;font-weight:700;' : '';
       html += '<tr style="background:' + bg + ';border-bottom:1px solid rgba(255,255,255,0.03);"><td style="padding:4px 6px;">' + _tnEsc(b.bookmaker) + '</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;' + bp1 + '">' + p1o + '</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;' + bp2 + '">' + p2o + '</td></tr>';
     });
     html += '</tbody></table>';
     if (texDetail.avg_p1 || texDetail.avg_p2) {
-      html += '<div style="margin-top:4px;padding:4px 6px;background:rgba(0,230,118,0.05);border-radius:3px;display:flex;justify-content:space-between;font-size:10px;"><span style="color:var(--text3,#5a6068);">Moy :</span><span style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--tex-green,#00e676);">' + (texDetail.avg_p1||'—') + ' / ' + (texDetail.avg_p2||'—') + '</span></div>';
+      html += '<div style="margin-top:4px;padding:4px 6px;background:rgba(0,230,118,0.05);border-radius:3px;display:flex;justify-content:space-between;font-size:10px;"><span style="color:#5a6068;">Moy :</span><span style="font-family:\'DM Mono\',monospace;font-weight:700;color:#00e676;">' + (texDetail.avg_p1||'—') + ' / ' + (texDetail.avg_p2||'—') + '</span></div>';
     }
     html += '</div>';
   }
@@ -6183,7 +6184,7 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
   if (badges.length) {
     html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
     badges.forEach(function(b) {
-      html += '<span style="background:#1c2030;color:var(--text3,#8d9399);font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid rgba(255,255,255,0.03);">' + _tnEsc(b.label) + ' <span style="color:var(--text,#e8eaed);font-weight:700;">' + _tnEsc(b.val) + '</span></span>';
+      html += '<span style="background:#1c2030 !important;color:#8d9399 !important;font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid rgba(255,255,255,0.05) !important;">' + _tnEsc(b.label) + ' <span style="color:#e8eaed;font-weight:700;">' + _tnEsc(b.val) + '</span></span>';
     });
     html += '</div>';
   }
