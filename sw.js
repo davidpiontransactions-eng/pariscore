@@ -119,7 +119,8 @@
 // v58 (2026-06-26) : BUGFIX 'BR">' parasite — event delegation pour onerror (plus de quotes inline)
 // v59 (2026-06-26) : Photos via ui-avatars.com (pattern existant) + heure locale browser (plus UTC)
 // v60 (2026-06-26) : Fiche joueur redesignée — photo plus grande (80px) + barres progression (rank/elo/W-L%) + pills L5
-const CACHE_VERSION = 'v60';
+// v61 (2026-06-26) : BUGFIX photos — utilise _lookupTennisElo (table tennis_players_elo) au lieu de tennis_players fantôme
+const CACHE_VERSION = 'v61';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

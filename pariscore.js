@@ -6075,10 +6075,50 @@ async function openPlayerProfile(slug, name, surface) {
     if (r.prize_money && r.prize_money.total_career) {
       var pm = r.prize_money.total_career;
       var pmFormatted = pm >= 1000000 ? '$' + (pm / 1000000).toFixed(1) + 'M' : '$' + (pm / 1000).toFixed(0) + 'K';
-      html += '<div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.1);border-radius:8px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">';
+      html += '<div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.1);border-radius:8px;padding:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">';
       html += '<span style="font-size:11px;color:var(--text3,#5a6068);text-transform:uppercase;letter-spacing:.05em;">Prize Money carrière</span>';
       html += '<span style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:800;color:#00e676;">' + pmFormatted + '</span>';
       html += '</div>';
+      // NEW — Estimation prize money par surface (basée sur % de matchs joués par surface)
+      // Note : ATP Tour ne publie pas le prize money par surface, on estime donc
+      // proportionnellement au nombre de matchs joués sur chaque surface
+      if (r.surface_record) {
+        var sr = r.surface_record;
+        var surfaces = [['all','Total'],['clay','Clay'],['hard','Hard'],['grass','Grass'],['indoors','Indoor']];
+        var totalMatchesAll = 0;
+        var surfaceMatchCounts = {};
+        surfaces.forEach(function(s) {
+          var key = s[0];
+          var rec = sr[key];
+          if (rec && rec.wins != null && rec.losses != null && key !== 'all') {
+            var tm = rec.wins + rec.losses;
+            surfaceMatchCounts[key] = tm;
+            totalMatchesAll += tm;
+          }
+        });
+        if (totalMatchesAll > 0) {
+          html += '<div style="margin-bottom:16px;">';
+          html += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:6px;">Prize money estimé par surface</div>';
+          html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;">';
+          surfaces.forEach(function(s) {
+            var key = s[0], label = s[1];
+            if (key === 'all') return;
+            var count = surfaceMatchCounts[key] || 0;
+            if (count === 0) return;
+            var pct = count / totalMatchesAll;
+            var pmEstim = Math.round(pm * pct);
+            var pmEstimFmt = pmEstim >= 1000000 ? '$' + (pmEstim / 1000000).toFixed(1) + 'M' : '$' + (pmEstim / 1000).toFixed(0) + 'K';
+            var sColor = surfColor(s[1] === 'Indoor' ? 'Indoor' : s[1]);
+            html += '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px;display:flex;align-items:center;gap:8px;">';
+            html += '<span style="width:8px;height:8px;border-radius:50%;background:' + sColor + ';flex-shrink:0;"></span>';
+            html += '<div style="flex:1;min-width:0;"><div style="font-size:10px;color:var(--text2,#8d9399);">' + label + '</div>';
+            html += '<div style="font-family:\'DM Mono\',monospace;font-size:12px;font-weight:700;color:#00e676;">' + pmEstimFmt + '</div>';
+            html += '<div style="font-size:9px;color:var(--text3,#5a6068);">' + Math.round(pct * 100) + '% des matchs</div>';
+            html += '</div></div>';
+          });
+          html += '</div></div>';
+        }
+      }
     }
     // Section 4 : L5 matchs récents
     if (r.recent_matches && r.recent_matches.length) {
