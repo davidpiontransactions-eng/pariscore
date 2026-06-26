@@ -5267,6 +5267,8 @@ let _texMatchsSearchQuery = '';
 let _texMatchsRawData = null; // cache des données brutes pour re-tri sans refetch
 let _texMatchsTimer = null;
 let _texMatchsLastRenderHash = null; // Q5 fix — detect payload changes to preserve scroll/selection
+let _texMatchsState = 'idle'; // L6 fix — explicit state machine: 'idle' | 'loading' | 'error' | 'rendered' (replaces fragile innerHTML.includes())
+let _texMatchsLastFetchTs = null; // L28 fix — timestamp of last successful fetch for 'MAJ il y a Xs' badge
 
 // Q11 fix — map filter keys to user-friendly FR labels (avoid exposing technical internal names)
 const _TEX_FILTER_LABELS = {
@@ -5278,6 +5280,11 @@ const _TEX_FILTER_LABELS = {
   rating: 'Rating',
   upset: 'Upset',
 };
+
+function _texEscapeRegex(s) {
+  // L27 fix — escape regex special chars in user search query so they match literally
+  return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // Q3 fix — debounce helper to avoid re-render on every keypress
 function _texDebounce(fn, ms) {
@@ -5451,10 +5458,10 @@ async function loadTexTournamentsToday() {
       return d && d >= weekStart && d < weekEnd;
     });
     if (!todayTour.length) todayTour = list.slice(0, 8); // fallback : 8 premiers (tournois à venir)
-    // Q10 fix — label honest: if no tournament this week, show 'À venir' instead of 'du jour'
+    // L25 fix — show count of tournaments in the section header
     var sectionLabel = todayTour.length ? 'À venir' : 'À venir';
     var labelEl = document.querySelector('[data-tex-tournaments-label]');
-    if (labelEl) labelEl.textContent = sectionLabel;
+    if (labelEl) labelEl.textContent = sectionLabel + ' (' + todayTour.length + ')';
     var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
     var catMeta = {
       grand_slam: { label: 'GS', color: 'var(--tex-gold,#FFD700)' }, // D4 fix — use CSS token
@@ -5500,17 +5507,22 @@ async function loadTexMatchs() {
   if (!body) return;
   // H4 fix — token de génération pour annuler les réponses stale
   var myId = ++_texMatchsReqId;
-  if (!body.innerHTML.includes('tn-t10-loading') && !body.innerHTML.includes('tex-matchs-table')) {
+  // L6 fix — use explicit state machine instead of fragile innerHTML.includes()
+  if (_texMatchsState === 'idle' || _texMatchsState === 'error') {
     body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>';
   }
+  _texMatchsState = 'loading';
   try {
     var r = await apiFetch('/api/v1/tennis/tex/matches?tour=' + _texMatchsTour).then(function(r) { return r.json(); });
     if (myId !== _texMatchsReqId) return; // stale response, abandon
     if (r.error) throw new Error(r.detail || r.error);
     _texMatchsRawData = r; // cache pour re-tri sans refetch
+    _texMatchsLastFetchTs = Date.now(); // L28 fix — track fetch time for 'MAJ il y a Xs' badge
     _renderTexMatchs(r);
+    _texMatchsState = 'rendered';
   } catch (e) {
     if (myId !== _texMatchsReqId) return; // stale error, abandon
+    _texMatchsState = 'error';
     body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:\'DM Mono\',monospace;font-size:12px;">Erreur: ' + _tnEsc(e.message) + '</div>';
     if (statusEl) statusEl.textContent = 'Erreur';
   } finally {
@@ -5532,7 +5544,7 @@ function _renderTexMatchs(r) {
   try {
     payloadHash = matches.length + '|' + (matches[0] && matches[0].id || '') + '|' + (matches[matches.length-1] && matches[matches.length-1].id || '') + '|' + _texMatchsFilter + '|' + _texMatchsSearchQuery;
   } catch(_) {}
-  var isInitialLoad = !body.innerHTML.includes('tex-matchs-table');
+  var isInitialLoad = _texMatchsState !== 'rendered'; // L6 fix — use state machine
   var skipRender = !isInitialLoad && payloadHash === _texMatchsLastRenderHash;
   if (skipRender) {
     // Same payload, same filter, same search → preserve UI state, just touch status bar
@@ -5550,11 +5562,20 @@ function _renderTexMatchs(r) {
   }
   // Filtre recherche : par nom de joueur OU nom de tournoi
   if (_texMatchsSearchQuery) {
+    // L27 fix — escape regex special chars so user can search 'Sinner?' without breaking regex
+    var searchRe;
+    try {
+      searchRe = new RegExp(_texEscapeRegex(_texMatchsSearchQuery), 'i');
+    } catch(_) {
+      searchRe = null;
+    }
     matches = matches.filter(function(m) {
-      var p1 = (m.player1.name || '').toLowerCase();
-      var p2 = (m.player2.name || '').toLowerCase();
-      var tour = (m.tournament || '').toLowerCase();
-      return p1.includes(_texMatchsSearchQuery) || p2.includes(_texMatchsSearchQuery) || tour.includes(_texMatchsSearchQuery);
+      var p1 = (m.player1.name || '');
+      var p2 = (m.player2.name || '');
+      var tour = (m.tournament || '');
+      if (searchRe) return searchRe.test(p1) || searchRe.test(p2) || searchRe.test(tour);
+      // Fallback to simple includes (already case-insensitive because query is lowercased)
+      return p1.toLowerCase().includes(_texMatchsSearchQuery) || p2.toLowerCase().includes(_texMatchsSearchQuery) || tour.toLowerCase().includes(_texMatchsSearchQuery);
     });
     if (!matches.length) {
       body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match trouve pour "' + _tnEsc(_texMatchsSearchQuery) + '".</div>';
@@ -5564,10 +5585,22 @@ function _renderTexMatchs(r) {
   }
   // TEX-FILTERS : trier selon le filtre sélectionné
   matches = _sortTexMatchs(matches);
+  // L26 fix — specific empty-state message for filters that depend on Elo data (Elite / Upset / Rating)
+  if (!matches.length && (_texMatchsFilter === 'elite' || _texMatchsFilter === 'upset' || _texMatchsFilter === 'elo_delta')) {
+    var anyElo = (r.matches || []).some(function(m) { return m.elo_surface && (m.elo_surface.p1 != null || m.elo_surface.p2 != null); });
+    if (!anyElo) {
+      body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Données indisponibles pour ce filtre. Réessayez plus tard.</div>';
+      if (statusEl) statusEl.textContent = 'Données indisponibles';
+      return;
+    }
+  }
   var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
   var playerPhoto = function(slug, name) {
-    if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">?</span>';
-    return '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(name||'?') + '&background=172132&color=fff&size=56" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy">';
+    if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">' + _tnEsc((name||'?').charAt(0).toUpperCase()) + '</span>';
+    // L22+L23 fix — local SVG data-URI avatar (no external ui-avatars.com dependency) + onerror fallback to initials
+    var initials = encodeURIComponent((name||'?').split(/\s+/).map(function(w){return w.charAt(0);}).slice(0,2).join('').toUpperCase() || '?');
+    var svgAvatar = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"56\" height=\"56\"><rect width=\"56\" height=\"56\" fill=\"#172132\"/><text x=\"50%\" y=\"50%\" dy=\"0.35em\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"24\" font-weight=\"700\" fill=\"#fff\">' + (initials || '%3F') + '</text></svg>');
+    return '<img src="' + svgAvatar + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy" onerror="this.outerHTML=\'<span style=\\\"width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 monospace;color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)\\\">' + _tnEsc((name||'?').charAt(0).toUpperCase()) + '</span>\'">';
   };
   // Badge filtre actif (sans emojis)
   var filterBadges = {
@@ -5625,9 +5658,9 @@ function _renderTexMatchs(r) {
     }
     var scoresHtml = '';
     if (p1Scores || p2Scores) {
-      scoresHtml = '<td style="padding:8px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;"><div>' + _tnEsc(p1Scores) + '</div><div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div></td>';
-    } else { scoresHtml = '<td style="padding:8px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>'; }
-    var oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
+      scoresHtml = '<td data-label="Score" style="padding:8px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;"><div>' + _tnEsc(p1Scores) + '</div><div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div></td>';
+    } else { scoresHtml = '<td data-label="Score" style="padding:8px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>'; }
+    var oddsHtml = '<td data-label="Cotes" style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
     if (m.odds_current && (m.odds_current.p1 || m.odds_current.p2)) {
       var p1Odd = m.odds_current.p1 ? m.odds_current.p1.toFixed(2) : '—';
       var p2Odd = m.odds_current.p2 ? m.odds_current.p2.toFixed(2) : '—';
@@ -5640,18 +5673,20 @@ function _renderTexMatchs(r) {
       }
       // H10 fix — cotes neutres par défaut, vert uniquement si value_score > 0
       var oddsColor = (m.value_score > 0) ? '#00e676' : 'var(--text,#e8eaed)';
-      oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;"><div style="color:' + oddsColor + ';font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
+      oddsHtml = '<td data-label="Cotes" style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;"><div style="color:' + oddsColor + ';font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
     }
     var matchLink = ''; // Pas de lien externe — secret de fabrication
-    var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
+    // L9 fix — defensive check on tex_match_id (must be a finite positive integer)
+    var hasValidMatchId = Number.isFinite(m.tex_match_id) && m.tex_match_id > 0;
+    var clickAttr = hasValidMatchId ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
     return tourHeader
-      + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-      + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + badgeFn(m) + '</td>'
-      + '<td style="padding:8px 8px;">'
+      + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (hasValidMatchId ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
+      + '<td data-label="Heure" style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + badgeFn(m) + '</td>'
+      + '<td data-label="Match" style="padding:8px 8px;">'
         + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p1Slug) + '" data-name="' + _tnEsc(m.player1.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
         + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p2Slug) + '" data-name="' + _tnEsc(m.player2.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
       + '</td>'
-      + '<td style="padding:8px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;white-space:nowrap;">' + eloHtml + '</td>'
+      + '<td data-label="Index" style="padding:8px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;white-space:nowrap;">' + eloHtml + '</td>'
       + scoresHtml + oddsHtml
       + '</tr>';
   }).join('');
@@ -5666,8 +5701,15 @@ function _renderTexMatchs(r) {
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   if (statusEl) {
     // Q11 fix — use FR labels instead of raw internal keys
+    // L28 fix — show 'MAJ il y a Xs' badge when we have a fetch timestamp
     var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
-    statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
+    var statusTxt = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
+    if (_texMatchsLastFetchTs) {
+      var elapsedSec = Math.max(0, Math.round((Date.now() - _texMatchsLastFetchTs) / 1000));
+      var elapsedTxt = elapsedSec < 60 ? elapsedSec + 's' : Math.round(elapsedSec / 60) + 'min';
+      statusTxt += ' · MAJ il y a ' + elapsedTxt;
+    }
+    statusEl.textContent = statusTxt;
   }
   // H1 fix — event delegation pour les liens joueurs (au lieu de onclick inline)
   if (!body._texPlayerDelegationWired) {
@@ -5687,6 +5729,8 @@ async function openTexMatchDetail(texMatchId) {
   if (!texMatchId) return;
   // Réutiliser le modal existant ou créer un overlay
   var overlay = document.getElementById('tex-match-detail-overlay');
+  // L21 fix — keep reference to previously focused element to restore on close
+  var _texPreviousFocus = document.activeElement;
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'tex-match-detail-overlay';
@@ -5694,10 +5738,27 @@ async function openTexMatchDetail(texMatchId) {
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-label', 'Detail du match');
-    // H11 fix — Escape pour fermer
-    var _texEscHandler = function(e) { if (e.key === 'Escape') { overlay.style.display = 'none'; document.removeEventListener('keydown', _texEscHandler); } };
+    // H11 fix — Escape pour fermer + L21 fix — focus trap
+    var _texEscHandler = function(e) {
+      if (e.key === 'Escape') { _texCloseModal(); }
+      // L21 fix — Tab cycles within modal
+      else if (e.key === 'Tab') {
+        var focusable = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (!focusable.length) return;
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    var _texCloseModal = function() {
+      overlay.style.display = 'none';
+      document.removeEventListener('keydown', _texEscHandler);
+      // L21 fix — restore focus to the element that opened the modal
+      if (_texPreviousFocus && typeof _texPreviousFocus.focus === 'function') { try { _texPreviousFocus.focus(); } catch(_) {} }
+    };
+    overlay._close = _texCloseModal; // expose for inline close buttons
     document.addEventListener('keydown', _texEscHandler);
-    overlay.onclick = function(e) { if (e.target === overlay) overlay.style.display = 'none'; };
+    overlay.onclick = function(e) { if (e.target === overlay) _texCloseModal(); };
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'flex';
@@ -5743,14 +5804,14 @@ async function openTexMatchDetail(texMatchId) {
     overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
       + '<h3 style="margin:0;font-family:\'Instrument Sans\',sans-serif;font-size:18px;font-weight:700;color:var(--text,#e8eaed);">' + p1 + ' vs ' + p2 + '</h3>'
-      + '<button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:20px;cursor:pointer;" aria-label="Fermer">✕</button>'
+      + '<button onclick="var o=document.getElementById(\'tex-match-detail-overlay\');if(o&&o._close){o._close();}else{o.style.display=\'none\';}" style="background:none;border:none;color:var(--text3,#5a6068);font-size:20px;cursor:pointer;" aria-label="Fermer">✕</button>'
       + '</div>'
       + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3,#5a6068);margin-bottom:8px;">Cotes multi-bookmakers</div>'
       + booksHtml + avgHtml + h2hHtml
       + '<div style="margin-top:16px;text-align:center;"></div>'
       + '</div>';
   } catch (e) {
-    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
+    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="var o=document.getElementById(\'tex-match-detail-overlay\');if(o&&o._close){o._close();}else{o.style.display=\'none\';}" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
   }
 }
 
@@ -5758,6 +5819,8 @@ async function openTexMatchDetail(texMatchId) {
 async function openPlayerProfile(slug, name, surface) {
   if (!slug && !name) return;
   var overlay = document.getElementById('player-profile-overlay');
+  // L21 fix — keep reference to previously focused element to restore on close
+  var _profilePrevFocus = document.activeElement;
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'player-profile-overlay';
@@ -5765,10 +5828,25 @@ async function openPlayerProfile(slug, name, surface) {
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-label', 'Fiche joueur');
-    // H11 fix — Escape pour fermer
-    var _profileEscHandler = function(e) { if (e.key === 'Escape') { overlay.style.display = 'none'; document.removeEventListener('keydown', _profileEscHandler); } };
+    // H11 fix — Escape + L21 fix — focus trap
+    var _profileEscHandler = function(e) {
+      if (e.key === 'Escape') { _profileCloseModal(); }
+      else if (e.key === 'Tab') {
+        var focusable = overlay.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (!focusable.length) return;
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    var _profileCloseModal = function() {
+      overlay.style.display = 'none';
+      document.removeEventListener('keydown', _profileEscHandler);
+      if (_profilePrevFocus && typeof _profilePrevFocus.focus === 'function') { try { _profilePrevFocus.focus(); } catch(_) {} }
+    };
+    overlay._close = _profileCloseModal;
     document.addEventListener('keydown', _profileEscHandler);
-    overlay.onclick = function(e) { if (e.target === overlay) overlay.style.display = 'none'; };
+    overlay.onclick = function(e) { if (e.target === overlay) _profileCloseModal(); };
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'flex';
@@ -5793,7 +5871,7 @@ async function openPlayerProfile(slug, name, surface) {
     if (r.country) html += '<div style="font-size:12px;color:var(--text3,#64748b);margin-top:2px;">' + _tnEsc(r.country) + '</div>';
     if (r.age) html += '<div style="font-size:11px;color:var(--text3,#5a6068);">' + _tnEsc(r.age) + ' ans' + (r.plays ? ' · ' + _tnEsc(r.plays) + '-handed' : '') + '</div>';
     html += '</div></div>';
-    html += '<button onclick="document.getElementById(\'player-profile-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:22px;cursor:pointer;padding:0 4px;" aria-label="Fermer">✕</button>';
+    html += '<button onclick="var o=document.getElementById(\'player-profile-overlay\');if(o&&o._close){o._close();}else{o.style.display=\'none\';}" style="background:none;border:none;color:var(--text3,#5a6068);font-size:22px;cursor:pointer;padding:0 4px;" aria-label="Fermer">✕</button>';
     html += '</div>';
     // Section 1 : Classements
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
@@ -5827,8 +5905,11 @@ async function openPlayerProfile(slug, name, surface) {
       surfaces.forEach(function(s) {
         var key = s[0], label = s[1];
         var rec = sr[key];
-        if (rec) {
-          var pct = rec.wins + rec.losses > 0 ? Math.round(rec.wins / (rec.wins + rec.losses) * 100) : 0;
+        // L7 fix — check rec.wins != null explicitly (not just `if (rec)` which is truthy for empty {})
+        if (rec && rec.wins != null && rec.losses != null) {
+          // L8 fix — add parentheses around (rec.wins + rec.losses) for precedence clarity
+          var totalMatches = (rec.wins + rec.losses);
+          var pct = totalMatches > 0 ? Math.round(rec.wins / totalMatches * 100) : 0;
           var sColor = surfColor(s[1] === 'Indoor' ? 'Indoor' : s[1]);
           html += '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px;text-align:center;">';
           html += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px;"><span style="width:6px;height:6px;border-radius:50%;background:' + sColor + ';"></span><span style="font-size:10px;color:var(--text2,#8d9399);">' + label + '</span></div>';
@@ -5885,7 +5966,7 @@ async function openPlayerProfile(slug, name, surface) {
     html += '</div>';
     overlay.innerHTML = html;
   } catch (e) {
-    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'player-profile-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
+    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="var o=document.getElementById(\'player-profile-overlay\');if(o&&o._close){o._close();}else{o.style.display=\'none\';}" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
   }
 }
 

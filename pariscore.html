@@ -23191,6 +23191,57 @@ body[data-page="mma"] footer { display: none !important; }
 .tex-tournaments-toggle:hover { background: rgba(0,119,255,0.08); }
 .tex-tournaments-toggle .chevron { transition: transform 0.2s ease; }
 .tex-tournaments-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+
+/* L24 fix — responsive popup padding on mobile (less generous, more screen real estate) */
+@media (max-width: 480px) {
+  #tex-match-detail-overlay > div,
+  #player-profile-overlay > div {
+    padding: 16px !important;
+    max-height: 92vh !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* L29 fix — tableau MATCHS responsive : cards empilées < 768px */
+@media (max-width: 768px) {
+  .tex-matchs-table { overflow-x: visible; }
+  .tex-matchs-table table { display: block; }
+  .tex-matchs-table thead { display: none; }
+  .tex-matchs-table tbody { display: block; }
+  .tex-matchs-table tbody tr {
+    display: block;
+    margin-bottom: 8px;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .tex-matchs-table tbody td {
+    display: block;
+    padding: 4px 0 !important;
+    text-align: left !important;
+    border: none !important;
+  }
+  .tex-matchs-table tbody td:before {
+    content: attr(data-label) " : ";
+    color: var(--text3, #5a6068);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 6px;
+  }
+}
+
+/* L31 fix — densité : sur mobile, grouper les filtres en 2 lignes compactes */
+@media (max-width: 640px) {
+  .tn2-tab-panel[data-tab="matchs"] > div:nth-child(2) {
+    padding: 6px !important;
+    gap: 4px !important;
+  }
+  .tn2-tab-panel[data-tab="matchs"] .tn2-f-btn {
+    padding: 4px 6px !important;
+    font-size: 9px !important;
+  }
+}
 .tn2-f-badge {
   display: inline-block; padding: 0 4px;
   font-size: 9px; font-weight: 600;
@@ -24638,7 +24689,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-15"></script>
+<script src="/pariscore.js?v=250625-16"></script>
 <script>
 (function(){
 var b=document.createElement('div');
