@@ -14,7 +14,7 @@
 const assert = require('assert');
 const logic = require('./lib/tennis-logic.js');
 
-const { decodeHtmlEntities, texEscapeRegex, upsetScore, sortTexMatchs, computeMatchRating } = logic;
+const { decodeHtmlEntities, texEscapeRegex, upsetScore, sortTexMatchs, computeMatchRating, inferMatchStatus } = logic;
 
 // ─────────────────────────────────────────────────────────────────────────
 // Mini framework de test (zéro dépendance)
@@ -563,6 +563,115 @@ test('Match with no Elo + no odds still returns valid rating (graceful)', () => 
   const out = computeMatchRating(fixture.challengerNoElo);
   assert(out.match_rating.score >= 1, 'score must be at least 1 (clamp)');
   assert(out.match_rating.stars >= 1, 'stars must be at least 1');
+});
+
+// ═════════════════════════════════════════════════════════════════════════
+// SUITE 6 — inferMatchStatus (NEW)
+// ═════════════════════════════════════════════════════════════════════════
+console.log('\n── Suite 6 : inferMatchStatus ──');
+
+// Helper : construit un timestamp UTC pour aujourd'hui à HH:MM
+function todayAt(hh, mm) {
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm);
+}
+
+test('Returns "unknown" when time_utc is null/empty', () => {
+  deepEq(inferMatchStatus(null, [], []), { status: 'unknown', starts_in_minutes: null });
+  deepEq(inferMatchStatus('', [], []), { status: 'unknown', starts_in_minutes: null });
+});
+
+test('Returns "unknown" when time_utc is malformed', () => {
+  deepEq(inferMatchStatus('invalid', [], []), { status: 'unknown', starts_in_minutes: null });
+  // 'abc' ne matche pas la regex \d{1,2}:\d{2}
+  deepEq(inferMatchStatus('abc', [], []), { status: 'unknown', starts_in_minutes: null });
+  deepEq(inferMatchStatus('14', [], []), { status: 'unknown', starts_in_minutes: null }); // pas de :MM
+});
+
+test('Match in the future with no scores → "upcoming"', () => {
+  // Match dans 2h (utilise time_utc dynamique)
+  const now = Date.now();
+  const future = new Date(now + 2 * 3600 * 1000);
+  const hh = String(future.getUTCHours()).padStart(2, '0');
+  const mm = String(future.getUTCMinutes()).padStart(2, '0');
+  const result = inferMatchStatus(hh + ':' + mm, [], [], now);
+  eq(result.status, 'upcoming');
+  assert(result.starts_in_minutes > 60 && result.starts_in_minutes <= 120, 'should be ~120 min');
+});
+
+test('Match started 30min ago, no scores → "live"', () => {
+  const now = Date.now();
+  const past = new Date(now - 30 * 60 * 1000);
+  const hh = String(past.getUTCHours()).padStart(2, '0');
+  const mm = String(past.getUTCMinutes()).padStart(2, '0');
+  const result = inferMatchStatus(hh + ':' + mm, [], [], now);
+  eq(result.status, 'live');
+  assert(result.starts_in_minutes < 0 && result.starts_in_minutes >= -35, 'should be ~-30 min');
+});
+
+test('Match started 10min ago, 1 set played → "live" (not finished)', () => {
+  const now = Date.now();
+  const past = new Date(now - 10 * 60 * 1000);
+  const hh = String(past.getUTCHours()).padStart(2, '0');
+  const mm = String(past.getUTCMinutes()).padStart(2, '0');
+  // 1 set joué (best-of-3 pas encore fini)
+  const result = inferMatchStatus(hh + ':' + mm, ['6'], ['3'], now);
+  eq(result.status, 'live');
+});
+
+test('Match with 3+ sets played → "finished" (best-of-3 with 2-1)', () => {
+  const now = Date.now();
+  const future = new Date(now + 2 * 3600 * 1000);
+  const hh = String(future.getUTCHours()).padStart(2, '0');
+  const mm = String(future.getUTCMinutes()).padStart(2, '0');
+  // 3 sets joués (6-3, 4-6, 6-2)
+  const result = inferMatchStatus(hh + ':' + mm, ['6', '4', '6'], ['3', '6', '2'], now);
+  eq(result.status, 'finished');
+});
+
+test('Match with 3 sets but no time → still "unknown" (cannot infer)', () => {
+  // Sans time_utc, on ne peut pas savoir si le match est aujourd'hui
+  const result = inferMatchStatus(null, ['6', '4', '6'], ['3', '6', '2']);
+  eq(result.status, 'unknown');
+});
+
+test('Match started 6h ago with scores → "finished" (>5h threshold)', () => {
+  const now = Date.now();
+  const past = new Date(now - 6 * 3600 * 1000); // 6h ago
+  const hh = String(past.getUTCHours()).padStart(2, '0');
+  const mm = String(past.getUTCMinutes()).padStart(2, '0');
+  // 1 set joué mais ça fait 6h → considéré fini
+  const result = inferMatchStatus(hh + ':' + mm, ['6'], ['3'], now);
+  eq(result.status, 'finished');
+});
+
+test('Match started 6h ago without scores → "live" (no scores to confirm finish)', () => {
+  // Edge case : 6h passé mais aucun score → on ne peut pas confirmer fini
+  // L'heuristique dit : startsInMin < -300 && hasScores → finished
+  // Donc sans scores, ça reste live (même si c'est probablement fini en réalité)
+  const now = Date.now();
+  const past = new Date(now - 6 * 3600 * 1000);
+  const hh = String(past.getUTCHours()).padStart(2, '0');
+  const mm = String(past.getUTCMinutes()).padStart(2, '0');
+  const result = inferMatchStatus(hh + ':' + mm, [], [], now);
+  eq(result.status, 'live');
+});
+
+test('starts_in_minutes is rounded to integer', () => {
+  const now = Date.now();
+  const future = new Date(now + 90 * 1000); // 1.5 min
+  const hh = String(future.getUTCHours()).padStart(2, '0');
+  const mm = String(future.getUTCMinutes()).padStart(2, '0');
+  const result = inferMatchStatus(hh + ':' + mm, [], [], now);
+  assert(Number.isInteger(result.starts_in_minutes), 'starts_in_minutes must be integer');
+});
+
+test('Fixture grandSlamElite with time_utc "14:00" — status depends on current time', () => {
+  // Test avec un time fixe ; on vérifie juste que la fonction ne plante pas
+  const result = inferMatchStatus('14:00', [], []);
+  assert(['upcoming', 'live', 'finished', 'unknown'].includes(result.status), 'valid status');
+  // starts_in_minutes peut être négatif ou positif selon l'heure du test
+  assert(result.starts_in_minutes !== null, 'starts_in_minutes computed');
 });
 
 // ═════════════════════════════════════════════════════════════════════════

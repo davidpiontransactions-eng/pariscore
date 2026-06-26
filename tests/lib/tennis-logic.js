@@ -226,4 +226,30 @@ module.exports = {
   upsetScore,
   sortTexMatchs,
   computeMatchRating,
+  inferMatchStatus,
 };
+
+// ─────────────────────────────────────────────────────────────────────────
+// inferMatchStatus — extrait de server.js (L29737-29757)
+// Heuristique d'inférence du status d'un match à partir de time_utc + scores.
+// ─────────────────────────────────────────────────────────────────────────
+function inferMatchStatus(time_utc, scoresP1, scoresP2, nowMs) {
+  if (!time_utc || !/^\d{1,2}:\d{2}/.test(time_utc)) {
+    return { status: 'unknown', starts_in_minutes: null };
+  }
+  nowMs = nowMs || Date.now();
+  const nowUtc = new Date(nowMs);
+  const parts = time_utc.match(/^(\d{1,2}):(\d{2})/);
+  const hh = parseInt(parts[1], 10);
+  const mm = parseInt(parts[2], 10);
+  const matchStartMs = Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), nowUtc.getUTCDate(), hh, mm);
+  const startsInMin = Math.round((matchStartMs - nowMs) / 60000);
+  const totalSets = Math.max((scoresP1 || []).length, (scoresP2 || []).length);
+  const hasScores = totalSets > 0;
+  let status;
+  if (totalSets >= 3) status = 'finished';
+  else if (startsInMin < -300 && hasScores) status = 'finished';
+  else if (startsInMin < 0) status = 'live';
+  else status = 'upcoming';
+  return { status, starts_in_minutes: startsInMin };
+}

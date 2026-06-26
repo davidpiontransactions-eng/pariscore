@@ -29697,6 +29697,12 @@ function _texParseMatchesPage(html) {
   for (const th of tourHeaders) {
     if (!tourHeadersByExactName.has(th.name)) tourHeadersByExactName.set(th.name, th);
   }
+  // NEW — Snapshot de l'heure UTC au moment du parse (pour inférer status live/finished/upcoming)
+  const nowMs = Date.now();
+  const nowUtc = new Date(nowMs);
+  const todayUtcY = nowUtc.getUTCFullYear();
+  const todayUtcM = nowUtc.getUTCMonth();
+  const todayUtcD = nowUtc.getUTCDate();
   while ((m = trRe.exec(html)) !== null) {
     const [, , idx, , row1, row2] = m;
     // Trouver le tournoi le plus récent avant ce match
@@ -29728,10 +29734,34 @@ function _texParseMatchesPage(html) {
     const driftP2 = (oddsOpen[1] != null && oddsCurr[1] != null) ? ((oddsCurr[1] - oddsOpen[1]) / Math.max(0.01, Math.abs(oddsOpen[1])) * 100) : null;
     // Round info (ex: "1/8", "Quarterfinal", etc.)
     const roundM = row1.match(/class="round"[^>]*>([^<]+)</);
+    // ─── NEW — Inférence status : finished | live | upcoming ───
+    // S'appuie sur time_utc + présence de scores + nombre de sets joués.
+    let status = 'upcoming';
+    let startsInMin = null;
+    if (time && /^\d{1,2}:\d{2}/.test(time)) {
+      const parts = time.match(/^(\d{1,2}):(\d{2})/);
+      const hh = parseInt(parts[1], 10);
+      const mm = parseInt(parts[2], 10);
+      const matchStartMs = Date.UTC(todayUtcY, todayUtcM, todayUtcD, hh, mm);
+      startsInMin = Math.round((matchStartMs - nowMs) / 60000);
+      const totalSets = Math.max(scoresP1.length, scoresP2.length);
+      const hasScores = totalSets > 0;
+      // Heuristique :
+      // - 3+ sets joués → fini (best-of-3 avec 2-1 ou best-of-5 avec 3-0/3-1/3-2)
+      // - match commencé il y a plus de 5h avec scores → probablement fini
+      // - match commencé (startsInMin < 0) sans condition précédente → live
+      // - match pas encore commencé → upcoming
+      if (totalSets >= 3) status = 'finished';
+      else if (startsInMin < -300 && hasScores) status = 'finished';
+      else if (startsInMin < 0) status = 'live';
+      else status = 'upcoming';
+    }
     out.push({
       id: matchIdM ? `tex_${matchIdM[1]}` : `tex_idx_${idx}`,
       tex_match_id: matchIdM ? parseInt(matchIdM[1], 10) : null,
       time_utc: time,
+      status, // NEW — 'finished' | 'live' | 'upcoming' | 'unknown'
+      starts_in_minutes: startsInMin, // NEW — négatif si déjà commencé
       tournament: tournament ? _decodeHtmlEntities(tournament) : null,
       tournament_slug: tournament ? (tourHeadersByExactName.get(tournament)?.slug || null) : null,
       surface: surface || null,

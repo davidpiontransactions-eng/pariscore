@@ -5269,6 +5269,10 @@ let _texMatchsTimer = null;
 let _texMatchsLastRenderHash = null; // Q5 fix — detect payload changes to preserve scroll/selection
 let _texMatchsState = 'idle'; // L6 fix — explicit state machine: 'idle' | 'loading' | 'error' | 'rendered' (replaces fragile innerHTML.includes())
 let _texMatchsLastFetchTs = null; // L28 fix — timestamp of last successful fetch for 'MAJ il y a Xs' badge
+// NEW — Filtres supplémentaires (timing + étoiles + masquer terminés)
+let _texMatchsTimeFilter = 'all'; // 'all' | 'live' | '1h' | '2h' | '4h' | '6h'
+let _texMatchsMinStars = 0; // 0 (tous) | 1 | 2 | 3 | 4 (seuil minimum d'étoiles match_rating.stars)
+let _texMatchsShowFinished = false; // false par défaut (exclure les matchs terminés)
 
 // Q11 fix — map filter keys to user-friendly FR labels (avoid exposing technical internal names)
 const _TEX_FILTER_LABELS = {
@@ -5280,6 +5284,56 @@ const _TEX_FILTER_LABELS = {
   rating: 'Rating',
   upset: 'Upset',
 };
+
+// NEW — Labels pour les filtres temporels
+const _TEX_TIME_FILTER_LABELS = {
+  all: 'Tous',
+  live: 'Live',
+  '1h': '≤ 1h',
+  '2h': '≤ 2h',
+  '4h': '≤ 4h',
+  '6h': '≤ 6h',
+};
+
+// NEW — Change le filtre temporel (live / 1h / 2h / 4h / 6h / all)
+function texMatchsSetTimeFilter(filter) {
+  _texMatchsTimeFilter = filter || 'all';
+  document.querySelectorAll('.tex-time-filter-btn').forEach(function(b) {
+    var isActive = b.getAttribute('data-time') === _texMatchsTimeFilter;
+    b.classList.toggle('is-active', isActive);
+  });
+  _texMatchsLastRenderHash = null; // force re-render
+  if (_texMatchsRawData && _texMatchsRawData.matches) {
+    _renderTexMatchs(_texMatchsRawData);
+  }
+}
+
+// NEW — Change le seuil minimum d'étoiles (0=tous, 1-4 = ≥ N étoiles)
+function texMatchsSetMinStars(stars) {
+  _texMatchsMinStars = parseInt(stars, 10) || 0;
+  document.querySelectorAll('.tex-stars-filter-btn').forEach(function(b) {
+    var isActive = parseInt(b.getAttribute('data-stars'), 10) === _texMatchsMinStars;
+    b.classList.toggle('is-active', isActive);
+  });
+  _texMatchsLastRenderHash = null;
+  if (_texMatchsRawData && _texMatchsRawData.matches) {
+    _renderTexMatchs(_texMatchsRawData);
+  }
+}
+
+// NEW — Bascule l'affichage des matchs terminés (masqués par défaut)
+function texMatchsToggleFinished() {
+  _texMatchsShowFinished = !_texMatchsShowFinished;
+  var btn = document.querySelector('.tex-finished-toggle');
+  if (btn) {
+    btn.classList.toggle('is-active', _texMatchsShowFinished);
+    btn.textContent = _texMatchsShowFinished ? 'Afficher terminés ✓' : 'Masquer terminés';
+  }
+  _texMatchsLastRenderHash = null;
+  if (_texMatchsRawData && _texMatchsRawData.matches) {
+    _renderTexMatchs(_texMatchsRawData);
+  }
+}
 
 function _texEscapeRegex(s) {
   // L27 fix — escape regex special chars in user search query so they match literally
@@ -5542,7 +5596,7 @@ function _renderTexMatchs(r) {
   // (avoids losing scroll position / hover state on identical auto-refresh payloads)
   var payloadHash = '';
   try {
-    payloadHash = matches.length + '|' + (matches[0] && matches[0].id || '') + '|' + (matches[matches.length-1] && matches[matches.length-1].id || '') + '|' + _texMatchsFilter + '|' + _texMatchsSearchQuery;
+    payloadHash = matches.length + '|' + (matches[0] && matches[0].id || '') + '|' + (matches[matches.length-1] && matches[matches.length-1].id || '') + '|' + _texMatchsFilter + '|' + _texMatchsSearchQuery + '|' + _texMatchsTimeFilter + '|' + _texMatchsMinStars + '|' + _texMatchsShowFinished;
   } catch(_) {}
   var isInitialLoad = _texMatchsState !== 'rendered'; // L6 fix — use state machine
   var skipRender = !isInitialLoad && payloadHash === _texMatchsLastRenderHash;
@@ -5558,6 +5612,37 @@ function _renderTexMatchs(r) {
   if (!matches.length) {
     body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match programmé aujourd\'hui.</div>';
     if (statusEl) statusEl.textContent = '0 matchs';
+    return;
+  }
+  // NEW — Filtre 1 : Masquer matchs terminés (sauf si _texMatchsShowFinished=true)
+  if (!_texMatchsShowFinished) {
+    var beforeFinished = matches.length;
+    matches = matches.filter(function(m) { return m.status !== 'finished'; });
+    if (beforeFinished !== matches.length && statusEl) {
+      // Petit feedback discret pour l'utilisateur
+      var hiddenCount = beforeFinished - matches.length;
+      // (on l'ajoute au status bar plus bas)
+    }
+  }
+  // NEW — Filtre 2 : Timing (live / ≤1h / ≤2h / ≤4h / ≤6h)
+  if (_texMatchsTimeFilter !== 'all') {
+    matches = matches.filter(function(m) {
+      if (_texMatchsTimeFilter === 'live') return m.status === 'live';
+      var maxHours = parseInt(_texMatchsTimeFilter, 10);
+      if (isNaN(maxHours)) return true;
+      // Match à venir dans ≤ maxHours heures
+      return m.status === 'upcoming' && m.starts_in_minutes != null && m.starts_in_minutes <= maxHours * 60;
+    });
+  }
+  // NEW — Filtre 3 : Étoiles minimum (≥ N étoiles)
+  if (_texMatchsMinStars > 0) {
+    matches = matches.filter(function(m) {
+      return m.match_rating && m.match_rating.stars >= _texMatchsMinStars;
+    });
+  }
+  if (!matches.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match ne correspond à ces filtres.</div>';
+    if (statusEl) statusEl.textContent = '0 matchs (filtres)';
     return;
   }
   // Filtre recherche : par nom de joueur OU nom de tournoi
@@ -5679,9 +5764,19 @@ function _renderTexMatchs(r) {
     // L9 fix — defensive check on tex_match_id (must be a finite positive integer)
     var hasValidMatchId = Number.isFinite(m.tex_match_id) && m.tex_match_id > 0;
     var clickAttr = hasValidMatchId ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
+    // NEW — Badge status (Live / Dans X min / Terminé)
+    var statusBadge = '';
+    if (m.status === 'live') {
+      statusBadge = ' <span style="display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(255,77,77,0.15);color:#ff4d4d;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px;animation:tex-blink 1.5s ease-in-out infinite;">LIVE</span>';
+    } else if (m.status === 'upcoming' && m.starts_in_minutes != null && m.starts_in_minutes >= 0 && m.starts_in_minutes <= 60) {
+      var minTxt = m.starts_in_minutes <= 1 ? 'maintenant' : 'dans ' + m.starts_in_minutes + 'min';
+      statusBadge = ' <span style="display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(0,230,118,0.10);color:var(--tex-green,#00e676);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px;">' + minTxt + '</span>';
+    } else if (m.status === 'finished') {
+      statusBadge = ' <span style="display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.05);color:var(--text3,#5a6068);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px;">FIN</span>';
+    }
     return tourHeader
       + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (hasValidMatchId ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-      + '<td data-label="Heure" style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + badgeFn(m) + '</td>'
+      + '<td data-label="Heure" style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + statusBadge + badgeFn(m) + '</td>'
       + '<td data-label="Match" style="padding:8px 8px;">'
         + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p1Slug) + '" data-name="' + _tnEsc(m.player1.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
         + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p2Slug) + '" data-name="' + _tnEsc(m.player2.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
