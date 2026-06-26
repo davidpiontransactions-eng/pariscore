@@ -4798,7 +4798,7 @@ async function fetchTennisTop10() {
     // Afficher le spinner au premier chargement (hors polling) si pas de cache
     var isEmpty = container.innerHTML === '' || container.innerHTML.includes('tn-t10-empty') || container.innerHTML.includes('tn-t10-loading');
     if (isEmpty && fetchTennisTop10._retry === 0 && fetchTennisTop10._pollCount === 0) {
-      container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
+      container.innerHTML = '<div class="tn-t10-loading" style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>';
     }
     
     // Cache-busting + signal AbortController
@@ -5259,8 +5259,16 @@ async function loadTexCalendar() {
 // ═══ TENNIS EXPLORER — MATCHS DU JOUR (sous-onglet MATCHS) ═══
 let _texMatchsTour = 'atp';
 let _texMatchsFilter = 'time';
+let _texMatchsSearchQuery = '';
 let _texMatchsRawData = null; // cache des données brutes pour re-tri sans refetch
 let _texMatchsTimer = null;
+
+function texMatchsSearch(query) {
+  _texMatchsSearchQuery = (query || '').toLowerCase().trim();
+  if (_texMatchsRawData && _texMatchsRawData.matches) {
+    _renderTexMatchs(_texMatchsRawData);
+  }
+}
 
 function texMatchsSetFilter(filter) {
   _texMatchsFilter = filter;
@@ -5364,7 +5372,7 @@ async function loadTexMatchs() {
   var statusEl = document.getElementById('tex-matchs-status');
   if (!body) return;
   if (!body.innerHTML.includes('tn-t10-loading') && !body.innerHTML.includes('tex-matchs-table')) {
-    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>';
   }
   try {
     var r = await apiFetch('/api/v1/tennis/tex/matches?tour=' + _texMatchsTour).then(function(r) { return r.json(); });
@@ -5387,6 +5395,20 @@ function _renderTexMatchs(r) {
     if (statusEl) statusEl.textContent = '0 matchs';
     return;
   }
+  // Filtre recherche : par nom de joueur OU nom de tournoi
+  if (_texMatchsSearchQuery) {
+    matches = matches.filter(function(m) {
+      var p1 = (m.player1.name || '').toLowerCase();
+      var p2 = (m.player2.name || '').toLowerCase();
+      var tour = (m.tournament || '').toLowerCase();
+      return p1.includes(_texMatchsSearchQuery) || p2.includes(_texMatchsSearchQuery) || tour.includes(_texMatchsSearchQuery);
+    });
+    if (!matches.length) {
+      body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match trouve pour "' + _tnEsc(_texMatchsSearchQuery) + '".</div>';
+      if (statusEl) statusEl.textContent = '0 resultat';
+      return;
+    }
+  }
   // TEX-FILTERS : trier selon le filtre sélectionné
   matches = _sortTexMatchs(matches);
   var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
@@ -5394,13 +5416,13 @@ function _renderTexMatchs(r) {
     if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">?</span>';
     return '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(name||'?') + '&background=172132&color=fff&size=56" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy">';
   };
-  // Badge filtre actif
+  // Badge filtre actif (sans emojis)
   var filterBadges = {
-    elo_delta: function(m) { return m.elo_surface?.delta != null ? '<span style="font-size:9px;font-weight:700;color:' + (m.elo_surface.delta >= 100 ? '#00e676' : m.elo_surface.delta >= 50 ? '#fbbf24' : '#ef4444') + ';margin-left:4px;">Δ' + m.elo_surface.delta + '</span>' : ''; },
+    elo_delta: function(m) { return m.elo_surface?.delta != null ? '<span style="font-size:9px;font-weight:700;color:' + (m.elo_surface.delta >= 100 ? '#00e676' : m.elo_surface.delta >= 50 ? '#fbbf24' : '#ef4444') + ';margin-left:4px;">D' + m.elo_surface.delta + '</span>' : ''; },
     value: function(m) { return m.value_score > 0 ? '<span style="font-size:9px;font-weight:700;color:#00e676;margin-left:4px;">V' + m.value_score + '</span>' : ''; },
-    drift: function(m) { return m.max_drift > 0 ? '<span style="font-size:9px;font-weight:700;color:' + (m.max_drift >= 5 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">📈' + m.max_drift.toFixed(1) + '%</span>' : ''; },
-    elite: function(m) { return m.is_elite ? '<span style="font-size:9px;font-weight:700;color:#FFD700;margin-left:4px;">⭐</span>' : ''; },
-    upset: function(m) { var s = _upsetScore(m); return s > 50 ? '<span style="font-size:9px;font-weight:700;color:#ce93d8;margin-left:4px;">⚡' + s + '</span>' : ''; },
+    drift: function(m) { return m.max_drift > 0 ? '<span style="font-size:9px;font-weight:700;color:' + (m.max_drift >= 5 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">' + m.max_drift.toFixed(1) + '%</span>' : ''; },
+    elite: function(m) { return m.is_elite ? '<span style="font-size:9px;font-weight:700;color:#FFD700;margin-left:4px;">TOP</span>' : ''; },
+    upset: function(m) { var s = _upsetScore(m); return s > 50 ? '<span style="font-size:9px;font-weight:700;color:#ce93d8;margin-left:4px;">UP' + s + '</span>' : ''; },
     time: function() { return ''; },
   };
   var badgeFn = filterBadges[_texMatchsFilter] || function() { return ''; };
@@ -5444,7 +5466,7 @@ function _renderTexMatchs(r) {
       }
       oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;"><div style="color:#00e676;font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
     }
-    var matchLink = m.tex_match_id ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match">↗</a>' : '';
+    var matchLink = m.tex_match_id ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match">TE</a>' : '';
     var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
     return tourHeader
       + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
@@ -5532,7 +5554,7 @@ async function openTexMatchDetail(texMatchId) {
       + '</div>'
       + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3,#5a6068);margin-bottom:8px;">📊 Cotes multi-bookmakers</div>'
       + booksHtml + avgHtml + h2hHtml
-      + '<div style="margin-top:16px;text-align:center;"><a href="https://www.tennisexplorer.com/match-detail/?id=' + texMatchId + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;">Voir sur TennisExplorer ↗</a></div>'
+      + '<div style="margin-top:16px;text-align:center;"><a href="https://www.tennisexplorer.com/match-detail/?id=' + texMatchId + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;">Voir sur TennisExplorer</a></a></div>'
       + '</div>';
   } catch (e) {
     overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
@@ -5641,7 +5663,7 @@ async function openPlayerProfile(slug, name, surface) {
     }
     // Footer : lien TennisExplorer
     if (r.source_url) {
-      html += '<div style="text-align:center;margin-top:8px;"><a href="' + _tnEsc(r.source_url) + '" target="_blank" rel="noopener" style="color:var(--text3,#5a6068);text-decoration:none;font-size:11px;">Fiche complète sur TennisExplorer ↗</a></div>';
+      html += '<div style="text-align:center;margin-top:8px;"><a href="' + _tnEsc(r.source_url) + '" target="_blank" rel="noopener" style="color:var(--text3,#5a6068);text-decoration:none;font-size:11px;">Fiche complete sur TennisExplorer</a></a></div>';
     }
     html += '</div>';
     overlay.innerHTML = html;
