@@ -5371,6 +5371,67 @@ function texMatchsSetTour(tour) {
     }
   });
   loadTexMatchs();
+  loadTexTournamentsToday();
+}
+
+// Tournois du jour (section collapsible dans le sous-onglet MATCHS)
+async function loadTexTournamentsToday() {
+  var body = document.getElementById('tex-tournaments-today');
+  if (!body) return;
+  try {
+    var r = await apiFetch('/api/v1/tennis/tex/calendar?tour=' + _texMatchsTour).then(function(r) { return r.json(); });
+    if (r.error) throw new Error(r.detail || r.error);
+    var list = r.tournaments || [];
+    if (!list.length) {
+      body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3,#5a6068);font-size:12px;">Aucun tournoi programme.</div>';
+      return;
+    }
+    // Filtrer tournois de la semaine en cours (classe "actual" ou date dans la semaine)
+    var now = new Date();
+    var weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+    var weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 7);
+    var todayTour = list.filter(function(t) {
+      if (!t.start_date) return false;
+      var d = new Date(t.start_date);
+      return d >= weekStart && d <= weekEnd;
+    });
+    if (!todayTour.length) todayTour = list.slice(0, 8); // fallback : 8 premiers
+    var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
+    var catMeta = {
+      grand_slam: { label: 'GS', color: '#FFD700' },
+      masters_1000: { label: 'M1000', color: '#0077ff' },
+      wta_1000: { label: 'WTA 1000', color: '#E91E63' },
+      atp_500: { label: '500', color: '#9C27B0' },
+      wta_500: { label: 'W500', color: '#FF9800' },
+      atp_250: { label: '250', color: '#4CAF50' },
+      wta_250: { label: 'W250', color: '#00BCD4' },
+    };
+    var rows = todayTour.map(function(t) {
+      var cat = catMeta[t.category] || { label: '—', color: 'var(--text3,#5a6068)' };
+      var sIcon = t.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(t.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s;" onmouseenter="this.style.background=\'rgba(0,119,255,0.04)\'" onmouseleave="this.style.background=\'\'">'
+        + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:11px;">' + _tnEsc(t.start_date || '—') + '</td>'
+        + '<td style="padding:8px 8px;">'
+        + '<span style="display:inline-block;padding:2px 6px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;color:' + cat.color + ';background:rgba(255,255,255,0.05);margin-right:8px;vertical-align:middle;">' + cat.label + '</span>'
+        + '<span style="font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:500;color:var(--text,#e8eaed);vertical-align:middle;">' + _tnEsc(t.name || '—') + '</span>'
+        + '</td>'
+        + '<td style="padding:8px 8px;text-align:center;white-space:nowrap;">' + sIcon + '<span style="font-size:11px;color:var(--text2,#8d9399);vertical-align:middle;">' + _tnEsc(t.surface || '—') + '</span></td>'
+        + '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--green,#00e676);font-weight:600;white-space:nowrap;">' + _tnEsc(t.prize || '—') + '</td>'
+        + '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2,#8d9399);">' + (t.singles_draw || '—') + 'S</td>'
+        + '</tr>';
+    }).join('');
+    body.innerHTML = '<div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+      + '<thead><tr style="background:#111a28;">'
+      + '<th style="padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Date</th>'
+      + '<th style="padding:8px 8px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Tournoi</th>'
+      + '<th style="padding:8px 8px;text-align:center;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Surface</th>'
+      + '<th style="padding:8px 8px;text-align:right;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Prize</th>'
+      + '<th style="padding:8px 12px;text-align:right;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Draw</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  } catch (e) {
+    body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3,#5a6068);font-size:12px;">Tournois indisponibles.</div>';
+  }
 }
 
 async function loadTexMatchs() {
