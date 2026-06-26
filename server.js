@@ -42171,7 +42171,30 @@ if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
         }
       } catch (e) { _trackCatch('tennis', 'player_profile_elo', e); }
     }
-    // 3. Photo joueur (ui-avatars fallback — pas de scraping ATP/WTA bloqué)
+    // 3. Photo joueur — NEW : tente d'abord le lookup BSD player_id pour avoir la vraie photo
+    //    via la route /api/v1/tennis/player-photo/<id> (pattern existant autres onglets tennis)
+    try {
+      if (profile.name) {
+        // Recherche du player_id BSD par nom dans la base tennis_players (si la table existe)
+        const pNameLower = profile.name.toLowerCase().trim();
+        const pLastName = pNameLower.split(' ').pop();
+        let bsdRow = null;
+        // Essai 1 : nom exact
+        try {
+          bsdRow = sqldb.prepare('SELECT id FROM tennis_players WHERE LOWER(name) = ? COLLATE NOCASE LIMIT 1').get(pNameLower);
+        } catch (_) {}
+        // Essai 2 : LIKE lastname%
+        if (!bsdRow && pLastName && pLastName.length >= 3) {
+          try {
+            bsdRow = sqldb.prepare('SELECT id FROM tennis_players WHERE LOWER(name) LIKE ? COLLATE NOCASE LIMIT 1').get(pLastName + '%');
+          } catch (_) {}
+        }
+        if (bsdRow && bsdRow.id) {
+          profile.bsd_player_id = bsdRow.id;
+        }
+      }
+    } catch (e) { _trackCatch('tennis', 'player_profile_bsd_lookup', e); }
+    // Fallback : ui-avatars si pas de BSD player_id trouvé
     profile.photo_url = profile.name
       ? 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.name) + '&background=172132&color=fff&size=200'
       : null;
