@@ -42014,6 +42014,109 @@ if (pathname === '/api/v1/tennis/tex/player' && req.method === 'GET') {
 // prize money, L5 matchs (depuis BSD si dispo), stats service/retour (si dispo).
 const _playerProfileCache = new Map();
 const PLAYER_PROFILE_TTL_MS = 30 * 60 * 1000; // 30min
+
+// ─── NEW — Player photo cache (Wikipedia REST API, 24h TTL) ──────────────
+// Évite de rappeler Wikipedia pour chaque match affiché.
+const _playerPhotoCache = new Map(); // Map<playerName, { url, ts, status: 'ok'|'not_found' }>
+const PLAYER_PHOTO_TTL_MS = 24 * 3600 * 1000; // 24h
+const PLAYER_PHOTO_TTL_NOT_FOUND_MS = 7 * 24 * 3600 * 1000; // 7j pour les "not found" (évite de re-scrap Wikipedia trop souvent)
+
+// Wikipedia REST API — récupère le thumbnail d'un joueur depuis son nom
+async function _fetchWikipediaPhoto(playerName) {
+  if (!playerName) return null;
+  // Construit le titre Wikipedia à partir du nom du joueur
+  // Ex: "Roberto Bautista Agut" → "Roberto Bautista Agut"
+  // Ex: "Jannik Sinner" → "Jannik Sinner"
+  const wikiTitle = playerName.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('_');
+  // Premier essai : page summary en.wikipedia.org
+  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
+  try {
+    const res = await httpsGet(url, {
+      'Accept': 'application/json',
+      'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
+    });
+    if (res && res.status === 200 && res.data && res.data.thumbnail && res.data.thumbnail.source) {
+      return res.data.thumbnail.source;
+    }
+    // Pas de thumbnail → essaie avec "tennis" suffix (ex: "Jannik Sinner tennis")
+    if (res && res.status === 200 && res.data && res.data.type === 'disambiguation') {
+      const url2 = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle + ' (tennis)')}`;
+      const res2 = await httpsGet(url2, {
+        'Accept': 'application/json',
+        'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
+      });
+      if (res2 && res2.status === 200 && res2.data && res2.data.thumbnail && res2.data.thumbnail.source) {
+        return res2.data.thumbnail.source;
+      }
+    }
+    return null;
+  } catch (e) {
+    _trackCatch('tennis', 'wikipedia_photo_fetch', e);
+    return null;
+  }
+}
+
+// Route player-photo — renvoie une image (redirige vers Wikipedia) ou 404
+if (pathname === '/api/v1/tennis/player-photo' && req.method === 'GET') {
+  try {
+    const playerName = (query.name || '').toString().trim();
+    if (!playerName) return jsonResponse(res, 404, { error: 'name_required' });
+    
+    // Vérifie le cache
+    const cached = _playerPhotoCache.get(playerName.toLowerCase());
+    const ttlMs = (cached && cached.status === 'not_found') ? PLAYER_PHOTO_TTL_NOT_FOUND_MS : PLAYER_PHOTO_TTL_MS;
+    if (cached && Date.now() - cached.ts < ttlMs) {
+      if (cached.status === 'ok' && cached.url) {
+        // Redirect vers l'URL Wikipedia (cache navigateur gère le reste)
+        res.writeHead(302, { 'Location': cached.url, 'Cache-Control': 'public, max-age=86400' });
+        res.end();
+        return;
+      }
+      return jsonResponse(res, 404, { error: 'photo_not_available', cached: true });
+    }
+    
+    // Pas en cache → interroge Wikipedia (async, non-bloquant pour le navigateur)
+    // On renvoie immédiatement un 302 vers un avatar SVG généré côté serveur (data: URI)
+    // pendant qu'on lance le fetch Wikipedia en arrière-plan pour les prochaines fois
+    _fetchWikipediaPhoto(playerName).then(photoUrl => {
+      if (photoUrl) {
+        _playerPhotoCache.set(playerName.toLowerCase(), { url: photoUrl, ts: Date.now(), status: 'ok' });
+        // Persiste en SQLite pour les redémarrages
+        try {
+          sqldb.prepare('INSERT OR REPLACE INTO player_photos (player_id, player_name, source, local_path, fetched_at) VALUES (?, ?, ?, ?, ?)')
+            .run(playerName.toLowerCase(), playerName, 'wikipedia', photoUrl, Math.floor(Date.now() / 1000));
+        } catch (_) {}
+      } else {
+        _playerPhotoCache.set(playerName.toLowerCase(), { url: null, ts: Date.now(), status: 'not_found' });
+      }
+    }).catch(() => {});
+    
+    // En attendant le fetch Wikipedia, vérifie si on a déjà une URL en SQLite
+    let sqliteUrl = null;
+    try {
+      const row = sqldb.prepare('SELECT local_path FROM player_photos WHERE player_id = ?').get(playerName.toLowerCase());
+      if (row && row.local_path) sqliteUrl = row.local_path;
+    } catch (_) {}
+    
+    if (sqliteUrl) {
+      res.writeHead(302, { 'Location': sqliteUrl, 'Cache-Control': 'public, max-age=86400' });
+      res.end();
+      return;
+    }
+    
+    // Pas encore en cache → génère un SVG coloré basé sur le hash du nom
+    const hash = playerName.toLowerCase().split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
+    const hue = Math.abs(hash) % 360;
+    const initials = playerName.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase()).slice(0, 2).join('') || '?';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56"><rect width="56" height="56" fill="hsl(${hue},45%,30%)"/><text x="50%" y="50%" dy="0.35em" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#fff">${initials}</text></svg>`;
+    const dataUri = 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
+    res.writeHead(302, { 'Location': dataUri, 'Cache-Control': 'public, max-age=300' });
+    res.end();
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'player_photo_error', detail: e.message });
+  }
+}
+
 if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
   try {
     const slug = (query.slug || '').toString().trim();

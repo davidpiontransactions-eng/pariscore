@@ -5681,10 +5681,15 @@ function _renderTexMatchs(r) {
   }
   var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
   var playerPhoto = function(slug, name) {
-    // SIMPLIFIED — retourne directement un span avec initiales (plus fiable que SVG data-URI)
-    // Calcule les initiales (max 2 lettres : prénom + nom)
+    // NEW — utilise la route /api/v1/tennis/player-photo qui :
+    // 1. Vérifie le cache SQLite (24h)
+    // 2. Si absent, fetch Wikipedia en arrière-plan + renvoie SVG coloré temporaire
+    // 3. Au prochain affichage, la photo Wikipedia est en cache
+    // Fallback onerror : span initiales si la route échoue
     var _initials = (name||'?').split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('') || '?';
-    return '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
+    var _fallback = '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
+    if (!name) return _fallback;
+    return '<img src="/api/v1/tennis/player-photo?name=' + encodeURIComponent(name) + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);" alt="' + _tnEsc(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'' + _fallback.replace(/'/g, "\\'") + '\'">';
   };
   // Badge filtre actif (sans emojis)
   var filterBadges = {
