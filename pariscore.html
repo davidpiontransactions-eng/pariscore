@@ -15781,6 +15781,14 @@ function psSetLang(v) {
       <div id="tex-matchs-body" style="min-height:200px;">
         <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>
       </div>
+      <!-- Tableau des tournois du jour (collapsible) -->
+      <div style="margin-top:16px;">
+        <div onclick="var el=document.getElementById('tex-tournaments-today');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.toggle-arrow').textContent=el.style.display==='none'?'+':'-';" style="cursor:pointer;padding:10px 12px;background:rgba(0,119,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text2,#8d9399);">Tournois du jour</span>
+          <span class="toggle-arrow" style="font-family:'DM Mono',monospace;font-size:16px;color:var(--text3,#5a6068);">+</span>
+        </div>
+        <div id="tex-tournaments-today" style="display:none;margin-top:8px;"></div>
+      </div>
     </div>
 
     <!-- ── TAB LIVE ── -->
@@ -24601,7 +24609,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-12"></script>
+<script src="/pariscore.js?v=250625-13"></script>
 <script>
 (function(){
 var b=document.createElement('div');
