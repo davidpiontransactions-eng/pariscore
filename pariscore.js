@@ -5681,17 +5681,13 @@ function _renderTexMatchs(r) {
   }
   var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
   var playerPhoto = function(slug, name) {
-    // PATTERN EXISTANT (réutilise le système des autres onglets tennis) :
-    // 1. <img src='/api/v1/tennis/player-photo/<id>'> si player_id BSD dispo
-    // 2. Fallback onerror='fixBrokenPlayerPhoto(this)' qui essaie :
-    //    a. ui-avatars.com ( externe mais fiable )
-    //    b. SVG data URI inline avec initiales
-    // Ici on a pas l'ID BSD (matches TennisExplorer), on part directement sur ui-avatars
+    // PATTERN EXISTANT + nouvelle route /api/v1/tennis/player-photo?name=<name>
+    // qui proxy Wikipedia et sert l'image binaire (plus de redirect data: URI cassé)
     var _initials = (name||'?').split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('') || '?';
     if (!name) return '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
-    // ui-avatars.com — service gratuit et fiable, déjà utilisé dans les autres onglets
-    var _avatarUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name.trim()) + '&background=172132&color=fff&size=96&bold=true&font-size=0.33';
-    return '<img src="' + _avatarUrl + '" data-name="' + _tnEsc(name) + '" alt="' + _tnEsc(name) + '" loading="lazy" decoding="async" onerror="fixBrokenPlayerPhoto(this)" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);">';
+    // Route backend : cherche tennis_players_elo → BSD direct → Wikipedia → SVG initiales
+    var _photoUrl = '/api/v1/tennis/player-photo?name=' + encodeURIComponent(name.trim());
+    return '<img src="' + _photoUrl + '" data-name="' + _tnEsc(name) + '" alt="' + _tnEsc(name) + '" loading="lazy" decoding="async" onerror="fixBrokenPlayerPhoto(this)" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);">';
   };
   // NEW — Convertit l'heure UTC en heure locale (browser timezone)
   var _localTime = function(timeUtcStr) {
@@ -5988,15 +5984,8 @@ async function openPlayerProfile(slug, name, surface) {
     var r = await apiFetch(url).then(function(r) { return r.json(); });
     if (r.error) throw new Error(r.detail || r.error);
     var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
-    // NEW — détermine l'URL de la photo (vraie photo si player_id BSD dispo, sinon ui-avatars)
-    var _photoUrl;
-    if (r.bsd_player_id) {
-      _photoUrl = tennisPlayerPhotoURL(r.bsd_player_id); // route /api/v1/tennis/player-photo/<id>
-    } else if (r.name) {
-      _photoUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(r.name.trim()) + '&background=172132&color=fff&size=200&bold=true&font-size=0.33';
-    } else {
-      _photoUrl = null;
-    }
+    // NEW — détermine l'URL de la photo via route backend (proxy BSD + Wikipedia + SVG initiales)
+    var _photoUrl = r.name ? '/api/v1/tennis/player-photo?name=' + encodeURIComponent(r.name.trim()) : null;
     var html = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;">';
     // Header : photo + nom + pays
     html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">';

@@ -42056,32 +42056,85 @@ async function _fetchWikipediaPhoto(playerName) {
   }
 }
 
-// Route player-photo — renvoie une image (redirige vers Wikipedia) ou 404
+// Route player-photo — proxy photo par nom (cherche tennis_players_elo → BSD → Wikipedia)
+// Renvoie l'image binaire directement (pas de 302 redirect qui cassait <img src>)
 if (pathname === '/api/v1/tennis/player-photo' && req.method === 'GET') {
   try {
     const playerName = (query.name || '').toString().trim();
-    if (!playerName) return jsonResponse(res, 404, { error: 'name_required' });
-    
-    // Vérifie le cache
+    if (!playerName) { res.writeHead(404); res.end(); return; }
+
+    // 1) Tente d'abord le lookup dans tennis_players_elo → route <id> BSD (cache disque)
+    const eloInfo = _lookupTennisElo(playerName);
+    if (eloInfo && eloInfo.id) {
+      // Redirige vers la route <id> qui a un cache disque + proxy BSD + fallback Wikipedia
+      const redirectUrl = '/api/v1/tennis/player-photo/' + encodeURIComponent(eloInfo.id);
+      res.writeHead(302, { 'Location': redirectUrl, 'Cache-Control': 'public, max-age=86400' });
+      res.end();
+      return;
+    }
+
+    // 2) Vérifie le cache mémoire Wikipedia
     const cached = _playerPhotoCache.get(playerName.toLowerCase());
     const ttlMs = (cached && cached.status === 'not_found') ? PLAYER_PHOTO_TTL_NOT_FOUND_MS : PLAYER_PHOTO_TTL_MS;
     if (cached && Date.now() - cached.ts < ttlMs) {
       if (cached.status === 'ok' && cached.url) {
-        // Redirect vers l'URL Wikipedia (cache navigateur gère le reste)
-        res.writeHead(302, { 'Location': cached.url, 'Cache-Control': 'public, max-age=86400' });
-        res.end();
-        return;
+        // Proxy l'image Wikipedia directement (au lieu de redirect)
+        try {
+          const https2 = require('https');
+          https2.get(cached.url, { headers: { 'User-Agent': 'PariScore/2.0 (https://pariscore.fr)' }, timeout: 5000 }, function(imgRes) {
+            if (imgRes.statusCode === 200 && (imgRes.headers['content-type'] || '').indexOf('image/') >= 0) {
+              const chunks = [];
+              imgRes.on('data', c => chunks.push(c));
+              imgRes.on('end', () => {
+                const buf = Buffer.concat(chunks);
+                res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'], 'Cache-Control': 'public, max-age=86400', 'Access-Control-Allow-Origin': '*' });
+                res.end(buf);
+              });
+            } else {
+              imgRes.resume();
+              _serveInitialsSvg(res, playerName);
+            }
+          }).on('error', () => _serveInitialsSvg(res, playerName)).on('timeout', function() { this.destroy(); _serveInitialsSvg(res, playerName); });
+          return;
+        } catch (_) { /* fallback ci-dessous */ }
       }
-      return jsonResponse(res, 404, { error: 'photo_not_available', cached: true });
+      _serveInitialsSvg(res, playerName);
+      return;
     }
-    
-    // Pas en cache → interroge Wikipedia (async, non-bloquant pour le navigateur)
-    // On renvoie immédiatement un 302 vers un avatar SVG généré côté serveur (data: URI)
-    // pendant qu'on lance le fetch Wikipedia en arrière-plan pour les prochaines fois
+
+    // 3) Vérifie le cache SQLite player_photos
+    let sqliteUrl = null;
+    try {
+      const row = sqldb.prepare('SELECT local_path FROM player_photos WHERE player_id = ?').get(playerName.toLowerCase());
+      if (row && row.local_path) sqliteUrl = row.local_path;
+    } catch (_) {}
+
+    if (sqliteUrl) {
+      // Proxy l'image
+      try {
+        const https2 = require('https');
+        https2.get(sqliteUrl, { headers: { 'User-Agent': 'PariScore/2.0 (https://pariscore.fr)' }, timeout: 5000 }, function(imgRes) {
+          if (imgRes.statusCode === 200 && (imgRes.headers['content-type'] || '').indexOf('image/') >= 0) {
+            const chunks = [];
+            imgRes.on('data', c => chunks.push(c));
+            imgRes.on('end', () => {
+              const buf = Buffer.concat(chunks);
+              res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'], 'Cache-Control': 'public, max-age=86400', 'Access-Control-Allow-Origin': '*' });
+              res.end(buf);
+            });
+          } else {
+            imgRes.resume();
+            _serveInitialsSvg(res, playerName);
+          }
+        }).on('error', () => _serveInitialsSvg(res, playerName)).on('timeout', function() { this.destroy(); _serveInitialsSvg(res, playerName); });
+        return;
+      } catch (_) {}
+    }
+
+    // 4) Fetch Wikipedia en arrière-plan + sert immédiatement SVG initiales
     _fetchWikipediaPhoto(playerName).then(photoUrl => {
       if (photoUrl) {
         _playerPhotoCache.set(playerName.toLowerCase(), { url: photoUrl, ts: Date.now(), status: 'ok' });
-        // Persiste en SQLite pour les redémarrages
         try {
           sqldb.prepare('INSERT OR REPLACE INTO player_photos (player_id, player_name, source, local_path, fetched_at) VALUES (?, ?, ?, ?, ?)')
             .run(playerName.toLowerCase(), playerName, 'wikipedia', photoUrl, Math.floor(Date.now() / 1000));
@@ -42090,31 +42143,22 @@ if (pathname === '/api/v1/tennis/player-photo' && req.method === 'GET') {
         _playerPhotoCache.set(playerName.toLowerCase(), { url: null, ts: Date.now(), status: 'not_found' });
       }
     }).catch(() => {});
-    
-    // En attendant le fetch Wikipedia, vérifie si on a déjà une URL en SQLite
-    let sqliteUrl = null;
-    try {
-      const row = sqldb.prepare('SELECT local_path FROM player_photos WHERE player_id = ?').get(playerName.toLowerCase());
-      if (row && row.local_path) sqliteUrl = row.local_path;
-    } catch (_) {}
-    
-    if (sqliteUrl) {
-      res.writeHead(302, { 'Location': sqliteUrl, 'Cache-Control': 'public, max-age=86400' });
-      res.end();
-      return;
-    }
-    
-    // Pas encore en cache → génère un SVG coloré basé sur le hash du nom
-    const hash = playerName.toLowerCase().split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
-    const hue = Math.abs(hash) % 360;
-    const initials = playerName.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase()).slice(0, 2).join('') || '?';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56"><rect width="56" height="56" fill="hsl(${hue},45%,30%)"/><text x="50%" y="50%" dy="0.35em" text-anchor="middle" font-family="sans-serif" font-size="22" font-weight="700" fill="#fff">${initials}</text></svg>`;
-    const dataUri = 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
-    res.writeHead(302, { 'Location': dataUri, 'Cache-Control': 'public, max-age=300' });
-    res.end();
+
+    _serveInitialsSvg(res, playerName);
   } catch (e) {
-    return jsonResponse(res, 500, { error: 'player_photo_error', detail: e.message });
+    try { _serveInitialsSvg(res, ''); } catch (_) { res.writeHead(500); res.end(); }
   }
+}
+
+// Helper — sert un SVG coloré avec initiales (fallback universel)
+function _serveInitialsSvg(res, playerName) {
+  const hash = (playerName || '?').toLowerCase().split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
+  const hue = Math.abs(hash) % 360;
+  const initials = (playerName || '?').split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase()).slice(0, 2).join('') || '?';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="hsl(${hue},35%,25%)"/><text x="50%" y="50%" dy="0.35em" text-anchor="middle" font-family="sans-serif" font-size="38" font-weight="700" fill="#fff">${initials}</text></svg>`;
+  const buf = Buffer.from(svg, 'utf8');
+  res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=300', 'Access-Control-Allow-Origin': '*' });
+  res.end(buf);
 }
 
 if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
