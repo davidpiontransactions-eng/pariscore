@@ -5348,8 +5348,8 @@ async function loadTexMatchs() {
         + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
         + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + '</td>'
         + '<td style="padding:8px 8px;">'
-          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + p1Name + '</div>'
-          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + p2Name + '</div>'
+          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p1Slug) + '\',\'' + _tnEsc(m.player1.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
+          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p2Slug) + '\',\'' + _tnEsc(m.player2.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
         + '</td>'
         + scoresHtml
         + oddsHtml
@@ -5440,6 +5440,117 @@ async function openTexMatchDetail(texMatchId) {
       + '</div>';
   } catch (e) {
     overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
+  }
+}
+
+// ═══ PLAYER PROFILE POPUP — fiche joueur agrégée (TE + BSD + Elo interne) ═══
+async function openPlayerProfile(slug, name, surface) {
+  if (!slug && !name) return;
+  var overlay = document.getElementById('player-profile-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'player-profile-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.style.display = 'none'; };
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;"><div style="text-align:center;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement de la fiche joueur...</div></div>';
+  try {
+    var url = '/api/v1/tennis/player-profile?';
+    if (slug) url += 'slug=' + encodeURIComponent(slug);
+    if (name) url += (slug ? '&' : '') + 'name=' + encodeURIComponent(name);
+    if (surface) url += '&surface=' + encodeURIComponent(surface);
+    var r = await apiFetch(url).then(function(r) { return r.json(); });
+    if (r.error) throw new Error(r.detail || r.error);
+    var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
+    var html = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;">';
+    // Header : photo + nom + pays
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">';
+    html += '<div style="display:flex;gap:16px;align-items:center;">';
+    if (r.photo_url) {
+      html += '<img src="' + _tnEsc(r.photo_url) + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.1);" alt="' + _tnEsc(r.name||'') + '">';
+    }
+    html += '<div>';
+    html += '<h3 style="margin:0;font-family:\'Instrument Sans\',sans-serif;font-size:20px;font-weight:700;color:var(--text,#e8eaed);">' + _tnEsc(r.name || '—') + '</h3>';
+    if (r.country) html += '<div style="font-size:12px;color:var(--text3,#64748b);margin-top:2px;">' + _tnEsc(r.country) + '</div>';
+    if (r.age) html += '<div style="font-size:11px;color:var(--text3,#5a6068);">' + _tnEsc(r.age) + ' ans' + (r.plays ? ' · ' + _tnEsc(r.plays) + '-handed' : '') + '</div>';
+    html += '</div></div>';
+    html += '<button onclick="document.getElementById(\'player-profile-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:22px;cursor:pointer;padding:0 4px;">✕</button>';
+    html += '</div>';
+    // Section 1 : Classements
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
+    if (r.rank_singles) {
+      html += '<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:12px;text-align:center;">';
+      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:4px;">Simple</div>';
+      html += '<div style="font-family:\'DM Mono\',monospace;font-size:24px;font-weight:800;color:#00e676;">#' + _tnEsc(r.rank_singles.current || '—') + '</div>';
+      if (r.rank_singles.highest) html += '<div style="font-size:10px;color:var(--text3,#5a6068);">Max #' + _tnEsc(r.rank_singles.highest) + '</div>';
+      html += '</div>';
+    }
+    if (r.elo_surface) {
+      html += '<div style="background:rgba(0,119,255,.06);border:1px solid rgba(0,119,255,.15);border-radius:8px;padding:12px;text-align:center;">';
+      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:4px;">Elo ' + _tnEsc(r.elo_surface.surface || 'Surface') + '</div>';
+      html += '<div style="font-family:\'DM Mono\',monospace;font-size:24px;font-weight:800;color:#0077ff;">' + _tnEsc(r.elo_surface.value) + '</div>';
+      html += '<div style="font-size:10px;color:var(--text3,#5a6068);">' + _tnEsc(r.elo_surface.matches || 0) + ' matchs</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    // Section 2 : W-L par surface (52 semaines)
+    if (r.surface_record) {
+      var sr = r.surface_record;
+      html += '<div style="margin-bottom:16px;">';
+      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:8px;">📊 Bilan par surface (carrière)</div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;">';
+      var surfaces = [['all','Total'],['clay','Clay'],['hard','Hard'],['grass','Grass'],['indoors','Indoor']];
+      surfaces.forEach(function(s) {
+        var key = s[0], label = s[1];
+        var rec = sr[key];
+        if (rec) {
+          var pct = rec.wins + rec.losses > 0 ? Math.round(rec.wins / (rec.wins + rec.losses) * 100) : 0;
+          var sColor = surfColor(s[1] === 'Indoor' ? 'Indoor' : s[1]);
+          html += '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px;text-align:center;">';
+          html += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px;"><span style="width:6px;height:6px;border-radius:50%;background:' + sColor + ';"></span><span style="font-size:10px;color:var(--text2,#8d9399);">' + label + '</span></div>';
+          html += '<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:var(--text,#e8eaed);">' + rec.wins + '-' + rec.losses + '</div>';
+          html += '<div style="font-size:10px;color:' + (pct >= 60 ? '#00e676' : pct >= 40 ? '#fbbf24' : '#ef4444') + ';">' + pct + '%</div>';
+          html += '</div>';
+        }
+      });
+      html += '</div></div>';
+    }
+    // Section 3 : Prize money
+    if (r.prize_money && r.prize_money.total_career) {
+      var pm = r.prize_money.total_career;
+      var pmFormatted = pm >= 1000000 ? '$' + (pm / 1000000).toFixed(1) + 'M' : '$' + (pm / 1000).toFixed(0) + 'K';
+      html += '<div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.1);border-radius:8px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-size:11px;color:var(--text3,#5a6068);text-transform:uppercase;letter-spacing:.05em;">💰 Prize Money carrière</span>';
+      html += '<span style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:800;color:#00e676;">' + pmFormatted + '</span>';
+      html += '</div>';
+    }
+    // Section 4 : L5 matchs récents
+    if (r.recent_matches && r.recent_matches.length) {
+      html += '<div style="margin-bottom:16px;">';
+      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:8px;">🗓️ Derniers matchs</div>';
+      r.recent_matches.forEach(function(m) {
+        var isP1 = (m.player1 || '').toLowerCase().includes((r.name || '').toLowerCase().split(' ').pop());
+        var opp = isP1 ? m.player2 : m.player1;
+        var score = m.score || '—';
+        var status = m.status || '';
+        var won = status === 'finished' ? (isP1 && /won/i.test(status)) : null;
+        html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:12px;">';
+        html += '<span style="color:var(--text2,#8d9399);">' + _tnEsc(m.tournament || '') + ' · ' + _tnEsc(opp || '') + '</span>';
+        html += '<span style="font-family:\'DM Mono\',monospace;color:var(--text,#e8eaed);">' + _tnEsc(score) + '</span>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    // Footer : lien TennisExplorer
+    if (r.source_url) {
+      html += '<div style="text-align:center;margin-top:8px;"><a href="' + _tnEsc(r.source_url) + '" target="_blank" rel="noopener" style="color:var(--text3,#5a6068);text-decoration:none;font-size:11px;">Fiche complète sur TennisExplorer ↗</a></div>';
+    }
+    html += '</div>';
+    overlay.innerHTML = html;
+  } catch (e) {
+    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'player-profile-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
   }
 }
 

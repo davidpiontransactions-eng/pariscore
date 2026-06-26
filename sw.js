@@ -108,8 +108,8 @@
 // v38 (2026-06-25) : HOTFIX cards Top Matchs Tennis — restructuration 3 zones
 // (header/body/footer) au lieu de grid 2 col sur .tn-t10-card qui écrasait les
 // 12+ enfants en zigzag. Bump pariscore.js?v=250625-2.
-// v43 (2026-06-25) : MATCHS tab enrichi — photos joueurs + tournoi/surface + modal match-detail multi-bookmakers
-const CACHE_VERSION = 'v43';
+// v44 (2026-06-25) : Fiche joueur popup — liens P1/P2 cliquables + profil agrégé (TE+BSD+Elo)
+const CACHE_VERSION = 'v44';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

@@ -29747,9 +29747,40 @@ function _texParsePlayerPage(html, slug) {
     sex,
     plays,
     surface_record, // T3
+    prize_money: _texParsePrizeMoney(html), // TEX-PROFILE
     source_url: `${TEX_BASE}/player/${slug}/`,
     fetched_at: new Date().toISOString(),
   };
+}
+
+// TEX-PROFILE — Parser prize money depuis page joueur TennisExplorer
+function _texParsePrizeMoney(html) {
+  if (!html) return null;
+  // Chercher "Prize money" dans le bloc de détails
+  const pmM = html.match(/Prize\s*money[:\s]*<\/[^>]+>\s*<[^>]+>\s*([\$€]\s*[\d,]+)/i);
+  if (pmM) {
+    const raw = pmM[1].replace(/[\$€\s]/g, '').replace(/,/g, '');
+    const total = parseInt(raw, 10);
+    if (Number.isFinite(total)) return { total_career: total, currency: 'USD' };
+  }
+  // Fallback : chercher tableau annuel de prize money
+  const yearM = html.match(/<table[^>]*class="player-result"[^>]*>([\s\S]*?)<\/table>/);
+  if (yearM) {
+    const rows = [...yearM[1].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)];
+    const yearly = {};
+    for (const r of rows) {
+      const cells = [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(c => c[1].replace(/<[^>]+>/g, '').trim());
+      if (cells.length >= 2 && /\d{4}/.test(cells[0])) {
+        const year = parseInt(cells[0], 10);
+        const prizeRaw = (cells[cells.length - 1] || '').replace(/[\$€\s,]/g, '');
+        const prize = parseInt(prizeRaw, 10);
+        if (Number.isFinite(prize)) yearly[year] = prize;
+      }
+    }
+    const total = Object.values(yearly).reduce((s, v) => s + v, 0);
+    if (total > 0) return { total_career: total, currency: 'USD', yearly };
+  }
+  return null;
 }
 
 async function fetchTexMatches(tour, dateISO) {
@@ -41717,6 +41748,88 @@ if (pathname === '/api/v1/tennis/tex/player' && req.method === 'GET') {
   } catch (e) {
     const code = e.message === 'player_not_found' ? 404 : 500;
     return jsonResponse(res, code, { error: 'tex_player_error', detail: e.message });
+  }
+}
+// ═══ TENNIS PLAYER PROFILE — agrégé TE + BSD + Elo interne (popup fiche joueur) ═══
+// Query: ?slug=<tennisexplorer-slug>&name=<player-name>&surface=<Clay|Hard|Grass>
+// Retourne : photo, nom, pays, classement ATP/WTA, Elo surface interne, W-L par surface,
+// prize money, L5 matchs (depuis BSD si dispo), stats service/retour (si dispo).
+const _playerProfileCache = new Map();
+const PLAYER_PROFILE_TTL_MS = 30 * 60 * 1000; // 30min
+if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
+  try {
+    const slug = (query.slug || '').toString().trim();
+    const name = (query.name || '').toString().trim();
+    const surface = (query.surface || '').toString().trim() || null;
+    if (!slug && !name) return jsonResponse(res, 400, { error: 'slug_or_name_required' });
+    const cacheKey = `${slug || name}|${surface || 'all'}`;
+    const cached = _playerProfileCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < PLAYER_PROFILE_TTL_MS) {
+      return jsonResponse(res, 200, { ...cached.data, cache: 'hit' });
+    }
+    const profile = { slug: slug || null, name: name || null, surface, fetched_at: new Date().toISOString() };
+    // 1. TennisExplorer profile (W-L surface, rank, prize money, country, DOB, plays)
+    if (slug) {
+      try {
+        const texData = await fetchTexPlayer(slug);
+        if (texData) {
+          profile.name = texData.name || profile.name;
+          profile.country = texData.country || null;
+          profile.dob = texData.dob || null;
+          profile.age = texData.dob ? Math.floor((Date.now() - new Date(texData.dob).getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
+          profile.height_cm = texData.height_cm || null;
+          profile.plays = texData.plays || null; // right/left
+          profile.rank_singles = texData.rank_singles || null;
+          profile.rank_doubles = texData.rank_doubles || null;
+          profile.surface_record = texData.surface_record || null;
+          profile.prize_money = texData.prize_money || null;
+          profile.source_url = texData.source_url || null;
+        }
+      } catch (e) { _trackCatch('tennis', 'player_profile_tex', e); }
+    }
+    // 2. Elo surface interne (depuis tennis_player_elo)
+    if (profile.name) {
+      try {
+        const eloRow = sqldb.prepare('SELECT player_name, elo, tour, surface, matches_count FROM tennis_elo WHERE player_name LIKE ? COLLATE NOCASE').get('%' + profile.name.toLowerCase() + '%');
+        if (eloRow) {
+          profile.elo_surface = { value: Math.round(eloRow.elo), tour: eloRow.tour, surface: eloRow.surface, matches: eloRow.matches_count };
+        }
+      } catch (e) { _trackCatch('tennis', 'player_profile_elo', e); }
+    }
+    // 3. Photo joueur (ui-avatars fallback — pas de scraping ATP/WTA bloqué)
+    profile.photo_url = profile.name
+      ? 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.name) + '&background=172132&color=fff&size=200'
+      : null;
+    // 4. L5 matchs depuis BSD si dispo (depuis __tennisVBWarmMatches)
+    try {
+      const warmMatches = globalThis.__tennisVBWarmMatches;
+      if (warmMatches && Array.isArray(warmMatches) && profile.name) {
+        const pNameLower = profile.name.toLowerCase();
+        const lastName = pNameLower.split(' ').pop();
+        const l5 = warmMatches
+          .filter(m => {
+            const p1 = (m.player1 || '').toLowerCase();
+            const p2 = (m.player2 || '').toLowerCase();
+            return p1.includes(lastName) || p2.includes(lastName);
+          })
+          .slice(0, 5)
+          .map(m => ({
+            tournament: m.tournament || null,
+            surface: m.surface || null,
+            round: m.round || null,
+            player1: m.player1 || null,
+            player2: m.player2 || null,
+            score: m.live_score || null,
+            status: m.status || null,
+            start_time: m.start_time || null,
+          }));
+        if (l5.length) profile.recent_matches = l5;
+      }
+    } catch (e) { _trackCatch('tennis', 'player_profile_l5', e); }
+    _playerProfileCache.set(cacheKey, { ts: Date.now(), data: profile });
+    return jsonResponse(res, 200, { ...profile, cache: 'miss' });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'player_profile_error', detail: e.message });
   }
 }
 // Tennis Abstract — current tournament forecasts (scraped, cache 6h).
