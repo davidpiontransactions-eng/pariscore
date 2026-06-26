@@ -120,7 +120,8 @@
 // v59 (2026-06-26) : Photos via ui-avatars.com (pattern existant) + heure locale browser (plus UTC)
 // v60 (2026-06-26) : Fiche joueur redesignée — photo plus grande (80px) + barres progression (rank/elo/W-L%) + pills L5
 // v61 (2026-06-26) : BUGFIX photos — utilise _lookupTennisElo (table tennis_players_elo) au lieu de tennis_players fantôme
-const CACHE_VERSION = 'v61';
+// v62 (2026-06-26) : Route /player-photo?name= proxy binaire (plus de 302 data:URI cassé) + fallback SVG initiales coloré
+const CACHE_VERSION = 'v62';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
