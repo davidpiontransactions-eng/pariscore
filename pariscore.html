@@ -15721,7 +15721,10 @@ function psSetLang(v) {
 
     <!-- ═══ TAB NAVIGATION (sticky) ═══ -->
     <nav class="tn2-tab-nav" id="tn2-tab-nav">
-      <button class="tn2-tab-btn active" data-tab="live" onclick="tn2SwitchTab('live')">
+      <button class="tn2-tab-btn active" data-tab="matchs" onclick="tn2SwitchTab('matchs')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>MATCHS
+      </button>
+      <button class="tn2-tab-btn" data-tab="live" onclick="tn2SwitchTab('live')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>LIVE
       </button>
       <button class="tn2-tab-btn" data-tab="top" onclick="tn2SwitchTab('top')">
@@ -15746,8 +15749,25 @@ function psSetLang(v) {
 
     <!-- ═══ TAB PANELS ═══ -->
 
+    <!-- ── TAB MATCHS (Tennis Explorer — tous les matchs du jour) ── -->
+    <div class="tn2-tab-panel active" data-tab="matchs">
+      <div class="tn2-section-header">
+        <h2>Matchs du Jour</h2>
+        <div class="tn2-header-controls">
+          <span class="tn2-refresh-time" id="tex-matchs-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#64748b);margin-right:8px;">—</span>
+          <div class="tn2-mode-toggle">
+            <button class="tn2-mode-btn active" onclick="texMatchsSetTour('atp')">ATP</button>
+            <button class="tn2-mode-btn" onclick="texMatchsSetTour('wta')">WTA</button>
+          </div>
+        </div>
+      </div>
+      <div id="tex-matchs-body" style="min-height:200px;">
+        <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>
+      </div>
+    </div>
+
     <!-- ── TAB LIVE ── -->
-    <div class="tn2-tab-panel active" data-tab="live">
+    <div class="tn2-tab-panel" data-tab="live">
       <div class="tn2-section-header">
         <h2>Matchs en Direct</h2>
         <div class="tn2-header-controls">
@@ -16301,10 +16321,13 @@ function psSetLang(v) {
     var selBtn = document.querySelector('.tn2-tab-btn[data-tab="' + tabId + '"]');
     if (selBtn) selBtn.classList.add('active');
     var key = '_tn2_tab_' + tabId + '_loaded';
-    // Ne pas blocker les onglets live/top qui ont besoin de refresh périodique
-    if ((tabId !== 'live' && tabId !== 'top') && window[key]) return;
+    // Ne pas blocker les onglets live/top/matchs qui ont besoin de refresh périodique
+    if ((tabId !== 'live' && tabId !== 'top' && tabId !== 'matchs') && window[key]) return;
     window[key] = true;
     switch (tabId) {
+      case 'matchs':
+        if (typeof loadTexMatchs === 'function') loadTexMatchs();
+        break;
       case 'live':
         if (typeof tickTennisLive === 'function') tickTennisLive();
         break;
@@ -24561,7 +24584,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-5"></script>
+<script src="/pariscore.js?v=250625-6"></script>
 <script>
 (function(){
 var b=document.createElement('div');

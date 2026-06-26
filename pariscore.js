@@ -927,7 +927,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
   if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
   if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
-  if (pageId === 'tennis')   { try { tn2SwitchTab('live'); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
+  if (pageId === 'tennis')   { try { tn2SwitchTab('matchs'); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
   try { if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page(); } catch(e) {}
   if (pageId === 'cs2') try { initCs2Page(); } catch(e) {}
   try { if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage(); } catch(e) {}
@@ -5255,6 +5255,113 @@ async function loadTexCalendar() {
     if (status) status.textContent = 'Erreur';
   }
 }
+
+// ═══ TENNIS EXPLORER — MATCHS DU JOUR (sous-onglet MATCHS) ═══
+let _texMatchsTour = 'atp';
+let _texMatchsTimer = null;
+
+function texMatchsSetTour(tour) {
+  _texMatchsTour = tour;
+  document.querySelectorAll('.tn2-mode-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('texMatchsSetTour')) {
+      b.classList.toggle('active', b.textContent.toLowerCase() === tour);
+    }
+  });
+  loadTexMatchs();
+}
+
+async function loadTexMatchs() {
+  var body = document.getElementById('tex-matchs-body');
+  var statusEl = document.getElementById('tex-matchs-status');
+  if (!body) return;
+  if (!body.innerHTML.includes('tn-t10-loading') && !body.innerHTML.includes('tex-matchs-table')) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>';
+  }
+  try {
+    var r = await apiFetch('/api/v1/tennis/tex/matches?tour=' + _texMatchsTour).then(function(r) { return r.json(); });
+    if (r.error) throw new Error(r.detail || r.error);
+    var matches = r.matches || [];
+    if (!matches.length) {
+      body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match programmé aujourd\'hui.</div>';
+      if (statusEl) statusEl.textContent = '0 matchs';
+      return;
+    }
+    // Tableau façon TennisExplorer — charte Premium Dark
+    var rows = matches.map(function(m) {
+      var time = m.time_utc || '—';
+      var p1Name = _tnEsc(m.player1.name || '—');
+      var p2Name = _tnEsc(m.player2.name || '—');
+      var p1Slug = _tnEsc(m.player1.slug || '');
+      var p2Slug = _tnEsc(m.player2.slug || '');
+      var p1Scores = (m.player1.scores || []).join(' ');
+      var p2Scores = (m.player2.scores || []).join(' ');
+      var scoresHtml = '';
+      if (p1Scores || p2Scores) {
+        scoresHtml = '<td style="padding:10px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;">'
+          + '<div>' + _tnEsc(p1Scores) + '</div>'
+          + '<div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div>'
+          + '</td>';
+      } else {
+        scoresHtml = '<td style="padding:10px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>';
+      }
+      // Cotes (opening → current) avec drift
+      var oddsHtml = '<td style="padding:10px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
+      if (m.odds_current && (m.odds_current.p1 || m.odds_current.p2)) {
+        var p1Odd = m.odds_current.p1 ? m.odds_current.p1.toFixed(2) : '—';
+        var p2Odd = m.odds_current.p2 ? m.odds_current.p2.toFixed(2) : '—';
+        var driftHtml = '';
+        if (m.odds_drift_pct) {
+          var d1 = m.odds_drift_pct.p1;
+          var d2 = m.odds_drift_pct.p2;
+          var d1Color = d1 != null && d1 < 0 ? '#00e676' : d1 != null && d1 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
+          var d2Color = d2 != null && d2 < 0 ? '#00e676' : d2 != null && d2 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
+          var d1Txt = d1 != null ? (d1 > 0 ? '+' : '') + d1.toFixed(1) + '%' : '';
+          var d2Txt = d2 != null ? (d2 > 0 ? '+' : '') + d2.toFixed(1) + '%' : '';
+          driftHtml = '<div style="font-size:9px;color:' + d1Color + ';">' + _tnEsc(d1Txt) + '</div><div style="font-size:9px;color:' + d2Color + ';">' + _tnEsc(d2Txt) + '</div>';
+        }
+        oddsHtml = '<td style="padding:10px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;">'
+          + '<div style="color:#00e676;font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>'
+          + driftHtml
+          + '</td>';
+      }
+      // Lien match-detail si tex_match_id
+      var matchLink = m.tex_match_id
+        ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match sur TennisExplorer">↗</a>'
+        : '';
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
+        + '<td style="padding:10px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + '</td>'
+        + '<td style="padding:10px 8px;">'
+          + '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:14px;font-weight:600;color:var(--text,#e8eaed);">' + p1Name + '</div>'
+          + '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:14px;font-weight:600;color:var(--text2,#8d9399);">' + p2Name + '</div>'
+        + '</td>'
+        + scoresHtml
+        + oddsHtml
+        + '<td style="padding:10px 12px;text-align:right;">' + matchLink + '</td>'
+        + '</tr>';
+    }).join('');
+    body.innerHTML = '<div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+      + '<thead><tr style="background:#111a28;">'
+      + '<th style="padding:10px 12px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
+      + '<th style="padding:10px 8px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
+      + '<th style="padding:10px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
+      + '<th style="padding:10px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes (P1/P2)</th>'
+      + '<th style="padding:10px 12px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);"></th>'
+      + '</tr></thead>'
+      + '<tbody>' + rows + '</tbody>'
+      + '</table></div>';
+    if (statusEl) {
+      statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase());
+    }
+    // Auto-refresh 5min
+    if (_texMatchsTimer) clearInterval(_texMatchsTimer);
+    _texMatchsTimer = setInterval(function() { loadTexMatchs(); }, 300000);
+  } catch (e) {
+    body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:\'DM Mono\',monospace;font-size:12px;">Erreur: ' + _tnEsc(e.message) + '</div>';
+    if (statusEl) statusEl.textContent = 'Erreur';
+  }
+}
+
 async function loadTennisAbstractRome() {
   const section = document.getElementById('tennis-abstract-section');
   const statusEl = document.getElementById('ta-rome-status');
