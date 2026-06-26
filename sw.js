@@ -115,7 +115,8 @@
 // v54 (2026-06-26) : BUGFIX tourHeader — exclure player/doubles-team du regex + validation frontend
 // v55 (2026-06-26) : BUGFIX tourHeader v2 — regex corrigée pour structure HTML réelle (slugs avec / + spans avant texte)
 // v56 (2026-06-26) : FIX playerPhoto (suppression SVG cassé → span initiales simple) + densité tableau augmentée
-const CACHE_VERSION = 'v56';
+// v57 (2026-06-26) : NEW player photos via Wikipedia REST API + cache SQLite 24h + fallback SVG coloré
+const CACHE_VERSION = 'v57';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
