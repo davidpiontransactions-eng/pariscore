@@ -108,8 +108,8 @@
 // v38 (2026-06-25) : HOTFIX cards Top Matchs Tennis — restructuration 3 zones
 // (header/body/footer) au lieu de grid 2 col sur .tn-t10-card qui écrasait les
 // 12+ enfants en zigzag. Bump pariscore.js?v=250625-2.
-// v46 (2026-06-25) : MATCHS — remove emojis + add search bar (player name or tournament)
-const CACHE_VERSION = 'v46';
+// v47 (2026-06-25) : Match Rating 1-5 etoiles — 5 criteres pondérés + filtre Rating + tooltip breakdown
+const CACHE_VERSION = 'v47';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

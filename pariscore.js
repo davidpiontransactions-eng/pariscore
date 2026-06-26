@@ -5319,6 +5319,12 @@ function _sortTexMatchs(matches) {
         return bSum - aSum;
       });
       break;
+    case 'rating':
+      // Match rating décroissant (5 étoiles en premier)
+      sorted.sort(function(a, b) {
+        return (b.match_rating?.score || 0) - (a.match_rating?.score || 0);
+      });
+      break;
     case 'upset':
       // Upset potentiel : outsider (Elo plus faible) avec cote qui shortening (drift négatif)
       // = le marché pense que l'outsider va gagner → upset alert
@@ -5422,10 +5428,31 @@ function _renderTexMatchs(r) {
     value: function(m) { return m.value_score > 0 ? '<span style="font-size:9px;font-weight:700;color:#00e676;margin-left:4px;">V' + m.value_score + '</span>' : ''; },
     drift: function(m) { return m.max_drift > 0 ? '<span style="font-size:9px;font-weight:700;color:' + (m.max_drift >= 5 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">' + m.max_drift.toFixed(1) + '%</span>' : ''; },
     elite: function(m) { return m.is_elite ? '<span style="font-size:9px;font-weight:700;color:#FFD700;margin-left:4px;">TOP</span>' : ''; },
+    rating: function(m) { return m.match_rating ? '<span style="font-size:9px;font-weight:700;color:' + (m.match_rating.stars >= 4 ? '#FFD700' : m.match_rating.stars >= 3 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">' + m.match_rating.score + '</span>' : ''; },
     upset: function(m) { var s = _upsetScore(m); return s > 50 ? '<span style="font-size:9px;font-weight:700;color:#ce93d8;margin-left:4px;">UP' + s + '</span>' : ''; },
     time: function() { return ''; },
   };
   var badgeFn = filterBadges[_texMatchsFilter] || function() { return ''; };
+  // Stars rendering (1-5, sans emojis — utilise des caractères Unicode pleins/vides)
+  var starHtml = function(m) {
+    if (!m.match_rating) return '';
+    var stars = m.match_rating.stars;
+    var score = m.match_rating.score;
+    var bd = m.match_rating.breakdown || {};
+    var tooltip = 'Score: ' + score + '/100\\n' +
+      'Elo qualite: ' + (bd.elo_quality || 0) + '/100 (30%)\\n' +
+      'Competitivite: ' + (bd.competitiveness || 0) + '/100 (25%)\\n' +
+      'Prestige: ' + (bd.tournament_prestige || 0) + '/100 (20%)\\n' +
+      'Valeur betting: ' + (bd.betting_value || 0) + '/100 (15%)\\n' +
+      'Cotes dispo: ' + (bd.odds_availability || 0) + '/100 (10%)';
+    var starColor = stars >= 4 ? '#FFD700' : stars >= 3 ? '#fbbf24' : stars >= 2 ? '#8d9399' : '#5a6068';
+    var html = '<span title="' + _tnEsc(tooltip) + '" style="font-size:11px;letter-spacing:1px;color:' + starColor + ';cursor:help;margin-right:4px;">';
+    for (var i = 1; i <= 5; i++) {
+      html += i <= stars ? '\u2605' : '\u2606'; // étoile pleine / vide
+    }
+    html += '</span>';
+    return html;
+  };
   var lastTournament = null;
   var rows = matches.map(function(m) {
     var time = m.time_utc || '—';
@@ -5470,7 +5497,7 @@ function _renderTexMatchs(r) {
     var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
     return tourHeader
       + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-      + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + badgeFn(m) + '</td>'
+      + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + badgeFn(m) + '</td>'
       + '<td style="padding:8px 8px;">'
         + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p1Slug) + '\',\'' + _tnEsc(m.player1.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
         + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p2Slug) + '\',\'' + _tnEsc(m.player2.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
