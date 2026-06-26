@@ -15761,6 +15761,16 @@ function psSetLang(v) {
           </div>
         </div>
       </div>
+      <!-- Barre de filtres intelligents -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
+        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;margin-right:4px;">🎯 Filtre :</span>
+        <button class="tex-filter-btn active" data-filter="time" onclick="texMatchsSetFilter('time')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:#0077ff;color:#fff;">⏰ Heure</button>
+        <button class="tex-filter-btn" data-filter="elo_delta" onclick="texMatchsSetFilter('elo_delta')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">📊 Elo Δ</button>
+        <button class="tex-filter-btn" data-filter="value" onclick="texMatchsSetFilter('value')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">💰 Value</button>
+        <button class="tex-filter-btn" data-filter="drift" onclick="texMatchsSetFilter('drift')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">📈 Drift</button>
+        <button class="tex-filter-btn" data-filter="elite" onclick="texMatchsSetFilter('elite')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">⭐ Élite</button>
+        <button class="tex-filter-btn" data-filter="upset" onclick="texMatchsSetFilter('upset')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">⚡ Upset</button>
+      </div>
       <div id="tex-matchs-body" style="min-height:200px;">
         <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement des matchs...</div>
       </div>
@@ -24584,7 +24594,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-8"></script>
+<script src="/pariscore.js?v=250625-9"></script>
 <script>
 (function(){
 var b=document.createElement('div');

@@ -5258,7 +5258,96 @@ async function loadTexCalendar() {
 
 // ═══ TENNIS EXPLORER — MATCHS DU JOUR (sous-onglet MATCHS) ═══
 let _texMatchsTour = 'atp';
+let _texMatchsFilter = 'time';
+let _texMatchsRawData = null; // cache des données brutes pour re-tri sans refetch
 let _texMatchsTimer = null;
+
+function texMatchsSetFilter(filter) {
+  _texMatchsFilter = filter;
+  // Update visuel des boutons
+  document.querySelectorAll('.tex-filter-btn').forEach(function(b) {
+    var isActive = b.getAttribute('data-filter') === filter;
+    b.classList.toggle('active', isActive);
+    b.style.background = isActive ? '#0077ff' : 'transparent';
+    b.style.color = isActive ? '#fff' : 'var(--text2,#8d9399)';
+  });
+  // Re-trier sans refetch si on a déjà les données
+  if (_texMatchsRawData && _texMatchsRawData.matches) {
+    _renderTexMatchs(_texMatchsRawData);
+  }
+}
+
+function _sortTexMatchs(matches) {
+  var sorted = matches.slice(); // clone
+  switch (_texMatchsFilter) {
+    case 'elo_delta':
+      // Plus grand écart Elo en premier = match le plus déséquilibré (favori clair)
+      sorted.sort(function(a, b) {
+        var da = a.elo_surface?.delta || 0;
+        var db = b.elo_surface?.delta || 0;
+        return db - da;
+      });
+      break;
+    case 'value':
+      // Plus haut value_score en premier (Elo delta + drift négatif = value bet)
+      sorted.sort(function(a, b) {
+        return (b.value_score || 0) - (a.value_score || 0);
+      });
+      break;
+    case 'drift':
+      // Plus gros mouvement de cotes en premier (steam = argent sharp)
+      sorted.sort(function(a, b) {
+        return (b.max_drift || 0) - (a.max_drift || 0);
+      });
+      break;
+    case 'elite':
+      // Matchs entre top joueurs (Elo ≥ 1900 les 2) en premier, triés par somme Elo décroissant
+      sorted.sort(function(a, b) {
+        var aElite = a.is_elite ? 1 : 0;
+        var bElite = b.is_elite ? 1 : 0;
+        if (aElite !== bElite) return bElite - aElite;
+        var aSum = (a.elo_surface?.p1 || 0) + (a.elo_surface?.p2 || 0);
+        var bSum = (b.elo_surface?.p1 || 0) + (b.elo_surface?.p2 || 0);
+        return bSum - aSum;
+      });
+      break;
+    case 'upset':
+      // Upset potentiel : outsider (Elo plus faible) avec cote qui shortening (drift négatif)
+      // = le marché pense que l'outsider va gagner → upset alert
+      sorted.sort(function(a, b) {
+        var aUpset = _upsetScore(a);
+        var bUpset = _upsetScore(b);
+        return bUpset - aUpset;
+      });
+      break;
+    case 'time':
+    default:
+      // Tri par heure chronologique (défaut)
+      sorted.sort(function(a, b) {
+        var ta = a.time_utc || '99:99';
+        var tb = b.time_utc || '99:99';
+        return ta.localeCompare(tb);
+      });
+      break;
+  }
+  return sorted;
+}
+
+function _upsetScore(m) {
+  // Score d'upset : Elo delta petit (match serré) + drift négatif sur l'outsider
+  if (!m.elo_surface || m.elo_surface.delta == null) return 0;
+  var delta = m.elo_surface.delta;
+  // Plus le delta est petit, plus l'upset est probable
+  var upsetElo = Math.max(0, 100 - delta); // 100 si delta=0, 0 si delta≥100
+  // Bonus si l'outsider (Elo plus faible) a un drift négatif (shortening = argent sur lui)
+  var upsetDrift = 0;
+  if (m.elo_surface.favorite === 'p1' && m.odds_drift_pct?.p2 < 0) {
+    upsetDrift = Math.abs(m.odds_drift_pct.p2) * 3;
+  } else if (m.elo_surface.favorite === 'p2' && m.odds_drift_pct?.p1 < 0) {
+    upsetDrift = Math.abs(m.odds_drift_pct.p1) * 3;
+  }
+  return Math.round((upsetElo + upsetDrift) * 10) / 10;
+}
 
 function texMatchsSetTour(tour) {
   _texMatchsTour = tour;
@@ -5280,103 +5369,110 @@ async function loadTexMatchs() {
   try {
     var r = await apiFetch('/api/v1/tennis/tex/matches?tour=' + _texMatchsTour).then(function(r) { return r.json(); });
     if (r.error) throw new Error(r.detail || r.error);
-    var matches = r.matches || [];
-    if (!matches.length) {
-      body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match programmé aujourd\'hui.</div>';
-      if (statusEl) statusEl.textContent = '0 matchs';
-      return;
-    }
-    // Tableau façon TennisExplorer — charte Premium Dark
-    // TEX8 fix : photos joueurs + tournoi/surface + lignes cliquables (match-detail modal)
-    var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
-    var playerPhoto = function(slug, name) {
-      if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">?</span>';
-      return '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(name||'?') + '&background=172132&color=fff&size=56" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy">';
-    };
-    // Grouper par tournoi
-    var lastTournament = null;
-    var rows = matches.map(function(m) {
-      var time = m.time_utc || '—';
-      var p1Name = _tnEsc(m.player1.name || '—');
-      var p2Name = _tnEsc(m.player2.name || '—');
-      var p1Slug = m.player1.slug || '';
-      var p2Slug = m.player2.slug || '';
-      var p1Scores = (m.player1.scores || []).join(' ');
-      var p2Scores = (m.player2.scores || []).join(' ');
-      // En-tête tournoi si changement
-      var tourHeader = '';
-      if (m.tournament && m.tournament !== lastTournament) {
-        lastTournament = m.tournament;
-        var sIcon = m.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(m.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
-        tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="5" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
-      }
-      // Score
-      var scoresHtml = '';
-      if (p1Scores || p2Scores) {
-        scoresHtml = '<td style="padding:8px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;">'
-          + '<div>' + _tnEsc(p1Scores) + '</div>'
-          + '<div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div>'
-          + '</td>';
-      } else {
-        scoresHtml = '<td style="padding:8px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>';
-      }
-      // Cotes (current) avec drift
-      var oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
-      if (m.odds_current && (m.odds_current.p1 || m.odds_current.p2)) {
-        var p1Odd = m.odds_current.p1 ? m.odds_current.p1.toFixed(2) : '—';
-        var p2Odd = m.odds_current.p2 ? m.odds_current.p2.toFixed(2) : '—';
-        var driftHtml = '';
-        if (m.odds_drift_pct) {
-          var d1 = m.odds_drift_pct.p1, d2 = m.odds_drift_pct.p2;
-          var d1Color = d1 != null && d1 < 0 ? '#00e676' : d1 != null && d1 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
-          var d2Color = d2 != null && d2 < 0 ? '#00e676' : d2 != null && d2 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
-          var d1Txt = d1 != null ? (d1 > 0 ? '+' : '') + d1.toFixed(1) + '%' : '';
-          var d2Txt = d2 != null ? (d2 > 0 ? '+' : '') + d2.toFixed(1) + '%' : '';
-          driftHtml = '<div style="font-size:9px;color:' + d1Color + ';">' + _tnEsc(d1Txt) + '</div><div style="font-size:9px;color:' + d2Color + ';">' + _tnEsc(d2Txt) + '</div>';
-        }
-        oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;">'
-          + '<div style="color:#00e676;font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>'
-          + driftHtml + '</td>';
-      }
-      // Lien match-detail si tex_match_id
-      var matchLink = m.tex_match_id
-        ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match sur TennisExplorer">↗</a>'
-        : '';
-      // Ligne cliquable si tex_match_id (ouvre modal match-detail)
-      var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')" style="cursor:pointer;"' : '';
-      return tourHeader
-        + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-        + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + '</td>'
-        + '<td style="padding:8px 8px;">'
-          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p1Slug) + '\',\'' + _tnEsc(m.player1.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
-          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p2Slug) + '\',\'' + _tnEsc(m.player2.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
-        + '</td>'
-        + scoresHtml
-        + oddsHtml
-        + '<td style="padding:8px 12px;text-align:right;">' + matchLink + '</td>'
-        + '</tr>';
-    }).join('');
-    body.innerHTML = '<div class="tex-matchs-table" style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
-      + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-      + '<thead><tr style="background:#111a28;">'
-      + '<th style="padding:10px 12px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
-      + '<th style="padding:10px 8px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
-      + '<th style="padding:10px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
-      + '<th style="padding:10px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes (P1/P2)</th>'
-      + '<th style="padding:10px 12px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);"></th>'
-      + '</tr></thead>'
-      + '<tbody>' + rows + '</tbody>'
-      + '</table></div>';
-    if (statusEl) {
-      statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase());
-    }
-    // Auto-refresh 5min
-    if (_texMatchsTimer) clearInterval(_texMatchsTimer);
-    _texMatchsTimer = setInterval(function() { loadTexMatchs(); }, 300000);
+    _texMatchsRawData = r; // cache pour re-tri sans refetch
+    _renderTexMatchs(r);
   } catch (e) {
     body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:\'DM Mono\',monospace;font-size:12px;">Erreur: ' + _tnEsc(e.message) + '</div>';
     if (statusEl) statusEl.textContent = 'Erreur';
   }
+}
+
+function _renderTexMatchs(r) {
+  var body = document.getElementById('tex-matchs-body');
+  var statusEl = document.getElementById('tex-matchs-status');
+  if (!body || !r) return;
+  var matches = r.matches || [];
+  if (!matches.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match programmé aujourd\'hui.</div>';
+    if (statusEl) statusEl.textContent = '0 matchs';
+    return;
+  }
+  // TEX-FILTERS : trier selon le filtre sélectionné
+  matches = _sortTexMatchs(matches);
+  var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
+  var playerPhoto = function(slug, name) {
+    if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">?</span>';
+    return '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(name||'?') + '&background=172132&color=fff&size=56" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy">';
+  };
+  // Badge filtre actif
+  var filterBadges = {
+    elo_delta: function(m) { return m.elo_surface?.delta != null ? '<span style="font-size:9px;font-weight:700;color:' + (m.elo_surface.delta >= 100 ? '#00e676' : m.elo_surface.delta >= 50 ? '#fbbf24' : '#ef4444') + ';margin-left:4px;">Δ' + m.elo_surface.delta + '</span>' : ''; },
+    value: function(m) { return m.value_score > 0 ? '<span style="font-size:9px;font-weight:700;color:#00e676;margin-left:4px;">V' + m.value_score + '</span>' : ''; },
+    drift: function(m) { return m.max_drift > 0 ? '<span style="font-size:9px;font-weight:700;color:' + (m.max_drift >= 5 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">📈' + m.max_drift.toFixed(1) + '%</span>' : ''; },
+    elite: function(m) { return m.is_elite ? '<span style="font-size:9px;font-weight:700;color:#FFD700;margin-left:4px;">⭐</span>' : ''; },
+    upset: function(m) { var s = _upsetScore(m); return s > 50 ? '<span style="font-size:9px;font-weight:700;color:#ce93d8;margin-left:4px;">⚡' + s + '</span>' : ''; },
+    time: function() { return ''; },
+  };
+  var badgeFn = filterBadges[_texMatchsFilter] || function() { return ''; };
+  var lastTournament = null;
+  var rows = matches.map(function(m) {
+    var time = m.time_utc || '—';
+    var p1Name = _tnEsc(m.player1.name || '—');
+    var p2Name = _tnEsc(m.player2.name || '—');
+    var p1Slug = m.player1.slug || '';
+    var p2Slug = m.player2.slug || '';
+    var p1Scores = (m.player1.scores || []).join(' ');
+    var p2Scores = (m.player2.scores || []).join(' ');
+    // Elo display
+    var eloHtml = '—';
+    if (m.elo_surface && (m.elo_surface.p1 != null || m.elo_surface.p2 != null)) {
+      var e1 = m.elo_surface.p1 != null ? m.elo_surface.p1 : '—';
+      var e2 = m.elo_surface.p2 != null ? m.elo_surface.p2 : '—';
+      var favColor = m.elo_surface.favorite === 'p1' ? '#00e676' : m.elo_surface.favorite === 'p2' ? '#00e676' : 'var(--text3,#5a6068)';
+      eloHtml = '<span style="color:' + (m.elo_surface.favorite === 'p1' ? '#00e676' : 'var(--text2,#8d9399)') + ';">' + e1 + '</span><span style="color:var(--text3,#5a6068);"> / </span><span style="color:' + (m.elo_surface.favorite === 'p2' ? '#00e676' : 'var(--text2,#8d9399)') + ';">' + e2 + '</span>';
+    }
+    var tourHeader = '';
+    if (m.tournament && m.tournament !== lastTournament) {
+      lastTournament = m.tournament;
+      var sIcon = m.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(m.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
+      tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="6" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
+    }
+    var scoresHtml = '';
+    if (p1Scores || p2Scores) {
+      scoresHtml = '<td style="padding:8px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;"><div>' + _tnEsc(p1Scores) + '</div><div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div></td>';
+    } else { scoresHtml = '<td style="padding:8px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>'; }
+    var oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
+    if (m.odds_current && (m.odds_current.p1 || m.odds_current.p2)) {
+      var p1Odd = m.odds_current.p1 ? m.odds_current.p1.toFixed(2) : '—';
+      var p2Odd = m.odds_current.p2 ? m.odds_current.p2.toFixed(2) : '—';
+      var driftHtml = '';
+      if (m.odds_drift_pct) {
+        var d1 = m.odds_drift_pct.p1, d2 = m.odds_drift_pct.p2;
+        var d1Color = d1 != null && d1 < 0 ? '#00e676' : d1 != null && d1 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
+        var d2Color = d2 != null && d2 < 0 ? '#00e676' : d2 != null && d2 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
+        driftHtml = '<div style="font-size:9px;color:' + d1Color + ';">' + (d1 != null ? (d1 > 0 ? '+' : '') + d1.toFixed(1) + '%' : '') + '</div><div style="font-size:9px;color:' + d2Color + ';">' + (d2 != null ? (d2 > 0 ? '+' : '') + d2.toFixed(1) + '%' : '') + '</div>';
+      }
+      oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;"><div style="color:#00e676;font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
+    }
+    var matchLink = m.tex_match_id ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match">↗</a>' : '';
+    var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
+    return tourHeader
+      + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
+      + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + badgeFn(m) + '</td>'
+      + '<td style="padding:8px 8px;">'
+        + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p1Slug) + '\',\'' + _tnEsc(m.player1.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
+        + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" onclick="event.stopPropagation();openPlayerProfile(\'' + _tnEsc(p2Slug) + '\',\'' + _tnEsc(m.player2.name||'') + '\',\'' + _tnEsc(m.surface||'') + '\')" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
+      + '</td>'
+      + '<td style="padding:8px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;white-space:nowrap;">' + eloHtml + '</td>'
+      + scoresHtml + oddsHtml
+      + '<td style="padding:8px 12px;text-align:right;">' + matchLink + '</td>'
+      + '</tr>';
+  }).join('');
+  body.innerHTML = '<div class="tex-matchs-table" style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    + '<thead><tr style="background:#111a28;">'
+    + '<th style="padding:10px 12px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
+    + '<th style="padding:10px 8px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
+    + '<th style="padding:10px 8px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Elo Surf</th>'
+    + '<th style="padding:10px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
+    + '<th style="padding:10px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes P1/P2</th>'
+    + '<th style="padding:10px 12px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);"></th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  if (statusEl) {
+    statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + _texMatchsFilter;
+  }
+  if (_texMatchsTimer) clearInterval(_texMatchsTimer);
+  _texMatchsTimer = setInterval(function() { loadTexMatchs(); }, 300000);
 }
 
 // TEX9 — Modal match-detail (multi-bookmakers + H2H + drift)
