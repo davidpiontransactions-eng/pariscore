@@ -29580,8 +29580,30 @@ async function fetchAiscoreSportFixtures(sport, maxItems = 50) {
 // User-Agent identifié + cookie my_timezone=0 (UTC) pour parsing TZ-safe.
 const TEX_BASE = 'https://www.tennisexplorer.com';
 const TEX_MATCHES_TTL_MS = 30 * 60 * 1000;   // 30min
+const TEX_MATCHES_TTL_TODAY_MS = 5 * 60 * 1000; // L15 fix — 5min for today's matches (live odds change fast)
 const TEX_PLAYER_TTL_MS = 24 * 3600 * 1000;  // 24h
 const TEX_CACHE_MAX_ENTRIES = 500; // M10 fix — LRU cap to bound memory
+
+// L4 fix — extract magic numbers into named config for clarity + tuning
+const TEX_RATING_CONFIG = {
+  eloDeltaWeight: 0.5,
+  driftNegP1Weight: 2,
+  driftNegP2Weight: 2,
+  eloAvgFloor: 1600,    // Elo → 0 at this value
+  eloAvgCeil: 2200,     // Elo → 100 at this value
+  compScoreDeltaCoeff: 0.5,  // competitiveness slope
+  bettingValueDriftCoeff: 10,
+  eliteEloThreshold: 1900,
+  weights: { elo: 0.30, comp: 0.25, prestige: 0.20, betting: 0.15, odds: 0.10 },
+};
+
+// L3 fix — prestige lookup table with explicit slug/name matching (no loose `paris` regex)
+const TEX_PRESTIGE_RULES = [
+  { score: 100, pattern: /grand\s*slam|roland[\s-]*garros|wimbledon|us\s*open|australian\s*open/i },
+  { score: 80,  pattern: /masters(?:\s*1000)?|wta\s*1000|atp\s*1000|indian\s*wells|miami\s*open|madrid\s*open|internazionali|rome\s*masters|monte[\s-]*carlo|cincinnati|canada\s*masters|toronto|montreal|shanghai\s*masters|paris\s*masters/i },
+  { score: 60,  pattern: /atp\s*500|wta\s*500|halle\s*open|queen'?s\s*club|barcelona\s*open|swiss\s*indoors|basel|vienna\s*open|tokyo\s*open|dubai\s*duty\s*free|acapulco/i },
+  { score: 40,  pattern: /atp\s*250|wta\s*250/i },
+];
 const texMatchesCache = new Map();
 const texPlayerCache = new Map();
 
@@ -29649,6 +29671,7 @@ function _texParseMatchesPage(html) {
   let currentTournament = null;
   let currentSurface = null;
   // Regex pour les en-têtes tournoi (entre les blocs de matchs)
+  // L20 fix — declare tourHeadRe locally (not module-level) so lastIndex state can't leak across calls
   const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>[\s\S]*?<\/tr>/g;
   // Regex pour surface dans l'en-tête (class="surface" ou texte Clay/Hard/Grass)
   const surfaceRe = /(?:class="surface"[^>]*>([^<]+)<|(Clay|Hard|Grass|Carpet|Indoor))/i;
@@ -29669,6 +29692,11 @@ function _texParseMatchesPage(html) {
     tourHeaders.push({ pos: thMatch.index, name: tourName, slug: tourSlug, surface });
   }
   // Deuxième passe : parser les matchs et associer le tournoi le plus récent
+  // L2 fix — pre-build Map<name, slug> to avoid O(n²) tourHeaders.find() per match
+  const tourHeadersByExactName = new Map();
+  for (const th of tourHeaders) {
+    if (!tourHeadersByExactName.has(th.name)) tourHeadersByExactName.set(th.name, th);
+  }
   while ((m = trRe.exec(html)) !== null) {
     const [, , idx, , row1, row2] = m;
     // Trouver le tournoi le plus récent avant ce match
@@ -29705,7 +29733,7 @@ function _texParseMatchesPage(html) {
       tex_match_id: matchIdM ? parseInt(matchIdM[1], 10) : null,
       time_utc: time,
       tournament: tournament ? _decodeHtmlEntities(tournament) : null,
-      tournament_slug: tournament ? (tourHeaders.find(th => th.name === tournament)?.slug || null) : null,
+      tournament_slug: tournament ? (tourHeadersByExactName.get(tournament)?.slug || null) : null,
       surface: surface || null,
       round: roundM ? _decodeHtmlEntities(roundM[1]) : null,
       player1: { slug: p1M[1], name: _decodeHtmlEntities(p1M[2]), scores: scoresP1 },
@@ -29808,8 +29836,12 @@ function _texParsePrizeMoney(html) {
   if (yearM) {
     const rows = [...yearM[1].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)];
     const yearly = {};
+    let careerRowFound = false;
     for (const r of rows) {
       const cells = [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(c => c[1].replace(/<[^>]+>/g, '').trim());
+      // L17 fix — exclude the "Career" totals row to avoid double-counting with the yearly sum
+      const firstCellLower = (cells[0] || '').toLowerCase();
+      if (/^career$/i.test(firstCellLower)) { careerRowFound = true; continue; }
       if (cells.length >= 2 && /\d{4}/.test(cells[0])) {
         const year = parseInt(cells[0], 10);
         const prizeRaw = (cells[cells.length - 1] || '').replace(/[\$€\s,]/g, '');
@@ -29818,7 +29850,7 @@ function _texParsePrizeMoney(html) {
       }
     }
     const total = Object.values(yearly).reduce((s, v) => s + v, 0);
-    if (total > 0) return { total_career: total, currency: 'USD', yearly };
+    if (total > 0) return { total_career: total, currency: 'USD', yearly, _career_row_present: careerRowFound };
   }
   return null;
 }
@@ -29837,7 +29869,15 @@ async function fetchTexMatches(tour, dateISO) {
   const datePart = dateISO ? `&year=${dateISO.slice(0, 4)}&month=${dateISO.slice(5, 7)}&day=${dateISO.slice(8, 10)}` : '';
   const cacheKey = `${type}|${dateISO || 'today'}`;
   const cached = texMatchesCache.get(cacheKey);
-  if (cached && Date.now() - cached.ts < TEX_MATCHES_TTL_MS) return cached.data;
+  // L11 fix — also check that cached.data.date matches the requested date (avoid stale 'today' returned for next day)
+  const todayISO = _texFmtDate(new Date());
+  const requestedDate = dateISO || todayISO;
+  // L15 fix — shorter TTL (5min) when fetching today's matches (live odds change fast)
+  const isToday = requestedDate === todayISO;
+  const ttlMs = isToday ? TEX_MATCHES_TTL_TODAY_MS : TEX_MATCHES_TTL_MS;
+  if (cached && Date.now() - cached.ts < ttlMs && cached.data && cached.data.date === requestedDate) {
+    return cached.data;
+  }
   const path = `/matches/?type=${type}${datePart}`;
   const html = await _texFetchHtml(path);
   const matches = _texParseMatchesPage(html);
@@ -29924,15 +29964,16 @@ async function fetchTexMatches(tour, dateISO) {
         favorite: (e1 && e2) ? (e1.elo > e2.elo ? 'p1' : 'p2') : null,
       };
       // Value score : combine Elo delta + drift cotes (plus le delta est grand + drift négatif = value)
+      // L4 fix — use TEX_RATING_CONFIG magic numbers (tunable config)
       let valueScore = 0;
-      if (m.elo_surface.delta != null) valueScore += m.elo_surface.delta * 0.5;
+      if (m.elo_surface.delta != null) valueScore += m.elo_surface.delta * TEX_RATING_CONFIG.eloDeltaWeight;
       if (m.odds_drift_pct) {
-        if (m.odds_drift_pct.p1 != null && m.odds_drift_pct.p1 < 0) valueScore += Math.abs(m.odds_drift_pct.p1) * 2;
-        if (m.odds_drift_pct.p2 != null && m.odds_drift_pct.p2 < 0) valueScore += Math.abs(m.odds_drift_pct.p2) * 2;
+        if (m.odds_drift_pct.p1 != null && m.odds_drift_pct.p1 < 0) valueScore += Math.abs(m.odds_drift_pct.p1) * TEX_RATING_CONFIG.driftNegP1Weight;
+        if (m.odds_drift_pct.p2 != null && m.odds_drift_pct.p2 < 0) valueScore += Math.abs(m.odds_drift_pct.p2) * TEX_RATING_CONFIG.driftNegP2Weight;
       }
       m.value_score = Math.round(valueScore * 10) / 10;
       // Elite flag : les 2 joueurs dans le top 50 Elo
-      m.is_elite = (e1 && e2 && e1.elo >= 1900 && e2.elo >= 1900) ? true : false;
+      m.is_elite = (e1 && e2 && e1.elo >= TEX_RATING_CONFIG.eliteEloThreshold && e2.elo >= TEX_RATING_CONFIG.eliteEloThreshold) ? true : false;
       // Drift max (plus gros mouvement de cotes)
       m.max_drift = Math.max(
         Math.abs(m.odds_drift_pct?.p1 || 0),
@@ -29941,29 +29982,30 @@ async function fetchTexMatches(tour, dateISO) {
       // ═══ MATCH RATING — 5 critères pondérés, score 0-100, 1-5 étoiles ═══
       // Critère 1 : Qualité Elo (30%) — moyenne Elo des 2 joueurs
       var eloAvg = (m.elo_surface?.p1 && m.elo_surface?.p2) ? (m.elo_surface.p1 + m.elo_surface.p2) / 2 : 0;
-      var eloScore = Math.min(100, Math.max(0, (eloAvg - 1600) / 6)); // 1600→0, 2200→100
+      var eloScore = Math.min(100, Math.max(0, (eloAvg - TEX_RATING_CONFIG.eloAvgFloor) / ((TEX_RATING_CONFIG.eloAvgCeil - TEX_RATING_CONFIG.eloAvgFloor) / 100)));
       // Critère 2 : Compétitivité (25%) — delta Elo petit = match serré
       var eloDelta = (m.elo_surface && m.elo_surface.delta != null) ? m.elo_surface.delta : 999;
-      var compScore = Math.max(0, 100 - eloDelta * 0.5); // 0→100, 200→0
-      // Critère 3 : Prestige tournoi (20%) — Grand Slam > Masters > 500 > 250 > Challenger
+      var compScore = Math.max(0, 100 - eloDelta * TEX_RATING_CONFIG.compScoreDeltaCoeff);
+      // Critère 3 : Prestige tournoi (20%) — L3 fix : lookup table with explicit rules
       var tourName = (m.tournament || '').toLowerCase();
       var prestigeScore = 20; // défaut (Challenger/ITF)
-      if (/grand slam|roland garros|wimbledon|us open|australian open/.test(tourName)) prestigeScore = 100;
-      else if (/masters|masters 1000|wta 1000|atp 1000|indian wells|miami|madrid|rome|monte carlo|cincinnati|canada|shanghai|paris/.test(tourName)) prestigeScore = 80;
-      else if (/atp 500|wta 500|halle|queen| barcelona|basel|vienna|tokyo|dubai|acapulco/.test(tourName)) prestigeScore = 60;
-      else if (/atp 250|wta 250/.test(tourName)) prestigeScore = 40;
+      for (const rule of TEX_PRESTIGE_RULES) {
+        if (rule.pattern.test(tourName)) { prestigeScore = rule.score; break; }
+      }
       // Critère 4 : Valeur betting (15%) — drift important = argent sharp = match intéressant
-      var bettingValueScore = Math.min(100, (m.max_drift || 0) * 10); // 0%→0, 10%→100
+      var bettingValueScore = Math.min(100, (m.max_drift || 0) * TEX_RATING_CONFIG.bettingValueDriftCoeff);
       // Critère 5 : Disponibilité cotes (10%) — cotes disponibles = marché liquide
       var oddsScore = (m.odds_current?.p1 && m.odds_current?.p2) ? 100 : 0;
-      // Score composite pondéré
+      // Score composite pondéré — L4 fix : use weights from config
       var composite = Math.round(
-        eloScore * 0.30 +
-        compScore * 0.25 +
-        prestigeScore * 0.20 +
-        bettingValueScore * 0.15 +
-        oddsScore * 0.10
+        eloScore * TEX_RATING_CONFIG.weights.elo +
+        compScore * TEX_RATING_CONFIG.weights.comp +
+        prestigeScore * TEX_RATING_CONFIG.weights.prestige +
+        bettingValueScore * TEX_RATING_CONFIG.weights.betting +
+        oddsScore * TEX_RATING_CONFIG.weights.odds
       );
+      // L18 fix — round value_score to 1 decimal for consistency with match_rating.score (integer 0-100)
+      m.value_score = Math.round(m.value_score * 10) / 10;
       m.match_rating = {
         score: composite, // 0-100
         stars: Math.max(1, Math.min(5, Math.ceil(composite / 20))), // 1-5
