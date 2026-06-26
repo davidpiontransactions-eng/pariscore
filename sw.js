@@ -112,7 +112,8 @@
 // v51 (2026-06-26) : Sprint 2 audit MATCHS — 28 bugs MED fixes
 // v52 (2026-06-26) : Sprint 3 audit MATCHS — 31 bugs LOW fixes
 // v53 (2026-06-26) : NEW filtres MATCHS — Timing (live/1h/2h/4h/6h) + Étoiles (1-4) + masquer terminés
-const CACHE_VERSION = 'v53';
+// v54 (2026-06-26) : BUGFIX tourHeader — exclure player/doubles-team du regex + validation frontend
+const CACHE_VERSION = 'v54';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

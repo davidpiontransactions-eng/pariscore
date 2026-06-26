@@ -5736,7 +5736,19 @@ function _renderTexMatchs(r) {
     // For 'time' filter we use insertion-order grouping (matches arrive pre-grouped by tourney).
     // For other filters (elo_delta, value, drift, etc.) we still show the header on tournament change
     // so users can tell which tournament each match belongs to.
-    if (m.tournament && m.tournament !== lastTournament) {
+    // BUGFIX — validation défensive : ne pas afficher l'en-tête si m.tournament ressemble à un nom
+    // de joueur (ex: "Bautista-Agut R." au lieu d'un vrai nom de tournoi). On détecte ça via :
+    //   - la présence d'une initiale majuscule suivie d'un point (ex: "R.", "J.", "A.")
+    //   - ou si le texte contient moins de 3 mots courts (les tournois ont généralement 2+ mots)
+    var _isLikelyPlayerName = function(s) {
+      if (!s || typeof s !== 'string') return false;
+      // Pattern "Nom P." (initiale avec point final) → très probablement un joueur
+      if (/\s+[A-ZÀ-Ý]\.\s*$/.test(s)) return true;
+      // Pattern "Nom-Prenom I." (avec tiret + initiale)
+      if (/-[A-ZÀ-Ý]\s+[A-Z]\.\s*$/.test(s)) return true;
+      return false;
+    };
+    if (m.tournament && m.tournament !== lastTournament && !_isLikelyPlayerName(m.tournament)) {
       lastTournament = m.tournament;
       var sIcon = m.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(m.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
       tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="5" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
