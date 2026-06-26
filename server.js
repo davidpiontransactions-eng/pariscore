@@ -42171,26 +42171,13 @@ if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
         }
       } catch (e) { _trackCatch('tennis', 'player_profile_elo', e); }
     }
-    // 3. Photo joueur — NEW : tente d'abord le lookup BSD player_id pour avoir la vraie photo
-    //    via la route /api/v1/tennis/player-photo/<id> (pattern existant autres onglets tennis)
+    // 3. Photo joueur — NEW : utilise _lookupTennisElo (table tennis_players_elo existante)
+    //    pour récupérer player_id BSD → vraie photo via /api/v1/tennis/player-photo/<id>
     try {
       if (profile.name) {
-        // Recherche du player_id BSD par nom dans la base tennis_players (si la table existe)
-        const pNameLower = profile.name.toLowerCase().trim();
-        const pLastName = pNameLower.split(' ').pop();
-        let bsdRow = null;
-        // Essai 1 : nom exact
-        try {
-          bsdRow = sqldb.prepare('SELECT id FROM tennis_players WHERE LOWER(name) = ? COLLATE NOCASE LIMIT 1').get(pNameLower);
-        } catch (_) {}
-        // Essai 2 : LIKE lastname%
-        if (!bsdRow && pLastName && pLastName.length >= 3) {
-          try {
-            bsdRow = sqldb.prepare('SELECT id FROM tennis_players WHERE LOWER(name) LIKE ? COLLATE NOCASE LIMIT 1').get(pLastName + '%');
-          } catch (_) {}
-        }
-        if (bsdRow && bsdRow.id) {
-          profile.bsd_player_id = bsdRow.id;
+        const eloInfo = _lookupTennisElo(profile.name);
+        if (eloInfo && eloInfo.id) {
+          profile.bsd_player_id = eloInfo.id;
         }
       }
     } catch (e) { _trackCatch('tennis', 'player_profile_bsd_lookup', e); }
