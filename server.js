@@ -29592,28 +29592,65 @@ function _texFmtDate(d) {
 
 async function _texFetchHtml(pathSuffix) {
   const url = `${TEX_BASE}${pathSuffix}`;
-  const res = await httpsGet(url, {
-    'Accept': 'text/html,application/xhtml+xml',
-    'User-Agent': 'Mozilla/5.0 (PariScore/2.0 +https://pariscore.render.com)',
-    'Cookie': 'my_timezone=0',
-  });
-  if (res.status !== 200 || typeof res.data !== 'string') {
-    throw new Error(`tennisexplorer HTTP ${res.status} for ${pathSuffix}`);
+  // TEX7 fix — retry 2x avec backoff 1s si échec réseau
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await httpsGet(url, {
+        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0 (PariScore/2.0 +https://pariscore.fr)',
+        'Cookie': 'my_timezone=0',
+      });
+      if (res.status === 200 && typeof res.data === 'string') return res.data;
+      if (attempt < 3) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+      throw new Error(`tennisexplorer HTTP ${res.status} for ${pathSuffix}`);
+    } catch (e) {
+      if (attempt < 3) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
+      _trackCatch('tennis', 'tex_fetch_html', e);
+      throw e;
+    }
   }
-  return res.data;
 }
 
 function _texParseMatchesPage(html) {
   if (!html) return [];
   const out = [];
+  // TEX8 fix — capturer le nom du tournoi depuis les en-têtes de bloc
+  // Les en-têtes tournoi sont dans <tr class="head"> avec <a href="/tournament-slug/">
+  let currentTournament = null;
+  let currentSurface = null;
+  // Regex pour les en-têtes tournoi (entre les blocs de matchs)
+  const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>[\s\S]*?<\/tr>/g;
+  // Regex pour surface dans l'en-tête (class="surface" ou texte Clay/Hard/Grass)
+  const surfaceRe = /(?:class="surface"[^>]*>([^<]+)<|(Clay|Hard|Grass|Carpet|Indoor))/i;
   // Capture paired rows: <tr id="s<N>" or "r<N>"> + <tr id="s<N>b" or "r<N>b">
-  // Singles use s prefix, doubles use r prefix (T4 v10.13)
   const trRe = /<tr id="([sr])(\d+)"[^>]*class="(one|two)[^"]*"[^>]*>([\s\S]*?)<\/tr>\s*<tr id="\1\2b"[^>]*>([\s\S]*?)<\/tr>/g;
   let m;
+  // Première passe : trouver tous les en-têtes tournoi avec leur position
+  const tourHeaders = [];
+  let thMatch;
+  while ((thMatch = tourHeadRe.exec(html)) !== null) {
+    const blockHtml = thMatch[0];
+    const tourName = thMatch[2].trim();
+    const tourSlug = thMatch[1].trim();
+    // Détecter surface dans le bloc
+    let surface = null;
+    const sM = blockHtml.match(surfaceRe);
+    if (sM) surface = (sM[1] || sM[2] || '').trim();
+    tourHeaders.push({ pos: thMatch.index, name: tourName, slug: tourSlug, surface });
+  }
+  // Deuxième passe : parser les matchs et associer le tournoi le plus récent
   while ((m = trRe.exec(html)) !== null) {
-    const [, , idx, , row1, row2] = m; // [prefix, num, class, row1, row2] post-T4
+    const [, , idx, , row1, row2] = m;
+    // Trouver le tournoi le plus récent avant ce match
+    let tournament = null;
+    let surface = null;
+    for (const th of tourHeaders) {
+      if (th.pos < m.index) {
+        tournament = th.name;
+        surface = th.surface;
+      } else break;
+    }
     const timeM = row1.match(/class="first time"[^>]*>([^<]+)</);
-    // T4: accept /player/<slug> (singles) OR /doubles-team/<slug1>/<slug2> (doubles)
     const p1M = row1.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     const p2M = row2.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     if (!p1M || !p2M) continue;
@@ -29629,14 +29666,18 @@ function _texParseMatchesPage(html) {
     const time = timeM ? timeM[1].trim() : null;
     const driftP1 = (oddsOpen[0] && oddsCurr[0]) ? ((oddsCurr[0] - oddsOpen[0]) / oddsOpen[0] * 100) : null;
     const driftP2 = (oddsOpen[1] && oddsCurr[1]) ? ((oddsCurr[1] - oddsOpen[1]) / oddsOpen[1] * 100) : null;
+    // Round info (ex: "1/8", "Quarterfinal", etc.)
+    const roundM = row1.match(/class="round"[^>]*>([^<]+)</);
     out.push({
       id: matchIdM ? `tex_${matchIdM[1]}` : `tex_idx_${idx}`,
       tex_match_id: matchIdM ? parseInt(matchIdM[1], 10) : null,
-      time_utc: time, // HH:MM en UTC (cookie my_timezone=0)
+      time_utc: time,
+      tournament: tournament || null,
+      tournament_slug: tournament ? tourHeaders.find(th => th.name === tournament)?.slug : null,
+      surface: surface || null,
+      round: roundM ? roundM[1].trim() : null,
       player1: { slug: p1M[1], name: p1M[2].trim(), scores: scoresP1 },
       player2: { slug: p2M[1], name: p2M[2].trim(), scores: scoresP2 },
-      // NOTE: page /matches/ affiche les odds de player1 seul (favori display).
-      // Pour récupérer p2 odds → fetch /match-detail/?id=N (non implémenté MVP).
       odds_open: (oddsOpen.length > 0) ? { p1: oddsOpen[0] ?? null, p2: oddsOpen[1] ?? null } : null,
       odds_current: (oddsCurr.length > 0) ? { p1: oddsCurr[0] ?? null, p2: oddsCurr[1] ?? null } : null,
       odds_drift_pct: (driftP1 != null || driftP2 != null) ? { p1: driftP1, p2: driftP2 } : null,
