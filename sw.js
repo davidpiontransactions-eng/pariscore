@@ -118,7 +118,8 @@
 // v57 (2026-06-26) : NEW player photos via Wikipedia REST API + cache SQLite 24h + fallback SVG coloré
 // v58 (2026-06-26) : BUGFIX 'BR">' parasite — event delegation pour onerror (plus de quotes inline)
 // v59 (2026-06-26) : Photos via ui-avatars.com (pattern existant) + heure locale browser (plus UTC)
-const CACHE_VERSION = 'v59';
+// v60 (2026-06-26) : Fiche joueur redesignée — photo plus grande (80px) + barres progression (rank/elo/W-L%) + pills L5
+const CACHE_VERSION = 'v60';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
