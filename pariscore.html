@@ -15778,6 +15778,25 @@ function psSetLang(v) {
         <button class="tn2-f-btn tex-filter-btn" data-filter="rating" onclick="texMatchsSetFilter('rating')">Rating</button>
         <button class="tn2-f-btn tex-filter-btn" data-filter="upset" onclick="texMatchsSetFilter('upset')">Upset</button>
       </div>
+      <!-- NEW — Barre de filtres timing + étoiles + toggle matchs terminés -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid rgba(255,255,255,0.04);">
+        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Timing :</span>
+        <button class="tn2-f-btn is-active tex-time-filter-btn" data-time="all" onclick="texMatchsSetTimeFilter('all')">Tous</button>
+        <button class="tn2-f-btn tex-time-filter-btn" data-time="live" onclick="texMatchsSetTimeFilter('live')">Live</button>
+        <button class="tn2-f-btn tex-time-filter-btn" data-time="1h" onclick="texMatchsSetTimeFilter('1h')">≤ 1h</button>
+        <button class="tn2-f-btn tex-time-filter-btn" data-time="2h" onclick="texMatchsSetTimeFilter('2h')">≤ 2h</button>
+        <button class="tn2-f-btn tex-time-filter-btn" data-time="4h" onclick="texMatchsSetTimeFilter('4h')">≤ 4h</button>
+        <button class="tn2-f-btn tex-time-filter-btn" data-time="6h" onclick="texMatchsSetTimeFilter('6h')">≤ 6h</button>
+        <span style="width:1px;height:18px;background:rgba(255,255,255,0.06);margin:0 4px;"></span>
+        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Étoiles :</span>
+        <button class="tn2-f-btn is-active tex-stars-filter-btn" data-stars="0" onclick="texMatchsSetMinStars(0)">Toutes</button>
+        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="1" onclick="texMatchsSetMinStars(1)">★+</button>
+        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="2" onclick="texMatchsSetMinStars(2)">★★+</button>
+        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="3" onclick="texMatchsSetMinStars(3)">★★★+</button>
+        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="4" onclick="texMatchsSetMinStars(4)">★★★★+</button>
+        <span style="width:1px;height:18px;background:rgba(255,255,255,0.06);margin:0 4px;"></span>
+        <button class="tn2-f-btn tex-finished-toggle" onclick="texMatchsToggleFinished()" title="Afficher/masquer les matchs terminés">Masquer terminés</button>
+      </div>
       <div id="tex-matchs-body" style="min-height:200px;">
         <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>
       </div>
@@ -23242,6 +23261,19 @@ body[data-page="mma"] footer { display: none !important; }
     font-size: 9px !important;
   }
 }
+
+/* NEW — Animation blink pour le badge LIVE */
+@keyframes tex-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* NEW — Style spécifique pour le bouton toggle matchs terminés */
+.tex-finished-toggle.is-active {
+  background: rgba(0, 230, 118, 0.10) !important;
+  border-color: rgba(0, 230, 118, 0.30) !important;
+  color: var(--tex-green, #00e676) !important;
+}
 .tn2-f-badge {
   display: inline-block; padding: 0 4px;
   font-size: 9px; font-weight: 600;
@@ -24689,7 +24721,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-16"></script>
+<script src="/pariscore.js?v=250625-17"></script>
 <script>
 (function(){
 var b=document.createElement('div');
