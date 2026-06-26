@@ -114,7 +114,8 @@
 // v53 (2026-06-26) : NEW filtres MATCHS — Timing (live/1h/2h/4h/6h) + Étoiles (1-4) + masquer terminés
 // v54 (2026-06-26) : BUGFIX tourHeader — exclure player/doubles-team du regex + validation frontend
 // v55 (2026-06-26) : BUGFIX tourHeader v2 — regex corrigée pour structure HTML réelle (slugs avec / + spans avant texte)
-const CACHE_VERSION = 'v55';
+// v56 (2026-06-26) : FIX playerPhoto (suppression SVG cassé → span initiales simple) + densité tableau augmentée
+const CACHE_VERSION = 'v56';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
