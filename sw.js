@@ -124,7 +124,8 @@
 // v63 (2026-06-26) : BUGFIX photos — exempter /player-photo et /player-profile du gate Pro Tennis (sinon 403 JSON)
 // v64 (2026-06-26) : NEW bouton capsule 'Prematch' par ligne + modale prematch enrichie (style card Top 10)
 // v65 (2026-06-26) : BUGFIX _localTime global (pas scope local) + retire emoji ⚡ du bouton Prematch
-const CACHE_VERSION = 'v65';
+// v66 (2026-06-26) : Prematch = clone de la modale Top 10 (route /match-by-players pour trouver BSD)
+const CACHE_VERSION = 'v66';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
