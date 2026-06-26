@@ -29862,6 +29862,43 @@ async function fetchTexMatches(tour, dateISO) {
         Math.abs(m.odds_drift_pct?.p1 || 0),
         Math.abs(m.odds_drift_pct?.p2 || 0)
       );
+      // ═══ MATCH RATING — 5 critères pondérés, score 0-100, 1-5 étoiles ═══
+      // Critère 1 : Qualité Elo (30%) — moyenne Elo des 2 joueurs
+      var eloAvg = (m.elo_surface?.p1 && m.elo_surface?.p2) ? (m.elo_surface.p1 + m.elo_surface.p2) / 2 : 0;
+      var eloScore = Math.min(100, Math.max(0, (eloAvg - 1600) / 6)); // 1600→0, 2200→100
+      // Critère 2 : Compétitivité (25%) — delta Elo petit = match serré
+      var eloDelta = m.elo_surface?.delta || 999;
+      var compScore = Math.max(0, 100 - eloDelta * 0.5); // 0→100, 200→0
+      // Critère 3 : Prestige tournoi (20%) — Grand Slam > Masters > 500 > 250 > Challenger
+      var tourName = (m.tournament || '').toLowerCase();
+      var prestigeScore = 20; // défaut (Challenger/ITF)
+      if (/grand slam|roland garros|wimbledon|us open|australian open/.test(tourName)) prestigeScore = 100;
+      else if (/masters|masters 1000|wta 1000|atp 1000|indian wells|miami|madrid|rome|monte carlo|cincinnati|canada|shanghai|paris/.test(tourName)) prestigeScore = 80;
+      else if (/atp 500|wta 500|halle|queen| barcelona|basel|vienna|tokyo|dubai|acapulco/.test(tourName)) prestigeScore = 60;
+      else if (/atp 250|wta 250/.test(tourName)) prestigeScore = 40;
+      // Critère 4 : Valeur betting (15%) — drift important = argent sharp = match intéressant
+      var bettingValueScore = Math.min(100, (m.max_drift || 0) * 10); // 0%→0, 10%→100
+      // Critère 5 : Disponibilité cotes (10%) — cotes disponibles = marché liquide
+      var oddsScore = (m.odds_current?.p1 && m.odds_current?.p2) ? 100 : 0;
+      // Score composite pondéré
+      var composite = Math.round(
+        eloScore * 0.30 +
+        compScore * 0.25 +
+        prestigeScore * 0.20 +
+        bettingValueScore * 0.15 +
+        oddsScore * 0.10
+      );
+      m.match_rating = {
+        score: composite, // 0-100
+        stars: Math.max(1, Math.min(5, Math.ceil(composite / 20))), // 1-5
+        breakdown: {
+          elo_quality: Math.round(eloScore),
+          competitiveness: Math.round(compScore),
+          tournament_prestige: prestigeScore,
+          betting_value: Math.round(bettingValueScore),
+          odds_availability: oddsScore,
+        }
+      };
     }
   } catch (e) { _trackCatch('tennis', 'tex_enrich_matches', e); }
   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
