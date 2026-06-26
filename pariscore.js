@@ -5287,59 +5287,76 @@ async function loadTexMatchs() {
       return;
     }
     // Tableau façon TennisExplorer — charte Premium Dark
+    // TEX8 fix : photos joueurs + tournoi/surface + lignes cliquables (match-detail modal)
+    var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
+    var playerPhoto = function(slug, name) {
+      if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">?</span>';
+      return '<img src="https://ui-avatars.com/api/?name=' + encodeURIComponent(name||'?') + '&background=172132&color=fff&size=56" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy">';
+    };
+    // Grouper par tournoi
+    var lastTournament = null;
     var rows = matches.map(function(m) {
       var time = m.time_utc || '—';
       var p1Name = _tnEsc(m.player1.name || '—');
       var p2Name = _tnEsc(m.player2.name || '—');
-      var p1Slug = _tnEsc(m.player1.slug || '');
-      var p2Slug = _tnEsc(m.player2.slug || '');
+      var p1Slug = m.player1.slug || '';
+      var p2Slug = m.player2.slug || '';
       var p1Scores = (m.player1.scores || []).join(' ');
       var p2Scores = (m.player2.scores || []).join(' ');
+      // En-tête tournoi si changement
+      var tourHeader = '';
+      if (m.tournament && m.tournament !== lastTournament) {
+        lastTournament = m.tournament;
+        var sIcon = m.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(m.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
+        tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="5" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
+      }
+      // Score
       var scoresHtml = '';
       if (p1Scores || p2Scores) {
-        scoresHtml = '<td style="padding:10px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;">'
+        scoresHtml = '<td style="padding:8px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;">'
           + '<div>' + _tnEsc(p1Scores) + '</div>'
           + '<div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div>'
           + '</td>';
       } else {
-        scoresHtml = '<td style="padding:10px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>';
+        scoresHtml = '<td style="padding:8px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>';
       }
-      // Cotes (opening → current) avec drift
-      var oddsHtml = '<td style="padding:10px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
+      // Cotes (current) avec drift
+      var oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
       if (m.odds_current && (m.odds_current.p1 || m.odds_current.p2)) {
         var p1Odd = m.odds_current.p1 ? m.odds_current.p1.toFixed(2) : '—';
         var p2Odd = m.odds_current.p2 ? m.odds_current.p2.toFixed(2) : '—';
         var driftHtml = '';
         if (m.odds_drift_pct) {
-          var d1 = m.odds_drift_pct.p1;
-          var d2 = m.odds_drift_pct.p2;
+          var d1 = m.odds_drift_pct.p1, d2 = m.odds_drift_pct.p2;
           var d1Color = d1 != null && d1 < 0 ? '#00e676' : d1 != null && d1 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
           var d2Color = d2 != null && d2 < 0 ? '#00e676' : d2 != null && d2 > 0 ? '#ef4444' : 'var(--text3,#5a6068)';
           var d1Txt = d1 != null ? (d1 > 0 ? '+' : '') + d1.toFixed(1) + '%' : '';
           var d2Txt = d2 != null ? (d2 > 0 ? '+' : '') + d2.toFixed(1) + '%' : '';
           driftHtml = '<div style="font-size:9px;color:' + d1Color + ';">' + _tnEsc(d1Txt) + '</div><div style="font-size:9px;color:' + d2Color + ';">' + _tnEsc(d2Txt) + '</div>';
         }
-        oddsHtml = '<td style="padding:10px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;">'
+        oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;">'
           + '<div style="color:#00e676;font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>'
-          + driftHtml
-          + '</td>';
+          + driftHtml + '</td>';
       }
       // Lien match-detail si tex_match_id
       var matchLink = m.tex_match_id
         ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match sur TennisExplorer">↗</a>'
         : '';
-      return '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-        + '<td style="padding:10px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + '</td>'
-        + '<td style="padding:10px 8px;">'
-          + '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:14px;font-weight:600;color:var(--text,#e8eaed);">' + p1Name + '</div>'
-          + '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:14px;font-weight:600;color:var(--text2,#8d9399);">' + p2Name + '</div>'
+      // Ligne cliquable si tex_match_id (ouvre modal match-detail)
+      var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')" style="cursor:pointer;"' : '';
+      return tourHeader
+        + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
+        + '<td style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + _tnEsc(time) + '</td>'
+        + '<td style="padding:8px 8px;">'
+          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + p1Name + '</div>'
+          + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + p2Name + '</div>'
         + '</td>'
         + scoresHtml
         + oddsHtml
-        + '<td style="padding:10px 12px;text-align:right;">' + matchLink + '</td>'
+        + '<td style="padding:8px 12px;text-align:right;">' + matchLink + '</td>'
         + '</tr>';
     }).join('');
-    body.innerHTML = '<div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
+    body.innerHTML = '<div class="tex-matchs-table" style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
       + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
       + '<thead><tr style="background:#111a28;">'
       + '<th style="padding:10px 12px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
@@ -5359,6 +5376,70 @@ async function loadTexMatchs() {
   } catch (e) {
     body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:\'DM Mono\',monospace;font-size:12px;">Erreur: ' + _tnEsc(e.message) + '</div>';
     if (statusEl) statusEl.textContent = 'Erreur';
+  }
+}
+
+// TEX9 — Modal match-detail (multi-bookmakers + H2H + drift)
+async function openTexMatchDetail(texMatchId) {
+  if (!texMatchId) return;
+  // Réutiliser le modal existant ou créer un overlay
+  var overlay = document.getElementById('tex-match-detail-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'tex-match-detail-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.style.display = 'none'; };
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;"><div style="text-align:center;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement du détail match...</div></div>';
+  try {
+    var r = await apiFetch('/api/v1/tennis/tex/match-detail?id=' + texMatchId).then(function(r) { return r.json(); });
+    if (r.error) throw new Error(r.detail || r.error);
+    var p1 = _tnEsc(r.player1 || 'J1');
+    var p2 = _tnEsc(r.player2 || 'J2');
+    // Tableau des bookmakers
+    var booksHtml = '';
+    if (r.books && r.books.length) {
+      booksHtml = '<table style="width:100%;border-collapse:collapse;margin-top:12px;"><thead><tr style="background:#111a28;"><th style="padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);">Bookmaker</th><th style="padding:8px 8px;text-align:right;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);">' + p1 + '</th><th style="padding:8px 8px;text-align:right;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);">' + p2 + '</th><th style="padding:8px 12px;text-align:right;font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);">Drift</th></tr></thead><tbody>';
+      r.books.forEach(function(b, i) {
+        var bg = i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent';
+        var p1Odd = b.odd_p1 != null ? b.odd_p1.toFixed(2) : '—';
+        var p2Odd = b.odd_p2 != null ? b.odd_p2.toFixed(2) : '—';
+        var d1 = b.drift_p1_pct, d2 = b.drift_p2_pct;
+        var dColor = function(d) { return d != null && d < 0 ? '#00e676' : d != null && d > 0 ? '#ef4444' : 'var(--text3,#5a6068)'; };
+        var dTxt = function(d) { return d != null ? (d > 0 ? '+' : '') + d.toFixed(1) + '%' : '—'; };
+        var bestP1 = b.best_p1 ? 'color:#00e676;font-weight:700;' : '';
+        var bestP2 = b.best_p2 ? 'color:#00e676;font-weight:700;' : '';
+        booksHtml += '<tr style="background:' + bg + ';border-bottom:1px solid rgba(255,255,255,0.03);">'
+          + '<td style="padding:8px 12px;font-size:12px;color:var(--text,#e8eaed);">' + _tnEsc(b.bookmaker) + '</td>'
+          + '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;' + bestP1 + '">' + _tnEsc(p1Odd) + '</td>'
+          + '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;' + bestP2 + '">' + _tnEsc(p2Odd) + '</td>'
+          + '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;"><span style="color:' + dColor(d1) + '">' + dTxt(d1) + '</span> <span style="color:' + dColor(d2) + '">' + dTxt(d2) + '</span></td>'
+          + '</tr>';
+      });
+      booksHtml += '</tbody></table>';
+    } else {
+      booksHtml = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-size:12px;">Aucune cote disponible</div>';
+    }
+    // H2H
+    var h2hHtml = r.h2h_summary ? '<div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:var(--text2,#8d9399);">📊 H2H : ' + _tnEsc(r.h2h_summary) + '</div>' : '';
+    // Average odds
+    var avgHtml = '';
+    if (r.avg_p1 != null || r.avg_p2 != null) {
+      avgHtml = '<div style="display:flex;gap:16px;margin-top:12px;padding:12px;background:rgba(0,230,118,0.05);border-radius:8px;"><span style="font-size:12px;color:var(--text3,#5a6068);">Moyenne :</span><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:#00e676;">' + (r.avg_p1||'—') + '</span><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:#00e676;">' + (r.avg_p2||'—') + '</span></div>';
+    }
+    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">'
+      + '<h3 style="margin:0;font-family:\'Instrument Sans\',sans-serif;font-size:18px;font-weight:700;color:var(--text,#e8eaed);">' + p1 + ' vs ' + p2 + '</h3>'
+      + '<button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:20px;cursor:pointer;">✕</button>'
+      + '</div>'
+      + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3,#5a6068);margin-bottom:8px;">📊 Cotes multi-bookmakers</div>'
+      + booksHtml + avgHtml + h2hHtml
+      + '<div style="margin-top:16px;text-align:center;"><a href="https://www.tennisexplorer.com/match-detail/?id=' + texMatchId + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;">Voir sur TennisExplorer ↗</a></div>'
+      + '</div>';
+  } catch (e) {
+    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
   }
 }
 
