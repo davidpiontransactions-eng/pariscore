@@ -19598,6 +19598,8 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/tennis/player-photo' || pathname.startsWith('/api/v1/tennis/player-photo/')) return false;
   // NEW — player-profile exempté aussi (sinon popup fiche joueur cassé en consultation libre)
   if (pathname === '/api/v1/tennis/player-profile') return false;
+  // NEW — match-by-players exempté (cherche match BSD pour modale prematch MATCHS)
+  if (pathname === '/api/v1/tennis/match-by-players') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -42163,6 +42165,60 @@ function _serveInitialsSvg(res, playerName) {
   const buf = Buffer.from(svg, 'utf8');
   res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=300', 'Access-Control-Allow-Origin': '*' });
   res.end(buf);
+}
+
+// NEW — Route /api/v1/tennis/match-by-players — cherche un match BSD par nom des 2 joueurs
+// Utilisé par la modale Prematch de MATCHS (TennisExplorer) pour retrouver le match BSD équivalent
+// et ouvrir openTennisAnalysisModal (modale riche du Top 10) avec toutes les données (predictions,
+// serve_dominance, confidence_badge, edge, etc.)
+if (pathname === '/api/v1/tennis/match-by-players' && req.method === 'GET') {
+  try {
+    const p1Name = (query.p1 || '').toString().trim();
+    const p2Name = (query.p2 || '').toString().trim();
+    if (!p1Name || !p2Name) return jsonResponse(res, 400, { error: 'p1_and_p2_required' });
+
+    // Récupère les matchs BSD warmés en mémoire
+    const warmMatches = globalThis.__tennisVBWarmMatches;
+    if (!warmMatches || !Array.isArray(warmMatches) || warmMatches.length === 0) {
+      return jsonResponse(res, 404, { error: 'no_bsd_matches_available' });
+    }
+
+    // Fonction de normalisation : compare les derniers mots des noms (lastnames)
+    const lastName = (s) => (s || '').toLowerCase().trim().split(/\s+/).pop();
+    const p1Last = lastName(p1Name);
+    const p2Last = lastName(p2Name);
+
+    // Cherche un match où P1 et P2 correspondent (dans les 2 sens)
+    const found = warmMatches.find(m => {
+      const m1 = (m.player1 || '').toLowerCase();
+      const m2 = (m.player2 || '').toLowerCase();
+      const m1Last = lastName(m.player1);
+      const m2Last = lastName(m.player2);
+      // Match exact ou par lastname
+      const p1Match = m1.includes(p1Last) || m1Last === p1Last;
+      const p2Match = m2.includes(p2Last) || m2Last === p2Last;
+      const p1MatchRev = m2.includes(p1Last) || m2Last === p1Last;
+      const p2MatchRev = m1.includes(p2Last) || m1Last === p2Last;
+      return (p1Match && p2Match) || (p1MatchRev && p2MatchRev);
+    });
+
+    if (!found) return jsonResponse(res, 404, { error: 'match_not_found_in_bsd' });
+
+    return jsonResponse(res, 200, {
+      bsd_match_id: String(found.id || found.matchId || ''),
+      bsd_match: {
+        id: String(found.id || found.matchId || ''),
+        player1: found.player1,
+        player2: found.player2,
+        tournament: found.tournament,
+        surface: found.surface,
+        round: found.round,
+        start_time: found.start_time,
+      },
+    });
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'match_by_players_error', detail: e.message });
+  }
 }
 
 if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
