@@ -5685,11 +5685,11 @@ function _renderTexMatchs(r) {
     // 1. Vérifie le cache SQLite (24h)
     // 2. Si absent, fetch Wikipedia en arrière-plan + renvoie SVG coloré temporaire
     // 3. Au prochain affichage, la photo Wikipedia est en cache
-    // Fallback onerror : span initiales si la route échoue
+    // BUGFIX — plus de onerror inline (posait problème de quotes) : à la place, on
+    // utilise un data-fallback attribute + event delegation globale (cf. plus bas)
     var _initials = (name||'?').split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('') || '?';
-    var _fallback = '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
-    if (!name) return _fallback;
-    return '<img src="/api/v1/tennis/player-photo?name=' + encodeURIComponent(name) + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);" alt="' + _tnEsc(name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'' + _fallback.replace(/'/g, "\\'") + '\'">';
+    if (!name) return '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
+    return '<img src="/api/v1/tennis/player-photo?name=' + encodeURIComponent(name) + '" data-fallback-initials="' + _tnEsc(_initials) + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);" alt="' + _tnEsc(name) + '" loading="lazy" referrerpolicy="no-referrer">';
   };
   // Badge filtre actif (sans emojis)
   var filterBadges = {
@@ -5831,6 +5831,20 @@ function _renderTexMatchs(r) {
       e.stopPropagation();
       openPlayerProfile(a.dataset.slug, a.dataset.name, a.dataset.surface);
     });
+  }
+  // BUGFIX — event delegation globale pour onerror des <img data-fallback-initials="...">
+  // (remplace les onerror inline qui posaient problème de quotes → "BR">" parasite)
+  if (!body._texPhotoFallbackWired) {
+    body._texPhotoFallbackWired = true;
+    body.addEventListener('error', function(e) {
+      var img = e.target;
+      if (img.tagName !== 'IMG' || !img.dataset.fallbackInitials) return;
+      // Remplace l'image cassée par un span initiales
+      var span = document.createElement('span');
+      span.style.cssText = 'width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;';
+      span.textContent = img.dataset.fallbackInitials;
+      if (img.parentNode) img.parentNode.replaceChild(span, img);
+    }, true); // capture phase pour capter les erreurs d'images
   }
   // H5 fix — timer maintenant géré dans loadTexMatchs() finally (plus ici)
 }

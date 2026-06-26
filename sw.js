@@ -116,7 +116,8 @@
 // v55 (2026-06-26) : BUGFIX tourHeader v2 — regex corrigée pour structure HTML réelle (slugs avec / + spans avant texte)
 // v56 (2026-06-26) : FIX playerPhoto (suppression SVG cassé → span initiales simple) + densité tableau augmentée
 // v57 (2026-06-26) : NEW player photos via Wikipedia REST API + cache SQLite 24h + fallback SVG coloré
-const CACHE_VERSION = 'v57';
+// v58 (2026-06-26) : BUGFIX 'BR">' parasite — event delegation pour onerror (plus de quotes inline)
+const CACHE_VERSION = 'v58';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
