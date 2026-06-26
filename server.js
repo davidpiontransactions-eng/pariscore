@@ -29672,7 +29672,10 @@ function _texParseMatchesPage(html) {
   let currentSurface = null;
   // Regex pour les en-têtes tournoi (entre les blocs de matchs)
   // L20 fix — declare tourHeadRe locally (not module-level) so lastIndex state can't leak across calls
-  const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>[\s\S]*?<\/tr>/g;
+  // BUGFIX — exclure les slugs 'player/' et 'doubles-team/' qui sont des liens de joueurs, pas des tournois
+  // (sinon la regex matche par erreur des noms de joueurs comme "Bautista-Agut R." dans l'en-tête)
+  // On utilise un negative lookahead pour ignorer les href qui commencent par player/ ou doubles-team/
+  const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/(?!player\/|doubles-team\/)([^"]+?)\/?"[^>]*>([^<]+)<\/a>[\s\S]*?<\/tr>/g;
   // Regex pour surface dans l'en-tête (class="surface" ou texte Clay/Hard/Grass)
   const surfaceRe = /(?:class="surface"[^>]*>([^<]+)<|(Clay|Hard|Grass|Carpet|Indoor))/i;
   // Capture paired rows: <tr id="s<N>" or "r<N>"> + <tr id="s<N>b" or "r<N>b">
