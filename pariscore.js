@@ -5681,11 +5681,10 @@ function _renderTexMatchs(r) {
   }
   var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
   var playerPhoto = function(slug, name) {
-    if (!slug) return '<span style="width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 var(--font-mono);color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)">' + _tnEsc((name||'?').charAt(0).toUpperCase()) + '</span>';
-    // L22+L23 fix — local SVG data-URI avatar (no external ui-avatars.com dependency) + onerror fallback to initials
-    var initials = encodeURIComponent((name||'?').split(/\s+/).map(function(w){return w.charAt(0);}).slice(0,2).join('').toUpperCase() || '?');
-    var svgAvatar = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"56\" height=\"56\"><rect width=\"56\" height=\"56\" fill=\"#172132\"/><text x=\"50%\" y=\"50%\" dy=\"0.35em\" text-anchor=\"middle\" font-family=\"monospace\" font-size=\"24\" font-weight=\"700\" fill=\"#fff\">' + (initials || '%3F') + '</text></svg>');
-    return '<img src="' + svgAvatar + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)" alt="' + _tnEsc(name||'') + '" loading="lazy" onerror="this.outerHTML=\'<span style=\\\"width:28px;height:28px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 monospace;color:var(--text3,#64748b);flex-shrink:0;border:1px solid rgba(255,255,255,.08)\\\">' + _tnEsc((name||'?').charAt(0).toUpperCase()) + '</span>\'">';
+    // SIMPLIFIED — retourne directement un span avec initiales (plus fiable que SVG data-URI)
+    // Calcule les initiales (max 2 lettres : prénom + nom)
+    var _initials = (name||'?').split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('') || '?';
+    return '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
   };
   // Badge filtre actif (sans emojis)
   var filterBadges = {
@@ -5751,13 +5750,13 @@ function _renderTexMatchs(r) {
     if (m.tournament && m.tournament !== lastTournament && !_isLikelyPlayerName(m.tournament)) {
       lastTournament = m.tournament;
       var sIcon = m.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(m.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
-      tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="5" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
+      tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="5" style="padding:5px 10px;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
     }
     var scoresHtml = '';
     if (p1Scores || p2Scores) {
-      scoresHtml = '<td data-label="Score" style="padding:8px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text,#e8eaed);white-space:nowrap;"><div>' + _tnEsc(p1Scores) + '</div><div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div></td>';
-    } else { scoresHtml = '<td data-label="Score" style="padding:8px 6px;text-align:center;color:var(--text3,#5a6068);font-size:11px;">—</td>'; }
-    var oddsHtml = '<td data-label="Cotes" style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3,#5a6068);">—</td>';
+      scoresHtml = '<td data-label="Score" style="padding:4px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text,#e8eaed);white-space:nowrap;line-height:1.2;"><div>' + _tnEsc(p1Scores) + '</div><div style="color:var(--text3,#64748b);">' + _tnEsc(p2Scores) + '</div></td>';
+    } else { scoresHtml = '<td data-label="Score" style="padding:4px 6px;text-align:center;color:var(--text3,#5a6068);font-size:10px;">—</td>'; }
+    var oddsHtml = '<td data-label="Cotes" style="padding:4px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text3,#5a6068);">—</td>';
     if (m.odds_current && (m.odds_current.p1 || m.odds_current.p2)) {
       var p1Odd = m.odds_current.p1 ? m.odds_current.p1.toFixed(2) : '—';
       var p2Odd = m.odds_current.p2 ? m.odds_current.p2.toFixed(2) : '—';
@@ -5770,7 +5769,7 @@ function _renderTexMatchs(r) {
       }
       // H10 fix — cotes neutres par défaut, vert uniquement si value_score > 0
       var oddsColor = (m.value_score > 0) ? '#00e676' : 'var(--text,#e8eaed)';
-      oddsHtml = '<td data-label="Cotes" style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;"><div style="color:' + oddsColor + ';font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
+      oddsHtml = '<td data-label="Cotes" style="padding:4px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:12px;white-space:nowrap;line-height:1.2;"><div style="color:' + oddsColor + ';font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:9px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
     }
     var matchLink = ''; // Pas de lien externe — secret de fabrication
     // L9 fix — defensive check on tex_match_id (must be a finite positive integer)
@@ -5788,23 +5787,23 @@ function _renderTexMatchs(r) {
     }
     return tourHeader
       + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (hasValidMatchId ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-      + '<td data-label="Heure" style="padding:8px 12px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + statusBadge + badgeFn(m) + '</td>'
-      + '<td data-label="Match" style="padding:8px 8px;">'
-        + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text,#e8eaed);">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p1Slug) + '" data-name="' + _tnEsc(m.player1.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
-        + '<div style="display:flex;align-items:center;gap:8px;font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:600;color:var(--text2,#8d9399);margin-top:2px;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p2Slug) + '" data-name="' + _tnEsc(m.player2.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
+      + '<td data-label="Heure" style="padding:4px 10px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:11px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + statusBadge + badgeFn(m) + '</td>'
+      + '<td data-label="Match" style="padding:4px 6px;">'
+        + '<div style="display:flex;align-items:center;gap:6px;font-family:\'Instrument Sans\',sans-serif;font-size:12px;font-weight:600;color:var(--text,#e8eaed);line-height:1.2;">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p1Slug) + '" data-name="' + _tnEsc(m.player1.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
+        + '<div style="display:flex;align-items:center;gap:6px;font-family:\'Instrument Sans\',sans-serif;font-size:12px;font-weight:600;color:var(--text2,#8d9399);margin-top:1px;line-height:1.2;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p2Slug) + '" data-name="' + _tnEsc(m.player2.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
       + '</td>'
-      + '<td data-label="Index" style="padding:8px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;white-space:nowrap;">' + eloHtml + '</td>'
+      + '<td data-label="Index" style="padding:4px 6px;text-align:center;font-family:\'DM Mono\',monospace;font-size:11px;white-space:nowrap;">' + eloHtml + '</td>'
       + scoresHtml + oddsHtml
       + '</tr>';
   }).join('');
   body.innerHTML = '<div class="tex-matchs-table" style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
-    + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
     + '<thead><tr style="background:#111a28;">'
-    + '<th style="padding:10px 12px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
-    + '<th style="padding:10px 8px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
-    + '<th style="padding:10px 8px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Index</th>'
-    + '<th style="padding:10px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
-    + '<th style="padding:10px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes P1/P2</th>'
+    + '<th style="padding:6px 10px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
+    + '<th style="padding:6px 6px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
+    + '<th style="padding:6px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Index</th>'
+    + '<th style="padding:6px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
+    + '<th style="padding:6px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes P1/P2</th>'
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   if (statusEl) {
     // Q11 fix — use FR labels instead of raw internal keys
