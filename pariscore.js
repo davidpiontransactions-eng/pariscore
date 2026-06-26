@@ -5983,251 +5983,65 @@ async function openTexPrematch(texMatchId) {
   var p1Name = matchData.player1.name || '';
   var p2Name = matchData.player2.name || '';
 
-  // 2. Crée ou réutilise l'overlay
+  // 2. Double routing : cherche le match BSD équivalent
+  try {
+    var url = '/api/v1/tennis/match-by-players?p1=' + encodeURIComponent(p1Name) + '&p2=' + encodeURIComponent(p2Name);
+    var r = await apiFetch(url).then(function(r) { return r.json(); });
+    if (r && r.bsd_match_id) {
+      // Match BSD trouvé → ouvre DIRECTEMENT openTennisAnalysisModal (100% clone du Top 10)
+      // Cette modale a TOUTES les données : predictions, serve_dominance, confidence_badge,
+      // edge, photos BSD, H2H, UQD IC90, P_BETS, etc.
+      if (typeof openTennisAnalysisModal === 'function') {
+        openTennisAnalysisModal(r.bsd_match_id);
+        return;
+      }
+    }
+  } catch (_) {}
+
+  // 3. Fallback : match BSD non trouvé → modale TennisExplorer enrichie
+  _openTexPrematchFallback(texMatchId, matchData);
+}
+
+// Fallback : modale prematch TennisExplorer (quand BSD non trouvé)
+async function _openTexPrematchFallback(texMatchId, matchData) {
   var overlay = document.getElementById('tex-prematch-overlay');
   var _prevFocus = document.activeElement;
   if (!overlay) {
     overlay = document.createElement('div');
     overlay.id = 'tex-prematch-overlay';
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Analyse Prematch');
-    var _escHandler = function(e) {
-      if (e.key === 'Escape') { _closePrematch(); }
-      else if (e.key === 'Tab') {
-        var focusable = overlay.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
-        if (!focusable.length) return;
-        var first = focusable[0], last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-      }
-    };
-    var _closePrematch = function() {
-      overlay.style.display = 'none';
-      document.removeEventListener('keydown', _escHandler);
-      if (_prevFocus && typeof _prevFocus.focus === 'function') { try { _prevFocus.focus(); } catch(_) {} }
-    };
-    overlay._close = _closePrematch;
-    document.addEventListener('keydown', _escHandler);
-    overlay.onclick = function(e) { if (e.target === overlay) _closePrematch(); };
+    overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Analyse Prematch');
+    var _esc = function(e) { if (e.key === 'Escape') { overlay.style.display='none'; document.removeEventListener('keydown',_esc); } };
+    document.addEventListener('keydown', _esc);
+    overlay.onclick = function(e) { if (e.target === overlay) { overlay.style.display='none'; document.removeEventListener('keydown',_esc); } };
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'flex';
-  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;"><div style="width:32px;height:32px;border:3px solid rgba(0,119,255,.2);border-top-color:#0077ff;border-radius:50%;animation:tex-spin 0.8s linear infinite;"></div><div style="color:var(--text2,#8d9399);font-size:13px;">Chargement de l\'analyse prematch…</div></div>';
-
+  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:32px;text-align:center;"><div style="color:var(--text2,#8d9399);font-size:14px;margin-bottom:12px;">Chargement…</div></div>';
   try {
-    // 3. Double routing : cherche le match BSD équivalent
-    var bsdData = null;
-    var bsdMatchId = null;
-    try {
-      var url = '/api/v1/tennis/match-by-players?p1=' + encodeURIComponent(p1Name) + '&p2=' + encodeURIComponent(p2Name);
-      var r = await apiFetch(url).then(function(r) { return r.json(); });
-      if (r && r.bsd_match_id) {
-        bsdMatchId = r.bsd_match_id;
-        // Fetch les données enrichies BSD (predictions, serve_dominance, confidence_badge, edge, etc.)
-        var detailUrl = '/api/v1/tennis/detail/' + encodeURIComponent(bsdMatchId);
-        var dr = await apiFetch(detailUrl).then(function(r) { return r.json(); });
-        if (dr && !dr.error) bsdData = dr;
-      }
-    } catch(_) {}
-
-    // 4. Fetch les cotes multi-bookmakers + H2H depuis TennisExplorer
     var texDetail = null;
-    try {
-      var tr = await apiFetch('/api/v1/tennis/tex/match-detail?id=' + texMatchId).then(function(r) { return r.json(); });
-      if (!tr.error) texDetail = tr;
-    } catch(_) {}
-
-    // 5. Construit la card complète
-    var p1Photo = '/api/v1/tennis/player-photo?name=' + encodeURIComponent(p1Name.trim());
-    var p2Photo = '/api/v1/tennis/player-photo?name=' + encodeURIComponent(p2Name.trim());
-    // Si BSD trouvé, utilise les photos BSD (plus haute qualité)
-    if (bsdData && bsdData.players) {
-      if (bsdData.players.p1 && bsdData.players.p1.id) p1Photo = tennisPlayerPhotoURL(bsdData.players.p1.id);
-      if (bsdData.players.p2 && bsdData.players.p2.id) p2Photo = tennisPlayerPhotoURL(bsdData.players.p2.id);
-    }
-
-    var html = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;padding:20px;">';
-
-    // ── Header : tournoi + photos + noms ──
-    var tourName = (bsdData && bsdData.meta && bsdData.meta.tournament) || matchData.tournament || 'Match Tennis';
-    var surface = (bsdData && bsdData.meta && bsdData.meta.surface) || matchData.surface || '';
-    var round = (bsdData && bsdData.meta && bsdData.meta.round) || matchData.round || '';
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">';
-    html += '<div style="flex:1;">';
-    html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:6px;">' + _tnEsc(tourName) + (surface ? ' · ' + _tnEsc(surface) : '') + (round ? ' · ' + _tnEsc(round) : '') + '</div>';
-    html += '<div style="display:flex;align-items:center;gap:20px;">';
-    // P1 block
-    html += '<div style="text-align:center;flex:1;">';
-    html += '<img src="' + p1Photo + '" data-name="' + _tnEsc(p1Name) + '" alt="' + _tnEsc(p1Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:var(--bg4,#172132);margin-bottom:4px;">';
-    html += '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:700;color:var(--text,#e8eaed);line-height:1.2;">' + _tnEsc(p1Name) + '</div>';
-    if (bsdData && bsdData.players && bsdData.players.p1 && bsdData.players.p1.rank) {
-      html += '<div style="font-size:10px;color:var(--tex-gold,#FFD700);font-weight:700;margin-top:1px;">#' + bsdData.players.p1.rank + '</div>';
-    } else if (matchData.elo_surface && matchData.elo_surface.p1 != null) {
-      html += '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:' + (matchData.elo_surface.favorite === 'p1' ? 'var(--tex-green,#00e676)' : 'var(--text3,#8d9399)') + ';font-weight:700;margin-top:1px;">Elo ' + matchData.elo_surface.p1 + '</div>';
-    }
-    html += '</div>';
-    // VS
-    html += '<div style="font-family:\'DM Mono\',monospace;font-size:16px;font-weight:800;color:var(--text3,#5a6068);align-self:center;">VS</div>';
-    // P2 block
-    html += '<div style="text-align:center;flex:1;">';
-    html += '<img src="' + p2Photo + '" data-name="' + _tnEsc(p2Name) + '" alt="' + _tnEsc(p2Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:var(--bg4,#172132);margin-bottom:4px;">';
-    html += '<div style="font-family:\'Instrument Sans\',sans-serif;font-size:13px;font-weight:700;color:var(--text,#e8eaed);line-height:1.2;">' + _tnEsc(p2Name) + '</div>';
-    if (bsdData && bsdData.players && bsdData.players.p2 && bsdData.players.p2.rank) {
-      html += '<div style="font-size:10px;color:var(--tex-gold,#FFD700);font-weight:700;margin-top:1px;">#' + bsdData.players.p2.rank + '</div>';
-    } else if (matchData.elo_surface && matchData.elo_surface.p2 != null) {
-      html += '<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:' + (matchData.elo_surface.favorite === 'p2' ? 'var(--tex-green,#00e676)' : 'var(--text3,#8d9399)') + ';font-weight:700;margin-top:1px;">Elo ' + matchData.elo_surface.p2 + '</div>';
-    }
-    html += '</div>';
-    html += '</div></div>';
-    html += '<button onclick="var o=document.getElementById(\'tex-prematch-overlay\');if(o&&o._close){o._close();}else{o.style.display=\'none\';}" style="background:none;border:none;color:var(--text3,#5a6068);font-size:22px;cursor:pointer;padding:0 4px;flex-shrink:0;" aria-label="Fermer">✕</button>';
-    html += '</div>';
-
-    // ── Badge source (BSD ou TennisExplorer) ──
-    var sourceBadge = bsdData
-      ? '<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(0,230,118,0.10);color:var(--tex-green,#00e676);font-size:9px;font-weight:700;text-transform:uppercase;">Source BSD</span>'
-      : '<span style="display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(255,193,7,0.10);color:var(--tex-amber,#fbbf24);font-size:9px;font-weight:700;text-transform:uppercase;">Source TennisExplorer</span>';
-    html += '<div style="margin-bottom:10px;">' + sourceBadge + '</div>';
-
-    // ── Section 1 : Score + Confidence (style Top 10) ──
-    var scoreVal = null, scoreLabel = 'Score';
-    if (bsdData && bsdData.predictive && bsdData.predictive.kpi) {
-      scoreVal = bsdData.predictive.kpi.score;
-      scoreLabel = 'Score IA';
-    } else if (matchData.match_rating) {
-      scoreVal = matchData.match_rating.score;
-      scoreLabel = 'Match Rating';
-    }
-    if (scoreVal != null) {
-      var stars = matchData.match_rating ? matchData.match_rating.stars : Math.max(1, Math.min(5, Math.ceil(scoreVal / 20)));
-      var starsHtml = '';
-      for (var i = 1; i <= 5; i++) { starsHtml += i <= stars ? '<span style="color:var(--tex-gold,#FFD700);font-size:14px;">★</span>' : '<span style="color:var(--text3,#5a6068);font-size:14px;">☆</span>'; }
-      var sc = scoreVal >= 70 ? 'var(--tex-gold,#FFD700)' : scoreVal >= 50 ? 'var(--tex-green,#00e676)' : scoreVal >= 30 ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-      html += '<div style="background:rgba(0,119,255,.06);border:1px solid rgba(0,119,255,.15);border-radius:8px;padding:10px;margin-bottom:10px;">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);">' + scoreLabel + '</span><div>' + starsHtml + '</div></div>';
-      html += '<div style="display:flex;align-items:baseline;gap:6px;"><span style="font-family:\'DM Mono\',monospace;font-size:24px;font-weight:800;color:' + sc + ';">' + scoreVal + '</span><span style="font-size:10px;color:var(--text3,#5a6068);">/ 100</span></div>';
-      // Confidence badge (BSD only)
-      if (bsdData && bsdData.confidence_badge && bsdData.confidence_badge.level) {
-        var cbColor = bsdData.confidence_badge.level === 'HIGH' ? 'var(--tex-green,#00e676)' : bsdData.confidence_badge.level === 'MEDIUM' ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-        html += '<div style="margin-top:4px;font-size:10px;color:' + cbColor + ';font-weight:700;">Confiance : ' + bsdData.confidence_badge.level + '</div>';
-      }
-      // Breakdown (TE only)
-      if (matchData.match_rating && matchData.match_rating.breakdown) {
-        var bd = matchData.match_rating.breakdown;
-        var labels = {elo_quality:'Elo', competitiveness:'Compét.', tournament_prestige:'Prestige', betting_value:'Value', odds_availability:'Cotes'};
-        html += '<div style="margin-top:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;">';
-        Object.keys(labels).forEach(function(k) {
-          var val = bd[k] || 0;
-          var c = val >= 70 ? 'var(--tex-gold,#FFD700)' : val >= 50 ? 'var(--tex-green,#00e676)' : val >= 30 ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-          html += '<div style="text-align:center;"><div style="font-size:7px;color:var(--text3,#5a6068);text-transform:uppercase;">' + labels[k] + '</div><div style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;color:' + c + ';">' + val + '</div><div style="margin-top:1px;height:2px;background:rgba(255,255,255,0.06);border-radius:1px;overflow:hidden;"><div style="height:100%;width:' + val + '%;background:' + c + ';"></div></div></div>';
-        });
-        html += '</div>';
-      }
-      html += '</div>';
-    }
-
-    // ── Section 2 : Edge + Verdict (BSD only) ──
-    if (bsdData) {
-      var edge = bsdData.best_edge || {};
-      var verdict = bsdData.predictive && bsdData.predictive.kpi && bsdData.predictive.kpi.verdict;
-      if (edge.edge != null || verdict) {
-        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">';
-        if (edge.edge != null) {
-          html += '<div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:8px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:2px;">Edge</div><div style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:800;color:var(--tex-green,#00e676);">+' + Number(edge.edge).toFixed(1) + '%</div></div>';
-        }
-        if (verdict) {
-          var vColor = verdict === 'HOME' || verdict === 'P1' ? 'var(--tex-green,#00e676)' : verdict === 'AWAY' || verdict === 'P2' ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-          html += '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:8px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:2px;">Verdict</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:800;color:' + vColor + ';">' + _tnEsc(verdict) + '</div></div>';
-        }
-        html += '</div>';
-      }
-    }
-
-    // ── Section 3 : Value + Drift (TE) ──
-    var hasValue = matchData.value_score > 0;
-    var hasDrift = matchData.max_drift > 0;
-    if (hasValue || hasDrift) {
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">';
-      if (hasValue) {
-        html += '<div style="background:rgba(0,230,118,.06);border:1px solid rgba(0,230,118,.15);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:8px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:2px;">Value Score</div><div style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:800;color:var(--tex-green,#00e676);">+' + matchData.value_score + '</div></div>';
-      }
-      if (hasDrift) {
-        var dC = matchData.max_drift >= 5 ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
-        html += '<div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px;text-align:center;"><div style="font-size:8px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:2px;">Drift max</div><div style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:800;color:' + dC + ';">' + matchData.max_drift.toFixed(1) + '%</div></div>';
-      }
-      html += '</div>';
-    }
-
-    // ── Section 4 : Serve dominance (BSD only) ──
-    if (bsdData && bsdData.serve_dominance) {
-      var sd = bsdData.serve_dominance;
-      html += '<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px;margin-bottom:10px;">';
-      html += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:6px;">Serve Dominance</div>';
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
-      if (sd.p1) {
-        html += '<div><div style="font-size:10px;color:var(--text2,#8d9399);margin-bottom:2px;">' + _tnEsc(p1Name.split(' ').pop()) + '</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text,#e8eaed);">' + (sd.p1.serve_pts_won_pct != null ? sd.p1.serve_pts_won_pct.toFixed(1) + '%' : '—') + '</div></div>';
-      }
-      if (sd.p2) {
-        html += '<div><div style="font-size:10px;color:var(--text2,#8d9399);margin-bottom:2px;">' + _tnEsc(p2Name.split(' ').pop()) + '</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text,#e8eaed);">' + (sd.p2.serve_pts_won_pct != null ? sd.p2.serve_pts_won_pct.toFixed(1) + '%' : '—') + '</div></div>';
-      }
-      html += '</div></div>';
-    }
-
-    // ── Section 5 : Cotes multi-bookmakers ──
+    try { var tr = await apiFetch('/api/v1/tennis/tex/match-detail?id=' + texMatchId).then(function(r){return r.json();}); if (!tr.error) texDetail = tr; } catch(_) {}
+    var p1 = matchData.player1.name||'J1', p2 = matchData.player2.name||'J2';
+    var p1Ph = '/api/v1/tennis/player-photo?name='+encodeURIComponent(p1.trim()), p2Ph = '/api/v1/tennis/player-photo?name='+encodeURIComponent(p2.trim());
+    var h = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:20px;">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;"><div style="flex:1;"><div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:6px;">'+_tnEsc(matchData.tournament||'')+(matchData.surface?' · '+_tnEsc(matchData.surface):'')+'</div><div style="display:flex;align-items:center;gap:16px;">';
+    h += '<div style="text-align:center;flex:1;"><img src="'+p1Ph+'" data-name="'+_tnEsc(p1)+'" alt="'+_tnEsc(p1)+'" onerror="fixBrokenPlayerPhoto(this)" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:var(--bg4,#172132);margin-bottom:4px;"><div style="font-size:12px;font-weight:700;color:var(--text,#e8eaed);">'+_tnEsc(p1)+'</div></div>';
+    h += '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:800;color:var(--text3,#5a6068);">VS</div>';
+    h += '<div style="text-align:center;flex:1;"><img src="'+p2Ph+'" data-name="'+_tnEsc(p2)+'" alt="'+_tnEsc(p2)+'" onerror="fixBrokenPlayerPhoto(this)" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:var(--bg4,#172132);margin-bottom:4px;"><div style="font-size:12px;font-weight:700;color:var(--text,#e8eaed);">'+_tnEsc(p2)+'</div></div>';
+    h += '</div></div><button onclick="document.getElementById(\'tex-prematch-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:22px;cursor:pointer;">✕</button></div>';
+    h += '<div style="background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.20);border-radius:6px;padding:8px;margin-bottom:10px;font-size:10px;color:var(--tex-amber,#fbbf24);text-align:center;">Match non trouvé dans BSD — données enrichies limitées. Cotes TennisExplorer ci-dessous.</div>';
     if (texDetail && texDetail.books && texDetail.books.length) {
-      html += '<div style="margin-bottom:10px;">';
-      html += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:4px;">Cotes multi-bookmakers</div>';
-      html += '<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#111a28;"><th style="padding:4px 6px;text-align:left;">Book</th><th style="padding:4px 6px;text-align:right;">' + _tnEsc(p1Name.split(' ').pop()) + '</th><th style="padding:4px 6px;text-align:right;">' + _tnEsc(p2Name.split(' ').pop()) + '</th></tr></thead><tbody>';
-      texDetail.books.forEach(function(b, i) {
-        var bg = i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent';
-        var p1o = b.odd_p1 != null ? b.odd_p1.toFixed(2) : '—';
-        var p2o = b.odd_p2 != null ? b.odd_p2.toFixed(2) : '—';
-        var bestP1 = b.best_p1 ? 'color:var(--tex-green,#00e676);font-weight:700;' : '';
-        var bestP2 = b.best_p2 ? 'color:var(--tex-green,#00e676);font-weight:700;' : '';
-        html += '<tr style="background:' + bg + ';border-bottom:1px solid rgba(255,255,255,.03);"><td style="padding:4px 6px;">' + _tnEsc(b.bookmaker) + '</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;' + bestP1 + '">' + p1o + '</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;' + bestP2 + '">' + p2o + '</td></tr>';
-      });
-      html += '</tbody></table>';
-      if (texDetail.avg_p1 != null || texDetail.avg_p2 != null) {
-        html += '<div style="margin-top:4px;padding:6px 8px;background:rgba(0,230,118,0.05);border-radius:4px;display:flex;justify-content:space-between;font-size:10px;"><span style="color:var(--text3,#5a6068);">Moyenne :</span><span style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--tex-green,#00e676);">' + (texDetail.avg_p1||'—') + ' / ' + (texDetail.avg_p2||'—') + '</span></div>';
-      }
-      html += '</div>';
+      h += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:4px;">Cotes multi-bookmakers</div><table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#111a28;"><th style="padding:4px 6px;text-align:left;">Book</th><th style="padding:4px 6px;text-align:right;">'+_tnEsc(p1.split(' ').pop())+'</th><th style="padding:4px 6px;text-align:right;">'+_tnEsc(p2.split(' ').pop())+'</th></tr></thead><tbody>';
+      texDetail.books.forEach(function(b,i){var bg=i%2?'rgba(255,255,255,0.02)':'transparent';var p1o=b.odd_p1!=null?b.odd_p1.toFixed(2):'—';var p2o=b.odd_p2!=null?b.odd_p2.toFixed(2):'—';var bp1=b.best_p1?'color:var(--tex-green,#00e676);font-weight:700;':'';var bp2=b.best_p2?'color:var(--tex-green,#00e676);font-weight:700;':'';h+='<tr style="background:'+bg+';border-bottom:1px solid rgba(255,255,255,.03);"><td style="padding:4px 6px;">'+_tnEsc(b.bookmaker)+'</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;'+bp1+'">'+p1o+'</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;'+bp2+'">'+p2o+'</td></tr>';});
+      h += '</tbody></table>';
+      if (texDetail.avg_p1||texDetail.avg_p2) h += '<div style="margin-top:4px;padding:6px;background:rgba(0,230,118,0.05);border-radius:4px;font-size:10px;text-align:center;"><span style="color:var(--text3,#5a6068);">Moy :</span> <span style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--tex-green,#00e676);">'+(texDetail.avg_p1||'—')+' / '+(texDetail.avg_p2||'—')+'</span></div>';
     }
-
-    // ── Section 6 : H2H ──
-    var h2h = (bsdData && bsdData.h2h_record) || (texDetail && texDetail.h2h_summary);
-    if (h2h) {
-      html += '<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px;margin-bottom:10px;">';
-      html += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:3px;">H2H</div>';
-      if (typeof h2h === 'string') {
-        html += '<div style="font-size:11px;color:var(--text,#e8eaed);">' + _tnEsc(h2h) + '</div>';
-      } else if (h2h.all && h2h.all.total > 0) {
-        html += '<div style="font-size:11px;color:var(--text,#e8eaed);">' + (h2h.all.p1_wins || 0) + ' - ' + (h2h.all.p2_wins || 0) + ' (total ' + h2h.all.total + ')</div>';
-      }
-      html += '</div>';
-    }
-
-    // ── Section 7 : Boutons d'action (P_BETS + AI) ──
-    var safeId = bsdMatchId || String(texMatchId);
-    html += '<div style="display:flex;gap:8px;margin-bottom:10px;">';
-    html += '<button class="p-bets-btn" data-fixture-id="' + _tnEsc(safeId) + '" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" style="flex:1;padding:8px 12px;border-radius:6px;background:rgba(0,119,255,0.12);border:1px solid rgba(0,119,255,0.25);color:#0077ff;font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;" title="Bets prédictifs IA">P_BETS</button>';
-    html += '<button data-p1="' + _tnEsc(p1Name) + '" data-p2="' + _tnEsc(p2Name) + '" data-tournament="' + _tnEsc(tourName) + '" data-surface="' + _tnEsc(surface) + '" data-source="prematch" onclick="event.stopPropagation();aiSendToDiscord(this)" style="flex:1;padding:8px 12px;border-radius:6px;background:rgba(0,230,118,0.10);border:1px solid rgba(0,230,118,0.25);color:var(--tex-green,#00e676);font-size:11px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;" title="Prédiction IA → Discord">AI Discord</button>';
-    html += '</div>';
-
-    // ── Section 8 : Statut + heure ──
-    var statusLabel = matchData.status === 'live' ? 'EN DIRECT' : matchData.status === 'finished' ? 'Terminé' : matchData.status === 'upcoming' ? 'À venir' : '—';
-    var statusColor = matchData.status === 'live' ? '#ff4d4d' : matchData.status === 'finished' ? 'var(--text3,#5a6068)' : 'var(--tex-green,#00e676)';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(255,255,255,.02);border-radius:4px;font-size:10px;">';
-    html += '<span style="color:var(--text3,#5a6068);">Statut : <span style="color:' + statusColor + ';font-weight:700;">' + statusLabel + '</span></span>';
-    if (matchData.time_utc) {
-      html += '<span style="color:var(--text3,#5a6068);">Heure : <span style="font-family:\'DM Mono\',monospace;color:var(--text2,#8d9399);">' + _tnEsc(_localTime(matchData.time_utc)) + '</span></span>';
-    }
-    html += '</div>';
-
-    html += '</div>';
-    overlay.innerHTML = html;
-  } catch (e) {
-    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="var o=document.getElementById(\'tex-prematch-overlay\');if(o&&o._close){o._close();}else{o.style.display=\'none\';}" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
+    if (texDetail && texDetail.h2h_summary) h += '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px;margin-top:8px;font-size:11px;color:var(--text,#e8eaed);">H2H : '+_tnEsc(texDetail.h2h_summary)+'</div>';
+    h += '<div style="margin-top:8px;font-size:10px;color:var(--text3,#5a6068);text-align:center;">Heure : '+_tnEsc(_localTime(matchData.time_utc))+' · Statut : '+_tnEsc(matchData.status||'—')+'</div>';
+    h += '</div>';
+    overlay.innerHTML = h;
+  } catch(e) {
+    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: '+_tnEsc(e.message)+'</div><button onclick="document.getElementById(\'tex-prematch-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
   }
 }
 

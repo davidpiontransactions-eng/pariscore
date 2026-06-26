@@ -42177,24 +42177,43 @@ if (pathname === '/api/v1/tennis/match-by-players' && req.method === 'GET') {
     const p2Name = (query.p2 || '').toString().trim();
     if (!p1Name || !p2Name) return jsonResponse(res, 400, { error: 'p1_and_p2_required' });
 
-    // Récupère les matchs BSD warmés en mémoire
-    const warmMatches = globalThis.__tennisVBWarmMatches;
+    // Récupère les matchs BSD — utilise __tennisVBWarm (fonction) qui est plus fiable que __tennisVBWarmMatches
+    let warmMatches = globalThis.__tennisVBWarmMatches;
+    if (!warmMatches || !Array.isArray(warmMatches) || warmMatches.length === 0) {
+      // Fallback : appelle __tennisVBWarm (la fonction)
+      const _tnVbFn = globalThis.__tennisVBWarm;
+      if (typeof _tnVbFn === 'function') {
+        try {
+          const vb = await _tnVbFn({});
+          if (vb && vb.status === 200 && vb.body && vb.body.matches) {
+            warmMatches = vb.body.matches;
+          }
+        } catch(_) {}
+      }
+    }
     if (!warmMatches || !Array.isArray(warmMatches) || warmMatches.length === 0) {
       return jsonResponse(res, 404, { error: 'no_bsd_matches_available' });
     }
 
-    // Fonction de normalisation : compare les derniers mots des noms (lastnames)
+    // Normalisation : extrait le nom d'un joueur (string ou objet {name:...})
+    const getPlayerName = (p) => {
+      if (!p) return '';
+      if (typeof p === 'string') return p.toLowerCase().trim();
+      if (typeof p === 'object' && p.name) return p.name.toLowerCase().trim();
+      return '';
+    };
     const lastName = (s) => (s || '').toLowerCase().trim().split(/\s+/).pop();
     const p1Last = lastName(p1Name);
     const p2Last = lastName(p2Name);
 
     // Cherche un match où P1 et P2 correspondent (dans les 2 sens)
     const found = warmMatches.find(m => {
-      const m1 = (m.player1 || '').toLowerCase();
-      const m2 = (m.player2 || '').toLowerCase();
-      const m1Last = lastName(m.player1);
-      const m2Last = lastName(m.player2);
-      // Match exact ou par lastname
+      const m1 = getPlayerName(m.player1);
+      const m2 = getPlayerName(m.player2);
+      if (!m1 || !m2) return false;
+      const m1Last = lastName(m1);
+      const m2Last = lastName(m2);
+      // Match par lastname (plus tolérant)
       const p1Match = m1.includes(p1Last) || m1Last === p1Last;
       const p2Match = m2.includes(p2Last) || m2Last === p2Last;
       const p1MatchRev = m2.includes(p1Last) || m2Last === p1Last;
@@ -42204,12 +42223,16 @@ if (pathname === '/api/v1/tennis/match-by-players' && req.method === 'GET') {
 
     if (!found) return jsonResponse(res, 404, { error: 'match_not_found_in_bsd' });
 
+    const bsdId = String(found.id || found.matchId || '');
+    const bsdP1 = getPlayerName(found.player1);
+    const bsdP2 = getPlayerName(found.player2);
+
     return jsonResponse(res, 200, {
-      bsd_match_id: String(found.id || found.matchId || ''),
+      bsd_match_id: bsdId,
       bsd_match: {
-        id: String(found.id || found.matchId || ''),
-        player1: found.player1,
-        player2: found.player2,
+        id: bsdId,
+        player1: bsdP1,
+        player2: bsdP2,
         tournament: found.tournament,
         surface: found.surface,
         round: found.round,
