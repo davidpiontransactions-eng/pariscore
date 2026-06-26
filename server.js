@@ -29829,18 +29829,34 @@ async function fetchTexMatches(tour, dateISO) {
       const p1Key = (m.player1.name || '').toLowerCase();
       const p2Key = (m.player2.name || '').toLowerCase();
       // Match Elo par nom exact, sinon par dernier mot du nom (fallback)
-      const findElo = (name) => {
+      // H3 fix — lookup Elo par nom exact, puis par slug TE, puis par dernier mot (stricte)
+      const findElo = (name, slug) => {
         if (!name) return null;
+        // 1. Match exact par nom complet
         const full = eloMap.get(name.toLowerCase());
         if (full) return full;
-        const lastName = name.toLowerCase().split(' ').pop();
-        for (const [k, v] of eloMap) {
-          if (k.endsWith(lastName) || k.includes(lastName)) return v;
+        // 2. Match par slug TE (ex: "jannik-sinner" → "sinner")
+        if (slug) {
+          const slugParts = slug.toLowerCase().split('-');
+          const slugLast = slugParts[slugParts.length - 1];
+          for (const [k, v] of eloMap) {
+            // Match si le dernier mot du nom dans la DB correspond au dernier mot du slug
+            const dbParts = k.split(' ');
+            const dbLast = dbParts[dbParts.length - 1];
+            if (dbLast === slugLast && dbParts.length >= 1) return v;
+          }
         }
-        return null;
+        // 3. Fallback stricte : dernier mot du nom exact (pas includes)
+        const lastName = name.toLowerCase().split(' ').pop();
+        if (lastName.length < 4) return null; // trop court = trop de faux positifs
+        for (const [k, v] of eloMap) {
+          const dbLast = k.split(' ').pop();
+          if (dbLast === lastName) return v;
+        }
+        return null; // pas de match confiant → null (honnête)
       };
-      const e1 = findElo(m.player1.name);
-      const e2 = findElo(m.player2.name);
+      const e1 = findElo(m.player1.name, m.player1.slug);
+      const e2 = findElo(m.player2.name, m.player2.slug);
       m.elo_surface = {
         p1: e1 ? Math.round(e1.elo) : null,
         p2: e2 ? Math.round(e2.elo) : null,
@@ -29867,7 +29883,7 @@ async function fetchTexMatches(tour, dateISO) {
       var eloAvg = (m.elo_surface?.p1 && m.elo_surface?.p2) ? (m.elo_surface.p1 + m.elo_surface.p2) / 2 : 0;
       var eloScore = Math.min(100, Math.max(0, (eloAvg - 1600) / 6)); // 1600→0, 2200→100
       // Critère 2 : Compétitivité (25%) — delta Elo petit = match serré
-      var eloDelta = m.elo_surface?.delta || 999;
+      var eloDelta = (m.elo_surface && m.elo_surface.delta != null) ? m.elo_surface.delta : 999;
       var compScore = Math.max(0, 100 - eloDelta * 0.5); // 0→100, 200→0
       // Critère 3 : Prestige tournoi (20%) — Grand Slam > Masters > 500 > 250 > Challenger
       var tourName = (m.tournament || '').toLowerCase();
