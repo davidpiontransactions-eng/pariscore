@@ -127,7 +127,8 @@
 // v66 (2026-06-26) : Prematch = clone de la modale Top 10 (route /match-by-players pour trouver BSD)
 // v67 (2026-06-27) : Prematch = card COMPLÈTE style Top 10 avec double routing BSD/TE + P_BETS + serve_dominance + edge
 // v68 (2026-06-27) : FIX routing BSD — m.player1 est un objet {name:...} pas une string + fallback __tennisVBWarm() + clone 100% Top 10
-const CACHE_VERSION = 'v68';
+// v69 (2026-06-27) : Prematch = INLINE card (pas de modale) + clone structure Top 10 + toggle on/off
+const CACHE_VERSION = 'v69';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
