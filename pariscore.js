@@ -5681,15 +5681,33 @@ function _renderTexMatchs(r) {
   }
   var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
   var playerPhoto = function(slug, name) {
-    // NEW — utilise la route /api/v1/tennis/player-photo qui :
-    // 1. Vérifie le cache SQLite (24h)
-    // 2. Si absent, fetch Wikipedia en arrière-plan + renvoie SVG coloré temporaire
-    // 3. Au prochain affichage, la photo Wikipedia est en cache
-    // BUGFIX — plus de onerror inline (posait problème de quotes) : à la place, on
-    // utilise un data-fallback attribute + event delegation globale (cf. plus bas)
+    // PATTERN EXISTANT (réutilise le système des autres onglets tennis) :
+    // 1. <img src='/api/v1/tennis/player-photo/<id>'> si player_id BSD dispo
+    // 2. Fallback onerror='fixBrokenPlayerPhoto(this)' qui essaie :
+    //    a. ui-avatars.com ( externe mais fiable )
+    //    b. SVG data URI inline avec initiales
+    // Ici on a pas l'ID BSD (matches TennisExplorer), on part directement sur ui-avatars
     var _initials = (name||'?').split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('') || '?';
     if (!name) return '<span style="width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;">' + _tnEsc(_initials) + '</span>';
-    return '<img src="/api/v1/tennis/player-photo?name=' + encodeURIComponent(name) + '" data-fallback-initials="' + _tnEsc(_initials) + '" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);" alt="' + _tnEsc(name) + '" loading="lazy" referrerpolicy="no-referrer">';
+    // ui-avatars.com — service gratuit et fiable, déjà utilisé dans les autres onglets
+    var _avatarUrl = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name.trim()) + '&background=172132&color=fff&size=96&bold=true&font-size=0.33';
+    return '<img src="' + _avatarUrl + '" data-name="' + _tnEsc(name) + '" alt="' + _tnEsc(name) + '" loading="lazy" decoding="async" onerror="fixBrokenPlayerPhoto(this)" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);">';
+  };
+  // NEW — Convertit l'heure UTC en heure locale (browser timezone)
+  var _localTime = function(timeUtcStr) {
+    if (!timeUtcStr || !/^\d{1,2}:\d{2}/.test(timeUtcStr)) return timeUtcStr || '—';
+    try {
+      var parts = timeUtcStr.match(/^(\d{1,2}):(\d{2})/);
+      var hh = parseInt(parts[1], 10);
+      var mm = parseInt(parts[2], 10);
+      // Construit une date pour aujourd'hui à HH:MM UTC
+      var now = new Date();
+      var d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm));
+      // Format local HH:MM
+      var localH = d.getHours();
+      var localM = d.getMinutes();
+      return (localH < 10 ? '0' : '') + localH + ':' + (localM < 10 ? '0' : '') + localM;
+    } catch(_) { return timeUtcStr; }
   };
   // Badge filtre actif (sans emojis)
   var filterBadges = {
@@ -5792,7 +5810,7 @@ function _renderTexMatchs(r) {
     }
     return tourHeader
       + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (hasValidMatchId ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
-      + '<td data-label="Heure" style="padding:4px 10px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:11px;font-weight:600;">' + starHtml(m) + _tnEsc(time) + statusBadge + badgeFn(m) + '</td>'
+      + '<td data-label="Heure" style="padding:4px 10px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:11px;font-weight:600;">' + starHtml(m) + _tnEsc(_localTime(time)) + statusBadge + badgeFn(m) + '</td>'
       + '<td data-label="Match" style="padding:4px 6px;">'
         + '<div style="display:flex;align-items:center;gap:6px;font-family:\'Instrument Sans\',sans-serif;font-size:12px;font-weight:600;color:var(--text,#e8eaed);line-height:1.2;">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p1Slug) + '" data-name="' + _tnEsc(m.player1.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
         + '<div style="display:flex;align-items:center;gap:6px;font-family:\'Instrument Sans\',sans-serif;font-size:12px;font-weight:600;color:var(--text2,#8d9399);margin-top:1px;line-height:1.2;">' + playerPhoto(p2Slug, m.player2.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p2Slug) + '" data-name="' + _tnEsc(m.player2.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text2,#8d9399)\'">' + p2Name + '</a></div>'
@@ -5804,7 +5822,7 @@ function _renderTexMatchs(r) {
   body.innerHTML = '<div class="tex-matchs-table" style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
     + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
     + '<thead><tr style="background:#111a28;">'
-    + '<th style="padding:6px 10px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
+    + '<th style="padding:6px 10px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure</th>'
     + '<th style="padding:6px 6px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
     + '<th style="padding:6px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Index</th>'
     + '<th style="padding:6px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
@@ -5831,20 +5849,6 @@ function _renderTexMatchs(r) {
       e.stopPropagation();
       openPlayerProfile(a.dataset.slug, a.dataset.name, a.dataset.surface);
     });
-  }
-  // BUGFIX — event delegation globale pour onerror des <img data-fallback-initials="...">
-  // (remplace les onerror inline qui posaient problème de quotes → "BR">" parasite)
-  if (!body._texPhotoFallbackWired) {
-    body._texPhotoFallbackWired = true;
-    body.addEventListener('error', function(e) {
-      var img = e.target;
-      if (img.tagName !== 'IMG' || !img.dataset.fallbackInitials) return;
-      // Remplace l'image cassée par un span initiales
-      var span = document.createElement('span');
-      span.style.cssText = 'width:24px;height:24px;border-radius:50%;background:var(--bg4,#172132);display:inline-flex;align-items:center;justify-content:center;font:700 10px/1 monospace;color:var(--text3,#8d9399);flex-shrink:0;border:1px solid rgba(255,255,255,.08);user-select:none;';
-      span.textContent = img.dataset.fallbackInitials;
-      if (img.parentNode) img.parentNode.replaceChild(span, img);
-    }, true); // capture phase pour capter les erreurs d'images
   }
   // H5 fix — timer maintenant géré dans loadTexMatchs() finally (plus ici)
 }
