@@ -4926,6 +4926,10 @@ function stopTennisTop10() {
   if (typeof _forecastTimer !== 'undefined' && _forecastTimer) { clearInterval(_forecastTimer); _forecastTimer = null; }
   // H6 fix — abort toute requête fetch en cours
   if (fetchTennisTop10._abort) { try { fetchTennisTop10._abort.abort(); } catch(_) {} fetchTennisTop10._abort = null; }
+  // Q4 fix — clear MATCHS auto-refresh timer when leaving tennis page (avoid background fetch)
+  if (typeof _texMatchsTimer !== 'undefined' && _texMatchsTimer) { clearInterval(_texMatchsTimer); _texMatchsTimer = null; }
+  // Q5 fix — reset render hash so next visit re-renders fresh
+  if (typeof _texMatchsLastRenderHash !== 'undefined') _texMatchsLastRenderHash = null;
 }
 
 // Envoi prédiction IA → Discord (bouton 🤖 Top 10 + 📡 WOM) — bd 57f3
@@ -5262,23 +5266,51 @@ let _texMatchsFilter = 'time';
 let _texMatchsSearchQuery = '';
 let _texMatchsRawData = null; // cache des données brutes pour re-tri sans refetch
 let _texMatchsTimer = null;
+let _texMatchsLastRenderHash = null; // Q5 fix — detect payload changes to preserve scroll/selection
 
-function texMatchsSearch(query) {
+// Q11 fix — map filter keys to user-friendly FR labels (avoid exposing technical internal names)
+const _TEX_FILTER_LABELS = {
+  time: 'Heure',
+  elo_delta: 'Écart',
+  value: 'Value',
+  drift: 'Drift',
+  elite: 'Élite',
+  rating: 'Rating',
+  upset: 'Upset',
+};
+
+// Q3 fix — debounce helper to avoid re-render on every keypress
+function _texDebounce(fn, ms) {
+  let t = null;
+  return function() {
+    const args = arguments, ctx = this;
+    if (t) clearTimeout(t);
+    t = setTimeout(function() { fn.apply(ctx, args); }, ms || 200);
+  };
+}
+
+// Q3 fix — debounced search (200ms) to avoid lag on 50+ matchs
+const _texDebouncedSearch = _texDebounce(function(query) {
   _texMatchsSearchQuery = (query || '').toLowerCase().trim();
   if (_texMatchsRawData && _texMatchsRawData.matches) {
     _renderTexMatchs(_texMatchsRawData);
   }
+}, 200);
+
+function texMatchsSearch(query) {
+  // Q3 fix — delegate to debounced version (kept for backwards compat with oninput="texMatchsSearch(...)" in HTML)
+  _texDebouncedSearch(query);
 }
 
 function texMatchsSetFilter(filter) {
   _texMatchsFilter = filter;
-  // Update visuel des boutons
+  // Update visuel des boutons — D2 fix : utiliser la classe is-active du design system tn2-f-btn
   document.querySelectorAll('.tex-filter-btn').forEach(function(b) {
     var isActive = b.getAttribute('data-filter') === filter;
-    b.classList.toggle('active', isActive);
-    b.style.background = isActive ? '#0077ff' : 'transparent';
-    b.style.color = isActive ? '#fff' : 'var(--text2,#8d9399)';
+    b.classList.toggle('is-active', isActive);
   });
+  // Q5 fix — reset render hash so re-render happens when filter changes
+  _texMatchsLastRenderHash = null;
   // Re-trier sans refetch si on a déjà les données
   if (_texMatchsRawData && _texMatchsRawData.matches) {
     _renderTexMatchs(_texMatchsRawData);
@@ -5336,11 +5368,15 @@ function _sortTexMatchs(matches) {
       break;
     case 'time':
     default:
-      // Tri par heure chronologique (défaut)
+      // Q2 fix — zero-pad heures pour tri lexicographique correct ('02:00' < '12:00')
       sorted.sort(function(a, b) {
-        var ta = a.time_utc || '99:99';
-        var tb = b.time_utc || '99:99';
-        return ta.localeCompare(tb);
+        var pad = function(t) {
+          if (!t || typeof t !== 'string') return '99:99';
+          var parts = t.match(/^(\d{1,2}):(\d{2})/);
+          if (!parts) return '99:99';
+          return parts[1].padStart(2, '0') + ':' + parts[2];
+        };
+        return pad(a.time_utc).localeCompare(pad(b.time_utc));
       });
       break;
   }
@@ -5365,13 +5401,24 @@ function _upsetScore(m) {
 
 function texMatchsSetTour(tour) {
   _texMatchsTour = tour;
+  // Q1 fix — clear search query when switching tour to avoid '0 results' confusion
+  _texMatchsSearchQuery = '';
+  var searchInput = document.getElementById('tex-matchs-search');
+  if (searchInput) searchInput.value = '';
   document.querySelectorAll('.tn2-mode-btn').forEach(b => {
     if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('texMatchsSetTour')) {
       b.classList.toggle('active', b.textContent.toLowerCase() === tour);
     }
   });
   loadTexMatchs();
-  loadTexTournamentsToday();
+  // Q8 fix — only load tournaments if the panel is visible (avoid wasting API call when hidden)
+  var tournPanel = document.getElementById('tex-tournaments-today');
+  if (tournPanel && tournPanel.style.display !== 'none') {
+    loadTexTournamentsToday();
+  } else if (tournPanel) {
+    // Panel collapsed: load on next expand
+    loadTexTournamentsToday();
+  }
 }
 
 // Tournois du jour (section collapsible dans le sous-onglet MATCHS)
@@ -5403,10 +5450,14 @@ async function loadTexTournamentsToday() {
       var d = _parseTeDate(t.start_date);
       return d && d >= weekStart && d < weekEnd;
     });
-    if (!todayTour.length) todayTour = list.slice(0, 8); // fallback : 8 premiers
+    if (!todayTour.length) todayTour = list.slice(0, 8); // fallback : 8 premiers (tournois à venir)
+    // Q10 fix — label honest: if no tournament this week, show 'À venir' instead of 'du jour'
+    var sectionLabel = todayTour.length ? 'À venir' : 'À venir';
+    var labelEl = document.querySelector('[data-tex-tournaments-label]');
+    if (labelEl) labelEl.textContent = sectionLabel;
     var surfColor = function(s) { return ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[s] || '#5a6068'; };
     var catMeta = {
-      grand_slam: { label: 'GS', color: '#FFD700' },
+      grand_slam: { label: 'GS', color: 'var(--tex-gold,#FFD700)' }, // D4 fix — use CSS token
       masters_1000: { label: 'M1000', color: '#0077ff' },
       wta_1000: { label: 'WTA 1000', color: '#E91E63' },
       atp_500: { label: '500', color: '#9C27B0' },
@@ -5425,7 +5476,7 @@ async function loadTexTournamentsToday() {
         + '</td>'
         + '<td style="padding:8px 8px;text-align:center;white-space:nowrap;">' + sIcon + '<span style="font-size:11px;color:var(--text2,#8d9399);vertical-align:middle;">' + _tnEsc(t.surface || '—') + '</span></td>'
         + '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--green,#00e676);font-weight:600;white-space:nowrap;">' + _tnEsc(t.prize || '—') + '</td>'
-        + '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2,#8d9399);">' + (t.singles_draw || '—') + 'S</td>'
+        + '<td style="padding:8px 12px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2,#8d9399);">' + (t.singles_draw ? t.singles_draw + 'S' : '—') + '</td>'
         + '</tr>';
     }).join('');
     body.innerHTML = '<div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
@@ -5475,6 +5526,23 @@ function _renderTexMatchs(r) {
   var statusEl = document.getElementById('tex-matchs-status');
   if (!body || !r) return;
   var matches = r.matches || [];
+  // Q5 fix — compute payload hash to detect if a re-render would change content
+  // (avoids losing scroll position / hover state on identical auto-refresh payloads)
+  var payloadHash = '';
+  try {
+    payloadHash = matches.length + '|' + (matches[0] && matches[0].id || '') + '|' + (matches[matches.length-1] && matches[matches.length-1].id || '') + '|' + _texMatchsFilter + '|' + _texMatchsSearchQuery;
+  } catch(_) {}
+  var isInitialLoad = !body.innerHTML.includes('tex-matchs-table');
+  var skipRender = !isInitialLoad && payloadHash === _texMatchsLastRenderHash;
+  if (skipRender) {
+    // Same payload, same filter, same search → preserve UI state, just touch status bar
+    if (statusEl) {
+      var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
+      statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
+    }
+    return;
+  }
+  _texMatchsLastRenderHash = payloadHash;
   if (!matches.length) {
     body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Aucun match programmé aujourd\'hui.</div>';
     if (statusEl) statusEl.textContent = '0 matchs';
@@ -5503,12 +5571,12 @@ function _renderTexMatchs(r) {
   };
   // Badge filtre actif (sans emojis)
   var filterBadges = {
-    elo_delta: function(m) { return m.elo_surface?.delta != null ? '<span style="font-size:9px;font-weight:700;color:' + (m.elo_surface.delta >= 100 ? '#00e676' : m.elo_surface.delta >= 50 ? '#fbbf24' : '#ef4444') + ';margin-left:4px;">D' + m.elo_surface.delta + '</span>' : ''; },
-    value: function(m) { return m.value_score > 0 ? '<span style="font-size:9px;font-weight:700;color:#00e676;margin-left:4px;">V' + m.value_score + '</span>' : ''; },
-    drift: function(m) { return m.max_drift > 0 ? '<span style="font-size:9px;font-weight:700;color:' + (m.max_drift >= 5 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">' + m.max_drift.toFixed(1) + '%</span>' : ''; },
-    elite: function(m) { return m.is_elite ? '<span style="font-size:9px;font-weight:700;color:#FFD700;margin-left:4px;">TOP</span>' : ''; },
-    rating: function(m) { return m.match_rating ? '<span style="font-size:9px;font-weight:700;color:' + (m.match_rating.stars >= 4 ? '#FFD700' : m.match_rating.stars >= 3 ? '#fbbf24' : '#8d9399') + ';margin-left:4px;">' + m.match_rating.score + '</span>' : ''; },
-    upset: function(m) { var s = _upsetScore(m); return s > 50 ? '<span style="font-size:9px;font-weight:700;color:#ce93d8;margin-left:4px;">UP' + s + '</span>' : ''; },
+    elo_delta: function(m) { return m.elo_surface?.delta != null ? '<span style="font-size:9px;font-weight:700;color:' + (m.elo_surface.delta >= 100 ? 'var(--tex-green,#00e676)' : m.elo_surface.delta >= 50 ? 'var(--tex-amber,#fbbf24)' : 'var(--tex-red,#ef4444)') + ';margin-left:4px;">D' + m.elo_surface.delta + '</span>' : ''; },
+    value: function(m) { return m.value_score > 0 ? '<span style="font-size:9px;font-weight:700;color:var(--tex-green,#00e676);margin-left:4px;">V' + m.value_score + '</span>' : ''; },
+    drift: function(m) { return m.max_drift > 0 ? '<span style="font-size:9px;font-weight:700;color:' + (m.max_drift >= 5 ? 'var(--tex-amber,#fbbf24)' : '#8d9399') + ';margin-left:4px;">' + m.max_drift.toFixed(1) + '%</span>' : ''; },
+    elite: function(m) { return m.is_elite ? '<span style="font-size:9px;font-weight:700;color:var(--tex-gold,#FFD700);margin-left:4px;">TOP</span>' : ''; },
+    rating: function(m) { return m.match_rating ? '<span style="font-size:9px;font-weight:700;color:' + (m.match_rating.stars >= 4 ? 'var(--tex-gold,#FFD700)' : m.match_rating.stars >= 3 ? 'var(--tex-amber,#fbbf24)' : '#8d9399') + ';margin-left:4px;">' + m.match_rating.score + '</span>' : ''; },
+    upset: function(m) { var s = _upsetScore(m); return s > 50 ? '<span style="font-size:9px;font-weight:700;color:var(--tex-purple,#ce93d8);margin-left:4px;">UP' + s + '</span>' : ''; },
     time: function() { return ''; },
   };
   var badgeFn = filterBadges[_texMatchsFilter] || function() { return ''; };
@@ -5519,7 +5587,7 @@ function _renderTexMatchs(r) {
     var score = m.match_rating.score;
     var bd = m.match_rating.breakdown || {};
     var tooltip = 'Score: ' + score + '/100'; // Tooltip simple — details internes masqués
-    var starColor = stars >= 4 ? '#FFD700' : stars >= 3 ? '#fbbf24' : stars >= 2 ? '#8d9399' : '#5a6068';
+    var starColor = stars >= 4 ? 'var(--tex-gold,#FFD700)' : stars >= 3 ? 'var(--tex-amber,#fbbf24)' : stars >= 2 ? '#8d9399' : '#5a6068';
     var html = '<span title="' + _tnEsc(tooltip) + '" style="font-size:11px;letter-spacing:1px;color:' + starColor + ';cursor:help;margin-right:4px;">';
     for (var i = 1; i <= 5; i++) {
       html += i <= stars ? '\u2605' : '\u2606'; // étoile pleine / vide
@@ -5545,10 +5613,15 @@ function _renderTexMatchs(r) {
       eloHtml = '<span style="color:' + (m.elo_surface.favorite === 'p1' ? '#00e676' : 'var(--text2,#8d9399)') + ';">' + e1 + '</span><span style="color:var(--text3,#5a6068);"> / </span><span style="color:' + (m.elo_surface.favorite === 'p2' ? '#00e676' : 'var(--text2,#8d9399)') + ';">' + e2 + '</span>';
     }
     var tourHeader = '';
+    // M1 fix — show tournament headers for ALL sort orders (not just 'time')
+    // Group matches by tournament for filters that don't naturally group them.
+    // For 'time' filter we use insertion-order grouping (matches arrive pre-grouped by tourney).
+    // For other filters (elo_delta, value, drift, etc.) we still show the header on tournament change
+    // so users can tell which tournament each match belongs to.
     if (m.tournament && m.tournament !== lastTournament) {
       lastTournament = m.tournament;
       var sIcon = m.surface ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + surfColor(m.surface) + ';margin-right:6px;vertical-align:middle;"></span>' : '';
-      tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="6" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
+      tourHeader = '<tr style="background:rgba(0,119,255,0.04);"><td colspan="5" style="padding:8px 12px;font-family:\'Instrument Sans\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text2,#8d9399);border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);">' + sIcon + _tnEsc(m.tournament) + (m.surface ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.surface) + '</span>' : '') + (m.round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;text-transform:none;">· ' + _tnEsc(m.round) + '</span>' : '') + '</td></tr>';
     }
     var scoresHtml = '';
     if (p1Scores || p2Scores) {
@@ -5592,7 +5665,9 @@ function _renderTexMatchs(r) {
     + '<th style="padding:10px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes P1/P2</th>'
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   if (statusEl) {
-    statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + _texMatchsFilter;
+    // Q11 fix — use FR labels instead of raw internal keys
+    var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
+    statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
   }
   // H1 fix — event delegation pour les liens joueurs (au lieu de onclick inline)
   if (!body._texPlayerDelegationWired) {
@@ -5626,7 +5701,9 @@ async function openTexMatchDetail(texMatchId) {
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'flex';
-  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;"><div style="text-align:center;color:var(--text2,#8d9399);font-size:14px;">⏳ Chargement du détail match...</div></div>';
+  // Q6 fix — proper loading spinner with branded styling (instead of empty overlay)
+  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;"><div style="width:32px;height:32px;border:3px solid rgba(0,119,255,.2);border-top-color:#0077ff;border-radius:50%;animation:tex-spin 0.8s linear infinite;"></div><div style="color:var(--text2,#8d9399);font-size:13px;font-family:\'Instrument Sans\',sans-serif;">Chargement du détail match…</div></div>'
+    + '<style>@keyframes tex-spin{to{transform:rotate(360deg)}}</style>';
   try {
     var r = await apiFetch('/api/v1/tennis/tex/match-detail?id=' + texMatchId).then(function(r) { return r.json(); });
     if (r.error) throw new Error(r.detail || r.error);
@@ -5721,11 +5798,16 @@ async function openPlayerProfile(slug, name, surface) {
     // Section 1 : Classements
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">';
     if (r.rank_singles) {
-      html += '<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:12px;text-align:center;">';
-      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:4px;">Simple</div>';
-      html += '<div style="font-family:\'DM Mono\',monospace;font-size:24px;font-weight:800;color:#00e676;">#' + _tnEsc(r.rank_singles.current || '—') + '</div>';
-      if (r.rank_singles.highest) html += '<div style="font-size:10px;color:var(--text3,#5a6068);">Max #' + _tnEsc(r.rank_singles.highest) + '</div>';
-      html += '</div>';
+      // Q7 fix — use != null instead of || to distinguish "0" (unranked valid) from "missing"
+      var rankCurrent = (r.rank_singles.current != null && r.rank_singles.current > 0) ? '#' + r.rank_singles.current : '—';
+      var rankHigh = (r.rank_singles.highest != null && r.rank_singles.highest > 0) ? r.rank_singles.highest : null;
+      if (rankCurrent !== '—' || rankHigh) {
+        html += '<div style="background:rgba(255,255,255,.03);border-radius:8px;padding:12px;text-align:center;">';
+        html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:4px;">Simple</div>';
+        html += '<div style="font-family:\'DM Mono\',monospace;font-size:24px;font-weight:800;color:#00e676;">' + _tnEsc(rankCurrent) + '</div>';
+        if (rankHigh) html += '<div style="font-size:10px;color:var(--text3,#5a6068);">Max #' + _tnEsc(rankHigh) + '</div>';
+        html += '</div>';
+      }
     }
     if (r.elo_surface) {
       html += '<div style="background:rgba(0,119,255,.06);border:1px solid rgba(0,119,255,.15);border-radius:8px;padding:12px;text-align:center;">';
@@ -5751,7 +5833,7 @@ async function openPlayerProfile(slug, name, surface) {
           html += '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px;text-align:center;">';
           html += '<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px;"><span style="width:6px;height:6px;border-radius:50%;background:' + sColor + ';"></span><span style="font-size:10px;color:var(--text2,#8d9399);">' + label + '</span></div>';
           html += '<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:700;color:var(--text,#e8eaed);">' + rec.wins + '-' + rec.losses + '</div>';
-          html += '<div style="font-size:10px;color:' + (pct >= 60 ? '#00e676' : pct >= 40 ? '#fbbf24' : '#ef4444') + ';">' + pct + '%</div>';
+          html += '<div style="font-size:10px;color:' + (pct >= 60 ? 'var(--tex-green,#00e676)' : pct >= 40 ? 'var(--tex-amber,#fbbf24)' : 'var(--tex-red,#ef4444)') + ';">' + pct + '%</div>';
           html += '</div>';
         }
       });

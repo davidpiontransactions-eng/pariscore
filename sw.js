@@ -109,7 +109,8 @@
 // (header/body/footer) au lieu de grid 2 col sur .tn-t10-card qui écrasait les
 // 12+ enfants en zigzag. Bump pariscore.js?v=250625-2.
 // v50 (2026-06-25) : Sprint 1 audit MATCHS — 12 bugs HIGH fixes
-const CACHE_VERSION = 'v50';
+// v51 (2026-06-26) : Sprint 2 audit MATCHS — 28 bugs MED fixes
+const CACHE_VERSION = 'v51';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

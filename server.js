@@ -29581,8 +29581,38 @@ async function fetchAiscoreSportFixtures(sport, maxItems = 50) {
 const TEX_BASE = 'https://www.tennisexplorer.com';
 const TEX_MATCHES_TTL_MS = 30 * 60 * 1000;   // 30min
 const TEX_PLAYER_TTL_MS = 24 * 3600 * 1000;  // 24h
+const TEX_CACHE_MAX_ENTRIES = 500; // M10 fix — LRU cap to bound memory
 const texMatchesCache = new Map();
 const texPlayerCache = new Map();
+
+// M10 fix — LRU eviction helper (Map keeps insertion order in JS)
+function _texCacheEvict(cache, maxEntries) {
+  if (cache.size <= maxEntries) return;
+  const toRemove = cache.size - maxEntries;
+  let removed = 0;
+  for (const key of cache.keys()) {
+    if (removed >= toRemove) break;
+    cache.delete(key);
+    removed++;
+  }
+}
+
+// M8 fix — decode common HTML entities encountered in TE player names/tournaments
+function _decodeHtmlEntities(s) {
+  if (!s) return s;
+  return String(s)
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function _texFmtDate(d) {
   // Tennis Explorer date format: YYYY-MM-DD via ?year=YYYY&month=MM&day=DD
@@ -29654,35 +29684,45 @@ function _texParseMatchesPage(html) {
     const p1M = row1.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     const p2M = row2.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     if (!p1M || !p2M) continue;
+    // M8 fix — decode HTML entities in player/tournament names (handles &amp; &#39; &nbsp; etc.)
     const scoresP1 = [...row1.matchAll(/class="score"[^>]*>([^<]*)</g)]
-      .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
+      .map(x => _decodeHtmlEntities(x[1])).filter(Boolean);
     const scoresP2 = [...row2.matchAll(/class="score"[^>]*>([^<]*)</g)]
-      .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
+      .map(x => _decodeHtmlEntities(x[1])).filter(Boolean);
     const oddsOpen = [...row1.matchAll(/class="coursew"[^>]*>([^<]+)</g)]
       .map(x => parseFloat(x[1])).filter(v => Number.isFinite(v));
     const oddsCurr = [...row1.matchAll(/class="course"[^>]*>([^<]+)</g)]
       .map(x => parseFloat(x[1])).filter(v => Number.isFinite(v));
     const matchIdM = row1.match(/href="\/match-detail\/\?id=(\d+)"/);
     const time = timeM ? timeM[1].trim() : null;
-    const driftP1 = (oddsOpen[0] && oddsCurr[0]) ? ((oddsCurr[0] - oddsOpen[0]) / oddsOpen[0] * 100) : null;
-    const driftP2 = (oddsOpen[1] && oddsCurr[1]) ? ((oddsCurr[1] - oddsOpen[1]) / oddsOpen[1] * 100) : null;
+    // M7 fix — clamp denominator to avoid division by zero if oddsOpen is exactly 0 (corrupted HTML)
+    const driftP1 = (oddsOpen[0] != null && oddsCurr[0] != null) ? ((oddsCurr[0] - oddsOpen[0]) / Math.max(0.01, Math.abs(oddsOpen[0])) * 100) : null;
+    const driftP2 = (oddsOpen[1] != null && oddsCurr[1] != null) ? ((oddsCurr[1] - oddsOpen[1]) / Math.max(0.01, Math.abs(oddsOpen[1])) * 100) : null;
     // Round info (ex: "1/8", "Quarterfinal", etc.)
     const roundM = row1.match(/class="round"[^>]*>([^<]+)</);
     out.push({
       id: matchIdM ? `tex_${matchIdM[1]}` : `tex_idx_${idx}`,
       tex_match_id: matchIdM ? parseInt(matchIdM[1], 10) : null,
       time_utc: time,
-      tournament: tournament || null,
-      tournament_slug: tournament ? tourHeaders.find(th => th.name === tournament)?.slug : null,
+      tournament: tournament ? _decodeHtmlEntities(tournament) : null,
+      tournament_slug: tournament ? (tourHeaders.find(th => th.name === tournament)?.slug || null) : null,
       surface: surface || null,
-      round: roundM ? roundM[1].trim() : null,
-      player1: { slug: p1M[1], name: p1M[2].trim(), scores: scoresP1 },
-      player2: { slug: p2M[1], name: p2M[2].trim(), scores: scoresP2 },
+      round: roundM ? _decodeHtmlEntities(roundM[1]) : null,
+      player1: { slug: p1M[1], name: _decodeHtmlEntities(p1M[2]), scores: scoresP1 },
+      player2: { slug: p2M[1], name: _decodeHtmlEntities(p2M[2]), scores: scoresP2 },
       odds_open: (oddsOpen.length > 0) ? { p1: oddsOpen[0] ?? null, p2: oddsOpen[1] ?? null } : null,
       odds_current: (oddsCurr.length > 0) ? { p1: oddsCurr[0] ?? null, p2: oddsCurr[1] ?? null } : null,
       odds_drift_pct: (driftP1 != null || driftP2 != null) ? { p1: driftP1, p2: driftP2 } : null,
     });
   }
+  // M4 fix — telemetry on parser health for monitoring (no PII)
+  try {
+    const _parsedCount = out.length;
+    const _headersCount = (tourHeaders || []).length;
+    if (_parsedCount === 0 && _headersCount > 0) {
+      console.warn('[tex-parser] 0 matches parsed from page with ' + _headersCount + ' tournament headers — possible HTML structure drift');
+    }
+  } catch (_) {}
   return out;
 }
 
@@ -29815,12 +29855,16 @@ async function fetchTexMatches(tour, dateISO) {
     const eloMap = new Map();
     try {
       const eloRows = sqldb.prepare('SELECT player_name, elo, surface, matches_count FROM tennis_elo WHERE tour = ?').all(tourCode);
+      // M6 fix — Map<name, Map<surface, elo>> so we can pick best surface match per match surface
       for (const r of eloRows) {
-        const key = r.player_name.toLowerCase();
-        // Garder le meilleur Elo par joueur (préférence surface spécifique si dispo)
-        const existing = eloMap.get(key);
-        if (!existing || (r.surface && r.surface !== 'ALL' && (!existing.surface || existing.surface === 'ALL'))) {
-          eloMap.set(key, { elo: r.elo, surface: r.surface, matches: r.matches_count });
+        const key = (r.player_name || '').toLowerCase().trim();
+        if (!key) continue;
+        const surfaceKey = (r.surface || 'ALL').toUpperCase();
+        if (!eloMap.has(key)) eloMap.set(key, new Map());
+        const playerSurfaces = eloMap.get(key);
+        // Store; prefer non-ALL surface in lookup logic downstream
+        if (!playerSurfaces.has(surfaceKey) || surfaceKey !== 'ALL') {
+          playerSurfaces.set(surfaceKey, { elo: r.elo, surface: r.surface, matches: r.matches_count });
         }
       }
     } catch (e) { _trackCatch('tennis', 'tex_elo_enrich', e); }
@@ -29830,33 +29874,49 @@ async function fetchTexMatches(tour, dateISO) {
       const p2Key = (m.player2.name || '').toLowerCase();
       // Match Elo par nom exact, sinon par dernier mot du nom (fallback)
       // H3 fix — lookup Elo par nom exact, puis par slug TE, puis par dernier mot (stricte)
-      const findElo = (name, slug) => {
+      // M6 fix — eloMap values are now Map<surface, eloRow>; pick best surface-aware entry
+      const _pickBestElo = (playerSurfaces, matchSurface) => {
+        if (!playerSurfaces) return null;
+        // Prefer surface-specific Elo if match surface is known
+        if (matchSurface) {
+          const surfKey = matchSurface.toUpperCase();
+          if (playerSurfaces.has(surfKey)) return playerSurfaces.get(surfKey);
+        }
+        // Otherwise prefer a non-ALL surface, else ALL
+        let allEntry = null;
+        let nonAllEntry = null;
+        for (const [surfKey, val] of playerSurfaces) {
+          if (surfKey === 'ALL') allEntry = val;
+          else { nonAllEntry = val; break; }
+        }
+        return nonAllEntry || allEntry;
+      };
+      const findElo = (name, slug, matchSurface) => {
         if (!name) return null;
         // 1. Match exact par nom complet
-        const full = eloMap.get(name.toLowerCase());
-        if (full) return full;
+        const full = eloMap.get(name.toLowerCase().trim());
+        if (full) return _pickBestElo(full, matchSurface);
         // 2. Match par slug TE (ex: "jannik-sinner" → "sinner")
         if (slug) {
           const slugParts = slug.toLowerCase().split('-');
           const slugLast = slugParts[slugParts.length - 1];
           for (const [k, v] of eloMap) {
-            // Match si le dernier mot du nom dans la DB correspond au dernier mot du slug
             const dbParts = k.split(' ');
             const dbLast = dbParts[dbParts.length - 1];
-            if (dbLast === slugLast && dbParts.length >= 1) return v;
+            if (dbLast === slugLast && dbParts.length >= 1) return _pickBestElo(v, matchSurface);
           }
         }
         // 3. Fallback stricte : dernier mot du nom exact (pas includes)
         const lastName = name.toLowerCase().split(' ').pop();
-        if (lastName.length < 4) return null; // trop court = trop de faux positifs
+        if (lastName.length < 4) return null;
         for (const [k, v] of eloMap) {
           const dbLast = k.split(' ').pop();
-          if (dbLast === lastName) return v;
+          if (dbLast === lastName) return _pickBestElo(v, matchSurface);
         }
-        return null; // pas de match confiant → null (honnête)
+        return null;
       };
-      const e1 = findElo(m.player1.name, m.player1.slug);
-      const e2 = findElo(m.player2.name, m.player2.slug);
+      const e1 = findElo(m.player1.name, m.player1.slug, m.surface);
+      const e2 = findElo(m.player2.name, m.player2.slug, m.surface);
       m.elo_surface = {
         p1: e1 ? Math.round(e1.elo) : null,
         p2: e2 ? Math.round(e2.elo) : null,
@@ -29918,6 +29978,7 @@ async function fetchTexMatches(tour, dateISO) {
     }
   } catch (e) { _trackCatch('tennis', 'tex_enrich_matches', e); }
   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
+  _texCacheEvict(texMatchesCache, TEX_CACHE_MAX_ENTRIES); // M10 fix — bound cache
   return data;
 }
 
@@ -30599,10 +30660,13 @@ async function fetchTexPlayer(slug) {
   if (!slug || !/^[a-z0-9-]+$/i.test(slug)) throw new Error('invalid_slug');
   const cached = texPlayerCache.get(slug);
   if (cached && Date.now() - cached.ts < TEX_PLAYER_TTL_MS) return cached.data;
+  // LRU touch on access
+  if (cached) { texPlayerCache.delete(slug); texPlayerCache.set(slug, cached); }
   const html = await _texFetchHtml(`/player/${slug}/`);
   const data = _texParsePlayerPage(html, slug);
   if (!data || !data.name) throw new Error('player_not_found');
   texPlayerCache.set(slug, { ts: Date.now(), data });
+  _texCacheEvict(texPlayerCache, TEX_CACHE_MAX_ENTRIES); // M10 fix
   return data;
 }
 
@@ -41898,9 +41962,23 @@ if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
     // 2. Elo surface interne (depuis tennis_player_elo)
     if (profile.name) {
       try {
-        const eloRow = sqldb.prepare('SELECT player_name, elo, tour, surface, matches_count FROM tennis_elo WHERE player_name LIKE ? COLLATE NOCASE').get('%' + profile.name.toLowerCase() + '%');
-        if (eloRow) {
-          profile.elo_surface = { value: Math.round(eloRow.elo), tour: eloRow.tour, surface: eloRow.surface, matches: eloRow.matches_count };
+        // M5 fix — lookup Elo with stricter matching: exact name OR lastName-only (no LIKE '%name%' which matches homonyms)
+        const pNameLower = (profile.name || '').toLowerCase().trim();
+        const pLastName = pNameLower.split(' ').pop();
+        let eloRows = [];
+        // Try exact full name first
+        eloRows = sqldb.prepare('SELECT player_name, elo, tour, surface, matches_count FROM tennis_elo WHERE LOWER(player_name) = ? COLLATE NOCASE').all(pNameLower);
+        // Then by lastName (stricter than LIKE %name%)
+        if (!eloRows.length && pLastName && pLastName.length >= 4) {
+          eloRows = sqldb.prepare('SELECT player_name, elo, tour, surface, matches_count FROM tennis_elo WHERE LOWER(player_name) LIKE ? COLLATE NOCASE').all(pLastName + ' %');
+        }
+        if (eloRows.length) {
+          // Prefer a row whose surface matches the requested surface, else first non-ALL, else ALL
+          const surfKey = (query.surface || '').toString().trim().toLowerCase();
+          let pick = eloRows.find(r => (r.surface || '').toLowerCase() === surfKey && surfKey);
+          if (!pick) pick = eloRows.find(r => r.surface && r.surface !== 'ALL');
+          if (!pick) pick = eloRows[0];
+          profile.elo_surface = { value: Math.round(pick.elo), tour: pick.tour, surface: pick.surface, matches: pick.matches_count };
         }
       } catch (e) { _trackCatch('tennis', 'player_profile_elo', e); }
     }
