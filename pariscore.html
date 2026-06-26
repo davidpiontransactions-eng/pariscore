@@ -15768,26 +15768,26 @@ function psSetLang(v) {
           <input type="text" id="tex-matchs-search" placeholder="Rechercher un joueur ou un tournoi..." oninput="texMatchsSearch(this.value)" style="width:100%;padding:7px 12px 7px 32px;font-size:12px;background:#0e1420;border:1px solid rgba(255,255,255,.08);border-radius:6px;color:var(--text,#e8eaed);font-family:'Instrument Sans',sans-serif;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(0,119,255,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
           <svg style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text3,#5a6068);pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <!-- Filtres -->
+        <!-- Filtres — D2 fix : utilisation de la classe du design system tn2-f-btn -->
         <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Filtre :</span>
-        <button class="tex-filter-btn active" data-filter="time" onclick="texMatchsSetFilter('time')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:#0077ff;color:#fff;">Heure</button>
-        <button class="tex-filter-btn" data-filter="elo_delta" onclick="texMatchsSetFilter('elo_delta')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">Elo Delta</button>
-        <button class="tex-filter-btn" data-filter="value" onclick="texMatchsSetFilter('value')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">Value</button>
-        <button class="tex-filter-btn" data-filter="drift" onclick="texMatchsSetFilter('drift')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">Drift</button>
-        <button class="tex-filter-btn" data-filter="elite" onclick="texMatchsSetFilter('elite')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">Elite</button>
-        <button class="tex-filter-btn" data-filter="rating" onclick="texMatchsSetFilter('rating')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">Rating</button>
-        <button class="tex-filter-btn" data-filter="upset" onclick="texMatchsSetFilter('upset')" style="padding:5px 12px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.08);border-radius:6px;cursor:pointer;background:transparent;color:var(--text2,#8d9399);">Upset</button>
+        <button class="tn2-f-btn is-active tex-filter-btn" data-filter="time" onclick="texMatchsSetFilter('time')">Heure</button>
+        <button class="tn2-f-btn tex-filter-btn" data-filter="elo_delta" onclick="texMatchsSetFilter('elo_delta')">Elo Delta</button>
+        <button class="tn2-f-btn tex-filter-btn" data-filter="value" onclick="texMatchsSetFilter('value')">Value</button>
+        <button class="tn2-f-btn tex-filter-btn" data-filter="drift" onclick="texMatchsSetFilter('drift')">Drift</button>
+        <button class="tn2-f-btn tex-filter-btn" data-filter="elite" onclick="texMatchsSetFilter('elite')">Elite</button>
+        <button class="tn2-f-btn tex-filter-btn" data-filter="rating" onclick="texMatchsSetFilter('rating')">Rating</button>
+        <button class="tn2-f-btn tex-filter-btn" data-filter="upset" onclick="texMatchsSetFilter('upset')">Upset</button>
       </div>
       <div id="tex-matchs-body" style="min-height:200px;">
         <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>
       </div>
-      <!-- Tableau des tournois du jour (collapsible) -->
+      <!-- Tableau des tournois (collapsible) — Q9 fix : ouvert par défaut + D5 fix : button avec chevron SVG + aria-expanded -->
       <div style="margin-top:16px;">
-        <div onclick="var el=document.getElementById('tex-tournaments-today');el.style.display=el.style.display==='none'?'block':'none';this.querySelector('.toggle-arrow').textContent=el.style.display==='none'?'+':'-';" style="cursor:pointer;padding:10px 12px;background:rgba(0,119,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text2,#8d9399);">Tournois du jour</span>
-          <span class="toggle-arrow" style="font-family:'DM Mono',monospace;font-size:16px;color:var(--text3,#5a6068);">+</span>
-        </div>
-        <div id="tex-tournaments-today" style="display:none;margin-top:8px;"></div>
+        <button class="tex-tournaments-toggle" type="button" aria-expanded="true" aria-controls="tex-tournaments-today" onclick="var el=document.getElementById('tex-tournaments-today');var expanded=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',!expanded);el.style.display=expanded?'none':'block';">
+          <span data-tex-tournaments-label style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text2,#8d9399);">À venir</span>
+          <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3,#5a6068);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <div id="tex-tournaments-today" style="display:block;margin-top:8px;"></div>
       </div>
     </div>
 
@@ -23162,7 +23162,35 @@ body[data-page="mma"] footer { display: none !important; }
   white-space: nowrap;
 }
 .tn2-f-btn:hover { border-color: var(--tn2-accent-dim); color: var(--tn2-text); }
-.tn2-f-btn.is-active { background: var(--tn2-accent-dim); border-color: rgba(0,230,118,0.3); color: var(--tn2-accent); }
+.tn2-f-btn.is-active { background: var(--tn2-accent-dim); border-color: rgba(0,119,255,0.3); color: var(--tn2-accent); }
+/* D3 fix — focus-visible pour la barre de recherche MATCHS (accessibilité clavier) */
+#tex-matchs-search:focus-visible {
+  outline: 2px solid var(--tn2-accent);
+  outline-offset: 1px;
+}
+#tex-matchs-search:focus {
+  border-color: rgba(0,119,255,.4);
+}
+/* D4 fix — tokens sémantiques pour couleurs sémantiques (au lieu de #FFD700/#fbbf24/#ce93d8 hardcoded) */
+:root {
+  --tex-gold: #FFD700;       /* élite / GS / 5 étoiles */
+  --tex-amber: #fbbf24;      /* warning / 4 étoiles / mid */
+  --tex-purple: #ce93d8;     /* upset / outsider */
+  --tex-green: #00e676;      /* value / favori / drift négatif */
+  --tex-red: #ef4444;        /* drift positif / perte */
+}
+/* D5 fix — chevron SVG pour le toggle de section tournois */
+.tex-tournaments-toggle {
+  cursor: pointer; padding: 10px 12px;
+  background: rgba(0,119,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+  width: 100%; text-align: left; font-family: inherit;
+  transition: background 0.15s;
+}
+.tex-tournaments-toggle:hover { background: rgba(0,119,255,0.08); }
+.tex-tournaments-toggle .chevron { transition: transform 0.2s ease; }
+.tex-tournaments-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
 .tn2-f-badge {
   display: inline-block; padding: 0 4px;
   font-size: 9px; font-weight: 600;
@@ -23304,7 +23332,7 @@ body[data-page="mma"] footer { display: none !important; }
   transition: all var(--tn2-transition);
   text-transform: uppercase; letter-spacing: 0.03em;
 }
-.tn2-mode-btn.active { background: var(--tn2-accent-dim); border-color: rgba(0,230,118,0.25); color: var(--tn2-accent); }
+.tn2-mode-btn.active { background: var(--tn2-accent-dim); border-color: rgba(0,119,255,0.25); color: var(--tn2-accent); }
 
 /* ═══ 12 — SUBTABS ═══ */
 .tn2-subtabs {
@@ -24610,7 +24638,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-14"></script>
+<script src="/pariscore.js?v=250625-15"></script>
 <script>
 (function(){
 var b=document.createElement('div');
