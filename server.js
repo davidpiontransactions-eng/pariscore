@@ -29809,6 +29809,61 @@ async function fetchTexMatches(tour, dateISO) {
     fetched_at: new Date().toISOString(),
     matches,
   };
+  // TEX-FILTERS — enrichir chaque match avec Elo surface P1/P2 + delta + value_score
+  try {
+    const tourCode = type.split('-')[0].toUpperCase(); // ATP ou WTA
+    const eloMap = new Map();
+    try {
+      const eloRows = sqldb.prepare('SELECT player_name, elo, surface, matches_count FROM tennis_elo WHERE tour = ?').all(tourCode);
+      for (const r of eloRows) {
+        const key = r.player_name.toLowerCase();
+        // Garder le meilleur Elo par joueur (préférence surface spécifique si dispo)
+        const existing = eloMap.get(key);
+        if (!existing || (r.surface && r.surface !== 'ALL' && (!existing.surface || existing.surface === 'ALL'))) {
+          eloMap.set(key, { elo: r.elo, surface: r.surface, matches: r.matches_count });
+        }
+      }
+    } catch (e) { _trackCatch('tennis', 'tex_elo_enrich', e); }
+    // Enrichir chaque match
+    for (const m of data.matches) {
+      const p1Key = (m.player1.name || '').toLowerCase();
+      const p2Key = (m.player2.name || '').toLowerCase();
+      // Match Elo par nom exact, sinon par dernier mot du nom (fallback)
+      const findElo = (name) => {
+        if (!name) return null;
+        const full = eloMap.get(name.toLowerCase());
+        if (full) return full;
+        const lastName = name.toLowerCase().split(' ').pop();
+        for (const [k, v] of eloMap) {
+          if (k.endsWith(lastName) || k.includes(lastName)) return v;
+        }
+        return null;
+      };
+      const e1 = findElo(m.player1.name);
+      const e2 = findElo(m.player2.name);
+      m.elo_surface = {
+        p1: e1 ? Math.round(e1.elo) : null,
+        p2: e2 ? Math.round(e2.elo) : null,
+        delta: (e1 && e2) ? Math.abs(Math.round(e1.elo - e2.elo)) : null,
+        favorite: (e1 && e2) ? (e1.elo > e2.elo ? 'p1' : 'p2') : null,
+      };
+      // Value score : combine Elo delta + drift cotes (plus le delta est grand + drift négatif = value)
+      let valueScore = 0;
+      if (m.elo_surface.delta != null) valueScore += m.elo_surface.delta * 0.5;
+      if (m.odds_drift_pct) {
+        if (m.odds_drift_pct.p1 != null && m.odds_drift_pct.p1 < 0) valueScore += Math.abs(m.odds_drift_pct.p1) * 2;
+        if (m.odds_drift_pct.p2 != null && m.odds_drift_pct.p2 < 0) valueScore += Math.abs(m.odds_drift_pct.p2) * 2;
+      }
+      m.value_score = Math.round(valueScore * 10) / 10;
+      // Elite flag : les 2 joueurs dans le top 50 Elo
+      m.is_elite = (e1 && e2 && e1.elo >= 1900 && e2.elo >= 1900) ? true : false;
+      // Drift max (plus gros mouvement de cotes)
+      m.max_drift = Math.max(
+        Math.abs(m.odds_drift_pct?.p1 || 0),
+        Math.abs(m.odds_drift_pct?.p2 || 0)
+      );
+    }
+  } catch (e) { _trackCatch('tennis', 'tex_enrich_matches', e); }
   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
   return data;
 }
