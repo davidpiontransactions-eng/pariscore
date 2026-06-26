@@ -5817,7 +5817,7 @@ function _renderTexMatchs(r) {
       statusBadge = ' <span style="display:inline-block;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.05);color:var(--text3,#5a6068);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-left:4px;">FIN</span>';
     }
     return tourHeader
-      + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (hasValidMatchId ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
+      + '<tr data-tex-match-id="' + (hasValidMatchId ? m.tex_match_id : '') + '"' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (hasValidMatchId ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
       + '<td data-label="Heure" style="padding:4px 10px;white-space:nowrap;color:var(--text2,#8d9399);font-family:\'DM Mono\',monospace;font-size:11px;font-weight:600;">' + starHtml(m) + _tnEsc(_localTime(time)) + statusBadge + badgeFn(m) + '</td>'
       + '<td data-label="Match" style="padding:4px 6px;">'
         + '<div style="display:flex;align-items:center;gap:6px;font-family:\'Instrument Sans\',sans-serif;font-size:12px;font-weight:600;color:var(--text,#e8eaed);line-height:1.2;">' + playerPhoto(p1Slug, m.player1.name) + '<a href="javascript:void(0)" class="tex-player-link" data-slug="' + _tnEsc(p1Slug) + '" data-name="' + _tnEsc(m.player1.name||'') + '" data-surface="' + _tnEsc(m.surface||'') + '" style="color:inherit;text-decoration:none;cursor:pointer;" onmouseenter="this.style.color=\'#0077ff\'" onmouseleave="this.style.color=\'var(--text,#e8eaed)\'">' + p1Name + '</a></div>'
@@ -5952,97 +5952,244 @@ async function openTexMatchDetail(texMatchId) {
   }
 }
 
-// ═══ PREMATCH MODAL — card complète style Top 10 avec double routing BSD/TE ═══
-// Au clic sur bouton "Prematch" d'une ligne MATCHS (TennisExplorer) :
-// 1. Cherche le match BSD équivalent via /api/v1/tennis/match-by-players
-// 2. Si BSD trouvé → fetch /api/v1/tennis/detail/<bsd_id> (predictions, serve_dominance, etc.)
-// 3. Affiche une card complète dans une modale dédiée avec :
-//    - Photos + noms + tournoi
-//    - Score/Match Rating + étoiles + breakdown
-//    - Predictions IA (si BSD)
-//    - Serve dominance (si BSD)
-//    - Confidence badge (si BSD)
-//    - Edge (si BSD)
-//    - Value + Drift
-//    - Elo delta
-//    - Cotes multi-bookmakers
-//    - H2H
-//    - Bouton P_BETS
-//    - Statut + heure
+// ═══ PREMATCH INLINE — clone 100% card Top 10 (pas de modale) ═══
+// Au clic sur bouton "Prematch" d'une ligne MATCHS :
+// 1. Toggle : si card déjà ouverte pour ce match → la ferme
+// 2. Sinon → fetch BSD (double routing) + render inline card sous la ligne
 async function openTexPrematch(texMatchId) {
   if (!texMatchId) return;
-  // 1. Récupère les données du match TennisExplorer depuis le cache local
+  var row = document.querySelector('tr[data-tex-match-id="' + texMatchId + '"]');
+  if (!row) return;
+  // Toggle : si card déjà ouverte → ferme
+  var existing = row.nextElementSibling;
+  if (existing && existing.classList && existing.classList.contains('prematch-inline-row')) {
+    existing.remove();
+    return;
+  }
+  // Récupère matchData depuis le cache local
   var matchData = null;
   if (_texMatchsRawData && _texMatchsRawData.matches) {
     matchData = _texMatchsRawData.matches.find(function(m) { return m.tex_match_id === texMatchId; });
   }
-  if (!matchData) {
-    openTexMatchDetail(texMatchId);
-    return;
-  }
-  var p1Name = matchData.player1.name || '';
-  var p2Name = matchData.player2.name || '';
+  if (!matchData) return;
 
-  // 2. Double routing : cherche le match BSD équivalent
+  // Insère une ligne "loading" immédiatement
+  var loadingRow = document.createElement('tr');
+  loadingRow.classList.add('prematch-inline-row');
+  loadingRow.innerHTML = '<td colspan="5" style="padding:16px;background:#131722;border-bottom:1px solid rgba(255,255,255,0.06);"><div style="display:flex;align-items:center;gap:10px;color:var(--text2,#8d9399);font-size:12px;"><div style="width:18px;height:18px;border:2px solid rgba(0,119,255,.2);border-top-color:#0077ff;border-radius:50%;animation:tex-spin 0.8s linear infinite;"></div>Chargement de la card prematch…</div></td>';
+  row.parentNode.insertBefore(loadingRow, row.nextSibling);
+
   try {
-    var url = '/api/v1/tennis/match-by-players?p1=' + encodeURIComponent(p1Name) + '&p2=' + encodeURIComponent(p2Name);
-    var r = await apiFetch(url).then(function(r) { return r.json(); });
-    if (r && r.bsd_match_id) {
-      // Match BSD trouvé → ouvre DIRECTEMENT openTennisAnalysisModal (100% clone du Top 10)
-      // Cette modale a TOUTES les données : predictions, serve_dominance, confidence_badge,
-      // edge, photos BSD, H2H, UQD IC90, P_BETS, etc.
-      if (typeof openTennisAnalysisModal === 'function') {
-        openTennisAnalysisModal(r.bsd_match_id);
-        return;
+    // Double routing BSD
+    var bsdData = null, bsdMatchId = null;
+    var p1Name = matchData.player1.name || '';
+    var p2Name = matchData.player2.name || '';
+    try {
+      var rUrl = '/api/v1/tennis/match-by-players?p1=' + encodeURIComponent(p1Name) + '&p2=' + encodeURIComponent(p2Name);
+      var r = await apiFetch(rUrl).then(function(r) { return r.json(); });
+      if (r && r.bsd_match_id) {
+        bsdMatchId = r.bsd_match_id;
+        var dr = await apiFetch('/api/v1/tennis/detail/' + encodeURIComponent(bsdMatchId)).then(function(r) { return r.json(); });
+        if (dr && !dr.error) bsdData = dr;
       }
-    }
-  } catch (_) {}
+    } catch(_) {}
 
-  // 3. Fallback : match BSD non trouvé → modale TennisExplorer enrichie
-  _openTexPrematchFallback(texMatchId, matchData);
+    // Cotes multi-bookmakers TennisExplorer
+    var texDetail = null;
+    try {
+      var tr = await apiFetch('/api/v1/tennis/tex/match-detail?id=' + texMatchId).then(function(r) { return r.json(); });
+      if (!tr.error) texDetail = tr;
+    } catch(_) {}
+
+    // Render la card inline
+    var cardHtml = _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail);
+    loadingRow.innerHTML = '<td colspan="5" style="padding:0;background:#131722;border-bottom:1px solid rgba(255,255,255,0.06);">' + cardHtml + '</td>';
+  } catch(e) {
+    loadingRow.innerHTML = '<td colspan="5" style="padding:16px;background:#131722;color:var(--red,#ff4d4d);font-size:12px;">Erreur: ' + _tnEsc(e.message) + '</td>';
+  }
 }
 
-// Fallback : modale prematch TennisExplorer (quand BSD non trouvé)
-async function _openTexPrematchFallback(texMatchId, matchData) {
-  var overlay = document.getElementById('tex-prematch-overlay');
-  var _prevFocus = document.activeElement;
-  if (!overlay) {
-    overlay = document.createElement('div');
-    overlay.id = 'tex-prematch-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    overlay.setAttribute('role', 'dialog'); overlay.setAttribute('aria-modal', 'true'); overlay.setAttribute('aria-label', 'Analyse Prematch');
-    var _esc = function(e) { if (e.key === 'Escape') { overlay.style.display='none'; document.removeEventListener('keydown',_esc); } };
-    document.addEventListener('keydown', _esc);
-    overlay.onclick = function(e) { if (e.target === overlay) { overlay.style.display='none'; document.removeEventListener('keydown',_esc); } };
-    document.body.appendChild(overlay);
+// Rendu de la card prematch inline — clone structure Top 10
+function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
+  var p1Name = matchData.player1.name || 'J1';
+  var p2Name = matchData.player2.name || 'J2';
+  // Photos : BSD si dispo, sinon route ?name=
+  var p1Photo = '/api/v1/tennis/player-photo?name=' + encodeURIComponent(p1Name.trim());
+  var p2Photo = '/api/v1/tennis/player-photo?name=' + encodeURIComponent(p2Name.trim());
+  if (bsdData && bsdData.players) {
+    if (bsdData.players.p1 && bsdData.players.p1.id) p1Photo = tennisPlayerPhotoURL(bsdData.players.p1.id);
+    if (bsdData.players.p2 && bsdData.players.p2.id) p2Photo = tennisPlayerPhotoURL(bsdData.players.p2.id);
   }
-  overlay.style.display = 'flex';
-  overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:32px;text-align:center;"><div style="color:var(--text2,#8d9399);font-size:14px;margin-bottom:12px;">Chargement…</div></div>';
-  try {
-    var texDetail = null;
-    try { var tr = await apiFetch('/api/v1/tennis/tex/match-detail?id=' + texMatchId).then(function(r){return r.json();}); if (!tr.error) texDetail = tr; } catch(_) {}
-    var p1 = matchData.player1.name||'J1', p2 = matchData.player2.name||'J2';
-    var p1Ph = '/api/v1/tennis/player-photo?name='+encodeURIComponent(p1.trim()), p2Ph = '/api/v1/tennis/player-photo?name='+encodeURIComponent(p2.trim());
-    var h = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:600px;width:100%;max-height:85vh;overflow-y:auto;padding:20px;">';
-    h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;"><div style="flex:1;"><div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:6px;">'+_tnEsc(matchData.tournament||'')+(matchData.surface?' · '+_tnEsc(matchData.surface):'')+'</div><div style="display:flex;align-items:center;gap:16px;">';
-    h += '<div style="text-align:center;flex:1;"><img src="'+p1Ph+'" data-name="'+_tnEsc(p1)+'" alt="'+_tnEsc(p1)+'" onerror="fixBrokenPlayerPhoto(this)" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:var(--bg4,#172132);margin-bottom:4px;"><div style="font-size:12px;font-weight:700;color:var(--text,#e8eaed);">'+_tnEsc(p1)+'</div></div>';
-    h += '<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:800;color:var(--text3,#5a6068);">VS</div>';
-    h += '<div style="text-align:center;flex:1;"><img src="'+p2Ph+'" data-name="'+_tnEsc(p2)+'" alt="'+_tnEsc(p2)+'" onerror="fixBrokenPlayerPhoto(this)" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.12);background:var(--bg4,#172132);margin-bottom:4px;"><div style="font-size:12px;font-weight:700;color:var(--text,#e8eaed);">'+_tnEsc(p2)+'</div></div>';
-    h += '</div></div><button onclick="document.getElementById(\'tex-prematch-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:22px;cursor:pointer;">✕</button></div>';
-    h += '<div style="background:rgba(255,193,7,0.06);border:1px solid rgba(255,193,7,0.20);border-radius:6px;padding:8px;margin-bottom:10px;font-size:10px;color:var(--tex-amber,#fbbf24);text-align:center;">Match non trouvé dans BSD — données enrichies limitées. Cotes TennisExplorer ci-dessous.</div>';
-    if (texDetail && texDetail.books && texDetail.books.length) {
-      h += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:4px;">Cotes multi-bookmakers</div><table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#111a28;"><th style="padding:4px 6px;text-align:left;">Book</th><th style="padding:4px 6px;text-align:right;">'+_tnEsc(p1.split(' ').pop())+'</th><th style="padding:4px 6px;text-align:right;">'+_tnEsc(p2.split(' ').pop())+'</th></tr></thead><tbody>';
-      texDetail.books.forEach(function(b,i){var bg=i%2?'rgba(255,255,255,0.02)':'transparent';var p1o=b.odd_p1!=null?b.odd_p1.toFixed(2):'—';var p2o=b.odd_p2!=null?b.odd_p2.toFixed(2):'—';var bp1=b.best_p1?'color:var(--tex-green,#00e676);font-weight:700;':'';var bp2=b.best_p2?'color:var(--tex-green,#00e676);font-weight:700;':'';h+='<tr style="background:'+bg+';border-bottom:1px solid rgba(255,255,255,.03);"><td style="padding:4px 6px;">'+_tnEsc(b.bookmaker)+'</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;'+bp1+'">'+p1o+'</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;'+bp2+'">'+p2o+'</td></tr>';});
-      h += '</tbody></table>';
-      if (texDetail.avg_p1||texDetail.avg_p2) h += '<div style="margin-top:4px;padding:6px;background:rgba(0,230,118,0.05);border-radius:4px;font-size:10px;text-align:center;"><span style="color:var(--text3,#5a6068);">Moy :</span> <span style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--tex-green,#00e676);">'+(texDetail.avg_p1||'—')+' / '+(texDetail.avg_p2||'—')+'</span></div>';
+  var p1Rank = (bsdData && bsdData.players && bsdData.players.p1 && bsdData.players.p1.rank) ? bsdData.players.p1.rank : null;
+  var p2Rank = (bsdData && bsdData.players && bsdData.players.p2 && bsdData.players.p2.rank) ? bsdData.players.p2.rank : null;
+  var p1Elo = (matchData.elo_surface && matchData.elo_surface.p1 != null) ? matchData.elo_surface.p1 : null;
+  var p2Elo = (matchData.elo_surface && matchData.elo_surface.p2 != null) ? matchData.elo_surface.p2 : null;
+  // Score : BSD IA sinon Match Rating TE
+  var scoreVal = (bsdData && bsdData.predictive && bsdData.predictive.kpi && bsdData.predictive.kpi.score != null) ? bsdData.predictive.kpi.score : (matchData.match_rating ? matchData.match_rating.score : null);
+  var verdict = (bsdData && bsdData.predictive && bsdData.predictive.kpi && bsdData.predictive.kpi.verdict) ? bsdData.predictive.kpi.verdict : null;
+  var edgeVal = (bsdData && bsdData.best_edge && bsdData.best_edge.edge != null) ? bsdData.best_edge.edge : null;
+  var confLevel = (bsdData && bsdData.confidence_badge && bsdData.confidence_badge.level) ? bsdData.confidence_badge.level : null;
+  // Serve dominance
+  var sdP1 = (bsdData && bsdData.serve_dominance && bsdData.serve_dominance.p1 && bsdData.serve_dominance.p1.serve_pts_won_pct != null) ? bsdData.serve_dominance.p1.serve_pts_won_pct : null;
+  var sdP2 = (bsdData && bsdData.serve_dominance && bsdData.serve_dominance.p2 && bsdData.serve_dominance.p2.serve_pts_won_pct != null) ? bsdData.serve_dominance.p2.serve_pts_won_pct : null;
+  var retP1 = (bsdData && bsdData.serve_dominance && bsdData.serve_dominance.p1 && bsdData.serve_dominance.p1.return_pts_won_pct != null) ? bsdData.serve_dominance.p1.return_pts_won_pct : null;
+  var retP2 = (bsdData && bsdData.serve_dominance && bsdData.serve_dominance.p2 && bsdData.serve_dominance.p2.return_pts_won_pct != null) ? bsdData.serve_dominance.p2.return_pts_won_pct : null;
+  // Tournoi
+  var tourName = (bsdData && bsdData.meta && bsdData.meta.tournament) || matchData.tournament || 'Match Tennis';
+  var surface = (bsdData && bsdData.meta && bsdData.meta.surface) || matchData.surface || '';
+  var round = (bsdData && bsdData.meta && bsdData.meta.round) || matchData.round || '';
+
+  var html = '<div style="background:#131722;border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:16px;margin:8px 4px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">';
+  // ── Ligne 1 : Header Match Quality ──
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">';
+  html += '<div style="display:flex;flex-direction:column;gap:4px;">';
+  // Badge source
+  if (bsdData) {
+    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(0,230,118,0.10);color:var(--tex-green,#00e676);font-size:9px;font-weight:700;text-transform:uppercase;">Source BSD</span>';
+  } else {
+    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(255,193,7,0.10);color:var(--tex-amber,#fbbf24);font-size:9px;font-weight:700;text-transform:uppercase;">Source TennisExplorer</span>';
+  }
+  if (surface) {
+    var sCol = ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[surface] || '#5a6068';
+    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:' + sCol + ';">' + _tnEsc(surface) + (round ? ' <span style="color:var(--text3,#5a6068);font-weight:400;">· ' + _tnEsc(round) + '</span>' : '') + '</div>';
+  }
+  if (matchData.time_utc) {
+    html += '<div style="font-size:10px;color:var(--text3,#5a6068);">Heure : <span style="font-family:\'DM Mono\',monospace;color:var(--text2,#8d9399);">' + _tnEsc(_localTime(matchData.time_utc)) + '</span></div>';
+  }
+  html += '</div>';
+  // Score qualité
+  if (scoreVal != null) {
+    var sc = scoreVal >= 70 ? '#ffc107' : scoreVal >= 50 ? 'var(--tex-green,#00e676)' : scoreVal >= 30 ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
+    html += '<div style="text-align:right;"><span style="font-family:\'DM Mono\',monospace;font-size:26px;font-weight:800;color:' + sc + ';">' + scoreVal + '</span><span style="color:var(--text3,#5a6068);font-size:12px;">/100</span></div>';
+  }
+  html += '</div>';
+
+  // ── Ligne 2 : Joueurs ──
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">';
+  html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+  // P1
+  html += '<div style="display:flex;align-items:center;gap:8px;"><img src="' + p1Photo + '" data-name="' + _tnEsc(p1Name) + '" alt="' + _tnEsc(p1Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);background:var(--bg4,#172132);"><span style="color:var(--text,#e8eaed);font-weight:700;font-size:13px;">' + _tnEsc(p1Name) + '</span>' + (p1Rank ? '<span style="font-size:10px;color:var(--text3,#5a6068);background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:2px;">#' + p1Rank + '</span>' : '') + '</div>';
+  html += '<div style="font-size:10px;color:var(--text3,#5a6068);padding-left:4px;">vs</div>';
+  // P2
+  html += '<div style="display:flex;align-items:center;gap:8px;"><img src="' + p2Photo + '" data-name="' + _tnEsc(p2Name) + '" alt="' + _tnEsc(p2Name) + '" onerror="fixBrokenPlayerPhoto(this)" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);background:var(--bg4,#172132);"><span style="color:var(--text,#e8eaed);font-weight:700;font-size:13px;">' + _tnEsc(p2Name) + '</span>' + (p2Rank ? '<span style="font-size:10px;color:var(--text3,#5a6068);background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:2px;">#' + p2Rank + '</span>' : '') + '</div>';
+  html += '</div>';
+  // Bouton collapse
+  html += '<button onclick="var r=this.closest(&quot;tr&quot;);if(r) r.remove();" style="background:#1c2030;border:1px solid rgba(255,255,255,0.1);width:32px;height:28px;border-radius:4px;color:var(--text,#e8eaed);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;" title="Fermer">−</button>';
+  html += '</div>';
+
+  // ── Ligne 3 : Metrics (ELO + J1% + P_BETS) ──
+  html += '<div style="margin-bottom:12px;">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
+  html += '<span style="font-size:12px;">🎯</span>';
+  if (p1Elo != null && p2Elo != null) {
+    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--text3,#8d9399);border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:3px;">ELO ' + p1Elo + '/' + p2Elo + '</span>';
+  }
+  if (bsdData && bsdData.predictive && bsdData.predictive.probabilities && bsdData.predictive.probabilities.p1 != null) {
+    html += '<span style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--text3,#8d9399);border:1px solid rgba(255,255,255,0.1);padding:1px 6px;border-radius:3px;">J1 ' + Math.round(bsdData.predictive.probabilities.p1 * 100) + '%</span>';
+  }
+  // P_BETS button
+  var safeId = bsdMatchId || String(matchData.tex_match_id || '');
+  html += '<button class="p-bets-btn" data-fixture-id="' + _tnEsc(safeId) + '" onclick="event.stopPropagation();openPBets(this.dataset.fixtureId)" style="font-size:10px;font-weight:700;background:rgba(0,230,118,0.20);color:var(--tex-green,#00e676);padding:2px 8px;border-radius:3px;border:none;cursor:pointer;text-transform:uppercase;box-shadow:0 0 8px rgba(0,230,118,0.3);" title="Bets prédictifs IA">P_BETS</button>';
+  html += '</div>';
+
+  // ── Ligne 4 : Prédiction ──
+  if (bsdData && (verdict || edgeVal != null || confLevel)) {
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;border-bottom:1px dashed rgba(255,255,255,0.05);">';
+    html += '<div>';
+    html += '<span style="font-size:9px;font-weight:700;color:var(--text3,#5a6068);letter-spacing:0.05em;">BETS PREDICTIFS';
+    if (confLevel) {
+      var cbC = confLevel === 'HIGH' ? 'var(--tex-green,#00e676)' : confLevel === 'MEDIUM' ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
+      html += ' <span style="background:rgba(255,255,255,0.1);padding:1px 4px;border-radius:2px;color:' + cbC + ';">' + _tnEsc(confLevel) + '</span>';
     }
-    if (texDetail && texDetail.h2h_summary) h += '<div style="background:rgba(255,255,255,.03);border-radius:6px;padding:8px;margin-top:8px;font-size:11px;color:var(--text,#e8eaed);">H2H : '+_tnEsc(texDetail.h2h_summary)+'</div>';
-    h += '<div style="margin-top:8px;font-size:10px;color:var(--text3,#5a6068);text-align:center;">Heure : '+_tnEsc(_localTime(matchData.time_utc))+' · Statut : '+_tnEsc(matchData.status||'—')+'</div>';
-    h += '</div>';
-    overlay.innerHTML = h;
-  } catch(e) {
-    overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: '+_tnEsc(e.message)+'</div><button onclick="document.getElementById(\'tex-prematch-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
+    html += '</span>';
+    if (verdict) {
+      var vC = verdict === 'P1' || verdict === 'HOME' ? 'var(--tex-green,#00e676)' : verdict === 'P2' || verdict === 'AWAY' ? 'var(--tex-amber,#fbbf24)' : 'var(--text3,#8d9399)';
+      html += '<div style="font-size:11px;color:var(--text2,#8d9399);margin-top:2px;">Verdict : <span style="color:' + vC + ';font-weight:700;">' + _tnEsc(verdict) + '</span></div>';
+    }
+    html += '</div>';
+    if (edgeVal != null) {
+      html += '<div style="text-align:right;"><span style="color:var(--text,#e8eaed);font-weight:700;font-size:13px;">+' + Number(edgeVal).toFixed(1) + '%</span><span style="color:var(--text3,#5a6068);font-size:10px;margin-left:6px;">Edge</span></div>';
+    }
+    html += '</div>';
   }
+
+  // ── Ligne 5 : Grille Insights (3 colonnes) ──
+  if (bsdData || matchData) {
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">';
+    // Service
+    html += '<div style="background:#1c2030;border:1px solid rgba(255,255,255,0.03);border-radius:6px;padding:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#0077ff;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#0077ff;display:inline-block;"></span>SERVICE</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:var(--text3,#5a6068);padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
+    if (sdP1 != null && sdP2 != null) {
+      var bestServer = sdP1 > sdP2 ? p1Name.split(' ').pop() : p2Name.split(' ').pop();
+      var bestVal = Math.max(sdP1, sdP2);
+      html += '<div style="color:var(--text,#e8eaed);font-weight:700;font-size:11px;line-height:1.2;margin-bottom:2px;">' + _tnEsc(bestServer) + ' meilleure serveuse <span style="color:var(--tex-green,#00e676);">' + bestVal.toFixed(1) + '%</span></div>';
+    } else {
+      html += '<div style="color:var(--text3,#5a6068);font-size:11px;">N/A</div>';
+    }
+    html += '</div>';
+    // Retour
+    html += '<div style="background:#1c2030;border:1px solid rgba(255,255,255,0.03);border-radius:6px;padding:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:var(--tex-green,#00e676);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:var(--tex-green,#00e676);display:inline-block;"></span>RETOUR</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:var(--text3,#5a6068);padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
+    if (retP1 != null && retP2 != null) {
+      var bestReturner = retP1 > retP2 ? p1Name.split(' ').pop() : p2Name.split(' ').pop();
+      var bestRet = Math.max(retP1, retP2);
+      html += '<div style="color:var(--text,#e8eaed);font-weight:700;font-size:11px;line-height:1.2;margin-bottom:2px;">' + _tnEsc(bestReturner) + ' meilleure receveuse <span style="color:var(--tex-green,#00e676);">' + bestRet.toFixed(1) + '%</span></div>';
+    } else {
+      html += '<div style="color:var(--text3,#5a6068);font-size:11px;">N/A</div>';
+    }
+    html += '</div>';
+    // H2H Surface
+    html += '<div style="background:#1c2030;border:1px solid rgba(255,255,255,0.03);border-radius:6px;padding:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;"><span style="font-size:10px;font-weight:700;color:#d8b4fe;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#d8b4fe;display:inline-block;"></span>H2H SURFACE</span><span style="font-size:8px;background:rgba(255,255,255,0.1);color:var(--text3,#5a6068);padding:1px 4px;border-radius:2px;">NOYAU</span></div>';
+    var h2hVal = 'N/A';
+    if (bsdData && bsdData.h2h_record && bsdData.h2h_record.all && bsdData.h2h_record.all.total > 0) {
+      h2hVal = (bsdData.h2h_record.all.p1_wins || 0) + '-' + (bsdData.h2h_record.all.p2_wins || 0);
+    } else if (texDetail && texDetail.h2h_summary) {
+      h2hVal = _tnEsc(texDetail.h2h_summary).substring(0, 20);
+    }
+    html += '<div style="color:var(--text,#e8eaed);font-weight:800;font-size:18px;line-height:1.2;margin-bottom:2px;">' + h2hVal + '</div>';
+    html += '</div>';
+    html += '</div>';
+  }
+
+  // ── Ligne 6 : Cotes multi-bookmakers (si TE) ──
+  if (texDetail && texDetail.books && texDetail.books.length) {
+    html += '<div style="margin-bottom:10px;">';
+    html += '<div style="font-size:9px;text-transform:uppercase;color:var(--text3,#5a6068);margin-bottom:4px;letter-spacing:0.05em;">Cotes multi-bookmakers</div>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:10px;"><thead><tr style="background:#111a28;"><th style="padding:4px 6px;text-align:left;">Book</th><th style="padding:4px 6px;text-align:right;">' + _tnEsc(p1Name.split(' ').pop()) + '</th><th style="padding:4px 6px;text-align:right;">' + _tnEsc(p2Name.split(' ').pop()) + '</th></tr></thead><tbody>';
+    texDetail.books.forEach(function(b, i) {
+      var bg = i % 2 ? 'rgba(255,255,255,0.02)' : 'transparent';
+      var p1o = b.odd_p1 != null ? b.odd_p1.toFixed(2) : '—';
+      var p2o = b.odd_p2 != null ? b.odd_p2.toFixed(2) : '—';
+      var bp1 = b.best_p1 ? 'color:var(--tex-green,#00e676);font-weight:700;' : '';
+      var bp2 = b.best_p2 ? 'color:var(--tex-green,#00e676);font-weight:700;' : '';
+      html += '<tr style="background:' + bg + ';border-bottom:1px solid rgba(255,255,255,0.03);"><td style="padding:4px 6px;">' + _tnEsc(b.bookmaker) + '</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;' + bp1 + '">' + p1o + '</td><td style="padding:4px 6px;text-align:right;font-family:\'DM Mono\',monospace;' + bp2 + '">' + p2o + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    if (texDetail.avg_p1 || texDetail.avg_p2) {
+      html += '<div style="margin-top:4px;padding:4px 6px;background:rgba(0,230,118,0.05);border-radius:3px;display:flex;justify-content:space-between;font-size:10px;"><span style="color:var(--text3,#5a6068);">Moy :</span><span style="font-family:\'DM Mono\',monospace;font-weight:700;color:var(--tex-green,#00e676);">' + (texDetail.avg_p1||'—') + ' / ' + (texDetail.avg_p2||'—') + '</span></div>';
+    }
+    html += '</div>';
+  }
+
+  // ── Ligne 7 : Footer badges (data brute TE) ──
+  var badges = [];
+  if (matchData.elo_surface && matchData.elo_surface.delta != null) badges.push({label:'Écart Elo', val: matchData.elo_surface.delta});
+  if (matchData.value_score > 0) badges.push({label:'Value', val: '+' + matchData.value_score});
+  if (matchData.max_drift > 0) badges.push({label:'Drift', val: matchData.max_drift.toFixed(1) + '%'});
+  if (matchData.is_elite) badges.push({label:'Élite', val: '✓'});
+  if (matchData.match_rating && matchData.match_rating.stars) badges.push({label:'Stars', val: matchData.match_rating.stars + '/5'});
+  if (matchData.status) badges.push({label:'Statut', val: matchData.status});
+  if (badges.length) {
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+    badges.forEach(function(b) {
+      html += '<span style="background:#1c2030;color:var(--text3,#8d9399);font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid rgba(255,255,255,0.03);">' + _tnEsc(b.label) + ' <span style="color:var(--text,#e8eaed);font-weight:700;">' + _tnEsc(b.val) + '</span></span>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+  return html;
 }
 
 // ═══ PLAYER PROFILE POPUP — fiche joueur agrégée (TE + BSD + Elo interne) ═══
