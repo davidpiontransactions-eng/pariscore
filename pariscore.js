@@ -4514,7 +4514,7 @@ function _tnTop10Card(m, rank) {
       </div>`;
     }).join('');
     betsHtml = `<div class="tn-t10-bets">
-      <div class="tn-t10-bets-head">🎯 BETS PRÉDICTIFS ${verdictBadge}</div>
+      <div class="tn-t10-bets-head">BETS PREDICTIFS ${verdictBadge}</div>
       ${rows}
     </div>`;
   } else if (pred && pred.kpi && pred.kpi.verdict) {
@@ -4523,7 +4523,7 @@ function _tnTop10Card(m, rank) {
     const verdictTone = String(kpi.tone || 'pass');
     const verdictBadge = `<span class="tn-t10-verdict tn-t10-verdict-${_tnEsc(verdictTone)}">${_tnEsc(kpi.verdict)}${kpi.conf_pct != null ? ` · ${kpi.conf_pct}%` : ''}</span>`;
     betsHtml = `<div class="tn-t10-bets">
-      <div class="tn-t10-bets-head">🎯 VERDICT ${verdictBadge}</div>
+      <div class="tn-t10-bets-head">VERDICT ${verdictBadge}</div>
     </div>`;
   }
 
@@ -5439,12 +5439,7 @@ function _renderTexMatchs(r) {
     var stars = m.match_rating.stars;
     var score = m.match_rating.score;
     var bd = m.match_rating.breakdown || {};
-    var tooltip = 'Score: ' + score + '/100\\n' +
-      'Elo qualite: ' + (bd.elo_quality || 0) + '/100 (30%)\\n' +
-      'Competitivite: ' + (bd.competitiveness || 0) + '/100 (25%)\\n' +
-      'Prestige: ' + (bd.tournament_prestige || 0) + '/100 (20%)\\n' +
-      'Valeur betting: ' + (bd.betting_value || 0) + '/100 (15%)\\n' +
-      'Cotes dispo: ' + (bd.odds_availability || 0) + '/100 (10%)';
+    var tooltip = 'Score: ' + score + '/100'; // Tooltip simple — details internes masqués
     var starColor = stars >= 4 ? '#FFD700' : stars >= 3 ? '#fbbf24' : stars >= 2 ? '#8d9399' : '#5a6068';
     var html = '<span title="' + _tnEsc(tooltip) + '" style="font-size:11px;letter-spacing:1px;color:' + starColor + ';cursor:help;margin-right:4px;">';
     for (var i = 1; i <= 5; i++) {
@@ -5493,7 +5488,7 @@ function _renderTexMatchs(r) {
       }
       oddsHtml = '<td style="padding:8px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:13px;white-space:nowrap;"><div style="color:#00e676;font-weight:700;">' + _tnEsc(p1Odd) + ' <span style="color:var(--text3,#5a6068);font-size:10px;font-weight:400;">/</span> ' + _tnEsc(p2Odd) + '</div>' + driftHtml + '</td>';
     }
-    var matchLink = m.tex_match_id ? '<a href="https://www.tennisexplorer.com/match-detail/?id=' + m.tex_match_id + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;margin-left:6px;" title="Détail match">TE</a>' : '';
+    var matchLink = ''; // Pas de lien externe — secret de fabrication
     var clickAttr = m.tex_match_id ? ' onclick="openTexMatchDetail(' + m.tex_match_id + ')"' : '';
     return tourHeader
       + '<tr' + clickAttr + ' style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;' + (m.tex_match_id ? 'cursor:pointer;' : '') + '" onmouseenter="this.style.background=\'rgba(0,119,255,0.06)\'" onmouseleave="this.style.background=\'\'">'
@@ -5504,7 +5499,6 @@ function _renderTexMatchs(r) {
       + '</td>'
       + '<td style="padding:8px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:12px;white-space:nowrap;">' + eloHtml + '</td>'
       + scoresHtml + oddsHtml
-      + '<td style="padding:8px 12px;text-align:right;">' + matchLink + '</td>'
       + '</tr>';
   }).join('');
   body.innerHTML = '<div class="tex-matchs-table" style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">'
@@ -5512,10 +5506,9 @@ function _renderTexMatchs(r) {
     + '<thead><tr style="background:#111a28;">'
     + '<th style="padding:10px 12px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Heure UTC</th>'
     + '<th style="padding:10px 8px;text-align:left;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Match</th>'
-    + '<th style="padding:10px 8px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Elo Surf</th>'
+    + '<th style="padding:10px 8px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Form</th>'
     + '<th style="padding:10px 6px;text-align:center;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Score</th>'
     + '<th style="padding:10px 8px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);">Cotes P1/P2</th>'
-    + '<th style="padding:10px 12px;text-align:right;font-family:\'Instrument Sans\',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3,#5a6068);border-bottom:1px solid rgba(255,255,255,0.06);"></th>'
     + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
   if (statusEl) {
     statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + _texMatchsFilter;
@@ -5568,7 +5561,7 @@ async function openTexMatchDetail(texMatchId) {
       booksHtml = '<div style="padding:20px;text-align:center;color:var(--text3,#5a6068);font-size:12px;">Aucune cote disponible</div>';
     }
     // H2H
-    var h2hHtml = r.h2h_summary ? '<div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:var(--text2,#8d9399);">📊 H2H : ' + _tnEsc(r.h2h_summary) + '</div>' : '';
+    var h2hHtml = r.h2h_summary ? '<div style="margin-top:16px;padding:12px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:12px;color:var(--text2,#8d9399);">H2H : ' + _tnEsc(r.h2h_summary) + '</div>' : '';
     // Average odds
     var avgHtml = '';
     if (r.avg_p1 != null || r.avg_p2 != null) {
@@ -5579,9 +5572,9 @@ async function openTexMatchDetail(texMatchId) {
       + '<h3 style="margin:0;font-family:\'Instrument Sans\',sans-serif;font-size:18px;font-weight:700;color:var(--text,#e8eaed);">' + p1 + ' vs ' + p2 + '</h3>'
       + '<button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="background:none;border:none;color:var(--text3,#5a6068);font-size:20px;cursor:pointer;">✕</button>'
       + '</div>'
-      + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3,#5a6068);margin-bottom:8px;">📊 Cotes multi-bookmakers</div>'
+      + '<div style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3,#5a6068);margin-bottom:8px;">Cotes multi-bookmakers</div>'
       + booksHtml + avgHtml + h2hHtml
-      + '<div style="margin-top:16px;text-align:center;"><a href="https://www.tennisexplorer.com/match-detail/?id=' + texMatchId + '" target="_blank" rel="noopener" style="color:var(--text3,#64748b);text-decoration:none;font-size:11px;">Voir sur TennisExplorer</a></a></div>'
+      + '<div style="margin-top:16px;text-align:center;"></div>'
       + '</div>';
   } catch (e) {
     overlay.innerHTML = '<div style="background:#131722;border:1px solid rgba(255,255,255,.08);border-radius:12px;max-width:500px;width:100%;padding:24px;text-align:center;"><div style="color:var(--red,#ff4d4d);font-size:13px;">Erreur: ' + _tnEsc(e.message) + '</div><button onclick="document.getElementById(\'tex-match-detail-overlay\').style.display=\'none\'" style="margin-top:12px;background:rgba(255,255,255,.06);border:none;color:var(--text,#e8eaed);padding:8px 20px;border-radius:6px;cursor:pointer;">Fermer</button></div>';
@@ -5644,7 +5637,7 @@ async function openPlayerProfile(slug, name, surface) {
     if (r.surface_record) {
       var sr = r.surface_record;
       html += '<div style="margin-bottom:16px;">';
-      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:8px;">📊 Bilan par surface (carrière)</div>';
+      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:8px;">Bilan par surface (carrière)</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:8px;">';
       var surfaces = [['all','Total'],['clay','Clay'],['hard','Hard'],['grass','Grass'],['indoors','Indoor']];
       surfaces.forEach(function(s) {
@@ -5667,14 +5660,14 @@ async function openPlayerProfile(slug, name, surface) {
       var pm = r.prize_money.total_career;
       var pmFormatted = pm >= 1000000 ? '$' + (pm / 1000000).toFixed(1) + 'M' : '$' + (pm / 1000).toFixed(0) + 'K';
       html += '<div style="background:rgba(0,230,118,.05);border:1px solid rgba(0,230,118,.1);border-radius:8px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">';
-      html += '<span style="font-size:11px;color:var(--text3,#5a6068);text-transform:uppercase;letter-spacing:.05em;">💰 Prize Money carrière</span>';
+      html += '<span style="font-size:11px;color:var(--text3,#5a6068);text-transform:uppercase;letter-spacing:.05em;">Prize Money carrière</span>';
       html += '<span style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:800;color:#00e676;">' + pmFormatted + '</span>';
       html += '</div>';
     }
     // Section 4 : L5 matchs récents
     if (r.recent_matches && r.recent_matches.length) {
       html += '<div style="margin-bottom:16px;">';
-      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:8px;">🗓️ Derniers matchs</div>';
+      html += '<div style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;margin-bottom:8px;">Derniers matchs</div>';
       r.recent_matches.forEach(function(m) {
         var isP1 = (m.player1 || '').toLowerCase().includes((r.name || '').toLowerCase().split(' ').pop());
         var opp = isP1 ? m.player2 : m.player1;
@@ -5688,9 +5681,9 @@ async function openPlayerProfile(slug, name, surface) {
       });
       html += '</div>';
     }
-    // Footer : lien TennisExplorer
+    // Footer : pas de lien externe
     if (r.source_url) {
-      html += '<div style="text-align:center;margin-top:8px;"><a href="' + _tnEsc(r.source_url) + '" target="_blank" rel="noopener" style="color:var(--text3,#5a6068);text-decoration:none;font-size:11px;">Fiche complete sur TennisExplorer</a></a></div>';
+      html += '<div style="text-align:center;margin-top:8px;"></div>';
     }
     html += '</div>';
     overlay.innerHTML = html;
