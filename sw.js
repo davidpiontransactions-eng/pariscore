@@ -121,7 +121,8 @@
 // v60 (2026-06-26) : Fiche joueur redesignée — photo plus grande (80px) + barres progression (rank/elo/W-L%) + pills L5
 // v61 (2026-06-26) : BUGFIX photos — utilise _lookupTennisElo (table tennis_players_elo) au lieu de tennis_players fantôme
 // v62 (2026-06-26) : Route /player-photo?name= proxy binaire (plus de 302 data:URI cassé) + fallback SVG initiales coloré
-const CACHE_VERSION = 'v62';
+// v63 (2026-06-26) : BUGFIX photos — exempter /player-photo et /player-profile du gate Pro Tennis (sinon 403 JSON)
+const CACHE_VERSION = 'v63';
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;

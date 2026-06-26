@@ -19594,6 +19594,10 @@ function srvPlanGate(req, res, pathname) {
   // tennis-abstract (event) + report + tennis/tex — données publiques historiques
   if (pathname === '/api/v1/tennis-abstract' || pathname === '/api/v1/tennis-abstract/report') return false;
   if (pathname === '/api/v1/tennis/tex/matches' || pathname === '/api/v1/tennis/tex/calendar') return false;
+  // NEW — player-photo public (sinon <img src> reçoit erreur JSON 403 au lieu d'une image)
+  if (pathname === '/api/v1/tennis/player-photo' || pathname.startsWith('/api/v1/tennis/player-photo/')) return false;
+  // NEW — player-profile exempté aussi (sinon popup fiche joueur cassé en consultation libre)
+  if (pathname === '/api/v1/tennis/player-profile') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
