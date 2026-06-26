@@ -29672,10 +29672,17 @@ function _texParseMatchesPage(html) {
   let currentSurface = null;
   // Regex pour les en-têtes tournoi (entre les blocs de matchs)
   // L20 fix — declare tourHeadRe locally (not module-level) so lastIndex state can't leak across calls
-  // BUGFIX — exclure les slugs 'player/' et 'doubles-team/' qui sont des liens de joueurs, pas des tournois
-  // (sinon la regex matche par erreur des noms de joueurs comme "Bautista-Agut R." dans l'en-tête)
-  // On utilise un negative lookahead pour ignorer les href qui commencent par player/ ou doubles-team/
-  const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/(?!player\/|doubles-team\/)([^"]+?)\/?"[^>]*>([^<]+)<\/a>[\s\S]*?<\/tr>/g;
+  // BUGFIX v2 — la structure HTML réelle de TennisExplorer est :
+  //   <tr class="head flags"><td><a href="/utr-pro-tennis-series-3/2026/atp-men/">
+  //     <span class="fl fl-us">&nbsp;</span><span class="type-men2">&nbsp;</span>UTR Pro Tennis Series 3</a></td>
+  // Problèmes avec l'ancienne regex :
+  //   1. [^"]+? s'arrêtait au premier / → ne capturait pas le slug complet (avec /2026/atp-men/)
+  //   2. [^<]+ essayait de matcher juste après > mais il y a <span> avant le texte → échouait
+  // Solution :
+  //   - href="\/(?!player\/|doubles-team\/)([^"]+?)\/?" : capture le slug complet + exclut joueurs
+  //   - >[\s\S]*?([^<]+)<\/a> : skip les spans et capture le DERNIER texte avant </a>
+  //   - nettoyer le name pour retirer d'éventuels "/span>" ou espaces en début
+  const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/(?!player\/|doubles-team\/|match-detail\/|results\/)([^"]+?)\/?"[^>]*>[\s\S]*?([^<]+)<\/a>[\s\S]*?<\/tr>/g;
   // Regex pour surface dans l'en-tête (class="surface" ou texte Clay/Hard/Grass)
   const surfaceRe = /(?:class="surface"[^>]*>([^<]+)<|(Clay|Hard|Grass|Carpet|Indoor))/i;
   // Capture paired rows: <tr id="s<N>" or "r<N>"> + <tr id="s<N>b" or "r<N>b">
@@ -29686,8 +29693,12 @@ function _texParseMatchesPage(html) {
   let thMatch;
   while ((thMatch = tourHeadRe.exec(html)) !== null) {
     const blockHtml = thMatch[0];
-    const tourName = thMatch[2].trim();
-    const tourSlug = thMatch[1].trim();
+    // BUGFIX v2 — nettoyer le nom du tournoi qui peut contenir des artefacts
+    // (la regex capture parfois "/span>" ou des espaces en début à cause des <span> avant le texte)
+    let tourName = thMatch[2].trim().replace(/^\/span>/, '').trim();
+    let tourSlug = thMatch[1].trim();
+    // BUGFIX v2 — filtrer les faux positifs : noms purement numériques (liens de pagination "26")
+    if (/^\d+$/.test(tourName)) continue;
     // Détecter surface dans le bloc
     let surface = null;
     const sM = blockHtml.match(surfaceRe);
