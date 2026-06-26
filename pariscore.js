@@ -5587,6 +5587,24 @@ async function loadTexMatchs() {
   }
 }
 
+// NEW — Convertit l'heure UTC en heure locale (browser timezone)
+// Fonction GLOBALE (accessible par _renderTexMatchs, openTexPrematch, openTexMatchDetail)
+function _localTime(timeUtcStr) {
+  if (!timeUtcStr || !/^\d{1,2}:\d{2}/.test(timeUtcStr)) return timeUtcStr || '—';
+  try {
+    var parts = timeUtcStr.match(/^(\d{1,2}):(\d{2})/);
+    var hh = parseInt(parts[1], 10);
+    var mm = parseInt(parts[2], 10);
+    // Construit une date pour aujourd'hui à HH:MM UTC
+    var now = new Date();
+    var d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm));
+    // Format local HH:MM
+    var localH = d.getHours();
+    var localM = d.getMinutes();
+    return (localH < 10 ? '0' : '') + localH + ':' + (localM < 10 ? '0' : '') + localM;
+  } catch(_) { return timeUtcStr; }
+}
+
 function _renderTexMatchs(r) {
   var body = document.getElementById('tex-matchs-body');
   var statusEl = document.getElementById('tex-matchs-status');
@@ -5689,22 +5707,8 @@ function _renderTexMatchs(r) {
     var _photoUrl = '/api/v1/tennis/player-photo?name=' + encodeURIComponent(name.trim());
     return '<img src="' + _photoUrl + '" data-name="' + _tnEsc(name) + '" alt="' + _tnEsc(name) + '" loading="lazy" decoding="async" onerror="fixBrokenPlayerPhoto(this)" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08);background:var(--bg4,#172132);">';
   };
-  // NEW — Convertit l'heure UTC en heure locale (browser timezone)
-  var _localTime = function(timeUtcStr) {
-    if (!timeUtcStr || !/^\d{1,2}:\d{2}/.test(timeUtcStr)) return timeUtcStr || '—';
-    try {
-      var parts = timeUtcStr.match(/^(\d{1,2}):(\d{2})/);
-      var hh = parseInt(parts[1], 10);
-      var mm = parseInt(parts[2], 10);
-      // Construit une date pour aujourd'hui à HH:MM UTC
-      var now = new Date();
-      var d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm));
-      // Format local HH:MM
-      var localH = d.getHours();
-      var localM = d.getMinutes();
-      return (localH < 10 ? '0' : '') + localH + ':' + (localM < 10 ? '0' : '') + localM;
-    } catch(_) { return timeUtcStr; }
-  };
+  // _localTime est maintenant une fonction globale (déplacée hors de _renderTexMatchs
+  // pour être accessible par openTexPrematch et openTexMatchDetail)
   // Badge filtre actif (sans emojis)
   var filterBadges = {
     elo_delta: function(m) { return m.elo_surface?.delta != null ? '<span style="font-size:9px;font-weight:700;color:' + (m.elo_surface.delta >= 100 ? 'var(--tex-green,#00e676)' : m.elo_surface.delta >= 50 ? 'var(--tex-amber,#fbbf24)' : 'var(--tex-red,#ef4444)') + ';margin-left:4px;">D' + m.elo_surface.delta + '</span>' : ''; },
@@ -5795,7 +5799,7 @@ function _renderTexMatchs(r) {
     var hasValidMatchId = Number.isFinite(m.tex_match_id) && m.tex_match_id > 0;
     // NEW — Bouton capsule "Prematch" qui ouvre la modale prematch enrichie
     var prematchBtn = hasValidMatchId
-      ? ' <button type="button" onclick="event.stopPropagation();openTexPrematch(' + m.tex_match_id + ')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;background:rgba(0,119,255,0.12);border:1px solid rgba(0,119,255,0.25);color:#0077ff;font-size:9px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:3px;transition:all 0.15s;" onmouseenter="this.style.background=\'rgba(0,119,255,0.22)\'" onmouseleave="this.style.background=\'rgba(0,119,255,0.12)\'" title="Analyse prematch détaillée">⚡ Prematch</button>'
+      ? ' <button type="button" onclick="event.stopPropagation();openTexPrematch(' + m.tex_match_id + ')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;background:rgba(0,119,255,0.12);border:1px solid rgba(0,119,255,0.25);color:#0077ff;font-size:9px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.04em;margin-top:3px;transition:all 0.15s;" onmouseenter="this.style.background=\'rgba(0,119,255,0.22)\'" onmouseleave="this.style.background=\'rgba(0,119,255,0.12)\'" title="Analyse prematch détaillée">Prematch</button>'
       : '';
     // Si on a un bouton prematch, on l'ajoute sous les cotes (sinon onclick sur la row garde openTexMatchDetail)
     if (prematchBtn && oddsHtml.endsWith('</td>')) {
