@@ -12407,6 +12407,7 @@ function psSetLang(v) {
     <a href="javascript:void(0)" onclick="showPage('nba',this);return false;" data-page="nba" aria-label="NBA" data-i18n="nav.nba">NBA</a>
     <a href="javascript:void(0)" onclick="showPage('wnba',this);return false;" data-page="wnba" aria-label="WNBA" data-i18n="nav.wnba">WNBA</a>
     <a href="javascript:void(0)" onclick="showPage('f1',this);return false;" data-page="f1" aria-label="Formule 1" data-i18n="nav.f1">FORMULE 1</a>
+    <a href="javascript:void(0)" onclick="showPage('cycling',this);return false;" data-page="cycling" aria-label="Cyclisme" data-i18n="nav.cycling">CYCLISME</a>
     <a href="javascript:void(0)" onclick="showPage('worldcup',this);try{if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}}catch(e){}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
     <a href="javascript:void(0)" onclick="showPage('rg',this);try{if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}}catch(e){}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
     <a href="javascript:void(0)" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
@@ -12489,6 +12490,10 @@ function psSetLang(v) {
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h2l2.5-2.5h4L14 13h7"/><path d="M3 11.5V14"/><path d="M21 12v2.5"/><path d="M8 10.5l1-1.5h3l1 1.5"/><circle cx="8" cy="16" r="2"/><circle cx="17" cy="16" r="2"/><path d="M10 16h5"/></svg></span>
     <span class="bn-lbl" data-i18n="bnav.f1">F1</span>
   </a>
+  <a href="#" data-page="cycling" onclick="bnGo('cycling',this);return false;">
+    <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span>
+    <span class="bn-lbl" data-i18n="bnav.cycling">Cyclisme</span>
+  </a>
   <a href="#" data-page="__live" onclick="bnGo('__live',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="#fff"/><path d="M5.5 5.5a9 9 0 0 0 0 13M18.5 5.5a9 9 0 0 1 0 13M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7"/></svg></span>
     <span class="bn-lbl" data-i18n="bnav.live">Live<span id="bn-live-badge" class="bn-badge" style="display:none;">0</span></span>
@@ -12511,6 +12516,7 @@ function psSetLang(v) {
   <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()" data-i18n="bnav.night_mode">☾ Mode Nuit</button>
   <div class="bn-more-grid">
     <a href="javascript:void(0)" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span><span data-i18n="bnav.nba">NBA</span></a>
+    <a href="javascript:void(0)" onclick="bnGo('cycling',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span><span data-i18n="bnav.cycling">Cyclisme</span></a>
     <a href="javascript:void(0)" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span data-i18n="nav.alertes">Alertes</span></a>
     <a href="javascript:void(0)" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span><span data-i18n="nav.hotpicks">Hot Picks</span></a>
     <a href="javascript:void(0)" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span data-i18n="nav.surebets">Sure Bets</span></a>
@@ -22628,8 +22634,36 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
   <div class="f1-grid" id="f1-grid"></div>
   <div class="f1-note" id="f1-note"></div>
 </div>
+<div id="page-cycling" data-page="cycling" style="display:none;">
+<style>
+/* ── Cycling tokens + nav ─────────────────────────── */
+#page-cycling{--cyc-bg:#0a1628;--cyc-accent:#ff6b35;padding-top:4px;background:var(--cyc-bg);min-height:60vh;}
+.nav-links a[data-page="cycling"]{color:var(--cyc-accent,#ff6b35);}
+body[data-page="cycling"] .footer-newsletter,
+body[data-page="cycling"] footer{display:none!important;}
+.cyc-wrap{max-width:1040px;margin:0 auto;padding:22px 16px 100px;font-family:'Instrument Sans',sans-serif;color:#e8eaed;}
+.cyc-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.cyc-title{font-family:Syne,sans-serif;font-weight:800;font-size:24px;display:flex;align-items:center;gap:10px;}
+.cyc-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--cyc-accent,#ff6b35);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.35);border-radius:20px;padding:3px 10px;text-transform:uppercase;letter-spacing:.04em;}
+.cyc-sub{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.05em;}
+.cyc-placeholder{padding:40px 20px;text-align:center;color:#8d9399;font-family:'Instrument Sans',sans-serif;font-size:15px;border:1px dashed rgba(255,107,53,.25);border-radius:16px;margin-top:20px;}
+</style>
+<div class="cyc-wrap">
+  <div class="cyc-head">
+    <div class="cyc-title">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--cyc-accent,#ff6b35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+      </svg>
+      Cyclisme
+      <span class="cyc-badge">Sprint 1</span>
+    </div>
+    <div class="cyc-sub">Courses · Résultats · Classements</div>
+  </div>
+  <div class="cyc-placeholder">
+    ⏳ Contenu cyclisme à venir — calendrier, classements UCI, pronostics.
+  </div>
 </div>
-
+</div>
 <div id="page-mma" data-page="mma" style="display:none;">
 <style>
 /* ── MMA Tab Styles ──────────────────────────────────────────── */
