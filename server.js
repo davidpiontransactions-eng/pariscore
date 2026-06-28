@@ -23127,13 +23127,18 @@ async function getTennisScheduleCached() {
   if (Date.now() - _tennisScheduleCache.ts < TENNIS_SCHEDULE_TTL_MS && _tennisScheduleCache.data.length) {
     return _tennisScheduleCache.data;
   }
-  try {
-    const data = await fetchESPNTennisSchedule();
-    if (data.length) _tennisScheduleCache = { ts: Date.now(), data };
-  } catch (e) {
-    console.warn('  [Tennis] schedule fetch error:', e.message);
+  if (!_schedulePromise) {
+    _schedulePromise = fetchESPNTennisSchedule().then(data => {
+      if (data && data.length) _tennisScheduleCache = { ts: Date.now(), data };
+      _schedulePromise = null;
+      return _tennisScheduleCache.data;
+    }).catch(e => {
+      console.warn('  [Tennis] schedule fetch error:', e.message);
+      _schedulePromise = null;
+      return _tennisScheduleCache.data;
+    });
   }
-  return _tennisScheduleCache.data;
+  return _schedulePromise;
 }
 
 // ── BSD Tennis (Sports Addon actif) — source PRIMAIRE, ESPN en complément ──────
@@ -30999,6 +31004,7 @@ function _texParseMatchDetail(html) {
     const trRe = /<tr class="(one|two|average|head)"[^>]*>([\s\S]*?)(?=<tr class="(?:one|two|average|head)"|<\/tbody>)/g;
     let trMatch;
     while ((trMatch = trRe.exec(oddsBlock[1])) !== null) {
+      if (!_texTimeLeft()) break;
       const rowClass = trMatch[1];
       const tr = trMatch[2];
       if (rowClass === 'head') continue;
@@ -31037,7 +31043,7 @@ function _texParseMatchDetail(html) {
   const h2hM = _texSafeMatch(html, /<h2 class="bg">Head-to-head<\/h2>([\s\S]*?)<h2 class="bg">/, 'h2h');
   let h2hSummary = null;
   if (h2hM) {
-    const noDataM = h2hM[1].match(/<div class="no-data">([^<]+)<\/div>/);
+    const noDataM = _texSafeMatch(h2hM[1], /<div class="no-data">([^<]+)<\/div>/, 'h2hNoData');
     if (noDataM) {
       h2hSummary = noDataM[1].trim();
     } else {
@@ -31061,13 +31067,14 @@ function _texParseMatchDetail(html) {
     const blockM = _texSafeMatch(html, blockRe, 'block' + menu);
     if (!blockM || /class="none"[^>]*>[\s\S]{0,200}No odds/.test(blockM[0])) continue;
     const block = blockM[1];
-    const titleM2 = block.match(/<tr class="odds-type"[^>]*>\s*<td[^>]*>([^<]+)<\/td>/);
+    const titleM2 = _texSafeMatch(block, /<tr class="odds-type"[^>]*>\s*<td[^>]*>([^<]+)<\/td>/, 'marketTitle');
     const marketTitle = titleM2 ? titleM2[1].trim() : null;
     const trRe2 = /<tr class="(one|two|average)"[^>]*>([\s\S]*?)(?=<tr class="(?:one|two|average|head|odds-)"|<\/tbody>)/g;
     const rows = [];
     let avgP1m = null, avgP2m = null;
     let trMatch2;
     while ((trMatch2 = trRe2.exec(block)) !== null) {
+      if (!_texTimeLeft()) break;
       const rowClass = trMatch2[1];
       const tr2 = trMatch2[2];
       const bookM2 = tr2.match(/<span class="t">([^<]+)<\/span>/);
