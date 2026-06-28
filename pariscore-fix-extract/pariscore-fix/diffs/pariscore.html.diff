@@ -1,0 +1,27 @@
+diff --git a/pariscore.html b/pariscore.html
+old mode 100644
+new mode 100755
+index 6409a16..53590f5
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -14956,6 +14956,11 @@ function psSetLang(v) {
+         <div class="section-label">📈 Tendances du moment</div>
+         <div class="section-sub" style="color:var(--text2,#8d9399);font-size:13px;">Joueurs dont la forme projetée varie le plus — prévisions TimesFM sur 6 matchs</div>
+       </div>
++      <!-- Switcher tennis/football -->
++      <div style="display:flex;gap:6px;background:rgba(255,255,255,0.04);border-radius:8px;padding:4px;">
++        <button data-trending-sport="tennis" class="trending-sport-btn active" style="padding:6px 14px;font-size:12px;font-weight:600;border:none;background:#0077ff;color:#fff;border-radius:6px;cursor:pointer;">Tennis</button>
++        <button data-trending-sport="football" class="trending-sport-btn" style="padding:6px 14px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--text2,#8d9399);border-radius:6px;cursor:pointer;">Football</button>
++      </div>
+     </div>
+     <div id="trending-container" style="min-height:60px;">
+       <div class="trending-loading" style="text-align:center;padding:20px;color:var(--text2,#8d9399);">⏳ Chargement des tendances...</div>
+@@ -24482,7 +24487,7 @@ a:focus-visible,
+      ============================================================ -->
+ 
+ <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
+-<script src="/pariscore.js?v=240618-1"></script>
++<script src="/pariscore.js?v=250625-1"></script>
+ <script>
+ (function(){
+ var b=document.createElement('div');

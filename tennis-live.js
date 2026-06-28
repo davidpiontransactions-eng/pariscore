@@ -78,7 +78,7 @@ var TennisLive = (function () {
   //   glicko2: { p1_serve, p1_return, p2_serve, p2_return }
   //   betfair_wom, momentum, ...
   //   serving: 1|2 (numérique), current_point: "15-30"|"AD"|null
-  //   dr_exact: null (NON fourni par /api/v1 — calculé client-side)
+  //   dr_exact: { p1, p2, delta, exact, reliable, source, p1Serve, p1Ret, p2Serve, p2Ret, dr_by_set }
   //   live_stats: null (NON fourni par /api/v1 — utilise _bsd_stats)
   function mapLiveMatch(raw) {
     var sets = (raw.sets || []).map(function (s) { return { p1: parseInt(s.p1) || 0, p2: parseInt(s.p2) || 0 }; });
@@ -105,25 +105,33 @@ var TennisLive = (function () {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // DR RÉEL — calculé depuis _bsd_stats (même formule que server.js)
+    // DR — utilise dr_exact du serveur quand disponible (calculé dans
+    // l'enrichissement live de server.js, même formule que computeDRFromBSD)
+    // Fallback: calcul client-side via computeDRFromBSD ou computeDRBySet
     // ══════════════════════════════════════════════════════════════
-    var bsd = raw._bsd_stats || raw.live_stats || {};
-    var drComputed = computeDRFromBSD(bsd);
-    var dr = { p1: 1, p2: 1, delta: 0, exact: false, reliable: false, source: 'none' };
-    if (drComputed) {
-      dr = {
-        p1: drComputed.p1, p2: drComputed.p2, delta: drComputed.delta,
-        exact: true, reliable: drComputed.source === 'bsd_serve_ret',
-        source: drComputed.source
-      };
+    var dr;
+    var drComputed = null;
+    if (raw.dr_exact && raw.dr_exact.exact && raw.dr_exact.p1 > 0) {
+      dr = raw.dr_exact;
     } else {
-      // Fallback: DR par set depuis les jeux (proxy jeux)
-      var drBySet = computeDRBySet(sets);
-      var setKeys = Object.keys(drBySet);
-      if (setKeys.length > 0) {
-        var vals = setKeys.map(function (k) { return drBySet[k].dr; });
-        var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
-        dr = { p1: avg, p2: 1 / avg, delta: Math.abs(avg - 1 / avg), exact: true, reliable: false, source: 'bsd_games' };
+      var bsd = raw._bsd_stats || raw.live_stats || {};
+      drComputed = computeDRFromBSD(bsd);
+      dr = { p1: 1, p2: 1, delta: 0, exact: false, reliable: false, source: 'none' };
+      if (drComputed) {
+        dr = {
+          p1: drComputed.p1, p2: drComputed.p2, delta: drComputed.delta,
+          exact: true, reliable: drComputed.source === 'bsd_serve_ret',
+          source: drComputed.source
+        };
+      } else {
+        // Fallback: DR par set depuis les jeux (proxy jeux)
+        var drBySet = computeDRBySet(sets);
+        var setKeys = Object.keys(drBySet);
+        if (setKeys.length > 0) {
+          var vals = setKeys.map(function (k) { return drBySet[k].dr; });
+          var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+          dr = { p1: avg, p2: 1 / avg, delta: Math.abs(avg - 1 / avg), exact: true, reliable: false, source: 'bsd_games' };
+        }
       }
     }
 

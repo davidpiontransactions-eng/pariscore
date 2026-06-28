@@ -1,0 +1,177 @@
+diff --git a/pariscore.js b/pariscore.js
+index 5b9479d..5ae3c83 100644
+--- a/pariscore.js
++++ b/pariscore.js
+@@ -939,6 +939,22 @@ function showPage(pageId, linkEl) {
+   if (pageId === 'wnba') try { initWnbaPage(); } catch(e) {}
+   try { if (pageId !== 'f1' && typeof stopF1Page === 'function') stopF1Page(); } catch(e) {}
+   if (pageId === 'f1') try { initF1Page(); } catch(e) {}
++  // P1.4 — cleanup SSE RG live quand on quitte la page RG (évite EventSource fantôme)
++  try {
++    if (pageId !== 'rg' && window._rgLiveEs) {
++      window._rgLiveEs.close();
++      window._rgLiveEs = null;
++      window._rgLiveSseInit = false;
++    }
++  } catch(e) {}
++  // P1.4 — cleanup SSE tennis live stream quand on quitte la page tennis
++  try {
++    if (pageId !== 'tennis' && window._psLtsEs) {
++      window._psLtsEs.close();
++      window._psLtsEs = null;
++      window._psLtsSseInit = false;
++    }
++  } catch(e) {}
+   // Met à jour le titre dynamique selon la page
+   setPageTitle(pageId);
+   // Restaure la position scroll sauvegardée ou scroll en haut
+@@ -19902,7 +19918,7 @@ async function apiFetch(url, opts = {}) {
+       if (age > cached.ttl && !cached._refreshing) {
+         cached._refreshing = true;
+         AppCache._refresh(url, function() {
+-          return fetch(url, { ...opts, headers }).then(function(r) {
++          return fetch(url, { ...opts, headers, credentials: 'include' }).then(function(r) {
+             if (!r.ok) throw new Error('Status ' + r.status);
+             return r.clone().json();
+           });
+@@ -19917,7 +19933,7 @@ async function apiFetch(url, opts = {}) {
+     }
+   }
+ 
+-  const res = await fetch(url, { ...opts, headers });
++  const res = await fetch(url, { ...opts, headers, credentials: 'include' });
+ 
+   // Mettre en cache les réponses GET réussies
+   if (isGet && res.ok && !opts.skipCache) {
+@@ -20192,6 +20208,8 @@ function psLogout() {
+   // Forensic trace : capture toute remise à zéro de session (cf. CR-F rapport
+   // bug mobile 2026-05-19). À retirer une fois le chemin auto-logout identifié.
+   try { console.warn('[psLogout] called from:', new Error().stack); } catch (e) {}
++  // P1 secu — appel serveur pour clearer le cookie httpOnly (best-effort, sans attendre)
++  try { fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' }).catch(function(){}); } catch (e) {}
+   psClearToken();
+   updateNavAuthState();
+   // Reset état matchs pour forcer re-auth au prochain accès
+@@ -24200,46 +24218,95 @@ async function loadTrends() {
+ //  
+ // ════════════════════════════════════════════════════════════════════════════════════════
+ //  TRENDING — section sport-specific risers/decliners (x2ez)
++//  P1 UI TimesFM — alimente #trending-risers + #trending-decliners depuis
++//  /api/v1/forecasts/{tennis,football}/trending?limit=10
++//  Format API : { top_risers: [{entity_label, context, current, forecast, delta}],
++//                 top_decliners: [...] }
+ // ════════════════════════════════════════════════════════════════════════════════════════
+ let _trendingPollTimer = null;
++let _trendingCurrentSport = 'tennis';
+ 
+ function _renderTrendingSection(sport) {
+-  var el = document.getElementById('trending-risers');
+-  if (!el) return;
+-  el.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;">Chargement…</div>';
+-  apiFetch('/api/v1/trends?sport=' + encodeURIComponent(sport || ''))
+-    .then(function(r) { if (!r.ok) throw new Error(); return r.json(); })
++  var activeSport = sport || _trendingCurrentSport || 'tennis';
++  _trendingCurrentSport = activeSport;
++  var risersEl = document.getElementById('trending-risers');
++  var declinersEl = document.getElementById('trending-decliners');
++  if (!risersEl && !declinersEl) return;
++  var loadingHtml = '<div style="color:var(--text2,#8d9399);font-size:13px;padding:20px;text-align:center;">⏳ Chargement…</div>';
++  if (risersEl) risersEl.innerHTML = loadingHtml;
++  if (declinersEl) declinersEl.innerHTML = loadingHtml;
++
++  var url = '/api/v1/forecasts/' + encodeURIComponent(activeSport) + '/trending?limit=10';
++  apiFetch(url)
++    .then(function(r) {
++      if (!r.ok) throw new Error('HTTP ' + r.status);
++      return r.json();
++    })
+     .then(function(data) {
+-      el.innerHTML = _buildTrendingHtml(data.risers || [], data.decliners || []);
++      var risers = (data && data.top_risers) || [];
++      var decliners = (data && data.top_decliners) || [];
++      if (risersEl) risersEl.innerHTML = _buildTrendingHtml(risers, 'rise');
++      if (declinersEl) declinersEl.innerHTML = _buildTrendingHtml(decliners, 'decline');
++      // Wire le bouton switcher sport si présent
++      _wireTrendingSportSwitcher();
+     })
+-    .catch(function() {
+-      el.innerHTML = '<div style="color:#888;padding:20px;font-size:13px;">⚠ Lancez node server.js pour charger les tendances.</div>';
++    .catch(function(err) {
++      var errHtml = '<div style="color:var(--text2,#8d9399);padding:20px;font-size:13px;text-align:center;">⚠ Tendances ' + _tnEsc(activeSport) + ' indisponibles.<br><span style="font-size:11px;opacity:0.7;">' + _tnEsc(err && err.message || '') + '</span></div>';
++      if (risersEl) risersEl.innerHTML = errHtml;
++      if (declinersEl) declinersEl.innerHTML = '';
+     });
++  // Polling 5min — refresh régulier sans action user
+   if (_trendingPollTimer) clearInterval(_trendingPollTimer);
+-  _trendingPollTimer = setInterval(function() { _renderTrendingSection(sport); }, 300000);
++  _trendingPollTimer = setInterval(function() { _renderTrendingSection(_trendingCurrentSport); }, 300000);
+ }
+ 
+-function _buildTrendingHtml(risers, decliners) {
+-  var html = '';
+-  if (risers.length) {
+-    html += '<div style="margin-bottom:16px;"><h3 style="font-size:14px;margin:0 0 8px;color:#22c55e;">📈 Risers</h3>';
+-    risers.forEach(function(r) {
+-      html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">' +
+-        '<span>' + (r.name || '') + '</span><span style="color:#22c55e;font-weight:600;">+' + (r.change || 0) + '</span></div>';
+-    });
+-    html += '</div>';
++function _buildTrendingHtml(items, kind) {
++  if (!items || !items.length) {
++    return '<div style="color:var(--text2,#8d9399);font-size:13px;padding:20px;text-align:center;">Aucune donnée.</div>';
+   }
+-  if (decliners.length) {
+-    html += '<div><h3 style="font-size:14px;margin:0 0 8px;color:#ef4444;">📉 Decliners</h3>';
+-    decliners.forEach(function(d) {
+-      html += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;">' +
+-        '<span>' + (d.name || '') + '</span><span style="color:#ef4444;font-weight:600;">' + (d.change || 0) + '</span></div>';
++  var color = kind === 'rise' ? '#10b981' : '#ef4444';
++  var arrow = kind === 'rise' ? '▲' : '▼';
++  var html = '';
++  items.slice(0, 10).forEach(function(it) {
++    var label = _tnEsc(it.entity_label || it.name || '—');
++    var ctx = it.context ? ' <span style="color:var(--text3,#6b7280);font-size:10px;">(' + _tnEsc(it.context) + ')</span>' : '';
++    var delta = typeof it.delta === 'number' ? it.delta : 0;
++    var deltaSign = delta >= 0 ? '+' : '';
++    var deltaStr = deltaSign + delta.toFixed(1);
++    var cur = typeof it.current === 'number' ? it.current.toFixed(1) : '—';
++    var fc = typeof it.forecast === 'number' ? it.forecast.toFixed(1) : '—';
++    html += '<div class="trending-row" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--border,rgba(255,255,255,0.05));font-size:13px;">' +
++      '<div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
++        '<span style="color:' + color + ';font-weight:700;margin-right:6px;">' + arrow + '</span>' +
++        '<span>' + label + '</span>' + ctx +
++      '</div>' +
++      '<div style="text-align:right;flex-shrink:0;margin-left:8px;">' +
++        '<span style="color:var(--text2,#8d9399);font-size:11px;">' + cur + ' → ' + fc + '</span> ' +
++        '<span style="color:' + color + ';font-weight:700;margin-left:6px;">' + deltaStr + '</span>' +
++      '</div>' +
++    '</div>';
++  });
++  return html;
++}
++
++// Switcher tennis ↔ football pour la section tendances
++function _wireTrendingSportSwitcher() {
++  var btns = document.querySelectorAll('[data-trending-sport]');
++  if (!btns.length) return;
++  btns.forEach(function(btn) {
++    if (btn._trendingWired) return;
++    btn._trendingWired = true;
++    btn.addEventListener('click', function(e) {
++      e.preventDefault();
++      var s = btn.getAttribute('data-trending-sport') || 'tennis';
++      if (s === _trendingCurrentSport) return;
++      // Mise à jour visuelle du toggle
++      btns.forEach(function(b) { b.classList.toggle('active', b === btn); });
++      _renderTrendingSection(s);
+     });
+-    html += '</div>';
+-  }
+-  return html || '<div style="color:#888;font-size:13px;padding:20px;">Aucune tendance disponible.</div>';
++  });
+ }
+-PAGE GUIDE / DOCUMENTATION
++// PAGE GUIDE / DOCUMENTATION
+ // ═══════════════════════════════════════════════════════════════════════════════
+ let guideLoaded = false;
+ 

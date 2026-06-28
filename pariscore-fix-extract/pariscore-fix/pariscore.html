@@ -12407,7 +12407,6 @@ function psSetLang(v) {
     <a href="javascript:void(0)" onclick="showPage('nba',this);return false;" data-page="nba" aria-label="NBA" data-i18n="nav.nba">NBA</a>
     <a href="javascript:void(0)" onclick="showPage('wnba',this);return false;" data-page="wnba" aria-label="WNBA" data-i18n="nav.wnba">WNBA</a>
     <a href="javascript:void(0)" onclick="showPage('f1',this);return false;" data-page="f1" aria-label="Formule 1" data-i18n="nav.f1">FORMULE 1</a>
-    <a href="javascript:void(0)" onclick="showPage('cycling',this);return false;" data-page="cycling" aria-label="Cyclisme" data-i18n="nav.cycling">CYCLISME</a>
     <a href="javascript:void(0)" onclick="showPage('worldcup',this);try{if(typeof renderWCGroups==='function'&&!window._wcLoaded){window._wcLoaded=true;renderWCGroups();if(typeof loadWCSchedule==='function')loadWCSchedule(null,document.querySelector('#wc-rnd-ctrl .wc-rnd-btn'));}}catch(e){}return false;" data-page="worldcup" aria-label="Coupe du Monde 2026" data-i18n="nav.worldcup">CdM 2026</a>
     <a href="javascript:void(0)" onclick="showPage('rg',this);try{if(typeof loadRolandGarros==='function'&&!window._rgLoaded){window._rgLoaded=true;loadRolandGarros();}}catch(e){}return false;" data-page="rg" aria-label="Roland Garros" data-i18n="nav.rolandgarros">Roland Garros</a>
     <a href="javascript:void(0)" onclick="showPage('strategies',this);return false;" data-page="strategies" aria-label="Top Stratégies" data-i18n="nav.strategies">Top Stratégies</a>
@@ -12490,10 +12489,6 @@ function psSetLang(v) {
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h2l2.5-2.5h4L14 13h7"/><path d="M3 11.5V14"/><path d="M21 12v2.5"/><path d="M8 10.5l1-1.5h3l1 1.5"/><circle cx="8" cy="16" r="2"/><circle cx="17" cy="16" r="2"/><path d="M10 16h5"/></svg></span>
     <span class="bn-lbl" data-i18n="bnav.f1">F1</span>
   </a>
-  <a href="#" data-page="cycling" onclick="bnGo('cycling',this);return false;">
-    <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span>
-    <span class="bn-lbl" data-i18n="bnav.cycling">Cyclisme</span>
-  </a>
   <a href="#" data-page="__live" onclick="bnGo('__live',this);return false;">
     <span class="bn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" fill="#fff"/><path d="M5.5 5.5a9 9 0 0 0 0 13M18.5 5.5a9 9 0 0 1 0 13M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7"/></svg></span>
     <span class="bn-lbl" data-i18n="bnav.live">Live<span id="bn-live-badge" class="bn-badge" style="display:none;">0</span></span>
@@ -12516,7 +12511,6 @@ function psSetLang(v) {
   <button id="theme-toggle-m" class="bn-theme-toggle" onclick="toggleTheme()" data-i18n="bnav.night_mode">☾ Mode Nuit</button>
   <div class="bn-more-grid">
     <a href="javascript:void(0)" onclick="bnGo('nba',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3 3 3 9.8 0 12.8M18.4 5.6c-3 3-3 9.8 0 12.8"/></svg></span><span data-i18n="bnav.nba">NBA</span></a>
-    <a href="javascript:void(0)" onclick="bnGo('cycling',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg></span><span data-i18n="bnav.cycling">Cyclisme</span></a>
     <a href="javascript:void(0)" onclick="bnGo('alertes',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span><span data-i18n="nav.alertes">Alertes</span></a>
     <a href="javascript:void(0)" onclick="bnGo('hot-picks',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-1 4-1 6a3 3 0 0 0 6 0c0-1 0-2-1-3 2 1 4 4 4 8a8 8 0 0 1-16 0c0-4 3-7 5-9 0 2 1 3 3 3"/></svg></span><span data-i18n="nav.hotpicks">Hot Picks</span></a>
     <a href="javascript:void(0)" onclick="bnGo('sure-bets',this);return false;"><span class="bn3d"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><span data-i18n="nav.surebets">Sure Bets</span></a>
@@ -15727,10 +15721,7 @@ function psSetLang(v) {
 
     <!-- ═══ TAB NAVIGATION (sticky) ═══ -->
     <nav class="tn2-tab-nav" id="tn2-tab-nav">
-      <button class="tn2-tab-btn active" data-tab="matchs" onclick="tn2SwitchTab('matchs')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>MATCHS
-      </button>
-      <button class="tn2-tab-btn" data-tab="live" onclick="tn2SwitchTab('live')">
+      <button class="tn2-tab-btn active" data-tab="live" onclick="tn2SwitchTab('live')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>LIVE
       </button>
       <button class="tn2-tab-btn" data-tab="top" onclick="tn2SwitchTab('top')">
@@ -15755,69 +15746,8 @@ function psSetLang(v) {
 
     <!-- ═══ TAB PANELS ═══ -->
 
-    <!-- ── TAB MATCHS (Tennis Explorer — tous les matchs du jour) ── -->
-    <div class="tn2-tab-panel active" data-tab="matchs">
-      <div class="tn2-section-header">
-        <h2>Matchs du Jour</h2>
-        <div class="tn2-header-controls">
-          <span class="tn2-refresh-time" id="tex-matchs-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#64748b);margin-right:8px;">—</span>
-          <div class="tn2-mode-toggle">
-            <button class="tn2-mode-btn active" onclick="texMatchsSetTour('atp')">ATP</button>
-            <button class="tn2-mode-btn" onclick="texMatchsSetTour('wta')">WTA</button>
-          </div>
-        </div>
-      </div>
-      <!-- Barre de recherche + filtres intelligents -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
-        <!-- Module de recherche -->
-        <div style="position:relative;flex:1;min-width:200px;">
-          <input type="text" id="tex-matchs-search" placeholder="Rechercher un joueur ou un tournoi..." oninput="texMatchsSearch(this.value)" style="width:100%;padding:7px 12px 7px 32px;font-size:12px;background:#0e1420;border:1px solid rgba(255,255,255,.08);border-radius:6px;color:var(--text,#e8eaed);font-family:'Instrument Sans',sans-serif;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(0,119,255,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-          <svg style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text3,#5a6068);pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        </div>
-        <!-- Filtres — D2 fix : utilisation de la classe du design system tn2-f-btn -->
-        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Filtre :</span>
-        <button class="tn2-f-btn is-active tex-filter-btn" data-filter="time" onclick="texMatchsSetFilter('time')">Heure</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="elo_delta" onclick="texMatchsSetFilter('elo_delta')">Elo Delta</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="value" onclick="texMatchsSetFilter('value')">Value</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="drift" onclick="texMatchsSetFilter('drift')">Drift</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="elite" onclick="texMatchsSetFilter('elite')">Elite</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="rating" onclick="texMatchsSetFilter('rating')">Rating</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="upset" onclick="texMatchsSetFilter('upset')">Upset</button>
-      </div>
-      <!-- NEW — Barre de filtres timing + étoiles + toggle matchs terminés -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid rgba(255,255,255,0.04);">
-        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Timing :</span>
-        <button class="tn2-f-btn is-active tex-time-filter-btn" data-time="all" onclick="texMatchsSetTimeFilter('all')">Tous</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="live" onclick="texMatchsSetTimeFilter('live')">Live</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="1h" onclick="texMatchsSetTimeFilter('1h')">≤ 1h</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="2h" onclick="texMatchsSetTimeFilter('2h')">≤ 2h</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="4h" onclick="texMatchsSetTimeFilter('4h')">≤ 4h</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="6h" onclick="texMatchsSetTimeFilter('6h')">≤ 6h</button>
-        <span style="width:1px;height:18px;background:rgba(255,255,255,0.06);margin:0 4px;"></span>
-        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Étoiles :</span>
-        <button class="tn2-f-btn is-active tex-stars-filter-btn" data-stars="0" onclick="texMatchsSetMinStars(0)">Toutes</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="1" onclick="texMatchsSetMinStars(1)">★+</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="2" onclick="texMatchsSetMinStars(2)">★★+</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="3" onclick="texMatchsSetMinStars(3)">★★★+</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="4" onclick="texMatchsSetMinStars(4)">★★★★+</button>
-        <span style="width:1px;height:18px;background:rgba(255,255,255,0.06);margin:0 4px;"></span>
-        <button class="tn2-f-btn tex-finished-toggle" onclick="texMatchsToggleFinished()" title="Afficher/masquer les matchs terminés">Masquer terminés</button>
-      </div>
-      <div id="tex-matchs-body" style="min-height:200px;">
-        <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>
-      </div>
-      <!-- Tableau des tournois (collapsible) — Q9 fix : ouvert par défaut + D5 fix : button avec chevron SVG + aria-expanded -->
-      <div style="margin-top:16px;">
-        <button class="tex-tournaments-toggle" type="button" aria-expanded="true" aria-controls="tex-tournaments-today" onclick="var el=document.getElementById('tex-tournaments-today');var expanded=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',!expanded);el.style.display=expanded?'none':'block';">
-          <span data-tex-tournaments-label style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text2,#8d9399);">À venir</span>
-          <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3,#5a6068);"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </button>
-        <div id="tex-tournaments-today" style="display:block;margin-top:8px;"></div>
-      </div>
-    </div>
-
     <!-- ── TAB LIVE ── -->
-    <div class="tn2-tab-panel" data-tab="live">
+    <div class="tn2-tab-panel active" data-tab="live">
       <div class="tn2-section-header">
         <h2>Matchs en Direct</h2>
         <div class="tn2-header-controls">
@@ -15857,7 +15787,6 @@ function psSetLang(v) {
       <div class="tn2-section-header">
         <h2>Value Bets Tennis</h2>
       </div>
-      <div id="tennis-strategy-pills" class="strategy-pills" style="margin:0 0 8px;"></div>
       <div id="tennis-vb-filters" class="tn2-filters-bar">
         <div class="tn2-fg">
           <span class="tn2-fg-lbl">Circuit</span>
@@ -16372,26 +16301,17 @@ function psSetLang(v) {
     var selBtn = document.querySelector('.tn2-tab-btn[data-tab="' + tabId + '"]');
     if (selBtn) selBtn.classList.add('active');
     var key = '_tn2_tab_' + tabId + '_loaded';
-    // Ne pas blocker les onglets live/top/matchs qui ont besoin de refresh périodique
-    if ((tabId !== 'live' && tabId !== 'top' && tabId !== 'matchs') && window[key]) return;
+    // Ne pas blocker les onglets live/top qui ont besoin de refresh périodique
+    if ((tabId !== 'live' && tabId !== 'top') && window[key]) return;
     window[key] = true;
     switch (tabId) {
-      case 'matchs':
-        // BUG-LIVE-2 fix — stopper le polling LIVE quand on quitte l'onglet
-        if (typeof stopTennisLive === 'function') stopTennisLive();
-        if (typeof loadTexMatchs === 'function') loadTexMatchs();
-        if (typeof loadTexTournamentsToday === 'function') loadTexTournamentsToday();
-        break;
       case 'live':
-        // BUG-LIVE-2 fix — startTennisLive (fetch + polling 30s) au lieu de tickTennisLive (fetch unique)
-        if (typeof startTennisLive === 'function') startTennisLive();
+        if (typeof tickTennisLive === 'function') tickTennisLive();
         break;
       case 'top':
-        if (typeof stopTennisLive === 'function') stopTennisLive();
         if (typeof startTennisTop10 === 'function') startTennisTop10();
         break;
       case 'paris':
-        if (typeof stopTennisLive === 'function') stopTennisLive();
         if (typeof startTennisValueBets === 'function') startTennisValueBets();
         break;
       case 'clas':
@@ -22640,85 +22560,8 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
   <div class="f1-grid" id="f1-grid"></div>
   <div class="f1-note" id="f1-note"></div>
 </div>
-<div id="page-cycling" data-page="cycling" style="display:none;">
-<style>
-/* ── Cycling tokens + nav ─────────────────────────── */
-#page-cycling{--cyc-bg:#0a1628;--cyc-accent:#ff6b35;padding-top:4px;background:var(--cyc-bg);min-height:60vh;}
-.nav-links a[data-page="cycling"]{color:var(--cyc-accent,#ff6b35);}
-body[data-page="cycling"] .footer-newsletter,
-body[data-page="cycling"] footer{display:none!important;}
-.cyc-wrap{max-width:1040px;margin:0 auto;padding:22px 16px 100px;font-family:'Instrument Sans',sans-serif;color:#e8eaed;}
-.cyc-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
-.cyc-title{font-family:Syne,sans-serif;font-weight:800;font-size:24px;display:flex;align-items:center;gap:10px;}
-.cyc-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--cyc-accent,#ff6b35);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.35);border-radius:20px;padding:3px 10px;text-transform:uppercase;letter-spacing:.04em;}
-.cyc-sub{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.05em;}
-
-/* ── Cycling status + note ───────────────────────── */
-.cyc-status{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px;}
-.cyc-note{font-family:'Instrument Sans',sans-serif;font-size:12px;color:#6b7280;line-height:1.5;margin-top:28px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px;}
-
-/* ── Cycling bet cards (grid 3) ──────────────────── */
-.cyc-bets{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px;}
-@media(max-width:700px){.cyc-bets{grid-template-columns:1fr;}}
-.cycbet{background:rgba(255,255,255,.04);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;position:relative;transition:background .15s;}
-.cycbet:hover{background:rgba(255,255,255,.07);}
-.cycbet-ico{display:flex;align-items:center;gap:4px;color:var(--cyc-accent,#ff6b35);opacity:.7;}
-.cycbet-type{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--cyc-accent,#ff6b35);opacity:.8;}
-.cycbet-pick{font-family:Syne,sans-serif;font-weight:700;font-size:17px;line-height:1.2;margin:2px 0 6px;}
-.cycbet-foot{display:flex;align-items:center;gap:12px;margin-top:auto;}
-.cycbet-ring{position:relative;width:58px;height:58px;flex-shrink:0;}
-.cycbet-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;}
-.cycbet-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
-.cycbet-team{font-size:12px;color:#b0b3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cycbet-ci{font-family:'DM Mono',monospace;font-size:10px;color:#6b7280;}
-.cyc-empty{grid-column:1/-1;padding:24px 20px;text-align:center;color:#8d9399;font-size:14px;}
-
-/* ── Grid head ───────────────────────────────────── */
-.cyc-grid-head{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.06em;margin:28px 0 8px;}
-
-/* ── Riders grid ─────────────────────────────────── */
-.cyc-grid{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.04);border-radius:12px;overflow:hidden;}
-.cycdrv{display:grid;grid-template-columns:32px 40px 1fr 100px 52px;align-items:center;gap:8px;padding:8px 12px;background:var(--cyc-bg,#0a1628);transition:background .1s;font-size:13px;}
-.cycdrv:hover{background:rgba(255,255,255,.03);}
-.cycdrv-h{font-family:'DM Mono',monospace;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;background:rgba(255,255,255,.02);}
-.cycdrv-pos{font-family:'DM Mono',monospace;font-weight:700;font-size:13px;text-align:center;color:#6b7280;}
-.cycdrv-pos.g{color:var(--cyc-accent,#ff6b35);}
-.cycdrv-pos.s{color:var(--cyc-accent,#ff6b35);opacity:.8;}
-.cycdrv-pos.b{color:var(--cyc-accent,#ff6b35);opacity:.6;}
-.cycdrv-ava{display:flex;align-items:center;justify-content:center;}
-.cycdrv-ava b{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.02em;background:var(--tc,rgba(255,107,53,.12));border-radius:6px;padding:2px 6px;line-height:1.4;color:#0b132b;}
-.cycdrv-id{display:flex;flex-direction:column;gap:1px;min-width:0;}
-.cycdrv-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cycdrv-type{opacity:.5;font-size:11px;}
-.cycdrv-team{font-size:11px;color:#8d9399;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cycdrv-bars{display:flex;flex-direction:column;gap:3px;}
-.cycbar{height:5px;width:100%;border-radius:3px;overflow:hidden;display:block;background:rgba(255,255,255,.06);}
-.cycbar i{display:block;height:100%;border-radius:3px;background:var(--cyc-accent,#ff6b35);transition:width .3s;}
-.cycbar--pod i{background:#8d9399;}
-.cycdrv-top10{font-family:'DM Mono',monospace;font-size:12px;color:#8d9399;text-align:right;}
-@media(max-width:700px){
-  .cycdrv{grid-template-columns:28px 34px 1fr 72px 38px;font-size:12px;padding:6px 10px;}
-  .cycdrv-bars{display:none;}
-}
-</style>
-<div class="cyc-wrap">
-  <div class="cyc-head">
-    <div class="cyc-title">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--cyc-accent,#ff6b35)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-      </svg>
-      Cyclisme
-      <span class="cyc-badge">Tour de France 2026</span>
-    </div>
-    <div class="cyc-sub" id="cyc-race-badge">—</div>
-  </div>
-  <div class="cyc-status" id="cyc-status">Chargement…</div>
-  <div class="cyc-bets" id="cyc-bets"></div>
-  <div class="cyc-grid-head">Grille coureurs · projections modèle (Monte-Carlo)</div>
-  <div class="cyc-grid" id="cyc-grid"></div>
-  <div class="cyc-note" id="cyc-note"></div>
 </div>
-</div>
+
 <div id="page-mma" data-page="mma" style="display:none;">
 <style>
 /* ── MMA Tab Styles ──────────────────────────────────────────── */
@@ -23270,99 +23113,7 @@ body[data-page="mma"] footer { display: none !important; }
   white-space: nowrap;
 }
 .tn2-f-btn:hover { border-color: var(--tn2-accent-dim); color: var(--tn2-text); }
-.tn2-f-btn.is-active { background: var(--tn2-accent-dim); border-color: rgba(0,119,255,0.3); color: var(--tn2-accent); }
-/* D3 fix — focus-visible pour la barre de recherche MATCHS (accessibilité clavier) */
-#tex-matchs-search:focus-visible {
-  outline: 2px solid var(--tn2-accent);
-  outline-offset: 1px;
-}
-#tex-matchs-search:focus {
-  border-color: rgba(0,119,255,.4);
-}
-/* D4 fix — tokens sémantiques pour couleurs sémantiques (au lieu de #FFD700/#fbbf24/#ce93d8 hardcoded) */
-:root {
-  --tex-gold: #FFD700;       /* élite / GS / 5 étoiles */
-  --tex-amber: #fbbf24;      /* warning / 4 étoiles / mid */
-  --tex-purple: #ce93d8;     /* upset / outsider */
-  --tex-green: #00e676;      /* value / favori / drift négatif */
-  --tex-red: #ef4444;        /* drift positif / perte */
-}
-/* D5 fix — chevron SVG pour le toggle de section tournois */
-.tex-tournaments-toggle {
-  cursor: pointer; padding: 10px 12px;
-  background: rgba(0,119,255,0.04);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
-  width: 100%; text-align: left; font-family: inherit;
-  transition: background 0.15s;
-}
-.tex-tournaments-toggle:hover { background: rgba(0,119,255,0.08); }
-.tex-tournaments-toggle .chevron { transition: transform 0.2s ease; }
-.tex-tournaments-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); }
-
-/* L24 fix — responsive popup padding on mobile (less generous, more screen real estate) */
-@media (max-width: 480px) {
-  #tex-match-detail-overlay > div,
-  #player-profile-overlay > div {
-    padding: 16px !important;
-    max-height: 92vh !important;
-    border-radius: 8px !important;
-  }
-}
-
-/* L29 fix — tableau MATCHS responsive : cards empilées < 768px */
-@media (max-width: 768px) {
-  .tex-matchs-table { overflow-x: visible; }
-  .tex-matchs-table table { display: block; }
-  .tex-matchs-table thead { display: none; }
-  .tex-matchs-table tbody { display: block; }
-  .tex-matchs-table tbody tr {
-    display: block;
-    margin-bottom: 8px;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    border-radius: 8px;
-    padding: 8px 10px;
-  }
-  .tex-matchs-table tbody td {
-    display: block;
-    padding: 4px 0 !important;
-    text-align: left !important;
-    border: none !important;
-  }
-  .tex-matchs-table tbody td:before {
-    content: attr(data-label) " : ";
-    color: var(--text3, #5a6068);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-right: 6px;
-  }
-}
-
-/* L31 fix — densité : sur mobile, grouper les filtres en 2 lignes compactes */
-@media (max-width: 640px) {
-  .tn2-tab-panel[data-tab="matchs"] > div:nth-child(2) {
-    padding: 6px !important;
-    gap: 4px !important;
-  }
-  .tn2-tab-panel[data-tab="matchs"] .tn2-f-btn {
-    padding: 4px 6px !important;
-    font-size: 9px !important;
-  }
-}
-
-/* NEW — Animation blink pour le badge LIVE */
-@keyframes tex-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
-
-/* NEW — Style spécifique pour le bouton toggle matchs terminés */
-.tex-finished-toggle.is-active {
-  background: rgba(0, 230, 118, 0.10) !important;
-  border-color: rgba(0, 230, 118, 0.30) !important;
-  color: var(--tex-green, #00e676) !important;
-}
+.tn2-f-btn.is-active { background: var(--tn2-accent-dim); border-color: rgba(0,230,118,0.3); color: var(--tn2-accent); }
 .tn2-f-badge {
   display: inline-block; padding: 0 4px;
   font-size: 9px; font-weight: 600;
@@ -23504,7 +23255,7 @@ body[data-page="mma"] footer { display: none !important; }
   transition: all var(--tn2-transition);
   text-transform: uppercase; letter-spacing: 0.03em;
 }
-.tn2-mode-btn.active { background: var(--tn2-accent-dim); border-color: rgba(0,119,255,0.25); color: var(--tn2-accent); }
+.tn2-mode-btn.active { background: var(--tn2-accent-dim); border-color: rgba(0,230,118,0.25); color: var(--tn2-accent); }
 
 /* ═══ 12 — SUBTABS ═══ */
 .tn2-subtabs {
@@ -24810,7 +24561,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.js?v=250625-34"></script>
+<script src="/pariscore.js?v=250625-5"></script>
 <script>
 (function(){
 var b=document.createElement('div');

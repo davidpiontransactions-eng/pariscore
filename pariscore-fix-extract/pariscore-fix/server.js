@@ -46,7 +46,6 @@ let nlpInjuryScraper = null; try { nlpInjuryScraper = require('./tools/nlp-injur
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
 const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
 const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
-const cyclingService    = require('./services/cyclingService');    // Cyclisme vertical (TDF 2026, Plackett-Luce mock) Sprint 2
 const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catch (_) {}
@@ -585,7 +584,6 @@ function _inferErrorContext() {
     else if (/mma|ufc/i.test(stack)) { page = 'mma'; sport = 'mma'; }
     else if (/basketball|nba|wnba/i.test(stack)) { page = 'nba'; sport = 'basketball'; }
     else if (/f1Service|jolpica|ergast/i.test(stack)) { page = 'f1'; sport = 'f1'; }
-    else if (/cyclingService/i.test(stack)) { page = 'cycling'; sport = 'cycling'; }
   } catch (_) {}
   return { page, sport };
 }
@@ -2326,38 +2324,8 @@ const SOFA_HEADERS = {
   'Cache-Control': 'no-cache',
 };
 
-// Rate limiter + retry Sofascore
-const _sofaRL = { maxPerSec: 10, windowMs: 1000, queue: [] };
-function _sofaRateLimit() {
-  return new Promise(resolve => {
-    const now = Date.now();
-    _sofaRL.queue = _sofaRL.queue.filter(t => now - t < _sofaRL.windowMs);
-    if (_sofaRL.queue.length >= _sofaRL.maxPerSec) {
-      const wait = _sofaRL.queue[0] + _sofaRL.windowMs - now;
-      setTimeout(() => { _sofaRL.queue.push(Date.now()); resolve(); }, wait);
-    } else {
-      _sofaRL.queue.push(now);
-      resolve();
-    }
-  });
-}
-
-async function _sofaGetRaw(path) {
+async function sofaGet(path) {
   return httpsGet(`https://api.sofascore.com/api/v1${path}`, SOFA_HEADERS);
-}
-
-async function sofaGet(path, retries = 2) {
-  await _sofaRateLimit();
-  for (var i = 0; i <= retries; i++) {
-    try {
-      var r = await _sofaGetRaw(path);
-      if (r && r.status === 200 && r.data) return r;
-      if (i < retries) await new Promise(r => setTimeout(r, (i + 1) * 1000));
-    } catch (e) {
-      if (i < retries) await new Promise(r => setTimeout(r, (i + 1) * 1000));
-    }
-  }
-  return null;
 }
 
 // ─── DR Live EXACT via Sofascore (stats points service/retour) ──────────────
@@ -2677,25 +2645,6 @@ function computeTennisDRFromMatch(m) {
       dr_by_set, source: 'bsd_games' };
   }
   return null;
-}
-
-// Normalise le résultat de computeTennisDRFromMatch vers le shape standard client.
-// Ajoute p1, p2, delta, exact, reliable pour compatibilité frontend.
-function _normalizeTennisDR(drRaw) {
-  if (!drRaw || !Number.isFinite(drRaw.dr)) return null;
-  const p1 = drRaw.dr;
-  const p2 = p1 > 0 ? parseFloat((1 / p1).toFixed(3)) : 1;
-  return {
-    p1, p2, delta: parseFloat(Math.abs(p1 - p2).toFixed(3)),
-    exact: drRaw.source === 'bsd_serve_ret',
-    reliable: drRaw.source === 'bsd_serve_ret' || drRaw.source === 'sofa',
-    source: drRaw.source || 'bsd_games',
-    p1Serve: drRaw.p1_serve != null ? drRaw.p1_serve : null,
-    p1Ret: drRaw.p1_ret != null ? drRaw.p1_ret : null,
-    p2Serve: drRaw.p2_serve != null ? drRaw.p2_serve : null,
-    p2Ret: drRaw.p2_ret != null ? drRaw.p2_ret : null,
-    dr_by_set: drRaw.dr_by_set || null,
-  };
 }
 
 // ─── National Team Elo Ratings — eloratings.net ──────────────────────────────
@@ -7551,9 +7500,6 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
   return handle;
 }
 
-// Agent HTTP keepAlive limité — évite les fuites de sockets sous charge
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 25, timeout: 15000, keepAliveMsecs: 30000 });
-
 function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr);
@@ -7562,36 +7508,21 @@ function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
       path: u.pathname + (u.search || ''),
       method: 'GET',
       headers: { 'Accept': 'application/json', 'User-Agent': 'PariScore/2.0', ...headers },
-      agent: httpsAgent,
     };
-    let retried = false;
-    const doRequest = () => {
-      const req = https.request(opts, (res) => {
-        let body = '';
-        res.on('data', c => body += c);
-        res.on('end', () => {
-          try {
-            resolve({ status: res.statusCode, headers: res.headers, data: JSON.parse(body) });
-          } catch (e) {
-            resolve({ status: res.statusCode, headers: res.headers, data: body });
-          }
-        });
-      });
-      req.on('error', (err) => {
-        if (!retried && (err.code === 'ECONNRESET' || err.code === 'ETIMEOUT')) {
-          retried = true;
-          return void setTimeout(doRequest, 1000);
+    const req = https.request(opts, (res) => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        try {
+          resolve({ status: res.statusCode, headers: res.headers, data: JSON.parse(body) });
+        } catch (e) {
+          resolve({ status: res.statusCode, headers: res.headers, data: body });
         }
-        reject(err);
       });
-      req.setTimeout(timeoutMs, () => {
-        req.destroy();
-        if (!retried) { retried = true; return void setTimeout(doRequest, 1000); }
-        reject(new Error('Timeout'));
-      });
-      req.end();
-    };
-    doRequest();
+    });
+    req.on('error', reject);
+    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
+    req.end();
   });
 }
 
@@ -19599,7 +19530,6 @@ function srvAccess(req) {
   const u = getAuthUser(req);
   const role = u ? u.role : null;
   let footPro = false, tennisPro = false;
-  if (process.env.TENNIS_DEV_BYPASS == "1") { footPro = true; tennisPro = true; }
   if (role === 'admin' || role === 'premium' || role === 'pro_all') { footPro = true; tennisPro = true; }
   else if (role === 'pro_foot') footPro = true;
   else if (role === 'pro_tennis') tennisPro = true;
@@ -19664,12 +19594,6 @@ function srvPlanGate(req, res, pathname) {
   // tennis-abstract (event) + report + tennis/tex — données publiques historiques
   if (pathname === '/api/v1/tennis-abstract' || pathname === '/api/v1/tennis-abstract/report') return false;
   if (pathname === '/api/v1/tennis/tex/matches' || pathname === '/api/v1/tennis/tex/calendar') return false;
-  // NEW — player-photo public (sinon <img src> reçoit erreur JSON 403 au lieu d'une image)
-  if (pathname === '/api/v1/tennis/player-photo' || pathname.startsWith('/api/v1/tennis/player-photo/')) return false;
-  // NEW — player-profile exempté aussi (sinon popup fiche joueur cassé en consultation libre)
-  if (pathname === '/api/v1/tennis/player-profile') return false;
-  // NEW — match-by-players exempté (cherche match BSD pour modale prematch MATCHS)
-  if (pathname === '/api/v1/tennis/match-by-players') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
@@ -20785,52 +20709,6 @@ const STRATEGIES = {
       return null;
     },
   },
-  // ── Tennis strategies (évaluation côté client) ──────────────────────────
-  TENNIS_SERVE_HOLD: {
-    label: 'Serve & Hold',
-    icon: '',
-    tipster: 'Le Serveur',
-    tipsterDesc: 'Joueur avec % jeux servis gagnés ≥ 80%. Service dominant sur surface.',
-    tipsterFlag: '🇺🇸',
-    getProb: () => null,
-    getOdds: () => null,
-  },
-  TENNIS_RETURN_SPECIALIST: {
-    label: 'Return Specialist',
-    icon: '',
-    tipster: 'Le Breakeur',
-    tipsterDesc: 'Joueur dominant au retour (≥45% pts retour gagnés). Briseur de service.',
-    tipsterFlag: '🇦🇺',
-    getProb: () => null,
-    getOdds: () => null,
-  },
-  TENNIS_DR_DOMINANCE: {
-    label: 'DR Dominance',
-    icon: '',
-    tipster: 'Le Dominant',
-    tipsterDesc: 'Dominance Ratio (DR) ≥ 1.3 sur la surface. Contrôle du jeu.',
-    tipsterFlag: '🇪🇸',
-    getProb: () => null,
-    getOdds: () => null,
-  },
-  TENNIS_SURFACE_SPECIALIST: {
-    label: 'Surface Specialist',
-    icon: '',
-    tipster: 'Le Spécialiste',
-    tipsterDesc: 'Elo surface ≥ 1650 (top 5% sur la surface). Spécialiste surface.',
-    tipsterFlag: '🇨🇭',
-    getProb: () => null,
-    getOdds: () => null,
-  },
-  TENNIS_UNDERDOG_HOLD: {
-    label: 'Underdog Hold',
-    icon: '',
-    tipster: 'Le Renard',
-    tipsterDesc: 'Underdog (cote ≥ 2.0) avec service solide (hold ≥ 78%).',
-    tipsterFlag: '🇫🇷',
-    getProb: () => null,
-    getOdds: () => null,
-  },
 };
 
 // Value Index: mesure la valeur RÉELLE du bet (0-100%).
@@ -21719,41 +21597,6 @@ async function handleAPI(req, res, pathname, query) {
     }
   }
 
-  // ── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ──
-  // GET /api/v1/cycling — étape en cours : grille coureurs + 3 value bets + stats
-  if (pathname === '/api/v1/cycling' && req.method === 'GET') {
-    try {
-      const full = await cyclingService.getCyclingFull();
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' });
-      return res.end(JSON.stringify(full));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ ok: false, error: e.message, bets: [], riders: [] }));
-    }
-  }
-  // GET /api/v1/cycling/bets — 3 value bets seuls
-  if (pathname === '/api/v1/cycling/bets' && req.method === 'GET') {
-    try {
-      const b = await cyclingService.getCyclingBets();
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' });
-      return res.end(JSON.stringify(b));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ ok: false, error: e.message, bets: [] }));
-    }
-  }
-  // GET /api/v1/cycling/races — calendrier étapes
-  if (pathname === '/api/v1/cycling/races' && req.method === 'GET') {
-    try {
-      const r = await cyclingService.getCyclingStages();
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
-      return res.end(JSON.stringify(r));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ ok: false, error: e.message, stages: [] }));
-    }
-  }
-
   // ── BetExplorer Tennis Dropping Odds ─────────────────────────────────────
   // GET /api/v1/tennis/dropping-odds?min=20 — matchs tennis avec cotes descendantes
   if (pathname === '/api/v1/tennis/dropping-odds' && req.method === 'GET') {
@@ -21834,7 +21677,7 @@ async function handleAPI(req, res, pathname, query) {
     try {
       var playerName = null;
       try { var row = sqldb.prepare("SELECT player_name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row) playerName = row.player_name; } catch (_) {}
-      if (!playerName) { try { var row2 = sqldb.prepare("SELECT player_name AS name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
+      if (!playerName) { try { var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
       if (playerName) {
         var wikiUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(playerName.replace(/ +/g, '_'));
         var wikiOk = await new Promise(function(resolve) {
@@ -21882,7 +21725,7 @@ async function handleAPI(req, res, pathname, query) {
       }
     } catch (_) {}
     try {
-      var row2 = sqldb.prepare("SELECT player_name AS name FROM tennis_players_elo WHERE player_id = ?").get(playerId);
+      var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId);
       if (row2 && row2.name) {
         res.writeHead(302, { 'Location': 'https://ui-avatars.com/api/?name=' + encodeURIComponent(row2.name.trim()) + '&background=172132&color=fff&size=96&bold=true' });
         res.end();
@@ -23096,9 +22939,6 @@ async function fetchESPNTennisLive() {
 const TENNIS_SCHEDULE_TTL_MS = 15 * 60 * 1000;
 const TENNIS_SCHEDULE_DAYS = 3;
 let _tennisScheduleCache = { ts: 0, data: [] };
-/** Anti-cache-stampede : si N requêtes arrivent pendant un fetch, une seule
-    déclenche l'appel ESPN, les autres attendent la même promise. */
-let _schedulePromise = null;
 
 function _tennisYmd(d) {
   return d.getUTCFullYear() * 1e4 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
@@ -23127,18 +22967,13 @@ async function getTennisScheduleCached() {
   if (Date.now() - _tennisScheduleCache.ts < TENNIS_SCHEDULE_TTL_MS && _tennisScheduleCache.data.length) {
     return _tennisScheduleCache.data;
   }
-  if (!_schedulePromise) {
-    _schedulePromise = fetchESPNTennisSchedule().then(data => {
-      if (data && data.length) _tennisScheduleCache = { ts: Date.now(), data };
-      _schedulePromise = null;
-      return _tennisScheduleCache.data;
-    }).catch(e => {
-      console.warn('  [Tennis] schedule fetch error:', e.message);
-      _schedulePromise = null;
-      return _tennisScheduleCache.data;
-    });
+  try {
+    const data = await fetchESPNTennisSchedule();
+    if (data.length) _tennisScheduleCache = { ts: Date.now(), data };
+  } catch (e) {
+    console.warn('  [Tennis] schedule fetch error:', e.message);
   }
-  return _schedulePromise;
+  return _tennisScheduleCache.data;
 }
 
 // ── BSD Tennis (Sports Addon actif) — source PRIMAIRE, ESPN en complément ──────
@@ -24324,8 +24159,6 @@ async function _fetchMSChallengerMatches() {
   }
 }
 
-let _tennisEloFinishedIds = new Set();
-
 async function pollTennisLive() {
   if (_isFetchingTennis) return;
   _isFetchingTennis = true;
@@ -24893,52 +24726,11 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     try { await enrichMatchesWithBetfairWOM(data, 'tennis'); } catch (_) {}
-    // Injection DR normalisé dans chaque match live pour le client
-    for (let i = 0; i < data.length; i++) {
-      try {
-        const drRaw = computeTennisDRFromMatch(data[i]);
-        if (drRaw) data[i].dr_exact = _normalizeTennisDR(drRaw);
-      } catch (_) { /* skip si les stats manquent */ }
-    }
     _tennisLiveCache = { ts: Date.now(), data };
     try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
     try { verifyPendingFootAlerts(); } catch (e) { console.warn('  [FootAlerts] verifyPending:', e.message); }
     // bd c8zp: cron capture tennis score finals → tennisHistory
     try { archiveFinishedTennisFromLiveCache(data); } catch (e) { console.warn('  [Tennis Archive]', e.message); }
-    // bd — Auto-alimentation tennis_players_elo depuis les matchs terminés
-    try {
-      const _eloLookupStmt = sqldb.prepare("SELECT player_id, player_name, elo, matches_count FROM tennis_elo WHERE LOWER(player_name) = LOWER(?) AND tour = ? AND surface = 'ALL' LIMIT 1");
-      const _eloInsertStmt = sqldb.prepare('INSERT OR REPLACE INTO tennis_players_elo (player_id, player_name, elo_rating, matches_played, last_match_at, circuit) VALUES (?, ?, ?, ?, ?, ?)');
-      const _nowSec = Math.floor(Date.now() / 1000);
-      let _eloAdded = 0;
-      for (const _m of data) {
-        if (!_m || !_m.id) continue;
-        if (_tennisEloFinishedIds.has(_m.id)) continue;
-        const _isFinished = _m.is_live === false && (
-          String(_m.status || '').toLowerCase().includes('finish') ||
-          String(_m.status || '').toLowerCase().includes('end') ||
-          String(_m.status || '').toLowerCase() === 'ft' ||
-          (_m.player1_sets != null && _m.player2_sets != null && (_m.player1_sets >= 2 || _m.player2_sets >= 2))
-        );
-        if (!_isFinished) continue;
-        _tennisEloFinishedIds.add(_m.id);
-        const _circuit = _m.tour === 'WTA' ? 'WTA' : 'ATP';
-        for (const _pName of [_m.player1?.name, _m.player2?.name]) {
-          if (!_pName) continue;
-          const _row = _eloLookupStmt.get(_pName, _circuit);
-          if (_row) {
-            _eloInsertStmt.run(String(_row.player_id), _row.player_name, _row.elo, _row.matches_count, _nowSec, _circuit);
-            console.log('  [TennisElo] auto-update:', _row.player_name, _row.elo);
-            _eloAdded++;
-          }
-        }
-      }
-      if (_eloAdded > 0) console.log('  [TennisElo] ' + _eloAdded + ' joueurs mis à jour');
-      if (_tennisEloFinishedIds.size > 2000) {
-        const _arr = Array.from(_tennisEloFinishedIds).slice(-1000);
-        _tennisEloFinishedIds = new Set(_arr);
-      }
-    } catch (_eElo) { console.warn('  [TennisElo] auto-update error:', _eElo.message); }
     // bd mpg Phase 2 — On-demand fetch aiscore PBP pour matchs live sans cache.
     // Trigger populate cache → next poll detectAndBroadcastPBPUpdates broadcast SSE.
     try {
@@ -27823,8 +27615,6 @@ function computePlayerServeReceiveIndex(playerName, tour, surface = 'ALL', lastN
     const bpConvertedPct = safePercent(totalOppBpFaced - totalOppBpSaved, totalOppBpFaced) || 0;
 
     const receiveIndex = Math.round(rpwPct * 0.6 + bpConvertedPct * 0.4);
-    const firstInPct = safePercent(totalFirstIn, totalSvpt) || 0;
-    const serveHoldPct = safePercent(totalFirstWon + totalSecondWon, totalSvpt) || 0;
 
     // Lookup rank from global serve index
     let serveRank = null, serveTotal = null, receiveRank = null, receiveTotal = null;
@@ -27857,8 +27647,6 @@ function computePlayerServeReceiveIndex(playerName, tour, surface = 'ALL', lastN
       receive_delta: delta.receive_delta,
       first_won_pct: parseFloat(firstWonPct.toFixed(2)),
       second_won_pct: parseFloat(secondWonPct.toFixed(2)),
-      first_in_pct: parseFloat(firstInPct.toFixed(2)),
-      serve_hold_pct: parseFloat(serveHoldPct.toFixed(2)),
       ace_pct: parseFloat(acePct.toFixed(2)),
       rpw_pct: parseFloat(rpwPct.toFixed(2)),
       bp_converted_pct: parseFloat(bpConvertedPct.toFixed(2)),
@@ -29792,61 +29580,9 @@ async function fetchAiscoreSportFixtures(sport, maxItems = 50) {
 // User-Agent identifié + cookie my_timezone=0 (UTC) pour parsing TZ-safe.
 const TEX_BASE = 'https://www.tennisexplorer.com';
 const TEX_MATCHES_TTL_MS = 30 * 60 * 1000;   // 30min
-const TEX_MATCHES_TTL_TODAY_MS = 5 * 60 * 1000; // L15 fix — 5min for today's matches (live odds change fast)
 const TEX_PLAYER_TTL_MS = 24 * 3600 * 1000;  // 24h
-const TEX_CACHE_MAX_ENTRIES = 500; // M10 fix — LRU cap to bound memory
-
-// L4 fix — extract magic numbers into named config for clarity + tuning
-const TEX_RATING_CONFIG = {
-  eloDeltaWeight: 0.5,
-  driftNegP1Weight: 2,
-  driftNegP2Weight: 2,
-  eloAvgFloor: 1600,    // Elo → 0 at this value
-  eloAvgCeil: 2200,     // Elo → 100 at this value
-  compScoreDeltaCoeff: 0.5,  // competitiveness slope
-  bettingValueDriftCoeff: 10,
-  eliteEloThreshold: 1900,
-  weights: { elo: 0.30, comp: 0.25, prestige: 0.20, betting: 0.15, odds: 0.10 },
-};
-
-// L3 fix — prestige lookup table with explicit slug/name matching (no loose `paris` regex)
-const TEX_PRESTIGE_RULES = [
-  { score: 100, pattern: /grand\s*slam|roland[\s-]*garros|wimbledon|us\s*open|australian\s*open/i },
-  { score: 80,  pattern: /masters(?:\s*1000)?|wta\s*1000|atp\s*1000|indian\s*wells|miami\s*open|madrid\s*open|internazionali|rome\s*masters|monte[\s-]*carlo|cincinnati|canada\s*masters|toronto|montreal|shanghai\s*masters|paris\s*masters/i },
-  { score: 60,  pattern: /atp\s*500|wta\s*500|halle\s*open|queen'?s\s*club|barcelona\s*open|swiss\s*indoors|basel|vienna\s*open|tokyo\s*open|dubai\s*duty\s*free|acapulco/i },
-  { score: 40,  pattern: /atp\s*250|wta\s*250/i },
-];
 const texMatchesCache = new Map();
 const texPlayerCache = new Map();
-
-// M10 fix — LRU eviction helper (Map keeps insertion order in JS)
-function _texCacheEvict(cache, maxEntries) {
-  if (cache.size <= maxEntries) return;
-  const toRemove = cache.size - maxEntries;
-  let removed = 0;
-  for (const key of cache.keys()) {
-    if (removed >= toRemove) break;
-    cache.delete(key);
-    removed++;
-  }
-}
-
-// M8 fix — decode common HTML entities encountered in TE player names/tournaments
-function _decodeHtmlEntities(s) {
-  if (!s) return s;
-  return String(s)
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)))
-    .replace(/\s+/g, ' ')
-    .trim();
-}
 
 function _texFmtDate(d) {
   // Tennis Explorer date format: YYYY-MM-DD via ?year=YYYY&month=MM&day=DD
@@ -29856,168 +29592,56 @@ function _texFmtDate(d) {
 
 async function _texFetchHtml(pathSuffix) {
   const url = `${TEX_BASE}${pathSuffix}`;
-  // TEX7 fix — retry 2x avec backoff 1s si échec réseau
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const res = await httpsGet(url, {
-        'Accept': 'text/html,application/xhtml+xml',
-        'User-Agent': 'Mozilla/5.0 (PariScore/2.0 +https://pariscore.fr)',
-        'Cookie': 'my_timezone=0',
-      });
-      if (res.status === 200 && typeof res.data === 'string') return res.data;
-      if (attempt < 3) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
-      throw new Error(`tennisexplorer HTTP ${res.status} for ${pathSuffix}`);
-    } catch (e) {
-      if (attempt < 3) { await new Promise(r => setTimeout(r, 1000 * attempt)); continue; }
-      _trackCatch('tennis', 'tex_fetch_html', e);
-      throw e;
-    }
+  const res = await httpsGet(url, {
+    'Accept': 'text/html,application/xhtml+xml',
+    'User-Agent': 'Mozilla/5.0 (PariScore/2.0 +https://pariscore.render.com)',
+    'Cookie': 'my_timezone=0',
+  });
+  if (res.status !== 200 || typeof res.data !== 'string') {
+    throw new Error(`tennisexplorer HTTP ${res.status} for ${pathSuffix}`);
   }
+  return res.data;
 }
 
-function _texParseMatchesPage(html, dateISO) {
+function _texParseMatchesPage(html) {
   if (!html) return [];
   const out = [];
-  // TEX8 fix — capturer le nom du tournoi depuis les en-têtes de bloc
-  // Les en-têtes tournoi sont dans <tr class="head"> avec <a href="/tournament-slug/">
-  let currentTournament = null;
-  let currentSurface = null;
-  // Regex pour les en-têtes tournoi (entre les blocs de matchs)
-  // L20 fix — declare tourHeadRe locally (not module-level) so lastIndex state can't leak across calls
-  // BUGFIX v2 — la structure HTML réelle de TennisExplorer est :
-  //   <tr class="head flags"><td><a href="/utr-pro-tennis-series-3/2026/atp-men/">
-  //     <span class="fl fl-us">&nbsp;</span><span class="type-men2">&nbsp;</span>UTR Pro Tennis Series 3</a></td>
-  // Problèmes avec l'ancienne regex :
-  //   1. [^"]+? s'arrêtait au premier / → ne capturait pas le slug complet (avec /2026/atp-men/)
-  //   2. [^<]+ essayait de matcher juste après > mais il y a <span> avant le texte → échouait
-  // Solution :
-  //   - href="\/(?!player\/|doubles-team\/)([^"]+?)\/?" : capture le slug complet + exclut joueurs
-  //   - >[\s\S]*?([^<]+)<\/a> : skip les spans et capture le DERNIER texte avant </a>
-  //   - nettoyer le name pour retirer d'éventuels "/span>" ou espaces en début
-  const tourHeadRe = /<tr[^>]*class="[^"]*head[^"]*"[^>]*>[\s\S]*?<a\s+href="\/(?!player\/|doubles-team\/|match-detail\/|results\/)([^"]+?)\/?"[^>]*>[\s\S]*?([^<]+)<\/a>[\s\S]*?<\/tr>/g;
-  // Regex pour surface dans l'en-tête (class="surface" ou texte Clay/Hard/Grass)
-  const surfaceRe = /(?:class="surface"[^>]*>([^<]+)<|(Clay|Hard|Grass|Carpet|Indoor))/i;
   // Capture paired rows: <tr id="s<N>" or "r<N>"> + <tr id="s<N>b" or "r<N>b">
+  // Singles use s prefix, doubles use r prefix (T4 v10.13)
   const trRe = /<tr id="([sr])(\d+)"[^>]*class="(one|two)[^"]*"[^>]*>([\s\S]*?)<\/tr>\s*<tr id="\1\2b"[^>]*>([\s\S]*?)<\/tr>/g;
   let m;
-  // Première passe : trouver tous les en-têtes tournoi avec leur position
-  const tourHeaders = [];
-  let thMatch;
-  while ((thMatch = tourHeadRe.exec(html)) !== null) {
-    const blockHtml = thMatch[0];
-    // BUGFIX v2 — nettoyer le nom du tournoi qui peut contenir des artefacts
-    // (la regex capture parfois "/span>" ou des espaces en début à cause des <span> avant le texte)
-    let tourName = thMatch[2].trim().replace(/^\/span>/, '').trim();
-    let tourSlug = thMatch[1].trim();
-    // BUGFIX v2 — filtrer les faux positifs : noms purement numériques (liens de pagination "26")
-    if (/^\d+$/.test(tourName)) continue;
-    // Détecter surface dans le bloc
-    let surface = null;
-    const sM = blockHtml.match(surfaceRe);
-    if (sM) surface = (sM[1] || sM[2] || '').trim();
-    tourHeaders.push({ pos: thMatch.index, name: tourName, slug: tourSlug, surface });
-  }
-  // Deuxième passe : parser les matchs et associer le tournoi le plus récent
-  // L2 fix — pre-build Map<name, slug> to avoid O(n²) tourHeaders.find() per match
-  const tourHeadersByExactName = new Map();
-  for (const th of tourHeaders) {
-    if (!tourHeadersByExactName.has(th.name)) tourHeadersByExactName.set(th.name, th);
-  }
-  // NEW — Snapshot de l'heure UTC au moment du parse (pour inférer status live/finished/upcoming)
-  // PIPE-5 fix — utiliser la date demandée (dateISO) plutôt que "aujourd'hui" pour le calcul
-  // du statut. Sans ça, les matchs d'une date passée/future sont tous badgés 'live' ou 'upcoming'
-  // à tort. Fallback sur aujourd'hui si dateISO absent (rétrocompatibilité appelant L24149).
-  const nowMs = Date.now();
-  const nowUtc = new Date(nowMs);
-  let refUtcY = nowUtc.getUTCFullYear();
-  let refUtcM = nowUtc.getUTCMonth();
-  let refUtcD = nowUtc.getUTCDate();
-  if (dateISO && /^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
-    refUtcY = parseInt(dateISO.slice(0, 4), 10);
-    refUtcM = parseInt(dateISO.slice(5, 7), 10) - 1;
-    refUtcD = parseInt(dateISO.slice(8, 10), 10);
-  }
-  const todayUtcY = refUtcY;
-  const todayUtcM = refUtcM;
-  const todayUtcD = refUtcD;
   while ((m = trRe.exec(html)) !== null) {
-    const [, , idx, , row1, row2] = m;
-    // Trouver le tournoi le plus récent avant ce match
-    let tournament = null;
-    let surface = null;
-    for (const th of tourHeaders) {
-      if (th.pos < m.index) {
-        tournament = th.name;
-        surface = th.surface;
-      } else break;
-    }
+    const [, , idx, , row1, row2] = m; // [prefix, num, class, row1, row2] post-T4
     const timeM = row1.match(/class="first time"[^>]*>([^<]+)</);
+    // T4: accept /player/<slug> (singles) OR /doubles-team/<slug1>/<slug2> (doubles)
     const p1M = row1.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     const p2M = row2.match(/class="t-name"><a href="\/(?:player|doubles-team)\/([^"]+?)\/?"[^>]*>([^<]+)<\/a>/);
     if (!p1M || !p2M) continue;
-    // M8 fix — decode HTML entities in player/tournament names (handles &amp; &#39; &nbsp; etc.)
     const scoresP1 = [...row1.matchAll(/class="score"[^>]*>([^<]*)</g)]
-      .map(x => _decodeHtmlEntities(x[1])).filter(Boolean);
+      .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
     const scoresP2 = [...row2.matchAll(/class="score"[^>]*>([^<]*)</g)]
-      .map(x => _decodeHtmlEntities(x[1])).filter(Boolean);
+      .map(x => x[1].replace(/&nbsp;/g, '').trim()).filter(Boolean);
     const oddsOpen = [...row1.matchAll(/class="coursew"[^>]*>([^<]+)</g)]
       .map(x => parseFloat(x[1])).filter(v => Number.isFinite(v));
     const oddsCurr = [...row1.matchAll(/class="course"[^>]*>([^<]+)</g)]
       .map(x => parseFloat(x[1])).filter(v => Number.isFinite(v));
     const matchIdM = row1.match(/href="\/match-detail\/\?id=(\d+)"/);
     const time = timeM ? timeM[1].trim() : null;
-    // M7 fix — clamp denominator to avoid division by zero if oddsOpen is exactly 0 (corrupted HTML)
-    const driftP1 = (oddsOpen[0] != null && oddsCurr[0] != null) ? ((oddsCurr[0] - oddsOpen[0]) / Math.max(0.01, Math.abs(oddsOpen[0])) * 100) : null;
-    const driftP2 = (oddsOpen[1] != null && oddsCurr[1] != null) ? ((oddsCurr[1] - oddsOpen[1]) / Math.max(0.01, Math.abs(oddsOpen[1])) * 100) : null;
-    // Round info (ex: "1/8", "Quarterfinal", etc.)
-    const roundM = row1.match(/class="round"[^>]*>([^<]+)</);
-    // ─── NEW — Inférence status : finished | live | upcoming ───
-    // S'appuie sur time_utc + présence de scores + nombre de sets joués.
-    let status = 'upcoming';
-    let startsInMin = null;
-    if (time && /^\d{1,2}:\d{2}/.test(time)) {
-      const parts = time.match(/^(\d{1,2}):(\d{2})/);
-      const hh = parseInt(parts[1], 10);
-      const mm = parseInt(parts[2], 10);
-      const matchStartMs = Date.UTC(todayUtcY, todayUtcM, todayUtcD, hh, mm);
-      startsInMin = Math.round((matchStartMs - nowMs) / 60000);
-      const totalSets = Math.max(scoresP1.length, scoresP2.length);
-      const hasScores = totalSets > 0;
-      // Heuristique :
-      // - 3+ sets joués → fini (best-of-3 avec 2-1 ou best-of-5 avec 3-0/3-1/3-2)
-      // - match commencé il y a plus de 5h avec scores → probablement fini
-      // - match commencé (startsInMin < 0) sans condition précédente → live
-      // - match pas encore commencé → upcoming
-      if (totalSets >= 3) status = 'finished';
-      else if (startsInMin < -300 && hasScores) status = 'finished';
-      else if (startsInMin < 0) status = 'live';
-      else status = 'upcoming';
-    }
+    const driftP1 = (oddsOpen[0] && oddsCurr[0]) ? ((oddsCurr[0] - oddsOpen[0]) / oddsOpen[0] * 100) : null;
+    const driftP2 = (oddsOpen[1] && oddsCurr[1]) ? ((oddsCurr[1] - oddsOpen[1]) / oddsOpen[1] * 100) : null;
     out.push({
       id: matchIdM ? `tex_${matchIdM[1]}` : `tex_idx_${idx}`,
       tex_match_id: matchIdM ? parseInt(matchIdM[1], 10) : null,
-      time_utc: time,
-      status, // NEW — 'finished' | 'live' | 'upcoming' | 'unknown'
-      starts_in_minutes: startsInMin, // NEW — négatif si déjà commencé
-      tournament: tournament ? _decodeHtmlEntities(tournament) : null,
-      tournament_slug: tournament ? (tourHeadersByExactName.get(tournament)?.slug || null) : null,
-      surface: surface || null,
-      round: roundM ? _decodeHtmlEntities(roundM[1]) : null,
-      player1: { slug: p1M[1], name: _decodeHtmlEntities(p1M[2]), scores: scoresP1 },
-      player2: { slug: p2M[1], name: _decodeHtmlEntities(p2M[2]), scores: scoresP2 },
+      time_utc: time, // HH:MM en UTC (cookie my_timezone=0)
+      player1: { slug: p1M[1], name: p1M[2].trim(), scores: scoresP1 },
+      player2: { slug: p2M[1], name: p2M[2].trim(), scores: scoresP2 },
+      // NOTE: page /matches/ affiche les odds de player1 seul (favori display).
+      // Pour récupérer p2 odds → fetch /match-detail/?id=N (non implémenté MVP).
       odds_open: (oddsOpen.length > 0) ? { p1: oddsOpen[0] ?? null, p2: oddsOpen[1] ?? null } : null,
       odds_current: (oddsCurr.length > 0) ? { p1: oddsCurr[0] ?? null, p2: oddsCurr[1] ?? null } : null,
       odds_drift_pct: (driftP1 != null || driftP2 != null) ? { p1: driftP1, p2: driftP2 } : null,
     });
   }
-  // M4 fix — telemetry on parser health for monitoring (no PII)
-  try {
-    const _parsedCount = out.length;
-    const _headersCount = (tourHeaders || []).length;
-    if (_parsedCount === 0 && _headersCount > 0) {
-      console.warn('[tex-parser] 0 matches parsed from page with ' + _headersCount + ' tournament headers — possible HTML structure drift');
-    }
-  } catch (_) {}
   return out;
 }
 
@@ -30082,44 +29706,9 @@ function _texParsePlayerPage(html, slug) {
     sex,
     plays,
     surface_record, // T3
-    prize_money: _texParsePrizeMoney(html), // TEX-PROFILE
     source_url: `${TEX_BASE}/player/${slug}/`,
     fetched_at: new Date().toISOString(),
   };
-}
-
-// TEX-PROFILE — Parser prize money depuis page joueur TennisExplorer
-function _texParsePrizeMoney(html) {
-  if (!html) return null;
-  // Chercher "Prize money" dans le bloc de détails
-  const pmM = html.match(/Prize\s*money[:\s]*<\/[^>]+>\s*<[^>]+>\s*([\$€]\s*[\d,]+)/i);
-  if (pmM) {
-    const raw = pmM[1].replace(/[\$€\s]/g, '').replace(/,/g, '');
-    const total = parseInt(raw, 10);
-    if (Number.isFinite(total)) return { total_career: total, currency: 'USD' };
-  }
-  // Fallback : chercher tableau annuel de prize money
-  const yearM = html.match(/<table[^>]*class="player-result"[^>]*>([\s\S]*?)<\/table>/);
-  if (yearM) {
-    const rows = [...yearM[1].matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)];
-    const yearly = {};
-    let careerRowFound = false;
-    for (const r of rows) {
-      const cells = [...r[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(c => c[1].replace(/<[^>]+>/g, '').trim());
-      // L17 fix — exclude the "Career" totals row to avoid double-counting with the yearly sum
-      const firstCellLower = (cells[0] || '').toLowerCase();
-      if (/^career$/i.test(firstCellLower)) { careerRowFound = true; continue; }
-      if (cells.length >= 2 && /\d{4}/.test(cells[0])) {
-        const year = parseInt(cells[0], 10);
-        const prizeRaw = (cells[cells.length - 1] || '').replace(/[\$€\s,]/g, '');
-        const prize = parseInt(prizeRaw, 10);
-        if (Number.isFinite(prize)) yearly[year] = prize;
-      }
-    }
-    const total = Object.values(yearly).reduce((s, v) => s + v, 0);
-    if (total > 0) return { total_career: total, currency: 'USD', yearly, _career_row_present: careerRowFound };
-  }
-  return null;
 }
 
 async function fetchTexMatches(tour, dateISO) {
@@ -30136,18 +29725,10 @@ async function fetchTexMatches(tour, dateISO) {
   const datePart = dateISO ? `&year=${dateISO.slice(0, 4)}&month=${dateISO.slice(5, 7)}&day=${dateISO.slice(8, 10)}` : '';
   const cacheKey = `${type}|${dateISO || 'today'}`;
   const cached = texMatchesCache.get(cacheKey);
-  // L11 fix — also check that cached.data.date matches the requested date (avoid stale 'today' returned for next day)
-  const todayISO = _texFmtDate(new Date());
-  const requestedDate = dateISO || todayISO;
-  // L15 fix — shorter TTL (5min) when fetching today's matches (live odds change fast)
-  const isToday = requestedDate === todayISO;
-  const ttlMs = isToday ? TEX_MATCHES_TTL_TODAY_MS : TEX_MATCHES_TTL_MS;
-  if (cached && Date.now() - cached.ts < ttlMs && cached.data && cached.data.date === requestedDate) {
-    return cached.data;
-  }
+  if (cached && Date.now() - cached.ts < TEX_MATCHES_TTL_MS) return cached.data;
   const path = `/matches/?type=${type}${datePart}`;
   const html = await _texFetchHtml(path);
-  const matches = _texParseMatchesPage(html, dateISO || null);
+  const matches = _texParseMatchesPage(html);
   const data = {
     tour: type.split('-')[0].toUpperCase(),
     format: type.split('-')[1], // single | double
@@ -30156,166 +29737,8 @@ async function fetchTexMatches(tour, dateISO) {
     fetched_at: new Date().toISOString(),
     matches,
   };
-  // TEX-FILTERS — enrichir chaque match avec Elo surface P1/P2 + delta + value_score
-  try {
-    const tourCode = type.split('-')[0].toUpperCase(); // ATP ou WTA
-    const eloMap = new Map();
-    try {
-      const eloRows = sqldb.prepare('SELECT player_name, elo, surface, matches_count FROM tennis_elo WHERE tour = ?').all(tourCode);
-      // M6 fix — Map<name, Map<surface, elo>> so we can pick best surface match per match surface
-      for (const r of eloRows) {
-        const key = (r.player_name || '').toLowerCase().trim();
-        if (!key) continue;
-        const surfaceKey = (r.surface || 'ALL').toUpperCase();
-        if (!eloMap.has(key)) eloMap.set(key, new Map());
-        const playerSurfaces = eloMap.get(key);
-        // Store; prefer non-ALL surface in lookup logic downstream
-        if (!playerSurfaces.has(surfaceKey) || surfaceKey !== 'ALL') {
-          playerSurfaces.set(surfaceKey, { elo: r.elo, surface: r.surface, matches: r.matches_count });
-        }
-      }
-    } catch (e) { _trackCatch('tennis', 'tex_elo_enrich', e); }
-    // Enrichir chaque match
-    for (const m of data.matches) {
-      const p1Key = (m.player1.name || '').toLowerCase();
-      const p2Key = (m.player2.name || '').toLowerCase();
-      // Match Elo par nom exact, sinon par dernier mot du nom (fallback)
-      // H3 fix — lookup Elo par nom exact, puis par slug TE, puis par dernier mot (stricte)
-      // M6 fix — eloMap values are now Map<surface, eloRow>; pick best surface-aware entry
-      const _pickBestElo = (playerSurfaces, matchSurface) => {
-        if (!playerSurfaces) return null;
-        // Prefer surface-specific Elo if match surface is known
-        if (matchSurface) {
-          const surfKey = matchSurface.toUpperCase();
-          if (playerSurfaces.has(surfKey)) return playerSurfaces.get(surfKey);
-        }
-        // Otherwise prefer a non-ALL surface, else ALL
-        let allEntry = null;
-        let nonAllEntry = null;
-        for (const [surfKey, val] of playerSurfaces) {
-          if (surfKey === 'ALL') allEntry = val;
-          else { nonAllEntry = val; break; }
-        }
-        return nonAllEntry || allEntry;
-      };
-      const findElo = (name, slug, matchSurface) => {
-        if (!name) return null;
-        // 1. Match exact par nom complet
-        const full = eloMap.get(name.toLowerCase().trim());
-        if (full) return _pickBestElo(full, matchSurface);
-        // 2. Match par slug TE (ex: "jannik-sinner" → "sinner")
-        if (slug) {
-          const slugParts = slug.toLowerCase().split('-');
-          const slugLast = slugParts[slugParts.length - 1];
-          for (const [k, v] of eloMap) {
-            const dbParts = k.split(' ');
-            const dbLast = dbParts[dbParts.length - 1];
-            if (dbLast === slugLast && dbParts.length >= 1) return _pickBestElo(v, matchSurface);
-          }
-        }
-        // 3. Fallback stricte : dernier mot du nom exact (pas includes)
-        const lastName = name.toLowerCase().split(' ').pop();
-        if (lastName.length < 4) return null;
-        for (const [k, v] of eloMap) {
-          const dbLast = k.split(' ').pop();
-          if (dbLast === lastName) return _pickBestElo(v, matchSurface);
-        }
-        return null;
-      };
-      const e1 = findElo(m.player1.name, m.player1.slug, m.surface);
-      const e2 = findElo(m.player2.name, m.player2.slug, m.surface);
-      m.elo_surface = {
-        p1: e1 ? Math.round(e1.elo) : null,
-        p2: e2 ? Math.round(e2.elo) : null,
-        delta: (e1 && e2) ? Math.abs(Math.round(e1.elo - e2.elo)) : null,
-        favorite: (e1 && e2) ? (e1.elo > e2.elo ? 'p1' : 'p2') : null,
-      };
-      // Value score : combine Elo delta + drift cotes (plus le delta est grand + drift négatif = value)
-      // L4 fix — use TEX_RATING_CONFIG magic numbers (tunable config)
-      let valueScore = 0;
-      if (m.elo_surface.delta != null) valueScore += m.elo_surface.delta * TEX_RATING_CONFIG.eloDeltaWeight;
-      if (m.odds_drift_pct) {
-        if (m.odds_drift_pct.p1 != null && m.odds_drift_pct.p1 < 0) valueScore += Math.abs(m.odds_drift_pct.p1) * TEX_RATING_CONFIG.driftNegP1Weight;
-        if (m.odds_drift_pct.p2 != null && m.odds_drift_pct.p2 < 0) valueScore += Math.abs(m.odds_drift_pct.p2) * TEX_RATING_CONFIG.driftNegP2Weight;
-      }
-      m.value_score = Math.round(valueScore * 10) / 10;
-      // Elite flag : les 2 joueurs dans le top 50 Elo
-      m.is_elite = (e1 && e2 && e1.elo >= TEX_RATING_CONFIG.eliteEloThreshold && e2.elo >= TEX_RATING_CONFIG.eliteEloThreshold) ? true : false;
-      // Drift max (plus gros mouvement de cotes)
-      m.max_drift = Math.max(
-        Math.abs(m.odds_drift_pct?.p1 || 0),
-        Math.abs(m.odds_drift_pct?.p2 || 0)
-      );
-      // ═══ MATCH RATING — 5 critères pondérés, score 0-100, 1-5 étoiles ═══
-      // Critère 1 : Qualité Elo (30%) — moyenne Elo des 2 joueurs
-      var eloAvg = (m.elo_surface?.p1 && m.elo_surface?.p2) ? (m.elo_surface.p1 + m.elo_surface.p2) / 2 : 0;
-      var eloScore = Math.min(100, Math.max(0, (eloAvg - TEX_RATING_CONFIG.eloAvgFloor) / ((TEX_RATING_CONFIG.eloAvgCeil - TEX_RATING_CONFIG.eloAvgFloor) / 100)));
-      // Critère 2 : Compétitivité (25%) — delta Elo petit = match serré
-      var eloDelta = (m.elo_surface && m.elo_surface.delta != null) ? m.elo_surface.delta : 999;
-      var compScore = Math.max(0, 100 - eloDelta * TEX_RATING_CONFIG.compScoreDeltaCoeff);
-      // Critère 3 : Prestige tournoi (20%) — L3 fix : lookup table with explicit rules
-      var tourName = (m.tournament || '').toLowerCase();
-      var prestigeScore = 20; // défaut (Challenger/ITF)
-      for (const rule of TEX_PRESTIGE_RULES) {
-        if (rule.pattern.test(tourName)) { prestigeScore = rule.score; break; }
-      }
-      // Critère 4 : Valeur betting (15%) — drift important = argent sharp = match intéressant
-      var bettingValueScore = Math.min(100, (m.max_drift || 0) * TEX_RATING_CONFIG.bettingValueDriftCoeff);
-      // Critère 5 : Disponibilité cotes (10%) — cotes disponibles = marché liquide
-      var oddsScore = (m.odds_current?.p1 && m.odds_current?.p2) ? 100 : 0;
-      // Score composite pondéré — L4 fix : use weights from config
-      var composite = Math.round(
-        eloScore * TEX_RATING_CONFIG.weights.elo +
-        compScore * TEX_RATING_CONFIG.weights.comp +
-        prestigeScore * TEX_RATING_CONFIG.weights.prestige +
-        bettingValueScore * TEX_RATING_CONFIG.weights.betting +
-        oddsScore * TEX_RATING_CONFIG.weights.odds
-      );
-      // L18 fix — round value_score to 1 decimal for consistency with match_rating.score (integer 0-100)
-      m.value_score = Math.round(m.value_score * 10) / 10;
-      m.match_rating = {
-        score: composite, // 0-100
-        stars: Math.max(1, Math.min(5, Math.ceil(composite / 20))), // 1-5
-        breakdown: {
-          elo_quality: Math.round(eloScore),
-          competitiveness: Math.round(compScore),
-          tournament_prestige: prestigeScore,
-          betting_value: Math.round(bettingValueScore),
-          odds_availability: oddsScore,
-        }
-      };
-    }
-  } catch (e) { _trackCatch('tennis', 'tex_enrich_matches', e); }
-  // PIPE-19 fix — exclure les matchs UTR Pro côté serveur (cohérence multi-consommateurs).
-  // Le filtre frontend (pariscore.js::_isUTRProMatch) reste en double pour defense-in-depth,
-  // mais désormais PARIS/value-bets et tout autre consumer de /api/v1/tennis/tex/matches
-  // ne reçoivent plus non plus les matchs UTR Pro.
-  try {
-    const _beforeUtr = data.matches.length;
-    data.matches = data.matches.filter(function (m) { return !_isUTRProMatchServer(m); });
-    if (data.matches.length !== _beforeUtr) {
-      console.log('[tex] UTR Pro exclus côté serveur: ' + (_beforeUtr - data.matches.length) + ' match(s) retirés sur ' + _beforeUtr);
-    }
-  } catch (e) { _trackCatch('tennis', 'tex_utr_filter', e); }
   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
-  _texCacheEvict(texMatchesCache, TEX_CACHE_MAX_ENTRIES); // M10 fix — bound cache
   return data;
-}
-
-// PIPE-19 fix — helper serveur partagé pour détecter les matchs UTR Pro.
-// Miroir de _isUTRProMatch côté frontend (pariscore.js). Détection insensible
-// à la casse sur tournament + tournament_slug. Couvre UTR Pro Tennis Series,
-// UTR PTT, et tous les slugs commençant par "utr-".
-function _isUTRProMatchServer(m) {
-  if (!m) return false;
-  var t = String(m.tournament || '').toLowerCase();
-  var s = String(m.tournament_slug || '').toLowerCase();
-  if (t.indexOf('utr pro') !== -1) return true;
-  if (t.indexOf('utr ptt') !== -1) return true;
-  if (s.indexOf('utr-pro') !== -1) return true;
-  if (s.indexOf('utr-ptt') !== -1) return true;
-  if (s.indexOf('utr-') === 0) return true;
-  return false;
 }
 
 // T6 v10.13 — Tennis calendar saison (tournaments par tour)
@@ -30996,13 +30419,10 @@ async function fetchTexPlayer(slug) {
   if (!slug || !/^[a-z0-9-]+$/i.test(slug)) throw new Error('invalid_slug');
   const cached = texPlayerCache.get(slug);
   if (cached && Date.now() - cached.ts < TEX_PLAYER_TTL_MS) return cached.data;
-  // LRU touch on access
-  if (cached) { texPlayerCache.delete(slug); texPlayerCache.set(slug, cached); }
   const html = await _texFetchHtml(`/player/${slug}/`);
   const data = _texParsePlayerPage(html, slug);
   if (!data || !data.name) throw new Error('player_not_found');
   texPlayerCache.set(slug, { ts: Date.now(), data });
-  _texCacheEvict(texPlayerCache, TEX_CACHE_MAX_ENTRIES); // M10 fix
   return data;
 }
 
@@ -31012,19 +30432,9 @@ const TEX_MATCH_DETAIL_TTL_MS = 6 * 3600 * 1000;
 const texMatchDetailCache = new Map();
 
 function _texParseMatchDetail(html) {
-  // ── Sécurité ReDoS : limite taille + timeout ──
-  const MAX_HTML = 500000;
   if (!html) return null;
-  if (html.length > MAX_HTML) html = html.slice(0, MAX_HTML);
-  const _TEX_START = performance.now();
-  const _TEX_TIMEOUT = 5000;
-  function _texTimeLeft() { return (performance.now() - _TEX_START) < _TEX_TIMEOUT; }
-  function _texSafeMatch(subject, re, label) {
-    if (!_texTimeLeft()) return null;
-    try { return subject.match(re); } catch (e) { console.warn(`  [TexParse:${label}] regex error: ${e.message}`); return null; }
-  }
   // Header players
-  const titleM = _texSafeMatch(html, /<h1 class="bg">([^<]+)<\/h1>/, 'title');
+  const titleM = html.match(/<h1 class="bg">([^<]+)<\/h1>/);
   let p1Name = null, p2Name = null;
   if (titleM) {
     const parts = titleM[1].split(/\s*-\s*/);
@@ -31032,7 +30442,7 @@ function _texParseMatchDetail(html) {
     p2Name = (parts[1] || '').trim();
   }
   // Find first odds tab data (Home/Away) — table.result.balance under oddsMenu-1-data
-  const oddsBlock = _texSafeMatch(html, /<div id="oddsMenu-1-data">([\s\S]*?)<\/div>\s*<div id="oddsMenu-2-data"/, 'oddsBlock1');
+  const oddsBlock = html.match(/<div id="oddsMenu-1-data">([\s\S]*?)<\/div>\s*<div id="oddsMenu-2-data"/);
   const books = [];
   let avgP1 = null, avgP2 = null;
   if (oddsBlock) {
@@ -31040,7 +30450,6 @@ function _texParseMatchDetail(html) {
     const trRe = /<tr class="(one|two|average|head)"[^>]*>([\s\S]*?)(?=<tr class="(?:one|two|average|head)"|<\/tbody>)/g;
     let trMatch;
     while ((trMatch = trRe.exec(oddsBlock[1])) !== null) {
-      if (!_texTimeLeft()) break;
       const rowClass = trMatch[1];
       const tr = trMatch[2];
       if (rowClass === 'head') continue;
@@ -31076,10 +30485,10 @@ function _texParseMatchDetail(html) {
     }
   }
   // H2H summary
-  const h2hM = _texSafeMatch(html, /<h2 class="bg">Head-to-head<\/h2>([\s\S]*?)<h2 class="bg">/, 'h2h');
+  const h2hM = html.match(/<h2 class="bg">Head-to-head<\/h2>([\s\S]*?)<h2 class="bg">/);
   let h2hSummary = null;
   if (h2hM) {
-    const noDataM = _texSafeMatch(h2hM[1], /<div class="no-data">([^<]+)<\/div>/, 'h2hNoData');
+    const noDataM = h2hM[1].match(/<div class="no-data">([^<]+)<\/div>/);
     if (noDataM) {
       h2hSummary = noDataM[1].trim();
     } else {
@@ -31100,17 +30509,16 @@ function _texParseMatchDetail(html) {
     const blockRe = nextMenu
       ? new RegExp(`<div id="oddsMenu-${menu}-data"[^>]*>([\\s\\S]*?)<div id="oddsMenu-${nextMenu}-data"`)
       : new RegExp(`<div id="oddsMenu-${menu}-data"[^>]*>([\\s\\S]*?)<\\/div>\\s*<\\/div>\\s*<\\/div>`);
-    const blockM = _texSafeMatch(html, blockRe, 'block' + menu);
+    const blockM = html.match(blockRe);
     if (!blockM || /class="none"[^>]*>[\s\S]{0,200}No odds/.test(blockM[0])) continue;
     const block = blockM[1];
-    const titleM2 = _texSafeMatch(block, /<tr class="odds-type"[^>]*>\s*<td[^>]*>([^<]+)<\/td>/, 'marketTitle');
+    const titleM2 = block.match(/<tr class="odds-type"[^>]*>\s*<td[^>]*>([^<]+)<\/td>/);
     const marketTitle = titleM2 ? titleM2[1].trim() : null;
     const trRe2 = /<tr class="(one|two|average)"[^>]*>([\s\S]*?)(?=<tr class="(?:one|two|average|head|odds-)"|<\/tbody>)/g;
     const rows = [];
     let avgP1m = null, avgP2m = null;
     let trMatch2;
     while ((trMatch2 = trRe2.exec(block)) !== null) {
-      if (!_texTimeLeft()) break;
       const rowClass = trMatch2[1];
       const tr2 = trMatch2[2];
       const bookM2 = tr2.match(/<span class="t">([^<]+)<\/span>/);
@@ -38788,8 +38196,6 @@ async function _buildTennisValueBetsCore({ date }) {
         serve_index: _p1ss.serve_index, receive_index: _p1ss.receive_index,
         serve_rank: _p1ss.serve_rank, serve_total: _p1ss.serve_total, serve_delta: _p1ss.serve_delta,
         receive_rank: _p1ss.receive_rank, receive_total: _p1ss.receive_total, receive_delta: _p1ss.receive_delta,
-        serve_hold_pct: _p1ss?.serve_hold_pct ?? serveDom?.p1?.serve_pts_won_pct ?? null,
-        return_pct: _p1ss?.rpw_pct ?? null,
         // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
         rank: _getPlayerRank(p1Name, tourGuess) ?? (m.player1?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb (p1_surface is {elo, matches, surface} object)
@@ -38802,8 +38208,6 @@ async function _buildTennisValueBetsCore({ date }) {
         serve_index: _p2ss.serve_index, receive_index: _p2ss.receive_index,
         serve_rank: _p2ss.serve_rank, serve_total: _p2ss.serve_total, serve_delta: _p2ss.serve_delta,
         receive_rank: _p2ss.receive_rank, receive_total: _p2ss.receive_total, receive_delta: _p2ss.receive_delta,
-        serve_hold_pct: _p2ss?.serve_hold_pct ?? serveDom?.p2?.serve_pts_won_pct ?? null,
-        return_pct: _p2ss?.rpw_pct ?? null,
         // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
         rank: _getPlayerRank(p2Name, tourGuess) ?? (m.player2?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb
@@ -42272,336 +41676,6 @@ if (pathname === '/api/v1/tennis/tex/player' && req.method === 'GET') {
   } catch (e) {
     const code = e.message === 'player_not_found' ? 404 : 500;
     return jsonResponse(res, code, { error: 'tex_player_error', detail: e.message });
-  }
-}
-// ═══ TENNIS PLAYER PROFILE — agrégé TE + BSD + Elo interne (popup fiche joueur) ═══
-// Query: ?slug=<tennisexplorer-slug>&name=<player-name>&surface=<Clay|Hard|Grass>
-// Retourne : photo, nom, pays, classement ATP/WTA, Elo surface interne, W-L par surface,
-// prize money, L5 matchs (depuis BSD si dispo), stats service/retour (si dispo).
-const _playerProfileCache = new Map();
-const PLAYER_PROFILE_TTL_MS = 30 * 60 * 1000; // 30min
-
-// ─── NEW — Player photo cache (Wikipedia REST API, 24h TTL) ──────────────
-// Évite de rappeler Wikipedia pour chaque match affiché.
-const _playerPhotoCache = new Map(); // Map<playerName, { url, ts, status: 'ok'|'not_found' }>
-const PLAYER_PHOTO_TTL_MS = 24 * 3600 * 1000; // 24h
-const PLAYER_PHOTO_TTL_NOT_FOUND_MS = 7 * 24 * 3600 * 1000; // 7j pour les "not found" (évite de re-scrap Wikipedia trop souvent)
-
-// Wikipedia REST API — récupère le thumbnail d'un joueur depuis son nom
-async function _fetchWikipediaPhoto(playerName) {
-  if (!playerName) return null;
-  // Construit le titre Wikipedia à partir du nom du joueur
-  // Ex: "Roberto Bautista Agut" → "Roberto Bautista Agut"
-  // Ex: "Jannik Sinner" → "Jannik Sinner"
-  const wikiTitle = playerName.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('_');
-  // Premier essai : page summary en.wikipedia.org
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
-  try {
-    const res = await httpsGet(url, {
-      'Accept': 'application/json',
-      'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
-    });
-    if (res && res.status === 200 && res.data && res.data.thumbnail && res.data.thumbnail.source) {
-      return res.data.thumbnail.source;
-    }
-    // Pas de thumbnail → essaie avec "tennis" suffix (ex: "Jannik Sinner tennis")
-    if (res && res.status === 200 && res.data && res.data.type === 'disambiguation') {
-      const url2 = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle + ' (tennis)')}`;
-      const res2 = await httpsGet(url2, {
-        'Accept': 'application/json',
-        'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
-      });
-      if (res2 && res2.status === 200 && res2.data && res2.data.thumbnail && res2.data.thumbnail.source) {
-        return res2.data.thumbnail.source;
-      }
-    }
-    return null;
-  } catch (e) {
-    _trackCatch('tennis', 'wikipedia_photo_fetch', e);
-    return null;
-  }
-}
-
-// Route player-photo — proxy photo par nom (cherche tennis_players_elo → BSD → Wikipedia)
-// Renvoie l'image binaire directement (pas de 302 redirect qui cassait <img src>)
-if (pathname === '/api/v1/tennis/player-photo' && req.method === 'GET') {
-  try {
-    const playerName = (query.name || '').toString().trim();
-    if (!playerName) { res.writeHead(404); res.end(); return; }
-
-    // 1) Tente d'abord le lookup dans tennis_players_elo → route <id> BSD (cache disque)
-    const eloInfo = _lookupTennisElo(playerName);
-    if (eloInfo && eloInfo.id) {
-      // Redirige vers la route <id> qui a un cache disque + proxy BSD + fallback Wikipedia
-      const redirectUrl = '/api/v1/tennis/player-photo/' + encodeURIComponent(eloInfo.id);
-      res.writeHead(302, { 'Location': redirectUrl, 'Cache-Control': 'public, max-age=86400' });
-      res.end();
-      return;
-    }
-
-    // 2) Vérifie le cache mémoire Wikipedia
-    const cached = _playerPhotoCache.get(playerName.toLowerCase());
-    const ttlMs = (cached && cached.status === 'not_found') ? PLAYER_PHOTO_TTL_NOT_FOUND_MS : PLAYER_PHOTO_TTL_MS;
-    if (cached && Date.now() - cached.ts < ttlMs) {
-      if (cached.status === 'ok' && cached.url) {
-        // Proxy l'image Wikipedia directement (au lieu de redirect)
-        try {
-          const https2 = require('https');
-          https2.get(cached.url, { headers: { 'User-Agent': 'PariScore/2.0 (https://pariscore.fr)' }, timeout: 5000 }, function(imgRes) {
-            if (imgRes.statusCode === 200 && (imgRes.headers['content-type'] || '').indexOf('image/') >= 0) {
-              const chunks = [];
-              imgRes.on('data', c => chunks.push(c));
-              imgRes.on('end', () => {
-                const buf = Buffer.concat(chunks);
-                res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'], 'Cache-Control': 'public, max-age=86400', 'Access-Control-Allow-Origin': '*' });
-                res.end(buf);
-              });
-            } else {
-              imgRes.resume();
-              _serveInitialsSvg(res, playerName);
-            }
-          }).on('error', () => _serveInitialsSvg(res, playerName)).on('timeout', function() { this.destroy(); _serveInitialsSvg(res, playerName); });
-          return;
-        } catch (_) { /* fallback ci-dessous */ }
-      }
-      _serveInitialsSvg(res, playerName);
-      return;
-    }
-
-    // 3) Vérifie le cache SQLite player_photos
-    let sqliteUrl = null;
-    try {
-      const row = sqldb.prepare('SELECT local_path FROM player_photos WHERE player_id = ?').get(playerName.toLowerCase());
-      if (row && row.local_path) sqliteUrl = row.local_path;
-    } catch (_) {}
-
-    if (sqliteUrl) {
-      // Proxy l'image
-      try {
-        const https2 = require('https');
-        https2.get(sqliteUrl, { headers: { 'User-Agent': 'PariScore/2.0 (https://pariscore.fr)' }, timeout: 5000 }, function(imgRes) {
-          if (imgRes.statusCode === 200 && (imgRes.headers['content-type'] || '').indexOf('image/') >= 0) {
-            const chunks = [];
-            imgRes.on('data', c => chunks.push(c));
-            imgRes.on('end', () => {
-              const buf = Buffer.concat(chunks);
-              res.writeHead(200, { 'Content-Type': imgRes.headers['content-type'], 'Cache-Control': 'public, max-age=86400', 'Access-Control-Allow-Origin': '*' });
-              res.end(buf);
-            });
-          } else {
-            imgRes.resume();
-            _serveInitialsSvg(res, playerName);
-          }
-        }).on('error', () => _serveInitialsSvg(res, playerName)).on('timeout', function() { this.destroy(); _serveInitialsSvg(res, playerName); });
-        return;
-      } catch (_) {}
-    }
-
-    // 4) Fetch Wikipedia en arrière-plan + sert immédiatement SVG initiales
-    _fetchWikipediaPhoto(playerName).then(photoUrl => {
-      if (photoUrl) {
-        _playerPhotoCache.set(playerName.toLowerCase(), { url: photoUrl, ts: Date.now(), status: 'ok' });
-        try {
-          sqldb.prepare('INSERT OR REPLACE INTO player_photos (player_id, player_name, source, local_path, fetched_at) VALUES (?, ?, ?, ?, ?)')
-            .run(playerName.toLowerCase(), playerName, 'wikipedia', photoUrl, Math.floor(Date.now() / 1000));
-        } catch (_) {}
-      } else {
-        _playerPhotoCache.set(playerName.toLowerCase(), { url: null, ts: Date.now(), status: 'not_found' });
-      }
-    }).catch(() => {});
-
-    _serveInitialsSvg(res, playerName);
-  } catch (e) {
-    try { _serveInitialsSvg(res, ''); } catch (_) { res.writeHead(500); res.end(); }
-  }
-}
-
-// Helper — sert un SVG coloré avec initiales (fallback universel)
-function _serveInitialsSvg(res, playerName) {
-  const hash = (playerName || '?').toLowerCase().split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0, 0);
-  const hue = Math.abs(hash) % 360;
-  const initials = (playerName || '?').split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase()).slice(0, 2).join('') || '?';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96"><rect width="96" height="96" fill="hsl(${hue},35%,25%)"/><text x="50%" y="50%" dy="0.35em" text-anchor="middle" font-family="sans-serif" font-size="38" font-weight="700" fill="#fff">${initials}</text></svg>`;
-  const buf = Buffer.from(svg, 'utf8');
-  res.writeHead(200, { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=300', 'Access-Control-Allow-Origin': '*' });
-  res.end(buf);
-}
-
-// NEW — Route /api/v1/tennis/match-by-players — cherche un match BSD par nom des 2 joueurs
-// Utilisé par la modale Prematch de MATCHS (TennisExplorer) pour retrouver le match BSD équivalent
-// et ouvrir openTennisAnalysisModal (modale riche du Top 10) avec toutes les données (predictions,
-// serve_dominance, confidence_badge, edge, etc.)
-if (pathname === '/api/v1/tennis/match-by-players' && req.method === 'GET') {
-  try {
-    const p1Name = (query.p1 || '').toString().trim();
-    const p2Name = (query.p2 || '').toString().trim();
-    if (!p1Name || !p2Name) return jsonResponse(res, 400, { error: 'p1_and_p2_required' });
-
-    // Récupère les matchs BSD — utilise __tennisVBWarm (fonction) qui est plus fiable que __tennisVBWarmMatches
-    let warmMatches = globalThis.__tennisVBWarmMatches;
-    if (!warmMatches || !Array.isArray(warmMatches) || warmMatches.length === 0) {
-      // Fallback : appelle __tennisVBWarm (la fonction)
-      const _tnVbFn = globalThis.__tennisVBWarm;
-      if (typeof _tnVbFn === 'function') {
-        try {
-          const vb = await _tnVbFn({});
-          if (vb && vb.status === 200 && vb.body && vb.body.matches) {
-            warmMatches = vb.body.matches;
-          }
-        } catch(_) {}
-      }
-    }
-    if (!warmMatches || !Array.isArray(warmMatches) || warmMatches.length === 0) {
-      return jsonResponse(res, 404, { error: 'no_bsd_matches_available' });
-    }
-
-    // Normalisation : extrait le nom d'un joueur (string ou objet {name:...})
-    const getPlayerName = (p) => {
-      if (!p) return '';
-      if (typeof p === 'string') return p.toLowerCase().trim();
-      if (typeof p === 'object' && p.name) return p.name.toLowerCase().trim();
-      return '';
-    };
-    const lastName = (s) => (s || '').toLowerCase().trim().split(/\s+/).pop();
-    const p1Last = lastName(p1Name);
-    const p2Last = lastName(p2Name);
-
-    // Cherche un match où P1 et P2 correspondent (dans les 2 sens)
-    const found = warmMatches.find(m => {
-      const m1 = getPlayerName(m.player1);
-      const m2 = getPlayerName(m.player2);
-      if (!m1 || !m2) return false;
-      const m1Last = lastName(m1);
-      const m2Last = lastName(m2);
-      // Match par lastname (plus tolérant)
-      const p1Match = m1.includes(p1Last) || m1Last === p1Last;
-      const p2Match = m2.includes(p2Last) || m2Last === p2Last;
-      const p1MatchRev = m2.includes(p1Last) || m2Last === p1Last;
-      const p2MatchRev = m1.includes(p2Last) || m1Last === p2Last;
-      return (p1Match && p2Match) || (p1MatchRev && p2MatchRev);
-    });
-
-    if (!found) return jsonResponse(res, 404, { error: 'match_not_found_in_bsd' });
-
-    const bsdId = String(found.id || found.matchId || '');
-    const bsdP1 = getPlayerName(found.player1);
-    const bsdP2 = getPlayerName(found.player2);
-
-    return jsonResponse(res, 200, {
-      bsd_match_id: bsdId,
-      bsd_match: {
-        id: bsdId,
-        player1: bsdP1,
-        player2: bsdP2,
-        tournament: found.tournament,
-        surface: found.surface,
-        round: found.round,
-        start_time: found.start_time,
-      },
-    });
-  } catch (e) {
-    return jsonResponse(res, 500, { error: 'match_by_players_error', detail: e.message });
-  }
-}
-
-if (pathname === '/api/v1/tennis/player-profile' && req.method === 'GET') {
-  try {
-    const slug = (query.slug || '').toString().trim();
-    const name = (query.name || '').toString().trim();
-    const surface = (query.surface || '').toString().trim() || null;
-    if (!slug && !name) return jsonResponse(res, 400, { error: 'slug_or_name_required' });
-    const cacheKey = `${slug || name}|${surface || 'all'}`;
-    const cached = _playerProfileCache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < PLAYER_PROFILE_TTL_MS) {
-      return jsonResponse(res, 200, { ...cached.data, cache: 'hit' });
-    }
-    const profile = { slug: slug || null, name: name || null, surface, fetched_at: new Date().toISOString() };
-    // 1. TennisExplorer profile (W-L surface, rank, prize money, country, DOB, plays)
-    if (slug) {
-      try {
-        const texData = await fetchTexPlayer(slug);
-        if (texData) {
-          profile.name = texData.name || profile.name;
-          profile.country = texData.country || null;
-          profile.dob = texData.dob || null;
-          profile.age = texData.dob ? Math.floor((Date.now() - new Date(texData.dob).getTime()) / (365.25 * 24 * 3600 * 1000)) : null;
-          profile.height_cm = texData.height_cm || null;
-          profile.plays = texData.plays || null; // right/left
-          profile.rank_singles = texData.rank_singles || null;
-          profile.rank_doubles = texData.rank_doubles || null;
-          profile.surface_record = texData.surface_record || null;
-          profile.prize_money = texData.prize_money || null;
-          profile.source_url = texData.source_url || null;
-        }
-      } catch (e) { _trackCatch('tennis', 'player_profile_tex', e); }
-    }
-    // 2. Elo surface interne (depuis tennis_player_elo)
-    if (profile.name) {
-      try {
-        // M5 fix — lookup Elo with stricter matching: exact name OR lastName-only (no LIKE '%name%' which matches homonyms)
-        const pNameLower = (profile.name || '').toLowerCase().trim();
-        const pLastName = pNameLower.split(' ').pop();
-        let eloRows = [];
-        // Try exact full name first
-        eloRows = sqldb.prepare('SELECT player_name, elo, tour, surface, matches_count FROM tennis_elo WHERE LOWER(player_name) = ? COLLATE NOCASE').all(pNameLower);
-        // Then by lastName (stricter than LIKE %name%)
-        if (!eloRows.length && pLastName && pLastName.length >= 4) {
-          eloRows = sqldb.prepare('SELECT player_name, elo, tour, surface, matches_count FROM tennis_elo WHERE LOWER(player_name) LIKE ? COLLATE NOCASE').all(pLastName + ' %');
-        }
-        if (eloRows.length) {
-          // Prefer a row whose surface matches the requested surface, else first non-ALL, else ALL
-          const surfKey = (query.surface || '').toString().trim().toLowerCase();
-          let pick = eloRows.find(r => (r.surface || '').toLowerCase() === surfKey && surfKey);
-          if (!pick) pick = eloRows.find(r => r.surface && r.surface !== 'ALL');
-          if (!pick) pick = eloRows[0];
-          profile.elo_surface = { value: Math.round(pick.elo), tour: pick.tour, surface: pick.surface, matches: pick.matches_count };
-        }
-      } catch (e) { _trackCatch('tennis', 'player_profile_elo', e); }
-    }
-    // 3. Photo joueur — NEW : utilise _lookupTennisElo (table tennis_players_elo existante)
-    //    pour récupérer player_id BSD → vraie photo via /api/v1/tennis/player-photo/<id>
-    try {
-      if (profile.name) {
-        const eloInfo = _lookupTennisElo(profile.name);
-        if (eloInfo && eloInfo.id) {
-          profile.bsd_player_id = eloInfo.id;
-        }
-      }
-    } catch (e) { _trackCatch('tennis', 'player_profile_bsd_lookup', e); }
-    // Fallback : ui-avatars si pas de BSD player_id trouvé
-    profile.photo_url = profile.name
-      ? 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.name) + '&background=172132&color=fff&size=200'
-      : null;
-    // 4. L5 matchs depuis BSD si dispo (depuis __tennisVBWarmMatches)
-    try {
-      const warmMatches = globalThis.__tennisVBWarmMatches;
-      if (warmMatches && Array.isArray(warmMatches) && profile.name) {
-        const pNameLower = profile.name.toLowerCase();
-        const lastName = pNameLower.split(' ').pop();
-        const l5 = warmMatches
-          .filter(m => {
-            const p1 = (m.player1 || '').toLowerCase();
-            const p2 = (m.player2 || '').toLowerCase();
-            return p1.includes(lastName) || p2.includes(lastName);
-          })
-          .slice(0, 5)
-          .map(m => ({
-            tournament: m.tournament || null,
-            surface: m.surface || null,
-            round: m.round || null,
-            player1: m.player1 || null,
-            player2: m.player2 || null,
-            score: m.live_score || null,
-            status: m.status || null,
-            start_time: m.start_time || null,
-          }));
-        if (l5.length) profile.recent_matches = l5;
-      }
-    } catch (e) { _trackCatch('tennis', 'player_profile_l5', e); }
-    _playerProfileCache.set(cacheKey, { ts: Date.now(), data: profile });
-    return jsonResponse(res, 200, { ...profile, cache: 'miss' });
-  } catch (e) {
-    return jsonResponse(res, 500, { error: 'player_profile_error', detail: e.message });
   }
 }
 // Tennis Abstract — current tournament forecasts (scraped, cache 6h).
@@ -51176,8 +50250,6 @@ setInterval(function() {
   try { if (typeof globalThis.__metricsCache !== "undefined" && globalThis.__metricsCache.prune) globalThis.__metricsCache.prune(); } catch(_) {}
   if (process.env.DEBUG_CACHE_PURGE === "1") console.log("[CachePurge] hourly cleanup done");
 }, 60 * 60 * 1000);
-
-
 
 
 

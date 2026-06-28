@@ -1,0 +1,200 @@
+diff --git a/pariscore.html b/pariscore.html
+index 8787fa1..515fd26 100755
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -16376,16 +16376,21 @@ function psSetLang(v) {
+     window[key] = true;
+     switch (tabId) {
+       case 'matchs':
++        // BUG-LIVE-2 fix — stopper le polling LIVE quand on quitte l'onglet
++        if (typeof stopTennisLive === 'function') stopTennisLive();
+         if (typeof loadTexMatchs === 'function') loadTexMatchs();
+         if (typeof loadTexTournamentsToday === 'function') loadTexTournamentsToday();
+         break;
+       case 'live':
+-        if (typeof tickTennisLive === 'function') tickTennisLive();
++        // BUG-LIVE-2 fix — startTennisLive (fetch + polling 30s) au lieu de tickTennisLive (fetch unique)
++        if (typeof startTennisLive === 'function') startTennisLive();
+         break;
+       case 'top':
++        if (typeof stopTennisLive === 'function') stopTennisLive();
+         if (typeof startTennisTop10 === 'function') startTennisTop10();
+         break;
+       case 'paris':
++        if (typeof stopTennisLive === 'function') stopTennisLive();
+         if (typeof startTennisValueBets === 'function') startTennisValueBets();
+         break;
+       case 'clas':
+diff --git a/pariscore.js b/pariscore.js
+index d46a362..23cdbc9 100644
+--- a/pariscore.js
++++ b/pariscore.js
+@@ -2304,7 +2304,9 @@ ${m.is_live && m.live_stats != null && safeId ? `<button class="tn-stats-btn" on
+ }
+ 
+ async function tickTennisLive() {
+-  const statusEl = document.getElementById('tennis-live-status');
++  // BUG-LIVE-1 fix — l'HTML utilise id="tn2-live-status", l'ancien code cherchait "tennis-live-status" (toujours null).
++  // On teste les deux IDs pour ne pas casser d'éventuels autres templates VPS.
++  const statusEl = document.getElementById('tn2-live-status') || document.getElementById('tennis-live-status');
+   try {
+     if (statusEl) statusEl.textContent = 'Mise à jour…';
+     // Vérifier le cache pour affichage immédiat
+@@ -5689,11 +5691,33 @@ function _localTime(timeUtcStr) {
+   } catch(_) { return timeUtcStr; }
+ }
+ 
++// UTR Pro exclusion — retire les matchs UTR Pro (UTR Pro Tennis Series, UTR PTT)
++// de l'onglet Tennis / Matchs. Détection insensible à la casse sur le nom du
++// tournoi et le slug (ex: "utr-pro-tennis-series-3/2026/atp-men/").
++// Cf. server.js:29720 (source HTML TE) et server.js:30683 (mot-clé surface 'utr pro').
++function _isUTRProMatch(m) {
++  if (!m) return false;
++  var t = String(m.tournament || '').toLowerCase();
++  var s = String(m.tournament_slug || '').toLowerCase();
++  // Match direct sur le nom du tournoi ou le slug
++  if (t.indexOf('utr pro') !== -1) return true;
++  if (t.indexOf('utr ptt') !== -1) return true;
++  if (s.indexOf('utr-pro') !== -1) return true;
++  if (s.indexOf('utr-ptt') !== -1) return true;
++  // Safety net : slug commençant par "utr-" (couvre "utr-sports" etc.)
++  if (s.indexOf('utr-') === 0) return true;
++  return false;
++}
++
+ function _renderTexMatchs(r) {
+   var body = document.getElementById('tex-matchs-body');
+   var statusEl = document.getElementById('tex-matchs-status');
+   if (!body || !r) return;
+   var matches = r.matches || [];
++  // UTR Pro — exclus de l'onglet Matchs (demande utilisateur)
++  var _utrBefore = matches.length;
++  matches = matches.filter(function(m) { return !_isUTRProMatch(m); });
++  var _utrHidden = _utrBefore - matches.length;
+   // Q5 fix — compute payload hash to detect if a re-render would change content
+   // (avoids losing scroll position / hover state on identical auto-refresh payloads)
+   var payloadHash = '';
+@@ -5706,7 +5730,9 @@ function _renderTexMatchs(r) {
+     // Same payload, same filter, same search → preserve UI state, just touch status bar
+     if (statusEl) {
+       var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
+-      statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
++      var _skipStatus = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
++      if (_utrHidden > 0) _skipStatus += ' · UTR Pro exclus: ' + _utrHidden;
++      statusEl.textContent = _skipStatus;
+     }
+     return;
+   }
+@@ -5925,6 +5951,7 @@ function _renderTexMatchs(r) {
+     // L28 fix — show 'MAJ il y a Xs' badge when we have a fetch timestamp
+     var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
+     var statusTxt = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
++    if (_utrHidden > 0) statusTxt += ' · UTR Pro exclus: ' + _utrHidden;
+     if (_texMatchsLastFetchTs) {
+       var elapsedSec = Math.max(0, Math.round((Date.now() - _texMatchsLastFetchTs) / 1000));
+       var elapsedTxt = elapsedSec < 60 ? elapsedSec + 's' : Math.round(elapsedSec / 60) + 'min';
+diff --git a/server.js b/server.js
+index be6557a..24eb3d9 100644
+--- a/server.js
++++ b/server.js
+@@ -21720,7 +21720,7 @@ async function handleAPI(req, res, pathname, query) {
+     try {
+       var playerName = null;
+       try { var row = sqldb.prepare("SELECT player_name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row) playerName = row.player_name; } catch (_) {}
+-      if (!playerName) { try { var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
++      if (!playerName) { try { var row2 = sqldb.prepare("SELECT player_name AS name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
+       if (playerName) {
+         var wikiUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(playerName.replace(/ +/g, '_'));
+         var wikiOk = await new Promise(function(resolve) {
+@@ -21768,7 +21768,7 @@ async function handleAPI(req, res, pathname, query) {
+       }
+     } catch (_) {}
+     try {
+-      var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId);
++      var row2 = sqldb.prepare("SELECT player_name AS name FROM tennis_players_elo WHERE player_id = ?").get(playerId);
+       if (row2 && row2.name) {
+         res.writeHead(302, { 'Location': 'https://ui-avatars.com/api/?name=' + encodeURIComponent(row2.name.trim()) + '&background=172132&color=fff&size=96&bold=true' });
+         res.end();
+@@ -29706,7 +29706,7 @@ async function _texFetchHtml(pathSuffix) {
+   }
+ }
+ 
+-function _texParseMatchesPage(html) {
++function _texParseMatchesPage(html, dateISO) {
+   if (!html) return [];
+   const out = [];
+   // TEX8 fix — capturer le nom du tournoi depuis les en-têtes de bloc
+@@ -29755,11 +29755,22 @@ function _texParseMatchesPage(html) {
+     if (!tourHeadersByExactName.has(th.name)) tourHeadersByExactName.set(th.name, th);
+   }
+   // NEW — Snapshot de l'heure UTC au moment du parse (pour inférer status live/finished/upcoming)
++  // PIPE-5 fix — utiliser la date demandée (dateISO) plutôt que "aujourd'hui" pour le calcul
++  // du statut. Sans ça, les matchs d'une date passée/future sont tous badgés 'live' ou 'upcoming'
++  // à tort. Fallback sur aujourd'hui si dateISO absent (rétrocompatibilité appelant L24149).
+   const nowMs = Date.now();
+   const nowUtc = new Date(nowMs);
+-  const todayUtcY = nowUtc.getUTCFullYear();
+-  const todayUtcM = nowUtc.getUTCMonth();
+-  const todayUtcD = nowUtc.getUTCDate();
++  let refUtcY = nowUtc.getUTCFullYear();
++  let refUtcM = nowUtc.getUTCMonth();
++  let refUtcD = nowUtc.getUTCDate();
++  if (dateISO && /^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
++    refUtcY = parseInt(dateISO.slice(0, 4), 10);
++    refUtcM = parseInt(dateISO.slice(5, 7), 10) - 1;
++    refUtcD = parseInt(dateISO.slice(8, 10), 10);
++  }
++  const todayUtcY = refUtcY;
++  const todayUtcM = refUtcM;
++  const todayUtcD = refUtcD;
+   while ((m = trRe.exec(html)) !== null) {
+     const [, , idx, , row1, row2] = m;
+     // Trouver le tournoi le plus récent avant ce match
+@@ -29967,7 +29978,7 @@ async function fetchTexMatches(tour, dateISO) {
+   }
+   const path = `/matches/?type=${type}${datePart}`;
+   const html = await _texFetchHtml(path);
+-  const matches = _texParseMatchesPage(html);
++  const matches = _texParseMatchesPage(html, dateISO || null);
+   const data = {
+     tour: type.split('-')[0].toUpperCase(),
+     format: type.split('-')[1], // single | double
+@@ -30106,11 +30117,38 @@ async function fetchTexMatches(tour, dateISO) {
+       };
+     }
+   } catch (e) { _trackCatch('tennis', 'tex_enrich_matches', e); }
++  // PIPE-19 fix — exclure les matchs UTR Pro côté serveur (cohérence multi-consommateurs).
++  // Le filtre frontend (pariscore.js::_isUTRProMatch) reste en double pour defense-in-depth,
++  // mais désormais PARIS/value-bets et tout autre consumer de /api/v1/tennis/tex/matches
++  // ne reçoivent plus non plus les matchs UTR Pro.
++  try {
++    const _beforeUtr = data.matches.length;
++    data.matches = data.matches.filter(function (m) { return !_isUTRProMatchServer(m); });
++    if (data.matches.length !== _beforeUtr) {
++      console.log('[tex] UTR Pro exclus côté serveur: ' + (_beforeUtr - data.matches.length) + ' match(s) retirés sur ' + _beforeUtr);
++    }
++  } catch (e) { _trackCatch('tennis', 'tex_utr_filter', e); }
+   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
+   _texCacheEvict(texMatchesCache, TEX_CACHE_MAX_ENTRIES); // M10 fix — bound cache
+   return data;
+ }
+ 
++// PIPE-19 fix — helper serveur partagé pour détecter les matchs UTR Pro.
++// Miroir de _isUTRProMatch côté frontend (pariscore.js). Détection insensible
++// à la casse sur tournament + tournament_slug. Couvre UTR Pro Tennis Series,
++// UTR PTT, et tous les slugs commençant par "utr-".
++function _isUTRProMatchServer(m) {
++  if (!m) return false;
++  var t = String(m.tournament || '').toLowerCase();
++  var s = String(m.tournament_slug || '').toLowerCase();
++  if (t.indexOf('utr pro') !== -1) return true;
++  if (t.indexOf('utr ptt') !== -1) return true;
++  if (s.indexOf('utr-pro') !== -1) return true;
++  if (s.indexOf('utr-ptt') !== -1) return true;
++  if (s.indexOf('utr-') === 0) return true;
++  return false;
++}
++
+ // T6 v10.13 — Tennis calendar saison (tournaments par tour)
+ const TEX_CALENDAR_TTL_MS = 24 * 3600 * 1000;
+ const texCalendarCache = new Map();
