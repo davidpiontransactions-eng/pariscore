@@ -24936,7 +24936,7 @@ function psAccess() {
 }
 
 // Pages toujours ouvertes (marketing / compte / doc)
-const PS_OPEN_PAGES = ['accueil', 'tarifs', 'parametres', 'guide', 'matchs', 'hot-picks', 'sure-bets', 'tendances'];
+const PS_OPEN_PAGES = ['accueil', 'tarifs', 'parametres', 'guide', 'matchs', 'hot-picks', 'sure-bets', 'tendances', 'cycling'];
 
 // Retourne null si autorisé, sinon { need:'register'|'pro', sport? }
 function psPageBlocked(pageId) {
