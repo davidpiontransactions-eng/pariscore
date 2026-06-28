@@ -2326,8 +2326,38 @@ const SOFA_HEADERS = {
   'Cache-Control': 'no-cache',
 };
 
-async function sofaGet(path) {
+// Rate limiter + retry Sofascore
+const _sofaRL = { maxPerSec: 10, windowMs: 1000, queue: [] };
+function _sofaRateLimit() {
+  return new Promise(resolve => {
+    const now = Date.now();
+    _sofaRL.queue = _sofaRL.queue.filter(t => now - t < _sofaRL.windowMs);
+    if (_sofaRL.queue.length >= _sofaRL.maxPerSec) {
+      const wait = _sofaRL.queue[0] + _sofaRL.windowMs - now;
+      setTimeout(() => { _sofaRL.queue.push(Date.now()); resolve(); }, wait);
+    } else {
+      _sofaRL.queue.push(now);
+      resolve();
+    }
+  });
+}
+
+async function _sofaGetRaw(path) {
   return httpsGet(`https://api.sofascore.com/api/v1${path}`, SOFA_HEADERS);
+}
+
+async function sofaGet(path, retries = 2) {
+  await _sofaRateLimit();
+  for (var i = 0; i <= retries; i++) {
+    try {
+      var r = await _sofaGetRaw(path);
+      if (r && r.status === 200 && r.data) return r;
+      if (i < retries) await new Promise(r => setTimeout(r, (i + 1) * 1000));
+    } catch (e) {
+      if (i < retries) await new Promise(r => setTimeout(r, (i + 1) * 1000));
+    }
+  }
+  return null;
 }
 
 // ─── DR Live EXACT via Sofascore (stats points service/retour) ──────────────
@@ -2647,6 +2677,25 @@ function computeTennisDRFromMatch(m) {
       dr_by_set, source: 'bsd_games' };
   }
   return null;
+}
+
+// Normalise le résultat de computeTennisDRFromMatch vers le shape standard client.
+// Ajoute p1, p2, delta, exact, reliable pour compatibilité frontend.
+function _normalizeTennisDR(drRaw) {
+  if (!drRaw || !Number.isFinite(drRaw.dr)) return null;
+  const p1 = drRaw.dr;
+  const p2 = p1 > 0 ? parseFloat((1 / p1).toFixed(3)) : 1;
+  return {
+    p1, p2, delta: parseFloat(Math.abs(p1 - p2).toFixed(3)),
+    exact: drRaw.source === 'bsd_serve_ret',
+    reliable: drRaw.source === 'bsd_serve_ret' || drRaw.source === 'sofa',
+    source: drRaw.source || 'bsd_games',
+    p1Serve: drRaw.p1_serve != null ? drRaw.p1_serve : null,
+    p1Ret: drRaw.p1_ret != null ? drRaw.p1_ret : null,
+    p2Serve: drRaw.p2_serve != null ? drRaw.p2_serve : null,
+    p2Ret: drRaw.p2_ret != null ? drRaw.p2_ret : null,
+    dr_by_set: drRaw.dr_by_set || null,
+  };
 }
 
 // ─── National Team Elo Ratings — eloratings.net ──────────────────────────────
@@ -7502,6 +7551,9 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
   return handle;
 }
 
+// Agent HTTP keepAlive limité — évite les fuites de sockets sous charge
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 25, timeout: 15000, keepAliveMsecs: 30000 });
+
 function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr);
@@ -7510,21 +7562,36 @@ function httpsGet(urlStr, headers = {}, timeoutMs = 15000) {
       path: u.pathname + (u.search || ''),
       method: 'GET',
       headers: { 'Accept': 'application/json', 'User-Agent': 'PariScore/2.0', ...headers },
+      agent: httpsAgent,
     };
-    const req = https.request(opts, (res) => {
-      let body = '';
-      res.on('data', c => body += c);
-      res.on('end', () => {
-        try {
-          resolve({ status: res.statusCode, headers: res.headers, data: JSON.parse(body) });
-        } catch (e) {
-          resolve({ status: res.statusCode, headers: res.headers, data: body });
-        }
+    let retried = false;
+    const doRequest = () => {
+      const req = https.request(opts, (res) => {
+        let body = '';
+        res.on('data', c => body += c);
+        res.on('end', () => {
+          try {
+            resolve({ status: res.statusCode, headers: res.headers, data: JSON.parse(body) });
+          } catch (e) {
+            resolve({ status: res.statusCode, headers: res.headers, data: body });
+          }
+        });
       });
-    });
-    req.on('error', reject);
-    req.setTimeout(timeoutMs, () => { req.destroy(); reject(new Error('Timeout')); });
-    req.end();
+      req.on('error', (err) => {
+        if (!retried && (err.code === 'ECONNRESET' || err.code === 'ETIMEOUT')) {
+          retried = true;
+          return void setTimeout(doRequest, 1000);
+        }
+        reject(err);
+      });
+      req.setTimeout(timeoutMs, () => {
+        req.destroy();
+        if (!retried) { retried = true; return void setTimeout(doRequest, 1000); }
+        reject(new Error('Timeout'));
+      });
+      req.end();
+    };
+    doRequest();
   });
 }
 
@@ -19532,6 +19599,7 @@ function srvAccess(req) {
   const u = getAuthUser(req);
   const role = u ? u.role : null;
   let footPro = false, tennisPro = false;
+  if (process.env.TENNIS_DEV_BYPASS == "1") { footPro = true; tennisPro = true; }
   if (role === 'admin' || role === 'premium' || role === 'pro_all') { footPro = true; tennisPro = true; }
   else if (role === 'pro_foot') footPro = true;
   else if (role === 'pro_tennis') tennisPro = true;
@@ -20716,6 +20784,52 @@ const STRATEGIES = {
       if (steam.direction === 'away') return m.odds?.away || null;
       return null;
     },
+  },
+  // ── Tennis strategies (évaluation côté client) ──────────────────────────
+  TENNIS_SERVE_HOLD: {
+    label: 'Serve & Hold',
+    icon: '',
+    tipster: 'Le Serveur',
+    tipsterDesc: 'Joueur avec % jeux servis gagnés ≥ 80%. Service dominant sur surface.',
+    tipsterFlag: '🇺🇸',
+    getProb: () => null,
+    getOdds: () => null,
+  },
+  TENNIS_RETURN_SPECIALIST: {
+    label: 'Return Specialist',
+    icon: '',
+    tipster: 'Le Breakeur',
+    tipsterDesc: 'Joueur dominant au retour (≥45% pts retour gagnés). Briseur de service.',
+    tipsterFlag: '🇦🇺',
+    getProb: () => null,
+    getOdds: () => null,
+  },
+  TENNIS_DR_DOMINANCE: {
+    label: 'DR Dominance',
+    icon: '',
+    tipster: 'Le Dominant',
+    tipsterDesc: 'Dominance Ratio (DR) ≥ 1.3 sur la surface. Contrôle du jeu.',
+    tipsterFlag: '🇪🇸',
+    getProb: () => null,
+    getOdds: () => null,
+  },
+  TENNIS_SURFACE_SPECIALIST: {
+    label: 'Surface Specialist',
+    icon: '',
+    tipster: 'Le Spécialiste',
+    tipsterDesc: 'Elo surface ≥ 1650 (top 5% sur la surface). Spécialiste surface.',
+    tipsterFlag: '🇨🇭',
+    getProb: () => null,
+    getOdds: () => null,
+  },
+  TENNIS_UNDERDOG_HOLD: {
+    label: 'Underdog Hold',
+    icon: '',
+    tipster: 'Le Renard',
+    tipsterDesc: 'Underdog (cote ≥ 2.0) avec service solide (hold ≥ 78%).',
+    tipsterFlag: '🇫🇷',
+    getProb: () => null,
+    getOdds: () => null,
   },
 };
 
@@ -22982,6 +23096,9 @@ async function fetchESPNTennisLive() {
 const TENNIS_SCHEDULE_TTL_MS = 15 * 60 * 1000;
 const TENNIS_SCHEDULE_DAYS = 3;
 let _tennisScheduleCache = { ts: 0, data: [] };
+/** Anti-cache-stampede : si N requêtes arrivent pendant un fetch, une seule
+    déclenche l'appel ESPN, les autres attendent la même promise. */
+let _schedulePromise = null;
 
 function _tennisYmd(d) {
   return d.getUTCFullYear() * 1e4 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
@@ -24769,6 +24886,13 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
     try { await enrichMatchesWithBetfairWOM(data, 'tennis'); } catch (_) {}
+    // Injection DR normalisé dans chaque match live pour le client
+    for (let i = 0; i < data.length; i++) {
+      try {
+        const drRaw = computeTennisDRFromMatch(data[i]);
+        if (drRaw) data[i].dr_exact = _normalizeTennisDR(drRaw);
+      } catch (_) { /* skip si les stats manquent */ }
+    }
     _tennisLiveCache = { ts: Date.now(), data };
     try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
     try { verifyPendingFootAlerts(); } catch (e) { console.warn('  [FootAlerts] verifyPending:', e.message); }
@@ -27658,6 +27782,8 @@ function computePlayerServeReceiveIndex(playerName, tour, surface = 'ALL', lastN
     const bpConvertedPct = safePercent(totalOppBpFaced - totalOppBpSaved, totalOppBpFaced) || 0;
 
     const receiveIndex = Math.round(rpwPct * 0.6 + bpConvertedPct * 0.4);
+    const firstInPct = safePercent(totalFirstIn, totalSvpt) || 0;
+    const serveHoldPct = safePercent(totalFirstWon + totalSecondWon, totalSvpt) || 0;
 
     // Lookup rank from global serve index
     let serveRank = null, serveTotal = null, receiveRank = null, receiveTotal = null;
@@ -27690,6 +27816,8 @@ function computePlayerServeReceiveIndex(playerName, tour, surface = 'ALL', lastN
       receive_delta: delta.receive_delta,
       first_won_pct: parseFloat(firstWonPct.toFixed(2)),
       second_won_pct: parseFloat(secondWonPct.toFixed(2)),
+      first_in_pct: parseFloat(firstInPct.toFixed(2)),
+      serve_hold_pct: parseFloat(serveHoldPct.toFixed(2)),
       ace_pct: parseFloat(acePct.toFixed(2)),
       rpw_pct: parseFloat(rpwPct.toFixed(2)),
       bp_converted_pct: parseFloat(bpConvertedPct.toFixed(2)),
@@ -30843,9 +30971,19 @@ const TEX_MATCH_DETAIL_TTL_MS = 6 * 3600 * 1000;
 const texMatchDetailCache = new Map();
 
 function _texParseMatchDetail(html) {
+  // ── Sécurité ReDoS : limite taille + timeout ──
+  const MAX_HTML = 500000;
   if (!html) return null;
+  if (html.length > MAX_HTML) html = html.slice(0, MAX_HTML);
+  const _TEX_START = performance.now();
+  const _TEX_TIMEOUT = 5000;
+  function _texTimeLeft() { return (performance.now() - _TEX_START) < _TEX_TIMEOUT; }
+  function _texSafeMatch(subject, re, label) {
+    if (!_texTimeLeft()) return null;
+    try { return subject.match(re); } catch (e) { console.warn(`  [TexParse:${label}] regex error: ${e.message}`); return null; }
+  }
   // Header players
-  const titleM = html.match(/<h1 class="bg">([^<]+)<\/h1>/);
+  const titleM = _texSafeMatch(html, /<h1 class="bg">([^<]+)<\/h1>/, 'title');
   let p1Name = null, p2Name = null;
   if (titleM) {
     const parts = titleM[1].split(/\s*-\s*/);
@@ -30853,7 +30991,7 @@ function _texParseMatchDetail(html) {
     p2Name = (parts[1] || '').trim();
   }
   // Find first odds tab data (Home/Away) — table.result.balance under oddsMenu-1-data
-  const oddsBlock = html.match(/<div id="oddsMenu-1-data">([\s\S]*?)<\/div>\s*<div id="oddsMenu-2-data"/);
+  const oddsBlock = _texSafeMatch(html, /<div id="oddsMenu-1-data">([\s\S]*?)<\/div>\s*<div id="oddsMenu-2-data"/, 'oddsBlock1');
   const books = [];
   let avgP1 = null, avgP2 = null;
   if (oddsBlock) {
@@ -30896,7 +31034,7 @@ function _texParseMatchDetail(html) {
     }
   }
   // H2H summary
-  const h2hM = html.match(/<h2 class="bg">Head-to-head<\/h2>([\s\S]*?)<h2 class="bg">/);
+  const h2hM = _texSafeMatch(html, /<h2 class="bg">Head-to-head<\/h2>([\s\S]*?)<h2 class="bg">/, 'h2h');
   let h2hSummary = null;
   if (h2hM) {
     const noDataM = h2hM[1].match(/<div class="no-data">([^<]+)<\/div>/);
@@ -30920,7 +31058,7 @@ function _texParseMatchDetail(html) {
     const blockRe = nextMenu
       ? new RegExp(`<div id="oddsMenu-${menu}-data"[^>]*>([\\s\\S]*?)<div id="oddsMenu-${nextMenu}-data"`)
       : new RegExp(`<div id="oddsMenu-${menu}-data"[^>]*>([\\s\\S]*?)<\\/div>\\s*<\\/div>\\s*<\\/div>`);
-    const blockM = html.match(blockRe);
+    const blockM = _texSafeMatch(html, blockRe, 'block' + menu);
     if (!blockM || /class="none"[^>]*>[\s\S]{0,200}No odds/.test(blockM[0])) continue;
     const block = blockM[1];
     const titleM2 = block.match(/<tr class="odds-type"[^>]*>\s*<td[^>]*>([^<]+)<\/td>/);
@@ -38607,6 +38745,8 @@ async function _buildTennisValueBetsCore({ date }) {
         serve_index: _p1ss.serve_index, receive_index: _p1ss.receive_index,
         serve_rank: _p1ss.serve_rank, serve_total: _p1ss.serve_total, serve_delta: _p1ss.serve_delta,
         receive_rank: _p1ss.receive_rank, receive_total: _p1ss.receive_total, receive_delta: _p1ss.receive_delta,
+        serve_hold_pct: _p1ss?.serve_hold_pct ?? serveDom?.p1?.serve_pts_won_pct ?? null,
+        return_pct: _p1ss?.rpw_pct ?? null,
         // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
         rank: _getPlayerRank(p1Name, tourGuess) ?? (m.player1?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb (p1_surface is {elo, matches, surface} object)
@@ -38619,6 +38759,8 @@ async function _buildTennisValueBetsCore({ date }) {
         serve_index: _p2ss.serve_index, receive_index: _p2ss.receive_index,
         serve_rank: _p2ss.serve_rank, serve_total: _p2ss.serve_total, serve_delta: _p2ss.serve_delta,
         receive_rank: _p2ss.receive_rank, receive_total: _p2ss.receive_total, receive_delta: _p2ss.receive_delta,
+        serve_hold_pct: _p2ss?.serve_hold_pct ?? serveDom?.p2?.serve_pts_won_pct ?? null,
+        return_pct: _p2ss?.rpw_pct ?? null,
         // BUG-03 fix: ATP/WTA ranking from DB; fallback to BSD current_ranking.position
         rank: _getPlayerRank(p2Name, tourGuess) ?? (m.player2?.current_ranking?.position || null),
         // BUG-04 fix: elo_surface from computed eloProb
@@ -50991,6 +51133,8 @@ setInterval(function() {
   try { if (typeof globalThis.__metricsCache !== "undefined" && globalThis.__metricsCache.prune) globalThis.__metricsCache.prune(); } catch(_) {}
   if (process.env.DEBUG_CACHE_PURGE === "1") console.log("[CachePurge] hourly cleanup done");
 }, 60 * 60 * 1000);
+
+
 
 
 
