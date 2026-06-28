@@ -927,7 +927,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
   if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
   if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
-  if (pageId === 'tennis')   { try { tn2SwitchTab('matchs'); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
+  if (pageId === 'tennis')   { try { tn2SwitchTab('matchs'); } catch(e){}; try { startTennisLive(); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
   try { if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page(); } catch(e) {}
   if (pageId === 'cs2') try { initCs2Page(); } catch(e) {}
   try { if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage(); } catch(e) {}
@@ -3977,9 +3977,57 @@ function _tnComputeDR(m){
 }
 function _tnDeltaDR(m){ const d = _tnComputeDR(m); return d ? d.delta : -1; }
 
-// Returns true if match satisfies the requested expert strategy preset.
-// Conditions volontairement strictes pour livrer un set étroit, actionnable.
-
+// ── Tennis strategy evaluators (client-side) ──────────────────────────
+function _tnMatchStrategy(key, m) {
+  if (!m || !m.player1 || !m.player2) return null;
+  const p1 = m.player1, p2 = m.player2;
+  const bsd = m._bsd_stats;
+  switch (key) {
+    case 'TENNIS_SERVE_HOLD': {
+      const h1 = p1.serve_hold_pct || bsd?.p1_first_pct || (m.serve_dominance?.p1?.serve_pts_won_pct / 100) || null;
+      const h2 = p2.serve_hold_pct || bsd?.p2_first_pct || (m.serve_dominance?.p2?.serve_pts_won_pct / 100) || null;
+      if (h1 >= 80) return { side: 'p1', value: h1, label: 'P1 ' + h1 + '%' };
+      if (h2 >= 80) return { side: 'p2', value: h2, label: 'P2 ' + h2 + '%' };
+      return null;
+    }
+    case 'TENNIS_RETURN_SPECIALIST': {
+      const r1 = p1.return_pct || bsd?.p1_ret_won || null;
+      const r2 = p2.return_pct || bsd?.p2_ret_won || null;
+      if (r1 >= 45) return { side: 'p1', value: r1, label: 'P1 ' + r1 + '%' };
+      if (r2 >= 45) return { side: 'p2', value: r2, label: 'P2 ' + r2 + '%' };
+      return null;
+    }
+    case 'TENNIS_DR_DOMINANCE': {
+      // DR = dominance ratio (delta serve - return). Live via SSE _live patch, pre-match via serve_dominance delta
+      const dr = m._live?.dominance_ratio ?? m.serve_dominance?.delta ?? null;
+      if (dr != null && dr >= 1.3) return { side: 'p1', value: dr, label: 'DR ' + dr.toFixed(2) };
+      if (dr != null && dr <= -1.3) return { side: 'p2', value: Math.abs(dr), label: 'DR ' + Math.abs(dr).toFixed(2) };
+      return null;
+    }
+    case 'TENNIS_SURFACE_SPECIALIST': {
+      const e1 = p1.elo_surface;
+      const e2 = p2.elo_surface;
+      if (e1 >= 1650) return { side: 'p1', value: e1, label: 'Elo ' + e1 };
+      if (e2 >= 1650) return { side: 'p2', value: e2, label: 'Elo ' + e2 };
+      return null;
+    }
+    case 'TENNIS_UNDERDOG_HOLD': {
+      const oddsP1 = m.odds?.p1?.odds;
+      const oddsP2 = m.odds?.p2?.odds;
+      const h1 = p1.serve_hold_pct || bsd?.p1_first_pct || (m.serve_dominance?.p1?.serve_pts_won_pct / 100) || null;
+      const h2 = p2.serve_hold_pct || bsd?.p2_first_pct || (m.serve_dominance?.p2?.serve_pts_won_pct / 100) || null;
+      if (oddsP1 >= 2.0 && h2 >= 78) return { side: 'p2', value: h2, label: 'P2 ' + h2 + '% @ ' + oddsP1 };
+      if (oddsP2 >= 2.0 && h1 >= 78) return { side: 'p1', value: h1, label: 'P1 ' + h1 + '% @ ' + oddsP2 };
+      return null;
+    }
+    default: return null;
+  }
+}
+function _tnCountStrategy(key, matches) {
+  var n = 0;
+  for (var i = 0; i < matches.length; i++) { if (_tnMatchStrategy(key, matches[i])) n++; }
+  return n;
+}
 
 function renderTennisValueBets(rawMatches) {
   const tbody = document.getElementById('tennis-vb-tbody');
@@ -4018,10 +4066,12 @@ function renderTennisValueBets(rawMatches) {
       const s = String(m.status || '').toUpperCase();
       if (s === 'TERMINÉ' || s === 'TERMINE' || s === 'FINAL' || s === 'FINISHED' || s === 'POST') return false;
     }
+    if (currentTennisStrategy && !_tnMatchStrategy(currentTennisStrategy, m)) return false;
     return true;
   });
   // Compteurs visibles sur chaque bouton filtre (circuit/surface/format/catégorie)
   _tvbUpdateCounters(matches);
+  _tnUpdateStrategyPills(matches);
 
   if (filtered.length === 0) {
     tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Aucun match ne correspond aux filtres.</span></div>';
@@ -4215,6 +4265,32 @@ function _tvbSetBadge(filter, counts) {
       b.appendChild(badge);
     }
   }
+}
+
+// ── Tennis strategy pills ───────────────────────────────────────────────────
+function _tnUpdateStrategyPills(matches) {
+  const container = document.getElementById('tennis-strategy-pills');
+  if (!container) return;
+  container.innerHTML = '<span class="tn2-fg-lbl" style="margin-right:6px;white-space:nowrap;">Strat</span>'
+    + TENNIS_STRATEGIES_UI.map(s => {
+      const n = _tnCountStrategy(s.key, matches);
+      const active = currentTennisStrategy === s.key;
+      const tipster = s.tipster ? `<span style="font-size:12px;font-weight:700;display:block;line-height:1.3;">${s.tipster}</span>` : '';
+      const sub = `<span style="font-size:10px;opacity:0.65;display:block;">${s.label}</span>`;
+      return `<div class="strategy-pill${active ? ' active' : ''}" data-key="${s.key}" onclick="applyTennisStrategy('${s.key}')" style="${n === 0 ? 'opacity:0.35;' : ''}">${tipster}${sub}${n > 0 ? '<span class="strategy-count" style="margin-left:4px;color:var(--blue,#38bdf8);font-family:\'DM Mono\',monospace;font-size:10px;">' + n + '</span>' : ''}</div>`;
+    }).join('');
+}
+
+function applyTennisStrategy(key) {
+  if (currentTennisStrategy === key) {
+    currentTennisStrategy = '';
+  } else {
+    currentTennisStrategy = key;
+  }
+  document.querySelectorAll('#tennis-strategy-pills .strategy-pill').forEach(p =>
+    p.classList.toggle('active', p.dataset.key === currentTennisStrategy)
+  );
+  renderTennisValueBets(window._tennisVbLastFetch || []);
 }
 
 // ── AI-AL Tennis ────────────────────────────────────────────────────────────
@@ -22193,7 +22269,15 @@ const STRATEGIES_UI = [
   { key: 'HT_UNDER_FT_OVER', label: 'Explosion 2e Mi-Temps',  icon: '', tipster: 'Le Dynamiteur' },
   { key: 'STEAM_DETECTED',   label: 'Steam Multi-Book',       icon: '', tipster: 'Le Sharp' },
 ];
+const TENNIS_STRATEGIES_UI = [
+  { key: 'TENNIS_SERVE_HOLD',        label: 'Serve & Hold',           icon: '', tipster: 'Le Serveur' },
+  { key: 'TENNIS_RETURN_SPECIALIST', label: 'Return Specialist',      icon: '', tipster: 'Le Breakeur' },
+  { key: 'TENNIS_DR_DOMINANCE',      label: 'DR Dominance',           icon: '', tipster: 'Le Dominant' },
+  { key: 'TENNIS_SURFACE_SPECIALIST',label: 'Surface Specialist',     icon: '', tipster: 'Le Spécialiste' },
+  { key: 'TENNIS_UNDERDOG_HOLD',     label: 'Underdog Hold',          icon: '', tipster: 'Le Renard' },
+];
 let currentStrategies = ['BTTS_YES'];
+let currentTennisStrategy = '';
 let strategiesPageInitialized = false;
 let activeStratLeague = '';
 let activeStratConf = 50;
