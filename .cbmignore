@@ -1,0 +1,28 @@
+# ─── codebase-memory-mcp ignore ──────────────────────────────
+# Exclude non-PariScore subprojects and noise from the knowledge graph
+
+# Shadowbroker sub-project (entirely separate codebase)
+shadow/
+
+# Backup / VPS copies of main files (duplicates that pollute SIMILAR_TO)
+vps/
+fichier VPS/
+pariscore-fix-extract/
+
+# GLM workspace artifacts (temporary)
+GLM/
+
+# Open-design (separate Next.js project, not PariScore core)
+open-design/
+
+# Large data caches (not code)
+.context/ufc_data_cache.csv
+.context/i18n/
+
+# Node modules
+node_modules/
+
+# Generated / patch artifacts
+*.patch
+*.db
+*.log
