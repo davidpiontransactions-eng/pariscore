@@ -984,6 +984,7 @@ function setPageTitle(sportName) {
     'nba':         'NBA - Scores & Statistiques',
     'wnba':        'WNBA - Scores & Statistiques',
     'f1':          'Formule 1 - Résultats & Classements',
+    'cycling':     'Cyclisme - Courses & Résultats',
     'worldcup':    'Coupe du Monde 2026',
     'rg':          'Roland Garros - Direct & Résultats',
     'hot-picks':   'Hot Picks - Sélections du Moment',
