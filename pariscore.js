@@ -2304,7 +2304,9 @@ ${m.is_live && m.live_stats != null && safeId ? `<button class="tn-stats-btn" on
 }
 
 async function tickTennisLive() {
-  const statusEl = document.getElementById('tennis-live-status');
+  // BUG-LIVE-1 fix — l'HTML utilise id="tn2-live-status", l'ancien code cherchait "tennis-live-status" (toujours null).
+  // On teste les deux IDs pour ne pas casser d'éventuels autres templates VPS.
+  const statusEl = document.getElementById('tn2-live-status') || document.getElementById('tennis-live-status');
   try {
     if (statusEl) statusEl.textContent = 'Mise à jour…';
     // Vérifier le cache pour affichage immédiat
@@ -5689,11 +5691,33 @@ function _localTime(timeUtcStr) {
   } catch(_) { return timeUtcStr; }
 }
 
+// UTR Pro exclusion — retire les matchs UTR Pro (UTR Pro Tennis Series, UTR PTT)
+// de l'onglet Tennis / Matchs. Détection insensible à la casse sur le nom du
+// tournoi et le slug (ex: "utr-pro-tennis-series-3/2026/atp-men/").
+// Cf. server.js:29720 (source HTML TE) et server.js:30683 (mot-clé surface 'utr pro').
+function _isUTRProMatch(m) {
+  if (!m) return false;
+  var t = String(m.tournament || '').toLowerCase();
+  var s = String(m.tournament_slug || '').toLowerCase();
+  // Match direct sur le nom du tournoi ou le slug
+  if (t.indexOf('utr pro') !== -1) return true;
+  if (t.indexOf('utr ptt') !== -1) return true;
+  if (s.indexOf('utr-pro') !== -1) return true;
+  if (s.indexOf('utr-ptt') !== -1) return true;
+  // Safety net : slug commençant par "utr-" (couvre "utr-sports" etc.)
+  if (s.indexOf('utr-') === 0) return true;
+  return false;
+}
+
 function _renderTexMatchs(r) {
   var body = document.getElementById('tex-matchs-body');
   var statusEl = document.getElementById('tex-matchs-status');
   if (!body || !r) return;
   var matches = r.matches || [];
+  // UTR Pro — exclus de l'onglet Matchs (demande utilisateur)
+  var _utrBefore = matches.length;
+  matches = matches.filter(function(m) { return !_isUTRProMatch(m); });
+  var _utrHidden = _utrBefore - matches.length;
   // Q5 fix — compute payload hash to detect if a re-render would change content
   // (avoids losing scroll position / hover state on identical auto-refresh payloads)
   var payloadHash = '';
@@ -5706,7 +5730,9 @@ function _renderTexMatchs(r) {
     // Same payload, same filter, same search → preserve UI state, just touch status bar
     if (statusEl) {
       var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
-      statusEl.textContent = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
+      var _skipStatus = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
+      if (_utrHidden > 0) _skipStatus += ' · UTR Pro exclus: ' + _utrHidden;
+      statusEl.textContent = _skipStatus;
     }
     return;
   }
@@ -5925,6 +5951,7 @@ function _renderTexMatchs(r) {
     // L28 fix — show 'MAJ il y a Xs' badge when we have a fetch timestamp
     var filterLabel = _TEX_FILTER_LABELS[_texMatchsFilter] || _texMatchsFilter;
     var statusTxt = matches.length + ' matchs · ' + (r.tour || _texMatchsTour.toUpperCase()) + ' · ' + filterLabel;
+    if (_utrHidden > 0) statusTxt += ' · UTR Pro exclus: ' + _utrHidden;
     if (_texMatchsLastFetchTs) {
       var elapsedSec = Math.max(0, Math.round((Date.now() - _texMatchsLastFetchTs) / 1000));
       var elapsedTxt = elapsedSec < 60 ? elapsedSec + 's' : Math.round(elapsedSec / 60) + 'min';
