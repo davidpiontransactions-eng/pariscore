@@ -46,6 +46,7 @@ let nlpInjuryScraper = null; try { nlpInjuryScraper = require('./tools/nlp-injur
 const basketballService = require('./services/basketballService'); // NBA vertical (ESPN, Elo+FourFactors+totals, JS-natif)
 const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
 const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
+const cyclingService    = require('./services/cyclingService');    // Cyclisme vertical (TDF 2026, Plackett-Luce mock) Sprint 2
 const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catch (_) {}
@@ -584,6 +585,7 @@ function _inferErrorContext() {
     else if (/mma|ufc/i.test(stack)) { page = 'mma'; sport = 'mma'; }
     else if (/basketball|nba|wnba/i.test(stack)) { page = 'nba'; sport = 'basketball'; }
     else if (/f1Service|jolpica|ergast/i.test(stack)) { page = 'f1'; sport = 'f1'; }
+    else if (/cyclingService/i.test(stack)) { page = 'cycling'; sport = 'cycling'; }
   } catch (_) {}
   return { page, sport };
 }
@@ -21600,6 +21602,41 @@ async function handleAPI(req, res, pathname, query) {
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message, races: [] }));
+    }
+  }
+
+  // ── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ──
+  // GET /api/v1/cycling — étape en cours : grille coureurs + 3 value bets + stats
+  if (pathname === '/api/v1/cycling' && req.method === 'GET') {
+    try {
+      const full = await cyclingService.getCyclingFull();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' });
+      return res.end(JSON.stringify(full));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, bets: [], riders: [] }));
+    }
+  }
+  // GET /api/v1/cycling/bets — 3 value bets seuls
+  if (pathname === '/api/v1/cycling/bets' && req.method === 'GET') {
+    try {
+      const b = await cyclingService.getCyclingBets();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=300' });
+      return res.end(JSON.stringify(b));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, bets: [] }));
+    }
+  }
+  // GET /api/v1/cycling/races — calendrier étapes
+  if (pathname === '/api/v1/cycling/races' && req.method === 'GET') {
+    try {
+      const r = await cyclingService.getCyclingStages();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=3600' });
+      return res.end(JSON.stringify(r));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, stages: [] }));
     }
   }
 

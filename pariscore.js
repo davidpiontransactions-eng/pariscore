@@ -939,6 +939,8 @@ function showPage(pageId, linkEl) {
   if (pageId === 'wnba') try { initWnbaPage(); } catch(e) {}
   try { if (pageId !== 'f1' && typeof stopF1Page === 'function') stopF1Page(); } catch(e) {}
   if (pageId === 'f1') try { initF1Page(); } catch(e) {}
+  try { if (pageId !== 'cycling' && typeof stopCyclingPage === 'function') stopCyclingPage(); } catch(e) {}
+  if (pageId === 'cycling') try { initCyclingPage(); } catch(e) {}
   // P1.4 — cleanup SSE RG live quand on quitte la page RG (évite EventSource fantôme)
   try {
     if (pageId !== 'rg' && window._rgLiveEs) {
@@ -1097,6 +1099,76 @@ function _renderF1Grid(drivers) {
     var win = pc(d.win).toFixed(0), pod = pc(d.podium).toFixed(0), rel = pc(d.reliability).toFixed(0);
     var ava = '<span class="f1drv-ava" style="--tc:' + tc + '">' + (d.photo ? '<img src="' + _f1Esc(d.photo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">' : '') + '<b>' + _f1Esc(d.code) + '</b></span>';
     return '<div class="f1drv" style="--tc:' + tc + '"><span class="f1drv-pos ' + medal + '">' + _f1Esc(d.pos) + '</span>' + ava + '<span class="f1drv-code">' + _f1Esc(d.code) + '</span><span class="f1drv-id"><span class="f1drv-name">' + _f1Esc(d.name) + crown + '</span><span class="f1drv-team">' + _f1Esc(d.team) + '</span></span><span class="f1drv-bars"><span class="f1bar" title="Win ' + win + '%"><i style="width:' + win + '%"></i></span><span class="f1bar f1bar--pod" title="Podium ' + pod + '%"><i style="width:' + pod + '%"></i></span></span><span class="f1drv-rel">' + rel + '%</span></div>';
+  }).join('');
+}
+
+// ─── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ───
+var _cycPoll = null, _cycErrBackoff = 300000;
+function _cycEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+window.initCyclingPage = function () {
+  _cycErrBackoff = 300000;
+  _fetchAndRenderCycling();
+  if (_cycPoll) clearInterval(_cycPoll);
+  _cycPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling(); }, 300000);
+};
+if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } };
+function _fetchAndRenderCycling() {
+  fetch('/api/v1/cycling', { cache: 'no-store' })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
+      var st = document.getElementById('cyc-status'), rb = document.getElementById('cyc-race-badge'), nt = document.getElementById('cyc-note'), cb = document.getElementById('cyc-bets'), cg = document.getElementById('cyc-grid');
+      if (!j || j.ok === false) {
+        if (st) st.textContent = 'Données cyclisme indisponibles';
+        if (cb) cb.innerHTML = '';
+        if (cg) cg.innerHTML = '';
+        _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
+        return;
+      }
+      _cycErrBackoff = 300000;
+      if (rb && j.race) rb.textContent = j.race;
+      if (st) st.textContent = 'Étape ' + (j.stage || '') + ' · ' + (j.route || '') + ' (' + (j.type || '') + ') · ' + (j.date || '') + ' · ' + Number(j.sims || 0).toLocaleString('fr') + ' sims' + (j.calibrated ? '' : ' · non calibré');
+      _renderCyclingBets(j.bets || []);
+      _renderCyclingGrid(j.riders || []);
+      if (nt) nt.textContent = j.note || '';
+    })
+    .catch(function () {
+      var st = document.getElementById('cyc-status');
+      if (st) st.textContent = 'Erreur de chargement cyclisme (prochain essai dans ' + Math.round(_cycErrBackoff / 1000) + 's)';
+      _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
+    });
+}
+function _cycBetIcon(type) {
+  var T = {
+    stage_winner: '<path d="M7 4h10v3a5 5 0 0 1-10 0V4zM5 5H3v1.5A2.5 2.5 0 0 0 5.5 9M19 5h2v1.5A2.5 2.5 0 0 1 18.5 9M9 13h6l-1 8h-4l-1-8z"/>',
+    teammate_h2h: '<path d="M4 6h6v12H4zM14 6h6v12h-6M12 8v8"/>',
+    top10_reliability: '<path d="M12 3l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V6l7-3zM9 12l2 2 4-4"/>'
+  };
+  return '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">' + (T[type] || T.stage_winner) + '</svg>';
+}
+function _renderCyclingBets(bets) {
+  var c = document.getElementById('cyc-bets'); if (!c) return;
+  if (!bets.length) { c.innerHTML = '<div class="cyc-empty">Aucun bet disponible</div>'; return; }
+  var CIRC = 138.23;
+  c.innerHTML = bets.map(function (b) {
+    if (!b) return '';
+    var pct = (b.probPct != null) ? b.probPct : Math.round((b.prob || 0) * 100);
+    var p = Math.max(0, Math.min(1, pct / 100));
+    var off = (CIRC * (1 - p)).toFixed(1);
+    var ci = (b.ci95 && b.ci95.length === 2) ? ('IC ' + Math.round(b.ci95[0] * 100) + '–' + Math.round(b.ci95[1] * 100) + '%') : '';
+    var ring = '<div class="cycbet-ring"><svg width="58" height="58" viewBox="0 0 58 58" style="transform:rotate(-90deg)"><circle cx="29" cy="29" r="22" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/><circle cx="29" cy="29" r="22" fill="none" stroke="var(--cyc-accent,#ff6b35)" stroke-width="5" stroke-linecap="round" stroke-dasharray="' + CIRC + '" stroke-dashoffset="' + off + '"/></svg><b>' + pct + '%</b></div>';
+    return '<div class="cycbet">' + '<div class="cycbet-ico">' + _cycBetIcon(b.type) + '</div><div class="cycbet-type">' + _cycEsc(b.label) + '</div><div class="cycbet-pick">' + _cycEsc(b.pick) + '</div><div class="cycbet-foot">' + ring + '<div class="cycbet-info"><div class="cycbet-team">' + _cycEsc(b.team || b.market || '') + '</div><div class="cycbet-ci">' + ci + '</div></div></div></div>';
+  }).join('');
+}
+function _renderCyclingGrid(riders) {
+  var c = document.getElementById('cyc-grid'); if (!c) return;
+  if (!riders.length) { c.innerHTML = '<div class="cyc-empty">Aucun coureur disponible</div>'; return; }
+  var pc = function (v) { return v != null ? v * 100 : 0; };
+  var head = '<div class="cycdrv cycdrv-h"><span>#</span><span></span><span>Coureur / Équipe</span><span>Win · Pod</span><span style="text-align:right">Top10</span></div>';
+  c.innerHTML = head + riders.map(function (d, i) {
+    var medal = i === 0 ? 'g' : i === 1 ? 's' : i === 2 ? 'b' : '';
+    var win = pc(d.win).toFixed(0), pod = pc(d.podium).toFixed(0), top10 = pc(d.top10).toFixed(0);
+    var typeIcon = d.type === 'sprinter' ? '⚡' : d.type === 'puncheur' ? '⛰' : '▲';
+    return '<div class="cycdrv"><span class="cycdrv-pos ' + medal + '">' + (i + 1) + '</span><span class="cycdrv-ava"><b>' + _cycEsc(d.code) + '</b></span><span class="cycdrv-id"><span class="cycdrv-name">' + _cycEsc(d.name) + ' <span class="cycdrv-type">' + typeIcon + '</span></span><span class="cycdrv-team">' + _cycEsc(d.team) + '</span></span><span class="cycdrv-bars"><span class="cycbar" title="Win ' + win + '%"><i style="width:' + win + '%"></i></span><span class="cycbar cycbar--pod" title="Podium ' + pod + '%"><i style="width:' + pod + '%"></i></span></span><span class="cycdrv-top10">' + top10 + '%</span></div>';
   }).join('');
 }
 
