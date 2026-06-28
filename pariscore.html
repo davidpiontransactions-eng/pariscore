@@ -16376,16 +16376,21 @@ function psSetLang(v) {
     window[key] = true;
     switch (tabId) {
       case 'matchs':
+        // BUG-LIVE-2 fix — stopper le polling LIVE quand on quitte l'onglet
+        if (typeof stopTennisLive === 'function') stopTennisLive();
         if (typeof loadTexMatchs === 'function') loadTexMatchs();
         if (typeof loadTexTournamentsToday === 'function') loadTexTournamentsToday();
         break;
       case 'live':
-        if (typeof tickTennisLive === 'function') tickTennisLive();
+        // BUG-LIVE-2 fix — startTennisLive (fetch + polling 30s) au lieu de tickTennisLive (fetch unique)
+        if (typeof startTennisLive === 'function') startTennisLive();
         break;
       case 'top':
+        if (typeof stopTennisLive === 'function') stopTennisLive();
         if (typeof startTennisTop10 === 'function') startTennisTop10();
         break;
       case 'paris':
+        if (typeof stopTennisLive === 'function') stopTennisLive();
         if (typeof startTennisValueBets === 'function') startTennisValueBets();
         break;
       case 'clas':

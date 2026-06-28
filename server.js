@@ -21720,7 +21720,7 @@ async function handleAPI(req, res, pathname, query) {
     try {
       var playerName = null;
       try { var row = sqldb.prepare("SELECT player_name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row) playerName = row.player_name; } catch (_) {}
-      if (!playerName) { try { var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
+      if (!playerName) { try { var row2 = sqldb.prepare("SELECT player_name AS name FROM tennis_players_elo WHERE player_id = ?").get(playerId); if (row2) playerName = row2.name; } catch (_) {} }
       if (playerName) {
         var wikiUrl = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(playerName.replace(/ +/g, '_'));
         var wikiOk = await new Promise(function(resolve) {
@@ -21768,7 +21768,7 @@ async function handleAPI(req, res, pathname, query) {
       }
     } catch (_) {}
     try {
-      var row2 = sqldb.prepare("SELECT name FROM tennis_players WHERE id = ?").get(playerId);
+      var row2 = sqldb.prepare("SELECT player_name AS name FROM tennis_players_elo WHERE player_id = ?").get(playerId);
       if (row2 && row2.name) {
         res.writeHead(302, { 'Location': 'https://ui-avatars.com/api/?name=' + encodeURIComponent(row2.name.trim()) + '&background=172132&color=fff&size=96&bold=true' });
         res.end();
@@ -29706,7 +29706,7 @@ async function _texFetchHtml(pathSuffix) {
   }
 }
 
-function _texParseMatchesPage(html) {
+function _texParseMatchesPage(html, dateISO) {
   if (!html) return [];
   const out = [];
   // TEX8 fix — capturer le nom du tournoi depuis les en-têtes de bloc
@@ -29755,11 +29755,22 @@ function _texParseMatchesPage(html) {
     if (!tourHeadersByExactName.has(th.name)) tourHeadersByExactName.set(th.name, th);
   }
   // NEW — Snapshot de l'heure UTC au moment du parse (pour inférer status live/finished/upcoming)
+  // PIPE-5 fix — utiliser la date demandée (dateISO) plutôt que "aujourd'hui" pour le calcul
+  // du statut. Sans ça, les matchs d'une date passée/future sont tous badgés 'live' ou 'upcoming'
+  // à tort. Fallback sur aujourd'hui si dateISO absent (rétrocompatibilité appelant L24149).
   const nowMs = Date.now();
   const nowUtc = new Date(nowMs);
-  const todayUtcY = nowUtc.getUTCFullYear();
-  const todayUtcM = nowUtc.getUTCMonth();
-  const todayUtcD = nowUtc.getUTCDate();
+  let refUtcY = nowUtc.getUTCFullYear();
+  let refUtcM = nowUtc.getUTCMonth();
+  let refUtcD = nowUtc.getUTCDate();
+  if (dateISO && /^\d{4}-\d{2}-\d{2}$/.test(dateISO)) {
+    refUtcY = parseInt(dateISO.slice(0, 4), 10);
+    refUtcM = parseInt(dateISO.slice(5, 7), 10) - 1;
+    refUtcD = parseInt(dateISO.slice(8, 10), 10);
+  }
+  const todayUtcY = refUtcY;
+  const todayUtcM = refUtcM;
+  const todayUtcD = refUtcD;
   while ((m = trRe.exec(html)) !== null) {
     const [, , idx, , row1, row2] = m;
     // Trouver le tournoi le plus récent avant ce match
@@ -29967,7 +29978,7 @@ async function fetchTexMatches(tour, dateISO) {
   }
   const path = `/matches/?type=${type}${datePart}`;
   const html = await _texFetchHtml(path);
-  const matches = _texParseMatchesPage(html);
+  const matches = _texParseMatchesPage(html, dateISO || null);
   const data = {
     tour: type.split('-')[0].toUpperCase(),
     format: type.split('-')[1], // single | double
@@ -30106,9 +30117,36 @@ async function fetchTexMatches(tour, dateISO) {
       };
     }
   } catch (e) { _trackCatch('tennis', 'tex_enrich_matches', e); }
+  // PIPE-19 fix — exclure les matchs UTR Pro côté serveur (cohérence multi-consommateurs).
+  // Le filtre frontend (pariscore.js::_isUTRProMatch) reste en double pour defense-in-depth,
+  // mais désormais PARIS/value-bets et tout autre consumer de /api/v1/tennis/tex/matches
+  // ne reçoivent plus non plus les matchs UTR Pro.
+  try {
+    const _beforeUtr = data.matches.length;
+    data.matches = data.matches.filter(function (m) { return !_isUTRProMatchServer(m); });
+    if (data.matches.length !== _beforeUtr) {
+      console.log('[tex] UTR Pro exclus côté serveur: ' + (_beforeUtr - data.matches.length) + ' match(s) retirés sur ' + _beforeUtr);
+    }
+  } catch (e) { _trackCatch('tennis', 'tex_utr_filter', e); }
   texMatchesCache.set(cacheKey, { ts: Date.now(), data });
   _texCacheEvict(texMatchesCache, TEX_CACHE_MAX_ENTRIES); // M10 fix — bound cache
   return data;
+}
+
+// PIPE-19 fix — helper serveur partagé pour détecter les matchs UTR Pro.
+// Miroir de _isUTRProMatch côté frontend (pariscore.js). Détection insensible
+// à la casse sur tournament + tournament_slug. Couvre UTR Pro Tennis Series,
+// UTR PTT, et tous les slugs commençant par "utr-".
+function _isUTRProMatchServer(m) {
+  if (!m) return false;
+  var t = String(m.tournament || '').toLowerCase();
+  var s = String(m.tournament_slug || '').toLowerCase();
+  if (t.indexOf('utr pro') !== -1) return true;
+  if (t.indexOf('utr ptt') !== -1) return true;
+  if (s.indexOf('utr-pro') !== -1) return true;
+  if (s.indexOf('utr-ptt') !== -1) return true;
+  if (s.indexOf('utr-') === 0) return true;
+  return false;
 }
 
 // T6 v10.13 — Tennis calendar saison (tournaments par tour)
