@@ -19,6 +19,10 @@
 const MC_SIMS = 4000;
 const TEMP = 1.0;
 
+// ── DNF modeling ──
+const DNF_K = 0.25; // strength protection factor
+const DNF_BASE = { TTT:0.05, Flat:0.04, Hills:0.12, Mountain:0.25, ITT:0.03 };
+
 const BETA_CLIMB = 1.4, BETA_SPRINT = 0.9, BETA_GC = 0.7, BETA_FORM = 0.5;
 
 // ── 21 étapes TDF 2026 (données consolidées des fichiers cycling-design/stages/) ──
@@ -120,13 +124,22 @@ function _strengthForStage(rider, stage) {
   return Math.exp(eta / TEMP);
 }
 
-// ── Monte-Carlo simulation (Plackett-Luce) ─────────────────────────────────────
+// ── Monte-Carlo simulation (Plackett-Luce + DNF) ─────────────────────────────
 function _simulate(riders, stage) {
   var M = MC_SIMS;
+  var dnfBase = DNF_BASE[stage.type] || DNF_BASE.Hills;
   var win = {}, pod = {}, top10 = {};
   riders.forEach(function(r) { win[r.code] = 0; pod[r.code] = 0; top10[r.code] = 0; });
   for (var s = 0; s < M; s++) {
-    var strengths = riders.map(function(r) { return { code: r.code, strength: r._strength }; });
+    // ── DNF draw: weaker riders DNF more on harder stages ──
+    var pool = [];
+    riders.forEach(function(r) {
+      var dnfProb = dnfBase / (1 + r._strength * DNF_K);
+      if (Math.random() >= dnfProb) pool.push(r);
+    });
+    if (pool.length < 2) continue; // need at least 2 for PL
+
+    var strengths = pool.map(function(r) { return { code: r.code, strength: r._strength }; });
     var sum = strengths.reduce(function(a, x) { return a + x.strength; }, 0);
     var order = [], rem = strengths.slice();
     while (rem.length) {
@@ -218,7 +231,7 @@ async function _model() {
     type: stage.type, elev: stage.elev, country: stage.country,
     sims: sim.sims,
     model: 'plackett-luce-v1-mock', calibrated: false,
-    note: 'Modèle v1 (mock) — basé sur 28 riders profilés (PCS data). Non calibré. Probas indicatives, aucun signal BET dur.',
+    note: 'Modèle v1 (mock) — basé sur 29 riders profilés (PCS data). Non calibré. Probas indicatives, aucun signal BET dur.',
     riders: ridersOut.sort(function(a, b) { return b.win - a.win; }),
     bets: bets,
   };

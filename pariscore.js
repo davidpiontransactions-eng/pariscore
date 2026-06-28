@@ -1159,6 +1159,16 @@ function _renderCyclingBets(bets) {
     return '<div class="cycbet">' + '<div class="cycbet-ico">' + _cycBetIcon(b.type) + '</div><div class="cycbet-type">' + _cycEsc(b.label) + '</div><div class="cycbet-pick">' + _cycEsc(b.pick) + '</div><div class="cycbet-foot">' + ring + '<div class="cycbet-info"><div class="cycbet-team">' + _cycEsc(b.team || b.market || '') + '</div><div class="cycbet-ci">' + ci + '</div></div></div></div>';
   }).join('');
 }
+function _cycTeamColor(id) {
+  var C = {
+    uae:'#E31837', visma:'#FFCD00', soudal:'#00CFE0', bora:'#B20000',
+    ef:'#FF6B00', jayco:'#1A1A2E', groupama:'#00A650', ineos:'#000000',
+    alpecin:'#FF4500', lidl:'#005CAA', bahrain:'#B8860B', total:'#E2001A',
+    intermarche:'#FF6600', dsm:'#00A3E0', arkea:'#00BFFF', astana:'#003399',
+    unox:'#FF0000'
+  };
+  return C[String(id || '').toLowerCase()] || '#8d9399';
+}
 function _renderCyclingGrid(riders) {
   var c = document.getElementById('cyc-grid'); if (!c) return;
   if (!riders.length) { c.innerHTML = '<div class="cyc-empty">Aucun coureur disponible</div>'; return; }
@@ -1168,7 +1178,8 @@ function _renderCyclingGrid(riders) {
     var medal = i === 0 ? 'g' : i === 1 ? 's' : i === 2 ? 'b' : '';
     var win = pc(d.win).toFixed(0), pod = pc(d.podium).toFixed(0), top10 = pc(d.top10).toFixed(0);
     var typeIcon = d.type === 'sprinter' ? '⚡' : d.type === 'puncheur' ? '⛰' : '▲';
-    return '<div class="cycdrv"><span class="cycdrv-pos ' + medal + '">' + (i + 1) + '</span><span class="cycdrv-ava"><b>' + _cycEsc(d.code) + '</b></span><span class="cycdrv-id"><span class="cycdrv-name">' + _cycEsc(d.name) + ' <span class="cycdrv-type">' + typeIcon + '</span></span><span class="cycdrv-team">' + _cycEsc(d.team) + '</span></span><span class="cycdrv-bars"><span class="cycbar" title="Win ' + win + '%"><i style="width:' + win + '%"></i></span><span class="cycbar cycbar--pod" title="Podium ' + pod + '%"><i style="width:' + pod + '%"></i></span></span><span class="cycdrv-top10">' + top10 + '%</span></div>';
+    var tc = _cycTeamColor(d.teamId);
+    return '<div class="cycdrv" style="--tc:' + tc + '"><span class="cycdrv-pos ' + medal + '">' + (i + 1) + '</span><span class="cycdrv-ava"><b>' + _cycEsc(d.code) + '</b></span><span class="cycdrv-id"><span class="cycdrv-name">' + _cycEsc(d.name) + ' <span class="cycdrv-type">' + typeIcon + '</span></span><span class="cycdrv-team">' + _cycEsc(d.team) + '</span></span><span class="cycdrv-bars"><span class="cycbar" title="Win ' + win + '%"><i style="width:' + win + '%"></i></span><span class="cycbar cycbar--pod" title="Podium ' + pod + '%"><i style="width:' + pod + '%"></i></span></span><span class="cycdrv-top10">' + top10 + '%</span></div>';
   }).join('');
 }
 
