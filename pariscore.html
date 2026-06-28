@@ -22646,7 +22646,54 @@ body[data-page="cycling"] footer{display:none!important;}
 .cyc-title{font-family:Syne,sans-serif;font-weight:800;font-size:24px;display:flex;align-items:center;gap:10px;}
 .cyc-badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--cyc-accent,#ff6b35);background:rgba(255,107,53,.12);border:1px solid rgba(255,107,53,.35);border-radius:20px;padding:3px 10px;text-transform:uppercase;letter-spacing:.04em;}
 .cyc-sub{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.05em;}
-.cyc-placeholder{padding:40px 20px;text-align:center;color:#8d9399;font-family:'Instrument Sans',sans-serif;font-size:15px;border:1px dashed rgba(255,107,53,.25);border-radius:16px;margin-top:20px;}
+
+/* ── Cycling status + note ───────────────────────── */
+.cyc-status{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px;}
+.cyc-note{font-family:'Instrument Sans',sans-serif;font-size:12px;color:#6b7280;line-height:1.5;margin-top:28px;padding:12px;background:rgba(255,255,255,.03);border-radius:8px;}
+
+/* ── Cycling bet cards (grid 3) ──────────────────── */
+.cyc-bets{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px;}
+@media(max-width:700px){.cyc-bets{grid-template-columns:1fr;}}
+.cycbet{background:rgba(255,255,255,.04);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px;position:relative;transition:background .15s;}
+.cycbet:hover{background:rgba(255,255,255,.07);}
+.cycbet-ico{display:flex;align-items:center;gap:4px;color:var(--cyc-accent,#ff6b35);opacity:.7;}
+.cycbet-type{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--cyc-accent,#ff6b35);opacity:.8;}
+.cycbet-pick{font-family:Syne,sans-serif;font-weight:700;font-size:17px;line-height:1.2;margin:2px 0 6px;}
+.cycbet-foot{display:flex;align-items:center;gap:12px;margin-top:auto;}
+.cycbet-ring{position:relative;width:58px;height:58px;flex-shrink:0;}
+.cycbet-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;}
+.cycbet-info{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.cycbet-team{font-size:12px;color:#b0b3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cycbet-ci{font-family:'DM Mono',monospace;font-size:10px;color:#6b7280;}
+.cyc-empty{grid-column:1/-1;padding:24px 20px;text-align:center;color:#8d9399;font-size:14px;}
+
+/* ── Grid head ───────────────────────────────────── */
+.cyc-grid-head{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.06em;margin:28px 0 8px;}
+
+/* ── Riders grid ─────────────────────────────────── */
+.cyc-grid{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.04);border-radius:12px;overflow:hidden;}
+.cycdrv{display:grid;grid-template-columns:32px 40px 1fr 100px 52px;align-items:center;gap:8px;padding:8px 12px;background:var(--cyc-bg,#0a1628);transition:background .1s;font-size:13px;}
+.cycdrv:hover{background:rgba(255,255,255,.03);}
+.cycdrv-h{font-family:'DM Mono',monospace;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;padding:8px 12px;background:rgba(255,255,255,.02);}
+.cycdrv-pos{font-family:'DM Mono',monospace;font-weight:700;font-size:13px;text-align:center;color:#6b7280;}
+.cycdrv-pos.g{color:var(--cyc-accent,#ff6b35);}
+.cycdrv-pos.s{color:var(--cyc-accent,#ff6b35);opacity:.8;}
+.cycdrv-pos.b{color:var(--cyc-accent,#ff6b35);opacity:.6;}
+.cycdrv-ava{display:flex;align-items:center;justify-content:center;}
+.cycdrv-ava b{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.02em;background:rgba(255,107,53,.12);border-radius:6px;padding:2px 6px;line-height:1.4;}
+.cycdrv-id{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.cycdrv-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cycdrv-type{opacity:.5;font-size:11px;}
+.cycdrv-team{font-size:11px;color:#8d9399;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cycdrv-bars{display:flex;flex-direction:column;gap:3px;}
+.cycbar{height:5px;width:100%;border-radius:3px;overflow:hidden;display:block;background:rgba(255,255,255,.06);}
+.cycbar i{display:block;height:100%;border-radius:3px;background:var(--cyc-accent,#ff6b35);transition:width .3s;}
+.cycbar--pod i{background:#8d9399;}
+.cycdrv-top10{font-family:'DM Mono',monospace;font-size:12px;color:#8d9399;text-align:right;}
+@media(max-width:700px){
+  .cycdrv{grid-template-columns:28px 34px 1fr 72px 38px;font-size:12px;padding:6px 10px;}
+  .cycdrv-bars{display:none;}
+}
 </style>
 <div class="cyc-wrap">
   <div class="cyc-head">
@@ -22655,13 +22702,15 @@ body[data-page="cycling"] footer{display:none!important;}
         <circle cx="12" cy="12" r="2"/><path d="M2 16h4l3.5-4 1.5 3L14 9l4 7h4"/><path d="M8 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M18 20a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
       </svg>
       Cyclisme
-      <span class="cyc-badge">Sprint 1</span>
+      <span class="cyc-badge">Tour de France 2026</span>
     </div>
-    <div class="cyc-sub">Courses · Résultats · Classements</div>
+    <div class="cyc-sub" id="cyc-race-badge">—</div>
   </div>
-  <div class="cyc-placeholder">
-    ⏳ Contenu cyclisme à venir — calendrier, classements UCI, pronostics.
-  </div>
+  <div class="cyc-status" id="cyc-status">Chargement…</div>
+  <div class="cyc-bets" id="cyc-bets"></div>
+  <div class="cyc-grid-head">Grille coureurs · projections modèle (Monte-Carlo)</div>
+  <div class="cyc-grid" id="cyc-grid"></div>
+  <div class="cyc-note" id="cyc-note"></div>
 </div>
 </div>
 <div id="page-mma" data-page="mma" style="display:none;">
