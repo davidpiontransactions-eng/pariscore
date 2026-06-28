@@ -102,6 +102,14 @@ services:
       - key: GNEWS_API_KEY
         sync: false   # laisser vide pour utiliser uniquement les flux RSS
 
+      # Firecrawl — scraping web structuré (optionnel, cf. services/firecrawlService.js)
+      - key: FIRECRAWL_API_KEY
+        sync: false   # https://firecrawl.dev/app/api-keys
+      - key: FIRECRAWL_ENABLED
+        value: "false"  # feature flag — activer manuellement après POC
+      - key: FIRECRAWL_CACHE_TTL_MS
+        value: "1800000"  # 30 min
+
     # Disque persistant — pariscore.db survit aux redémarrages
     disk:
       name: pariscore-data

@@ -188,3 +188,61 @@ bd close <id>         # Complete work
 - NEVER say "ready to push when you are" - YOU must push
 - If push fails, resolve and retry until it succeeds
 <!-- END BEADS INTEGRATION -->
+
+## MCP Servers — Capacités Disponibles
+
+Ce projet utilise **6 serveurs MCP** configurés dans `.mcp.json`. Les clients MCP (opencode, Claude Code, Cline) les chargent automatiquement au démarrage.
+
+### Serveurs Installés
+
+| Serveur | Technologie | Utilité |
+|---------|-------------|---------|
+| `project_fs` | `npx @modelcontextprotocol/server-filesystem` | Navigation, lecture, écriture fichiers dans le projet |
+| `memory` | `npx @modelcontextprotocol/server-memory` | **Knowledge Graph persistant** — mémoire entre sessions |
+| `git` | `uvx mcp-server-git` | Opérations git structurées (status, log, diff, commit) |
+| `bzzoiro-sports` | HTTP MCP (externe) | Données sportives via API |
+| `sportdbdotdev` | HTTP MCP (externe) | SportDB |
+| `sportradar` | MCP Remote via RapidAPI | Sportradar |
+
+### 🧠 Memory Server — Guide d'Utilisation
+
+Le serveur `memory` est un **Knowledge Graph** qui persiste les données entre sessions. Il expose 8 outils :
+
+- `create_entities` / `create_relations` — Stocker des connaissances
+- `search_nodes(query)` — Rechercher dans le graphe
+- `add_observations` — Enrichir une entité existante
+- `read_graph` / `open_nodes` — Explorer le graphe
+- `delete_*` — Nettoyer
+
+**Cas d'usage concrets pour PariScore :**
+- Stocker les décisions d'architecture (pourquoi tel pattern, telle API)
+- Mémoriser les bugs récurrents et leurs corrections
+- Enregistrer les analyses de stratégies de paris
+- Garder trace des schémas de données API-football / Odds API
+- Documenter les dépendances entre modules
+
+**Bonnes pratiques :**
+- Utiliser `search_nodes` au début d'une session pour restaurer le contexte
+- Créer une entité `pariscore-architecture` avec les observations sur l'architecture
+- Créer des entités par domaine : `api-football`, `odds-api`, `strategies`, `bugs`, `decisions`
+- Utiliser `create_relations` pour lier les entités entre elles
+
+### 🔧 Git Server — Opérations Structurées
+
+Alternative plus robuste aux appels shell `git`. Outils disponibles :
+- `git_status`, `git_log`, `git_diff` — Lecture
+- `git_commit` — Écriture (commits structurés)
+- `git_branch`, `git_checkout` — Navigation branches
+
+### 📁 Filesystem Server — Navigation Fichiers
+
+Remplace les appels shell pour la lecture/écriture de fichiers. Racine autorisée : la racine du projet.
+
+### Vérification
+
+Pour tester qu'un serveur répond :
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | npx -y @modelcontextprotocol/server-memory
+# ou pour git :
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | uvx mcp-server-git --repository .
+```
