@@ -2353,7 +2353,7 @@ async function tickTennisLive() {
 function startTennisLive() { /* no-op — TennisScope gère le refresh */ }
 
 function stopTennisLive() {
-  if (typeof _tennisTimer !== 'undefined' && _tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
+  if (_tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
 }
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
@@ -4459,7 +4459,7 @@ async function tickTennisValueBets() {
 function startTennisValueBets() { /* no-op — TennisScope gère le refresh */ }
 
 function stopTennisValueBets() {
-  if (typeof _tennisVbTimer !== 'undefined' && _tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
+  if (_tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
 }
 
 // ─── Top 10 Matchs du Jour — Tennis ──────────────────────────────────────
@@ -10533,6 +10533,8 @@ function _psSbPickTennis(name) {
   document.querySelectorAll('#ps-tennis-sidebar .sidebar-league-item, #ps-tennis-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
     btn.classList.toggle('is-active', (btn.dataset.sbTournoi || '') === name);
   });
+  // Mémoriser le filtre pour le cas où TennisScope n'est pas encore initialisé
+  window._pendingTennisFilter = name;
   // Délègue le filtre au TennisScope pour re-rendre les matchs
   try { if (window.TennisScope && typeof window.TennisScope.filterTournament === 'function') window.TennisScope.filterTournament(name); } catch(e) {}
 }

@@ -24719,7 +24719,10 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
     } catch (e) { /* swallow — pulse best-effort */ }
     const _aiTotal = _aiEnriched + _aiEnrichedOndemand;
     console.log(`  [TennisLive] BSD=${bsd.length} ESPN=${espn.length} merged=${data.length} live=${_liveIds.size}${_aiTotal ? ` serving+${_aiTotal}aiscore` : ''}${_aiOndemand ? ` fetched+${_aiOndemand}aiscore_ondemand` : ''}${BSD_TENNIS_ENABLED ? '' : ' (BSD off)'}`);
-    try { await enrichMatchesWithBetfairWOM(data, 'tennis'); } catch (_) {}
+    // Betfair WOM enrichissement — pas à chaque poll (coûteux), TTL 5 min
+    if (!globalThis._bfWomTennisLastTs || Date.now() - globalThis._bfWomTennisLastTs > 5 * 60 * 1000) {
+      try { await enrichMatchesWithBetfairWOM(data, 'tennis'); globalThis._bfWomTennisLastTs = Date.now(); } catch (_) {}
+    }
     // Injection DR normalisé dans chaque match live pour le client
     for (let i = 0; i < data.length; i++) {
       try {
@@ -37443,6 +37446,10 @@ async function buildTennisValueBets(opts = {}) {
     return { status: 200, body: { count: 0, matches: [], meta: { loading: true, building: true } } };
   }
   const hit = _tennisVBCache.get(key);
+  // Circuit-breaker : si le dernier build a échoué, attendre 60s avant de réessayer
+  if (hit && hit.error && Date.now() - hit.ts < 60 * 1000) {
+    return { status: 200, body: { count: 0, matches: [], meta: { loading: true, error: hit.message, retry_after_ms: 60000 - (Date.now() - hit.ts) } } };
+  }
   if (hit) {
     // Build degrade ESPN (BSD KO ce cycle) : TTL court 60 s -> reessaie BSD vite
     // au lieu de figer des ids ESPN (detail mort) pendant 4 min.
@@ -37453,7 +37460,7 @@ async function buildTennisValueBets(opts = {}) {
     _vbGuard.set(key, { promise: null, ts: Date.now() });
     _buildTennisValueBetsCore(opts)
       .then(r => { _vbGuard.delete(key); if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
-      .catch(e => { _vbGuard.delete(key); console.warn('  [TennisVB] rebuild bg echec:', e.message); });
+      .catch(e => { _vbGuard.delete(key); _tennisVBCache.set(key, { ts: Date.now(), error: true, message: String(e && e.message || e) }); console.warn('  [TennisVB] rebuild bg echec:', e.message); });
     return hit.result;
   }
   // [FIX bug onglet tennis - v4] Aucun cache : NE PLUS bloquer la requete.
@@ -37465,7 +37472,7 @@ async function buildTennisValueBets(opts = {}) {
   _vbGuard.set(key, { promise: null, ts: Date.now() });
   _buildTennisValueBetsCore(opts)
     .then(r => { _vbGuard.delete(key); if (r && r.status === 200) _tennisVBCache.set(key, { ts: Date.now(), result: r }); })
-    .catch(e => { _vbGuard.delete(key); console.warn('  [TennisVB] cold build bg echec:', e && e.message || e); });
+    .catch(e => { _vbGuard.delete(key); _tennisVBCache.set(key, { ts: Date.now(), error: true, message: String(e && e.message || e) }); console.warn('  [TennisVB] cold build bg echec:', e && e.message || e); });
   return { status: 200, body: { count: 0, matches: [], meta: { loading: true, building: true } } };
 }
 // Pont scope : le warm-up boot (_sackmannBootSync IIFE) ne voit pas cette
