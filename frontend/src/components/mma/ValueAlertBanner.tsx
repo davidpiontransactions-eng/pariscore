@@ -34,7 +34,7 @@ export default function ValueAlertBanner({ alert, fighterAName, fighterBName }: 
             fontSize: 15,
             color: 'var(--color-accent-green)',
           }}>
-            Value Bet Détectée
+            Value Bet Detected
           </div>
           <div style={{
             fontFamily: 'var(--font-body)',
@@ -53,10 +53,10 @@ export default function ValueAlertBanner({ alert, fighterAName, fighterBName }: 
         flex: 1,
         justifyContent: 'space-around',
       }}>
-        <MetricTile label="Ratio modèle/marché" value={`${(alert.ratio * 100).toFixed(0)}%`} color="var(--color-accent-green)" />
+        <MetricTile label="Model/Market Ratio" value={`${(alert.ratio * 100).toFixed(0)}%`} color="var(--color-accent-green)" />
         <MetricTile label="Expected Value" value={`+${evPercent}%`} color="var(--color-accent-green)" />
-        <MetricTile label="Kelly fractionnaire" value={`${(alert.kelly_fraction * 100).toFixed(1)}%`} color="var(--color-accent-blue)" />
-        <MetricTile label="Probabilité modèle" value={`${(alert.model_prob * 100).toFixed(0)}%`} color="var(--color-text-primary)" />
+        <MetricTile label="Kelly Fraction" value={`${(alert.kelly_fraction * 100).toFixed(1)}%`} color="var(--color-accent-blue)" />
+        <MetricTile label="Model Probability" value={`${(alert.model_prob * 100).toFixed(0)}%`} color="var(--color-text-primary)" />
       </div>
     </div>
   );

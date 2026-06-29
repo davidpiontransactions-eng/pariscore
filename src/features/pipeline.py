@@ -114,6 +114,16 @@ class FeaturePipeline:
         )
         match_features = match_features.merge(edge, on="match_id", how="left")
 
+
+        # -- Safety: retirer les matchups corrompus (meme joueur A et B) --
+        before_safe = len(match_features)
+        match_features = match_features[
+            match_features["player_a_id"] != match_features["player_b_id"]
+        ].copy()
+        if len(match_features) < before_safe:
+            removed_count = before_safe - len(match_features)
+            print(f"[Pipeline] [WARN] Retire {removed_count} matchups corrompus (player_a == player_b)")
+
         # ── Étape 8: Différentiels ──
         print("[Pipeline] Calcul differentiels A - B...")
         diff_srv = compute_differential(

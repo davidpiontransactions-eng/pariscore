@@ -89,7 +89,7 @@ def load_sackmann(
             )
             if nan_mask.any():
                 unique_ids = df[nan_mask].apply(
-                    lambda r: "_".join(sorted([str(r["winner_id"]), str(r["loser_id"])])),
+                    lambda r: str(r["tourney_date"]) + "_" + "_".join(sorted([str(r["winner_id"]), str(r["loser_id"])])),
                     axis=1,
                 )
                 df.loc[nan_mask, "match_id"] = unique_ids

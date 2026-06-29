@@ -7,9 +7,10 @@ interface Props {
   error: string | null;
   onSelect: (m: MatchDemo) => void;
   selected: boolean;
+  onPlayerClick?: (name: string) => void;
 }
 
-export default function MatchCard({ match, prediction, loading, error, onSelect, selected }: Props) {
+export default function MatchCard({ match, prediction, loading, error, onSelect, selected, onPlayerClick }: Props) {
   const prob = prediction ? prediction.prob_a * 100 : null;
   const borderStyle = selected
     ? '2px solid var(--color-accent-blue)'
@@ -64,22 +65,46 @@ export default function MatchCard({ match, prediction, loading, error, onSelect,
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: 16,
-            color: 'var(--color-text-primary)',
-          }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onPlayerClick?.(match.player_a.name); }}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 16,
+              color: 'var(--color-text-primary)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'block',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent-green)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          >
             {match.player_a.name}
-          </div>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: 16,
-            color: 'var(--color-text-secondary)',
-          }}>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onPlayerClick?.(match.player_b.name); }}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 16,
+              color: 'var(--color-text-secondary)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'block',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent-green)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
+          >
             {match.player_b.name}
-          </div>
+          </button>
         </div>
 
         <div style={{ textAlign: 'right' }}>

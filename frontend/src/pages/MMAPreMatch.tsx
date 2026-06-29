@@ -29,7 +29,7 @@ function mockKeyFactors(fight: UFCMatchFeatures): UFCKeyFactor[] {
 
   if (a.opponent_strength_sos != null) {
     factors.push({
-      label: "Force de l'opposition",
+      label: 'Strength of Opposition',
       fighter_a_value: a.opponent_strength_sos.toFixed(2),
       fighter_b_value: b.opponent_strength_sos.toFixed(2),
       advantage: a.opponent_strength_sos > b.opponent_strength_sos ? 'a' : 'b',
@@ -62,7 +62,7 @@ function mockKeyFactors(fight: UFCMatchFeatures): UFCKeyFactor[] {
   if (a.reach_cm != null && b.reach_cm != null) {
     const reachDiff = a.reach_cm - b.reach_cm;
     factors.push({
-      label: 'Allonge',
+      label: 'Reach',
       fighter_a_value: `${a.reach_cm} cm`,
       fighter_b_value: `${b.reach_cm} cm`,
       advantage: reachDiff > 0 ? 'a' : 'b',
@@ -73,7 +73,7 @@ function mockKeyFactors(fight: UFCMatchFeatures): UFCKeyFactor[] {
 
   const daysDiff = (b.days_since_last_fight || 30) - (a.days_since_last_fight || 30);
   factors.push({
-    label: 'Repos',
+    label: 'Rest Days',
     fighter_a_value: `${a.days_since_last_fight}j`,
     fighter_b_value: `${b.days_since_last_fight}j`,
     advantage: daysDiff > 0 ? 'a' : 'b',
@@ -205,7 +205,7 @@ export default function MMAPreMatch() {
           color: 'var(--color-text-tertiary)',
           fontSize: 12,
         }}>
-          🧪 Mode simulation - API UFC non disponible
+          🧪 Simulation mode - UFC API unavailable
         </div>
       )}
 
@@ -217,7 +217,7 @@ export default function MMAPreMatch() {
             textTransform: 'uppercase', letterSpacing: '0.5px',
             marginBottom: 'var(--space-md)',
           }}>
-            🥊 Combats du jour
+            🥊 Today's Fights
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
             {SAMPLE_FIGHTS.map((f) => {
@@ -243,7 +243,7 @@ export default function MMAPreMatch() {
               textAlign: 'center', padding: 'var(--space-2xl)',
               background: 'var(--color-card)', borderRadius: 'var(--radius-card)',
             }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Calcul des predictions...</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Calculating predictions...</span>
             </div>
           )}
 
@@ -268,7 +268,8 @@ export default function MMAPreMatch() {
                       fontFamily: 'var(--font-body)', fontSize: 12,
                       color: 'var(--color-text-tertiary)', marginTop: 2,
                     }}>
-                      {new Date(selected.event_date).toLocaleDateString('fr-FR', {
+                      {/* TODO: use i18n locale instead of hardcoded 'en-US' */}
+                      {new Date(selected.event_date).toLocaleDateString('en-US', {
                         day: 'numeric', month: 'long', year: 'numeric',
                       })}
                     </div>
@@ -363,19 +364,19 @@ export default function MMAPreMatch() {
                 }}>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Confiance
+                      Confidence
                     </div>
                     <div style={{
                       fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18,
                       color: selectedPrediction.confidence >= 0.8 ? 'var(--color-accent-green)' : 'var(--color-text-secondary)',
                       marginTop: 2,
                     }}>
-                      {selectedPrediction.confidence >= 0.8 ? 'Élevée' : selectedPrediction.confidence >= 0.5 ? 'Moyenne' : 'Faible'} ({(selectedPrediction.confidence * 100).toFixed(0)}%)
+                      {selectedPrediction.confidence >= 0.8 ? 'High' : selectedPrediction.confidence >= 0.5 ? 'Medium' : 'Low'} ({(selectedPrediction.confidence * 100).toFixed(0)}%)
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Cotes ouverture
+                      Opening Odds
                     </div>
                     <div style={{
                       fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15,
@@ -406,7 +407,7 @@ export default function MMAPreMatch() {
                   color: 'var(--color-text-tertiary)', textTransform: 'uppercase',
                   letterSpacing: '0.5px', margin: '0 0 var(--space-sm)',
                 }}>
-                  Methode de fin estimee
+                  Estimated Finish Method
                 </h3>
                 <MethodDistribution
                   koRate={selected.weight_class_avg_finish_rate}
@@ -425,7 +426,7 @@ export default function MMAPreMatch() {
                   color: 'var(--color-text-tertiary)', textTransform: 'uppercase',
                   letterSpacing: '0.5px', margin: '0 0 var(--space-md)',
                 }}>
-                  Facteurs cles
+                   Key Factors
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                   {selectedPrediction.key_factors.map((f, i) => (
@@ -435,9 +436,9 @@ export default function MMAPreMatch() {
               </div>
 
               <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
-                Modele: {selectedPrediction.model_version}
+                Model: {selectedPrediction.model_version}
                 {' · '}
-                {new Date(selectedPrediction.timestamp).toLocaleTimeString('fr-FR')}
+                {new Date(selectedPrediction.timestamp).toLocaleTimeString('en-US')}
               </div>
             </>
           )}
@@ -487,7 +488,7 @@ function KeyFactorRow({ factor }: { factor: UFCKeyFactor }) {
           fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 11,
           color: 'var(--color-text-tertiary)', minWidth: 32, textAlign: 'right',
         }}>
-          P{(factor.weight * 100).toFixed(0)}%
+          W{(factor.weight * 100).toFixed(0)}%
         </div>
       </div>
     </div>

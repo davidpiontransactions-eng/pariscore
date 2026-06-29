@@ -7,6 +7,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+# NOTE: N'importez PAS MatchFeatures — il est déprécié avec des noms divergents.
+# Utilisez les features brutes / dict envoyé à predict/pre-match.
 
 # ──────────────────────────────────────────────
 # Entités de base
@@ -95,7 +97,13 @@ class EwmaFeatures(BaseModel):
 
 
 class MatchFeatures(BaseModel):
-    """Feature vector complet pour un match pré-match."""
+    """⚠️ DÉPRÉCIÉ — Ne pas utiliser.
+
+    Les noms de champs ci-dessous ne correspondent PAS à FEATURE_COLUMNS
+    (train.py). Cette classe n'est plus utilisée par le pipeline actif.
+    Utilisez les dictionnaires bruts envoyés à /predict/pre-match à la place.
+    Voir FEATURE_COLUMNS dans src/models/train.py pour les noms exacts.
+    """
     match_id: str
 
     # Noyau dur

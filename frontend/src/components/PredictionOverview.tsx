@@ -2,9 +2,10 @@ import type { MatchPrediction } from '../types';
 
 interface Props {
   prediction: MatchPrediction;
+  onPlayerClick?: (name: string) => void;
 }
 
-export default function PredictionOverview({ prediction }: Props) {
+export default function PredictionOverview({ prediction, onPlayerClick }: Props) {
   const probA = prediction.prob_a * 100;
   const probB = prediction.prob_b * 100;
   const conf = prediction.confidence ?? 0;
@@ -45,14 +46,26 @@ export default function PredictionOverview({ prediction }: Props) {
       {/* Labels A / B */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-lg)' }}>
         <div>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: 16,
-            color: 'var(--color-text-primary)',
-          }}>
+          <button
+            onClick={() => onPlayerClick?.(prediction.player_a_name ?? prediction.player_a_id)}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 16,
+              color: 'var(--color-text-primary)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'inline',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent-green)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          >
             {prediction.player_a_name ?? prediction.player_a_id}
-          </div>
+          </button>
           <div style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 800,
@@ -63,14 +76,26 @@ export default function PredictionOverview({ prediction }: Props) {
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: 16,
-            color: 'var(--color-text-primary)',
-          }}>
+          <button
+            onClick={() => onPlayerClick?.(prediction.player_b_name ?? prediction.player_b_id)}
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 16,
+              color: 'var(--color-text-primary)',
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              textAlign: 'right',
+              display: 'inline',
+              textDecoration: 'none',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent-green)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-text-primary)'; }}
+          >
             {prediction.player_b_name ?? prediction.player_b_id}
-          </div>
+          </button>
           <div style={{
             fontFamily: 'var(--font-display)',
             fontWeight: 800,

@@ -1,6 +1,7 @@
 import type { HealthStatus, MatchPrediction, FeatureVector } from '../types';
 import type { StrategyResult } from '../types/dashboard';
 import type { UFCMatchFeatures } from '../types/ufc';
+import type { Tournament, TournamentMatch } from '../types';
 
 const BASE = import.meta.env.VITE_API_BASE ?? '';
 
@@ -10,7 +11,10 @@ export async function checkHealth(): Promise<HealthStatus> {
   return res.json();
 }
 
-export async function predictMatch(features: FeatureVector): Promise<MatchPrediction> {
+export async function predictMatch(
+  features: Record<string, number | null>,
+  signal?: AbortSignal
+): Promise<MatchPrediction> {
   const body = { ...features };
   if (!body.player_a_name) delete body.player_a_name;
   if (!body.player_b_name) delete body.player_b_name;
@@ -18,11 +22,72 @@ export async function predictMatch(features: FeatureVector): Promise<MatchPredic
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || `Prediction failed: ${res.status}`);
   }
+  return res.json();
+}
+
+// --- Tennis / ATP ---
+
+// --- Recent / Upcoming Matches ---
+
+export interface RecentMatch {
+  match_id: string;
+  player_a_name: string;
+  player_b_name: string;
+  tourney_name: string;
+  surface: string;
+  round: string;
+  tourney_date: string;
+  prob_a: number;
+  prob_b: number;
+  confidence: number;
+  features: Record<string, number | null>;
+  target?: number;
+  correct?: boolean;
+  status?: string;
+}
+
+export interface RecentMatchesResponse {
+  matches: RecentMatch[];
+  total: number;
+  source: string;
+}
+
+export async function fetchRecentMatches(): Promise<RecentMatchesResponse> {
+  const res = await fetch(`${BASE}/matches/recent`);
+  if (!res.ok) throw new Error(`Recent matches failed: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchUpcomingMatches(): Promise<RecentMatchesResponse> {
+  const res = await fetch(`${BASE}/matches/upcoming`);
+  if (!res.ok) throw new Error(`Upcoming matches failed: ${res.status}`);
+  return res.json();
+}
+
+// --- Tennis / ATP ---
+
+export async function fetchTennisTournaments(): Promise<Tournament[]> {
+  const res = await fetch(`${BASE}/tennis/tournaments`);
+  if (!res.ok) throw new Error(`Tennis API error: ${res.status}`);
+  const data = await res.json();
+  return data.tournaments ?? [];
+}
+
+export async function fetchTennisTournament(slug: string): Promise<Tournament> {
+  const res = await fetch(`${BASE}/tennis/tournaments/${slug}`);
+  if (!res.ok) throw new Error(`Tennis tournament error: ${res.status}`);
+  return res.json();
+}
+
+export async function fetchTennisDraw(slug: string): Promise<any> {
+  const res = await fetch(`${BASE}/tennis/tournaments/${slug}/draw`);
+  if (!res.ok) throw new Error(`Tennis draw error: ${res.status}`);
   return res.json();
 }
 

@@ -41,16 +41,16 @@ const DEMO_BANKROLL_HISTORY = Array.from({ length: 50 }, (_, i) => ({
 function formatPct(v: number): string { return (v * 100).toFixed(1) + '%'; }
 
 function formatCurrency(v: number): string {
-  return v.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+  return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 /* ── Stratégies ── */
 
 const STRATEGIES = [
   { value: 'value_betting', label: 'Value Betting', desc: 'Parier quand proba modèle > proba marché' },
-  { value: 'favori_modere', label: 'Favori Modéré', desc: 'Parier sur le favori seulement si confiance élevée' },
-  { value: 'contrarien', label: 'Contrarien', desc: 'Parier contre le favori (fade the public)' },
-  { value: 'kelly_criterion', label: 'Kelly Criterion', desc: 'Taille de mise optimale' },
+  { value: 'favori_modere', label: 'Moderate Favorite', desc: 'Bet on favorite only with high confidence' },
+  { value: 'contrarien', label: 'Contrarian', desc: 'Bet against the favorite (fade the public)' },
+  { value: 'kelly_criterion', label: 'Kelly Criterion', desc: 'Optimal bet sizing' },
 ];
 
 /* ── Statistique descriptive ── */
@@ -137,7 +137,7 @@ export default function Dashboard() {
           📊 Dashboard
         </h1>
         <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-          Performance & Métriques du modèle {DEMO_METRICS.model_version}
+          Model Performance & Metrics — {DEMO_METRICS.model_version}
         </p>
       </div>
 
@@ -146,15 +146,15 @@ export default function Dashboard() {
         fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 14,
         color: 'var(--color-text-secondary)', textTransform: 'uppercase',
         letterSpacing: '0.5px', marginBottom: 'var(--space-md)',
-      }}>Modèle</h2>
+      }}>Model</h2>
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-md)',
         marginBottom: 'var(--space-xl)',
       }}>
-        <StatBox label="Précision" value={formatPct(DEMO_METRICS.accuracy)} color="var(--color-accent-green)" />
+        <StatBox label="Accuracy" value={formatPct(DEMO_METRICS.accuracy)} color="var(--color-accent-green)" />
         <StatBox label="AUC-ROC" value={formatPct(DEMO_METRICS.auc)} color="var(--color-accent-blue)" />
         <StatBox label="Brier Score" value={DEMO_METRICS.brier.toFixed(3)} color="var(--color-live)'}" />
-        <StatBox label="Matchs" value={DEMO_METRICS.n_matches.toLocaleString()} />
+        <StatBox label="Matches" value={DEMO_METRICS.n_matches.toLocaleString()} />
       </div>
 
       {/* Feature importance chart */}
@@ -165,7 +165,7 @@ export default function Dashboard() {
           letterSpacing: '0.5px', margin: '0 0 var(--space-md)',
         }}>
           <Activity size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-          Importance des features
+          Feature Importance
         </h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={featureChartData} layout="vertical" margin={{ left: 120 }}>
@@ -174,7 +174,7 @@ export default function Dashboard() {
             <YAxis type="category" dataKey="name" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} width={110} />
             <Tooltip
               contentStyle={{ background: '#131722', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, fontSize: 12 }}
-              formatter={(value) => [Number(value).toFixed(1) + '%', 'Importance']}
+              formatter={(value) => [Number(value).toFixed(1) + '%', 'Importance (%)']}
             />
             <Bar dataKey="importance" fill="var(--color-accent-blue)" radius={[0, 3, 3, 0]} />
           </BarChart>
@@ -198,7 +198,7 @@ export default function Dashboard() {
       }}>
         <div>
           <label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 4 }}>
-            Stratégie
+            Strategy
           </label>
           <select
             value={strategy}
@@ -219,7 +219,7 @@ export default function Dashboard() {
         </div>
         <div>
           <label style={{ fontSize: 11, color: 'var(--color-text-tertiary)', display: 'block', marginBottom: 4 }}>
-            Seuil ({threshold.toFixed(2)})
+            Threshold ({threshold.toFixed(2)})
           </label>
           <input
             type="range" min={1.0} max={2.0} step={0.05}
@@ -239,7 +239,7 @@ export default function Dashboard() {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? '⏳ Calcul...' : '▶ Lancer le backtest'}
+          {loading ? '⏳ Calculating...' : '▶ Run Backtest'}
         </button>
       </div>
 
@@ -259,10 +259,10 @@ export default function Dashboard() {
             <StatBox label="Paris" value={result.total_bets.toString()} />
             <StatBox label="Win Rate" value={formatPct(result.win_rate)}
               color="var(--color-accent-green)" />
-            <StatBox label="Cote Moy." value={result.avg_odds.toFixed(2)} />
+            <StatBox label="Avg Odds" value={result.avg_odds.toFixed(2)} />
             <StatBox label="Bankroll" value={formatCurrency(result.bankroll_final)}
               color={result.bankroll_final > result.bankroll_initial ? 'var(--color-accent-green)' : 'var(--color-danger)'} />
-            <StatBox label="Statut" value={result.status === 'ok' ? 'Réel' : 'Démo'}
+            <StatBox label="Status" value={result.status === 'ok' ? 'Live' : 'Demo'}
               color={result.status === 'ok' ? 'var(--color-accent-green)' : 'var(--color-live)'} />
           </div>
 
@@ -274,7 +274,7 @@ export default function Dashboard() {
               letterSpacing: '0.5px', margin: '0 0 var(--space-md)',
             }}>
               <TrendingUp size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-              Évolution de la bankroll
+              Bankroll Evolution
             </h3>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={bankrollChartData}>
@@ -303,16 +303,16 @@ export default function Dashboard() {
             letterSpacing: '0.5px', margin: '0 0 var(--space-md)',
           }}>
             <Target size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-            Derniers paris
+            Recent Bets
           </h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ color: 'var(--color-text-tertiary)', textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.5px' }}>
                 <th style={{ textAlign: 'left', padding: '4px 8px' }}>Match</th>
-                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Proba</th>
-                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Cote</th>
-                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Mise</th>
-                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Résultat</th>
+                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Prob</th>
+                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Odds</th>
+                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Stake</th>
+                <th style={{ textAlign: 'right', padding: '4px 8px' }}>Result</th>
                 <th style={{ textAlign: 'right', padding: '4px 8px' }}>P&L</th>
               </tr>
             </thead>

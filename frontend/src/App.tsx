@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { checkHealth } from './api/pariscore';
 import PreMatch from './pages/PreMatch';
-import Dashboard from './pages/Dashboard';
+const Dashboard = lazy(() => import('./pages/Dashboard'));
 import H2HPage from './pages/H2HPage';
 import MMAPreMatch from './pages/MMAPreMatch';
 
@@ -33,7 +33,7 @@ function App() {
             <h1>
               Pariscore
               <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--color-text-tertiary)', marginLeft: 8 }}>
-                Prédiction sportive
+                Sports Predictions
               </span>
             </h1>
             <nav style={{ display: 'flex', gap: 'var(--space-md)' }}>
@@ -48,16 +48,7 @@ function App() {
               >
                 🎾 ATP
               </NavLink>
-              <NavLink
-                to="/mma"
-                style={({ isActive }) => ({
-                  ...linkBase,
-                  color: isActive ? 'var(--color-accent-green)' : 'var(--color-text-secondary)',
-                  borderBottomColor: isActive ? 'var(--color-accent-green)' : 'transparent',
-                })}
-              >
-                🥊 UFC
-              </NavLink>
+
               <NavLink
                 to="/dashboard"
                 style={({ isActive }) => ({
@@ -67,6 +58,16 @@ function App() {
                 })}
               >
                 Dashboard
+              </NavLink>
+              <NavLink
+                to="/mma"
+                style={({ isActive }) => ({
+                  ...linkBase,
+                  color: isActive ? 'var(--color-accent-green)' : 'var(--color-text-secondary)',
+                  borderBottomColor: isActive ? 'var(--color-accent-green)' : 'transparent',
+                })}
+              >
+                MMA
               </NavLink>
               <NavLink
                 to="/h2h"
@@ -83,18 +84,26 @@ function App() {
           <div className="flex items-center gap-sm">
             <span className={'status-dot ' + (apiOnline === true ? 'online' : 'offline')} />
             <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-              API {apiOnline === null ? '...' : apiOnline ? 'connectee' : 'hors ligne'}
+              API {apiOnline === null ? '...' : apiOnline ? 'connected' : 'offline'}
             </span>
           </div>
         </header>
 
         <main className="app-main">
-          <Routes>
-            <Route path="/" element={<PreMatch />} />
-            <Route path="/mma" element={<MMAPreMatch />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/h2h" element={<H2HPage />} />
-          </Routes>
+            <Routes>
+              <Route path="/" element={<PreMatch />} />
+              <Route path="/dashboard" element={
+                <Suspense fallback={
+                  <div style={{ padding: 'var(--space-xl)', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
+                    Loading dashboard…
+                  </div>
+                }>
+                  <Dashboard />
+                </Suspense>
+              } />
+              <Route path="/mma" element={<MMAPreMatch />} />
+              <Route path="/h2h" element={<H2HPage />} />
+            </Routes>
         </main>
       </div>
     </BrowserRouter>

@@ -131,13 +131,13 @@ export default function H2HPage() {
           Head-to-Head
         </h2>
         <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--color-text-tertiary)' }}>
-          Confrontations directes
+          Head-to-Head Records
         </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 'var(--space-md)', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Joueur A</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Player A</div>
           <select value={playerA} onChange={(e) => setPlayerA(e.target.value)} style={selectStyle}>
             {PLAYERS.filter((p) => p !== playerB).map((p) => (
               <option key={p} value={p}>{p}</option>
@@ -148,7 +148,7 @@ export default function H2HPage() {
           <Swords size={24} color="var(--color-text-tertiary)" />
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Joueur B</div>
+          <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Player B</div>
           <select value={playerB} onChange={(e) => setPlayerB(e.target.value)} style={selectStyle}>
             {PLAYERS.filter((p) => p !== playerA).map((p) => (
               <option key={p} value={p}>{p}</option>
@@ -167,7 +167,7 @@ export default function H2HPage() {
           color: 'var(--color-text-tertiary)',
           fontSize: 14,
         }}>
-          Aucune confrontation directe disponible pour ce duo.
+          No head-to-head record available for this pair.
         </div>
       ) : (
         <>
@@ -230,7 +230,7 @@ export default function H2HPage() {
               letterSpacing: '0.5px',
               marginBottom: 'var(--space-md)',
             }}>
-              Matchs recents
+              Recent Matches
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {h2h.recent.map((m, i) => (

@@ -10,6 +10,7 @@ Usage:
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -72,9 +73,11 @@ def cmd_train():
 
 def cmd_api():
     import uvicorn
-    print("Lancement de l'API Pariscore sur http://0.0.0.0:8000")
-    print("   Documentation: http://localhost:8000/docs")
-    uvicorn.run("src.api.main:app", host="0.0.0.0", port=8000, reload=True)
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "8000"))
+    print(f"Lancement de l'API Pariscore sur http://{host}:{port}")
+    print(f"   Documentation: http://localhost:{port}/docs")
+    uvicorn.run("src.api.main:app", host=host, port=port, reload=False)
 
 
 def cmd_generate():

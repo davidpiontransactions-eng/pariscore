@@ -13,6 +13,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from pathlib import Path
+
 from src.models.train import FEATURE_COLUMNS
 from src.features.pipeline import FeaturePipeline
 from src.data.synthetic import generate_dataset
@@ -313,6 +315,133 @@ class BacktestEngine:
                         "stake": stake,
                     }
         return None
+
+    # ── Backtesting sur données réelles ───────────────────────────
+
+    def run_on_real_data(
+        self,
+        strategy: str = "value_betting",
+        threshold: float = 1.10,
+        bankroll: float = 10000.0,
+        min_odds: float = 1.50,
+        max_odds: float = 5.00,
+        data_path: str | Path = "data/generated_features.csv",
+    ) -> dict:
+        """Backtest sur le dataset generated_features.csv (vrais matchs).
+
+        Itère chronologiquement sur les matchs, prédit prob_a avec le modèle,
+        génère des odds réalistes (avec overround 3%), applique la stratégie,
+        et enregistre les résultats.
+
+        Args:
+            strategy: Nom de la stratégie.
+            threshold: Seuil de value.
+            bankroll: Bankroll initiale.
+            min_odds: Cote minimale.
+            max_odds: Cote maximale.
+            data_path: Chemin vers le CSV.
+
+        Returns:
+            Même dict que run().
+        """
+        valid = {"value_betting", "favori_modere", "contrarien", "kelly_criterion"}
+        if strategy not in valid:
+            return {
+                "status": "error",
+                "detail": f"Stratégie inconnue: {strategy}. "
+                           f"Choisir parmi {valid}",
+            }
+
+        df = pd.read_csv(data_path)
+        if df.empty:
+            return {"status": "error", "detail": "Fichier de données vide."}
+
+        df = df.sort_values("tourney_date").reset_index(drop=True)
+
+        bankroll_current = bankroll
+        bankroll_history = [bankroll]
+        bet_history: list[dict] = []
+        peak = bankroll
+
+        strategy_map = {
+            "value_betting": self._value_betting,
+            "favori_modere": self._favori_modere,
+            "contrarien": self._contrarien,
+            "kelly_criterion": self._kelly_criterion,
+        }
+        apply = strategy_map[strategy]
+
+        for idx, (_, match) in enumerate(df.iterrows()):
+            prob_a = self._predict(match.to_dict())
+            prob_b = 1.0 - prob_a
+            odds_a, odds_b = self._realistic_odds(prob_a)
+
+            target = match.get("target", -1)
+            if target not in (0, 1):
+                continue
+            actual_winner_won = target == 1
+
+            if strategy in ("value_betting", "kelly_criterion"):
+                bet = apply(
+                    prob_a, prob_b, odds_a, odds_b,
+                    threshold, min_odds, max_odds,
+                    idx, bankroll_current,
+                )
+            else:
+                bet = apply(
+                    prob_a, prob_b, odds_a, odds_b,
+                    threshold, min_odds, max_odds,
+                    idx,
+                )
+
+            if bet is not None:
+                bet["match_id"] = str(match.get("match_id", f"REAL_{idx:06d}"))
+
+                if bet["side"] == "A":
+                    bet_won = actual_winner_won
+                else:
+                    bet_won = not actual_winner_won
+
+                bet["result"] = "win" if bet_won else "loss"
+                if bet_won:
+                    bet["pnl"] = round(bet["stake"] * (bet["odds"] - 1), 2)
+                else:
+                    bet["pnl"] = round(-bet["stake"], 2)
+
+                bankroll_current += bet["pnl"]
+                bet_history.append(bet)
+
+            bankroll_history.append(round(bankroll_current, 2))
+            if bankroll_current > peak:
+                peak = bankroll_current
+
+        return self._compute_metrics(
+            strategy, bankroll, bankroll_current,
+            bankroll_history, bet_history,
+        )
+
+    @staticmethod
+    def _realistic_odds(prob_a: float) -> tuple[float, float]:
+        """Génère des odds avec overround bookmaker (~3%).
+
+        Les bookmakers ajoutent une marge implicite pour garantir
+        un profit quelle que soit l'issue. Cette méthode simule
+        cela en gonflant les probabilités puis en re-normalisant.
+
+        Args:
+            prob_a: Probabilité estimée que le joueur A gagne.
+
+        Returns:
+            Tuple (odds_a, odds_b).
+        """
+        margin = 0.03
+        market_prob_a = prob_a * (1 + margin)
+        market_prob_b = (1 - prob_a) * (1 + margin)
+        total = market_prob_a + market_prob_b
+        return (
+            round(1.0 / (market_prob_a / total), 4),
+            round(1.0 / (market_prob_b / total), 4),
+        )
 
     # ── Métriques ─────────────────────────────────────────────────
 

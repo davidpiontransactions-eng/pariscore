@@ -32,3 +32,25 @@ Thumbs.db
 
 # Context
 .context/
+.gstack/
+
+# Dev / exploratory scripts
+calibrate.py
+investigate_dupes.py
+predict_20.py
+predict_batch.py
+predict_close.py
+run_pipeline.py
+
+# Generated calibration data
+data/calibration_results.json
+data/calibration_sample.json
+
+# Generated features (regenerate via pipeline)
+data/generated_features.csv
+
+# Trained model artifacts - too large for git (45 MB)
+models/
+
+# Build output
+dist/

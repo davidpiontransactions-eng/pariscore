@@ -14,20 +14,30 @@ Stack: FastAPI + scikit-learn + Pydantic + SportModelRegistry.
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ensure project root is on sys.path (works even when uvicorn spawns a child)
+_root = str(Path(__file__).resolve().parent.parent.parent)
+if _root not in sys.path:
+    sys.path.insert(0, _root)
+
 import logging
 from datetime import datetime
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .routes.tennis import router as tennis_router
+
 from src.schema.match import PredictionResponse
 from src.schema.ufc import UFCPredictionResponse, UFCFightFeatures
 from src.features.pipeline import FeaturePipeline
 from src.models.train import FEATURE_COLUMNS
 from src.models.registry import MODEL_REGISTRY, ModelEntry
+from src.strategies.engine import BacktestEngine
 from src.features.ufc_pipeline import UFCPipeline
 from src.models.mma import UfcBaselineModel
 
@@ -56,6 +66,7 @@ class AppState:
         self.model_loaded = False
         self.model_meta: dict = {}
         self.feature_columns: list[str] = []
+        self.generated_df: pd.DataFrame | None = None
 
 state = AppState()
 
@@ -120,10 +131,84 @@ async def predict_prematch(features: dict):
     )
 
 
+@app.post("/predict/batch")
+async def predict_batch(matchups: list[dict]):
+    """Prédiction vectorisée sur N matchups en un seul appel.
+
+    Au lieu de N appels individuels à predict_proba (≈3s/req),
+    on construit une matrice N×18 et on appelle predict_proba une seule fois.
+    """
+    if not matchups:
+        raise HTTPException(status_code=400, detail="Liste de matchups vide")
+
+    missing = set(state.feature_columns) - set(matchups[0].keys())
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Colonnes manquantes: {missing}. "
+                   "Générez d'abord les features via /features/generate",
+        )
+
+    # Construction de la matrice N×18
+    cols = state.feature_columns if state.feature_columns else FEATURE_COLUMNS
+    X = np.array([
+        [m.get(col, 0.0) for col in cols]
+        for m in matchups
+    ])
+
+    # Appel unique à predict_proba — c'est ici que sklearn vectorise
+    probas = state.model.predict_proba(X)[:, 1]
+
+    results = []
+    for i, m in enumerate(matchups):
+        prob_a = float(probas[i])
+        results.append({
+            "match_id": m.get("match_id", f"batch_{i}"),
+            "player_a_id": m.get("player_a_id", ""),
+            "player_b_id": m.get("player_b_id", ""),
+            "player_a_name": m.get("player_a_name"),
+            "player_b_name": m.get("player_b_name"),
+            "prob_a": round(prob_a, 4),
+            "prob_b": round(1.0 - prob_a, 4),
+            "confidence": round(float(2 * abs(prob_a - 0.5)), 4),
+        })
+
+    return {
+        "total": len(results),
+        "results": results,
+        "batch_version": "vectorized_v1",
+    }
+
+
+REQUIRED_SACKMANN_COLS = {"player_id", "match_date", "is_winner",
+                         "player_name", "tourney_id", "tourney_name",
+                         "surface", "round", "tourney_date"}
+
+
 @app.post("/features/generate")
 async def generate_features(data: dict):
+    missing = REQUIRED_SACKMANN_COLS - set(data.keys())
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format de données invalide. L'endpoint /features/generate attend "
+                   f"des données de matchs brutes au format Sackmann (une ligne par "
+                   f"joueur par match), PAS des features déjà calculées. "
+                   f"Colonnes Sackmann manquantes: {sorted(missing)}. "
+                   f"Exemple: player_id, match_date, is_winner, player_name, "
+                   f"tourney_id, surface, round, score, etc. "
+                   f"Utilisez /predict/pre-match si vous avez déjà les features.",
+        )
     df = pd.DataFrame([data])
-    result = state.pipeline.run(df)
+    try:
+        result = state.pipeline.run(df)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Erreur lors de la génération des features: {e}. "
+                   f"Vérifiez que les données sont au format Sackmann "
+                   f"avec les colonnes requises: player_id, match_date, is_winner, ...",
+        )
     if result.empty:
         raise HTTPException(
             status_code=400,
@@ -140,6 +225,97 @@ async def generate_features(data: dict):
     }
 
 
+# ── Match history & upcoming endpoints ──
+
+GENERATED_FEATURES_PATH = Path("data/generated_features.csv")
+
+
+def _load_generated_df() -> pd.DataFrame:
+    if state.generated_df is not None:
+        return state.generated_df
+    if not GENERATED_FEATURES_PATH.exists():
+        raise HTTPException(status_code=404, detail="Fichier generated_features.csv introuvable")
+    df = pd.read_csv(GENERATED_FEATURES_PATH)
+    state.generated_df = df
+    return df
+
+
+def _safe_val(v) -> float | None:
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return None
+    return float(v)
+
+
+@app.get("/matches/recent")
+async def matches_recent():
+    if not state.model_loaded:
+        raise HTTPException(status_code=503, detail="Modèle non chargé")
+
+    df = _load_generated_df()
+    recent = df.tail(20).copy()
+
+    cols = state.feature_columns if state.feature_columns else FEATURE_COLUMNS
+    X = recent[cols].fillna(0.0).values
+    probas = state.model.predict_proba(X)[:, 1]
+
+    matches = []
+    for i, (_, row) in enumerate(recent.iterrows()):
+        prob_a = float(probas[i])
+        target = int(row.get("target", -1))
+        matches.append({
+            "match_id": str(row.get("match_id", "")),
+            "player_a_name": str(row.get("player_a_name", "")),
+            "player_b_name": str(row.get("player_b_name", "")),
+            "tourney_name": str(row.get("tourney_name", "")),
+            "surface": str(row.get("surface", "")),
+            "round": str(row.get("round", "")),
+            "tourney_date": str(row.get("tourney_date", "")),
+            "prob_a": round(prob_a, 4),
+            "prob_b": round(1.0 - prob_a, 4),
+            "confidence": round(float(2 * abs(prob_a - 0.5)), 4),
+            "target": target,
+            "correct": bool((prob_a >= 0.5) == (target == 1)),
+            "features": {col: _safe_val(row.get(col)) for col in cols},
+        })
+
+    return {"matches": matches, "total": len(matches), "source": "generated_features"}
+
+
+@app.get("/matches/upcoming")
+async def matches_upcoming():
+    if not state.model_loaded:
+        raise HTTPException(status_code=503, detail="Modèle non chargé")
+
+    df = _load_generated_df()
+
+    df_sorted = df.sort_values("tourney_date", ascending=False)
+    df_filtered = df_sorted[df_sorted["target"] == 1].head(20).copy()
+
+    cols = state.feature_columns if state.feature_columns else FEATURE_COLUMNS
+    X = df_filtered[cols].fillna(0.0).values
+    probas = state.model.predict_proba(X)[:, 1]
+
+    matches = []
+    for i, (_, row) in enumerate(df_filtered.iterrows()):
+        prob_a = float(probas[i])
+        matches.append({
+            "match_id": str(row.get("match_id", "")),
+            "player_a_name": str(row.get("player_a_name", "")),
+            "player_b_name": str(row.get("player_b_name", "")),
+            "tourney_name": str(row.get("tourney_name", "")),
+            "surface": str(row.get("surface", "")),
+            "round": str(row.get("round", "")),
+            "tourney_date": str(row.get("tourney_date", "")),
+            "prob_a": round(prob_a, 4),
+            "prob_b": round(1.0 - prob_a, 4),
+            "confidence": round(float(2 * abs(prob_a - 0.5)), 4),
+            "status": "upcoming",
+            "features": {col: _safe_val(row.get(col)) for col in cols},
+        })
+
+    return {"matches": matches, "total": len(matches), "source": "generated_features"}
+
+
 @app.post("/strategy/simulate")
 async def simulate_strategy(
     model_type: str = "random_forest",
@@ -151,18 +327,16 @@ async def simulate_strategy(
 ):
     if not state.model_loaded:
         raise HTTPException(status_code=503, detail="Modèle non chargé")
-    return {
-        "strategy": strategy,
-        "model": model_type,
-        "bankroll_initial": bankroll,
-        "bankroll_final": bankroll * 1.05,
-        "roi_percent": 5.0,
-        "sharpe_ratio": 0.8,
-        "max_drawdown_percent": -12.0,
-        "total_bets": 0,
-        "status": "simulation_placeholder",
-        "note": "Backtesting complet à implémenter après Session 4",
-    }
+
+    engine = BacktestEngine(model=state.model)
+    result = engine.run_on_real_data(
+        strategy=strategy,
+        threshold=threshold,
+        bankroll=bankroll,
+        min_odds=min_odds,
+        max_odds=max_odds,
+    )
+    return result
 
 
 # ── UFC/MMA endpoints ──
@@ -334,6 +508,10 @@ def _compute_value_alert(prob_a: float, features: UFCFightFeatures) -> dict | No
     return None
 
 
+# ── TennisExplorer scraper endpoints ──
+app.include_router(tennis_router)
+
+
 @app.on_event("startup")
 async def startup():
     model_path = Path("models/pariscore_rf_v1.joblib")
@@ -375,3 +553,4 @@ async def startup():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

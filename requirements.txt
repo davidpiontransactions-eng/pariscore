@@ -11,6 +11,11 @@ fastapi>=0.136.3
 uvicorn[standard]>=0.46.0
 pydantic>=2.13.4
 
+# Scraping tennis
+httpx>=0.28.0
+beautifulsoup4>=4.14.0
+lxml>=5.3.0
+
 # Database
 psycopg[binary]>=3.3.4
 
