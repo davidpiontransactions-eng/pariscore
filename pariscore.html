@@ -25407,6 +25407,9 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       .then(function (r) { clearTimeout(timeout); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         var raw = (data && data.matches) || [];
+        // NOTE: remplacement complet (pas de merge/diff par ID). Si un match disparaît
+        // temporairement du serveur, il s'efface ici. Un merge par ID serait plus résilient
+        // mais nécessiterait un timestamp par match côté serveur. TODO: N4 review.
         _state.matches = raw.map(mapMatch).filter(Boolean);
         _state.lastFetch = Date.now();
         _state.loading = false;
@@ -25608,6 +25611,12 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       // (showPage gère le start/stop quand l'utilisateur navigue entre onglets)
       var _initPage = document.getElementById('page-tennis');
       if (_initPage && _initPage.style.display !== 'none') startAutoRefresh();
+      // Appliquer un filtre tournoi pending (si l'utilisateur a cliqué sidebar avant init)
+      if (window._pendingTennisFilter && window._pendingTennisFilter !== 'ALL') {
+        _state.activeTournament = window._pendingTennisFilter;
+        window._pendingTennisFilter = null;
+        renderActiveTab();
+      }
     },
     refresh: fetchData,
     switchTab: switchTab,
@@ -25622,7 +25631,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     stopAutoRefresh: function () {
       if (_timer) { clearInterval(_timer); _timer = null; }
     },
-    getState: function () { return Object.assign({}, _state); }
+    getState: function () { return Object.assign({}, _state, { matches: _state.matches.slice() }); }
   };
 
   // ── Wire-up au chargement ─────────────────────────────────────────────
