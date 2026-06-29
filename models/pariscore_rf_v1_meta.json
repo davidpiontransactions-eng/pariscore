@@ -1,0 +1,30 @@
+{
+  "accuracy_mean": 0.8708909004287756,
+  "accuracy_std": 0.1345586783745561,
+  "brier_mean": 0.08673663155952187,
+  "brier_std": 0.07726119242632287,
+  "roc_auc_mean": 0.9582053245011745,
+  "roc_auc_std": 0.05562131719806945,
+  "log_loss_mean": 0.27368457567630655,
+  "log_loss_std": 0.20949269100800647,
+  "feature_importance": {
+    "h2h_context_score": 0.3193845400019649,
+    "ret_pts_won_S_A": 0.14296468465450082,
+    "ret_pts_won_S_B": 0.11304237496080076,
+    "srv_pts_won_S_A": 0.10632010332055289,
+    "srv_pts_won_S_B": 0.07704186786432123,
+    "srv_pts_won_pct_S_DIFF": 0.07620808884880038,
+    "ret_pts_won_pct_S_DIFF": 0.07475162553663284,
+    "serve_edge_B": 0.030395182973869755,
+    "serve_edge_A": 0.03037367211124392,
+    "motivation_A": 0.01090595885548578,
+    "motivation_B": 0.008678351164717404,
+    "fatigue_A": 0.005196516499549188,
+    "fatigue_B": 0.004737033207560215,
+    "clutch_A": 0.0,
+    "clutch_B": 0.0
+  },
+  "n_features": 18,
+  "n_train_samples": 12595,
+  "model_file": "models\\pariscore_rf_v1.joblib"
+}
