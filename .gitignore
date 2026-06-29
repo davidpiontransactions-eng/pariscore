@@ -135,3 +135,4 @@ test_cron_sps_updater.py
 test_surface_powerscore.py
 verify-powerscore.py
 checkdb.js
+cache/
