@@ -1,112 +1,112 @@
 {
-  "generated": "2026-06-06T23:47:23.076Z",
+  "generated": "2026-06-29T12:30:18.454Z",
   "source": "espn-scoreboard",
   "season_start": "2026-05-01",
-  "games_count": 84,
+  "games_count": 150,
   "hca_elo": 46,
   "k": 20,
   "backtest": {
-    "n": 84,
-    "brier": 0.2533,
+    "n": 150,
+    "brier": 0.233,
     "baseline_brier": 0.25,
-    "accuracy": 47.6
+    "accuracy": 59.3
   },
   "ratings": {
     "3": {
       "name": "Dallas Wings",
-      "elo": 1609,
-      "gp": 11,
-      "form_l10_winpct": 70,
-      "form_l10_margin": 6.4,
-      "last_game": "2026-06-06T02:00Z"
+      "elo": 1560,
+      "gp": 20,
+      "form_l10_winpct": 50,
+      "form_l10_margin": -0.3,
+      "last_game": "2026-06-28T18:00Z"
     },
     "5": {
       "name": "Indiana Fever",
-      "elo": 1559,
-      "gp": 10,
+      "elo": 1556,
+      "gp": 20,
       "form_l10_winpct": 60,
-      "form_l10_margin": 8.2,
-      "last_game": "2026-06-04T23:00Z"
+      "form_l10_margin": 4.1,
+      "last_game": "2026-06-28T00:00Z"
     },
     "6": {
       "name": "Los Angeles Sparks",
-      "elo": 1460,
-      "gp": 11,
+      "elo": 1436,
+      "gp": 19,
       "form_l10_winpct": 40,
-      "form_l10_margin": -4.3,
-      "last_game": "2026-06-06T02:00Z"
+      "form_l10_margin": -7.4,
+      "last_game": "2026-06-28T00:00Z"
     },
     "8": {
       "name": "Minnesota Lynx",
-      "elo": 1656,
-      "gp": 12,
-      "form_l10_winpct": 90,
-      "form_l10_margin": 13.2,
-      "last_game": "2026-06-06T17:00Z"
+      "elo": 1700,
+      "gp": 20,
+      "form_l10_winpct": 80,
+      "form_l10_margin": 10.4,
+      "last_game": "2026-06-28T18:00Z"
     },
     "9": {
       "name": "New York Liberty",
-      "elo": 1538,
-      "gp": 11,
+      "elo": 1558,
+      "gp": 21,
       "form_l10_winpct": 60,
-      "form_l10_margin": 4.5,
-      "last_game": "2026-06-03T23:30Z"
+      "form_l10_margin": 4.1,
+      "last_game": "2026-06-28T23:00Z"
     },
     "11": {
       "name": "Phoenix Mercury",
-      "elo": 1448,
-      "gp": 12,
-      "form_l10_winpct": 30,
-      "form_l10_margin": -5.6,
-      "last_game": "2026-06-06T02:00Z"
+      "elo": 1450,
+      "gp": 20,
+      "form_l10_winpct": 50,
+      "form_l10_margin": -0.8,
+      "last_game": "2026-06-27T18:00Z"
     },
     "14": {
       "name": "Seattle Storm",
-      "elo": 1387,
-      "gp": 12,
+      "elo": 1407,
+      "gp": 20,
       "form_l10_winpct": 20,
-      "form_l10_margin": -7.8,
-      "last_game": "2026-06-06T17:00Z"
+      "form_l10_margin": -4.4,
+      "last_game": "2026-06-28T01:00Z"
     },
     "16": {
       "name": "Washington Mystics",
-      "elo": 1511,
-      "gp": 9,
-      "form_l10_winpct": 55.6,
-      "form_l10_margin": 0.3,
-      "last_game": "2026-06-02T23:30Z"
+      "elo": 1492,
+      "gp": 19,
+      "form_l10_winpct": 50,
+      "form_l10_margin": -5.2,
+      "last_game": "2026-06-28T19:00Z"
     },
     "17": {
       "name": "Las Vegas Aces",
-      "elo": 1573,
-      "gp": 11,
-      "form_l10_winpct": 70,
-      "form_l10_margin": 4.2,
-      "last_game": "2026-06-06T19:00Z"
+      "elo": 1628,
+      "gp": 20,
+      "form_l10_winpct": 80,
+      "form_l10_margin": 4.5,
+      "last_game": "2026-06-28T20:00Z"
     },
     "18": {
       "name": "Connecticut Sun",
-      "elo": 1341,
-      "gp": 13,
-      "form_l10_winpct": 20,
-      "form_l10_margin": -10.8,
-      "last_game": "2026-06-05T23:30Z"
+      "elo": 1366,
+      "gp": 20,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -1.2,
+      "last_game": "2026-06-26T23:30Z"
     },
     "19": {
       "name": "Chicago Sky",
-      "elo": 1439,
-      "gp": 10,
-      "form_l10_winpct": 40,
-      "form_l10_margin": -4.1,
-      "last_game": "2026-06-05T23:30Z"
+      "elo": 1401,
+      "gp": 19,
+      "form_l10_winpct": 30,
+      "form_l10_margin": -1.3,
+      "last_game": "2026-06-28T20:00Z"
     },
     "20": {
       "name": "Atlanta Dream",
-      "elo": 1536,
-      "gp": 10,
+      "elo": 1549,
+      "gp": 20,
       "form_l10_winpct": 60,
-      "form_l10_margin": 2.2,
-      "last_game": "2026-06-04T23:00Z"
+      "form_l10_margin": 5.2,
+      "last_game": "2026-06-28T01:00Z"
     },
     "17476": {
       "name": "NIGERIA",
@@ -118,27 +118,27 @@
     },
     "129689": {
       "name": "Golden State Valkyries",
-      "elo": 1536,
-      "gp": 11,
-      "form_l10_winpct": 50,
-      "form_l10_margin": 4.8,
-      "last_game": "2026-06-06T19:00Z"
+      "elo": 1620,
+      "gp": 20,
+      "form_l10_winpct": 70,
+      "form_l10_margin": 3.4,
+      "last_game": "2026-06-28T23:00Z"
     },
     "131935": {
       "name": "Toronto Tempo",
-      "elo": 1485,
-      "gp": 11,
-      "form_l10_winpct": 50,
-      "form_l10_margin": -1,
-      "last_game": "2026-06-03T23:30Z"
+      "elo": 1456,
+      "gp": 20,
+      "form_l10_winpct": 40,
+      "form_l10_margin": -2.6,
+      "last_game": "2026-06-27T18:00Z"
     },
     "132052": {
       "name": "Portland Fire",
-      "elo": 1454,
-      "gp": 13,
-      "form_l10_winpct": 50,
-      "form_l10_margin": -2.6,
-      "last_game": "2026-06-06T02:00Z"
+      "elo": 1355,
+      "gp": 21,
+      "form_l10_winpct": 20,
+      "form_l10_margin": -13.8,
+      "last_game": "2026-06-28T19:00Z"
     }
   }
 }

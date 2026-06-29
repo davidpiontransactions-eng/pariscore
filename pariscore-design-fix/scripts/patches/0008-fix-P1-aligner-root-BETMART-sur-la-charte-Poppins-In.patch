@@ -1,0 +1,65 @@
+From 54979226122660ade53727444b0719390cb94502 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:56:06 +0000
+Subject: [PATCH 08/18] fix(P1): aligner :root BETMART sur la charte
+ (Poppins/Inter, 8 tokens)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- font-head: 'Barlow Condensed' → 'Poppins' (charter display font)
+- font-body: 'Source Sans 3' → 'Inter' (charter body font)
+- text3: #64748b → #707e94 (charter text-tertiary)
+- bg: #0e131f → #0b0e17 (charter bg-primary)
+- bg2: #182030 → #0e121e (charter bg-secondary)
+- bg3: #1e2a3d → #131722 (charter card)
+- bg4: #243045 → #161c2a (charter card-hover)
+- font-mono: 'DM Mono' inchangé (utilisé pour chiffres tabulaires)
+
+Référence: audit/pariscore/frontend/src/styles/tokens.css
+---
+ pariscore.html | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/pariscore.html b/pariscore.html
+index 50d770a..855dc22 100755
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -109,10 +109,10 @@
+   :root {
+     color-scheme: dark;  /* BETMART — Dark Navy Premium × PariScore */
+     /* ── BETMART Palette — Dark Navy #0e131f, Neon Green #00e676, Electric Blue #0077ff ── */
+-    --bg: #0e131f;
+-    --bg2: #182030;
+-    --bg3: #1e2a3d;
+-    --bg4: #243045;
++    --bg: #0b0e17;
++    --bg2: #0e121e;
++    --bg3: #131722;
++    --bg4: #161c2a;
+     --accent: #00e676;
+     --accent-dim: #00c853;
+     --accent-bg: rgba(0,230,118,0.12);
+@@ -127,7 +127,7 @@
+     --blue-bg: rgba(0,119,255,0.12);
+     --text: #ffffff;
+     --text2: #94a3b8;
+-    --text3: #64748b;
++    --text3: #707e94;
+     --border: rgba(255,255,255,0.05);
+     --border2: rgba(255,255,255,0.10);
+     --card-shadow:
+@@ -140,8 +140,8 @@
+       0 0 0 1px rgba(255,255,255,0.06);
+     --gauge-rail: rgba(255,255,255,0.06);
+     --gauge-rail-opacity: 1;
+-    --font-head: 'Barlow Condensed', sans-serif;
+-    --font-body: 'Source Sans 3', sans-serif;
++    --font-head: 'Poppins', sans-serif;
++    --font-body: 'Inter', sans-serif;
+     --font-mono: 'DM Mono', monospace;
+      --radius: 8px;
+      --radius-lg: 12px;
+-- 
+2.47.3
+

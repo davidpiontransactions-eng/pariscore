@@ -1,0 +1,62 @@
+From f6f2d69bb41cbc457e6f5ce25c2890d29d57f0e4 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:49:49 +0000
+Subject: [PATCH 02/18] feat(P1): import Google Fonts (Inter+Poppins) + add 12
+ design tokens
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- index.html: preconnect + Inter (400/500/600/700) + Poppins (600/700/800)
+- index.html: title 'frontend' → 'Pariscore — Sports Predictions'
+- tokens.css: add --color-overlay, --color-divider, --color-on-accent
+- tokens.css: add soft-bg tokens (danger/accent-green/accent-blue/live)
+- tokens.css: add MMA extensions (--color-mma-brawler, --color-mma-allrounder)
+---
+ frontend/index.html            |  5 ++++-
+ frontend/src/styles/tokens.css | 15 +++++++++++++++
+ 2 files changed, 19 insertions(+), 1 deletion(-)
+
+diff --git a/frontend/index.html b/frontend/index.html
+index 0fca6f0..9d1a072 100644
+--- a/frontend/index.html
++++ b/frontend/index.html
+@@ -4,7 +4,10 @@
+     <meta charset="UTF-8" />
+     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>frontend</title>
++    <link rel="preconnect" href="https://fonts.googleapis.com">
++    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
++    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
++    <title>Pariscore — Sports Predictions</title>
+   </head>
+   <body>
+     <div id="root"></div>
+diff --git a/frontend/src/styles/tokens.css b/frontend/src/styles/tokens.css
+index c949dea..74af6a5 100644
+--- a/frontend/src/styles/tokens.css
++++ b/frontend/src/styles/tokens.css
+@@ -56,4 +56,19 @@
+ 
+   /* ── SHADOWS ── */
+   --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
++
++  /* ── NOUVEAUX TOKENS (audit 2026) ── */
++  --color-overlay: rgba(0,0,0,0.7);
++  --color-divider: rgba(255,255,255,0.10);
++  --color-on-accent: #0b0e17;
++
++  /* Soft backgrounds for badges/banners */
++  --color-danger-bg-soft: rgba(255,23,68,0.10);
++  --color-accent-green-bg-soft: rgba(0,230,118,0.10);
++  --color-accent-blue-bg-soft: rgba(0,119,255,0.10);
++  --color-live-bg-soft: rgba(255,109,46,0.10);
++
++  /* MMA extensions */
++  --color-mma-brawler: #ff6d2e;
++  --color-mma-allrounder: #38bdf8;
+ }
+-- 
+2.47.3
+

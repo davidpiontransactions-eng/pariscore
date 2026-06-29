@@ -1,0 +1,106 @@
+From 46526df578ddf398686679f91b281751b0f9ab9a Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 13:06:55 +0000
+Subject: [PATCH 14/18] fix(P0+P1): aligner body.dark-theme et :root BETMART
+ sur la charte (vps)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Identique à pariscore.html:
+- P0: body.dark-theme — 12 tokens alignés (bg/accent/red/amber/blue/text/border)
+- P1: :root BETMART — 8 valeurs alignées (bg/font-head/font-body/text3)
+
+Référence: audit/pariscore/frontend/src/styles/tokens.css
+---
+ vps/pariscore.html | 50 +++++++++++++++++++++++-----------------------
+ 1 file changed, 25 insertions(+), 25 deletions(-)
+
+diff --git a/vps/pariscore.html b/vps/pariscore.html
+index 7332575..b594302 100644
+--- a/vps/pariscore.html
++++ b/vps/pariscore.html
+@@ -109,10 +109,10 @@
+   :root {
+     color-scheme: dark;  /* BETMART — Dark Navy Premium × PariScore */
+     /* ── BETMART Palette — Dark Navy #0e131f, Neon Green #00e676, Electric Blue #0077ff ── */
+-    --bg: #0e131f;
+-    --bg2: #182030;
+-    --bg3: #1e2a3d;
+-    --bg4: #243045;
++    --bg: #0b0e17;
++    --bg2: #0e121e;
++    --bg3: #131722;
++    --bg4: #161c2a;
+     --accent: #00e676;
+     --accent-dim: #00c853;
+     --accent-bg: rgba(0,230,118,0.12);
+@@ -127,7 +127,7 @@
+     --blue-bg: rgba(0,119,255,0.12);
+     --text: #ffffff;
+     --text2: #94a3b8;
+-    --text3: #64748b;
++    --text3: #707e94;
+     --border: rgba(255,255,255,0.05);
+     --border2: rgba(255,255,255,0.10);
+     --card-shadow:
+@@ -140,8 +140,8 @@
+       0 0 0 1px rgba(255,255,255,0.06);
+     --gauge-rail: rgba(255,255,255,0.06);
+     --gauge-rail-opacity: 1;
+-    --font-head: 'Barlow Condensed', sans-serif;
+-    --font-body: 'Source Sans 3', sans-serif;
++    --font-head: 'Poppins', sans-serif;
++    --font-body: 'Inter', sans-serif;
+     --font-mono: 'DM Mono', monospace;
+      --radius: 8px;
+      --radius-lg: 12px;
+@@ -3189,27 +3189,27 @@
+   /* ── Nuit Profonde — réactivé v3.2 (rollback bd z55o) ── */
+   body.dark-theme {
+     color-scheme: dark;
+-    --bg: #0a0d0f;
+-    --bg2: #15181c;
+-    --bg3: #1e2328;
+-    --bg4: #262c32;
+-    --accent: #ff1f2d;
+-    --accent-dim: #cc0f1c;
+-    --accent-bg: rgba(255,31,45,0.08);
++    --bg: #0b0e17;          /* ✅ charter bg-primary */
++    --bg2: #0e121e;          /* ✅ charter bg-secondary */
++    --bg3: #131722;          /* ✅ charter card */
++    --bg4: #161c2a;          /* ✅ charter card-hover */
++    --accent: #00e676;       /* ✅ VERT restauré (charter accent-green) */
++    --accent-dim: #00c853;
++    --accent-bg: rgba(0,230,118,0.08);
+     --green: #00e676;
+     --green-dim: #00c85a;
+     --green-bg: rgba(0,230,118,0.08);
+-    --red: #ff4d4d;
+-    --red-bg: rgba(255,77,77,0.08);
+-    --amber: #ffa726;
+-    --amber-bg: rgba(255,167,38,0.1);
+-    --blue: #29b6f6;
+-    --blue-bg: rgba(41,182,246,0.09);
+-    --text: #e8eaed;
+-    --text2: #8d9399;
+-    --text3: #5a6068;
+-    --border: rgba(255,255,255,0.07);
+-    --border2: rgba(255,255,255,0.12);
++    --red: #ff1744;          /* ✅ charter danger */
++    --red-bg: rgba(255,23,68,0.08);
++    --amber: #ff6d2e;        /* ✅ charter live */
++    --amber-bg: rgba(255,109,46,0.1);
++    --blue: #0077ff;         /* ✅ charter accent-blue */
++    --blue-bg: rgba(0,119,255,0.09);
++    --text: #ffffff;         /* ✅ BLANC restauré (charter text-primary) */
++    --text2: #94a3b8;        /* ✅ charter text-secondary */
++    --text3: #707e94;        /* ✅ charter text-tertiary — passe AA large */
++    --border: rgba(255,255,255,0.05);   /* ✅ charter border */
++    --border2: rgba(255,255,255,0.08);  /* ✅ charter border-medium */
+     --card-shadow: none;
+     --gauge-rail: rgba(255,255,255,0.08);
+     --gauge-rail-opacity: 0.6;
+-- 
+2.47.3
+

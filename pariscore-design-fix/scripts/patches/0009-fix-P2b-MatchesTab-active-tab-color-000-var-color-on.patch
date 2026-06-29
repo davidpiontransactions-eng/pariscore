@@ -1,0 +1,31 @@
+From 77b91ed8656f13cd633b2553f8a6d8165e2f182c Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:57:06 +0000
+Subject: [PATCH 09/18] =?UTF-8?q?fix(P2b):=20MatchesTab=20active=20tab=20c?=
+ =?UTF-8?q?olor=20'#000'=20=E2=86=92=20var(--color-on-accent)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Missed during initial P2b pass — same pattern as PreMatch.tsx:125.
+Discovered during final ripgrep verification.
+---
+ frontend/src/components/MatchesTab.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/frontend/src/components/MatchesTab.tsx b/frontend/src/components/MatchesTab.tsx
+index 24cf130..d11d6f9 100644
+--- a/frontend/src/components/MatchesTab.tsx
++++ b/frontend/src/components/MatchesTab.tsx
+@@ -136,7 +136,7 @@ function RoundTabs({
+               borderRadius: 'var(--radius-btn)',
+               border: 'none',
+               background: isActive ? 'var(--color-accent-green)' : 'var(--color-bg-secondary)',
+-              color: isActive ? '#000' : 'var(--color-text-secondary)',
++              color: isActive ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
+               fontFamily: 'var(--font-display)',
+               fontWeight: 600,
+               fontSize: 12,
+-- 
+2.47.3
+

@@ -1,0 +1,322 @@
+From a4185c827b6fcf0a59941770f1e610f4051cc816 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:59:59 +0000
+Subject: [PATCH 11/18] =?UTF-8?q?fix(P2b+P2c):=20purger=20purple=20et=20go?=
+ =?UTF-8?q?ld=20interdits=20=E2=86=92=20charter=20blue/live=20orange?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+P2b — Purple purge (38 occurrences → #38bdf8 charter alt blue):
+- 18 × #ab47bc → #38bdf8
+- 20 × #ce93d8 → #38bdf8 (y compris --tex-purple)
+- --tn2-purple: #a855f7 → #38bdf8
+
+P2c — Gold purge (4 occurrences → #ff6d2e charter live orange):
+- --tn2-gold: #fbbf24 → #ff6d2e
+- --tex-gold: #FFD700 → #ff6d2e
+- 2 × #d4af37 → #ff6d2e (border + gradient)
+- Commentaire D4 fix préservé (historique)
+
+Référence: audit/pariscore/frontend/src/styles/tokens.css (--color-cat-service: #38bdf8, --color-live: #ff6d2e)
+---
+ pariscore.html | 82 +++++++++++++++++++++++++-------------------------
+ 1 file changed, 41 insertions(+), 41 deletions(-)
+
+diff --git a/pariscore.html b/pariscore.html
+index fefca74..800ff67 100755
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -1881,7 +1881,7 @@
+     box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.18);
+   }
+   html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-card[data-tier="high"] {
+-    border-color: #d4af37;
++    border-color: #ff6d2e;
+     box-shadow: 0 0 12px -2px rgba(212, 175, 55, 0.35);
+     animation: pslts-slb-enter 320ms cubic-bezier(0.32, 0.72, 0, 1) forwards,
+                pslts-slb-glow 2.4s ease-in-out 320ms infinite;
+@@ -1960,7 +1960,7 @@
+   html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-gauge-fill {
+     height: 100%;
+     width: 0%;
+-    background: linear-gradient(90deg, #16a34a, #d4af37);
++    background: linear-gradient(90deg, #16a34a, #ff6d2e);
+     transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+   }
+   html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-slb-conf {
+@@ -3669,7 +3669,7 @@
+     transition:background .2s, transform .2s;
+   }
+   .ls-row-val.home { color:var(--green); }
+-  .ls-row-val.away { color:#ab47bc; }
++  .ls-row-val.away { color:#38bdf8; }
+   .ls-row-val.ls-leading {
+     background:rgba(255,255,255,0.08);
+     transform:scale(1.05);
+@@ -3860,7 +3860,7 @@
+     background: linear-gradient(135deg, rgba(33,150,243,0.25), rgba(33,150,243,0.05));
+   }
+   .bsd-pitch-player.away .bsd-pitch-avatar {
+-    border: 2px solid #ab47bc;
++    border: 2px solid #38bdf8;
+     background: linear-gradient(135deg, rgba(171,71,188,0.25), rgba(171,71,188,0.05));
+   }
+   .bsd-pitch-player.gk .bsd-pitch-avatar {
+@@ -3951,7 +3951,7 @@
+     border: 1px solid rgba(33,150,243,0.25);
+   }
+   .bsd-pitch-formation.away {
+-    top: 6.5%; color: #ce93d8;
++    top: 6.5%; color: #38bdf8;
+     border: 1px solid rgba(171,71,188,0.25);
+   }
+ 
+@@ -4040,7 +4040,7 @@
+   .ps-live-metric { display:grid; grid-template-columns:36px 1fr 36px; gap:5px; align-items:center; font-family:var(--font-mono); font-size:11px; }
+   .ps-live-bar-wrap { height:6px; background:var(--bg4); border-radius:3px; overflow-y:auto; display:flex; }
+   .ps-live-bar-home { background:var(--green); border-radius:3px 0 0 3px; transition:width .4s; }
+-  .ps-live-bar-away { background:#ab47bc; border-radius:0 3px 3px 0; margin-left:auto; transition:width .4s; }
++  .ps-live-bar-away { background:#38bdf8; border-radius:0 3px 3px 0; margin-left:auto; transition:width .4s; }
+   .ps-bet-pill { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:var(--radius-sm); font-size:12px; font-weight:700; }
+   .ps-bet-pill.ok  { background:rgba(0,230,118,0.15); color:var(--green); border:1px solid rgba(0,230,118,0.35); }
+   .ps-bet-pill.warn { background:rgba(245,158,11,0.13); color:var(--amber); border:1px solid rgba(245,158,11,0.3); }
+@@ -4447,33 +4447,33 @@
+ .ins-btn:hover { background: linear-gradient(135deg, rgba(0,230,118,1), rgba(0,200,83,1)); box-shadow: 0 4px 16px rgba(0,230,118,0.4); transform: translateY(-1px); }
+ 
+   /* ── Deep Analysis Pro Modal ───────────────────────────────────────────── */
+-  .ai-gen-btn { font: 700 9px/1 var(--font-mono); padding: 5px 7px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.45); color: #ce93d8; background: rgba(171,71,188,0.1); letter-spacing: .5px; transition: background .15s, border-color .15s, transform .15s; cursor: pointer; }
+-  .ai-gen-btn:hover { background: rgba(171,71,188,0.22); border-color: #ab47bc; transform: scale(1.05); }
++  .ai-gen-btn { font: 700 9px/1 var(--font-mono); padding: 5px 7px; border-radius: 5px; border: 1px solid rgba(171,71,188,0.45); color: #38bdf8; background: rgba(171,71,188,0.1); letter-spacing: .5px; transition: background .15s, border-color .15s, transform .15s; cursor: pointer; }
++  .ai-gen-btn:hover { background: rgba(171,71,188,0.22); border-color: #38bdf8; transform: scale(1.05); }
+   #deep-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.82); display: flex; align-items: center; justify-content: center; z-index: 1020; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; transform: scale(0.97); will-change: transform, opacity; }
+   #deep-modal.open { opacity: 1; pointer-events: all; transform: scale(1); }
+   #deep-panel { background: #0e1116; border: 1px solid rgba(171,71,188,0.35); border-radius: var(--radius-xl); position: relative; width: 94%; max-width: 780px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 60px rgba(171,71,188,0.15); }
+   #deep-panel-header { padding: 18px 24px 14px; border-bottom: 1px solid rgba(171,71,188,0.2); display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+   #deep-panel-inner { overflow-y: auto; padding: 20px 24px 24px; flex: 1; }
+   #deep-panel-inner h1 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 14px; }
+-  #deep-panel-inner h2 { font-size: 13px; font-weight: 700; color: #ce93d8; margin: 18px 0 8px; border-bottom: 1px solid rgba(171,71,188,0.2); padding-bottom: 5px; }
++  #deep-panel-inner h2 { font-size: 13px; font-weight: 700; color: #38bdf8; margin: 18px 0 8px; border-bottom: 1px solid rgba(171,71,188,0.2); padding-bottom: 5px; }
+   #deep-panel-inner h3 { font-size: 11px; font-weight: 700; color: var(--text2); margin: 12px 0 5px; text-transform: uppercase; letter-spacing: .5px; }
+   #deep-panel-inner p { font-size: 13px; line-height: 1.65; color: var(--text2); margin: 5px 0 10px; }
+   #deep-panel-inner ul { margin: 5px 0 10px 16px; }
+   #deep-panel-inner li { font-size: 13px; line-height: 1.65; color: var(--text2); margin-bottom: 5px; }
+   #deep-panel-inner strong { color: var(--text); }
+-  #deep-panel-inner code { background: rgba(171,71,188,0.12); color: #ce93d8; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
++  #deep-panel-inner code { background: rgba(171,71,188,0.12); color: #38bdf8; border-radius: 4px; padding: 1px 5px; font-size: 12px; }
+   #deep-panel-inner pre { background: #080b0f; border: 1px solid rgba(171,71,188,0.25); border-radius: var(--radius); padding: 14px 16px; overflow-x: auto; position: relative; margin: 8px 0 14px; }
+   #deep-panel-inner pre code { background: none; color: #e0e0e0; font-size: 12px; line-height: 1.6; padding: 0; }
+-  .dp-copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #ce93d8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
++  .dp-copy-btn { position: absolute; top: 8px; right: 8px; background: rgba(171,71,188,0.2); border: 1px solid rgba(171,71,188,0.4); color: #38bdf8; border-radius: 5px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
+   .dp-copy-btn:hover { background: rgba(171,71,188,0.35); }
+   .dp-powerscore { display: flex; gap: 16px; margin: 10px 0 14px; }
+   .dp-score-card { flex: 1; background: rgba(171,71,188,0.07); border: 1px solid rgba(171,71,188,0.2); border-radius: 10px; padding: 12px 14px; }
+   .dp-score-card .team-name { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+-  .dp-score-card .score-val { font: 700 26px/1 var(--font-mono); color: #ce93d8; }
++  .dp-score-card .score-val { font: 700 26px/1 var(--font-mono); color: #38bdf8; }
+   .dp-score-card .score-bar { height: 4px; border-radius: 2px; background: rgba(171,71,188,0.15); margin-top: 8px; overflow: hidden; }
+-  .dp-score-card .score-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #7b1fa2, #ce93d8); transition: width .8s ease; }
++  .dp-score-card .score-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #7b1fa2, #38bdf8); transition: width .8s ease; }
+   #deep-loader { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 48px 0; }
+-  .dp-spinner { width: 36px; height: 36px; border: 3px solid rgba(171,71,188,0.2); border-top-color: #ab47bc; border-radius: 50%; animation: dp-spin 0.9s linear infinite; }
++  .dp-spinner { width: 36px; height: 36px; border: 3px solid rgba(171,71,188,0.2); border-top-color: #38bdf8; border-radius: 50%; animation: dp-spin 0.9s linear infinite; }
+   @keyframes dp-spin { to { transform: rotate(360deg); } }
+   .dp-loader-text { font-size: 13px; color: var(--text2); text-align: center; line-height: 1.5; }
+   .dp-loader-tip { font-size: 11px; color: var(--text3); font-family: var(--font-mono); margin-top: 4px; }
+@@ -4513,8 +4513,8 @@
+   .dp-code-copy { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: var(--text3); border-radius: 4px; padding: 3px 10px; font-size: 10px; cursor: pointer; font-family: var(--font-mono); transition: background .15s; }
+   .dp-code-copy:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+   .dp-mode-btn { font: 600 10px/1 var(--font-mono); padding: 7px 16px; border-radius: 20px; border: 1px solid rgba(171,71,188,0.25); color: var(--text3); background: transparent; cursor: pointer; transition: background .18s, border-color .18s, color .18s; letter-spacing: .8px; text-transform: uppercase; }
+-  .dp-mode-btn:hover { background: rgba(171,71,188,0.1); border-color: rgba(171,71,188,0.5); color: #ce93d8; }
+-  .dp-mode-btn.active { background: rgba(171,71,188,0.22); border-color: #ab47bc; color: #ce93d8; box-shadow: 0 0 12px rgba(171,71,188,0.2); }
++  .dp-mode-btn:hover { background: rgba(171,71,188,0.1); border-color: rgba(171,71,188,0.5); color: #38bdf8; }
++  .dp-mode-btn.active { background: rgba(171,71,188,0.22); border-color: #38bdf8; color: #38bdf8; box-shadow: 0 0 12px rgba(171,71,188,0.2); }
+   #deep-terminal { scrollbar-width: thin; scrollbar-color: rgba(0,200,83,0.3) transparent; }
+   /* I1 — Confidence badge */
+   .dp-conf-badge { display:none; font:700 10px/1 var(--font-mono); padding:4px 9px; border-radius:5px; letter-spacing:.5px; white-space:nowrap; }
+@@ -4526,9 +4526,9 @@
+   /* I3 — Kelly footer widget */
+   #deep-panel-footer { padding:10px 24px; border-top:1px solid rgba(171,71,188,0.15); display:flex; align-items:center; gap:10px; flex-shrink:0; }
+   #dp-bankroll-input { background:#080b0f; border:1px solid rgba(171,71,188,0.3); border-radius:var(--radius-sm); color:var(--text); font:13px var(--font-mono); padding:5px 10px; width:90px; outline:none; }
+-  #dp-bankroll-input:focus { border-color:#ab47bc; }
++  #dp-bankroll-input:focus { border-color:#38bdf8; }
+   .dp-kelly-hint { font:11px var(--font-mono); color:var(--text3); }
+-  .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#ce93d8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:4px 10px; margin:12px 0 0; margin-left:29px; }
++  .dp-kelly-tag { display:inline-flex; align-items:center; gap:5px; font:600 10px/1 var(--font-mono); color:#38bdf8; background:rgba(171,71,188,0.1); border:1px solid rgba(171,71,188,0.25); border-radius:4px; padding:4px 10px; margin:12px 0 0; margin-left:29px; }
+   /* ── Revue de presse (section 5) — cartes médias ─────────────── */
+   .dp-press-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 26px; counter-reset: press-counter; }
+   .dp-press-item { padding: 12px 16px 12px 18px; border-left: 3px solid #c0392b; background: rgba(192,57,43,0.05); border-radius: 0 6px 6px 0; counter-increment: press-counter; position: relative; }
+@@ -4551,14 +4551,14 @@
+   /* I5 — Mode Pro panel */
+   #dp-pro-panel { display:none; margin-bottom:16px; background:#080b0f; border:1px solid rgba(171,71,188,0.25); border-radius:10px; padding:14px 16px; }
+   #dp-pro-panel.visible { display:block; }
+-  .dp-pro-title { font:700 10px/1 var(--font-mono); color:#ce93d8; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
++  .dp-pro-title { font:700 10px/1 var(--font-mono); color:#38bdf8; letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
+   .dp-pro-table { width:100%; border-collapse:collapse; font:12px var(--font-mono); }
+   .dp-pro-table th { color:var(--text3); font-weight:600; text-align:left; padding:4px 8px; border-bottom:1px solid rgba(171,71,188,0.15); }
+   .dp-pro-table td { color:var(--text2); padding:4px 8px; }
+   .dp-pro-table .ev-pos { color:#15803D; font-weight:800; } .dp-pro-table .ev-neg { color:#B91C1C; font-weight:800; }
+   /* I5 — Pro toggle button */
+   #dp-btn-pro { font:600 10px/1 var(--font-mono); padding:5px 10px; border-radius:5px; border:1px solid rgba(171,71,188,0.3); color:var(--text3); background:transparent; cursor:pointer; transition:background .15s, border-color .15s, color .15s; letter-spacing:.5px; }
+-  #dp-btn-pro:hover, #dp-btn-pro.active { background:rgba(171,71,188,0.18); border-color:#ab47bc; color:#ce93d8; }
++  #dp-btn-pro:hover, #dp-btn-pro.active { background:rgba(171,71,188,0.18); border-color:#38bdf8; color:#38bdf8; }
+   #insights-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: flex; align-items: center; justify-content: center; z-index: 1010; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; transform: scale(0.97); will-change: transform, opacity; }
+   #insights-modal.open { opacity: 1; pointer-events: all; transform: scale(1); }
+   #insights-panel { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-xl); position: relative; width: 94%; max-width: 740px; max-height: 88vh; display: flex; flex-direction: column; }
+@@ -4616,16 +4616,16 @@
+   .cmp-label { font-size: 11px; color: var(--text3); width: 105px; text-align: right; flex-shrink: 0; }
+   .cmp-track { flex: 1; height: 7px; background: var(--bg4); border-radius: 4px; position: relative; overflow: hidden; }
+   .cmp-home { position: absolute; left: 0; top: 0; height: 100%; background: var(--blue); border-radius: 4px; transition: width .5s ease; }
+-  .cmp-away { position: absolute; right: 0; top: 0; height: 100%; background: #ab47bc; border-radius: 4px; transition: width .5s ease; }
++  .cmp-away { position: absolute; right: 0; top: 0; height: 100%; background: #38bdf8; border-radius: 4px; transition: width .5s ease; }
+   .cmp-val-home { font: 600 11px/1 var(--font-mono); color: var(--blue); width: 38px; text-align: right; flex-shrink: 0; }
+-  .cmp-val-away { font: 600 11px/1 var(--font-mono); color: #ab47bc; width: 38px; flex-shrink: 0; }
++  .cmp-val-away { font: 600 11px/1 var(--font-mono); color: #38bdf8; width: 38px; flex-shrink: 0; }
+   /* Stats table */
+   .ins-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+   .ins-table th { font: 600 10px/1 var(--font-mono); letter-spacing: 1px; text-transform: uppercase; color: var(--text3); padding: 6px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+   .ins-table td { padding: 7px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+   .ins-table .row-label { text-align: left; color: var(--text2); font-size: 12px; }
+   .ins-table .val-home { color: var(--blue); font-family: var(--font-mono); font-weight: 600; }
+-  .ins-table .val-away { color: #ab47bc; font-family: var(--font-mono); font-weight: 600; }
++  .ins-table .val-away { color: #38bdf8; font-family: var(--font-mono); font-weight: 600; }
+   .ins-table tr:hover td { background: rgba(255,255,255,0.02); }
+   /* Player cards */
+   .player-card { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: var(--radius); background: var(--bg3); margin-bottom: 5px; }
+@@ -5053,12 +5053,12 @@
+   .rk-row:last-child { border-bottom: none; }
+   .rk-row:hover { background: rgba(255,255,255,0.02); }
+   .rk-row.rk-home { color: var(--blue); }
+-  .rk-row.rk-away { color: #ab47bc; }
++  .rk-row.rk-away { color: #38bdf8; }
+   .rk-num { width: 18px; font-size: 10px; color: var(--text3); text-align: right; flex-shrink: 0; }
+   .rk-name { flex: 1; font-size: 12px; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+   .rk-badge { display: inline-block; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: 3px; margin-left: 4px; vertical-align: middle; line-height: 1.4; }
+   .rk-badge-H { background: var(--blue); color: #000; }
+-  .rk-badge-A { background: #ab47bc; color: #fff; }
++  .rk-badge-A { background: #38bdf8; color: #fff; }
+   /* Ranking badge — colonne 1 */
+   .rk-badge-s { display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:20px;padding:0 6px;border-radius:4px;font-family:var(--font-mono);font-size:10px;font-weight:700;line-height:1; }
+   .rk-badge-s.rk-top { background:rgba(0,255,136,0.15);color:#00ff88;border:1px solid rgba(0,255,136,0.3); }
+@@ -7264,7 +7264,7 @@
+   .stg-badge.over15   { background: rgba(255,167,38,0.08); color: #ffcc02; border: 1px solid rgba(255,204,2,0.2); }
+   .stg-badge.under25  { background: rgba(41,182,246,0.12); color: #29b6f6; border: 1px solid rgba(41,182,246,0.25); }
+   .stg-badge.under35  { background: rgba(41,182,246,0.08); color: #4fc3f7; border: 1px solid rgba(79,195,247,0.2); }
+-  .stg-badge.home     { background: rgba(156,39,176,0.12); color: #ce93d8; border: 1px solid rgba(206,147,216,0.25); }
++  .stg-badge.home     { background: rgba(156,39,176,0.12); color: #38bdf8; border: 1px solid rgba(206,147,216,0.25); }
+   .stg-badge.away     { background: rgba(239,83,80,0.12); color: #ef9a9a; border: 1px solid rgba(239,154,154,0.25); }
+   .stg-badge.draw     { background: rgba(158,158,158,0.12); color: #bdbdbd; border: 1px solid rgba(189,189,189,0.25); }
+   .stg-badge.cs00     { background: rgba(96,125,139,0.15); color: #90a4ae; border: 1px solid rgba(144,164,174,0.2); }
+@@ -8225,7 +8225,7 @@
+     padding: 4px 8px; border-radius: 5px;
+     font-size: 9px; font-weight: 700; font-family: var(--font-mono);
+     letter-spacing: 0.5px;
+-    background: rgba(156,39,176,0.1); color: #ab47bc;
++    background: rgba(156,39,176,0.1); color: #38bdf8;
+     border: 1px solid rgba(156,39,176,0.2);
+     cursor: pointer; transition: background .15s, border-color .15s, transform .15s; white-space: nowrap;
+   }
+@@ -19817,7 +19817,7 @@ window.tn2SetupH2H = function() {
+   .tn-t10-card[data-reason="VALEUR"]   {border-left-color:#00e676!important}
+   .tn-t10-card[data-reason="VAPEUR"]   {border-left-color:#ff9800!important}
+   .tn-t10-card[data-reason="CLASSIQUE"]{border-left-color:#e8b84b!important}
+-  .tn-t10-card[data-reason="DRAMA"]    {border-left-color:#ce93d8!important}
++  .tn-t10-card[data-reason="DRAMA"]    {border-left-color:#38bdf8!important}
+   .tn-t10-card[data-reason="UPSET"]    {border-left-color:#00bcd4!important}
+ 
+   /* ── Zone header (full width) : rank, score, tag, surface, date ── */
+@@ -19888,7 +19888,7 @@ window.tn2SetupH2H = function() {
+   .tn-t10-tag-VALEUR   { background: rgba(0,230,118,.1);  border-color: rgba(0,230,118,.35); color: #00e676; }
+   .tn-t10-tag-VAPEUR   { background: rgba(255,152,0,.1);  border-color: rgba(255,152,0,.35); color: #ff9800; }
+   .tn-t10-tag-CLASSIQUE{ background: rgba(232,184,75,.1); border-color: rgba(232,184,75,.35); color: #e8b84b; }
+-  .tn-t10-tag-DRAMA    { background: rgba(156,39,176,.1); border-color: rgba(156,39,176,.35); color: #ce93d8; }
++  .tn-t10-tag-DRAMA    { background: rgba(156,39,176,.1); border-color: rgba(156,39,176,.35); color: #38bdf8; }
+   .tn-t10-tag-UPSET    { background: rgba(0,188,212,.1);  border-color: rgba(0,188,212,.35); color: #00bcd4; }
+   .tn-t10-tag-ANALYSE  { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); color: var(--text3,#64748b); }
+ 
+@@ -20969,7 +20969,7 @@ window.tn2SetupH2H = function() {
+               <span style="color:var(--text2)"><strong>Home en pleine ascension</strong>. Pari recommandé : <strong>1 ou Double Chance 1X</strong>.</span>
+             </div>
+             <div style="display:grid;grid-template-columns:90px 1fr;padding:10px 12px;border-top:1px solid var(--border);font-size:12px;align-items:start;gap:4px;background:rgba(0,0,0,0.02)">
+-              <span style="color:#ab47bc;font-weight:700">&lt; -18</span>
++              <span style="color:#38bdf8;font-weight:700">&lt; -18</span>
+               <span style="color:var(--text2)"><strong>Away en pleine forme</strong>. Pari : <strong>2 ou Double Chance X2</strong> (cote bonifiée habituelle).</span>
+             </div>
+             <div style="display:grid;grid-template-columns:90px 1fr;padding:10px 12px;border-top:1px solid var(--border);font-size:12px;align-items:start;gap:4px">
+@@ -21015,9 +21015,9 @@ window.tn2SetupH2H = function() {
+           Bouton AI-AL — Analyse Pro IA
+         </div>
+         <div class="guide-gloss-body">
+-          <p>Le bouton <strong style="color:#ce93d8">AI-AL</strong> (violet, dernière colonne de chaque ligne de match — Foot &amp; Tennis) déclenche l'<strong>Analyse Pro IA</strong> : un moteur d'agrégation qui fusionne le modèle mathématique PariScore (Poisson/Elo dévigé) avec une couche de raisonnement IA, puis restitue un verdict actionnable en &lt; 5 secondes via un terminal streaming.</p>
++          <p>Le bouton <strong style="color:#38bdf8">AI-AL</strong> (violet, dernière colonne de chaque ligne de match — Foot &amp; Tennis) déclenche l'<strong>Analyse Pro IA</strong> : un moteur d'agrégation qui fusionne le modèle mathématique PariScore (Poisson/Elo dévigé) avec une couche de raisonnement IA, puis restitue un verdict actionnable en &lt; 5 secondes via un terminal streaming.</p>
+ 
+-          <h4 style="margin:14px 0 8px;font-size:12px;font-weight:700;color:#ce93d8">Ce que produit AI-AL (4 blocs)</h4>
++          <h4 style="margin:14px 0 8px;font-size:12px;font-weight:700;color:#38bdf8">Ce que produit AI-AL (4 blocs)</h4>
+           <ul style="margin:8px 0 12px 18px;font-size:12px;color:var(--text2);line-height:1.7">
+             <li><strong>Power Score IA</strong> — note de domination 0-100 par camp, recalculée serveur (forme pondérée + xG + qualité adverse + contexte). À ne pas confondre avec le <em>PWR Score</em> (entry 05) calculé côté client.</li>
+             <li><strong>Top 5 Paris</strong> — les 5 marchés au meilleur couple <em>probabilité × valeur (EV)</em>, classés, avec cote conseillée.</li>
+@@ -21033,7 +21033,7 @@ window.tn2SetupH2H = function() {
+ 
+           <div class="guide-gloss-example">
+             <span class="guide-gloss-ex-label">⚽ Exemple FOOT — Çaykur Rizespor vs Beşiktaş (Süper Lig) :</span>
+-            Clic <strong style="color:#ce93d8">AI-AL</strong> sur la ligne →<br>
++            Clic <strong style="color:#38bdf8">AI-AL</strong> sur la ligne →<br>
+             → <strong>Power Score IA</strong> : Rizespor <strong>41</strong> · Beşiktaş <strong>69</strong> (domination extérieure nette)<br>
+             → <strong>Top 5 Paris</strong> : 1) <strong>2</strong> (Beşiktaş) @1.90 · 2) <strong>X2</strong> @1.28 · 3) <strong>+1.5 Beşiktaş</strong> · 4) <strong>BTTS Oui</strong> 59% · 5) <strong>Over 2.5</strong> 55%<br>
+             → <strong>Confiance</strong> : <code class="guide-gloss-result">72/100</code> · <strong>Divergence</strong> : modèle 53% vs marché 50% sur le « 2 » → léger edge <strong>+6.2%</strong><br>
+@@ -21190,7 +21190,7 @@ window.tn2SetupH2H = function() {
+         <div class="gm-title" id="gm-title">—</div>
+         <div class="gm-sub" id="gm-sub">—</div>
+       </div>
+-      <div id="gm-quota-badge" style="margin-left:auto;background:rgba(156,39,176,0.12);color:#ab47bc;border:1px solid rgba(156,39,176,0.25);border-radius:4px;padding:3px 8px;font-size:10px;font-family:var(--font-mono);letter-spacing:.5px;"></div>
++      <div id="gm-quota-badge" style="margin-left:auto;background:rgba(156,39,176,0.12);color:#38bdf8;border:1px solid rgba(156,39,176,0.25);border-radius:4px;padding:3px 8px;font-size:10px;font-family:var(--font-mono);letter-spacing:.5px;"></div>
+     </div>
+ 
+     <div id="gm-status" style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;margin:12px 0 16px;">
+@@ -21219,7 +21219,7 @@ window.tn2SetupH2H = function() {
+     <button class="modal-close" onclick="closeAttributesRadar()" style="position:absolute;top:16px;right:16px;">×</button>
+     
+     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+-      <span style="font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px;background:rgba(156,39,176,0.1);color:#ab47bc;letter-spacing:.5px;text-transform:uppercase;">✦ ATTRIBUTS</span>
++      <span style="font-size:10px;font-family:var(--font-mono);padding:3px 8px;border-radius:4px;background:rgba(156,39,176,0.1);color:#38bdf8;letter-spacing:.5px;text-transform:uppercase;">✦ ATTRIBUTS</span>
+       <div>
+         <div style="font-family:var(--font-head);font-size:20px;font-weight:800;" id="attr-title">—</div>
+         <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="attr-sub">—</div>
+@@ -21331,7 +21331,7 @@ window.tn2SetupH2H = function() {
+     <div id="radar-big"></div>
+     <div style="display:flex;justify-content:space-around;margin-top:14px;font-size:10px;font-family:var(--font-mono);color:var(--text3);">
+       <span style="color:#29b6f6;">■ Home</span>
+-      <span style="color:#ab47bc;">■ Away</span>
++      <span style="color:#38bdf8;">■ Away</span>
+     </div>
+     <button onclick="closeRadarModal()" style="margin-top:16px;padding:6px 18px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--font-body);font-size:12px;">Fermer</button>
+   </div>
+@@ -22793,8 +22793,8 @@ body[data-page="mma"] footer { display: none !important; }
+   --tn2-text-muted: #64748b;
+   --tn2-live: #ff6d2e;
+   --tn2-warning: #f59e0b;
+-  --tn2-gold: #fbbf24;
+-  --tn2-purple: #a855f7;
++  --tn2-gold: #ff6d2e;
++  --tn2-purple: #38bdf8;
+   --tn2-cyan: #22d3ee;
+   --tn2-orange: #f97316;
+   --tn2-green: #00e676;
+@@ -23125,11 +23125,11 @@ body[data-page="mma"] footer { display: none !important; }
+ #tex-matchs-search:focus {
+   border-color: rgba(0,119,255,.4);
+ }
+-/* D4 fix — tokens sémantiques pour couleurs sémantiques (au lieu de #FFD700/#fbbf24/#ce93d8 hardcoded) */
++/* D4 fix — tokens sémantiques pour couleurs sémantiques (au lieu de #FFD700/#fbbf24/#38bdf8 hardcoded) */
+ :root {
+-  --tex-gold: #FFD700;       /* élite / GS / 5 étoiles */
++  --tex-gold: #ff6d2e;       /* élite / GS / 5 étoiles */
+   --tex-amber: #fbbf24;      /* warning / 4 étoiles / mid */
+-  --tex-purple: #ce93d8;     /* upset / outsider */
++  --tex-purple: #38bdf8;     /* upset / outsider */
+   --tex-green: #00e676;      /* value / favori / drift négatif */
+   --tex-red: #ef4444;        /* drift positif / perte */
+ }
+-- 
+2.47.3
+
