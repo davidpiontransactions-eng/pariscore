@@ -15701,7 +15701,7 @@ function psSetLang(v) {
     <!-- UC-5 Today's birthdays ribbon -->
     <div id="ta-birthdays-ribbon" style="display:none;margin-bottom:12px;"></div>
 
-    <!-- ═══ KPI BAR ═══ -->
+    <!-- ═══ KPI BAR (préservée) ═══ -->
     <div class="tn2-kpi-bar">
       <div class="tn2-kpi-item">
         <span class="tn2-kpi-icon">🎾</span>
@@ -15725,255 +15725,60 @@ function psSetLang(v) {
       </div>
     </div>
 
-    <!-- ═══ TAB NAVIGATION (sticky) ═══ -->
-    <nav class="tn2-tab-nav" id="tn2-tab-nav">
-      <button class="tn2-tab-btn active" data-tab="matchs" onclick="tn2SwitchTab('matchs')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>MATCHS
-      </button>
-      <button class="tn2-tab-btn" data-tab="live" onclick="tn2SwitchTab('live')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>LIVE
-      </button>
-      <button class="tn2-tab-btn" data-tab="top" onclick="tn2SwitchTab('top')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor"/></svg>TOP
-      </button>
-      <button class="tn2-tab-btn" data-tab="paris" onclick="tn2SwitchTab('paris')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>PARIS
-      </button>
-      <button class="tn2-tab-btn" data-tab="clas" onclick="tn2SwitchTab('clas')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>CLAS
-      </button>
-      <button class="tn2-tab-btn" data-tab="tnos" onclick="tn2SwitchTab('tnos')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 6.5 2 4.5 2A2.5 2.5 0 0 0 2 4.5v15A2.5 2.5 0 0 0 4.5 22h1"/><path d="M12 12V2l4 10V2"/><path d="M16.5 2a2.5 2.5 0 0 1 0 5c-2 0-1.5-3 1-3"/><circle cx="12" cy="15" r="5"/><circle cx="12" cy="15" r="3" fill="currentColor"/></svg>TNOS
-      </button>
-      <button class="tn2-tab-btn" data-tab="h2h" onclick="tn2SwitchTab('h2h')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>H2H
-      </button>
-      <button class="tn2-tab-btn" data-tab="cal" onclick="tn2SwitchTab('cal')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>CAL
-      </button>
-    </nav>
+    <!-- ═══ Watermark translucide (demo.html) ═══ -->
+    <div class="sc-wm" id="sc-wm" aria-hidden="true"></div>
 
-    <!-- ═══ TAB PANELS ═══ -->
-
-    <!-- ── TAB MATCHS (Tennis Explorer — tous les matchs du jour) ── -->
-    <div class="tn2-tab-panel active" data-tab="matchs">
-      <div class="tn2-section-header">
-        <h2>Matchs du Jour</h2>
-        <div class="tn2-header-controls">
-          <span class="tn2-refresh-time" id="tex-matchs-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#64748b);margin-right:8px;">—</span>
-          <div class="tn2-mode-toggle">
-            <button class="tn2-mode-btn active" onclick="texMatchsSetTour('atp')">ATP</button>
-            <button class="tn2-mode-btn" onclick="texMatchsSetTour('wta')">WTA</button>
+    <!-- ═══ HEADER ANALYTIQUE — Portage demo.html ═══ -->
+    <header class="sc-app-header">
+      <div class="sc-app-inner">
+        <div class="sc-brand">
+          <div class="sc-logo"><svg viewBox="0 0 40 40" width="28" height="28" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#0a0d0f"/><path d="M5 20 Q14 9 20 20 Q26 31 35 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".92"/><path d="M5 20 Q14 31 20 20 Q26 9 35 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".92"/></svg></div>
+          <div>
+            <h1 class="sc-brand-h1">Tennis<span>Scope</span>.AI</h1>
+            <p class="sc-brand-sub">Elo + Glicko-2 + Kelly + Markov live — Portage Option A pour Pariscore</p>
           </div>
         </div>
-      </div>
-      <!-- Barre de recherche + filtres intelligents -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.05);">
-        <!-- Module de recherche -->
-        <div style="position:relative;flex:1;min-width:200px;">
-          <input type="text" id="tex-matchs-search" placeholder="Rechercher un joueur ou un tournoi..." oninput="texMatchsSearch(this.value)" style="width:100%;padding:7px 12px 7px 32px;font-size:12px;background:#0e1420;border:1px solid rgba(255,255,255,.08);border-radius:6px;color:var(--text,#e8eaed);font-family:'Instrument Sans',sans-serif;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='rgba(0,119,255,.4)'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
-          <svg style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text3,#5a6068);pointer-events:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div class="sc-actions">
+          <span class="sc-status" id="sc-status">Initialisation…</span>
+          <button class="sc-refresh-btn" id="sc-refresh-btn" type="button" title="Rafraîchir les données">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Rafraîchir
+          </button>
         </div>
-        <!-- Filtres — D2 fix : utilisation de la classe du design system tn2-f-btn -->
-        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Filtre :</span>
-        <button class="tn2-f-btn is-active tex-filter-btn" data-filter="time" onclick="texMatchsSetFilter('time')">Heure</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="elo_delta" onclick="texMatchsSetFilter('elo_delta')">Elo Delta</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="value" onclick="texMatchsSetFilter('value')">Value</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="drift" onclick="texMatchsSetFilter('drift')">Drift</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="elite" onclick="texMatchsSetFilter('elite')">Elite</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="rating" onclick="texMatchsSetFilter('rating')">Rating</button>
-        <button class="tn2-f-btn tex-filter-btn" data-filter="upset" onclick="texMatchsSetFilter('upset')">Upset</button>
       </div>
-      <!-- NEW — Barre de filtres timing + étoiles + toggle matchs terminés -->
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:6px;border:1px solid rgba(255,255,255,0.04);">
-        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Timing :</span>
-        <button class="tn2-f-btn is-active tex-time-filter-btn" data-time="all" onclick="texMatchsSetTimeFilter('all')">Tous</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="live" onclick="texMatchsSetTimeFilter('live')">Live</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="1h" onclick="texMatchsSetTimeFilter('1h')">≤ 1h</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="2h" onclick="texMatchsSetTimeFilter('2h')">≤ 2h</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="4h" onclick="texMatchsSetTimeFilter('4h')">≤ 4h</button>
-        <button class="tn2-f-btn tex-time-filter-btn" data-time="6h" onclick="texMatchsSetTimeFilter('6h')">≤ 6h</button>
-        <span style="width:1px;height:18px;background:rgba(255,255,255,0.06);margin:0 4px;"></span>
-        <span style="font-size:10px;text-transform:uppercase;color:var(--text3,#5a6068);letter-spacing:.05em;align-self:center;">Étoiles :</span>
-        <button class="tn2-f-btn is-active tex-stars-filter-btn" data-stars="0" onclick="texMatchsSetMinStars(0)">Toutes</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="1" onclick="texMatchsSetMinStars(1)">★+</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="2" onclick="texMatchsSetMinStars(2)">★★+</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="3" onclick="texMatchsSetMinStars(3)">★★★+</button>
-        <button class="tn2-f-btn tex-stars-filter-btn" data-stars="4" onclick="texMatchsSetMinStars(4)">★★★★+</button>
-        <span style="width:1px;height:18px;background:rgba(255,255,255,0.06);margin:0 4px;"></span>
-        <button class="tn2-f-btn tex-finished-toggle" onclick="texMatchsToggleFinished()" title="Afficher/masquer les matchs terminés">Masquer terminés</button>
-      </div>
-      <div id="tex-matchs-body" style="min-height:200px;">
-        <div style="text-align:center;padding:40px;color:var(--text2,#8d9399);font-size:14px;">Chargement des matchs...</div>
-      </div>
-      <!-- Tableau des tournois (collapsible) — Q9 fix : ouvert par défaut + D5 fix : button avec chevron SVG + aria-expanded -->
-      <div style="margin-top:16px;">
-        <button class="tex-tournaments-toggle" type="button" aria-expanded="true" aria-controls="tex-tournaments-today" onclick="var el=document.getElementById('tex-tournaments-today');var expanded=this.getAttribute('aria-expanded')==='true';this.setAttribute('aria-expanded',!expanded);el.style.display=expanded?'none':'block';">
-          <span data-tex-tournaments-label style="font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--text2,#8d9399);">À venir</span>
-          <svg class="chevron" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text3,#5a6068);"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      <nav class="sc-tabs" id="sc-nav">
+        <button class="sc-tab-btn active" data-tab="prematch" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Prematch
         </button>
-        <div id="tex-tournaments-today" style="display:block;margin-top:8px;"></div>
-      </div>
-    </div>
+        <button class="sc-tab-btn" data-tab="live" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+          Live
+        </button>
+        <button class="sc-tab-btn" data-tab="valuebets" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+          Value Bets
+        </button>
+        <button class="sc-tab-btn" data-tab="analytics" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 16V9M12 16V5M17 16v-4"/></svg>
+          Analytics
+        </button>
+      </nav>
+    </header>
 
-    <!-- ── TAB LIVE ── -->
-    <div class="tn2-tab-panel" data-tab="live">
-      <div class="tn2-section-header">
-        <h2>Matchs en Direct</h2>
-        <div class="tn2-header-controls">
-          <span class="tn2-refresh-time" id="tn2-live-status">—</span>
+    <!-- ═══ PANELS ═══ -->
+    <main class="sc-main">
+      <div class="sc-note">
+        <b>Portage Option A</b> — Composants analytiques (jauge de probabilité, momentum, sparklines Elo, radar 6 metrics, value bets table avec Edge/EV/Kelly).
+        Consomme les données réelles de Pariscore (Elo/Glicko-2 surface, predictions.elo, best_ev_model, momentum.kfs_direction).
+      </div>
+      <div id="sc-panel-prematch" class="sc-panel active"></div>
+      <div id="sc-panel-live" class="sc-panel"></div>
+      <div id="sc-panel-valuebets" class="sc-panel"></div>
+      <div id="sc-panel-analytics" class="sc-panel"></div>
+    </main>
 
-          <button class="tn2-btn-glass" onclick="tickTennisLive()">🔄</button>
-          <label class="tn2-toggle"><input type="checkbox" id="tennis-live-only" checked> Live uniquement</label>
-          <!-- src-filters removed v12.81 -->
-      </div>
-    </div>
-    <div id="tn2-live-grid" class="tn2-card-grid tn2-grid-3">
-      <div class="tn2-loading">Chargement...</div>
-    </div>
-  </div>
-
-    <!-- ── TAB TOP ── -->
-    <div class="tn2-tab-panel" data-tab="top">
-      <div class="tn2-section-header">
-        <h2>Top 10 Matchs du Jour</h2>
-        <div class="tn2-header-controls">
-          <span class="tn2-refresh-time" id="tn-top10-status" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3,#64748b);margin-right:8px;">—</span>
-          <div class="tn2-mode-toggle">
-            <button class="tn2-mode-btn active" onclick="tn2Top10Mode('viewer')">FAN</button>
-            <button class="tn2-mode-btn" onclick="tn2Top10Mode('bettor')">PARIEUR</button>
-            <button class="tn2-mode-btn" onclick="tn2Top10Mode('powerscore')" style="margin-left:4px;font-size:10px">⚡ PW SCR</button>
-          </div>
-        </div>
-      </div>
-      <div id="tn2-top-grid" class="tn2-card-grid tn2-grid-3" role="list" aria-live="polite" aria-atomic="false">
-        <div class="tn2-loading">Chargement...</div>
-      </div>
-    </div>
-
-    <!-- ── TAB PARIS ── -->
-    <div class="tn2-tab-panel" data-tab="paris">
-      <div id="tennis-live-section"></div>
-      <div class="tn2-section-header">
-        <h2>Value Bets Tennis</h2>
-      </div>
-      <div id="tennis-strategy-pills" class="strategy-pills" style="margin:0 0 8px;"></div>
-      <div id="tennis-vb-filters" class="tn2-filters-bar">
-        <div class="tn2-fg">
-          <span class="tn2-fg-lbl">Circuit</span>
-          <button class="tn2-f-btn is-active" data-filter="tour" data-value="ALL" onclick="applyTennisFilter(this)">Tous <span class="tn2-f-badge">0</span></button>
-          <button class="tn2-f-btn" data-filter="tour" data-value="ATP" onclick="applyTennisFilter(this)">ATP <span class="tn2-f-badge">0</span></button>
-          <button class="tn2-f-btn" data-filter="tour" data-value="WTA" onclick="applyTennisFilter(this)">WTA <span class="tn2-f-badge">0</span></button>
-        </div>
-        <div class="tn2-fg">
-          <span class="tn2-fg-lbl">Surface</span>
-          <button class="tn2-f-btn is-active" data-filter="surface" data-value="ALL" onclick="applyTennisFilter(this)">Toutes</button>
-          <button class="tn2-f-btn" data-filter="surface" data-value="Hard" onclick="applyTennisFilter(this)">Hard</button>
-          <button class="tn2-f-btn" data-filter="surface" data-value="Clay" onclick="applyTennisFilter(this)">Clay</button>
-          <button class="tn2-f-btn" data-filter="surface" data-value="Grass" onclick="applyTennisFilter(this)">Grass</button>
-        </div>
-        <div class="tn2-fg">
-          <label class="tn2-toggle"><input type="checkbox" id="tennis-vb-live-only" onchange="renderTennisValueBets(window._tennisVbLastFetch||[])"> LIVE</label>
-        </div>
-      </div>
-      <div class="tn2-table-wrap">
-        <div class="tn2-vb-status" id="tennis-vb-status"></div>
-        <div class="tn2-table" id="tennis-vb-table" role="table" aria-label="Tableau value bets tennis">
-          <div class="tn2-thead" role="rowgroup">
-            <div class="tn2-tr" role="row">
-              <span class="tn2-th" role="columnheader" aria-label="Favoris">★</span>
-              <span class="tn2-th tn2-th-match" role="columnheader">Match</span>
-              <span class="tn2-th" role="columnheader" style="color:#00e676;">Bets Prédictifs</span>
-              <span class="tn2-th" role="columnheader" style="color:#38bdf8;">Score</span>
-              <span class="tn2-th" role="columnheader" style="color:#29b6f6;">Elo</span>
-              <span class="tn2-th" role="columnheader" style="color:#00e676;">Proba</span>
-              <span class="tn2-th" role="columnheader" style="color:#29b6f6;">Jeux O/U</span>
-              <span class="tn2-th" role="columnheader" style="color:#00e676;">Value EV+</span>
-              <span class="tn2-th" role="columnheader" aria-label="Détails">▸</span>
-            </div>
-          </div>
-          <div class="tn2-tbody" id="tennis-vb-tbody" role="rowgroup">
-            <div class="tn2-tr"><span class="tn2-td" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text3,#5a6068);">Chargement...</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── TAB CLAS ── -->
-    <div class="tn2-tab-panel" data-tab="clas">
-      <div class="tn2-section-header">
-        <h2>Classements</h2>
-      </div>
-      <div class="tn2-subtabs">
-        <button class="tn2-subtab active" onclick="tn2Rankings('atp')">ATP</button>
-        <button class="tn2-subtab" onclick="tn2Rankings('wta')">WTA</button>
-        <button class="tn2-subtab" onclick="tn2Rankings('elo')">Elo PariScore</button>
-      </div>
-      <div id="tn2-rankings-grid" class="tn2-card-grid tn2-grid-3">
-        <div class="tn2-loading">Chargement...</div>
-      </div>
-    </div>
-
-    <!-- ── TAB TNOS ── -->
-    <div class="tn2-tab-panel" data-tab="tnos">
-      <div class="tn2-section-header">
-        <h2>Tournois en Cours</h2>
-      </div>
-      <div class="tn2-filters-bar">
-        <div class="tn2-fg">
-          <button class="tn2-f-btn is-active" onclick="tn2FilterTournaments('all')">Tous</button>
-          <button class="tn2-f-btn" onclick="tn2FilterTournaments('atp')">ATP</button>
-          <button class="tn2-f-btn" onclick="tn2FilterTournaments('wta')">WTA</button>
-        </div>
-        <div class="tn2-fg">
-          <button class="tn2-f-btn is-active" onclick="tn2FilterTournaments('active')">En cours</button>
-          <button class="tn2-f-btn" onclick="tn2FilterTournaments('upcoming')">À venir</button>
-        </div>
-      </div>
-      <div id="tn2-tournaments-grid" class="tn2-card-grid tn2-grid-3">
-        <div class="tn2-loading">Chargement...</div>
-      </div>
-    </div>
-
-    <!-- ── TAB H2H ── -->
-    <div class="tn2-tab-panel" data-tab="h2h">
-      <div class="tn2-section-header">
-        <h2>Head-to-Head</h2>
-      </div>
-      <div class="tn2-h2h-selectors">
-        <div class="tn2-h2h-player-pick">
-          <label>Joueur 1</label>
-          <input type="text" id="tn2-h2h-p1" placeholder="Saisis un nom..." class="tn2-input">
-        </div>
-        <div class="tn2-h2h-vs">VS</div>
-        <div class="tn2-h2h-player-pick">
-          <label>Joueur 2</label>
-          <input type="text" id="tn2-h2h-p2" placeholder="Saisis un nom..." class="tn2-input">
-        </div>
-        <button class="tn2-btn-primary" onclick="tn2SearchH2H()">Comparer</button>
-      </div>
-      <div class="tn2-h2h-results" id="tn2-h2h-results"></div>
-    </div>
-
-    <!-- ── TAB CAL ── -->
-    <div class="tn2-tab-panel" data-tab="cal">
-      <div class="tn2-section-header">
-        <h2>Calendrier 2026</h2>
-      </div>
-      <div class="tn2-subtabs">
-        <button class="tn2-subtab active" onclick="tn2Calendar('atp')">ATP</button>
-        <button class="tn2-subtab" onclick="tn2Calendar('wta')">WTA</button>
-      </div>
-      <div class="tn2-calendar-root">
-        <div class="tn2-calendar-wrapper">
-          <div id="tn2-cal-timeline" class="tn2-timeline">
-            <div class="tn2-loading">Chargement...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ P_BETS MODAL v2 — Premium Decision Tool ═══ -->
+    <!-- ═══ P_BETS MODAL v2 — Premium Decision Tool (préservé) ═══ -->
     <div class="p-bets-overlay" id="pBetsOverlay" onclick="if(event.target===this)closePBets()">
       <div class="p-bets-modal" id="pBetsModal">
         <div class="pbet-header">
@@ -24814,6 +24619,150 @@ a:focus-visible,
   .tl-score-block { flex: 1 1 100%; order: -1; padding: 4px 0; }
   .tl-elo-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+<style id="sc-tennis-scope-css">
+/* === TennisScope — Portage Option A pour Pariscore === */
+.sc-wm{position:fixed;top:110px;right:20px;font-size:clamp(220px,30vw,380px);line-height:1;opacity:.07;pointer-events:none;z-index:5;user-select:none;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;filter:saturate(.9);transition:opacity .3s ease}
+/* ── Jauge de probabilité semi-circulaire ────────────────────────────── */
+.sc-gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+.sc-gauge-center{font-family:var(--font-mono);font-weight:800;fill:var(--text)}
+.sc-gauge-label{font-family:var(--font-mono);font-size:9px;fill:var(--text3);letter-spacing:.08em}
+.sc-gauge-legend{display:flex;justify-content:space-between;width:100%;padding:0 4px;margin-top:-2px}
+/* ── Barre de momentum -100..+100 ───────────────────────────────────── */
+.sc-momentum{width:100%}
+.sc-momentum-head{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text3);margin-bottom:4px;font-family:var(--font-mono)}
+.sc-momentum-track{position:relative;height:6px;border-radius:var(--radius-pill);background:var(--bg3);overflow:hidden}
+.sc-momentum-fill{position:absolute;inset-block:0;border-radius:var(--radius-pill);transition:width .6s cubic-bezier(.4,0,.2,1),left .6s cubic-bezier(.4,0,.2,1)}
+.sc-momentum-mid{position:absolute;top:-2px;bottom:-2px;left:50%;width:1px;background:var(--border2)}
+/* ── Carte prematch enrichie ────────────────────────────────────────── */
+.sc-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--card-shadow);overflow:hidden;transition:box-shadow .2s,transform .2s}
+.sc-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.sc-flag{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:15px;padding:0 4px;border-radius:3px;background:var(--bg4);color:var(--text2);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;border:1px solid var(--border2)}
+.sc-card-body{padding:12px}
+/* surface badge */
+.sc-surface{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:600;font-family:var(--font-mono);border:1px solid}
+.sc-surface-clay{color:#fb923c;background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.3)}
+.sc-surface-grass{color:#4ade80;background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3)}
+.sc-surface-hard{color:var(--blue);background:var(--blue-bg);border-color:rgba(0,119,255,.3)}
+.sc-surface-indoor{color:var(--text2);background:rgba(148,163,184,.1);border-color:rgba(148,163,184,.3)}
+/* meta row */
+.sc-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:10px;font-size:11px;color:var(--text3);font-family:var(--font-mono)}
+.sc-badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid var(--border2);font-size:10px;font-weight:600;color:var(--text2)}
+.sc-badge-prize{color:var(--amber);border-color:rgba(245,158,11,.3);background:var(--amber-bg)}
+/* players grid: [P1 | gauge | P2] */
+.sc-players{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.sc-player{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sc-player-top{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+.sc-player-top{flex-direction:row-reverse}
+.sc-player-name{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.sc-player-form{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.sc-player-form{flex-direction:row-reverse}
+.sc-dots{display:flex;gap:2px}
+.sc-dot{width:13px;height:13px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;font-family:var(--font-mono)}
+.sc-dot-w{background:rgba(0,230,118,.18);color:var(--green)}
+.sc-dot-l{background:rgba(239,68,68,.18);color:var(--red)}
+.sc-elo-spark{display:flex;align-items:center;gap:4px}
+/* odds boxes */
+.sc-odds{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-top:12px}
+.sc-odd{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);text-align:center}
+.sc-odd-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);min-width:64px}
+/* top value callout */
+.sc-callout{display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 10px;border-radius:var(--radius);border:1px solid rgba(0,230,118,.25);background:var(--green-bg)}
+/* value bet signal badge */
+.sc-signal{display:inline-flex;align-items:center;padding:1px 6px;border-radius:var(--radius-sm);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;font-family:var(--font-mono);border:1px solid}
+.sc-signal-strong{color:var(--green);background:rgba(0,230,118,.15);border-color:rgba(0,230,118,.4)}
+.sc-signal-moderate{color:var(--amber);background:var(--amber-bg);border-color:rgba(245,158,11,.4)}
+.sc-signal-avoid{color:var(--red);background:var(--red-bg);border-color:rgba(239,68,68,.3)}
+.sc-signal-live{color:var(--blue);background:var(--blue-bg);border-color:rgba(0,119,255,.4)}
+/* expand toggle */
+.sc-expand{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:8px;padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--text3);font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:background .15s,color .15s}
+.sc-detail{margin-top:8px;padding-top:10px;border-top:1px solid var(--border);display:none}
+/* section labels */
+.sc-seclbl{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:6px;font-family:var(--font-mono)}
+/* factor row */
+.sc-factor{background:var(--bg);border-radius:var(--radius);padding:6px 8px;border:1px solid var(--border)}
+.sc-factor{margin-top:5px}
+.sc-factor-row{display:flex;align-items:center;justify-content:space-between;font-size:11px}
+.sc-factor-vals{display:flex;align-items:center;gap:6px;font-family:var(--font-mono);font-weight:700}
+.sc-factor-desc{font-size:10px;color:var(--text3);margin-top:2px;line-height:1.3}
+.sc-metric{margin-top:6px}
+.sc-metric-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:2px}
+.sc-metric-bar{display:flex;gap:2px;height:5px}
+/* H2H */
+.sc-h2h{display:flex;align-items:center;justify-content:center;gap:14px;margin:4px 0 8px}
+.sc-h2h-list{display:flex;flex-direction:column;gap:3px}
+.sc-h2h-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px 7px;font-size:10px}
+/* markets list */
+.sc-market{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px}
+.sc-market{margin-top:3px}
+/* ── Value bets table ───────────────────────────────────────────────── */
+.sc-vb-table{width:100%;border-collapse:collapse;font-size:12px}
+.sc-vb-match{display:flex;align-items:center;gap:7px;min-width:0}
+.sc-edge{font-weight:800}
+.sc-kelly{color:var(--amber)}
+/* summary cards row */
+.sc-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.sc-summary{grid-template-columns:repeat(2,1fr)}
+.sc-sumcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px 12px}
+/* top pick highlight */
+.sc-toppick{background:linear-gradient(90deg,var(--green-bg) 0%,transparent 70%);border:1px solid rgba(0,230,118,.25);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px}
+/* controls bar */
+.sc-ctrl{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.sc-filters{display:flex;gap:5px;flex-wrap:wrap}
+.sc-fbtn{padding:5px 11px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text3);font-size:11px;font-family:var(--font-mono);cursor:pointer;transition:all .12s}
+.sc-sortwrap{display:flex;align-items:center;gap:6px}
+.sc-sort{padding:5px 8px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text2);font-size:11px;font-family:var(--font-mono);cursor:pointer}
+.sc-radar-axis{stroke:var(--border2);stroke-width:1}
+.sc-radar-grid{stroke:var(--border);stroke-width:1;fill:none}
+.sc-radar-p1{fill:var(--green);fill-opacity:.18;stroke:var(--green);stroke-width:1.6}
+.sc-radar-p2{fill:var(--blue);fill-opacity:.14;stroke:var(--blue);stroke-width:1.6;stroke-dasharray:3 2}
+.sc-radar-axislbl{font-size:9px;fill:var(--text3);font-family:var(--font-mono);text-anchor:middle}
+.sc-radar-legend{display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:11px;font-family:var(--font-mono)}
+/* surface prob bars */
+.sc-surflist{display:flex;flex-direction:column;gap:8px}
+.sc-surfbar{height:6px;border-radius:var(--radius-pill);background:var(--bg3);overflow:hidden}
+/* live prob bar */
+.sc-liveprob{display:flex;height:24px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+/* responsive grid */
+.sc-grid{display:grid;gap:12px}
+.sc-grid-2{grid-template-columns:repeat(2,1fr)}
+.sc-grid-2{grid-template-columns:1fr}
+.sc-grid-3{grid-template-columns:repeat(3,1fr)}
+.sc-grid-3{grid-template-columns:repeat(2,1fr)}
+.sc-grid-3{grid-template-columns:1fr}
+/* scrollable table wrapper */
+.sc-table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg2);max-height:560px}
+/* utility */
+.sc-row{display:flex;align-items:center;gap:8px}
+.sc-grow{flex:1;min-width:0}
+.sc-mono{font-family:var(--font-mono)}
+
+/* === TennisScope — Header & panels (layout) === */
+.sc-app-header{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;padding:14px 16px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px);box-shadow:var(--card-shadow,0 1px 3px rgba(0,0,0,.6))}
+.sc-app-inner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sc-brand{display:flex;align-items:center;gap:10px}
+.sc-logo{width:36px;height:36px;border-radius:8px;background:var(--bg3,#1e2a3d);display:flex;align-items:center;justify-content:center}
+.sc-brand-h1{margin:0;font-family:var(--font-head,Barlow Condensed,sans-serif);font-weight:800;font-size:20px;letter-spacing:.02em;color:var(--text,#fff)}
+.sc-brand-h1 span{color:var(--accent,#00e676)}
+.sc-brand-sub{margin:2px 0 0;font-family:var(--font-mono,DM Mono,monospace);font-size:11px;color:var(--text3,#64748b)}
+.sc-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sc-status{font-family:var(--font-mono,DM Mono,monospace);font-size:11px;color:var(--text3,#64748b);padding:6px 10px;background:var(--bg3,#1e2a3d);border-radius:6px;border:1px solid var(--border,rgba(255,255,255,.05))}
+.sc-refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--accent-bg,rgba(0,230,118,.12));color:var(--accent,#00e676);border:1px solid rgba(0,230,118,.25);border-radius:6px;font-family:var(--font-body,Source Sans 3,sans-serif);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.sc-refresh-btn:hover{background:rgba(0,230,118,.18);border-color:rgba(0,230,118,.4)}
+.sc-tabs{display:flex;gap:4px;padding:6px;background:var(--bg,#0e131f);border-radius:8px;border:1px solid var(--border,rgba(255,255,255,.05));overflow-x:auto;scrollbar-width:none}
+.sc-tabs::-webkit-scrollbar{display:none}
+.sc-tab-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:var(--text2,#94a3b8);border:none;border-radius:6px;font-family:var(--font-head,Barlow Condensed,sans-serif);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap}
+.sc-tab-btn:hover{color:var(--text,#fff);background:var(--bg3,#1e2a3d)}
+.sc-tab-btn.active{background:var(--accent-bg,rgba(0,230,118,.12));color:var(--accent,#00e676);box-shadow:inset 0 0 0 1px rgba(0,230,118,.25)}
+.sc-main{min-height:400px}
+.sc-panel{display:none;animation:sc-fade .25s ease}
+.sc-panel.active{display:block}
+@keyframes sc-fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.sc-note{padding:10px 14px;background:var(--bg2,#182030);border-left:3px solid var(--accent,#00e676);border-radius:6px;font-size:12px;color:var(--text2,#94a3b8);line-height:1.6;margin-bottom:12px}
+.sc-note b{color:var(--text,#fff)}
+.sc-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:280px;color:rgba(255,255,255,.018);pointer-events:none;z-index:0;user-select:none;transition:opacity .3s}
+@media(max-width:640px){.sc-app-header{padding:10px}.sc-brand-h1{font-size:16px}.sc-tab-btn{padding:6px 10px;font-size:11px}.sc-wm{font-size:140px}}
+</style>
 </style>
 
 <div class="mma-header">
@@ -24883,6 +24832,1017 @@ if (_origTn2SwitchTab) {
     if (tab === 'paris') setTimeout(initTennisLive, 100);
   };
 }
+</script>
+
+<script>
+/* ============================================================================
+ * TennisScope — Portage Option A pour Pariscore
+ * Composants analytiques vanilla JS (zéro dépendance, zéro React).
+ *
+ * Se branche sur les DONNÉES RÉELLES de Pariscore :
+ *   match.player1 {name, flag?, photo?, form, elo_surface, rank}
+ *   match.player2 {...}
+ *   match.glicko2 {p1_serve, p1_return, p2_serve, p2_return, p1_rating?, p2_rating?, p1_prob?}
+ *   match.momentum {kfs_direction:'p1'|'p2'|'neutral', kfs_confidence, momentum_shift}
+ *   match.predictions {elo, blended?}        // elo = P1 win prob 0..1
+ *   match.set_model {...}                     // scores projetés
+ *   match.best_ev_model {label, odds, prob, ev, ev_pct?}
+ *   match.confidence_badge {...}
+ *   match.odds_player1, match.odds_player2    // cotes bookmaker
+ *   match.surface, match.tour, match.tournament, match.round, match.status
+ *   match.start_time | match.commence_time
+ *   match._isLive, match._live {sets, games, points, server, ...}
+ *
+ * Hooks d'intégration :
+ *   Scope.renderPrematchGrid(el, matches)
+ *   Scope.renderLiveGrid(el, matches)
+ *   Scope.renderValueBets(el, matches)
+ *   Scope.renderAnalytics(el, matches, matchId?)
+ *   Scope.enhanceCard(cardEl, match)          // enrichit une carte tn2-card existante
+ *
+ * Aucun export global polluant : tout sous window.Scope.
+ * ============================================================================ */
+(function (root) {
+  'use strict';
+
+  /* ── Helpers ─────────────────────────────────────────────────────── */
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function num(v,d){var n=Number(v);if(!isFinite(n))return 0;return d?Math.round(n*Math.pow(10,d))/Math.pow(10,d):n;}
+  function pct(v,d){d=d==null?0:d;return num(v*100,d)+'%';}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function shortName(name){if(!name)return '?';var p=String(name).trim().split(/\s+/);return p.length>1?p[p.length-1]:p[0];}
+  function firstName(name){if(!name)return '?';var p=String(name).trim().split(/\s+/);return p[0];}
+
+  // Convertit un emoji drapeau (regional indicators) en code pays ISO-2.
+  // 🇪🇸 → ES · 🇮🇹 → IT · 🇷🇸 → RS · 🇷🇺 → RU · 🇺🇸 → US · 🇩🇪 → DE …
+  function flagToCC(flag){
+    if(!flag||typeof flag!=='string')return '';
+    var cc='';
+    for(var i=0;i<flag.length;i++){
+      var c=flag.codePointAt(i);
+      if(c>=0x1F1E6&&c<=0x1F1FF){cc+=String.fromCharCode(65+(c-0x1F1E6));i++;} // skip low surrogate
+      else if(c>0xFFFF){i++;} // skip low surrogate of any non-BMP char
+    }
+    return cc.length===2?cc:'';
+  }
+
+  // Petite bibliothèque d'icônes SVG (stroke=currentColor, donc hérite la couleur).
+  function svgIcon(name,size){
+    size=size||12;
+    var P={
+      trophy:'<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 4H4v2a3 3 0 0 0 3 3M17 4h3v2a3 3 0 0 1-3 3"/>',
+      pin:'<path d="M12 21s-7-7-7-12a7 7 0 0 1 14 0c0 5-7 12-7 12zM12 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>',
+      clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+      zap:'<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
+      radio:'<circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 16.24a6 6 0 0 1 0-8.49M19.07 4.93a10 10 0 0 1 0 14.14M4.93 19.07a10 10 0 0 1 0-14.14"/>',
+      grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+      chart:'<path d="M3 3v18h18M7 16V9M12 16V5M17 16v-4"/>',
+      scale:'<path d="M12 3v18M5 7l-3 6h6zM19 7l-3 6h6zM5 7h14M8 21h8"/>',
+      target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'
+    };
+    return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[name]||'')+'</svg>';
+  }
+
+  // Probabilité Elo/Glicko d'après les données Pariscore.
+  // Priorité : predictions.elo > glicko2.p1_prob > dérivation des ratings.
+  function p1WinProb(m){
+    if(m.predictions){
+      if(m.predictions.elo!=null) return clamp(Number(m.predictions.elo),0.02,0.98);
+      if(m.predictions.blended!=null) return clamp(Number(m.predictions.blended),0.02,0.98);
+    }
+    if(m.glicko2&&m.glicko2.p1_prob!=null) return clamp(Number(m.glicko2.p1_prob),0.02,0.98);
+    if(m.glicko2&&m.glicko2.p1_rating!=null&&m.glicko2.p2_rating!=null){
+      var a=Number(m.glicko2.p1_rating),b=Number(m.glicko2.p2_rating);
+      return clamp(1/(1+Math.pow(10,(b-a)/400)),0.05,0.95);
+    }
+    if(m.player1&&m.player2&&m.player1.elo_surface!=null&&m.player2.elo_surface!=null){
+      var ea=Number(m.player1.elo_surface),eb=Number(m.player2.elo_surface);
+      return clamp(1/(1+Math.pow(10,(eb-ea)/400)),0.05,0.95);
+    }
+    return 0.5;
+  }
+
+  // Implied probability (dés-vigée) depuis deux cotes décimales.
+  function implied(oddsA,oddsB){
+    var a=1/oddsA,b=1/oddsB,s=a+b;
+    return{p1:a/s,p2:b/s,vig:s-1};
+  }
+  function ev(p,odds){return p*odds-1;}
+  function kelly(p,odds){var b=odds-1;if(b<=0)return 0;return clamp((p*b-(1-p))/b,0,0.25);}
+  function tier(edge,evv,k){
+    if(edge>=0.06&&evv>=0.08&&k>=0.04)return 'strong';
+    if(edge>=0.03&&evv>=0.03)return 'moderate';
+    return 'avoid';
+  }
+  function signalBadge(t){
+    var lbl={strong:'VALUE FORTE',moderate:'Value',avoid:'À éviter',live:'LIVE'}[t];
+    return '<span class="sc-signal sc-signal-'+t+'">'+lbl+'</span>';
+  }
+
+  /* ── Surface badge ────────────────────────────────────────────────── */
+  function surfaceBadge(surf){
+    var s=String(surf||'').toLowerCase();
+    var cls='sc-surface-hard',lbl='Dur';
+    if(/clay|terre|battue/.test(s)){cls='sc-surface-clay';lbl='Terre';}
+    else if(/grass|gazon/.test(s)){cls='sc-surface-grass';lbl='Gazon';}
+    else if(/indoor|salle/.test(s)){cls='sc-surface-indoor';lbl='Intérieur';}
+    return '<span class="sc-surface '+cls+'"><span class="dot"></span>'+lbl+'</span>';
+  }
+
+  /* ── Form dots ────────────────────────────────────────────────────── */
+  function formDots(form){
+    // form = 0..100 index OU string 'WWLLW' OU array ['W','L',...]
+    var arr=null;
+    if(Array.isArray(form))arr=form;
+    else if(typeof form==='string'&&/[WL]/i.test(form))arr=form.toUpperCase().split('');
+    if(!arr){
+      // synthétise 10 dots à partir de l'index 0..100
+      var f=clamp(num(form),0,100)/100;
+      arr=[];for(var i=0;i<10;i++){arr.push(Math.random()<f?'W':'L');}
+    }
+    var h='';arr.slice(0,10).forEach(function(r){var w=/W/i.test(r);h+='<span class="sc-dot sc-dot-'+(w?'w':'l')+'">'+(w?'W':'L')+'</span>';});
+    return '<div class="sc-dots">'+h+'</div>';
+  }
+
+  /* ── Sparkline Elo (mini courbe) ──────────────────────────────────── */
+  function sparkline(data,color){
+    if(!data||data.length<2)return '';
+    var mn=Math.min.apply(null,data),mx=Math.max.apply(null,data),range=mx-mn||1;
+    var w=64,h=18,pts=data.map(function(v,i){var x=(i/(data.length-1))*w;var y=h-((v-mn)/range)*h;return x.toFixed(1)+','+y.toFixed(1);});
+    return '<svg width="'+w+'" height="'+h+'" class="sc-spark"><polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+w+'" cy="'+pts[pts.length-1].split(',')[1]+'" r="1.8" fill="'+color+'"/></svg>';
+  }
+
+  /* ── Jauge de probabilité semi-circulaire (SVG) ───────────────────── */
+  function gauge(p1Prob,opts){
+    opts=opts||{};
+    var size=opts.size||140,live=!!opts.live;
+    var p1=clamp(p1Prob,0,1),p2=1-p1;
+    var r=size/2-10,cx=size/2,cy=size/2;
+    // arc de 180° (gauche) à 0° (droite)
+    function polar(deg,rad){var rr=rad==null?r:rad;var rd=deg*Math.PI/180;return{x:cx+rr*Math.cos(rd),y:cy-rr*Math.sin(rd)};}
+    function arc(a0,a1,rad){var s=polar(a0,rad),e=polar(a1,rad);var large=Math.abs(a1-a0)>180?1:0;return 'M '+s.x+' '+s.y+' A '+rad+' '+rad+' 0 '+large+' 1 '+e.x+' '+e.y;}
+    var split=180-p1*180; // angle split
+    var colP1=p1>=0.55?'var(--green)':(p1>=0.45?'var(--amber)':'var(--red)');
+    var colP2='var(--bg4)';
+    var ang=180-p1*180;
+    var needle=polar(ang,r*0.8);
+    return '<div class="sc-gauge-wrap"><svg class="sc-gauge" width="'+size+'" height="'+(size/2+18)+'" viewBox="0 0 '+size+' '+(size/2+18)+'">'
+      +'<path d="'+arc(0,180,r)+'" fill="none" stroke="var(--bg3)" stroke-width="9" stroke-linecap="round"/>'
+      +'<path d="'+arc(split,180,r)+'" fill="none" stroke="'+colP1+'" stroke-width="9" stroke-linecap="round"/>'
+      +'<path d="'+arc(0,split,r)+'" fill="none" stroke="'+colP2+'" stroke-width="9" stroke-linecap="round"/>'
+      +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/>'
+      +'<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="var(--text)"/>'
+      +'<text class="sc-gauge-center" x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" style="font-size:20px">'+Math.round(p1*100)+'%</text>'
+      +'<text class="sc-gauge-label" x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle">'+(live?'LIVE':'PREMATCH')+'</text>'
+      +'</svg>'
+      +'<div class="sc-gauge-legend"><div class="p1">P1<small>'+esc(opts.p1n||'')+'</small></div><div class="p2">P2<small>'+esc(opts.p2n||'')+'</small></div></div>'
+      +'</div>';
+  }
+
+  /* ── Barre de momentum -100..+100 ─────────────────────────────────── */
+  function momentumBar(m){
+    var mom=m.momentum||{};
+    var dir=mom.kfs_direction||'neutral';
+    var conf=num(mom.kfs_confidence,0);
+    var shift=num(mom.momentum_shift,2);
+    // score -100..+100 : direction p1 → +, p2 → -, amplitude = confidence
+    var score=dir==='p1'?conf:(dir==='p2'?-conf:0);
+    var p1Pct=((score+100)/200)*100;
+    var col=score>15?'var(--green)':(score<-15?'var(--blue)':'var(--amber)');
+    var label=dir==='p1'?'P1 au pouvoir':(dir==='p2'?'P2 au pouvoir':'Équilibré');
+    return '<div class="sc-momentum">'
+      +'<div class="sc-momentum-head"><span>P2</span><span>'+label+' · <span class="val">'+(score>0?'+':'')+score+'</span> · flow '+shift.toFixed(2)+'</span><span>P1</span></div>'
+      +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:50%;width:0;background:'+col+';"></div></div>'
+      +'<script type="text/sc-fill">/*'+p1Pct+'*/<\/script>'
+      +'</div>';
+  }
+  // Note: le fill se positionne via JS après insertion (cf. applyMomentumFill).
+
+  /* ── Metric row comparison ────────────────────────────────────────── */
+  function metricRow(lbl,p1,p2,unit,favorHigher){
+    unit=unit||'';favorHigher=favorHigher!==false;
+    var w1=favorHigher?p1>p2:p1<p2,w2=favorHigher?p2>p1:p2<p1;
+    var total=(p1+p2)||1;var p1Pct=(p1/total)*100;
+    return '<div class="sc-metric">'
+      +'<div class="sc-metric-row"><span class="v1 '+(w1?'win':'')+'">'+num(p1,p1<10?1:0)+unit+'</span><span class="lbl">'+lbl+'</span><span class="v2 '+(w2?'win':'')+'">'+num(p2,p2<10?1:0)+unit+'</span></div>'
+      +'<div class="sc-metric-bar"><div class="l"><div class="lf" style="width:'+p1Pct+'%"></div></div><div class="r"><div class="rf" style="width:'+(100-p1Pct)+'%"></div></div></div>'
+      +'</div>';
+  }
+
+  /* ── Facteurs du modèle ───────────────────────────────────────────── */
+  function factors(m){
+    var p1=m.player1||{},p2=m.player2||{},g=m.glicko2||{};
+    var out=[];
+    var e1=p1.elo_surface!=null?num(p1.elo_surface):null;
+    var e2=p2.elo_surface!=null?num(p2.elo_surface):null;
+    if(e1!=null&&e2!=null){
+      out.push({label:'Elo surface',v1:e1,v2:e2,unit:'',weight:0.35,favors:e1>e2?1:2,
+        desc:'Rating Elo spécifique à la surface '+(m.surface||'')+'. '+(e1>e2?p1.name:p2.name)+' domine de '+Math.abs(e1-e2)+' pts.'});
+    }
+    if(g.p1_serve!=null&&g.p2_serve!=null){
+      out.push({label:'Glicko service',v1:num(g.p1_serve),v2:num(g.p2_serve),unit:'',weight:0.2,favors:g.p1_serve>g.p2_serve?1:2,
+        desc:'Score de service Glicko-2 — crucial pour le hold %.'});
+    }
+    if(g.p1_return!=null&&g.p2_return!=null){
+      out.push({label:'Glicko retour',v1:num(g.p1_return),v2:num(g.p2_return),unit:'',weight:0.18,favors:g.p1_return>g.p2_return?1:2,
+        desc:'Score de retour Glicko-2 — capacité à breaker.'});
+    }
+    if(p1.form!=null&&p2.form!=null){
+      out.push({label:'Forme récente',v1:num(p1.form),v2:num(p2.form),unit:'',weight:0.12,favors:p1.form>p2.form?1:2,
+        desc:'Indice de forme pondéré (10 derniers matchs).'});
+    }
+    if(p1.rank!=null&&p2.rank!=null){
+      out.push({label:'Classement ATP/WTA',v1:num(p1.rank),v2:num(p2.rank),unit:'',weight:0.1,favors:p1.rank<p2.rank?1:2,
+        desc:'Classement officiel (plus bas = meilleur).'});
+    }
+    if(m.h2h){
+      out.push({label:'Confrontations H2H',v1:m.h2h.p1Wins+'V',v2:m.h2h.p2Wins+'V',unit:'',weight:0.05,favors:m.h2h.p1Wins>m.h2h.p2Wins?1:2,
+        desc:'Historique direct ('+(m.h2h.p1Wins+m.h2h.p2Wins)+' matchs).'});
+    }
+    return out;
+  }
+  function factorList(m){
+    var fs=factors(m);var h='';
+    fs.forEach(function(f){
+      h+='<div class="sc-factor">'
+        +'<div class="sc-factor-row"><span class="lbl">'+esc(f.label)+' <span class="w">poids '+(f.weight*100|0)+'%</span></span>'
+        +'<span class="sc-factor-vals"><span class="v1 '+((f.favors===1)?'':'')+'" style="'+(f.favors===1?'':'opacity:.6')+'">'+f.v1+f.unit+'</span><span class="vs">vs</span><span class="v2" style="'+(f.favors===2?'':'opacity:.6')+'">'+f.v2+f.unit+'</span></span></div>'
+        +'<div class="sc-factor-desc">'+esc(f.desc)+'</div></div>';
+    });
+    return h;
+  }
+
+  /* ── Markets (tous les paris) ─────────────────────────────────────── */
+  function marketsList(m){
+    var p1=p1WinProb(m),p2=1-p1;
+    var o1=num(m.odds_player1),o2=num(m.odds_player2);
+    var imp=implied(o1,o2);
+    var rows=[];
+    function row(label,odds,mp,ip){
+      if(!odds)return;var e=ev(mp,odds),k=kelly(mp,odds),ed=mp-ip;
+      rows.push('<div class="sc-market"><span class="lbl">'+esc(label)+'</span>'
+        +'<span class="nums"><span class="o">@'+num(odds,2)+'</span><span class="m">'+(mp*100|0)+'%</span><span class="i">'+(ip*100|0)+'%</span>'+signalBadge(tier(ed,e,k))+'</span></div>');
+    }
+    row((m.player1&&m.player1.name)||'P1',o1,p1,imp.p1);
+    row((m.player2&&m.player2.name)||'P2',o2,p2,imp.p2);
+    // bonus markets from best_ev_model if present
+    if(m.best_ev_model&&m.best_ev_model.label){
+      var be=m.best_ev_model;var mp=num(be.prob)/100;var ip2=1/num(be.odds);
+      row(be.label,num(be.odds),mp,ip2);
+    }
+    return rows.join('');
+  }
+
+  /* ── H2H block ────────────────────────────────────────────────────── */
+  function h2hBlock(m){
+    if(!m.h2h)return '<div class="sc-seclbl">H2H — n/d</div>';
+    var h='<div class="sc-h2h"><div class="side p1"><div class="num">'+m.h2h.p1Wins+'</div><div class="lbl">'+esc(shortName(m.player1.name))+'</div></div>'
+      +'<div class="vs">—</div><div class="side p2"><div class="num">'+m.h2h.p2Wins+'</div><div class="lbl">'+esc(shortName(m.player2.name))+'</div></div></div>';
+    if(m.h2h.lastMeetings&&m.h2h.lastMeetings.length){
+      h+='<div class="sc-h2h-list">';
+      m.h2h.lastMeetings.slice(0,3).forEach(function(meet){
+        h+='<div class="sc-h2h-item"><span class="t">'+esc(meet.tournament)+'</span><span class="s '+(meet.winner===1?'p1':'p2')+'">'+esc(meet.score)+'</span></div>';
+      });
+      h+='</div>';
+    }
+    return h;
+  }
+
+  /* ── Carte prematch complète ──────────────────────────────────────── */
+  function prematchCard(m){
+    var p1=m.player1||{},p2=m.player2||{};
+    var p1p=p1WinProb(m);
+    var o1=num(m.odds_player1),o2=num(m.odds_player2);
+    var imp=implied(o1,o2);
+    var ev1=ev(p1p,o1),ev2=ev(1-p1p,o2);
+    var k1=kelly(p1p,o1),k2=kelly(1-p1p,o2);
+    // top value bet
+    var topVB=null;
+    if(m.best_ev_model&&m.best_ev_model.odds){
+      var be=m.best_ev_model;var mp=num(be.prob)/100;var ipb=1/num(be.odds);
+      topVB={label:be.label,odds:num(be.odds,2),modelProb:mp,impliedProb:ipb,ev:ev(mp,num(be.odds)),kelly:kelly(mp,num(be.odds)),edge:mp-ipb};
+    }else{
+      // choisir le meilleur entre P1/P2
+      var cands=[{label:(p1.name||'P1')+' Win',odds:o1,mp:p1p,ip:imp.p1},{label:(p2.name||'P2')+' Win',odds:o2,mp:1-p1p,ip:imp.p2}];
+      cands.forEach(function(c){c.ev=ev(c.mp,c.odds);c.kelly=kelly(c.mp,c.odds);c.edge=c.mp-c.ip;});
+      cands.sort(function(a,b){return b.edge-a.edge;});
+      topVB=cands[0];
+    }
+    var topTier=tier(topVB.edge,topVB.ev,topVB.kelly);
+    var isLive=!!m._isLive;
+    var st=new Date(m.start_time||m.commence_time||Date.now());
+    var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    var dateStr=st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+
+    var eloTrend1=p1.eloTrend||[p1.elo_surface||2000];
+    var eloTrend2=p2.eloTrend||[p2.elo_surface||2000];
+
+    return '<div class="sc-card" data-match-id="'+esc(m.id)+'">'
+      +'<div class="sc-card-head">'
+      +'<div class="tour">'+svgIcon('trophy',14)+'<span class="name">'+esc(m.tournament||'')+'</span></div>'
+      +surfaceBadge(m.surface)
+      +'</div>'
+      +'<div class="sc-card-body">'
+      // meta
+      +'<div class="sc-meta">'
+      +'<span>'+svgIcon('pin',11)+' '+esc(m.city||'')+'</span><span class="sep">·</span>'
+      +'<span>'+svgIcon('clock',11)+' '+dateStr+' '+timeStr+'</span>'
+      +'<span class="sc-badge">'+esc(m.round||'')+'</span>'
+      +'<span class="sc-badge">Bo'+(m.bestOf||3)+'</span>'
+      +(m.prizePool?'<span class="sc-badge sc-badge-prize">'+esc(m.prizePool)+'</span>':'')
+      +'</div>'
+      // players + gauge
+      +'<div class="sc-players">'
+      +playerBlock(p1,'left','#00e676',p1p,eloTrend1)
+      +gauge(p1p,{size:130,live:isLive,p1n:shortName(p1.name),p2n:shortName(p2.name)})
+      +playerBlock(p2,'right','#0077ff',1-p1p,eloTrend2)
+      +'</div>'
+      // odds
+      +'<div class="sc-odds">'
+      +oddBox(shortName(p1.name),o1,ev1,ev1>0)
+      +'<div class="sc-odd-mid"><div class="lbl">Score proj.</div><div class="val">'+esc(projectedScore(p1p,m.bestOf))+'</div><div class="sub">'+(expectedGames(m))+' jeux</div></div>'
+      +oddBox(shortName(p2.name),o2,ev2,ev2>0)
+      +'</div>'
+      // top value
+      +'<div class="sc-callout"><div class="ico">'+svgIcon('zap',16)+'</div><div class="body"><div class="title"><b>'+esc(topVB.label)+'</b>'+signalBadge(topTier)+(isLive?signalBadge('live'):'')+'</div>'
+      +'<div class="stats">Cote '+topVB.odds.toFixed(2)+' · Edge '+(topVB.edge*100).toFixed(1)+'% · EV '+(topVB.ev*100).toFixed(1)+'% · Kelly '+(topVB.kelly*100).toFixed(1)+'%</div></div></div>'
+      // expand
+      +'<button class="sc-expand" onclick="Scope._toggle(this)"><span>Analyse détaillée · Facteurs · H2H · Marchés</span><span class="chev">▾</span></button>'
+      +'<div class="sc-detail">'
+      +'<div class="sc-seclbl">'+svgIcon('scale',12)+' Facteurs du modèle</div>'+factorList(m)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Metrics clés</div>'
+      +metricRow('Glicko service',num(m.glicko2&&m.glicko2.p1_serve),num(m.glicko2&&m.glicko2.p2_serve),'',true)
+      +metricRow('Glicko retour',num(m.glicko2&&m.glicko2.p1_return),num(m.glicko2&&m.glicko2.p2_return),'',true)
+      +metricRow('Forme',num(p1.form),num(p2.form),'',true)
+      +metricRow('Classement',num(p1.rank),num(p2.rank),'',false)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(m)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Tous les marchés</div>'+marketsList(m)
+      +'</div>'
+      +'</div></div>';
+  }
+
+  function playerBlock(p,align,color,prob,trend){
+    var cc=flagToCC(p.flag);
+    return '<div class="sc-player '+(align==='right'?'right':'')+'">'
+      +'<div class="sc-player-top">'+(cc?'<span class="sc-flag">'+cc+'</span>':'')+'<span>#'+(p.rank||'—')+'</span></div>'
+      +'<div class="sc-player-name">'+esc(p.name||'?')+'</div>'
+      +'<div class="sc-player-form">Forme <b>'+(p.form!=null?num(p.form):'—')+'</b>'+formDots(p.form)+'</div>'
+      +'<div class="sc-elo-spark">'+sparkline(trend,color)+'<small>Elo '+(p.elo_surface||'—')+'</small></div>'
+      +'</div>';
+  }
+  function oddBox(lbl,odds,evv,hl){
+    return '<div class="sc-odd '+(hl?'value':'')+'"><div class="lbl">'+esc(lbl)+'</div><div class="val">'+(odds?odds.toFixed(2):'—')+'</div><div class="ev '+(evv>0?'pos':'neg')+'">EV '+(evv>=0?'+':'')+(evv*100).toFixed(1)+'%</div></div>';
+  }
+  function projectedScore(p1p,bestOf){
+    bestOf=bestOf||3;
+    if(bestOf===5){if(p1p>0.7)return'3-0';if(p1p>0.58)return'3-1';if(p1p>0.5)return'3-2';if(p1p>0.42)return'2-3';if(p1p>0.3)return'1-3';return'0-3';}
+    if(p1p>0.65)return'2-0';if(p1p>0.5)return'2-1';if(p1p>0.35)return'1-2';return'0-2';
+  }
+  function expectedGames(m){
+    var base=(m.bestOf===5?36:22);
+    var comp=1-Math.abs(p1WinProb(m)-0.5)*2; // 0..1, plus proche de 1 = match serré
+    // pas de serve-dominance : les ratings Glicko ne sont pas des hold%.
+    // Ajustement modeste : match serré → légèrement plus de jeux.
+    var adj=(comp-0.5)*6;
+    return Math.round((base+adj)*10)/10;
+  }
+
+  /* ── Carte live ───────────────────────────────────────────────────── */
+  function liveCard(m){
+    var card=prematchCard(m);
+    // insère live prob + momentum juste après la balise de fermeture du body du card
+    // plus simple : on prepend un bloc live dans le body. On reconstruit le bloc live.
+    var live=m._live||{};
+    var liveProb=m.liveProbability||p1WinProb(m);
+    var mom=m.momentum||{};
+    var dir=mom.kfs_direction||'neutral';
+    var conf=num(mom.kfs_confidence,0);
+    var score=dir==='p1'?conf:(dir==='p2'?-conf:0);
+    var p1Pct=((score+100)/200)*100;
+    var col=score>15?'var(--green)':(score<-15?'var(--blue)':'var(--amber)');
+    var liveBlock='<div style="margin-bottom:10px">'
+      +'<div class="sc-seclbl">'+svgIcon('radio',12)+' Probabilité live (modèle Markov)</div>'
+      +'<div class="sc-liveprob"><div class="p1" style="width:'+(liveProb*100)+'%">P1 '+(liveProb*100).toFixed(0)+'%</div><div class="p2" style="width:'+((1-liveProb)*100)+'%">P2 '+((1-liveProb)*100).toFixed(0)+'%</div></div>'
+      +'<div class="sc-momentum" style="margin-top:8px"><div class="sc-momentum-head"><span>P2</span><span>+'+score+' P1 · flow '+num(mom.momentum_shift,2)+'</span><span>P1</span></div>'
+      +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:'+Math.min(50,p1Pct-50)+'%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div></div>'
+      +'</div>';
+    return card.replace('<div class="sc-card-body">','<div class="sc-card-body">'+liveBlock);
+  }
+
+  /* ── Value bets table ─────────────────────────────────────────────── */
+  function valueBetsTable(matches,opts){
+    opts=opts||{};
+    var filter=opts.filter||'all'; // all|strong|moderate
+    var sort=opts.sort||'edge';    // edge|ev|kelly|odds|modelProb
+    var rows=[];
+    matches.forEach(function(m){
+      if(!m.player1||!m.player2)return;
+      var p1=p1WinProb(m),p2=1-p1;
+      var o1=num(m.odds_player1),o2=num(m.odds_player2);
+      if(!o1||!o2)return;
+      var imp=implied(o1,o2);
+      function addRow(label,odds,mp,ip){
+        var e=ev(mp,odds),k=kelly(mp,odds),ed=mp-ip,t=tier(ed,e,k);
+        if(filter!=='all'&&t!==filter)return;
+        rows.push({label:label,odds:odds,mp:mp,ip:ip,edge:ed,ev:e,kelly:k,tier:t,m:m});
+      }
+      addRow((m.player1.name||'P1')+' Win',o1,p1,imp.p1);
+      addRow((m.player2.name||'P2')+' Win',o2,p2,imp.p2);
+      if(m.best_ev_model&&m.best_ev_model.odds){
+        var be=m.best_ev_model;var mp2=num(be.prob)/100;var ip2=1/num(be.odds);
+        addRow(be.label,num(be.odds),mp2,ip2);
+      }
+    });
+    rows.sort(function(a,b){return b[sort]-a[sort];});
+    var h='<table class="sc-vb-table"><thead><tr>'
+      +'<th>Match / Marché</th><th>Cote</th><th>Modèle</th><th>Impl.</th><th>Edge</th><th>EV</th><th>Kelly</th><th><span class="ctr">Signal</span></th>'
+      +'</tr></thead><tbody>';
+    if(!rows.length){
+      h+='<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3)">Aucun value bet pour ce filtre.</td></tr>';
+    }
+    rows.forEach(function(r){
+      var edgeCls=r.edge>=0.06?'hi':(r.edge>=0.03?'mid':(r.edge>0?'lo':'neg'));
+      var matchLabel=shortName(r.m.player1.name)+' vs '+shortName(r.m.player2.name);
+      h+='<tr>'
+        +'<td><div class="sc-vb-match">'+(r.m._isLive?'<span class="live"></span>':'')+'<div class="txt"><b>'+esc(r.label)+'</b><small>'+esc(matchLabel)+' · '+esc(r.m.tournament)+'</small></div></div></td>'
+        +'<td class="num">'+r.odds.toFixed(2)+'</td>'
+        +'<td class="num" style="color:var(--blue)">'+(r.mp*100|0)+'%</td>'
+        +'<td class="num" style="color:var(--text3);opacity:.7">'+(r.ip*100|0)+'%</td>'
+        +'<td class="num sc-edge '+edgeCls+'">'+(r.edge>=0?'+':'')+(r.edge*100).toFixed(1)+'%</td>'
+        +'<td class="num sc-ev '+(r.ev>0?'pos':'neg')+'">'+(r.ev>=0?'+':'')+(r.ev*100).toFixed(1)+'%</td>'
+        +'<td class="num sc-kelly">'+(r.kelly*100).toFixed(1)+'%</td>'
+        +'<td class="ctr">'+signalBadge(r.tier)+'</td>'
+        +'</tr>';
+    });
+    h+='</tbody></table>';
+    return h;
+  }
+
+  /* ── Summary cards + top pick ─────────────────────────────────────── */
+  function summaryRow(matches){
+    var all=[],strong=0,mod=0,edges=[];
+    matches.forEach(function(m){
+      if(!m.player1||!m.player2)return;
+      var p1=p1WinProb(m);var o1=num(m.odds_player1),o2=num(m.odds_player2);
+      if(o1&&o2){
+        var imp=implied(o1,o2);
+        var e1=p1-imp.p1,e2=(1-p1)-imp.p2;
+        edges.push(e1,e2);
+        [e1,e2].forEach(function(e){/*compte via tier ci-dessous*/});
+        function cnt(mp,ip,odds){var t=tier(mp-ip,ev(mp,odds),kelly(mp,odds));if(t==='strong')strong++;else if(t==='moderate')mod++;all.push(mp-ip);}
+        cnt(p1,imp.p1,o1);cnt(1-p1,imp.p2,o2);
+      }
+    });
+    var avg=edges.length?edges.reduce(function(a,b){return a+b;},0)/edges.length:0;
+    var best=edges.length?Math.max.apply(null,edges):0;
+    return '<div class="sc-summary">'
+      +'<div class="sc-sumcard"><div class="lbl">'+svgIcon('target',13)+' Matchs analysés</div><div class="val">'+matches.length+'</div></div>'
+      +'<div class="sc-sumcard green"><div class="lbl">'+svgIcon('zap',13)+' Value forts</div><div class="val">'+strong+'</div></div>'
+      +'<div class="sc-sumcard amber"><div class="lbl">'+svgIcon('chart',13)+' Value modérés</div><div class="val">'+mod+'</div></div>'
+      +'<div class="sc-sumcard blue"><div class="lbl">'+svgIcon('target',13)+' Meilleur edge</div><div class="val">'+(best*100).toFixed(1)+'%</div></div>'
+      +'</div>';
+  }
+  function topPick(matches){
+    var best=null;
+    matches.forEach(function(m){
+      if(!m.player1||!m.player2)return;
+      var p1=p1WinProb(m);var o1=num(m.odds_player1),o2=num(m.odds_player2);
+      if(o1&&o2){var imp=implied(o1,o2);
+        [[p1,o1,m.player1.name+' Win',imp.p1],[(1-p1),o2,m.player2.name+' Win',imp.p2]].forEach(function(a){
+          var mp=a[0],odds=a[1],lbl=a[2],ip=a[3];var e=mp-ip,evv=ev(mp,odds),k=kelly(mp,odds);
+          if(!best||e>best.edge)best={label:lbl,odds:odds,mp:mp,ip:ip,edge:e,ev:evv,kelly:k,m:m};
+        });
+      }
+    });
+    if(!best)return '';
+    var t=tier(best.edge,best.ev,best.kelly);
+    return '<div class="sc-toppick"><div class="head"><span style="color:var(--green)">'+svgIcon('zap',13)+' Top pick</span>'+signalBadge(t)+surfaceBadge(best.m.surface)+'</div>'
+      +'<h3>'+esc(best.label)+'</h3><div class="meta">'+esc(shortName(best.m.player1.name)+' vs '+shortName(best.m.player2.name))+' · '+esc(best.m.tournament)+'</div>'
+      +'<div class="kpis"><span class="kpi">Cote <b>'+best.odds.toFixed(2)+'</b></span><span class="kpi g">Edge <b>'+(best.edge*100).toFixed(1)+'%</b></span><span class="kpi g">EV <b>'+(best.ev*100).toFixed(1)+'%</b></span><span class="kpi a">Kelly <b>'+(best.kelly*100).toFixed(1)+'%</b></span></div></div>';
+  }
+
+  /* ── Radar SVG (6 metrics, pure SVG) ──────────────────────────────── */
+  function radar(m){
+    var g=m.glicko2||{},p1=m.player1||{},p2=m.player2||{};
+    // normalise 0..100
+    function norm(v,mn,mx,invert){if(v==null)return 50;var n=(v-mn)/(mx-mn)*100;if(invert)n=100-n;return clamp(n,0,100);}
+    var data=[
+      {metric:'Service',p1:norm(g.p1_serve,1200,2200),p2:norm(g.p2_serve,1200,2200)},
+      {metric:'Retour',p1:norm(g.p1_return,1200,2200),p2:norm(g.p2_return,1200,2200)},
+      {metric:'Forme',p1:num(p1.form,0)||50,p2:num(p2.form,0)||50},
+      {metric:'Classement',p1:norm(p1.rank,1,200,true),p2:norm(p2.rank,1,200,true)},
+      {metric:'Elo surface',p1:norm(p1.elo_surface,1800,2400),p2:norm(p2.elo_surface,1800,2400)},
+      {metric:'Confiance',p1:(m.confidence_badge&&m.confidence_badge.p1)||50,p2:(m.confidence_badge&&m.confidence_badge.p2)||50}
+    ];
+    var cx=110,cy=110,R=80,N=data.length;
+    function pt(i,val){var ang=-Math.PI/2+(i/N)*2*Math.PI;var r=R*(val/100);return{x:cx+r*Math.cos(ang),y:cy+r*Math.sin(ang)};}
+    var grid='';for(var k=1;k<=4;k++){var pts=[];for(var i=0;i<N;i++){var ang=-Math.PI/2+(i/N)*2*Math.PI;var r=R*k/4;pts.push((cx+r*Math.cos(ang))+','+(cy+r*Math.sin(ang)));}grid+='<polygon class="sc-radar-grid" points="'+pts.join(' ')+'"/>';}
+    var axes='';for(var i=0;i<N;i++){var ang=-Math.PI/2+(i/N)*2*Math.PI;var ex=cx+R*Math.cos(ang),ey=cy+R*Math.sin(ang);axes+='<line class="sc-radar-axis" x1="'+cx+'" y1="'+cy+'" x2="'+ex+'" y2="'+ey+'"/>';var lx=cx+(R+12)*Math.cos(ang),ly=cy+(R+12)*Math.sin(ang)+3;axes+='<text class="sc-radar-axislbl" x="'+lx+'" y="'+ly+'">'+data[i].metric+'</text>';}
+    var p1pts=[],p2pts=[];
+    data.forEach(function(d,i){var a=pt(i,d.p1),b=pt(i,d.p2);p1pts.push(a.x+','+a.y);p2pts.push(b.x+','+b.y);});
+    return '<div class="sc-radar"><svg width="220" height="220" viewBox="0 0 220 220">'+grid+axes
+      +'<polygon class="sc-radar-p2" points="'+p2pts.join(' ')+'"/>'
+      +'<polygon class="sc-radar-p1" points="'+p1pts.join(' ')+'"/>'
+      +'</svg>'
+      +'<div class="sc-radar-legend"><span class="lg"><span class="sw" style="background:var(--green)"></span>'+esc(shortName(m.player1.name))+'</span><span class="lg"><span class="sw" style="background:var(--blue)"></span>'+esc(shortName(m.player2.name))+'</span></div></div>';
+  }
+
+  /* ── Analytics panel ──────────────────────────────────────────────── */
+  function analyticsPanel(m){
+    var p1=m.player1||{},p2=m.player2||{};
+    return '<div class="sc-grid sc-grid-2">'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('grid',14)+'<span class="name">Radar des metrics</span></div></div><div class="sc-card-body">'+radar(m)+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('chart',14)+'<span class="name">Comparaison détaillée</span></div></div><div class="sc-card-body">'
+      +metricRow('Glicko service',num(m.glicko2&&m.glicko2.p1_serve),num(m.glicko2&&m.glicko2.p2_serve),'',true)
+      +metricRow('Glicko retour',num(m.glicko2&&m.glicko2.p1_return),num(m.glicko2&&m.glicko2.p2_return),'',true)
+      +metricRow('Elo surface',num(p1.elo_surface),num(p2.elo_surface),'',true)
+      +metricRow('Forme',num(p1.form),num(p2.form),'',true)
+      +metricRow('Classement',num(p1.rank),num(p2.rank),'',false)
+      +'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('scale',14)+'<span class="name">Facteurs pondérés</span></div></div><div class="sc-card-body">'+factorList(m)+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('trophy',14)+'<span class="name">H2H & Marchés</span></div></div><div class="sc-card-body">'+h2hBlock(m)+'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Marchés</div>'+marketsList(m)+'</div></div>'
+      +'</div>';
+  }
+
+  // module-level host tracking for re-render on filter/sort
+  var _vbHost=null,_vbMatches=null,_vbOpts={filter:'all',sort:'edge'};
+
+  function filterBtn(val,active,lbl){return '<button class="sc-fbtn '+(active===val?'active':'')+'" onclick="Scope._refilter(\''+val+'\')">'+lbl+'</button>';}
+  function sortSelect(active){return '<select class="sc-sort" onchange="Scope._resort(this.value)">'
+    +'<option value="edge"'+(active==='edge'?' selected':'')+'>Edge</option>'
+    +'<option value="ev"'+(active==='ev'?' selected':'')+'>EV</option>'
+    +'<option value="kelly"'+(active==='kelly'?' selected':'')+'>Kelly</option>'
+    +'<option value="odds"'+(active==='odds'?' selected':'')+'>Cote</option>'
+    +'</select>';}
+
+  function _rerenderVB(){
+    if(!_vbHost)return;
+    var opts=_vbOpts;
+    var html=summaryRow(_vbMatches)+topPick(_vbMatches)
+      +'<div class="sc-ctrl"><div class="sc-filters">'
+      +filterBtn('all',opts.filter,'Tous')+filterBtn('strong',opts.filter,'Forts')+filterBtn('moderate',opts.filter,'Modérés')
+      +'</div><div class="sc-sortwrap"><label>Trier</label>'+sortSelect(opts.sort)+'</div></div>'
+      +'<div class="sc-table-wrap">'+valueBetsTable(_vbMatches,opts)+'</div>'
+      +'<div style="margin-top:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2);font-size:11px;color:var(--text3);line-height:1.5"><b style="color:var(--text2)">Méthodologie.</b> Probabilités issues du Elo/Glicko-2 surface de Pariscore. Cotes dés-vigées. <span style="color:var(--green)">Value bet</span> = prob. modèle > prob. implicite. <span style="color:var(--green)">EV</span>=p×cote−1. <span style="color:var(--amber)">Kelly</span>=fraction bankroll optimale (plafonnée 25%).</div>';
+    _vbHost.innerHTML=html;
+  }
+
+  /* ── Public API ───────────────────────────────────────────────────── */
+  var Scope={
+    // helpers exposés (utiles pour réutilisation dans Pariscore)
+    p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
+    gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
+    prematchCard:prematchCard,liveCard:liveCard,valueBetsTable:valueBetsTable,
+    summaryRow:summaryRow,topPick:topPick,radar:radar,analyticsPanel:analyticsPanel,factors:factors,
+
+    // rendus haut niveau (injectent dans un élément du DOM)
+    renderPrematchGrid:function(el,matches){
+      el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(prematchCard).join('')+'</div>';
+    },
+    renderLiveGrid:function(el,matches){
+      el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(liveCard).join('')+'</div>';
+    },
+    renderValueBets:function(el,matches,opts){
+      _vbHost=el;_vbMatches=matches;_vbOpts=opts||{filter:'all',sort:'edge'};
+      _rerenderVB();
+    },
+    renderAnalytics:function(el,matches,matchId){
+      var m=matchId?matches.filter(function(x){return x.id===matchId;})[0]:matches[0];
+      if(!m){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--text3)">Aucun match.</div>';return;}
+      el.innerHTML=analyticsPanel(m);
+    },
+
+    // interne : toggle détail + re-filter + re-sort
+    _toggle:function(btn){var d=btn.nextElementSibling;var open=btn.classList.toggle('open');d.classList.toggle('open',open);btn.querySelector('span').textContent=open?"Masquer l'analyse détaillée":'Analyse détaillée · Facteurs · H2H · Marchés';},
+    _refilter:function(val){_vbOpts.filter=val;_rerenderVB();},
+    _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
+    _version:'1.0.0'
+  };
+
+  root.Scope=Scope;
+})(typeof window!=='undefined'?window:this);
+
+/* ============================================================================
+   Données d'exemple — shape EXACTE des matchs Pariscore (buildUnifiedTennis)
+   ============================================================================ */
+var SAMPLE_MATCHES=[
+  {
+    id:"m1", tournament:"Roland-Garros", city:"Paris", tour:"ATP", surface:"Clay", round:"QF",
+    prizePool:"€53.5M", bestOf:5,
+    start_time:new Date(Date.now()+90*60000).toISOString(),
+    status:"prematch", _isLive:false,
+    player1:{name:"Carlos Alcaraz",flag:"🇪🇸",rank:1,form:78,elo_surface:2310,eloTrend:[2240,2255,2270,2260,2280,2290,2300,2295,2305,2310]},
+    player2:{name:"Jannik Sinner",flag:"🇮🇹",rank:2,form:72,elo_surface:2280,eloTrend:[2290,2300,2310,2295,2285,2290,2300,2280,2285,2280]},
+    odds_player1:1.95, odds_player2:1.85,
+    predictions:{elo:0.54},
+    glicko2:{p1_rating:2310,p2_rating:2280,p1_prob:0.54,p1_serve:2150,p2_serve:2080,p1_return:1820,p2_return:1790},
+    momentum:{kfs_direction:"neutral",kfs_confidence:0,momentum_shift:0.02},
+    best_ev_model:{label:"Alcaraz Win",odds:1.95,prob:54,ev:5.3,ev_pct:5.3},
+    confidence_badge:{p1:68,p2:55},
+    h2h:{p1Wins:4,p2Wins:3,lastMeetings:[
+      {date:"2024-03-15",surface:"Hard",tournament:"Indian Wells",winner:1,score:"7-6 6-3"},
+      {date:"2023-09-08",surface:"Hard",tournament:"US Open",winner:2,score:"6-3 6-7 6-4"},
+      {date:"2023-05-18",surface:"Clay",tournament:"Rome",winner:1,score:"6-4 6-2"}
+    ]}
+  },
+  {
+    id:"m2", tournament:"Wimbledon", city:"London", tour:"ATP", surface:"Grass", round:"SF",
+    prizePool:"£50M", bestOf:5,
+    start_time:new Date(Date.now()+150*60000).toISOString(),
+    status:"prematch", _isLive:false,
+    player1:{name:"Novak Djokovic",flag:"🇷🇸",rank:3,form:81,elo_surface:2290,eloTrend:[2270,2280,2260,2275,2285,2290,2285,2295,2290,2290]},
+    player2:{name:"Daniil Medvedev",flag:"🇷🇺",rank:4,form:64,elo_surface:2230,eloTrend:[2250,2240,2235,2245,2230,2225,2235,2230,2228,2230]},
+    odds_player1:1.65, odds_player2:2.25,
+    predictions:{elo:0.62},
+    glicko2:{p1_rating:2290,p2_rating:2230,p1_prob:0.62,p1_serve:2180,p2_serve:2120,p1_return:1880,p2_return:1920},
+    momentum:{kfs_direction:"p1",kfs_confidence:42,momentum_shift:0.18},
+    best_ev_model:{label:"Djokovic Win",odds:1.65,prob:62,ev:2.3,ev_pct:2.3},
+    confidence_badge:{p1:75,p2:48},
+    h2h:{p1Wins:11,p2Wins:5,lastMeetings:[
+      {date:"2024-01-28",surface:"Hard",tournament:"AO",winner:1,score:"6-3 6-2 6-4"},
+      {date:"2023-11-12",surface:"Hard",tournament:"ATP Finals",winner:2,score:"6-4 6-3"}
+    ]}
+  },
+  {
+    id:"m3", tournament:"US Open", city:"New York", tour:"ATP", surface:"Hard", round:"R16",
+    prizePool:"$75M", bestOf:5,
+    start_time:new Date(Date.now()+240*60000).toISOString(),
+    status:"prematch", _isLive:false,
+    player1:{name:"Taylor Fritz",flag:"🇺🇸",rank:7,form:70,elo_surface:2200,eloTrend:[2190,2185,2200,2205,2195,2200,2210,2200,2195,2200]},
+    player2:{name:"Alexander Zverev",flag:"🇩🇪",rank:5,form:74,elo_surface:2210,eloTrend:[2200,2210,2205,2215,2210,2220,2215,2210,2205,2210]},
+    odds_player1:2.40, odds_player2:1.55,
+    predictions:{elo:0.44},
+    glicko2:{p1_rating:2200,p2_rating:2210,p1_prob:0.44,p1_serve:2190,p2_serve:2150,p1_return:1750,p2_return:1810},
+    momentum:{kfs_direction:"p2",kfs_confidence:35,momentum_shift:-0.12},
+    best_ev_model:{label:"Zverev Win",odds:1.55,prob:56,ev:8.6,ev_pct:8.6},
+    confidence_badge:{p1:52,p2:64},
+    h2h:{p1Wins:3,p2Wins:5,lastMeetings:[
+      {date:"2024-04-20",surface:"Clay",tournament:"Madrid",winner:2,score:"6-4 7-6"}
+    ]}
+  },
+  {
+    id:"m4", tournament:"Cincinnati Masters", city:"Cincinnati", tour:"ATP", surface:"Hard", round:"QF",
+    prizePool:"$6.8M", bestOf:3,
+    start_time:new Date(Date.now()+45*60000).toISOString(),
+    status:"prematch", _isLive:false,
+    player1:{name:"Holger Rune",flag:"🇩🇰",rank:8,form:76,elo_surface:2140,eloTrend:[2120,2130,2140,2135,2145,2140,2150,2145,2140,2140]},
+    player2:{name:"Hubert Hurkacz",flag:"🇵🇱",rank:9,form:69,elo_surface:2120,eloTrend:[2110,2120,2115,2125,2120,2115,2120,2125,2120,2120]},
+    odds_player1:1.80, odds_player2:2.00,
+    predictions:{elo:0.55},
+    glicko2:{p1_rating:2140,p2_rating:2120,p1_prob:0.55,p1_serve:2080,p2_serve:2150,p1_return:1850,p2_return:1720},
+    momentum:{kfs_direction:"neutral",kfs_confidence:0,momentum_shift:0.05},
+    best_ev_model:{label:"Rune Win",odds:1.80,prob:55,ev:4.0,ev_pct:4.0},
+    confidence_badge:{p1:62,p2:50},
+    h2h:{p1Wins:2,p2Wins:2,lastMeetings:[
+      {date:"2024-02-10",surface:"Hard",tournament:"Rotterdam",winner:1,score:"6-4 6-3"}
+    ]}
+  },
+  // ── LIVE matches (shape avec _live) ──
+  {
+    id:"m5", tournament:"Madrid Open", city:"Madrid", tour:"ATP", surface:"Clay", round:"F",
+    prizePool:"€7.7M", bestOf:3,
+    start_time:new Date(Date.now()-50*60000).toISOString(),
+    status:"live", _isLive:true, liveProbability:0.61,
+    player1:{name:"Iga Swiatek",flag:"🇵🇱",rank:1,form:85,elo_surface:2280,eloTrend:[2260,2270,2280,2275,2285,2280,2290,2285,2280,2280]},
+    player2:{name:"Aryna Sabalenka",flag:"🇧🇾",rank:2,form:80,elo_surface:2240,eloTrend:[2230,2240,2235,2245,2240,2235,2245,2240,2238,2240]},
+    odds_player1:1.70, odds_player2:2.15,
+    predictions:{elo:0.58},
+    glicko2:{p1_rating:2280,p2_rating:2240,p1_prob:0.58,p1_serve:2050,p2_serve:2080,p1_return:1900,p2_return:1850},
+    momentum:{kfs_direction:"p1",kfs_confidence:58,momentum_shift:0.24},
+    best_ev_model:{label:"Swiatek Win",odds:1.70,prob:61,ev:3.7,ev_pct:3.7},
+    confidence_badge:{p1:72,p2:58},
+    _live:{sets:[{p1:6,p2:4}],currentSetGames:{p1:3,p2:2},currentGamePoints:{p1:2,p2:1},server:1},
+    h2h:{p1Wins:7,p2Wins:4,lastMeetings:[
+      {date:"2024-05-10",surface:"Clay",tournament:"Rome",winner:1,score:"6-2 6-3"},
+      {date:"2024-01-25",surface:"Hard",tournament:"AO",winner:2,score:"6-4 3-6 6-2"}
+    ]}
+  },
+  {
+    id:"m6", tournament:"Queen's Club", city:"London", tour:"ATP", surface:"Grass", round:"SF",
+    prizePool:"€2.5M", bestOf:3,
+    start_time:new Date(Date.now()-30*60000).toISOString(),
+    status:"live", _isLive:true, liveProbability:0.43,
+    player1:{name:"Coco Gauff",flag:"🇺🇸",rank:3,form:71,elo_surface:2100,eloTrend:[2090,2100,2095,2105,2100,2110,2105,2100,2095,2100]},
+    player2:{name:"Elena Rybakina",flag:"🇰🇿",rank:4,form:83,elo_surface:2150,eloTrend:[2140,2150,2145,2155,2150,2160,2155,2150,2148,2150]},
+    odds_player1:2.30, odds_player2:1.62,
+    predictions:{elo:0.48},
+    glicko2:{p1_rating:2100,p2_rating:2150,p1_prob:0.48,p1_serve:2020,p2_serve:2160,p1_return:1880,p2_return:1780},
+    momentum:{kfs_direction:"p2",kfs_confidence:48,momentum_shift:-0.21},
+    best_ev_model:{label:"Rybakina Win",odds:1.62,prob:57,ev:9.8,ev_pct:9.8},
+    confidence_badge:{p1:50,p2:68},
+    _live:{sets:[{p1:3,p2:6}],currentSetGames:{p1:2,p2:4},currentGamePoints:{p1:1,p2:2},server:2},
+    h2h:{p1Wins:2,p2Wins:3,lastMeetings:[
+      {date:"2024-06-15",surface:"Grass",tournament:"Berlin",winner:2,score:"7-5 6-3"}
+    ]}
+  }
+];
+
+
+window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});};
+
+/* ============================================================================
+ * TennisScope Bridge — connecte les données Pariscore au module Scope
+ * Remplace le rendu auto de demo.html (SAMPLE_MATCHES) par des fetch réels
+ * ============================================================================ */
+(function (root) {
+  'use strict';
+
+  // ── État interne ──────────────────────────────────────────────────────
+  var _state = {
+    matches: [],         // tous les matchs (prematch + live)
+    lastFetch: 0,
+    loading: false,
+    error: null,
+    selectedMatchId: null,
+    activeTab: 'prematch' // prematch|live|valuebets|analytics
+  };
+
+  // ── Mapping Pariscore → Scope shape ────────────────────────────────────
+  // Le backend Pariscore renvoie déjà la plupart des champs attendus par Scope.
+  // On normalise juste les champs manquants et on calcule eloTrend si absent.
+  function mapMatch(m) {
+    if (!m) return null;
+    var p1 = m.player1 || {};
+    var p2 = m.player2 || {};
+    // eloTrend : si absent, on synthétise à partir d'elo_surface (courbe plate)
+    function trend(p) {
+      if (Array.isArray(p.eloTrend) && p.eloTrend.length >= 2) return p.eloTrend;
+      var base = Number(p.elo_surface) || 2000;
+      // petite variation plausible pour la sparkline
+      return [base - 12, base - 6, base - 3, base - 8, base, base + 4, base - 2, base + 6, base + 2, base];
+    }
+    // best_ev_model : si absent, on le dérive à partir des cotes + predictions.elo
+    var bestEv = m.best_ev_model;
+    if (!bestEv || !bestEv.odds) {
+      var p1p = (m.predictions && (m.predictions.elo != null)) ? Number(m.predictions.elo) :
+                (m.glicko2 && m.glicko2.p1_prob != null) ? Number(m.glicko2.p1_prob) : 0.5;
+      var o1 = Number(m.odds_player1) || 0;
+      var o2 = Number(m.odds_player2) || 0;
+      if (o1 && o2) {
+        var useP1 = p1p >= 0.5;
+        bestEv = {
+          label: (useP1 ? (p1.name || 'P1') : (p2.name || 'P2')) + ' Win',
+          odds: useP1 ? o1 : o2,
+          prob: Math.round((useP1 ? p1p : (1 - p1p)) * 100),
+          ev: 0
+        };
+        var ev = (useP1 ? p1p : (1 - p1p)) * (useP1 ? o1 : o2) - 1;
+        bestEv.ev = Math.round(ev * 1000) / 10;
+        bestEv.ev_pct = bestEv.ev;
+      }
+    }
+    // h2h : si absent, on le laisse tel quel (Scope gère le cas null)
+    return Object.assign({}, m, {
+      player1: Object.assign({}, p1, { eloTrend: trend(p1) }),
+      player2: Object.assign({}, p2, { eloTrend: trend(p2) }),
+      best_ev_model: bestEv,
+      // Assure les champs utilisés par Scope
+      bestOf: m.bestOf || m.best_of || 3,
+      city: m.city || m.location || '',
+      commence_time: m.commence_time || m.start_time
+    });
+  }
+
+  // ── Fetch des données ─────────────────────────────────────────────────
+  // On réutilise les endpoints existants de Pariscore:
+  //  - /api/v1/tennis/value-bets (retourne {count, matches[], meta}) — source principale
+  //  - /api/v1/tennis/top10?mode=viewer — top matchs
+  //  - /api/v1/tennis/live — live-only (fallback)
+  function fetchData() {
+    if (_state.loading) return Promise.resolve(_state.matches);
+    _state.loading = true;
+    _state.error = null;
+    publishStatus('Rafraîchissement…');
+    return fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (data) {
+        var raw = (data && data.matches) || [];
+        _state.matches = raw.map(mapMatch).filter(Boolean);
+        _state.lastFetch = Date.now();
+        _state.loading = false;
+        publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs');
+        // Met à jour la KPI bar existante de Pariscore (compat backwards)
+        updateKpiBar(_state.matches);
+        // Re-render l'onglet actif
+        renderActiveTab();
+        return _state.matches;
+      })
+      .catch(function (err) {
+        _state.loading = false;
+        _state.error = err && err.message || String(err);
+        publishStatus('Erreur : ' + _state.error, true);
+        return [];
+      });
+  }
+
+  function publishStatus(msg, isError) {
+    var el = document.getElementById('sc-status');
+    if (el) {
+      el.textContent = msg;
+      el.style.color = isError ? 'var(--red,#ef4444)' : 'var(--text3,#64748b)';
+    }
+    // Aussi dans le tennis-vb-status existant si présent (compat)
+    var legacy = document.getElementById('tennis-vb-status');
+    if (legacy) legacy.textContent = msg;
+  }
+
+  function updateKpiBar(matches) {
+    var live = matches.filter(function (m) { return !!m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); });
+    var withBets = matches.filter(function (m) { return m.odds_player1 && m.odds_player2; });
+    var tournaments = {};
+    matches.forEach(function (m) { if (m.tournament) tournaments[m.tournament] = 1; });
+    var setNum = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = String(v); };
+    setNum('tn2-kpi-live', live.length);
+    setNum('tn2-kpi-bets', withBets.length);
+    setNum('tn2-kpi-top', Math.min(10, matches.length));
+    setNum('tn2-kpi-tournaments', Object.keys(tournaments).length);
+  }
+
+  // ── Rendu ─────────────────────────────────────────────────────────────
+  function getPrematch() { return _state.matches.filter(function (m) { return !m._isLive && !/live|progress|playing|in.play/i.test(String(m.status || '')); }); }
+  function getLive() { return _state.matches.filter(function (m) { return m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); }); }
+
+  function renderActiveTab() {
+    if (!root.Scope) return;
+    var tab = _state.activeTab;
+    var pEl = document.getElementById('sc-panel-' + tab);
+    if (!pEl) return;
+    // Ne re-render que si la tab est active
+    var allPrematch = getPrematch();
+    var allLive = getLive();
+    if (tab === 'prematch') {
+      if (!allPrematch.length) {
+        pEl.innerHTML = emptyState(_state.loading ? 'Chargement des matchs…' : 'Aucun match à venir. Cliquez sur Rafraîchir.');
+      } else {
+        root.Scope.renderPrematchGrid(pEl, allPrematch);
+      }
+    } else if (tab === 'live') {
+      if (!allLive.length) {
+        pEl.innerHTML = emptyState('Aucun match en direct pour le moment.');
+      } else {
+        root.Scope.renderLiveGrid(pEl, allLive);
+      }
+    } else if (tab === 'valuebets') {
+      root.Scope.renderValueBets(pEl, _state.matches, { filter: 'all', sort: 'edge' });
+    } else if (tab === 'analytics') {
+      var matchId = _state.selectedMatchId || (allPrematch[0] && allPrematch[0].id) || (allLive[0] && allLive[0].id);
+      root.Scope.renderAnalytics(pEl, _state.matches, matchId);
+      // Sélecteur de match pour l'onglet Analytics
+      addMatchSelector(pEl, matchId);
+    }
+    setWatermark(tab);
+  }
+
+  function emptyState(msg) {
+    return '<div style="padding:48px;text-align:center;color:var(--text3,#64748b);font-family:var(--font-body,Source Sans 3,sans-serif);font-size:14px">' + (root.Scope ? root.Scope._esc ? root.Scope._esc(msg) : msg : msg) + '</div>';
+  }
+
+  function addMatchSelector(host, currentId) {
+    if (!host || !root.Scope) return;
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+    wrap.innerHTML = '<label style="font-size:12px;color:var(--text3,#64748b);text-transform:uppercase;letter-spacing:.05em">Analyser :</label>';
+    var sel = document.createElement('select');
+    sel.className = 'sc-sort';
+    sel.style.cssText = 'padding:6px 10px;background:var(--bg2,#182030);color:var(--text,#fff);border:1px solid var(--border2,rgba(255,255,255,.1));border-radius:6px;font-family:var(--font-mono,DM Mono,monospace);font-size:12px;max-width:380px';
+    _state.matches.forEach(function (m) {
+      var opt = document.createElement('option');
+      opt.value = m.id;
+      var label = (m.player1 && m.player1.name || '?') + ' vs ' + (m.player2 && m.player2.name || '?');
+      if (m._isLive) label = '🔴 ' + label;
+      opt.textContent = label + ' · ' + (m.tournament || '');
+      if (m.id === currentId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function () {
+      _state.selectedMatchId = sel.value;
+      renderActiveTab();
+    });
+    wrap.appendChild(sel);
+    host.insertBefore(wrap, host.firstChild);
+  }
+
+  function setWatermark(tab) {
+    var el = document.getElementById('sc-wm');
+    if (!el) return;
+    var icons = { prematch: '📅', live: '📡', valuebets: '⚡', analytics: '📊' };
+    el.textContent = icons[tab] || '';
+  }
+
+  // ── Switch d'onglet ───────────────────────────────────────────────────
+  function switchTab(tab) {
+    _state.activeTab = tab;
+    // masquer tous les panels
+    document.querySelectorAll('.sc-panel').forEach(function (p) { p.classList.remove('active'); });
+    var panel = document.getElementById('sc-panel-' + tab);
+    if (panel) panel.classList.add('active');
+    // boutons
+    document.querySelectorAll('#sc-nav button').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderActiveTab();
+  }
+
+  // ── Auto-refresh (60s) ────────────────────────────────────────────────
+  var _timer = null;
+  function startAutoRefresh() {
+    if (_timer) clearInterval(_timer);
+    _timer = setInterval(function () {
+      // Ne rafraîchir que si l'onglet tennis est visible
+      var tennisVisible = document.querySelector('.tn2-main') && document.querySelector('.tn2-main').offsetParent !== null;
+      if (tennisVisible) fetchData();
+    }, 60000);
+  }
+
+  // ── API publique ──────────────────────────────────────────────────────
+  root.TennisScope = {
+    init: function () {
+      // Premier fetch
+      fetchData().then(function () {
+        // Si aucun match, on tente le top10 comme fallback
+        if (!_state.matches.length) {
+          fetch('/api/v1/tennis/top10?mode=viewer', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (data && Array.isArray(data.top10) && data.top10.length) {
+                // Les objets top10 sont plus légers ; on ne les utilise que si on a vraiment 0 match
+                // (ils n'ont pas toutes les fields pour Scope)
+                if (!_state.matches.length) {
+                  _state.matches = data.top10.map(function (t) {
+                    return {
+                      id: t.matchId,
+                      player1: { name: t.player1, rank: t.rank_p1, elo_surface: t.elo_p1 },
+                      player2: { name: t.player2, rank: t.rank_p2, elo_surface: t.elo_p2 },
+                      tournament: t.tournament, tour: t.tour, surface: t.surface, round: t.round,
+                      start_time: t.start_time, status: t.status, _isLive: t.is_live
+                    };
+                  }).map(mapMatch);
+                  renderActiveTab();
+                }
+              }
+            }).catch(function () {});
+        }
+      });
+      startAutoRefresh();
+    },
+    refresh: fetchData,
+    switchTab: switchTab,
+    getState: function () { return Object.assign({}, _state); }
+  };
+
+  // ── Wire-up au chargement ─────────────────────────────────────────────
+  function wireUp() {
+    var navBtns = document.querySelectorAll('#sc-nav button');
+    navBtns.forEach(function (b) {
+      b.addEventListener('click', function () { switchTab(b.dataset.tab); });
+    });
+    // Refresh button
+    var refreshBtn = document.getElementById('sc-refresh-btn');
+    if (refreshBtn) refreshBtn.addEventListener('click', fetchData);
+    // Init auto si l'élément racine existe
+    if (document.getElementById('sc-panel-prematch')) {
+      root.TennisScope.init();
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireUp);
+  } else {
+    wireUp();
+  }
+
+  // ── Compat : exposer le rendu pour l'intégration avec renderTennisValueBets existant ──
+  // Quand l'ancien code Pariscore appelle renderTennisValueBets(matches), on intercepte
+  // pour rafraîchir notre vue Value Bets si l'onglet actif est valuebets.
+  if (typeof window.renderTennisValueBets === 'function') {
+    var _orig = window.renderTennisValueBets;
+    window.renderTennisValueBets = function (raw) {
+      try {
+        var arr = (raw && raw.matches) ? raw.matches : (Array.isArray(raw) ? raw : []);
+        if (arr.length) {
+          _state.matches = arr.map(mapMatch).filter(Boolean);
+          _state.lastFetch = Date.now();
+          updateKpiBar(_state.matches);
+          if (_state.activeTab === 'valuebets' || _state.activeTab === 'prematch' || _state.activeTab === 'live') {
+            renderActiveTab();
+          }
+        }
+      } catch (e) { /* silent fallback */ }
+      return _orig.apply(this, arguments);
+    };
+  }
+
+  // Aussi intercepter tickTennisLive (appelé par le bouton refresh existant)
+  if (typeof window.tickTennisLive === 'function') {
+    var _origTick = window.tickTennisLive;
+    window.tickTennisLive = function () {
+      var p = _origTick.apply(this, arguments);
+      // En parallèle, on rafraîchit aussi nos données analytiques
+      fetchData();
+      return p;
+    };
+  }
+})(typeof window !== 'undefined' ? window : this);
+
 </script>
 </body>
 </html>
