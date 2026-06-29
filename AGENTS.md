@@ -191,7 +191,7 @@ bd close <id>         # Complete work
 
 ## MCP Servers — Capacités Disponibles
 
-Ce projet utilise **6 serveurs MCP** configurés dans `.mcp.json`. Les clients MCP (opencode, Claude Code, Cline) les chargent automatiquement au démarrage.
+Ce projet utilise **7 serveurs MCP** configurés dans `.mcp.json`. Les clients MCP (opencode, Claude Code, Cline) les chargent automatiquement au démarrage.
 
 ### Serveurs Installés
 
@@ -203,6 +203,7 @@ Ce projet utilise **6 serveurs MCP** configurés dans `.mcp.json`. Les clients M
 | `bzzoiro-sports` | HTTP MCP (externe) | Données sportives via API |
 | `sportdbdotdev` | HTTP MCP (externe) | SportDB |
 | `sportradar` | MCP Remote via RapidAPI | Sportradar |
+| `playwright` | `npx @playwright/mcp` (Microsoft) | **Automatisation navigateur** — E2E visuel, screenshots, scraping fallback, extraction DOM |
 
 ### 🧠 Memory Server — Guide d'Utilisation
 
