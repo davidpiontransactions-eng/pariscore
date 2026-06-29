@@ -1,0 +1,59 @@
+{
+  "mcpServers": {
+    "bzzoiro-sports": {
+      "type": "http",
+      "url": "https://sports.bzzoiro.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${BSD_API_KEY}"
+      }
+    },
+    "sportdbdotdev": {
+      "type": "http",
+      "url": "https://api.sportdb.dev/mcp/",
+      "headers": {
+        "X-API-Key": "${SPORTDB_API_KEY}"
+      }
+    },
+    "sportradar": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.rapidapi.com",
+        "--header",
+        "x-api-host: sport-radar-api.p.rapidapi.com",
+        "--header",
+        "x-api-key: ${RAPIDAPI_KEY}"
+      ]
+    },
+    "project_fs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/david/Documents/dev PariScore/ParisScorebis"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "C:/Users/david/Documents/dev PariScore/ParisScorebis"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    }
+  }
+}
