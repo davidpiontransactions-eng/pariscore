@@ -16167,6 +16167,8 @@ function psSetLang(v) {
       .catch(function() { window._tennisPhotoMap = {}; return window._tennisPhotoMap; });
   };
 
+  // @deprecated — TennisScope.switchTab() remplace. Les éléments .tn2-tab-panel n'existent plus dans le HTML.
+  // Conservé comme no-op sécurisé pour les callers existants (voir D9 dans rapport audit).
   window.tn2SwitchTab = function(tabId) {
     var panels = document.querySelectorAll('.tn2-tab-panel');
     for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
@@ -16710,7 +16712,7 @@ function psSetLang(v) {
       }
     }
     document.addEventListener('DOMContentLoaded', function() {
-      if (window.tn2SwitchTab) tn2SwitchTab('live');
+      // tn2SwitchTab('live') supprimé : TennisScope.init() gère l'onglet par défaut (prematch)
       _tn2Patch();
       if (typeof window.tn2SetupH2H === 'function') tn2SetupH2H();
       if (typeof window._loadTennisPhotoMap === 'function') window._loadTennisPhotoMap();
@@ -24718,21 +24720,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
 <script src="/tennis-live.js"></script>
 <script>
-// Init Tennis Live when tennis page is shown
-function initTennisLive() {
-  if (document.getElementById('tennis-live-section')) {
-    TennisLive.init('tennis-live-section');
-  }
-}
-document.addEventListener('DOMContentLoaded', initTennisLive);
-// Also init on tab switch
-var _origTn2SwitchTab = (typeof tn2SwitchTab === 'function') ? tn2SwitchTab : null;
-if (_origTn2SwitchTab) {
-  tn2SwitchTab = function(tab) {
-    _origTn2SwitchTab(tab);
-    if (tab === 'paris') setTimeout(initTennisLive, 100);
-  };
-}
+// @deprecated — TennisScope remplace TennisLive.init(). Container tennis-live-section supprimé.
+// Conservé tennis-live.js pour les fonctions utilitaires éventuelles, mais plus d'init auto.
+// function initTennisLive() { … } — supprimé : ciblait un DOM inexistant.
+// Le wrapper tn2SwitchTab a été supprimé car TennisScope.switchTab() gère les onglets.
 </script>
 
 <script>
