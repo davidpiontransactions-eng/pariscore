@@ -863,11 +863,9 @@ function showPage(pageId, linkEl) {
       if (_s) { _s.style.display = 'none'; _s.dataset.confirming = ''; }
     }
   } catch (e) {}
-  // Stop tennis poll quand on quitte l'onglet
-  try { if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive(); } catch(e) {}
-  try { if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets(); } catch(e) {}
-  try { if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10(); } catch(e) {}
-  try { if (pageId !== 'tennis' && typeof stopTexCalendarAutoRefresh === 'function') stopTexCalendarAutoRefresh(); } catch(e) {}
+  // Stop tennis poll quand on quitte l'onglet — TennisScope lifecycle
+  try { if (pageId !== 'tennis' && window.TennisScope && typeof window.TennisScope.stopAutoRefresh === 'function') window.TennisScope.stopAutoRefresh(); } catch(e) {}
+  // Legacy cleanup (supprimé : stopTennisLive/stopTennisValueBets/stopTennisTop10 ciblent du DOM inexistant)
   if (_prevPageId) {
     var _prevPage = document.getElementById('page-' + _prevPageId);
     if (_prevPage) _prevPage._scrollY = window.scrollY;
@@ -928,7 +926,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
   if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
   if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
-  if (pageId === 'tennis')   { try { tn2SwitchTab('matchs'); } catch(e){}; try { startTennisLive(); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { startTexCalendarAutoRefresh(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
+  if (pageId === 'tennis')   { try { if (window.TennisScope) { window.TennisScope.refresh(); window.TennisScope.startAutoRefresh(); } } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
   try { if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page(); } catch(e) {}
   if (pageId === 'cs2') try { initCs2Page(); } catch(e) {}
   try { if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage(); } catch(e) {}
@@ -10554,9 +10552,12 @@ function _psSbPickFoot(key) {
   });
 }
 function _psSbPickTennis(name) {
+  // Toggle CSS actif sur le bouton sidebar
   document.querySelectorAll('#ps-tennis-sidebar .sidebar-league-item, #ps-tennis-sidebar-all-list .sidebar-league-item').forEach(function(btn) {
     btn.classList.toggle('is-active', (btn.dataset.sbTournoi || '') === name);
   });
+  // Délègue le filtre au TennisScope pour re-rendre les matchs
+  try { if (window.TennisScope && typeof window.TennisScope.filterTournament === 'function') window.TennisScope.filterTournament(name); } catch(e) {}
 }
 // ── Comptage matchs par ligue (sport = odds_key) — day-aware ────────
 function _leagueMatchCounts() {
