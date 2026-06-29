@@ -24718,7 +24718,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 })();
 </script>
 
-<script src="/tennis-live.js"></script>
+<!-- tennis-live.js : chargé conditionnellement uniquement si le conteneur legacy existe -->
+<!-- @deprecated : TennisScope remplace. Supprimer ce script quand le module TennisLive est retiré. -->
 <script>
 // @deprecated — TennisScope remplace TennisLive.init(). Container tennis-live-section supprimé.
 // Conservé tennis-live.js pour les fonctions utilitaires éventuelles, mais plus d'init auto.
@@ -25395,8 +25396,15 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     _state.loading = true;
     _state.error = null;
     publishStatus('Rafraîchissement…');
-    return fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    // Timeout client 25s — évite de bloquer indéfiniment si le serveur est lent (cold build ~20s)
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timeout = setTimeout(function () { if (controller) controller.abort(); }, 25000);
+    return fetch('/api/v1/tennis/value-bets', {
+      headers: { 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      signal: controller ? controller.signal : undefined
+    })
+      .then(function (r) { clearTimeout(timeout); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (data) {
         var raw = (data && data.matches) || [];
         _state.matches = raw.map(mapMatch).filter(Boolean);
@@ -25410,6 +25418,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         return _state.matches;
       })
       .catch(function (err) {
+        clearTimeout(timeout);
+        if (err && err.name === 'AbortError') err = new Error('Timeout 25s');
         _state.loading = false;
         _state.error = err && err.message || String(err);
         publishStatus('Erreur : ' + _state.error, true);
@@ -25456,12 +25466,13 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
 
   // ── Rendu ─────────────────────────────────────────────────────────────
   // Filtre par tournoi (sidebar) — 'ALL' = pas de filtre
+  // Match par token (mot complet) pour éviter les faux positifs sur sous-chaînes courtes
   function filterByTournament(arr) {
     if (!_state.activeTournament || _state.activeTournament === 'ALL') return arr;
-    var t = _state.activeTournament.toLowerCase();
+    var t = _state.activeTournament.toLowerCase().trim();
     return arr.filter(function (m) {
       var tour = (m.tournament || m.tour || '').toLowerCase();
-      return tour.indexOf(t) !== -1 || t.indexOf(tour) !== -1;
+      return tour === t || tour.indexOf(t + ' ') === 0 || tour.indexOf(' ' + t) !== -1 || tour.indexOf('(' + t) !== -1;
     });
   }
   function getPrematch() { return filterByTournament(_state.matches.filter(function (m) { return !m._isLive && !/live|progress|playing|in.play/i.test(String(m.status || '')); })); }
@@ -25505,7 +25516,11 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
 
   function addMatchSelector(host, currentId) {
     if (!host || !root.Scope) return;
+    // Supprimer le sélecteur existant avant d'en insérer un nouveau (évite les leaks DOM)
+    var existing = host.querySelector('.sc-match-selector');
+    if (existing) existing.remove();
     var wrap = document.createElement('div');
+    wrap.className = 'sc-match-selector';
     wrap.style.cssText = 'margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
     wrap.innerHTML = '<label style="font-size:12px;color:var(--text3,#64748b);text-transform:uppercase;letter-spacing:.05em">Analyser :</label>';
     var sel = document.createElement('select');
@@ -25589,7 +25604,10 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
             }).catch(function () {});
         }
       });
-      // Auto-refresh démarré dans init() si la page tennis est visible
+      // Auto-refresh : démarré ici si la page tennis est déjà visible au chargement
+      // (showPage gère le start/stop quand l'utilisateur navigue entre onglets)
+      var _initPage = document.getElementById('page-tennis');
+      if (_initPage && _initPage.style.display !== 'none') startAutoRefresh();
     },
     refresh: fetchData,
     switchTab: switchTab,
