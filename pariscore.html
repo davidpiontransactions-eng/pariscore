@@ -25554,7 +25554,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     loading: false,
     error: null,
     selectedMatchId: null,
-    activeTab: 'prematch' // prematch|live|valuebets|analytics
+    activeTab: 'prematch', // prematch|live|valuebets|analytics
+    activeTournament: 'ALL' // filtre tournoi sidebar ('ALL' = pas de filtre)
   };
 
   // ── Mapping Pariscore → Scope shape ────────────────────────────────────
@@ -25659,8 +25660,17 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   }
 
   // ── Rendu ─────────────────────────────────────────────────────────────
-  function getPrematch() { return _state.matches.filter(function (m) { return !m._isLive && !/live|progress|playing|in.play/i.test(String(m.status || '')); }); }
-  function getLive() { return _state.matches.filter(function (m) { return m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); }); }
+  // Filtre par tournoi (sidebar) — 'ALL' = pas de filtre
+  function filterByTournament(arr) {
+    if (!_state.activeTournament || _state.activeTournament === 'ALL') return arr;
+    var t = _state.activeTournament.toLowerCase();
+    return arr.filter(function (m) {
+      var tour = (m.tournament || m.tour || '').toLowerCase();
+      return tour.indexOf(t) !== -1 || t.indexOf(tour) !== -1;
+    });
+  }
+  function getPrematch() { return filterByTournament(_state.matches.filter(function (m) { return !m._isLive && !/live|progress|playing|in.play/i.test(String(m.status || '')); })); }
+  function getLive() { return filterByTournament(_state.matches.filter(function (m) { return m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); })); }
 
   function renderActiveTab() {
     if (!root.Scope) return;
@@ -25683,10 +25693,11 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         root.Scope.renderLiveGrid(pEl, allLive);
       }
     } else if (tab === 'valuebets') {
-      root.Scope.renderValueBets(pEl, _state.matches, { filter: 'all', sort: 'edge' });
+      root.Scope.renderValueBets(pEl, filterByTournament(_state.matches), { filter: 'all', sort: 'edge' });
     } else if (tab === 'analytics') {
+      var filtered = filterByTournament(_state.matches);
       var matchId = _state.selectedMatchId || (allPrematch[0] && allPrematch[0].id) || (allLive[0] && allLive[0].id);
-      root.Scope.renderAnalytics(pEl, _state.matches, matchId);
+      root.Scope.renderAnalytics(pEl, filtered, matchId);
       // Sélecteur de match pour l'onglet Analytics
       addMatchSelector(pEl, matchId);
     }
@@ -25748,9 +25759,9 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   function startAutoRefresh() {
     if (_timer) clearInterval(_timer);
     _timer = setInterval(function () {
-      // Ne rafraîchir que si l'onglet tennis est visible
-      var tennisVisible = document.querySelector('.tn2-main') && document.querySelector('.tn2-main').offsetParent !== null;
-      if (tennisVisible) fetchData();
+      // Ne rafraîchir que si la page tennis est visible (display !== none)
+      var page = document.getElementById('page-tennis');
+      if (page && page.style.display !== 'none') fetchData();
     }, 60000);
   }
 
@@ -25783,10 +25794,21 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
             }).catch(function () {});
         }
       });
-      startAutoRefresh();
+      // Auto-refresh démarré dans init() si la page tennis est visible
     },
     refresh: fetchData,
     switchTab: switchTab,
+    /** Filtre les matchs par tournoi et re-rend l'onglet actif */
+    filterTournament: function (name) {
+      _state.activeTournament = name || 'ALL';
+      renderActiveTab();
+    },
+    /** Démarre l'auto-refresh (appelé quand on entre sur la page tennis) */
+    startAutoRefresh: startAutoRefresh,
+    /** Stoppe l'auto-refresh (appelé quand on quitte la page tennis) */
+    stopAutoRefresh: function () {
+      if (_timer) { clearInterval(_timer); _timer = null; }
+    },
     getState: function () { return Object.assign({}, _state); }
   };
 
@@ -25831,16 +25853,9 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     };
   }
 
-  // Aussi intercepter tickTennisLive (appelé par le bouton refresh existant)
-  if (typeof window.tickTennisLive === 'function') {
-    var _origTick = window.tickTennisLive;
-    window.tickTennisLive = function () {
-      var p = _origTick.apply(this, arguments);
-      // En parallèle, on rafraîchit aussi nos données analytiques
-      fetchData();
-      return p;
-    };
-  }
+  // NOTE : L'interceptor tickTennisLive a été supprimé car le système legacy
+  // (startTennisLive/renderTennisLive) ciblait du DOM inexistant (tennis-live-tbody).
+  // TennisScope.refresh() remplace désormais toutes les fonctions de refresh tennis.
 })(typeof window !== 'undefined' ? window : this);
 
 </script>
