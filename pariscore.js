@@ -2215,6 +2215,8 @@ function _tnRenderServiceCircles(s, p1, p2) {
   return items.length ? `<div class="tn-stats-circs">${items.join('')}</div>` : '';
 }
 
+// @deprecated — TennisScope remplace ce rendu legacy. Éléments DOM (tennis-live-tbody) supprimés.
+// Conservé comme stub pour les callers existants (patchTennisLive, refresh général).
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
@@ -2346,14 +2348,12 @@ async function tickTennisLive() {
   }
 }
 
-function startTennisLive() {
-  tickTennisLive();
-  if (_tennisTimer) clearInterval(_tennisTimer);
-  _tennisTimer = setInterval(tickTennisLive, 30 * 1000);
-}
+// @deprecated — TennisScope.refresh() + startAutoRefresh() remplacent ce poll legacy.
+// Stub : ne lance plus le polling 30s qui ciblait du DOM inexistant.
+function startTennisLive() { /* no-op — TennisScope gère le refresh */ }
 
 function stopTennisLive() {
-  if (_tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
+  if (typeof _tennisTimer !== 'undefined' && _tennisTimer) { clearInterval(_tennisTimer); _tennisTimer = null; }
 }
 
 // ─── TENNIS VALUE BETS (T6) — Elo surface-split + Odds devig + EV model ─────
@@ -4028,6 +4028,8 @@ function _tnCountStrategy(key, matches) {
   return n;
 }
 
+// @deprecated — TennisScope.renderActiveTab() via Scope.renderValueBets() remplace ce rendu legacy.
+// Conservé : le TennisScope bridge intercepte cet appel pour mettre à jour _state.matches.
 function renderTennisValueBets(rawMatches) {
   const tbody = document.getElementById('tennis-vb-tbody');
   if (!tbody) return;
@@ -4378,6 +4380,7 @@ async function analyzeTennisMatch(matchId) {
   }
 }
 
+// @deprecated — TennisScope.fetchData() remplace. Conservé comme fallback pour callers existants.
 async function tickTennisValueBets() {
   const statusEl = document.getElementById('tennis-vb-status');
   try {
@@ -4451,14 +4454,12 @@ async function tickTennisValueBets() {
   }
 }
 
-function startTennisValueBets() {
-  tickTennisValueBets();
-  if (_tennisVbTimer) clearInterval(_tennisVbTimer);
-  _tennisVbTimer = setInterval(tickTennisValueBets, 5 * 60 * 1000);
-}
+// @deprecated — TennisScope.refresh() + startAutoRefresh() gèrent le fetch value-bets.
+// Stub : ne lance plus le polling 5min legacy.
+function startTennisValueBets() { /* no-op — TennisScope gère le refresh */ }
 
 function stopTennisValueBets() {
-  if (_tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
+  if (typeof _tennisVbTimer !== 'undefined' && _tennisVbTimer) { clearInterval(_tennisVbTimer); _tennisVbTimer = null; }
 }
 
 // ─── Top 10 Matchs du Jour — Tennis ──────────────────────────────────────
