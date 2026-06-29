@@ -1,0 +1,59 @@
+:root {
+  /* ── FONDS & SURFACES (60%) ── */
+  --color-bg-primary:     #0b0e17;
+  --color-bg-secondary:   #0e121e;
+  --color-card:           #131722;
+  --color-card-hover:     #161c2a;
+  --color-odds-box:       #0b0e17;
+
+  /* ── TEXTES & FRONTIÈRES (30%) ── */
+  --color-text-primary:   #ffffff;
+  --color-text-secondary: #94a3b8;
+  --color-text-tertiary:  #707e94;
+  --color-border:         rgba(255,255,255,0.05);
+  --color-border-medium:  rgba(255,255,255,0.08);
+
+  /* ── ACCENTS & SIGNAUX (10%) ── */
+  --color-accent-green:   #00e676;
+  --color-accent-blue:    #0077ff;
+  --color-live:           #ff6d2e;
+  --color-danger:         #ff1744;
+
+  /* ── BADGES CATÉGORIE (Tennis) ── */
+  --color-cat-service:    #38bdf8;
+  --color-cat-return:     #10b981;
+  --color-cat-mental:     #ff6d2e;
+  --color-cat-global:     #94a3b8;
+
+  /* ── BADGES MMA ── */
+  --color-mma-striking:   #ef4444;
+  --color-mma-grappling:  #8b5cf6;
+  --color-mma-ko:         #ef4444;
+  --color-mma-sub:        #8b5cf6;
+  --color-mma-dec:        #38bdf8;
+
+  /* ── GLOWS ── */
+  --glow-blue:  0 4px 12px rgba(0,119,255,0.3);
+  --glow-green: 0 4px 12px rgba(0,230,118,0.3);
+
+  /* ── TYPOGRAPHIE ── */
+  --font-display: 'Poppins', sans-serif;
+  --font-body:    'Inter', sans-serif;
+
+  /* ── ESPACEMENT ── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+
+  /* ── COINS ── */
+  --radius-card:  8px;
+  --radius-btn:   6px;
+  --radius-badge: 4px;
+  --padding-card: 20px;
+
+  /* ── SHADOWS ── */
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+}

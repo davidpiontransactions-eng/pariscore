@@ -1,0 +1,1 @@
+"""Schémas de données Pariscore."""
