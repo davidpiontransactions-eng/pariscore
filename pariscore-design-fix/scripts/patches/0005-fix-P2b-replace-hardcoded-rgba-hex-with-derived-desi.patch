@@ -1,0 +1,144 @@
+From 0984f435ac0e2798b90ea0a3e0d0f272b3149927 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:53:30 +0000
+Subject: [PATCH 05/18] fix(P2b): replace hardcoded rgba/hex with derived
+ design tokens
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- Dashboard.tsx: 2 chart tooltips #131722 → var(--color-card), border rgba → var(--color-border-medium)
+- Dashboard.tsx: backtest button color '#fff' → var(--color-text-primary)
+- PreMatch.tsx: active tab text '#000' → var(--color-on-accent)
+- PreMatch.tsx: skeleton gradient #1e293b/#334155 → var(--color-bg-secondary)/var(--color-card-hover)
+- PreMatch.tsx: error banner bg rgba(255,23,68,0.1) → var(--color-danger-bg-soft), border → var(--color-danger)
+- MMAPreMatch.tsx: warning bg rgba(148,163,184,0.08) → var(--color-border-medium)
+- MMAPreMatch.tsx: divider line rgba(255,255,255,0.15) → var(--color-divider)
+- H2HPage.tsx: progress bar bg rgba(255,255,255,0.08) → var(--color-border-medium)
+- PlayerProfileModal.tsx: overlay rgba(0,0,0,0.7) → var(--color-overlay)
+
+Note: PreMatch.tsx inline code blocks (rgba(0,0,0,0.3)) kept as-is per audit fallback guidance.
+Note: MatchesTab.tsx live/error border glows (rgba 0.3) kept as-is for visual effect.
+---
+ frontend/src/components/PlayerProfileModal.tsx | 2 +-
+ frontend/src/pages/Dashboard.tsx               | 6 +++---
+ frontend/src/pages/H2HPage.tsx                 | 2 +-
+ frontend/src/pages/MMAPreMatch.tsx             | 4 ++--
+ frontend/src/pages/PreMatch.tsx                | 8 ++++----
+ 5 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/frontend/src/components/PlayerProfileModal.tsx b/frontend/src/components/PlayerProfileModal.tsx
+index 3a9f3c4..00025f2 100644
+--- a/frontend/src/components/PlayerProfileModal.tsx
++++ b/frontend/src/components/PlayerProfileModal.tsx
+@@ -52,7 +52,7 @@ export default function PlayerProfileModal({ player, onClose }: Props) {
+         position: 'fixed',
+         inset: 0,
+         zIndex: 9999,
+-        background: 'rgba(0,0,0,0.7)',
++        background: 'var(--color-overlay)',
+         display: 'flex',
+         alignItems: 'center',
+         justifyContent: 'center',
+diff --git a/frontend/src/pages/Dashboard.tsx b/frontend/src/pages/Dashboard.tsx
+index c9c7581..1c6ab0f 100644
+--- a/frontend/src/pages/Dashboard.tsx
++++ b/frontend/src/pages/Dashboard.tsx
+@@ -173,7 +173,7 @@ export default function Dashboard() {
+             <XAxis type="number" tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }} />
+             <YAxis type="category" dataKey="name" tick={{ fill: 'var(--color-text-secondary)', fontSize: 11 }} width={110} />
+             <Tooltip
+-              contentStyle={{ background: '#131722', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, fontSize: 12 }}
++              contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border-medium)', borderRadius: 6, fontSize: 12 }}
+               formatter={(value) => [Number(value).toFixed(1) + '%', 'Importance (%)']}
+             />
+             <Bar dataKey="importance" fill="var(--color-accent-blue)" radius={[0, 3, 3, 0]} />
+@@ -232,7 +232,7 @@ export default function Dashboard() {
+           onClick={runBacktest}
+           disabled={loading}
+           style={{
+-            background: 'var(--color-accent-blue)', color: '#fff',
++            background: 'var(--color-accent-blue)', color: 'var(--color-text-primary)',
+             border: 'none', borderRadius: 'var(--radius-btn)',
+             padding: '8px 20px', fontFamily: 'var(--font-display)',
+             fontWeight: 600, fontSize: 13, cursor: 'pointer',
+@@ -283,7 +283,7 @@ export default function Dashboard() {
+                 <YAxis tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }}
+                   tickFormatter={(v: number) => (v / 1000).toFixed(0) + 'k'} />
+                 <Tooltip
+-                  contentStyle={{ background: '#131722', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, fontSize: 12 }}
++                  contentStyle={{ background: 'var(--color-card)', border: '1px solid var(--color-border-medium)', borderRadius: 6, fontSize: 12 }}
+                   formatter={(value) => [formatCurrency(Number(value)), 'Bankroll']}
+                 />
+                 <Line type="monotone" dataKey="bankroll" stroke="var(--color-accent-green)"
+diff --git a/frontend/src/pages/H2HPage.tsx b/frontend/src/pages/H2HPage.tsx
+index 7d1103a..f2f4dec 100644
+--- a/frontend/src/pages/H2HPage.tsx
++++ b/frontend/src/pages/H2HPage.tsx
+@@ -95,7 +95,7 @@ function Bar({ a, b, label, color }: { a: number; b: number; label: string; colo
+       </div>
+       <div style={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', background: 'var(--color-bg-secondary)' }}>
+         <div style={{ width: `${(a / total) * 100}%`, background: color, transition: 'width 0.3s' }} />
+-        <div style={{ width: `${(b / total) * 100}%`, background: 'rgba(255,255,255,0.08)', transition: 'width 0.3s' }} />
++        <div style={{ width: `${(b / total) * 100}%`, background: 'var(--color-border-medium)', transition: 'width 0.3s' }} />
+       </div>
+     </div>
+   );
+diff --git a/frontend/src/pages/MMAPreMatch.tsx b/frontend/src/pages/MMAPreMatch.tsx
+index 510400c..08abcd2 100644
+--- a/frontend/src/pages/MMAPreMatch.tsx
++++ b/frontend/src/pages/MMAPreMatch.tsx
+@@ -194,7 +194,7 @@ export default function MMAPreMatch() {
+     <div>
+       {apiStatus === 'offline' && (
+         <div style={{
+-          background: 'rgba(148,163,184,0.08)',
++          background: 'var(--color-border-medium)',
+           border: '1px solid var(--color-border-medium)',
+           borderRadius: 'var(--radius-card)',
+           padding: 'var(--space-sm) var(--space-md)',
+@@ -297,7 +297,7 @@ export default function MMAPreMatch() {
+                   }} />
+                   <div style={{
+                     position: 'absolute', left: '50%', top: 0, bottom: 0,
+-                    width: 1, background: 'rgba(255,255,255,0.15)',
++                    width: 1, background: 'var(--color-divider)',
+                   }} />
+                 </div>
+ 
+diff --git a/frontend/src/pages/PreMatch.tsx b/frontend/src/pages/PreMatch.tsx
+index e2cfad9..9dfd790 100644
+--- a/frontend/src/pages/PreMatch.tsx
++++ b/frontend/src/pages/PreMatch.tsx
+@@ -122,7 +122,7 @@ export default function PreMatch() {
+     borderRadius: 'var(--radius-btn)',
+     border: 'none',
+     background: active ? 'var(--color-accent-green)' : 'var(--color-bg-secondary)',
+-    color: active ? '#000' : 'var(--color-text-secondary)',
++    color: active ? 'var(--color-on-accent)' : 'var(--color-text-secondary)',
+     fontFamily: 'var(--font-display)',
+     fontWeight: 600,
+     fontSize: 13,
+@@ -136,7 +136,7 @@ export default function PreMatch() {
+     <div>
+       <style>{`
+ .skeleton-pulse {
+-  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
++  background: linear-gradient(90deg, var(--color-bg-secondary) 25%, var(--color-card-hover) 50%, var(--color-bg-secondary) 75%);
+   background-size: 200% 100%;
+   animation: skeleton-shimmer 1.5s ease-in-out infinite;
+   border-radius: 4px;
+@@ -148,8 +148,8 @@ export default function PreMatch() {
+       `}</style>
+       {apiStatus === 'offline' && (
+         <div style={{
+-          background: 'rgba(255,23,68,0.1)',
+-          border: '1px solid rgba(255,23,68,0.3)',
++          background: 'var(--color-danger-bg-soft)',
++          border: '1px solid var(--color-danger)',
+           borderRadius: 'var(--radius-card)',
+           padding: 'var(--space-md)',
+           marginBottom: 'var(--space-lg)',
+-- 
+2.47.3
+

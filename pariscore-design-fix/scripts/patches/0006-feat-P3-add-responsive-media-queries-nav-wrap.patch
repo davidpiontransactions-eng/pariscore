@@ -1,0 +1,144 @@
+From d44a9dbe3cfe47e5cec575e2156ecca84ed61770 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:55:04 +0000
+Subject: [PATCH 06/18] feat(P3): add responsive media queries + nav wrap
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- index.css: 3 new media queries (1024 / 768 / 480)
+  - 1024: prematch-grid & mma-prematch-grid stack to 1fr, KPI/secondary grids → 2 cols
+  - 768: KPI/secondary/h2h grids → 1fr, app-nav switches to horizontal scroll
+  - 480: dashboard-kpi-grid → 1fr
+- App.tsx: nav element gets className='app-nav' + inline flexWrap: 'wrap' (desktop)
+- PreMatch.tsx:186: add className='prematch-grid'
+- MMAPreMatch.tsx:212: add className='mma-prematch-grid'
+- Dashboard.tsx:150: add className='dashboard-kpi-grid'
+- Dashboard.tsx:249: add className='dashboard-secondary-grid'
+- H2HPage.tsx:138: add className='h2h-grid'
+---
+ frontend/src/App.tsx               |  2 +-
+ frontend/src/index.css             | 32 ++++++++++++++++++++++++++++++
+ frontend/src/pages/Dashboard.tsx   |  4 ++--
+ frontend/src/pages/H2HPage.tsx     |  2 +-
+ frontend/src/pages/MMAPreMatch.tsx |  2 +-
+ frontend/src/pages/PreMatch.tsx    |  2 +-
+ 6 files changed, 38 insertions(+), 6 deletions(-)
+
+diff --git a/frontend/src/App.tsx b/frontend/src/App.tsx
+index 3d1dab7..f223879 100644
+--- a/frontend/src/App.tsx
++++ b/frontend/src/App.tsx
+@@ -36,7 +36,7 @@ function App() {
+                 Sports Predictions
+               </span>
+             </h1>
+-            <nav style={{ display: 'flex', gap: 'var(--space-md)' }}>
++            <nav className="app-nav" style={{ display: 'flex', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
+               <NavLink
+                 to="/"
+                 end
+diff --git a/frontend/src/index.css b/frontend/src/index.css
+index e74367c..f12ee1f 100644
+--- a/frontend/src/index.css
++++ b/frontend/src/index.css
+@@ -129,3 +129,35 @@ body {
+     font-size: 20px;
+   }
+ }
++
++/* ── RESPONSIVE — Mobile-first breakpoints (audit 2026) ── */
++@media (max-width: 1024px) {
++  .prematch-grid,
++  .mma-prematch-grid {
++    grid-template-columns: 1fr !important;
++  }
++  .dashboard-kpi-grid,
++  .dashboard-secondary-grid {
++    grid-template-columns: repeat(2, 1fr) !important;
++  }
++}
++
++@media (max-width: 768px) {
++  .dashboard-kpi-grid,
++  .dashboard-secondary-grid,
++  .h2h-grid {
++    grid-template-columns: 1fr !important;
++  }
++  .app-nav {
++    flex-wrap: nowrap !important;
++    overflow-x: auto !important;
++    -webkit-overflow-scrolling: touch;
++  }
++  .app-nav::-webkit-scrollbar { height: 4px; }
++}
++
++@media (max-width: 480px) {
++  .dashboard-kpi-grid {
++    grid-template-columns: 1fr !important;
++  }
++}
+diff --git a/frontend/src/pages/Dashboard.tsx b/frontend/src/pages/Dashboard.tsx
+index 1c6ab0f..7cbfd7b 100644
+--- a/frontend/src/pages/Dashboard.tsx
++++ b/frontend/src/pages/Dashboard.tsx
+@@ -147,7 +147,7 @@ export default function Dashboard() {
+         color: 'var(--color-text-secondary)', textTransform: 'uppercase',
+         letterSpacing: '0.5px', marginBottom: 'var(--space-md)',
+       }}>Model</h2>
+-      <div style={{
++      <div className="dashboard-kpi-grid" style={{
+         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-md)',
+         marginBottom: 'var(--space-xl)',
+       }}>
+@@ -246,7 +246,7 @@ export default function Dashboard() {
+       {/* Résultats */}
+       {result && (
+         <>
+-          <div style={{
++          <div className="dashboard-secondary-grid" style={{
+             display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+             gap: 'var(--space-md)', marginBottom: 'var(--space-xl)',
+           }}>
+diff --git a/frontend/src/pages/H2HPage.tsx b/frontend/src/pages/H2HPage.tsx
+index f2f4dec..6b3ef63 100644
+--- a/frontend/src/pages/H2HPage.tsx
++++ b/frontend/src/pages/H2HPage.tsx
+@@ -135,7 +135,7 @@ export default function H2HPage() {
+         </p>
+       </div>
+ 
+-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 'var(--space-md)', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
++      <div className="h2h-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 'var(--space-md)', alignItems: 'center', marginBottom: 'var(--space-xl)' }}>
+         <div>
+           <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.3px' }}>Player A</div>
+           <select value={playerA} onChange={(e) => setPlayerA(e.target.value)} style={selectStyle}>
+diff --git a/frontend/src/pages/MMAPreMatch.tsx b/frontend/src/pages/MMAPreMatch.tsx
+index 08abcd2..3e55e51 100644
+--- a/frontend/src/pages/MMAPreMatch.tsx
++++ b/frontend/src/pages/MMAPreMatch.tsx
+@@ -209,7 +209,7 @@ export default function MMAPreMatch() {
+         </div>
+       )}
+ 
+-      <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 'var(--space-lg)' }}>
++      <div className="mma-prematch-grid" style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 'var(--space-lg)' }}>
+         <div>
+           <h2 style={{
+             fontFamily: 'var(--font-display)', fontWeight: 700,
+diff --git a/frontend/src/pages/PreMatch.tsx b/frontend/src/pages/PreMatch.tsx
+index 9dfd790..4e47fe8 100644
+--- a/frontend/src/pages/PreMatch.tsx
++++ b/frontend/src/pages/PreMatch.tsx
+@@ -183,7 +183,7 @@ export default function PreMatch() {
+       </div>
+ 
+       {activeSubTab === 'pronostics' ? (
+-        <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 'var(--space-lg)' }}>
++        <div className="prematch-grid" style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 'var(--space-lg)' }}>
+           <div>
+             <h2 style={{
+               fontFamily: 'var(--font-display)',
+-- 
+2.47.3
+

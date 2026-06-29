@@ -1,0 +1,131 @@
+/* ========================================
+   Pariscore v3 — Global Styles
+   ======================================== */
+
+@import './styles/tokens.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  min-height: 100vh;
+}
+
+#root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+/* ── Layout ── */
+
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg) 0;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-xl);
+}
+
+.app-header h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.app-main {
+  flex: 1;
+  padding-bottom: var(--space-2xl);
+}
+
+/* ── Status Dot ── */
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online {
+  background: var(--color-accent-green);
+  box-shadow: 0 0 6px var(--color-accent-green);
+}
+
+.status-dot.offline {
+  background: var(--color-danger);
+}
+
+/* ── Utility ── */
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-sm { gap: var(--space-sm); }
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-tertiary {
+  color: var(--color-text-tertiary);
+}
+
+/* ── Scrollbar ── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-tertiary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-secondary);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 768px) {
+  #root {
+    padding: 0 var(--space-md);
+  }
+
+  .app-header h1 {
+    font-size: 20px;
+  }
+}

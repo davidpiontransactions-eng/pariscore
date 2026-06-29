@@ -1,0 +1,124 @@
+From 0c1a1d62374e825a3b7e6d0ff9e4104dc6a33f91 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:50:49 +0000
+Subject: [PATCH 04/18] fix(P2): replace 4 phantom palettes with design tokens
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- KeyFactors.tsx: CATEGORY_COLORS hex → cat-service/mental/global/return tokens
+- MatchesTab.tsx: SURFACE_COLORS hex → accent-green/live/accent-blue/text-tertiary tokens
+- MatchesTab.tsx: 2 fallbacks '#94a3b8' → 'var(--color-text-tertiary)'
+- StanceBadge.tsx: STANCE_COLORS hex → mma-dec/ko/sub tokens, fallback tokenized
+- StyleMatchupBadge.tsx: brawler/all_rounder hex → mma-brawler/mma-allrounder tokens
+---
+ frontend/src/components/KeyFactors.tsx            | 12 ++++++------
+ frontend/src/components/MatchesTab.tsx            | 12 ++++++------
+ frontend/src/components/mma/StanceBadge.tsx       |  8 ++++----
+ frontend/src/components/mma/StyleMatchupBadge.tsx |  4 ++--
+ 4 files changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/frontend/src/components/KeyFactors.tsx b/frontend/src/components/KeyFactors.tsx
+index 5c1cc20..5a9374d 100644
+--- a/frontend/src/components/KeyFactors.tsx
++++ b/frontend/src/components/KeyFactors.tsx
+@@ -5,12 +5,12 @@ interface Props {
+ }
+ 
+ const CATEGORY_COLORS: Record<string, string> = {
+-  'Service Edge': '#38bdf8',
+-  'Clutch Factor': '#ff6d2e',
+-  'H2H': '#94a3b8',
+-  'Forme récente': '#10b981',
+-  'Motivation': '#ff6d2e',
+-  'Fatigue': '#94a3b8',
++  'Service Edge': 'var(--color-cat-service)',
++  'Clutch Factor': 'var(--color-cat-mental)',
++  'H2H': 'var(--color-cat-global)',
++  'Forme récente': 'var(--color-cat-return)',
++  'Motivation': 'var(--color-cat-mental)',
++  'Fatigue': 'var(--color-cat-global)',
+ };
+ 
+ function formatVal(v: number | null | undefined): string {
+diff --git a/frontend/src/components/MatchesTab.tsx b/frontend/src/components/MatchesTab.tsx
+index 9895bd2..24cf130 100644
+--- a/frontend/src/components/MatchesTab.tsx
++++ b/frontend/src/components/MatchesTab.tsx
+@@ -11,10 +11,10 @@ interface Props {
+ const ROUND_ORDER = ['All', 'R128', 'R64', 'R32', 'R16', 'QF', 'SF', 'F'];
+ 
+ const SURFACE_COLORS: Record<string, string> = {
+-  Grass: '#00e676',
+-  Clay: '#ff6d2e',
+-  Hard: '#0077ff',
+-  Carpet: '#94a3b8',
++  Grass: 'var(--color-accent-green)',
++  Clay: 'var(--color-live)',
++  Hard: 'var(--color-accent-blue)',
++  Carpet: 'var(--color-text-tertiary)',
+ };
+ 
+ /* ── Styles ── */
+@@ -85,7 +85,7 @@ function TournamentBar({
+               width: 8,
+               height: 8,
+               borderRadius: '50%',
+-              background: SURFACE_COLORS[t.surface] ?? '#94a3b8',
++              background: SURFACE_COLORS[t.surface] ?? 'var(--color-text-tertiary)',
+               flexShrink: 0,
+             }} />
+             <div style={{ textAlign: 'left' }}>
+@@ -670,7 +670,7 @@ export default function MatchesTab({ onPlayerClick }: Props) {
+               width: 6,
+               height: 6,
+               borderRadius: '50%',
+-              background: SURFACE_COLORS[tournament.surface] ?? '#94a3b8',
++              background: SURFACE_COLORS[tournament.surface] ?? 'var(--color-text-tertiary)',
+               display: 'inline-block',
+             }} />
+             {tournament.surface}
+diff --git a/frontend/src/components/mma/StanceBadge.tsx b/frontend/src/components/mma/StanceBadge.tsx
+index 7ea7e42..0eafc6b 100644
+--- a/frontend/src/components/mma/StanceBadge.tsx
++++ b/frontend/src/components/mma/StanceBadge.tsx
+@@ -1,9 +1,9 @@
+ import type { Stance } from '../../types/ufc';
+ 
+ const STANCE_COLORS: Record<Stance, string> = {
+-  orthodox: '#38bdf8',
+-  southpaw: '#ef4444',
+-  switch:   '#8b5cf6',
++  orthodox: 'var(--color-mma-dec)',
++  southpaw: 'var(--color-mma-ko)',
++  switch:   'var(--color-mma-sub)',
+ };
+ 
+ const STANCE_LABELS: Record<Stance, string> = {
+@@ -18,7 +18,7 @@ interface Props {
+ }
+ 
+ export default function StanceBadge({ stance, size = 'sm' }: Props) {
+-  const color = STANCE_COLORS[stance] || '#94a3b8';
++  const color = STANCE_COLORS[stance] || 'var(--color-text-tertiary)';
+   const label = STANCE_LABELS[stance] || stance;
+   const fontSize = size === 'md' ? 12 : 11;
+ 
+diff --git a/frontend/src/components/mma/StyleMatchupBadge.tsx b/frontend/src/components/mma/StyleMatchupBadge.tsx
+index 31b6164..18bb7fa 100644
+--- a/frontend/src/components/mma/StyleMatchupBadge.tsx
++++ b/frontend/src/components/mma/StyleMatchupBadge.tsx
+@@ -3,8 +3,8 @@ import type { FighterStyle } from '../../types/ufc';
+ const STYLE_META: Record<FighterStyle, { label: string; color: string; icon: string }> = {
+   striker:    { label: 'Striker',    color: 'var(--color-mma-striking)',   icon: '👊' },
+   grappler:   { label: 'Grappler',   color: 'var(--color-mma-grappling)',  icon: '🤼' },
+-  brawler:    { label: 'Brawler',    color: '#ff6d2e',                     icon: '🔥' },
+-  all_rounder:{ label: 'All-Rounder',color: '#38bdf8',                     icon: '⭐' },
++  brawler:    { label: 'Brawler',    color: 'var(--color-mma-brawler)',    icon: '🔥' },
++  all_rounder:{ label: 'All-Rounder',color: 'var(--color-mma-allrounder)', icon: '⭐' },
+ };
+ 
+ interface Props {
+-- 
+2.47.3
+

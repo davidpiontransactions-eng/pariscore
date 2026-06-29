@@ -1,0 +1,598 @@
+From 593bc550e06912f41b5c78c0d8d12de15e77e18e Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 13:07:41 +0000
+Subject: [PATCH 15/18] fix(P2a): unifier l'indicateur LIVE sur #ff6d2e (vps)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Identique à pariscore.html:
+- 53 occurrences #ff4d4d → #ff1744 (danger)
+- 12 occurrences LIVE contextuelles → #ff6d2e (live orange)
+- 24 occurrences #FF6B00 (CS2) → #ff6d2e
+- --tn2-live: #ef4444 → #ff6d2e
+---
+ vps/pariscore.html | 154 ++++++++++++++++++++++-----------------------
+ 1 file changed, 77 insertions(+), 77 deletions(-)
+
+diff --git a/vps/pariscore.html b/vps/pariscore.html
+index b594302..33cc82c 100644
+--- a/vps/pariscore.html
++++ b/vps/pariscore.html
+@@ -3626,7 +3626,7 @@
+     pointer-events: none;
+   }
+   .live-update-toast.visible { opacity: 1; transform: translateY(0); }
+-  .badge-live { background: rgba(255,77,77,0.15); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.3); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-family: var(--font-mono); margin-left: 6px; animation: blink 1.5s infinite; }
++  .badge-live { background: rgba(255,109,46,0.15); color: #ff6d2e; border: 1px solid rgba(255,109,46,0.3); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-family: var(--font-mono); margin-left: 6px; animation: blink 1.5s infinite; }
+ 
+ 
+   /* Live stats panel — side-by-side comparison */
+@@ -3700,13 +3700,13 @@
+   /* Live Top 5 Panel */
+   #live-top5-panel { display:none;background:linear-gradient(135deg,rgba(255,77,77,0.06) 0%,var(--bg2) 60%);border:1px solid rgba(255,77,77,0.25);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:16px; }
+   .lt5-header { display:flex;align-items:center;gap:10px;margin-bottom:12px; }
+-  .lt5-title { font-size:13px;font-weight:700;color:#ff4d4d;letter-spacing:.02em; }
++  .lt5-title { font-size:13px;font-weight:700;color:#ff6d2e;letter-spacing:.02em; }
+   .lt5-subtitle { font-size:11px;color:var(--text3); }
+   .lt5-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px; }
+   .lt5-card { background:var(--bg3);border:1px solid var(--border);border-radius: var(--radius);padding:10px 12px;cursor:pointer;transition:border-color .2s; }
+   .lt5-card:hover { border-color:rgba(255,77,77,0.4); }
+   .lt5-match { font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow-y:auto;text-overflow:ellipsis; }
+-  .lt5-score { font-size:13px;font-weight:700;font-family:var(--font-mono);color:#ff4d4d;margin:3px 0; }
++  .lt5-score { font-size:13px;font-weight:700;font-family:var(--font-mono);color:#ff6d2e;margin:3px 0; }
+   .lt5-bet { font-size:11px;font-weight:700;border-radius:4px;padding:2px 7px;display:inline-block;margin:3px 0; }
+   .lt5-reason { font-size:10px;color:var(--text3);line-height:1.4;margin-top:3px; }
+   .match-row-live { animation:livePulse 3s infinite; }
+@@ -4020,7 +4020,7 @@
+ 
+   /* Dropping Odds delta */
+   .odds-delta-up   { color: #00e676; font-family: var(--font-mono); font-size: 11px; }
+-  .odds-delta-down { color: #ff4d4d; font-family: var(--font-mono); font-size: 11px; }
++  .odds-delta-down { color: #ff1744; font-family: var(--font-mono); font-size: 11px; }
+   .odds-delta-flat { color: var(--text3); font-family: var(--font-mono); font-size: 11px; }
+ 
+   /* Power Score — Static Insight Layer */
+@@ -4406,7 +4406,7 @@
+   .country-flag { width: 18px; height: auto; border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.4); vertical-align: middle; margin-right: 4px; }
+   .country-flag-img { width: 16px; height: 11px; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.4); vertical-align: middle; margin-right: 3px; object-fit: cover; }
+   .country-live-badge {
+-    display: none; font-size: 8px; font-weight: 700; background: #ff4d4d; color: #fff;
++    display: none; font-size: 8px; font-weight: 700; background: #ff1744; color: #fff;
+     border-radius: 7px; padding: 0 4px; line-height: 14px; min-width: 14px; text-align: center;
+     margin-left: 2px; vertical-align: middle;
+   }
+@@ -4416,7 +4416,7 @@
+     margin-left: 3px; padding: 0 2px; line-height: 1; opacity: 0.6; transition: opacity .15s;
+     min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;
+   }
+-  .country-remove:hover { opacity: 1; color: #ff4d4d; }
++  .country-remove:hover { opacity: 1; color: #ff1744; }
+   .country-chip.active .country-remove { display: inline; }
+   /* Stat cells */
+   .sc { min-width: 44px; font-family: var(--font-mono); font-size: 12px; font-weight: 500; padding: 5px 6px; border-left: 1px solid var(--border); }
+@@ -4520,7 +4520,7 @@
+   .dp-conf-badge { display:none; font:700 10px/1 var(--font-mono); padding:4px 9px; border-radius:5px; letter-spacing:.5px; white-space:nowrap; }
+   .dp-conf-badge.good { background:rgba(0,230,118,0.13); border:1px solid rgba(0,230,118,0.4); color:#00e676; }
+   .dp-conf-badge.mid  { background:rgba(255,167,38,0.13); border:1px solid rgba(255,167,38,0.4); color:#ffa726; }
+-  .dp-conf-badge.low  { background:rgba(239,68,68,0.13);  border:1px solid rgba(239,68,68,0.4);  color:#ff4d4d; }
++  .dp-conf-badge.low  { background:rgba(239,68,68,0.13);  border:1px solid rgba(239,68,68,0.4);  color:#ff1744; }
+   /* U6 — Timestamp */
+   #dp-timestamp { font:10px/1 var(--font-mono); color:var(--text3); margin-top:3px; display:none; }
+   /* I3 — Kelly footer widget */
+@@ -4547,7 +4547,7 @@
+   .dp-div-row { display:flex; align-items:center; gap:8px; font:12px var(--font-mono); }
+   .dp-div-badge { font:700 9px/1 var(--font-mono); padding:2px 7px; border-radius:4px; white-space:nowrap; }
+   .dp-div-badge.up   { background:rgba(0,230,118,0.15); border:1px solid rgba(0,230,118,0.4); color:#00e676; }
+-  .dp-div-badge.down { background:rgba(239,68,68,0.15);  border:1px solid rgba(239,68,68,0.4);  color:#ff4d4d; }
++  .dp-div-badge.down { background:rgba(239,68,68,0.15);  border:1px solid rgba(239,68,68,0.4);  color:#ff1744; }
+   /* I5 — Mode Pro panel */
+   #dp-pro-panel { display:none; margin-bottom:16px; background:#080b0f; border:1px solid rgba(171,71,188,0.25); border-radius:10px; padding:14px 16px; }
+   #dp-pro-panel.visible { display:block; }
+@@ -4991,7 +4991,7 @@
+   .ld-teams { font:800 20px/1.2 var(--font-head); }
+   .ld-league { font-size:12px;color:var(--text3);margin-top:4px; }
+   .ld-score-row { display:flex;align-items:center;gap:12px;margin-top:10px; }
+-  .ld-score { font:800 32px/1 var(--font-mono);color:#ff4d4d; }
++  .ld-score { font:800 32px/1 var(--font-mono);color:#ff6d2e; }
+   .ld-minute { font-size:14px;color:var(--text3);font-weight:600; }
+   .ld-intensity { font-size:12px;padding:3px 8px;border-radius:4px;font-weight:700;font-family:var(--font-mono); }
+   .ld-charts { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px; }
+@@ -5076,7 +5076,7 @@
+   /* Rankings — badges de zone */
+   .rk-zone-cl  { color: #29b6f6 !important; font-weight: 700; }
+   .rk-zone-el  { color: #00c45a !important; font-weight: 700; }
+-  .rk-zone-rel { color: #ff4d4d !important; font-weight: 700; }
++  .rk-zone-rel { color: #ff1744 !important; font-weight: 700; }
+   /* Mobile compact — Packball v44 layout */
+   @media (max-width: 768px) {
+     #vb-table { min-width: 600px; }
+@@ -5726,7 +5726,7 @@
+     border: 1px solid var(--border2); color: var(--text2); background: transparent;
+   }
+   .scroll-lock-btn:hover { color: var(--text); background: var(--bg3); }
+-  .scroll-lock-btn.locked { background: rgba(255,77,77,0.12); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
++  .scroll-lock-btn.locked { background: rgba(255,77,77,0.12); color: #ff1744; border-color: rgba(255,77,77,0.3); }
+   #matches-table.no-live .pressure-col { display: none; }
+ 
+   /* ── VALUE-FIRST ROW v47 — V2 desktop redesign — hiérarchie visuelle par tier ── */
+@@ -6014,7 +6014,7 @@
+     box-shadow: 0 0 8px rgba(56,189,248,0.50);
+   }
+ 
+-  .match-tab.live-tab.active { background: rgba(255,77,77,0.12); color: #ff4d4d; border-color: rgba(255,77,77,0.3); }
++  .match-tab.live-tab.active { background: rgba(255,109,46,0.12); color: #ff6d2e; border-color: rgba(255,109,46,0.3); }
+ 
+   /* v11.0 — Badge néon WebSocket BSD (connecté/déconnecté) sur bouton LIVE */
+   .ws-status-dot {
+@@ -6033,7 +6033,7 @@
+     animation: ws-pulse 1.4s infinite;
+   }
+   .ws-status-dot.ws-off {
+-    background: #ff4d4d;
++    background: #ff1744;
+     box-shadow: 0 0 4px rgba(255,77,77,0.5);
+   }
+   @keyframes ws-pulse {
+@@ -6351,7 +6351,7 @@
+     .sf-chip { font-size: 8px; padding: 1px 5px; }
+   }
+   .match-tab:hover:not(.active) { border-color: var(--border2); color: var(--text); }
+-  .live-count-badge { display:inline-block; background:#ff4d4d; color:#fff; font-size:9px; border-radius: var(--radius); padding:1px 5px; margin-left:4px; vertical-align:middle; }
++  .live-count-badge { display:inline-block; background:#ff6d2e; color:#fff; font-size:9px; border-radius: var(--radius); padding:1px 5px; margin-left:4px; vertical-align:middle; }
+   .table-count {
+     font-size: 12px; color: var(--text3);
+     font-family: var(--font-mono);
+@@ -7759,7 +7759,7 @@
+   .alert-toast.type-flood { border-color: rgba(239,68,68,0.55); }
+   .alert-toast-bar { width: 4px; flex-shrink: 0; }
+   .alert-toast.type-trap .alert-toast-bar { background: linear-gradient(180deg, #ffa726, #fb8c00); }
+-  .alert-toast.type-flood .alert-toast-bar { background: linear-gradient(180deg, #ff4d4d, #e2001a); }
++  .alert-toast.type-flood .alert-toast-bar { background: linear-gradient(180deg, #ff1744, #e2001a); }
+   .alert-toast.type-value { border-color: rgba(34,197,94,0.55); }
+   .alert-toast.type-value .alert-toast-bar { background: linear-gradient(180deg, #4ade80, #16a34a); }
+   .alert-toast-body { flex: 1; min-width: 0; padding: 10px 14px 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+@@ -8208,8 +8208,8 @@
+     display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+     padding:5px 10px;border-radius:5px;
+     font:800 10px/1 var(--font-mono);letter-spacing:.5px;
+-    background:#ff4d4d;color:#fff !important;
+-    border:1px solid #ff4d4d;
++    background:#ff1744;color:#fff !important;
++    border:1px solid #ff1744;
+     cursor:pointer;transition:background .15s, border-color .15s, transform .15s;white-space:nowrap;
+     box-shadow:0 2px 6px rgba(255,77,77,0.35);
+     animation:liveBtnPulse 2s ease-in-out infinite;
+@@ -12082,8 +12082,8 @@
+ </style>
+ <style>/*TN_UNIFY_CSS*/
+ tr.tennis-vb-row{transition:background .4s ease;}
+-tr.tennis-vb-row.is-live>td:first-child{position:relative;background:linear-gradient(90deg,rgba(255,77,77,.09),rgba(255,77,77,0) 85%);box-shadow:inset 3px 0 0 0 var(--red,#ff4d4d),inset 7px 0 9px -6px rgba(255,77,77,.55);}
+-.tn-live-ind{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--red,#ff4d4d);letter-spacing:.3px;animation:tnLivePulse 1.8s ease-in-out infinite;}
++tr.tennis-vb-row.is-live>td:first-child{position:relative;background:linear-gradient(90deg,rgba(255,109,46,.09),rgba(255,109,46,0) 85%);box-shadow:inset 3px 0 0 0 #ff6d2e,inset 7px 0 9px -6px rgba(255,109,46,.55);}
++.tn-live-ind{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:#ff6d2e;letter-spacing:.3px;animation:tnLivePulse 1.8s ease-in-out infinite;}
+ @keyframes tnLivePulse{0%,100%{opacity:1}50%{opacity:.55}}
+ @media(prefers-reduced-motion:reduce){.tn-live-ind{animation:none}}
+ </style>
+@@ -15159,7 +15159,7 @@ function psSetLang(v) {
+ .wc-bp h3 { font-family:Syne,sans-serif; font-size:18px; color:var(--text2,#8d9399); margin:0 0 8px; }
+ .wc-bp p { font-family:'Instrument Sans',sans-serif; font-size:13px; color:var(--text3,#5a6068); margin:4px 0; }
+ .wc-loading { text-align:center; padding:36px; color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:12px; }
+-.wc-err { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius: var(--radius); padding:10px 14px; color:#ff4d4d; font-family:'DM Mono',monospace; font-size:11px; margin:8px 0; }
++.wc-err { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius: var(--radius); padding:10px 14px; color:#ff1744; font-family:'DM Mono',monospace; font-size:11px; margin:8px 0; }
+ .wc-total-line { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3,#5a6068); margin-bottom:12px; }
+ /* ── WC Prévisions tab ── */
+ .wc-pred-meta { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px; padding:7px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius: var(--radius); }
+@@ -15884,7 +15884,7 @@ function psSetLang(v) {
+           <div style="font-family:'DM Mono',monospace;font-size:13px;">Analyse IA en cours... (10-25s)</div>
+         </div>
+         <pre id="tennis-ai-output" style="display:none;white-space:pre-wrap;word-wrap:break-word;font-family:'DM Mono',monospace;font-size:13px;line-height:1.6;color:var(--text,#e8eaed);background:var(--bg,#0a0d0f);padding:16px;border:1px solid var(--bg4,#1e2328);border-radius:var(--radius-sm);margin:0;"></pre>
+-        <div id="tennis-ai-error" style="display:none;padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:13px;"></div>
++        <div id="tennis-ai-error" style="display:none;padding:24px;text-align:center;color:var(--red,#ff1744);font-family:'DM Mono',monospace;font-size:13px;"></div>
+       </div>
+     </div>
+   </div>
+@@ -17094,7 +17094,7 @@ window.tn2SetupH2H = function() {
+       var rows = (d.path || []).map(function (s) {
+         var pw = s.prob_win != null ? s.prob_win + '%' : '<span style="color:var(--text3,#5a6068);">--</span>';
+         var cum = s.cumulative != null ? s.cumulative + '%' : '--';
+-        var cumCol = s.cumulative == null ? 'var(--text3,#5a6068)' : (s.cumulative >= 50 ? 'var(--green,#00e676)' : s.cumulative >= 20 ? 'var(--amber,#ffa726)' : 'var(--red,#ff4d4d)');
++        var cumCol = s.cumulative == null ? 'var(--text3,#5a6068)' : (s.cumulative >= 50 ? 'var(--green,#00e676)' : s.cumulative >= 20 ? 'var(--amber,#ffa726)' : 'var(--red,#ff1744)');
+         return '<tr><td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);">' + (s.round || '--') + '</td>'
+           + '<td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);">vs ' + (s.opponent || 'TBD') + '</td>'
+           + '<td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);text-align:center;font-family:DM Mono,monospace;">' + pw + '</td>'
+@@ -17104,7 +17104,7 @@ window.tn2SetupH2H = function() {
+         + '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="color:var(--text3,#5a6068);font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:6px 10px;">Tour</th><th style="text-align:left;padding:6px 10px;">Adversaire</th><th style="padding:6px 10px;">P(gagne)</th><th style="padding:6px 10px;">Cumule</th></tr></thead><tbody>' + rows + '</tbody></table>';
+     } catch (e) {
+       if (st) st.textContent = 'erreur';
+-      box.innerHTML = '<span style="color:var(--red,#ff4d4d);">Erreur : ' + (e && e.message || e) + '</span>';
++      box.innerHTML = '<span style="color:var(--red,#ff1744);">Erreur : ' + (e && e.message || e) + '</span>';
+     }
+   }
+   </script>
+@@ -17121,7 +17121,7 @@ window.tn2SetupH2H = function() {
+   /* .tex-table tr:hover td { background:rgba(255,255,255,0.02); } */
+   /* .tex-player-link { color:var(--text,#e8eaed); cursor:pointer; text-decoration:none; } */
+   /* .tex-player-link:hover { color:var(--blue,#29b6f6); text-decoration:underline; } */
+-  /* .tex-drift-up   { color:var(--red,#ff4d4d); font-weight:600; } */
++  /* .tex-drift-up   { color:var(--red,#ff1744); font-weight:600; } */
+   /* .tex-drift-down { color:var(--green,#00e676); font-weight:600; } */
+   /* .tex-drift-flat { color:var(--text3,#5a6068); } */
+   /* UC-1 Elo tooltip (Tennis Abstract) */
+@@ -17221,7 +17221,7 @@ window.tn2SetupH2H = function() {
+   }
+   #tennis-vb-table .tn-dr-delta { font-family:'DM Mono',monospace; font-size:9px; font-weight:800; letter-spacing:.3px; padding:1px 5px; border-radius:4px; margin-left:4px; background:rgba(148,163,184,.12); color:#94a3b8; white-space:nowrap; }
+   #tennis-vb-table .tn-dr-delta.up { background:rgba(74,222,128,.18); color:#4ade80; }
+-  #tennis-vb-table .tn-dr-delta.down { background:rgba(255,77,77,.18); color:#ff4d4d; }
++  #tennis-vb-table .tn-dr-delta.down { background:rgba(255,77,77,.18); color:#ff1744; }
+   #tennis-vb-table .tn-dr-delta.flat { background:rgba(148,163,184,.12); color:#94a3b8; }
+   /* bd c0c — Market Divergence Pulse (cellule cote/edge) */
+   /* GPU-friendly : transform + opacity + filter brightness only.
+@@ -17297,10 +17297,10 @@ window.tn2SetupH2H = function() {
+   #tennis-vb-table .tn-dr-val { font-family:'DM Mono',monospace; font-size:11px; font-weight:800; display:inline-flex; align-items:center; gap:3px; }
+   #tennis-vb-table .tn-dr-dom .tn-dr-val { color:#4ade80; }
+   #tennis-vb-table .tn-dr-bal .tn-dr-val { color:#ffa726; }
+-  #tennis-vb-table .tn-dr-sub .tn-dr-val { color:#ff4d4d; }
++  #tennis-vb-table .tn-dr-sub .tn-dr-val { color:#ff1744; }
+   #tennis-vb-table .tn-dr-arr { font-size:9px; }
+   #tennis-vb-table .tn-dr-up { color:#4ade80; }
+-  #tennis-vb-table .tn-dr-down { color:#ff4d4d; }
++  #tennis-vb-table .tn-dr-down { color:#ff1744; }
+   #tennis-vb-table .tn-dr-flat { color:#64748b; }
+   #tennis-vb-table .tn-dr-exact .tn-dr-lab { color:#38bdf8; text-shadow:0 0 5px rgba(56,189,248,.55); }
+   #tennis-vb-table .tn-dr-i { padding:0; margin-left:4px; background:none; border:none; cursor:pointer; color:#38bdf8; opacity:.65; font-size:9px; line-height:1; vertical-align:baseline; }
+@@ -17311,13 +17311,13 @@ window.tn2SetupH2H = function() {
+   #tennis-vb-table .tn-drs-chip { font-family:'DM Mono',monospace; font-size:8px; font-weight:800; letter-spacing:.3px; padding:1px 4px; border-radius:3px; border:1px solid #243044; background:#0f172a; color:#94a3b8; white-space:nowrap; }
+   #tennis-vb-table .tn-drs-dom { color:#4ade80; border-color:rgba(74,222,128,.4); }
+   #tennis-vb-table .tn-drs-bal { color:#ffa726; border-color:rgba(255,167,38,.4); }
+-  #tennis-vb-table .tn-drs-sub { color:#ff4d4d; border-color:rgba(255,77,77,.4); }
++  #tennis-vb-table .tn-drs-sub { color:#ff1744; border-color:rgba(255,77,77,.4); }
+   #tennis-vb-table .tn-drs-cur { box-shadow:0 0 0 1px #38bdf8, 0 0 6px rgba(56,189,248,.5); background:rgba(56,189,248,.08); }
+   #tennis-vb-table .tn-drs-unrel { opacity:.5; font-style:italic; }
+ 
+   #tennis-vb-table .tvb-dtc-live { display:flex; justify-content:center; }
+-  #tennis-vb-table .tn-live-tag { display:inline-flex; align-items:center; gap:5px; font-family:'DM Mono',monospace; font-size:9px; font-weight:800; letter-spacing:.5px; color:#ff4d4d; background:rgba(255,77,77,.12); border:1px solid rgba(255,77,77,.35); border-radius:var(--radius-pill); padding:2px 8px; text-transform:uppercase; }
+-  #tennis-vb-table .tn-live-tag i { width:7px; height:7px; border-radius:50%; background:#ff4d4d; display:inline-block; flex:0 0 7px; animation:tnLivePulse 1.4s ease-in-out infinite; }
++  #tennis-vb-table .tn-live-tag { display:inline-flex; align-items:center; gap:5px; font-family:'DM Mono',monospace; font-size:9px; font-weight:800; letter-spacing:.5px; color:#ff6d2e; background:rgba(255,109,46,.12); border:1px solid rgba(255,109,46,.35); border-radius:var(--radius-pill); padding:2px 8px; text-transform:uppercase; }
++  #tennis-vb-table .tn-live-tag i { width:7px; height:7px; border-radius:50%; background:#ff6d2e; display:inline-block; flex:0 0 7px; animation:tnLivePulse 1.4s ease-in-out infinite; }
+   @media (prefers-reduced-motion:reduce) { #tennis-vb-table .tn-live-tag i { animation:none; } }
+   #tennis-vb-table .tn-pmeta { display:inline-flex; align-items:center; gap:6px; margin-left:7px; vertical-align:middle; }
+   #tennis-vb-table .elo-rk { font-family:'DM Mono',monospace; font-size:9px; font-weight:600; color:var(--text2,#8d9399); background:rgba(255,255,255,.05); border:1px solid var(--border); border-radius:5px; padding:1px 5px; letter-spacing:.3px; opacity:.85; white-space:nowrap; }
+@@ -17329,7 +17329,7 @@ window.tn2SetupH2H = function() {
+   #tennis-vb-table .tn-form { display:inline-flex; gap:3px; }
+   #tennis-vb-table .tn-pip { width:14px; height:14px; border-radius:3px; font-family:'DM Mono',monospace; font-size:8px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; line-height:1; }
+   #tennis-vb-table .tn-pip-w { background:rgba(74,222,128,.18); color:#4ade80; border:1px solid rgba(74,222,128,.45); box-shadow:0 0 6px rgba(74,222,128,.45); }
+-  #tennis-vb-table .tn-pip-l { background:rgba(255,77,77,.16); color:#ff4d4d; border:1px solid rgba(255,77,77,.42); box-shadow:0 0 6px rgba(255,77,77,.40); }
++  #tennis-vb-table .tn-pip-l { background:rgba(255,77,77,.16); color:#ff1744; border:1px solid rgba(255,77,77,.42); box-shadow:0 0 6px rgba(255,77,77,.40); }
+   #tennis-vb-table .tn-pip-na { background:transparent; color:var(--text3,#5a6068); border:1px solid var(--border); box-shadow:none; }
+   #tennis-vb-table .tsm-cell { display:flex; flex-direction:column; align-items:center; gap:5px; min-width:160px; }
+   #tennis-vb-table .tsm-row { width:100%; display:flex; justify-content:center; }
+@@ -17343,7 +17343,7 @@ window.tn2SetupH2H = function() {
+   #tennis-vb-table .tpf-ps { font-family:'DM Mono',monospace; font-size:11px; font-weight:800; padding:1px 7px; border-radius:var(--radius-sm); white-space:nowrap; }
+   #tennis-vb-table .tpf-ps-hi { color:#4ade80; background:rgba(74,222,128,.15); border:1px solid rgba(74,222,128,.4); }
+   #tennis-vb-table .tpf-ps-mid { color:#ffa726; background:rgba(255,167,38,.15); border:1px solid rgba(255,167,38,.4); }
+-  #tennis-vb-table .tpf-ps-lo { color:#ff4d4d; background:rgba(255,77,77,.14); border:1px solid rgba(255,77,77,.4); }
++  #tennis-vb-table .tpf-ps-lo { color:#ff1744; background:rgba(255,77,77,.14); border:1px solid rgba(255,77,77,.4); }
+   #tennis-vb-table .tpf-ps-na { color:var(--text3,#5a6068); border:1px solid var(--border); }
+   #tennis-vb-table .tpf-psrk { font-family:'DM Mono',monospace; font-size:10px; font-weight:700; color:var(--blue,#29b6f6); background:rgba(41,182,246,.12); border:1px solid rgba(41,182,246,.3); border-radius:5px; padding:1px 5px; white-space:nowrap; }
+   #tennis-vb-table th, #tennis-vb-table td { text-align:center; }
+@@ -17388,11 +17388,11 @@ window.tn2SetupH2H = function() {
+   .tn-bppi-cell { display:flex; flex-direction:column; gap:3px; align-items:center; min-width:36px; }
+   .tn-bppi-bar { width:32px; height:4px; background:rgba(255,255,255,.06); border-radius:2px; overflow-y:auto; position:relative; }
+   .tn-bppi-bar > span { display:block; height:100%; border-radius:2px; transition:width .25s ease-out; }
+-  .tn-bppi-low  > span { background:linear-gradient(90deg,#ff4d4d,#e2001a); }
++  .tn-bppi-low  > span { background:linear-gradient(90deg,#ff1744,#e2001a); }
+   .tn-bppi-mid  > span { background:linear-gradient(90deg,#ffa726,#fb8c00); }
+   .tn-bppi-high > span { background:linear-gradient(90deg,#00e676,#00c853); }
+   .tn-bppi-val { font-family:'DM Mono',monospace; font-size:10px; font-weight:700; line-height:1; }
+-  .tn-bppi-val.low  { color:#ff4d4d; }
++  .tn-bppi-val.low  { color:#ff1744; }
+   .tn-bppi-val.mid  { color:#ffa726; }
+   .tn-bppi-val.high { color:#00e676; }
+   .tn-bppi-missing { color:var(--text3,#5a6068); font-family:'DM Mono',monospace; font-size:11px; }
+@@ -17426,7 +17426,7 @@ window.tn2SetupH2H = function() {
+   .tvb-pred-kpi.strong { color:#0a0d0f; background:linear-gradient(135deg,#00e676,#00c853); }
+   .tvb-pred-kpi.value  { color:#0a0d0f; background:linear-gradient(135deg,#ffa726,#fb8c00); }
+   .tvb-pred-kpi.pass   { color:var(--text3,#5a6068); background:var(--bg4,#1e2328); }
+-  .tvb-pred-kpi.live   { color:#fff; background:linear-gradient(135deg,#ff4d4d,#e2001a); }
++  .tvb-pred-kpi.live   { color:#fff; background:linear-gradient(135deg,#ff6d2e,#e2001a); }
+   .tvb-pred-chip { font-family:'DM Mono',monospace; font-size:10px; line-height:1.4; color:var(--text2,#8d9399); white-space:nowrap; }
+   .tvb-pred-chip b { color:var(--text,#e8eaed); font-weight:700; }
+   .tvb-pred-chip .pp { color:#38bdf8; }
+@@ -17466,7 +17466,7 @@ window.tn2SetupH2H = function() {
+   #tennis-live-table .tennis-set-score { font-family:'DM Mono',monospace; font-size:14px; color:var(--blue,#29b6f6); }
+   #tennis-live-table .tennis-games { font-family:'DM Mono',monospace; font-size:13px; color:var(--text2,#8d9399); }
+   #tennis-live-table .tennis-point { font-family:'DM Mono',monospace; font-weight:700; color:var(--green,#00e676); }
+-  #tennis-live-table .tennis-status-live { color:var(--red,#ff4d4d); font-weight:700; }
++  #tennis-live-table .tennis-status-live { color:#ff6d2e; font-weight:700; }
+   #tennis-live-table .tennis-status-final { color:var(--text3,#5a6068); }
+   #tennis-live-table .tennis-flag, #tennis-vb-table .tennis-flag { width:18px; height:12px; object-fit:cover; vertical-align:middle; margin-right:6px; border-radius:2px; }
+   #tennis-live-table .tennis-tour { display:inline-block; padding:2px 8px; border-radius:10px; font-family:'DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.5px; }
+@@ -17501,7 +17501,7 @@ window.tn2SetupH2H = function() {
+   .tennis-modal-card { position:relative; background:var(--bg2,#111417); border:1px solid var(--bg4,#1e2328); border-radius: var(--radius-lg); width:min(960px, 94vw); max-height:88vh; overflow-y:auto; padding:24px 28px; box-shadow:0 20px 60px rgba(0,0,0,0.6); animation:tennisModalIn 220ms ease-out; }
+   @keyframes tennisModalIn { from { opacity:0; transform:translateY(8px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
+   .tennis-modal-close { position:absolute; top:12px; right:14px; width:32px; height:32px; border-radius:50%; border:1px solid var(--bg4,#1e2328); background:var(--bg3,#181c20); color:var(--text,#e8eaed); cursor:pointer; font-size:14px; }
+-  .tennis-modal-close:hover { background:var(--red,#ff4d4d); color:#fff; }
++  .tennis-modal-close:hover { background:var(--red,#ff1744); color:#fff; }
+   .tennis-detail-header { display:flex; align-items:center; gap:16px; padding-bottom:16px; border-bottom:1px solid var(--bg4,#1e2328); margin-bottom:16px; }
+   .tennis-detail-versus { display:flex; align-items:center; gap:12px; flex:1; }
+   .tennis-detail-player { display:flex; flex-direction:column; gap:4px; }
+@@ -17688,7 +17688,7 @@ window.tn2SetupH2H = function() {
+   .tn-odds-val { font-size:14px; font-weight:800; color:var(--text,#e8eaed); font-family:'DM Mono',monospace; }
+   .tn-edge-badge { font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; }
+   .tn-edge-pos { background:rgba(0,230,118,0.15); color:var(--green,#00e676); }
+-  .tn-edge-neg { background:rgba(255,77,77,0.12); color:var(--red,#ff4d4d); }
++  .tn-edge-neg { background:rgba(255,77,77,0.12); color:var(--red,#ff1744); }
+   /* Fav + expand buttons */
+   .tn-fav-btn { background:none; border:none; cursor:pointer; font-size:16px; color:var(--text3,#5a6068); padding:4px; min-width:32px; min-height:44px; transition:color 150ms,transform 100ms; line-height:1; }
+   .tn-fav-btn:hover { color:var(--amber,#ffa726); transform:scale(1.2); }
+@@ -17733,7 +17733,7 @@ window.tn2SetupH2H = function() {
+   .tn-live-stats-table tr:not(:last-child) td { border-bottom:1px solid rgba(255,255,255,0.04); }
+   .tn-live-stats-table .slbl { text-align:center; color:var(--text3,#5a6068); font-family:'Instrument Sans',sans-serif; font-size:10px; min-width:160px; padding:4px 12px; }
+   .tn-sv { color:var(--green,#00e676); font-weight:700; }
+-  .tn-sv-lo { color:var(--red,#ff4d4d); }
++  .tn-sv-lo { color:var(--red,#ff1744); }
+   .tn-stats-btn { font-size:9px; padding:2px 5px; background:rgba(41,182,246,0.12); color:var(--blue,#29b6f6); border:1px solid rgba(41,182,246,0.28); border-radius:3px; cursor:pointer; line-height:1.5; white-space:nowrap; }
+   .tn-stats-btn:hover { background:rgba(41,182,246,0.22); }
+   .tn-stats-btn.active { background:rgba(41,182,246,0.22); border-color:rgba(41,182,246,0.6); }
+@@ -18038,7 +18038,7 @@ window.tn2SetupH2H = function() {
+   }
+   .switch-premium-container input:checked + .slider-premium-round::before {
+     transform: translateX(14px);
+-    background: #ff4d4d;
++    background: #ff1744;
+   }
+   .live-label-text {
+     font-size: 10px;
+@@ -20452,10 +20452,10 @@ window.tn2SetupH2H = function() {
+               <span style="color:#ff8c00;font-weight:600;">Zone d'entrée principale. Confirmer avec xG et momentum.</span>
+             </div>
+             <div style="display:grid;grid-template-columns:70px 110px 1fr 1fr;padding:10px 12px;border-top:1px solid var(--border2);font-size:12px;align-items:start;gap:4px;background:rgba(255,77,77,0.07);">
+-              <span style="color:#ff4d4d;font-weight:700;">70 – 100</span>
+-              <span style="color:#ff4d4d;">🔥 Bouillant</span>
++              <span style="color:#ff1744;font-weight:700;">70 – 100</span>
++              <span style="color:#ff1744;">🔥 Bouillant</span>
+               <span style="color:var(--text2);">Buts multiples, tirs constants, momentum qui bascule toutes les 5 min.</span>
+-              <span style="color:#ff4d4d;font-weight:600;">Agir vite — les cotes bougent. Priorité marchés Over et BTTS.</span>
++              <span style="color:#ff1744;font-weight:600;">Agir vite — les cotes bougent. Priorité marchés Over et BTTS.</span>
+             </div>
+           </div>
+ 
+@@ -20481,19 +20481,19 @@ window.tn2SetupH2H = function() {
+           </div>
+ 
+           <div style="border:1px solid rgba(255,77,77,0.3);border-radius:8px;overflow-y:auto;margin-bottom:16px;">
+-            <div style="background:rgba(255,77,77,0.08);padding:10px 14px;font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#ff4d4d;">Signal Type — "Avalanche"</div>
++            <div style="background:rgba(255,77,77,0.08);padding:10px 14px;font-family:var(--font-head);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#ff1744;">Signal Type — "Avalanche"</div>
+             <div style="padding:14px;font-size:12.5px;line-height:1.8;color:var(--text2);">
+-              Intensité <span style="color:#ff4d4d;font-weight:700;">🔥 82</span><br>
++              Intensité <span style="color:#ff1744;font-weight:700;">🔥 82</span><br>
+               Score : 1 – 1, 65ème minute<br>
+               xG cumulés : <span style="color:#00e676;font-weight:700;">2.3</span> / <span style="color:#7c4dff;font-weight:700;">1.9</span><br>
+-              <span style="color:#ff4d4d;margin-top:8px;display:block;font-weight:600;">→ Pari : Over 2.5 ou Over 3.5</span>
++              <span style="color:#ff1744;margin-top:8px;display:block;font-weight:600;">→ Pari : Over 2.5 ou Over 3.5</span>
+               <span style="color:var(--text3);font-size:11px;">Match très ouvert, défenses poreuses, 25 min restantes.</span>
+             </div>
+           </div>
+ 
+           <div style="border:1px solid var(--border2);border-radius:8px;padding:14px;font-size:12px;line-height:1.8;color:var(--text3);">
+             <strong style="color:var(--text2);display:block;margin-bottom:6px;">⚠️ Signal à éviter</strong>
+-            Intensité élevée <strong style="color:#ff4d4d;">🔥 74</strong> mais due uniquement aux buts (3 – 2, 80ème min). xG plats. Momentum stable. Le score explique tout — les cotes ne bougent plus. Aucune inefficience à exploiter.
++            Intensité élevée <strong style="color:#ff1744;">🔥 74</strong> mais due uniquement aux buts (3 – 2, 80ème min). xG plats. Momentum stable. Le score explique tout — les cotes ne bougent plus. Aucune inefficience à exploiter.
+           </div>
+         </div>
+       </div>
+@@ -20502,7 +20502,7 @@ window.tn2SetupH2H = function() {
+         <div class="gs-stat"><div class="gs-stat-val" style="color:#8d9399;">😴 0–19</div><div class="gs-stat-lbl">Passer son tour</div></div>
+         <div class="gs-stat"><div class="gs-stat-val" style="color:#ffd600;">🟡 20–39</div><div class="gs-stat-lbl">Surveiller</div></div>
+         <div class="gs-stat"><div class="gs-stat-val" style="color:#ff8c00;">⚡ 40–69</div><div class="gs-stat-lbl">Zone d'entrée</div></div>
+-        <div class="gs-stat" style="border-right:none;"><div class="gs-stat-val" style="color:#ff4d4d;">🔥 70–100</div><div class="gs-stat-lbl">Agir immédiatement</div></div>
++        <div class="gs-stat" style="border-right:none;"><div class="gs-stat-val" style="color:#ff1744;">🔥 70–100</div><div class="gs-stat-lbl">Agir immédiatement</div></div>
+       </div>
+     </div>
+     <!-- ── FIN JAUGE D'INTENSITÉ ──────────────────────────────────────────── -->
+@@ -20521,12 +20521,12 @@ window.tn2SetupH2H = function() {
+         <code>DR = (% de points gagnés au retour) / (% de points perdus au service)</code>
+       </div>
+       <p><i>Note : un DR supérieur à <code>1.00</code> indique que le joueur prend l'ascendant sur l'échange et « domine » statistiquement son adversaire, même si le score est serré.</i></p>
+-      <p>Affichage <b>par joueur</b> dans le scoreboard (colonne 3) : <code>DR P1</code> et <code>DR P2</code> (réciproques). Le suffixe <code>~</code> signale le mode <i>proxy jeux+sets</i> (fallback) ; sans suffixe = valeur <b>exacte Sofascore</b> (points service + retour live). Couleur : <span style="color:#4ade80;font-weight:700;">vert &gt; 1.08 (domine)</span> · <span style="color:#ffa726;font-weight:700;">orange ~équilibré</span> · <span style="color:#ff4d4d;font-weight:700;">rouge &lt; 0.92 (subit)</span>.</p>
++      <p>Affichage <b>par joueur</b> dans le scoreboard (colonne 3) : <code>DR P1</code> et <code>DR P2</code> (réciproques). Le suffixe <code>~</code> signale le mode <i>proxy jeux+sets</i> (fallback) ; sans suffixe = valeur <b>exacte Sofascore</b> (points service + retour live). Couleur : <span style="color:#4ade80;font-weight:700;">vert &gt; 1.08 (domine)</span> · <span style="color:#ffa726;font-weight:700;">orange ~équilibré</span> · <span style="color:#ff1744;font-weight:700;">rouge &lt; 0.92 (subit)</span>.</p>
+ 
+       <h3 style="color:var(--text);font-size:15px;margin:22px 0 10px;">Interprétation des flèches</h3>
+       <ul style="margin:8px 0 8px 18px;">
+         <li><b style="color:#4ade80;">▲ Hausse</b> : le joueur intensifie sa pression au retour ou stabilise son service.</li>
+-        <li><b style="color:#ff4d4d;">▼ Baisse</b> : le joueur subit davantage de pression ou commet plus de fautes directes sur ses engagements.</li>
++        <li><b style="color:#ff1744;">▼ Baisse</b> : le joueur subit davantage de pression ou commet plus de fautes directes sur ses engagements.</li>
+         <li><b style="color:#64748b;">► Stable</b> : momentum inchangé depuis le jeu précédent (variation &lt; 0.02).</li>
+       </ul>
+       <p>La tendance est calculée <b>indépendamment pour chaque joueur</b>, par comparaison au jeu précédent, et se rafraîchit à chaque mise à jour du flux live (SSE).</p>
+@@ -21856,16 +21856,16 @@ body[data-page="cs2"] .footer-newsletter,
+ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-header { padding: 18px 16px 0; max-width: 1200px; margin: 0 auto; }
+ .cs2-title { font-family: Syne,sans-serif; font-weight: 800; font-size: 26px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+-.cs2-badge-live { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,107,0,0.12); border: 1px solid rgba(255,107,0,0.35); border-radius: 20px; padding: 2px 8px; font-family:'DM Mono',monospace; font-size: 10px; font-weight: 700; color: #FF6B00; text-transform: uppercase; }
+-.cs2-badge-live .cs2-ldot { width: 5px; height: 5px; border-radius: 50%; background: #FF6B00; animation: cs2pulse 1.2s ease-in-out infinite; }
++.cs2-badge-live { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,107,0,0.12); border: 1px solid rgba(255,107,0,0.35); border-radius: 20px; padding: 2px 8px; font-family:'DM Mono',monospace; font-size: 10px; font-weight: 700; color: #ff6d2e; text-transform: uppercase; }
++.cs2-badge-live .cs2-ldot { width: 5px; height: 5px; border-radius: 50%; background: #ff6d2e; animation: cs2pulse 1.2s ease-in-out infinite; }
+ @keyframes cs2pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.7);} }
+ .cs2-subtitle { font-family:'DM Mono',monospace; font-size: 11px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.06em; }
+ .cs2-toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 16px 16px; max-width: 1200px; }
+ .cs2-pill { display: inline-flex; align-items: center; gap: 4px; padding: 8px 14px; border-radius: 20px; border: 1px solid var(--bg4,#1e2328); background: var(--bg2,#111417); color: var(--text2,#8d9399); font-family:'Instrument Sans',sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; min-width:40px;min-height:40px; }
+-.cs2-pill.active, .cs2-pill:focus-visible { background: #FF6B00; border-color: #FF6B00; color: #fff; }
+-.cs2-pill:hover:not(.active) { border-color: #FF6B00; color: #FF6B00; }
++.cs2-pill.active, .cs2-pill:focus-visible { background: #ff6d2e; border-color: #ff6d2e; color: #fff; }
++.cs2-pill:hover:not(.active) { border-color: #ff6d2e; color: #ff6d2e; }
+ .cs2-refresh-btn { margin-left: auto; padding: 6px 13px; background: var(--bg3,#181c20); color: var(--text,#e8eaed); border: 1px solid var(--bg4,#1e2328); border-radius: var(--radius-sm); cursor: pointer; font-family:'Instrument Sans',sans-serif; font-size: 12px; }
+-.cs2-refresh-btn:hover { border-color: #FF6B00; }
++.cs2-refresh-btn:hover { border-color: #ff6d2e; }
+ /* Grid */
+ .cs2-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; padding: 0 16px 96px; max-width: 1200px; margin: 0 auto; }
+ /* Card */
+@@ -21877,8 +21877,8 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-tour-logo { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; flex-shrink: 0; }
+ .cs2-tour-name { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.04em; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ .cs2-format { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); padding: 2px 6px; border: 1px solid var(--bg4,#1e2328); border-radius: 4px; white-space: nowrap; }
+-.cs2-live-pill { display: inline-flex; align-items: center; gap: 3px; font-family:'DM Mono',monospace; font-size: 9px; font-weight: 700; color: #FF6B00; white-space: nowrap; }
+-.cs2-live-pill .cs2-ldot { width: 5px; height: 5px; border-radius: 50%; background: #FF6B00; animation: cs2pulse 1.2s ease-in-out infinite; }
++.cs2-live-pill { display: inline-flex; align-items: center; gap: 3px; font-family:'DM Mono',monospace; font-size: 9px; font-weight: 700; color: #ff6d2e; white-space: nowrap; }
++.cs2-live-pill .cs2-ldot { width: 5px; height: 5px; border-radius: 50%; background: #ff6d2e; animation: cs2pulse 1.2s ease-in-out infinite; }
+ /* VS row */
+ .cs2-vs-row { display: flex; align-items: center; gap: 8px; padding: 14px 12px 10px; }
+ .cs2-team { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+@@ -21908,10 +21908,10 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-prob-row { display:flex; align-items:center; gap:6px; padding:4px 12px 6px; }
+ .cs2-prob-bar { flex:1; height:5px; border-radius:3px; overflow-y:auto; display:flex; }
+ .cs2-prob-fill-ct { background:#3b82f6; transition:width .4s ease; }
+-.cs2-prob-fill-t  { background:#FF6B00; }
++.cs2-prob-fill-t  { background:#ff6d2e; }
+ .cs2-prob-lbl { font-family:'DM Mono',monospace; font-size:10px; font-weight:700; white-space:nowrap; }
+ .cs2-prob-lbl-t1 { color:#3b82f6; }
+-.cs2-prob-lbl-t2 { color:#FF6B00; }
++.cs2-prob-lbl-t2 { color:#ff6d2e; }
+ /* LAN badge */
+ .cs2-lan-tag { font-family:'DM Mono',monospace; font-size:8px; font-weight:700; color:#f59e0b; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); border-radius:3px; padding:1px 4px; margin-left:4px; vertical-align:middle; }
+ /* EV badge */
+@@ -21928,7 +21928,7 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-momentum-wrap { padding: 6px 12px 4px; border-top: 1px solid var(--bg4,#1e2328); }
+ .cs2-momentum-labels { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+ .cs2-momentum-bar { display: flex; height: 5px; border-radius: 3px; overflow: hidden; background: var(--bg3); }
+-.cs2-momentum-t1 { background: #FF6B00; transition: width .4s ease; }
++.cs2-momentum-t1 { background: #ff6d2e; transition: width .4s ease; }
+ .cs2-momentum-t2 { background: #3b82f6; transition: width .4s ease; }
+ .cs2-eco-row { display: flex; align-items: center; padding-top: 3px; }
+ .cs2-eco-badge { font-family:'DM Mono',monospace; font-size: 8px; font-weight: 700; letter-spacing: .05em; }
+@@ -21937,7 +21937,7 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-scout-hd { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--bg4,#1e2328); gap: 8px; }
+ .cs2-scout-tabs-bar { display: flex; border-bottom: 1px solid var(--bg4,#1e2328); }
+ .cs2-scout-tab { flex: 1; background: 0; border: 0; border-bottom: 2px solid transparent; color: var(--text2,#8d9399); font-family:'DM Mono',monospace; font-size: 9px; font-weight: 700; letter-spacing: .04em; padding: 9px 4px; cursor: pointer; transition: color .15s, border-color .15s; }
+-.cs2-scout-tab.active, .cs2-scout-tab:hover { color: #FF6B00; border-bottom-color: #FF6B00; }
++.cs2-scout-tab.active, .cs2-scout-tab:hover { color: #ff6d2e; border-bottom-color: #ff6d2e; }
+ .cs2-scout-content { flex: 1; overflow-y: auto; padding: 14px 16px; }
+ .cs2-scout-loading { padding: 30px; text-align: center; color: var(--text2,#8d9399); font-size: 13px; }
+ .cs2-scout-empty { padding: 20px; text-align: center; color: var(--text3,#5a6068); font-size: 11px; line-height: 1.6; }
+@@ -21945,10 +21945,10 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-scout-map-row.scout-map-current { background: rgba(255,107,0,0.04); border-radius: 4px; }
+ .cs2-scout-map-name { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text2,#8d9399); width: 68px; flex-shrink: 0; text-transform: uppercase; }
+ .cs2-scout-bar-wrap { flex: 1; display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: var(--bg3,#181c20); }
+-.cs2-scout-bar-t1 { background: #FF6B00; }
++.cs2-scout-bar-t1 { background: #ff6d2e; }
+ .cs2-scout-bar-t2 { background: #3b82f6; }
+ .cs2-scout-wr { font-family:'DM Mono',monospace; font-size: 10px; width: 34px; flex-shrink: 0; }
+-.cs2-scout-wr.t1 { color: #FF6B00; text-align: right; }
++.cs2-scout-wr.t1 { color: #ff6d2e; text-align: right; }
+ .cs2-scout-wr.t2 { color: #3b82f6; }
+ .cs2-scout-player-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+ .cs2-scout-player-name { font-size: 12px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@@ -21959,7 +21959,7 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-veto-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-family:'DM Mono',monospace; font-size: 11px; }
+ .cs2-veto-num { color: var(--text3,#5a6068); width: 16px; flex-shrink: 0; }
+ .cs2-veto-team { flex: 1; color: var(--text2,#8d9399); font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+-.cs2-veto-action.ban { color: #ff4d4d; font-weight: 700; }
++.cs2-veto-action.ban { color: #ff1744; font-weight: 700; }
+ .cs2-veto-action.pick { color: #00e676; font-weight: 700; }
+ .cs2-veto-action.decider { color: #ffa726; font-weight: 700; }
+ .cs2-veto-map { flex: 2; text-transform: uppercase; }
+@@ -21973,17 +21973,17 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-map-bar.map-vertigo { background: linear-gradient(90deg, rgba(40,100,200,0.10) 0%, var(--bg3,#181c20) 70%); }
+ .cs2-map-bar.map-dust2   { background: linear-gradient(90deg, rgba(200,160,80,0.10) 0%, var(--bg3,#181c20) 70%); }
+ /* Map advantage glow on left border */
+-.cs2-map-bar.adv-t1 { border-left: 2px solid #FF6B00; padding-left: 8px; box-shadow: inset 3px 0 10px rgba(255,107,0,0.10); }
++.cs2-map-bar.adv-t1 { border-left: 2px solid #ff6d2e; padding-left: 8px; box-shadow: inset 3px 0 10px rgba(255,107,0,0.10); }
+ .cs2-map-bar.adv-t2 { border-left: 2px solid #3b82f6; padding-left: 8px; box-shadow: inset 3px 0 10px rgba(59,130,246,0.10); }
+ /* Series score dots */
+ .cs2-map-dots { display: flex; align-items: center; gap: 7px; }
+ .cs2-dots-side { display: flex; gap: 4px; }
+ .cs2-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bg4,#1e2328); border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; transition: box-shadow 0.2s; }
+-.cs2-dot.d-t1 { background: #FF6B00; border-color: rgba(255,107,0,0.9); box-shadow: 0 0 6px rgba(255,107,0,0.65); }
++.cs2-dot.d-t1 { background: #ff6d2e; border-color: rgba(255,107,0,0.9); box-shadow: 0 0 6px rgba(255,107,0,0.65); }
+ .cs2-dot.d-t2 { background: #3b82f6; border-color: rgba(59,130,246,0.9); box-shadow: 0 0 6px rgba(59,130,246,0.65); }
+ .cs2-dot-sep { width: 1px; height: 13px; background: var(--bg4,#1e2328); margin: 0 1px; }
+ /* CT/T round score colors */
+-.cs2-rds-t1 { color: #FF6B00; font-weight: 700; }
++.cs2-rds-t1 { color: #ff6d2e; font-weight: 700; }
+ .cs2-rds-t2 { color: #3b82f6; font-weight: 700; }
+ /* Footer */
+ .cs2-card-foot { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid var(--bg4,#1e2328); flex-wrap: wrap; gap: 6px; }
+@@ -22007,7 +22007,7 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-highlights-bar { display: flex; align-items: center; gap: 5px; padding: 6px 12px; flex-wrap: wrap; border-top: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); }
+ .cs2-hl-label { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); text-transform: uppercase; letter-spacing: 0.04em; flex-shrink: 0; }
+ .cs2-hl-btn { font-family:'DM Mono',monospace; font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--bg4,#1e2328); background: var(--bg2,#111417); color: var(--text2,#8d9399); cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+-.cs2-hl-btn:hover, .cs2-hl-btn.active { border-color: #FF6B00; color: #FF6B00; background: rgba(255,107,0,0.08); }
++.cs2-hl-btn:hover, .cs2-hl-btn.active { border-color: #ff6d2e; color: #ff6d2e; background: rgba(255,107,0,0.08); }
+ /* Video player */
+ .cs2-hl-player { position: relative; background: #000; border-top: 1px solid var(--bg4,#1e2328); }
+ .cs2-hl-video { width: 100%; max-height: 200px; display: block; }
+@@ -22026,7 +22026,7 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-dash-row { border-bottom: 1px solid var(--bg4,#1e2328); background: var(--bg2,#111417); transition: background 0.12s; }
+ .cs2-dash-row:hover { background: var(--bg3,#181c20); }
+ .cs2-dash-row:last-child { border-bottom: 0; }
+-.cs2-dash-row.cs2-dash-live { border-left: 3px solid #FF6B00; }
++.cs2-dash-row.cs2-dash-live { border-left: 3px solid #ff6d2e; }
+ .cs2-dash-table td { padding: 8px 10px; vertical-align: middle; }
+ .cs2-dash-score { font-family: 'DM Mono',monospace; white-space: nowrap; min-width: 70px; text-align: center; }
+ .cs2-dash-teams { min-width: 150px; }
+@@ -22040,7 +22040,7 @@ body[data-page="cs2"] footer { display: none !important; }
+ .cs2-verdict-badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-sm); font-family: 'DM Mono',monospace; font-size: 11px; font-weight: 700; white-space: nowrap; }
+ .cs2-verdict-strong { background: rgba(0,230,118,0.12); border: 1px solid rgba(0,230,118,0.5); color: #00e676; }
+ .cs2-verdict-mild   { background: rgba(255,167,38,0.12); border: 1px solid rgba(255,167,38,0.5); color: #ffa726; }
+-.cs2-verdict-skip   { background: rgba(255,77,77,0.10);  border: 1px solid rgba(255,77,77,0.4);  color: #ff4d4d; }
++.cs2-verdict-skip   { background: rgba(255,77,77,0.10);  border: 1px solid rgba(255,77,77,0.4);  color: #ff1744; }
+ .cs2-verdict-hold   { background: rgba(141,147,153,0.10);border: 1px solid rgba(141,147,153,0.3);color: #8d9399; }
+ /* Tier 3 badge */
+ .cs2-tier3-badge { font-family:'DM Mono',monospace; font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; background:rgba(255,167,38,0.12); border:1px solid rgba(255,167,38,0.35); color:#ffa726; margin-left:8px; vertical-align:middle; text-transform:uppercase; letter-spacing:0.05em; }
+@@ -22204,12 +22204,12 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
+ .cs2-tgroup-head { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--bg3,#181c20); }
+ .cs2-tg-logo { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; flex-shrink: 0; }
+ .cs2-tg-name { font-family: 'Instrument Sans',sans-serif; font-weight: 700; font-size: 12px; color: var(--text,#e8eaed); flex: 1; text-transform: uppercase; letter-spacing: 0.05em; }
+-.cs2-tg-live-pill { display: inline-flex; align-items: center; gap: 3px; font-family: 'DM Mono',monospace; font-size: 9px; font-weight: 700; color: #FF6B00; margin-right: 4px; }
++.cs2-tg-live-pill { display: inline-flex; align-items: center; gap: 3px; font-family: 'DM Mono',monospace; font-size: 9px; font-weight: 700; color: #ff6d2e; margin-right: 4px; }
+ .cs2-tg-count { font-family: 'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); }
+ /* Match row */
+ .cs2-row { display: flex; align-items: center; background: var(--bg2,#111417); border-top: 1px solid var(--bg4,#1e2328); transition: background 0.12s; min-height: 58px; position: relative; }
+ .cs2-row:hover { background: rgba(255,107,0,0.03); }
+-.cs2-row.is-live { border-left: 2px solid #FF6B00; background: rgba(255,107,0,0.015); }
++.cs2-row.is-live { border-left: 2px solid #ff6d2e; background: rgba(255,107,0,0.015); }
+ .cs2-row.has-value-map { border-left: 2px solid rgba(0,230,118,0.6); background: rgba(0,230,118,0.015); }
+ /* Status col */
+ .cs2-row-status { width: 74px; flex-shrink: 0; padding: 0 10px; text-align: center; }
+@@ -22231,16 +22231,16 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
+ .cs2-row-prob { margin-top: 5px; }
+ .cs2-row-prob-bar { height: 3px; border-radius: 2px; overflow: hidden; display: flex; }
+ .cs2-row-prob-ct { background: #3b82f6; }
+-.cs2-row-prob-t  { background: #FF6B00; }
++.cs2-row-prob-t  { background: #ff6d2e; }
+ /* Odds col */
+ .cs2-row-odds { display: flex; flex-direction: column; gap: 4px; padding: 0 10px; flex-shrink: 0; min-width: 68px; }
+ .cs2-row-odd { font-family: 'DM Mono',monospace; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 4px; border: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); color: var(--text2,#8d9399); cursor: pointer; white-space: nowrap; transition: background 0.12s, border-color 0.12s, color 0.12s; text-align: center; }
+-.cs2-row-odd:hover { border-color: rgba(255,107,0,0.5); color: #FF6B00; }
++.cs2-row-odd:hover { border-color: rgba(255,107,0,0.5); color: #ff6d2e; }
+ .cs2-row-odd.best { border-color: rgba(0,230,118,0.45); color: #00e676; background: rgba(0,230,118,0.07); }
+ /* Action col */
+ .cs2-row-action { flex-shrink: 0; padding: 0 14px 0 4px; }
+ .cs2-row-scout-btn { background: var(--bg3,#181c20); border: 1px solid var(--bg4,#1e2328); color: var(--text3,#5a6068); cursor: pointer; font-family: 'DM Mono',monospace; font-size: 10px; padding: 4px 9px; border-radius: 4px; transition: border-color 0.12s, color 0.12s; white-space: nowrap; }
+-.cs2-row-scout-btn:hover { border-color: #FF6B00; color: #FF6B00; }
++.cs2-row-scout-btn:hover { border-color: #ff6d2e; color: #ff6d2e; }
+ /* Map sub-bar (live) */
+ .cs2-row-mapbar { display: flex; align-items: center; gap: 8px; padding: 4px 74px 5px; border-top: 1px solid var(--bg4,#1e2328); background: var(--bg3,#181c20); font-family: 'DM Mono',monospace; font-size: 10px; color: var(--text2,#8d9399); }
+ /* Responsive */
+@@ -22515,7 +22515,7 @@ body[data-page="mma"] footer { display: none !important; }
+ .mma-bet-card-head { font-family: Syne,sans-serif; font-weight: 800; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+ .mma-bet-card.safe  .mma-bet-card-head { color: #00E676; }
+ .mma-bet-card.value .mma-bet-card-head { color: #D4AF37; }
+-.mma-bet-card.wild  .mma-bet-card-head { color: #FF6B00; }
++.mma-bet-card.wild  .mma-bet-card-head { color: #ff6d2e; }
+ .mma-bet-card-pick { font-family:'Instrument Sans',sans-serif; font-size: 13px; font-weight: 700; color: var(--text,#e8eaed); margin-bottom: 3px; }
+ .mma-bet-card-meta { font-family:'DM Mono',monospace; font-size: 10px; color: var(--text3,#5a6068); margin-bottom: 3px; }
+ .mma-bet-card-reason { font-size: 11.5px; color: var(--text2,#8d9399); line-height: 1.4; }
+@@ -22661,7 +22661,7 @@ body[data-page="mma"] footer { display: none !important; }
+   --tn2-text: #ffffff;
+   --tn2-text-secondary: #94a3b8;
+   --tn2-text-muted: #64748b;
+-  --tn2-live: #ef4444;
++  --tn2-live: #ff6d2e;
+   --tn2-warning: #f59e0b;
+   --tn2-gold: #fbbf24;
+   --tn2-purple: #a855f7;
+-- 
+2.47.3
+

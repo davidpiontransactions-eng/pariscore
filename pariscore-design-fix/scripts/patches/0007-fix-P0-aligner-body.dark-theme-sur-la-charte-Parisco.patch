@@ -1,0 +1,78 @@
+From fc219fbb428c7239e85df2b7549b4868778fcd68 Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Mon, 29 Jun 2026 12:55:52 +0000
+Subject: [PATCH 07/18] fix(P0): aligner body.dark-theme sur la charte
+ Pariscore (12 tokens)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- bg/bg2/bg3/bg4: #0a0d0f→#0b0e17, #15181c→#0e121e, #1e2328→#131722, #262c32→#161c2a
+- accent: #ff1f2d (rouge) → #00e676 (VERT charter — restaure l'identité Pariscore)
+- red: #ff4d4d → #ff1744 (charter danger)
+- amber: #ffa726 → #ff6d2e (charter live)
+- blue: #29b6f6 → #0077ff (charter accent-blue)
+- text: #e8eaed → #ffffff (BLANC charter — corrige contraste AA)
+- text2: #8d9399 → #94a3b8 (charter text-secondary)
+- text3: #5a6068 → #707e94 (charter text-tertiary — passe AA large)
+- border: 0.07 → 0.05 (charter border)
+- border2: 0.12 → 0.08 (charter border-medium)
+
+Référence: audit/pariscore/frontend/src/styles/tokens.css
+---
+ pariscore.html | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/pariscore.html b/pariscore.html
+index 08ae71d..50d770a 100755
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -3189,27 +3189,27 @@
+   /* ── Nuit Profonde — réactivé v3.2 (rollback bd z55o) ── */
+   body.dark-theme {
+     color-scheme: dark;
+-    --bg: #0a0d0f;
+-    --bg2: #15181c;
+-    --bg3: #1e2328;
+-    --bg4: #262c32;
+-    --accent: #ff1f2d;
+-    --accent-dim: #cc0f1c;
+-    --accent-bg: rgba(255,31,45,0.08);
++    --bg: #0b0e17;          /* ✅ charter bg-primary */
++    --bg2: #0e121e;          /* ✅ charter bg-secondary */
++    --bg3: #131722;          /* ✅ charter card */
++    --bg4: #161c2a;          /* ✅ charter card-hover */
++    --accent: #00e676;       /* ✅ VERT restauré (charter accent-green) */
++    --accent-dim: #00c853;
++    --accent-bg: rgba(0,230,118,0.08);
+     --green: #00e676;
+     --green-dim: #00c85a;
+     --green-bg: rgba(0,230,118,0.08);
+-    --red: #ff4d4d;
+-    --red-bg: rgba(255,77,77,0.08);
+-    --amber: #ffa726;
+-    --amber-bg: rgba(255,167,38,0.1);
+-    --blue: #29b6f6;
+-    --blue-bg: rgba(41,182,246,0.09);
+-    --text: #e8eaed;
+-    --text2: #8d9399;
+-    --text3: #5a6068;
+-    --border: rgba(255,255,255,0.07);
+-    --border2: rgba(255,255,255,0.12);
++    --red: #ff1744;          /* ✅ charter danger */
++    --red-bg: rgba(255,23,68,0.08);
++    --amber: #ff6d2e;        /* ✅ charter live */
++    --amber-bg: rgba(255,109,46,0.1);
++    --blue: #0077ff;         /* ✅ charter accent-blue */
++    --blue-bg: rgba(0,119,255,0.09);
++    --text: #ffffff;         /* ✅ BLANC restauré (charter text-primary) */
++    --text2: #94a3b8;        /* ✅ charter text-secondary */
++    --text3: #707e94;        /* ✅ charter text-tertiary — passe AA large */
++    --border: rgba(255,255,255,0.05);   /* ✅ charter border */
++    --border2: rgba(255,255,255,0.08);  /* ✅ charter border-medium */
+     --card-shadow: none;
+     --gauge-rail: rgba(255,255,255,0.08);
+     --gauge-rail-opacity: 0.6;
+-- 
+2.47.3
+
