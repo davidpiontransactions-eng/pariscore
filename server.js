@@ -25560,6 +25560,10 @@ function computeTennisElo() {
     });
     tx();
 
+    // bd — après recompute, mirrorer vers tennis_players_elo pour alimenter le
+    // calculator RAM WElo + la route /api/v1/tennis/elo/rankings.
+    try { _mirrorTennisEloToPlayersElo(); } catch (_) { /* swallow — non bloquant */ }
+
     _tennisEloLastComputeTs = Date.now();
     try { kvSet('tennis_elo_last_compute', _tennisEloLastComputeTs); } catch (_) { /* swallow */ }
 
@@ -25578,6 +25582,55 @@ function getTennisEloLastCompute() {
     if (stored) _tennisEloLastComputeTs = stored;
   } catch (_) { /* swallow */ }
   return _tennisEloLastComputeTs;
+}
+
+// bd — Miroir tennis_elo → tennis_players_elo.
+// tennis_players_elo est la source du calculator RAM WElo (initTennisEloCalculator)
+// et de la route /api/v1/tennis/elo/rankings. Si elle reste vide, les rankings
+// renvoient du vide même si tennis_elo contient les ratings. Cette fonction
+// repeuple tennis_players_elo à partir des ratings surface='ALL' (1 ligne/joueur),
+// en dédoublonnant les rares player_id collisionnant ATP/WTA (ID BSD ITF mal résolus).
+// Idempotente : DELETE + INSERT en transaction. À appeler après tout recompute ELO.
+function _mirrorTennisEloToPlayersElo() {
+  const t0 = Date.now();
+  try {
+    const rows = sqldb.prepare(`
+      WITH ranked AS (
+        SELECT player_id, player_name, elo, matches_count, last_match_date, tour,
+          ROW_NUMBER() OVER (
+            PARTITION BY CAST(player_id AS TEXT)
+            ORDER BY last_match_date DESC NULLS LAST, matches_count DESC
+          ) AS rn
+        FROM tennis_elo
+        WHERE surface = 'ALL'
+      )
+      SELECT CAST(player_id AS TEXT) AS player_id, player_name, elo AS elo_rating,
+             matches_count AS matches_played, last_match_date AS last_match_at,
+             tour AS circuit
+      FROM ranked WHERE rn = 1
+    `).all();
+    if (!rows.length) {
+      console.log('  [Elo] Miroir players_elo : tennis_elo vide, rien à mirrorer');
+      return 0;
+    }
+    const nowSec = Math.floor(Date.now() / 1000);
+    const tx = sqldb.transaction(() => {
+      sqldb.exec('DELETE FROM tennis_players_elo');
+      const stmt = sqldb.prepare(`INSERT OR REPLACE INTO tennis_players_elo
+        (player_id, player_name, elo_rating, matches_played, last_match_at, circuit, atp_rank, wta_rank, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)`);
+      for (const r of rows) {
+        stmt.run(r.player_id, r.player_name, r.elo_rating, r.matches_played, r.last_match_at, r.circuit, nowSec, nowSec);
+      }
+    });
+    tx();
+    const elapsed = Date.now() - t0;
+    console.log(`  [Elo] ✓ ${rows.length} joueurs mirrorés vers tennis_players_elo (${elapsed} ms)`);
+    return rows.length;
+  } catch (e) {
+    console.warn('  [Elo] ⚠ miroir players_elo échec:', e.message);
+    return 0;
+  }
 }
 
 // Lookup par nom (case-insensitive). Surface défaut 'ALL' (blended).
@@ -49035,6 +49088,18 @@ async function bootInit() {
     } catch (e) { console.warn('  [Boot] ⚠ retro-enrich tennisHistory (non-bloquant):', e.message); }
 
     // Init WElo Tennis calculator
+    // bd — pré-alimenter tennis_players_elo depuis tennis_elo si vide, sinon le
+    // calculator RAM (qui lit players_elo) démarre à 0 joueurs → rankings vide.
+    try {
+      const _peCount = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_players_elo').get().n;
+      const _teCount = sqldb.prepare('SELECT COUNT(*) AS n FROM tennis_elo WHERE surface = ?').get('ALL').n;
+      if (_peCount === 0 && _teCount > 0) {
+        console.log(`  [Boot] tennis_players_elo vide mais tennis_elo a ${_teCount} joueurs (surface=ALL) → miroir`);
+        _mirrorTennisEloToPlayersElo();
+      }
+    } catch (e) {
+      console.warn('  [Boot] ⚠ pré-miroir players_elo:', e.message);
+    }
     try {
       initTennisEloCalculator();
     } catch (e) {
@@ -50378,6 +50443,21 @@ if (MATCHSTAT_ENABLED) {
           console.log('  [Elo] Boot compute (tennis_elo vide, table tennis_matches legacy présente)…');
           computeTennisElo();
         }
+        // bd — Staleness check : si tennis_matches_internal est nettement plus
+        // récent que les ratings ELO (source TENNIS_ELO_SOURCE=union/internal),
+        // les ratings sont périmés → recompute idempotent au boot.
+        // Couvre le cas où tennis_elo est non vide mais figé (ex. ratings d'un
+        // précédent boot en source 'legacy', alors que l'ETL a rajeuni la table interne).
+        try {
+          const eloMaxRow = sqldb.prepare('SELECT MAX(last_match_date) AS mx FROM tennis_elo').get();
+          const internalMaxRow = sqldb.prepare("SELECT MAX(tourney_date) AS mx FROM tennis_matches_internal WHERE tourney_date IS NOT NULL").get();
+          const eloMax = eloMaxRow && eloMaxRow.mx ? Number(eloMaxRow.mx) : 0;
+          const internalMax = internalMaxRow && internalMaxRow.mx ? Number(internalMaxRow.mx) : 0;
+          if (internalMax > 0 && internalMax - eloMax > 14 /* jours en YYYYMMDD relatif */) {
+            console.log(`  [Elo] Staleness détecté (data interne ${internalMax}, elo ${eloMax}) → recompute (source ${process.env.TENNIS_ELO_SOURCE || 'legacy'})`);
+            computeTennisElo();
+          }
+        } catch (_) { /* swallow — non bloquant */ }
       } catch (_) { /* swallow */ }
     }, 5000);
     return;

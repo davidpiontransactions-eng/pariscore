@@ -16213,11 +16213,17 @@ function psSetLang(v) {
           }
   })();
         break;
-      case 'cal':
-        break;
+      // bd — case 'cal' supprimé : le calendrier tn2 (tn2Calendar/tn2LoadCalendar)
+      // était du dead code (élément #tn2-cal-timeline inexistant, aucun appelant).
+      // Le calendrier tennis réellement utilisé est le calendrier TEX
+      // (#tennis-tex-calendar-section, loadTexCalendar dans pariscore.js).
     }
   };
 
+  // Writer CANONIQUE de la KPI bar tennis (IDs tn2-kpi-{live,bets,top,tournaments}).
+  // Contrat : écriture partielle autorisée — une clé absente (undefined/null)
+  // préserve la valeur précédente au lieu de l'écraser. Tous les renderers tn2
+  // et le module TennisScope DOIVENT passer par ici (plus de writer concurrent).
   window.tn2UpdateKPI = function(data) {
     var el = document.getElementById('tn2-kpi-live');
     if (el) el.textContent = data.live != null ? data.live : el.textContent;
@@ -16656,7 +16662,9 @@ function psSetLang(v) {
       if (window.tn2UpdateKPI) tn2UpdateKPI({ tournaments: 0 });
       return;
     }
-    if (window.tn2UpdateKPI) tn2UpdateKPI({ tournaments: list.length, live: (document.getElementById('tn2-kpi-live') ? parseInt(document.getElementById('tn2-kpi-live').textContent) || 0 : 0), bets: (document.getElementById('tn2-kpi-bets') ? parseInt(document.getElementById('tn2-kpi-bets').textContent) || 0 : 0), top: (document.getElementById('tn2-kpi-top') ? parseInt(document.getElementById('tn2-kpi-top').textContent) || 0 : 0) });
+    // bd — on ne passe que la clé connue ; tn2UpdateKPI préserve les autres
+    // compteurs via son contrat != null (plus de relecture DOM fragile).
+    if (window.tn2UpdateKPI) tn2UpdateKPI({ tournaments: list.length });
     var html = '';
     for (var i = 0; i < list.length; i++) {
       var t = list[i];
@@ -16826,88 +16834,6 @@ window.tn2LoadH2H = function(player1, player2) {
     }
   })();
 };
-
-window.tn2Calendar = function(circuit) {
-  var btns = document.querySelectorAll('.tn2-subtab');
-  for (var _ci = 0; _ci < btns.length; _ci++) btns[_ci].classList.remove('active');
-  var act = document.querySelector('.tn2-subtab[onclick*="' + circuit + '"]');
-  if (act) act.classList.add('active');
-  tn2LoadCalendar(circuit);
-};
-window.tn2LoadCalendar = function(circuit) {
-  circuit = circuit || 'atp';
-  var container = document.getElementById('tn2-cal-timeline');
-  if (!container) return;
-  container.innerHTML = '<div class="tn2-loading">Chargement...</div>';
-  (async function() {
-    try {
-      var r = await fetch('/api/v1/tennis/tournaments?circuit=' + circuit);
-      var data = await r.json();
-      var list = data.tournaments || data.events || data || [];
-      if (!list.length) {
-        container.innerHTML = '<div class="tn2-empty">Aucun tournoi trouvé</div>';
-        return;
-      }
-      // Group by month
-      var months = {};
-      for (var i = 0; i < list.length; i++) {
-        var t = list[i];
-        var dateStr = t.date || t.start_date || t.dates || '';
-        var month = 'À venir';
-        if (dateStr) {
-          try {
-            var d = new Date(dateStr);
-            month = d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-          } catch(e) { month = dateStr.substring(0, 7); }
-        }
-        if (!months[month]) months[month] = [];
-        months[month].push(t);
-      }
-      var html = '';
-      var monthKeys = Object.keys(months);
-      monthKeys.sort();
-      for (var mi = 0; mi < monthKeys.length; mi++) {
-        var mName = monthKeys[mi];
-        var tList = months[mName];
-        html += '<div class="tn2-timeline-month">';
-        html += '<div class="tn2-timeline-month-hdr">' + escapeHtml(mName) + '</div>';
-        for (var tj = 0; tj < tList.length; tj++) {
-          var t = tList[tj];
-          var tName = t.name || t.nom || t.tournament_name || 'Tournoi';
-          var tSurface = t.surface || t.terrain || '';
-          var tDates = t.dates || t.date || t.start_date || '';
-          if (t.end_date) tDates += ' - ' + t.end_date;
-          var tLocation = t.location || t.country || t.ville || '';
-          var tPrize = t.prize_money || t.prize || '';
-          var tTier = t.tier || t.category || '';
-          var surfaceDots = { 'Clay':'🟤', 'Grass':'🟢', 'Hard':'🔵', 'Carpet':'🟣', 'Indoor':'⚪' };
-          var surfIcon = surfaceDots[tSurface] || '🎾';
-          var tId = t.id || t.tournament_id || '';
-          html += '<div class="tn2-timeline-entry">';
-          html += '<span class="tn2-timeline-dot"></span>';
-          html += '<span class="tn2-cal-surf-icon">' + surfIcon + '</span>';
-          if (tTier) html += '<span class="tn2-badge-atp">' + escapeHtml(tTier) + '</span>';
-          html += '<div style="flex:1;min-width:0;">';
-          html += '<div class="tn2-cal-name">' + escapeHtml(tName) + '</div>';
-          html += '<div class="tn2-cal-meta">';
-          if (tSurface) html += escapeHtml(tSurface) + ' · ';
-          if (tLocation) html += escapeHtml(tLocation) + ' · ';
-          if (tDates) html += escapeHtml(tDates);
-          html += '</div></div>';
-          if (tPrize) html += '<span class="tn2-cal-prize">' + escapeHtml(tPrize) + '</span>';
-          if (tId) html += '<button class="tn2-cal-matches-btn" data-tid="' + tId + '" onclick="tn2ToggleTournamentMatches(' + tId + ', this)" title="Voir les matchs du tournoi">🔮</button>';
-          html += '</div>';
-          if (tId) html += '<div class="tn2-tournament-matches" id="tn2-tm-' + tId + '" style="display:none;"></div>';
-        }
-        html += '</div>';
-      }
-      container.innerHTML = html;
-    } catch (e) {
-      container.innerHTML = '<div class="tn2-empty">Erreur chargement calendrier</div>';
-    }
-  })();
-};
-
 
 window.tn2ToggleTournamentMatches = function(tournamentId, btnEl) {
   var container = document.getElementById('tn2-tm-' + tournamentId);
@@ -25422,120 +25348,9 @@ if (_origTn2SwitchTab) {
   root.Scope=Scope;
 })(typeof window!=='undefined'?window:this);
 
-/* ============================================================================
-   Données d'exemple — shape EXACTE des matchs Pariscore (buildUnifiedTennis)
-   ============================================================================ */
-var SAMPLE_MATCHES=[
-  {
-    id:"m1", tournament:"Roland-Garros", city:"Paris", tour:"ATP", surface:"Clay", round:"QF",
-    prizePool:"€53.5M", bestOf:5,
-    start_time:new Date(Date.now()+90*60000).toISOString(),
-    status:"prematch", _isLive:false,
-    player1:{name:"Carlos Alcaraz",flag:"🇪🇸",rank:1,form:78,elo_surface:2310,eloTrend:[2240,2255,2270,2260,2280,2290,2300,2295,2305,2310]},
-    player2:{name:"Jannik Sinner",flag:"🇮🇹",rank:2,form:72,elo_surface:2280,eloTrend:[2290,2300,2310,2295,2285,2290,2300,2280,2285,2280]},
-    odds_player1:1.95, odds_player2:1.85,
-    predictions:{elo:0.54},
-    glicko2:{p1_rating:2310,p2_rating:2280,p1_prob:0.54,p1_serve:2150,p2_serve:2080,p1_return:1820,p2_return:1790},
-    momentum:{kfs_direction:"neutral",kfs_confidence:0,momentum_shift:0.02},
-    best_ev_model:{label:"Alcaraz Win",odds:1.95,prob:54,ev:5.3,ev_pct:5.3},
-    confidence_badge:{p1:68,p2:55},
-    h2h:{p1Wins:4,p2Wins:3,lastMeetings:[
-      {date:"2024-03-15",surface:"Hard",tournament:"Indian Wells",winner:1,score:"7-6 6-3"},
-      {date:"2023-09-08",surface:"Hard",tournament:"US Open",winner:2,score:"6-3 6-7 6-4"},
-      {date:"2023-05-18",surface:"Clay",tournament:"Rome",winner:1,score:"6-4 6-2"}
-    ]}
-  },
-  {
-    id:"m2", tournament:"Wimbledon", city:"London", tour:"ATP", surface:"Grass", round:"SF",
-    prizePool:"£50M", bestOf:5,
-    start_time:new Date(Date.now()+150*60000).toISOString(),
-    status:"prematch", _isLive:false,
-    player1:{name:"Novak Djokovic",flag:"🇷🇸",rank:3,form:81,elo_surface:2290,eloTrend:[2270,2280,2260,2275,2285,2290,2285,2295,2290,2290]},
-    player2:{name:"Daniil Medvedev",flag:"🇷🇺",rank:4,form:64,elo_surface:2230,eloTrend:[2250,2240,2235,2245,2230,2225,2235,2230,2228,2230]},
-    odds_player1:1.65, odds_player2:2.25,
-    predictions:{elo:0.62},
-    glicko2:{p1_rating:2290,p2_rating:2230,p1_prob:0.62,p1_serve:2180,p2_serve:2120,p1_return:1880,p2_return:1920},
-    momentum:{kfs_direction:"p1",kfs_confidence:42,momentum_shift:0.18},
-    best_ev_model:{label:"Djokovic Win",odds:1.65,prob:62,ev:2.3,ev_pct:2.3},
-    confidence_badge:{p1:75,p2:48},
-    h2h:{p1Wins:11,p2Wins:5,lastMeetings:[
-      {date:"2024-01-28",surface:"Hard",tournament:"AO",winner:1,score:"6-3 6-2 6-4"},
-      {date:"2023-11-12",surface:"Hard",tournament:"ATP Finals",winner:2,score:"6-4 6-3"}
-    ]}
-  },
-  {
-    id:"m3", tournament:"US Open", city:"New York", tour:"ATP", surface:"Hard", round:"R16",
-    prizePool:"$75M", bestOf:5,
-    start_time:new Date(Date.now()+240*60000).toISOString(),
-    status:"prematch", _isLive:false,
-    player1:{name:"Taylor Fritz",flag:"🇺🇸",rank:7,form:70,elo_surface:2200,eloTrend:[2190,2185,2200,2205,2195,2200,2210,2200,2195,2200]},
-    player2:{name:"Alexander Zverev",flag:"🇩🇪",rank:5,form:74,elo_surface:2210,eloTrend:[2200,2210,2205,2215,2210,2220,2215,2210,2205,2210]},
-    odds_player1:2.40, odds_player2:1.55,
-    predictions:{elo:0.44},
-    glicko2:{p1_rating:2200,p2_rating:2210,p1_prob:0.44,p1_serve:2190,p2_serve:2150,p1_return:1750,p2_return:1810},
-    momentum:{kfs_direction:"p2",kfs_confidence:35,momentum_shift:-0.12},
-    best_ev_model:{label:"Zverev Win",odds:1.55,prob:56,ev:8.6,ev_pct:8.6},
-    confidence_badge:{p1:52,p2:64},
-    h2h:{p1Wins:3,p2Wins:5,lastMeetings:[
-      {date:"2024-04-20",surface:"Clay",tournament:"Madrid",winner:2,score:"6-4 7-6"}
-    ]}
-  },
-  {
-    id:"m4", tournament:"Cincinnati Masters", city:"Cincinnati", tour:"ATP", surface:"Hard", round:"QF",
-    prizePool:"$6.8M", bestOf:3,
-    start_time:new Date(Date.now()+45*60000).toISOString(),
-    status:"prematch", _isLive:false,
-    player1:{name:"Holger Rune",flag:"🇩🇰",rank:8,form:76,elo_surface:2140,eloTrend:[2120,2130,2140,2135,2145,2140,2150,2145,2140,2140]},
-    player2:{name:"Hubert Hurkacz",flag:"🇵🇱",rank:9,form:69,elo_surface:2120,eloTrend:[2110,2120,2115,2125,2120,2115,2120,2125,2120,2120]},
-    odds_player1:1.80, odds_player2:2.00,
-    predictions:{elo:0.55},
-    glicko2:{p1_rating:2140,p2_rating:2120,p1_prob:0.55,p1_serve:2080,p2_serve:2150,p1_return:1850,p2_return:1720},
-    momentum:{kfs_direction:"neutral",kfs_confidence:0,momentum_shift:0.05},
-    best_ev_model:{label:"Rune Win",odds:1.80,prob:55,ev:4.0,ev_pct:4.0},
-    confidence_badge:{p1:62,p2:50},
-    h2h:{p1Wins:2,p2Wins:2,lastMeetings:[
-      {date:"2024-02-10",surface:"Hard",tournament:"Rotterdam",winner:1,score:"6-4 6-3"}
-    ]}
-  },
-  // ── LIVE matches (shape avec _live) ──
-  {
-    id:"m5", tournament:"Madrid Open", city:"Madrid", tour:"ATP", surface:"Clay", round:"F",
-    prizePool:"€7.7M", bestOf:3,
-    start_time:new Date(Date.now()-50*60000).toISOString(),
-    status:"live", _isLive:true, liveProbability:0.61,
-    player1:{name:"Iga Swiatek",flag:"🇵🇱",rank:1,form:85,elo_surface:2280,eloTrend:[2260,2270,2280,2275,2285,2280,2290,2285,2280,2280]},
-    player2:{name:"Aryna Sabalenka",flag:"🇧🇾",rank:2,form:80,elo_surface:2240,eloTrend:[2230,2240,2235,2245,2240,2235,2245,2240,2238,2240]},
-    odds_player1:1.70, odds_player2:2.15,
-    predictions:{elo:0.58},
-    glicko2:{p1_rating:2280,p2_rating:2240,p1_prob:0.58,p1_serve:2050,p2_serve:2080,p1_return:1900,p2_return:1850},
-    momentum:{kfs_direction:"p1",kfs_confidence:58,momentum_shift:0.24},
-    best_ev_model:{label:"Swiatek Win",odds:1.70,prob:61,ev:3.7,ev_pct:3.7},
-    confidence_badge:{p1:72,p2:58},
-    _live:{sets:[{p1:6,p2:4}],currentSetGames:{p1:3,p2:2},currentGamePoints:{p1:2,p2:1},server:1},
-    h2h:{p1Wins:7,p2Wins:4,lastMeetings:[
-      {date:"2024-05-10",surface:"Clay",tournament:"Rome",winner:1,score:"6-2 6-3"},
-      {date:"2024-01-25",surface:"Hard",tournament:"AO",winner:2,score:"6-4 3-6 6-2"}
-    ]}
-  },
-  {
-    id:"m6", tournament:"Queen's Club", city:"London", tour:"ATP", surface:"Grass", round:"SF",
-    prizePool:"€2.5M", bestOf:3,
-    start_time:new Date(Date.now()-30*60000).toISOString(),
-    status:"live", _isLive:true, liveProbability:0.43,
-    player1:{name:"Coco Gauff",flag:"🇺🇸",rank:3,form:71,elo_surface:2100,eloTrend:[2090,2100,2095,2105,2100,2110,2105,2100,2095,2100]},
-    player2:{name:"Elena Rybakina",flag:"🇰🇿",rank:4,form:83,elo_surface:2150,eloTrend:[2140,2150,2145,2155,2150,2160,2155,2150,2148,2150]},
-    odds_player1:2.30, odds_player2:1.62,
-    predictions:{elo:0.48},
-    glicko2:{p1_rating:2100,p2_rating:2150,p1_prob:0.48,p1_serve:2020,p2_serve:2160,p1_return:1880,p2_return:1780},
-    momentum:{kfs_direction:"p2",kfs_confidence:48,momentum_shift:-0.21},
-    best_ev_model:{label:"Rybakina Win",odds:1.62,prob:57,ev:9.8,ev_pct:9.8},
-    confidence_badge:{p1:50,p2:68},
-    _live:{sets:[{p1:3,p2:6}],currentSetGames:{p1:2,p2:4},currentGamePoints:{p1:1,p2:2},server:2},
-    h2h:{p1Wins:2,p2Wins:3,lastMeetings:[
-      {date:"2024-06-15",surface:"Grass",tournament:"Berlin",winner:2,score:"7-5 6-3"}
-    ]}
-  }
-];
+/* SAMPLE_MATCHES supprimé (code mort hérité de demo.html) —
+   les données live proviennent désormais de TennisScope Bridge (fetch /api/v1/tennis/value-bets). */
+
 
 
 window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});};
@@ -25651,11 +25466,25 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     var withBets = matches.filter(function (m) { return m.odds_player1 && m.odds_player2; });
     var tournaments = {};
     matches.forEach(function (m) { if (m.tournament) tournaments[m.tournament] = 1; });
-    var setNum = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = String(v); };
-    setNum('tn2-kpi-live', live.length);
-    setNum('tn2-kpi-bets', withBets.length);
-    setNum('tn2-kpi-top', Math.min(10, matches.length));
-    setNum('tn2-kpi-tournaments', Object.keys(tournaments).length);
+    // bd — délègue vers le writer canonique tn2UpdateKPI (writer unique de la
+    // KPI bar) pour éviter le conflit de deux systèmes écrivant les mêmes IDs.
+    // tn2UpdateKPI est exposé en global par le legacy tn2 (window.tn2UpdateKPI).
+    var kpi = {
+      live: live.length,
+      bets: withBets.length,
+      top: Math.min(10, matches.length),
+      tournaments: Object.keys(tournaments).length
+    };
+    if (typeof window.tn2UpdateKPI === 'function') {
+      window.tn2UpdateKPI(kpi);
+    } else {
+      // Fallback : écriture directe si le legacy n'est pas chargé
+      var setNum = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = String(v); };
+      setNum('tn2-kpi-live', kpi.live);
+      setNum('tn2-kpi-bets', kpi.bets);
+      setNum('tn2-kpi-top', kpi.top);
+      setNum('tn2-kpi-tournaments', kpi.tournaments);
+    }
   }
 
   // ── Rendu ─────────────────────────────────────────────────────────────
