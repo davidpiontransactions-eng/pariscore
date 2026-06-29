@@ -867,6 +867,7 @@ function showPage(pageId, linkEl) {
   try { if (pageId !== 'tennis' && typeof stopTennisLive === 'function') stopTennisLive(); } catch(e) {}
   try { if (pageId !== 'tennis' && typeof stopTennisValueBets === 'function') stopTennisValueBets(); } catch(e) {}
   try { if (pageId !== 'tennis' && typeof stopTennisTop10 === 'function') stopTennisTop10(); } catch(e) {}
+  try { if (pageId !== 'tennis' && typeof stopTexCalendarAutoRefresh === 'function') stopTexCalendarAutoRefresh(); } catch(e) {}
   if (_prevPageId) {
     var _prevPage = document.getElementById('page-' + _prevPageId);
     if (_prevPage) _prevPage._scrollY = window.scrollY;
@@ -927,7 +928,7 @@ function showPage(pageId, linkEl) {
   if (pageId === 'alertes')    try { initAlertesPage(); } catch(e) {}
   if (pageId === 'comparateur') try { initComparateur(); } catch(e) {}
   if (pageId === 'guide')    try { initStaticGuideNav(); } catch(e) {}
-  if (pageId === 'tennis')   { try { tn2SwitchTab('matchs'); } catch(e){}; try { startTennisLive(); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
+  if (pageId === 'tennis')   { try { tn2SwitchTab('matchs'); } catch(e){}; try { startTennisLive(); } catch(e){}; try { loadTennisAbstractRome(); } catch(e){}; try { loadTexCalendar(); } catch(e){}; try { startTexCalendarAutoRefresh(); } catch(e){}; try { loadTaEloIndices().then(enrichTennisVbWithTA); } catch(e){}; try { loadTaLotteryIndices(); } catch(e){}; try { loadTaMCPLadder('men'); } catch(e){}; try { loadTaBirthdaysRibbon(); } catch(e){} }
   try { if (pageId !== 'cs2' && typeof stopCs2Page === 'function') stopCs2Page(); } catch(e) {}
   if (pageId === 'cs2') try { initCs2Page(); } catch(e) {}
   try { if (pageId !== 'mma' && typeof stopMMAPage === 'function') stopMMAPage(); } catch(e) {}
@@ -5352,7 +5353,10 @@ async function loadTexCalendar() {
   const body = document.getElementById('tex-cal-body');
   const status = document.getElementById('tex-cal-status');
   if (!body) return;
-  body.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">${I18N.t('status.loading')}</div>`;
+  // bd — refresh silencieux : pas de flash "loading" sur les polls périodiques.
+  if (!_texCalSilent) {
+    body.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;">${I18N.t('status.loading')}</div>`;
+  }
   try {
     const r = await apiFetch(`/api/v1/tennis/tex/calendar?tour=${_texCalTour}`).then(r => r.json());
     if (r.error) throw new Error(r.detail || r.error);
@@ -5420,6 +5424,27 @@ async function loadTexCalendar() {
     body.innerHTML = `<div style="padding:24px;text-align:center;color:var(--red,#ff4d4d);font-family:'DM Mono',monospace;font-size:12px;">Erreur: ${_escapeHtmlSafe(e.message)}</div>`;
     if (status) status.textContent = 'Erreur';
   }
+}
+
+// bd — Auto-refresh du calendrier TEX (15 min). Auparavant loadTexCalendar n'était
+// appelé qu'une seule fois à l'entrée de l'onglet tennis (pariscore.js:930), le
+// calendrier ne se mettait donc jamais à jour. Le polling est silencieux (pas de
+// flash "loading") grâce au drapeau _texCalSilent : on ne réécrit le DOM que sur
+// changement réel. Arrêté quand on quitte l'onglet tennis (start/stop explicites).
+let _texCalTimer = null;
+let _texCalSilent = false;
+const TEX_CAL_REFRESH_MS = 15 * 60 * 1000;
+
+function startTexCalendarAutoRefresh() {
+  if (_texCalTimer) return; // déjà armé
+  _texCalTimer = setInterval(() => {
+    _texCalSilent = true; // supprime le flash "loading" au refresh périodique
+    loadTexCalendar().finally(() => { _texCalSilent = false; });
+  }, TEX_CAL_REFRESH_MS);
+}
+
+function stopTexCalendarAutoRefresh() {
+  if (_texCalTimer) { clearInterval(_texCalTimer); _texCalTimer = null; }
 }
 
 // ═══ TENNIS EXPLORER — MATCHS DU JOUR (sous-onglet MATCHS) ═══
