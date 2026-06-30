@@ -35881,6 +35881,93 @@ if (pathname === '/api/v1/admin/clear-cache' && req.method === 'DELETE') {
   }
 }
 
+// POST /api/v1/admin/enrich-photos — pré-charge en lot les photos joueurs Wikipedia.
+// Auth : JWT admin OU header X-Admin-Key.
+// Query : ?limit=100 (défaut, top-ranked d'abord) ?force=1 (re-fetch même si déjà en DB)
+// Tourne en arrière-plan : répond immédiatement {started, count}. Le log montre la progression.
+// Rate-limit respectueux : 1 fetch toutes les 250ms + yields event-loop pour ne pas bloquer.
+if (pathname === '/api/v1/admin/enrich-photos' && req.method === 'POST') {
+  const headerKey = req.headers['x-admin-key'];
+  const keyOk = process.env.ADMIN_PASSWORD && headerKey && headerKey === process.env.ADMIN_PASSWORD;
+  const user = getAuthUser(req);
+  if (!keyOk && (!user || user.role !== 'admin')) return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  const qp = new URLSearchParams(req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '');
+  const limit = Math.min(parseInt(qp.get('limit') || '100', 10), 1000);
+  const force = qp.get('force') === '1';
+  if (globalThis.__photoEnrichRunning) return jsonResponse(res, 409, { error: 'Enrichissement déjà en cours' });
+
+  // Sélectionne les joueurs : top-ranked d'abord (COALESCE atp_rank, wta_rank)
+  let players;
+  try {
+    players = sqldb.prepare(`SELECT player_name, circuit, COALESCE(atp_rank, wta_rank, 9999) as rk
+                             FROM tennis_players_elo
+                             WHERE player_name IS NOT NULL AND player_name != ''
+                             ORDER BY rk ASC
+                             LIMIT ?`).all(limit);
+  } catch (e) { return jsonResponse(res, 500, { error: 'tennis_players_elo inaccessible: ' + e.message }); }
+
+  globalThis.__photoEnrichRunning = true;
+  jsonResponse(res, 202, { started: true, count: players.length, message: 'Voir logs serveur pour progression' });
+
+  // Batch asynchrone en arrière-plan (non-bloquant, rate-limit 250ms)
+  (async () => {
+    let ok = 0, skip = 0, fail = 0;
+    const t0 = Date.now();
+    console.log(`[PhotoEnrich] Démarrage batch ${players.length} joueurs (force=${force})`);
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i];
+      // Skip si déjà en DB (sauf force=1)
+      if (!force) {
+        try {
+          const ex = sqldb.prepare('SELECT player_id FROM player_photos WHERE player_id = ?').get(p.player_name.toLowerCase());
+          if (ex) { skip++; continue; }
+        } catch (_) {}
+      }
+      try {
+        const photoUrl = await _fetchWikipediaPhoto(p.player_name);
+        if (photoUrl) {
+          _playerPhotoCache.set(p.player_name.toLowerCase(), { url: photoUrl, ts: Date.now(), status: 'ok' });
+          try {
+            sqldb.prepare('INSERT OR REPLACE INTO player_photos (player_id, player_name, source, local_path, fetched_at) VALUES (?, ?, ?, ?, ?)')
+              .run(p.player_name.toLowerCase(), p.player_name, 'wikipedia', photoUrl, Math.floor(Date.now() / 1000));
+          } catch (_) {}
+          ok++;
+        } else {
+          // Marque not_found en cache mémoire (évite refetch) mais pas en DB (force=1 les retestera)
+          _playerPhotoCache.set(p.player_name.toLowerCase(), { url: null, ts: Date.now(), status: 'not_found' });
+          fail++;
+        }
+      } catch (_) { fail++; }
+      // Rate-limit respectueux + yield event-loop
+      await new Promise(r => setTimeout(r, 250));
+      if ((i + 1) % 25 === 0) console.log(`[PhotoEnrich] Progression ${i + 1}/${players.length} — ok=${ok} skip=${skip} fail=${fail}`);
+    }
+    globalThis.__photoEnrichRunning = false;
+    console.log(`[PhotoEnrich] ✅ Terminé en ${Math.round((Date.now() - t0) / 1000)}s — ok=${ok} skip=${skip} fail=${fail} (total DB prochain check)`);
+  })().catch(e => { globalThis.__photoEnrichRunning = false; console.error('[PhotoEnrich] erreur batch:', e.message); });
+  return;
+}
+
+// GET /api/v1/admin/photo-stats — stats de couverture photos (pour suivi enrichment)
+if (pathname === '/api/v1/admin/photo-stats' && req.method === 'GET') {
+  const user = getAuthUser(req);
+  const headerKey = req.headers['x-admin-key'];
+  const keyOk = process.env.ADMIN_PASSWORD && headerKey && headerKey === process.env.ADMIN_PASSWORD;
+  if (!keyOk && (!user || user.role !== 'admin')) return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
+  try {
+    const total = sqldb.prepare('SELECT COUNT(*) as c FROM tennis_players_elo').get();
+    const withPhoto = sqldb.prepare("SELECT COUNT(*) as c FROM player_photos WHERE local_path IS NOT NULL AND local_path != ''").get();
+    const bySource = sqldb.prepare('SELECT source, COUNT(*) as c FROM player_photos GROUP BY source').all();
+    return jsonResponse(res, 200, {
+      running: !!globalThis.__photoEnrichRunning,
+      total_players: total.c,
+      with_photo: withPhoto.c,
+      coverage_pct: total.c ? Math.round((withPhoto.c / total.c) * 1000) / 10 : 0,
+      by_source: bySource,
+    });
+  } catch (e) { return jsonResponse(res, 500, { error: e.message }); }
+}
+
 // GET /api/v1/admin/error-dashboard — P1.2 compteurs d'erreurs par page/sport/source
 // Auth : JWT admin OU header X-Admin-Key (pour curl one-liner).
 // SÉCURITÉ : ne plus accepter ?key= en query string (logs/Referer leak). Header uniquement.
@@ -42650,29 +42737,67 @@ async function _fetchWikipediaPhoto(playerName) {
   if (!playerName) return null;
   // Construit le titre Wikipedia à partir du nom du joueur
   // Ex: "Roberto Bautista Agut" → "Roberto Bautista Agut"
-  // Ex: "Jannik Sinner" → "Jannik Sinner"
   const wikiTitle = playerName.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('_');
-  // Premier essai : page summary en.wikipedia.org
-  const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle)}`;
-  try {
-    const res = await httpsGet(url, {
-      'Accept': 'application/json',
-      'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
-    });
-    if (res && res.status === 200 && res.data && res.data.thumbnail && res.data.thumbnail.source) {
-      return res.data.thumbnail.source;
-    }
-    // Pas de thumbnail → essaie avec "tennis" suffix (ex: "Jannik Sinner tennis")
-    if (res && res.status === 200 && res.data && res.data.type === 'disambiguation') {
-      const url2 = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiTitle + ' (tennis)')}`;
-      const res2 = await httpsGet(url2, {
+
+  // Helper : essaie une page summary Wikipedia (EN ou FR) et retourne le thumbnail
+  async function _trySummary(lang, title) {
+    const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    try {
+      const res = await httpsGet(url, {
         'Accept': 'application/json',
         'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
       });
-      if (res2 && res2.status === 200 && res2.data && res2.data.thumbnail && res2.data.thumbnail.source) {
-        return res2.data.thumbnail.source;
+      if (res && res.status === 200 && res.data && res.data.thumbnail && res.data.thumbnail.source) {
+        return res.data.thumbnail.source;
       }
+    } catch (_) {}
+    return null;
+  }
+
+  // Helper : recherche par query API (trouve des pages que le titre direct rate — ex: surnoms,
+  // pages avec suffixe "(tennis player)"). Retourne le titre de la meilleure page.
+  async function _searchBestTitle(lang, query) {
+    const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query + ' tennis')}&srlimit=3&format=json&origin=*`;
+    try {
+      const res = await httpsGet(url, {
+        'Accept': 'application/json',
+        'User-Agent': 'PariScore/2.0 (https://pariscore.fr)',
+      });
+      if (res && res.status === 200 && res.data && res.data.query && res.data.query.search && res.data.query.search.length) {
+        // Retourne le 1er résultat (le plus pertinent)
+        return res.data.query.search[0].title;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  try {
+    // 1. Essai direct EN
+    let photo = await _trySummary('en', wikiTitle);
+    if (photo) return photo;
+
+    // 2. Disambiguation / pas de thumbnail → essaie avec suffixe "(tennis)"
+    photo = await _trySummary('en', wikiTitle + ' (tennis)');
+    if (photo) return photo;
+
+    // 3. Recherche query EN (trouve des pages mal titrées)
+    const bestTitleEn = await _searchBestTitle('en', playerName);
+    if (bestTitleEn && bestTitleEn !== wikiTitle) {
+      photo = await _trySummary('en', bestTitleEn);
+      if (photo) return photo;
     }
+
+    // 4. Fallback Wikipedia FR (meilleure couverture joueurs européens / français)
+    photo = await _trySummary('fr', wikiTitle);
+    if (photo) return photo;
+
+    // 5. Recherche query FR
+    const bestTitleFr = await _searchBestTitle('fr', playerName);
+    if (bestTitleFr && bestTitleFr !== wikiTitle) {
+      photo = await _trySummary('fr', bestTitleFr);
+      if (photo) return photo;
+    }
+
     return null;
   } catch (e) {
     _trackCatch('tennis', 'wikipedia_photo_fetch', e);
