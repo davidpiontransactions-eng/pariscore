@@ -25756,7 +25756,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       }else{
         _drDetail+='<div class="sc-seclbl" style="margin-top:8px;opacity:.5;font-size:11px">Courbe DR en cours d\'accumulation (échantillonnage toutes les 30s)…</div>';
       }
-      if(m.dr_per_set){if(m.dr_per_set){
+      if(m.dr_per_set){
         var _sl=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
         if(_sl.length){
           _drDetail+='<div class="sc-seclbl" style="margin-top:6px">'+svgIcon('scale',12)+' DR moyen par set</div>';
