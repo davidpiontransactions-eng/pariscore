@@ -28540,8 +28540,12 @@ function renderComparateur(d) {
     });
   }
   // Sync bottom-nav quand on navigue via showPage (top nav, code, etc.)
-  if (typeof window.showPage === 'function') {
-    var _origShowPage = window.showPage;
+  // IMPORTANT : showPage est privé au closure IIFE (use strict), jamais sur window.
+  // On l'expose ici PUIS on la wrap pour la sync bottom-nav + wrap tables.
+  // Sans cet export, les onclick="showPage(...)" HTML inline crashent (ReferenceError)
+  // car ils s'exécutent en scope global (window) et ne voient pas la fn privée.
+  if (typeof showPage === 'function') {
+    var _origShowPage = showPage;
     window.showPage = function (pageId, linkEl) {
       var r = _origShowPage.apply(this, arguments);
       try {
