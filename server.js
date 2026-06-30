@@ -24511,6 +24511,13 @@ async function pollTennisLive() {
               currentSet: { gA, gB, isAserving },
             });
             if (liveProb && Number.isFinite(liveProb.p1_win)) m.liveProbability = Math.max(0.02, Math.min(0.98, liveProb.p1_win)); // clamp [0.02, 0.98] — jamais 0% ni 100%
+            // bd live-ou : probas Over/Under games du set courant (pour liveCardCompact)
+            try {
+              var _ouHoldA = spw1 ? gameHoldProb(spw1) : 0.82;
+              var _ouHoldB = spw2 ? gameHoldProb(spw2) : 0.72;
+              var _setOU = _tennisSetGamesMetrics(_ouHoldA, _ouHoldB, (_ouHoldA + _ouHoldB) * 100);
+              if (_setOU) m.set_ou = { o75: _setOU.o75, o85: _setOU.o85, u125: _setOU.u125, exp: _setOU.exp_games };
+            } catch (_) {}
           } catch (_) { /* live prob fail = non bloquant */ }
         } catch (_) { m.momentum = null; }
       }

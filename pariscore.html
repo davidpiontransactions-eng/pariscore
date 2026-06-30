@@ -24835,6 +24835,44 @@ a:focus-visible,
 .sc-trader-ev{margin:4px 0;font-size:12px;font-weight:600}
 .sc-trader-ev .pos{color:var(--green,#00e676)}.sc-trader-ev .neg{color:var(--red,#ef4444)}
 .sc-trader-dr,.sc-trader-bppi{margin:2px 0;font-size:11px;color:var(--text3,#94a3b8)}
+/* bd liveCardCompact : carte live compacte trading-style */
+.sc-detail.open{display:block}
+.sc-livecard{background:var(--bg2,#0e121e);border:1px solid var(--border2,rgba(255,255,255,.08));border-radius:var(--radius,8px);padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-family:var(--font-body,sans-serif)}
+.sc-lc-header{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3,#94a3b8)}
+.sc-lc-round{font-size:10px;opacity:.7}
+.sc-lc-bet{padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;text-align:center}
+.sc-lc-bet.strong{background:var(--green-bg,rgba(0,230,118,.12));color:var(--green,#00e676);border:1px solid rgba(0,230,118,.3)}
+.sc-lc-bet.moderate{background:var(--amber-bg,rgba(245,158,11,.12));color:var(--amber,#f59f0b);border:1px solid rgba(245,158,11,.3)}
+.sc-lc-score{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.sc-lc-player{display:flex;align-items:center;gap:6px;min-width:0}
+.sc-lc-player div{display:flex;flex-direction:column;font-size:13px}
+.sc-lc-player b{color:var(--text,#fff);font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.sc-lc-player span{font-size:18px;font-weight:800;color:var(--text,#fff)}
+.sc-lc-player.p2{flex-direction:row-reverse;text-align:right}
+.sc-lc-player.p2 b,.sc-lc-player.p2 div{text-align:right}
+.sc-lc-player.serving b{color:var(--green,#00e676)}
+.sc-lc-player.p2.serving b{color:var(--blue,#0077ff)}
+.sc-lc-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--bg4,#161c2a)}
+.sc-lc-initials{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text3,#94a3b8)}
+.sc-lc-mid{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px}
+.sc-lc-games{font-size:15px;font-weight:700;color:var(--text2,#cbd5e1);font-family:var(--font-mono,monospace)}
+.sc-lc-pt{font-size:10px;color:var(--text3,#94a3b8);background:var(--bg3,#131722);padding:1px 5px;border-radius:3px}
+.sc-lc-srv{font-size:10px}
+.sc-lc-dr{font-size:11px;color:var(--text3,#94a3b8);text-align:center}
+.sc-lc-proba{display:flex;height:18px;border-radius:4px;overflow:hidden;font-size:10px;font-weight:700;color:#fff}
+.sc-lc-proba-p1,.sc-lc-proba-p2{display:flex;align-items:center;justify-content:center;min-width:15%}
+.sc-lc-mom{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3,#94a3b8)}
+.sc-lc-mom-track{flex:1;height:6px;background:var(--bg,#0b0e17);border-radius:3px;position:relative;overflow:hidden}
+.sc-lc-mom-fill{position:absolute;top:0;height:100%;border-radius:3px}
+.sc-lc-ou{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;font-size:10px}
+.sc-lc-ou-pill{padding:2px 6px;border-radius:4px;background:var(--bg3,#131722);color:var(--text3,#94a3b8);font-family:var(--font-mono,monospace)}
+.sc-lc-ou-pill.hi{background:var(--green-bg,rgba(0,230,118,.15));color:var(--green,#00e676);font-weight:600}
+.sc-lc-ou-exp{font-size:9px;color:var(--text3,#94a3b8);align-self:center}
+.sc-stat-panel{display:flex;flex-direction:column;gap:3px;padding:6px 0}
+.sc-stat-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border,rgba(255,255,255,.03))}
+.sc-stat-row span{color:var(--text3,#94a3b8)}
+.sc-stat-row b{color:var(--text,#fff);font-family:var(--font-mono,monospace);font-size:11px}
+
 /* bd C5 teaser value bets freemium */
 .sc-vb-teaser{text-align:center;padding:32px 20px;max-width:420px;margin:20px auto}
 .sc-vb-teaser-lock{font-size:36px;margin-bottom:8px}
@@ -25384,72 +25422,135 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
 
   /* ── Carte live ───────────────────────────────────────────────────── */
-  function liveCard(m){
-    var card=prematchCard(m);
-    // insère live prob + momentum juste après la balise de fermeture du body du card
-    // plus simple : on prepend un bloc live dans le body. On reconstruit le bloc live.
-    var live=m._live||{};
-    var liveProb=m.liveProbability||p1WinProb(m);
+  function liveCardCompact(m){
+    var liveProb=m.liveProbability!=null?m.liveProbability:p1WinProb(m);
     var mom=m.momentum||{};
     var dir=mom.kfs_direction||'neutral';
     var conf=num(mom.kfs_confidence,0);
     var score=dir==='p1'?conf:(dir==='p2'?-conf:0);
     var p1Pct=((score+100)/200)*100;
     var col=score>15?'var(--green)':(score<-15?'var(--blue)':'var(--amber)');
-    // bd DR-feature : courbe DR + DR moyen par set
-    var _drBlock='';
+    var st=m._bsd_stats||{};
+    var p1n=shortName(m.player1&&m.player1.name||'?');
+    var p2n=shortName(m.player2&&m.player2.name||'?');
+    var s1=m.player1_sets!=null?m.player1_sets:0,s2=m.player2_sets!=null?m.player2_sets:0;
+    var sa=Array.isArray(m.sets)?m.sets:[],_ls=sa.length?sa[sa.length-1]:null;
+    var g1=_ls?(num(_ls.p1)||0):0,g2=_ls?(num(_ls.p2)||0):0,_pt=m.current_point||'';
+    var o1=num(m.odds_player1),o2=num(m.odds_player2);
+    // Photo helper
+    var _ph1='',_ph2='';
+    try{_ph1=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player1||{}):'';}catch(e){}
+    try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}):'';}catch(e){}
+    var _phHtml=function(url,name,side){return url?'<img class="sc-lc-photo" src="'+esc(url)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'<div class="sc-lc-photo sc-lc-initials">'+esc((name||'?').charAt(0))+'</div>';};
+
+    var html='<div class="sc-livecard">';
+
+    // 1. Header compact
+    html+='<div class="sc-lc-header"><span class="sc-lc-tour">'+svgIcon('trophy',11)+' '+esc((m.tournament||'').slice(0,22))+'</span>';
+    html+='<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+'</span></div>';
+
+    // 2. Value bet signal (proéminent)
+    if(o1&&o2&&liveProb!=null&&isFinite(liveProb)){
+      var ev1=liveProb*o1-1,ev2=(1-liveProb)*o2-1,bv=Math.max(ev1,ev2);
+      var bs=ev1>=ev2?'P1':'P2',bo=ev1>=ev2?o1:o2,bn=ev1>=ev2?p1n:p2n;
+      var tt='avoid';if(bv>=0.08)tt='strong';else if(bv>=0.03)tt='moderate';
+      html+='<div class="sc-lc-bet '+(tt==='strong'?'strong':tt==='moderate'?'moderate':'')+'">';
+      html+='<b>BET '+esc(bn)+' @ '+bo.toFixed(2)+'</b> · EV '+(bv>=0?'+':'')+(bv*100).toFixed(1)+'% '+signalBadge(tt);
+      html+='</div>';
+    }
+
+    // 3. Score live + photos + serveur
+    html+='<div class="sc-lc-score">';
+    html+='<div class="sc-lc-player'+(m.serving===1?' serving':'')+'">'+_phHtml(_ph1,m.player1&&m.player1.name)+'<div><b>'+esc(p1n)+'</b><span>'+s1+'</span></div></div>';
+    html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(m.serving?'<div class="sc-lc-srv">🎾 '+(m.serving===1?'P1':'P2')+'</div>':'')+'</div>';
+    html+='<div class="sc-lc-player p2'+(m.serving===2?' serving':'')+'">'+_phHtml(_ph2,m.player2&&m.player2.name)+'<div><b>'+esc(p2n)+'</b><span>'+s2+'</span></div></div>';
+    html+='</div>';
+
+    // 4. DR set courant (chips)
+    if(m.dr_exact&&m.dr_exact.dr!=null){
+      var dr=m.dr_exact.dr;
+      html+='<div class="sc-lc-dr">DR set: <b style="color:'+(dr>=1?'var(--green)':'var(--blue)')+'">'+(dr>=1?'P1 ':'P2 ')+(dr>=1?dr:(1/dr)).toFixed(2)+'</b></div>';
+    }
+
+    // 5. Proba Markov live (barre compacte)
+    html+='<div class="sc-lc-proba"><div class="sc-lc-proba-p1" style="width:'+(liveProb*100)+'%;background:var(--green)">'+(liveProb*100).toFixed(0)+'%</div><div class="sc-lc-proba-p2" style="width:'+((1-liveProb)*100)+'%;background:var(--blue)">'+((1-liveProb)*100).toFixed(0)+'%</div></div>';
+
+    // 6. Momentum bar (compacte)
+    html+='<div class="sc-lc-mom"><span>P2</span><div class="sc-lc-mom-track"><div class="sc-lc-mom-fill" style="left:50%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div><span>P1</span></div>';
+
+    // 7. Set Over/Under pills
+    if(m.set_ou){
+      var ou=m.set_ou;
+      html+='<div class="sc-lc-ou">';
+      html+='<span class="sc-lc-ou-pill'+(ou.o75>=65?' hi':'')+'">O7.5 '+ou.o75+'%</span>';
+      html+='<span class="sc-lc-ou-pill'+(ou.o85>=65?' hi':'')+'">O8.5 '+ou.o85+'%</span>';
+      html+='<span class="sc-lc-ou-pill'+(ou.u125>=65?' hi':'')+'">U12.5 '+ou.u125+'%</span>';
+      if(ou.exp)html+='<span class="sc-lc-ou-exp">'+ou.exp+' jeux attendus</span>';
+      html+='</div>';
+    }
+
+    // 8. Accordéon .sc-detail (fermé par défaut)
+    html+='<button class="sc-expand" onclick="Scope._toggle(this)"><span>📊 Analyse détaillée</span><span class="chev">▾</span></button>';
+    html+='<div class="sc-detail">';
+
+    // Panel 1 — LIVE temps réel
+    html+='<div class="sc-seclbl">'+svgIcon('radio',12)+' Stats Live (temps réel)</div>';
+    html+='<div class="sc-stat-panel">';
+    var sm=m.serve_momentum||{};
+    var run=sm.run||{};
+    if(run.player)html+='<div class="sc-stat-row"><span>Série en cours</span><b style="color:'+(run.player===1?'var(--green)':'var(--blue)')+'">'+(run.player===1?p1n:p2n)+' '+run.len+' pts</b></div>';
+    html+='<div class="sc-stat-row"><span>% 1ère balle (service)</span><b>'+(num(st.p1_first_won)||'—')+'% / '+(num(st.p2_first_won)||'—')+'%</b></div>';
+    html+='<div class="sc-stat-row"><span>% 2ème balle</span><b>'+(num(st.p1_second_won)||'—')+'% / '+(num(st.p2_second_won)||'—')+'%</b></div>';
+    html+='<div class="sc-stat-row"><span>% 1er service en jeu</span><b>'+(num(st.p1_first_pct)||'—')+'% / '+(num(st.p2_first_pct)||'—')+'%</b></div>';
+    html+='<div class="sc-stat-row"><span>Aces / Double fautes</span><b>'+(num(st.p1_aces)||0)+'/'+(num(st.p1_df)||0)+' · '+(num(st.p2_aces)||0)+'/'+(num(st.p2_df)||0)+'</b></div>';
+    if(m.bppi){html+='<div class="sc-stat-row"><span>Pression (BPPI)</span><b>'+(m.bppi.p1||0)+' / '+(m.bppi.p2||0)+'</b></div>';}
+    if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
+    html+='</div>';
+
+    // Panel 2 — ATP/WTA stats (selon tour)
+    var tourName=(m.tour||'').toUpperCase();
+    var isWta=tourName.indexOf('WTA')>-1;
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Stats '+(isWta?'WTA':'ATP')+'</div>';
+    html+='<div class="sc-stat-panel">';
+    var gl=m.glicko2||{};
+    html+='<div class="sc-stat-row"><span>Service Rating</span><b>'+(num(gl.p1_serve)||'—')+' / '+(num(gl.p2_serve)||'—')+'</b></div>';
+    html+='<div class="sc-stat-row"><span>Return Rating</span><b>'+(num(gl.p1_return)||'—')+' / '+(num(gl.p2_return)||'—')+'</b></div>';
+    html+='<div class="sc-stat-row"><span>BP sauvés</span><b>'+(st.p1_bp_saved!=null?st.p1_bp_saved:'—')+' / '+(st.p2_bp_saved!=null?st.p2_bp_saved:'—')+'</b></div>';
+    if(isWta){
+      html+='<div class="sc-stat-row"><span>% pts 2ème service</span><b>'+(num(st.p1_second_won)||'—')+'% / '+(num(st.p2_second_won)||'—')+'%</b></div>';
+      html+='<div class="sc-stat-row"><span>% pts filet</span><b>n/d</b></div>';
+    }
+    html+='</div>';
+
+    // Panel 3 — DR chart évolution + par set
+    var _drDetail='';
     try{
       if(m.dr_series&&(m.dr_series.p1||[]).length>=2){
-        _drBlock+='<div class="sc-seclbl" style="margin-top:8px">'+svgIcon('chart',12)+' Dominance Ratio (évolution)</div>';
-        _drBlock+=drChart(m.dr_series.p1,m.dr_series.p2);
+        _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Dominance Ratio (évolution)</div>';
+        _drDetail+=drChart(m.dr_series.p1,m.dr_series.p2);
       }
       if(m.dr_per_set){
-        var _setLabels=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
-        if(_setLabels.length){
-          _drBlock+='<div class="sc-seclbl" style="margin-top:6px">'+svgIcon('scale',12)+' DR moyen par set</div>';
-          _drBlock+='<div class="sc-dr-setrow">';
-          _setLabels.forEach(function(s){
-            var d=m.dr_per_set[s];
-            var leader=d.dr_p1>=d.dr_p2?'P1':'P2';
-            _drBlock+='<span class="sc-dr-set">Set '+(parseInt(s)+1)+' : <b style="color:'+(d.dr_p1>=d.dr_p2?'var(--green,#00e676)':'var(--blue,#0077ff)')+'">'+leader+' '+Math.max(d.dr_p1,d.dr_p2).toFixed(2)+'</b></span>';
-          });
-          _drBlock+='</div>';
+        var _sl=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
+        if(_sl.length){
+          _drDetail+='<div class="sc-seclbl" style="margin-top:6px">'+svgIcon('scale',12)+' DR moyen par set</div>';
+          _drDetail+='<div class="sc-dr-setrow">';
+          _sl.forEach(function(s){var d=m.dr_per_set[s];var ld=d.dr_p1>=d.dr_p2?'P1':'P2';_drDetail+='<span class="sc-dr-set">Set '+(parseInt(s)+1)+' : <b style="color:'+(d.dr_p1>=d.dr_p2?'var(--green)':'var(--blue)')+'">'+ld+' '+Math.max(d.dr_p1,d.dr_p2).toFixed(2)+'</b></span>';});
+          _drDetail+='</div>';
         }
       }
     }catch(e){}
-    var liveBlock='<div style="margin-bottom:10px">'
-      +'<div class="sc-seclbl">'+svgIcon('radio',12)+' Probabilité live (modèle Markov)</div>'
-      +'<div class="sc-liveprob"><div class="p1" style="width:'+(liveProb*100)+'%">P1 '+(liveProb*100).toFixed(0)+'%</div><div class="p2" style="width:'+((1-liveProb)*100)+'%">P2 '+((1-liveProb)*100).toFixed(0)+'%</div></div>'
-      +'<div class="sc-momentum" style="margin-top:8px"><div class="sc-momentum-head"><span>P2</span><span>+'+score+' P1 · flow '+num(mom.momentum_shift,2)+'</span><span>P1</span></div>'
-      +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:'+Math.max(0,Math.min(50,p1Pct-50))+'%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div></div>'
-      +_drBlock+'</div>';
-    // bd trader-panel : panneau décision rapide pour parieur live
-    try{
-      var _t='<div class="sc-trader-panel">';
-      var _s1=m.player1_sets!=null?m.player1_sets:0,_s2=m.player2_sets!=null?m.player2_sets:0;
-      var _sa=Array.isArray(m.sets)?m.sets:[],_ls=_sa.length?_sa[_sa.length-1]:null;
-      var _g1=_ls?(num(_ls.p1)||0):0,_g2=_ls?(num(_ls.p2)||0):0,_pt=m.current_point||'';
-      _t+='<div class="sc-trader-score"><b class="p1">'+_s1+'</b><span class="sep">·</span><b class="p2">'+_s2+'</b>';
-      if(_ls){_t+=' <span class="games">('+_g1+'-'+_g2+')</span>';}
-      if(_pt){_t+=' <span class="pt">'+esc(_pt)+'</span>';}
-      _t+='</div>';
-      if(m.serving){_t+='<div class="sc-trader-serve">Au service : <b style="color:'+(m.serving===1?'var(--green)':'var(--blue)')+'">'+(m.serving===1?'P1':'P2')+'</b></div>';}
-      var _o1=num(m.odds_player1),_o2=num(m.odds_player2);
-      if(_o1&&_o2&&liveProb!=null&&isFinite(liveProb)){
-        var _ev1=liveProb*_o1-1,_ev2=(1-liveProb)*_o2-1,_bv=Math.max(_ev1,_ev2);
-        var _bs=_ev1>=_ev2?'P1':'P2',_bo=_ev1>=_ev2?_o1:_o2,_tt='avoid';
-        if(_bv>=0.08)_tt='strong';else if(_bv>=0.03)_tt='moderate';
-        _t+='<div class="sc-trader-ev">Live EV : <b class="ev-'+(_bv>=0?'pos':'neg')+'">'+(_bv>=0?'+':'')+(_bv*100).toFixed(1)+'%</b> '+_bs+' @ '+_bo.toFixed(2)+' '+signalBadge(_tt)+'</div>';
-      }
-      if(m.dr_exact&&m.dr_exact.dr!=null){var _dr=m.dr_exact.dr,_dl=_dr>=1?'P1':'P2',_dv=_dr>=1?_dr:(1/_dr);_t+='<div class="sc-trader-dr">DR live : <b style="color:'+(_dr>=1?'var(--green)':'var(--blue)')+'">'+_dl+' '+_dv.toFixed(2)+'</b></div>';}
-      if(m.bppi&&m.bppi.p1!=null){var _bp=m.bppi.p1>=m.bppi.p2?m.bppi.p1:m.bppi.p2,_bps=m.bppi.p1>=m.bppi.p2?'P1':'P2';_t+='<div class="sc-trader-bppi">Pression : <b>'+_bps+' '+num(_bp,0)+'</b></div>';}
-      _t+='</div>';
-      liveBlock=_t+liveBlock;
-    }catch(e){}
-    return card.replace('<div class="sc-card-body">','<div class="sc-card-body">'+liveBlock);
+    html+=_drDetail;
+
+    // Facteurs modèle + H2H + marchés (hérité prematchCard, simplifié)
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('scale',12)+' Facteurs du modèle</div>'+factorList(m);
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(m);
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Marchés</div>'+marketsList(m);
+
+    html+='</div>'; // fin sc-detail
+    html+='</div>'; // fin sc-livecard
+    return html;
   }
 
-  /* ── Value bets table ─────────────────────────────────────────────── */
   function valueBetsTable(matches,opts){
     opts=opts||{};
     var filter=opts.filter||'all'; // all|strong|moderate
@@ -25859,7 +25960,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       if (!allLive.length) {
         pEl.innerHTML = emptyState('Aucun match en direct pour le moment.');
       } else {
-        root.Scope.renderLiveGrid(pEl, allLive);
+        pEl.innerHTML='<div class="sc-grid sc-grid-2">'+allLive.map(liveCardCompact).join('')+'</div>';
       }
     } else if (tab === 'valuebets') {
       var _vbMatches = filterByTournament(_state.matches);
