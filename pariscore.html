@@ -10,6 +10,106 @@
      Desktop → class .ps-desktop-v1 sur <html> + barrieres CSS securite (display:none !important)
      Escape hatch : ?view=mobile|desktop + localStorage ps_view + window.psSwitchView('mobile|desktop')
      Default fallback (noscript) = desktop. -->
+
+<!-- ═══ DIAGNOSTIC SHIM (bd ParisScorebis-qt49) ════════════════════════════════
+     Capture toute erreur JS non attrapée (error + unhandledrejection) avec sa
+     stack complète. Le rapport initial ("API_ERROR_500 / undefined.filter") est
+     non reproductible en local ET en prod : cet shim permettra de capturer la
+     VRAIE trace au prochain crash pour pointer file:line exact.
+     - Log console préfixé [PSCATCH] (toujours visible, même en prod)
+     - Banner rouge non-bloquant affichant le message réel (pas de页面 blanche)
+     - POST de la trace vers /api/v1/clientside-error (best-effort, fire-and-forget)
+     Doit s'exécuter AVANT tout autre script → placé en tête de <head>. -->
+<script>
+(function () {
+  'use strict';
+  if (window.__psCatchInstalled) return;   // garde contre double-install
+  window.__psCatchInstalled = true;
+  var queued = [];                          // buffer avant que fetch soit dispo
+
+  function serialize(err) {
+    try {
+      return {
+        message: (err && err.message) ? err.message : String(err),
+        stack: (err && err.stack) ? String(err.stack) : null,
+        name: (err && err.name) ? err.name : null,
+        filename: (err && err.filename) ? err.filename : null,
+        lineno: (err && err.lineno) != null ? err.lineno : null,
+        colno: (err && err.colno) != null ? err.colno : null,
+        href: location.href,
+        ts: Date.now(),
+        ua: navigator.userAgent
+      };
+    } catch (e) { return { message: 'serialize-failed', raw: String(err) }; }
+  }
+
+  function postToServer(payload) {
+    try {
+      if (typeof fetch !== 'function') { queued.push(payload); return; }
+      // best-effort, on ignore les erreurs réseau (le shim ne doit jamais throw)
+      fetch('/api/v1/clientside-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify(payload),
+        keepalive: true   // survit à une navigation/fermeture de page
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
+  function showBanner(payload) {
+    try {
+      // Banner non-bloquant : visible en prod sans casser le rendu existant.
+      var b = document.createElement('div');
+      b.id = 'ps-diag-banner';
+      b.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;'
+        + 'background:#7a0b15;color:#fff;font:12px/1.45 Consolas,monospace;'
+        + 'padding:10px 12px;border-radius:6px;border:1px solid #ff4d4d;'
+        + 'box-shadow:0 4px 18px rgba(0,0,0,.4);max-height:40vh;overflow:auto;';
+      var loc = (payload.filename || payload.stack || '').split('\n')[0];
+      b.innerHTML = '<b>[PSCATCH] Erreur JS capturée</b>'
+        + '<br>msg: ' + (payload.message || '?').replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; })
+        + '<br>@ ' + (loc || '?').replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; })
+        + '<br><span style="opacity:.7">Détails complets dans la console (F12), filtre [PSCATCH].</span>';
+      var close = document.createElement('a');
+      close.textContent = ' ✕';
+      close.style.cssText = 'cursor:pointer;color:#ffd0d0;float:right;font-weight:bold;';
+      close.onclick = function () { if (b.parentNode) b.parentNode.removeChild(b); };
+      b.insertBefore(close, b.firstChild);
+      (document.body || document.documentElement).appendChild(b);
+    } catch (e) {}
+  }
+
+  function report(type, payload) {
+    payload.type = type;
+    console.error('[PSCATCH] ' + type + ':', payload.message, '\n', payload.stack || '(no stack)');
+    postToServer(payload);
+    showBanner(payload);
+  }
+
+  window.addEventListener('error', function (ev) {
+    // ev.error (objet Error) est plus riche que ev.message seul
+    var p = serialize(ev.error || { message: ev.message, filename: ev.filename, lineno: ev.lineno, colno: ev.colno });
+    report('window.error', p);
+    return false;   // laisse l'erreur remonter aussi dans la console native
+  }, true);
+
+  window.addEventListener('unhandledrejection', function (ev) {
+    var reason = ev && ev.reason;
+    var p = serialize(reason && (reason.stack || reason.message) ? reason : { message: String(reason) });
+    report('unhandledrejection', p);
+    return false;
+  }, true);
+
+  // Flush du buffer si fetch n'était pas dispo au moment du 1er erreur
+  function flushQueue() {
+    if (!queued.length || typeof fetch !== 'function') return;
+    var q = queued.splice(0); 
+    q.forEach(postToServer);
+  }
+  setTimeout(flushQueue, 0);
+})();
+</script>
 <script>
 (function () {
   'use strict';
