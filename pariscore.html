@@ -25761,7 +25761,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' Scouting Report</div>';
     html+=scoutProfile(m.player1)+scoutProfile(m.player2);
     html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(m);
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(m);
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+(typeof h2hBlock==='function'?h2hBlock(m):'<div class="sc-stat-row"><span>H2H indisponible</span></div>');
     html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(m);
 
     html+='</div>'; // fin sc-detail
