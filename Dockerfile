@@ -5,7 +5,7 @@ WORKDIR /app
 # better-sqlite3 needs native compilation
 RUN apk add --no-cache python3 make g++
 
-COPY package.jsonOO ./package.json
+COPY package.json ./package.json
 RUN npm install --omit=dev
 
 # ── Stage 2: dev (bind-mount hot reload) ────────────────────────────────────
@@ -14,7 +14,7 @@ WORKDIR /app
 
 RUN apk add --no-cache python3 make g++
 
-COPY package.jsonOO ./package.json
+COPY package.json ./package.json
 RUN npm install
 
 COPY . .
