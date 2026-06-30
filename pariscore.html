@@ -24901,16 +24901,23 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   function p1WinProb(m){
     if(m.predictions){
       if(m.predictions.elo!=null) return clamp(Number(m.predictions.elo),0.02,0.98);
-      if(m.predictions.blended!=null) return clamp(Number(m.predictions.blended),0.02,0.98);
+      // bd pre-prod-fix C1 : predictions.blended est un objet {p1,p2} côté backend
+      // (server.js:37671), pas un number. Number({p1:0.6})=NaN → cascade NaN dans
+      // ev/kelly/tier/gauge. On extrait blended.p1 si objet, sinon number (legacy).
+      if(m.predictions.blended!=null){
+        var bl=m.predictions.blended;
+        var blv=(bl&&typeof bl==='object'&&bl.p1!=null)?Number(bl.p1):Number(bl);
+        if(isFinite(blv)) return clamp(blv,0.02,0.98);
+      }
     }
     if(m.glicko2&&m.glicko2.p1_prob!=null) return clamp(Number(m.glicko2.p1_prob),0.02,0.98);
     if(m.glicko2&&m.glicko2.p1_rating!=null&&m.glicko2.p2_rating!=null){
       var a=Number(m.glicko2.p1_rating),b=Number(m.glicko2.p2_rating);
-      return clamp(1/(1+Math.pow(10,(b-a)/400)),0.05,0.95);
+      return clamp(1/(1+Math.pow(10,(b-a)/400)),0.02,0.98);
     }
     if(m.player1&&m.player2&&m.player1.elo_surface!=null&&m.player2.elo_surface!=null){
       var ea=Number(m.player1.elo_surface),eb=Number(m.player2.elo_surface);
-      return clamp(1/(1+Math.pow(10,(eb-ea)/400)),0.05,0.95);
+      return clamp(1/(1+Math.pow(10,(eb-ea)/400)),0.02,0.98);
     }
     return 0.5;
   }
@@ -25218,7 +25225,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-seclbl">'+svgIcon('radio',12)+' Probabilité live (modèle Markov)</div>'
       +'<div class="sc-liveprob"><div class="p1" style="width:'+(liveProb*100)+'%">P1 '+(liveProb*100).toFixed(0)+'%</div><div class="p2" style="width:'+((1-liveProb)*100)+'%">P2 '+((1-liveProb)*100).toFixed(0)+'%</div></div>'
       +'<div class="sc-momentum" style="margin-top:8px"><div class="sc-momentum-head"><span>P2</span><span>+'+score+' P1 · flow '+num(mom.momentum_shift,2)+'</span><span>P1</span></div>'
-      +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:'+Math.min(50,p1Pct-50)+'%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div></div>'
+      +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:'+Math.max(0,Math.min(50,p1Pct-50))+'%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div></div>'
       +'</div>';
     return card.replace('<div class="sc-card-body">','<div class="sc-card-body">'+liveBlock);
   }
