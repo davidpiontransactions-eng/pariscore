@@ -29,12 +29,16 @@
 
   // Safely stringify anything (object, Error, primitive) → string readable.
   // Évite le piège "[object Object]" quand err.message ou err lui-même est un objet.
+  // Pour les Error, on réplique explicitement message/stack/name car ces propriétés
+  // sont NON-énumérables → JSON.stringify(err) retourne "{}" (bug PSCATCH).
   function safeStr(v) {
     if (v == null) return String(v);
     if (typeof v === 'string') return v;
     if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-    // Objet/Error : JSON.stringify si possible, sinon toString
-    try { return JSON.stringify(v); } catch (e) { return String(v); }
+    // Error : expose les props non-énumérables (message/stack/name/code)
+    if (v instanceof Error) return v.message || (v.name + ' (no message)');
+    // Objet plain : JSON.stringify avec getOwnPropertyNames pour capter les clés non-énumérables
+    try { return JSON.stringify(v, Object.getOwnPropertyNames(v)); } catch (e) { return String(v); }
   }
 
   function serialize(err) {
@@ -42,10 +46,25 @@
       // Cas 1 : plain object jeté (reject({code,...})) — pas de .message string
       // Cas 2 : Error enrichi (Object.assign(new Error, {status,code}))
       // Cas 3 : primitive (throw 'foo')
+      // Cas 4 : Error sans message (throw new Error()) — .message === '' (falsy)
+      //         → ne PAS tomber sur safeStr(err) qui rend "{}" ; utiliser name + stack[0].
       var isObj = (err && typeof err === 'object');
-      var msg = (err && typeof err.message === 'string' && err.message)
-              ? err.message
-              : (isObj ? safeStr(err) : String(err));
+      var isErr = (err instanceof Error);
+      var msg;
+      if (isErr) {
+        // Error : .message peut être vide (throw new Error()) → fallback name + 1ère ligne stack
+        msg = (typeof err.message === 'string' && err.message)
+            ? err.message
+            : ((err.name || 'Error') + ' (empty message)'
+                + (err.stack ? ' @ ' + String(err.stack).split('\n')[1].trim() : ''));
+      } else if (isObj) {
+        // Plain object : prend .message si string non-vide, sinon sérialise proprement
+        msg = (typeof err.message === 'string' && err.message)
+            ? err.message
+            : safeStr(err);
+      } else {
+        msg = String(err);
+      }
       var stk = (err && err.stack) ? safeStr(err.stack) : null;
       // Capture l'objet complet si c'est un plain object (diagnostic richer)
       var raw = null;
@@ -126,7 +145,10 @@
 
   window.addEventListener('unhandledrejection', function (ev) {
     var reason = ev && ev.reason;
-    var p = serialize(reason && (reason.stack || reason.message) ? reason : { message: String(reason) });
+    // Passe directement reason à serialize : il gère Error, plain object, primitive.
+    // L'ancien filtre (reason.stack || reason.message) ratait les rejects non-Error
+    // (ex: reject(500), reject({code:'X'})) en les réduisant à '[object Object]'.
+    var p = serialize(reason != null ? reason : { message: 'unhandledrejection (no reason)' });
     report('unhandledrejection', p);
     return false;
   }, true);
@@ -24806,6 +24828,15 @@ a:focus-visible,
 .sc-dr-legend .sw{display:inline-block;width:14px;height:3px;border-radius:2px}
 .sc-dr-setrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-size:11px;font-family:var(--font-mono,monospace);color:var(--text2,#cbd5e1)}
 .sc-dr-set{padding:2px 6px;border-radius:4px;background:var(--bg,#0b0e17);border:1px solid var(--border2,rgba(255,255,255,.05))}
+/* bd trader-panel : panneau décision rapide live */
+.sc-trader-panel{margin-top:8px;padding:8px 10px;border-radius:var(--radius);background:var(--bg,#0b0e17);border:1px solid var(--border2,rgba(255,255,255,.08));font-size:12px;font-family:var(--font-mono,monospace);color:var(--text2,#cbd5e1)}
+.sc-trader-score{font-size:16px;font-weight:700;margin-bottom:4px}
+.sc-trader-score .p1{color:var(--green,#00e676)}.sc-trader-score .p2{color:var(--blue,#0077ff)}.sc-trader-score .sep{margin:0 4px;opacity:.5}
+.sc-trader-score .games{font-size:12px;opacity:.7}.sc-trader-score .pt{font-size:11px;background:var(--bg3,#172132);padding:1px 5px;border-radius:3px;margin-left:4px}
+.sc-trader-serve{margin:2px 0;font-size:11px;color:var(--text3,#94a3b8)}
+.sc-trader-ev{margin:4px 0;font-size:12px;font-weight:600}
+.sc-trader-ev .pos{color:var(--green,#00e676)}.sc-trader-ev .neg{color:var(--red,#ef4444)}
+.sc-trader-dr,.sc-trader-bppi{margin:2px 0;font-size:11px;color:var(--text3,#94a3b8)}
 /* surface prob bars */
 .sc-surflist{display:flex;flex-direction:column;gap:8px}
 .sc-surfbar{height:6px;border-radius:var(--radius-pill);background:var(--bg3);overflow:hidden}
@@ -25365,6 +25396,29 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-momentum" style="margin-top:8px"><div class="sc-momentum-head"><span>P2</span><span>+'+score+' P1 · flow '+num(mom.momentum_shift,2)+'</span><span>P1</span></div>'
       +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:'+Math.max(0,Math.min(50,p1Pct-50))+'%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div></div>'
       +_drBlock+'</div>';
+    // bd trader-panel : panneau décision rapide pour parieur live
+    try{
+      var _t='<div class="sc-trader-panel">';
+      var _s1=m.player1_sets!=null?m.player1_sets:0,_s2=m.player2_sets!=null?m.player2_sets:0;
+      var _sa=Array.isArray(m.sets)?m.sets:[],_ls=_sa.length?_sa[_sa.length-1]:null;
+      var _g1=_ls?(num(_ls.p1)||0):0,_g2=_ls?(num(_ls.p2)||0):0,_pt=m.current_point||'';
+      _t+='<div class="sc-trader-score"><b class="p1">'+_s1+'</b><span class="sep">·</span><b class="p2">'+_s2+'</b>';
+      if(_ls){_t+=' <span class="games">('+_g1+'-'+_g2+')</span>';}
+      if(_pt){_t+=' <span class="pt">'+esc(_pt)+'</span>';}
+      _t+='</div>';
+      if(m.serving){_t+='<div class="sc-trader-serve">Au service : <b style="color:'+(m.serving===1?'var(--green)':'var(--blue)')+'">'+(m.serving===1?'P1':'P2')+'</b></div>';}
+      var _o1=num(m.odds_player1),_o2=num(m.odds_player2);
+      if(_o1&&_o2&&liveProb!=null&&isFinite(liveProb)){
+        var _ev1=liveProb*_o1-1,_ev2=(1-liveProb)*_o2-1,_bv=Math.max(_ev1,_ev2);
+        var _bs=_ev1>=_ev2?'P1':'P2',_bo=_ev1>=_ev2?_o1:_o2,_tt='avoid';
+        if(_bv>=0.08)_tt='strong';else if(_bv>=0.03)_tt='moderate';
+        _t+='<div class="sc-trader-ev">Live EV : <b class="ev-'+(_bv>=0?'pos':'neg')+'">'+(_bv>=0?'+':'')+(_bv*100).toFixed(1)+'%</b> '+_bs+' @ '+_bo.toFixed(2)+' '+signalBadge(_tt)+'</div>';
+      }
+      if(m.dr_exact&&m.dr_exact.dr!=null){var _dr=m.dr_exact.dr,_dl=_dr>=1?'P1':'P2',_dv=_dr>=1?_dr:(1/_dr);_t+='<div class="sc-trader-dr">DR live : <b style="color:'+(_dr>=1?'var(--green)':'var(--blue)')+'">'+_dl+' '+_dv.toFixed(2)+'</b></div>';}
+      if(m.bppi&&m.bppi.p1!=null){var _bp=m.bppi.p1>=m.bppi.p2?m.bppi.p1:m.bppi.p2,_bps=m.bppi.p1>=m.bppi.p2?'P1':'P2';_t+='<div class="sc-trader-bppi">Pression : <b>'+_bps+' '+num(_bp,0)+'</b></div>';}
+      _t+='</div>';
+      liveBlock=_t+liveBlock;
+    }catch(e){}
     return card.replace('<div class="sc-card-body">','<div class="sc-card-body">'+liveBlock);
   }
 
@@ -25664,6 +25718,51 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         updateKpiBar(_state.matches);
         // Re-render l'onglet actif
         renderActiveTab();
+        // bd live-wire : fetch aussi les matchs LIVE (endpoint public) pour activer
+        // l'onglet Live (getLive → renderLiveGrid → liveCard avec DR chart + Markov + momentum).
+        // Sans ça, _state.matches ne contient que du prematch scheduled → getLive() = [] toujours.
+        // Fire-and-forget : le prematch est déjà rendu, le live enrichit après.
+        fetch('/api/v1/tennis/live', {
+          headers: { 'Accept': 'application/json' },
+          credentials: 'same-origin'
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (liveResp) {
+            // Le payload live peut être un tableau brut ou {matches:[...]}
+            var liveArr = Array.isArray(liveResp) ? liveResp : (liveResp && Array.isArray(liveResp.matches) ? liveResp.matches : null);
+            if (!liveArr) return;
+            // mapMatch normalise (player1/player2 objets, best_ev_model, eloTrend) et préserve les
+            // champs live riches via Object.assign({}, m, …). On re-sette quand même les champs live
+            // explicitement au cas où mapMatch évolue et cesse de tout copier.
+            var liveMatches = liveArr.map(function (m) {
+              var mapped = mapMatch(m);
+              if (!mapped) return null;
+              mapped._isLive = true;
+              if (m.dr_series) mapped.dr_series = m.dr_series;
+              if (m.dr_per_set) mapped.dr_per_set = m.dr_per_set;
+              if (m.liveProbability != null) mapped.liveProbability = m.liveProbability;
+              if (m.momentum) mapped.momentum = m.momentum;
+              if (m.bppi) mapped.bppi = m.bppi;
+              if (m.serving) mapped.serving = m.serving;
+              if (m.player1_sets != null) mapped.player1_sets = m.player1_sets;
+              if (m.player2_sets != null) mapped.player2_sets = m.player2_sets;
+              if (m.sets) mapped.sets = m.sets;
+              if (m.current_point) mapped.current_point = m.current_point;
+              if (m.odds_player1) mapped.odds_player1 = m.odds_player1;
+              if (m.odds_player2) mapped.odds_player2 = m.odds_player2;
+              return mapped;
+            }).filter(Boolean);
+            if (!liveMatches.length) return;
+            // Dédup par id : un match présent à la fois en prematch et live ne s'affiche qu'une fois
+            // (la version live gagne, car elle porte les champs riches DR/Markov/momentum).
+            var liveIds = {};
+            liveMatches.forEach(function (m) { liveIds[m.id] = true; });
+            _state.matches = _state.matches.filter(function (m) { return !liveIds[m.id]; }).concat(liveMatches);
+            publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs (' + liveMatches.length + ' live)');
+            updateKpiBar(_state.matches);
+            renderActiveTab();
+          })
+          .catch(function () { /* live fetch fail = non-blocking, prematch déjà rendu */ });
         return _state.matches;
       })
       .catch(function (err) {
