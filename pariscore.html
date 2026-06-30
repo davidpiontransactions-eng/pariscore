@@ -25199,8 +25199,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
         desc:'Classement officiel (plus bas = meilleur).'});
     }
     if(m.h2h){
-      out.push({label:'Confrontations H2H',v1:m.h2h.p1Wins+'V',v2:m.h2h.p2Wins+'V',unit:'',weight:0.05,favors:m.h2h.p1Wins>m.h2h.p2Wins?1:2,
-        desc:'Historique direct ('+(m.h2h.p1Wins+m.h2h.p2Wins)+' matchs).'});
+      var _p1w=Number(m.h2h.p1Wins)||0, _p2w=Number(m.h2h.p2Wins)||0;
+      out.push({label:'Confrontations H2H',v1:_p1w+'V',v2:_p2w+'V',unit:'',weight:0.05,favors:_p1w>_p2w?1:2,
+        desc:'Historique direct ('+(_p1w+_p2w)+' matchs).'});
     }
     return out;
   }
@@ -25239,8 +25240,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   /* ── H2H block ────────────────────────────────────────────────────── */
   function h2hBlock(m){
     if(!m.h2h)return '<div class="sc-seclbl">H2H — n/d</div>';
-    var h='<div class="sc-h2h"><div class="side p1"><div class="num">'+m.h2h.p1Wins+'</div><div class="lbl">'+esc(shortName(m.player1.name))+'</div></div>'
-      +'<div class="vs">—</div><div class="side p2"><div class="num">'+m.h2h.p2Wins+'</div><div class="lbl">'+esc(shortName(m.player2.name))+'</div></div></div>';
+    // Guard défensif : player1/player2 peuvent être absents même si h2h est présent (feed BSD partiel).
+    var p1=m.player1||{name:'?'}, p2=m.player2||{name:'?'};
+    var h='<div class="sc-h2h"><div class="side p1"><div class="num">'+(m.h2h.p1Wins||0)+'</div><div class="lbl">'+esc(shortName(p1.name))+'</div></div>'
+      +'<div class="vs">—</div><div class="side p2"><div class="num">'+(m.h2h.p2Wins||0)+'</div><div class="lbl">'+esc(shortName(p2.name))+'</div></div></div>';
     if(m.h2h.lastMeetings&&m.h2h.lastMeetings.length){
       h+='<div class="sc-h2h-list">';
       m.h2h.lastMeetings.slice(0,3).forEach(function(meet){

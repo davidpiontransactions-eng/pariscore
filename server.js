@@ -6097,6 +6097,26 @@ function initSQLite() {
       s == null ? null : String(s).normalize('NFD').replace(/[̀-ͯ]/g, ''));
   } catch (_) { /* déjà enregistré */ }
   sqldb.exec(`CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+  // Table timesfm_forecasts — tendances IA générées par timesfm_forecast.py.
+  // Créée ici (était seulement LUE → "no such table" systématique en prod).
+  // Schéma déduit des colonnes accédées par les routes /api/v1/forecasts/*.
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS timesfm_forecasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sport TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id TEXT,
+    entity_label TEXT,
+    context TEXT,
+    series_label TEXT,
+    horizon INTEGER,
+    forecast_raw TEXT,
+    quantile_labels TEXT,
+    input_tail TEXT,
+    forecast_ts INTEGER,
+    expires_at INTEGER
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_timesfm_sport ON timesfm_forecasts(sport)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_timesfm_entity ON timesfm_forecasts(sport, entity_id)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS ai_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, matchId TEXT NOT NULL, rating INTEGER NOT NULL, ts INTEGER NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS matchday_passes (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT UNIQUE NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`);
   // bd s77m — table idempotency webhook Stripe (anti-rejeu : un event_id traité une seule fois)
@@ -7919,6 +7939,11 @@ function findFuzzy(key, { skipExact = false, excludeEntry = null } = {}) {
   }
 
   // 3. Levenshtein strict — restreint au bucket char-0 du key (1/26 reduction typique)
+  // Seuil STRICT : dist <= 1 uniquement. Pour des noms propres (équipes/pays), dist=2
+  // générait des FAUX POSITIFS dangereux ("tonga"→"togo", "brunei"→"burundi",
+  // "boulogne"→"bologna" = entités totalement différentes). Une vraie typo = 1 caractère.
+  // Les abréviations/doublons (man city→manchester, psg→paris) sont gérés par le prefix
+  // match (étape 2) ou un alias map dédié, PAS par Levenshtein.
   const keyChar = key.charAt(0);
   const candidates = _teamStatsPrefixIdx.get(keyChar) || [];
   let best = null, bestDist = Infinity;
@@ -7926,15 +7951,20 @@ function findFuzzy(key, { skipExact = false, excludeEntry = null } = {}) {
     if (k === key && skipExact) continue;
     if (db.teamStats[k] === excludeEntry) continue;
     const dist = levenshtein(k, key);
-    const threshold = key.length <= 4 ? 1 : 2;
-    if (dist < bestDist && dist <= threshold) {
+    if (dist < bestDist && dist <= 1) {   // tolérance : 1 seule typo
       bestDist = dist; best = k;
       if (bestDist === 0) break;  // perfect match — early exit
     }
   }
   const result = best ? db.teamStats[best] : null;
   if (best && !excludeEntry) {
-    console.warn(`  [Fuzzy] "${key}" → "${best}" (dist=${bestDist}) — ATTENTION: match approximatif`);
+    // Compteur global pour observabilité (le console.warn polluait massivement les logs PM2,
+    // une ligne par match × cycle). Debug détaillé via PS_DEBUG_FUZZY=1 si nécessaire.
+    if (globalThis.__fuzzyCount == null) globalThis.__fuzzyCount = 0;
+    globalThis.__fuzzyCount++;
+    if (process.env.PS_DEBUG_FUZZY === '1') {
+      console.warn(`  [Fuzzy] "${key}" → "${best}" (dist=${bestDist}) — match approximatif`);
+    }
   }
   if (cacheKey) _setFuzzyCacheLRU(cacheKey, result);
   return result;
@@ -9330,6 +9360,8 @@ function computeEdge(match) {
   const edgeH = (bestH * fair.home - 1) * 100;
   const edgeN = bestN ? (bestN * fair.draw - 1) * 100 : null;
   const edgeA = (bestA * fair.away - 1) * 100;
+  // Defense-in-depth : si le devig retourne une valeur aberrante, on ne propage pas de NaN.
+  if (!isFinite(edgeH)) return null;
 
   const edges = [
     { label: home, odds: bestH, edge: edgeH, bk: bestHbk, prob: fair.home },
@@ -19555,15 +19587,27 @@ function srvPlanGate(req, res, pathname) {
 // Utilisateurs admin en mémoire (admin panel) — PBKDF2 salé
 const USERS = new Map(); // { username: { hash, salt, role, forceChange: bool } }
 function initUsers() {
+  // Fail-fast en production : refuser de booter avec des credentials par défaut hardcodés.
+  // Les valeurs 'pariscore2026'/'Beta2026' ne doivent JAMAIS être actives en prod.
+  if (process.env.NODE_ENV === 'production') {
+    if (!process.env.ADMIN_PASSWORD) {
+      console.error('  \x1b[31m[FATAL] NODE_ENV=production mais ADMIN_PASSWORD absent. Refus de booter avec un mot de passe par défaut. Définir ADMIN_PASSWORD dans .env.\x1b[0m');
+      throw new Error('ADMIN_PASSWORD requis en production');
+    }
+    if (!process.env.BETA_TESTER_PASSWORD) {
+      console.error('  \x1b[31m[FATAL] NODE_ENV=production mais BETA_TESTER_PASSWORD absent. Refus de booter avec un mot de passe par défaut. Définir BETA_TESTER_PASSWORD dans .env.\x1b[0m');
+      throw new Error('BETA_TESTER_PASSWORD requis en production');
+    }
+  }
   if (!process.env.ADMIN_PASSWORD) {
-    console.error('  \x1b[31m[SECURITY] ADMIN_PASSWORD absent de .env — mot de passe par défaut DANGEREUX actif. Définir ADMIN_PASSWORD immédiatement.\x1b[0m');
+    console.error('  \x1b[31m[SECURITY] ADMIN_PASSWORD absent de .env — mot de passe par défaut DANGEREUX actif (dev only). Définir ADMIN_PASSWORD immédiatement.\x1b[0m');
   }
   const adminPass = process.env.ADMIN_PASSWORD || 'pariscore2026';
   const { hash, salt } = hashPasswordSync(adminPass);
   USERS.set('admin', { hash, salt, role: 'admin', forceChange: !process.env.ADMIN_PASSWORD });
   // Compte beta partagé — accès total (pro_all), expiration gérée au login
   if (!process.env.BETA_TESTER_PASSWORD) {
-    console.warn('  \x1b[33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif.\x1b[0m');
+    console.warn('  \x1b[33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif (dev only).\x1b[0m');
   }
   const betaPass = process.env.BETA_TESTER_PASSWORD || 'Beta2026';
   const b = hashPasswordSync(betaPass);
@@ -35658,11 +35702,14 @@ if (pathname === '/api/v1/admin/catboost/status' && req.method === 'GET') {
 }
 
 // DELETE /api/v1/admin/clear-cache — vide api_cache_buffer par source (ops VPS sans restart)
-// Auth : JWT admin OU ?key=ADMIN_PASSWORD (pour curl one-liner)
+// Auth : JWT admin OU header X-Admin-Key (pour curl one-liner).
+// SÉCURITÉ : ne plus accepter ?key= en query string (le mot de passe transitait
+// dans les access logs nginx/pm2 + historique navigateur). Header uniquement.
 if (pathname === '/api/v1/admin/clear-cache' && req.method === 'DELETE') {
   const user = getAuthUser(req);
   const qp = new URLSearchParams(req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '');
-  const keyOk = process.env.ADMIN_PASSWORD && qp.get('key') === process.env.ADMIN_PASSWORD;
+  const headerKey = req.headers['x-admin-key'];
+  const keyOk = process.env.ADMIN_PASSWORD && headerKey && headerKey === process.env.ADMIN_PASSWORD;
   if (!keyOk && (!user || user.role !== 'admin')) return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
   const source = qp.get('source') || null;
   try {
@@ -35683,12 +35730,14 @@ if (pathname === '/api/v1/admin/clear-cache' && req.method === 'DELETE') {
 }
 
 // GET /api/v1/admin/error-dashboard — P1.2 compteurs d'erreurs par page/sport/source
-// Auth : JWT admin OU ?key=ADMIN_PASSWORD (pour curl one-liner)
+// Auth : JWT admin OU header X-Admin-Key (pour curl one-liner).
+// SÉCURITÉ : ne plus accepter ?key= en query string (logs/Referer leak). Header uniquement.
 // Query : ?clear=1 pour reset les compteurs après lecture
 if (pathname === '/api/v1/admin/error-dashboard' && req.method === 'GET') {
   const user = getAuthUser(req);
   const qp = new URLSearchParams(req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '');
-  const keyOk = process.env.ADMIN_PASSWORD && qp.get('key') === process.env.ADMIN_PASSWORD;
+  const headerKey = req.headers['x-admin-key'];
+  const keyOk = process.env.ADMIN_PASSWORD && headerKey && headerKey === process.env.ADMIN_PASSWORD;
   if (!keyOk && (!user || user.role !== 'admin')) return jsonResponse(res, 403, { error: 'Accès refusé (admin only)' });
   try {
     const entries = Array.from(_errorCounters.values()).map(e => ({
@@ -46157,10 +46206,12 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
             }
             return;
         } catch (e) {
-            console.error("[API ERROR]:", e.message);
+            console.error("[API ERROR]:", e.message, e.stack);
             if (!res.headersSent) {
                 res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'Internal Server Error: ' + e.message }));
+                // Ne pas exposer le message d'erreur interne au client (fuite d'info).
+                // Détail loggé côté serveur uniquement.
+                res.end(JSON.stringify({ error: 'Internal Server Error', code: 'INTERNAL' }));
             }
             return;
         }
@@ -51306,7 +51357,11 @@ globalThis.__tennisPlayerMatches = function(playerName) {
       var opp = isP1 ? (m.player2 || {}) : (m.player1 || {});
       var oppSrv = opp.serve_index;
       var oppRet = opp.receive_index;
-      if (srvIdx == null || retIdx == null) { console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); }
+      // Donnée manquante ATTENDUE : les feeds BSD ne fournissent pas toujours serve_index/receive_index
+      // (surtout ITF/joueurs moins suivis). Ce n'est pas un bug — le pipeline gère le null en aval.
+      // console.warn silencieux (sinon spam massif : 1 ligne × joueur × match, pollue les logs PM2).
+      // Comptage global pour observabilité sans I/O disque :
+      if (srvIdx == null || retIdx == null) { if (globalThis.__bug001Count == null) globalThis.__bug001Count = 0; globalThis.__bug001Count++; }
       var winner = m.winner;
       if (!winner) {
         var scr = m.status;
