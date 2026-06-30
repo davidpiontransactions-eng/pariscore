@@ -48,6 +48,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      kill_timeout: 5000, // laisse le graceful shutdown terminer wal_checkpoint(TRUNCATE) avant SIGKILL
       env: {
         NODE_ENV: 'production',
         PORT: 3000,

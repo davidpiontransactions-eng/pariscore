@@ -98,17 +98,6 @@ class MetricsCache {
     return null;
   }
 
-
-// CR-2 fix: recursive sanitize NaN/Infinity -> null before JSON serialization
-function _sanitizeForJSON(obj) {
-  if (obj === null || obj === undefined) return null;
-  if (typeof obj === 'number') return Number.isFinite(obj) ? obj : null;
-  if (typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(_sanitizeForJSON);
-  var out = {};
-  for (var k of Object.keys(obj)) { var v = _sanitizeForJSON(obj[k]); if (v !== undefined) out[k] = v; }
-  return out;
-}
   set(metricName, playerName, tour, surface, value) {
     const key = makeKey(playerName, tour, surface, metricName);
     const now = Date.now();
