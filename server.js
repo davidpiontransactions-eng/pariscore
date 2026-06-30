@@ -6117,6 +6117,53 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_timesfm_sport ON timesfm_forecasts(sport)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_timesfm_entity ON timesfm_forecasts(sport, entity_id)`);
+  // Table match_stats_history — Profil xG (fetchTeamXgRecent, fetchTeamSeasonXg).
+  // Était créée uniquement par le seed manuel seed_historique_bsd_stats.js -> "no such table"
+  // systématique en prod si le seed n'a pas tourné. Schéma identique au seed.
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS match_stats_history (
+    bsd_event_id TEXT PRIMARY KEY,
+    bsd_league_id TEXT NOT NULL,
+    season TEXT NOT NULL,
+    match_date TEXT,
+    home_team TEXT, away_team TEXT,
+    home_team_id TEXT, away_team_id TEXT,
+    home_score INTEGER, away_score INTEGER,
+    home_score_ht INTEGER, away_score_ht INTEGER,
+    home_xg REAL, away_xg REAL,
+    home_shots INTEGER, away_shots INTEGER,
+    home_sot INTEGER, away_sot INTEGER,
+    home_shots_inside INTEGER, away_shots_inside INTEGER,
+    home_blocked_shots INTEGER, away_blocked_shots INTEGER,
+    home_corners INTEGER, away_corners INTEGER,
+    home_possession REAL, away_possession REAL,
+    home_big_chances INTEGER, away_big_chances INTEGER,
+    home_big_chances_missed INTEGER, away_big_chances_missed INTEGER,
+    home_passes INTEGER, away_passes INTEGER,
+    home_pass_acc REAL, away_pass_acc REAL,
+    home_yellow INTEGER, away_yellow INTEGER,
+    home_fouls INTEGER, away_fouls INTEGER,
+    home_offsides INTEGER, away_offsides INTEGER,
+    home_touches_box INTEGER, away_touches_box INTEGER,
+    home_final_third INTEGER, away_final_third INTEGER,
+    home_woodwork INTEGER, away_woodwork INTEGER,
+    home_goals_prevented REAL, away_goals_prevented REAL,
+    home_xg_1h REAL, away_xg_1h REAL,
+    home_xg_2h REAL, away_xg_2h REAL,
+    home_corners_1h INTEGER, away_corners_1h INTEGER,
+    home_corners_2h INTEGER, away_corners_2h INTEGER,
+    home_shots_1h INTEGER, away_shots_1h INTEGER,
+    home_shots_2h INTEGER, away_shots_2h INTEGER,
+    odds_home REAL, odds_draw REAL, odds_away REAL,
+    odds_over_15 REAL, odds_over_25 REAL, odds_over_35 REAL, odds_under_25 REAL,
+    odds_btts_yes REAL, odds_btts_no REAL,
+    weather_code INTEGER, temperature_c REAL, wind_speed REAL,
+    travel_distance_km REAL, is_derby INTEGER, is_neutral INTEGER,
+    referee TEXT, attendance INTEGER,
+    fetched_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_msh_teams ON match_stats_history(home_team, away_team)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_msh_date ON match_stats_history(match_date)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_msh_league_season ON match_stats_history(bsd_league_id, season)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS ai_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, matchId TEXT NOT NULL, rating INTEGER NOT NULL, ts INTEGER NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS matchday_passes (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT UNIQUE NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`);
   // bd s77m — table idempotency webhook Stripe (anti-rejeu : un event_id traité une seule fois)
@@ -24969,7 +25016,9 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
           const _row = _eloLookupStmt.get(_pName, _circuit);
           if (_row) {
             _eloInsertStmt.run(String(_row.player_id), _row.player_name, _row.elo, _row.matches_count, _nowSec, _circuit);
-            console.log('  [TennisElo] auto-update:', _row.player_name, _row.elo);
+            // Log détaillé silencieux par défaut (sinon 585 lignes/cycle pour rien).
+            // Résumé global émis après la boucle (_eloAdded). Debug via PS_DEBUG_ELO=1.
+            if (process.env.PS_DEBUG_ELO === '1') console.log('  [TennisElo] auto-update:', _row.player_name, _row.elo);
             _eloAdded++;
           }
         }
