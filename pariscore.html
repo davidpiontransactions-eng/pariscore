@@ -24864,7 +24864,7 @@ a:focus-visible,
 .sc-lc-bet{padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;text-align:center}
 .sc-lc-bet.strong{background:linear-gradient(135deg,rgba(0,230,118,.18) 0%,rgba(0,230,118,.06) 100%);color:var(--green,#00e676);border:1px solid rgba(0,230,118,.35);box-shadow:0 0 14px rgba(0,230,118,.2),inset 0 1px 0 rgba(0,230,118,.15);text-shadow:0 0 8px rgba(0,230,118,.3)}
 .sc-lc-bet.moderate{background:linear-gradient(135deg,rgba(245,158,11,.18) 0%,rgba(245,158,11,.06) 100%);color:var(--amber,#f59f0b);border:1px solid rgba(245,158,11,.35);box-shadow:0 0 12px rgba(245,158,11,.15),inset 0 1px 0 rgba(245,158,11,.12);text-shadow:0 0 6px rgba(245,158,11,.25)}
-.sc-lc-score{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.sc-lc-score{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0}
 .sc-lc-player{display:flex;align-items:center;gap:6px;min-width:0}
 .sc-lc-player div{display:flex;flex-direction:column;font-size:13px}
 .sc-lc-player b{color:var(--text,#fff);font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
@@ -24873,8 +24873,8 @@ a:focus-visible,
 .sc-lc-player.p2 b,.sc-lc-player.p2 div{text-align:right}
 .sc-lc-player.serving b{color:var(--green,#00e676)}
 .sc-lc-player.p2.serving b{color:var(--blue,#0077ff)}
-.sc-lc-photo{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--bg4,#161c2a)}
-.sc-lc-initials{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--text3,#94a3b8)}
+.sc-lc-photo{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--bg4,#161c2a);border:2px solid var(--border2,rgba(255,255,255,.12));box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
+.sc-lc-initials{display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--text3,#94a3b8)}
 .sc-lc-mid{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px}
 .sc-lc-games{font-size:15px;font-weight:700;color:var(--text2,#cbd5e1);font-family:var(--font-mono,monospace)}
 .sc-lc-pt{font-size:10px;color:var(--text3,#94a3b8);background:var(--bg3,#131722);padding:1px 5px;border-radius:3px}
@@ -24897,6 +24897,12 @@ a:focus-visible,
 .sc-stat-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border,rgba(255,255,255,.03))}
 .sc-stat-row span{color:var(--text3,#94a3b8)}
 .sc-stat-row b{color:var(--text,#fff);font-family:var(--font-mono,monospace);font-size:11px}
+.sc-tour-group{margin-bottom:16px}
+.sc-tour-header{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:8px;background:linear-gradient(135deg,var(--bg3,#131722) 0%,var(--bg2,#0e121e) 100%);border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.08));box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
+.sc-tour-header .name{font-family:var(--font-head,sans-serif);font-size:14px;font-weight:700;color:var(--text,#fff)}
+.sc-tour-header .tour{font-size:11px;color:var(--green,#00e676);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.sc-tour-header .count{font-size:11px;color:var(--text3,#94a3b8);margin-left:auto}
+
 
 /* bd C5 teaser value bets freemium */
 .sc-vb-teaser{text-align:center;padding:32px 20px;max-width:420px;margin:20px auto}
@@ -25466,7 +25472,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var _ph1='',_ph2='';
     try{_ph1=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player1||{}):'';}catch(e){}
     try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}):'';}catch(e){}
-    var _phHtml=function(url,name,side){return url?'<img class="sc-lc-photo" src="'+esc(url)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'<div class="sc-lc-photo sc-lc-initials">'+esc((name||'?').charAt(0))+'</div>';};
+    var _phHtml=function(url,name){var n=encodeURIComponent(name||'?');var fallback='https://ui-avatars.com/api/?name='+n+'&background=161c2a&color=94a3b8&size=88&bold=true';var src=url||fallback;return '<img class="sc-lc-photo" src="'+esc(src)+'" alt="'+esc(name||'')+'" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\''+fallback+'\';}">';};
 
     var html='<div class="sc-livecard">';
 
@@ -25985,9 +25991,22 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       if (!allLive.length) {
         pEl.innerHTML = emptyState('Aucun match en direct pour le moment.');
       } else {
-        // liveCardCompact est privé au 1er IIFE (Scope) → on passe par l'API publique
-        // renderLiveGrid qui l'utilise en interne (fix ReferenceError cross-IIFE).
-        root.Scope.renderLiveGrid(pEl, allLive);
+        var _groups = {};
+        allLive.forEach(function(m) {
+          var tn = m.tournament || 'Autres';
+          if (!_groups[tn]) _groups[tn] = [];
+          _groups[tn].push(m);
+        });
+        var _gHtml = '';
+        Object.keys(_groups).forEach(function(tn) {
+          var _gm = _groups[tn];
+          var _gt = _gm[0].tour || '';
+          _gHtml += '<div class="sc-tour-group">';
+          _gHtml += '<div class="sc-tour-header">' + svgIcon('trophy',14) + ' <span class="name">' + esc(tn) + '</span> <span class="tour">' + esc(_gt) + '</span> <span class="count">' + _gm.length + ' matchs</span></div>';
+          _gHtml += '<div class="sc-grid sc-grid-2">' + _gm.map(liveCardCompact).join('') + '</div>';
+          _gHtml += '</div>';
+        });
+        pEl.innerHTML = _gHtml;
       }
     } else if (tab === 'valuebets') {
       var _vbMatches = filterByTournament(_state.matches);
