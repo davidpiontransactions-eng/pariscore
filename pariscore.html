@@ -133,22 +133,43 @@
     payload.type = type;
     console.error('[PSCATCH] ' + type + ':', payload.message, '\n', payload.stack || '(no stack)');
     postToServer(payload);
-    showBanner(payload);
+    // N'affiche le bandeau QUE si on a une info exploitable (message réel + stack/filename).
+    // Évite le bandeau rouge "msg: {}" pour les erreurs externes sans contexte.
+    var hasUsableInfo = payload.message && payload.message !== '{}' && payload.message !== '[object Object]'
+      && (payload.stack || payload.filename);
+    if (hasUsableInfo) showBanner(payload);
+  }
+
+  // Filtre des erreurs NON-actionnables qu'on ne doit PAS remonter au utilisateur :
+  // - "Script error." = erreur cross-origin (extension, iframe, tracking pixel) sans stack
+  // - ev.error === null ET message vide = rien à diagnostiquer
+  // Ces erreurs ne sont PAS des bugs PariScore et le bandeau rouge panique l'uti pour rien.
+  function _isNoiseError(ev) {
+    var msg = String((ev && ev.message) || '').toLowerCase();
+    if (msg === 'script error.' || msg === 'script error') return true;  // cross-origin standard
+    if (!ev) return true;
+    // ev.error null + aucun filename + message vide = rien d'exploitable
+    if (!ev.error && !ev.filename && !msg) return true;
+    return false;
   }
 
   window.addEventListener('error', function (ev) {
+    // Filtre les erreurs externes non-actionnables (cross-origin, extensions)
+    if (_isNoiseError(ev)) return false;
     // ev.error (objet Error) est plus riche que ev.message seul
-    var p = serialize(ev.error || { message: ev.message, filename: ev.filename, lineno: ev.lineno, colno: ev.colno });
+    var p = serialize(ev.error || { message: ev.message || '(erreur sans message)', filename: ev.filename, lineno: ev.lineno, colno: ev.colno });
     report('window.error', p);
     return false;   // laisse l'erreur remonter aussi dans la console native
   }, true);
 
   window.addEventListener('unhandledrejection', function (ev) {
     var reason = ev && ev.reason;
+    // Filtre les rejets externes non-actionnables (ex: extensions, tracking)
+    if (reason == null) return false;
+    var rStr = String(reason.message || reason).toLowerCase();
+    if (rStr === 'script error.' || rStr === 'script error') return false;
     // Passe directement reason à serialize : il gère Error, plain object, primitive.
-    // L'ancien filtre (reason.stack || reason.message) ratait les rejects non-Error
-    // (ex: reject(500), reject({code:'X'})) en les réduisant à '[object Object]'.
-    var p = serialize(reason != null ? reason : { message: 'unhandledrejection (no reason)' });
+    var p = serialize(reason);
     report('unhandledrejection', p);
     return false;
   }, true);
