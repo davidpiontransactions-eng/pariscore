@@ -25741,11 +25741,22 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // Panel 3 — DR chart évolution + par set
     var _drDetail='';
     try{
-      if(m.dr_series&&(m.dr_series.p1||[]).length>=2){
-        _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Dominance Ratio (évolution)</div>';
-        _drDetail+=drChart(m.dr_series.p1,m.dr_series.p2);
+      // DR set courant (toujours affiché si dr_exact dispo)
+      if(m.dr_exact&&m.dr_exact.dr!=null){
+        var _dr=m.dr_exact.dr,_drl=_dr>=1?'P1':'P2',_drv=_dr>=1?_dr:(1/_dr);
+        _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('scale',12)+' Dominance Ratio (set courant)</div>';
+        _drDetail+='<div class="sc-stat-row"><span>DR</span><b style="color:'+(_dr>=1?'var(--green)':'var(--blue)')+'">'+_drl+' '+_drv.toFixed(2)+'</b></div>';
+        if(m.dr_exact.p1Serve!=null)_drDetail+='<div class="sc-stat-row"><span>Serve P1/P2</span><b>'+num(m.dr_exact.p1Serve)+' / '+num(m.dr_exact.p2Serve)+'</b></div>';
+        if(m.dr_exact.p1Ret!=null)_drDetail+='<div class="sc-stat-row"><span>Return P1/P2</span><b>'+num(m.dr_exact.p1Ret)+' / '+num(m.dr_exact.p2Ret)+'</b></div>';
       }
-      if(m.dr_per_set){
+      // DR chart évolution (si assez de samples accumulés)
+      if(m.dr_series&&(m.dr_series.p1||[]).length>=2){
+        _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' DR évolution ('+m.dr_series.p1.length+' points)</div>';
+        _drDetail+=drChart(m.dr_series.p1,m.dr_series.p2);
+      }else{
+        _drDetail+='<div class="sc-seclbl" style="margin-top:8px;opacity:.5;font-size:11px">Courbe DR en cours d\'accumulation (échantillonnage toutes les 30s)…</div>';
+      }
+      if(m.dr_per_set){if(m.dr_per_set){
         var _sl=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
         if(_sl.length){
           _drDetail+='<div class="sc-seclbl" style="margin-top:6px">'+svgIcon('scale',12)+' DR moyen par set</div>';
