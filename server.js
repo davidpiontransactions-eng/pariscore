@@ -37910,7 +37910,22 @@ async function _refreshTop10Cache() {
         }
         let vb = await _tnVbFn({});
         if (!vb || vb.status !== 200) {
-          console.warn('[Top10Refresh] buildTennisValueBets echec');
+          // Log diagnostique : avant on n'avait que "echec" sans contexte → impossible
+          // de savoir si c'était BSD KO (502/503), addon requis (402), ou autre.
+          // On logge status + error du body, avec dédoublonnage pour éviter le spam
+          // (le Top10 peut être rafraîchi plusieurs fois au boot quand le cache est froid).
+          const _errDetail = (vb && vb.body && (vb.body.error || vb.body.detail)) || 'no detail';
+          const _errKey = vb ? (vb.status + ':' + _errDetail) : 'novb';
+          globalThis.__top10VbErrs = globalThis.__top10VbErrs || new Map();
+          const _prev = globalThis.__top10VbErrs.get(_errKey) || 0;
+          globalThis.__top10VbErrs.set(_errKey, _prev + 1);
+          if (_prev === 0) {
+            // 1er échec pour cette cause : log détaillé
+            console.warn(`[Top10Refresh] buildTennisValueBets echec — status=${vb ? vb.status : 'null'} err=${_errDetail}`);
+          } else if (_prev === 4) {
+            // Après 5 occurrences : résumé + arrêt du spam
+            console.warn(`[Top10Refresh] buildTennisValueBets — ${_prev + 1}e échec identique (${_errKey}), logs suivants supprimés`);
+          }
           return false;
         }
         // [FIX cold-start] buildTennisValueBets retourne {building:true,count:0}
