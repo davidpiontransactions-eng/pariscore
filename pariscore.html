@@ -25567,22 +25567,28 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     html+='<div class="sc-stat-row"><span>% 2ème balle</span>'+_vs(st.p1_second_won,st.p2_second_won,true,true)+'%</div>';
     html+='<div class="sc-stat-row"><span>% 1er service en jeu</span>'+_vs(st.p1_first_pct,st.p2_first_pct,true,true)+'%</div>';
     html+='<div class="sc-stat-row"><span>Aces / Double fautes</span><b>'+(num(st.p1_aces)||0)+'/'+(num(st.p1_df)||0)+' · '+(num(st.p2_aces)||0)+'/'+(num(st.p2_df)||0)+'</b></div>';
-    if(m.bppi){html+='<div class="sc-stat-row"><span>Pression (BPPI)</span>'+_vs(m.bppi.p1,m.bppi.p2,false)+'</div>';}
+    if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
     if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
     html+='</div>';
 
-    // Panel 2 — ATP/WTA stats (selon tour)
+    // Panel 2 — Indicateurs parieur (remplace l'ancien panneau Glicko cassé :
+    // les ratings Service/Return Glicko2 étaient TOUJOURS 1500 car processMatchResult
+    // n'était jamais appelé → valeurs identiques P1/P2 = inutiles + terme inconnu des parieurs)
     var tourName=(m.tour||'').toUpperCase();
     var isWta=tourName.indexOf('WTA')>-1;
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Stats '+(isWta?'WTA':'ATP')+'</div>';
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Indicateurs '+tourName+'</div>';
     html+='<div class="sc-stat-panel">';
-    var gl=m.glicko2||{};
-    html+='<div class="sc-stat-row"><span>Service Rating</span>'+_vs(gl.p1_serve,gl.p2_serve,true)+'</div>';
-    html+='<div class="sc-stat-row"><span>Return Rating</span>'+_vs(gl.p1_return,gl.p2_return,true)+'</div>';
-    html+='<div class="sc-stat-row"><span>BP sauvés</span>'+_vs(st.p1_bp_saved,st.p2_bp_saved,false)+'</div>';
-    if(isWta){
-      html+='<div class="sc-stat-row"><span>% pts 2ème service</span>'+_vs(st.p1_second_won,st.p2_second_won,true,true)+'%</div>';
-      html+='<div class="sc-stat-row"><span>% pts filet</span><b>n/d</b></div>';
+    // BP sauvés/confrontés : info concrète pour le parieur (résilience sous pression)
+    if(st.p1_bp_saved!=null||st.p2_bp_saved!=null){
+      html+='<div class="sc-stat-row"><span>Balles de break sauvées</span>'+_vs(st.p1_bp_saved,st.p2_bp_saved,false)+'</div>';
+    }
+    // Indice de dominance (BPPI renommé pour le parieur) : score 0-100
+    if(m.bppi&&(m.bppi.p1!=null||m.bppi.p2!=null)){
+      html+='<div class="sc-stat-row"><span>Indice dominance</span>'+_vs(m.bppi.p1,m.bppi.p2,false)+'/100</div>';
+    }
+    // % retour de service (révélateur du break potential)
+    if(st.p1_ret_won!=null||st.p2_ret_won!=null){
+      html+='<div class="sc-stat-row"><span>% retours gagnés</span>'+_vs(st.p1_ret_won,st.p2_ret_won,true,true)+'%</div>';
     }
     html+='</div>';
 

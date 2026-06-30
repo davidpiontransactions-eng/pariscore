@@ -24047,9 +24047,12 @@ function computeBPPI(m) {
   const offense_p2 = p2BreakOpp > 0 ? (p2Breaks / p2BreakOpp) * 100 : 50;
 
   // Serve pressure proxy : % 1ères balles in (BSD expose p1_first_serve_pct).
+  // IMPORTANT : BSD renvoie parfois une fraction 0-1 (0.65), parfois un pourcentage 0-100 (65).
+  // _tnPctFrac normalise vers 0-1 puis *100 → pourcentage. _clampPct seul ne divisait pas → bug.
   const bsdStats = m._bsd_stats || {};
-  const serve_p1 = _clampPct(bsdStats.p1_first_pct != null ? bsdStats.p1_first_pct : 50);
-  const serve_p2 = _clampPct(bsdStats.p2_first_pct != null ? bsdStats.p2_first_pct : 50);
+  const _servePct = (v) => { const f = _tnPctFrac(v); return _clampPct(f != null ? f * 100 : 50); };
+  const serve_p1 = _servePct(bsdStats.p1_first_pct);
+  const serve_p2 = _servePct(bsdStats.p2_first_pct);
 
   // Momentum 5 jeux : combine run (streak en cours) + ratio jeux gagnés sur 5.
   let p1Won5 = 0, p2Won5 = 0;
