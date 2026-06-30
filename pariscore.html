@@ -24900,10 +24900,27 @@ a:focus-visible,
 .sc-lc-dr-chip{font-size:10px;color:var(--text3,#94a3b8);padding:2px 6px;border-radius:4px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.08))}
 .sc-lc-ou-pill{padding:2px 7px;border-radius:5px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.08));font-family:var(--font-mono,monospace);font-size:10px;color:var(--text2,#cbd5e1)}
 .sc-lc-ou-pill.hi{background:linear-gradient(135deg,rgba(0,230,118,.18) 0%,rgba(0,230,118,.06) 100%);border-color:rgba(0,230,118,.3);color:var(--green,#00e676);text-shadow:0 0 6px rgba(0,230,118,.25)}
-.sc-stat-panel{display:flex;flex-direction:column;gap:3px;padding:6px 0}
+.sc-stat-panel{display:flex;flex-direction:column;gap:5px;padding:6px 0}
 .sc-stat-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border,rgba(255,255,255,.03))}
 .sc-stat-row span{color:var(--text3,#94a3b8)}
 .sc-stat-row b{color:var(--text,#fff);font-family:var(--font-mono,monospace);font-size:11px}
+/* Duel miroir 3D : barre comparative P1 (vert, gauche) vs P2 (bleu, droite) */
+.sc-duel{display:flex;flex-direction:column;gap:3px;padding:3px 0;border-bottom:1px solid var(--border,rgba(255,255,255,.03))}
+.sc-duel-lbl{font-size:10px;color:var(--text3,#94a3b8);text-align:center;font-weight:600;letter-spacing:.02em}
+.sc-duel-row{display:flex;align-items:center;gap:6px}
+.sc-duel-val{font-family:var(--font-mono,monospace);font-size:10px;font-weight:700;width:42px;flex-shrink:0;text-align:center;opacity:.85}
+.sc-duel-val.p1{color:var(--green,#00e676);text-align:right}
+.sc-duel-val.p2{color:var(--blue,#0077ff);text-align:left}
+.sc-duel-val.win{text-shadow:0 0 8px currentColor;font-weight:800}
+.sc-duel-track{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.7),inset 0 -1px 0 rgba(255,255,255,.04)}
+.sc-duel-side{flex:1;height:100%;position:relative;display:flex}
+.sc-duel-side.p1{justify-content:flex-end}
+.sc-duel-side.p2{justify-content:flex-start}
+.sc-duel-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.sc-duel-fill.p1{background:linear-gradient(180deg,#00e676 0%,#00c853 50%,#00a844 100%);box-shadow:0 0 6px rgba(0,230,118,.35),inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.3)}
+.sc-duel-fill.p2{background:linear-gradient(180deg,#3b9eff 0%,#0077ff 50%,#005ecb 100%);box-shadow:0 0 6px rgba(0,119,255,.35),inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.3)}
+.sc-duel-fill.p1.win{box-shadow:0 0 12px rgba(0,230,118,.6),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.3)}
+.sc-duel-fill.p2.win{box-shadow:0 0 12px rgba(0,119,255,.6),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.3)}
 .sc-tour-group{margin-bottom:16px}
 .sc-tour-header{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:8px;background:linear-gradient(135deg,var(--bg3,#131722) 0%,var(--bg2,#0e121e) 100%);border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.08));box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
 .sc-tour-header .name{font-family:var(--font-head,sans-serif);font-size:14px;font-weight:700;color:var(--text,#fff)}
@@ -25494,6 +25511,34 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       var c2=(n1!=null&&n2!=null&&n2>n1)?' style="color:var(--green)"':'';
       return '<b><span'+c1+'>'+s1+'</span> / <span'+c2+'>'+s2+'</span></b>';
     }
+    // Duel miroir 3D : barre comparative P1 (gauche, vert) vs P2 (droite, bleu).
+    // opts: {unit:'%', max:100, decimals:true, pct:true}. Si pas de max → max dynamique.
+    // Le gagnant (valeur + haute) reçoit la classe win (glow renforcé).
+    function _duel(label,v1,v2,opts){
+      opts=opts||{};
+      var n1=opts.pct?_pct(v1):num(v1),n2=opts.pct?_pct(v2):num(v2);
+      var has1=n1!=null&&!isNaN(n1),has2=n2!=null&&!isNaN(n2);
+      var d=opts.decimals!==false;
+      var s1=has1?(d?n1.toFixed(2):String(Math.round(n1))):'—';
+      var s2=has2?(d?n2.toFixed(2):String(Math.round(n2))):'—';
+      var unit=opts.unit||'';
+      var max=opts.max!=null?opts.max:(Math.max(has1?n1:0,has2?n2:0,1));
+      // Ratio : chaque côté fait 50% max de la ligne. v/max*50.
+      var r1=has1?Math.max(2,Math.min(50,(n1/max)*50)):0;
+      var r2=has2?Math.max(2,Math.min(50,(n2/max)*50)):0;
+      var w1=has1&&has2&&n1>n2, w2=has1&&has2&&n2>n1;
+      var h='<div class="sc-duel">'
+        +'<div class="sc-duel-lbl">'+esc(label)+'</div>'
+        +'<div class="sc-duel-row">'
+        +'<span class="sc-duel-val p1'+(w1?' win':'')+'">'+s1+unit+'</span>'
+        +'<div class="sc-duel-track">'
+        +'<div class="sc-duel-side p1"><div class="sc-duel-fill p1'+(w1?' win':'')+'" style="width:'+(r1*2)+'%"></div></div>'
+        +'<div class="sc-duel-side p2"><div class="sc-duel-fill p2'+(w2?' win':'')+'" style="width:'+(r2*2)+'%"></div></div>'
+        +'</div>'
+        +'<span class="sc-duel-val p2'+(w2?' win':'')+'">'+s2+unit+'</span>'
+        +'</div></div>';
+      return h;
+    }
 
     // === Value bet calcul (remonté pour décision immédiate) ===
     var _hasBet=false,_betHtml='';
@@ -25557,38 +25602,32 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     html+='<button class="sc-expand" onclick="Scope._toggle(this)" data-label-closed="📊 Analyse détaillée" data-label-open="Masquer l\'analyse"><span class="lbl">📊 Analyse détaillée</span><span class="chev">▾</span></button>';
     html+='<div class="sc-detail">';
 
-    // Panel 1 — LIVE temps réel
+    // Panel 1 — LIVE temps réel (duels miroir 3D)
     html+='<div class="sc-seclbl">'+svgIcon('radio',12)+' Stats Live (temps réel)</div>';
     html+='<div class="sc-stat-panel">';
     var sm=m.serve_momentum||{};
     var run=sm.run||{};
     if(run.player)html+='<div class="sc-stat-row"><span>Série en cours</span><b style="color:'+(run.player===1?'var(--green)':'var(--blue)')+'">'+(run.player===1?p1n:p2n)+' '+run.len+' pts</b></div>';
-    html+='<div class="sc-stat-row"><span>% 1ère balle (service)</span>'+_vs(st.p1_first_won,st.p2_first_won,true,true)+'%</div>';
-    html+='<div class="sc-stat-row"><span>% 2ème balle</span>'+_vs(st.p1_second_won,st.p2_second_won,true,true)+'%</div>';
-    html+='<div class="sc-stat-row"><span>% 1er service en jeu</span>'+_vs(st.p1_first_pct,st.p2_first_pct,true,true)+'%</div>';
-    html+='<div class="sc-stat-row"><span>Aces / Double fautes</span><b>'+(num(st.p1_aces)||0)+'/'+(num(st.p1_df)||0)+' · '+(num(st.p2_aces)||0)+'/'+(num(st.p2_df)||0)+'</b></div>';
-    if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
+    html+=_duel('% 1ère balle gagnée',st.p1_first_won,st.p2_first_won,{pct:true,unit:'%'});
+    html+=_duel('% 2ème balle gagnée',st.p1_second_won,st.p2_second_won,{pct:true,unit:'%'});
+    html+=_duel('% 1er service en jeu',st.p1_first_pct,st.p2_first_pct,{pct:true,unit:'%'});
+    html+=_duel('Aces',st.p1_aces,st.p2_aces,{decimals:false});
+    html+=_duel('Double fautes',st.p1_df,st.p2_df,{decimals:false});
     if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
     html+='</div>';
 
-    // Panel 2 — Indicateurs parieur (remplace l'ancien panneau Glicko cassé :
-    // les ratings Service/Return Glicko2 étaient TOUJOURS 1500 car processMatchResult
-    // n'était jamais appelé → valeurs identiques P1/P2 = inutiles + terme inconnu des parieurs)
+    // Panel 2 — Indicateurs parieur (duels miroir 3D)
     var tourName=(m.tour||'').toUpperCase();
-    var isWta=tourName.indexOf('WTA')>-1;
     html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Indicateurs '+tourName+'</div>';
     html+='<div class="sc-stat-panel">';
-    // BP sauvés/confrontés : info concrète pour le parieur (résilience sous pression)
     if(st.p1_bp_saved!=null||st.p2_bp_saved!=null){
-      html+='<div class="sc-stat-row"><span>Balles de break sauvées</span>'+_vs(st.p1_bp_saved,st.p2_bp_saved,false)+'</div>';
+      html+=_duel('Balles de break sauvées',st.p1_bp_saved,st.p2_bp_saved,{decimals:false});
     }
-    // Indice de dominance (BPPI renommé pour le parieur) : score 0-100
     if(m.bppi&&(m.bppi.p1!=null||m.bppi.p2!=null)){
-      html+='<div class="sc-stat-row"><span>Indice dominance</span>'+_vs(m.bppi.p1,m.bppi.p2,false)+'/100</div>';
+      html+=_duel('Indice dominance',m.bppi.p1,m.bppi.p2,{max:100,decimals:false});
     }
-    // % retour de service (révélateur du break potential)
     if(st.p1_ret_won!=null||st.p2_ret_won!=null){
-      html+='<div class="sc-stat-row"><span>% retours gagnés</span>'+_vs(st.p1_ret_won,st.p2_ret_won,true,true)+'%</div>';
+      html+=_duel('% retours gagnés',st.p1_ret_won,st.p2_ret_won,{pct:true,unit:'%'});
     }
     html+='</div>';
 
