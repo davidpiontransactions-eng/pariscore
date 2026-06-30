@@ -24700,6 +24700,13 @@ a:focus-visible,
 .sc-odds{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-top:12px}
 .sc-odd{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);text-align:center}
 .sc-odd-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);min-width:64px}
+/* bd pre-prod-fix : textes odds/score visibles sur fond sombre (était gris-sur-gris illisible) */
+.sc-odd .lbl,.sc-odd-mid .lbl{color:var(--text3,#94a3b8);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.sc-odd .val,.sc-odd-mid .val{color:var(--text,#fff);font-weight:700;font-size:16px}
+.sc-odd .ev{font-size:11px}
+.sc-odd .ev.pos,.sc-odd-mid .sub{color:var(--green,#00e676)}
+.sc-odd .ev.neg{color:var(--red,#ef4444)}
+.sc-odd-mid .lbl{color:var(--text3,#94a3b8)}
 /* top value callout */
 .sc-callout{display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 10px;border-radius:var(--radius);border:1px solid rgba(0,230,118,.25);background:var(--green-bg)}
 /* value bet signal badge */
@@ -24928,17 +24935,21 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   // Probabilité Elo/Glicko d'après les données Pariscore.
   // Priorité : predictions.elo > glicko2.p1_prob > dérivation des ratings.
+  // bd pre-prod-fix C1+v2 : predictions.elo ET predictions.blended sont des objets
+  // {p1,p2} côté backend (server.js top10 builder), pas des numbers.
+  // Number({p1:0.6})=NaN → cascade NaN dans ev/kelly/tier/gauge. On extrait .p1 si objet.
+  function _probaField(v){
+    if(v==null) return NaN;
+    if(typeof v==='number') return v;
+    if(typeof v==='object'&&v.p1!=null) return Number(v.p1);
+    return Number(v);
+  }
   function p1WinProb(m){
     if(m.predictions){
-      if(m.predictions.elo!=null) return clamp(Number(m.predictions.elo),0.02,0.98);
-      // bd pre-prod-fix C1 : predictions.blended est un objet {p1,p2} côté backend
-      // (server.js:37671), pas un number. Number({p1:0.6})=NaN → cascade NaN dans
-      // ev/kelly/tier/gauge. On extrait blended.p1 si objet, sinon number (legacy).
-      if(m.predictions.blended!=null){
-        var bl=m.predictions.blended;
-        var blv=(bl&&typeof bl==='object'&&bl.p1!=null)?Number(bl.p1):Number(bl);
-        if(isFinite(blv)) return clamp(blv,0.02,0.98);
-      }
+      var eloV=_probaField(m.predictions.elo);
+      if(isFinite(eloV)) return clamp(eloV,0.02,0.98);
+      var blV=_probaField(m.predictions.blended);
+      if(isFinite(blV)) return clamp(blV,0.02,0.98);
     }
     if(m.glicko2&&m.glicko2.p1_prob!=null) return clamp(Number(m.glicko2.p1_prob),0.02,0.98);
     if(m.glicko2&&m.glicko2.p1_rating!=null&&m.glicko2.p2_rating!=null){
