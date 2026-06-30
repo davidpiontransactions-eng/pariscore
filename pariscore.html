@@ -15887,7 +15887,7 @@ function psSetLang(v) {
           <div class="sc-logo"><svg viewBox="0 0 40 40" width="28" height="28" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#0a0d0f"/><path d="M5 20 Q14 9 20 20 Q26 31 35 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".92"/><path d="M5 20 Q14 31 20 20 Q26 9 35 20" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".92"/></svg></div>
           <div>
             <h1 class="sc-brand-h1">Tennis<span>Scope</span>.AI</h1>
-            <p class="sc-brand-sub">Elo + Glicko-2 + Kelly + Markov live — Portage Option A pour Pariscore</p>
+            <p class="sc-brand-sub">Elo + Glicko-2 + Kelly + Markov live</p>
           </div>
         </div>
         <div class="sc-actions">
@@ -15920,10 +15920,6 @@ function psSetLang(v) {
 
     <!-- ═══ PANELS ═══ -->
     <main class="sc-main">
-      <div class="sc-note">
-        <b>Portage Option A</b> — Composants analytiques (jauge de probabilité, momentum, sparklines Elo, radar 6 metrics, value bets table avec Edge/EV/Kelly).
-        Consomme les données réelles de Pariscore (Elo/Glicko-2 surface, predictions.elo, best_ev_model, momentum.kfs_direction).
-      </div>
       <div id="sc-panel-prematch" class="sc-panel active"></div>
       <div id="sc-panel-live" class="sc-panel"></div>
       <div id="sc-panel-valuebets" class="sc-panel"></div>
@@ -25698,83 +25694,70 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     if (_state.loading) return Promise.resolve(_state.matches);
     _state.loading = true;
     _state.error = null;
+    _state.liveError = false;
     publishStatus('Rafraîchissement…');
-    // Timeout client 25s — évite de bloquer indéfiniment si le serveur est lent (cold build ~20s)
     var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var timeout = setTimeout(function () { if (controller) controller.abort(); }, 25000);
-    return fetch('/api/v1/tennis/value-bets', {
+    // bd live-fix : fetch LIVE en PREMIER (endpoint public, jamais 403) pour que l'onglet Live
+    // fonctionne TOUJOURS, même pour les non-Pro. Value-bets (Pro-gated) devient secondaire
+    // best-effort — son 403 ne bloque plus l'affichage live.
+    return fetch('/api/v1/tennis/live', {
       headers: { 'Accept': 'application/json' },
       credentials: 'same-origin',
       signal: controller ? controller.signal : undefined
     })
       .then(function (r) { clearTimeout(timeout); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (data) {
-        var raw = (data && data.matches) || [];
-        // NOTE: remplacement complet (pas de merge/diff par ID). Si un match disparaît
-        // temporairement du serveur, il s'efface ici. Un merge par ID serait plus résilient
-        // mais nécessiterait un timestamp par match côté serveur. TODO: N4 review.
-        _state.matches = raw.map(mapMatch).filter(Boolean);
+      .then(function (liveResp) {
+        var liveArr = Array.isArray(liveResp) ? liveResp : (liveResp && Array.isArray(liveResp.matches) ? liveResp.matches : []);
+        var liveMatches = liveArr.map(function (m) {
+          var mapped = mapMatch(m);
+          if (!mapped) return null;
+          mapped._isLive = true;
+          if (m.dr_series) mapped.dr_series = m.dr_series;
+          if (m.dr_per_set) mapped.dr_per_set = m.dr_per_set;
+          if (m.liveProbability != null) mapped.liveProbability = m.liveProbability;
+          if (m.momentum) mapped.momentum = m.momentum;
+          if (m.bppi) mapped.bppi = m.bppi;
+          if (m.serving) mapped.serving = m.serving;
+          if (m.player1_sets != null) mapped.player1_sets = m.player1_sets;
+          if (m.player2_sets != null) mapped.player2_sets = m.player2_sets;
+          if (m.sets) mapped.sets = m.sets;
+          if (m.current_point) mapped.current_point = m.current_point;
+          if (m.odds_player1) mapped.odds_player1 = m.odds_player1;
+          if (m.odds_player2) mapped.odds_player2 = m.odds_player2;
+          return mapped;
+        }).filter(Boolean);
+        _state.matches = liveMatches;
         _state.lastFetch = Date.now();
         _state.loading = false;
-        publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs');
-        // Met à jour la KPI bar existante de Pariscore (compat backwards)
+        publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs live');
         updateKpiBar(_state.matches);
-        // Re-render l'onglet actif
         renderActiveTab();
-        // bd live-wire : fetch aussi les matchs LIVE (endpoint public) pour activer
-        // l'onglet Live (getLive → renderLiveGrid → liveCard avec DR chart + Markov + momentum).
-        // Sans ça, _state.matches ne contient que du prematch scheduled → getLive() = [] toujours.
-        // Fire-and-forget : le prematch est déjà rendu, le live enrichit après.
-        fetch('/api/v1/tennis/live', {
-          headers: { 'Accept': 'application/json' },
-          credentials: 'same-origin'
-        })
+        // Value-bets en best-effout (Pro only). Si 403/non-Pro → silencieux.
+        // Si succès → enrichit _state.matches avec prematch (sans écraser les live).
+        fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (liveResp) {
-            // Le payload live peut être un tableau brut ou {matches:[...]}
-            var liveArr = Array.isArray(liveResp) ? liveResp : (liveResp && Array.isArray(liveResp.matches) ? liveResp.matches : null);
-            if (!liveArr) return;
-            // mapMatch normalise (player1/player2 objets, best_ev_model, eloTrend) et préserve les
-            // champs live riches via Object.assign({}, m, …). On re-sette quand même les champs live
-            // explicitement au cas où mapMatch évolue et cesse de tout copier.
-            var liveMatches = liveArr.map(function (m) {
-              var mapped = mapMatch(m);
-              if (!mapped) return null;
-              mapped._isLive = true;
-              if (m.dr_series) mapped.dr_series = m.dr_series;
-              if (m.dr_per_set) mapped.dr_per_set = m.dr_per_set;
-              if (m.liveProbability != null) mapped.liveProbability = m.liveProbability;
-              if (m.momentum) mapped.momentum = m.momentum;
-              if (m.bppi) mapped.bppi = m.bppi;
-              if (m.serving) mapped.serving = m.serving;
-              if (m.player1_sets != null) mapped.player1_sets = m.player1_sets;
-              if (m.player2_sets != null) mapped.player2_sets = m.player2_sets;
-              if (m.sets) mapped.sets = m.sets;
-              if (m.current_point) mapped.current_point = m.current_point;
-              if (m.odds_player1) mapped.odds_player1 = m.odds_player1;
-              if (m.odds_player2) mapped.odds_player2 = m.odds_player2;
-              return mapped;
-            }).filter(Boolean);
-            if (!liveMatches.length) return;
-            // Dédup par id : un match présent à la fois en prematch et live ne s'affiche qu'une fois
-            // (la version live gagne, car elle porte les champs riches DR/Markov/momentum).
+          .then(function (data) {
+            if (!data || !data.matches) return;
+            var prematch = data.matches.map(mapMatch).filter(Boolean);
             var liveIds = {};
-            liveMatches.forEach(function (m) { liveIds[m.id] = true; });
-            _state.matches = _state.matches.filter(function (m) { return !liveIds[m.id]; }).concat(liveMatches);
+            _state.matches.forEach(function (m) { if (m._isLive) liveIds[m.id] = true; });
+            var newPrematch = prematch.filter(function (m) { return !liveIds[m.id]; });
+            _state.matches = _state.matches.concat(newPrematch);
             publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs (' + liveMatches.length + ' live)');
             updateKpiBar(_state.matches);
             renderActiveTab();
           })
-          .catch(function () { /* live fetch fail = non-blocking, prematch déjà rendu */ });
+          .catch(function () { /* value-bets 403 (non-Pro) = silencieux, non-blocking */ });
         return _state.matches;
       })
       .catch(function (err) {
         clearTimeout(timeout);
-        if (err && err.name === 'AbortError') err = new Error('Timeout 25s');
         _state.loading = false;
+        _state.liveError = true;
         _state.error = err && err.message || String(err);
-        if (/403/.test(_state.error)) { if (_timer) { clearInterval(_timer); _timer = null; } }
-        publishStatus('Erreur : ' + _state.error, true);
+        publishStatus('Erreur live : ' + _state.error, true);
+        renderActiveTab();
         return [];
       });
   }
