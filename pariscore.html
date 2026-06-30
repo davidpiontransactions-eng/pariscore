@@ -25738,7 +25738,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // helpers exposés (utiles pour réutilisation dans Pariscore)
     p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
-    prematchCard:prematchCard,liveCard:liveCard,valueBetsTable:valueBetsTable,
+    prematchCard:prematchCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     summaryRow:summaryRow,topPick:topPick,radar:radar,analyticsPanel:analyticsPanel,factors:factors,
 
     // rendus haut niveau (injectent dans un élément du DOM)
@@ -25746,7 +25746,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(prematchCard).join('')+'</div>';
     },
     renderLiveGrid:function(el,matches){
-      el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(liveCard).join('')+'</div>';
+      el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(liveCardCompact).join('')+'</div>';
     },
     renderValueBets:function(el,matches,opts){
       _vbHost=el;_vbMatches=matches;_vbOpts=opts||{filter:'all',sort:'edge'};
