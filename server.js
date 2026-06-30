@@ -38636,8 +38636,9 @@ async function _buildTennisValueBetsCore({ date }) {
   // this was 400+ compiles per VB cycle. Statement is now compiled once and reused.
   const _stmtPlayerRank = (() => {
     try {
+      // La colonne s'appelle 'circuit' (pas 'tour') dans tennis_players_elo — fix no such column: tour.
       return sqldb.prepare(
-        `SELECT atp_rank, wta_rank FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND tour = ? LIMIT 1`
+        `SELECT atp_rank, wta_rank FROM tennis_players_elo WHERE LOWER(player_name) = LOWER(?) AND circuit = ? LIMIT 1`
       );
     } catch (_) { console.warn('[vb] _stmtPlayerRank prepare', _?.message); return null; }
   })();
