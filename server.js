@@ -9774,8 +9774,19 @@ function buildMatchRecord(raw) {
     away: _aSideDB ? (aRaw?._source || 'db') : (fdAway ? fdAway._source : 'sim'),
   };
 
-  if (!_hSideDB && !fdHome) console.warn(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (non trouvé en DB ni archive FD)`);
-  if (!_aSideDB && !fdAway) console.warn(`  [BuildMatch] "${raw.away_team}" (Away) — stats simulées (non trouvé en DB ni archive FD)`);
+  // Stats simulées = comportement NORMAL pour les ligues non couvertes par les feeds
+  // (ex: League of Ireland — Shelbourne, Dundalk...). Ce n'est pas une erreur technique.
+  // log: console.log (out log) au lieu de console.warn (error log), + dédoublonnage pour
+  // éviter le spam répétitif à chaque cycle de refresh.
+  globalThis.__simStatsSeen = globalThis.__simStatsSeen || new Set();
+  if (!_hSideDB && !fdHome) {
+    const _k = 'H:' + raw.home_team;
+    if (!globalThis.__simStatsSeen.has(_k)) { globalThis.__simStatsSeen.add(_k); console.log(`  [BuildMatch] "${raw.home_team}" (Home) — stats simulées (ligue non couverte, fallback PPG)`); }
+  }
+  if (!_aSideDB && !fdAway) {
+    const _k = 'A:' + raw.away_team;
+    if (!globalThis.__simStatsSeen.has(_k)) { globalThis.__simStatsSeen.add(_k); console.log(`  [BuildMatch] "${raw.away_team}" (Away) — stats simulées (ligue non couverte, fallback PPG)`); }
+  }
 
   // ── FIX v20.0 — getTeamForm() : Normalisateur Universel (symétrique Home/Away) ──
   // Niveaux : 1) DB exacte  2) Fuzzy  3) Prefix fallback  4) Historique de matchs
@@ -9790,7 +9801,7 @@ function buildMatchRecord(raw) {
     if (firstWord.length >= 4) {
       for (const [k, v] of Object.entries(db.teamStats)) {
         if (k.startsWith(firstWord) && v?.form && v.form.length >= 3) {
-          console.warn(`  [Forme] "${teamName}" → fallback forme depuis "${k}" (${v.form})`);
+          if (process.env.PS_DEBUG_FORM === '1') console.log(`  [Forme] "${teamName}" → fallback forme depuis "${k}" (${v.form})`);
           return v.form;
         }
       }
@@ -9798,13 +9809,15 @@ function buildMatchRecord(raw) {
     // Niveau 4 — Dérivation depuis l'historique des matchs terminés (dernier recours)
     const derived = deriveFormFromHistory(teamName, 5);
     if (derived) {
-      console.warn(`  [Forme] "${teamName}" → forme dérivée de l'historique (${derived})`);
+      if (process.env.PS_DEBUG_FORM === '1') console.log(`  [Forme] "${teamName}" → forme dérivée de l'historique (${derived})`);
       return derived;
     }
     // Niveau 5 — Synthèse forme depuis stats saison (PPG → W/D/L)
     const synForm = deriveFormFromStats(fallbackStats);
     if (synForm) {
-      console.warn(`  [Forme] "${teamName}" → forme synthétisée depuis PPG (${synForm})`);
+      // Fallback PPG = normal pour ligues non couvertes. log détaillé silencieux par défaut
+      // (sinon spam massif à chaque cycle pour chaque équipe non couverte).
+      if (process.env.PS_DEBUG_FORM === '1') console.log(`  [Forme] "${teamName}" → forme synthétisée depuis PPG (${synForm})`);
       return synForm;
     }
     return '';
