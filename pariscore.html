@@ -24858,13 +24858,15 @@ a:focus-visible,
 .sc-trader-dr,.sc-trader-bppi{margin:2px 0;font-size:11px;color:var(--text3,#94a3b8)}
 /* bd liveCardCompact : carte live compacte trading-style */
 .sc-detail.open{display:block}
-.sc-livecard{background:var(--bg2,#0e121e);border:1px solid var(--border2,rgba(255,255,255,.08));border-radius:var(--radius,8px);padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-family:var(--font-body,sans-serif)}
-.sc-lc-header{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text3,#94a3b8)}
-.sc-lc-round{font-size:10px;opacity:.7}
-.sc-lc-bet{padding:6px 10px;border-radius:6px;font-size:13px;font-weight:600;text-align:center}
-.sc-lc-bet.strong{background:linear-gradient(135deg,rgba(0,230,118,.18) 0%,rgba(0,230,118,.06) 100%);color:var(--green,#00e676);border:1px solid rgba(0,230,118,.35);box-shadow:0 0 14px rgba(0,230,118,.2),inset 0 1px 0 rgba(0,230,118,.15);text-shadow:0 0 8px rgba(0,230,118,.3)}
-.sc-lc-bet.moderate{background:linear-gradient(135deg,rgba(245,158,11,.18) 0%,rgba(245,158,11,.06) 100%);color:var(--amber,#f59f0b);border:1px solid rgba(245,158,11,.35);box-shadow:0 0 12px rgba(245,158,11,.15),inset 0 1px 0 rgba(245,158,11,.12);text-shadow:0 0 6px rgba(245,158,11,.25)}
-.sc-lc-score{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0}
+.sc-livecard{background:var(--bg2,#0e121e);border:1px solid var(--border2,rgba(255,255,255,.08));border-radius:var(--radius,8px);padding:6px 8px;display:flex;flex-direction:column;gap:4px;font-family:var(--font-body,sans-serif)}
+.sc-lc-header{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text3,#94a3b8);gap:6px;flex-wrap:wrap}
+.sc-lc-round{font-size:10px;opacity:.8;display:inline-flex;align-items:center;gap:4px}
+.sc-lc-round .sc-surface{font-size:9px}
+.sc-lc-bet{padding:7px 10px;border-radius:6px;font-size:13px;font-weight:600;text-align:center}
+.sc-lc-bet.strong{background:linear-gradient(135deg,rgba(0,230,118,.22) 0%,rgba(0,230,118,.08) 100%);color:var(--green,#00e676);border:1px solid rgba(0,230,118,.4);box-shadow:0 0 16px rgba(0,230,118,.25),inset 0 1px 0 rgba(0,230,118,.2);text-shadow:0 0 8px rgba(0,230,118,.4)}
+.sc-lc-bet.moderate{background:linear-gradient(135deg,rgba(245,158,11,.2) 0%,rgba(245,158,11,.07) 100%);color:var(--amber,#f59f0b);border:1px solid rgba(245,158,11,.38);box-shadow:0 0 12px rgba(245,158,11,.18),inset 0 1px 0 rgba(245,158,11,.14);text-shadow:0 0 6px rgba(245,158,11,.3)}
+.sc-lc-bet.none{padding:4px 10px;font-size:10px;font-weight:500;color:var(--text3,#94a3b8);background:transparent;border:1px dashed var(--border2,rgba(255,255,255,.1));text-align:center}
+.sc-lc-score{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 0}
 .sc-lc-player{display:flex;align-items:center;gap:6px;min-width:0}
 .sc-lc-player div{display:flex;flex-direction:column;font-size:13px}
 .sc-lc-player b{color:var(--text,#fff);font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
@@ -24879,20 +24881,25 @@ a:focus-visible,
 .sc-lc-games{font-size:15px;font-weight:700;color:var(--text2,#cbd5e1);font-family:var(--font-mono,monospace)}
 .sc-lc-pt{font-size:10px;color:var(--text3,#94a3b8);background:var(--bg3,#131722);padding:1px 5px;border-radius:3px}
 .sc-lc-srv{font-size:10px}
-.sc-lc-dr{font-size:11px;color:var(--text3,#94a3b8);text-align:center}
-.sc-lc-proba{display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:10px;font-weight:700;color:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.08),0 1px 2px rgba(0,0,0,.4)}
+/* KPI rows : label gauche + barre + valeur droite (look trading dashboard) */
+.sc-lc-kpi{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text3,#94a3b8)}
+.sc-lc-kpi-lbl{width:54px;flex-shrink:0;text-transform:uppercase;letter-spacing:.05em;font-weight:600;font-size:9px}
+.sc-lc-kpi-val{width:auto;flex-shrink:0;font-family:var(--font-mono,monospace);font-size:10px;color:var(--text2,#cbd5e1)}
+.sc-lc-kpi .sc-lc-proba{flex:1}
+.sc-lc-kpi .sc-lc-mom-track{flex:1}
+.sc-lc-proba{display:flex;height:18px;border-radius:5px;overflow:hidden;font-size:10px;font-weight:700;color:#fff;box-shadow:inset 0 1px 3px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.08),0 1px 2px rgba(0,0,0,.4)}
 .sc-lc-proba-p1,.sc-lc-proba-p2{display:flex;align-items:center;justify-content:center;min-width:15%;text-shadow:0 1px 2px rgba(0,0,0,.5);transition:width .3s ease}
 /* bd 3D-pro : gradients segments proba */
 .sc-lc-proba-p1{background:linear-gradient(180deg,#00e676 0%,#00c853 50%,#00a844 100%)!important}
 .sc-lc-proba-p2{background:linear-gradient(180deg,#3b9eff 0%,#0077ff 50%,#005ecb 100%)!important}
 
-.sc-lc-mom{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text3,#94a3b8)}
-.sc-lc-mom-track{flex:1;height:8px;background:linear-gradient(180deg,#08090e 0%,#0f1219 50%,#0a0c12 100%);border-radius:4px;position:relative;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.7),inset 0 -1px 0 rgba(255,255,255,.04),0 1px 0 rgba(255,255,255,.03)}
-.sc-lc-mom-fill{position:absolute;top:0;height:100%;border-radius:4px;box-shadow:0 0 8px currentColor,inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.3)}
-.sc-lc-ou{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;font-size:10px}
-.sc-lc-ou-pill{padding:3px 8px;border-radius:5px;background:linear-gradient(180deg,var(--bg3,#131722) 0%,var(--bg,#0b0e17) 100%);color:var(--text3,#94a3b8);font-family:var(--font-mono,monospace);box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 1px 2px rgba(0,0,0,.3),inset 0 -1px 0 rgba(0,0,0,.3)}
-.sc-lc-ou-pill.hi{background:linear-gradient(180deg,rgba(0,230,118,.2) 0%,rgba(0,230,118,.08) 100%);color:var(--green,#00e676);font-weight:700;box-shadow:0 0 10px rgba(0,230,118,.25),inset 0 1px 0 rgba(0,230,118,.2),inset 0 -1px 0 rgba(0,0,0,.2);text-shadow:0 0 6px rgba(0,230,118,.4)}
-.sc-lc-ou-exp{font-size:9px;color:var(--text3,#94a3b8);align-self:center}
+.sc-lc-mom-track{height:6px;background:linear-gradient(180deg,#08090e 0%,#0f1219 50%,#0a0c12 100%);border-radius:3px;position:relative;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.7),inset 0 -1px 0 rgba(255,255,255,.04),0 1px 0 rgba(255,255,255,.03)}
+.sc-lc-mom-fill{position:absolute;top:0;height:100%;border-radius:3px;box-shadow:0 0 8px currentColor,inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.3)}
+/* Ligne DR + OU pills fusionnées (1 ligne horizontale compacte) */
+.sc-lc-kpirow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:10px;padding:1px 0}
+.sc-lc-dr-chip{font-size:10px;color:var(--text3,#94a3b8);padding:2px 6px;border-radius:4px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.08))}
+.sc-lc-ou-pill{padding:2px 7px;border-radius:5px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.08));font-family:var(--font-mono,monospace);font-size:10px;color:var(--text2,#cbd5e1)}
+.sc-lc-ou-pill.hi{background:linear-gradient(135deg,rgba(0,230,118,.18) 0%,rgba(0,230,118,.06) 100%);border-color:rgba(0,230,118,.3);color:var(--green,#00e676);text-shadow:0 0 6px rgba(0,230,118,.25)}
 .sc-stat-panel{display:flex;flex-direction:column;gap:3px;padding:6px 0}
 .sc-stat-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border,rgba(255,255,255,.03))}
 .sc-stat-row span{color:var(--text3,#94a3b8)}
@@ -25474,54 +25481,66 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}):'';}catch(e){}
     var _phHtml=function(url,name){var n=encodeURIComponent(name||'?');var fallback='https://ui-avatars.com/api/?name='+n+'&background=161c2a&color=94a3b8&size=88&bold=true';var src=url||fallback;return '<img class="sc-lc-photo" src="'+esc(src)+'" alt="'+esc(name||'')+'" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\''+fallback+'\';}">';};
 
-    var html='<div class="sc-livecard">';
-
-    // 1. Header compact
-    html+='<div class="sc-lc-header"><span class="sc-lc-tour">'+svgIcon('trophy',11)+' '+esc((m.tournament||'').slice(0,22))+'</span>';
-    html+='<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+'</span></div>';
-
-    // 2. Value bet signal (proéminent)
+    // === Value bet calcul (remonté pour décision immédiate) ===
+    var _hasBet=false,_betHtml='';
     if(o1&&o2&&liveProb!=null&&isFinite(liveProb)){
       var ev1=liveProb*o1-1,ev2=(1-liveProb)*o2-1,bv=Math.max(ev1,ev2);
       var bs=ev1>=ev2?'P1':'P2',bo=ev1>=ev2?o1:o2,bn=ev1>=ev2?p1n:p2n;
       var tt='avoid';if(bv>=0.08)tt='strong';else if(bv>=0.03)tt='moderate';
-      html+='<div class="sc-lc-bet '+(tt==='strong'?'strong':tt==='moderate'?'moderate':'')+'">';
-      html+='<b>BET '+esc(bn)+' @ '+bo.toFixed(2)+'</b> · EV '+(bv>=0?'+':'')+(bv*100).toFixed(1)+'% '+signalBadge(tt);
-      html+='</div>';
+      _hasBet=tt!=='avoid';
+      _betHtml='<div class="sc-lc-bet '+(tt==='strong'?'strong':tt==='moderate'?'moderate':'avoid')+'">'
+        +'<b>BET '+esc(bn)+' @ '+bo.toFixed(2)+'</b> · EV '+(bv>=0?'+':'')+(bv*100).toFixed(1)+'% '+signalBadge(tt)
+        +'</div>';
     }
 
-    // 3. Score live + photos + serveur
+    var html='<div class="sc-livecard">';
+
+    // 1. Header ultra-compact (1 ligne) : tournoi + round + badge surface
+    html+='<div class="sc-lc-header"><span class="sc-lc-tour">'+svgIcon('trophy',11)+' '+esc((m.tournament||'').slice(0,22))+'</span>'
+      +'<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+' · '+surfaceBadge(m.surface,m.tournament)+'</span></div>';
+
+    // 2. Score Zone (l'élément dominant — photos + noms + sets + games + serveur)
     html+='<div class="sc-lc-score">';
     html+='<div class="sc-lc-player'+(m.serving===1?' serving':'')+'">'+_phHtml(_ph1,m.player1&&m.player1.name)+'<div><b>'+esc(p1n)+'</b><span>'+s1+'</span></div></div>';
-    html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(m.serving?'<div class="sc-lc-srv">🎾 '+(m.serving===1?'P1':'P2')+'</div>':'')+'</div>';
+    html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(m.serving?'<div class="sc-lc-srv">🎾 '+(m.serving===1?p1n:p2n)+'</div>':'')+'</div>';
     html+='<div class="sc-lc-player p2'+(m.serving===2?' serving':'')+'">'+_phHtml(_ph2,m.player2&&m.player2.name)+'<div><b>'+esc(p2n)+'</b><span>'+s2+'</span></div></div>';
     html+='</div>';
 
-    // 4. DR set courant (chips)
-    if(m.dr_exact&&m.dr_exact.dr!=null){
-      var dr=m.dr_exact.dr;
-      html+='<div class="sc-lc-dr">DR set: <b style="color:'+(dr>=1?'var(--green)':'var(--blue)')+'">'+(dr>=1?'P1 ':'P2 ')+(dr>=1?dr:(1/dr)).toFixed(2)+'</b></div>';
+    // 3. ACTION ZONE — Value bet remonté IMMÉDIATEMENT sous le score (décision en 1 sec)
+    if(_hasBet){
+      html+=_betHtml;
+    } else {
+      html+='<div class="sc-lc-bet none">Aucun value bet · EV&lt;3% (attente meilleur prix)</div>';
     }
 
-    // 5. Proba Markov live (barre compacte)
+    // 4. VALIDATION ZONE — KPIs en barres horizontales ultra-compactes
+    // 4a. Barre proba modèle (Modèle vs implicite) — label à gauche, cote à droite
+    var _impP1=o1?(1/o1):null;
+    html+='<div class="sc-lc-kpi"><span class="sc-lc-kpi-lbl">Modèle</span>';
     html+='<div class="sc-lc-proba"><div class="sc-lc-proba-p1" style="width:'+(liveProb*100)+'%;background:var(--green)">'+(liveProb*100).toFixed(0)+'%</div><div class="sc-lc-proba-p2" style="width:'+((1-liveProb)*100)+'%;background:var(--blue)">'+((1-liveProb)*100).toFixed(0)+'%</div></div>';
+    html+='<span class="sc-lc-kpi-val">'+(_impP1!=null?'Cote '+o1.toFixed(2):'—')+'</span></div>';
 
-    // 6. Momentum bar (compacte)
-    html+='<div class="sc-lc-mom"><span>P2</span><div class="sc-lc-mom-track"><div class="sc-lc-mom-fill" style="left:50%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div><span>P1</span></div>';
+    // 4b. Barre momentum (compacte) — label à gauche
+    html+='<div class="sc-lc-kpi"><span class="sc-lc-kpi-lbl">Momentum</span>';
+    html+='<div class="sc-lc-mom-track"><div class="sc-lc-mom-fill" style="left:50%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div>';
+    html+='</div>';
 
-    // 7. Set Over/Under pills
+    // 4c. Ligne DR + OU pills fusionnées (1 ligne horizontale)
+    html+='<div class="sc-lc-kpirow">';
+    if(m.dr_exact&&m.dr_exact.dr!=null){
+      var dr=m.dr_exact.dr;
+      html+='<span class="sc-lc-dr-chip">DR <b style="color:'+(dr>=1?'var(--green)':'var(--blue)')+'">'+(dr>=1?'P1 ':'P2 ')+(dr>=1?dr:(1/dr)).toFixed(2)+'</b></span>';
+    }
     if(m.set_ou){
       var ou=m.set_ou;
-      html+='<div class="sc-lc-ou">';
       html+='<span class="sc-lc-ou-pill'+(ou.o75>=65?' hi':'')+'">O7.5 '+ou.o75+'%</span>';
       html+='<span class="sc-lc-ou-pill'+(ou.o85>=65?' hi':'')+'">O8.5 '+ou.o85+'%</span>';
       html+='<span class="sc-lc-ou-pill'+(ou.u125>=65?' hi':'')+'">U12.5 '+ou.u125+'%</span>';
-      if(ou.exp)html+='<span class="sc-lc-ou-exp">'+ou.exp+' jeux attendus</span>';
-      html+='</div>';
     }
+    html+='</div>';
 
-    // 8. Accordéon .sc-detail (fermé par défaut)
-    html+='<button class="sc-expand" onclick="Scope._toggle(this)"><span>📊 Analyse détaillée</span><span class="chev">▾</span></button>';
+    // 5. Bouton accordéon (libellé harmonisé via data-label)
+    html+='<button class="sc-expand" onclick="Scope._toggle(this)" data-label-closed="📊 Analyse détaillée" data-label-open="Masquer l\'analyse"><span class="lbl">📊 Analyse détaillée</span><span class="chev">▾</span></button>';
     html+='<div class="sc-detail">';
 
     // Panel 1 — LIVE temps réel
@@ -25766,7 +25785,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     },
 
     // interne : toggle détail + re-filter + re-sort
-    _toggle:function(btn){var d=btn.nextElementSibling;var open=btn.classList.toggle('open');d.classList.toggle('open',open);btn.querySelector('span').textContent=open?"Masquer l'analyse détaillée":'Analyse détaillée · Facteurs · H2H · Marchés';},
+    _toggle:function(btn){var d=btn.nextElementSibling;var open=btn.classList.toggle('open');d.classList.toggle('open',open);var lbl=btn.querySelector('span.lbl')||btn.querySelector('span:not(.chev)');if(lbl){lbl.textContent=open?(btn.getAttribute('data-label-open')||"Masquer l'analyse"):(btn.getAttribute('data-label-closed')||lbl.textContent);}},
     _refilter:function(val){_vbOpts.filter=val;_rerenderVB();},
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
     _version:'1.0.0'
