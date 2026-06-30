@@ -25886,20 +25886,17 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-radar-legend"><span class="lg"><span class="sw" style="background:var(--green)"></span>'+esc(shortName(m.player1.name))+'</span><span class="lg"><span class="sw" style="background:var(--blue)"></span>'+esc(shortName(m.player2.name))+'</span></div></div>';
   }
 
-  /* ── Analytics panel ──────────────────────────────────────────────── */
+  /* ── Analytics panel (Scouting Report unifié — plus de Glicko/factorList/marketsList) ─── */
   function analyticsPanel(m){
     var p1=m.player1||{},p2=m.player2||{};
     return '<div class="sc-grid sc-grid-2">'
-      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('grid',14)+'<span class="name">Radar des metrics</span></div></div><div class="sc-card-body">'+radar(m)+'</div></div>'
-      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('chart',14)+'<span class="name">Comparaison détaillée</span></div></div><div class="sc-card-body">'
-      +metricRow('Glicko service',num(m.glicko2&&m.glicko2.p1_serve),num(m.glicko2&&m.glicko2.p2_serve),'',true)
-      +metricRow('Glicko retour',num(m.glicko2&&m.glicko2.p1_return),num(m.glicko2&&m.glicko2.p2_return),'',true)
-      +metricRow('Elo surface',num(p1.elo_surface),num(p2.elo_surface),'',true)
-      +metricRow('Forme',num(p1.form),num(p2.form),'',true)
-      +metricRow('Classement',num(p1.rank),num(p2.rank),'',false)
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('grid',14)+'<span class="name">Radar des metrics</span></div></div><div class="sc-card-body">'+(typeof radar==='function'?radar(m):'')+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('trophy',14)+'<span class="name">Scouting Report</span></div></div><div class="sc-card-body">'
+      +(typeof scoutProfile==='function'?scoutProfile(p1)+scoutProfile(p2):'')
       +'</div></div>'
-      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('scale',14)+'<span class="name">Facteurs pondérés</span></div></div><div class="sc-card-body">'+(typeof factorList==='function'?factorList(m):'')+'</div></div>'
-      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('trophy',14)+'<span class="name">H2H & Marchés</span></div></div><div class="sc-card-body">'+h2hBlock(m)+'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Marchés</div>'+(typeof marketsList==='function'?marketsList(m):'')+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('target',14)+'<span class="name">Lecture parieur</span></div></div><div class="sc-card-body">'+(typeof bettorRead==='function'?bettorRead(m):'')+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('trophy',14)+'<span class="name">H2H</span></div></div><div class="sc-card-body">'+h2hBlock(m)+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('zap',14)+'<span class="name">Top 3 Bets</span></div></div><div class="sc-card-body">'+(typeof topBets==='function'?topBets(m):'')+'</div></div>'
       +'</div>';
   }
 
