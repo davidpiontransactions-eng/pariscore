@@ -25480,6 +25480,17 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     try{_ph1=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player1||{}):'';}catch(e){}
     try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}):'';}catch(e){}
     var _phHtml=function(url,name){var n=encodeURIComponent(name||'?');var fallback='https://ui-avatars.com/api/?name='+n+'&background=161c2a&color=94a3b8&size=88&bold=true';var src=url||fallback;return '<img class="sc-lc-photo" src="'+esc(src)+'" alt="'+esc(name||'')+'" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\''+fallback+'\';}">';};
+    // Helper formatage duel P1/P2 : decimals=true → 2 chiffres après virgule (% et ratings),
+    // decimals=false → entier (compteurs aces/df/BPPI). Le plus grand des deux est mis en vert.
+    function _fmt(v,d){var n=num(v);if(n==null||isNaN(n))return '—';return d?(n).toFixed(2):String(n);}
+    function _vs(v1,v2,d){
+      var n1=num(v1),n2=num(v2);
+      var s1=(n1==null||isNaN(n1))?'—':(d?n1.toFixed(2):String(n1));
+      var s2=(n2==null||isNaN(n2))?'—':(d?n2.toFixed(2):String(n2));
+      var c1=(n1!=null&&n2!=null&&n1>n2)?' style="color:var(--green)"':'';
+      var c2=(n1!=null&&n2!=null&&n2>n1)?' style="color:var(--green)"':'';
+      return '<b><span'+c1+'>'+s1+'</span> / <span'+c2+'>'+s2+'</span></b>';
+    }
 
     // === Value bet calcul (remonté pour décision immédiate) ===
     var _hasBet=false,_betHtml='';
@@ -25549,11 +25560,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var sm=m.serve_momentum||{};
     var run=sm.run||{};
     if(run.player)html+='<div class="sc-stat-row"><span>Série en cours</span><b style="color:'+(run.player===1?'var(--green)':'var(--blue)')+'">'+(run.player===1?p1n:p2n)+' '+run.len+' pts</b></div>';
-    html+='<div class="sc-stat-row"><span>% 1ère balle (service)</span><b>'+(num(st.p1_first_won)||'—')+'% / '+(num(st.p2_first_won)||'—')+'%</b></div>';
-    html+='<div class="sc-stat-row"><span>% 2ème balle</span><b>'+(num(st.p1_second_won)||'—')+'% / '+(num(st.p2_second_won)||'—')+'%</b></div>';
-    html+='<div class="sc-stat-row"><span>% 1er service en jeu</span><b>'+(num(st.p1_first_pct)||'—')+'% / '+(num(st.p2_first_pct)||'—')+'%</b></div>';
+    html+='<div class="sc-stat-row"><span>% 1ère balle (service)</span>'+_vs(st.p1_first_won,st.p2_first_won,true)+'%</div>';
+    html+='<div class="sc-stat-row"><span>% 2ème balle</span>'+_vs(st.p1_second_won,st.p2_second_won,true)+'%</div>';
+    html+='<div class="sc-stat-row"><span>% 1er service en jeu</span>'+_vs(st.p1_first_pct,st.p2_first_pct,true)+'%</div>';
     html+='<div class="sc-stat-row"><span>Aces / Double fautes</span><b>'+(num(st.p1_aces)||0)+'/'+(num(st.p1_df)||0)+' · '+(num(st.p2_aces)||0)+'/'+(num(st.p2_df)||0)+'</b></div>';
-    if(m.bppi){html+='<div class="sc-stat-row"><span>Pression (BPPI)</span><b>'+(m.bppi.p1||0)+' / '+(m.bppi.p2||0)+'</b></div>';}
+    if(m.bppi){html+='<div class="sc-stat-row"><span>Pression (BPPI)</span>'+_vs(m.bppi.p1,m.bppi.p2,false)+'</div>';}
     if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
     html+='</div>';
 
@@ -25563,11 +25574,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Stats '+(isWta?'WTA':'ATP')+'</div>';
     html+='<div class="sc-stat-panel">';
     var gl=m.glicko2||{};
-    html+='<div class="sc-stat-row"><span>Service Rating</span><b>'+(num(gl.p1_serve)||'—')+' / '+(num(gl.p2_serve)||'—')+'</b></div>';
-    html+='<div class="sc-stat-row"><span>Return Rating</span><b>'+(num(gl.p1_return)||'—')+' / '+(num(gl.p2_return)||'—')+'</b></div>';
-    html+='<div class="sc-stat-row"><span>BP sauvés</span><b>'+(st.p1_bp_saved!=null?st.p1_bp_saved:'—')+' / '+(st.p2_bp_saved!=null?st.p2_bp_saved:'—')+'</b></div>';
+    html+='<div class="sc-stat-row"><span>Service Rating</span>'+_vs(gl.p1_serve,gl.p2_serve,true)+'</div>';
+    html+='<div class="sc-stat-row"><span>Return Rating</span>'+_vs(gl.p1_return,gl.p2_return,true)+'</div>';
+    html+='<div class="sc-stat-row"><span>BP sauvés</span>'+_vs(st.p1_bp_saved,st.p2_bp_saved,false)+'</div>';
     if(isWta){
-      html+='<div class="sc-stat-row"><span>% pts 2ème service</span><b>'+(num(st.p1_second_won)||'—')+'% / '+(num(st.p2_second_won)||'—')+'%</b></div>';
+      html+='<div class="sc-stat-row"><span>% pts 2ème service</span>'+_vs(st.p1_second_won,st.p2_second_won,true)+'%</div>';
       html+='<div class="sc-stat-row"><span>% pts filet</span><b>n/d</b></div>';
     }
     html+='</div>';
