@@ -7255,9 +7255,11 @@ function sanityCheckTeamStats() {
     }
   }
   if (issues.length) {
-    console.error(`\x1b[31m[SANITY] ${issues.length} data anomalies detected:\x1b[0m`);
-    issues.slice(0, 10).forEach(iss => console.error(`  \x1b[31m• ${iss}\x1b[0m`));
-    if (issues.length > 10) console.error(`  \x1b[31m... and ${issues.length - 10} more\x1b[0m`);
+    // Anomalie de DONNÉES gérée (PPG manquant → fallback plus loin dans le pipeline),
+    // pas une erreur technique fatale. console.warn (out log) au lieu de console.error.
+    console.warn(`[SANITY] ${issues.length} data anomalies (PPG manquant, fallback appliqué):`);
+    issues.slice(0, 10).forEach(iss => console.warn(`  • ${iss}`));
+    if (issues.length > 10) console.warn(`  ... and ${issues.length - 10} more`);
     return false;
   }
   console.log(`  [SANITY] ✓ Team stats valid (${Object.keys(db.teamStats).length} teams, all checks passed)`);
@@ -33228,7 +33230,21 @@ if (pathname === '/api/v1/clientside-error' && req.method === 'POST') {
   req.on('end', () => {
     try {
       const p = JSON.parse(body) || {};
-      const msg = String(p.message || '').slice(0, 500);
+      // Extraction robuste du message : si p.message est un objet (client au vieux shim
+      // qui sérialise mal), on le déroule. Évite le log "| {} |" inutilisable.
+      let msg;
+      if (typeof p.message === 'string') {
+        msg = p.message;
+      } else if (p.message && typeof p.message === 'object') {
+        try { msg = p.message.message || JSON.stringify(p.message); } catch (_) { msg = '[obj]'; }
+      } else {
+        // Fallback : examiner raw / reason / error pour retrouver la vraie cause
+        const alt = p.raw || p.reason || p.error;
+        if (alt && typeof alt === 'object') { try { msg = alt.message || JSON.stringify(alt); } catch (_) { msg = '[obj]'; } }
+        else if (typeof alt === 'string') msg = alt;
+        else msg = '';
+      }
+      msg = String(msg).slice(0, 500);
       const stack = String(p.stack || '').slice(0, 4000);
       const loc = p.filename ? (p.filename + ':' + (p.lineno != null ? p.lineno : '?') + (p.colno != null ? (':' + p.colno) : '')) : '';
       // Un seul log par erreur : [PSCATCH] type | msg | @loc
