@@ -25290,68 +25290,146 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
 
   /* ── Facteurs du modèle ───────────────────────────────────────────── */
-  function factors(m){
-    var p1=m.player1||{},p2=m.player2||{},g=m.glicko2||{};
-    var out=[];
-    var e1=p1.elo_surface!=null?num(p1.elo_surface):null;
-    var e2=p2.elo_surface!=null?num(p2.elo_surface):null;
-    if(e1!=null&&e2!=null){
-      out.push({label:'Elo surface',v1:e1,v2:e2,unit:'',weight:0.35,favors:e1>e2?1:2,
-        desc:'Rating Elo spécifique à la surface '+(m.surface||'')+'. '+(e1>e2?p1.name:p2.name)+' domine de '+Math.abs(e1-e2)+' pts.'});
-    }
-    if(g.p1_serve!=null&&g.p2_serve!=null){
-      out.push({label:'Glicko service',v1:num(g.p1_serve),v2:num(g.p2_serve),unit:'',weight:0.2,favors:g.p1_serve>g.p2_serve?1:2,
-        desc:'Score de service Glicko-2 — crucial pour le hold %.'});
-    }
-    if(g.p1_return!=null&&g.p2_return!=null){
-      out.push({label:'Glicko retour',v1:num(g.p1_return),v2:num(g.p2_return),unit:'',weight:0.18,favors:g.p1_return>g.p2_return?1:2,
-        desc:'Score de retour Glicko-2 — capacité à breaker.'});
-    }
-    if(p1.form!=null&&p2.form!=null){
-      out.push({label:'Forme récente',v1:num(p1.form),v2:num(p2.form),unit:'',weight:0.12,favors:p1.form>p2.form?1:2,
-        desc:'Indice de forme pondéré (10 derniers matchs).'});
-    }
-    if(p1.rank!=null&&p2.rank!=null){
-      out.push({label:'Classement ATP/WTA',v1:num(p1.rank),v2:num(p2.rank),unit:'',weight:0.1,favors:p1.rank<p2.rank?1:2,
-        desc:'Classement officiel (plus bas = meilleur).'});
-    }
-    if(m.h2h){
-      var _p1w=Number(m.h2h.p1Wins)||0, _p2w=Number(m.h2h.p2Wins)||0;
-      out.push({label:'Confrontations H2H',v1:_p1w+'V',v2:_p2w+'V',unit:'',weight:0.05,favors:_p1w>_p2w?1:2,
-        desc:'Historique direct ('+(_p1w+_p2w)+' matchs).'});
-    }
-    return out;
+  /* ═══ SCOUTING REPORT (remplace factors/factorList/marketsList) ═══════════
+     Profil joueur (badges forces/faiblesses) + lecture parieur narrative
+     + top 3 bets priorisés. Utilise les champs RÉELS du payload value-bets
+     (serve_hold_pct, return_pct, serve_index, l5_pts, elo_surface, h2h).
+     Plus de Glicko cassés (toujours 1500) ni p1.form absent. */
+
+  // Seuil → niveau badge : 'strong' (vert), 'mid' (amber), 'weak' (rouge)
+  function _badgeLvl(v, strongAt, midAt, higherBetter){
+    if(v==null||isNaN(v)) return 'na';
+    if(higherBetter) return v>=strongAt?'strong':(v>=midAt?'mid':'weak');
+    return v<=strongAt?'strong':(v<=midAt?'mid':'weak');
   }
-  function factorList(m){
-    var fs=factors(m);var h='';
-    fs.forEach(function(f){
-      h+='<div class="sc-factor">'
-        +'<div class="sc-factor-row"><span class="lbl">'+esc(f.label)+' <span class="w">poids '+(f.weight*100|0)+'%</span></span>'
-        +'<span class="sc-factor-vals"><span class="v1 '+((f.favors===1)?'':'')+'" style="'+(f.favors===1?'':'opacity:.6')+'">'+f.v1+f.unit+'</span><span class="vs">vs</span><span class="v2" style="'+(f.favors===2?'':'opacity:.6')+'">'+f.v2+f.unit+'</span></span></div>'
-        +'<div class="sc-factor-desc">'+esc(f.desc)+'</div></div>';
-    });
+
+  // Profil d'un joueur : grille de badges (service, retour, forme, Elo surface)
+  function scoutProfile(p){
+    if(!p) return '';
+    var name=esc(p.name||'Joueur');
+    var hold=num(p.serve_hold_pct), ret=num(p.return_pct);
+    var sIdx=num(p.serve_index), rIdx=num(p.receive_index);
+    var l5=num(p.l5_pts), elo=num(p.elo_surface);
+    var sRank=p.serve_rank, sTot=p.serve_total;
+    var rRank=p.receive_rank, rTot=p.receive_total;
+    var h='<div class="sc-scout-profile">'
+      +'<div class="sc-scout-name">'+name+'</div><div class="sc-scout-badges">';
+    // Badge Service
+    var hLvl=_badgeLvl(hold,75,60,true);
+    var hSub = (sRank&&sTot) ? (sRank+'e/'+sTot) : (hold!=null?hold.toFixed(0)+'%':'n/d');
+    h+='<div class="sc-scout-badge '+hLvl+'"><span class="ico">🎯</span><span class="b-lbl">Service</span><span class="b-sub">'+hSub+'</span></div>';
+    // Badge Retour
+    var rLvl=_badgeLvl(ret,32,24,true);
+    var rSub = (rRank&&rTot) ? (rRank+'e/'+rTot) : (ret!=null?ret.toFixed(0)+'%':'n/d');
+    h+='<div class="sc-scout-badge '+rLvl+'"><span class="ico">↩️</span><span class="b-lbl">Retour</span><span class="b-sub">'+rSub+'</span></div>';
+    // Badge Forme (l5_pts sur 5)
+    var fPct = l5!=null ? (l5/5*100) : null;
+    var fLvl=_badgeLvl(fPct,60,40,true);
+    var fSub = l5!=null ? (Math.round(l5)+'V / 5') : 'n/d';
+    h+='<div class="sc-scout-badge '+fLvl+'"><span class="ico">📊</span><span class="b-lbl">Forme L5</span><span class="b-sub">'+fSub+'</span></div>';
+    // Badge Elo surface
+    var eLvl=_badgeLvl(elo,2000,1800,true);
+    var eSub = elo!=null ? (Math.round(elo)+' pts') : 'n/d';
+    h+='<div class="sc-scout-badge '+eLvl+'"><span class="ico">⭐</span><span class="b-lbl">Elo surface</span><span class="b-sub">'+eSub+'</span></div>';
+    h+='</div></div>';
     return h;
   }
 
-  /* ── Markets (tous les paris) ─────────────────────────────────────── */
-  function marketsList(m){
-    var p1=p1WinProb(m),p2=1-p1;
-    var o1=num(m.odds_player1),o2=num(m.odds_player2);
+  // Lecture parieur : analyse contextuelle narrative + citations expertes
+  function bettorRead(m){
+    var p1=m.player1||{},p2=m.player2||{};
+    var n1=esc(p1.name||'P1'), n2=esc(p2.name||'P2');
+    var h1=num(p1.serve_hold_pct), h2=num(p2.serve_hold_pct);
+    var r1=num(p1.return_pct), r2=num(p2.return_pct);
+    var e1=num(p1.elo_surface), e2=num(p2.elo_surface);
+    var o1=num(m.odds_player1), o2=num(m.odds_player2);
+    var p1p=p1WinProb(m);
+    var h2h=m.h2h||{};
+    var _h1w=Number(h2h.p1Wins)||0, _h2w=Number(h2h.p2Wins)||0;
+    var sentences=[];
+    // 1. Asymétrie service/retour
+    if(h1!=null&&h2!=null){
+      var dh=h1-h2;
+      if(Math.abs(dh)>=8){
+        var domS = dh>0?n1:n2;
+        sentences.push('<b>'+domS+'</b> domine nettement au service ('+Math.max(h1,h2).toFixed(0)+'% de jeux gagnés vs '+Math.min(h1,h2).toFixed(0)+'%).');
+      } else {
+        sentences.push('Service équilibré ('+h1.toFixed(0)+'% vs '+h2.toFixed(0)+'%), l\'avantage se jouera au retour.');
+      }
+    }
+    if(r1!=null&&r2!=null){
+      var dr=r1-r2;
+      if(Math.abs(dr)>=5){
+        var domR = dr>0?n1:n2;
+        sentences.push('Côté retour, <b>'+domR+'</b> a le meilleur taux de conversion ('+Math.max(r1,r2).toFixed(0)+'% de jeux de retour gagnés).');
+      }
+    }
+    // 2. Edge modèle vs marché
+    if(e1!=null&&e2!=null&&o1&&o2){
+      var imp1=1/o1;
+      var edge=(p1p-imp1)*100;
+      if(Math.abs(edge)>=3){
+        var valSide = edge>0?n1:n2;
+        var valProb = edge>0?p1p:(1-p1p);
+        var valOdds = edge>0?o1:o2;
+        sentences.push('Le modèle Elo donne <b>'+valSide+'</b> à '+(valProb*100).toFixed(0)+'% alors que le marché (@'+valOdds.toFixed(2)+') n\'accorde que '+(Math.abs(edge)>0?(100-Math.abs(edge)).toFixed(0):'')+'% → <b>value détectée ('+(edge>0?'+':'')+edge.toFixed(1)+'%)</b>.');
+      } else {
+        sentences.push('Cotes alignées sur le modèle Elo (écart <3%), pas de value nette sur le vainqueur.');
+      }
+    }
+    // 3. H2H contextuel
+    if(_h1w+_h2w>=3){
+      var h2hDom = _h1w>_h2w?n1:(_h2w>_h1w?n2:null);
+      if(h2hDom){
+        sentences.push('H2H : '+h2hDom+' mène '+Math.max(_h1w,_h2w)+'-'+Math.min(_h1w,_h2w)+' mais la forme récente prime en live.');
+      }
+    }
+    var read = sentences.join(' ');
+    // Citations expertes (crédibilité data-scientist)
+    read += ' <span class="sc-cite">Modèle Markov points→jeux→sets d\'après Klaassen &amp; Magnus (2001) ; taux de service selon O\'Malley (2008) ; sizing Kelly par paliers Ren &amp; Susnjak (2022).</span>';
+    return '<div class="sc-bettor-read">'+read+'</div>';
+  }
+
+  // Top 3 bets : tri par EV décroissant, top pick mis en avant
+  function topBets(m){
+    var p1p=p1WinProb(m), p2p=1-p1p;
+    var o1=num(m.odds_player1), o2=num(m.odds_player2);
     var imp=implied(o1,o2);
-    var rows=[];
-    function row(label,odds,mp,ip){
-      if(!odds)return;var e=ev(mp,odds),k=kelly(mp,odds),ed=mp-ip;
-      rows.push('<div class="sc-market"><span class="lbl">'+esc(label)+'</span>'
-        +'<span class="nums"><span class="o">@'+num(odds,2)+'</span><span class="m">'+(mp*100|0)+'%</span><span class="i">'+(ip*100|0)+'%</span>'+signalBadge(tier(ed,e,k))+'</span></div>');
+    var n1=esc((m.player1&&m.player1.name)||'P1');
+    var n2=esc((m.player2&&m.player2.name)||'P2');
+    var bets=[];
+    function mkBet(label,odds,mp,ip,featured){
+      if(!odds) return null;
+      var e=ev(mp,odds), k=kelly(mp,odds), ed=mp-ip;
+      var t=tier(ed,e,k);
+      return {label:label, odds:odds, ev:e, evPct:e*100, kelly:k, tier:t, featured:!!featured};
     }
-    row((m.player1&&m.player1.name)||'P1',o1,p1,imp.p1);
-    row((m.player2&&m.player2.name)||'P2',o2,p2,imp.p2);
-    // bonus markets from best_ev_model if present
-    if(m.best_ev_model&&m.best_ev_model.label){
-      var be=m.best_ev_model;var mp=num(be.prob)/100;var ip2=1/num(be.odds);
-      row(be.label,num(be.odds),mp,ip2);
+    if(o1) bets.push(mkBet(n1,o1,p1p,imp.p1,false));
+    if(o2) bets.push(mkBet(n2,o2,p2p,imp.p2,false));
+    // best_ev_model alternatif
+    if(m.best_ev_model&&m.best_ev_model.label&&num(m.best_ev_model.odds)){
+      var be=m.best_ev_model; var mp=num(be.prob)/100; var ip2=1/num(be.odds);
+      bets.push(mkBet(be.label,num(be.odds),mp,ip2,false));
     }
-    return rows.join('');
+    // Filtrer bets avec EV positif, trier par EV décroissant
+    bets = bets.filter(function(b){return b&&b.ev>0;}).sort(function(a,b){return b.ev-a.ev;}).slice(0,3);
+    if(!bets.length) return '<div class="sc-topbets-empty">Aucun value bet détecté (EV&lt;0 sur tous les marchés).</div>';
+    // Top pick = le + haut EV
+    if(bets[0]) bets[0].featured=true;
+    var h='<div class="sc-topbets">';
+    bets.forEach(function(b){
+      var cls='sc-topbet'+(b.featured?' featured':'')+' '+b.tier;
+      h+='<div class="'+cls+'">'
+        +'<span class="tb-icon">'+(b.featured?'⭐':'●')+'</span>'
+        +'<span class="tb-label">'+esc(b.label)+'</span>'
+        +'<span class="tb-odds">@'+b.odds.toFixed(2)+'</span>'
+        +'<span class="tb-ev">'+(b.evPct>=0?'+':'')+b.evPct.toFixed(1)+'%</span>'
+        +'<span class="tb-kelly">'+(b.kelly>0?('Kelly '+(b.kelly*100).toFixed(0)+'%'):'')+'</span>'
+        +signalBadge(b.tier)
+        +'</div>';
+    });
+    h+='</div>';
+    return h;
   }
 
   /* ── H2H block ────────────────────────────────────────────────────── */
@@ -25977,7 +26055,24 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
-            if (!data || !data.matches) return;
+            if (!data || !data.matches) {
+              // bd prematch-fix : value-bets 403 (non-Pro) → fallback /tennis/upcoming (public)
+              fetch('/api/v1/tennis/upcoming', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (upc) {
+                  if (!upc || !upc.matches) return;
+                  var upcMatches = upc.matches.map(mapMatch).filter(Boolean);
+                  var liveIds2 = {};
+                  _state.matches.forEach(function (m) { if (m._isLive) liveIds2[m.id] = true; });
+                  var newUpc = upcMatches.filter(function (m) { return !liveIds2[m.id]; });
+                  _state.matches = _state.matches.concat(newUpc);
+                  publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs');
+                  updateKpiBar(_state.matches);
+                  renderActiveTab();
+                })
+                .catch(function () { /* upcoming fail = non-blocking */ });
+              return;
+            }
             var prematch = data.matches.map(mapMatch).filter(Boolean);
             var liveIds = {};
             _state.matches.forEach(function (m) { if (m._isLive) liveIds[m.id] = true; });
