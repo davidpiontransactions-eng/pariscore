@@ -24685,7 +24685,10 @@ a:focus-visible,
 .sc-badge-prize{color:var(--amber);border-color:rgba(245,158,11,.3);background:var(--amber-bg)}
 /* players grid: [P1 | gauge | P2] */
 .sc-players{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
-.sc-player{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sc-player{display:flex;flex-direction:column;gap:3px;min-width:0;align-items:center;text-align:center}
+.sc-player-photo{width:38px;height:38px;border-radius:50%;overflow:hidden;border:1.5px solid var(--bg3,#1e2a3d);flex-shrink:0;background:var(--bg4,#131722);margin-bottom:2px}
+.sc-player-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.sc-player.right .sc-player-top{flex-direction:row-reverse}
 .sc-player-top{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
 .sc-player-top{flex-direction:row-reverse}
 .sc-player-name{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
@@ -24707,6 +24710,42 @@ a:focus-visible,
 .sc-odd .ev.pos,.sc-odd-mid .sub{color:var(--green,#00e676)}
 .sc-odd .ev.neg{color:var(--red,#ef4444)}
 .sc-odd-mid .lbl{color:var(--text3,#94a3b8)}
+/* bd audit-fix : textes lisibles sur fonds sombres (9 zones, ~25 selecteurs) */
+.sc-card,.sc-card-body,.sc-table-wrap{color:var(--text2,#cbd5e1)}
+.sc-card-head .tour{color:var(--text2,#cbd5e1)}
+.sc-card-head .tour .name{color:var(--text,#fff)}
+.sc-callout{color:var(--text2,#cbd5e1)}
+.sc-callout .title b{color:var(--text,#fff)}
+.sc-callout .stats{color:var(--text3,#94a3b8)}
+.sc-callout .ico{color:var(--green,#00e676)}
+.sc-sumcard .lbl{color:var(--text3,#94a3b8)}
+.sc-sumcard .val{color:var(--text,#fff)}
+.sc-toppick h3{color:var(--text,#fff)}
+.sc-toppick .meta{color:var(--text3,#94a3b8)}
+.sc-toppick .kpi{color:var(--text3,#94a3b8)}
+.sc-toppick .kpi b{color:var(--text,#fff)}
+.sc-toppick .kpi.g b{color:var(--green,#00e676)}
+.sc-toppick .kpi.a b{color:var(--amber,#f59e0b)}
+.sc-liveprob .p1,.sc-liveprob .p2{color:#fff;font-weight:700;font-size:10px;font-family:var(--font-mono,monospace);display:flex;align-items:center;justify-content:center}
+.sc-vb-table th{color:var(--text3,#94a3b8);font-weight:700;text-align:left;border-bottom:1px solid var(--border);padding:6px 4px}
+.sc-vb-table td{color:var(--text2,#cbd5e1);padding:5px 4px;border-bottom:1px solid var(--border)}
+.sc-vb-table .sc-vb-match .txt b{color:var(--text,#fff)}
+.sc-vb-table .sc-vb-match .txt small{color:var(--text3,#94a3b8);display:block;font-size:10px}
+.sc-vb-table .sc-edge.hi{color:var(--green,#00e676)}
+.sc-vb-table .sc-edge.mid{color:var(--amber,#f59e0b)}
+.sc-vb-table .sc-edge.lo{color:var(--text2,#cbd5e1)}
+.sc-vb-table .sc-edge.neg{color:var(--red,#ef4444)}
+.sc-vb-table .sc-ev.pos{color:var(--green,#00e676)}
+.sc-vb-table .sc-ev.neg{color:var(--red,#ef4444)}
+.sc-factor-row .lbl{color:var(--text2,#cbd5e1)}
+.sc-factor-row .lbl .w{color:var(--text3,#94a3b8);font-weight:400;font-size:10px}
+.sc-factor-row .sc-factor-vals{color:var(--text,#fff)}
+.sc-h2h-item .t{color:var(--text3,#94a3b8)}
+.sc-h2h-item .s{color:var(--text2,#cbd5e1)}
+.sc-h2h-item .s.p1{color:var(--green,#00e676)}
+.sc-h2h-item .s.p2{color:var(--blue,#0077ff)}
+.sc-market{color:var(--text2,#cbd5e1)}
+.sc-market .v{color:var(--text,#fff);font-weight:700}
 /* top value callout */
 .sc-callout{display:flex;align-items:center;gap:8px;margin-top:10px;padding:7px 10px;border-radius:var(--radius);border:1px solid rgba(0,230,118,.25);background:var(--green-bg)}
 /* value bet signal badge */
@@ -25225,7 +25264,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   function playerBlock(p,align,color,prob,trend){
     var cc=flagToCC(p.flag);
+    // bd photos-fix : photo joueur via getPlayerPhotoUrl (BSD→ESPN→ui-avatars fallback)
+    var _phUrl='';
+    try{ _phUrl=(typeof window.getPlayerPhotoUrl==='function')?window.getPlayerPhotoUrl(p):''; }catch(e){}
+    _phUrl=_phUrl?esc(_phUrl):'';
+    var _phImg=_phUrl?('<img src="'+_phUrl+'" alt="" loading="lazy" onerror="this.onerror=null;var n=encodeURIComponent(\''+esc(String(p.name||'?')).replace(/'/g,"\\'")+'\');this.src=\'https://ui-avatars.com/api/?name=\'+n+\'&background=172132&color=fff&size=80\';">'):'';
     return '<div class="sc-player '+(align==='right'?'right':'')+'">'
+      +'<div class="sc-player-photo">'+_phImg+'</div>'
       +'<div class="sc-player-top">'+(cc?'<span class="sc-flag">'+cc+'</span>':'')+'<span>#'+(p.rank||'—')+'</span></div>'
       +'<div class="sc-player-name">'+esc(p.name||'?')+'</div>'
       +'<div class="sc-player-form">Forme <b>'+(p.form!=null?num(p.form):'—')+'</b>'+formDots(p.form)+'</div>'
@@ -25731,6 +25776,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   // ── API publique ──────────────────────────────────────────────────────
   root.TennisScope = {
     init: function () {
+      // bd photos-fix : précharger la map des photos avant le 1er render
+      try { if (typeof window._loadTennisPhotoMap === 'function') window._loadTennisPhotoMap(); } catch (e) {}
       // Premier fetch
       fetchData().then(function () {
         // Si aucun match, on tente le top10 comme fallback
