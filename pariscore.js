@@ -1174,6 +1174,7 @@ function _renderCyclingGrid(riders) {
   var pc = function (v) { return v != null ? v * 100 : 0; };
   var head = '<div class="cycdrv cycdrv-h"><span>#</span><span></span><span>Coureur / Équipe</span><span>Win · Pod</span><span style="text-align:right">Top10</span></div>';
   c.innerHTML = head + riders.map(function (d, i) {
+    if (!d) return ''; // guard : rider null/undefined dans le tableau backend
     var medal = i === 0 ? 'g' : i === 1 ? 's' : i === 2 ? 'b' : '';
     var win = pc(d.win).toFixed(0), pod = pc(d.podium).toFixed(0), top10 = pc(d.top10).toFixed(0);
     var typeIcon = d.type === 'sprinter' ? '⚡' : d.type === 'puncheur' ? '⛰' : '▲';
@@ -1395,9 +1396,9 @@ window.toggleWnbaProps = function (btn, matchId) {
   drawer.dataset.loaded = '1';
   drawer.innerHTML = '<div class="wnba-props-load">Calcul des props joueuses…</div>';
   fetch('/api/v1/wnba/props/' + encodeURIComponent(matchId), { cache: 'no-store' })
-    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status + ' /api/v1/wnba/props')); })
     .then(function (j) { drawer.innerHTML = _renderWnbaProps(j.props); })
-    .catch(function (e) { drawer.innerHTML = '<div class="wnba-props-load" style="color:#f87171">Props indisponibles (' + e + ')</div>'; drawer.dataset.loaded = ''; });
+    .catch(function (e) { drawer.innerHTML = '<div class="wnba-props-load" style="color:#f87171">Props indisponibles (' + (e && e.message ? e.message : e) + ')</div>'; drawer.dataset.loaded = ''; });
 };
 function _renderWnbaProps(d) {
   if (!d) return '<div class="wnba-props-load">—</div>';
@@ -21899,7 +21900,7 @@ async function loadPartnerBookmakers() {
   if (!grid) return;
   try {
     const r = await fetch('/api/v1/affiliates');
-    if (!r.ok) throw new Error();
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' sur /api/v1/affiliates');
     const affiliates = await r.json();
     if (!affiliates.length) {
       grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text3);font-size:13px;padding:20px;">Aucun partenaire bookmaker disponible pour le moment.</div>';
@@ -22148,7 +22149,7 @@ async function loadPredictions() {
   grid.innerHTML = `<div style="color:#888;font-size:13px;padding:20px;">${I18N.t('status.loading_predictions')}</div>`;
   try {
     const res  = await apiFetch('/api/v1/predictions');
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' sur /api/v1/predictions');
     const data = await res.json();
     const preds = data.predictions || [];
     if (!preds.length) { grid.innerHTML = `<div style="color:#888;padding:20px;font-size:13px;">${I18N.t('empty.no_prediction')}</div>`; return; }
@@ -25578,7 +25579,7 @@ async function loadTrends() {
   grid.innerHTML = `<div style="color:#888;font-size:13px;padding:20px;">${I18N.t('status.loading_trends')}</div>`;
   try {
     const res  = await apiFetch('/api/v1/trends');
-    if (!res.ok) throw new Error();
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' sur /api/v1/trends');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     const g = data.global;
@@ -26319,7 +26320,7 @@ async function saveAlertConfig() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled, chatId, edgeMin, probaMin, markets, leagues, liveEnabled, intensityMin, pressureDeltaMin }),
     });
-    if (!r.ok) throw new Error();
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' sur /api/v1/alerts/prefs');
     try { localStorage.setItem('ps_alert_prefs', JSON.stringify({ chatId, enabled, liveEnabled })); } catch {}
     const msg = document.getElementById('al-save-msg');
     if (msg) { msg.style.display = 'inline'; setTimeout(() => msg.style.display = 'none', 2500); }
@@ -26332,7 +26333,7 @@ async function loadAlertHistory() {
   if (!el) return;
   try {
     const r = await apiFetch('/api/v1/alerts/history');
-    if (!r.ok) throw new Error();
+    if (!r.ok) throw new Error('HTTP ' + r.status + ' sur /api/v1/alerts/history');
     const data = await r.json();
     const hist = data.history || [];
     if (!hist.length) {
@@ -31786,10 +31787,10 @@ async function loadFootAlerts() {
       bet_a: betA, bet_b: betB,
     });
     fetch('/api/v1/mma/fight-analysis?' + params)
-      .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+      .then(function(r) { return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status + ' /api/v1/mma/fight-analysis')); })
       .then(function(d) { gem.innerHTML = _renderMMAAnalysis(d.text || 'Analyse indisponible.'); })
       .catch(function(e) {
-        gem.innerHTML = '<div class="mma-analysis-body" style="color:var(--red,#ff4d4d)">Analyse IA indisponible (' + e + ')</div>';
+        gem.innerHTML = '<div class="mma-analysis-body" style="color:var(--red,#ff4d4d)">Analyse IA indisponible (' + (e && e.message ? e.message : e) + ')</div>';
       });
   };
 
