@@ -22834,6 +22834,7 @@ body[data-page="mma"] footer { display: none !important; }
   --tn2-glass: rgba(24, 32, 48, 0.92);
   --tn2-transition: 0.2s ease;
 }
+:root{--tn2-accent:var(--accent);--tn2-bg-page:var(--bg2);--tn2-bg-card:var(--bg3);--tn2-text:var(--text);--tn2-text-secondary:var(--text2);--tn2-warning:var(--amber);}
 
 /* ── Base ── */
 .tn2-dashboard {
@@ -24728,11 +24729,10 @@ a:focus-visible,
 .sc-liveprob{display:flex;height:24px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
 /* responsive grid */
 .sc-grid{display:grid;gap:12px}
-.sc-grid-2{grid-template-columns:repeat(2,1fr)}
 .sc-grid-2{grid-template-columns:1fr}
-.sc-grid-3{grid-template-columns:repeat(3,1fr)}
-.sc-grid-3{grid-template-columns:repeat(2,1fr)}
 .sc-grid-3{grid-template-columns:1fr}
+@media (min-width:769px){.sc-grid-2{grid-template-columns:repeat(2,1fr)}.sc-grid-3{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:1201px){.sc-grid-3{grid-template-columns:repeat(3,1fr)}}
 /* scrollable table wrapper */
 .sc-table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg2);max-height:560px}
 /* utility */
@@ -24917,6 +24917,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   // Implied probability (dés-vigée) depuis deux cotes décimales.
   function implied(oddsA,oddsB){
+    if(!oddsA||!oddsB)return{p1:0,p2:0,vig:0};
     var a=1/oddsA,b=1/oddsB,s=a+b;
     return{p1:a/s,p2:b/s,vig:s-1};
   }
@@ -25525,6 +25526,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         if (err && err.name === 'AbortError') err = new Error('Timeout 25s');
         _state.loading = false;
         _state.error = err && err.message || String(err);
+        if (/403/.test(_state.error)) { if (_timer) { clearInterval(_timer); _timer = null; } }
         publishStatus('Erreur : ' + _state.error, true);
         return [];
       });
@@ -25551,7 +25553,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     // tn2UpdateKPI est exposé en global par le legacy tn2 (window.tn2UpdateKPI).
     var kpi = {
       live: live.length,
-      bets: withBets.length,
+      bets: withBets.length || '—',
       top: Math.min(10, matches.length),
       tournaments: Object.keys(tournaments).length
     };
@@ -25698,6 +25700,10 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
                       player1: { name: t.player1, rank: t.rank_p1, elo_surface: t.elo_p1 },
                       player2: { name: t.player2, rank: t.rank_p2, elo_surface: t.elo_p2 },
                       tournament: t.tournament, tour: t.tour, surface: t.surface, round: t.round,
+                      odds_player1: t.odds_player1 || null,
+                      odds_player2: t.odds_player2 || null,
+                      predictions: t.predictions || null,
+                      glicko2: t.glicko2 || null,
                       start_time: t.start_time, status: t.status, _isLive: t.is_live
                     };
                   }).map(mapMatch);

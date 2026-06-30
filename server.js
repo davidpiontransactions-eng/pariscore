@@ -37689,6 +37689,13 @@ async function _refreshTop10Cache() {
               powerscore_p1: (e.player1 && e.player1.powerscore != null) ? e.player1.powerscore : null,
               powerscore_p2: (e.player2 && e.player2.powerscore != null) ? e.player2.powerscore : null,
               metrics: e.metrics || null,
+              // P0-1: expose raw odds/glicko2 + raw Elo only. Do NOT spread ...e nor
+              // expose predictions.blended/bsd/set_probs/most_aces — those are Pro-gated
+              // analysis and must not leak to the public /api/v1/tennis/top10 endpoint.
+              odds_player1: (e.odds && e.odds.p1 && e.odds.p1.odds) || null,
+              odds_player2: (e.odds && e.odds.p2 && e.odds.p2.odds) || null,
+              predictions: e.predictions ? { elo: e.predictions.elo || null } : null,
+              glicko2: e.glicko2 || null,
             };
           });
           if (mode === 'pwscr') {

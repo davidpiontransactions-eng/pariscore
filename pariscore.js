@@ -4380,80 +4380,6 @@ async function analyzeTennisMatch(matchId) {
   }
 }
 
-// @deprecated — TennisScope.fetchData() remplace. Conservé comme fallback pour callers existants.
-async function tickTennisValueBets() {
-  const statusEl = document.getElementById('tennis-vb-status');
-  try {
-    if (statusEl && !window._tennisVbBuildRetries) statusEl.textContent = I18N.t('status.loading');
-    // Vérifier le cache pour affichage immédiat
-    // Timeout client 25s : une requête pendue ne doit pas figer l'UI.
-    const r = await Promise.race([
-      apiFetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' } }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('client_timeout')), 25000)),
-    ]);
-    if (r.status === 401 || r.status === 403) {
-      if (statusEl) statusEl.textContent = 'Accès réservé';
-      const tbody = document.getElementById('tennis-vb-tbody');
-      if (tbody) tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:40px;display:block;text-align:center;color:var(--text2,#8d9399);">🔒 Module Tennis réservé <b>Pro Tennis / Duo</b>.<br><span style="font-size:13px;color:var(--text3,#5a6068);">Connecte-toi pour accéder aux value bets tennis.</span></span></div>';
-      return;
-    }
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    try { AppCache.set('/api/v1/tennis/value-bets', data, 30000, 120000); } catch(e) {}
-    const matches = Array.isArray(data.matches) ? data.matches : [];
-    // Cold : le serveur construit en fond et renvoie loading → on ré-essaie.
-    if (data.meta && (data.meta.loading || data.meta.building) && matches.length === 0) {
-      window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
-      const tb = document.getElementById('tennis-vb-tbody');
-      if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tb.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis (1er chargement, ~20 s)…</span></div>';
-      }
-      if (window._tennisVbBuildRetries <= 30) {
-        if (statusEl) statusEl.textContent = `⏳ Préparation… (${window._tennisVbBuildRetries})`;
-        setTimeout(tickTennisValueBets, 2500);
-      } else if (statusEl) {
-        statusEl.textContent = 'Build trop long — réessaie plus tard';
-      }
-      return;
-    }
-    window._tennisVbBuildRetries = 0;
-    window._tennisVbLastFetch = matches;
-    console.log('[Tennis Value] Data received:', matches.length, 'matches, src=' + (data.meta?.match_source || '?'));
-    try {
-      renderTennisValueBets(matches);
-    } catch (renderErr) {
-      console.error('[TennisVB] render crash:', renderErr);
-      const tb = document.getElementById('tennis-vb-tbody');
-      if (tb) tb.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--red,#ff4d4d);">Erreur d\'affichage — voir console (F12).</span></div>';
-      if (statusEl) statusEl.textContent = 'Erreur rendu';
-      return;
-    }
-    if (statusEl) {
-      const withElo = matches.filter(m => m.predictions && m.predictions.elo).length;
-      const src = data.meta?.match_source || '?';
-      statusEl.textContent = `${matches.length} matchs · ${withElo} avec Elo · src=${src} · ${new Date().toLocaleTimeString('fr-FR')}`;
-    }
-  } catch (e) {
-    console.warn('[TennisVB] fetch error:', e.message);
-    // Ne PAS rester bloqué sur "Erreur réseau" : retry borné automatique.
-    window._tennisVbBuildRetries = (window._tennisVbBuildRetries || 0) + 1;
-    if (window._tennisVbBuildRetries <= 30) {
-      if (statusEl) statusEl.textContent = `Reconnexion… (${window._tennisVbBuildRetries})`;
-      const tb = document.getElementById('tennis-vb-tbody');
-      if (tb && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tb.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--text2,#8d9399);">⏳ Préparation des données tennis…</span></div>';
-      }
-      setTimeout(tickTennisValueBets, 2500);
-    } else {
-      if (statusEl) statusEl.textContent = 'Erreur réseau';
-      const tbody = document.getElementById('tennis-vb-tbody');
-      if (tbody && (!window._tennisVbLastFetch || !window._tennisVbLastFetch.length)) {
-        tbody.innerHTML = '<div role="row"><span role="cell" style="grid-column:1/-1;padding:32px;display:block;text-align:center;color:var(--red,#ff4d4d);">Erreur de chargement (build serveur indisponible).</span></div>';
-      }
-    }
-  }
-}
-
 // @deprecated — TennisScope.refresh() + startAutoRefresh() gèrent le fetch value-bets.
 // Stub : ne lance plus le polling 5min legacy.
 function startTennisValueBets() { /* no-op — TennisScope gère le refresh */ }
@@ -27459,6 +27385,7 @@ document.addEventListener('keydown', function(e) {
   if ((el = d.getElementById('tennis-detail-modal')) && el.style.display === 'flex') { closeTennisDetail(); return; }
   if ((el = d.getElementById('tennis-ai-modal')) && el.style.display === 'flex') { closeTennisAIModal(); return; }
   if ((el = d.getElementById('tennis-games-modal')) && el.style.display === 'flex') { closeTennisGamesPopup(); return; }
+  if ((el = d.getElementById('tennis-analysis-modal')) && el.style.display === 'flex') { closeTennisAnalysisModal(); return; }
   if ((el = d.getElementById('radar-modal')) && el.style.display === 'flex') { closeRadarModal(); return; }
   if ((el = d.getElementById('nba-ai-modal')) && el.style.display === 'flex') { closeNbaAI(); return; }
   if ((el = d.getElementById('team-detail-modal')) && el.style.display === 'flex') { el.style.display = 'none'; return; }
