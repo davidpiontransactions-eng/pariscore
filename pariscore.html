@@ -27,15 +27,41 @@
   window.__psCatchInstalled = true;
   var queued = [];                          // buffer avant que fetch soit dispo
 
+  // Safely stringify anything (object, Error, primitive) → string readable.
+  // Évite le piège "[object Object]" quand err.message ou err lui-même est un objet.
+  function safeStr(v) {
+    if (v == null) return String(v);
+    if (typeof v === 'string') return v;
+    if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+    // Objet/Error : JSON.stringify si possible, sinon toString
+    try { return JSON.stringify(v); } catch (e) { return String(v); }
+  }
+
   function serialize(err) {
     try {
+      // Cas 1 : plain object jeté (reject({code,...})) — pas de .message string
+      // Cas 2 : Error enrichi (Object.assign(new Error, {status,code}))
+      // Cas 3 : primitive (throw 'foo')
+      var isObj = (err && typeof err === 'object');
+      var msg = (err && typeof err.message === 'string' && err.message)
+              ? err.message
+              : (isObj ? safeStr(err) : String(err));
+      var stk = (err && err.stack) ? safeStr(err.stack) : null;
+      // Capture l'objet complet si c'est un plain object (diagnostic richer)
+      var raw = null;
+      if (isObj) {
+        try { raw = JSON.parse(JSON.stringify(err, Object.getOwnPropertyNames(err))); } catch (e) { raw = safeStr(err); }
+      }
       return {
-        message: (err && err.message) ? err.message : String(err),
-        stack: (err && err.stack) ? String(err.stack) : null,
-        name: (err && err.name) ? err.name : null,
-        filename: (err && err.filename) ? err.filename : null,
-        lineno: (err && err.lineno) != null ? err.lineno : null,
-        colno: (err && err.colno) != null ? err.colno : null,
+        message: msg,
+        stack: stk,
+        name: (err && err.name) ? safeStr(err.name) : null,
+        code: (err && err.code) ? safeStr(err.code) : null,        // erreurs API typiques
+        status: (err && err.status != null) ? safeStr(err.status) : null,
+        filename: (err && err.filename) ? safeStr(err.filename) : null,
+        lineno: (err && err.lineno) != null ? safeStr(err.lineno) : null,
+        colno: (err && err.colno) != null ? safeStr(err.colno) : null,
+        raw: raw,                                                    // objet complet sérialisé
         href: location.href,
         ts: Date.now(),
         ua: navigator.userAgent
@@ -67,9 +93,13 @@
         + 'padding:10px 12px;border-radius:6px;border:1px solid #ff4d4d;'
         + 'box-shadow:0 4px 18px rgba(0,0,0,.4);max-height:40vh;overflow:auto;';
       var loc = (payload.filename || payload.stack || '').split('\n')[0];
+      function esc(s){ return String(s==null?'?':s).replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; }); }
       b.innerHTML = '<b>[PSCATCH] Erreur JS capturée</b>'
-        + '<br>msg: ' + (payload.message || '?').replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; })
-        + '<br>@ ' + (loc || '?').replace(/[<>&]/g, function (c) { return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]; })
+        + '<br>msg: ' + esc(payload.message)
+        + '<br>@ ' + esc(loc)
+        + (payload.code ? '<br>code: ' + esc(payload.code) : '')
+        + (payload.status ? '<br>status: ' + esc(payload.status) : '')
+        + (payload.raw && typeof payload.raw === 'object' ? '<br>raw: ' + esc(JSON.stringify(payload.raw).slice(0,300)) : (payload.raw ? '<br>raw: ' + esc(payload.raw) : ''))
         + '<br><span style="opacity:.7">Détails complets dans la console (F12), filtre [PSCATCH].</span>';
       var close = document.createElement('a');
       close.textContent = ' ✕';
