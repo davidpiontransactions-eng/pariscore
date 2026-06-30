@@ -21408,6 +21408,11 @@ function openAuthModal(tab = 'login') {
     if (f) f.focus();
   }, 100);
 }
+// bd PSCATCH-fix — openAuthModal est appelée par des onclick HTML inline
+// (pariscore.html:12541,15101) qui s'exécutent dans le scope global, hors de
+// l'IIFE applicative. Sans cette exposition explicite, ces handlers lèvent
+// "ReferenceError: openAuthModal is not defined" (capturé par le shim [PSCATCH]).
+window.openAuthModal = openAuthModal;
 // ====== BUTTON LOADING STATE ======
 function setButtonLoading(btnId, isLoading, originalText) {
   var btn = document.getElementById(btnId);
@@ -21514,6 +21519,7 @@ function switchAuthTab(tab) {
   clearAllInlineErrors('auth-form-login');
   clearAllInlineErrors('auth-form-register');
 }
+window.switchAuthTab = switchAuthTab; // bd PSCATCH-fix — onclick HTML inline (pariscore.html)
 
 function togglePwd(btn, inputId) {
   var inp = document.getElementById(inputId);
