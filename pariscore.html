@@ -24921,6 +24921,38 @@ a:focus-visible,
 .sc-duel-fill.p2{background:linear-gradient(180deg,#3b9eff 0%,#0077ff 50%,#005ecb 100%);box-shadow:0 0 6px rgba(0,119,255,.35),inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.3)}
 .sc-duel-fill.p1.win{box-shadow:0 0 12px rgba(0,230,118,.6),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.3)}
 .sc-duel-fill.p2.win{box-shadow:0 0 12px rgba(0,119,255,.6),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -1px 0 rgba(0,0,0,.3)}
+/* Scouting Report — profil joueur (badges forces/faiblesses) */
+.sc-scout-profile{padding:6px 8px;margin:4px 0;border-radius:6px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.06))}
+.sc-scout-name{font-size:12px;font-weight:700;color:var(--text,#fff);margin-bottom:5px}
+.sc-scout-badges{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.sc-scout-badge{display:flex;align-items:center;gap:5px;padding:4px 6px;border-radius:5px;font-size:10px;line-height:1.2}
+.sc-scout-badge .ico{font-size:13px;flex-shrink:0}
+.sc-scout-badge .b-lbl{font-weight:600;color:var(--text2,#cbd5e1)}
+.sc-scout-badge .b-sub{font-family:var(--font-mono,monospace);font-size:9px;color:var(--text3,#94a3b8);margin-left:auto}
+.sc-scout-badge.strong{background:linear-gradient(135deg,rgba(0,230,118,.15) 0%,rgba(0,230,118,.05) 100%);border:1px solid rgba(0,230,118,.25)}
+.sc-scout-badge.strong .b-sub{color:var(--green,#00e676)}
+.sc-scout-badge.mid{background:linear-gradient(135deg,rgba(245,158,11,.12) 0%,rgba(245,158,11,.04) 100%);border:1px solid rgba(245,158,11,.2)}
+.sc-scout-badge.mid .b-sub{color:var(--amber,#f59f0b)}
+.sc-scout-badge.weak{background:linear-gradient(135deg,rgba(239,68,68,.1) 0%,rgba(239,68,68,.03) 100%);border:1px solid rgba(239,68,68,.18)}
+.sc-scout-badge.weak .b-sub{color:var(--red,#ef4444)}
+.sc-scout-badge.na{background:var(--bg,#0b0e17);border:1px solid var(--border2,rgba(255,255,255,.05));opacity:.6}
+/* Lecture parieur */
+.sc-bettor-read{padding:6px 8px;border-radius:6px;background:var(--bg3,#131722);border-left:3px solid var(--blue,#0077ff);font-size:11px;line-height:1.5;color:var(--text2,#cbd5e1)}
+.sc-bettor-read b{color:var(--text,#fff)}
+.sc-cite{display:block;margin-top:5px;font-size:9px;font-style:italic;color:var(--text3,#94a3b8);opacity:.8}
+/* Top 3 Bets */
+.sc-topbets{display:flex;flex-direction:column;gap:4px}
+.sc-topbet{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:5px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.06));font-size:11px}
+.sc-topbet .tb-icon{flex-shrink:0;font-size:12px}
+.sc-topbet .tb-label{flex:1;font-weight:600;color:var(--text,#fff);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-topbet .tb-odds{font-family:var(--font-mono,monospace);font-size:10px;color:var(--text2,#cbd5e1);flex-shrink:0}
+.sc-topbet .tb-ev{font-family:var(--font-mono,monospace);font-size:10px;font-weight:700;flex-shrink:0}
+.sc-topbet .tb-kelly{font-family:var(--font-mono,monospace);font-size:9px;color:var(--text3,#94a3b8);flex-shrink:0}
+.sc-topbet.featured{background:linear-gradient(135deg,rgba(0,230,118,.12) 0%,rgba(0,230,118,.04) 100%);border:1px solid rgba(0,230,118,.3);box-shadow:0 0 10px rgba(0,230,118,.12)}
+.sc-topbet.strong .tb-ev{color:var(--green,#00e676)}
+.sc-topbet.moderate .tb-ev{color:var(--amber,#f59f0b)}
+.sc-topbet.avoid{opacity:.5}
+.sc-topbets-empty{padding:8px;text-align:center;font-size:10px;color:var(--text3,#94a3b8);font-style:italic}
 .sc-tour-group{margin-bottom:16px}
 .sc-tour-header{display:flex;align-items:center;gap:8px;padding:8px 12px;margin-bottom:8px;background:linear-gradient(135deg,var(--bg3,#131722) 0%,var(--bg2,#0e121e) 100%);border-radius:8px;border:1px solid var(--border2,rgba(255,255,255,.08));box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
 .sc-tour-header .name{font-family:var(--font-head,sans-serif);font-size:14px;font-weight:700;color:var(--text,#fff)}
@@ -25510,14 +25542,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       // expand
       +'<button class="sc-expand" onclick="Scope._toggle(this)"><span>Analyse détaillée · Facteurs · H2H · Marchés</span><span class="chev">▾</span></button>'
       +'<div class="sc-detail">'
-      +'<div class="sc-seclbl">'+svgIcon('scale',12)+' Facteurs du modèle</div>'+factorList(m)
-      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Metrics clés</div>'
-      +metricRow('Glicko service',num(m.glicko2&&m.glicko2.p1_serve),num(m.glicko2&&m.glicko2.p2_serve),'',true)
-      +metricRow('Glicko retour',num(m.glicko2&&m.glicko2.p1_return),num(m.glicko2&&m.glicko2.p2_return),'',true)
-      +metricRow('Forme',num(p1.form),num(p2.form),'',true)
-      +metricRow('Classement',num(p1.rank),num(p2.rank),'',false)
+      +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
+      +scoutProfile(p1)+scoutProfile(p2)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(m)
       +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(m)
-      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Tous les marchés</div>'+marketsList(m)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(m)
       +'</div>'
       +'</div></div>';
   }
@@ -25728,10 +25757,12 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     }catch(e){}
     html+=_drDetail;
 
-    // Facteurs modèle + H2H + marchés (hérité prematchCard, simplifié)
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('scale',12)+' Facteurs du modèle</div>'+factorList(m);
+    // Scouting Report (remplace Facteurs/Marchés — profils forces/faiblesses + lecture parieur + top bets)
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' Scouting Report</div>';
+    html+=scoutProfile(m.player1)+scoutProfile(m.player2);
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(m);
     html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(m);
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Marchés</div>'+marketsList(m);
+    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(m);
 
     html+='</div>'; // fin sc-detail
     html+='</div>'; // fin sc-livecard
