@@ -17858,6 +17858,7 @@ async function fetchStats(force = false) {
             const _inType = LEAGUE_TYPE_MAP[configId] || 'T1';
             const _inCountry = LEAGUE_COUNTRY_MAP[configId] || '';
             const _inIsDomestic = (_inType === 'T1' || _inType === 'T2') && !_CONTINENTAL_COUNTRIES.has(_inCountry);
+            let _preservedCount = 0;   // agrégat : éviter 12+ lignes par cycle continental
             for (const [k, v] of Object.entries(teams)) {
               const ex = db.teamStats[k];
               if (ex && ex.leagueId !== configId) {
@@ -17865,11 +17866,16 @@ async function fetchStats(force = false) {
                 const _exCountry = LEAGUE_COUNTRY_MAP[ex.leagueId] || '';
                 const _exIsDomestic = (_exType === 'T1' || _exType === 'T2') && !_CONTINENTAL_COUNTRIES.has(_exCountry);
                 if (_exIsDomestic && !_inIsDomestic) {
-                  console.warn(`  [STANDINGS] "${k}" préservé ligue ${ex.leagueId}(${_exType}) rang ${ex.rank} — skip ligue ${configId}(${_inType}) rang ${v.rank}`);
+                  // Logique métier saine : une ligue continentale (Libertadores) ne doit pas
+                  // écraser le rang domestique T1/T2. Info de debug → stdout + agrégat anti-spam.
+                  _preservedCount++;
                   continue;
                 }
               }
               db.teamStats[k] = v;
+            }
+            if (_preservedCount > 0) {
+              console.log(`  [STANDINGS] ${_preservedCount} équipe(s) rang domestique préservé(es) — ligue continentale ${configId}(${_inType}) n'écrase pas T1/T2`);
             }
             const count = Object.keys(teams).length;
             bsdTeamsFetched += count;
@@ -19981,28 +19987,43 @@ const DISCORD_TENNIS_BREAK_SET_URL = process.env.DISCORD_TENNIS_BREAK_SET_URL
 // Canal alertes live DR diff + variance (séparé du morning picks) — vide = silence
 const DISCORD_TENNIS_LIVE_WEBHOOK_URL = process.env.DISCORD_TENNIS_LIVE_WEBHOOK_URL || '';
 
+// Circuit-breaker Discord global : si rate-limit (429), pause 60s sur TOUS les webhooks
+// pour éviter de spammer l'API Discord (qui ban temporaire au-delà de ~30 req/min).
+let _discordBlockedUntil = 0;
+function _discordBlocked() { return Date.now() < _discordBlockedUntil; }
+
 async function sendDiscordFootAlert(embed) {
-  if (!DISCORD_FOOT_WEBHOOK_URL) return false;
+  if (!DISCORD_FOOT_WEBHOOK_URL || _discordBlocked()) return false;
   try {
     const res = await httpsPost(DISCORD_FOOT_WEBHOOK_URL, { embeds: [embed] });
+    if (res && res.status === 429) {
+      _discordBlockedUntil = Date.now() + 60 * 1000;  // pause 60s
+      console.log(`  [Discord:Foot] Rate-limité (429) — pause 60s sur tous les webhooks`);
+      return false;
+    }
     if (res && res.status >= 400) {
-      console.warn(`  [Discord:Foot] Échec webhook: HTTP ${res.status}`);
+      console.log(`  [Discord:Foot] Échec webhook: HTTP ${res.status}`);
       return false;
     }
     console.log(`  [Discord:Foot] Alerte envoyée`);
     return true;
   } catch (e) {
-    console.warn(`  [Discord:Foot] Échec:`, e.message);
+    console.log(`  [Discord:Foot] Échec: ${e.message}`);
     return false;
   }
 }
 
 async function sendDiscordAlert(embed) {
-  if (!DISCORD_WEBHOOK_URL) return false;
+  if (!DISCORD_WEBHOOK_URL || _discordBlocked()) return false;
   try {
     const res = await httpsPost(DISCORD_WEBHOOK_URL, { embeds: [embed] });
+    if (res && res.status === 429) {
+      _discordBlockedUntil = Date.now() + 60 * 1000;
+      console.log(`  [Discord] Rate-limité (429) — pause 60s sur tous les webhooks`);
+      return false;
+    }
     if (res && res.status >= 400) {
-      console.warn(`  [Discord] Échec webhook: HTTP ${res.status}`);
+      console.log(`  [Discord] Échec webhook: HTTP ${res.status}`);
       return false;
     }
     console.log(`  [Discord] Alerte envoyée`);
