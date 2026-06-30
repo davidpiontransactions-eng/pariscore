@@ -24420,7 +24420,7 @@ async function pollTennisLive() {
             // _tnLiveServeStats retourne des fractions 0-1 ; p1_first_won peut être 0-100.
             const toFrac = v => Number.isFinite(v) ? (v > 1 ? v / 100 : v) : v;
             spw1 = toFrac(spw1); spw2 = toFrac(spw2);
-            const fmt = (Number(m.best_of) === 5 || m.best_of === '5') ? 'BO5' : 'BO3';
+            const fmt = (Number(m.best_of) === 5 || m.best_of === '5' || (/grand|slam|roland|wimbledon|us open|australian/i.test(String(m.tournament || '') + ' ' + String(m.tour || '')) && /atp|men/i.test(String(m.tour || '')))) ? 'BO5' : 'BO3';
             const liveProb = computeTennisMatchProb({
               p1_serve_pct: Math.max(0.3, Math.min(0.95, spw1)),
               p2_serve_pct: Math.max(0.3, Math.min(0.95, spw2)),
@@ -24428,7 +24428,7 @@ async function pollTennisLive() {
               setsWon1, setsWon2,
               currentSet: { gA, gB, isAserving },
             });
-            if (liveProb && Number.isFinite(liveProb.p1_win)) m.liveProbability = liveProb.p1_win;
+            if (liveProb && Number.isFinite(liveProb.p1_win)) m.liveProbability = Math.max(0.02, Math.min(0.98, liveProb.p1_win)); // clamp [0.02, 0.98] — jamais 0% ni 100%
           } catch (_) { /* live prob fail = non bloquant */ }
         } catch (_) { m.momentum = null; }
       }
