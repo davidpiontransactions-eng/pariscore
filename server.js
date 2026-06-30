@@ -24191,14 +24191,43 @@ async function pollTennisLive() {
       // bd — K-Flow + SM Momentum tracker: feed point data per match
       if (m && m.is_live && tennisMomentumTracker) {
         try {
-          const pWinner = m.current_point ? (m.current_point.includes('40') || m.serving === 1 ? 0 : 1) : (m.serving === 1 ? 0 : 1);
-          tennisMomentumTracker.addPoint(m.id, {
-            winner: m.serving === 1 ? 0 : 1, // heuristic: server wins point by default (will improve with real point data)
-            server: m.serving === 1 ? 0 : m.serving === 2 ? 1 : null,
-            rallyCount: 4, // default rally count (will improve with real data)
-            gamePoint: false,
-            ts: Date.now(),
-          });
+          // Feed REAL point-by-point data (aiscore PBP) au tracker au lieu du GHOST
+          // hardcoded "server wins". Convention tracker : winner/server en 0|1
+          // (0=p1, 1=p2) ; le feed PBP aiscore est 1-indexé (1|2) → conversion -1.
+          // On ne rejoue que les points nouveaux (idx > _pbpLastIdx) par match.
+          let _pbpReplayed = false;
+          try {
+            // bd live-fix : timeout 5s par fetch PBP (évite hang sur N matchs live séquentiels)
+            const _pbpTimeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 5000); });
+            const pbp = await Promise.race([fetchTennisPBP(m.id).catch(function(){ return null; }), _pbpTimeout]);
+            if (pbp && Array.isArray(pbp.points) && pbp.points.length) {
+              if (m._pbpLastIdx == null) m._pbpLastIdx = -1;
+              for (const pt of pbp.points) {
+                if (pt.idx <= m._pbpLastIdx) continue; // skip déjà rejoués
+                const srv = pt.server != null ? (Number(pt.server) - 1) : (m.serving === 1 ? 0 : m.serving === 2 ? 1 : null);
+                const wnr = pt.winner != null ? (Number(pt.winner) - 1) : (m.serving === 1 ? 0 : 1);
+                tennisMomentumTracker.addPoint(m.id, {
+                  winner: wnr,
+                  server: srv,
+                  rallyCount: pt.rallyCount || 4,
+                  gamePoint: !!pt.gamePoint,
+                  ts: Date.now(),
+                });
+                m._pbpLastIdx = pt.idx;
+                _pbpReplayed = true;
+              }
+            }
+          } catch (_) { /* PBP fail = non bloquant, fallback ci-dessous */ }
+          if (!_pbpReplayed) {
+            // Fallback : ancien comportement hardcoded si PBP indisponible.
+            tennisMomentumTracker.addPoint(m.id, {
+              winner: m.serving === 1 ? 0 : 1, // heuristic: server wins point by default
+              server: m.serving === 1 ? 0 : m.serving === 2 ? 1 : null,
+              rallyCount: 4, // default rally count
+              gamePoint: false,
+              ts: Date.now(),
+            });
+          }
           m.momentum = tennisMomentumTracker.getMomentum(m.id);
           // Attach Glicko-2 ratings to match for frontend display
           if (tennisGlicko2) {
@@ -24215,6 +24244,36 @@ async function pollTennisLive() {
               };
             } catch (_) { m.glicko2 = null; }
           }
+          // CHANTIER 3 — Compute live match probability (markov_live_conditioned).
+          // Derive du score live (sets gagnés + jeux du set courant) + SPW cumulés BSD.
+          try {
+            const setsWon1 = Number(m.player1_sets) || 0;
+            const setsWon2 = Number(m.player2_sets) || 0;
+            const setsArr = Array.isArray(m.sets) ? m.sets : [];
+            const lastSet = setsArr[setsArr.length - 1];
+            const gA = lastSet ? (Number(lastSet.p1) || Number(lastSet.games_p1) || 0) : 0;
+            const gB = lastSet ? (Number(lastSet.p2) || Number(lastSet.games_p2) || 0) : 0;
+            const isAserving = (m.serving === 1 || m.serving === '1');
+            // SPW live depuis _bsd_stats (cumulé). Reuse helper _tnLiveServeStats si dispo.
+            const liveStats = (typeof _tnLiveServeStats === 'function') ? _tnLiveServeStats(m) : null;
+            const bsd = m._bsd_stats || {};
+            let spw1 = (liveStats && Number.isFinite(liveStats.p1_spw)) ? liveStats.p1_spw
+                     : (Number(bsd.p1_first_won) || Number(bsd.p1_spw) || 0.65);
+            let spw2 = (liveStats && Number.isFinite(liveStats.p2_spw)) ? liveStats.p2_spw
+                     : (Number(bsd.p2_first_won) || Number(bsd.p2_spw) || 0.65);
+            // _tnLiveServeStats retourne des fractions 0-1 ; p1_first_won peut être 0-100.
+            const toFrac = v => Number.isFinite(v) ? (v > 1 ? v / 100 : v) : v;
+            spw1 = toFrac(spw1); spw2 = toFrac(spw2);
+            const fmt = (Number(m.best_of) === 5 || m.best_of === '5') ? 'BO5' : 'BO3';
+            const liveProb = computeTennisMatchProb({
+              p1_serve_pct: Math.max(0.3, Math.min(0.95, spw1)),
+              p2_serve_pct: Math.max(0.3, Math.min(0.95, spw2)),
+              format: fmt,
+              setsWon1, setsWon2,
+              currentSet: { gA, gB, isAserving },
+            });
+            if (liveProb && Number.isFinite(liveProb.p1_win)) m.liveProbability = liveProb.p1_win;
+          } catch (_) { /* live prob fail = non bloquant */ }
         } catch (_) { m.momentum = null; }
       }
     }
@@ -25788,9 +25847,25 @@ function gameHoldProb(spw) {
     + 20 * Math.pow(p, 3) * Math.pow(q, 3) * deuce;
 }
 
+// Coefficient binomial C(n,k) — forme multiplicative (évite overflow factoriel).
+// Utilisé pour la conditioning sets-won (Klaassen-Magnus live, binomiale négative).
+function binom(n, k) {
+  if (k < 0 || k > n || n < 0) return 0;
+  if (k === 0 || k === n) return 1;
+  k = Math.min(k, n - k); // symétrie
+  let res = 1;
+  for (let i = 0; i < k; i++) {
+    res = (res * (n - i)) / (i + 1);
+  }
+  return Math.round(res);
+}
+
 // DP exact sur game state (gA, gB, isAserving). P(A wins set).
 // Tiebreak approximé : pA / (pA + (1 - pB)) avec garde-fous [0.01, 0.99].
-function setWinProb(holdA, holdB) {
+function setWinProb(holdA, holdB, scoreState) {
+  // scoreState optionnel : { gA, gB, isAserving } — défaut {0,0,true} (comportement pré-match préservé).
+  // Permet de conditionner la proba de set sur le score de jeux en cours (live).
+  var ss = scoreState || { gA: 0, gB: 0, isAserving: true };
   const hA = Math.max(0.01, Math.min(0.99, holdA));
   const hB = Math.max(0.01, Math.min(0.99, holdB));
   const memo = new Map();
@@ -25807,7 +25882,8 @@ function setWinProb(holdA, holdB) {
     memo.set(key, result);
     return result;
   }
-  return P(0, 0, true);
+  // Conditionne au score en cours si scoreState fourni, sinon P(0,0,true) inchangé.
+  return P(Number(ss.gA) || 0, Number(ss.gB) || 0, ss.isAserving !== false);
 }
 
 // P(2-0 / 2-1 / 0-2 / 1-2) en best-of-3 + P(set) bru.
@@ -25852,24 +25928,61 @@ function matchSetProbs(holdA, holdB) {
  * @returns {{ p1_win:number, p2_win:number, p1_hold:number, p2_hold:number,
  *             p1_set_win:number, format:string, method:string }|null}
  */
-function computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format = 'BO3' } = {}) {
+function computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format = 'BO3', setsWon1, setsWon2, currentSet } = {}) {
   if (!Number.isFinite(p1_serve_pct) || !Number.isFinite(p2_serve_pct)) return null;
   if (p1_serve_pct < 0.3 || p1_serve_pct > 0.95) return null;
   if (p2_serve_pct < 0.3 || p2_serve_pct > 0.95) return null;
 
   const h1 = gameHoldProb(p1_serve_pct);
   const h2 = gameHoldProb(p2_serve_pct);
-  const pS = setWinProb(h1, h2); // closed-form DP exact, P(p1 wins set)
+
+  // Live conditioning détecté ? Si non (setsWon nuls + pas de currentSet) on garde
+  // EXACTEMENT la closed-form d'origine → zéro régression pré-match (byte-identique).
+  const sw1 = Number(setsWon1) || 0;
+  const sw2 = Number(setsWon2) || 0;
+  const hasLive = (sw1 !== 0 || sw2 !== 0 || !!currentSet);
+
+  // pS = proba du set COURANT (conditionné au score de jeux si currentSet fourni).
+  const pS = setWinProb(h1, h2, currentSet); // closed-form DP exact, P(p1 wins set)
   const qS = 1 - pS;
 
-  // Closed-form match win (best-of-N) — Klaassen-Magnus
+  // P(A gagne needsA sets avant que B gagne needsB sets), chaque set iid de proba p.
+  // Binomiale négative : Σ_{k=0}^{needsB-1} C(needsA-1+k, k) · p^needsA · (1-p)^k
+  function pWinBefore(needsA, needsB, p) {
+    if (needsA <= 0) return 1;
+    if (needsB <= 0) return 0;
+    const q = 1 - p;
+    let prob = 0;
+    for (let k = 0; k < needsB; k++) {
+      prob += binom(needsA - 1 + k, k) * Math.pow(p, needsA) * Math.pow(q, k);
+    }
+    return prob;
+  }
+
   let p1Match;
-  if (String(format).toUpperCase() === 'BO5') {
-    // BO5: gagne 3 sets sur ≤5. P = pS³·(1 + 3·qS + 6·qS²)
-    p1Match = pS * pS * pS * (1 + 3 * qS + 6 * qS * qS);
+  let method;
+  if (!hasLive) {
+    // Closed-form match win (best-of-N) — Klaassen-Magnus, inchangé pré-match.
+    if (String(format).toUpperCase() === 'BO5') {
+      p1Match = pS * pS * pS * (1 + 3 * qS + 6 * qS * qS);
+    } else {
+      p1Match = pS * pS + 2 * pS * pS * qS;
+    }
+    method = 'klaassen_magnus_closed_form';
   } else {
-    // BO3 par défaut: gagne 2 sets sur ≤3. P = pS² + 2·pS²·qS
-    p1Match = pS * pS + 2 * pS * pS * qS;
+    // Conditioning Markov : sets déjà gagnés + set courant en cours.
+    const setsNeeded1 = (String(format).toUpperCase() === 'BO5' ? 3 : 2) - sw1;
+    const setsNeeded2 = (String(format).toUpperCase() === 'BO5' ? 3 : 2) - sw2;
+    if (setsNeeded1 <= 0) p1Match = 1;          // déjà gagné
+    else if (setsNeeded2 <= 0) p1Match = 0;     // déjà perdu
+    else if (setsNeeded1 === 1 && setsNeeded2 === 1) p1Match = pS; // set décisif = set courant
+    else {
+      // Sets restants (hors courant) traités comme frais → pS0 sans currentSet.
+      const pS0 = setWinProb(h1, h2);
+      p1Match = pS * pWinBefore(setsNeeded1 - 1, setsNeeded2, pS0)
+              + qS * pWinBefore(setsNeeded1, setsNeeded2 - 1, pS0);
+    }
+    method = 'markov_live_conditioned';
   }
   // Clamp [0,1] (DP mémoïsé peut retourner 0.9999...)
   p1Match = Math.max(0, Math.min(1, p1Match));
@@ -25881,7 +25994,7 @@ function computeTennisMatchProb({ p1_serve_pct, p2_serve_pct, format = 'BO3' } =
     p2_hold: parseFloat(h2.toFixed(4)),
     p1_set_win: parseFloat(pS.toFixed(4)),
     format: format,
-    method: 'klaassen_magnus_closed_form',
+    method: method,
   };
 }
 
