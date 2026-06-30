@@ -6097,6 +6097,26 @@ function initSQLite() {
       s == null ? null : String(s).normalize('NFD').replace(/[̀-ͯ]/g, ''));
   } catch (_) { /* déjà enregistré */ }
   sqldb.exec(`CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL)`);
+  // Table timesfm_forecasts — tendances IA générées par timesfm_forecast.py.
+  // Créée ici (était seulement LUE → "no such table" systématique en prod).
+  // Schéma déduit des colonnes accédées par les routes /api/v1/forecasts/*.
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS timesfm_forecasts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sport TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id TEXT,
+    entity_label TEXT,
+    context TEXT,
+    series_label TEXT,
+    horizon INTEGER,
+    forecast_raw TEXT,
+    quantile_labels TEXT,
+    input_tail TEXT,
+    forecast_ts INTEGER,
+    expires_at INTEGER
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_timesfm_sport ON timesfm_forecasts(sport)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_timesfm_entity ON timesfm_forecasts(sport, entity_id)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS ai_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, matchId TEXT NOT NULL, rating INTEGER NOT NULL, ts INTEGER NOT NULL)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS matchday_passes (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT UNIQUE NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`);
   // bd s77m — table idempotency webhook Stripe (anti-rejeu : un event_id traité une seule fois)
@@ -7919,6 +7939,11 @@ function findFuzzy(key, { skipExact = false, excludeEntry = null } = {}) {
   }
 
   // 3. Levenshtein strict — restreint au bucket char-0 du key (1/26 reduction typique)
+  // Seuil STRICT : dist <= 1 uniquement. Pour des noms propres (équipes/pays), dist=2
+  // générait des FAUX POSITIFS dangereux ("tonga"→"togo", "brunei"→"burundi",
+  // "boulogne"→"bologna" = entités totalement différentes). Une vraie typo = 1 caractère.
+  // Les abréviations/doublons (man city→manchester, psg→paris) sont gérés par le prefix
+  // match (étape 2) ou un alias map dédié, PAS par Levenshtein.
   const keyChar = key.charAt(0);
   const candidates = _teamStatsPrefixIdx.get(keyChar) || [];
   let best = null, bestDist = Infinity;
@@ -7926,15 +7951,20 @@ function findFuzzy(key, { skipExact = false, excludeEntry = null } = {}) {
     if (k === key && skipExact) continue;
     if (db.teamStats[k] === excludeEntry) continue;
     const dist = levenshtein(k, key);
-    const threshold = key.length <= 4 ? 1 : 2;
-    if (dist < bestDist && dist <= threshold) {
+    if (dist < bestDist && dist <= 1) {   // tolérance : 1 seule typo
       bestDist = dist; best = k;
       if (bestDist === 0) break;  // perfect match — early exit
     }
   }
   const result = best ? db.teamStats[best] : null;
   if (best && !excludeEntry) {
-    console.warn(`  [Fuzzy] "${key}" → "${best}" (dist=${bestDist}) — ATTENTION: match approximatif`);
+    // Compteur global pour observabilité (le console.warn polluait massivement les logs PM2,
+    // une ligne par match × cycle). Debug détaillé via PS_DEBUG_FUZZY=1 si nécessaire.
+    if (globalThis.__fuzzyCount == null) globalThis.__fuzzyCount = 0;
+    globalThis.__fuzzyCount++;
+    if (process.env.PS_DEBUG_FUZZY === '1') {
+      console.warn(`  [Fuzzy] "${key}" → "${best}" (dist=${bestDist}) — match approximatif`);
+    }
   }
   if (cacheKey) _setFuzzyCacheLRU(cacheKey, result);
   return result;
