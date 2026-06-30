@@ -51327,7 +51327,11 @@ globalThis.__tennisPlayerMatches = function(playerName) {
       var opp = isP1 ? (m.player2 || {}) : (m.player1 || {});
       var oppSrv = opp.serve_index;
       var oppRet = opp.receive_index;
-      if (srvIdx == null || retIdx == null) { console.warn("[BUG-001] __tennisPlayerMatches(" + playerName + "): serve_index ou receive_index manquants, retourne null partiel"); }
+      // Donnée manquante ATTENDUE : les feeds BSD ne fournissent pas toujours serve_index/receive_index
+      // (surtout ITF/joueurs moins suivis). Ce n'est pas un bug — le pipeline gère le null en aval.
+      // console.warn silencieux (sinon spam massif : 1 ligne × joueur × match, pollue les logs PM2).
+      // Comptage global pour observabilité sans I/O disque :
+      if (srvIdx == null || retIdx == null) { if (globalThis.__bug001Count == null) globalThis.__bug001Count = 0; globalThis.__bug001Count++; }
       var winner = m.winner;
       if (!winner) {
         var scr = m.status;
