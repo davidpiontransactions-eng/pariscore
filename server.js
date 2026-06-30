@@ -19449,7 +19449,10 @@ function srvPlanGate(req, res, pathname) {
     '/api/v1/auth/me', '/api/v1/checkout/matchday', '/api/v1/webhook/stripe',
     '/api/v1/matchday/status', '/api/v1/team-logo',
     // bd nwk6 — push public (subscribe anon accepté, unsubscribe par endpoint)
-    '/api/v1/push/vapid-key', '/api/v1/push/subscribe', '/api/v1/push/unsubscribe'
+    '/api/v1/push/vapid-key', '/api/v1/push/subscribe', '/api/v1/push/unsubscribe',
+    // bd ParisScorebis-qt49 — capture erreurs JS client (doit être pré-auth : un crash
+    // peut survenir AVANT login et doit tout de même être reporté pour diagnostic)
+    '/api/v1/clientside-error'
   ]);
   if (PUBLIC.has(pathname)) return false;
   const a = srvAccess(req);
@@ -32888,6 +32891,32 @@ if (pathname === '/api/v1/click' && req.method === 'POST') {
         }
     });
     return;
+}
+
+// ─── Diagnostic : capture erreurs JS client (bd ParisScorebis-qt49) ────────────
+// Le shim <head> de pariscore.html POSTe ici la VRAIE trace des crashes non
+// attrapés (error + unhandledrejection). Pre-auth (le crash peut survenir avant
+// login). Log stderr structuré + réponse 204 (fire-and-forget côté client).
+// PAS de gate Pro : on veut capter même les visiteurs freemium/loggés-out.
+if (pathname === '/api/v1/clientside-error' && req.method === 'POST') {
+  let body = '';
+  req.on('data', chunk => { body += chunk; if (body.length > 16384) { req.destroy(); } }); // 16 KB max
+  req.on('end', () => {
+    try {
+      const p = JSON.parse(body) || {};
+      const msg = String(p.message || '').slice(0, 500);
+      const stack = String(p.stack || '').slice(0, 4000);
+      const loc = p.filename ? (p.filename + ':' + (p.lineno != null ? p.lineno : '?') + (p.colno != null ? (':' + p.colno) : '')) : '';
+      // Un seul log par erreur : [PSCATCH] type | msg | @loc
+      console.error('[PSCATCH] ' + (p.type || 'clientside') + ' | ' + msg + (loc ? (' | @ ' + loc) : '')
+        + ' | href=' + (p.href || '') + '\n' + (stack || '(no stack)'));
+      return jsonResponse(res, 204, {});
+    } catch (e) {
+      return jsonResponse(res, 204, {});   // toujours 204 : le client ne doit jamais bloquer
+    }
+  });
+  req.on('error', () => { try { res.end(); } catch (_) {} });
+  return;
 }
 
 if (pathname === '/api/v1/status') {
