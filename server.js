@@ -50,6 +50,7 @@ const cyclingService    = require('./services/cyclingService');    // Cyclisme v
 const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catch (_) {}
+let tnnsLiveScraper = null; try { tnnsLiveScraper = require('./services/tnnsLiveScraper'); } catch (_) { /* TNNS scraper optionnel */ }
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -1888,6 +1889,10 @@ const ESPN_SOCCER_SLUG = Object.assign({}, ESPN_STANDINGS_SLUG, {
 // Flag par défaut OFF — passer BSD_TENNIS_ENABLED=true dans .env après souscription.
 const BSD_TENNIS_ENABLED = String(process.env.BSD_TENNIS_ENABLED || 'false').toLowerCase() === 'true';
 const BSD_TENNIS_BASE = 'https://sports.bzzoiro.com/tennis';
+// bd TNNS Live scraper — point-by-point alternatif (tnnslive.com, données sous
+// licence Sportradar/TDI). OFF par défaut — voir avertissement légal dans
+// services/tnnsLiveScraper.js. Activation aux risques de l'utilisateur.
+const TNNS_LIVE_ENABLED = String(process.env.TNNS_LIVE_ENABLED || 'false').toLowerCase() === 'true';
 const BSD_TENNIS_MCP_URL = 'https://sports.bzzoiro.com/tennis/mcp/';
 const BSD_TENNIS_UPGRADE_URL = 'https://sports.bzzoiro.com/pricing/';
 
@@ -24247,6 +24252,37 @@ async function pollTennisLive() {
               }
             }
           } catch (_) { /* PBP fail = non bloquant, fallback ci-dessous */ }
+          // bd TNNS scraper : point-by-point alternatif (feature flag OFF défaut)
+          // Strictement additif/fallback : NE remplace JAMAIS aiscore si aiscore
+          // a déjà des données. Ne s'active que si aiscore est vide. Non bloquant.
+          if (TNNS_LIVE_ENABLED && tnnsLiveScraper && tnnsLiveScraper.enabled() && !_pbpReplayed) {
+            try {
+              const _tnnsPbpTimeout = new Promise(function(resolve){ setTimeout(function(){ resolve(null); }, 4000); });
+              const tnnsPbp = await Promise.race([
+                tnnsLiveScraper.fetchPBP(m.id).catch(function(){ return null; }),
+                _tnnsPbpTimeout
+              ]);
+              if (tnnsPbp && Array.isArray(tnnsPbp.points) && tnnsPbp.points.length) {
+                // aiscore vide → utiliser TNNS comme source PBP alternative
+                // (convention identique : server/winner 1-indexés, idx monotone)
+                if (m._pbpLastIdx == null) m._pbpLastIdx = -1;
+                for (const pt of tnnsPbp.points) {
+                  if (pt.idx <= m._pbpLastIdx) continue;
+                  const srv = pt.server != null ? (Number(pt.server) - 1) : (m.serving === 1 ? 0 : m.serving === 2 ? 1 : null);
+                  const wnr = pt.winner != null ? (Number(pt.winner) - 1) : (m.serving === 1 ? 0 : 1);
+                  tennisMomentumTracker.addPoint(m.id, {
+                    winner: wnr,
+                    server: srv,
+                    rallyCount: pt.rallyCount || 4,
+                    gamePoint: !!pt.gamePoint,
+                    ts: Date.now(),
+                  });
+                  m._pbpLastIdx = pt.idx;
+                  _pbpReplayed = true;
+                }
+              }
+            } catch (_) { /* TNNS fail = non bloquant */ }
+          }
           if (!_pbpReplayed) {
             // Fallback : ancien comportement hardcoded si PBP indisponible.
             tennisMomentumTracker.addPoint(m.id, {
@@ -49377,6 +49413,11 @@ async function bootInit() {
       } else {
         console.log('  [Boot] Tennis Abstract Elo scraper DISABLED (CC BY-NC-SA license — bd h6a + 8uoc legal DG pending).');
       }
+    }
+
+    // bd TNNS Live scraper status notice (OFF par défaut)
+    {
+      if (TNNS_LIVE_ENABLED) console.log('  [TNNS] Scraper ENABLED (⚠ utilise données sous licence — voir avertissement légal dans services/tnnsLiveScraper.js)');
     }
 
     // bd lzdg Phase 2 — defer fetchStats 30s post-boot (architectural fix)
