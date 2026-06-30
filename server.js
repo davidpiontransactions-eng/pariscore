@@ -7256,10 +7256,11 @@ function sanityCheckTeamStats() {
   }
   if (issues.length) {
     // Anomalie de DONNÉES gérée (PPG manquant → fallback plus loin dans le pipeline),
-    // pas une erreur technique fatale. console.warn (out log) au lieu de console.error.
-    console.warn(`[SANITY] ${issues.length} data anomalies (PPG manquant, fallback appliqué):`);
-    issues.slice(0, 10).forEach(iss => console.warn(`  • ${iss}`));
-    if (issues.length > 10) console.warn(`  ... and ${issues.length - 10} more`);
+    // pas une erreur technique fatale. console.log (stdout/out log) — IMPORTANT : en Node,
+    // console.warn va AUSSI sur stderr (donc error log PM2), seul console.log va sur stdout.
+    console.log(`[SANITY] ${issues.length} data anomalies (PPG manquant, fallback appliqué):`);
+    issues.slice(0, 10).forEach(iss => console.log(`  • ${iss}`));
+    if (issues.length > 10) console.log(`  ... and ${issues.length - 10} more`);
     return false;
   }
   console.log(`  [SANITY] ✓ Team stats valid (${Object.keys(db.teamStats).length} teams, all checks passed)`);
@@ -9863,7 +9864,10 @@ function buildMatchRecord(raw) {
   let poisson;
   let dixonColes = null;
   if (_lamBad) {
-    console.error("\x1b[31m[POISSON] λ invalide (expHome=%s expAway=%s) pour %s vs %s — calcul bloqué\x1b[0m", expHome, expAway, raw.home_team, raw.away_team);
+    // λ aberrant (ex: matchs internationaux, stats feed pauvres, cumul pris pour moyenne).
+    // Déjà géré : le match reçoit des probas à 0 + message explicite. Ce n'est pas un crash.
+    // console.log (stdout) au lieu de console.error (stderr) — anomalie gérée, pas erreur technique.
+    console.log("  [POISSON] λ invalide (expHome=%s expAway=%s) pour %s vs %s — fallback appliqué", expHome, expAway, raw.home_team, raw.away_team);
     poisson = { error: 'BAD_LAMBDA', message: 'Moyennes invalides — calcul Poisson impossible', over25: 0, btts: 0, homeWin: 0, draw: 0, awayWin: 0 };
   } else {
     poisson = computePoisson(expHome, expAway);
