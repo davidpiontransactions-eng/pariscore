@@ -25744,6 +25744,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // helpers exposés (utiles pour réutilisation dans Pariscore)
     p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
+    svgIcon:svgIcon,esc:esc,shortName:shortName,
     prematchCard:prematchCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     summaryRow:summaryRow,topPick:topPick,radar:radar,analyticsPanel:analyticsPanel,factors:factors,
 
@@ -26002,8 +26003,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           var _gm = _groups[tn];
           var _gt = _gm[0].tour || '';
           _gHtml += '<div class="sc-tour-group">';
-          _gHtml += '<div class="sc-tour-header">' + svgIcon('trophy',14) + ' <span class="name">' + esc(tn) + '</span> <span class="tour">' + esc(_gt) + '</span> <span class="count">' + _gm.length + ' matchs</span></div>';
-          _gHtml += '<div class="sc-grid sc-grid-2">' + _gm.map(liveCardCompact).join('') + '</div>';
+          _gHtml += '<div class="sc-tour-header">' + root.Scope.svgIcon('trophy',14) + ' <span class="name">' + root.Scope.esc(tn) + '</span> <span class="tour">' + root.Scope.esc(_gt) + '</span> <span class="count">' + _gm.length + ' matchs</span></div>';
+          _gHtml += '<div class="sc-grid sc-grid-2">' + _gm.map(root.Scope.liveCard).join('') + '</div>';
           _gHtml += '</div>';
         });
         pEl.innerHTML = _gHtml;
