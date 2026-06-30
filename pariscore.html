@@ -25898,8 +25898,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +metricRow('Forme',num(p1.form),num(p2.form),'',true)
       +metricRow('Classement',num(p1.rank),num(p2.rank),'',false)
       +'</div></div>'
-      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('scale',14)+'<span class="name">Facteurs pondérés</span></div></div><div class="sc-card-body">'+factorList(m)+'</div></div>'
-      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('trophy',14)+'<span class="name">H2H & Marchés</span></div></div><div class="sc-card-body">'+h2hBlock(m)+'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Marchés</div>'+marketsList(m)+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('scale',14)+'<span class="name">Facteurs pondérés</span></div></div><div class="sc-card-body">'+(typeof factorList==='function'?factorList(m):'')+'</div></div>'
+      +'<div class="sc-card"><div class="sc-card-head"><div class="tour">'+svgIcon('trophy',14)+'<span class="name">H2H & Marchés</span></div></div><div class="sc-card-body">'+h2hBlock(m)+'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' Marchés</div>'+(typeof marketsList==='function'?marketsList(m):'')+'</div></div>'
       +'</div>';
   }
 
