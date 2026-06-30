@@ -2621,6 +2621,43 @@ function verifyPendingFootAlerts() {
 // Fallback quand _sofaLiveIdx ne matche pas les noms BSD/ESPN.
 // Même shape de retour que getSofascoreDRCached → consommateurs inchangés.
 // DR = (serve% + return%) J1 / (serve% + return%) J2 (parité formule Sofascore).
+// Normalisation de la surface tennis : force la surface officielle des tournois majeurs
+// (source de vérité ATP/WTA — invariable d'année en année) quand le feed BSD/API renvoie
+// une surface null/erronée (ex: Wimbledon étiqueté 'Hard' au lieu de 'Grass').
+// Utilisée à l'ingestion (construction du payload route tennis) + reflet côté frontend.
+// tournamentName peut être null/undefined → on retourne la surface normalisée minimale.
+const _TENNIS_TOURNAMENT_SURFACE = [
+  // [regex sur le nom du tournoi, surface canonique]
+  [/wimbledon/i, 'Grass'],
+  [/roland[-\s]?garros|french open/i, 'Clay'],
+  [/australian open|ausopen/i, 'Hard'],
+  [/\bus\s?open/i, 'Hard'],
+  [/indian wells/i, 'Hard'],
+  [/\bmiami\b/i, 'Hard'],
+  [/monte[-\s]?carlo/i, 'Clay'],
+  [/\brome\b|internazionali|\broma\b/i, 'Clay'],
+  // Madrid Masters 1000 = Clay (attention au genre « madrid atp/wta » déjà couvert par la ville)
+  [/madrid/i, 'Clay'],
+  [/queen'?s club|halle\b/i, 'Grass'],
+  [/cincinnati|shanghai|paris masters|tokyo|beijing/i, 'Hard'],
+  [/barcelona|estoril|hamburg|bastad|gstaad|kitzbuhel/i, 'Clay'],
+  [/saint[-\s]?petersburg|rotterdam|doha|dubai|abu dhabi/i, 'Hard'],
+];
+function normalizeTennisSurface(rawSurface, tournamentName) {
+  const tn = String(tournamentName || '').toLowerCase();
+  // Override par nom de tournoi prioritaire (le nom est plus fiable que la surface feed)
+  for (const [rx, canonical] of _TENNIS_TOURNAMENT_SURFACE) {
+    if (rx.test(tn)) return canonical;
+  }
+  // Sinon : normalisation légère de la surface reçue (casse, synonymes FR/EN)
+  const s = String(rawSurface || '').toLowerCase().trim();
+  if (/clay|terre|battue|battu|schlacken|terra/i.test(s)) return 'Clay';
+  if (/grass|gazon|herbe|rasen/i.test(s)) return 'Grass';
+  if (/hard|dur|beton|cemento/i.test(s)) return 'Hard';
+  if (/indoor|salle|halle \(indoor\)/i.test(s)) return 'Hard'; // indoor = hard couvert par convention
+  return rawSurface || null;
+}
+
 function computeTennisDRFromMatch(m) {
   const s = m && m._bsd_stats;
   if (!s) return null;
@@ -22359,10 +22396,15 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       function _tnNormName(n) { return (n || '').replace(/[‐‑‒–—―-]/g, ' ').replace(/\s+/g, ' ').trim(); }
       var p1Norm = _tnNormName(p1.name || ''), p2Norm = _tnNormName(p2.name || '');
 
+      // Normalisation surface : force la surface officielle des tournois majeurs (source de
+      // vérité ATP/WTA) quand le feed BSD/API renvoie null/erreur (ex: Wimbledon étiqueté 'Hard').
+      // La surface d'un tournoi est invariable d'année en année → override fiable.
+      const _normSurf = normalizeTennisSurface(e.surface, e.tournament);
+
       const payload = {
         id: e.id,
         meta: {
-          tournament: e.tournament || null, surface: e.surface || null,
+          tournament: e.tournament || null, surface: _normSurf,
           round: e.round || null, start_time: e.start_time || null,
           status: e.status || null, tour: e.tour || null, court: e.court || null,
           is_live: !!(e._isLive || /live|progress|playing|in.play/i.test(String(e.status || ''))),

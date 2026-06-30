@@ -25056,8 +25056,24 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
 
   /* ── Surface badge ────────────────────────────────────────────────── */
-  function surfaceBadge(surf){
+  function surfaceBadge(surf, tournamentName){
     var s=String(surf||'').toLowerCase();
+    var t=String(tournamentName||'').toLowerCase();
+    // Override de sécurité ABSOLU par nom de tournoi : l'API renvoie parfois une surface
+    // manquante/erronée (ex: Wimbledon affiché 'Dur'). On force la surface connue des
+    // tournois majeurs quelle que soit la valeur reçue.
+    // Source de vérité : la surface officielle du tournoi (invariable d'année en année).
+    if(t.indexOf('wimbledon')>-1) s='grass';
+    if(t.indexOf('roland garros')>-1||t.indexOf('roland-garros')>-1) s='clay';
+    if(t.indexOf('us open')>-1||t.indexOf('usopen')>-1) s='hard';
+    if(t.indexOf('australian open')>-1||t.indexOf('ausopen')>-1) s='hard';
+    if(t.indexOf('indian wells')>-1) s='hard';
+    if(t.indexOf('miami')>-1) s='hard';
+    if(t.indexOf('madrid')>-1&&t.indexOf('atp')<0&&t.indexOf('wta')<0) s='clay';
+    if(t.indexOf('monte carlo')>-1||t.indexOf('monte-carlo')>-1) s='clay';
+    if(t.indexOf('rome')>-1||t.indexOf('roma')>-1||t.indexOf('internazionali')>-1) s='clay';
+    if(t.indexOf('queen')>-1||t.indexOf('halle')>-1) s='grass';
+    if(t.indexOf('cincinnati')>-1||t.indexOf('shanghai')>-1||t.indexOf('paris masters')>-1) s='hard';
     var cls='sc-surface-hard',lbl='Dur';
     if(/clay|terre|battue/.test(s)){cls='sc-surface-clay';lbl='Terre';}
     else if(/grass|gazon/.test(s)){cls='sc-surface-grass';lbl='Gazon';}
@@ -25282,7 +25298,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     return '<div class="sc-card" data-match-id="'+esc(m.id)+'">'
       +'<div class="sc-card-head">'
       +'<div class="tour">'+svgIcon('trophy',14)+'<span class="name">'+esc(m.tournament||'')+'</span></div>'
-      +surfaceBadge(m.surface)
+      +surfaceBadge(m.surface, m.tournament)
       +'</div>'
       +'<div class="sc-card-body">'
       // meta
@@ -25508,7 +25524,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     });
     if(!best)return '';
     var t=tier(best.edge,best.ev,best.kelly);
-    return '<div class="sc-toppick"><div class="head"><span style="color:var(--green)">'+svgIcon('zap',13)+' Top pick</span>'+signalBadge(t)+surfaceBadge(best.m.surface)+'</div>'
+    return '<div class="sc-toppick"><div class="head"><span style="color:var(--green)">'+svgIcon('zap',13)+' Top pick</span>'+signalBadge(t)+surfaceBadge(best.m.surface, best.m.tournament)+'</div>'
       +'<h3>'+esc(best.label)+'</h3><div class="meta">'+esc(shortName(best.m.player1.name)+' vs '+shortName(best.m.player2.name))+' · '+esc(best.m.tournament)+'</div>'
       +'<div class="kpis"><span class="kpi">Cote <b>'+best.odds.toFixed(2)+'</b></span><span class="kpi g">Edge <b>'+(best.edge*100).toFixed(1)+'%</b></span><span class="kpi g">EV <b>'+(best.ev*100).toFixed(1)+'%</b></span><span class="kpi a">Kelly <b>'+(best.kelly*100).toFixed(1)+'%</b></span></div></div>';
   }
