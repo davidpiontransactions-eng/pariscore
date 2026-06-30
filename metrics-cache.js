@@ -14,6 +14,19 @@ function makeKey(playerName, tour, surface, metricName) {
   return `${playerName}|${tour}|${surface}|${metricName}`;
 }
 
+// Sanitize récursif NaN/Infinity -> null avant JSON serialization (sinon JSON.stringify
+// produit des tokens invalides NaN/Infinity non-JSON, et SQLite refuse/stockerait du JSON corrompu).
+// Doit être définie AVANT la classe MetricsCache car utilisée par ses méthodes set/getBulk.
+function _sanitizeForJSON(obj) {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj === 'number') return Number.isFinite(obj) ? obj : null;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(_sanitizeForJSON);
+  var out = {};
+  for (var k of Object.keys(obj)) { var v = _sanitizeForJSON(obj[k]); if (v !== undefined) out[k] = v; }
+  return out;
+}
+
 class MetricsCache {
   constructor(dbPath) {
     this.dbPath = dbPath || DEFAULT_DB_PATH;
