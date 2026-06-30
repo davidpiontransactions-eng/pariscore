@@ -25985,7 +25985,9 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       if (!allLive.length) {
         pEl.innerHTML = emptyState('Aucun match en direct pour le moment.');
       } else {
-        pEl.innerHTML='<div class="sc-grid sc-grid-2">'+allLive.map(liveCardCompact).join('')+'</div>';
+        // liveCardCompact est privé au 1er IIFE (Scope) → on passe par l'API publique
+        // renderLiveGrid qui l'utilise en interne (fix ReferenceError cross-IIFE).
+        root.Scope.renderLiveGrid(pEl, allLive);
       }
     } else if (tab === 'valuebets') {
       var _vbMatches = filterByTournament(_state.matches);
