@@ -2698,6 +2698,29 @@ function _normalizeTennisDR(drRaw) {
   };
 }
 
+// bd DR-feature — Moyenne DR par set depuis la série temporelle (regroupe les samples par setIdx).
+// series: { p1: [], p2: [], ts: [], sets: [] } → { [setIdx]: { dr_p1, dr_p2, samples } } ou null.
+function _drSetAverages(series) {
+  if (!series || !Array.isArray(series.p1) || !series.p1.length) return null;
+  const bySet = {}; // setIdx → { p1Sum, p2Sum, count }
+  for (let i = 0; i < series.sets.length; i++) {
+    const s = series.sets[i];
+    if (!bySet[s]) bySet[s] = { p1Sum: 0, p2Sum: 0, count: 0 };
+    bySet[s].p1Sum += series.p1[i];
+    bySet[s].p2Sum += series.p2[i];
+    bySet[s].count++;
+  }
+  const result = {};
+  for (const s of Object.keys(bySet)) {
+    result[s] = {
+      dr_p1: +(bySet[s].p1Sum / bySet[s].count).toFixed(3),
+      dr_p2: +(bySet[s].p2Sum / bySet[s].count).toFixed(3),
+      samples: bySet[s].count,
+    };
+  }
+  return result;
+}
+
 // ─── National Team Elo Ratings — eloratings.net ──────────────────────────────
 // Cache 24h. Scope : équipes nationales (World Cup, Nations League, Euro, etc.)
 const _NATELO_TTL = 24 * 3600 * 1000;
@@ -21204,6 +21227,9 @@ async function handleAPI(req, res, pathname, query) {
           (Array.isArray(m.sets) && m.sets.length) ? m.sets.length
             : (Number.isFinite(m.current_set_index) ? m.current_set_index + 1 : null)
         ) : null,
+        // bd DR-feature — série DR (courbe d'évolution) + moyennes DR par set
+        dr_series: m.dr_series || null,
+        dr_per_set: m.dr_per_set || null,
         notes: m.notes,
         start_time: m.start_time,
         live_stats: m._bsd_stats || null,
@@ -23488,6 +23514,9 @@ async function fetchAiscoreServingOnDemand(liveData) {
 //     updated_at
 //   }
 const _tennisPBPPrev = new Map(); // matchId → { last_point_idx, ts }
+// bd DR-feature — série temporelle DR par match (snapshot par poll) pour courbe d'évolution.
+// Chaque entrée : { p1: [], p2: [], ts: [], sets: [] } (cap 200 samples ≈ 3h @ 1/min).
+const _tennisDRSeries = new Map(); // matchId → { p1: [], p2: [], ts: [], sets: [] }
 const _tennisPBPSSEDebounce = new Map(); // matchId → last broadcast ts
 const PBP_SSE_DEBOUNCE_MS = Math.max(5000, parseInt(process.env.PBP_SSE_DEBOUNCE_MS || '30000', 10));
 
@@ -24790,8 +24819,48 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
       try {
         const drRaw = computeTennisDRFromMatch(data[i]);
         if (drRaw) data[i].dr_exact = _normalizeTennisDR(drRaw);
+        // bd DR-feature — accumulate DR snapshots par poll pour courbe d'évolution (reuse drRaw).
+        try {
+          if (data[i] && data[i].is_live && drRaw && drRaw.dr != null && Number.isFinite(drRaw.dr) && drRaw.dr > 0) {
+            if (!_tennisDRSeries.has(data[i].id)) _tennisDRSeries.set(data[i].id, { p1: [], p2: [], ts: [], sets: [] });
+            const series = _tennisDRSeries.get(data[i].id);
+            // DR = p1/p2 ratio. p1 DR = dr, p2 DR = 1/dr (inverse). Cap [0.3, 3.0].
+            const p1dr = Math.max(0.3, Math.min(3.0, drRaw.dr));
+            const p2dr = Math.max(0.3, Math.min(3.0, 1 / drRaw.dr));
+            series.p1.push(p1dr);
+            series.p2.push(p2dr);
+            series.ts.push(Date.now());
+            // Index du set au moment du sample
+            const curSetIdx = (Number.isFinite(data[i].current_set_index) ? data[i].current_set_index
+              : (Array.isArray(data[i].sets) ? data[i].sets.length - 1 : 0));
+            series.sets.push(curSetIdx >= 0 ? curSetIdx : 0);
+            // Cap mémoire : 200 derniers samples (~3h @ 1/min)
+            if (series.p1.length > 200) { series.p1.shift(); series.p2.shift(); series.ts.shift(); series.sets.shift(); }
+          }
+        } catch (_) { /* non bloquant */ }
       } catch (_) { /* skip si les stats manquent */ }
     }
+    // bd DR-feature — Purge série DR pour matchs terminés (évite croissance mémoire)
+    // + attache dr_series / dr_per_set au match pour propagation vers le payload live.
+    try {
+      for (const m of data) {
+        if (!m || !m.id) continue;
+        if (m.is_live === false && m.status === 'finished') { _tennisDRSeries.delete(m.id); continue; }
+        try {
+          const drSeriesData = _tennisDRSeries.get(m.id);
+          if (drSeriesData && drSeriesData.p1.length >= 2) {
+            m.dr_series = {
+              p1: drSeriesData.p1,
+              p2: drSeriesData.p2,
+              ts: drSeriesData.ts,
+              sets: drSeriesData.sets,
+            };
+            const setAvg = _drSetAverages(drSeriesData);
+            if (setAvg) m.dr_per_set = setAvg;
+          }
+        } catch (_) { /* non bloquant */ }
+      }
+    } catch (_) { /* non bloquant */ }
     _tennisLiveCache = { ts: Date.now(), data };
     try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
     try { verifyPendingFootAlerts(); } catch (e) { console.warn('  [FootAlerts] verifyPending:', e.message); }

@@ -24798,6 +24798,14 @@ a:focus-visible,
 .sc-radar-p2{fill:var(--blue);fill-opacity:.14;stroke:var(--blue);stroke-width:1.6;stroke-dasharray:3 2}
 .sc-radar-axislbl{font-size:9px;fill:var(--text3);font-family:var(--font-mono);text-anchor:middle}
 .sc-radar-legend{display:flex;justify-content:center;gap:14px;margin-top:6px;font-size:11px;font-family:var(--font-mono)}
+/* bd DR-feature : courbe Dominance Ratio */
+.sc-dr{width:100%;margin-top:4px}
+.sc-dr svg{width:100%;height:auto;display:block}
+.sc-dr-legend{display:flex;justify-content:center;gap:16px;margin-top:4px;font-size:11px;font-family:var(--font-mono,monospace);color:var(--text3,#94a3b8)}
+.sc-dr-legend .lg{display:inline-flex;align-items:center;gap:4px}
+.sc-dr-legend .sw{display:inline-block;width:14px;height:3px;border-radius:2px}
+.sc-dr-setrow{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-size:11px;font-family:var(--font-mono,monospace);color:var(--text2,#cbd5e1)}
+.sc-dr-set{padding:2px 6px;border-radius:4px;background:var(--bg,#0b0e17);border:1px solid var(--border2,rgba(255,255,255,.05))}
 /* surface prob bars */
 .sc-surflist{display:flex;flex-direction:column;gap:8px}
 .sc-surfbar{height:6px;border-radius:var(--radius-pill);background:var(--bg3);overflow:hidden}
@@ -25051,6 +25059,29 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var mn=Math.min.apply(null,data),mx=Math.max.apply(null,data),range=mx-mn||1;
     var w=64,h=18,pts=data.map(function(v,i){var x=(i/(data.length-1))*w;var y=h-((v-mn)/range)*h;return x.toFixed(1)+','+y.toFixed(1);});
     return '<svg width="'+w+'" height="'+h+'" class="sc-spark"><polyline points="'+pts.join(' ')+'" fill="none" stroke="'+color+'" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+w+'" cy="'+pts[pts.length-1].split(',')[1]+'" r="1.8" fill="'+color+'"/></svg>';
+  }
+
+  /* ── Dominance Ratio evolution (dual-line, shared log scale) ──────── */
+  // bd DR-feature : courbe d'évolution du DR (ratio de dominance) p1 vs p2.
+  // Échelle log 0.3–3.0 (parité à 1.0 = ligne pointillée de référence).
+  function drChart(p1Series,p2Series){
+    if((!p1Series||p1Series.length<2)&&(!p2Series||p2Series.length<2))return '';
+    var w=240,h=70,pad=8,yMin=0.3,yMax=3.0;
+    function clampL(v,a,b){return Math.max(a,Math.min(b,v));}
+    // log scale : 0.3 et 3.0 équidistants de 1.0
+    function yMap(v){var t=(Math.log(v)-Math.log(yMin))/(Math.log(yMax)-Math.log(yMin));return (h-pad)-clampL(t,0,1)*(h-2*pad);}
+    function line(series,color,dashed){
+      if(!series||series.length<2)return '';
+      var pts=series.map(function(v,i){var x=pad+(i/(series.length-1))*(w-2*pad);return x.toFixed(1)+','+yMap(v).toFixed(1);}).join(' ');
+      return '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"'+(dashed?' stroke-dasharray="3 2"':'')+'/>';
+    }
+    var yPar=yMap(1.0);
+    var grid='<line x1="'+pad+'" y1="'+yPar+'" x2="'+(w-pad)+'" y2="'+yPar+'" stroke="var(--border2,#1e2a3d)" stroke-width="1" stroke-dasharray="2 3"/>';
+    var lbl='<text x="'+(pad+2)+'" y="'+(yPar-3)+'" font-size="9" fill="var(--text3,#94a3b8)" font-family="var(--font-mono,monospace)">1.0</text>';
+    return '<div class="sc-dr"><svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="xMidYMid meet">'+grid+lbl
+      +line(p1Series,'var(--green,#00e676)',false)
+      +line(p2Series,'var(--blue,#0077ff)',true)
+      +'</svg><div class="sc-dr-legend"><span class="lg"><span class="sw" style="background:var(--green,#00e676)"></span>P1 DR</span><span class="lg"><span class="sw" style="background:var(--blue,#0077ff)"></span>P2 DR</span></div></div>';
   }
 
   /* ── Jauge de probabilité semi-circulaire (SVG) ───────────────────── */
@@ -25307,12 +25338,33 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var score=dir==='p1'?conf:(dir==='p2'?-conf:0);
     var p1Pct=((score+100)/200)*100;
     var col=score>15?'var(--green)':(score<-15?'var(--blue)':'var(--amber)');
+    // bd DR-feature : courbe DR + DR moyen par set
+    var _drBlock='';
+    try{
+      if(m.dr_series&&(m.dr_series.p1||[]).length>=2){
+        _drBlock+='<div class="sc-seclbl" style="margin-top:8px">'+svgIcon('chart',12)+' Dominance Ratio (évolution)</div>';
+        _drBlock+=drChart(m.dr_series.p1,m.dr_series.p2);
+      }
+      if(m.dr_per_set){
+        var _setLabels=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
+        if(_setLabels.length){
+          _drBlock+='<div class="sc-seclbl" style="margin-top:6px">'+svgIcon('scale',12)+' DR moyen par set</div>';
+          _drBlock+='<div class="sc-dr-setrow">';
+          _setLabels.forEach(function(s){
+            var d=m.dr_per_set[s];
+            var leader=d.dr_p1>=d.dr_p2?'P1':'P2';
+            _drBlock+='<span class="sc-dr-set">Set '+(parseInt(s)+1)+' : <b style="color:'+(d.dr_p1>=d.dr_p2?'var(--green,#00e676)':'var(--blue,#0077ff)')+'">'+leader+' '+Math.max(d.dr_p1,d.dr_p2).toFixed(2)+'</b></span>';
+          });
+          _drBlock+='</div>';
+        }
+      }
+    }catch(e){}
     var liveBlock='<div style="margin-bottom:10px">'
       +'<div class="sc-seclbl">'+svgIcon('radio',12)+' Probabilité live (modèle Markov)</div>'
       +'<div class="sc-liveprob"><div class="p1" style="width:'+(liveProb*100)+'%">P1 '+(liveProb*100).toFixed(0)+'%</div><div class="p2" style="width:'+((1-liveProb)*100)+'%">P2 '+((1-liveProb)*100).toFixed(0)+'%</div></div>'
       +'<div class="sc-momentum" style="margin-top:8px"><div class="sc-momentum-head"><span>P2</span><span>+'+score+' P1 · flow '+num(mom.momentum_shift,2)+'</span><span>P1</span></div>'
       +'<div class="sc-momentum-track"><div class="sc-momentum-mid"></div><div class="sc-momentum-fill" style="left:'+Math.max(0,Math.min(50,p1Pct-50))+'%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div></div>'
-      +'</div>';
+      +_drBlock+'</div>';
     return card.replace('<div class="sc-card-body">','<div class="sc-card-body">'+liveBlock);
   }
 
