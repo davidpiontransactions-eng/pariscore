@@ -47126,7 +47126,10 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
         const ext = path.extname(filePath);
         const contentType = (typeof mime !== 'undefined' && mime[ext]) ? mime[ext] : 'application/octet-stream';
 
-        // Cache-Control : HTML + manifest/icône/SW → court + revalidation ; autres assets → immutable.
+        // Cache-Control : HTML + JS + SW → no-cache (revalidation systématique, jamais stale) ;
+        // autres assets statiques (icônes, fonts) → immutable 1 an.
+        // bd tennis-banner-fix : max-age=300 causait un cache HTTP navigateur obsolète de 5 min
+        // empêchant la propagation des mises à jour frontend (bandeau tennis invisible).
         const isHtml = ext === '.html' || ext === '';
         const base = path.basename(filePath).toLowerCase();
         const noLongCache = isHtml
@@ -47136,7 +47139,7 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
         const headers = {
             'Content-Type': contentType,
             'Cache-Control': noLongCache
-                ? 'public, max-age=300, must-revalidate'
+                ? 'no-cache'
                 : 'public, max-age=31536000, immutable',
             'Vary': 'Accept-Encoding',
             'X-Content-Type-Options': 'nosniff',
