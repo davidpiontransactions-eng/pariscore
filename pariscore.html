@@ -25295,8 +25295,21 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // Labels zones
     var lblTop = '<text x="' + (w - padR - 4) + '" y="' + (padT + 10) + '" text-anchor="end" font-size="8" fill="rgba(0,230,118,.35)" font-family="monospace">P1 dominate</text>';
     var lblBot = '<text x="' + (w - padR - 4) + '" y="' + (h - padB + 2) + '" text-anchor="end" font-size="8" fill="rgba(0,119,255,.35)" font-family="monospace">P2 dominate</text>';
+    // bd set-partition : lignes pointillées verticales tous les ~60 points (1 set ATP)
+    // ATP : set classique ~55-60 pts, set disputé ~70-75 pts. On prend 60 comme moyenne.
+    var SET_AVG_POINTS = 60;
+    var totalPointsOnChart = ((p1Series && p1Series.length) || 0) * 10; // chaque sample = 10 pts
+    var setDividers = '';
+    for (var setN = 1; setN * SET_AVG_POINTS <= totalPointsOnChart + SET_AVG_POINTS; setN++) {
+      var setX = padL + ((setN * SET_AVG_POINTS) / Math.max(totalPointsOnChart, SET_AVG_POINTS)) * plotW;
+      if (setX > padL && setX < w - padR) {
+        setDividers += '<line x1="' + setX.toFixed(1) + '" y1="' + padT + '" x2="' + setX.toFixed(1) + '" y2="' + (h - padB) + '" stroke="rgba(255,255,255,.12)" stroke-width="1" stroke-dasharray="3 5"/>';
+        setDividers += '<text x="' + (setX + 3).toFixed(1) + '" y="' + (padT + 9) + '" font-size="8" fill="rgba(255,255,255,.25)" font-family="monospace">S' + (setN + 1) + '</text>';
+      }
+    }
+    var set1Label = '<text x="' + (padL + 4) + '" y="' + (padT + 9) + '" font-size="8" fill="rgba(255,255,255,.25)" font-family="monospace">S1</text>';
     return '<div class="sc-dr"><svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="width:100%;height:auto;display:block">'
-      + zoneP1 + zoneP2 + grid + medLine + medLabel + lblTop + lblBot
+      + zoneP1 + zoneP2 + grid + set1Label + setDividers + medLine + medLabel + lblTop + lblBot
       + makeLine(p1Series, 'var(--green,#00e676)', false)
       + makeLine(p2Series, 'var(--blue,#3b9eff)', true)
       + '</svg>'
