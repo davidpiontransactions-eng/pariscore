@@ -25218,6 +25218,66 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     return '<span class="sc-surface '+cls+'"><span class="dot"></span>'+lbl+'</span>';
   }
 
+  /* ── Importance du tournoi (priorisation Prematch/Live) ───────────── */
+  // Heuristique par nom de tournoi : retourne un score 0..1 (plus haut = plus prestigieux).
+  // Hiérarchie ATP/WTA : Grand Slam > Masters/1000 > 500 > 250 > Challenger > ITF.
+  function tournamentTier(tournament, tour){
+    var t=String(tournament||'').toLowerCase();
+    var tg=String(tour||'').toLowerCase();
+    var both=t+' '+tg;
+    // Challenger (0.40) — testé tôt : "challenger" contient "halle", on doit le détecter avant
+    if(/\bchallenger\b/.test(both)) return 0.40;
+    // ITF / Futures (0.20)
+    if(/\bitf\b|\bfuture/.test(both)) return 0.20;
+    // Grand Slam (1.0)
+    if(/roland.?garros|wimbledon|us.?open|australian.?open|ausopen|grand.?slam/.test(both)) return 1.0;
+    // Masters 1000 / WTA 1000 (0.9)
+    if(/masters|indian.?wells|miami|monte.?carlo|cincinnati|shanghai|paris.?masters|canadian|toronto|montr[eé]al|madrid.?masters|internazionali|\brome\b|\b1000\b/.test(both)) return 0.90;
+    // ATP/WTA 500 (0.78) — \b pour éviter faux positifs ("halle" dans "challenger")
+    if(/barcelona|\bhalle\b|\bqueen\b|tokyo|beijing|basel|vienna|dubai|acapulco|\b500\b/.test(both)) return 0.78;
+    // ATP/WTA 250 (0.62) — la plupart des tournois standards du circuit principal
+    if(/\b250\b|\batp\b|\bwta\b/.test(both)) return 0.62;
+    // Fallback : tournoi non identifié
+    return 0.50;
+  }
+
+  /* ── Meilleur classement ATP/WTA du match ────────────────────────── */
+  // Retourne le rang (ATP/WTA) du joueur le mieux classé du match.
+  // Plus le rang est petit, meilleur est le classement (1 = n°1 mondial).
+  // Rang absent → 9999 (le match sera repoussé en fin de liste).
+  function bestRank(m){
+    var r1=num(m.player1&&m.player1.rank);
+    var r2=num(m.player2&&m.player2.rank);
+    if(!r1&&!r2) return 9999;
+    if(!r1) return r2;
+    if(!r2) return r1;
+    return Math.min(r1,r2);
+  }
+
+  /* ── Tri des matchs par importance (tournoi + classement) ────────── */
+  // Critères (ordre lexicographique) :
+  //  1. Importance du tournoi (décroissant : Grand Slam d'abord)
+  //  2. Meilleur rang ATP/WTA des 2 joueurs (croissant : top-10 d'abord)
+  //  3. Écart de classement entre les 2 joueurs (croissant : duels équilibrés d'abord)
+  function sortMatchesByImportance(matches){
+    return matches.slice().sort(function(a,b){
+      var ta=tournamentTier(a.tournament,a.tour);
+      var tb=tournamentTier(b.tournament,b.tour);
+      if(ta!==tb) return tb-ta;                 // 1. tournoi (décroissant)
+      var ra=bestRank(a), rb=bestRank(b);
+      if(ra!==rb) return ra-rb;                  // 2. meilleur rang (croissant)
+      var da=rankSpread(a), db=rankSpread(b);    // 3. écart (croissant = équilibré d'abord)
+      return da-db;
+    });
+  }
+  // Écart absolu entre les rangs des 2 joueurs (9999 si l'un manque).
+  function rankSpread(m){
+    var r1=num(m.player1&&m.player1.rank);
+    var r2=num(m.player2&&m.player2.rank);
+    if(!r1||!r2) return 9999;
+    return Math.abs(r1-r2);
+  }
+
   /* ── Form dots ────────────────────────────────────────────────────── */
   function formDots(form){
     // form = 0..100 index OU string 'WWLLW' OU array ['W','L',...]
@@ -25993,6 +26053,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // helpers exposés (utiles pour réutilisation dans Pariscore)
     p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
+    tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
     prematchCard:prematchCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     summaryRow:summaryRow,topPick:topPick,radar:radar,analyticsPanel:analyticsPanel,
@@ -26247,8 +26308,10 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     var pEl = document.getElementById('sc-panel-' + tab);
     if (!pEl) return;
     // Ne re-render que si la tab est active
-    var allPrematch = getPrematch();
-    var allLive = getLive();
+    // Tri par importance : tournoi prestigieux (Grand Slam > Masters > 500 > 250)
+    // puis meilleur classement ATP/WTA des joueurs, puis duel équilibré.
+    var allPrematch = root.Scope.sortMatchesByImportance(getPrematch());
+    var allLive = root.Scope.sortMatchesByImportance(getLive());
     if (tab === 'prematch') {
       if (!allPrematch.length) {
         pEl.innerHTML = emptyState(_state.loading ? 'Chargement des matchs…' : 'Aucun match à venir. Cliquez sur Rafraîchir.');
