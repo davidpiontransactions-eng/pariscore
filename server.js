@@ -23196,11 +23196,18 @@ function _normalizeBSDTennisMatch(m) {
       }))
     : [];
   const tn = m.tournament || {};
+  // bd tennis-banner-fix : résolveur nom tournoi multi-fallback (obj|string|null).
+  // Empêche tournament:'' (vide) qui faisait afficher "Match" dans le bandeau.
+  const _tnName = (tn && typeof tn === 'object' ? (tn.name || tn.short_name || tn.short || null) : null)
+    || (typeof m.tournament === 'string' ? m.tournament : null)
+    || (m.league && typeof m.league === 'object' ? (m.league.name || m.league.short_name) : (typeof m.league === 'string' ? m.league : null))
+    || (m.event_name && typeof m.event_name === 'string' ? m.event_name : null)
+    || tn && tn.name || '';
   return {
     id: `bsd_t_${m.id}`,
     tour: tn.circuit || '',
     discipline: tn.category || '',
-    tournament: tn.name || '',
+    tournament: _tnName,
     court: m.round_name || '',
     status: m.status || '',
     is_live: !!isLive,
@@ -24003,6 +24010,60 @@ function recordTennisServe(m) {
   return { games: recent, breaks_recent: breaks, run: { player: streakP, len: streakW }, trend, snapshots: hist.length };
 }
 
+// ── Momentum par jeu (strength-per-game series) ─────────────────────────────
+// Construit une série chronologique de "force du joueur" par jeu remporté,
+// dérivée de l'historique complet des snapshots _tennisServeHist (jusqu'à 14 jeux).
+// Pour chaque jeu gagné on assigne un score signé [-100, +100] :
+//   • Hold (serveur gagne son service)        : +45 (P1) / -45 (P2), bonus run
+//   • Break (returner gagne le service adverse): +90 (P1) / -90 (P2), car conquérant
+//   • Streak bonus : 3 jeux consécutifs → +15, 4+ → +25 (cappé 100)
+//   • EMA lissage α=0.4 sur point précédent (anticrage, spirale éviter)
+// Sortie : { games: [{ n, w, brk, v, run, set }], p1_series, p2_series, labels, last_run }
+// p1_series/p2_series sont les valeurs absolues 0-100 (force du joueur sur ce jeu),
+// prêtes pour graphe dual-courbe style "image 2".
+function _tennisMomentumSeries(matchId, m) {
+  const hist = _tennisServeHist.get(matchId);
+  if (!hist || hist.length < 2) return null;
+  const games = [];
+  for (let i = 1; i < hist.length; i++) {
+    const a = hist[i - 1], b = hist[i];
+    const d1 = b.g1 - a.g1, d2 = b.g2 - a.g2;
+    if (d1 + d2 !== 1) continue;
+    const winner = d1 === 1 ? 1 : 2;
+    const srv = a.serving;
+    const isBreak = srv != null && winner !== srv;
+    games.push({ w: winner, brk: isBreak, srv: srv || null, ts: b.ts });
+  }
+  if (games.length === 0) return null;
+  let streakP = null, streakW = 0;
+  let prevSigned = 0;
+  const out = [];
+  const setsArr = Array.isArray(m && m.sets) ? m.sets : [];
+  games.forEach((g, idx) => {
+    // streak calc jusqu'à ce jeu
+    if (streakP == null || streakP !== g.w) { streakP = g.w; streakW = 1; }
+    else { streakW++; }
+    const base = g.brk ? 90 : 45;
+    let runBonus = 0;
+    if (streakW >= 4) runBonus = 25;
+    else if (streakW >= 3) runBonus = 15;
+    else if (streakW >= 2) runBonus = 8;
+    let raw = (g.w === 1 ? 1 : -1) * (base + runBonus);
+    raw = Math.max(-100, Math.min(100, raw));
+    // EMA lissage α=0.4
+    const signed = Math.round(0.4 * raw + 0.6 * prevSigned);
+    prevSigned = signed;
+    // set number approximatif via setsArr (last set = set en cours)
+    const setNo = setsArr.length || 1;
+    out.push({ n: idx + 1, w: g.w, brk: !!g.brk, v: signed, run: streakW, set: setNo });
+  });
+  // p1_series = force P1 (0-100 depuis signed -100..+100), p2_series = inverse
+  const p1_series = out.map(o => Math.round((o.v + 100) / 2));
+  const p2_series = out.map(o => Math.round(((-o.v) + 100) / 2));
+  const labels = out.map(o => 'J' + o.n);
+  return { games: out, p1_series, p2_series, labels, count: out.length, last_run: { player: streakP, len: streakW } };
+}
+
 // ── bd 6xw — BREAK POINT PRESSURE INDEX (BPPI) ──────────────────────────────
 // Indicateur quant tennis live 0-100 par joueur mesurant pression sur set/match.
 // Composantes (pondérations) :
@@ -24423,7 +24484,12 @@ async function pollTennisLive() {
     // S3 : serve momentum par match live + purge des ids disparus.
     const _liveIds = new Set();
     for (const m of data) {
-      if (m && m.is_live) { _liveIds.add(m.id); try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; } }
+      if (m && m.is_live) {
+        _liveIds.add(m.id);
+        try { m.serve_momentum = recordTennisServe(m); } catch (_) { m.serve_momentum = null; }
+        // Force du joueur par jeu (série pour popup momentum chart)
+        try { m.momentum_series = _tennisMomentumSeries(m.id, m); } catch (_) { m.momentum_series = null; }
+      }
       // bd — K-Flow + SM Momentum tracker: feed point data per match
       if (m && m.is_live && tennisMomentumTracker) {
         try {
