@@ -25248,7 +25248,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // bd dr-pro : graphique dual-courbe DR P1 (vert) / P2 (bleu) avec médiane à 1.0
     // Échelle log (0.3-3.0), ligne médiane proéminente, grille, marqueurs, légende.
     if ((!p1Series || p1Series.length < 1) && (!p2Series || p2Series.length < 1)) return '';
-    var w = 280, h = 120, padL = 28, padR = 10, padT = 8, padB = 18;
+    var w = 380, h = 180, padL = 32, padR = 12, padT = 10, padB = 22;
     var plotW = w - padL - padR, plotH = h - padT - padB;
     var yMin = 0.3, yMax = 3.0;
     function clampL(v, a, b) { return Math.max(a, Math.min(b, v)); }
