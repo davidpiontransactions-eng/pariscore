@@ -129,7 +129,7 @@
 // v68 (2026-06-27) : FIX routing BSD — m.player1 est un objet {name:...} pas une string + fallback __tennisVBWarm() + clone 100% Top 10
 // v69 (2026-06-27) : Prematch = INLINE card (pas de modale) + clone structure Top 10 + toggle on/off
 // v70 (2026-06-27) : FIX CSS — 49 var() remplacés par hardcoded + !important sur backgrounds + hide empty insights
-const CACHE_VERSION = 'v74'; // feat(tennis): tri auto Prematch/Live par importance tournoi + classement ATP/WTA
+const CACHE_VERSION = 'v75'; // feat(tennis): favoris ★ persistants (localStorage) — priorité absolue dans le tri
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
