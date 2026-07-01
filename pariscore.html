@@ -24862,6 +24862,13 @@ a:focus-visible,
 .sc-lc-header{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text3,#94a3b8);gap:6px;flex-wrap:wrap}
 .sc-lc-round{font-size:10px;opacity:.8;display:inline-flex;align-items:center;gap:4px}
 .sc-lc-round .sc-surface{font-size:9px}
+/* Favori ★ — étoile cliquable sur les cartes tennis (prematch + live) */
+.sc-fav{background:none;border:none;cursor:pointer;padding:2px;color:var(--text3,#94a3b8);opacity:.45;transition:opacity .15s,transform .15s,color .15s;display:inline-flex;align-items:center;vertical-align:middle;line-height:0}
+.sc-fav:hover{opacity:1;transform:scale(1.18)}
+.sc-fav.on{color:#ffd24d;opacity:1;filter:drop-shadow(0 0 4px rgba(255,210,77,.55))}
+.sc-fav.on svg{fill:rgba(255,210,77,.9)}
+.sc-card-head .sc-fav{margin-left:auto}
+.sc-lc-header .sc-fav{margin-left:auto;flex:0 0 auto}
 .sc-lc-bet{padding:7px 10px;border-radius:6px;font-size:13px;font-weight:600;text-align:center}
 .sc-lc-bet.strong{background:linear-gradient(135deg,rgba(0,230,118,.22) 0%,rgba(0,230,118,.08) 100%);color:var(--green,#00e676);border:1px solid rgba(0,230,118,.4);box-shadow:0 0 16px rgba(0,230,118,.25),inset 0 1px 0 rgba(0,230,118,.2);text-shadow:0 0 8px rgba(0,230,118,.4)}
 .sc-lc-bet.moderate{background:linear-gradient(135deg,rgba(245,158,11,.2) 0%,rgba(245,158,11,.07) 100%);color:var(--amber,#f59f0b);border:1px solid rgba(245,158,11,.38);box-shadow:0 0 12px rgba(245,158,11,.18),inset 0 1px 0 rgba(245,158,11,.14);text-shadow:0 0 6px rgba(245,158,11,.3)}
@@ -25139,7 +25146,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
       chart:'<path d="M3 3v18h18M7 16V9M12 16V5M17 16v-4"/>',
       scale:'<path d="M12 3v18M5 7l-3 6h6zM19 7l-3 6h6zM5 7h14M8 21h8"/>',
-      target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>'
+      target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+      star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>'
     };
     return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(P[name]||'')+'</svg>';
   }
@@ -25261,6 +25269,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   //  3. Écart de classement entre les 2 joueurs (croissant : duels équilibrés d'abord)
   function sortMatchesByImportance(matches){
     return matches.slice().sort(function(a,b){
+      // 0. Favoris en premier (priorité absolue — devant même un Grand Slam)
+      var fa=isFav(a.id), fb=isFav(b.id);
+      if(fa&&!fb) return -1;
+      if(!fa&&fb) return 1;
       var ta=tournamentTier(a.tournament,a.tour);
       var tb=tournamentTier(b.tournament,b.tour);
       if(ta!==tb) return tb-ta;                 // 1. tournoi (décroissant)
@@ -25630,6 +25642,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-card-head">'
       +'<div class="tour">'+svgIcon('trophy',14)+'<span class="name">'+esc(m.tournament||'')+'</span></div>'
       +surfaceBadge(m.surface, m.tournament)
+      +favStar(m)
       +'</div>'
       +'<div class="sc-card-body">'
       // meta
@@ -25775,11 +25788,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
         +'</div>';
     }
 
-    var html='<div class="sc-livecard">';
+    var html='<div class="sc-livecard" data-match-id="'+esc(m.id)+'">';
 
-    // 1. Header ultra-compact (1 ligne) : tournoi + round + badge surface
+    // 1. Header ultra-compact (1 ligne) : tournoi + round + badge surface + favori ★
     html+='<div class="sc-lc-header"><span class="sc-lc-tour">'+svgIcon('trophy',11)+' '+esc((m.tournament||'').slice(0,22))+'</span>'
-      +'<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+' · '+surfaceBadge(m.surface,m.tournament)+'</span></div>';
+      +'<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+' · '+surfaceBadge(m.surface,m.tournament)+'</span>'+favStar(m)+'</div>';
 
     // 2. Score Zone (l'élément dominant — photos + noms + sets + games + serveur)
     html+='<div class="sc-lc-score">';
@@ -26048,6 +26061,29 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     _vbHost.innerHTML=html;
   }
 
+  /* ── Favoris (★) — persistance localStorage ──────────────────────── */
+  // Clé localStorage (convention projet : ps_*).
+  var _FAV_KEY='ps_tennis_favs';
+  // Set vivant des IDs favoris (chargé une fois au démarrage du module).
+  var _favIds=(function(){
+    try{ var raw=localStorage.getItem(_FAV_KEY); return raw?new Set(JSON.parse(raw)):new Set(); }catch(e){ return new Set(); }
+  })();
+  function isFav(id){ return _favIds.has(String(id)); }
+  // Callback de re-rendu enregistrée par le bridge TennisScope (init).
+  var _onFavToggle=null;
+  function toggleFav(id){
+    id=String(id);
+    if(_favIds.has(id)) _favIds.delete(id);
+    else _favIds.add(id);
+    try{ localStorage.setItem(_FAV_KEY, JSON.stringify(Array.from(_favIds))); }catch(e){}
+    if(_onFavToggle) _onFavToggle();
+  }
+  // Bouton étoile à insérer dans le header des cartes.
+  function favStar(m){
+    var on=isFav(m.id);
+    return '<button class="sc-fav'+(on?' on':'')+'" onclick="Scope.toggleFav(\''+esc(m.id)+'\')" title="Favori" aria-label="Basculer favori">'+svgIcon('star',14)+'</button>';
+  }
+
   /* ── Public API ───────────────────────────────────────────────────── */
   var Scope={
     // helpers exposés (utiles pour réutilisation dans Pariscore)
@@ -26080,6 +26116,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     _toggle:function(btn){var d=btn.nextElementSibling;var open=btn.classList.toggle('open');d.classList.toggle('open',open);var lbl=btn.querySelector('span.lbl')||btn.querySelector('span:not(.chev)');if(lbl){lbl.textContent=open?(btn.getAttribute('data-label-open')||"Masquer l'analyse"):(btn.getAttribute('data-label-closed')||lbl.textContent);}},
     _refilter:function(val){_vbOpts.filter=val;_rerenderVB();},
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
+    // favoris ★
+    isFav:isFav,
+    toggleFav:toggleFav,
+    setFavCallback:function(fn){_onFavToggle=fn;},
     _version:'1.0.0'
   };
 
@@ -26436,6 +26476,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   // ── API publique ──────────────────────────────────────────────────────
   root.TennisScope = {
     init: function () {
+      // Enregistrer la callback de re-rendu pour les favoris (★)
+      if (root.Scope && typeof root.Scope.setFavCallback === 'function') root.Scope.setFavCallback(renderActiveTab);
       // bd photos-fix : précharger la map des photos avant le 1er render
       try { if (typeof window._loadTennisPhotoMap === 'function') window._loadTennisPhotoMap(); } catch (e) {}
       // Premier fetch
