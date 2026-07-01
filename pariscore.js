@@ -29112,6 +29112,16 @@ function renderComparateur(d) {
         console.warn('SW register échec', e);
       });
     });
+    // bd sw-autoreload : quand un nouveau SW prend le contrôle (après skipWaiting),
+    // on recharge la page automatiquement pour que l'utilisateur voie la nouvelle version.
+    // Évite le piège du "je vois l'ancien design" après un déploiement.
+    var _swReloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (_swReloading) return;
+      _swReloading = true;
+      console.log('[SW] Nouveau contrôleur actif — rechargement automatique');
+      window.location.reload();
+    });
   }
 
   /* ── PWA Install Prompt UI (bd ParisScorebis-e7l polish) ──
