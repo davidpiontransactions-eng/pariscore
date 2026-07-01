@@ -23898,7 +23898,33 @@ function detectAndBroadcastPBPUpdates(liveData) {
     const prev = _tennisPBPPrev.get(m.id) || null;
     const lastIdx = norm.last_point_idx;
     if (prev && prev.last_point_idx === lastIdx) continue;
+    
     _tennisPBPPrev.set(m.id, { last_point_idx: lastIdx, ts: now });
+    // bd dr-10pts : échantillonner le DR tous les 10 POINTS (pas par poll temporel)
+    // totalPoints = lastIdx + 1 (idx est 0-based). On sample à chaque multiple de 10.
+    try {
+      const totalPoints = (lastIdx || 0) + 1;
+      const prevForDr = _tennisPBPPrev.get(m.id) || {};
+      const nextThreshold = prevForDr.next_dr_sample_at || 10;
+      if (totalPoints >= nextThreshold) {
+        // Calculer le DR à ce moment précis (tous les 10 points)
+        const drSnap = computeTennisDRFromMatch(m);
+        if (drSnap && Number.isFinite(drSnap.dr) && drSnap.dr > 0) {
+          if (!_tennisDRSeries.has(m.id)) _tennisDRSeries.set(m.id, { p1: [], p2: [], ts: [], sets: [] });
+          const series = _tennisDRSeries.get(m.id);
+          const p1dr = Math.max(0.3, Math.min(3.0, drSnap.dr));
+          const p2dr = Math.max(0.3, Math.min(3.0, 1 / drSnap.dr));
+          series.p1.push(p1dr);
+          series.p2.push(p2dr);
+          series.ts.push(totalPoints); // axis = point count (pas timestamp !)
+          const curSetIdx = (Number.isFinite(m.current_set_index) ? m.current_set_index : (Array.isArray(m.sets) ? m.sets.length - 1 : 0));
+          series.sets.push(curSetIdx);
+          if (series.p1.length > 200) { series.p1.shift(); series.p2.shift(); series.ts.shift(); series.sets.shift(); }
+        }
+        // Prochain seuil = prochain multiple de 10
+        _tennisPBPPrev.get(m.id).next_dr_sample_at = Math.ceil(totalPoints / 10) * 10 + 10;
+      }
+    } catch (_) {}
     const lastBroadcast = _tennisPBPSSEDebounce.get(m.id) || 0;
     if (now - lastBroadcast < PBP_SSE_DEBOUNCE_MS) continue;
     _tennisPBPSSEDebounce.set(m.id, now);
