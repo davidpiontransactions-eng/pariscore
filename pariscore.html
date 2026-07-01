@@ -16016,8 +16016,11 @@ function psSetLang(v) {
     <div class="tn2-modal-card" role="dialog" aria-modal="true" style="max-width:640px;padding:0;overflow-y:auto;background:linear-gradient(180deg,#131722,#0b0e17);border:1px solid rgba(255,255,255,.08);box-shadow:0 8px 40px rgba(0,0,0,.6);">
       <button class="tn2-modal-x" onclick="closeTennisAnalysisModal()" aria-label="Fermer" style="top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:#94a3b8;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;z-index:3;position:absolute;">✕</button>
 
-      <!-- Header : tournoi + surface (bandeau uniforme .sc-banner injecté via JS) -->
-      <div id="tam-banner-slot"></div>
+      <!-- Header : tournoi + surface -->
+      <div class="tam-header">
+        <span class="tam-tournament" id="tam-tournament">—</span>
+        <span class="tam-surface-badge" id="tam-surface"></span>
+      </div>
 
       <!-- === H2H Widget Premium === -->
       <div id="tam-h2h-widget" style="display:none;margin:0 20px 14px;padding:10px 14px;background:#131722;border:1px solid rgba(255,255,255,.06);border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;color:#94a3b8;text-align:center;">
@@ -16514,11 +16517,10 @@ function psSetLang(v) {
       var serving = m.serving || 1;
       var matchId = escapeHtml(String(m.id || m.match_id || m.bsd_id || m.event_id || ''));
       html += '<div class="tn2-match-card" data-match-id="' + matchId + '" onclick="openTennisDetail(\'' + matchId + '\')" style="cursor:pointer;">';
-      // bd tennis-banner : bandeau uniforme sombre (refonte image 1).
-      html += (window.Scope && window.Scope.matchBanner ? window.Scope.matchBanner({
-        tournament: tourneyName, surface: m.surface, round: m.round,
-        bestOf: (m.bestOf || m.best_of), isLive: !!m.is_live, compact: true
-      }) : '<div class="tn2-card-top"><span class="tn2-card-tournament">' + escapeHtml(tourneyName) + '</span>' + (m.is_live ? '<span class="tn2-card-live-badge">🔴 LIVE</span>' : '') + '</div>');
+      html += '<div class="tn2-card-top">';
+      html += '<span class="tn2-card-tournament">' + escapeHtml(tourneyName) + '</span>';
+      if (m.is_live) html += '<span class="tn2-card-live-badge">🔴 LIVE</span>';
+      html += '</div>';
       html += '<div class="tn2-card-body">';
       html += '<div class="tn2-card-player">';
       var p1PhotoUrl = window.getPlayerPhotoUrl(p1);
@@ -16588,11 +16590,10 @@ function psSetLang(v) {
       var surface = m.surface || '';
       var betRecs = m.bet_recommendations || m.recs || [];
       html += '<div class="tn2-match-card" style="border-left:4px solid ' + borderColor + ';">';
-      // bd tennis-banner : bandeau uniforme — reason dans le slot titre, score composite à droite.
-      html += (window.Scope && window.Scope.matchBanner ? window.Scope.matchBanner({
-        tournament: reasonLabel, surface: surface, reason: reasonLabel,
-        score: score, compact: true
-      }) : '<div class="tn2-card-top"><span class="tn2-card-tournament">' + escapeHtml(reasonLabel) + '</span><span class="tn2-card-live-badge" style="background:' + borderColor + ';">Score ' + score + '</span></div>');
+      html += '<div class="tn2-card-top">';
+      html += '<span class="tn2-card-tournament">' + escapeHtml(reasonLabel) + '</span>';
+      html += '<span class="tn2-card-live-badge" style="background:' + borderColor + ';">Score ' + score + '</span>';
+      html += '</div>';
       html += '<div class="tn2-card-body">';
       html += '<div class="tn2-card-player"><div class="tn2-player-info"><span class="tn2-player-name">' + escapeHtml(p1Name) + '</span></div></div>';
       html += '<div class="tn2-card-score"><div class="tn2-sets">VS</div></div>';
@@ -24710,65 +24711,7 @@ a:focus-visible,
 .sc-momentum-mid{position:absolute;top:-2px;bottom:-2px;left:50%;width:1px;background:var(--border2)}
 /* ── Carte prematch enrichie ────────────────────────────────────────── */
 .sc-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--card-shadow);overflow:hidden;transition:box-shadow .2s,transform .2s}
-/* .sc-card-head : en-tête simple réservé aux sous-cartes (scout, h2h, etc.) */
 .sc-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg3)}
-/* bd tennis-banner : bandeau premium sombre cinétique (refonte image 1).
-   Dégradé charbon + liseré surface en haut + typo broadcast. Classe dédiée
-   pour ne pas impacter les sous-cartes qui utilisent .sc-card-head. */
-.sc-banner{position:relative;display:flex;flex-direction:column;gap:2px;padding:14px 16px 12px;border-bottom:1px solid var(--border);
-  background:linear-gradient(135deg,#0d1117 0%,#161d2e 55%,#1a2230 100%);
-  overflow:hidden}
-.sc-banner::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,#374151)}
-.sc-banner[data-surface="clay"]::before{background:linear-gradient(90deg,#fb923c,#f59e0b)}
-.sc-banner[data-surface="grass"]::before{background:linear-gradient(90deg,#4ade80,#22c55e)}
-.sc-banner[data-surface="hard"]::before{background:linear-gradient(90deg,#0077ff,#38bdf8)}
-.sc-banner[data-surface="indoor"]::before{background:linear-gradient(90deg,#94a3b8,#64748b)}
-.sc-banner-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
-/* Zone gauche : logo + nom tournoi */
-.sc-banner-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
-/* Zone centre : round + Bo */
-.sc-banner-center{display:flex;align-items:center;gap:6px;flex:0 0 auto;text-align:center}
-.sc-banner-center .sc-mr{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border2);padding:2px 8px;border-radius:var(--radius-sm)}
-.sc-banner-center .sc-mb{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg,rgba(0,119,255,.1));border:1px solid rgba(0,119,255,.3);padding:2px 8px;border-radius:var(--radius-sm)}
-.sc-banner-center .sc-msep{color:var(--text3);opacity:.4;font-size:10px}
-/* Zone droite : date/heure + surface + badge live */
-.sc-banner-right{display:flex;align-items:center;gap:8px;flex:0 0 auto;justify-content:flex-end}
-.sc-banner-main{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.sc-tour-logo{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0}
-.sc-tour-title{min-width:0}
-.sc-tour-name{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text);line-height:1.15;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sc-tour-sub{font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sc-tour-sub .sep{opacity:.5}
-.sc-tour-time{font-family:var(--font-mono);font-size:10px;color:var(--text2);text-align:right;flex-shrink:0;line-height:1.4}
-.sc-tour-time .d{display:block;color:var(--text3);font-size:9px}
-/* score composite slot (tn2 top cards, live) */
-.sc-tour-score{font-family:var(--font-mono);font-size:11px;color:var(--text2);text-align:right;flex-shrink:0;line-height:1.4}
-.sc-tour-score .num{color:var(--text);font-weight:700;font-size:14px}
-/* badge LIVE rouge dans le bandeau */
-.sc-live-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-pill);font-size:9px;font-weight:800;font-family:var(--font-mono);letter-spacing:.05em;color:#fff;background:linear-gradient(135deg,#ef4444,#dc2626);border:1px solid rgba(239,68,68,.5);box-shadow:0 0 10px rgba(239,68,68,.35);animation:sc-live-pulse 2s ease-in-out infinite;flex-shrink:0}
-@keyframes sc-live-pulse{0%,100%{opacity:1}50%{opacity:.7}}
-/* variante compacte du bandeau pour cartes étroites (live, tn2) */
-.sc-banner--compact{padding:8px 10px}
-.sc-banner--compact .sc-tour-logo{width:24px;height:24px;border-radius:6px}
-.sc-banner--compact .sc-tour-name{font-size:12px}
-.sc-banner--compact .sc-tour-sub{font-size:9px;gap:4px;margin-top:1px}
-.sc-banner--compact .sc-tour-time{font-size:9px}
-.sc-banner--compact .sc-tour-time .d{font-size:8px}
-.sc-banner--compact .sc-tour-score .num{font-size:12px}
-.sc-banner--compact .sc-surface{font-size:9px;padding:1px 6px}
-.sc-banner--compact .sc-banner-center{gap:4px}
-.sc-banner--compact .sc-banner-center .sc-mr,
-.sc-banner--compact .sc-banner-center .sc-mb{font-size:9px;padding:1px 5px}
-.sc-banner--compact .sc-banner-right{gap:5px}
-/* responsive : le bandeau passe en colonne sur petit mobile */
-@media (max-width:480px){
-  .sc-banner{padding:10px 12px}
-  .sc-banner-row{flex-wrap:wrap;gap:6px}
-  .sc-banner-left{flex:1 1 100%;order:1}
-  .sc-banner-center{flex:1 1 100%;order:2;justify-content:center}
-  .sc-banner-right{flex:1 1 100%;order:3;justify-content:center}
-  .sc-tour-name{font-size:13px}
-}
 .sc-flag{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:15px;padding:0 4px;border-radius:3px;background:var(--bg4);color:var(--text2);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;border:1px solid var(--border2)}
 .sc-card-body{padding:12px}
 /* surface badge */
@@ -24783,28 +24726,20 @@ a:focus-visible,
 .sc-badge-prize{color:var(--amber);border-color:rgba(245,158,11,.3);background:var(--amber-bg)}
 /* players grid: [P1 | gauge | P2] */
 .sc-players{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
-.sc-player{display:flex;flex-direction:column;gap:4px;min-width:0;align-items:center;text-align:center}
-.sc-player.right{align-items:center}
-.sc-player-photo{width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid var(--bg4,#161c2a);flex-shrink:0;background:var(--bg4,#131722);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.sc-player{display:flex;flex-direction:column;gap:3px;min-width:0;align-items:center;text-align:center}
+.sc-player-photo{width:38px;height:38px;border-radius:50%;overflow:hidden;border:1.5px solid var(--bg3,#1e2a3d);flex-shrink:0;background:var(--bg4,#131722);margin-bottom:2px}
 .sc-player-photo img{width:100%;height:100%;object-fit:cover;display:block}
-/* bd tennis-players : refonte image 3 — nom gros + 2 lignes compactes,
-   MÊME police (sans-serif Poppins) pour nom/rangs, style broadcast. */
-.sc-player-name{font-family:var(--font-head);font-size:15px;font-weight:700;color:var(--text);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;letter-spacing:.01em}
-.sc-player-ranks{display:flex;flex-direction:column;gap:1px;margin-top:1px}
-.sc-player-ranks.right{align-items:flex-end}
-.sc-rank-line{font-family:var(--font-head);font-size:11px;font-weight:600;color:var(--text2);line-height:1.3;white-space:nowrap}
-.sc-rank-line .num{color:var(--text);font-weight:700}
-.sc-rank-line .lbl{color:var(--text3);font-weight:500;font-size:10px;margin-left:2px}
-.sc-rank-line.elo .num{color:var(--green)}
-.sc-rank-line.elo .lbl{color:var(--text3)}
-.sc-player-form{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);margin-top:2px}
-.sc-player.right .sc-player-form{flex-direction:row-reverse}
-.sc-player.right .sc-player-ranks{align-items:flex-end}
+.sc-player.right .sc-player-top{flex-direction:row-reverse}
+.sc-player-top{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+.sc-player-top{flex-direction:row-reverse}
+.sc-player-name{font-family:var(--font-head);font-size:14px;font-weight:700;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+.sc-player-form{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.sc-player-form{flex-direction:row-reverse}
 .sc-dots{display:flex;gap:2px}
 .sc-dot{width:13px;height:13px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;font-family:var(--font-mono)}
 .sc-dot-w{background:rgba(0,230,118,.18);color:var(--green)}
 .sc-dot-l{background:rgba(239,68,68,.18);color:var(--red)}
-.sc-elo-spark{display:flex;align-items:center;gap:4px;margin-top:1px}
+.sc-elo-spark{display:flex;align-items:center;gap:4px}
 /* odds boxes */
 .sc-odds{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-top:12px}
 .sc-odd{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 4px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);text-align:center}
@@ -24940,10 +24875,6 @@ a:focus-visible,
 .sc-lc-player.p2 b,.sc-lc-player.p2 div{text-align:right}
 .sc-lc-player.serving b{color:var(--green,#00e676)}
 .sc-lc-player.p2.serving b{color:var(--blue,#0077ff)}
-/* bd tennis-players : ligne rang ATP + Elo Surface compacte sous le nom (live) */
-.sc-lc-rank{font-family:var(--font-head,sans-serif);font-size:9px;font-weight:600;color:var(--text3,#707e94);line-height:1.2;margin:0;letter-spacing:.01em}
-.sc-lc-rank .rk-lbl{color:var(--text3,#707e94);font-weight:500;font-size:8px;margin-left:1px}
-.sc-lc-rank .rk-elo{color:var(--green,#00e676)}
 .sc-lc-photo{width:44px;height:44px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--bg4,#161c2a);border:2px solid var(--border2,rgba(255,255,255,.12));box-shadow:0 2px 8px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06)}
 .sc-lc-initials{display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--text3,#94a3b8)}
 .sc-lc-mid{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px}
@@ -25262,14 +25193,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
 
   /* ── Surface badge ────────────────────────────────────────────────── */
-  // resolveSurface : retourne la clé surface normalisée ('clay'|'grass'|'hard'|'indoor')
-  // en appliquant les overrides par nom de tournoi. Réutilisée par le badge ET le bandeau.
-  function resolveSurface(surf, tournamentName){
+  function surfaceBadge(surf, tournamentName){
     var s=String(surf||'').toLowerCase();
     var t=String(tournamentName||'').toLowerCase();
     // Override de sécurité ABSOLU par nom de tournoi : l'API renvoie parfois une surface
     // manquante/erronée (ex: Wimbledon affiché 'Dur'). On force la surface connue des
     // tournois majeurs quelle que soit la valeur reçue.
+    // Source de vérité : la surface officielle du tournoi (invariable d'année en année).
     if(t.indexOf('wimbledon')>-1) s='grass';
     if(t.indexOf('roland garros')>-1||t.indexOf('roland-garros')>-1) s='clay';
     if(t.indexOf('us open')>-1||t.indexOf('usopen')>-1) s='hard';
@@ -25281,62 +25211,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     if(t.indexOf('rome')>-1||t.indexOf('roma')>-1||t.indexOf('internazionali')>-1) s='clay';
     if(t.indexOf('queen')>-1||t.indexOf('halle')>-1) s='grass';
     if(t.indexOf('cincinnati')>-1||t.indexOf('shanghai')>-1||t.indexOf('paris masters')>-1) s='hard';
-    if(/clay|terre|battue/.test(s)) return 'clay';
-    if(/grass|gazon/.test(s)) return 'grass';
-    if(/indoor|salle/.test(s)) return 'indoor';
-    return 'hard';
-  }
-  function surfaceBadge(surf, tournamentName){
-    var key=resolveSurface(surf, tournamentName);
-    var cls='sc-surface-'+key, lbl={clay:'Terre',grass:'Gazon',hard:'Dur',indoor:'Intérieur'}[key];
+    var cls='sc-surface-hard',lbl='Dur';
+    if(/clay|terre|battue/.test(s)){cls='sc-surface-clay';lbl='Terre';}
+    else if(/grass|gazon/.test(s)){cls='sc-surface-grass';lbl='Gazon';}
+    else if(/indoor|salle/.test(s)){cls='sc-surface-indoor';lbl='Intérieur';}
     return '<span class="sc-surface '+cls+'"><span class="dot"></span>'+lbl+'</span>';
-  }
-
-  /* ── Bandeau match uniforme (refonte image 1) ─────────────────────── */
-  // matchBanner(o) : génère le HTML du bandeau premium sombre .sc-banner.
-  //  o = { tournament, surface, round, city, bestOf, prizePool, tour,
-  //        startTime|time, isLive, score, reason, compact }
-  // Structure 3 zones : GAUCHE (logo+nom tournoi) · CENTRE (round+Bo) · DROITE (date/heure+surface).
-  // Aucun nom de joueur dans le bandeau (géré dans le corps de la carte).
-  function matchBanner(o){
-    o=o||{};
-    var surfKey=resolveSurface(o.surface, o.tournament);
-    var compact=o.compact?' sc-banner--compact':'';
-    var st=new Date(o.startTime||o.time||0);
-    var hasTime=!isNaN(st.getTime()) && (o.startTime||o.time);
-    var timeStr=hasTime?st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
-    var dateStr=hasTime?st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
-    // ── ZONE GAUCHE : logo + nom tournoi (fallback 'Tournoi', jamais de joueurs) ──
-    var title=esc(o.tournament||o.reason||'Tournoi');
-    var left='<div class="sc-banner-left">'
-      +'<div class="sc-tour-logo">'+svgIcon('trophy',compact?15:18)+'</div>'
-      +'<div class="sc-tour-name">'+title+'</div>'
-      +'</div>';
-    // ── ZONE CENTRE : round + format (Bo3/Bo5) ──
-    var centerBits=[];
-    if(o.round) centerBits.push('<span class="sc-mr">'+esc(o.round)+'</span>');
-    if(o.bestOf) centerBits.push('<span class="sc-mb">Bo'+esc(o.bestOf)+'</span>');
-    var center='<div class="sc-banner-center">'+centerBits.join('<span class="sc-msep">·</span>')+'</div>';
-    // ── ZONE DROITE : score OU (date/heure) + surface + badge LIVE ──
-    var liveBadge=o.isLive?'<span class="sc-live-pill">● LIVE</span>':'';
-    var timeHtml='';
-    if(o.score!=null&&o.score!==''){
-      timeHtml='<div class="sc-tour-score"><span class="num">'+esc(o.score)+'</span></div>';
-    } else if(timeStr){
-      timeHtml='<div class="sc-tour-time"><span>'+timeStr+'</span>'+(dateStr?'<span class="d">'+dateStr+'</span>':'')+'</div>';
-    }
-    var right='<div class="sc-banner-right">'
-      +timeHtml
-      +liveBadge
-      +surfaceBadge(o.surface, o.tournament)
-      +'</div>';
-    return '<div class="sc-banner'+compact+'" data-surface="'+surfKey+'">'
-      +'<div class="sc-banner-row">'
-      +left
-      +center
-      +right
-      +'</div>'
-      +'</div>';
   }
 
   /* ── Form dots ────────────────────────────────────────────────────── */
@@ -25680,24 +25559,32 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     }
     var topTier=tier(topVB.edge,topVB.ev,topVB.kelly);
     var isLive=!!m._isLive;
+    var st=new Date(m.start_time||m.commence_time||Date.now());
+    var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    var dateStr=st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
 
     var eloTrend1=p1.eloTrend||[p1.elo_surface||2000];
     var eloTrend2=p2.eloTrend||[p2.elo_surface||2000];
 
     return '<div class="sc-card" data-match-id="'+esc(m.id)+'">'
-      // bd tennis-banner : bandeau premium sombre uniforme (refonte image 1).
-      // Aucun nom de joueur ici — géré dans le corps de la carte. Fallback 'Tournoi'.
-      +matchBanner({
-        tournament:m.tournament, surface:m.surface, round:m.round,
-        bestOf:(m.bestOf||3), prizePool:m.prizePool,
-        startTime:(m.start_time||m.commence_time), isLive:isLive
-      })
+      +'<div class="sc-card-head">'
+      +'<div class="tour">'+svgIcon('trophy',14)+'<span class="name">'+esc(m.tournament||'')+'</span></div>'
+      +surfaceBadge(m.surface, m.tournament)
+      +'</div>'
       +'<div class="sc-card-body">'
+      // meta
+      +'<div class="sc-meta">'
+      +'<span>'+svgIcon('pin',11)+' '+esc(m.city||'')+'</span><span class="sep">·</span>'
+      +'<span>'+svgIcon('clock',11)+' '+dateStr+' '+timeStr+'</span>'
+      +'<span class="sc-badge">'+esc(m.round||'')+'</span>'
+      +'<span class="sc-badge">Bo'+(m.bestOf||3)+'</span>'
+      +(m.prizePool?'<span class="sc-badge sc-badge-prize">'+esc(m.prizePool)+'</span>':'')
+      +'</div>'
       // players + gauge
       +'<div class="sc-players">'
-      +playerBlock(p1,'left','#00e676',p1p,eloTrend1,m.tour)
+      +playerBlock(p1,'left','#00e676',p1p,eloTrend1)
       +gauge(p1p,{size:130,live:isLive,p1n:shortName(p1.name),p2n:shortName(p2.name)})
-      +playerBlock(p2,'right','#0077ff',1-p1p,eloTrend2,m.tour)
+      +playerBlock(p2,'right','#0077ff',1-p1p,eloTrend2)
       +'</div>'
       // odds
       +'<div class="sc-odds">'
@@ -25720,30 +25607,19 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</div></div>';
   }
 
-  // bd tennis-players : refonte image 3 — nom gros + 2 lignes (rang ATP/WTA + Elo Surface),
-  // toutes en police Poppins (var(--font-head)), style broadcast épuré.
-  // align='left'|'right', color pour le sparkline, prob inutilisé ici, trend=serie elo,
-  // tour='atp'|'wta'|'' pour libeller le rang.
-  function playerBlock(p,align,color,prob,trend,tour){
+  function playerBlock(p,align,color,prob,trend){
     var cc=flagToCC(p.flag);
     // bd photos-fix : photo joueur via getPlayerPhotoUrl (BSD→ESPN→ui-avatars fallback)
     var _phUrl='';
     try{ _phUrl=(typeof window.getPlayerPhotoUrl==='function')?window.getPlayerPhotoUrl(p):''; }catch(e){}
     _phUrl=_phUrl?esc(_phUrl):'';
     var _phImg=_phUrl?('<img src="'+_phUrl+'" alt="" loading="lazy" onerror="this.onerror=null;var n=encodeURIComponent(\''+esc(String(p.name||'?')).replace(/'/g,"\\'")+'\');this.src=\'https://ui-avatars.com/api/?name=\'+n+\'&background=172132&color=fff&size=80\';">'):'';
-    var rankLbl = /wta/i.test(tour||'') ? 'WTA' : 'ATP';
-    var rankVal = (p.rank!=null && p.rank!=='') ? '#'+esc(p.rank) : '—';
-    var eloVal  = (p.elo_surface!=null && p.elo_surface!=='') ? esc(p.elo_surface) : '—';
-    var isRight = align==='right';
-    return '<div class="sc-player '+(isRight?'right':'')+'">'
+    return '<div class="sc-player '+(align==='right'?'right':'')+'">'
       +'<div class="sc-player-photo">'+_phImg+'</div>'
+      +'<div class="sc-player-top">'+(cc?'<span class="sc-flag">'+cc+'</span>':'')+'<span>#'+(p.rank||'—')+'</span></div>'
       +'<div class="sc-player-name">'+esc(p.name||'?')+'</div>'
-      +'<div class="sc-player-ranks'+(isRight?' right':'')+'">'
-      +'<div class="sc-rank-line"><span class="num">'+rankVal+'</span><span class="lbl">'+rankLbl+'</span>'+(cc?' <span class="sc-flag">'+cc+'</span>':'')+'</div>'
-      +'<div class="sc-rank-line elo"><span class="lbl">Elo Surf.</span> <span class="num">'+eloVal+'</span></div>'
-      +'</div>'
-      +'<div class="sc-player-form"><span>Forme <b>'+(p.form!=null?num(p.form):'—')+'</b></span>'+formDots(p.form)+'</div>'
-      +'<div class="sc-elo-spark">'+sparkline(trend,color)+'</div>'
+      +'<div class="sc-player-form">Forme <b>'+(p.form!=null?num(p.form):'—')+'</b>'+formDots(p.form)+'</div>'
+      +'<div class="sc-elo-spark">'+sparkline(trend,color)+'<small>Elo '+(p.elo_surface||'—')+'</small></div>'
       +'</div>';
   }
   function oddBox(lbl,odds,evv,hl){
@@ -25841,28 +25717,15 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     var html='<div class="sc-livecard">';
 
-    // 1. Bandeau tournoi uniforme (sombre cinétique, refonte image 1). Aucun joueur ici.
-    html+=matchBanner({
-      tournament:m.tournament, surface:m.surface, round:m.round,
-      bestOf:(m.bestOf||m.best_of), isLive:true, compact:true
-    });
+    // 1. Header ultra-compact (1 ligne) : tournoi + round + badge surface
+    html+='<div class="sc-lc-header"><span class="sc-lc-tour">'+svgIcon('trophy',11)+' '+esc((m.tournament||'').slice(0,22))+'</span>'
+      +'<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+' · '+surfaceBadge(m.surface,m.tournament)+'</span></div>';
 
-    // 2. Score Zone (l'élément dominant — photos + noms + rang/elo + sets + games + serveur)
-    // bd tennis-players : format image 3 uniformisé — nom + rang ATP + Elo Surface (compact).
-    var _p1=m.player1||{},_p2=m.player2||{};
-    var _rankLbl=/wta/i.test(m.tour||'')?'WTA':'ATP';
-    function _liveRankLine(p){
-      var r=(p.rank!=null&&p.rank!=='')?'#'+esc(p.rank):'';
-      var e=(p.elo_surface!=null&&p.elo_surface!=='')?'Elo '+esc(p.elo_surface):'';
-      var bits=[];
-      if(r) bits.push(r+' <span class="rk-lbl">'+_rankLbl+'</span>');
-      if(e) bits.push('<span class="rk-elo">'+e+'</span>');
-      return bits.length?'<small class="sc-lc-rank">'+bits.join(' · ')+'</small>':'';
-    }
+    // 2. Score Zone (l'élément dominant — photos + noms + sets + games + serveur)
     html+='<div class="sc-lc-score">';
-    html+='<div class="sc-lc-player'+(m.serving===1?' serving':'')+'">'+_phHtml(_ph1,_p1.name)+'<div><b>'+esc(p1n)+'</b>'+_liveRankLine(_p1)+'<span>'+s1+'</span></div></div>';
+    html+='<div class="sc-lc-player'+(m.serving===1?' serving':'')+'">'+_phHtml(_ph1,m.player1&&m.player1.name)+'<div><b>'+esc(p1n)+'</b><span>'+s1+'</span></div></div>';
     html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(m.serving?'<div class="sc-lc-srv">🎾 '+(m.serving===1?p1n:p2n)+'</div>':'')+'</div>';
-    html+='<div class="sc-lc-player p2'+(m.serving===2?' serving':'')+'">'+_phHtml(_ph2,_p2.name)+'<div><b>'+esc(p2n)+'</b>'+_liveRankLine(_p2)+'<span>'+s2+'</span></div></div>';
+    html+='<div class="sc-lc-player p2'+(m.serving===2?' serving':'')+'">'+_phHtml(_ph2,m.player2&&m.player2.name)+'<div><b>'+esc(p2n)+'</b><span>'+s2+'</span></div></div>';
     html+='</div>';
 
     // 3. ACTION ZONE — Value bet remonté IMMÉDIATEMENT sous le score (décision en 1 sec)
@@ -26131,7 +25994,6 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
-    resolveSurface:resolveSurface,matchBanner:matchBanner,
     prematchCard:prematchCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     summaryRow:summaryRow,topPick:topPick,radar:radar,analyticsPanel:analyticsPanel,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
