@@ -129,7 +129,7 @@
 // v68 (2026-06-27) : FIX routing BSD — m.player1 est un objet {name:...} pas une string + fallback __tennisVBWarm() + clone 100% Top 10
 // v69 (2026-06-27) : Prematch = INLINE card (pas de modale) + clone structure Top 10 + toggle on/off
 // v70 (2026-06-27) : FIX CSS — 49 var() remplacés par hardcoded + !important sur backgrounds + hide empty insights
-const CACHE_VERSION = 'v70';
+const CACHE_VERSION = 'v71'; // bd tennis-banner : bandeau 3 zones (logo+nom · round+Bo · date/heure+surface)
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
