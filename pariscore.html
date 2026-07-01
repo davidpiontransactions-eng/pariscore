@@ -25671,8 +25671,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     return '<div class="sc-card" data-match-id="'+esc(m.id)+'">'
       // bd tennis-banner : bandeau premium sombre uniforme (refonte image 1).
+      // Fallback : si pas de nom tournoi, on affiche "P1 vs P2" pour ne jamais avoir un bandeau vide.
       +matchBanner({
-        tournament:m.tournament, surface:m.surface, round:m.round,
+        tournament:(m.tournament||(shortName(p1.name)+' vs '+shortName(p2.name))), surface:m.surface, round:m.round,
         city:m.city, bestOf:(m.bestOf||3), prizePool:m.prizePool,
         startTime:(m.start_time||m.commence_time), isLive:isLive
       })
@@ -25826,8 +25827,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var html='<div class="sc-livecard">';
 
     // 1. Bandeau tournoi uniforme (sombre cinétique, refonte image 1).
+    // Fallback : si pas de nom tournoi, on affiche "P1 vs P2".
     html+=matchBanner({
-      tournament:m.tournament, surface:m.surface, round:m.round,
+      tournament:(m.tournament||(p1n+' vs '+p2n)), surface:m.surface, round:m.round,
       bestOf:(m.bestOf||m.best_of), isLive:true, compact:true
     });
 
