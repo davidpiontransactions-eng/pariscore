@@ -25805,13 +25805,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
         if(m.dr_exact.p1Serve!=null)_drDetail+='<div class="sc-stat-row"><span>Serve P1/P2</span><b>'+num(m.dr_exact.p1Serve)+' / '+num(m.dr_exact.p2Serve)+'</b></div>';
         if(m.dr_exact.p1Ret!=null)_drDetail+='<div class="sc-stat-row"><span>Return P1/P2</span><b>'+num(m.dr_exact.p1Ret)+' / '+num(m.dr_exact.p2Ret)+'</b></div>';
       }
-      // DR chart évolution (si assez de samples accumulés)
-      if(m.dr_series&&(m.dr_series.p1||[]).length>=2){
-        _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('chart',12)+' DR évolution ('+m.dr_series.p1.length+' points)</div>';
-        _drDetail+=drChart(m.dr_series.p1,m.dr_series.p2);
-      }else{
-        _drDetail+='<div class="sc-seclbl" style="margin-top:8px;opacity:.5;font-size:11px">Courbe DR en cours d\'accumulation (échantillonnage toutes les 30s)…</div>';
-      }
+      // DR chart : bouton qui ouvre un popup avec DR Set + DR Match
+      var _drCount = (m.dr_series && m.dr_series.p1) ? m.dr_series.p1.length : 0;
+      var _drMatchId = esc(m.id || '');
+      _drDetail+='<button class="sc-dr-popup-btn" onclick="openDRPopup(\'' + _drMatchId + '\')">' + svgIcon('chart',12) + ' DR évolution (' + _drCount + ' points) ▸</button>';
+      _drDetail+='<div id="dr-popup-data-' + _drMatchId + '" style="display:none">' + esc(JSON.stringify({series:m.dr_series||null, perSet:m.dr_per_set||null, exact:m.dr_exact||null})) + '</div>';
       if(m.dr_per_set){
         var _sl=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
         if(_sl.length){
@@ -26481,6 +26479,136 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
 })(typeof window !== 'undefined' ? window : this);
 
 </script>
+
+<!-- bd DR Popup : graphique DR Set + DR Match -->
+<div id="dr-popup-modal" class="tn2-modal" style="display:none;">
+  <div class="tn2-modal-bd" onclick="closeDRPopup()"></div>
+  <div class="tn2-modal-card" role="dialog" aria-modal="true" style="max-width:520px;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-family:var(--font-head,sans-serif);font-size:16px;font-weight:800;color:var(--text,#fff)">📊 Dominance Ratio</h3>
+      <a onclick="closeDRPopup()" style="cursor:pointer;color:var(--text3,#94a3b8);font-size:18px">✕</a>
+    </div>
+    <div id="dr-popup-content" style="min-height:200px"></div>
+  </div>
+</div>
+<script>
+function openDRPopup(matchId) {
+  try {
+    var dataEl = document.getElementById('dr-popup-data-' + matchId);
+    if (!dataEl) return;
+    var data = JSON.parse(dataEl.textContent || '{}');
+    var content = document.getElementById('dr-popup-content');
+    var html = '';
+
+    // Section 1 : DR Set courant
+    html += '<div style="margin-bottom:16px">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text,#fff);margin-bottom:8px">Set en cours</div>';
+    if (data.exact && data.exact.dr != null) {
+      var dr = data.exact.dr;
+      html += '<div style="display:flex;gap:12px;flex-wrap:wrap">';
+      html += '<div style="background:var(--bg3,#131722);padding:8px 14px;border-radius:8px;text-align:center">';
+      html += '<div style="font-size:10px;color:var(--text3,#94a3b8)">DR</div>';
+      html += '<div style="font-size:20px;font-weight:800;color:' + (dr>=1?'var(--green,#00e676)':'var(--blue,#0077ff)') + '">' + dr.toFixed(2) + '</div>';
+      html += '</div>';
+      if (data.exact.p1Serve != null) {
+        html += '<div style="background:var(--bg3,#131722);padding:8px 14px;border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--text3,#94a3b8)">Serve P1</div><div style="font-size:16px;font-weight:700;color:var(--text,#fff)">' + (data.exact.p1Serve||'—') + '</div></div>';
+        html += '<div style="background:var(--bg3,#131722);padding:8px 14px;border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--text3,#94a3b8)">Serve P2</div><div style="font-size:16px;font-weight:700;color:var(--text,#fff)">' + (data.exact.p2Serve||'—') + '</div></div>';
+      }
+      if (data.exact.p1Ret != null) {
+        html += '<div style="background:var(--bg3,#131722);padding:8px 14px;border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--text3,#94a3b8)">Ret P1</div><div style="font-size:16px;font-weight:700;color:var(--text,#fff)">' + (data.exact.p1Ret||'—') + '</div></div>';
+        html += '<div style="background:var(--bg3,#131722);padding:8px 14px;border-radius:8px;text-align:center"><div style="font-size:10px;color:var(--text3,#94a3b8)">Ret P2</div><div style="font-size:16px;font-weight:700;color:var(--text,#fff)">' + (data.exact.p2Ret||'—') + '</div></div>';
+      }
+      html += '</div>';
+    } else {
+      html += '<div style="color:var(--text3,#94a3b8);font-size:12px">Données DR set indisponibles</div>';
+    }
+    html += '</div>';
+
+    // Section 2 : DR Match évolution (graphique)
+    html += '<div style="margin-bottom:16px">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text,#fff);margin-bottom:8px">DR Match (évolution)</div>';
+    if (data.series && data.series.p1 && data.series.p1.length >= 1) {
+      // Appeler drChart depuis le Scope IIFE si accessible, sinon rendre inline
+      try {
+        html += window.Scope ? (function(){
+          // drChart est privé dans l'IIFE Scope → on recrée un chart minimal ici
+          return _drPopupChart(data.series.p1, data.series.p2);
+        })() : '<div style="color:var(--text3);font-size:12px">' + data.series.p1.length + ' échantillons</div>';
+      } catch(e) {
+        html += '<div style="color:var(--text3);font-size:12px">' + data.series.p1.length + ' échantillons DR accumulés</div>';
+      }
+    } else {
+      html += '<div style="color:var(--text3,#94a3b8);font-size:12px">En cours d\'accumulation (échantillonnage tous les 10 points)</div>';
+    }
+    html += '</div>';
+
+    // Section 3 : DR moyen par set
+    html += '<div>';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text,#fff);margin-bottom:8px">DR moyen par set</div>';
+    if (data.perSet) {
+      var sets = Object.keys(data.perSet).sort(function(a,b){return +a-+b;});
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      sets.forEach(function(s) {
+        var d = data.perSet[s];
+        var leader = d.dr_p1 >= d.dr_p2 ? 'P1' : 'P2';
+        var val = Math.max(d.dr_p1, d.dr_p2);
+        html += '<div style="background:var(--bg3,#131722);padding:8px 14px;border-radius:8px;text-align:center;min-width:80px">';
+        html += '<div style="font-size:10px;color:var(--text3,#94a3b8)">Set ' + (parseInt(s)+1) + '</div>';
+        html += '<div style="font-size:16px;font-weight:700;color:' + (d.dr_p1>=d.dr_p2?'var(--green,#00e676)':'var(--blue,#0077ff)') + '">' + leader + ' ' + val.toFixed(2) + '</div>';
+        html += '<div style="font-size:9px;color:var(--text3,#94a3b8)">' + (d.samples||0) + ' samples</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div style="color:var(--text3,#94a3b8);font-size:12px">Pas encore de données par set</div>';
+    }
+    html += '</div>';
+
+    content.innerHTML = html;
+    var modal = document.getElementById('dr-popup-modal');
+    if (modal) { modal.style.display = 'flex'; trapFocus(modal); }
+  } catch (e) { console.error('[DR Popup]', e); }
+}
+function closeDRPopup() {
+  var modal = document.getElementById('dr-popup-modal');
+  if (modal) modal.style.display = 'none';
+}
+// Mini chart DR pour le popup (inline, ne dépend pas de l'IIFE Scope)
+function _drPopupChart(p1, p2) {
+  if ((!p1 || p1.length < 1) && (!p2 || p2.length < 1)) return '<div style="color:var(--text3);font-size:12px">Pas assez de données</div>';
+  var w = 460, h = 160, padL = 32, padR = 12, padT = 10, padB = 22;
+  var plotW = w - padL - padR, plotH = h - padT - padB;
+  var yMin = 0.3, yMax = 3.0;
+  function ym(v) { v = Math.max(yMin, Math.min(yMax, v)); var t = (Math.log(v)-Math.log(yMin))/(Math.log(yMax)-Math.log(yMin)); return padT + plotH - t * plotH; }
+  function xm(i, n) { return padL + (n<=1 ? plotW/2 : (i/(n-1))*plotW); }
+  function line(s, color, dashed) {
+    if (!s || s.length < 1) return '';
+    var pts = s.map(function(v,i){return xm(i,s.length).toFixed(1)+','+ym(v).toFixed(1);}).join(' ');
+    var dots = s.map(function(v,i){var cx=xm(i,s.length).toFixed(1),cy=ym(v).toFixed(1);return '<circle cx="'+cx+'" cy="'+cy+'" r="2.5" fill="'+color+'" opacity="0.8"/><text x="'+cx+'" y="'+(parseFloat(cy)-5)+'" text-anchor="middle" font-size="8" fill="'+color+'" font-family="monospace">'+v.toFixed(2)+'</text>';}).join('');
+    return '<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round"'+(dashed?' stroke-dasharray="4 3"':'')+' opacity="0.9"/>'+dots;
+  }
+  // Médiane 1.0
+  var yMed = ym(1.0);
+  // Séparateurs de set (60 points)
+  var totalPts = ((p1&&p1.length)||0)*10;
+  var divs = '';
+  for (var sn=1; sn*60<=totalPts+60; sn++) {
+    var sx = padL + ((sn*60)/Math.max(totalPts,60))*plotW;
+    if (sx>padL && sx<w-padR) { divs += '<line x1="'+sx.toFixed(1)+'" y1="'+padT+'" x2="'+sx.toFixed(1)+'" y2="'+(h-padB)+'" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-dasharray="3 5"/>'; divs += '<text x="'+(sx+3).toFixed(1)+'" y="'+(padT+9)+'" font-size="7" fill="rgba(255,255,255,.2)" font-family="monospace">S'+(sn+1)+'</text>'; }
+  }
+  var s1lbl = '<text x="'+(padL+4)+'" y="'+(padT+9)+'" font-size="7" fill="rgba(255,255,255,.2)" font-family="monospace">S1</text>';
+  // Zones
+  var z1 = '<rect x="'+padL+'" y="'+padT+'" width="'+plotW+'" height="'+(yMed-padT)+'" fill="rgba(0,230,118,.03)"/>';
+  var z2 = '<rect x="'+padL+'" y="'+yMed+'" width="'+plotW+'" height="'+(padT+plotH-yMed)+'" fill="rgba(0,119,255,.03)"/>';
+  var grid = '';
+  [0.5,1.0,2.0].forEach(function(v){var gy=ym(v);grid+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(w-padR)+'" y2="'+gy+'" stroke="rgba(255,255,255,'+(v===1?'.12':'.05')+')" stroke-width="1"/>';grid+='<text x="'+(padL-4)+'" y="'+(gy+3)+'" text-anchor="end" font-size="8" fill="rgba(255,255,255,.3)" font-family="monospace">'+v.toFixed(1)+'</text>';});
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block">'+z1+z2+grid+s1lbl+divs+'<line x1="'+padL+'" y1="'+yMed+'" x2="'+(w-padR)+'" y2="'+yMed+'" stroke="rgba(255,255,255,.25)" stroke-width="1.2" stroke-dasharray="6 4"/>'+line(p1,'var(--green,#00e676)',false)+line(p2,'var(--blue,#3b9eff)',true)+'</svg><div style="display:flex;justify-content:center;gap:16px;margin-top:4px;font-size:11px;font-family:monospace;color:var(--text3,#94a3b8)"><span><span style="display:inline-block;width:14px;height:3px;background:var(--green,#00e676);border-radius:2px;vertical-align:middle"></span> P1 DR</span><span><span style="display:inline-block;width:14px;height:3px;background:var(--blue,#3b9eff);border-radius:2px;vertical-align:middle"></span> P2 DR</span><span style="opacity:.5">— 1.0 parité</span></div>';
+}
+</script>
+<style>
+.sc-dr-popup-btn{width:100%;padding:8px 12px;background:linear-gradient(135deg,var(--bg3,#131722) 0%,var(--bg2,#0e121e) 100%);border:1px solid var(--border2,rgba(255,255,255,.08));border-radius:8px;color:var(--text2,#cbd5e1);font-size:12px;font-family:var(--font-mono,monospace);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
+.sc-dr-popup-btn:hover{border-color:var(--green,#00e676);color:var(--green,#00e676);transform:translateY(-1px)}
+</style>
 </body>
 </html>
 
