@@ -24724,6 +24724,15 @@ a:focus-visible,
 .sc-banner[data-surface="hard"]::before{background:linear-gradient(90deg,#0077ff,#38bdf8)}
 .sc-banner[data-surface="indoor"]::before{background:linear-gradient(90deg,#94a3b8,#64748b)}
 .sc-banner-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%}
+/* Zone gauche : logo + nom tournoi */
+.sc-banner-left{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto}
+/* Zone centre : round + Bo */
+.sc-banner-center{display:flex;align-items:center;gap:6px;flex:0 0 auto;text-align:center}
+.sc-banner-center .sc-mr{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--text2);background:rgba(255,255,255,.04);border:1px solid var(--border2);padding:2px 8px;border-radius:var(--radius-sm)}
+.sc-banner-center .sc-mb{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg,rgba(0,119,255,.1));border:1px solid rgba(0,119,255,.3);padding:2px 8px;border-radius:var(--radius-sm)}
+.sc-banner-center .sc-msep{color:var(--text3);opacity:.4;font-size:10px}
+/* Zone droite : date/heure + surface + badge live */
+.sc-banner-right{display:flex;align-items:center;gap:8px;flex:0 0 auto;justify-content:flex-end}
 .sc-banner-main{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .sc-tour-logo{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text2);flex-shrink:0}
 .sc-tour-title{min-width:0}
@@ -24747,10 +24756,17 @@ a:focus-visible,
 .sc-banner--compact .sc-tour-time .d{font-size:8px}
 .sc-banner--compact .sc-tour-score .num{font-size:12px}
 .sc-banner--compact .sc-surface{font-size:9px;padding:1px 6px}
+.sc-banner--compact .sc-banner-center{gap:4px}
+.sc-banner--compact .sc-banner-center .sc-mr,
+.sc-banner--compact .sc-banner-center .sc-mb{font-size:9px;padding:1px 5px}
+.sc-banner--compact .sc-banner-right{gap:5px}
 /* responsive : le bandeau passe en colonne sur petit mobile */
 @media (max-width:480px){
   .sc-banner{padding:10px 12px}
   .sc-banner-row{flex-wrap:wrap;gap:6px}
+  .sc-banner-left{flex:1 1 100%;order:1}
+  .sc-banner-center{flex:1 1 100%;order:2;justify-content:center}
+  .sc-banner-right{flex:1 1 100%;order:3;justify-content:center}
   .sc-tour-name{font-size:13px}
 }
 .sc-flag{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:15px;padding:0 4px;border-radius:3px;background:var(--bg4);color:var(--text2);font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;border:1px solid var(--border2)}
@@ -25280,46 +25296,45 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   // matchBanner(o) : génère le HTML du bandeau premium sombre .sc-banner.
   //  o = { tournament, surface, round, city, bestOf, prizePool, tour,
   //        startTime|time, isLive, score, reason, compact }
-  // Tous les champs sont optionnels ; les slots vides sont omis.
-  // Utilisé partout (prematch, live, tn2, inline, dashboards détail).
+  // Structure 3 zones : GAUCHE (logo+nom tournoi) · CENTRE (round+Bo) · DROITE (date/heure+surface).
+  // Aucun nom de joueur dans le bandeau (géré dans le corps de la carte).
   function matchBanner(o){
     o=o||{};
     var surfKey=resolveSurface(o.surface, o.tournament);
     var compact=o.compact?' sc-banner--compact':'';
-    var st=new Date(o.startTime||o.time||Date.now());
-    var timeStr=isNaN(st.getTime())?'':st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    var dateStr=isNaN(st.getTime())?'':st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
-    // Titre : tournament par défaut, reason sinon (tn2 top cards)
-    var title=esc(o.tournament||o.reason||'Match');
-    // Sous-ligne : city · round · bestOf · prizePool
-    var sub='';
-    if(o.city) sub+='<span>'+svgIcon('pin',compact?9:10)+' '+esc(o.city)+'</span><span class="sep">·</span>';
-    if(o.round) sub+='<span>'+esc(o.round)+'</span><span class="sep">·</span>';
-    if(o.bestOf) sub+='<span>Bo'+esc(o.bestOf)+'</span><span class="sep">·</span>';
-    if(o.prizePool) sub+='<span>'+esc(o.prizePool)+'</span><span class="sep">·</span>';
-    // retire le dernier séparateur
-    sub=sub.replace(/<span class="sep">·<\/span>$/,'');
-    // Slot droit : score composite (si fourni) OU heure/date
-    var rightSlot='';
-    if(o.score!=null&&o.score!==''){
-      rightSlot='<div class="sc-tour-score"><span class="num">'+esc(o.score)+'</span></div>';
-    } else if(timeStr){
-      rightSlot='<div class="sc-tour-time"><span>'+timeStr+'</span>'+(dateStr?'<span class="d">'+dateStr+'</span>':'')+'</div>';
-    }
-    // Badge LIVE (si live)
-    var liveBadge=o.isLive?'<span class="sc-live-pill">● LIVE</span>':'';
-    return '<div class="sc-banner'+compact+'" data-surface="'+surfKey+'">'
-      +'<div class="sc-banner-row">'
-      +'<div class="sc-banner-main">'
+    var st=new Date(o.startTime||o.time||0);
+    var hasTime=!isNaN(st.getTime()) && (o.startTime||o.time);
+    var timeStr=hasTime?st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'';
+    var dateStr=hasTime?st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
+    // ── ZONE GAUCHE : logo + nom tournoi (fallback 'Tournoi', jamais de joueurs) ──
+    var title=esc(o.tournament||o.reason||'Tournoi');
+    var left='<div class="sc-banner-left">'
       +'<div class="sc-tour-logo">'+svgIcon('trophy',compact?15:18)+'</div>'
-      +'<div class="sc-tour-title">'
       +'<div class="sc-tour-name">'+title+'</div>'
-      +(sub?'<div class="sc-tour-sub">'+sub+'</div>':'')
-      +'</div>'
-      +'</div>'
-      +rightSlot
+      +'</div>';
+    // ── ZONE CENTRE : round + format (Bo3/Bo5) ──
+    var centerBits=[];
+    if(o.round) centerBits.push('<span class="sc-mr">'+esc(o.round)+'</span>');
+    if(o.bestOf) centerBits.push('<span class="sc-mb">Bo'+esc(o.bestOf)+'</span>');
+    var center='<div class="sc-banner-center">'+centerBits.join('<span class="sc-msep">·</span>')+'</div>';
+    // ── ZONE DROITE : score OU (date/heure) + surface + badge LIVE ──
+    var liveBadge=o.isLive?'<span class="sc-live-pill">● LIVE</span>':'';
+    var timeHtml='';
+    if(o.score!=null&&o.score!==''){
+      timeHtml='<div class="sc-tour-score"><span class="num">'+esc(o.score)+'</span></div>';
+    } else if(timeStr){
+      timeHtml='<div class="sc-tour-time"><span>'+timeStr+'</span>'+(dateStr?'<span class="d">'+dateStr+'</span>':'')+'</div>';
+    }
+    var right='<div class="sc-banner-right">'
+      +timeHtml
       +liveBadge
       +surfaceBadge(o.surface, o.tournament)
+      +'</div>';
+    return '<div class="sc-banner'+compact+'" data-surface="'+surfKey+'">'
+      +'<div class="sc-banner-row">'
+      +left
+      +center
+      +right
       +'</div>'
       +'</div>';
   }
@@ -25671,10 +25686,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     return '<div class="sc-card" data-match-id="'+esc(m.id)+'">'
       // bd tennis-banner : bandeau premium sombre uniforme (refonte image 1).
-      // Fallback : si pas de nom tournoi, on affiche "P1 vs P2" pour ne jamais avoir un bandeau vide.
+      // Aucun nom de joueur ici — géré dans le corps de la carte. Fallback 'Tournoi'.
       +matchBanner({
-        tournament:(m.tournament||(shortName(p1.name)+' vs '+shortName(p2.name))), surface:m.surface, round:m.round,
-        city:m.city, bestOf:(m.bestOf||3), prizePool:m.prizePool,
+        tournament:m.tournament, surface:m.surface, round:m.round,
+        bestOf:(m.bestOf||3), prizePool:m.prizePool,
         startTime:(m.start_time||m.commence_time), isLive:isLive
       })
       +'<div class="sc-card-body">'
@@ -25826,10 +25841,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     var html='<div class="sc-livecard">';
 
-    // 1. Bandeau tournoi uniforme (sombre cinétique, refonte image 1).
-    // Fallback : si pas de nom tournoi, on affiche "P1 vs P2".
+    // 1. Bandeau tournoi uniforme (sombre cinétique, refonte image 1). Aucun joueur ici.
     html+=matchBanner({
-      tournament:(m.tournament||(p1n+' vs '+p2n)), surface:m.surface, round:m.round,
+      tournament:m.tournament, surface:m.surface, round:m.round,
       bestOf:(m.bestOf||m.best_of), isLive:true, compact:true
     });
 
