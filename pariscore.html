@@ -15939,6 +15939,11 @@ function psSetLang(v) {
           Analytics
         </button>
       </nav>
+      <div class="sc-search" id="sc-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="sc-search-input" placeholder="Rechercher joueur ou tournoi…" autocomplete="off" aria-label="Rechercher">
+        <button class="sc-search-clear" id="sc-search-clear" type="button" title="Effacer" aria-label="Effacer la recherche">✕</button>
+      </div>
     </header>
 
     <!-- ═══ PANELS ═══ -->
@@ -25012,6 +25017,17 @@ a:focus-visible,
 .sc-tab-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:transparent;color:var(--text2,#94a3b8);border:none;border-radius:6px;font-family:var(--font-head,Barlow Condensed,sans-serif);font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:all .15s;white-space:nowrap}
 .sc-tab-btn:hover{color:var(--text,#fff);background:var(--bg3,#1e2a3d)}
 .sc-tab-btn.active{background:var(--accent-bg,rgba(0,230,118,.12));color:var(--accent,#00e676);box-shadow:inset 0 0 0 1px rgba(0,230,118,.25)}
+/* Barre de recherche (prematch + live) */
+.sc-search{display:flex;align-items:center;gap:7px;padding:5px 10px;margin:8px 14px 0;background:var(--bg3,#1e2a3d);border:1px solid var(--border,rgba(255,255,255,.07));border-radius:8px;max-width:380px;transition:border-color .15s}
+.sc-search:focus-within{border-color:rgba(0,230,118,.35)}
+.sc-search svg{color:var(--text3,#64748b);flex:0 0 auto}
+.sc-search input{flex:1;min-width:0;background:none;border:none;outline:none;color:var(--text,#fff);font-size:13px;padding:5px 0;font-family:inherit}
+.sc-search input::placeholder{color:var(--text3,#64748b)}
+.sc-search input::-webkit-search-cancel-button{display:none}
+.sc-search-clear{background:none;border:none;cursor:pointer;color:var(--text3,#64748b);font-size:14px;padding:2px 4px;line-height:1;display:none;border-radius:4px;flex:0 0 auto}
+.sc-search-clear:hover{color:var(--text,#fff)}
+.sc-search.has-text .sc-search-clear{display:inline-block}
+.sc-search-hidden{display:none!important}
 .sc-main{min-height:400px}
 .sc-panel{display:none;animation:sc-fade .25s ease}
 .sc-panel.active{display:block}
@@ -26148,7 +26164,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     error: null,
     selectedMatchId: null,
     activeTab: 'prematch', // prematch|live|valuebets|analytics
-    activeTournament: 'ALL' // filtre tournoi sidebar ('ALL' = pas de filtre)
+    activeTournament: 'ALL', // filtre tournoi sidebar ('ALL' = pas de filtre)
+    searchQuery: '' // recherche texte joueur/tournoi (prematch + live)
   };
 
   // ── Mapping Pariscore → Scope shape ────────────────────────────────────
@@ -26342,6 +26359,20 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   function getPrematch() { return filterByTournament(_state.matches.filter(function (m) { return !m._isLive && !/live|progress|playing|in.play/i.test(String(m.status || '')); })); }
   function getLive() { return filterByTournament(_state.matches.filter(function (m) { return m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); })); }
 
+  // Recherche texte — filtre sur nom joueur (p1/p2) et tournoi.
+  // Insensible à la casse, match partiel (substring). Vide = pas de filtre.
+  function filterBySearch(arr) {
+    var q = (_state.searchQuery || '').toLowerCase().trim();
+    if (!q) return arr;
+    return arr.filter(function (m) {
+      var p1 = String((m.player1 && m.player1.name) || '').toLowerCase();
+      var p2 = String((m.player2 && m.player2.name) || '').toLowerCase();
+      var tn = String(m.tournament || '').toLowerCase();
+      var tour = String(m.tour || '').toLowerCase();
+      return p1.indexOf(q) > -1 || p2.indexOf(q) > -1 || tn.indexOf(q) > -1 || tour.indexOf(q) > -1;
+    });
+  }
+
   function renderActiveTab() {
     if (!root.Scope) return;
     var tab = _state.activeTab;
@@ -26350,17 +26381,21 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     // Ne re-render que si la tab est active
     // Tri par importance : tournoi prestigieux (Grand Slam > Masters > 500 > 250)
     // puis meilleur classement ATP/WTA des joueurs, puis duel équilibré.
-    var allPrematch = root.Scope.sortMatchesByImportance(getPrematch());
-    var allLive = root.Scope.sortMatchesByImportance(getLive());
+    // La recherche texte s'applique après le filtre tournoi et avant le tri.
+    var allPrematch = root.Scope.sortMatchesByImportance(filterBySearch(getPrematch()));
+    var allLive = root.Scope.sortMatchesByImportance(filterBySearch(getLive()));
+    var _q = _state.searchQuery ? _state.searchQuery.trim() : '';
     if (tab === 'prematch') {
       if (!allPrematch.length) {
-        pEl.innerHTML = emptyState(_state.loading ? 'Chargement des matchs…' : 'Aucun match à venir. Cliquez sur Rafraîchir.');
+        var _msg = _state.loading ? 'Chargement des matchs…' : (_q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match à venir. Cliquez sur Rafraîchir.');
+        pEl.innerHTML = emptyState(_msg);
       } else {
         root.Scope.renderPrematchGrid(pEl, allPrematch);
       }
     } else if (tab === 'live') {
       if (!allLive.length) {
-        pEl.innerHTML = emptyState('Aucun match en direct pour le moment.');
+        var _msgL = _q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match en direct pour le moment.';
+        pEl.innerHTML = emptyState(_msgL);
       } else {
         var _groups = {};
         allLive.forEach(function(m) {
@@ -26459,6 +26494,9 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     document.querySelectorAll('#sc-nav button').forEach(function (b) {
       b.classList.toggle('active', b.dataset.tab === tab);
     });
+    // Barre de recherche visible uniquement sur prematch & live
+    var _sw = document.getElementById('sc-search-wrap');
+    if (_sw) _sw.classList.toggle('sc-search-hidden', tab !== 'prematch' && tab !== 'live');
     renderActiveTab();
   }
 
@@ -26478,6 +26516,24 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     init: function () {
       // Enregistrer la callback de re-rendu pour les favoris (★)
       if (root.Scope && typeof root.Scope.setFavCallback === 'function') root.Scope.setFavCallback(renderActiveTab);
+      // Wire-up barre de recherche (prematch + live uniquement)
+      (function () {
+        var inp = document.getElementById('sc-search-input');
+        var clr = document.getElementById('sc-search-clear');
+        var wrap = document.getElementById('sc-search-wrap');
+        if (!inp) return;
+        var _deb = null;
+        inp.addEventListener('input', function () {
+          _state.searchQuery = inp.value;
+          if (wrap) wrap.classList.toggle('has-text', !!inp.value.trim());
+          if (_deb) clearTimeout(_deb);
+          _deb = setTimeout(renderActiveTab, 150);
+        });
+        inp.addEventListener('keydown', function (e) { if (e.key === 'Escape') { inp.value=''; _state.searchQuery=''; if(wrap)wrap.classList.remove('has-text'); renderActiveTab(); } });
+        if (clr) clr.addEventListener('click', function () { inp.value=''; _state.searchQuery=''; if(wrap)wrap.classList.remove('has-text'); inp.focus(); renderActiveTab(); });
+        // Masquer la barre si l'onglet actif n'est pas prematch/live
+        if (wrap) wrap.classList.toggle('sc-search-hidden', _state.activeTab !== 'prematch' && _state.activeTab !== 'live');
+      })();
       // bd photos-fix : précharger la map des photos avant le 1er render
       try { if (typeof window._loadTennisPhotoMap === 'function') window._loadTennisPhotoMap(); } catch (e) {}
       // Premier fetch
