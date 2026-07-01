@@ -6177,30 +6177,26 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
   var surface = (bsdData && bsdData.meta && bsdData.meta.surface) || matchData.surface || '';
   var round = (bsdData && bsdData.meta && bsdData.meta.round) || matchData.round || '';
 
-  var html = '<div style="background:#131722;border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:16px;margin:8px 4px;box-shadow:0 4px 12px rgba(0,0,0,0.3);">';
-  // ── Ligne 1 : Header Match Quality ──
-  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">';
-  html += '<div style="display:flex;flex-direction:column;gap:4px;">';
-  // Badge source
-  if (bsdData) {
-    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(0,230,118,0.10);color:#00e676;font-size:9px;font-weight:700;text-transform:uppercase;">Source BSD</span>';
+  var html = '<div style="background:#131722;border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:0;margin:8px 4px;box-shadow:0 4px 12px rgba(0,0,0,0.3);overflow:hidden;">';
+  // ── Bandeau tournoi uniforme (refonte image 1) ──
+  // bd tennis-banner : remplace l'ancien header inline (source+surface+heure+score) par le bandeau sombre standard.
+  if (window.Scope && window.Scope.matchBanner) {
+    html += window.Scope.matchBanner({
+      tournament: tourName, surface: surface, round: round, time: matchData.time_utc,
+      score: (scoreVal != null ? scoreVal + '/100' : '')
+    });
   } else {
-    html += '<span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(255,193,7,0.10);color:#fbbf24;font-size:9px;font-weight:700;text-transform:uppercase;">Source TennisExplorer</span>';
+    // Fallback : ancien header inline si Scope non chargé.
+    html += '<div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-family:Poppins,sans-serif;font-weight:700;font-size:14px;color:#fff;">' + _tnEsc(tourName) + (surface ? ' · ' + _tnEsc(surface) : '') + (round ? ' · ' + _tnEsc(round) : '') + '</div>';
   }
-  if (surface) {
-    var sCol = ({Clay:'#C97D47',Hard:'#3B5BDB',Grass:'#34A853',Carpet:'#8E44AD',Indoor:'#7A6A5C'})[surface] || '#5a6068';
-    html += '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:' + sCol + ';">' + _tnEsc(surface) + (round ? ' <span style="color:#5a6068;font-weight:400;">· ' + _tnEsc(round) + '</span>' : '') + '</div>';
+  // Conteneur corps de carte (padding restauré pour les lignes suivantes)
+  html += '<div style="padding:16px;">';
+  // Badge source (sous le bandeau)
+  if (bsdData) {
+    html += '<div style="margin-bottom:10px;"><span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(0,230,118,0.10);color:#00e676;font-size:9px;font-weight:700;text-transform:uppercase;">Source BSD</span></div>';
+  } else {
+    html += '<div style="margin-bottom:10px;"><span style="display:inline-block;width:fit-content;padding:2px 6px;border-radius:3px;background:rgba(255,193,7,0.10);color:#fbbf24;font-size:9px;font-weight:700;text-transform:uppercase;">Source TennisExplorer</span></div>';
   }
-  if (matchData.time_utc) {
-    html += '<div style="font-size:10px;color:#5a6068;">Heure : <span style="font-family:\'DM Mono\',monospace;color:#8d9399;">' + _tnEsc(_localTime(matchData.time_utc)) + '</span></div>';
-  }
-  html += '</div>';
-  // Score qualité
-  if (scoreVal != null) {
-    var sc = scoreVal >= 70 ? '#ffc107' : scoreVal >= 50 ? '#00e676' : scoreVal >= 30 ? '#fbbf24' : '#8d9399';
-    html += '<div style="text-align:right;"><span style="font-family:\'DM Mono\',monospace;font-size:26px;font-weight:800;color:' + sc + ';">' + scoreVal + '</span><span style="color:#5a6068;font-size:12px;">/100</span></div>';
-  }
-  html += '</div>';
 
   // ── Ligne 2 : Joueurs ──
   html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">';
@@ -6327,7 +6323,8 @@ function _renderPrematchInlineCard(matchData, bsdData, bsdMatchId, texDetail) {
     html += '</div>';
   }
 
-  html += '</div>';
+  html += '</div>'; // fermeture corps (padding:16px)
+  html += '</div>'; // fermeture conteneur principal
   return html;
 }
 
@@ -8014,8 +8011,8 @@ function openTennisAnalysisModal(matchId) {
     document.addEventListener('keydown', window._tnAnalysisEscHandler);
   }
   // Reset fields
-  document.getElementById('tam-tournament').textContent = 'Chargement...';
-  document.getElementById('tam-surface').textContent = '';
+  var _bslot = document.getElementById('tam-banner-slot');
+  if (_bslot) _bslot.innerHTML = '<div class="tam-header"><span class="tam-tournament">Chargement...</span></div>';
   document.getElementById('tam-round').textContent = '';
   document.getElementById('tam-p1-name').textContent = '—';
   document.getElementById('tam-p2-name').textContent = '—';
@@ -8031,9 +8028,18 @@ function openTennisAnalysisModal(matchId) {
   fetch('/api/v1/tennis/detail/' + encodeURIComponent(String(matchId)), { signal: __tnAbort.signal })
     .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function(data) {
-      // Meta
-      document.getElementById('tam-tournament').textContent = data.meta.tournament || 'Match Tennis';
-      document.getElementById('tam-surface').textContent = data.meta.surface || '';
+      // Meta — bandeau tournoi uniforme (refonte image 1)
+      var _bannerSlot = document.getElementById('tam-banner-slot');
+      if (_bannerSlot) {
+        if (window.Scope && window.Scope.matchBanner) {
+          _bannerSlot.innerHTML = window.Scope.matchBanner({
+            tournament: data.meta.tournament, surface: data.meta.surface,
+            round: data.meta.round, startTime: data.meta.start_time
+          });
+        } else {
+          _bannerSlot.innerHTML = '<div class="tam-header"><span class="tam-tournament">' + _tnEsc(data.meta.tournament || 'Match Tennis') + '</span><span class="tam-surface-badge">' + _tnEsc(data.meta.surface || '') + '</span></div>';
+        }
+      }
       document.getElementById('tam-round').textContent = data.meta.round || '';
       // Players
       var p1 = data.players && data.players.p1 ? data.players.p1 : {};
@@ -8440,7 +8446,8 @@ function openTennisAnalysisModal(matchId) {
     })
     .catch(function(err) {
       console.error('[TennisAnalysisModal]', err);
-      document.getElementById('tam-tournament').textContent = 'Erreur de chargement';
+      var _bslot = document.getElementById('tam-banner-slot');
+      if (_bslot) _bslot.innerHTML = '<div class="tam-header"><span class="tam-tournament" style="color:#ef4444;">Erreur de chargement</span></div>';
     });
 }
 
@@ -8917,6 +8924,7 @@ async function _renderLivescoreDetail(eid) {
     };
     const meta = [m.competition, m.stage, m.venue && m.venue.name].filter(Boolean).map(_escTennis).join(' · ');
     body.innerHTML = `
+      ${(() => { try { return (window.Scope && window.Scope.matchBanner) ? window.Scope.matchBanner({tournament:m.competition, round:m.stage, isLive:true}) : ''; } catch(_) { return ''; } })()}
       <div style="padding:18px 20px;">
         <div style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;color:var(--text,#e8eaed);">
           ${_escTennis(p1.name || '—')} <span style="color:var(--text3,#5a6068);">vs</span> ${_escTennis(p2.name || '—')}
@@ -8997,6 +9005,7 @@ function _renderTennisDegradedDetail(matchId) {
   const bets = betsArr.slice(0, 3).map(b => `<li style="margin:3px 0;">${_escTennis(b.label || b.market || b.name || '')}${b.pick ? ' · ' + _escTennis(b.pick) : ''}${b.ev != null ? ' · EV ' + (Math.round(b.ev * 10) / 10) + '%' : ''}</li>`).join('');
   const row = (lbl, val) => val ? `<tr><td style="padding:5px 12px;color:var(--text3,#5a6068);font-family:'DM Mono',monospace;font-size:12px;white-space:nowrap;">${lbl}</td><td style="padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text,#e8eaed);">${val}</td></tr>` : '';
   return `${head}
+  ${(() => { try { return (window.Scope && window.Scope.matchBanner) ? window.Scope.matchBanner({tournament:m.tournament, surface:m.surface, round:m.round, tour:m.tour, isLive:!!m.is_live}) : ''; } catch(_) { return ''; } })()}
   <div style="max-width:560px;margin:14px auto 0;">
     <div style="font-family:Syne,sans-serif;font-weight:800;font-size:18px;text-align:center;color:var(--text,#e8eaed);">${_escTennis(p1.name || '—')} <span style="color:var(--text3,#5a6068);">vs</span> ${_escTennis(p2.name || '—')}</div>
     <div style="text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2,#8d9399);margin:4px 0 12px;">${meta || '—'}</div>
@@ -9778,6 +9787,7 @@ function renderTennisDashboard(data, preds) {
 
   const metaBits = [tournament, round, surface, status].filter(Boolean).map(_escTennis);
   return `
+    ${(() => { try { return (window.Scope && window.Scope.matchBanner) ? window.Scope.matchBanner({tournament:tournament, surface:surface, round:round}) : ''; } catch(_) { return ''; } })()}
     <div class="tennis-detail-header">
       <div class="tennis-detail-versus">
         <div class="tennis-detail-player">
@@ -9977,6 +9987,7 @@ function renderTennisProDashboard(d) {
   </div>` : '';
 
   return `<div class="tn-pro-root">
+    ${(() => { try { return (window.Scope && window.Scope.matchBanner) ? window.Scope.matchBanner({tournament:meta.tournament, surface:meta.surface, round:meta.round, startTime:meta.start_time, isLive:meta.is_live}) : ''; } catch(_) { return ''; } })()}
     <div class="tn-pro-header">
       <div class="tn-pro-title" id="tennis-detail-title">${esc(n1)} <span class="tn-pro-vs">VS</span> ${esc(n2)}</div>
       <div class="tn-pro-ranks">${p1.rank ? '#' + p1.rank : ''}${p1.rank && p2.rank ? ' · ' : ''}${p2.rank ? '#' + p2.rank : ''}</div>
