@@ -24907,6 +24907,22 @@ a:focus-visible,
 
 .sc-lc-mom-track{height:6px;background:linear-gradient(180deg,#08090e 0%,#0f1219 50%,#0a0c12 100%);border-radius:3px;position:relative;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.7),inset 0 -1px 0 rgba(255,255,255,.04),0 1px 0 rgba(255,255,255,.03)}
 .sc-lc-mom-fill{position:absolute;top:0;height:100%;border-radius:3px;box-shadow:0 0 8px currentColor,inset 0 1px 0 rgba(255,255,255,.25),inset 0 -1px 0 rgba(0,0,0,.3)}
+/* Chart momentum par set (SVG inline dans les cartes live) */
+.sc-lc-momchart{flex:1;min-width:0}
+.sc-lc-momchart svg{width:100%;height:64px;display:block;overflow:visible}
+.sc-lc-momchart .mom-set-divider{stroke:var(--border,rgba(255,255,255,.08));stroke-width:1;stroke-dasharray:2 3;opacity:.6}
+.sc-lc-momchart .mom-midline{stroke:var(--text3,#64748b);stroke-width:1;stroke-dasharray:3 2;opacity:.35}
+.sc-lc-momchart .mom-area-p1{opacity:1}
+.sc-lc-momchart .mom-area-p2{opacity:1}
+.sc-lc-momchart .mom-line{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sc-lc-momchart .mom-line-p1{stroke:var(--green,#00e676)}
+.sc-lc-momchart .mom-line-p2{stroke:var(--blue,#0077ff)}
+.sc-lc-momchart .mom-pt-p1{fill:var(--green,#00e676);stroke:none}
+.sc-lc-momchart .mom-pt-p2{fill:var(--blue,#0077ff);stroke:none}
+.sc-lc-momchart .mom-pt-brk{stroke:#fff;stroke-width:1.2}
+.sc-lc-momchart .mom-set-label{fill:var(--text3,#64748b);font-size:8px;font-family:var(--font-mono,monospace);text-anchor:middle}
+.sc-lc-momchart-empty{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;justify-content:center}
+.sc-lc-momchart-hint{font-size:9px;color:var(--text3,#64748b);text-align:center}
 /* Ligne DR + OU pills fusionnées (1 ligne horizontale compacte) */
 .sc-lc-kpirow{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:10px;padding:1px 0}
 .sc-lc-dr-chip{font-size:10px;color:var(--text3,#94a3b8);padding:2px 6px;border-radius:4px;background:var(--bg3,#131722);border:1px solid var(--border2,rgba(255,255,255,.08))}
@@ -25728,6 +25744,131 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     return Math.round((base+adj)*10)/10;
   }
 
+  /* ── Chart momentum par set (P1 haut / P2 bas, courbe par jeu) ───── */
+  // Données serveur : m.momentum_series = { games:[{n,w,brk,v,run,set}], ... }
+  // v = -100 (P2 domine) .. +100 (P1 domine). Chaque jeu = un point.
+  // Le n° de set est re-dérivé côté front depuis m.sets (le set serveur n'est pas fiable).
+  function momentumChart(m){
+    var ms=m.momentum_series;
+    var games=(ms&&Array.isArray(ms.games))?ms.games:[];
+    if(!games.length){
+      // Fallback : momentum agrégé instantané
+      var mom=m.momentum||{}, dir=mom.kfs_direction||'neutral', conf=num(mom.kfs_confidence,0);
+      var _sc=dir==='p1'?conf:(dir==='p2'?-conf:0);
+      return '<div class="sc-lc-momchart-empty" title="Momentum en cours d\'analyse">'
+        +'<div class="sc-lc-mom-track"><div class="sc-lc-mom-fill" style="left:'+(dir==='p2'?(50-Math.abs(_sc)/2)+'%':'50%')+';width:'+Math.abs(_sc)/2+'%;background:'+(_sc>15?'var(--green)':_sc<-15?'var(--blue)':'var(--amber)')+';"></div></div>'
+        +'<span class="sc-lc-momchart-hint">'+(dir==='neutral'?'En attente de données jeu-par-jeu…':(dir==='p1'?'P1 au pouvoir':'P2 au pouvoir'))+'</span></div>';
+    }
+    // Bornes cumulées de jeux par set (depuis m.sets)
+    var sa=Array.isArray(m.sets)?m.sets:[];
+    var setBounds=[], cum=0;
+    sa.forEach(function(s){ cum+=(num(s.p1)||0)+(num(s.p2)||0); setBounds.push(cum); });
+    // Assigner setIdx à chaque jeu
+    var maxSets = (m.bestOf||m.best_of||3)===5?5:3;
+    function setOf(gameN){
+      for(var i=0;i<setBounds.length;i++){ if(gameN<=setBounds[i]) return i; }
+      return setBounds.length; // set en cours (au-delà des bornes connues)
+    }
+    // Layout SVG
+    var W=300, H=64, padL=4, padR=4, padT=6, padB=14;
+    var plotW=W-padL-padR, plotH=H-padT-padB;
+    var midY=padT+plotH/2;
+    var n=games.length;
+    if(n===1) n=2; // évite division par zéro pour 1 point
+    function xOf(i){ return padL + (i/(n-1))*plotW; }
+    function yOf(v){ return midY - (num(v)/100)*(plotH/2 - 2); } // v>0 → haut (y petit)
+
+    // Construire les points [x,y] + métadonnées
+    var pts=[];
+    for(var gi=0; gi<games.length; gi++){
+      var g=games[gi];
+      pts.push({ x:xOf(gi), y:yOf(g.v), w:g.w, brk:!!g.brk, setIdx:setOf(g.n||gi+1), n:g.n||(gi+1), v:num(g.v) });
+    }
+
+    // Polylines P1 (au-dessus médiane) et P2 (en-dessous)
+    // On construit 2 chemins : un pour la zone positive, un pour la zone négative,
+    // en connectant les points consécutifs. Pour la zone, on ferme sur la médiane.
+    var p1Path='', p2Path='';
+    var p1Area='', p2Area='';
+    var prev=null;
+    pts.forEach(function(p,i){
+      if(prev){
+        // segment entre prev et p — coloré selon qui domine le segment
+        var segPts = 'M'+prev.x.toFixed(1)+','+prev.y.toFixed(1)+' L'+p.x.toFixed(1)+','+p.y.toFixed(1);
+        var midSegY=(prev.y+p.y)/2;
+        if(midSegY<=midY){ p1Path+=(p1Path?' ':'')+segPts; }
+        else { p2Path+=(p2Path?' ':'')+segPts; }
+      }
+      prev=p;
+    });
+
+    // Zone remplie (area) — polygone fermé sur la médiane pour l'effet dégradé
+    var p1AreaPts=[], p2AreaPts=[];
+    pts.forEach(function(p){
+      if(p.y<=midY) p1AreaPts.push(p);
+      else p2AreaPts.push(p);
+    });
+    if(p1AreaPts.length){
+      var a='M'+p1AreaPts[0].x.toFixed(1)+','+midY.toFixed(1);
+      p1AreaPts.forEach(function(p){ a+=' L'+p.x.toFixed(1)+','+p.y.toFixed(1); });
+      a+=' L'+p1AreaPts[p1AreaPts.length-1].x.toFixed(1)+','+midY.toFixed(1)+' Z';
+      p1Area=a;
+    }
+    if(p2AreaPts.length){
+      var b='M'+p2AreaPts[0].x.toFixed(1)+','+midY.toFixed(1);
+      p2AreaPts.forEach(function(p){ b+=' L'+p.x.toFixed(1)+','+p.y.toFixed(1); });
+      b+=' L'+p2AreaPts[p2AreaPts.length-1].x.toFixed(1)+','+midY.toFixed(1)+' Z';
+      p2Area=b;
+    }
+
+    // Dividers de sets (lignes verticales aux bornes cumulées)
+    var dividers='';
+    setBounds.forEach(function(b,i){
+      if(i>=setBounds.length-1) return; // pas après le dernier set (set en cours)
+      var dx=xOf(Math.min(b-1, games.length-1));
+      if(dx>padL && dx<W-padR){
+        dividers+='<line class="mom-set-divider" x1="'+dx.toFixed(1)+'" y1="'+padT+'" x2="'+dx.toFixed(1)+'" y2="'+(H-padB)+'"/>';
+      }
+    });
+
+    // Labels sets en bas
+    var setLabels='';
+    for(var si=0; si<Math.min(maxSets, setBounds.length+1); si++){
+      var segStart = si===0?0:setBounds[si-1];
+      var segEnd = si<setBounds.length?setBounds[si]:games.length;
+      if(segEnd<=segStart && si>=setBounds.length) segEnd=games.length;
+      var lx = (xOf(Math.max(0,Math.min(segStart,games.length-1))) + xOf(Math.max(0,Math.min(Math.max(segEnd-1,segStart),games.length-1))))/2;
+      if(isNaN(lx)) continue;
+      setLabels+='<text class="mom-set-label" x="'+lx.toFixed(1)+'" y="'+(H-2)+'">S'+(si+1)+'</text>';
+    }
+
+    // Points (cercles)
+    var dots='';
+    pts.forEach(function(p){
+      var cls='mom-pt-'+(p.w===1?'p1':'p2')+(p.brk?' mom-pt-brk':'');
+      var r=p.brk?3.2:2;
+      var tip='Set '+(p.setIdx+1)+' · Jeu '+p.n+' · '+(p.brk?'BREAK · ':'')+(p.w===1?'P1':'P2')+' '+(p.v>0?'+':'')+p.v;
+      dots+='<circle class="'+cls+'" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+r+'"><title>'+esc(tip)+'</title></circle>';
+    });
+
+    // Gradients (IDs uniques pour éviter collisions si plusieurs charts)
+    var gid='mg'+Math.abs((m.id||'').toString().split('').reduce(function(a,c){return a+c.charCodeAt(0);},0));
+    return '<svg width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Momentum par set">'
+      +'<defs>'
+      +'<linearGradient id="'+gid+'p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e676" stop-opacity=".35"/><stop offset="100%" stop-color="#00e676" stop-opacity="0"/></linearGradient>'
+      +'<linearGradient id="'+gid+'p2" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0077ff" stop-opacity=".35"/><stop offset="100%" stop-color="#0077ff" stop-opacity="0"/></linearGradient>'
+      +'</defs>'
+      +dividers
+      +'<line class="mom-midline" x1="'+padL+'" y1="'+midY.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+midY.toFixed(1)+'"/>'
+      +(p1Area?'<path class="mom-area-p1" d="'+p1Area+'" fill="url(#'+gid+'p1)"/>':'')
+      +(p2Area?'<path class="mom-area-p2" d="'+p2Area+'" fill="url(#'+gid+'p2)"/>':'')
+      +(p1Path?'<path class="mom-line mom-line-p1" d="'+p1Path+'"/>':'')
+      +(p2Path?'<path class="mom-line mom-line-p2" d="'+p2Path+'"/>':'')
+      +dots
+      +setLabels
+      +'</svg>';
+  }
+
   /* ── Carte live ───────────────────────────────────────────────────── */
   function liveCardCompact(m){
     var liveProb=m.liveProbability!=null?m.liveProbability:p1WinProb(m);
@@ -25831,9 +25972,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     html+='<div class="sc-lc-proba"><div class="sc-lc-proba-p1" style="width:'+(liveProb*100)+'%;background:var(--green)">'+(liveProb*100).toFixed(0)+'%</div><div class="sc-lc-proba-p2" style="width:'+((1-liveProb)*100)+'%;background:var(--blue)">'+((1-liveProb)*100).toFixed(0)+'%</div></div>';
     html+='<span class="sc-lc-kpi-val">'+(_impP1!=null?'Cote '+o1.toFixed(2):'—')+'</span></div>';
 
-    // 4b. Barre momentum (compacte) — label à gauche
-    html+='<div class="sc-lc-kpi"><span class="sc-lc-kpi-lbl">Momentum</span>';
-    html+='<div class="sc-lc-mom-track"><div class="sc-lc-mom-fill" style="left:50%;width:'+Math.abs(p1Pct-50)+'%;background:'+col+';"></div></div>';
+    // 4b. Chart momentum par set (P1 haut / P2 bas, courbe par jeu)
+    html+='<div class="sc-lc-kpi sc-lc-kpi-momchart"><span class="sc-lc-kpi-lbl">Momentum</span>';
+    html+='<div class="sc-lc-momchart">'+momentumChart(m)+'</div>';
     html+='</div>';
 
     // 4c. Ligne DR + OU pills fusionnées (1 ligne horizontale)
@@ -26246,6 +26387,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           if (m.dr_per_set) mapped.dr_per_set = m.dr_per_set;
           if (m.liveProbability != null) mapped.liveProbability = m.liveProbability;
           if (m.momentum) mapped.momentum = m.momentum;
+          if (m.momentum_series) mapped.momentum_series = m.momentum_series;
           if (m.bppi) mapped.bppi = m.bppi;
           if (m.serving) mapped.serving = m.serving;
           if (m.player1_sets != null) mapped.player1_sets = m.player1_sets;
