@@ -21385,6 +21385,7 @@ async function handleAPI(req, res, pathname, query) {
         court: m.court,
         status: m.status,
         is_live: m.is_live,
+        best_of: m.bestOf || _tennisBestOf(m.tour, m.tournament),
         player1: { name: m.player1.name, country: m.player1.country, flag: m.player1.flag, photo: m.player1.photo || null, id: m.player1.id || null },
         player2: { name: m.player2.name, country: m.player2.country, flag: m.player2.flag, photo: m.player2.photo || null, id: m.player2.id || null },
         player1_sets: m.player1_sets,
@@ -24469,6 +24470,8 @@ async function pollTennisLive() {
     let espn = [];
     try { espn = await fetchESPNTennisLive(); } catch (e) { console.warn('  [Tennis] ESPN live error:', e.message); }
     const data = _mergeTennisLive(bsd, espn);
+    // Inject bestOf pour tous les matchs live (Wimbledon = BO5 etc.)
+    for (const m of data) { if (m) m.bestOf = _tennisBestOf(m.tour, m.tournament); }
     // bd — Merge MatchStat Challenger matches (BSD ne couvre pas Challengers ATP)
     try { const msCh = await _fetchMSChallengerMatches(); if (msCh.length) data.push(...msCh); } catch (_) {}
     // bd c5i — Cross-source serving enrichment (aiscore cache hit) AVANT recordTennisServe
@@ -24597,7 +24600,7 @@ async function pollTennisLive() {
             // _tnLiveServeStats retourne des fractions 0-1 ; p1_first_won peut être 0-100.
             const toFrac = v => Number.isFinite(v) ? (v > 1 ? v / 100 : v) : v;
             spw1 = toFrac(spw1); spw2 = toFrac(spw2);
-            const fmt = (Number(m.best_of) === 5 || m.best_of === '5' || (/grand|slam|roland|wimbledon|us open|australian/i.test(String(m.tournament || '') + ' ' + String(m.tour || '')) && /atp|men/i.test(String(m.tour || '')))) ? 'BO5' : 'BO3';
+            const fmt = m.bestOf === 5 ? 'BO5' : 'BO3';
             const liveProb = computeTennisMatchProb({
               p1_serve_pct: Math.max(0.3, Math.min(0.95, spw1)),
               p2_serve_pct: Math.max(0.3, Math.min(0.95, spw2)),
@@ -38889,6 +38892,7 @@ async function _buildTennisValueBetsCore({ date }) {
       status: m.status || null,
       player1: { name: m.player1 && m.player1.name, country: m.player1 && m.player1.country, flag: m.player1 && m.player1.flag },
       player2: { name: m.player2 && m.player2.name, country: m.player2 && m.player2.country, flag: m.player2 && m.player2.flag },
+      bestOf: _tennisBestOf(m.tour, m.tournament),
     }));
     matchSource = 'espn';
   }
@@ -39021,6 +39025,7 @@ async function _buildTennisValueBetsCore({ date }) {
       enriched.push({
         id: m.id,
         tournament: _tNameFinal,
+        bestOf: _tennisBestOf(m.tour, _tNameFinal),
         surface: m.surface || null,
         start_time: m.start_time || m.commence_time || m.match_date || m.scheduled || m.event_date || m.start_date || m.date || null,
         status: m.status || null,
@@ -39313,6 +39318,7 @@ async function _buildTennisValueBetsCore({ date }) {
     const _fatigue = tourGuess ? { p1: computePlayerFatigue(p1Name, tourGuess), p2: computePlayerFatigue(p2Name, tourGuess) } : null;
     enriched.push({
       id: m.id,
+        bestOf: _tennisBestOf(tourGuess || _tourN, _tNameFinal),
       tournament: _tNameFinal,
       surface: surfaceClean || _surfN || null,
       surface_source: surfaceSource,
