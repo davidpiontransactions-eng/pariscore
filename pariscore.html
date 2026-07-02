@@ -16413,20 +16413,37 @@ function psSetLang(v) {
     if (el) el.textContent = data.tournaments != null ? data.tournaments : el.textContent;
   };
 
-  /* getPlayerPhotoUrl — Tennis Warehouse > ESPN CDN (headshot) > ui-avatars (fallback) */
-  window.getPlayerPhotoUrl = function(player) {
+  /* getPlayerPhotoUrl — Tennis Warehouse > BSD direct image > ui-avatars (fallback)
+   * bd photo-fix : retire ESPN CDN (n'a pas les droits WTA → renvoyait des headshots ATP masculins).
+   * Discrimination circuit pour éviter collisions ATP/WTA sur noms homonymes.
+   * Le lookup par name seul est DANGEREUX (ex: "Catherine McNally" existe en WTA ET en ITF/junior).
+   * On privilégie BSD image_path (déjà dans player.photo) puis ui-avatars sur initiales.
+   */
+  window.getPlayerPhotoUrl = function(player, circuitHint) {
     if (!player) return null;
-    if (player.photo) return player.photo;
+    // 1. BSD image_path direct (déjà formaté côté server.js:23215)
+    if (player.photo && /^https?:\/\//.test(player.photo)) return player.photo;
     var name = player.name || player.nom || '';
     if (!name) return null;
     var nameKey = name.toLowerCase().trim();
     var photoMap = window._tennisPhotoMap;
-    if (photoMap && photoMap[nameKey]) return photoMap[nameKey];
-    var id = player.id || player.player_id || player.bsdId || null;
-    if (id) {
-      return 'https://a.espncdn.com/combiner/i?img=/i/headshots/tennis/players/full/' + id + '.png&w=68&h=68';
+    // 2. Photo map : lookup par (circuit, name) pour éviter collisions ATP/WTA
+    //    photoMap peut contenir des clés "wta/elena rybakina" et "atp/john mc nally" en plus du flat "elena rybakina"
+    if (photoMap) {
+      if (circuitHint && photoMap[circuitHint.toLowerCase() + '/' + nameKey]) {
+        return photoMap[circuitHint.toLowerCase() + '/' + nameKey];
+      }
+      if (photoMap[nameKey]) return photoMap[nameKey];
     }
-    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=172132&color=fff&size=68&bold=true&font-size=0.33';
+    // 3. ID BSD : proxy /api/v1/tennis/player-photo/ID (server.js:21814 — cache disque + fallback Wikipedia)
+    //    Plus sûr que ESPN CDN (qui renvoie un homme générique pour ID BSD numérique)
+    var id = player.id || player.player_id || player.bsdId || null;
+    if (id && /^\d+$/.test(String(id))) {
+      return '/api/v1/tennis/player-photo/' + encodeURIComponent(String(id));
+    }
+    // 4. Fallback ui-avatars sur initiales (jamais ESPN générique)
+    var initials = name.split(/\s+/).map(function(s){return (s[0]||'').toUpperCase();}).join('').slice(0,2);
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(initials) + '&background=172132&color=fff&size=68&bold=true&font-size=0.33';
   };
 
   window.tn2RenderLiveCards = function(matches) {
@@ -25496,12 +25513,14 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
 
   // Profil d'un joueur : grille de badges (service, retour, forme, Elo surface)
+  // bd scouting-fix : null-safe (num() retourne 0 pour undefined → affichait "0%" rouge au lieu de "n/d")
+  function _safeNum(v){ return (v!=null && v!=='' && !isNaN(Number(v))) ? Number(v) : null; }
   function scoutProfile(p){
     if(!p) return '';
     var name=esc(p.name||'Joueur');
-    var hold=num(p.serve_hold_pct), ret=num(p.return_pct);
-    var sIdx=num(p.serve_index), rIdx=num(p.receive_index);
-    var l5=num(p.l5_pts), elo=num(p.elo_surface);
+    var hold=_safeNum(p.serve_hold_pct), ret=_safeNum(p.return_pct);
+    var sIdx=_safeNum(p.serve_index), rIdx=_safeNum(p.receive_index);
+    var l5=_safeNum(p.l5_pts), elo=_safeNum(p.elo_surface);
     var sRank=p.serve_rank, sTot=p.serve_total;
     var rRank=p.receive_rank, rTot=p.receive_total;
     var h='<div class="sc-scout-profile">'
@@ -25898,10 +25917,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var sa=Array.isArray(m.sets)?m.sets:[],_ls=sa.length?sa[sa.length-1]:null;
     var g1=_ls?(num(_ls.p1)||0):0,g2=_ls?(num(_ls.p2)||0):0,_pt=m.current_point||'';
     var o1=num(m.odds_player1),o2=num(m.odds_player2);
-    // Photo helper
+    // Photo helper — bd photo-fix : passer m.tour comme circuitHint pour éviter collisions ATP/WTA
     var _ph1='',_ph2='';
-    try{_ph1=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player1||{}):'';}catch(e){}
-    try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}):'';}catch(e){}
+    try{_ph1=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player1||{}, m.tour||m.discipline):'';}catch(e){}
+    try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}, m.tour||m.discipline):'';}catch(e){}
     var _phHtml=function(url,name){var n=encodeURIComponent(name||'?');var fallback='https://ui-avatars.com/api/?name='+n+'&background=161c2a&color=94a3b8&size=88&bold=true';var src=url||fallback;return '<img class="sc-lc-photo" src="'+esc(src)+'" alt="'+esc(name||'')+'" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\''+fallback+'\';}">';};
     // Helper formatage duel P1/P2 : decimals=true → 2 chiffres après virgule (% et ratings),
     // decimals=false → entier (compteurs aces/df/BPPI). Le plus grand des deux est mis en vert.
@@ -26457,6 +26476,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           _state.matches.filter(function(m){ return !m._isLive && !_liveIdsNow[m.id]; })
         );
         _state.lastFetch = Date.now();
+        // bd audit-fix : log diagnostic payload live
+        try { _auditLivePayload(liveMatches, 'fetchData:live'); } catch(_) {}
         publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs live');
         updateKpiBar(_state.matches);
         renderActiveTab();
@@ -26515,6 +26536,59 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         renderActiveTab();
         return [];
       });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // bd audit-fix : Intercepteur diagnostic payload live
+  // Log ce que le serveur envoie VRAIMENT pour identifier champs manquants.
+  // À retirer en prod après diagnostic (ou garder silencieux si 100% OK).
+  // ═══════════════════════════════════════════════════════════════════════
+  function _auditLivePayload(matches, source) {
+    if (!Array.isArray(matches) || !matches.length) {
+      console.warn('[AuditLive] payload VIDE depuis', source);
+      return;
+    }
+    var stats = {
+      source: source, total: matches.length,
+      with_bsd_stats: 0, with_serve_momentum: 0, with_momentum_series: 0,
+      with_dr_exact: 0, with_current_point: 0, with_serving: 0,
+      with_player_photo: 0, with_player_id: 0
+    };
+    matches.forEach(function(m) {
+      if (m._bsd_stats || m.live_stats) stats.with_bsd_stats++;
+      if (m.serve_momentum) stats.with_serve_momentum++;
+      if (m.momentum_series) stats.with_momentum_series++;
+      if (m.dr_exact) stats.with_dr_exact++;
+      if (m.current_point) stats.with_current_point++;
+      if (m.serving != null) stats.with_serving++;
+      if (m.player1 && (m.player1.photo || m.player1.id)) stats.with_player_photo++;
+      if (m.player1 && m.player1.id) stats.with_player_id++;
+    });
+    // Échantillonner le 1er match live pour voir le schéma exact reçu
+    var sample = matches.find(function(m){return m.is_live;}) || matches[0];
+    if (sample) {
+      var bsdStats = sample._bsd_stats || sample.live_stats || {};
+      var nullCount = Object.keys(bsdStats).filter(function(k){return bsdStats[k]==null;}).length;
+      console.log('[AuditLive] sample match id=' + sample.id + ' tour=' + sample.tour +
+        ' | _bsd_stats nulls=' + nullCount + '/' + Object.keys(bsdStats).length +
+        ' | momentum_series=' + (sample.momentum_series ? sample.momentum_series.games?.length + ' games' : 'null') +
+        ' | serving=' + sample.serving + ' | current_point=' + (sample.current_point||'null') +
+        ' | player1.id=' + (sample.player1?.id||'null') + ' player1.photo=' + (sample.player1?.photo?'YES':'null'));
+    }
+    // Warn si coverage faible
+    if (stats.with_bsd_stats < stats.total / 2) {
+      console.warn('[AuditLive] ⚠️ ' + stats.with_bsd_stats + '/' + stats.total + ' matchs ont _bsd_stats');
+    }
+    if (stats.with_momentum_series === 0) {
+      console.warn('[AuditLive] ⚠️ AUCUN match n\'a momentum_series — _tennisServeHist vide côté serveur');
+    }
+    if (stats.with_player_photo === 0) {
+      console.warn('[AuditLive] ⚠️ AUCUN match n\'a player1.photo ni player1.id — fallback ui-avatars');
+    }
+    console.log('[AuditLive] ' + stats.with_bsd_stats + '/' + stats.total + ' bsd_stats | ' +
+      stats.with_momentum_series + '/' + stats.total + ' momentum | ' +
+      stats.with_current_point + '/' + stats.total + ' current_point');
+    return stats;
   }
 
   function publishStatus(msg, isError) {
@@ -26820,6 +26894,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     },
     /** Démarre l'auto-refresh (appelé quand on entre sur la page tennis) */
     startAutoRefresh: startAutoRefresh,
+    // bd audit-fix : exposer pour debug console (window.TennisScope._auditLivePayload(matches))
+    _auditLivePayload: _auditLivePayload,
     /** Stoppe l'auto-refresh (appelé quand on quitte la page tennis) */
     stopAutoRefresh: function () {
       if (_timer) { clearInterval(_timer); _timer = null; }
