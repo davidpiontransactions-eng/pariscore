@@ -24702,7 +24702,7 @@ a:focus-visible,
 
 <style id="sc-tennis-scope-css">
 /* === TennisScope — Portage Option A pour Pariscore === */
-.sc-wm{position:fixed;top:110px;right:20px;font-size:clamp(220px,30vw,380px);line-height:1;opacity:.07;pointer-events:none;z-index:5;user-select:none;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;filter:saturate(.9);transition:opacity .3s ease}
+/* bd live-023 : définition .sc-wm supprimée (conflit z-index 5 vs 0 — la définition ligne ~25053 gagne et écrasait celle-ci) */
 /* ── Jauge de probabilité semi-circulaire ────────────────────────────── */
 .sc-gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
 .sc-gauge-center{font-family:var(--font-mono);font-weight:800;fill:var(--text)}
@@ -25701,8 +25701,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-callout"><div class="ico">'+svgIcon('zap',16)+'</div><div class="body"><div class="title"><b>'+esc(topVB.label)+'</b>'+signalBadge(topTier)+(isLive?signalBadge('live'):'')+'</div>'
       +'<div class="stats">Cote '+topVB.odds.toFixed(2)+' · Edge '+(topVB.edge*100).toFixed(1)+'% · EV '+(topVB.ev*100).toFixed(1)+'% · Kelly '+(topVB.kelly*100).toFixed(1)+'%</div></div></div>'
       // expand
-      +'<button class="sc-expand" onclick="Scope._toggle(this)"><span>Analyse détaillée · Facteurs · H2H · Marchés</span><span class="chev">▾</span></button>'
-      +'<div class="sc-detail">'
+      +'<button class="sc-expand" onclick="Scope._toggle(this)" data-match-id="'+(typeof escapeHtml==='function'?escapeHtml:esc)(m.id)+'" aria-expanded="false" aria-controls="det-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" data-label-closed="Analyse détaillée · Facteurs · H2H · Marchés" data-label-open="Masquer l\'analyse"><span class="lbl">Analyse détaillée · Facteurs · H2H · Marchés</span><span class="chev">▾</span></button>'
+      +'<div class="sc-detail" id="det-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region">'
       +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
       +scoutProfile(p1)+scoutProfile(p2)
       +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(m)
@@ -25718,7 +25718,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var _phUrl='';
     try{ _phUrl=(typeof window.getPlayerPhotoUrl==='function')?window.getPlayerPhotoUrl(p):''; }catch(e){}
     _phUrl=_phUrl?esc(_phUrl):'';
-    var _phImg=_phUrl?('<img src="'+_phUrl+'" alt="" loading="lazy" onerror="this.onerror=null;var n=encodeURIComponent(\''+esc(String(p.name||'?')).replace(/'/g,"\\'")+'\');this.src=\'https://ui-avatars.com/api/?name=\'+n+\'&background=172132&color=fff&size=80\';">'):'';
+    // bd live-026 : pattern data-player-name + getAttribute (au lieu d'inline encodeURIComponent casse par apostrophe)
+    var _phImg='';
+    if(_phUrl){
+      var _pn=encodeURIComponent(String(p.name||'?'));
+      var _pfb='https://ui-avatars.com/api/?name='+_pn+'&background=172132&color=fff&size=80';
+      _phImg='<img src="'+_phUrl+'" alt="" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\''+_pfb+'\';}">';
+    }
     return '<div class="sc-player '+(align==='right'?'right':'')+'">'
       +'<div class="sc-player-photo">'+_phImg+'</div>'
       +'<div class="sc-player-top">'+(cc?'<span class="sc-flag">'+cc+'</span>':'')+'<span>#'+(p.rank||'—')+'</span></div>'
@@ -25851,8 +25857,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       dots+='<circle class="'+cls+'" cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+r+'"><title>'+esc(tip)+'</title></circle>';
     });
 
-    // Gradients (IDs uniques pour éviter collisions si plusieurs charts)
-    var gid='mg'+Math.abs((m.id||'').toString().split('').reduce(function(a,c){return a+c.charCodeAt(0);},0));
+    // bd live-025 : compteur unique pour IDs gradient SVG (au lieu du hash m.id qui peut collisionner)
+    var gid='mg'+(_chartSeq++);
     return '<svg width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="Momentum par set">'
       +'<defs>'
       +'<linearGradient id="'+gid+'p1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00e676" stop-opacity=".35"/><stop offset="100%" stop-color="#00e676" stop-opacity="0"/></linearGradient>'
@@ -25871,7 +25877,14 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   /* ── Carte live ───────────────────────────────────────────────────── */
   function liveCardCompact(m){
-    var liveProb=m.liveProbability!=null?m.liveProbability:p1WinProb(m);
+    // bd live-005 : normaliser liveProbability (backend peut envoyer 65 au lieu de 0.65)
+    var liveProb;
+    if(m.liveProbability!=null){
+      liveProb=Number(m.liveProbability);
+      if(!isFinite(liveProb)) liveProb=p1WinProb(m);     // fallback si NaN/non-numérique
+      else if(liveProb>1) liveProb=liveProb/100;          // pourcentage → fraction
+    } else liveProb=p1WinProb(m);
+    liveProb=Math.max(0.001,Math.min(0.999,liveProb));    // clamp 0.1%-99.9%
     var mom=m.momentum||{};
     var dir=mom.kfs_direction||'neutral';
     var conf=num(mom.kfs_confidence,0);
@@ -25894,23 +25907,23 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // decimals=false → entier (compteurs aces/df/BPPI). Le plus grand des deux est mis en vert.
     // pct=true → normalise les fractions 0-1 en pourcentages 0-100 (BSD/ESPN renvoient
     // parfois 0.65 pour 65%, parfois 65 directement → on uniformise en 0-100).
-    function _fmt(v,d){var n=num(v);if(n==null||isNaN(n))return '—';return d?(n).toFixed(2):String(n);}
-    function _pct(v){var n=num(v);if(n==null||isNaN(n))return null;return n>1?n:n*100;}
-    function _vs(v1,v2,d,pct){
-      var n1=pct?_pct(v1):num(v1),n2=pct?_pct(v2):num(v2);
-      var s1=(n1==null||isNaN(n1))?'—':(d?n1.toFixed(2):String(n1));
-      var s2=(n2==null||isNaN(n2))?'—':(d?n2.toFixed(2):String(n2));
-      var c1=(n1!=null&&n2!=null&&n1>n2)?' style="color:var(--green)"':'';
-      var c2=(n1!=null&&n2!=null&&n2>n1)?' style="color:var(--green)"':'';
-      return '<b><span'+c1+'>'+s1+'</span> / <span'+c2+'>'+s2+'</span></b>';
+    // bd live-008 : _pct teste v==null AVANT num() (sinon undefined→0→"0.00%" au lieu de "—")
+    function _pct(v){
+      if(v==null||v===''||isNaN(Number(v))) return null;
+      var n=Number(v); return n>1?n:n*100;
     }
+    // bd live-021 : _fmt et _vs supprimés (code mort, jamais appelés)
     // Duel miroir 3D : barre comparative P1 (gauche, vert) vs P2 (droite, bleu).
     // opts: {unit:'%', max:100, decimals:true, pct:true}. Si pas de max → max dynamique.
     // Le gagnant (valeur + haute) reçoit la classe win (glow renforcé).
     function _duel(label,v1,v2,opts){
       opts=opts||{};
-      var n1=opts.pct?_pct(v1):num(v1),n2=opts.pct?_pct(v2):num(v2);
-      var has1=n1!=null&&!isNaN(n1),has2=n2!=null&&!isNaN(n2);
+      // bd live-008 : tester v1/v2==null AVANT num() (sinon undefined→0 fausse "donnée présente")
+      var _has1 = v1!=null && v1!=='' && !isNaN(Number(v1));
+      var _has2 = v2!=null && v2!=='' && !isNaN(Number(v2));
+      var n1 = _has1 ? (opts.pct ? _pct(v1) : Number(v1)) : null;
+      var n2 = _has2 ? (opts.pct ? _pct(v2) : Number(v2)) : null;
+      var has1 = n1!=null && !isNaN(n1), has2 = n2!=null && !isNaN(n2);
       var d=opts.decimals!==false;
       var s1=has1?(d?n1.toFixed(2):String(Math.round(n1))):'—';
       var s2=has2?(d?n2.toFixed(2):String(Math.round(n2))):'—';
@@ -25953,9 +25966,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     // 2. Score Zone (l'élément dominant — photos + noms + sets + games + serveur)
     html+='<div class="sc-lc-score">';
-    html+='<div class="sc-lc-player'+(m.serving===1?' serving':'')+'">'+_phHtml(_ph1,m.player1&&m.player1.name)+'<div><b>'+esc(p1n)+'</b><span>'+s1+'</span></div></div>';
-    html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(m.serving?'<div class="sc-lc-srv">🎾 '+(m.serving===1?p1n:p2n)+'</div>':'')+'</div>';
-    html+='<div class="sc-lc-player p2'+(m.serving===2?' serving':'')+'">'+_phHtml(_ph2,m.player2&&m.player2.name)+'<div><b>'+esc(p2n)+'</b><span>'+s2+'</span></div></div>';
+    // bd live-004+live-010 : esc(p1n/p2n) contre XSS + parseInt(m.serving) pour accepter string "1"/"2" du backend
+    var _srv = m.serving!=null ? (parseInt(m.serving,10)||0) : 0;
+    html+='<div class="sc-lc-player'+(_srv===1?' serving':'')+'">'+_phHtml(_ph1,m.player1&&m.player1.name)+'<div><b>'+esc(p1n)+'</b><span>'+s1+'</span></div></div>';
+    html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(_srv?'<div class="sc-lc-srv">🎾 '+(_srv===1?esc(p1n):esc(p2n))+'</div>':'')+'</div>';
+    html+='<div class="sc-lc-player p2'+(_srv===2?' serving':'')+'">'+_phHtml(_ph2,m.player2&&m.player2.name)+'<div><b>'+esc(p2n)+'</b><span>'+s2+'</span></div></div>';
     html+='</div>';
 
     // 3. ACTION ZONE — Value bet remonté IMMÉDIATEMENT sous le score (décision en 1 sec)
@@ -25979,28 +25994,37 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     // 4c. Ligne DR + OU pills fusionnées (1 ligne horizontale)
     html+='<div class="sc-lc-kpirow">';
-    if(m.dr_exact&&m.dr_exact.dr!=null){
+    // bd live-020 : guard dr>0 pour éviter 1/0=Infinity
+    if(m.dr_exact&&m.dr_exact.dr!=null&&m.dr_exact.dr>0){
       var dr=m.dr_exact.dr;
       html+='<span class="sc-lc-dr-chip">DR <b style="color:'+(dr>=1?'var(--green)':'var(--blue)')+'">'+(dr>=1?'P1 ':'P2 ')+(dr>=1?dr:(1/dr)).toFixed(2)+'</b></span>';
     }
+    // bd live-009 : guards !=null sur chaque champ pour éviter "undefined%"
     if(m.set_ou){
       var ou=m.set_ou;
-      html+='<span class="sc-lc-ou-pill'+(ou.o75>=65?' hi':'')+'">O7.5 '+ou.o75+'%</span>';
-      html+='<span class="sc-lc-ou-pill'+(ou.o85>=65?' hi':'')+'">O8.5 '+ou.o85+'%</span>';
-      html+='<span class="sc-lc-ou-pill'+(ou.u125>=65?' hi':'')+'">U12.5 '+ou.u125+'%</span>';
+      if(ou.o75!=null) html+='<span class="sc-lc-ou-pill'+(ou.o75>=65?' hi':'')+'">O7.5 '+ou.o75+'%</span>';
+      if(ou.o85!=null) html+='<span class="sc-lc-ou-pill'+(ou.o85>=65?' hi':'')+'">O8.5 '+ou.o85+'%</span>';
+      if(ou.u125!=null) html+='<span class="sc-lc-ou-pill'+(ou.u125>=65?' hi':'')+'">U12.5 '+ou.u125+'%</span>';
     }
     html+='</div>';
 
     // 5. Bouton accordéon (libellé harmonisé via data-label)
-    html+='<button class="sc-expand" onclick="Scope._toggle(this)" data-label-closed="📊 Analyse détaillée" data-label-open="Masquer l\'analyse"><span class="lbl">📊 Analyse détaillée</span><span class="chev">▾</span></button>';
-    html+='<div class="sc-detail">';
+    // bd live-001+live-016+live-019 : persistance état + ARIA + ID valide + backslash retiré
+    var _isOpen=_expandedMatchIds.has(String(m.id));
+    var _detId='det-'+String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_');
+    html+='<button class="sc-expand'+(_isOpen?' open':'')+'" onclick="Scope._toggle(this)" data-match-id="'+(typeof escapeHtml==='function'?escapeHtml:esc)(m.id)+'" aria-expanded="'+(_isOpen?'true':'false')+'" aria-controls="'+esc(_detId)+'" data-label-closed="📊 Analyse détaillée" data-label-open="Masquer l\'analyse"><span class="lbl">'+(_isOpen?'Masquer l\'analyse':'📊 Analyse détaillée')+'</span><span class="chev">▾</span></button>';
+    html+='<div class="sc-detail'+(_isOpen?' open':'')+'" id="'+esc(_detId)+'" role="region">';
 
     // Panel 1 — LIVE temps réel (duels miroir 3D)
     html+='<div class="sc-seclbl">'+svgIcon('radio',12)+' Stats Live (temps réel)</div>';
     html+='<div class="sc-stat-panel">';
     var sm=m.serve_momentum||{};
     var run=sm.run||{};
-    if(run.player)html+='<div class="sc-stat-row"><span>Série en cours</span><b style="color:'+(run.player===1?'var(--green)':'var(--blue)')+'">'+(run.player===1?p1n:p2n)+' '+run.len+' pts</b></div>';
+    if(run.player){
+      // bd live-004+live-010 : parseInt(run.player) + esc(p1n/p2n) (même bug que ligne 25957)
+      var _rp = run.player!=null ? (parseInt(run.player,10)||0) : 0;
+      if(_rp)html+='<div class="sc-stat-row"><span>Série en cours</span><b style="color:'+(_rp===1?'var(--green)':'var(--blue)')+'">'+(_rp===1?esc(p1n):esc(p2n))+' '+run.len+' pts</b></div>';
+    }
     html+=_duel('% 1ère balle gagnée',st.p1_first_won,st.p2_first_won,{pct:true,unit:'%'});
     html+=_duel('% 2ème balle gagnée',st.p1_second_won,st.p2_second_won,{pct:true,unit:'%'});
     html+=_duel('% 1er service en jeu',st.p1_first_pct,st.p2_first_pct,{pct:true,unit:'%'});
@@ -26027,8 +26051,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // Panel 3 — DR chart évolution + par set
     var _drDetail='';
     try{
-      // DR set courant (toujours affiché si dr_exact dispo)
-      if(m.dr_exact&&m.dr_exact.dr!=null){
+      // DR set courant (toujours affiché si dr_exact dispo) — bd live-020 : guard dr>0
+      if(m.dr_exact&&m.dr_exact.dr!=null&&m.dr_exact.dr>0){
         var _dr=m.dr_exact.dr,_drl=_dr>=1?'P1':'P2',_drv=_dr>=1?_dr:(1/_dr);
         _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('scale',12)+' Dominance Ratio (set courant)</div>';
         _drDetail+='<div class="sc-stat-row"><span>DR</span><b style="color:'+(_dr>=1?'var(--green)':'var(--blue)')+'">'+_drl+' '+_drv.toFixed(2)+'</b></div>';
@@ -26200,6 +26224,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   // module-level host tracking for re-render on filter/sort
   var _vbHost=null,_vbMatches=null,_vbOpts={filter:'all',sort:'edge'};
+  // bd live-001 : persistance état d'expansion des accordéons (cross-re-render).
+  // Variable module-level dans le Scope IIFE (pas dans _state qui est dans le TennisScope IIFE).
+  var _expandedMatchIds=new Set();
+  // bd live-025 : compteur module-level pour IDs gradient SVG uniques (évite collisions si match IDs dupliqués)
+  var _chartSeq=0;
 
   function filterBtn(val,active,lbl){return '<button class="sc-fbtn '+(active===val?'active':'')+'" onclick="Scope._refilter(\''+val+'\')">'+lbl+'</button>';}
   function sortSelect(active){return '<select class="sc-sort" onchange="Scope._resort(this.value)">'
@@ -26273,7 +26302,23 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     },
 
     // interne : toggle détail + re-filter + re-sort
-    _toggle:function(btn){var d=btn.nextElementSibling;var open=btn.classList.toggle('open');d.classList.toggle('open',open);var lbl=btn.querySelector('span.lbl')||btn.querySelector('span:not(.chev)');if(lbl){lbl.textContent=open?(btn.getAttribute('data-label-open')||"Masquer l'analyse"):(btn.getAttribute('data-label-closed')||lbl.textContent);}},
+    // bd live-001+live-016 : persistance état + maj aria-expanded au toggle
+    _toggle:function(btn){
+      var d=btn.nextElementSibling;
+      var open=btn.classList.toggle('open');
+      d.classList.toggle('open',open);
+      var lbl=btn.querySelector('span.lbl')||btn.querySelector('span:not(.chev)');
+      if(lbl){
+        lbl.textContent=open?(btn.getAttribute('data-label-open')||"Masquer l'analyse"):(btn.getAttribute('data-label-closed')||lbl.textContent);
+      }
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      // Persistance pour survivre au re-render polling/recherche/filtre
+      var mid=btn.getAttribute('data-match-id');
+      if(mid){
+        if(open) _expandedMatchIds.add(String(mid));
+        else _expandedMatchIds.delete(String(mid));
+      }
+    },
     _refilter:function(val){_vbOpts.filter=val;_rerenderVB();},
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
     // favoris ★
@@ -26366,6 +26411,9 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   function fetchData() {
     if (_state.loading) return Promise.resolve(_state.matches);
     _state.loading = true;
+    // bd live-022 : désactiver le bouton Rafraîchir pendant le fetch
+    var _refreshBtn = document.getElementById('sc-refresh-btn');
+    if (_refreshBtn) { _refreshBtn.disabled = true; _refreshBtn.style.opacity = '0.6'; }
     _state.error = null;
     _state.liveError = false;
     publishStatus('Rafraîchissement…');
@@ -26401,52 +26449,68 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           if (m.odds_player2) mapped.odds_player2 = m.odds_player2;
           return mapped;
         }).filter(Boolean);
-        _state.matches = liveMatches;
+        // bd live-002 : MERGE au lieu d'écraser — préserve les prematch existants pendant la fenêtre transitoire
+        // bd live-003 : on NE relâche PAS loading ici — on attend la fin du fetch value-bets/upcoming
+        var _liveIdsNow = {};
+        liveMatches.forEach(function(m){ _liveIdsNow[m.id] = true; });
+        _state.matches = liveMatches.concat(
+          _state.matches.filter(function(m){ return !m._isLive && !_liveIdsNow[m.id]; })
+        );
         _state.lastFetch = Date.now();
-        _state.loading = false;
         publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs live');
         updateKpiBar(_state.matches);
         renderActiveTab();
-        // Value-bets en best-effout (Pro only). Si 403/non-Pro → silencieux.
-        // Si succès → enrichit _state.matches avec prematch (sans écraser les live).
-        fetch('/api/v1/tennis/value-bets', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+        // Value-bets en best-effort (Pro only). Si 403/non-Pro → silencieux.
+        // bd live-003 : timeout 25s via Promise.race — évite loading permanent si serveur hang
+        function _fetchWithTimeout(url, ms) {
+          return Promise.race([
+            fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' }),
+            new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout ' + ms + 'ms')); }, ms); })
+          ]);
+        }
+        _fetchWithTimeout('/api/v1/tennis/value-bets', 25000)
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (data) {
             if (!data || !data.matches) {
               // bd prematch-fix : value-bets 403 (non-Pro) → fallback /tennis/upcoming (public)
-              fetch('/api/v1/tennis/upcoming', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+              return _fetchWithTimeout('/api/v1/tennis/upcoming', 25000)
                 .then(function (r) { return r.ok ? r.json() : null; })
                 .then(function (upc) {
                   if (!upc || !upc.matches) return;
                   var upcMatches = upc.matches.map(mapMatch).filter(Boolean);
-                  var liveIds2 = {};
-                  _state.matches.forEach(function (m) { if (m._isLive) liveIds2[m.id] = true; });
-                  var newUpc = upcMatches.filter(function (m) { return !liveIds2[m.id]; });
-                  _state.matches = _state.matches.concat(newUpc);
+                  // bd live-002 : REPLACE prematch, keep live (pas de doublons cumulatifs)
+                  _state.matches = _state.matches.filter(function(m){ return m._isLive; }).concat(upcMatches);
                   publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs');
                   updateKpiBar(_state.matches);
                   renderActiveTab();
-                })
-                .catch(function () { /* upcoming fail = non-blocking */ });
-              return;
+                });
             }
             var prematch = data.matches.map(mapMatch).filter(Boolean);
-            var liveIds = {};
-            _state.matches.forEach(function (m) { if (m._isLive) liveIds[m.id] = true; });
-            var newPrematch = prematch.filter(function (m) { return !liveIds[m.id]; });
-            _state.matches = _state.matches.concat(newPrematch);
+            // bd live-002 : REPLACE prematch, keep live
+            _state.matches = _state.matches.filter(function(m){ return m._isLive; }).concat(prematch);
             publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs (' + liveMatches.length + ' live)');
             updateKpiBar(_state.matches);
             renderActiveTab();
           })
-          .catch(function () { /* value-bets 403 (non-Pro) = silencieux, non-blocking */ });
+          .catch(function () { /* value-bets/upcoming 403/timeout = silencieux, non-blocking */ })
+          .then(function () {
+            // bd live-003 : relâcher loading APRÈS la fin du fetch secondaire (success OU fail)
+            _state.loading = false;
+            // bd live-022 : réactiver le bouton Rafraîchir
+            var _rb = document.getElementById('sc-refresh-btn');
+            if (_rb) { _rb.disabled = false; _rb.style.opacity = ''; }
+          });
         return _state.matches;
       })
       .catch(function (err) {
         clearTimeout(timeout);
         _state.loading = false;
+        // bd live-022 : réactiver le bouton Rafraîchir même en cas d'erreur
+        var _rb = document.getElementById('sc-refresh-btn');
+        if (_rb) { _rb.disabled = false; _rb.style.opacity = ''; }
         _state.liveError = true;
         _state.error = err && err.message || String(err);
+        updateKpiBar(_state.matches);  // bd live-012 : maj KPI même en cas d'erreur
         publishStatus('Erreur live : ' + _state.error, true);
         renderActiveTab();
         return [];
@@ -26539,7 +26603,17 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       }
     } else if (tab === 'live') {
       if (!allLive.length) {
-        var _msgL = _q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match en direct pour le moment.';
+        // bd live-006+live-007 : états loading/erreur visibles dans le panel Live
+        var _msgL;
+        if (_state.liveError) {
+          _msgL = '⚠️ Erreur live : ' + (_state.error || 'réseau') + ' — réessai automatique dans 60 s.';
+        } else if (_state.loading) {
+          _msgL = 'Chargement des matchs live…';
+        } else if (_q) {
+          _msgL = 'Aucun match trouvé pour « ' + _q + ' ».';
+        } else {
+          _msgL = 'Aucun match en direct pour le moment.';
+        }
         pEl.innerHTML = emptyState(_msgL);
       } else {
         var _groups = {};
@@ -26654,6 +26728,17 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       var page = document.getElementById('page-tennis');
       if (page && page.style.display !== 'none') fetchData();
     }, 60000);
+    // bd live-015 : pause polling quand onglet navigateur caché (économies batterie/CPU/serveur)
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) {
+        if (_timer) { clearInterval(_timer); _timer = null; }
+      } else {
+        // Reprendre immédiatement + relancer le cycle 60s (refresh instantané au retour)
+        var page = document.getElementById('page-tennis');
+        if (page && page.style.display !== 'none') fetchData();
+        if (!_timer) startAutoRefresh();
+      }
+    });
   }
 
   // ── API publique ──────────────────────────────────────────────────────
@@ -26684,8 +26769,12 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       // Premier fetch
       fetchData().then(function () {
         // Si aucun match, on tente le top10 comme fallback
+        // bd live-018 : timeout 25s via Promise.race sur le fetch top10
         if (!_state.matches.length) {
-          fetch('/api/v1/tennis/top10?mode=viewer', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+          Promise.race([
+            fetch('/api/v1/tennis/top10?mode=viewer', { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' }),
+            new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout top10')); }, 25000); })
+          ])
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
               if (data && Array.isArray(data.top10) && data.top10.length) {
@@ -26761,13 +26850,20 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   // ── Compat : exposer le rendu pour l'intégration avec renderTennisValueBets existant ──
   // Quand l'ancien code Pariscore appelle renderTennisValueBets(matches), on intercepte
   // pour rafraîchir notre vue Value Bets si l'onglet actif est valuebets.
+  // bd live-011 : MERGE au lieu d'écraser (préserve les live scores en cours)
   if (typeof window.renderTennisValueBets === 'function') {
     var _orig = window.renderTennisValueBets;
     window.renderTennisValueBets = function (raw) {
       try {
         var arr = (raw && raw.matches) ? raw.matches : (Array.isArray(raw) ? raw : []);
         if (arr.length) {
-          _state.matches = arr.map(mapMatch).filter(Boolean);
+          var _newPrematch = arr.map(mapMatch).filter(Boolean);
+          var _newIds = {};
+          _newPrematch.forEach(function(m){ _newIds[m.id] = true; });
+          // Keep live + replace prematch (stratégie cohérente avec fetchData)
+          _state.matches = _state.matches.filter(function(m){
+            return m._isLive || !_newIds[m.id];
+          }).concat(_newPrematch);
           _state.lastFetch = Date.now();
           updateKpiBar(_state.matches);
           if (_state.activeTab === 'valuebets' || _state.activeTab === 'prematch' || _state.activeTab === 'live') {
@@ -26792,7 +26888,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   <div class="tn2-modal-card" role="dialog" aria-modal="true" style="max-width:520px;padding:20px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <h3 style="font-family:var(--font-head,sans-serif);font-size:16px;font-weight:800;color:var(--text,#fff)">📊 Dominance Ratio</h3>
-      <a onclick="closeDRPopup()" style="cursor:pointer;color:var(--text3,#94a3b8);font-size:18px">✕</a>
+      <button type="button" onclick="closeDRPopup()" aria-label="Fermer le popup Dominance Ratio" style="cursor:pointer;color:var(--text3,#94a3b8);font-size:18px;background:none;border:none;padding:0;line-height:1;font:inherit;">✕</button>
     </div>
     <div id="dr-popup-content" style="min-height:200px"></div>
   </div>
