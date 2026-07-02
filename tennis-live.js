@@ -420,7 +420,8 @@ var TennisLive = (function () {
         intensity: int,
         bppi: bppi,
         glicko2: gl2,
-        smTrend: smTrend
+        smTrend: smTrend,
+        momentum: m._momentum || null
       },
       drHistory: m._drHist
     };
@@ -529,6 +530,35 @@ var TennisLive = (function () {
 
     pitDiv.innerHTML = '<div class="tl-pit-title"><span>PIT · 6 indicateurs</span><span class="tl-pit-source">' + drSrc + drRelBadge + '</span></div><div class="tl-pit-grid">' + pitMetric('Dom. Ratio', pit.dr != null ? formatDR(pit.dr) : '—', '\u0394 ' + formatDR(ms.dr.delta)) + pitMetric('Hold %', holdVal, 'P1/P2 % service') + pitMetric(rallySub === 'shots/point' ? 'Rally Avg' : '1st Serve', rallyVal, rallySub) + pitMetric('xWin \u0394', pit.xWinDelta != null ? (pit.xWinDelta > 0 ? '+' : '') + pit.xWinDelta + 'pts' : '—', 'WP ' + (pit.liveWinProb != null ? Math.round(pit.liveWinProb) + '%' : '—')) + pitMetric('Intensity', String(pit.intensity), '/ 100') + pitMetric('BPPI', bppiVal, bppiSub) + '</div>';
     c.appendChild(pitDiv);
+
+
+    // MODELE bar
+    var modelScore = null;
+    if (pit.dr != null && pit.liveWinProb != null) {
+      modelScore = Math.round((pit.dr * 50 + pit.liveWinProb * 0.5) / 1.5);
+      modelScore = Math.max(0, Math.min(100, modelScore));
+    }
+    if (modelScore != null) {
+      var modDiv = el('div', 'tl-pit');
+      var modColor = modelScore >= 70 ? '#10B981' : modelScore >= 50 ? '#F59E0B' : '#EF4444';
+      modDiv.innerHTML = '<div class="tl-pit-title"><span>Modèle · Prédiction</span><span class="tl-pit-source">DR + WinProb</span></div><div class="tl-bar-container"><div class="tl-bar-bg"><div class="tl-bar-fill" style="width:' + modelScore + '%;background:' + modColor + '"></div></div><span class="tl-bar-label" style="color:' + modColor + ';font-weight:700">' + modelScore + '%</span></div>';
+      c.appendChild(modDiv);
+    }
+
+    // MOMENTUM bar
+    var momentumVal = null;
+    if (pit.momentum != null) {
+      momentumVal = Math.round(pit.momentum);
+    } else if (pit.smTrend && pit.smTrend.run) {
+      momentumVal = Math.min(100, pit.smTrend.run.len * 20 + (pit.smTrend.trend !== 'even' ? 15 : 0));
+    }
+    if (momentumVal != null) {
+      var momDiv = el('div', 'tl-pit');
+      var momColor = momentumVal >= 70 ? '#10B981' : momentumVal >= 45 ? '#F59E0B' : '#EF4444';
+      var momLabel = momentumVal >= 70 ? 'Fort' : momentumVal >= 45 ? 'Modéré' : 'Faible';
+      momDiv.innerHTML = '<div class="tl-pit-title"><span>Momentum · Dynamique</span><span class="tl-pit-source">' + momLabel + '</span></div><div class="tl-bar-container"><div class="tl-bar-bg"><div class="tl-bar-fill" style="width:' + momentumVal + '%;background:' + momColor + '"></div></div><span class="tl-bar-label" style="color:' + momColor + ';font-weight:700">' + momentumVal + '%</span></div>';
+      c.appendChild(momDiv);
+    }
 
     // Glicko2 badge if available
     if (pit.glicko2) {
@@ -864,12 +894,12 @@ var TennisLive = (function () {
     state.loading = false;
     console.warn('[TennisLive] Using mock data — /api/v1/tennis/live unavailable');
     var ps = [
-      { name: 'Sinner Jannik', rank: 1, elo: 2320, country: 'ITA', flag: 'it', preWinProb: 0.65 },
-      { name: 'Fritz Taylor', rank: 12, elo: 2050, country: 'USA', flag: 'us', preWinProb: 0.55 },
-      { name: 'Alcaraz Carlos', rank: 2, elo: 2167, country: 'ESP', flag: 'es', preWinProb: 0.60 },
-      { name: 'Djokovic Novak', rank: 8, elo: 2100, country: 'SRB', flag: 'rs', preWinProb: 0.58 },
-      { name: 'Ruud Casper', rank: 6, elo: 2000, country: 'NOR', flag: 'no', preWinProb: 0.52 },
-      { name: 'Zverev Alexander', rank: 4, elo: 2080, country: 'GER', flag: 'de', preWinProb: 0.56 }
+      { name: 'Sinner Jannik', rank: 1, elo: 2320, country: 'ITA', flag: 'it', preWinProb: 0.65, photoUrl: "https://www.atptour.com/-/media/tennis/players/head-shot/sinner_head_22.png" },
+      { name: 'Fritz Taylor', rank: 12, elo: 2050, country: 'USA', flag: 'us', preWinProb: 0.55, photoUrl: "https://www.atptour.com/-/media/tennis/players/head-shot/fritz_head_22.png" },
+      { name: 'Alcaraz Carlos', rank: 2, elo: 2167, country: 'ESP', flag: 'es', preWinProb: 0.60, photoUrl: "https://www.atptour.com/-/media/tennis/players/head-shot/alcaraz_head_22.png" },
+      { name: 'Djokovic Novak', rank: 8, elo: 2100, country: 'SRB', flag: 'rs', preWinProb: 0.58, photoUrl: "https://www.atptour.com/-/media/tennis/players/head-shot/djokovic_head_22.png" },
+      { name: 'Ruud Casper', rank: 6, elo: 2000, country: 'NOR', flag: 'no', preWinProb: 0.52, photoUrl: "https://www.atptour.com/-/media/tennis/players/head-shot/ruud_head_22.png" },
+      { name: 'Zverev Alexander', rank: 4, elo: 2080, country: 'GER', flag: 'de', preWinProb: 0.56, photoUrl: "https://www.atptour.com/-/media/tennis/players/head-shot/zverev_head_22.png" }
     ];
     var ts = ['Wimbledon', 'Eastbourne', 'Mallorca', 'Berlin', 'Bad Homburg', 'Wimbledon'];
     var rs = ['Finale', 'Demi', 'Quart', '8e', '8e', '8e'];
@@ -881,7 +911,35 @@ var TennisLive = (function () {
 
   function createMockMatch(cfg) {
     var sets = [{ p1: 3 + (Math.abs(hashCode(cfg.id)) % 4), p2: 2 + (Math.abs(hashCode(cfg.id + 'b')) % 5) }];
-    var drVal = 1 + (Math.abs(hashCode(cfg.id + 'dr')) % 40) / 100; // 1.00-1.40
+    var drVal = 1 + (Math.abs(hashCode(cfg.id + 'dr')) % 40) / 100;
+    var h1 = Math.abs(hashCode(cfg.id + 'h1'));
+    var h2 = Math.abs(hashCode(cfg.id + 'h2'));
+    var lwp = Math.round(50 + (drVal - 1) * 60 + (h1 % 20) - 10);
+    lwp = Math.max(30, Math.min(85, lwp));
+    var press = Math.round(40 + Math.abs(drVal - 1) * 60 + (h1 % 15));
+    press = Math.max(25, Math.min(95, press));
+    var intens = Math.round(45 + (Math.abs(hashCode(cfg.id + 'i')) % 35));
+    intens = Math.max(30, Math.min(98, intens));
+    var svc = [];
+    var ng = Math.max(3, Math.min(8, 4 + (h1 % 5)));
+    for (var si = 0; si < ng; si++) {
+      var sw = (si + h2 % 2) % 2 === 0 ? 'p1' : 'p2';
+      svc.push({ s: sw, h: (Math.abs(hashCode(cfg.id + 'sv' + si)) % 10) > 3 });
+    }
+    var smRunLen = 1 + (h1 % 4);
+    var smRunPlayer = (h2 % 2) + 1;
+    var smTrend = smRunLen >= 3 ? (smRunPlayer === 1 ? 'p1' : 'p2') : 'even';
+    var serveMomentum = { breaks_recent: h1 % 4, run: { player: smRunPlayer, len: smRunLen }, trend: smTrend };
+    var holdPct1 = 55 + (h1 % 35);
+    var holdPct2 = 55 + (h2 % 30);
+    var rallyAvg = 3.5 + (h1 % 20) / 10;
+    var bppi = { p1: 40 + (h1 % 30), p2: 35 + (h2 % 35), missing: false, components: { pressure: intens, svc_momentum: smRunLen * 10 } };
+    var glicko2 = {
+      p1_serve: 150 + (cfg.p1.elo || 2000) / 10,
+      p1_return: 130 + (cfg.p1.elo || 2000) / 12,
+      p2_serve: 140 + (cfg.p2.elo || 2000) / 11,
+      p2_return: 125 + (cfg.p2.elo || 2000) / 13
+    };
     return {
       id: cfg.id, tournament: cfg.tournament, round: cfg.round, surface: cfg.surface, tour: cfg.tour,
       p1: cfg.p1, p2: cfg.p2,
@@ -890,11 +948,12 @@ var TennisLive = (function () {
       _fin: false, _win: null, _lastBreak: false,
       _drHist: [{ p1: drVal, p2: 1 / drVal }],
       _dr: { p1: drVal, p2: 1 / drVal, delta: Math.abs(drVal - 1 / drVal), exact: false, reliable: false, source: 'mock' },
-      _svc: [], _intensity: 55, _pressure: 60,
-      _liveWinProb: 58, _isLive: false, _startTime: null,
+      _svc: svc, _intensity: intens, _pressure: press,
+      _liveWinProb: lwp, _isLive: false, _startTime: null,
       _currentPoint: null, _serving: 'p1',
-      _holdPct1: null, _holdPct2: null, _rallyAvg: null, _betfairWom: null,
-      _bppi: null, _glicko2: null, _bsdStats: null, _serveMomentum: null
+      _holdPct1: holdPct1, _holdPct2: holdPct2, _rallyAvg: rallyAvg, _betfairWom: null,
+      _bppi: bppi, _glicko2: glicko2, _bsdStats: null, _serveMomentum: serveMomentum,
+      _momentum: smRunLen * 10 + press / 10
     };
   }
 
