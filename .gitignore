@@ -139,3 +139,6 @@ cache/
 .deploy-backups/
 *.db.backup-*
 pariscore.db.backup-*
+.deploy-backups/
+*.db.backup-*
+pariscore.db.backup-*
