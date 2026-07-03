@@ -1,6 +1,6 @@
 {
   "description": "Index des photos riders + logos teams cyclisme (source: Wikipedia)",
-  "last_update": "2026-07-03T13:30:36Z",
+  "last_update": "2026-07-03T15:06:56Z",
   "riders": {
     "tadej-pogacar": {
       "name": "Tadej Pogačar",
@@ -318,11 +318,12 @@
     },
     "visma-lease-a-bike": {
       "name": "Visma | Lease a Bike",
-      "wikipedia_title": "Team Visma–Lease a Bike",
-      "image_url": null,
-      "local_path": null,
-      "status": "no_image",
-      "scraped_at": "2026-07-03T13:30:31Z"
+      "wikipedia_title": "Team Visma–Lease a Bike (men's team)",
+      "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/b/be/Visma-Lease_a_Bike_logo.svg/330px-Visma-Lease_a_Bike_logo.svg.png",
+      "local_path": "data/cycling/images/teams/visma-lease-a-bike.png",
+      "status": "ok",
+      "source": "Wikipedia REST summary (Team Visma–Lease a Bike (men's team))",
+      "scraped_at": "2026-07-03T15:06:31Z"
     },
     "red-bull-bora-hansgrohe": {
       "name": "Red Bull-BORA-hansgrohe",
@@ -334,27 +335,30 @@
     },
     "netcompany-ineos": {
       "name": "Netcompany-INEOS",
-      "wikipedia_title": "Ineos Grenadiers",
-      "image_url": null,
-      "local_path": null,
-      "status": "no_image",
-      "scraped_at": "2026-07-03T13:30:33Z"
+      "wikipedia_title": "Netcompany–Ineos",
+      "image_url": "https://upload.wikimedia.org/wikipedia/en/0/06/Ineos_Grenadiers_Logo.jpg",
+      "local_path": "data/cycling/images/teams/netcompany-ineos.jpg",
+      "status": "ok",
+      "source": "Wikipedia wikitext infobox image (Netcompany–Ineos)",
+      "scraped_at": "2026-07-03T15:06:43Z"
     },
     "lidl-trek": {
       "name": "Lidl-Trek",
-      "wikipedia_title": "Lidl–Trek",
-      "image_url": null,
-      "local_path": null,
-      "status": "no_image",
-      "scraped_at": "2026-07-03T13:30:34Z"
+      "wikipedia_title": "Trek Factory Racing",
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Lidl%E2%80%93Trek_logo.png",
+      "local_path": "data/cycling/images/teams/lidl-trek.png",
+      "status": "ok",
+      "source": "Wikipedia REST summary (Trek Factory Racing)",
+      "scraped_at": "2026-07-03T15:06:53Z"
     },
     "decathlon-cma-cgm": {
       "name": "Decathlon CMA CGM",
-      "wikipedia_title": "Decathlon AG2R La Mondiale",
-      "image_url": null,
-      "local_path": null,
-      "status": "no_image",
-      "scraped_at": "2026-07-03T13:30:35Z"
+      "wikipedia_title": "Decathlon-AG2R La Mondiale",
+      "image_url": "https://upload.wikimedia.org/wikipedia/en/a/a4/Decathlon_CMA_CGM_logo.png",
+      "local_path": "data/cycling/images/teams/decathlon-cma-cgm.png",
+      "status": "ok",
+      "source": "Wikipedia REST summary (Decathlon-AG2R La Mondiale)",
+      "scraped_at": "2026-07-03T15:06:56Z"
     },
     "alpecin-premier-tech": {
       "name": "Alpecin Premier Tech",
