@@ -42916,11 +42916,16 @@ if (pathname === '/api/v1/tennis/player-photo' && req.method === 'GET') {
     // 1) Tente d'abord le lookup dans tennis_players_elo → route <id> BSD (cache disque)
     const eloInfo = _lookupTennisElo(playerName);
     if (eloInfo && eloInfo.id) {
-      // Redirige vers la route <id> qui a un cache disque + proxy BSD + fallback Wikipedia
-      const redirectUrl = '/api/v1/tennis/player-photo/' + encodeURIComponent(eloInfo.id);
-      res.writeHead(302, { 'Location': redirectUrl, 'Cache-Control': 'public, max-age=86400' });
-      res.end();
-      return;
+      // Vérifie si on a déjà une photo tennis-warehouse (meilleure qualité) → skip BSD redirect
+      var _tw = sqldb.prepare('SELECT 1 FROM player_photos WHERE player_id = ? AND source = ?').get(playerName.toLowerCase(), 'tennis-warehouse');
+      if (!_tw) {
+        // Pas de photo TW → redirect BSD normal
+        var redirectUrl = '/api/v1/tennis/player-photo/' + encodeURIComponent(eloInfo.id);
+        res.writeHead(302, { 'Location': redirectUrl, 'Cache-Control': 'public, max-age=86400' });
+        res.end();
+        return;
+      }
+      // Si photo TW existe → fall through vers cache mémoire / SQLite / Wikipedia
     }
 
     // 2) Vérifie le cache mémoire Wikipedia

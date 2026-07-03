@@ -1,0 +1,85 @@
+From 2b338ee816949b8ad780d9a9c0e56575ca60680f Mon Sep 17 00:00:00 2001
+From: Z User <z@container>
+Date: Thu, 2 Jul 2026 14:08:31 +0000
+Subject: [PATCH] fix(tennis-live): popup DR evolution ne s'ouvre pas quand
+ m.id contient une apostrophe
+
+Cause racine: esc() (ligne 115) n'echappe pas les quotes ' et ". Un matchId
+comme t_O'Connor_Alcaraz cassait l'attribut onclick inline (SyntaxError:
+missing ) after argument list) et le popup ne s'ouvrait pas silencieusement.
+
+Fix applique (4 emplacements, +16/-6 lignes):
+- Bouton DR popup: esc -> escapeHtml + pattern data-dr-match-id + getAttribute
+- Data div DR popup: esc -> escapeHtml (coherence)
+- catch(e){} silencieux -> console.warn (logging diagnostic)
+- Bouton favori (favStar): meme bug P1, meme fix applique en bonus
+- openDRPopup: guard + logging si data div introuvable
+
+Verification:
+- Test Playwright 6/6 cas aux limites PASS (apostrophe, guillemets, ampersand, null)
+- 75/75 tests unitaires existants (tests/tennis-matchs.test.js) toujours OK
+- 0 SyntaxError sur les 16 blocs <script> de pariscore.html
+
+Rapport: /home/z/my-project/download/rapport-fin-mission-dr-popup.md
+---
+ pariscore.html | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/pariscore.html b/pariscore.html
+index 54f3e65..f3c51be 100755
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -26036,10 +26036,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
+         if(m.dr_exact.p1Ret!=null)_drDetail+='<div class="sc-stat-row"><span>Return P1/P2</span><b>'+num(m.dr_exact.p1Ret)+' / '+num(m.dr_exact.p2Ret)+'</b></div>';
+       }
+       // DR chart : bouton qui ouvre un popup avec DR Set + DR Match
++      // bd dr-popup-fix : escapeHtml (et non esc) pour échapper quotes ' et " — sinon
++      // un matchId contenant une apostrophe (ex: "t_O'Connor_Alcaraz") casse l'inline
++      // onclick (SyntaxError: missing ) after argument list) et le popup ne s'ouvre pas.
+       var _drCount = (m.dr_series && m.dr_series.p1) ? m.dr_series.p1.length : 0;
+-      var _drMatchId = esc(m.id || '');
+-      _drDetail+='<button class="sc-dr-popup-btn" onclick="openDRPopup(\'' + _drMatchId + '\')">' + svgIcon('chart',12) + ' DR évolution (' + _drCount + ' points) ▸</button>';
+-      _drDetail+='<div id="dr-popup-data-' + _drMatchId + '" style="display:none">' + esc(JSON.stringify({series:m.dr_series||null, perSet:m.dr_per_set||null, exact:m.dr_exact||null})) + '</div>';
++      var _drMatchId = (typeof escapeHtml === 'function' ? escapeHtml : esc)(m.id || '');
++      _drDetail+='<button class="sc-dr-popup-btn" data-dr-match-id="' + _drMatchId + '" onclick="openDRPopup(this.getAttribute(\'data-dr-match-id\'))">' + svgIcon('chart',12) + ' DR évolution (' + _drCount + ' points) ▸</button>';
++      _drDetail+='<div id="dr-popup-data-' + _drMatchId + '" style="display:none">' + (typeof escapeHtml === 'function' ? escapeHtml : esc)(JSON.stringify({series:m.dr_series||null, perSet:m.dr_per_set||null, exact:m.dr_exact||null})) + '</div>';
+       if(m.dr_per_set){
+         var _sl=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
+         if(_sl.length){
+@@ -26049,7 +26052,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
+           _drDetail+='</div>';
+         }
+       }
+-    }catch(e){}
++    }catch(e){ console.warn('[liveCardCompact] DR detail render error for match', m && m.id, ':', e && e.message); }
+     html+=_drDetail;
+ 
+     // Scouting Report (remplace Facteurs/Marchés — profils forces/faiblesses + lecture parieur + top bets)
+@@ -26238,7 +26241,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
+   // Bouton étoile à insérer dans le header des cartes.
+   function favStar(m){
+     var on=isFav(m.id);
+-    return '<button class="sc-fav'+(on?' on':'')+'" onclick="Scope.toggleFav(\''+esc(m.id)+'\')" title="Favori" aria-label="Basculer favori">'+svgIcon('star',14)+'</button>';
++    return '<button class="sc-fav'+(on?' on':'')+'" data-fav-match-id="'+(typeof escapeHtml==='function'?escapeHtml:esc)(m.id)+'" onclick="Scope.toggleFav(this.getAttribute(\'data-fav-match-id\'))" title="Favori" aria-label="Basculer favori">'+svgIcon('star',14)+'</button>';
+   }
+ 
+   /* ── Public API ───────────────────────────────────────────────────── */
+@@ -26798,7 +26801,14 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
+ function openDRPopup(matchId) {
+   try {
+     var dataEl = document.getElementById('dr-popup-data-' + matchId);
+-    if (!dataEl) return;
++    if (!dataEl) {
++      // bd dr-popup-fix : log diagnostics au lieu de silently return — aide à debug
++      // si jamais le data div n'est pas rendu (ex: match sans dr_series/dr_per_set/dr_exact).
++      console.warn('[DR Popup] Aucun data div pour matchId=', JSON.stringify(matchId),
++        '— data divs disponibles:',
++        Array.prototype.slice.call(document.querySelectorAll('[id^="dr-popup-data-"]')).map(function(el){return el.id;}));
++      return;
++    }
+     var data = JSON.parse(dataEl.textContent || '{}');
+     var content = document.getElementById('dr-popup-content');
+     var html = '';
+-- 
+2.47.3
+
