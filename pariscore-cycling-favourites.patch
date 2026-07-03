@@ -1,0 +1,1079 @@
+diff --git a/Dockerfile b/Dockerfile
+index 6c8a3c7..791ce58 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -34,6 +34,9 @@ COPY --from=deps --chown=pariscore:pariscore /app/node_modules ./node_modules
+ COPY --chown=pariscore:pariscore server.js pariscore.html admin.html ./
+ COPY --chown=pariscore:pariscore bsd_config.json flags_config.json leagues_config.json ./
+ 
++# FIX QA 2-c : copier le dossier services/ (nécessaire pour require('./services/cyclingService') au boot)
++COPY --chown=pariscore:pariscore services/ ./services/
++
+ # Config files
+ COPY --chown=pariscore:pariscore assets/ ./assets/
+ 
+diff --git a/data/cycling/stage-favourites.json b/data/cycling/stage-favourites.json
+new file mode 100644
+index 0000000..6345e55
+--- /dev/null
++++ b/data/cycling/stage-favourites.json
+@@ -0,0 +1,177 @@
++{
++  "race": "Tour de France 2026",
++  "source": "cyclingstage.com",
++  "last_update": "2026-07-03T01:18:46.208164+00:00",
++  "stages": {
++    "1": {
++      "stage": 1,
++      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-1-contenders-tdf-2026/",
++      "scraped_at": "2026-07-03T01:18:46.206634+00:00",
++      "title": "Tour de France 2026 Favourites stage 1: Looking for the best finisher",
++      "description": "The yellow jersey awaits the rider who posts the fastest time on the team time trial course. Given the 7% gradient over the final 800 metres, the punchy climbers will almost certainly drop their team-mates in the finale in an attempt to ride into yellow.\n\n(Slideshow route/profile)\n\nUnlike an oldschool team time trial, where the time of the fifth rider across the line counts, each rider will be credited with his own individual time. The formula for taking the yellow jersey therefore appears straightforward: blast around the Barcelona course as quickly as possible as a team, before the designated leader goes clear in the finale to set the fastest time. To make that work, you need a squad full of strong time trialists who are willing to work for one another, and a leader with a punchy finishing kick.\n\nSeamless teamwork will be crucial during the flat opening section, and that remains largely the case on the first of the two climbs in the finale. It rises for 1.1 kilometres at an average gradient of 5.1%, so some teams may choose to continue from this point with only their strongest climbers. After a short flat section, the road dips slightly before the explosive final ascent of 800 metres at 7%.\n\nVisma | Lease a Bike recently won a team time trial run under the same format at the Tour Auvergne-Rhône-Alpes, with Netcompany-INEOS finishing a close second. Comparisons are difficult, however, as the teams will not be lining up at the Tour with exactly the same riders.\n\nSpecial mention should also go to Van der Poel’s individual time trial at the Tour de Suisse. He matched Pogacar’s time to finish second, but what really stood out was the determination with which he attacked the course on his time trial bike – hardly his weapon of choice. It raised the question: could he be targeting Barcelona?",
++      "favourites_raw": "*** UAE Emirates (Pogacar), Visma | Lease a Bike (Vingegaard)\n\n** Red Bull-BORA-hansgrohe (Evenepoel), Netcompany-INEOS (Arensman, Vauquelin)\n\n* Lidl-Trek (Ayuso, Skjelmose), Decathlon CMA CGM (Seixas), Alpecin Premier Tech (Van der Poel), EF Education-EasyPost (Carapaz)",
++      "favourites": [
++        {
++          "tier": "***",
++          "team": "UAE Emirates",
++          "riders": [
++            "Pogacar"
++          ]
++        },
++        {
++          "tier": "***",
++          "team": "Visma | Lease a Bike",
++          "riders": [
++            "Vingegaard"
++          ]
++        },
++        {
++          "tier": "**",
++          "team": "Red Bull-BORA-hansgrohe",
++          "riders": [
++            "Evenepoel"
++          ]
++        },
++        {
++          "tier": "**",
++          "team": "Netcompany-INEOS",
++          "riders": [
++            "Arensman",
++            "Vauquelin"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": "Lidl-Trek",
++          "riders": [
++            "Ayuso",
++            "Skjelmose"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": "Decathlon CMA CGM",
++          "riders": [
++            "Seixas"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": "Alpecin Premier Tech",
++          "riders": [
++            "Van der Poel"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": "EF Education-EasyPost",
++          "riders": [
++            "Carapaz"
++          ]
++        }
++      ],
++      "weather_forecast": "Weather forecast:\n\nThe Tour starts in sunny conditions. During the team time trial, temperatures are expected to reach 29°C and the wind will come from the south at around 18 km/h. Conditions are stable between start and finish, so all teams will start under the same circumstances, ensuring a fair race.",
++      "publication_info": "First published on 17 June - last update 30 June: weather forecest added",
++      "status": "ok",
++      "error": null
++    },
++    "2": {
++      "stage": 2,
++      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-2-contenders-tdf-2026/",
++      "scraped_at": "2026-07-03T01:06:03.655074+00:00",
++      "title": "Tour de France 2026 Favourites stage 2: A puncher’s paradise",
++      "description": "Stage 2 of the Tour comes to a head on a hilly circuit in Barcelona, tackled three times by the riders, each lap featuring two sharp, punchy climbs. The first is 1.6 kilometres at 9.3%, and the second, which doubles as the finish, is 600 metres at 7%.\n\n(Slideshow route/profile)\n\nPunchers will be licking their lips while eyeing the finishing circuit of stage 2. After a relatively unremarkable opening, the riders can test their climbing legs on the Côte de Begues – 6.1 kilometres at 6.5% – but the real focus is on Montjuïc in Barcelona, which the riders reach with just under 30 kilometres remaining.\n\nFrom there, an enthralling spectacle is almost guaranteed. The riders quickly hit the first of two climbs, which leads up to Montjuïc Castle and serves up 1.6 kilometres at an average of 9.3%, with ramps of up to 13%. Just below the summit it flattens out slightly before a 1-kilometre descent to the foot of the second climb, the Côte de l’Estadi Olímpic, which offers 700 metres at 7%.\n\nAfter two laps of 12.2 kilometres, the finish comes at the top of that 700-metre climb at 7%.\n\nLast year, the Tour peloton – with Pogacar and Van der Poel in leading roles – served up two days of spectacle on similar punchy finales at the start of the Tour. One win went to the Slovenian, the other to the Dutchman. What will we get this time?\n\nWe’ll continue to update this article in the build-up to the Tour de France.",
++      "favourites_raw": "*** Mathieu van der Poel, Tadej Pogacar, Tom Pidcock\n\n** Maxim Van Gils, Paul Seixas, Romain Grégoire, Mathias Vacek\n\n* Juan Ayuso, Jonas Vingegaard, Mads Pedersen, Lenny Martinez, Kévin Vauquelin",
++      "favourites": [
++        {
++          "tier": "***",
++          "team": null,
++          "riders": [
++            "Mathieu van der Poel"
++          ]
++        },
++        {
++          "tier": "***",
++          "team": null,
++          "riders": [
++            "Tadej Pogacar"
++          ]
++        },
++        {
++          "tier": "***",
++          "team": null,
++          "riders": [
++            "Tom Pidcock"
++          ]
++        },
++        {
++          "tier": "**",
++          "team": null,
++          "riders": [
++            "Maxim Van Gils"
++          ]
++        },
++        {
++          "tier": "**",
++          "team": null,
++          "riders": [
++            "Paul Seixas"
++          ]
++        },
++        {
++          "tier": "**",
++          "team": null,
++          "riders": [
++            "Romain Grégoire"
++          ]
++        },
++        {
++          "tier": "**",
++          "team": null,
++          "riders": [
++            "Mathias Vacek"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": null,
++          "riders": [
++            "Juan Ayuso"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": null,
++          "riders": [
++            "Jonas Vingegaard"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": null,
++          "riders": [
++            "Mads Pedersen"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": null,
++          "riders": [
++            "Lenny Martinez"
++          ]
++        },
++        {
++          "tier": "*",
++          "team": null,
++          "riders": [
++            "Kévin Vauquelin"
++          ]
++        }
++      ],
++      "weather_forecast": null,
++      "publication_info": "First published on 18 June - last updated: 29 June",
++      "status": "ok",
++      "error": null
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/deploy-ovh.ps1 b/deploy-ovh.ps1
+index 57dccd5..416e8b5 100644
+--- a/deploy-ovh.ps1
++++ b/deploy-ovh.ps1
+@@ -1,14 +1,15 @@
+ # deploy-ovh.ps1 - Transfert auto PariScore vers VPS OVH + restart PM2
+ #
+ # Usage :
+-#   .\deploy-ovh.ps1                 # deploy server.js + pariscore.html (defaut)
++#   .\deploy-ovh.ps1                 # deploy server.js + pariscore.html + services/ (defaut)
+ #   .\deploy-ovh.ps1 -Files a.js,b.js
+ #   .\deploy-ovh.ps1 -All            # deploy tous fichiers suivis git (hors .env/db/logs)
+ #   .\deploy-ovh.ps1 -NoBackup       # skip backup distant (.env/db)
+ #   .\deploy-ovh.ps1 -NpmInstall     # npm install --production avant restart (si deps changees)
+ 
+ param(
+-    [string[]]$Files = @('server.js', 'pariscore.html'),
++    # FIX QA 2-d : ajout de services/ par defaut — require('./services/cyclingService') au boot de server.js
++    [string[]]$Files = @('server.js', 'pariscore.html', 'services/'),
+     [switch]$All,
+     [switch]$NoBackup,
+     [switch]$NpmInstall
+diff --git a/pariscore.html b/pariscore.html
+index 1925e33..fb1733d 100755
+--- a/pariscore.html
++++ b/pariscore.html
+@@ -22607,6 +22607,7 @@ body[data-page="cs2"], #page-cs2 { background: #F2F2F0 !important; }
+   <div class="f1-grid" id="f1-grid"></div>
+   <div class="f1-note" id="f1-note"></div>
+ </div>
++</div><!-- FIX QA 2-a : ferme page-f1 (était manquant → page-cycling + page-mma + page-404 nested → onglets blancs) -->
+ <div id="page-cycling" data-page="cycling" style="display:none;">
+ <style>
+ /* ── Cycling tokens + nav ─────────────────────────── */
+@@ -22667,6 +22668,37 @@ body[data-page="cycling"] footer{display:none!important;}
+   .cycdrv{grid-template-columns:28px 34px 1fr 72px 38px;font-size:12px;padding:6px 10px;}
+   .cycdrv-bars{display:none;}
+ }
++
++/* ── Stage description + favourites (cyclingstage.com) ── */
++.cyc-stage{margin-top:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:18px 20px;}
++.cyc-stage-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
++.cyc-stage-title{font-family:Syne,sans-serif;font-weight:700;font-size:17px;color:#e8eaed;line-height:1.3;}
++.cyc-stage-source{font-family:'DM Mono',monospace;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;}
++.cyc-stage-source a{color:var(--cyc-accent,#ff6b35);text-decoration:none;}
++.cyc-stage-source a:hover{text-decoration:underline;}
++.cyc-stage-desc{font-family:'Instrument Sans',sans-serif;font-size:13.5px;color:#b0b3b8;line-height:1.65;white-space:pre-wrap;margin-bottom:14px;}
++.cyc-stage-weather{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;background:rgba(255,255,255,.04);border-left:3px solid var(--cyc-accent,#ff6b35);padding:8px 12px;border-radius:6px;margin-bottom:14px;line-height:1.5;}
++.cyc-stage-pubinfo{font-family:'DM Mono',monospace;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;margin-bottom:14px;}
++.cyc-fav-head{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px;}
++.cyc-fav{display:flex;flex-direction:column;gap:6px;}
++.cyc-fav-row{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:start;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;transition:background .15s;}
++.cyc-fav-row:hover{background:rgba(255,255,255,.06);}
++.cyc-fav-tier{font-family:'DM Mono',monospace;font-weight:800;font-size:14px;text-align:center;letter-spacing:-1px;}
++.cyc-fav-tier.t3{color:#ff6b35;}/* *** top favoris */
++.cyc-fav-tier.t2{color:#f59e0b;}/* ** contenders */
++.cyc-fav-tier.t1{color:#8d9399;}/* * outsiders */
++.cyc-fav-content{display:flex;flex-direction:column;gap:2px;min-width:0;}
++.cyc-fav-team{font-size:13px;font-weight:600;color:#e8eaed;}
++.cyc-fav-riders{font-family:'DM Mono',monospace;font-size:11px;color:#8d9399;}
++.cyc-fav-empty{padding:24px 16px;text-align:center;color:#8d9399;font-size:13px;background:rgba(255,255,255,.02);border-radius:8px;}
++.cyc-fav-loading{padding:24px 16px;text-align:center;color:#8d9399;font-size:13px;background:rgba(255,255,255,.02);border-radius:8px;}
++.cyc-fav-loading::before{content:"";display:inline-block;width:14px;height:14px;border:2px solid rgba(255,107,53,.2);border-top-color:var(--cyc-accent,#ff6b35);border-radius:50%;animation:cycspin 0.8s linear infinite;vertical-align:-2px;margin-right:8px;}
++@keyframes cycspin{to{transform:rotate(360deg);}}
++@media(max-width:700px){
++  .cyc-stage{padding:14px 14px;}
++  .cyc-stage-title{font-size:15px;}
++  .cyc-stage-desc{font-size:12.5px;}
++}
+ </style>
+ <div class="cyc-wrap">
+   <div class="cyc-head">
+@@ -22680,6 +22712,9 @@ body[data-page="cycling"] footer{display:none!important;}
+     <div class="cyc-sub" id="cyc-race-badge">—</div>
+   </div>
+   <div class="cyc-status" id="cyc-status">Chargement…</div>
++  <div class="cyc-stage" id="cyc-stage-favourites">
++    <div class="cyc-fav-loading">Chargement des favoris de l'étape…</div>
++  </div>
+   <div class="cyc-bets" id="cyc-bets"></div>
+   <div class="cyc-grid-head">Grille coureurs · projections modèle (Monte-Carlo)</div>
+   <div class="cyc-grid" id="cyc-grid"></div>
+diff --git a/pariscore.js b/pariscore.js
+index cf13912..e90c72f 100644
+--- a/pariscore.js
++++ b/pariscore.js
+@@ -1103,14 +1103,19 @@ function _renderF1Grid(drivers) {
+ 
+ // ─── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ───
+ var _cycPoll = null, _cycErrBackoff = 300000;
++var _cycFavPoll = null;
+ function _cycEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
+ window.initCyclingPage = function () {
+   _cycErrBackoff = 300000;
+   _fetchAndRenderCycling();
++  _fetchAndRenderCyclingFavourites();
+   if (_cycPoll) clearInterval(_cycPoll);
+   _cycPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling(); }, 300000);
++  // Refresh des favoris toutes les 30 minutes (moins critique que les bets)
++  if (_cycFavPoll) clearInterval(_cycFavPoll);
++  _cycFavPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites(); }, 1800000);
+ };
+-if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } };
++if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearInterval(_cycFavPoll); _cycFavPoll = null; } };
+ function _fetchAndRenderCycling() {
+   fetch('/api/v1/cycling', { cache: 'no-store' })
+     .then(function(r) { return r.json(); })
+@@ -1136,6 +1141,74 @@ function _fetchAndRenderCycling() {
+       _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
+     });
+ }
++// Fetch les favoris de l'étape courante depuis cyclingstage.com (via backend)
++function _fetchAndRenderCyclingFavourites() {
++  var c = document.getElementById('cyc-stage-favourites');
++  if (!c) return;
++  // Garde le loading state si vide, sinon garde l'ancien contenu pendant le fetch
++  if (!c.dataset.loaded) {
++    c.innerHTML = '<div class="cyc-fav-loading">Chargement des favoris de l\'étape…</div>';
++  }
++  fetch('/api/v1/cycling/favourites', { cache: 'no-store' })
++    .then(function(r) { return r.json(); })
++    .then(function(j) { _renderCyclingStageFavourites(j); })
++    .catch(function () {
++      if (!c.dataset.loaded) {
++        c.innerHTML = '<div class="cyc-fav-empty">Erreur de chargement des favoris. Nouvel essai dans 30 min.</div>';
++      }
++    });
++}
++function _renderCyclingStageFavourites(j) {
++  var c = document.getElementById('cyc-stage-favourites');
++  if (!c) return;
++  if (!j || j.ok === false) {
++    c.dataset.loaded = '0';
++    var msg = (j && j.message) ? j.message : 'Favoris non disponibles pour cette étape.';
++    var avail = (j && j.available_stages && j.available_stages.length)
++      ? '<div style="margin-top:8px;font-size:11px;color:#6b7280;">Étapes disponibles : ' + j.available_stages.join(', ') + '</div>'
++      : '';
++    c.innerHTML = '<div class="cyc-fav-empty">' + _cycEsc(msg) + avail + '</div>';
++    return;
++  }
++  c.dataset.loaded = '1';
++  // Construit le HTML
++  var html = '';
++  // Head (title + source)
++  html += '<div class="cyc-stage-head">';
++  html += '<div class="cyc-stage-title">' + _cycEsc(j.title || ('Étape ' + j.stage)) + '</div>';
++  html += '<div class="cyc-stage-source">Source : <a href="' + _cycEsc(j.source_url) + '" target="_blank" rel="noopener">cyclingstage.com</a></div>';
++  html += '</div>';
++  // Description
++  if (j.description) {
++    html += '<div class="cyc-stage-desc">' + _cycEsc(j.description) + '</div>';
++  }
++  // Weather
++  if (j.weather_forecast) {
++    html += '<div class="cyc-stage-weather">' + _cycEsc(j.weather_forecast) + '</div>';
++  }
++  // Publication info
++  if (j.publication_info) {
++    html += '<div class="cyc-stage-pubinfo">' + _cycEsc(j.publication_info) + '</div>';
++  }
++  // Favourites
++  if (j.favourites && j.favourites.length) {
++    html += '<div class="cyc-fav-head">Favoris de l\'étape · ' + j.favourites.length + ' entrées</div>';
++    html += '<div class="cyc-fav">';
++    j.favourites.forEach(function (f) {
++      var tierClass = f.tier === '***' ? 't3' : f.tier === '**' ? 't2' : 't1';
++      var teamHtml = f.team ? '<div class="cyc-fav-team">' + _cycEsc(f.team) + '</div>' : '';
++      var ridersHtml = (f.riders && f.riders.length) ? '<div class="cyc-fav-riders">' + f.riders.map(_cycEsc).join(' · ') + '</div>' : '';
++      html += '<div class="cyc-fav-row">';
++      html += '<div class="cyc-fav-tier ' + tierClass + '">' + _cycEsc(f.tier) + '</div>';
++      html += '<div class="cyc-fav-content">' + teamHtml + ridersHtml + '</div>';
++      html += '</div>';
++    });
++    html += '</div>';
++  } else {
++    html += '<div class="cyc-fav-empty">Aucun favori disponible</div>';
++  }
++  c.innerHTML = html;
++}
+ function _cycBetIcon(type) {
+   var T = {
+     stage_winner: '<path d="M7 4h10v3a5 5 0 0 1-10 0V4zM5 5H3v1.5A2.5 2.5 0 0 0 5.5 9M19 5h2v1.5A2.5 2.5 0 0 1 18.5 9M9 13h6l-1 8h-4l-1-8z"/>',
+diff --git a/scripts/scraper-cyclingstage-favourites.py b/scripts/scraper-cyclingstage-favourites.py
+new file mode 100755
+index 0000000..a7b7ce4
+--- /dev/null
++++ b/scripts/scraper-cyclingstage-favourites.py
+@@ -0,0 +1,421 @@
++#!/usr/bin/env python3
++# -*- coding: utf-8 -*-
++"""
++scraper-cyclingstage-favourites.py
++----------------------------------
++Scrape les descriptions et favoris des étapes du Tour de France 2026
++depuis cyclingstage.com, et les sauvegarde dans un fichier JSON
++consommé par le backend pariscore (cyclingService.js).
++
++Usage:
++    python3 scraper-cyclingstage-favourites.py --stage 1
++    python3 scraper-cyclingstage-favourites.py --stage all
++    python3 scraper-cyclingstage-favourites.py --current     # étape du jour (selon date)
++    python3 scraper-cyclingstage-favourites.py --next        # prochaine étape
++
++Source: https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-N-contenders-tdf-2026/
++Auteur: Équipe QA PARISCORE
++Licence: usage interne PARISCORE — ne pas redistribuer le contenu scrapingé.
++"""
++
++import argparse
++import json
++import os
++import re
++import sys
++import time
++from datetime import datetime, timezone, timedelta
++from html.parser import HTMLParser
++import urllib.request
++import urllib.error
++
++# ─── Constantes ───────────────────────────────────────────────────────────────
++BASE_URL = "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-{n}-contenders-tdf-2026/"
++OUTPUT_FILE = "/home/z/my-project/pariscore/data/cycling/stage-favourites.json"
++USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
++HTTP_TIMEOUT = 30
++DELAY_BETWEEN_REQUESTS = 1.5  # secondes — politesse
++
++# Calendrier TdF 2026 (dates de chaque étape)
++TDF_2026_STAGES = {
++    1:  "2026-07-04",
++    2:  "2026-07-05",
++    3:  "2026-07-06",
++    4:  "2026-07-07",
++    5:  "2026-07-08",
++    6:  "2026-07-09",
++    7:  "2026-07-10",
++    8:  "2026-07-11",
++    9:  "2026-07-12",
++    10: "2026-07-14",   # 13 = repos
++    11: "2026-07-15",
++    12: "2026-07-16",
++    13: "2026-07-17",
++    14: "2026-07-18",
++    15: "2026-07-19",
++    16: "2026-07-21",   # 20 = repos
++    17: "2026-07-22",
++    18: "2026-07-23",
++    19: "2026-07-24",
++    20: "2026-07-25",
++    21: "2026-07-26",
++}
++
++# ─── Helpers HTTP ─────────────────────────────────────────────────────────────
++
++def fetch_url(url):
++    """Fetch une URL avec User-Agent réaliste. Retourne le HTML ou None si erreur."""
++    req = urllib.request.Request(url, headers={
++        "User-Agent": USER_AGENT,
++        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
++        "Accept-Language": "en-US,en;q=0.9,fr;q=0.8",
++    })
++    try:
++        with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
++            if resp.status != 200:
++                return None
++            return resp.read().decode("utf-8", errors="replace")
++    except urllib.error.HTTPError as e:
++        if e.code == 404:
++            return None  # étape pas encore publiée
++        print(f"[WARN] HTTP {e.code} sur {url}", file=sys.stderr)
++        return None
++    except Exception as e:
++        print(f"[WARN] Erreur fetch {url}: {e}", file=sys.stderr)
++        return None
++
++
++# ─── Parsing HTML ────────────────────────────────────────────────────────────
++
++class TextExtractor(HTMLParser):
++    """Extracteur de texte simple qui préserve les <br> comme newlines."""
++    def __init__(self):
++        super().__init__()
++        self.parts = []
++        self.skip = False
++    def handle_starttag(self, tag, attrs):
++        if tag in ("script", "style", "nav", "header", "footer"):
++            self.skip = True
++        if tag == "br":
++            self.parts.append("\n")
++        if tag in ("p", "h1", "h2", "h3", "h4", "li", "div"):
++            self.parts.append("\n")
++    def handle_endtag(self, tag):
++        if tag in ("script", "style", "nav", "header", "footer"):
++            self.skip = False
++        if tag in ("p", "h1", "h2", "h3", "h4", "li", "div"):
++            self.parts.append("\n")
++    def handle_data(self, data):
++        if not self.skip:
++            self.parts.append(data)
++    def get_text(self):
++        text = "".join(self.parts)
++        # Normalise les entités courantes
++        text = text.replace("&amp;", "&").replace("&nbsp;", " ") \
++                    .replace("&quot;", '"').replace("&#39;", "'") \
++                    .replace("&rsquo;", "'").replace("&lsquo;", "'") \
++                    .replace("&ldquo;", '"').replace("&rdquo;", '"')
++        # Normalise whitespace
++        text = re.sub(r"[ \t]+", " ", text)
++        text = re.sub(r"\n[ \t]+", "\n", text)
++        text = re.sub(r"\n{3,}", "\n\n", text)
++        return text.strip()
++
++
++def clean_html_text(html_fragment):
++    """Nettoie un fragment HTML en texte plain."""
++    parser = TextExtractor()
++    try:
++        parser.feed(html_fragment)
++    except Exception:
++        pass
++    return parser.get_text()
++
++
++def extract_stage_data(html, stage_n):
++    """Extrait les données structurées d'une page cyclingstage.com étape."""
++    data = {
++        "stage": stage_n,
++        "url": BASE_URL.format(n=stage_n),
++        "scraped_at": datetime.now(timezone.utc).isoformat(),
++        "title": None,
++        "description": None,
++        "favourites_raw": None,
++        "favourites": [],  # [{tier: '***', team: 'UAE Emirates', riders: ['Pogacar']}]
++        "weather_forecast": None,
++        "publication_info": None,
++        "status": "ok",
++        "error": None,
++    }
++
++    # 1. Titre (h1 qui contient "Favourites stage N")
++    m = re.search(
++        r'<h1[^>]*>(Tour de France 2026 Favourites stage \d+:.*?)</h1>',
++        html, re.DOTALL
++    )
++    if m:
++        data["title"] = clean_html_text(m.group(1)).strip()
++
++    # 2. Section entre le h1 et le premier h2 "Favourites"
++    # La description est dans les <p> entre le titre et "Favourites ..."
++    m = re.search(
++        r'<h1[^>]*>Tour de France 2026 Favourites.*?</h1>(.*?)(?=<h2[^>]*>Favourites)',
++        html, re.DOTALL
++    )
++    if m:
++        article_html = m.group(1)
++        paras = re.findall(r'<p[^>]*>(.*?)</p>', article_html, re.DOTALL)
++        description_parts = []
++        publication_info = None
++        weather = None
++        for p in paras:
++            text = clean_html_text(p).strip()
++            if not text:
++                continue
++            # Skip les "Slideshow" et captions
++            if text.startswith("(Slideshow"):
++                continue
++            # Detect publication info
++            if re.match(r'^First published on', text, re.IGNORECASE):
++                publication_info = text
++                continue
++            # Detect weather forecast section
++            if text.lower().startswith("weather forecast"):
++                weather = text
++                continue
++            # Skip les "Another interesting read" et pub
++            if "Another interesting read" in text or "prize pool" in text.lower():
++                continue
++            # Skip les credits photo au début
++            if text.startswith("fotobureau") or text.startswith("Cor Vos"):
++                # Garde le texte après le credit
++                text = re.sub(r'^(fotobureau\s+Cor Vos|Cor Vos|Photo:.*?)(?=[A-Z])', '', text).strip()
++                if text:
++                    description_parts.append(text)
++            else:
++                description_parts.append(text)
++
++        if description_parts:
++            data["description"] = "\n\n".join(description_parts)
++        if publication_info:
++            data["publication_info"] = publication_info
++        if weather:
++            data["weather_forecast"] = weather
++
++    # 3. Section Favourites (h2 "Favourites ..." + le <p> qui suit)
++    m = re.search(
++        r'<h2[^>]*>Favourites\s+\d+(?:st|nd|rd|th)\s+stage.*?</h2>\s*<p>(.*?)</p>',
++        html, re.DOTALL | re.IGNORECASE
++    )
++    if m:
++        fav_html = m.group(1)
++        # Remplace <br> par newlines pour séparer les tiers
++        fav_html_normalized = re.sub(r'<br\s*/?>', '\n', fav_html)
++        fav_text = clean_html_text(fav_html_normalized).strip()
++        data["favourites_raw"] = fav_text
++
++        # Parse les tiers: lignes qui commencent par *** / ** / *
++        # Format typique:
++        #   "*** Team A (Rider1), Team B (Rider2, Rider3)\n** Team C (Rider4)"
++        # On split sur les virgules SEULEMENT si elles sont en dehors des parenthèses
++        favourites = []
++        for line in fav_text.split("\n"):
++            line = line.strip()
++            if not line:
++                continue
++            tier_match = re.match(r'^(\*{1,3})\s+(.+)$', line)
++            if not tier_match:
++                continue
++            tier = tier_match.group(1)
++            content = tier_match.group(2).strip()
++
++            # Split intelligent sur les virgules hors parenthèses
++            entries = []
++            current = ""
++            depth = 0
++            for char in content:
++                if char == "(":
++                    depth += 1
++                    current += char
++                elif char == ")":
++                    depth -= 1
++                    current += char
++                elif char == "," and depth == 0:
++                    if current.strip():
++                        entries.append(current.strip())
++                    current = ""
++                else:
++                    current += char
++            if current.strip():
++                entries.append(current.strip())
++
++            for entry in entries:
++                entry = entry.strip().rstrip(",").strip()
++                if not entry:
++                    continue
++                team_match = re.match(r'^(.+?)\s*\(([^)]+)\)\s*$', entry)
++                if team_match:
++                    # Format: "Team Name (Rider1, Rider2)"
++                    team = team_match.group(1).strip()
++                    riders = [r.strip() for r in team_match.group(2).split(",") if r.strip()]
++                else:
++                    # Format: "Rider Name" (pas d'équipe précisée — ex: stage 2)
++                    # On considère que c'est un rider solo, team = null
++                    team = None
++                    riders = [entry]
++                favourites.append({
++                    "tier": tier,
++                    "team": team,
++                    "riders": riders,
++                })
++        data["favourites"] = favourites
++
++    # Si pas de titre ni de favoris, la page est probablement vide / pas encore publiée
++    if not data["title"] and not data["favourites"]:
++        data["status"] = "empty"
++        data["error"] = "Page exists but no title/favourites found — possibly not yet published"
++
++    return data
++
++
++# ─── Main ────────────────────────────────────────────────────────────────────
++
++def determine_current_stage():
++    """Détermine le numéro de l'étape du jour (ou None si pas d'étape aujourd'hui)."""
++    today = datetime.now(timezone(timedelta(hours=2))).strftime("%Y-%m-%d")  # Europe/Paris
++    for n, date in TDF_2026_STAGES.items():
++        if date == today:
++            return n
++    return None
++
++
++def determine_next_stage():
++    """Détermine le numéro de la prochaine étape (à partir d'aujourd'hui)."""
++    today = datetime.now(timezone(timedelta(hours=2))).strftime("%Y-%m-%d")
++    for n in sorted(TDF_2026_STAGES.keys()):
++        if TDF_2026_STAGES[n] >= today:
++            return n
++    return None
++
++
++def load_existing_data():
++    """Charge les données existantes (ou retourne un dict vide)."""
++    if os.path.exists(OUTPUT_FILE):
++        try:
++            with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
++                return json.load(f)
++        except Exception as e:
++            print(f"[WARN] Erreur lecture {OUTPUT_FILE}: {e}", file=sys.stderr)
++    return {
++        "race": "Tour de France 2026",
++        "source": "cyclingstage.com",
++        "last_update": None,
++        "stages": {}
++    }
++
++
++def save_data(data):
++    """Sauvegarde les données en JSON."""
++    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
++    data["last_update"] = datetime.now(timezone.utc).isoformat()
++    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
++        json.dump(data, f, ensure_ascii=False, indent=2)
++    print(f"[OK] Données sauvegardées dans {OUTPUT_FILE}")
++
++
++def scrape_stage(stage_n, force=False):
++    """Scrape une étape spécifique. Retourne les données ou None."""
++    existing = load_existing_data()
++    if not force and str(stage_n) in existing["stages"]:
++        existing_data = existing["stages"][str(stage_n)]
++        # Re-scrape si plus vieux que 6h
++        scraped_at = existing_data.get("scraped_at", "")
++        if scraped_at:
++            try:
++                scraped_time = datetime.fromisoformat(scraped_at)
++                age_hours = (datetime.now(timezone.utc) - scraped_time).total_seconds() / 3600
++                if age_hours < 6:
++                    print(f"[SKIP] Stage {stage_n} déjà scrapé il y a {age_hours:.1f}h (< 6h)")
++                    return existing_data
++            except Exception:
++                pass
++
++    url = BASE_URL.format(n=stage_n)
++    print(f"[SCRAPING] Stage {stage_n}: {url}")
++    html = fetch_url(url)
++    if not html:
++        print(f"[FAIL] Stage {stage_n}: page introuvable ou erreur fetch")
++        return None
++
++    stage_data = extract_stage_data(html, stage_n)
++    if stage_data["status"] == "empty":
++        print(f"[EMPTY] Stage {stage_n}: page sans contenu — probablement pas encore publiée")
++        return stage_data
++
++    print(f"[OK] Stage {stage_n}: {len(stage_data.get('description', ''))} chars description, "
++          f"{len(stage_data.get('favourites', []))} favoris")
++    return stage_data
++
++
++def main():
++    parser = argparse.ArgumentParser(description="Scraper cyclingstage.com TdF 2026")
++    parser.add_argument("--stage", type=int, help="Numéro d'étape à scraper (1-21)")
++    parser.add_argument("--all", action="store_true", help="Scrape toutes les 21 étapes")
++    parser.add_argument("--current", action="store_true", help="Scrape l'étape du jour")
++    parser.add_argument("--next", action="store_true", help="Scrape la prochaine étape")
++    parser.add_argument("--force", action="store_true", help="Force re-scrape même si < 6h")
++    args = parser.parse_args()
++
++    if not any([args.stage, args.all, args.current, args.next]):
++        # Default: --next
++        args.next = True
++
++    existing = load_existing_data()
++
++    stages_to_scrape = []
++    if args.all:
++        stages_to_scrape = list(range(1, 22))
++    elif args.stage:
++        stages_to_scrape = [args.stage]
++    elif args.current:
++        n = determine_current_stage()
++        if n is None:
++            print("[INFO] Pas d'étape aujourd'hui (jour de repos ou hors TdF)")
++            # Scrap next à la place
++            n = determine_next_stage()
++            if n:
++                print(f"[INFO] Scraping prochaine étape: {n}")
++                stages_to_scrape = [n]
++        else:
++            stages_to_scrape = [n]
++    elif args.next:
++        n = determine_next_stage()
++        if n is None:
++            print("[INFO] TdF 2026 terminé")
++            return
++        stages_to_scrape = [n]
++
++    print(f"[INFO] Étapes à scraper: {stages_to_scrape}")
++    print(f"[INFO] Date du jour (Europe/Paris): {datetime.now(timezone(timedelta(hours=2))).strftime('%Y-%m-%d %H:%M')}")
++
++    for i, n in enumerate(stages_to_scrape):
++        stage_data = scrape_stage(n, force=args.force)
++        if stage_data:
++            existing["stages"][str(n)] = stage_data
++            existing["last_update"] = datetime.now(timezone.utc).isoformat()
++            save_data(existing)
++        if i < len(stages_to_scrape) - 1:
++            time.sleep(DELAY_BETWEEN_REQUESTS)
++
++    # Résumé final
++    print("\n=== RÉSUMÉ ===")
++    print(f"Total étapes en base: {len(existing['stages'])}")
++    for n_str in sorted(existing["stages"].keys(), key=int):
++        s = existing["stages"][n_str]
++        status_icon = "✓" if s.get("status") == "ok" else "✗"
++        title = (s.get("title") or "—")[:80]
++        print(f"  Stage {n_str:>2}: {status_icon} {title}")
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scripts/setup-cycling-cron.sh b/scripts/setup-cycling-cron.sh
+new file mode 100755
+index 0000000..57254ad
+--- /dev/null
++++ b/scripts/setup-cycling-cron.sh
+@@ -0,0 +1,149 @@
++#!/bin/bash
++# ─────────────────────────────────────────────────────────────────────────────
++# setup-cycling-cron.sh
++# Installe le cron quotidien qui scrape les favoris cyclingstage.com
++# pour le Tour de France 2026.
++#
++# Fréquence : tous les soirs à 18:00 Europe/Paris
++# À partir du : vendredi 3 juillet 2026
++# Jusqu'au : 27 juillet 2026 (lendemain de l'étape finale)
++#
++# Le cron lance le scraper Python qui :
++#   1. Détermine l'étape du jour (ou la prochaine si jour de repos)
++#   2. Scrape cyclingstage.com pour cette étape
++#   3. Met à jour data/cycling/stage-favourites.json
++#   4. Le backend pariscore (cyclingService.js) sert ce JSON via /api/v1/cycling/favourites
++#
++# Usage:
++#   bash setup-cycling-cron.sh           # installe le cron
++#   bash setup-cycling-cron.sh --status  # affiche l'état du cron
++#   bash setup-cycling-cron.sh --remove  # supprime le cron
++#
++# Prérequis:
++#   - Python 3.x installé (python3 --version)
++#   - Le repo pariscore cloné dans ~/pariscore (ou ajuster PARISCORE_DIR ci-dessous)
++#   - Le scraper scripts/scraper-cyclingstage-favourites.py présent
++# ─────────────────────────────────────────────────────────────────────────────
++
++set -euo pipefail
++
++# ─── Configuration ───────────────────────────────────────────────────────────
++PARISCORE_DIR="${PARISCORE_DIR:-$HOME/pariscore}"
++SCRAPER="$PARISCORE_DIR/scripts/scraper-cyclingstage-favourites.py"
++LOG_DIR="$PARISCORE_DIR/logs"
++LOG_FILE="$LOG_DIR/cycling-cron.log"
++CRON_MARKER="# PARISCORE-CYCLING-SCRAPER"
++PYTHON_BIN="${PYTHON_BIN:-python3}"
++
++# Vérif prérequis
++if [ ! -f "$SCRAPER" ]; then
++    echo "❌ ERREUR : Scraper introuvable à $SCRAPER"
++    echo "   Vérifie que PARISCORE_DIR est bien configuré (actuel: $PARISCORE_DIR)"
++    exit 1
++fi
++
++if ! command -v "$PYTHON_BIN" &>/dev/null; then
++    echo "❌ ERREUR : $PYTHON_BIN n'est pas installé"
++    exit 1
++fi
++
++mkdir -p "$LOG_DIR"
++
++# ─── Commande cron ────────────────────────────────────────────────────────────
++# 0 18 * * * = tous les jours à 18:00 (heure serveur = Europe/Paris sur le VPS OVH)
++# Le scraper utilise --current qui prend l'étape du jour, ou --next si jour de repos
++CRON_CMD="0 18 * * * cd $PARISCORE_DIR && $PYTHON_BIN $SCRAPER --current --force >> $LOG_FILE 2>&1 $CRON_MARKER"
++
++# ─── Actions ─────────────────────────────────────────────────────────────────
++ACTION="${1:-install}"
++
++case "$ACTION" in
++    --status)
++        echo "=== État du cron cycling scraper ==="
++        if crontab -l 2>/dev/null | grep -q "$CRON_MARKER"; then
++            echo "✅ Cron installé :"
++            crontab -l 2>/dev/null | grep "$CRON_MARKER" | sed 's/^/   /'
++        else
++            echo "❌ Cron NON installé"
++        fi
++        echo ""
++        echo "=== Dernières lignes du log ==="
++        if [ -f "$LOG_FILE" ]; then
++            tail -10 "$LOG_FILE" | sed 's/^/   /'
++        else
++            echo "   (pas de log encore)"
++        fi
++        echo ""
++        echo "=== Prochaine étape à scraper ==="
++        cd "$PARISCORE_DIR" && $PYTHON_BIN "$SCRAPER" --next --force 2>&1 | tail -5 || true
++        ;;
++
++    --remove)
++        echo "=== Suppression du cron ==="
++        if crontab -l 2>/dev/null | grep -q "$CRON_MARKER"; then
++            crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | crontab -
++            echo "✅ Cron supprimé"
++        else
++            echo "ℹ️  Cron n'était pas installé"
++        fi
++        ;;
++
++    install|"")
++        # Vérifier la timezone du serveur (le VPS OVH est censé être en Europe/Paris)
++        echo "=== Vérifications préalables ==="
++        SERVER_TZ=$(date +%Z 2>/dev/null || echo "unknown")
++        echo "   Timezone serveur : $SERVER_TZ ($(date))"
++        if [ "$SERVER_TZ" != "CEST" ] && [ "$SERVER_TZ" != "CET" ]; then
++            echo "⚠️  ATTENTION : Le serveur n'est pas en Europe/Paris ($SERVER_TZ)"
++            echo "   Le cron à 18:00 sera en heure serveur, pas en heure de Paris."
++            echo "   Pour fixer : sudo timedatectl set-timezone Europe/Paris"
++            echo ""
++        fi
++
++        # Vérifier si déjà installé
++        if crontab -l 2>/dev/null | grep -q "$CRON_MARKER"; then
++            echo "ℹ️  Cron déjà installé, mise à jour..."
++            crontab -l 2>/dev/null | grep -v "$CRON_MARKER" | crontab -
++        fi
++
++        # Ajouter le cron
++        (crontab -l 2>/dev/null; echo "$CRON_CMD") | crontab -
++
++        echo ""
++        echo "✅ Cron installé avec succès"
++        echo ""
++        echo "=== Détails ==="
++        echo "   Fréquence : tous les jours à 18:00 (Europe/Paris)"
++        echo "   Script : $SCRAPER"
++        echo "   Log : $LOG_FILE"
++        echo "   Première exécution : ce soir à 18:00 ($(date +%Y-%m-%d))"
++        echo ""
++        echo "=== Crontab actuel (lignes cycling) ==="
++        crontab -l 2>/dev/null | grep "$CRON_MARKER" | sed 's/^/   /'
++        echo ""
++        echo "=== Pour tester manuellement maintenant ==="
++        echo "   cd $PARISCORE_DIR && $PYTHON_BIN $SCRAPER --current --force"
++        echo ""
++        echo "=== Pour voir les logs ==="
++        echo "   tail -f $LOG_FILE"
++        echo ""
++        echo "=== Pour supprimer le cron ==="
++        echo "   bash $0 --remove"
++        ;;
++
++    --test)
++        # Lance le scraper une fois maintenant pour tester
++        echo "=== Test manuel du scraper (étape courante) ==="
++        cd "$PARISCORE_DIR" && $PYTHON_BIN "$SCRAPER" --current --force
++        ;;
++
++    *)
++        echo "Usage: $0 [--status|--remove|--test|install]"
++        echo ""
++        echo "  install (défaut) : installe le cron à 18:00 tous les jours"
++        echo "  --status         : affiche l'état du cron + derniers logs"
++        echo "  --test           : lance le scraper une fois maintenant pour tester"
++        echo "  --remove         : supprime le cron"
++        exit 1
++        ;;
++esac
+diff --git a/server.js b/server.js
+index 801c58d..8acd4f3 100644
+--- a/server.js
++++ b/server.js
+@@ -21783,6 +21783,21 @@ async function handleAPI(req, res, pathname, query) {
+       return res.end(JSON.stringify({ ok: false, error: e.message, stages: [] }));
+     }
+   }
++  // GET /api/v1/cycling/favourites — description + favoris de l'étape (scraped cyclingstage.com)
++  // Query: ?stage=N (si absent, utilise l'étape courante du modèle)
++  if (pathname === '/api/v1/cycling/favourites' && req.method === 'GET') {
++    try {
++      const q = new URL(req.url, 'http://localhost').searchParams;
++      const stageN = q.get('stage') ? parseInt(q.get('stage'), 10) : null;
++      const fav = await cyclingService.getStageFavourites(stageN);
++      const cacheMaxAge = fav.ok ? 3600 : 60; // 1h si OK, 1min si erreur (pour retry rapide)
++      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=' + cacheMaxAge });
++      return res.end(JSON.stringify(fav));
++    } catch (e) {
++      res.writeHead(500, { 'Content-Type': 'application/json' });
++      return res.end(JSON.stringify({ ok: false, error: e.message }));
++    }
++  }
+ 
+   // ── BetExplorer Tennis Dropping Odds ─────────────────────────────────────
+   // GET /api/v1/tennis/dropping-odds?min=20 — matchs tennis avec cotes descendantes
+diff --git a/services/cyclingService.js b/services/cyclingService.js
+index f6fc509..952175b 100644
+--- a/services/cyclingService.js
++++ b/services/cyclingService.js
+@@ -283,10 +283,85 @@ async function getCyclingFull() {
+   };
+ }
+ 
++// ── Stage favourites (scraped from cyclingstage.com) ──────────────────────────
++// Charge les données scrapées depuis data/cycling/stage-favourites.json
++// (généré par scripts/scraper-cyclingstage-favourites.py)
++var _stageFavouritesCache = null;
++var _stageFavouritesMtime = 0;
++
++function _loadStageFavourites() {
++  try {
++    var path = require('path');
++    var fs = require('fs');
++    var favPath = path.join(__dirname, '..', 'data', 'cycling', 'stage-favourites.json');
++    if (!fs.existsSync(favPath)) return null;
++    var stat = fs.statSync(favPath);
++    var mtime = stat.mtimeMs;
++    // Recharge si le fichier a changé (ou pas encore en cache)
++    if (_stageFavouritesCache && mtime === _stageFavouritesMtime) {
++      return _stageFavouritesCache;
++    }
++    var raw = fs.readFileSync(favPath, 'utf8');
++    _stageFavouritesCache = JSON.parse(raw);
++    _stageFavouritesMtime = mtime;
++    return _stageFavouritesCache;
++  } catch (e) {
++    console.warn('[cyclingService] _loadStageFavourites error:', e.message);
++    return null;
++  }
++}
++
++// Retourne les favoris pour une étape donnée (ou l'étape courante si stageN non fourni)
++async function getStageFavourites(stageN) {
++  var data = _loadStageFavourites();
++  if (!data) {
++    return {
++      ok: false,
++      error: 'no_scraped_data',
++      message: 'Aucune donnée scrapée. Lancez scripts/scraper-cyclingstage-favourites.py d\'abord.',
++      stage: stageN || null,
++    };
++  }
++
++  // Si stageN non fourni, utilise l'étape courante du modèle
++  if (!stageN) {
++    var m = await _model();
++    stageN = m ? m.stage : 1;
++  }
++
++  var stageData = data.stages ? data.stages[String(stageN)] : null;
++  if (!stageData) {
++    return {
++      ok: false,
++      error: 'stage_not_scraped',
++      message: 'Étape ' + stageN + ' pas encore scrapée. La page cyclingstage.com n\'est peut-être pas encore publiée.',
++      stage: stageN,
++      available_stages: data.stages ? Object.keys(data.stages).map(Number).sort((a,b)=>a-b) : [],
++      last_update: data.last_update,
++    };
++  }
++
++  return {
++    ok: true,
++    stage: stageN,
++    source: 'cyclingstage.com',
++    source_url: stageData.url,
++    scraped_at: stageData.scraped_at,
++    title: stageData.title,
++    description: stageData.description,
++    favourites: stageData.favourites,
++    favourites_raw: stageData.favourites_raw,
++    weather_forecast: stageData.weather_forecast,
++    publication_info: stageData.publication_info,
++    last_update: data.last_update,
++  };
++}
++
+ module.exports = {
+   getCyclingStages: getCyclingStages,
+   getCyclingBets: getCyclingBets,
+   getCyclingRiders: getCyclingRiders,
+   getCyclingFull: getCyclingFull,
+-  _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
++  getStageFavourites: getStageFavourites,
++  _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/', 'cyclingstage.com'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
+ };

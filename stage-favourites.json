@@ -1,0 +1,177 @@
+{
+  "race": "Tour de France 2026",
+  "source": "cyclingstage.com",
+  "last_update": "2026-07-03T01:18:46.208164+00:00",
+  "stages": {
+    "1": {
+      "stage": 1,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-1-contenders-tdf-2026/",
+      "scraped_at": "2026-07-03T01:18:46.206634+00:00",
+      "title": "Tour de France 2026 Favourites stage 1: Looking for the best finisher",
+      "description": "The yellow jersey awaits the rider who posts the fastest time on the team time trial course. Given the 7% gradient over the final 800 metres, the punchy climbers will almost certainly drop their team-mates in the finale in an attempt to ride into yellow.\n\n(Slideshow route/profile)\n\nUnlike an oldschool team time trial, where the time of the fifth rider across the line counts, each rider will be credited with his own individual time. The formula for taking the yellow jersey therefore appears straightforward: blast around the Barcelona course as quickly as possible as a team, before the designated leader goes clear in the finale to set the fastest time. To make that work, you need a squad full of strong time trialists who are willing to work for one another, and a leader with a punchy finishing kick.\n\nSeamless teamwork will be crucial during the flat opening section, and that remains largely the case on the first of the two climbs in the finale. It rises for 1.1 kilometres at an average gradient of 5.1%, so some teams may choose to continue from this point with only their strongest climbers. After a short flat section, the road dips slightly before the explosive final ascent of 800 metres at 7%.\n\nVisma | Lease a Bike recently won a team time trial run under the same format at the Tour Auvergne-Rhône-Alpes, with Netcompany-INEOS finishing a close second. Comparisons are difficult, however, as the teams will not be lining up at the Tour with exactly the same riders.\n\nSpecial mention should also go to Van der Poel’s individual time trial at the Tour de Suisse. He matched Pogacar’s time to finish second, but what really stood out was the determination with which he attacked the course on his time trial bike – hardly his weapon of choice. It raised the question: could he be targeting Barcelona?",
+      "favourites_raw": "*** UAE Emirates (Pogacar), Visma | Lease a Bike (Vingegaard)\n\n** Red Bull-BORA-hansgrohe (Evenepoel), Netcompany-INEOS (Arensman, Vauquelin)\n\n* Lidl-Trek (Ayuso, Skjelmose), Decathlon CMA CGM (Seixas), Alpecin Premier Tech (Van der Poel), EF Education-EasyPost (Carapaz)",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": "UAE Emirates",
+          "riders": [
+            "Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": "Visma | Lease a Bike",
+          "riders": [
+            "Vingegaard"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": "Red Bull-BORA-hansgrohe",
+          "riders": [
+            "Evenepoel"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": "Netcompany-INEOS",
+          "riders": [
+            "Arensman",
+            "Vauquelin"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": "Lidl-Trek",
+          "riders": [
+            "Ayuso",
+            "Skjelmose"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": "Decathlon CMA CGM",
+          "riders": [
+            "Seixas"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": "Alpecin Premier Tech",
+          "riders": [
+            "Van der Poel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": "EF Education-EasyPost",
+          "riders": [
+            "Carapaz"
+          ]
+        }
+      ],
+      "weather_forecast": "Weather forecast:\n\nThe Tour starts in sunny conditions. During the team time trial, temperatures are expected to reach 29°C and the wind will come from the south at around 18 km/h. Conditions are stable between start and finish, so all teams will start under the same circumstances, ensuring a fair race.",
+      "publication_info": "First published on 17 June - last update 30 June: weather forecest added",
+      "status": "ok",
+      "error": null
+    },
+    "2": {
+      "stage": 2,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-2-contenders-tdf-2026/",
+      "scraped_at": "2026-07-03T01:06:03.655074+00:00",
+      "title": "Tour de France 2026 Favourites stage 2: A puncher’s paradise",
+      "description": "Stage 2 of the Tour comes to a head on a hilly circuit in Barcelona, tackled three times by the riders, each lap featuring two sharp, punchy climbs. The first is 1.6 kilometres at 9.3%, and the second, which doubles as the finish, is 600 metres at 7%.\n\n(Slideshow route/profile)\n\nPunchers will be licking their lips while eyeing the finishing circuit of stage 2. After a relatively unremarkable opening, the riders can test their climbing legs on the Côte de Begues – 6.1 kilometres at 6.5% – but the real focus is on Montjuïc in Barcelona, which the riders reach with just under 30 kilometres remaining.\n\nFrom there, an enthralling spectacle is almost guaranteed. The riders quickly hit the first of two climbs, which leads up to Montjuïc Castle and serves up 1.6 kilometres at an average of 9.3%, with ramps of up to 13%. Just below the summit it flattens out slightly before a 1-kilometre descent to the foot of the second climb, the Côte de l’Estadi Olímpic, which offers 700 metres at 7%.\n\nAfter two laps of 12.2 kilometres, the finish comes at the top of that 700-metre climb at 7%.\n\nLast year, the Tour peloton – with Pogacar and Van der Poel in leading roles – served up two days of spectacle on similar punchy finales at the start of the Tour. One win went to the Slovenian, the other to the Dutchman. What will we get this time?\n\nWe’ll continue to update this article in the build-up to the Tour de France.",
+      "favourites_raw": "*** Mathieu van der Poel, Tadej Pogacar, Tom Pidcock\n\n** Maxim Van Gils, Paul Seixas, Romain Grégoire, Mathias Vacek\n\n* Juan Ayuso, Jonas Vingegaard, Mads Pedersen, Lenny Martinez, Kévin Vauquelin",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathieu van der Poel"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Maxim Van Gils"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Romain Grégoire"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mathias Vacek"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Kévin Vauquelin"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 18 June - last updated: 29 June",
+      "status": "ok",
+      "error": null
+    }
+  }
+}
