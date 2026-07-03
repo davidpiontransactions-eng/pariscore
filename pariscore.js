@@ -27356,6 +27356,11 @@ function dpCopy(btn) {
 // ── Focus trap helper ──────────────────────────────────────────────────────
 function trapFocus(modal) {
   if (!modal) return;
+  // bd live-013 : retirer le handler précédent pour éviter fuite mémoire + listeners cumulés
+  if (modal._tfHandler) {
+    modal.removeEventListener('keydown', modal._tfHandler);
+    modal._tfHandler = null;
+  }
   var f = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
   if (!f.length) return;
   var first = f[0], last = f[f.length - 1];
@@ -27367,7 +27372,10 @@ function trapFocus(modal) {
       if (document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   }
+  modal._tfHandler = _tfHandler;
   modal.addEventListener('keydown', _tfHandler);
+  // bd live-013 : déplacer le focus dans le modal à l'ouverture (a11y)
+  try { first.focus(); } catch(_) {}
 }
 
 document.addEventListener('keydown', function(e) {
@@ -27401,6 +27409,12 @@ document.addEventListener('keydown', function(e) {
   if ((el = d.getElementById('radar-modal')) && el.style.display === 'flex') { closeRadarModal(); return; }
   if ((el = d.getElementById('nba-ai-modal')) && el.style.display === 'flex') { closeNbaAI(); return; }
   if ((el = d.getElementById('team-detail-modal')) && el.style.display === 'flex') { el.style.display = 'none'; return; }
+  // bd live-014 : popup DR evolution (display:flex, pas de classe .open)
+  if ((el = d.getElementById('dr-popup-modal')) && el.style.display === 'flex') {
+    if (typeof closeDRPopup === 'function') closeDRPopup();
+    else el.style.display = 'none';
+    return;
+  }
   // Tennis live sheet (attribut data-open)
   if ((el = d.getElementById('ps-live-tennis-sheet')) && el.getAttribute('data-open') === 'true') { closePsLiveTennisSheet(); return; }
   // TV channels modal (dynamique, display:flex)
