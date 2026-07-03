@@ -19669,6 +19669,8 @@ function srvPlanGate(req, res, pathname) {
   if (pathname === '/api/v1/tennis/player-profile') return false;
   // NEW — match-by-players exempté (cherche match BSD pour modale prematch MATCHS)
   if (pathname === '/api/v1/tennis/match-by-players') return false;
+  // value-bets — données brutes en cache serveur, pas d'analyse IA payante → public
+  if (pathname === '/api/v1/tennis/value-bets') return false;
   if (pathname.startsWith('/api/v1/tennis')) {
     if (!a.tennisPro) { jsonResponse(res, 403, { error: 'Module Tennis réservé Pro Tennis / Duo', code: 'PLAN_REQUIRED' }); return true; }
     return false;
