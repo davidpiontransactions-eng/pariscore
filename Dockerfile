@@ -34,6 +34,9 @@ COPY --from=deps --chown=pariscore:pariscore /app/node_modules ./node_modules
 COPY --chown=pariscore:pariscore server.js pariscore.html admin.html ./
 COPY --chown=pariscore:pariscore bsd_config.json flags_config.json leagues_config.json ./
 
+# FIX QA 2-c : copier le dossier services/ (nécessaire pour require('./services/cyclingService') au boot)
+COPY --chown=pariscore:pariscore services/ ./services/
+
 # Config files
 COPY --chown=pariscore:pariscore assets/ ./assets/
 
