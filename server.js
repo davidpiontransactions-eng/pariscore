@@ -21783,6 +21783,21 @@ async function handleAPI(req, res, pathname, query) {
       return res.end(JSON.stringify({ ok: false, error: e.message, stages: [] }));
     }
   }
+  // GET /api/v1/cycling/favourites — description + favoris de l'étape (scraped cyclingstage.com)
+  // Query: ?stage=N (si absent, utilise l'étape courante du modèle)
+  if (pathname === '/api/v1/cycling/favourites' && req.method === 'GET') {
+    try {
+      const q = new URL(req.url, 'http://localhost').searchParams;
+      const stageN = q.get('stage') ? parseInt(q.get('stage'), 10) : null;
+      const fav = await cyclingService.getStageFavourites(stageN);
+      const cacheMaxAge = fav.ok ? 3600 : 60;
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=' + cacheMaxAge });
+      return res.end(JSON.stringify(fav));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
 
   // ── BetExplorer Tennis Dropping Odds ─────────────────────────────────────
   // GET /api/v1/tennis/dropping-odds?min=20 — matchs tennis avec cotes descendantes

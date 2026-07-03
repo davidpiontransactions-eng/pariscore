@@ -283,10 +283,85 @@ async function getCyclingFull() {
   };
 }
 
+// ── Stage favourites (scraped from cyclingstage.com) ──────────────────────────
+// Charge les données scrapées depuis data/cycling/stage-favourites.json
+// (généré par scripts/scraper-cyclingstage-favourites.py)
+var _stageFavouritesCache = null;
+var _stageFavouritesMtime = 0;
+
+function _loadStageFavourites() {
+  try {
+    var path = require('path');
+    var fs = require('fs');
+    var favPath = path.join(__dirname, '..', 'data', 'cycling', 'stage-favourites.json');
+    if (!fs.existsSync(favPath)) return null;
+    var stat = fs.statSync(favPath);
+    var mtime = stat.mtimeMs;
+    // Recharge si le fichier a changé (ou pas encore en cache)
+    if (_stageFavouritesCache && mtime === _stageFavouritesMtime) {
+      return _stageFavouritesCache;
+    }
+    var raw = fs.readFileSync(favPath, 'utf8');
+    _stageFavouritesCache = JSON.parse(raw);
+    _stageFavouritesMtime = mtime;
+    return _stageFavouritesCache;
+  } catch (e) {
+    console.warn('[cyclingService] _loadStageFavourites error:', e.message);
+    return null;
+  }
+}
+
+// Retourne les favoris pour une étape donnée (ou l'étape courante si stageN non fourni)
+async function getStageFavourites(stageN) {
+  var data = _loadStageFavourites();
+  if (!data) {
+    return {
+      ok: false,
+      error: 'no_scraped_data',
+      message: 'Aucune donnée scrapée. Lancez scripts/scraper-cyclingstage-favourites.py d\'abord.',
+      stage: stageN || null,
+    };
+  }
+
+  // Si stageN non fourni, utilise l'étape courante du modèle
+  if (!stageN) {
+    var m = await _model();
+    stageN = m ? m.stage : 1;
+  }
+
+  var stageData = data.stages ? data.stages[String(stageN)] : null;
+  if (!stageData) {
+    return {
+      ok: false,
+      error: 'stage_not_scraped',
+      message: 'Étape ' + stageN + ' pas encore scrapée. La page cyclingstage.com n\'est peut-être pas encore publiée.',
+      stage: stageN,
+      available_stages: data.stages ? Object.keys(data.stages).map(Number).sort((a,b)=>a-b) : [],
+      last_update: data.last_update,
+    };
+  }
+
+  return {
+    ok: true,
+    stage: stageN,
+    source: 'cyclingstage.com',
+    source_url: stageData.url,
+    scraped_at: stageData.scraped_at,
+    title: stageData.title,
+    description: stageData.description,
+    favourites: stageData.favourites,
+    favourites_raw: stageData.favourites_raw,
+    weather_forecast: stageData.weather_forecast,
+    publication_info: stageData.publication_info,
+    last_update: data.last_update,
+  };
+}
+
 module.exports = {
   getCyclingStages: getCyclingStages,
   getCyclingBets: getCyclingBets,
   getCyclingRiders: getCyclingRiders,
   getCyclingFull: getCyclingFull,
-  _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
+  getStageFavourites: getStageFavourites,
+  _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/', 'cyclingstage.com'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
 };

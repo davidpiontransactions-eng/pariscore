@@ -1103,14 +1103,18 @@ function _renderF1Grid(drivers) {
 
 // ─── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ───
 var _cycPoll = null, _cycErrBackoff = 300000;
+var _cycFavPoll = null;
 function _cycEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
 window.initCyclingPage = function () {
   _cycErrBackoff = 300000;
   _fetchAndRenderCycling();
+  _fetchAndRenderCyclingFavourites();
   if (_cycPoll) clearInterval(_cycPoll);
   _cycPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling(); }, 300000);
+  if (_cycFavPoll) clearInterval(_cycFavPoll);
+  _cycFavPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites(); }, 1800000);
 };
-if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } };
+if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearInterval(_cycFavPoll); _cycFavPoll = null; } };
 function _fetchAndRenderCycling() {
   fetch('/api/v1/cycling', { cache: 'no-store' })
     .then(function(r) { return r.json(); })
@@ -1135,6 +1139,67 @@ function _fetchAndRenderCycling() {
       if (st) st.textContent = 'Erreur de chargement cyclisme (prochain essai dans ' + Math.round(_cycErrBackoff / 1000) + 's)';
       _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
     });
+}
+// Fetch les favoris de l'étape courante depuis cyclingstage.com (via backend)
+function _fetchAndRenderCyclingFavourites() {
+  var c = document.getElementById('cyc-stage-favourites');
+  if (!c) return;
+  if (!c.dataset.loaded) {
+    c.innerHTML = '<div class="cyc-fav-loading">Chargement des favoris de l\'étape…</div>';
+  }
+  fetch('/api/v1/cycling/favourites', { cache: 'no-store' })
+    .then(function(r) { return r.json(); })
+    .then(function(j) { _renderCyclingStageFavourites(j); })
+    .catch(function () {
+      if (!c.dataset.loaded) {
+        c.innerHTML = '<div class="cyc-fav-empty">Erreur de chargement des favoris. Nouvel essai dans 30 min.</div>';
+      }
+    });
+}
+function _renderCyclingStageFavourites(j) {
+  var c = document.getElementById('cyc-stage-favourites');
+  if (!c) return;
+  if (!j || j.ok === false) {
+    c.dataset.loaded = '0';
+    var msg = (j && j.message) ? j.message : 'Favoris non disponibles pour cette étape.';
+    var avail = (j && j.available_stages && j.available_stages.length)
+      ? '<div style="margin-top:8px;font-size:11px;color:#6b7280;">Étapes disponibles : ' + j.available_stages.join(', ') + '</div>'
+      : '';
+    c.innerHTML = '<div class="cyc-fav-empty">' + _cycEsc(msg) + avail + '</div>';
+    return;
+  }
+  c.dataset.loaded = '1';
+  var html = '';
+  html += '<div class="cyc-stage-head">';
+  html += '<div class="cyc-stage-title">' + _cycEsc(j.title || ('Étape ' + j.stage)) + '</div>';
+  html += '<div class="cyc-stage-source">Source : <a href="' + _cycEsc(j.source_url) + '" target="_blank" rel="noopener">cyclingstage.com</a></div>';
+  html += '</div>';
+  if (j.description) {
+    html += '<div class="cyc-stage-desc">' + _cycEsc(j.description) + '</div>';
+  }
+  if (j.weather_forecast) {
+    html += '<div class="cyc-stage-weather">' + _cycEsc(j.weather_forecast) + '</div>';
+  }
+  if (j.publication_info) {
+    html += '<div class="cyc-stage-pubinfo">' + _cycEsc(j.publication_info) + '</div>';
+  }
+  if (j.favourites && j.favourites.length) {
+    html += '<div class="cyc-fav-head">Favoris de l\'étape · ' + j.favourites.length + ' entrées</div>';
+    html += '<div class="cyc-fav">';
+    j.favourites.forEach(function (f) {
+      var tierClass = f.tier === '***' ? 't3' : f.tier === '**' ? 't2' : 't1';
+      var teamHtml = f.team ? '<div class="cyc-fav-team">' + _cycEsc(f.team) + '</div>' : '';
+      var ridersHtml = (f.riders && f.riders.length) ? '<div class="cyc-fav-riders">' + f.riders.map(_cycEsc).join(' · ') + '</div>' : '';
+      html += '<div class="cyc-fav-row">';
+      html += '<div class="cyc-fav-tier ' + tierClass + '">' + _cycEsc(f.tier) + '</div>';
+      html += '<div class="cyc-fav-content">' + teamHtml + ridersHtml + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="cyc-fav-empty">Aucun favori disponible</div>';
+  }
+  c.innerHTML = html;
 }
 function _cycBetIcon(type) {
   var T = {
