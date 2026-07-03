@@ -274,12 +274,40 @@ async function getCyclingRiders() {
 async function getCyclingFull() {
   var m = await _model();
   if (!m) return _empty('model_unavailable', { bets: [], riders: [] });
+  
+  // Enrichit les bets avec photos riders + logos teams
+  var enrichedBets = (m.bets || []).map(function (b) {
+    var enrichedBet = Object.assign({}, b);
+    // Photo du rider (champ pick ou team)
+    if (b.pick) {
+      enrichedBet.photo = _getRiderPhotoUrl(b.pick);
+    }
+    if (b.team) {
+      enrichedBet.team_logo = _getTeamLogoUrl(b.team);
+    }
+    return enrichedBet;
+  });
+  
+  // Enrichit les riders de la grille avec photos + logos
+  var enrichedRiders = (m.riders || []).map(function (r) {
+    var enrichedRider = Object.assign({}, r);
+    enrichedRider.photo = _getRiderPhotoUrl(r.name);
+    if (r.team) {
+      enrichedRider.team_logo = _getTeamLogoUrl(r.team);
+    }
+    return enrichedRider;
+  });
+  
+  // Ajoute le profil d'étape letour.fr
+  var stageProfile = _getStageProfileUrl(m.stage);
+  
   return {
     ok: true, stage: m.stage, date: m.date, route: m.route, km: m.km,
     type: m.type, elev: m.elev, country: m.country,
     season: 2026, race: 'Tour de France',
     calibrated: m.calibrated, note: m.note, sims: m.sims,
-    bets: m.bets, riders: m.riders,
+    bets: enrichedBets, riders: enrichedRiders,
+    stage_profile: stageProfile,
   };
 }
 
@@ -300,10 +328,10 @@ var _photosIndexMtime = 0;
 function _slugifyCyc(name) {
   if (!name) return '';
   var s = String(name);
-  // Supprime accents
-  s = s.replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
-       .replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o')
-       .replace(/[ùúûü]/g, 'u').replace(/[ç]/g, 'c');
+  // Normalisation Unicode NFKD + suppression des combining marks (caron, acute, ...)
+  // Gère correctement č, š, ž, ő, ű, etc. que les regex simples ne couvrent pas.
+  // (Node.js supporte String.prototype.normalize depuis v0.12)
+  s = s.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
   s = s.toLowerCase().replace(/[\s|/\\]+/g, '-').replace(/[^a-z0-9-]/g, '');
   s = s.replace(/-+/g, '-').replace(/^-|-$/g, '');
   return s;
@@ -385,8 +413,10 @@ function _getRiderPhotoUrl(riderName) {
   var normalizedName = String(riderName).toLowerCase().trim();
   // Mapping manuel pour les cas connus
   var NAME_FALLBACKS = {
+    // ── cyclingstage.com variants (noms courts / sans accents) ──
     'pogacar': 'tadej-pogacar',
     'tadej pogacar': 'tadej-pogacar',
+    'tadej pogačar': 'tadej-pogacar',
     'vingegaard': 'jonas-vingegaard',
     'jonas vingegaard': 'jonas-vingegaard',
     'evenepoel': 'remco-evenepoel',
@@ -413,6 +443,72 @@ function _getRiderPhotoUrl(riderName) {
     'mathias vacek': 'mathias-vacek',
     'mads pedersen': 'mads-pedersen-cyclist',
     'lenny martinez': 'lenny-martinez',
+
+    // ── Mock cyclingService.js — 21 riders manquants (Task 10-riders-inventory) ──
+    // GC contenders
+    'rogl': 'primoz-roglic',
+    'primoz roglic': 'primoz-roglic',
+    'primož roglič': 'primoz-roglic',
+    'roglic': 'primoz-roglic',
+    'landa': 'mikel-landa',
+    'mikel landa': 'mikel-landa',
+    'ayate': 'adam-yates',
+    'adam yates': 'adam-yates',
+    'yates': 'simon-yates',
+    'simon yates': 'simon-yates',
+    'gaudu': 'david-gaudu',
+    'david gaudu': 'david-gaudu',
+    // Puncheurs / Classics
+    'wva': 'wout-van-aert',
+    'wout van aert': 'wout-van-aert',
+    'bett': 'alberto-bettiol',
+    'alberto bettiol': 'alberto-bettiol',
+    'bettiol': 'alberto-bettiol',
+    'moho': 'matej-mohoric',
+    'matej mohoric': 'matej-mohoric',
+    'matej mohorič': 'matej-mohoric',
+    'mohoric': 'matej-mohoric',
+    'kung': 'stefan-kung',
+    'stefan kung': 'stefan-kung',
+    'stefan küng': 'stefan-kung',
+    'turg': 'anthony-turgis',
+    'anthony turgis': 'anthony-turgis',
+    'turgis': 'anthony-turgis',
+    // Sprinteurs
+    'phil': 'jasper-philipsen',
+    'jasper philipsen': 'jasper-philipsen',
+    'philipsen': 'jasper-philipsen',
+    'girm': 'biniam-girmay',
+    'biniam girmay': 'biniam-girmay',
+    'girmay': 'biniam-girmay',
+    'mila': 'jonathan-milan',
+    'jonathan milan': 'jonathan-milan',
+    'milan': 'jonathan-milan',
+    'groe': 'dylan-groenewegen',
+    'dylan groenewegen': 'dylan-groenewegen',
+    'groenewegen': 'dylan-groenewegen',
+    'jako': 'fabio-jakobsen',
+    'fabio jakobsen': 'fabio-jakobsen',
+    'jakobsen': 'fabio-jakobsen',
+    'dema': 'arnaud-demare',
+    'arnaud demare': 'arnaud-demare',
+    'arnaud démare': 'arnaud-demare',
+    'demare': 'arnaud-demare',
+    'wels': 'sam-welsford',
+    'sam welsford': 'sam-welsford',
+    'welsford': 'sam-welsford',
+    'lapo': 'christophe-laporte',
+    'christophe laporte': 'christophe-laporte',
+    'laporte': 'christophe-laporte',
+    // Baroudeurs / équipiers
+    'lutc': 'alexey-lutsenko',
+    'alexey lutsenko': 'alexey-lutsenko',
+    'lutsenko': 'alexey-lutsenko',
+    'heal': 'ben-healy',
+    'ben healy': 'ben-healy',
+    'healy': 'ben-healy',
+    'cort': 'magnus-cort',
+    'magnus cort': 'magnus-cort',
   };
   var fallbackSlug = NAME_FALLBACKS[normalizedName];
   if (fallbackSlug && photos.riders[fallbackSlug] && photos.riders[fallbackSlug].local_path && photos.riders[fallbackSlug].status === 'ok') {
@@ -436,10 +532,46 @@ function _getRiderPhotoUrl(riderName) {
 function _getTeamLogoUrl(teamName) {
   var photos = _loadPhotosIndex();
   if (!photos || !photos.teams) return null;
+  // 1. Cherche par slug direct
   var slug = _slugifyCyc(teamName);
-  var entry = photos.teams[slug];
-  if (entry && entry.local_path && (entry.status === 'ok' || entry.status === 'placeholder')) {
+  if (photos.teams[slug] && photos.teams[slug].local_path && (photos.teams[slug].status === 'ok' || photos.teams[slug].status === 'placeholder')) {
     return '/api/v1/cycling/images/teams/' + slug;
+  }
+  // 2. Fallback : mapping d'alias (noms mock vs noms cyclingstage.com)
+  var normalizedName = String(teamName).toLowerCase().trim();
+  var TEAM_ALIAS = {
+    // Mock names → cyclingstage slugs
+    'uae team emirates': 'uae-emirates',
+    'uae team emirates xrg': 'uae-emirates',
+    'visma-lease a bike': 'visma-lease-a-bike',
+    'team visma-lease a bike': 'visma-lease-a-bike',
+    'visma | lease a bike': 'visma-lease-a-bike',
+    'soudal quick-step': null,  // pas de logo dans l'index
+    'red bull-bora-hansgrohe': 'red-bull-bora-hansgrohe',
+    'red bull–bora–hansgrohe': 'red-bull-bora-hansgrohe',
+    'ef education-easypost': 'ef-education-easypost',
+    'jayco-alula': null,  // pas de logo
+    'groupama-fdj': null,  // pas de logo
+    'ineos grenadiers': 'netcompany-ineos',
+    'netcompany-ineos': 'netcompany-ineos',
+    'netcompany–ineos': 'netcompany-ineos',
+    'lidl-trek': 'lidl-trek',
+    'lidl–trek': 'lidl-trek',
+    'bahrain victorious': null,  // pas de logo
+    'totalenergies': null,  // pas de logo
+    'intermarché-wanty': null,  // pas de logo
+    'dsm-firmenich postnl': null,  // pas de logo
+    'arkéa-b&b hotels': null,  // pas de logo
+    'astana qazaqstan': null,  // pas de logo
+    'uno-x mobility': null,  // pas de logo
+    'alpecin-deceuninck': 'alpecin-premier-tech',
+    'alpecin premier tech': 'alpecin-premier-tech',
+    'decathlon cma cgm': 'decathlon-cma-cgm',
+    'decathlon ag2r la mondiale': 'decathlon-cma-cgm',
+  };
+  var aliasSlug = TEAM_ALIAS[normalizedName];
+  if (aliasSlug && photos.teams[aliasSlug] && photos.teams[aliasSlug].local_path && (photos.teams[aliasSlug].status === 'ok' || photos.teams[aliasSlug].status === 'placeholder')) {
+    return '/api/v1/cycling/images/teams/' + aliasSlug;
   }
   return null;
 }
@@ -510,7 +642,6 @@ async function getStageFavourites(stageN, options) {
     response.weather_forecast = stageData.weather_forecast;
     response.publication_info = stageData.publication_info;
     response.translated = (lang !== 'en');
-    // Si lang !== 'en' mais pas de traduction dispo, on indique fallback EN
   }
 
   // Favouris avec photos + logos
@@ -521,11 +652,9 @@ async function getStageFavourites(stageN, options) {
       team: fav.team,
       riders: fav.riders || [],
     };
-    // Ajoute le logo de la team
     if (fav.team) {
       enriched.team_logo = _getTeamLogoUrl(fav.team);
     }
-    // Ajoute la photo de chaque rider
     enriched.riders = (fav.riders || []).map(function (riderName) {
       return {
         name: riderName,
@@ -535,7 +664,156 @@ async function getStageFavourites(stageN, options) {
     return enriched;
   });
 
+  // Ajoute le profil d'étape letour.fr
+  response.stage_profile = _getStageProfileUrl(stageN);
+
   return response;
+}
+
+// ── Stage profile (letour.fr) ────────────────────────────────────────────────
+var _profilesIndexCache = null;
+var _profilesIndexMtime = 0;
+
+function _loadProfilesIndex() {
+  try {
+    var path = require('path');
+    var fs = require('fs');
+    var pPath = path.join(__dirname, '..', 'data', 'cycling', 'images', 'profiles', 'index.json');
+    if (!fs.existsSync(pPath)) return null;
+    var stat = fs.statSync(pPath);
+    var mtime = stat.mtimeMs;
+    if (_profilesIndexCache && mtime === _profilesIndexMtime) {
+      return _profilesIndexCache;
+    }
+    var raw = fs.readFileSync(pPath, 'utf8');
+    _profilesIndexCache = JSON.parse(raw);
+    _profilesIndexMtime = mtime;
+    return _profilesIndexCache;
+  } catch (e) {
+    return null;
+  }
+}
+
+function _getStageProfileUrl(stageN) {
+  var profiles = _loadProfilesIndex();
+  if (!profiles || !profiles.stages) return null;
+  var entry = profiles.stages[String(stageN)];
+  if (entry && entry.local_path && entry.status === 'ok') {
+    return '/api/v1/cycling/images/profiles/stage-' + stageN;
+  }
+  return null;
+}
+
+function _getStageProfilePath(stageN) {
+  var profiles = _loadProfilesIndex();
+  if (!profiles || !profiles.stages) return null;
+  var entry = profiles.stages[String(stageN)];
+  if (!entry || !entry.local_path) return null;
+  var path = require('path');
+  return path.join(__dirname, '..', entry.local_path);
+}
+
+// ── Classifications + Leader board ───────────────────────────────────────────
+// Pour l'instant, le TdF 2026 n'a pas commencé (départ 4 juillet).
+// On renvoie un état "course pas encore commencée" + un leader board basé sur
+// les favoris du modèle (top 3 par win proba).
+
+async function getClassifications(stageN, options) {
+  options = options || {};
+  var lang = options.lang || 'en';
+
+  if (!stageN) {
+    var m = await _model();
+    stageN = m ? m.stage : 1;
+  }
+
+  // Pour l'instant, le TdF n'a pas commencé → on renvoie un état "non commencé"
+  // avec les favoris du modèle comme "leader board" prédictif.
+  var m = await _model();
+  if (!m) {
+    return {
+      ok: false,
+      error: 'model_unavailable',
+      message: 'Modèle non disponible',
+      stage: stageN,
+    };
+  }
+
+  // Calcule la date de l'étape
+  var stageDate = null;
+  try {
+    var STAGES_DATES = {
+      1: '2026-07-04', 2: '2026-07-05', 3: '2026-07-06', 4: '2026-07-07',
+      5: '2026-07-08', 6: '2026-07-09', 7: '2026-07-10', 8: '2026-07-11',
+      9: '2026-07-12', 10: '2026-07-14', 11: '2026-07-15', 12: '2026-07-16',
+      13: '2026-07-17', 14: '2026-07-18', 15: '2026-07-19', 16: '2026-07-21',
+      17: '2026-07-22', 18: '2026-07-23', 19: '2026-07-24', 20: '2026-07-25',
+      21: '2026-07-26'
+    };
+    stageDate = STAGES_DATES[stageN] || null;
+  } catch (e) {}
+
+  var now = new Date();
+  var todayStr = now.toISOString().slice(0, 10);
+  var stageStarted = stageDate && stageDate <= todayStr;
+  var stageFinished = stageDate && stageDate < todayStr;
+
+  // Top 3 riders par win% pour le leader board prédictif
+  var sortedRiders = (m.riders || []).slice().sort(function (a, b) {
+    return (b.win || 0) - (a.win || 0);
+  });
+  var top3 = sortedRiders.slice(0, 3).map(function (r, i) {
+    return {
+      position: i + 1,
+      rider: r.name,
+      code: r.code,
+      team: r.team,
+      team_logo: _getTeamLogoUrl(r.team),
+      photo: _getRiderPhotoUrl(r.name),
+      win_prob: r.win,
+      podium_prob: r.podium,
+      top10_prob: r.top10,
+    };
+  });
+
+  // Jerseys prédictifs (basés sur le type de rider)
+  var jerseys = {
+    yellow: top3[0] || null,  // GC leader
+    green: null,              // Sprinter — on prend le sprinter avec le plus haut win%
+    polka: null,              // Grimpeur — on prend le grimpeur avec le plus haut win%
+    white: null,              // Young rider — on prend le plus jeune (mock, on prend le 3e)
+  };
+  // Pour l'instant, on mock les jerseys avec top3 (à affiner quand TdF commence)
+  jerseys.green = top3[1] || null;
+  jerseys.polka = top3[2] || null;
+  jerseys.white = top3[2] || null;
+
+  return {
+    ok: true,
+    stage: stageN,
+    lang: lang,
+    stage_date: stageDate,
+    stage_started: stageStarted,
+    stage_finished: stageFinished,
+    race_status: stageFinished ? 'finished' : (stageStarted ? 'live' : 'upcoming'),
+    // Classement par étape (vide tant que la course n'est pas finie)
+    stage_classification: stageFinished ? [] : [],
+    // Classement général (vide tant que la course n'est pas finie)
+    gc_classification: stageFinished ? [] : [],
+    // Classements par maillot (vides tant que la course n'est pas finie)
+    jersey_classifications: {
+      yellow: stageFinished ? [] : [],
+      green: stageFinished ? [] : [],
+      polka: stageFinished ? [] : [],
+      white: stageFinished ? [] : [],
+    },
+    // Leader board prédictif (top 3 favoris du modèle) — visible en attendant
+    leader_board: top3,
+    jerseys_predicted: jerseys,
+    note: stageFinished
+      ? 'Résultats officiels non disponibles — à scraper depuis letour.fr après l\'étape'
+      : 'Course à venir — leader board basé sur les probabilités du modèle',
+  };
 }
 
 module.exports = {
@@ -544,6 +822,7 @@ module.exports = {
   getCyclingRiders: getCyclingRiders,
   getCyclingFull: getCyclingFull,
   getStageFavourites: getStageFavourites,
+  getClassifications: getClassifications,
   // Expose pour la route statique images
   _getRiderPhotoPath: function (slug) {
     var photos = _loadPhotosIndex();
@@ -561,5 +840,8 @@ module.exports = {
     var path = require('path');
     return path.join(__dirname, '..', entry.local_path);
   },
-  _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/', 'cyclingstage.com'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
+  _getStageProfilePath: _getStageProfilePath,
+  _getRiderPhotoUrl: _getRiderPhotoUrl,
+  _getTeamLogoUrl: _getTeamLogoUrl,
+  _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/', 'cyclingstage.com', 'letour.fr', 'wikipedia'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
 };

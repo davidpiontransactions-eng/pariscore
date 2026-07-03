@@ -25,6 +25,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -49,19 +50,25 @@ RIDER_WIKIPEDIA_MAP = {
     # Stars TdF 2026 (sans accent dans cyclingstage → avec accent Wikipedia)
     "Pogacar": "Tadej Pogacar",
     "Tadej Pogacar": "Tadej Pogačar",
+    "Tadej Pogačar": "Tadej Pogačar",
     "Vingegaard": "Jonas Vingegaard",
     "Jonas Vingegaard": "Jonas Vingegaard",
     "Evenepoel": "Remco Evenepoel",
+    "Remco Evenepoel": "Remco Evenepoel",
     "Van der Poel": "Mathieu van der Poel",
     "Mathieu van der Poel": "Mathieu van der Poel",
     "Carapaz": "Richard Carapaz",
+    "Richard Carapaz": "Richard Carapaz",
     "Ayuso": "Juan Ayuso",
     "Juan Ayuso": "Juan Ayuso",
     "Skjelmose": "Mattias Skjelmose",
+    "Mattias Skjelmose": "Mattias Skjelmose",
     "Seixas": "Paul Seixas",
     "Paul Seixas": "Paul Seixas",
     "Arensman": "Thymen Arensman",
-    "Vauquelin": "Kevin Vauquelin",
+    "Thymen Arensman": "Thymen Arensman",
+    "Vauquelin": "Kévin Vauquelin",
+    "Kevin Vauquelin": "Kévin Vauquelin",
     "Kévin Vauquelin": "Kévin Vauquelin",
     # Stage 2
     "Tom Pidcock": "Tom Pidcock",
@@ -70,6 +77,55 @@ RIDER_WIKIPEDIA_MAP = {
     "Mathias Vacek": "Mathias Vacek",
     "Mads Pedersen": "Mads Pedersen (cyclist)",
     "Lenny Martinez": "Lenny Martinez",
+
+    # ── Mock cyclingService.js — 21 riders manquants (Task 10-riders-inventory) ──
+    # GC contenders
+    "Primož Roglič": "Primož Roglič",
+    "Primoz Roglic": "Primož Roglič",
+    "Roglic": "Primož Roglič",
+    "Mikel Landa": "Mikel Landa",
+    "Landa": "Mikel Landa",
+    "Adam Yates": "Adam Yates (cyclist)",       # disambiguation (sibling Simon)
+    "Simon Yates": "Simon Yates (cyclist)",     # disambiguation (sibling Adam)
+    "David Gaudu": "David Gaudu",
+    "Gaudu": "David Gaudu",
+    # Puncheurs / Classics
+    "Wout van Aert": "Wout van Aert",
+    "Alberto Bettiol": "Alberto Bettiol",
+    "Bettiol": "Alberto Bettiol",
+    "Matej Mohorič": "Matej Mohorič",
+    "Matej Mohoric": "Matej Mohorič",
+    "Mohoric": "Matej Mohorič",
+    "Stefan Küng": "Stefan Küng",
+    "Stefan Kung": "Stefan Küng",
+    "Kung": "Stefan Küng",
+    "Anthony Turgis": "Anthony Turgis",
+    "Turgis": "Anthony Turgis",
+    # Sprinteurs
+    "Jasper Philipsen": "Jasper Philipsen",
+    "Philipsen": "Jasper Philipsen",
+    "Biniam Girmay": "Biniam Girmay",
+    "Girmay": "Biniam Girmay",
+    "Jonathan Milan": "Jonathan Milan",  # page Wikipedia existe déjà à ce titre (cycliste italien)
+    "Milan": "Jonathan Milan",
+    "Dylan Groenewegen": "Dylan Groenewegen",
+    "Groenewegen": "Dylan Groenewegen",
+    "Fabio Jakobsen": "Fabio Jakobsen",
+    "Jakobsen": "Fabio Jakobsen",
+    "Arnaud Démare": "Arnaud Démare",
+    "Arnaud Demare": "Arnaud Démare",
+    "Demare": "Arnaud Démare",
+    "Sam Welsford": "Sam Welsford",
+    "Welsford": "Sam Welsford",
+    "Christophe Laporte": "Christophe Laporte",
+    "Laporte": "Christophe Laporte",
+    # Baroudeurs / équipiers
+    "Alexey Lutsenko": "Alexey Lutsenko",
+    "Lutsenko": "Alexey Lutsenko",
+    "Ben Healy": "Ben Healy (cyclist)",         # disambiguation (rugbyman homonyme)
+    "Healy": "Ben Healy (cyclist)",
+    "Magnus Cort": "Magnus Cort",               # page Wikipedia : "Magnus Cort"
+    "Cort": "Magnus Cort",
 }
 
 # ─── Mapping teams → Wikipedia title ──────────────────────────────────────────
@@ -86,14 +142,13 @@ TEAM_WIKIPEDIA_MAP = {
 
 
 def slugify(name):
-    """Convertit un nom en slug safe pour nom de fichier."""
-    # Supprime accents
-    name_no_accents = re.sub(r'[àáâãäå]', 'a', name)
-    name_no_accents = re.sub(r'[èéêë]', 'e', name_no_accents)
-    name_no_accents = re.sub(r'[ìíîï]', 'i', name_no_accents)
-    name_no_accents = re.sub(r'[òóôõö]', 'o', name_no_accents)
-    name_no_accents = re.sub(r'[ùúûü]', 'u', name_no_accents)
-    name_no_accents = re.sub(r'[ç]', 'c', name_no_accents)
+    """Convertit un nom en slug safe pour nom de fichier.
+
+    Utilise NFKD pour gérer tous les accents Unicode (notamment č, š, ž, etc.
+    que les regex simples ne couvrent pas)."""
+    # Normalisation Unicode : décompose les accents (č → c + caron)
+    # puis encode en ASCII en ignorant les caractères non-ASCII (le caron)
+    name_no_accents = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore').decode('ascii')
     # Minuscules + remplace espaces/| par tiret
     slug = name_no_accents.lower()
     slug = re.sub(r'[\s|/\\]+', '-', slug)

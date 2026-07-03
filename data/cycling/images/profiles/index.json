@@ -1,0 +1,216 @@
+{
+  "source": "letour.fr",
+  "last_update": "2026-07-03T10:02:48Z",
+  "stages": {
+    "1": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/tdf26-profils-web-fr-e-tape-1/71083/0:0,1004:602-960-0-90/f71aa",
+      "local_path": "data/cycling/images/profiles/stage-1.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-1",
+      "scraped_at": "2026-07-03T10:02:10Z",
+      "status": "ok",
+      "bytes": 43724,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "2": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/2-tdf26-profils-web-fr/70964/0:0,1004:602-960-0-90/cf268",
+      "local_path": "data/cycling/images/profiles/stage-2.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-2",
+      "scraped_at": "2026-07-03T10:02:12Z",
+      "status": "ok",
+      "bytes": 99170,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "3": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/3-tdf26-profils-web-fr/70962/0:0,1004:602-960-0-90/55d8b",
+      "local_path": "data/cycling/images/profiles/stage-3.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-3",
+      "scraped_at": "2026-07-03T10:02:14Z",
+      "status": "ok",
+      "bytes": 101917,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "4": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/4-tdf26-profils-web-fr/70960/0:0,1004:602-960-0-90/6aaac",
+      "local_path": "data/cycling/images/profiles/stage-4.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-4",
+      "scraped_at": "2026-07-03T10:02:16Z",
+      "status": "ok",
+      "bytes": 92621,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "5": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/5-tdf26-profils-web-fr/70961/0:0,1004:602-960-0-90/9c154",
+      "local_path": "data/cycling/images/profiles/stage-5.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-5",
+      "scraped_at": "2026-07-03T10:02:17Z",
+      "status": "ok",
+      "bytes": 68736,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "6": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/6-tdf26-profils-web-fr/70968/0:0,1004:602-960-0-90/c69fa",
+      "local_path": "data/cycling/images/profiles/stage-6.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-6",
+      "scraped_at": "2026-07-03T10:02:19Z",
+      "status": "ok",
+      "bytes": 92723,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "7": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/7-tdf26-profils-web-fr/70963/0:0,1004:602-960-0-90/5d682",
+      "local_path": "data/cycling/images/profiles/stage-7.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-7",
+      "scraped_at": "2026-07-03T10:02:21Z",
+      "status": "ok",
+      "bytes": 62804,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "8": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/8-tdf26-profils-web-fr/70970/0:0,1004:602-960-0-90/11298",
+      "local_path": "data/cycling/images/profiles/stage-8.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-8",
+      "scraped_at": "2026-07-03T10:02:23Z",
+      "status": "ok",
+      "bytes": 75854,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "9": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/9-tdf26-profils-web-fr/70966/0:0,1004:602-960-0-90/96078",
+      "local_path": "data/cycling/images/profiles/stage-9.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-9",
+      "scraped_at": "2026-07-03T10:02:25Z",
+      "status": "ok",
+      "bytes": 98235,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "10": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/10-tdf26-profils-web-fr/70969/0:0,1004:602-960-0-90/afe2a",
+      "local_path": "data/cycling/images/profiles/stage-10.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-10",
+      "scraped_at": "2026-07-03T10:02:27Z",
+      "status": "ok",
+      "bytes": 105234,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "11": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/11-tdf26-profils-web-fr/70965/0:0,1004:602-960-0-90/76dd7",
+      "local_path": "data/cycling/images/profiles/stage-11.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-11",
+      "scraped_at": "2026-07-03T10:02:29Z",
+      "status": "ok",
+      "bytes": 76456,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "12": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/12-tdf26-profils-web-fr/70971/0:0,1004:602-960-0-90/413dc",
+      "local_path": "data/cycling/images/profiles/stage-12.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-12",
+      "scraped_at": "2026-07-03T10:02:31Z",
+      "status": "ok",
+      "bytes": 85894,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "13": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/13-tdf26-profils-web-fr/70973/0:0,1004:602-960-0-90/bf2e6",
+      "local_path": "data/cycling/images/profiles/stage-13.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-13",
+      "scraped_at": "2026-07-03T10:02:33Z",
+      "status": "ok",
+      "bytes": 87490,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "14": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/14-tdf26-profils-web-fr/70972/0:0,1004:602-960-0-90/2c309",
+      "local_path": "data/cycling/images/profiles/stage-14.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-14",
+      "scraped_at": "2026-07-03T10:02:35Z",
+      "status": "ok",
+      "bytes": 99904,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "15": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/15-tdf26-profils-web-fr/70976/0:0,1004:602-960-0-90/7345e",
+      "local_path": "data/cycling/images/profiles/stage-15.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-15",
+      "scraped_at": "2026-07-03T10:02:36Z",
+      "status": "ok",
+      "bytes": 101719,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "16": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/16-tdf26-profils-web-fr/70974/0:0,1004:602-960-0-90/e8ad8",
+      "local_path": "data/cycling/images/profiles/stage-16.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-16",
+      "scraped_at": "2026-07-03T10:02:38Z",
+      "status": "ok",
+      "bytes": 59310,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "17": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/17-tdf26-profils-web-fr/70979/0:0,1004:602-960-0-90/e7e70",
+      "local_path": "data/cycling/images/profiles/stage-17.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-17",
+      "scraped_at": "2026-07-03T10:02:40Z",
+      "status": "ok",
+      "bytes": 104512,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "18": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/18-tdf26-profils-web-fr/70977/0:0,1004:602-960-0-90/970be",
+      "local_path": "data/cycling/images/profiles/stage-18.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-18",
+      "scraped_at": "2026-07-03T10:02:42Z",
+      "status": "ok",
+      "bytes": 106255,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "19": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/19-tdf26-profils-web-fr/70975/0:0,1004:602-960-0-90/5575d",
+      "local_path": "data/cycling/images/profiles/stage-19.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-19",
+      "scraped_at": "2026-07-03T10:02:44Z",
+      "status": "ok",
+      "bytes": 91880,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "20": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/20-tdf26-profils-web-fr/70978/0:0,1004:602-960-0-90/a780c",
+      "local_path": "data/cycling/images/profiles/stage-20.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-20",
+      "scraped_at": "2026-07-03T10:02:46Z",
+      "status": "ok",
+      "bytes": 105303,
+      "source_used": "letour.fr/fr",
+      "error": null
+    },
+    "21": {
+      "image_url": "https://img.aso.fr/core_app/img-cycling-tdf-jpg/tdf26-profils-web-fr-e-tape-21/71082/0:0,1004:602-960-0-90/f1fe2",
+      "local_path": "data/cycling/images/profiles/stage-21.jpg",
+      "source_url": "https://www.letour.fr/fr/etape-21",
+      "scraped_at": "2026-07-03T10:02:48Z",
+      "status": "ok",
+      "bytes": 98321,
+      "source_used": "letour.fr/fr",
+      "error": null
+    }
+  }
+}
