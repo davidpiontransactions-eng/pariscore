@@ -21785,14 +21785,81 @@ async function handleAPI(req, res, pathname, query) {
   }
   // GET /api/v1/cycling/favourites — description + favoris de l'étape (scraped cyclingstage.com)
   // Query: ?stage=N (si absent, utilise l'étape courante du modèle)
+  //        ?lang=fr (si absent, utilise EN)
   if (pathname === '/api/v1/cycling/favourites' && req.method === 'GET') {
     try {
       const q = new URL(req.url, 'http://localhost').searchParams;
       const stageN = q.get('stage') ? parseInt(q.get('stage'), 10) : null;
-      const fav = await cyclingService.getStageFavourites(stageN);
-      const cacheMaxAge = fav.ok ? 3600 : 60;
+      const lang = q.get('lang') || 'en';
+      const fav = await cyclingService.getStageFavourites(stageN, { lang: lang });
+      const cacheMaxAge = fav.ok ? 3600 : 60; // 1h si OK, 1min si erreur (pour retry rapide)
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=' + cacheMaxAge });
       return res.end(JSON.stringify(fav));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+  // GET /api/v1/cycling/images/riders/<slug> — photo d'un coureur (depuis data/cycling/images/riders/)
+  if (pathname.startsWith('/api/v1/cycling/images/riders/') && req.method === 'GET') {
+    try {
+      const slug = pathname.replace('/api/v1/cycling/images/riders/', '');
+      // Sanitize : que alphanum + tirets
+      if (!/^[a-z0-9-]+$/.test(slug)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Invalid slug' }));
+      }
+      const imgPath = cyclingService._getRiderPhotoPath(slug);
+      if (!imgPath || !require('fs').existsSync(imgPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Image not found' }));
+      }
+      const ext = imgPath.split('.').pop().toLowerCase();
+      const mimeMap = { 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp', 'svg': 'image/svg+xml', 'gif': 'image/gif' };
+      const mime = mimeMap[ext] || 'application/octet-stream';
+      const fs = require('fs');
+      const stat = fs.statSync(imgPath);
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Cache-Control': 'public, max-age=86400', // 24h — images ne changent pas
+        'Content-Length': stat.size,
+        'Access-Control-Allow-Origin': '*'
+      });
+      const stream = fs.createReadStream(imgPath);
+      stream.pipe(res);
+      return;
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+  // GET /api/v1/cycling/images/teams/<slug> — logo d'une équipe (depuis data/cycling/images/teams/)
+  if (pathname.startsWith('/api/v1/cycling/images/teams/') && req.method === 'GET') {
+    try {
+      const slug = pathname.replace('/api/v1/cycling/images/teams/', '');
+      if (!/^[a-z0-9-]+$/.test(slug)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Invalid slug' }));
+      }
+      const imgPath = cyclingService._getTeamLogoPath(slug);
+      if (!imgPath || !require('fs').existsSync(imgPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Image not found' }));
+      }
+      const ext = imgPath.split('.').pop().toLowerCase();
+      const mimeMap = { 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp', 'svg': 'image/svg+xml', 'gif': 'image/gif' };
+      const mime = mimeMap[ext] || 'application/octet-stream';
+      const fs = require('fs');
+      const stat = fs.statSync(imgPath);
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Cache-Control': 'public, max-age=86400',
+        'Content-Length': stat.size,
+        'Access-Control-Allow-Origin': '*'
+      });
+      const stream = fs.createReadStream(imgPath);
+      stream.pipe(res);
+      return;
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ ok: false, error: e.message }));

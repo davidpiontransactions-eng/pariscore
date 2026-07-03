@@ -3120,5 +3120,19 @@
   "ss.back_change": "Change sport",
   "accuracy.rate_mid": " success rate on last ",
   "accuracy.rate_end": " predictions",
-  "accuracy.updated_label": "Updated: "
+  "accuracy.updated_label": "Updated: ",
+  "cyc.favourites_head": "Stage favourites",
+  "cyc.favourites_count": "{n} entries",
+  "cyc.source": "Source",
+  "cyc.weather_forecast": "Weather forecast",
+  "cyc.loading_favourites": "Loading stage favourites…",
+  "cyc.error_favourites": "Error loading favourites. Retrying in 30 min.",
+  "cyc.no_favourites": "No favourites available",
+  "cyc.favourites_unavailable": "Favourites unavailable for this stage.",
+  "cyc.available_stages": "Available stages",
+  "cyc.tier_top": "Top favourites",
+  "cyc.tier_contender": "Contenders",
+  "cyc.tier_outsider": "Outsiders",
+  "cyc.translation_badge": "Auto-translated",
+  "cyc.translated_at": "Translated on"
 }

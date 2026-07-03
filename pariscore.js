@@ -1141,63 +1141,129 @@ function _fetchAndRenderCycling() {
     });
 }
 // Fetch les favoris de l'étape courante depuis cyclingstage.com (via backend)
+// Détecte la langue active (I18N.current()) et passe ?lang= à l'API pour avoir
+// la version traduite (FR, ES, etc.) si disponible.
 function _fetchAndRenderCyclingFavourites() {
   var c = document.getElementById('cyc-stage-favourites');
   if (!c) return;
+  // Détecte la langue active
+  var lang = 'fr';
+  try {
+    if (typeof I18N !== 'undefined' && I18N.current) lang = I18N.current() || 'fr';
+  } catch (e) {}
+  // Garde le loading state si vide, sinon garde l'ancien contenu pendant le fetch
   if (!c.dataset.loaded) {
-    c.innerHTML = '<div class="cyc-fav-loading">Chargement des favoris de l\'étape…</div>';
+    var loadingMsg = 'Chargement des favoris de l\'étape…';
+    try { if (typeof I18N !== 'undefined' && I18N.t) loadingMsg = I18N.t('cyc.loading_favourites'); } catch (e) {}
+    c.innerHTML = '<div class="cyc-fav-loading">' + _cycEsc(loadingMsg) + '</div>';
   }
-  fetch('/api/v1/cycling/favourites', { cache: 'no-store' })
+  fetch('/api/v1/cycling/favourites?lang=' + encodeURIComponent(lang), { cache: 'no-store' })
     .then(function(r) { return r.json(); })
     .then(function(j) { _renderCyclingStageFavourites(j); })
     .catch(function () {
       if (!c.dataset.loaded) {
-        c.innerHTML = '<div class="cyc-fav-empty">Erreur de chargement des favoris. Nouvel essai dans 30 min.</div>';
+        var errMsg = 'Erreur de chargement des favoris. Nouvel essai dans 30 min.';
+        try { if (typeof I18N !== 'undefined' && I18N.t) errMsg = I18N.t('cyc.error_favourites'); } catch (e) {}
+        c.innerHTML = '<div class="cyc-fav-empty">' + _cycEsc(errMsg) + '</div>';
       }
     });
+}
+function _cycT(key, fallback) {
+  try {
+    if (typeof I18N !== 'undefined' && I18N.t) {
+      var v = I18N.t(key);
+      if (v && v !== key) return v;
+    }
+  } catch (e) {}
+  return fallback;
 }
 function _renderCyclingStageFavourites(j) {
   var c = document.getElementById('cyc-stage-favourites');
   if (!c) return;
   if (!j || j.ok === false) {
     c.dataset.loaded = '0';
-    var msg = (j && j.message) ? j.message : 'Favoris non disponibles pour cette étape.';
+    var msg = (j && j.message) ? j.message : _cycT('cyc.favourites_unavailable', 'Favoris non disponibles pour cette étape.');
     var avail = (j && j.available_stages && j.available_stages.length)
-      ? '<div style="margin-top:8px;font-size:11px;color:#6b7280;">Étapes disponibles : ' + j.available_stages.join(', ') + '</div>'
+      ? '<div style="margin-top:8px;font-size:11px;color:#6b7280;">' + _cycEsc(_cycT('cyc.available_stages', 'Étapes disponibles')) + ' : ' + j.available_stages.join(', ') + '</div>'
       : '';
     c.innerHTML = '<div class="cyc-fav-empty">' + _cycEsc(msg) + avail + '</div>';
     return;
   }
   c.dataset.loaded = '1';
+  // Construit le HTML
   var html = '';
+  // Head (title + source + badge traduction si applicable)
   html += '<div class="cyc-stage-head">';
   html += '<div class="cyc-stage-title">' + _cycEsc(j.title || ('Étape ' + j.stage)) + '</div>';
-  html += '<div class="cyc-stage-source">Source : <a href="' + _cycEsc(j.source_url) + '" target="_blank" rel="noopener">cyclingstage.com</a></div>';
+  if (j.translated === true) {
+    html += '<span class="cyc-stage-translated-badge" title="' + _cycEsc(_cycT('cyc.translated_at', 'Traduit le') + ' ' + (j.translated_at || '')) + '">' + _cycEsc(_cycT('cyc.translation_badge', 'Traduit auto')) + '</span>';
+  }
+  html += '<div class="cyc-stage-source">' + _cycEsc(_cycT('cyc.source', 'Source')) + ' : <a href="' + _cycEsc(j.source_url) + '" target="_blank" rel="noopener">cyclingstage.com</a></div>';
   html += '</div>';
+  // Description
   if (j.description) {
     html += '<div class="cyc-stage-desc">' + _cycEsc(j.description) + '</div>';
   }
+  // Weather
   if (j.weather_forecast) {
     html += '<div class="cyc-stage-weather">' + _cycEsc(j.weather_forecast) + '</div>';
   }
+  // Publication info
   if (j.publication_info) {
     html += '<div class="cyc-stage-pubinfo">' + _cycEsc(j.publication_info) + '</div>';
   }
+  // Favourites
   if (j.favourites && j.favourites.length) {
-    html += '<div class="cyc-fav-head">Favoris de l\'étape · ' + j.favourites.length + ' entrées</div>';
+    // Header avec légende des tiers
+    var favHeadLabel = _cycT('cyc.favourites_head', 'Favoris de l\'étape');
+    var favCountLabel = _cycT('cyc.favourites_count', '{n} entrées').replace('{n}', j.favourites.length);
+    html += '<div class="cyc-fav-head">';
+    html += '<span>' + _cycEsc(favHeadLabel) + ' · ' + _cycEsc(favCountLabel) + '</span>';
+    html += '<span class="cyc-fav-head-tier t3"><i></i>' + _cycEsc(_cycT('cyc.tier_top', 'Top favoris')) + '</span>';
+    html += '<span class="cyc-fav-head-tier t2"><i></i>' + _cycEsc(_cycT('cyc.tier_contender', 'Prétendants')) + '</span>';
+    html += '<span class="cyc-fav-head-tier t1"><i></i>' + _cycEsc(_cycT('cyc.tier_outsider', 'Outsiders')) + '</span>';
+    html += '</div>';
     html += '<div class="cyc-fav">';
     j.favourites.forEach(function (f) {
       var tierClass = f.tier === '***' ? 't3' : f.tier === '**' ? 't2' : 't1';
-      var teamHtml = f.team ? '<div class="cyc-fav-team">' + _cycEsc(f.team) + '</div>' : '';
-      var ridersHtml = (f.riders && f.riders.length) ? '<div class="cyc-fav-riders">' + f.riders.map(_cycEsc).join(' · ') + '</div>' : '';
       html += '<div class="cyc-fav-row">';
       html += '<div class="cyc-fav-tier ' + tierClass + '">' + _cycEsc(f.tier) + '</div>';
-      html += '<div class="cyc-fav-content">' + teamHtml + ridersHtml + '</div>';
-      html += '</div>';
+      html += '<div class="cyc-fav-content">';
+      // Team row (logo + name) si présent
+      if (f.team) {
+        html += '<div class="cyc-fav-team-row">';
+        if (f.team_logo) {
+          html += '<img class="cyc-fav-team-logo" src="' + _cycEsc(f.team_logo) + '" alt="' + _cycEsc(f.team) + '" loading="lazy" onerror="this.style.display=\'none\'">';
+        }
+        html += '<div class="cyc-fav-team">' + _cycEsc(f.team) + '</div>';
+        html += '</div>';
+      }
+      // Riders row (photo + name) en chips
+      if (f.riders && f.riders.length) {
+        html += '<div class="cyc-fav-riders">';
+        f.riders.forEach(function (rider) {
+          // rider peut être string (ancien format) ou object {name, photo} (nouveau)
+          var riderName = typeof rider === 'string' ? rider : (rider.name || rider);
+          var riderPhoto = typeof rider === 'object' ? rider.photo : null;
+          html += '<span class="cyc-fav-rider">';
+          if (riderPhoto) {
+            html += '<img class="cyc-fav-rider-photo" src="' + _cycEsc(riderPhoto) + '" alt="' + _cycEsc(riderName) + '" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">';
+            html += '<span class="cyc-fav-rider-photo placeholder" style="display:none">' + _cycEsc((riderName || '?').charAt(0).toUpperCase()) + '</span>';
+          } else {
+            // Placeholder si pas de photo
+            html += '<span class="cyc-fav-rider-photo placeholder">' + _cycEsc((riderName || '?').charAt(0).toUpperCase()) + '</span>';
+          }
+          html += _cycEsc(riderName);
+          html += '</span>';
+        });
+        html += '</div>';
+      }
+      html += '</div>'; // .cyc-fav-content
+      html += '</div>'; // .cyc-fav-row
     });
-    html += '</div>';
+    html += '</div>'; // .cyc-fav
   } else {
-    html += '<div class="cyc-fav-empty">Aucun favori disponible</div>';
+    html += '<div class="cyc-fav-empty">' + _cycEsc(_cycT('cyc.no_favourites', 'Aucun favori disponible')) + '</div>';
   }
   c.innerHTML = html;
 }

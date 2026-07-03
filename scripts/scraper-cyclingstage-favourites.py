@@ -31,7 +31,12 @@ import urllib.error
 
 # ─── Constantes ───────────────────────────────────────────────────────────────
 BASE_URL = "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-{n}-contenders-tdf-2026/"
-OUTPUT_FILE = "/home/z/my-project/pariscore/data/cycling/stage-favourites.json"
+# Chemin relatif au script : <repo>/data/cycling/stage-favourites.json
+# Utilise os.path.dirname(__file__) pour fonctionner sur n'importe quel environnement
+import os as _os
+_SCRIPT_DIR = _os.path.dirname(_os.path.abspath(__file__))
+_REPO_DIR = _os.path.dirname(_SCRIPT_DIR)
+OUTPUT_FILE = _os.path.join(_REPO_DIR, "data", "cycling", "stage-favourites.json")
 USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 HTTP_TIMEOUT = 30
 DELAY_BETWEEN_REQUESTS = 1.5  # secondes — politesse

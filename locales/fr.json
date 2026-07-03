@@ -3120,5 +3120,19 @@
   "ss.back_change": "Changer de sport",
   "accuracy.rate_mid": " de réussite sur les ",
   "accuracy.rate_end": " derniers pronostics",
-  "accuracy.updated_label": "Mise à jour : "
+  "accuracy.updated_label": "Mise à jour : ",
+  "cyc.favourites_head": "Favoris de l'étape",
+  "cyc.favourites_count": "{n} entrées",
+  "cyc.source": "Source",
+  "cyc.weather_forecast": "Prévisions météo",
+  "cyc.loading_favourites": "Chargement des favoris de l'étape…",
+  "cyc.error_favourites": "Erreur de chargement des favoris. Nouvel essai dans 30 min.",
+  "cyc.no_favourites": "Aucun favori disponible",
+  "cyc.favourites_unavailable": "Favoris non disponibles pour cette étape.",
+  "cyc.available_stages": "Étapes disponibles",
+  "cyc.tier_top": "Top favoris",
+  "cyc.tier_contender": "Prétendants",
+  "cyc.tier_outsider": "Outsiders",
+  "cyc.translation_badge": "Traduit automatiquement",
+  "cyc.translated_at": "Traduit le"
 }

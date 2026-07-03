@@ -286,8 +286,28 @@ async function getCyclingFull() {
 // ── Stage favourites (scraped from cyclingstage.com) ──────────────────────────
 // Charge les données scrapées depuis data/cycling/stage-favourites.json
 // (généré par scripts/scraper-cyclingstage-favourites.py)
+// Et les traductions depuis data/cycling/stage-favourites-i18n.json
+// (généré par scripts/scraper-cycling-translate.py)
+// Et l'index des photos depuis data/cycling/images/index.json
+// (généré par scripts/scraper-cycling-photos.py)
 var _stageFavouritesCache = null;
 var _stageFavouritesMtime = 0;
+var _stageFavouritesI18nCache = null;
+var _stageFavouritesI18nMtime = 0;
+var _photosIndexCache = null;
+var _photosIndexMtime = 0;
+
+function _slugifyCyc(name) {
+  if (!name) return '';
+  var s = String(name);
+  // Supprime accents
+  s = s.replace(/[àáâãäå]/g, 'a').replace(/[èéêë]/g, 'e')
+       .replace(/[ìíîï]/g, 'i').replace(/[òóôõö]/g, 'o')
+       .replace(/[ùúûü]/g, 'u').replace(/[ç]/g, 'c');
+  s = s.toLowerCase().replace(/[\s|/\\]+/g, '-').replace(/[^a-z0-9-]/g, '');
+  s = s.replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return s;
+}
 
 function _loadStageFavourites() {
   try {
@@ -311,8 +331,125 @@ function _loadStageFavourites() {
   }
 }
 
+function _loadStageFavouritesI18n() {
+  try {
+    var path = require('path');
+    var fs = require('fs');
+    var i18nPath = path.join(__dirname, '..', 'data', 'cycling', 'stage-favourites-i18n.json');
+    if (!fs.existsSync(i18nPath)) return null;
+    var stat = fs.statSync(i18nPath);
+    var mtime = stat.mtimeMs;
+    if (_stageFavouritesI18nCache && mtime === _stageFavouritesI18nMtime) {
+      return _stageFavouritesI18nCache;
+    }
+    var raw = fs.readFileSync(i18nPath, 'utf8');
+    _stageFavouritesI18nCache = JSON.parse(raw);
+    _stageFavouritesI18nMtime = mtime;
+    return _stageFavouritesI18nCache;
+  } catch (e) {
+    return null; // silencieux — i18n est optionnel
+  }
+}
+
+function _loadPhotosIndex() {
+  try {
+    var path = require('path');
+    var fs = require('fs');
+    var photosPath = path.join(__dirname, '..', 'data', 'cycling', 'images', 'index.json');
+    if (!fs.existsSync(photosPath)) return null;
+    var stat = fs.statSync(photosPath);
+    var mtime = stat.mtimeMs;
+    if (_photosIndexCache && mtime === _photosIndexMtime) {
+      return _photosIndexCache;
+    }
+    var raw = fs.readFileSync(photosPath, 'utf8');
+    _photosIndexCache = JSON.parse(raw);
+    _photosIndexMtime = mtime;
+    return _photosIndexCache;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Retourne l'URL de la photo d'un rider (ou null si pas trouvée)
+function _getRiderPhotoUrl(riderName) {
+  var photos = _loadPhotosIndex();
+  if (!photos || !photos.riders) return null;
+  // 1. Cherche par slug direct
+  var slug = _slugifyCyc(riderName);
+  if (photos.riders[slug] && photos.riders[slug].local_path && photos.riders[slug].status === 'ok') {
+    return '/api/v1/cycling/images/riders/' + slug;
+  }
+  // 2. Fallback : cherche par nom (avec normalisation)
+  //    Utile car cyclingstage utilise "Pogacar" mais l'index a "Tadej Pogačar"
+  var normalizedName = String(riderName).toLowerCase().trim();
+  // Mapping manuel pour les cas connus
+  var NAME_FALLBACKS = {
+    'pogacar': 'tadej-pogacar',
+    'tadej pogacar': 'tadej-pogacar',
+    'vingegaard': 'jonas-vingegaard',
+    'jonas vingegaard': 'jonas-vingegaard',
+    'evenepoel': 'remco-evenepoel',
+    'remco evenepoel': 'remco-evenepoel',
+    'van der poel': 'mathieu-van-der-poel',
+    'mathieu van der poel': 'mathieu-van-der-poel',
+    'carapaz': 'richard-carapaz',
+    'richard carapaz': 'richard-carapaz',
+    'ayuso': 'juan-ayuso',
+    'juan ayuso': 'juan-ayuso',
+    'skjelmose': 'mattias-skjelmose',
+    'mattias skjelmose': 'mattias-skjelmose',
+    'seixas': 'paul-seixas',
+    'paul seixas': 'paul-seixas',
+    'arensman': 'thymen-arensman',
+    'thymen arensman': 'thymen-arensman',
+    'vauquelin': 'kevin-vauquelin',
+    'kevin vauquelin': 'kevin-vauquelin',
+    'kévin vauquelin': 'kevin-vauquelin',
+    'tom pidcock': 'tom-pidcock',
+    'maxim van gils': 'maxim-van-gils',
+    'romain grégoire': 'romain-gregoire',
+    'romain gregoire': 'romain-gregoire',
+    'mathias vacek': 'mathias-vacek',
+    'mads pedersen': 'mads-pedersen-cyclist',
+    'lenny martinez': 'lenny-martinez',
+  };
+  var fallbackSlug = NAME_FALLBACKS[normalizedName];
+  if (fallbackSlug && photos.riders[fallbackSlug] && photos.riders[fallbackSlug].local_path && photos.riders[fallbackSlug].status === 'ok') {
+    return '/api/v1/cycling/images/riders/' + fallbackSlug;
+  }
+  // 3. Dernier fallback : cherche un rider dont le nom contient le nom cherché
+  for (var s in photos.riders) {
+    var entry = photos.riders[s];
+    if (entry.status === 'ok' && entry.local_path) {
+      var entryName = String(entry.name || '').toLowerCase();
+      // Match si le nom scrapé est contenu dans le nom indexé, ou inverse
+      if (entryName.includes(normalizedName) || normalizedName.includes(entryName.split(' ').pop())) {
+        return '/api/v1/cycling/images/riders/' + s;
+      }
+    }
+  }
+  return null;
+}
+
+// Retourne l'URL du logo d'une team (ou null si pas trouvée)
+function _getTeamLogoUrl(teamName) {
+  var photos = _loadPhotosIndex();
+  if (!photos || !photos.teams) return null;
+  var slug = _slugifyCyc(teamName);
+  var entry = photos.teams[slug];
+  if (entry && entry.local_path && (entry.status === 'ok' || entry.status === 'placeholder')) {
+    return '/api/v1/cycling/images/teams/' + slug;
+  }
+  return null;
+}
+
 // Retourne les favoris pour une étape donnée (ou l'étape courante si stageN non fourni)
-async function getStageFavourites(stageN) {
+// Options : { lang: 'fr' | 'en' | ... } — si lang !== 'en', essaie de charger la traduction
+async function getStageFavourites(stageN, options) {
+  options = options || {};
+  var lang = options.lang || 'en';
+
   var data = _loadStageFavourites();
   if (!data) {
     return {
@@ -341,20 +478,64 @@ async function getStageFavourites(stageN) {
     };
   }
 
-  return {
+  // Charge les traductions si lang !== 'en'
+  var i18nData = null;
+  if (lang !== 'en') {
+    i18nData = _loadStageFavouritesI18n();
+  }
+
+  // Construit la response avec i18n + photos
+  var response = {
     ok: true,
     stage: stageN,
+    lang: lang,
     source: 'cyclingstage.com',
     source_url: stageData.url,
     scraped_at: stageData.scraped_at,
-    title: stageData.title,
-    description: stageData.description,
-    favourites: stageData.favourites,
-    favourites_raw: stageData.favourites_raw,
-    weather_forecast: stageData.weather_forecast,
-    publication_info: stageData.publication_info,
     last_update: data.last_update,
   };
+
+  // Champs textuels : version EN par défaut, ou version traduite si dispo
+  if (lang !== 'en' && i18nData && i18nData.stages && i18nData.stages[String(stageN)] && i18nData.stages[String(stageN)].i18n && i18nData.stages[String(stageN)].i18n[lang]) {
+    var tr = i18nData.stages[String(stageN)].i18n[lang];
+    response.title = tr.title || stageData.title;
+    response.description = tr.description || stageData.description;
+    response.weather_forecast = tr.weather_forecast || stageData.weather_forecast;
+    response.publication_info = tr.publication_info || stageData.publication_info;
+    response.translated = true;
+    response.translated_at = i18nData.i18n_last_update;
+  } else {
+    response.title = stageData.title;
+    response.description = stageData.description;
+    response.weather_forecast = stageData.weather_forecast;
+    response.publication_info = stageData.publication_info;
+    response.translated = (lang !== 'en');
+    // Si lang !== 'en' mais pas de traduction dispo, on indique fallback EN
+  }
+
+  // Favouris avec photos + logos
+  response.favourites_raw = stageData.favourites_raw;
+  response.favourites = (stageData.favourites || []).map(function (fav) {
+    var enriched = {
+      tier: fav.tier,
+      team: fav.team,
+      riders: fav.riders || [],
+    };
+    // Ajoute le logo de la team
+    if (fav.team) {
+      enriched.team_logo = _getTeamLogoUrl(fav.team);
+    }
+    // Ajoute la photo de chaque rider
+    enriched.riders = (fav.riders || []).map(function (riderName) {
+      return {
+        name: riderName,
+        photo: _getRiderPhotoUrl(riderName),
+      };
+    });
+    return enriched;
+  });
+
+  return response;
 }
 
 module.exports = {
@@ -363,5 +544,22 @@ module.exports = {
   getCyclingRiders: getCyclingRiders,
   getCyclingFull: getCyclingFull,
   getStageFavourites: getStageFavourites,
+  // Expose pour la route statique images
+  _getRiderPhotoPath: function (slug) {
+    var photos = _loadPhotosIndex();
+    if (!photos || !photos.riders || !photos.riders[slug]) return null;
+    var entry = photos.riders[slug];
+    if (!entry.local_path) return null;
+    var path = require('path');
+    return path.join(__dirname, '..', entry.local_path);
+  },
+  _getTeamLogoPath: function (slug) {
+    var photos = _loadPhotosIndex();
+    if (!photos || !photos.teams || !photos.teams[slug]) return null;
+    var entry = photos.teams[slug];
+    if (!entry.local_path) return null;
+    var path = require('path');
+    return path.join(__dirname, '..', entry.local_path);
+  },
   _meta: { model: 'plackett-luce-v1-mock', sources: ['procyclingstats', 'cycling-design/stages/', 'cyclingstage.com'], MC_SIMS: MC_SIMS, betas: { climb: BETA_CLIMB, sprint: BETA_SPRINT, gc: BETA_GC, form: BETA_FORM }, temp: TEMP },
 };
