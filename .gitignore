@@ -136,3 +136,6 @@ test_surface_powerscore.py
 verify-powerscore.py
 checkdb.js
 cache/
+.deploy-backups/
+*.db.backup-*
+pariscore.db.backup-*

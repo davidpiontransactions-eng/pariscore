@@ -1,14 +1,14 @@
 {
   "description": "Index des photos riders + logos teams cyclisme (source: Wikipedia)",
-  "last_update": "2026-07-03T10:49:24Z",
+  "last_update": "2026-07-03T13:30:36Z",
   "riders": {
     "tadej-pogacar": {
-      "name": "Tadej Pogacar",
+      "name": "Tadej Pogačar",
       "wikipedia_title": "Tadej Pogačar",
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/2022_Tour_of_Slovenia_%28Stage_3%2C_Tadej_Poga%C4%8Dar_celebrating_victory_on_Celje_Castle_v2%29.jpg/330px-2022_Tour_of_Slovenia_%28Stage_3%2C_Tadej_Poga%C4%8Dar_celebrating_victory_on_Celje_Castle_v2%29.jpg",
       "local_path": "data/cycling/images/riders/tadej-pogacar.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T08:59:57Z"
+      "scraped_at": "2026-07-03T13:30:25Z"
     },
     "jonas-vingegaard": {
       "name": "Jonas Vingegaard",
@@ -16,7 +16,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/David_Gaudu%2C_Tadej_Poga%C4%8Dar%2C_Jonas_Vingegaard%2C_2023_Paris-Nice_%2852929456925%29_%28cropped2%29.jpg/330px-David_Gaudu%2C_Tadej_Poga%C4%8Dar%2C_Jonas_Vingegaard%2C_2023_Paris-Nice_%2852929456925%29_%28cropped2%29.jpg",
       "local_path": "data/cycling/images/riders/jonas-vingegaard.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T08:59:58Z"
+      "scraped_at": "2026-07-03T13:30:18Z"
     },
     "remco-evenepoel": {
       "name": "Remco Evenepoel",
@@ -24,7 +24,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Remco_Evenepoel_WC_2022.jpg/330px-Remco_Evenepoel_WC_2022.jpg",
       "local_path": "data/cycling/images/riders/remco-evenepoel.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T08:59:59Z"
+      "scraped_at": "2026-07-03T13:30:19Z"
     },
     "thymen-arensman": {
       "name": "Thymen Arensman",
@@ -32,15 +32,15 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/2020_Fleche_Wallonne_ThymenArensman.jpg/330px-2020_Fleche_Wallonne_ThymenArensman.jpg",
       "local_path": "data/cycling/images/riders/thymen-arensman.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:01Z"
+      "scraped_at": "2026-07-03T13:30:20Z"
     },
     "kevin-vauquelin": {
-      "name": "Kevin Vauquelin",
-      "wikipedia_title": "Kevin Vauquelin",
+      "name": "Kévin Vauquelin",
+      "wikipedia_title": "Kévin Vauquelin",
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/CDF2025-Vend%C3%A9e_011_K%C3%A9vin_Vauquelin.jpg/330px-CDF2025-Vend%C3%A9e_011_K%C3%A9vin_Vauquelin.jpg",
       "local_path": "data/cycling/images/riders/kevin-vauquelin.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:02Z"
+      "scraped_at": "2026-07-03T13:30:21Z"
     },
     "juan-ayuso": {
       "name": "Juan Ayuso",
@@ -48,7 +48,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/Vuelta_a_Espa%C3%B1a_2023_Contrarreloj_Valladolid-87.jpg/330px-Vuelta_a_Espa%C3%B1a_2023_Contrarreloj_Valladolid-87.jpg",
       "local_path": "data/cycling/images/riders/juan-ayuso.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:03Z"
+      "scraped_at": "2026-07-03T13:30:21Z"
     },
     "mattias-skjelmose": {
       "name": "Mattias Skjelmose",
@@ -56,7 +56,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Mattias_Skjelmose_at_the_rider_presentation_of_Itzulia_Basque_Country_stage_3.jpg/330px-Mattias_Skjelmose_at_the_rider_presentation_of_Itzulia_Basque_Country_stage_3.jpg",
       "local_path": "data/cycling/images/riders/mattias-skjelmose.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:04Z"
+      "scraped_at": "2026-07-03T13:30:22Z"
     },
     "paul-seixas": {
       "name": "Paul Seixas",
@@ -64,7 +64,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Paul_Seixas_-_podium_medaille_bronze_-_2025_European_road_championship.jpg/330px-Paul_Seixas_-_podium_medaille_bronze_-_2025_European_road_championship.jpg",
       "local_path": "data/cycling/images/riders/paul-seixas.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:06Z"
+      "scraped_at": "2026-07-03T13:30:23Z"
     },
     "mathieu-van-der-poel": {
       "name": "Mathieu van der Poel",
@@ -72,7 +72,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Li%C3%A9vin_2025_MVDP_podium.jpg/330px-Li%C3%A9vin_2025_MVDP_podium.jpg",
       "local_path": "data/cycling/images/riders/mathieu-van-der-poel.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:07Z"
+      "scraped_at": "2026-07-03T13:30:24Z"
     },
     "richard-carapaz": {
       "name": "Richard Carapaz",
@@ -80,7 +80,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Strade_Bianche-4_%2851964440683%29.jpg/330px-Strade_Bianche-4_%2851964440683%29.jpg",
       "local_path": "data/cycling/images/riders/richard-carapaz.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:08Z"
+      "scraped_at": "2026-07-03T13:30:24Z"
     },
     "tadej-pogaar": {
       "name": "Tadej Pogačar",
@@ -96,7 +96,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Tom_PIDCOCK_cropped.jpg/330px-Tom_PIDCOCK_cropped.jpg",
       "local_path": "data/cycling/images/riders/tom-pidcock.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:10Z"
+      "scraped_at": "2026-07-03T13:30:26Z"
     },
     "maxim-van-gils": {
       "name": "Maxim Van Gils",
@@ -104,7 +104,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Maxim_Van_Gils_-_2023_VLC_podium_men.jpg/330px-Maxim_Van_Gils_-_2023_VLC_podium_men.jpg",
       "local_path": "data/cycling/images/riders/maxim-van-gils.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:12Z"
+      "scraped_at": "2026-07-03T13:30:27Z"
     },
     "romain-gregoire": {
       "name": "Romain Grégoire",
@@ -112,7 +112,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/2025_ToBM_-_1st_Romain_Gregoire.JPG/330px-2025_ToBM_-_1st_Romain_Gregoire.JPG",
       "local_path": "data/cycling/images/riders/romain-gregoire.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:13Z"
+      "scraped_at": "2026-07-03T13:30:28Z"
     },
     "mathias-vacek": {
       "name": "Mathias Vacek",
@@ -120,7 +120,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Mathias_Vacek_-_2023_UCI_Road_World_Championships_%28Men%27s_road_race%29.jpg/330px-Mathias_Vacek_-_2023_UCI_Road_World_Championships_%28Men%27s_road_race%29.jpg",
       "local_path": "data/cycling/images/riders/mathias-vacek.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:20Z"
+      "scraped_at": "2026-07-03T13:30:29Z"
     },
     "mads-pedersen-cyclist": {
       "name": "Mads Pedersen (cyclist)",
@@ -128,7 +128,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Mads_Pedersen.jpg/330px-Mads_Pedersen.jpg",
       "local_path": "data/cycling/images/riders/mads-pedersen-cyclist.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:21Z"
+      "scraped_at": "2026-07-03T13:30:29Z"
     },
     "lenny-martinez": {
       "name": "Lenny Martinez",
@@ -136,7 +136,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Lenny_Martinez_2024.jpg/330px-Lenny_Martinez_2024.jpg",
       "local_path": "data/cycling/images/riders/lenny-martinez.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:23Z"
+      "scraped_at": "2026-07-03T13:30:30Z"
     },
     "primoz-roglic": {
       "name": "Primož Roglič",
@@ -314,16 +314,15 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/en/c/c8/UAE_Team_Emirates.png",
       "local_path": "data/cycling/images/teams/uae-emirates.png",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:24Z"
+      "scraped_at": "2026-07-03T13:30:31Z"
     },
     "visma-lease-a-bike": {
       "name": "Visma | Lease a Bike",
-      "wikipedia_title": "Team Visma–Lease a Bike (men's team)",
-      "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/b/be/Visma-Lease_a_Bike_logo.svg/330px-Visma-Lease_a_Bike_logo.svg.png",
-      "local_path": "data/cycling/images/teams/visma-lease-a-bike.png",
-      "status": "ok",
-      "source": "Wikipedia REST summary (Team Visma–Lease a Bike (men's team))",
-      "scraped_at": "2026-07-03T10:05:04Z"
+      "wikipedia_title": "Team Visma–Lease a Bike",
+      "image_url": null,
+      "local_path": null,
+      "status": "no_image",
+      "scraped_at": "2026-07-03T13:30:31Z"
     },
     "red-bull-bora-hansgrohe": {
       "name": "Red Bull-BORA-hansgrohe",
@@ -331,34 +330,31 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/en/thumb/5/50/Bora-hansgrohe.svg/330px-Bora-hansgrohe.svg.png",
       "local_path": "data/cycling/images/teams/red-bull-bora-hansgrohe.png",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:27Z"
+      "scraped_at": "2026-07-03T13:30:32Z"
     },
     "netcompany-ineos": {
       "name": "Netcompany-INEOS",
-      "wikipedia_title": "Netcompany–Ineos",
-      "image_url": "https://upload.wikimedia.org/wikipedia/en/0/06/Ineos_Grenadiers_Logo.jpg",
-      "local_path": "data/cycling/images/teams/netcompany-ineos.jpg",
-      "status": "ok",
-      "source": "Wikipedia wikitext infobox image (Netcompany–Ineos)",
-      "scraped_at": "2026-07-03T10:05:18Z"
+      "wikipedia_title": "Ineos Grenadiers",
+      "image_url": null,
+      "local_path": null,
+      "status": "no_image",
+      "scraped_at": "2026-07-03T13:30:33Z"
     },
     "lidl-trek": {
       "name": "Lidl-Trek",
-      "wikipedia_title": "Trek Factory Racing",
-      "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/84/Lidl%E2%80%93Trek_logo.png",
-      "local_path": "data/cycling/images/teams/lidl-trek.png",
-      "status": "ok",
-      "source": "Wikipedia REST summary (Trek Factory Racing)",
-      "scraped_at": "2026-07-03T10:05:29Z"
+      "wikipedia_title": "Lidl–Trek",
+      "image_url": null,
+      "local_path": null,
+      "status": "no_image",
+      "scraped_at": "2026-07-03T13:30:34Z"
     },
     "decathlon-cma-cgm": {
       "name": "Decathlon CMA CGM",
-      "wikipedia_title": "Decathlon-AG2R La Mondiale",
-      "image_url": "https://upload.wikimedia.org/wikipedia/en/a/a4/Decathlon_CMA_CGM_logo.png",
-      "local_path": "data/cycling/images/teams/decathlon-cma-cgm.png",
-      "status": "ok",
-      "source": "Wikipedia REST summary (Decathlon-AG2R La Mondiale)",
-      "scraped_at": "2026-07-03T10:05:32Z"
+      "wikipedia_title": "Decathlon AG2R La Mondiale",
+      "image_url": null,
+      "local_path": null,
+      "status": "no_image",
+      "scraped_at": "2026-07-03T13:30:35Z"
     },
     "alpecin-premier-tech": {
       "name": "Alpecin Premier Tech",
@@ -366,7 +362,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/2024_Volta_NXT_Classic_-_Team_Alpecin-Deceuninck.jpg/330px-2024_Volta_NXT_Classic_-_Team_Alpecin-Deceuninck.jpg",
       "local_path": "data/cycling/images/teams/alpecin-premier-tech.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:33Z"
+      "scraped_at": "2026-07-03T13:30:36Z"
     },
     "ef-education-easypost": {
       "name": "EF Education-EasyPost",
@@ -374,7 +370,7 @@
       "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Ef_Education-EasyPost%2C_2023_Paris-Nice_%2852917736703%29.jpg/330px-Ef_Education-EasyPost%2C_2023_Paris-Nice_%2852917736703%29.jpg",
       "local_path": "data/cycling/images/teams/ef-education-easypost.jpg",
       "status": "ok",
-      "scraped_at": "2026-07-03T09:00:34Z"
+      "scraped_at": "2026-07-03T13:30:36Z"
     },
     "soudal-quick-step": {
       "name": "Soudal Quick-Step",

@@ -74,14 +74,7 @@
       "publication_info": "First published on 17 June - last update 30 June: weather forecest added",
       "status": "ok",
       "error": null,
-      "i18n": {
-        "fr": {
-          "title": "Tour de France 2026 Favoris étape 1 : À la recherche du meilleur finisseur",
-          "description": "Le maillot jaune attend le cycliste qui réalise le meilleur temps sur le parcours du contre-la-montre par équipes. Avec une pente de 7% sur les derniers 800 mètres, les grimpeurs explosifs laisseront presque certainement leurs coéquipiers dans le final dans le but de s'emparer du maillot jaune.\n\n(Slideshow route/profile)\n\nContrairement à un contre-la-montre par équipes traditionnel où le temps du cinquième coureur à franchir la ligne compte, chaque coureur sera crédité de son propre temps individuel. La formule pour obtenir le maillot jaune semble donc simple : enchaîner le plus vite possible le parcours de Barcelonne en équipe, avant que le leader désigné ne parte seul dans le final pour établir le meilleur temps. Pour que cela fonctionne, il faut une équipe composée de forts spécialistes du contre-la-montre qui sont prêts à travailler les uns pour les autres, et un leader avec un finish puissant.\n\nUne équipe parfaite sera cruciale pendant la section plate d'ouverture, et cela restera largement le cas pendant la première des deux montées du final. Elle s'élève sur 1,1 kilomètres avec une pente moyenne de 5,1%, donc certaines équipes pourraient choisir de continuer à partir de ce point avec seulement leurs meilleurs grimpeurs. Après une courte section plate, la route descend légèrement avant la montée finale explosive de 800 mètres à 7%.\n\nVisma | Lease a Bike a récemment remporté un contre-la-montre par équipes couru sous le même format au Tour Auvergne-Rhône-Alpes, avec Netcompany-INEOS terminant à une seconde close. Les comparaisons sont difficiles, cependant, car les équipes ne s'aligneront pas au Tour avec exactement les mêmes coureurs.\n\nUne mention particulière devrait aussi être faite du contre-la-montre individuel de Van der Poel au Tour de Suisse. Il a égalé le temps de Pogacar pour finir deuxième, mais ce qui a vraiment marqué, c'est la détermination avec laquelle il a attaqué le parcours sur son vélo de contre-la-montre – loin d'être son arme de prédilection. Cela a soulevé la question : pourrait-il viser Barcelonne ?",
-          "weather_forecast": "Prévisions météorologiques :\n\nLe Tour débute sous un ensoleillement. Lors du contre-la-montre par équipes, les températures devraient atteindre 29°C et le vent viendra du sud à environ 18 km/h. Les conditions sont stables entre le départ et l'arrivée, toutes les équipes partiront donc dans les mêmes conditions, assurant une course juste.",
-          "publication_info": "Publié pour la première fois le 17 juin - dernière mise à jour le 30 juin : prévisions météo ajoutées"
-        }
-      }
+      "i18n": {}
     },
     "2": {
       "stage": 2,
@@ -180,16 +173,10 @@
       "publication_info": "First published on 18 June - last updated: 29 June",
       "status": "ok",
       "error": null,
-      "i18n": {
-        "fr": {
-          "title": "Tour de France 2026 Favoris étape 2 : Un paradis pour puncheurs",
-          "description": "La 2ème étape du Tour atteint son point culminant sur un circuit vallonné à Barcelone, que les coureurs abordent à trois reprises, chaque boucle comportant deux montées raides et punchy. La première fait 1,6 kilomètres à 9,3%, et la seconde, qui sert aussi d'arrivée, mesure 600 mètres à 7%.\n\n(Slideshow parcours/profil)\n\nLes puncheurs vont se lécher les lèvres en regardant le circuit final de la 2ème étape. Après un départ relativement sans histoire, les coureurs pourront tester leurs jambes sur la Côte de Begues – 6,1 kilomètres à 6,5% – mais le vrai point d'intérêt est le Montjuïc à Barcelone, que les coureurs atteignent avec moins de 30 kilomètres à parcourir.\n\nDe là, un spectacle captivant est presque garanti. Les coureurs abordent rapidement la première des deux montées, qui mène jusqu'au château de Montjuïc et propose 1,6 kilomètres à une moyenne de 9,3%, avec des rampes atteignant 13%. Juste avant le sommet, la pente s'adoucit légèrement avant une descente de 1 kilomètre jusqu'au pied de la deuxième montée, la Côte de l'Estadi Olímpic, qui offre 700 mètres à 7%.\n\nAprès deux boucles de 12,2 kilomètres, l'arrivée se trouve au sommet de cette montée de 700 mètres à 7%.\n\nL'an dernier, le peloton du Tour – avec Pogacar et Van der Poel en tête d'affiche – a offert deux jours de spectacle sur des fins d'étape similaires, punchy, au début du Tour. Une victoire est allée au Slovène, l'autre au Néerlandais. Qu'allons-nous avoir cette fois-ci ?\n\nNous continuerons de mettre à jour cet article à l'approche du Tour de France.",
-          "publication_info": "Publié pour la première fois le 18 juin - dernière mise à jour : 29 juin"
-        }
-      }
+      "i18n": {}
     }
   },
-  "i18n_last_update": "2026-07-03T09:05:59Z",
+  "i18n_last_update": "2026-07-03T13:30:38Z",
   "i18n_languages": [
     "fr"
   ]
