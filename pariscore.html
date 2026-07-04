@@ -3803,7 +3803,6 @@
   .live-update-toast.visible { opacity: 1; transform: translateY(0); }
   .badge-live { background: rgba(255,109,46,0.15); color: #ff6d2e; border: 1px solid rgba(255,109,46,0.3); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-family: var(--font-mono); margin-left: 6px; animation: blink 1.5s infinite; }
 
-
   /* Live stats panel — side-by-side comparison */
   .live-stats-panel {
     margin-top:6px;
@@ -4179,7 +4178,6 @@
     .bsd-bench-grid { gap: 6px; }
     .bsd-bench-chip { font-size: 8.5px; padding: 1px 6px 1px 4px; }
   }
-
 
   /* Acca Generator */
   .acca-panel { background: linear-gradient(135deg, rgba(0,230,118,0.06) 0%, rgba(41,182,246,0.04) 100%); border: 1px solid rgba(0,230,118,0.2); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 20px; }
@@ -12268,7 +12266,6 @@
     input, select, textarea,
     #league-search, #mob-sort-sel,
 
-
     /* 7 — Cibles tactiles ≥44px (HIG/Material) */
     .filter-chip, .mob-chip, .tennis-premium-btn, .preset-pill,
     .topn-chip, .topm-chip, .topv-chip, .country-chip, .tex-tour-btn,
@@ -13982,7 +13979,6 @@ function psSetLang(v) {
   <div id="ps-date-picker"></div>
   <!-- QUICK FILTERS BAR (Timelapse + Stratégies + Confiance) -->
   <div id="ps-quick-filters"></div>
-
 
   <!-- ═══ FILTER CONSOLE — masquée (sidebar gère la sélection ligues) ═══ -->
   <div class="filter-console" id="filter-console" style="display:none;">
@@ -15831,7 +15827,6 @@ function psSetLang(v) {
   </aside>
 </div>
 
-
 <script>window._tnLogoFallback=window._tnLogoFallback||function(i){i.style.display="none"}</script>
 <!-- PAGE : TENNIS LIVE (ESPN ATP+WTA) -->
 <div id="page-tennis" data-page="tennis" style="display:none;">
@@ -16013,7 +16008,6 @@ function psSetLang(v) {
       <div id="tennis-games-body"></div>
     </div>
   </div>
-
 
   <!-- ═══ MODAL ANALYSE PREMIUM TOP 10 (gstack sprint) ═══ -->
   <div id="tennis-analysis-modal" class="tn2-modal" style="display:none;">
@@ -16268,7 +16262,6 @@ function psSetLang(v) {
     </div>
   </div>
 
-
   <!-- ═══ LEGACY SECTIONS (préservées pour rétrocompatibilité) ═══ -->
 
   <!-- Tennis Abstract Rome forecasts — injecté dynamiquement par loadTennisAbstractRome() -->
@@ -16283,7 +16276,6 @@ function psSetLang(v) {
     <div class="tn2-legacy-grid" id="ta-rome-grid"></div>
     <div id="ta-rome-upcoming" style="margin-top:14px;font-size:12px;color:var(--text2,#8d9399);font-family:'DM Mono',monospace;"></div>
   </section>
-
 
   <!-- Tennis Abstract MCP Ladder -->
   <section class="tn2-legacy-section" id="tennis-mcp-section">
@@ -17158,7 +17150,6 @@ window.tn2SetupH2H = function() {
     }
   };
   </script>
-
 
   <script>
   async function loadRgPath() {
@@ -18583,19 +18574,6 @@ window.tn2SetupH2H = function() {
   /*   margin-left: 2px; */
   /* } */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
   /* OLD_TENNIS_DEPRECATED 2026-06: replaced by tn2-* system */
   /* UI-005 — Mobile Card-View Tennis (cards en stack <768px) */
   /* @media (max-width: 768px) { */
@@ -19838,8 +19816,6 @@ window.tn2SetupH2H = function() {
     opacity: 0 !important;
   }
 
-
-
   /* ═══ CRITICAL LAYOUT FIX — Reset + Stabilisation ═══ */
   /* Mapped from user request: ten-tab-root → tn2-main */
   .tn2-main {
@@ -20152,7 +20128,6 @@ window.tn2SetupH2H = function() {
   /* ── Animation live pulse ── */
   @keyframes tn-t10-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(244,67,54,.22)} 60%{box-shadow:0 0 0 5px rgba(244,67,54,0)} }
   .tn-t10-card:has(.tn-t10-live-score) { animation: tn-t10-pulse 2.2s ease-in-out infinite; }
-
 
   /* ── POWERSCORE MODE ── */
   .tn-t10-ps-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -21299,7 +21274,6 @@ window.tn2SetupH2H = function() {
   <div class="footer-right">© 2026 PariScore. Tous droits réservés.</div>
 </footer>
 
-
 <!-- POWER SCORE / AI ANALYSIS MODAL -->
 <div id="gemini-modal" onclick="if(event.target===this)closeGemini()">
   <div id="gemini-panel">
@@ -21747,7 +21721,6 @@ window.tn2SetupH2H = function() {
   </div>
 </div>
 
-
 <!-- ══════════════════════════════════════════════════════════
      DEEP ANALYSIS PRO MODAL
 ═══════════════════════════════════════════════════════════ -->
@@ -21783,7 +21756,6 @@ window.tn2SetupH2H = function() {
 
   </div>
 </div>
-
 
 <!-- bd rcmw V12 Mobile Premium B — C6 Pan & Zoom + C7 Haptics + Spring -->
 
@@ -21916,7 +21888,6 @@ window.tn2SetupH2H = function() {
   <div class="comp-credit">Données de cotes propulsées par <a href="https://oddspapi.io?via=pariscore" target="_blank" rel="sponsored noopener noreferrer">OddsPapi</a></div>
 </section>
 </div>
-
 
 <!-- ══════════════════════════════════════════════════════════════
      PAGE : CS2 / Counter-Strike 2
@@ -23918,8 +23889,6 @@ body[data-page="mma"] footer { display: none !important; }
 .tn2-timeline { display: flex; flex-direction: column; gap: 2px; }
 .tn2-timeline-month-header { position: sticky; top: 52px; z-index: 5; background: rgba(8,12,22,0.92); backdrop-filter: blur(12px); padding: 8px 12px; font-size: 12px; font-weight: 700; color: var(--tn2-text); border-bottom: 1px solid var(--tn2-border-card); }
 
-
-
 /* ═══ Win Probability Gauge ═══ */
 .win-gauge-wrapper {
   margin: 2px 20px 6px;
@@ -24130,7 +24099,6 @@ body[data-page="mma"] footer { display: none !important; }
   line-height: 1;
 }
 
-
 /* ── Insight Trading Text (remplace valeurs brutes SERVICE/RETOUR) ── */
 .insight-metric-body {
     margin-top: 4px;
@@ -24314,7 +24282,6 @@ body[data-page="mma"] footer { display: none !important; }
   .ps-prob-gauge { height: 26px; }
   .ps-prob-gauge-fill { font-size: 11px; }
 }
-
 
 /* ── Mode Tracker Live (toggle complet/tracker) ── */
 .ps-tracker-toggle { display:flex;align-items:center;gap:4px;background:var(--ps-bg-secondary,#0e121e);border-radius:6px;padding:3px;border:1px solid var(--ps-border,rgba(255,255,255,0.05)) }
@@ -24560,7 +24527,6 @@ a:focus-visible,
   .tl-player-block { flex: 1 1 40%; }
   .tl-score-block { flex: 1 1 100%; order: -1; padding: 4px 0; }
 }
-
 
 #tennis-live-section { padding: 16px; max-width: 1440px; margin: 0 auto; }
 
@@ -25054,7 +25020,6 @@ a:focus-visible,
 .sc-tour-header .tour{font-size:11px;color:var(--green,#00e676);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
 .sc-tour-header .count{font-size:11px;color:var(--text3,#94a3b8);margin-left:auto}
 
-
 /* bd C5 teaser value bets freemium */
 .sc-vb-teaser{text-align:center;padding:32px 20px;max-width:420px;margin:20px auto}
 .sc-vb-teaser-lock{font-size:36px;margin-bottom:8px}
@@ -25127,21 +25092,15 @@ a:focus-visible,
 .sc-premier-badge-strong .sc-badge{background:rgba(0,230,118,.15)!important;color:var(--accent,#00e676)!important;border-color:rgba(0,230,118,.3)!important}
 .sc-premier-badge-moderate .sc-badge{background:rgba(255,193,7,.12)!important;color:#ffc107!important;border-color:rgba(255,193,7,.25)!important}
 /* Smart Filter Bar */
-.sc-filterbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px);margin:0 0 10px;flex-wrap:wrap}
-.sc-filter-group{display:flex;align-items:center;gap:4px}
-.sc-filter-label{font-size:10px;color:var(--text3,#64748b);font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
-.sc-filter-btn{padding:4px 10px;background:var(--bg3,#1e2a3d);color:var(--text2,#94a3b8);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;transition:all .12s;white-space:nowrap}
-.sc-filter-btn:hover{color:var(--text,#fff);border-color:rgba(255,255,255,.12)}
-.sc-filter-btn.active{background:rgba(0,230,118,.1);color:var(--accent,#00e676);border-color:rgba(0,230,118,.25)}
-.sc-filter-sep{width:1px;height:20px;background:var(--border,rgba(255,255,255,.06))}
-.sc-filter-select{background:var(--bg3,#1e2a3d);color:var(--text,#fff);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:5px;font-size:11px;padding:4px 8px;outline:none;cursor:pointer;transition:border-color .15s}
-.sc-filter-select:focus{border-color:rgba(0,230,118,.25)}
 .sc-filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;margin-bottom:12px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px)}
 .sc-filter-group{display:flex;align-items:center;gap:4px}
 .sc-filter-label{font-size:10px;opacity:.5;text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
 .sc-filter-btn{background:transparent;color:var(--text,#fff);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;transition:all .15s;opacity:.5}
 .sc-filter-btn:hover{opacity:.8;border-color:rgba(255,255,255,.12)}
 .sc-filter-btn.active{opacity:1;border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.08)}
+.sc-filter-sep{width:1px;height:20px;background:var(--border,rgba(255,255,255,.06))}
+.sc-filter-select{background:var(--bg3,#1e2a3d);color:var(--text,#fff);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:5px;font-size:11px;padding:4px 8px;outline:none;cursor:pointer;transition:border-color .15s}
+.sc-filter-select:focus{border-color:rgba(0,230,118,.25)}
 
 /* === TennisScope — Header & panels (layout) === */
 .sc-app-header{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;padding:14px 16px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px);box-shadow:var(--card-shadow,0 1px 3px rgba(0,0,0,.6))}
@@ -25231,7 +25190,6 @@ window.addEventListener('unhandledrejection',function(e){console.error('Unhandle
 var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 })();
 </script>
-
 
 <script>
 /* ============================================================================
@@ -25832,7 +25790,6 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</div>'
       +'</div></div>';
   }
-
 
   /* ── Premier Card (compacte N1) ───────────────────────────────────── */
   function premierCard(m){
@@ -26494,7 +26451,6 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
     tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
-    prematchCard:prematchCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     prematchCard:prematchCard,premierCard:premierCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
@@ -26506,10 +26462,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     renderLiveGrid:function(el,matches){
       el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(liveCardCompact).join('')+'</div>';
     },
-    },
     renderValueBets:function(el,matches,opts){
-      _rerenderVB();
-    },
+      _vbHost=el;_vbMatches=matches;_vbOpts=opts||{filter:"all",sort:"edge"};_rerenderVB();},
     renderAnalytics:function(el,matches,matchId){
       var m=matchId?matches.filter(function(x){return x.id===matchId;})[0]:matches[0];
       if(!m){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--text3)">Aucun match.</div>';return;}
@@ -26580,8 +26534,6 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
 /* SAMPLE_MATCHES supprimé (code mort hérité de demo.html) —
    les données live proviennent désormais de TennisScope Bridge (fetch /api/v1/tennis/value-bets). */
-
-
 
 window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c];});};
 
@@ -26924,7 +26876,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         allPrematch.forEach(function(m){ if(m.tournament) _tnMap[m.tournament] = 1; });
         var _tnKeys = Object.keys(_tnMap).sort();
         var _tnOpts = '<option value="all">Tous</option>';
-        _tnKeys.forEach(function(t){ _tnOpts += '<option value="'+t+'"'+(_tournament===t?' selected':'')+'>'+t+'</option>'; });
+        _tnKeys.forEach(function(t){ _tnOpts += '<option value="'+esc(t)+'"'+(_tournament===t?' selected':'')+'>'+esc(t)+'</option>'; });
         pEl.innerHTML = '<div class="sc-filterbar" id="tennis-filterbar">'
           + '<div class="sc-filter-group">'
           + '<span class="sc-filter-label">Surface</span>'
@@ -27391,18 +27343,3 @@ function _drPopupChart(p1, p2) {
 </style>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
