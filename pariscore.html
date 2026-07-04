@@ -24737,10 +24737,23 @@ a:focus-visible,
 /* === TennisScope — Portage Option A pour Pariscore === */
 /* bd live-023 : définition .sc-wm supprimée (conflit z-index 5 vs 0 — la définition ligne ~25053 gagne et écrasait celle-ci) */
 /* ── Jauge de probabilité semi-circulaire ────────────────────────────── */
-.sc-gauge-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
+.sc-gauge-wrap{display:flex;flex-direction:row;align-items:center;gap:6px}
 .sc-gauge-center{font-family:var(--font-mono);font-weight:800;fill:var(--text)}
 .sc-gauge-label{font-family:var(--font-mono);font-size:9px;fill:var(--text3);letter-spacing:.08em}
-.sc-gauge-legend{display:flex;justify-content:space-between;width:100%;padding:0 4px;margin-top:-2px}
+.sc-gauge-legend{display:flex;justify-content:space-between;width:100%;padding:0 2px;margin-top:-2px;font-size:9px;color:var(--text3)}
+.sc-gauge-legend .p1 small{color:var(--green)}
+.sc-gauge-legend .p2 small{color:var(--blue)}
+@keyframes gauge-fill-in{from{stroke-dashoffset:300}to{stroke-dashoffset:0}}
+@keyframes gauge-fade-in{from{opacity:0}to{opacity:1}}
+.sc-gauge-fill{animation:gauge-fill-in .8s ease-out forwards}
+.sc-gauge-needle{animation:gauge-fade-in .4s ease-out .6s both}
+.sc-gauge-dot{animation:gauge-fade-in .4s ease-out .6s both}
+.sc-decision-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-pill);font-size:10px;font-weight:700;font-family:var(--font-mono);white-space:nowrap;line-height:1.4}
+.sc-decision-badge strong{font-size:12px}
+.sc-decision-badge.strong{color:#00e676;background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.25)}
+.sc-decision-badge.moderate{color:#fb923c;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.25)}
+.sc-decision-badge.neutral{color:var(--text3);background:rgba(148,163,184,.08);border:1px solid var(--border2)}
+.sc-gauge-col{display:flex;flex-direction:column;align-items:center;gap:4px}
 /* ── Barre de momentum -100..+100 ───────────────────────────────────── */
 .sc-momentum{width:100%}
 .sc-momentum-head{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text3);margin-bottom:4px;font-family:var(--font-mono)}
@@ -25504,28 +25517,26 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   /* ── Jauge de probabilité semi-circulaire (SVG) ───────────────────── */
   function gauge(p1Prob,opts){
     opts=opts||{};
-    var size=opts.size||140,live=!!opts.live;
-    var p1=clamp(p1Prob,0,1),p2=1-p1;
-    var r=size/2-10,cx=size/2,cy=size/2;
-    // arc de 180° (gauche) à 0° (droite)
+    var size=opts.size||130;
+    var p1=clamp(p1Prob,0,1);
+    var h=Math.round(size*0.45+4);
+    var r=size/2-8,cx=size/2,cy=r+1;
     function polar(deg,rad){var rr=rad==null?r:rad;var rd=deg*Math.PI/180;return{x:cx+rr*Math.cos(rd),y:cy-rr*Math.sin(rd)};}
     function arc(a0,a1,rad){var s=polar(a0,rad),e=polar(a1,rad);var large=Math.abs(a1-a0)>180?1:0;return 'M '+s.x+' '+s.y+' A '+rad+' '+rad+' 0 '+large+' 1 '+e.x+' '+e.y;}
-    var split=180-p1*180; // angle split
+    var split=180-p1*180;
     var colP1=p1>=0.55?'var(--green)':(p1>=0.45?'var(--amber)':'var(--red)');
     var colP2='var(--bg4)';
     var ang=180-p1*180;
-    var needle=polar(ang,r*0.8);
-    return '<div class="sc-gauge-wrap"><svg class="sc-gauge" width="'+size+'" height="'+(size/2+18)+'" viewBox="0 0 '+size+' '+(size/2+18)+'">'
-      +'<path d="'+arc(0,180,r)+'" fill="none" stroke="var(--bg3)" stroke-width="9" stroke-linecap="round"/>'
-      +'<path d="'+arc(split,180,r)+'" fill="none" stroke="'+colP1+'" stroke-width="9" stroke-linecap="round"/>'
-      +'<path d="'+arc(0,split,r)+'" fill="none" stroke="'+colP2+'" stroke-width="9" stroke-linecap="round"/>'
-      +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/>'
-      +'<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="var(--text)"/>'
-      +'<text class="sc-gauge-center" x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" style="font-size:20px">'+Math.round(p1*100)+'%</text>'
-      +'<text class="sc-gauge-label" x="'+cx+'" y="'+(cy+4)+'" text-anchor="middle">'+(live?'LIVE':'PREMATCH')+'</text>'
-      +'</svg>'
-      +'<div class="sc-gauge-legend"><div class="p1">P1<small>'+esc(opts.p1n||'')+'</small></div><div class="p2">P2<small>'+esc(opts.p2n||'')+'</small></div></div>'
-      +'</div>';
+    var needle=polar(ang,r*0.78);
+    var arcLen=Math.round(Math.PI*r);
+    return '<div class="sc-gauge-wrap"><svg class="sc-gauge" width="'+size+'" height="'+h+'" viewBox="0 0 '+size+' '+h+'">'
+      +'<path d="'+arc(0,180,r)+'" fill="none" stroke="var(--bg3)" stroke-width="7" stroke-linecap="round"/>'
+      +'<path d="'+arc(split,180,r)+'" fill="none" stroke="'+colP1+'" stroke-width="7" stroke-linecap="round" stroke-dasharray="'+arcLen+'" stroke-dashoffset="'+arcLen+'" class="sc-gauge-fill"/>'
+      +'<path d="'+arc(0,split,r)+'" fill="none" stroke="'+colP2+'" stroke-width="7" stroke-linecap="round"/>'
+      +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="var(--text)" stroke-width="2" stroke-linecap="round" class="sc-gauge-needle"/>'
+      +'<circle cx="'+cx+'" cy="'+cy+'" r="3.5" fill="var(--text)" class="sc-gauge-dot"/>'
+      +'<text class="sc-gauge-center" x="'+cx+'" y="'+(cy+3)+'" text-anchor="middle" style="font-size:15px">'+Math.round(p1*100)+'%</text>'
+      +'</svg></div>';
   }
 
   /* ── Barre de momentum -100..+100 ─────────────────────────────────── */
@@ -25741,6 +25752,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       topVB=cands[0];
     }
     var topTier=tier(topVB.edge,topVB.ev,topVB.kelly);
+    var isStrong=topTier==='strong',isModerate=topTier==='moderate';
     var isLive=!!m._isLive;
     var st=new Date(m.start_time||m.commence_time||Date.now());
     var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
@@ -25767,7 +25779,10 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       // players + gauge
       +'<div class="sc-players">'
       +playerBlock(p1,'left','#00e676',p1p,eloTrend1)
-      +gauge(p1p,{size:130,live:isLive,p1n:shortName(p1.name),p2n:shortName(p2.name)})
+      +'<div class="sc-gauge-col">'
+      +gauge(p1p,{size:130})
+       +'<div class="sc-decision-badge "+(isStrong?'strong':isModerate?'moderate':'neutral')+'><strong>'+(isStrong?'▲':isModerate?'◆':'○')+'</strong> '+(isStrong?'VALUE FORTE':isModerate?'Value':'Neutre')+' <span style="opacity:.7;font-weight:400;font-size:9px">'+(topVB.edge*100).toFixed(0)+'%</span></div>'
+      +'</div>'
       +playerBlock(p2,'right','#0077ff',1-p1p,eloTrend2)
       +'</div>'
       // odds
@@ -27343,3 +27358,4 @@ function _drPopupChart(p1, p2) {
 </style>
 </body>
 </html>
+

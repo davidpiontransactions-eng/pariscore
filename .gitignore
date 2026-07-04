@@ -142,3 +142,6 @@ pariscore.db.backup-*
 .deploy-backups/
 *.db.backup-*
 pariscore.db.backup-*
+
+# Session handoffs
+.HANDOFF.md
