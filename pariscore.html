@@ -25082,6 +25082,66 @@ a:focus-visible,
 .sc-row{display:flex;align-items:center;gap:8px}
 .sc-grow{flex:1;min-width:0}
 .sc-mono{font-family:var(--font-mono)}
+/* === Premier Card (Tennis Scope) === */
+.sc-premier-card{background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px);overflow:hidden;transition:border-color .15s,box-shadow .15s}
+.sc-premier-card:hover{border-color:rgba(0,230,118,.15);box-shadow:0 0 0 1px rgba(0,230,118,.05)}
+.sc-premier-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg3,#1e2a3d);border-bottom:1px solid var(--border,rgba(255,255,255,.05));gap:8px}
+.sc-premier-head-left{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden}
+.sc-premier-head-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.sc-premier-tournament{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text2,#94a3b8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-premier-sep{color:var(--text3,#64748b)}
+.sc-premier-round{font-size:10px;color:var(--text3,#64748b);white-space:nowrap}
+.sc-premier-date{font-size:10px;color:var(--text3,#64748b);white-space:nowrap}
+.sc-premier-vs{display:flex;align-items:center;padding:12px 12px 6px;gap:8px}
+.sc-premier-player{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}
+.sc-premier-player.p1{align-items:flex-start;text-align:left}
+.sc-premier-player.p2{align-items:flex-end;text-align:right}
+.sc-premier-photo-wrap{width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--bg3,#1e2a3d);display:flex;align-items:center;justify-content:center;margin-bottom:2px;flex:0 0 36px}
+.sc-premier-photo{width:100%;height:100%;object-fit:cover}
+.sc-premier-photo-init{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--text2,#94a3b8)}
+.sc-premier-pname{font-size:13px;font-weight:700;color:var(--text,#fff);line-height:1.2;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-premier-prank{font-size:10px;color:var(--text2,#94a3b8)}
+.sc-premier-pelo{font-size:9px;color:var(--text3,#64748b)}
+.sc-premier-gauge{flex:0 0 auto;padding:0 2px}
+.sc-premier-gauge svg{display:block}
+/* decision strip */
+.sc-premier-action{display:flex;align-items:center;padding:6px 12px 8px;gap:10px}
+.sc-premier-odds{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+.sc-premier-odds.p2{align-items:flex-end}
+.sc-premier-odd-val{font-size:15px;font-weight:800;font-family:var(--font-mono,DM Mono,monospace);color:var(--text,#fff);line-height:1.2}
+.sc-premier-odd-lbl{font-size:9px;color:var(--text3,#64748b);text-transform:uppercase;letter-spacing:.03em}
+.sc-premier-decision{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.sc-premier-decision-detail{font-size:9px;color:var(--text2,#94a3b8);text-align:center;line-height:1.3;white-space:nowrap}
+.sc-premier-decision-detail b{color:var(--text,#fff)}
+/* buttons */
+.sc-premier-buttons{display:flex;gap:6px;padding:0 12px 10px}
+.sc-premier-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 8px;background:var(--bg3,#1e2a3d);color:var(--text2,#94a3b8);border:1px solid var(--border,rgba(255,255,255,.06));border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.sc-premier-btn:hover{background:rgba(0,230,118,.08);color:var(--accent,#00e676);border-color:rgba(0,230,118,.2)}
+.sc-premier-btn .chev{font-size:8px;transition:transform .2s;margin-left:auto}
+.sc-premier-btn.open .chev{transform:rotate(180deg)}
+.sc-premier-btn.secondary{font-size:10px}
+.sc-premier-btn.secondary:hover{background:rgba(0,119,255,.08);color:#4499ff;border-color:rgba(0,119,255,.2)}
+/* detail panel */
+.sc-premier-detail{padding:0 12px 12px;border-top:1px solid var(--border,rgba(255,255,255,.05))}
+/* quick decision badge tiers */
+.sc-premier-badge-strong .sc-badge{background:rgba(0,230,118,.15)!important;color:var(--accent,#00e676)!important;border-color:rgba(0,230,118,.3)!important}
+.sc-premier-badge-moderate .sc-badge{background:rgba(255,193,7,.12)!important;color:#ffc107!important;border-color:rgba(255,193,7,.25)!important}
+/* Smart Filter Bar */
+.sc-filterbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px);margin:0 0 10px;flex-wrap:wrap}
+.sc-filter-group{display:flex;align-items:center;gap:4px}
+.sc-filter-label{font-size:10px;color:var(--text3,#64748b);font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.sc-filter-btn{padding:4px 10px;background:var(--bg3,#1e2a3d);color:var(--text2,#94a3b8);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;transition:all .12s;white-space:nowrap}
+.sc-filter-btn:hover{color:var(--text,#fff);border-color:rgba(255,255,255,.12)}
+.sc-filter-btn.active{background:rgba(0,230,118,.1);color:var(--accent,#00e676);border-color:rgba(0,230,118,.25)}
+.sc-filter-sep{width:1px;height:20px;background:var(--border,rgba(255,255,255,.06))}
+.sc-filter-select{background:var(--bg3,#1e2a3d);color:var(--text,#fff);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:5px;font-size:11px;padding:4px 8px;outline:none;cursor:pointer;transition:border-color .15s}
+.sc-filter-select:focus{border-color:rgba(0,230,118,.25)}
+.sc-filterbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;margin-bottom:12px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px)}
+.sc-filter-group{display:flex;align-items:center;gap:4px}
+.sc-filter-label{font-size:10px;opacity:.5;text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
+.sc-filter-btn{background:transparent;color:var(--text,#fff);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:4px;font-size:10px;padding:3px 8px;cursor:pointer;transition:all .15s;opacity:.5}
+.sc-filter-btn:hover{opacity:.8;border-color:rgba(255,255,255,.12)}
+.sc-filter-btn.active{opacity:1;border-color:rgba(0,230,118,.4);background:rgba(0,230,118,.08)}
 
 /* === TennisScope — Header & panels (layout) === */
 .sc-app-header{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;padding:14px 16px;background:var(--bg2,#182030);border:1px solid var(--border,rgba(255,255,255,.05));border-radius:var(--radius-lg,12px);box-shadow:var(--card-shadow,0 1px 3px rgba(0,0,0,.6))}
@@ -25118,7 +25178,7 @@ a:focus-visible,
 .sc-note{padding:10px 14px;background:var(--bg2,#182030);border-left:3px solid var(--accent,#00e676);border-radius:6px;font-size:12px;color:var(--text2,#94a3b8);line-height:1.6;margin-bottom:12px}
 .sc-note b{color:var(--text,#fff)}
 .sc-wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:280px;color:rgba(255,255,255,.018);pointer-events:none;z-index:0;user-select:none;transition:opacity .3s}
-@media(max-width:640px){.sc-app-header{padding:10px}.sc-brand-h1{font-size:16px}.sc-tab-btn{padding:6px 10px;font-size:11px}.sc-wm{font-size:140px}}
+@media(max-width:640px){.sc-app-header{padding:10px}.sc-brand-h1{font-size:16px}.sc-tab-btn{padding:6px 10px;font-size:11px}.sc-wm{font-size:140px}.sc-premier-card{border-radius:0;border-left:none;border-right:none}.sc-premier-vs{padding:10px 10px 6px}.sc-premier-photo-wrap{width:30px;height:30px}.sc-premier-pname{font-size:12px}.sc-premier-action{padding:4px 10px 6px;gap:6px}.sc-premier-odd-val{font-size:13px}.sc-premier-buttons{padding:0 10px 8px}.sc-filterbar{padding:6px 8px;gap:4px;flex-direction:column;align-items:stretch}.sc-filter-group{flex-wrap:wrap}.sc-grid-3{gap:8px}}
 </style>
 </style>
 
@@ -25773,6 +25833,99 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</div></div>';
   }
 
+
+  /* ── Premier Card (compacte N1) ───────────────────────────────────── */
+  function premierCard(m){
+    var p1=m.player1||{},p2=m.player2||{};
+    var p1p=p1WinProb(m);
+    var o1=num(m.odds_player1),o2=num(m.odds_player2);
+    var imp=implied(o1,o2);
+    var ev1=ev(p1p,o1),ev2=ev(1-p1p,o2);
+    var k1=kelly(p1p,o1),k2=kelly(1-p1p,o2);
+    // top value bet
+    var topVB=null;
+    if(m.best_ev_model&&m.best_ev_model.odds){
+      var be=m.best_ev_model;var mp=num(be.prob)/100;var ipb=1/num(be.odds);
+      topVB={label:be.label,odds:num(be.odds,2),modelProb:mp,impliedProb:ipb,ev:ev(mp,num(be.odds)),kelly:kelly(mp,num(be.odds)),edge:mp-ipb};
+    }else{
+      var cands=[{label:(p1.name||'P1')+' Win',odds:o1,mp:p1p,ip:imp.p1},{label:(p2.name||'P2')+' Win',odds:o2,mp:1-p1p,ip:imp.p2}];
+      cands.forEach(function(c){c.ev=ev(c.mp,c.odds);c.kelly=kelly(c.mp,c.odds);c.edge=c.mp-c.ip;});
+      cands.sort(function(a,b){return b.edge-a.edge;});
+      topVB=cands[0];
+    }
+    var topTier=tier(topVB.edge,topVB.ev,topVB.kelly);
+    var st=new Date(m.start_time||m.commence_time||Date.now());
+    var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    var dateStr=st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    var isStrong=topTier==='strong';
+    var isModerate=topTier==='moderate';
+
+    // photo joueurs via getPlayerPhotoUrl (reprend le pattern de playerBlock)
+    function _ph(p){
+      var _u='';
+      try{ _u=(typeof window.getPlayerPhotoUrl==='function')?window.getPlayerPhotoUrl(p):''; }catch(e){}
+      if(_u){
+        var _n=encodeURIComponent(String(p.name||'?'));
+        return '<img src="'+esc(_u)+'" alt="" class="sc-premier-photo" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\'https://ui-avatars.com/api/?name='+_n+'&background=172132&color=fff&size=80\';}">';
+      }
+      return '<div class="sc-premier-photo-init">'+esc((p.name||'?')[0])+'</div>';
+    }
+
+    return '<div class="sc-premier-card" data-match-id="'+esc(m.id)+'">'
+      // ── Header ──
+      +'<div class="sc-premier-head">'
+      +'<div class="sc-premier-head-left">'
+      +'<span class="sc-premier-tournament">'+esc(m.tournament||'')+'</span>'
+      +surfaceBadge(m.surface,m.tournament)
+      +'<span class="sc-premier-sep">·</span>'
+      +'<span class="sc-premier-round">'+esc(m.round||'')+'</span>'
+      +'</div>'
+      +'<div class="sc-premier-head-right">'
+      +'<span class="sc-premier-date">'+dateStr+' '+timeStr+'</span>'
+      +favStar(m)
+      +'</div>'
+      +'</div>'
+      // ── VS ──
+      +'<div class="sc-premier-vs">'
+      +'<div class="sc-premier-player p1">'
+      +'<div class="sc-premier-photo-wrap">'+_ph(p1)+'</div>'
+      +'<div class="sc-premier-pname">'+esc(p1.name||'?')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p1.rank||'—')+(p1.flag?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+'</div>'
+      +'<div class="sc-premier-pelo">Elo '+(p1.elo_surface||'—')+'</div>'
+      +'</div>'
+      +'<div class="sc-premier-gauge">'+gauge(p1p,{size:80,opt:p1p,sup:p1p,inf:p1p,p1n:shortName(p1.name),p2n:shortName(p2.name)})+'</div>'
+      +'<div class="sc-premier-player p2">'
+      +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
+      +'<div class="sc-premier-pname">'+esc(p2.name||'?')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p2.rank||'—')+(p2.flag?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+'</div>'
+      +'<div class="sc-premier-pelo">Elo '+(p2.elo_surface||'—')+'</div>'
+      +'</div>'
+      +'</div>'
+      // ── Decision strip ──
+      +'<div class="sc-premier-action">'
+      +'<div class="sc-premier-odds">'
+      +'<span class="sc-premier-odd-val">'+(o1?o1.toFixed(2):'—')+'</span>'
+      +'<span class="sc-premier-odd-lbl">'+esc(shortName(p1.name))+'</span>'
+      +'</div>'
+      +'<div class="sc-premier-decision">'
+      +'<div class="sc-premier-decision-badge sc-premier-badge-'+(isStrong?'strong':isModerate?'moderate':'neutral')+'">'+signalBadge(topTier)+'</div>'
+      +'<div class="sc-premier-decision-detail">Edge <b>'+(topVB.edge*100).toFixed(1)+'%</b> · Kelly <b>'+(topVB.kelly*100).toFixed(0)+'%</b></div>'
+      +'</div>'
+      +'<div class="sc-premier-odds p2">'
+      +'<span class="sc-premier-odd-val">'+(o2?o2.toFixed(2):'—')+'</span>'
+      +'<span class="sc-premier-odd-lbl">'+esc(shortName(p2.name))+'</span>'
+      +'</div>'
+      +'</div>'
+      // ── Expand buttons ──
+      +'<div class="sc-premier-buttons">'
+      +'<button class="sc-premier-btn" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>📊 Analyse</span><span class="chev">▾</span></button>'
+      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>🎯 Stratégies</span><span class="chev">▾</span></button>'
+      +'</div>'
+      // ── Detail panel ──
+      +'<div class="sc-premier-detail" id="pdet-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region" style="display:none"></div>'
+      +'</div>';
+  }
+
   function playerBlock(p,align,color,prob,trend){
     var cc=flagToCC(p.flag);
     // bd photos-fix : photo joueur via getPlayerPhotoUrl (BSD→ESPN→ui-avatars fallback)
@@ -26342,18 +26495,19 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
     prematchCard:prematchCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
-    summaryRow:summaryRow,topPick:topPick,radar:radar,analyticsPanel:analyticsPanel,
+    prematchCard:prematchCard,premierCard:premierCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
     // rendus haut niveau (injectent dans un élément du DOM)
+
     renderPrematchGrid:function(el,matches){
-      el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(prematchCard).join('')+'</div>';
+      el.innerHTML='<div class="sc-grid sc-grid-3">'+matches.map(premierCard).join('')+'</div>';
     },
     renderLiveGrid:function(el,matches){
       el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(liveCardCompact).join('')+'</div>';
     },
+    },
     renderValueBets:function(el,matches,opts){
-      _vbHost=el;_vbMatches=matches;_vbOpts=opts||{filter:'all',sort:'edge'};
       _rerenderVB();
     },
     renderAnalytics:function(el,matches,matchId){
@@ -26381,6 +26535,38 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       }
     },
     _refilter:function(val){_vbOpts.filter=val;_rerenderVB();},
+    _togglePremier:function(btn,mode){
+      var mid=btn.getAttribute('data-match-id');
+      var d=document.getElementById('pdet-'+String(mid||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'));
+      if(!d)return;
+      var open=btn.classList.toggle('open');
+      d.style.display=open?'block':'none';
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(!open)return;
+      if(d.getAttribute('data-loaded'))return;
+      d.setAttribute('data-loaded','1');
+      if(mode==='analyse'){
+        var match=null;
+        if(typeof TennisScope!=='undefined'&&TennisScope._state&&TennisScope._state.matches){
+          for(var i=0;i<TennisScope._state.matches.length;i++){
+            if(String(TennisScope._state.matches[i].id)===String(mid)){match=TennisScope._state.matches[i];break;}
+          }
+        }
+        if(!match){
+          d.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px">Analyse non disponible.</div>';
+          return;
+        }
+        d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'
+          +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
+          +scoutProfile(match.player1)+scoutProfile(match.player2)
+          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(match)
+          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(match)
+          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
+          +'</div>';
+      }else if(mode==='strategies'){
+        d.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Strategies disponibles dans la prochaine version.</div>';
+      }
+    },
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
     // favoris ★
     isFav:isFav,
@@ -26415,7 +26601,10 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     selectedMatchId: null,
     activeTab: 'prematch', // prematch|live|valuebets|analytics
     activeTournament: 'ALL', // filtre tournoi sidebar ('ALL' = pas de filtre)
-    searchQuery: '' // recherche texte joueur/tournoi (prematch + live)
+    searchQuery: '', // recherche texte joueur/tournoi (prematch + live)
+    surfaceFilter: 'all', // filtre surface (all|Hard|Clay|Grass)
+    tournamentFilter: 'all', // filtre tournoi (all|<nom>)
+    sortFilter: 'importance' // tri (importance|edge|time)
   };
 
   // ── Mapping Pariscore → Scope shape ────────────────────────────────────
@@ -26715,7 +26904,71 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         var _msg = _state.loading ? 'Chargement des matchs…' : (_q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match à venir. Cliquez sur Rafraîchir.');
         pEl.innerHTML = emptyState(_msg);
       } else {
-        root.Scope.renderPrematchGrid(pEl, allPrematch);
+        // ── Filtres Smart Filter Bar (surface + tournoi + tri) ──
+        var _surface = _state.surfaceFilter || 'all';
+        var _tournament = _state.tournamentFilter || 'all';
+        var _sort = _state.sortFilter || 'importance';
+        var _filtered = allPrematch.slice();
+        if (_surface !== 'all') _filtered = _filtered.filter(function(m){ return String(m.surface||'') === _surface; });
+        if (_tournament !== 'all') _filtered = _filtered.filter(function(m){ return (m.tournament||'') === _tournament; });
+        if (_sort === 'edge') {
+          _filtered.sort(function(a,b){
+            function _edge(x){ return x.best_ev_model ? (Number(x.best_ev_model.prob||0)/100 - 1/Number(x.best_ev_model.odds||1)) : 0; }
+            return _edge(b) - _edge(a);
+          });
+        } else if (_sort === 'time') {
+          _filtered.sort(function(a,b){ var as=a.start_time||'', bs=b.start_time||''; return as<bs?-1:as>bs?1:0; });
+        }
+        // Dropdown tournois
+        var _tnMap = {};
+        allPrematch.forEach(function(m){ if(m.tournament) _tnMap[m.tournament] = 1; });
+        var _tnKeys = Object.keys(_tnMap).sort();
+        var _tnOpts = '<option value="all">Tous</option>';
+        _tnKeys.forEach(function(t){ _tnOpts += '<option value="'+t+'"'+(_tournament===t?' selected':'')+'>'+t+'</option>'; });
+        pEl.innerHTML = '<div class="sc-filterbar" id="tennis-filterbar">'
+          + '<div class="sc-filter-group">'
+          + '<span class="sc-filter-label">Surface</span>'
+          + '<button class="sc-filter-btn' + (_surface==='all'?' active':'') + '" data-filter="surface" data-value="all">Toutes</button>'
+          + '<button class="sc-filter-btn' + (_surface==='Hard'?' active':'') + '" data-filter="surface" data-value="Hard">Dur</button>'
+          + '<button class="sc-filter-btn' + (_surface==='Clay'?' active':'') + '" data-filter="surface" data-value="Clay">Terre</button>'
+          + '<button class="sc-filter-btn' + (_surface==='Grass'?' active':'') + '" data-filter="surface" data-value="Grass">Gazon</button>'
+          + '</div>'
+          + '<div class="sc-filter-sep"></div>'
+          + '<div class="sc-filter-group">'
+          + '<span class="sc-filter-label">Tournoi</span>'
+          + '<select class="sc-filter-select" id="filter-tournament">' + _tnOpts + '</select>'
+          + '</div>'
+          + '<div class="sc-filter-sep"></div>'
+          + '<div class="sc-filter-group">'
+          + '<span class="sc-filter-label">Tri</span>'
+          + '<button class="sc-filter-btn' + (_sort==='importance'?' active':'') + '" data-filter="sort" data-value="importance">Importance</button>'
+          + '<button class="sc-filter-btn' + (_sort==='edge'?' active':'') + '" data-filter="sort" data-value="edge">Edge %</button>'
+          + '<button class="sc-filter-btn' + (_sort==='time'?' active':'') + '" data-filter="sort" data-value="time">Horaire</button>'
+          + '</div>'
+          + '</div>'
+          + '<div class="sc-grid sc-grid-3">' + _filtered.map(function(m){ return root.Scope.premierCard(m); }).join('') + '</div>';
+        // Wire-up filtres via délégation (une seule fois)
+        if (!pEl._filterWired) {
+          pEl._filterWired = true;
+          pEl.addEventListener('click', function(e){
+            var btn = e.target.closest('.sc-filter-btn');
+            if (!btn) return;
+            var group = btn.parentNode;
+            var filter = btn.getAttribute('data-filter');
+            var value = btn.getAttribute('data-value');
+            group.querySelectorAll('.sc-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+            btn.classList.add('active');
+            if (filter === 'surface') _state.surfaceFilter = value;
+            else if (filter === 'sort') _state.sortFilter = value;
+            renderActiveTab();
+          });
+          pEl.addEventListener('change', function(e){
+            if (e.target.id === 'filter-tournament') {
+              _state.tournamentFilter = e.target.value;
+              renderActiveTab();
+            }
+          });
+        }
       }
     } else if (tab === 'live') {
       if (!allLive.length) {
