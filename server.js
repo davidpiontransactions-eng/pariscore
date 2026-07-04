@@ -41294,6 +41294,191 @@ if (pathname === '/api/v1/tennis/value-bets' && req.method === 'GET') {
   }
 }
 
+// Route strategies tennis (pour l'expand des Premier Cards)
+if (pathname.startsWith('/api/v1/tennis/strategies/') && req.method === 'GET') {
+  try {
+    const matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/strategies/'.length));
+    if (!matchId) return jsonResponse(res, 400, { error: 'match_id_required' });
+
+    // Cherche le match dans le cache VB
+    let match = null;
+    _tennisVBCache.forEach(function(entry) {
+      if (match) return;
+      if (entry && entry.result && entry.result.body && Array.isArray(entry.result.body.matches)) {
+        for (var i = 0; i < entry.result.body.matches.length; i++) {
+          var m = entry.result.body.matches[i];
+          if (String(m.id) === String(matchId)) { match = m; break; }
+        }
+      }
+    });
+
+    if (!match) {
+      // Tente warm-up et renvoie loading
+      return jsonResponse(res, 404, { error: 'match_not_found_in_cache', detail: 'Aucun match trouvé — appelez /api/v1/tennis/value-bets d\'abord.' });
+    }
+
+    var p1 = match.player1 || {};
+    var p2 = match.player2 || {};
+    var eloPred = (match.predictions && match.predictions.elo) || {};
+    var blendedPred = (match.predictions && match.predictions.blended) || {};
+    var fatigue = match.fatigue || {};
+
+    // Helper : valeur sécurisée
+    function num(v, d) { return (v != null && typeof v === 'number' && isFinite(v)) ? v : d; }
+
+    // 1 — Momentum : forme récente (l5_pts)
+    var l5p1 = num(p1.l5_pts, 50);
+    var l5p2 = num(p2.l5_pts, 50);
+    var momentumP1 = (l5p1 + l5p2 > 0) ? (l5p1 / (l5p1 + l5p2)) * 100 : 50;
+
+    // 2 — Surface Specialist : Elo surface
+    var es1 = num(p1.elo_surface, 1500);
+    var es2 = num(p2.elo_surface, 1500);
+    var surfaceP1 = (es1 + es2 > 0) ? (es1 / (es1 + es2)) * 100 : 50;
+
+    // 3 — Form Trend : blended prediction + PowerScore
+    var bp1 = num(blendedPred && blendedPred.p1, num(eloPred && eloPred.p1, 50));
+    var bp2 = num(blendedPred && blendedPred.p2, num(eloPred && eloPred.p2, 50));
+    var ps1 = num(p1.powerscore, 50);
+    var ps2 = num(p2.powerscore, 50);
+    var blendTotal = bp1 + bp2;
+    var psTotal = ps1 + ps2;
+    var blendPart = blendTotal > 0 ? (bp1 / blendTotal) * 100 : 50;
+    var psPart = psTotal > 0 ? (ps1 / psTotal) * 100 : 50;
+    var formP1 = blendPart * 0.6 + psPart * 0.4;
+
+    // 4 — Fatigue Gauge : inverse matchs 14j
+    var f1p = fatigue.p1 || {};
+    var f2p = fatigue.p2 || {};
+    var fg1 = num(f1p.gamesLast14Days, 0);
+    var fg2 = num(f2p.gamesLast14Days, 0);
+    var totalG = fg1 + fg2;
+    var fatigueP1 = totalG > 0 ? ((fg2 / totalG) * 100) : 50;
+
+    // 5 — Confidence : rang + Elo surface
+    var r1 = num(p1.rank, 100);
+    var r2 = num(p2.rank, 100);
+    var rsP1 = 1 / r1;
+    var rsP2 = 1 / r2;
+    var totalRs = rsP1 + rsP2;
+    var rankPart = totalRs > 0 ? (rsP1 / totalRs) * 100 : 50;
+    var confP1 = rankPart * 0.5 + surfaceP1 * 0.5;
+
+    // Consensus : moyenne des 5
+    var allProbs = [momentumP1, surfaceP1, formP1, fatigueP1, confP1];
+    var consensusP1 = allProbs.reduce(function(a, b) { return a + b; }, 0) / allProbs.length;
+
+    function clamp(v) { return Math.min(100, Math.max(0, parseFloat(v.toFixed(1)))); }
+
+    var strategies = [
+      { key: 'momentum', label: 'Momentum', probP1: clamp(momentumP1), probP2: clamp(100 - momentumP1), description: 'Forme récente (5 derniers matchs)' },
+      { key: 'surface-specialist', label: 'Surface Specialist', probP1: clamp(surfaceP1), probP2: clamp(100 - surfaceP1), description: 'Avantage Elo sur la surface' },
+      { key: 'form-trend', label: 'Form Trend', probP1: clamp(formP1), probP2: clamp(100 - formP1), description: 'Prédiction blend + PowerScore' },
+      { key: 'fatigue-gauge', label: 'Fatigue Gauge', probP1: clamp(fatigueP1), probP2: clamp(100 - fatigueP1), description: 'Matchs sur 14 jours (inverse)' },
+      { key: 'confidence', label: 'Confidence', probP1: clamp(confP1), probP2: clamp(100 - confP1), description: 'Rang ATP/WTA + Elo surface' },
+    ];
+
+    return jsonResponse(res, 200, {
+      matchId: match.id,
+      player1: { name: p1.name },
+      player2: { name: p2.name },
+      tournament: match.tournament,
+      surface: match.surface,
+      tour: match.tour,
+      startTime: match.start_time,
+      strategies: strategies,
+      consensus: { probP1: clamp(consensusP1), probP2: clamp(100 - consensusP1) },
+    });
+  } catch (e) {
+    console.error('[TennisStrategies] route error:', e && e.stack ? e.stack : e);
+    return jsonResponse(res, 500, { error: 'strategies_failed', detail: String(e && e.message || e) });
+  }
+}
+
+// Route odds-comparison tennis (multi-bookmaker)
+if (pathname.startsWith('/api/v1/tennis/odds-comparison/') && req.method === 'GET') {
+  try {
+    var matchId = decodeURIComponent(pathname.slice('/api/v1/tennis/odds-comparison/'.length));
+    if (!matchId) return jsonResponse(res, 400, { error: 'match_id_required' });
+
+    var match = null;
+    _tennisVBCache.forEach(function(entry) {
+      if (match) return;
+      if (entry && entry.result && entry.result.body && Array.isArray(entry.result.body.matches)) {
+        for (var i = 0; i < entry.result.body.matches.length; i++) {
+          var m = entry.result.body.matches[i];
+          if (String(m.id) === String(matchId)) { match = m; break; }
+        }
+      }
+    });
+
+    if (!match) return jsonResponse(res, 404, { error: 'match_not_found' });
+
+    var p1 = match.player1 || {};
+    var p2 = match.player2 || {};
+    var odds = match.odds || null;
+    var fair = match.fair || null;
+    var edge = match.edge || null;
+    var bestEdge = match.best_edge || null;
+
+    // Cherche dans le cache Odds API pour d'autres bookmakers
+    var apiOdds = null;
+    try {
+      var oc = getTennisOddsCache();
+      if (oc && typeof oc === 'object') {
+        var sports = Object.keys(oc);
+        for (var si = 0; si < sports.length && !apiOdds; si++) {
+          var ms = oc[sports[si]];
+          if (Array.isArray(ms)) {
+            for (var mi = 0; mi < ms.length && !apiOdds; mi++) {
+              var om = ms[mi];
+              if (om && om.home_team && om.away_team) {
+                var p1last = p1.name ? String(p1.name).split(' ').pop().toLowerCase() : '';
+                var p2last = p2.name ? String(p2.name).split(' ').pop().toLowerCase() : '';
+                if (p1last && p2last &&
+                    (String(om.home_team).toLowerCase().indexOf(p1last) >= 0 ||
+                     String(om.away_team).toLowerCase().indexOf(p1last) >= 0)) {
+                  apiOdds = om;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (_) { /* odds cache pas disponible */ }
+
+    return jsonResponse(res, 200, {
+      matchId: match.id,
+      player1: { name: p1.name },
+      player2: { name: p2.name },
+      market: odds ? {
+        p1_odds: odds.p1 && odds.p1.odds,
+        p1_book: odds.p1 && odds.p1.book,
+        p2_odds: odds.p2 && odds.p2.odds,
+        p2_book: odds.p2 && odds.p2.book,
+      } : null,
+      fair_probabilities: fair ? { p1: fair.p1, p2: fair.p2, margin: fair.margin, method: fair.method } : null,
+      value: edge ? { p1_edge: edge.p1, p2_edge: edge.p2 } : null,
+      best_value: bestEdge || null,
+      theoddsapi: apiOdds ? {
+        sport: apiOdds._sport,
+        commence_time: apiOdds.commence_time,
+        bookmakers: (apiOdds.bookmakers || []).map(function(b) {
+          return {
+            key: b.key,
+            title: b.title,
+            last_update: b.last_update,
+            h2h: (b.markets || []).filter(function(mkt) { return mkt.key === 'h2h'; }).map(function(mkt) { return mkt.outcomes; }),
+          };
+        }),
+      } : null,
+    });
+  } catch (e) {
+    console.error('[TennisOddsComparison] route error:', e && e.stack ? e.stack : e);
+    return jsonResponse(res, 500, { error: 'odds_comparison_failed', detail: String(e && e.message || e) });
+  }
+}
+
 // ─── WElo TENNIS ELO ROUTES ─────────────────────────────────────────────
 
 // POST /api/v1/tennis/elo/process-match — Traiter un match et mettre à jour les ratings
