@@ -2,6 +2,29 @@
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
+## Session: XSS onclick template literals (2026-07-05)
+
+**Scope**: ParisScorebis-bhpw — 20 unescaped `${}` interpolations inside `onclick="..."` in template literals in `pariscore.js`. Single-quote injection could break JS context and redirect to phishing.
+
+**Pattern**: `onclick="openFunc('${m.id}')"` → `onclick="openFunc('${_jsStr(m.id)}')"`
+
+**Functions sanitized**: `_jsStr()` escapes `'` → `&#39;`, `"` → `&quot;`, `\` → `\\\\`.
+
+**Affected handlers** (20 locations): openLiveDetail, openInsights, openInsightsById, openRadarModal, showOddsGraph, openPowerScore, toggleFavorite, openBetminesModal, _slbDismiss, openBookmakerDeeplink, openCompDetail, openDeepAnalysis, insSetStatsMode, quickAddBet, _dhOpenReplay, goToMatch.
+
+**Safe by design** (not user-controlled): s.key (STRATEGIES_UI/TENNIS_STRATEGIES_UI hardcoded), p.onclick (PLANS array hardcoded), glossaryTerms (hardcoded), b.id/t.id (numeric DB IDs), safeId/matchId (pre-escaped via _escTennis/_tnEsc).
+
+## Session: Fix nested-ternary syntax error (2026-07-05)
+
+**Root cause**: genuine JS syntax bug in `pariscore.html` — single-quoted string `'<div class="sc-decision-badge "+(isStrong?` was never closed before the `+` concatenation operator. The `'` in `?` (intended as `'strong'` delimiter) was consumed as the closing quote of the outer string, making `strong` an unexpected identifier.
+
+**Fix** at `pariscore.html:25784`:
+```diff
+-+'<div class="sc-decision-badge "+(isStrong?'strong':...
+++'<div class="sc-decision-badge "'+(isStrong?'strong':...
+```
+Verified: `node --check` passes on all inline scripts.
+
 ## Quick Reference
 
 ```bash
