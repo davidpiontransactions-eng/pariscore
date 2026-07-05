@@ -21794,8 +21794,8 @@ async function handleAPI(req, res, pathname, query) {
       const stageN = q.get('stage') ? parseInt(q.get('stage'), 10) : null;
       const lang = q.get('lang') || 'en';
       const fav = await cyclingService.getStageFavourites(stageN, { lang: lang });
-      const cacheMaxAge = fav.ok ? 3600 : 60; // 1h si OK, 1min si erreur (pour retry rapide)
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'public, max-age=' + cacheMaxAge });
+      const cacheMaxAge = fav.ok ? 300 : 60; // 5min si OK (FIX QA 13-stage2-bug), 1min si erreur
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'private, max-age=' + cacheMaxAge + ', must-revalidate' });
       return res.end(JSON.stringify(fav));
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });

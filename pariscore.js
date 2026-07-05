@@ -1112,7 +1112,7 @@ window.initCyclingPage = function () {
   if (_cycPoll) clearInterval(_cycPoll);
   _cycPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling(); }, 300000);
   if (_cycFavPoll) clearInterval(_cycFavPoll);
-  _cycFavPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites(); }, 1800000);
+  _cycFavPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites(); }, 600000);
 };
 if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearInterval(_cycFavPoll); _cycFavPoll = null; } };
 function _fetchAndRenderCycling() {

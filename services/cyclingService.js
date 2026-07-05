@@ -92,7 +92,12 @@ const RIDERS = [
 const RIDERS_BY_CODE = {}; RIDERS.forEach(function(r) { RIDERS_BY_CODE[r.code] = r; });
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-function _today() { return new Date().toISOString().slice(0, 10); }
+// FIX QA 13-stage2-bug : _today() utilisait UTC au lieu d'Europe/Paris.
+function _today() {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(new Date());
+}
 function _clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 function _empty(reason, extra) { return Object.assign({ ok: false, reason: reason || 'not_implemented', updatedAt: null }, extra || {}); }
 function _z(arr) { var v = arr.filter(function(x) { return x != null && isFinite(x); }); var n = v.length || 1; var m = v.reduce(function(a, b) { return a + b; }, 0) / n; var sd = Math.sqrt(v.reduce(function(a, b) { return a + (b - m) * (b - m); }, 0) / n) || 1; return { m: m, sd: sd }; }
