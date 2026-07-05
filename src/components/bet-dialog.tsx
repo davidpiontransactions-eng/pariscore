@@ -13,9 +13,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Trophy, Check } from "lucide-react";
+import { Trophy, Check, Plus } from "lucide-react";
 import { useBankroll } from "@/hooks/use-bankroll";
 import { useAnalytics } from "@/components/analytics-provider";
+import { useBetSlip } from "@/hooks/use-bet-slip";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -38,11 +40,25 @@ type Props = {
 
 export function BetDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("bankroll.bet");
+  const tSlip = useTranslations("betSlip");
   const { addBet, stats } = useBankroll();
   const { track } = useAnalytics();
+  const { addToSlip, isFull } = useBetSlip();
+  const { toast } = useToast();
 
   const [betOn, setBetOn] = useState<"A" | "B">("A");
   const [stake, setStake] = useState("10");
+
+  // Compute the odd for the currently selected side. Returns 0 on bad
+  // inputs (caller should bail before calling).
+  function computeOdd(isA: boolean): number {
+    if (!match) return 0;
+    return match.odds
+      ? isA
+        ? match.odds.decimalA
+        : match.odds.decimalB
+      : 1 / (isA ? match.probA / 100 : match.probB / 100);
+  }
 
   const handlePlaceBet = () => {
     if (!match) return;
@@ -50,11 +66,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
     if (isNaN(stakeNum) || stakeNum <= 0) return;
 
     const isA = betOn === "A";
-    const odd = match.odds
-      ? isA
-        ? match.odds.decimalA
-        : match.odds.decimalB
-      : 1 / (isA ? match.probA / 100 : match.probB / 100);
+    const odd = computeOdd(isA);
 
     addBet({
       matchId: match.id,
@@ -82,6 +94,54 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
     // Reset
     setBetOn("A");
     setStake("10");
+  };
+
+  // Add the current selection to the floating bet slip instead of placing
+  // it immediately. The slip persists across matches and lets the user
+  // place all accumulated bets at once (DraftKings-style).
+  const handleAddToSlip = () => {
+    if (!match) return;
+    const stakeNum = parseFloat(stake);
+    if (isNaN(stakeNum) || stakeNum <= 0) return;
+
+    const isA = betOn === "A";
+    const odd = computeOdd(isA);
+
+    const added = addToSlip({
+      matchId: match.id,
+      playerA: match.playerA.name,
+      playerB: match.playerB.name,
+      betOn,
+      betOnName: isA ? match.playerA.name : match.playerB.name,
+      stake: stakeNum,
+      odd,
+      bookmaker: match.odds?.bookmaker,
+      surface: match.surface,
+      tournament: match.tournament,
+    });
+
+    if (added) {
+      track("bet_slip_add", {
+        match_id: match.id,
+        bet_on: betOn,
+        stake: stakeNum,
+        source: "bet_dialog",
+      });
+      toast({
+        title: tSlip("added"),
+        description: `${isA ? match.playerA.name : match.playerB.name} · ${stakeNum} € @ ${odd.toFixed(2)}`,
+      });
+      onOpenChange(false);
+      setBetOn("A");
+      setStake("10");
+    } else {
+      // Either the same selection is already in the slip (deduped by
+      // matchId + betOn) or the slip is full (max 5).
+      toast({
+        title: isFull ? tSlip("maxReached") : tSlip("alreadyInSlip"),
+        variant: isFull ? "destructive" : "default",
+      });
+    }
   };
 
   if (!match) return null;
@@ -205,9 +265,19 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               {t("cancel")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleAddToSlip}
+              disabled={isFull}
+              className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"
+            >
+              <Plus className="mr-1.5 h-3 w-3" />
+              {tSlip("addToSlip")}
             </Button>
             <Button
               size="sm"

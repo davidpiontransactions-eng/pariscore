@@ -16,14 +16,23 @@ import {
   Star,
   Mail,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProbabilityRing } from "./probability-ring";
+import { ProbabilityBar } from "./probability-bar";
+import { Sparkline } from "./sparkline";
+import { FormDots } from "./form-dots";
 import { StatChip } from "./stat-chip";
+import { BacktestBadge } from "./backtest-badge";
 import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useTerminalMode } from "@/hooks/use-terminal-mode";
+import { useEloSparkline } from "@/hooks/use-elo-sparkline";
 import { useEmailAlerts } from "@/hooks/use-email-alerts";
+import { useBetSlip } from "@/hooks/use-bet-slip";
+import { useToast } from "@/hooks/use-toast";
 import { useAnalytics } from "@/components/analytics-provider";
 import {
   Tooltip,
@@ -71,19 +80,44 @@ export function MatchCard({
   const t = useTranslations("match");
   const tTime = useTranslations("time");
   const tEmail = useTranslations("email");
+  const tSlip = useTranslations("betSlip");
+  const { terminalMode } = useTerminalMode();
   const [open, setOpen] = useState(defaultOpen);
-  const [chipsExpanded, setChipsExpanded] = useState(!chipsCollapsedByDefault);
+  // Terminal mode forces the stats chips to be always expanded — power
+  // users want all the data visible without an extra click, so we OR the
+  // user-driven flag with the terminal flag.
+  const [chipsExpanded, setChipsExpanded] = useState(
+    !chipsCollapsedByDefault || terminalMode
+  );
   const [emailSending, setEmailSending] = useState(false);
   const { track } = useAnalytics();
   const { isFavorite, toggle } = useFavorites();
   const { sendTestAlert } = useEmailAlerts();
+  const { addToSlip, isFull } = useBetSlip();
+  const { toast } = useToast();
   const fav = isFavorite(match.id);
+  // Sparklines Elo (P2 — Quant Terminal)
+  const sparklineA = useEloSparkline(match.id, "a", 30);
+  const sparklineB = useEloSparkline(match.id, "b", 30);
+  // Best odds (P3 — Bet Action Hub)
+  const bestOddA = match.allOdds?.reduce((max, o) => (o.decimalA > max.decimalA ? o : max));
+  const bestOddB = match.allOdds?.reduce((max, o) => (o.decimalB > max.decimalB ? o : max));
   const { playerA, playerB, stats, model, modelUpdatedAt } = match;
 
   const isLive = liveState?.isLive === true;
   // Live probabilities override the static prematch ones when the match is live.
   const probA = isLive ? Math.round(liveState!.liveProbA) : match.probA;
   const probB = isLive ? Math.round(liveState!.liveProbB) : match.probB;
+
+  // Terminal mode is sticky — when it's ON we never let the chips collapse,
+  // even if the A/B variant would have collapsed them. This effect runs
+  // whenever the mode flips and lifts the local state to match. Deferred
+  // via Promise.resolve().then(...) to satisfy `react-hooks/set-state-in-effect`.
+  useEffect(() => {
+    if (terminalMode && !chipsExpanded) {
+      Promise.resolve().then(() => setChipsExpanded(true));
+    }
+  }, [terminalMode, chipsExpanded]);
 
   // Track match card view (once per mount)
   useEffect(() => {
@@ -94,9 +128,10 @@ export function MatchCard({
       player_b: playerB.name,
       prob_a: probA,
       prob_b: probB,
+      terminal_mode: terminalMode,
     });
     // Only re-track when match changes (track is stable from useAnalytics)
-  }, [match.id, match.tournament, playerA.name, playerB.name, probA, probB, track]);
+  }, [match.id, match.tournament, playerA.name, playerB.name, probA, probB, track, terminalMode]);
 
   const handleToggleDetail = () => {
     const next = !open;
@@ -122,6 +157,49 @@ export function MatchCard({
     });
     // Open the bet dialog if handler provided, else just track
     onBetClick?.();
+  };
+
+  // Quick-add a player to the bet slip directly from the card — bypasses
+  // the BetDialog and uses a default 10 € stake. The user can fine-tune
+  // the stake inside the floating slip. Dedupes by matchId + betOn so
+  // double-clicking the same player's + is a no-op (toast).
+  const handleQuickAdd = (player: "A" | "B") => {
+    const isA = player === "A";
+    const playerName = isA ? playerA.name : playerB.name;
+    const odd = match.odds
+      ? isA
+        ? match.odds.decimalA
+        : match.odds.decimalB
+      : 1 / (isA ? probA / 100 : probB / 100);
+    const added = addToSlip({
+      matchId: match.id,
+      playerA: playerA.name,
+      playerB: playerB.name,
+      betOn: player,
+      betOnName: playerName,
+      stake: 10,
+      odd,
+      bookmaker: match.odds?.bookmaker,
+      surface: stats.surface,
+      tournament: match.tournament,
+    });
+    if (added) {
+      track("bet_slip_add", {
+        match_id: match.id,
+        bet_on: player,
+        stake: 10,
+        source: "ring_quick_add",
+      });
+      toast({
+        title: tSlip("added"),
+        description: `${playerName} · 10 € @ ${odd.toFixed(2)}`,
+      });
+    } else {
+      toast({
+        title: isFull ? tSlip("maxReached") : tSlip("alreadyInSlip"),
+        variant: isFull ? "destructive" : "default",
+      });
+    }
   };
 
   // Trigger a value-bet email test alert for this match. Sends to every
@@ -221,22 +299,65 @@ export function MatchCard({
       </header>
 
       {/* Corps : carte duelle A + VS + B */}
-      <div className="px-4 py-6 sm:px-6 sm:py-8">
+      <div className={cn("px-4 sm:px-6", terminalMode ? "py-4" : "py-6 sm:py-8")}>
         <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-2">
-          <PlayerBlock player={playerA} prob={probA} align="left" winLabel={t("win")} priority={priority} />
+          <PlayerBlock
+            player={playerA}
+            prob={probA}
+            align="left"
+            winLabel={t("win")}
+            priority={priority}
+            onQuickAdd={() => handleQuickAdd("A")}
+            quickAddLabel={tSlip("quickAdd", { player: playerA.name })}
+            sparklineData={sparklineA}
+            bestOdd={bestOddA ? { decimal: bestOddA.decimalA, bookmaker: bestOddA.bookmaker } : undefined}
+            terminalMode={terminalMode}
+          />
           <div className="flex items-center justify-center sm:py-0">
             <div
               className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-full",
+                "flex items-center justify-center rounded-full",
                 "border border-border/60 bg-muted/40 backdrop-blur-sm",
-                "text-xs font-bold tracking-wider text-muted-foreground"
+                "text-xs font-bold tracking-wider text-muted-foreground",
+                terminalMode ? "h-8 w-8" : "h-11 w-11"
               )}
             >
               {t("vs")}
             </div>
           </div>
-          <PlayerBlock player={playerB} prob={probB} align="right" winLabel={t("win")} priority={priority} />
+          <PlayerBlock
+            player={playerB}
+            prob={probB}
+            align="right"
+            winLabel={t("win")}
+            priority={priority}
+            onQuickAdd={() => handleQuickAdd("B")}
+            quickAddLabel={tSlip("quickAdd", { player: playerB.name })}
+            sparklineData={sparklineB}
+            bestOdd={bestOddB ? { decimal: bestOddB.decimalB, bookmaker: bestOddB.bookmaker } : undefined}
+            terminalMode={terminalMode}
+          />
         </div>
+
+        {/* Terminal mode: ProbabilityBar with IC bracket + decomposition —
+            always visible for power users, replacing the per-player rings
+            with a single dense horizontal bar that exposes the IC 95%
+            bracket and the Elo / Forme / H2H weight decomposition inline. */}
+        {terminalMode && (
+          <div className="mt-4">
+            <ProbabilityBar
+              probA={probA}
+              probB={probB}
+              ic={stats.ic}
+              colorA={playerA.color}
+              colorB={playerB.color}
+              shortNameA={playerA.shortName}
+              shortNameB={playerB.shortName}
+              weights={{ elo: 0.62, form: 0.24, h2h: 0.14 }}
+              showDecomposition
+            />
+          </div>
+        )}
 
         {/* Live score — shown only when the match is live */}
         {isLive && liveState && (
@@ -272,8 +393,10 @@ export function MatchCard({
         )}
       </div>
 
-      {/* Stats chips — fusion C (collapsed in A/B variant "chips_collapsed") */}
-      {chipsCollapsedByDefault && (
+      {/* Stats chips — fusion C (collapsed in A/B variant "chips_collapsed").
+          In terminal mode the chips are ALWAYS expanded (power-user view),
+          so we hide the collapse affordance entirely. */}
+      {chipsCollapsedByDefault && !terminalMode && (
         <div className="px-4 sm:px-6">
           <button
             type="button"
@@ -322,6 +445,11 @@ export function MatchCard({
             <span className="font-semibold">{t("modelLabel")}</span>
             <span>{model}</span>
           </span>
+          <BacktestBadge
+            surface={stats.surface}
+            eloGap={stats.eloGap}
+            className="ml-0.5"
+          />
           <span className="text-border">·</span>
           <span className="flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
@@ -529,18 +657,37 @@ function PlayerBlock({
   align,
   winLabel,
   priority = false,
+  onQuickAdd,
+  quickAddLabel,
+  sparklineData = [],
+  bestOdd,
+  terminalMode = false,
 }: {
   player: TennisMatch["playerA"];
   prob: number;
   align: "left" | "right";
   winLabel: string;
   priority?: boolean;
+  onQuickAdd?: () => void;
+  quickAddLabel?: string;
+  sparklineData?: number[];
+  bestOdd?: { decimal: number; bookmaker: string };
+  terminalMode?: boolean;
 }) {
+  // Photo dimensions: full 72px in simple mode, shrunk to 40px in terminal
+  // mode so more of the card real-estate goes to the dense data overlays
+  // (sparkline + probability bar + chips).
+  const photoSize = terminalMode ? 40 : 72;
+  // Sparkline width: 80px in terminal mode (more legible trend), 50px in
+  // simple mode (compact inline indicator next to the Elo number).
+  const sparkWidth = terminalMode ? 80 : 50;
+  const sparkHeight = terminalMode ? 22 : 16;
   return (
     <div
       className={cn(
         "flex flex-col items-center gap-3 sm:flex-row sm:gap-4",
-        align === "right" && "sm:flex-row-reverse"
+        align === "right" && "sm:flex-row-reverse",
+        terminalMode && "sm:gap-3"
       )}
     >
       <div className="relative">
@@ -552,10 +699,14 @@ function PlayerBlock({
         <img
           src={player.photoUrl}
           alt={player.name}
-          width={72}
-          height={72}
-          className="relative h-[72px] w-[72px] rounded-full object-cover ring-2 ring-offset-2 ring-offset-background"
-          style={{ "--tw-ring-color": player.color } as React.CSSProperties}
+          width={photoSize}
+          height={photoSize}
+          className="relative rounded-full object-cover ring-2 ring-offset-2 ring-offset-background"
+          style={{
+            "--tw-ring-color": player.color,
+            width: photoSize,
+            height: photoSize,
+          } as React.CSSProperties}
           loading={priority ? "eager" : "lazy"}
           fetchPriority={priority ? "high" : "auto"}
         />
@@ -566,24 +717,66 @@ function PlayerBlock({
           align === "right" && "sm:items-end sm:text-right"
         )}
       >
-        <h3 className="text-base font-bold leading-tight tracking-tight sm:text-lg">
+        <h3
+          className={cn(
+            "font-bold leading-tight tracking-tight",
+            terminalMode ? "text-sm sm:text-base" : "text-base sm:text-lg"
+          )}
+        >
           {player.name}
         </h3>
-        <p className="mt-0.5 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-2 font-mono text-xs text-muted-foreground">
           <span>#{player.rank}</span>
           <span className="text-border">·</span>
           <span>Elo {player.elo}</span>
-        </p>
-        <div className="mt-3">
+          {sparklineData.length > 1 && (
+            <Sparkline
+              data={sparklineData}
+              width={sparkWidth}
+              height={sparkHeight}
+              color={player.color}
+              strokeWidth={1.5}
+              ariaLabel={`Tendance Elo 30 jours ${player.name}`}
+            />
+          )}
+        </div>
+        {/* Form dots */}
+        <div className="mt-1.5">
+          <FormDots
+            form={player.form}
+            color={player.color}
+            size="sm"
+            ariaLabel={`Forme récente ${player.name}`}
+          />
+        </div>
+        {/* Best odd */}
+        {bestOdd && (
+          <div className="mt-2 flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px]">
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+              @{bestOdd.decimal.toFixed(2)}
+            </span>
+            <span className="text-muted-foreground">{bestOdd.bookmaker}</span>
+          </div>
+        )}
+        {/* Probability ring — kept in BOTH modes because it remains the
+            primary per-player win-probability affordance and the quick-add
+            (+) button anchor. In terminal mode it shrinks slightly so it
+            doesn't dominate the denser card. The horizontal ProbabilityBar
+            (with IC + decomposition) is rendered above in the card body
+            when terminal mode is ON. */}
+        <div className="relative mt-3 inline-block">
           <ProbabilityRing
             value={prob}
-            size={92}
-            stroke={7}
+            size={terminalMode ? 72 : 92}
+            stroke={terminalMode ? 6 : 7}
             color={player.color}
             trackColor="currentColor"
           >
             <span
-              className="text-xl font-bold tabular-nums"
+              className={cn(
+                "font-bold tabular-nums",
+                terminalMode ? "text-base" : "text-xl"
+              )}
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {prob}%
@@ -592,6 +785,22 @@ function PlayerBlock({
               {winLabel}
             </span>
           </ProbabilityRing>
+          {onQuickAdd && (
+            <button
+              type="button"
+              onClick={onQuickAdd}
+              aria-label={quickAddLabel}
+              title={quickAddLabel}
+              className={cn(
+                "absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full",
+                "border-2 border-background bg-emerald-600 text-white shadow-md",
+                "transition-all hover:scale-110 hover:bg-emerald-700",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              )}
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1,0 +1,1033 @@
+g: in the working copy of '.context/betwatch-wom-analysis.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.context/bsd_stats_etl_run.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.context/i18n/_server.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.context/opencode-watch.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.context/server-test.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/build.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/e2e.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/lint.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/load-test.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/refresh-elo.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gstack/browse-audit.jsonl', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gstack/browse-console.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gstack/browse-network.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gstack/claude-available.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ARCHITECTURE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'CONTRIBUTING.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Caddyfile', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/ABOUT-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/ABTEST-1-ab-test-instrumentation-engineer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/CICD-1-ci-cd-engineer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/CRON-1-ci-cd-engineer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/DIGEST-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/DOC-1-technical-writer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/E2E-1-e2e-test-engineer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/ELO-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/ELO-2-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/EMAIL-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/K6-1-load-test-engineer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/OPENAPI-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/SENTRY-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/SEO-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/STATS-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'agent-ctx/WS-1-full-stack-developer.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'betwatchService.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'cache/_add_momentum_popup.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'cache/_expose_block_complete.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'components.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/historique_bsd_tennis.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/historique_elofootball.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/historique_tennis.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/historique_wikidata.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/AB-TEST-SETUP.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'download/README-integration.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'download/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'download/propositions_design_tennis_prematch.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'download/test_panel_1000_pariers.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'eslint.config.mjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/CLASSEMENT_POWERSCORE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/RAPPORT_DESIGN_TENNIS_V3.1.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/RAPPORT_DESIGN_TENNIS_V3.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/members.csv', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/package.jsonOO', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/rapport_benchmark_rotowire.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/rapport_innovations_core_tabs.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/rapport_mission_colonne_2.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'exports/rapport_resolution_timeout_rg.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/.debug_tennis_err.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/.debug_tennis_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/server.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/server_bg.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/server_bg_err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/server_error.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'logs/server_output.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'markdown/ACCES_MEMO.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mini-services/tennis-live/bun.lock', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mini-services/tennis-live/index.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'mini-services/tennis-live/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'next.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'playwright.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'postcss.config.mjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'prisma/schema.prisma', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/logo.svg', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/manifest.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/openapi.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/robots.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'public/sw.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/api_search1.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/api_search2.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/fetch-tennis-data.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/make_pwa_icons.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/panel_data.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/panel_simulation.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/alcaraz.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/medvedev.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/osaka.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/rublev.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/sabalenka.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/sinner.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/photos/urls.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/search1.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/search2.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/search3.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/search4.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/search5.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/search6.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts/validate_prediction.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'sentry.client.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'sentry.edge.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'sentry.server.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server-err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server-test-err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server-test.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_err.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_error.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_out.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server_output.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/email/digest/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/email/subscribe/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/email/test/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/email/unsubscribe/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/push/digest/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/push/subscribe/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/push/test/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/sentry-test/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/tennis/elo-history/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/api/tennis/prematch/route.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/error.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/global-error.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/globals.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/loading.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/not-found.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/sitemap.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ab-test-debug.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/about-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/analytics-provider.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/api-docs-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/bankroll-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/bet-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/bookmaker-comparator-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/consent-banner.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/consent-provider.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/email-toggle.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/feedback-widget.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/language-toggle.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/paper-trading-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/privacy-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/push-toggle.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/sentry-error-boundary.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/sw-register.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/tennis/match-card.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/tennis/match-detail-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/tennis/odds-comparator.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/tennis/probability-ring.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/tennis/stat-chip.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/theme-toggle.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/accordion.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/alert-dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/alert.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/aspect-ratio.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/avatar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/badge.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/breadcrumb.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/button.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/calendar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/card.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/carousel.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/chart.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/checkbox.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/collapsible.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/command.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/context-menu.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/dialog.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/drawer.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/dropdown-menu.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/form.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/hover-card.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/input-otp.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/input.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/label.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/menubar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/navigation-menu.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/pagination.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/popover.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/progress.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/radio-group.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/resizable.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/scroll-area.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/select.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/separator.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/sheet.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/sidebar.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/skeleton.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/slider.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/sonner.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/switch.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/table.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/tabs.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/textarea.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/toast.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/toaster.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/toggle-group.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/toggle.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/ui/tooltip.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/value-bet-scanner-indicator.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-bankroll.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-digest-scheduler.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-elo-history.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-email-alerts.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-favorites.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-live-matches.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-mobile.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-paper-trading.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-prematch-matches.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-push-notifications.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-toast.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/hooks/use-value-bet-scanner.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/i18n/request.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/i18n/routing.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/ab-test.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/db.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/email/send.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/email/store.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/export-bankroll.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/prediction/elo-data.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/prediction/elo-history.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/prediction/engine.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/push/store.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/tennis-data.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/lib/utils.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/messages/en.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/messages/fr.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tailwind.config.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/api.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/detail-dialog.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/filters.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/load/script.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/match-card.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/mobile.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/page-objects.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/rgpd.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/smoke.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/theme-language.spec.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tools/scrape-betwatch-wom.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tools/tmux-3.6a/config.log', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tsconfig.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'wom.local.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'worklog.md', LF will be replaced by CRLF the next time Git touches it
+Enumerating objects: 758, done.
+Counting objects: 100% (758/758), done.
+Delta compression using up to 12 threads
+Compressing objects: 100% (704/704), done.
+Writing objects: 100% (758/758), done.
+Total 758 (delta 55), reused 0 (delta 0), pack-reused 0 (from 0)
+[main 0f1afb2] feat: SetPoint Tennis Prematch v10 - full app
+ 769 files changed, 391967 insertions(+), 265 deletions(-)
+ create mode 100644 .HANDOFF.md
+ create mode 100644 .agents/skills/agency-api-tester/SKILL.md
+ create mode 100644 .agents/skills/agency-backend-architect/SKILL.md
+ create mode 100644 .agents/skills/agency-code-reviewer/SKILL.md
+ create mode 100644 .agents/skills/agency-database-optimizer/SKILL.md
+ create mode 100644 .agents/skills/agency-incident-commander/SKILL.md
+ create mode 100644 .agents/skills/agency-reality-checker/SKILL.md
+ create mode 100644 .agents/skills/agency-security-architect/SKILL.md
+ create mode 100644 .agents/skills/agency-sre/SKILL.md
+ create mode 100644 .agents/skills/betting/SKILL.md
+ create mode 100644 .agents/skills/betting/references/api-reference.md
+ create mode 100644 .agents/skills/cbb-data/SKILL.md
+ create mode 100644 .agents/skills/cbb-data/references/api-reference.md
+ create mode 100644 .agents/skills/cbb-data/references/conference-ids.md
+ create mode 100644 .agents/skills/cbb-data/references/team-ids.md
+ create mode 100644 .agents/skills/cbb-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/cfb-data/SKILL.md
+ create mode 100644 .agents/skills/cfb-data/references/api-reference.md
+ create mode 100644 .agents/skills/cfb-data/references/conference-ids.md
+ create mode 100644 .agents/skills/cfb-data/references/team-ids.md
+ create mode 100644 .agents/skills/cfb-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/firecrawl-pilote/SKILL.md
+ create mode 100644 .agents/skills/football-data/SKILL.md
+ create mode 100644 .agents/skills/football-data/references/api-reference.md
+ create mode 100644 .agents/skills/football-data/references/commands.md
+ create mode 100644 .agents/skills/football-data/references/data-coverage.md
+ create mode 100644 .agents/skills/football-data/references/schemas.md
+ create mode 100644 .agents/skills/football-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/golf-data/SKILL.md
+ create mode 100644 .agents/skills/golf-data/references/api-reference.md
+ create mode 100644 .agents/skills/golf-data/references/majors.md
+ create mode 100644 .agents/skills/golf-data/references/player-ids.md
+ create mode 100644 .agents/skills/golf-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/higgsfield-generate/SKILL.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-ad-references.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-avatars.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-brand-kits.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-dtc-ads.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-modes.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-products.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/marketing-setup-items.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/media-inputs.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/model-catalog.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/prompt-engineering.md
+ create mode 100644 .agents/skills/higgsfield-generate/references/troubleshooting.md
+ create mode 100644 .agents/skills/higgsfield-marketplace-cards/SKILL.md
+ create mode 100644 .agents/skills/higgsfield-product-photoshoot/SKILL.md
+ create mode 100644 .agents/skills/higgsfield-soul-id/SKILL.md
+ create mode 100644 .agents/skills/higgsfield-soul-id/references/photo-guide.md
+ create mode 100644 .agents/skills/higgsfield-soul-id/references/troubleshooting.md
+ create mode 100644 .agents/skills/kalshi/SKILL.md
+ create mode 100644 .agents/skills/kalshi/references/api-reference.md
+ create mode 100644 .agents/skills/kalshi/references/api.md
+ create mode 100644 .agents/skills/kalshi/references/commands.md
+ create mode 100644 .agents/skills/kalshi/references/series-tickers.md
+ create mode 100644 .agents/skills/kalshi/scripts/validate_params.sh
+ create mode 100644 .agents/skills/markets/SKILL.md
+ create mode 100644 .agents/skills/markets/references/api-reference.md
+ create mode 100644 .agents/skills/metier-documentaliste/SKILL.md
+ create mode 100644 .agents/skills/metier-scraping-websearch/SKILL.md
+ create mode 100644 .agents/skills/mlb-data/SKILL.md
+ create mode 100644 .agents/skills/mlb-data/references/api-reference.md
+ create mode 100644 .agents/skills/mlb-data/references/team-ids.md
+ create mode 100644 .agents/skills/mlb-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/nba-data/SKILL.md
+ create mode 100644 .agents/skills/nba-data/references/api-reference.md
+ create mode 100644 .agents/skills/nba-data/references/team-ids.md
+ create mode 100644 .agents/skills/nba-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/nfl-data/SKILL.md
+ create mode 100644 .agents/skills/nfl-data/references/api-reference.md
+ create mode 100644 .agents/skills/nfl-data/references/team-ids.md
+ create mode 100644 .agents/skills/nfl-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/nhl-data/SKILL.md
+ create mode 100644 .agents/skills/nhl-data/references/api-reference.md
+ create mode 100644 .agents/skills/nhl-data/references/team-ids.md
+ create mode 100644 .agents/skills/nhl-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/polymarket/SKILL.md
+ create mode 100644 .agents/skills/polymarket/references/api-reference.md
+ create mode 100644 .agents/skills/polymarket/references/api.md
+ create mode 100644 .agents/skills/polymarket/references/commands.md
+ create mode 100644 .agents/skills/polymarket/scripts/validate_params.sh
+ create mode 100644 .agents/skills/sports-news/SKILL.md
+ create mode 100644 .agents/skills/sports-news/references/api-reference.md
+ create mode 100644 .agents/skills/sports-news/references/rss-feeds.md
+ create mode 100644 .agents/skills/sports-news/scripts/validate_params.sh
+ create mode 100644 .agents/skills/sports-reporter/SKILL.md
+ create mode 100644 .agents/skills/sports-reporter/references/api-reference.md
+ create mode 100644 .agents/skills/sports-reporter/references/article-templates.md
+ create mode 100644 .agents/skills/sports-reporter/references/sport-mapping.md
+ create mode 100644 .agents/skills/sports-reporter/scripts/validate_params.sh
+ create mode 100644 .agents/skills/tennis-data/SKILL.md
+ create mode 100644 .agents/skills/tennis-data/references/api-reference.md
+ create mode 100644 .agents/skills/tennis-data/references/grand-slams.md
+ create mode 100644 .agents/skills/tennis-data/references/player-ids.md
+ create mode 100644 .agents/skills/tennis-data/references/scoring.md
+ create mode 100644 .agents/skills/tennis-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/volleyball-data/SKILL.md
+ create mode 100644 .agents/skills/volleyball-data/references/api-reference.md
+ create mode 100644 .agents/skills/volleyball-data/references/competition-ids.md
+ create mode 100644 .agents/skills/wnba-data/SKILL.md
+ create mode 100644 .agents/skills/wnba-data/references/api-reference.md
+ create mode 100644 .agents/skills/wnba-data/references/team-ids.md
+ create mode 100644 .agents/skills/wnba-data/scripts/validate_params.sh
+ create mode 100644 .agents/skills/xctf-data/SKILL.md
+ create mode 100644 .agents/skills/xctf-data/references/api-reference.md
+ create mode 100644 .agents/skills/xctf-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/betting/SKILL.md
+ create mode 100644 .claude/skills/betting/references/api-reference.md
+ create mode 100644 .claude/skills/bigquery-basics/SKILL.md
+ create mode 100644 .claude/skills/bigquery-basics/references/bigquery_ai_detect_anomalies.md
+ create mode 100644 .claude/skills/bigquery-basics/references/bigquery_ai_forecast.md
+ create mode 100644 .claude/skills/bigquery-basics/references/bigquery_ai_generate.md
+ create mode 100644 .claude/skills/bigquery-basics/references/cli-usage.md
+ create mode 100644 .claude/skills/bigquery-basics/references/client-library-usage.md
+ create mode 100644 .claude/skills/bigquery-basics/references/core-concepts.md
+ create mode 100644 .claude/skills/bigquery-basics/references/iac-usage.md
+ create mode 100644 .claude/skills/bigquery-basics/references/iam-security.md
+ create mode 100644 .claude/skills/bigquery-basics/references/mcp-usage.md
+ create mode 100644 .claude/skills/brainstorming/SKILL.md
+ create mode 100644 .claude/skills/caveman/SKILL.md
+ create mode 100644 .claude/skills/cbb-data/SKILL.md
+ create mode 100644 .claude/skills/cbb-data/references/api-reference.md
+ create mode 100644 .claude/skills/cbb-data/references/conference-ids.md
+ create mode 100644 .claude/skills/cbb-data/references/team-ids.md
+ create mode 100644 .claude/skills/cbb-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/cfb-data/SKILL.md
+ create mode 100644 .claude/skills/cfb-data/references/api-reference.md
+ create mode 100644 .claude/skills/cfb-data/references/conference-ids.md
+ create mode 100644 .claude/skills/cfb-data/references/team-ids.md
+ create mode 100644 .claude/skills/cfb-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/football-data/SKILL.md
+ create mode 100644 .claude/skills/football-data/references/api-reference.md
+ create mode 100644 .claude/skills/football-data/references/commands.md
+ create mode 100644 .claude/skills/football-data/references/data-coverage.md
+ create mode 100644 .claude/skills/football-data/references/schemas.md
+ create mode 100644 .claude/skills/football-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/frontend-design/LICENSE.txt
+ create mode 100644 .claude/skills/frontend-design/SKILL.md
+ create mode 100644 .claude/skills/gcloud/SKILL.md
+ create mode 100644 .claude/skills/golf-data/SKILL.md
+ create mode 100644 .claude/skills/golf-data/references/api-reference.md
+ create mode 100644 .claude/skills/golf-data/references/majors.md
+ create mode 100644 .claude/skills/golf-data/references/player-ids.md
+ create mode 100644 .claude/skills/golf-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/google-cloud-waf-reliability/SKILL.md
+ create mode 100644 .claude/skills/google-cloud-waf-security/SKILL.md
+ create mode 100644 .claude/skills/higgsfield-generate/SKILL.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-ad-references.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-avatars.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-brand-kits.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-dtc-ads.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-modes.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-products.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/marketing-setup-items.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/media-inputs.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/model-catalog.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/prompt-engineering.md
+ create mode 100644 .claude/skills/higgsfield-generate/references/troubleshooting.md
+ create mode 100644 .claude/skills/higgsfield-marketplace-cards/SKILL.md
+ create mode 100644 .claude/skills/higgsfield-product-photoshoot/SKILL.md
+ create mode 100644 .claude/skills/higgsfield-soul-id/SKILL.md
+ create mode 100644 .claude/skills/higgsfield-soul-id/references/photo-guide.md
+ create mode 100644 .claude/skills/higgsfield-soul-id/references/troubleshooting.md
+ create mode 100644 .claude/skills/kalshi/SKILL.md
+ create mode 100644 .claude/skills/kalshi/references/api-reference.md
+ create mode 100644 .claude/skills/kalshi/references/api.md
+ create mode 100644 .claude/skills/kalshi/references/commands.md
+ create mode 100644 .claude/skills/kalshi/references/series-tickers.md
+ create mode 100644 .claude/skills/kalshi/scripts/validate_params.sh
+ create mode 100644 .claude/skills/markets/SKILL.md
+ create mode 100644 .claude/skills/markets/references/api-reference.md
+ create mode 100644 .claude/skills/mlb-data/SKILL.md
+ create mode 100644 .claude/skills/mlb-data/references/api-reference.md
+ create mode 100644 .claude/skills/mlb-data/references/team-ids.md
+ create mode 100644 .claude/skills/mlb-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/nba-data/SKILL.md
+ create mode 100644 .claude/skills/nba-data/references/api-reference.md
+ create mode 100644 .claude/skills/nba-data/references/team-ids.md
+ create mode 100644 .claude/skills/nba-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/nfl-data/SKILL.md
+ create mode 100644 .claude/skills/nfl-data/references/api-reference.md
+ create mode 100644 .claude/skills/nfl-data/references/team-ids.md
+ create mode 100644 .claude/skills/nfl-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/nhl-data/SKILL.md
+ create mode 100644 .claude/skills/nhl-data/references/api-reference.md
+ create mode 100644 .claude/skills/nhl-data/references/team-ids.md
+ create mode 100644 .claude/skills/nhl-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/pm-product-cycle/SKILL.md
+ create mode 100644 .claude/skills/polymarket/SKILL.md
+ create mode 100644 .claude/skills/polymarket/references/api-reference.md
+ create mode 100644 .claude/skills/polymarket/references/api.md
+ create mode 100644 .claude/skills/polymarket/references/commands.md
+ create mode 100644 .claude/skills/polymarket/scripts/validate_params.sh
+ create mode 100644 .claude/skills/sports-news/SKILL.md
+ create mode 100644 .claude/skills/sports-news/references/api-reference.md
+ create mode 100644 .claude/skills/sports-news/references/rss-feeds.md
+ create mode 100644 .claude/skills/sports-news/scripts/validate_params.sh
+ create mode 100644 .claude/skills/sports-reporter/SKILL.md
+ create mode 100644 .claude/skills/sports-reporter/references/api-reference.md
+ create mode 100644 .claude/skills/sports-reporter/references/article-templates.md
+ create mode 100644 .claude/skills/sports-reporter/references/sport-mapping.md
+ create mode 100644 .claude/skills/sports-reporter/scripts/validate_params.sh
+ create mode 100644 .claude/skills/tennis-data/SKILL.md
+ create mode 100644 .claude/skills/tennis-data/references/api-reference.md
+ create mode 100644 .claude/skills/tennis-data/references/grand-slams.md
+ create mode 100644 .claude/skills/tennis-data/references/player-ids.md
+ create mode 100644 .claude/skills/tennis-data/references/scoring.md
+ create mode 100644 .claude/skills/tennis-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/ui-ux-pro-max/SKILL.md
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/charts.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/colors.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/icons.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/landing.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/products.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/prompts.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/react-performance.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/flutter.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/html-tailwind.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/nextjs.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/nuxt-ui.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/nuxtjs.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/react-native.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/react.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/shadcn.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/svelte.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/swiftui.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/stacks/vue.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/styles.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/typography.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/ui-reasoning.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/ux-guidelines.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/data/web-interface.csv
+ create mode 100644 .claude/skills/ui-ux-pro-max/scripts/core.py
+ create mode 100644 .claude/skills/ui-ux-pro-max/scripts/design_system.py
+ create mode 100644 .claude/skills/ui-ux-pro-max/scripts/search.py
+ create mode 100644 .claude/skills/volleyball-data/SKILL.md
+ create mode 100644 .claude/skills/volleyball-data/references/api-reference.md
+ create mode 100644 .claude/skills/volleyball-data/references/competition-ids.md
+ create mode 100644 .claude/skills/wnba-data/SKILL.md
+ create mode 100644 .claude/skills/wnba-data/references/api-reference.md
+ create mode 100644 .claude/skills/wnba-data/references/team-ids.md
+ create mode 100644 .claude/skills/wnba-data/scripts/validate_params.sh
+ create mode 100644 .claude/skills/xctf-data/SKILL.md
+ create mode 100644 .claude/skills/xctf-data/references/api-reference.md
+ create mode 100644 .claude/skills/xctf-data/scripts/validate_params.sh
+ create mode 160000 .claude/worktrees/agent-a0a6e54c9afed82b1
+ create mode 160000 .claude/worktrees/agent-a0c9a228bdf3cabc0
+ create mode 160000 .claude/worktrees/agent-a1129bbba21ff8bc1
+ create mode 160000 .claude/worktrees/agent-a15e6fb73856057bc
+ create mode 160000 .claude/worktrees/agent-a1c408c66198a20b4
+ create mode 160000 .claude/worktrees/agent-a267e175548e67e54
+ create mode 160000 .claude/worktrees/agent-a282d3816f91ae873
+ create mode 160000 .claude/worktrees/agent-a321675c402659c76
+ create mode 160000 .claude/worktrees/agent-a4ffe54c31af61e35
+ create mode 160000 .claude/worktrees/agent-a5c32657f060fe133
+ create mode 160000 .claude/worktrees/agent-a74ab55576f1fe46e
+ create mode 160000 .claude/worktrees/agent-a787d8b744755c3ed
+ create mode 160000 .claude/worktrees/agent-a973983d1fac79b48
+ create mode 160000 .claude/worktrees/agent-a996aa91edab31df7
+ create mode 160000 .claude/worktrees/agent-a9c18fd585c4ad6a3
+ create mode 160000 .claude/worktrees/agent-aab871f2e4d00c143
+ create mode 160000 .claude/worktrees/agent-aac853e2857973c79
+ create mode 160000 .claude/worktrees/agent-ac2bd061e66ddf58b
+ create mode 160000 .claude/worktrees/agent-ac6a33ca03cc23447
+ create mode 160000 .claude/worktrees/agent-ace9159ed4d3b76f6
+ create mode 160000 .claude/worktrees/agent-acedb3d158d4ad373
+ create mode 160000 .claude/worktrees/agent-ad30e06c0c5751081
+ create mode 160000 .claude/worktrees/agent-ad8e8acffa7f0a10a
+ create mode 160000 .claude/worktrees/agent-adac14b61d7174eb1
+ create mode 160000 .claude/worktrees/agent-adcc87fb29aca21e1
+ create mode 160000 .claude/worktrees/agent-adcc9d019e85fabee
+ create mode 160000 .claude/worktrees/agent-ae07e4ecbfe2ac502
+ create mode 160000 .claude/worktrees/agent-ae2a73c4d54486560
+ create mode 160000 .claude/worktrees/agent-ae4186c398e3f7421
+ create mode 160000 .claude/worktrees/agent-ae51419560f809c63
+ create mode 160000 .claude/worktrees/agent-ae984767fc551b26a
+ create mode 160000 .claude/worktrees/agent-aea9fe435e059250c
+ create mode 160000 .claude/worktrees/agent-af61a01afe7d831f4
+ create mode 160000 .claude/worktrees/agent-af7ba5fc8e9bc4def
+ create mode 160000 .claude/worktrees/agent-afa42120527744bcd
+ create mode 160000 .claude/worktrees/agent-afe4d877f61bc217e
+ create mode 160000 .claude/worktrees/agent-aff4ed124d35d74c2
+ create mode 160000 .claude/worktrees/amazing-bell-904df2
+ create mode 160000 .claude/worktrees/angry-kapitsa-dab665
+ create mode 160000 .claude/worktrees/blissful-bohr-af1265
+ create mode 160000 .claude/worktrees/brave-shtern-7b4e57
+ create mode 160000 .claude/worktrees/lucid-poitras-50fdf2
+ create mode 100644 .context/_bo3_refresh.log
+ create mode 100644 .context/_mma_data/komaksym_fighter_details.csv
+ create mode 100644 .context/_mma_data/ufc_event_details.csv
+ create mode 100644 .context/_mma_data/ufc_fight_results.csv
+ create mode 100644 .context/_mma_data/ufc_fight_stats.csv
+ create mode 100644 .context/_mma_data/ufc_fighter_tott.csv
+ create mode 100644 .context/_nba_elo.log
+ create mode 100644 .context/_nba_elo2.log
+ create mode 100644 .context/_nba_elo3.log
+ create mode 100644 .context/_srv2.log
+ create mode 100644 .context/_xg_test_server.log
+ create mode 100644 .context/betwatch-wom-analysis.md
+ create mode 100644 .context/bsd_stats_etl_run.log
+ create mode 100644 .context/i18n/_server.log
+ create mode 100644 .context/opencode-watch.log
+ create mode 100644 .context/server-test.log
+ create mode 100644 .context/tennis_audit_00_current_state.png
+ create mode 100644 .context/tennis_audit_01_tennis_page.png
+ create mode 100644 .context/tennis_audit_02_top_tab.png
+ create mode 100644 .context/tennis_audit_03_pbets_modal.png
+ create mode 100644 .env.example
+ create mode 100644 .github/workflows/build.yml
+ create mode 100644 .github/workflows/e2e.yml
+ create mode 100644 .github/workflows/lint.yml
+ create mode 100644 .github/workflows/load-test.yml
+ create mode 100644 .github/workflows/refresh-elo.yml
+ create mode 100644 .gstack/browse-audit.jsonl
+ create mode 100644 .gstack/browse-console.log
+ create mode 100644 .gstack/browse-network.log
+ create mode 100644 .gstack/claude-available.json
+ create mode 100644 .jwt_secret
+ create mode 100644 01_prematch.png
+ create mode 100644 02_live.png
+ create mode 100644 03_valuebets.png
+ create mode 100644 04_analytics.png
+ create mode 100644 ARCHITECTURE.md
+ create mode 100644 CONTRIBUTING.md
+ create mode 100644 Caddyfile
+ create mode 100644 README.md
+ create mode 100644 agent-ctx/ABOUT-1-full-stack-developer.md
+ create mode 100644 agent-ctx/ABTEST-1-ab-test-instrumentation-engineer.md
+ create mode 100644 agent-ctx/CICD-1-ci-cd-engineer.md
+ create mode 100644 agent-ctx/CRON-1-ci-cd-engineer.md
+ create mode 100644 agent-ctx/DIGEST-1-full-stack-developer.md
+ create mode 100644 agent-ctx/DOC-1-technical-writer.md
+ create mode 100644 agent-ctx/E2E-1-e2e-test-engineer.md
+ create mode 100644 agent-ctx/ELO-1-full-stack-developer.md
+ create mode 100644 agent-ctx/ELO-2-full-stack-developer.md
+ create mode 100644 agent-ctx/EMAIL-1-full-stack-developer.md
+ create mode 100644 agent-ctx/K6-1-load-test-engineer.md
+ create mode 100644 agent-ctx/OPENAPI-1-full-stack-developer.md
+ create mode 100644 agent-ctx/SENTRY-1-full-stack-developer.md
+ create mode 100644 agent-ctx/SEO-1-full-stack-developer.md
+ create mode 100644 agent-ctx/STATS-1-full-stack-developer.md
+ create mode 100644 agent-ctx/WS-1-full-stack-developer.md
+ create mode 100644 betwatchService.js
+ create mode 100644 cache/_add_momentum_popup.js
+ create mode 100644 cache/_expose_block_complete.txt
+ create mode 100644 cache/player-photos/1006.png
+ create mode 100644 cache/player-photos/1239.png
+ create mode 100644 cache/player-photos/1243.png
+ create mode 100644 cache/player-photos/1261.png
+ create mode 100644 cache/player-photos/1317.png
+ create mode 100644 cache/player-photos/1333.png
+ create mode 100644 cache/player-photos/16.png
+ create mode 100644 cache/player-photos/1674.png
+ create mode 100644 cache/player-photos/169.png
+ create mode 100644 cache/player-photos/178.png
+ create mode 100644 cache/player-photos/179.png
+ create mode 100644 cache/player-photos/1996.png
+ create mode 100644 cache/player-photos/2078.png
+ create mode 100644 cache/player-photos/21.png
+ create mode 100644 cache/player-photos/2102.png
+ create mode 100644 cache/player-photos/2106.png
+ create mode 100644 cache/player-photos/2158.png
+ create mode 100644 cache/player-photos/2231.png
+ create mode 100644 cache/player-photos/2349.png
+ create mode 100644 cache/player-photos/2378.png
+ create mode 100644 cache/player-photos/238.png
+ create mode 100644 cache/player-photos/239.png
+ create mode 100644 cache/player-photos/246.png
+ create mode 100644 cache/player-photos/257.png
+ create mode 100644 cache/player-photos/266.png
+ create mode 100644 cache/player-photos/270.png
+ create mode 100644 cache/player-photos/2705.png
+ create mode 100644 cache/player-photos/2765.png
+ create mode 100644 cache/player-photos/2769.png
+ create mode 100644 cache/player-photos/2798.png
+ create mode 100644 cache/player-photos/280.png
+ create mode 100644 cache/player-photos/2806.png
+ create mode 100644 cache/player-photos/2837.png
+ create mode 100644 cache/player-photos/2865.png
+ create mode 100644 cache/player-photos/289.png
+ create mode 100644 cache/player-photos/2909.png
+ create mode 100644 cache/player-photos/2960.png
+ create mode 100644 cache/player-photos/2997.png
+ create mode 100644 cache/player-photos/3071.png
+ create mode 100644 cache/player-photos/3113.png
+ create mode 100644 cache/player-photos/3115.png
+ create mode 100644 cache/player-photos/3145.png
+ create mode 100644 cache/player-photos/3148.png
+ create mode 100644 cache/player-photos/3151.png
+ create mode 100644 cache/player-photos/3182.png
+ create mode 100644 cache/player-photos/334.png
+ create mode 100644 cache/player-photos/3353.png
+ create mode 100644 cache/player-photos/3370.png
+ create mode 100644 cache/player-photos/3456.png
+ create mode 100644 cache/player-photos/3470.png
+ create mode 100644 cache/player-photos/350.png
+ create mode 100644 cache/player-photos/353.png
+ create mode 100644 cache/player-photos/364.png
+ create mode 100644 cache/player-photos/3717.png
+ create mode 100644 cache/player-photos/3965.png
+ create mode 100644 cache/player-photos/3980.png
+ create mode 100644 cache/player-photos/3989.png
+ create mode 100644 cache/player-photos/4199.png
+ create mode 100644 cache/player-photos/4226.png
+ create mode 100644 cache/player-photos/4243.png
+ create mode 100644 cache/player-photos/4356.png
+ create mode 100644 cache/player-photos/4366.png
+ create mode 100644 cache/player-photos/4412.png
+ create mode 100644 cache/player-photos/445.png
+ create mode 100644 cache/player-photos/450.png
+ create mode 100644 cache/player-photos/4620.png
+ create mode 100644 cache/player-photos/4657.png
+ create mode 100644 cache/player-photos/4790.png
+ create mode 100644 cache/player-photos/480.png
+ create mode 100644 cache/player-photos/482.png
+ create mode 100644 cache/player-photos/509.png
+ create mode 100644 cache/player-photos/511.png
+ create mode 100644 cache/player-photos/5170.png
+ create mode 100644 cache/player-photos/5260.png
+ create mode 100644 cache/player-photos/5272.png
+ create mode 100644 cache/player-photos/5327.png
+ create mode 100644 cache/player-photos/536.png
+ create mode 100644 cache/player-photos/5501.png
+ create mode 100644 cache/player-photos/5778.png
+ create mode 100644 cache/player-photos/581.png
+ create mode 100644 cache/player-photos/5815.png
+ create mode 100644 cache/player-photos/5817.png
+ create mode 100644 cache/player-photos/5818.png
+ create mode 100644 cache/player-photos/5821.png
+ create mode 100644 cache/player-photos/5822.png
+ create mode 100644 cache/player-photos/5828.png
+ create mode 100644 cache/player-photos/5829.png
+ create mode 100644 cache/player-photos/5830.png
+ create mode 100644 cache/player-photos/5833.png
+ create mode 100644 cache/player-photos/5834.png
+ create mode 100644 cache/player-photos/5835.png
+ create mode 100644 cache/player-photos/5837.png
+ create mode 100644 cache/player-photos/5838.png
+ create mode 100644 cache/player-photos/5841.png
+ create mode 100644 cache/player-photos/5843.png
+ create mode 100644 cache/player-photos/5846.png
+ create mode 100644 cache/player-photos/7.png
+ create mode 100644 cache/player-photos/788.png
+ create mode 100644 cache/player-photos/80.png
+ create mode 100644 cache/player-photos/803.png
+ create mode 100644 cache/player-photos/809.png
+ create mode 100644 cache/player-photos/82.png
+ create mode 100644 cache/player-photos/848.png
+ create mode 100644 cache/player-photos/854.png
+ create mode 100644 cache/tennis_serve_deltas.json
+ create mode 100644 cache/tennis_serve_rank.json
+ create mode 100644 components.json
+ create mode 100644 cycling-after-opacity-fix.png
+ create mode 100644 data/backup-transfert/pariscore.db
+ create mode 100644 data/backup-transfert/pariscore.db-shm
+ create mode 100644 data/backup-transfert/pariscore.db-wal
+ create mode 100644 data/betwatch_wom.json
+ create mode 100644 data/cycling/images/teams/red-bull-bora-hansgrohe.png
+ create mode 100644 data/cycling/images/teams/uae-emirates.png
+ create mode 100644 data/database.db
+ create mode 100644 data/database.sqlite.zip
+ create mode 100644 data/historique_bsd_tennis.json
+ create mode 100644 data/historique_elofootball.json
+ create mode 100644 data/historique_tennis.json
+ create mode 100644 data/historique_wikidata.json
+ create mode 100644 data/metrics-cache.db
+ create mode 100644 data/metrics-cache.db-shm
+ create mode 100644 data/metrics-cache.db-wal
+ create mode 100644 database.db
+ create mode 100644 docs/AB-TEST-SETUP.md
+ create mode 100644 download/README-integration.md
+ create mode 100644 download/README.md
+ create mode 100644 download/panel_notes.png
+ create mode 100644 download/panel_votes.png
+ create mode 100644 download/propositions_design_tennis_prematch.md
+ create mode 100644 download/snapshot-desktop.png
+ create mode 100644 download/snapshot-detail-open.png
+ create mode 100644 download/snapshot-detail-warning.png
+ create mode 100644 download/snapshot-filters.png
+ create mode 100644 download/snapshot-fullpage.png
+ create mode 100644 download/snapshot-light-mode.png
+ create mode 100644 download/snapshot-mobile.png
+ create mode 100644 download/test_panel_1000_pariers.md
+ create mode 100644 download/v10-comparator.png
+ create mode 100644 download/v10-paper-trading.png
+ create mode 100644 download/v2-desktop.png
+ create mode 100644 download/v2-detail-opened.png
+ create mode 100644 download/v2-fullpage.png
+ create mode 100644 download/v2-mobile.png
+ create mode 100644 download/v3-desktop.png
+ create mode 100644 download/v3-detail-dialog.png
+ create mode 100644 download/v3-form-tab.png
+ create mode 100644 download/v3-h2h-tab.png
+ create mode 100644 download/v3-mobile-full.png
+ create mode 100644 download/v3-mobile.png
+ create mode 100644 download/v3-odds-comparator.png
+ create mode 100644 download/v4-after-consent.png
+ create mode 100644 download/v4-consent-banner.png
+ create mode 100644 download/v4-elo-history-final.png
+ create mode 100644 download/v4-elo-history-real.png
+ create mode 100644 download/v4-elo-history-v2.png
+ create mode 100644 download/v4-header-with-push.png
+ create mode 100644 download/v5-cwv-optimized.png
+ create mode 100644 download/v5-dialog-lazy.png
+ create mode 100644 download/v5-privacy-dialog.png
+ create mode 100644 download/v5-privacy-from-footer.png
+ create mode 100644 download/v6-404.png
+ create mode 100644 download/v6-error-500.png
+ create mode 100644 download/v6-feedback-dialog.png
+ create mode 100644 download/v6-feedback-widget.png
+ create mode 100644 download/v7-about-dialog.png
+ create mode 100644 download/v7-elo-real-187.png
+ create mode 100644 download/v7-favorites-filter.png
+ create mode 100644 download/v7-favorites-filtered.png
+ create mode 100644 download/v8-bankroll-dialog.png
+ create mode 100644 download/v8-bet-dialog.png
+ create mode 100644 download/v8-header-bankroll.png
+ create mode 100644 download/v9-final.png
+ create mode 100644 download/v9-scanner-indicator.png
+ create mode 100644 eslint.config.mjs
+ create mode 100644 exports/5_ACOMPARATIVEEVALUATIONOFRATINGSANDMACHINELEARNING-BASEDMETHODSFORTENNISMATCHRESULTPREDICTION.pdf
+ create mode 100644 exports/BSD_Tennis_API_Champs_2026.docx
+ create mode 100644 exports/CLASSEMENT_POWERSCORE.md
+ create mode 100644 exports/RAPPORT_DESIGN_TENNIS_V3.1.md
+ create mode 100644 exports/RAPPORT_DESIGN_TENNIS_V3.md
+ create mode 100644 exports/Rapport_Mission_LIVE_PariScore_2026.docx
+ create mode 100644 exports/auditlivebudget.docx
+ create mode 100644 exports/competitions_sportives_support_paris_autorises.xlsx
+ create mode 100644 exports/members.csv
+ create mode 100644 exports/package.jsonOO
+ create mode 100644 exports/rapport_benchmark_rotowire.md
+ create mode 100644 exports/rapport_historique_concurrents.docx
+ create mode 100644 exports/rapport_innovations_core_tabs.txt
+ create mode 100644 exports/rapport_mission_colonne_2.html
+ create mode 100644 exports/rapport_resolution_timeout_rg.md
+ create mode 100644 fix-cycling-v2.cpython-312.pyc
+ create mode 100644 historique_footballdata.json
+ create mode 100644 historique_international.json
+ create mode 100644 logs/.debug_tennis_err.txt
+ create mode 100644 logs/.debug_tennis_log.txt
+ create mode 100644 logs/server.log
+ create mode 100644 logs/server_bg.log
+ create mode 100644 logs/server_bg_err.log
+ create mode 100644 logs/server_boot.log
+ create mode 100644 logs/server_boot2.log
+ create mode 100644 logs/server_boot3.log
+ create mode 100644 logs/server_error.log
+ create mode 100644 logs/server_output.log
+ create mode 100644 logs/sps_updater.log
+ create mode 100644 markdown/.hermes_context.md
+ create mode 100644 markdown/ACCES_MEMO.md
+ create mode 100644 mini-services/.gitkeep
+ create mode 100644 mini-services/tennis-live/bun.lock
+ create mode 100644 mini-services/tennis-live/index.ts
+ create mode 100644 mini-services/tennis-live/package.json
+ create mode 100644 next.config.ts
+ create mode 100644 pariscore-design-fix.zip
+ create mode 100644 pariscore-fix.zip
+ create mode 100644 pariscore-home.png
+ create mode 100644 pariscore.db
+ create mode 100644 pariscore.db-shm
+ create mode 100644 pariscore.db-wal
+ create mode 100644 pariscore.html.bak
+ create mode 100644 playwright.config.ts
+ create mode 100644 postcss.config.mjs
+ create mode 100644 prisma/schema.prisma
+ create mode 100644 public/icon-192.png
+ create mode 100644 public/icon-512.png
+ create mode 100644 public/logo.svg
+ create mode 100644 public/manifest.json
+ create mode 100644 public/openapi.json
+ create mode 100644 public/robots.txt
+ create mode 100644 public/sw.js
+ create mode 100644 qa-powerscore-full.py
+ create mode 100644 screenshot-before-pwscr.png
+ create mode 100644 screenshot-homepage.png
+ create mode 100644 screenshot-powerscore-full.png
+ create mode 100644 screenshot-powerscore-mode.png
+ create mode 100644 screenshot-step1-tennis.png
+ create mode 100644 screenshot-step2-top.png
+ create mode 100644 screenshot-tennis.png
+ create mode 100644 screenshot-top-tab.png
+ create mode 100644 scripts/__pycache__/tennis-warehouse-photos.cpython-314.pyc
+ create mode 100644 scripts/api_search1.json
+ create mode 100644 scripts/api_search2.json
+ create mode 100644 scripts/fetch-tennis-data.ts
+ create mode 100644 scripts/make_pwa_icons.py
+ create mode 100644 scripts/panel_data.json
+ create mode 100644 scripts/panel_simulation.py
+ create mode 100644 scripts/photos/alcaraz.json
+ create mode 100644 scripts/photos/medvedev.json
+ create mode 100644 scripts/photos/osaka.json
+ create mode 100644 scripts/photos/rublev.json
+ create mode 100644 scripts/photos/sabalenka.json
+ create mode 100644 scripts/photos/sinner.json
+ create mode 100644 scripts/photos/urls.json
+ create mode 100644 scripts/search1.json
+ create mode 100644 scripts/search2.json
+ create mode 100644 scripts/search3.json
+ create mode 100644 scripts/search4.json
+ create mode 100644 scripts/search5.json
+ create mode 100644 scripts/search6.json
+ create mode 100644 scripts/validate_prediction.py
+ create mode 100644 sentry.client.config.ts
+ create mode 100644 sentry.edge.config.ts
+ create mode 100644 sentry.server.config.ts
+ create mode 100644 server-err.log
+ create mode 100644 server-test-err.log
+ create mode 100644 server-test.log
+ create mode 100644 server.err
+ create mode 100644 server.js.bak
+ create mode 100644 server.log
+ create mode 100644 server_err.log
+ create mode 100644 server_error.log
+ create mode 100644 server_out.log
+ create mode 100644 server_output.log
+ create mode 100644 server_test_qa.log
+ create mode 100644 setpoint-v10.zip
+ create mode 100644 src/app/api/email/digest/route.ts
+ create mode 100644 src/app/api/email/subscribe/route.ts
+ create mode 100644 src/app/api/email/test/route.ts
+ create mode 100644 src/app/api/email/unsubscribe/route.ts
+ create mode 100644 src/app/api/push/digest/route.ts
+ create mode 100644 src/app/api/push/subscribe/route.ts
+ create mode 100644 src/app/api/push/test/route.ts
+ create mode 100644 src/app/api/route.ts
+ create mode 100644 src/app/api/sentry-test/route.ts
+ create mode 100644 src/app/api/tennis/elo-history/route.ts
+ create mode 100644 src/app/api/tennis/prematch/route.ts
+ create mode 100644 src/app/error.tsx
+ create mode 100644 src/app/global-error.tsx
+ create mode 100644 src/app/globals.css
+ create mode 100644 src/app/layout.tsx
+ create mode 100644 src/app/loading.tsx
+ create mode 100644 src/app/not-found.tsx
+ create mode 100644 src/app/page.tsx
+ create mode 100644 src/app/sitemap.ts
+ create mode 100644 src/components/ab-test-debug.tsx
+ create mode 100644 src/components/about-dialog.tsx
+ create mode 100644 src/components/analytics-provider.tsx
+ create mode 100644 src/components/api-docs-dialog.tsx
+ create mode 100644 src/components/bankroll-dialog.tsx
+ create mode 100644 src/components/bet-dialog.tsx
+ create mode 100644 src/components/bookmaker-comparator-dialog.tsx
+ create mode 100644 src/components/consent-banner.tsx
+ create mode 100644 src/components/consent-provider.tsx
+ create mode 100644 src/components/email-toggle.tsx
+ create mode 100644 src/components/feedback-widget.tsx
+ create mode 100644 src/components/language-toggle.tsx
+ create mode 100644 src/components/paper-trading-dialog.tsx
+ create mode 100644 src/components/privacy-dialog.tsx
+ create mode 100644 src/components/push-toggle.tsx
+ create mode 100644 src/components/sentry-error-boundary.tsx
+ create mode 100644 src/components/sw-register.tsx
+ create mode 100644 src/components/tennis/match-card.tsx
+ create mode 100644 src/components/tennis/match-detail-dialog.tsx
+ create mode 100644 src/components/tennis/odds-comparator.tsx
+ create mode 100644 src/components/tennis/probability-ring.tsx
+ create mode 100644 src/components/tennis/stat-chip.tsx
+ create mode 100644 src/components/theme-toggle.tsx
+ create mode 100644 src/components/ui/accordion.tsx
+ create mode 100644 src/components/ui/alert-dialog.tsx
+ create mode 100644 src/components/ui/alert.tsx
+ create mode 100644 src/components/ui/aspect-ratio.tsx
+ create mode 100644 src/components/ui/avatar.tsx
+ create mode 100644 src/components/ui/badge.tsx
+ create mode 100644 src/components/ui/breadcrumb.tsx
+ create mode 100644 src/components/ui/button.tsx
+ create mode 100644 src/components/ui/calendar.tsx
+ create mode 100644 src/components/ui/card.tsx
+ create mode 100644 src/components/ui/carousel.tsx
+ create mode 100644 src/components/ui/chart.tsx
+ create mode 100644 src/components/ui/checkbox.tsx
+ create mode 100644 src/components/ui/collapsible.tsx
+ create mode 100644 src/components/ui/command.tsx
+ create mode 100644 src/components/ui/context-menu.tsx
+ create mode 100644 src/components/ui/dialog.tsx
+ create mode 100644 src/components/ui/drawer.tsx
+ create mode 100644 src/components/ui/dropdown-menu.tsx
+ create mode 100644 src/components/ui/form.tsx
+ create mode 100644 src/components/ui/hover-card.tsx
+ create mode 100644 src/components/ui/input-otp.tsx
+ create mode 100644 src/components/ui/input.tsx
+ create mode 100644 src/components/ui/label.tsx
+ create mode 100644 src/components/ui/menubar.tsx
+ create mode 100644 src/components/ui/navigation-menu.tsx
+ create mode 100644 src/components/ui/pagination.tsx
+ create mode 100644 src/components/ui/popover.tsx
+ create mode 100644 src/components/ui/progress.tsx
+ create mode 100644 src/components/ui/radio-group.tsx
+ create mode 100644 src/components/ui/resizable.tsx
+ create mode 100644 src/components/ui/scroll-area.tsx
+ create mode 100644 src/components/ui/select.tsx
+ create mode 100644 src/components/ui/separator.tsx
+ create mode 100644 src/components/ui/sheet.tsx
+ create mode 100644 src/components/ui/sidebar.tsx
+ create mode 100644 src/components/ui/skeleton.tsx
+ create mode 100644 src/components/ui/slider.tsx
+ create mode 100644 src/components/ui/sonner.tsx
+ create mode 100644 src/components/ui/switch.tsx
+ create mode 100644 src/components/ui/table.tsx
+ create mode 100644 src/components/ui/tabs.tsx
+ create mode 100644 src/components/ui/textarea.tsx
+ create mode 100644 src/components/ui/toast.tsx
+ create mode 100644 src/components/ui/toaster.tsx
+ create mode 100644 src/components/ui/toggle-group.tsx
+ create mode 100644 src/components/ui/toggle.tsx
+ create mode 100644 src/components/ui/tooltip.tsx
+ create mode 100644 src/components/value-bet-scanner-indicator.tsx
+ create mode 100644 src/hooks/use-bankroll.ts
+ create mode 100644 src/hooks/use-digest-scheduler.ts
+ create mode 100644 src/hooks/use-elo-history.ts
+ create mode 100644 src/hooks/use-email-alerts.ts
+ create mode 100644 src/hooks/use-favorites.ts
+ create mode 100644 src/hooks/use-live-matches.ts
+ create mode 100644 src/hooks/use-mobile.ts
+ create mode 100644 src/hooks/use-paper-trading.ts
+ create mode 100644 src/hooks/use-prematch-matches.ts
+ create mode 100644 src/hooks/use-push-notifications.ts
+ create mode 100644 src/hooks/use-toast.ts
+ create mode 100644 src/hooks/use-value-bet-scanner.ts
+ create mode 100644 src/i18n/request.ts
+ create mode 100644 src/i18n/routing.ts
+ create mode 100644 src/lib/ab-test.ts
+ create mode 100644 src/lib/db.ts
+ create mode 100644 src/lib/email/send.ts
+ create mode 100644 src/lib/email/store.ts
+ create mode 100644 src/lib/export-bankroll.ts
+ create mode 100644 src/lib/prediction/elo-data.json
+ create mode 100644 src/lib/prediction/elo-history.ts
+ create mode 100644 src/lib/prediction/engine.ts
+ create mode 100644 src/lib/push/store.ts
+ create mode 100644 src/lib/tennis-data.ts
+ create mode 100644 src/lib/utils.ts
+ create mode 100644 src/messages/en.json
+ create mode 100644 src/messages/fr.json
+ create mode 100644 tailwind.config.ts
+ create mode 100644 test-btn-selector.py
+ create mode 100644 test-find-error.py
+ create mode 100644 test-globals.py
+ create mode 100644 test-powerscore-btn.py
+ create mode 100644 test-powerscore-final.py
+ create mode 100644 test-ps-full.py
+ create mode 100644 test-ps-null.py
+ create mode 100644 tests/api.spec.ts
+ create mode 100644 tests/detail-dialog.spec.ts
+ create mode 100644 tests/filters.spec.ts
+ create mode 100644 tests/load/script.js
+ create mode 100644 tests/match-card.spec.ts
+ create mode 100644 tests/mobile.spec.ts
+ create mode 100644 tests/page-objects.ts
+ create mode 100644 tests/rgpd.spec.ts
+ create mode 100644 tests/smoke.spec.ts
+ create mode 100644 tests/theme-language.spec.ts
+ create mode 100644 timesfm_forecasts_dump.sql
+ create mode 100644 tools/Public-ESPN-API-main.zip
+ create mode 100644 tools/__pycache__/timesfm_forecast.cpython-314.pyc
+ create mode 100644 tools/cmux-multi-agent.zip
+ create mode 100644 tools/pty-toolkit.zip
+ create mode 100644 tools/scrape-betwatch-wom.js
+ create mode 100644 tools/tmux-3.6a/config.log
+ create mode 100644 tsconfig.json
+ create mode 100644 upload/pasted_image_1783249013001.png
+ create mode 100644 vps.zip
+ create mode 100644 wom.local.js
+ create mode 100644 worklog.md
+Enumerating objects: 790, done.
+Counting objects: 100% (790/790), done.
+Delta compression using up to 12 threads
+Compressing objects: 100% (666/666), done.
+Writing objects: 100% (769/769), 155.75 MiB | 24.82 MiB/s, done.
+Total 769 (delta 62), reused 755 (delta 50), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (62/62), completed with 11 local objects.
+remote: warning: File data/database.sqlite.zip is 69.29 MB; this is larger than GitHub's recommended maximum file size of 50.00 MB
+remote: error: Trace: 2523011274884447cda6fd2dbe89fcc74d51ff9b4f8fadbc49f996c7dd097825
+remote: error: See https://gh.io/lfs for more information.
+remote: error: File data/backup-transfert/pariscore.db is 112.24 MB; this exceeds GitHub's file size limit of 100.00 MB
+remote: error: File pariscore.db is 195.07 MB; this exceeds GitHub's file size limit of 100.00 MB
+remote: error: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
+To https://github.com/davidpiontransactions-eng/pariscore.git
+ ! [remote rejected] main -> main (pre-receive hook declined)
+error: failed to push some refs to 'https://github.com/davidpiontransactions-eng/pariscore.git'
