@@ -1,7 +1,7 @@
 {
   "race": "Tour de France 2026",
   "source": "cyclingstage.com",
-  "last_update": "2026-07-03T08:50:16.499819+00:00",
+  "last_update": "2026-07-05T10:44:54.762352+00:00",
   "stages": {
     "1": {
       "stage": 1,
@@ -78,9 +78,9 @@
     "2": {
       "stage": 2,
       "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-2-contenders-tdf-2026/",
-      "scraped_at": "2026-07-03T01:06:03.655074+00:00",
+      "scraped_at": "2026-07-05T10:44:54.757241+00:00",
       "title": "Tour de France 2026 Favourites stage 2: A puncher’s paradise",
-      "description": "Stage 2 of the Tour comes to a head on a hilly circuit in Barcelona, tackled three times by the riders, each lap featuring two sharp, punchy climbs. The first is 1.6 kilometres at 9.3%, and the second, which doubles as the finish, is 600 metres at 7%.\n\n(Slideshow route/profile)\n\nPunchers will be licking their lips while eyeing the finishing circuit of stage 2. After a relatively unremarkable opening, the riders can test their climbing legs on the Côte de Begues – 6.1 kilometres at 6.5% – but the real focus is on Montjuïc in Barcelona, which the riders reach with just under 30 kilometres remaining.\n\nFrom there, an enthralling spectacle is almost guaranteed. The riders quickly hit the first of two climbs, which leads up to Montjuïc Castle and serves up 1.6 kilometres at an average of 9.3%, with ramps of up to 13%. Just below the summit it flattens out slightly before a 1-kilometre descent to the foot of the second climb, the Côte de l’Estadi Olímpic, which offers 700 metres at 7%.\n\nAfter two laps of 12.2 kilometres, the finish comes at the top of that 700-metre climb at 7%.\n\nLast year, the Tour peloton – with Pogacar and Van der Poel in leading roles – served up two days of spectacle on similar punchy finales at the start of the Tour. One win went to the Slovenian, the other to the Dutchman. What will we get this time?\n\nWe’ll continue to update this article in the build-up to the Tour de France.",
+      "description": "Stage 2 of the Tour comes to a head on a hilly circuit in Barcelona, tackled three times by the riders, each lap featuring two sharp, punchy climbs. The first is 1.6 kilometres at 9.3%, and the second, which doubles as the finish, is 600 metres at 7%.\n\n(Slideshow route/profile)\n\nPunchers will be licking their lips while eyeing the finishing circuit of stage 2. After a relatively unremarkable opening, the riders can test their climbing legs on the Côte de Begues – 6.1 kilometres at 6.5% – but the real focus is on Montjuïc in Barcelona, which the riders reach with just under 30 kilometres remaining.\n\nFrom there, an enthralling spectacle is almost guaranteed. The riders quickly hit the first of two climbs, which leads up to Montjuïc Castle and serves up 1.6 kilometres at an average of 9.3%, with ramps of up to 13%. Just below the summit it flattens out slightly before a 1-kilometre descent to the foot of the second climb, the Côte de l’Estadi Olímpic, which offers 700 metres at 7%.\n\nAfter two laps of 12.2 kilometres, the finish comes at the top of that 700-metre climb at 7%.\n\nLast year, the Tour peloton – with Pogacar and Van der Poel in leading roles – served up two days of spectacle on similar punchy finales at the start of the Tour. One win went to the Slovenian, the other to the Dutchman. What will we get this time?",
       "favourites_raw": "*** Mathieu van der Poel, Tadej Pogacar, Tom Pidcock\n\n** Maxim Van Gils, Paul Seixas, Romain Grégoire, Mathias Vacek\n\n* Juan Ayuso, Jonas Vingegaard, Mads Pedersen, Lenny Martinez, Kévin Vauquelin",
       "favourites": [
         {
@@ -169,7 +169,7 @@
         }
       ],
       "weather_forecast": null,
-      "publication_info": "First published on 18 June - last updated: 29 June",
+      "publication_info": "First published on 18 June - last updated 5 July: weather forecast updated",
       "status": "ok",
       "error": null
     }
