@@ -81,7 +81,12 @@
     "formLabel": "Recent form",
     "formHint": "{pa} : {fa} · {pb} : {fb}",
     "warning": "Warning",
-    "warningText": "probabilities are estimates produced by a statistical model and do not constitute a guarantee of result. Please bet responsibly."
+    "warningText": "probabilities are estimates produced by a statistical model and do not constitute a guarantee of result. Please bet responsibly.",
+    "backtest": {
+      "label": "Model accuracy",
+      "tooltip": "Model accuracy over {n} similar matches ({surface}, Elo gap {bucket})",
+      "noData": "Insufficient data"
+    }
   },
   "detail": {
     "title": "Full analysis",
@@ -183,6 +188,13 @@
     "placeholder": "your@email.com",
     "invalid": "Invalid email",
     "testAlert": "Test email alert"
+  },
+  "terminal": {
+    "toggle": "Terminal mode",
+    "simpleMode": "Simple mode",
+    "terminalMode": "Terminal mode (dense)",
+    "indicator": "TERMINAL",
+    "tooltip": "Switch to terminal mode (dense power-user view)"
   },
   "privacy": {
     "title": "Privacy Policy",
@@ -462,5 +474,27 @@
     "parameters": "Parameters",
     "response": "Response",
     "example": "Example"
+  },
+  "betSlip": {
+    "title": "Bet Slip",
+    "empty": "No selections yet. Click + on a player.",
+    "stake": "Stake",
+    "odd": "Odds",
+    "payout": "Payout",
+    "total": "Total",
+    "potentialPayout": "Potential payout",
+    "placeBets": "Place bets ({n})",
+    "clear": "Clear",
+    "remove": "Remove",
+    "added": "Added to bet slip",
+    "placed": "{n} bets placed",
+    "maxReached": "Maximum 5 selections",
+    "addToSlip": "Add to slip",
+    "quickAdd": "Add {player} to slip",
+    "collapse": "Collapse",
+    "expand": "Show bet slip",
+    "count": "{n} selection(s)",
+    "alreadyInSlip": "Already in bet slip",
+    "vs": "vs"
   }
 }

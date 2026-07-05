@@ -81,7 +81,12 @@
     "formLabel": "Forme récente",
     "formHint": "{pa} : {fa} · {pb} : {fb}",
     "warning": "Avertissement",
-    "warningText": "les probabilités sont des estimations issues d'un modèle statistique et ne constituent pas une garantie de résultat. Pariez de manière responsable."
+    "warningText": "les probabilités sont des estimations issues d'un modèle statistique et ne constituent pas une garantie de résultat. Pariez de manière responsable.",
+    "backtest": {
+      "label": "Précision modèle",
+      "tooltip": "Précision du modèle sur {n} matchs similaires ({surface}, écart Elo {bucket})",
+      "noData": "Données insuffisantes"
+    }
   },
   "detail": {
     "title": "Analyse complète",
@@ -183,6 +188,13 @@
     "placeholder": "votre@email.com",
     "invalid": "Email invalide",
     "testAlert": "Tester l'alerte email"
+  },
+  "terminal": {
+    "toggle": "Mode terminal",
+    "simpleMode": "Mode simple",
+    "terminalMode": "Mode terminal (dense)",
+    "indicator": "TERMINAL",
+    "tooltip": "Basculer en mode terminal (vue dense power user)"
   },
   "privacy": {
     "title": "Politique de confidentialité",
@@ -462,5 +474,27 @@
     "parameters": "Paramètres",
     "response": "Réponse",
     "example": "Exemple"
+  },
+  "betSlip": {
+    "title": "Bet Slip",
+    "empty": "Aucune sélection. Cliquez sur + sur un joueur.",
+    "stake": "Mise",
+    "odd": "Cote",
+    "payout": "Gain",
+    "total": "Total",
+    "potentialPayout": "Gain potentiel",
+    "placeBets": "Parier ({n})",
+    "clear": "Vider",
+    "remove": "Retirer",
+    "added": "Ajouté au bet slip",
+    "placed": "{n} paris enregistrés",
+    "maxReached": "Maximum 5 sélections",
+    "addToSlip": "Ajouter au slip",
+    "quickAdd": "Ajouter {player} au slip",
+    "collapse": "Réduire",
+    "expand": "Afficher le bet slip",
+    "count": "{n} sélection(s)",
+    "alreadyInSlip": "Déjà dans le bet slip",
+    "vs": "vs"
   }
 }

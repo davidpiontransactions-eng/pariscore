@@ -13,6 +13,7 @@ import { BookmakerComparatorDialog } from "@/components/bookmaker-comparator-dia
 import { AboutDialog } from "@/components/about-dialog";
 import { ApiDocsDialog } from "@/components/api-docs-dialog";
 import { FeedbackWidget } from "@/components/feedback-widget";
+import { BetSlip } from "@/components/bet-slip";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AbTestDebugBadge } from "@/components/ab-test-debug";
@@ -173,6 +174,10 @@ export default async function RootLayout({
                   <AboutDialog />
                   <ApiDocsDialog />
                   <FeedbackWidget />
+                  {/* Floating bet slip — DraftKings-style sticky panel
+                      (bottom-right, above the feedback widget). Renders
+                      nothing while empty; auto-expands on first selection. */}
+                  <BetSlip />
                   <Toaster />
                   <ServiceWorkerRegister />
                   {/* Dev-only floating A/B test badge — returns null in

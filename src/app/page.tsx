@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
 import { PushToggle } from "@/components/push-toggle";
 import { EmailToggle } from "@/components/email-toggle";
+import { TerminalToggle } from "@/components/terminal-toggle";
 import { BetDialog } from "@/components/bet-dialog";
 import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicator";
@@ -26,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
@@ -100,10 +102,12 @@ export default function Home() {
   const tApiDocs = useTranslations("apiDocs");
   const tPaper = useTranslations("paperTrading");
   const tComparator = useTranslations("comparator");
+  const tTerminal = useTranslations("terminal");
 
   const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
   const { liveStates, connectionStatus, latency } = useLiveMatches();
   const { favorites, count: favCount } = useFavorites();
+  const { terminalMode } = useTerminalMode();
   const { track, getVariant, reloadFlags, setPersonProperties } = useAnalytics();
 
   const [filter, setFilter] = useState<FilterKey>("all");
@@ -228,12 +232,33 @@ export default function Home() {
 
   const matches: TennisMatch[] = data?.matches ?? [];
 
+  // Compute value bet edge for each match (P3 — Bet Action Hub default sort)
+  const matchesWithEdge = useMemo(() => {
+    return matches.map((m) => {
+      let maxEdge = 0;
+      if (m.allOdds) {
+        for (const o of m.allOdds) {
+          const edge = m.probA - o.impliedProbA;
+          if (edge > maxEdge) maxEdge = edge;
+        }
+      }
+      return { match: m, edge: maxEdge };
+    });
+  }, [matches]);
+
   const filtered = useMemo(() => {
-    if (filter === "favorites") return matches.filter((m) => m.probA >= 70);
-    if (filter === "balanced") return matches.filter((m) => m.probA < 60);
-    if (filter === "starred") return matches.filter((m) => favorites.has(m.id));
-    return matches;
-  }, [filter, matches, favorites]);
+    let result = matchesWithEdge;
+    if (filter === "favorites") result = result.filter(({ match }) => match.probA >= 70);
+    else if (filter === "balanced") result = result.filter(({ match }) => match.probA < 60);
+    else if (filter === "starred") result = result.filter(({ match }) => favorites.has(match.id));
+    // P3: sort by edge descending (value bets first), then by probA for tiebreaker
+    return result
+      .sort((a, b) => b.edge - a.edge || b.match.probA - a.match.probA)
+      .map(({ match }) => match);
+  }, [filter, matchesWithEdge, favorites]);
+
+  // P3: value bets count for the banner
+  const valueBetCount = matchesWithEdge.filter(({ edge }) => edge >= 3).length;
 
   const handleFilter = (key: FilterKey) => {
     setFilter(key);
@@ -308,6 +333,7 @@ export default function Home() {
             <LanguageToggle />
             <PushToggle />
             <EmailToggle />
+            <TerminalToggle />
             <ValueBetScannerIndicator />
             <Button
               variant="ghost"
@@ -343,6 +369,16 @@ export default function Home() {
                   <TrendingUp className="h-3 w-3" />
                   {t("liveModel")}
                 </Badge>
+                {terminalMode && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1 border-emerald-500/50 bg-emerald-500/10 font-mono text-emerald-700 dark:text-emerald-300"
+                    title={tTerminal("tooltip")}
+                  >
+                    <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                    {tTerminal("indicator")}
+                  </Badge>
+                )}
                 <button
                   type="button"
                   onClick={openAboutDialog}
@@ -418,13 +454,34 @@ export default function Home() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-5",
+              terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2"
+            )}
+          >
             {[0, 1, 2, 3].map((i) => (
               <MatchCardSkeleton key={i} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <>
+          {/* P3: Value bets banner */}
+          {valueBetCount > 0 && (
+            <button
+              onClick={() => track("value_bet_banner_click", { count: valueBetCount })}
+              className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-300"
+            >
+              <span className="animate-pulse">💎</span>
+              {valueBetCount} value bet{valueBetCount > 1 ? "s" : ""} détecté{valueBetCount > 1 ? "s" : ""} — trié{valueBetCount > 1 ? "s" : ""} par edge décroissant
+            </button>
+          )}
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-5",
+              terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2"
+            )}
+          >
             {filtered.map((match, idx) => (
               <MatchCard
                 key={match.id}
@@ -438,6 +495,7 @@ export default function Home() {
               />
             ))}
           </div>
+          </>
         )}
 
         {!isLoading && filtered.length === 0 && !error && (

@@ -1,0 +1,120 @@
+{
+  "total_panel": 1000,
+  "amateur_size": 700,
+  "pro_size": 300,
+  "personas": [
+    {
+      "id": "casual",
+      "label": "Casuel occasionnel",
+      "size": 250,
+      "segment": "Amateur",
+      "votes": {
+        "P1": 155,
+        "P2": 45,
+        "P3": 50
+      }
+    },
+    {
+      "id": "regular",
+      "label": "Amateur régulier",
+      "size": 300,
+      "segment": "Amateur",
+      "votes": {
+        "P1": 120,
+        "P2": 105,
+        "P3": 75
+      }
+    },
+    {
+      "id": "passionate",
+      "label": "Amateur passionné",
+      "size": 150,
+      "segment": "Amateur",
+      "votes": {
+        "P1": 42,
+        "P2": 72,
+        "P3": 36
+      }
+    },
+    {
+      "id": "semipro",
+      "label": "Semi-pro",
+      "size": 150,
+      "segment": "Pro",
+      "votes": {
+        "P1": 12,
+        "P2": 63,
+        "P3": 75
+      }
+    },
+    {
+      "id": "pro",
+      "label": "Pro bettor",
+      "size": 100,
+      "segment": "Pro",
+      "votes": {
+        "P1": 4,
+        "P2": 26,
+        "P3": 70
+      }
+    },
+    {
+      "id": "tipster",
+      "label": "Tipster / analyste",
+      "size": 50,
+      "segment": "Pro",
+      "votes": {
+        "P1": 3,
+        "P2": 37,
+        "P3": 10
+      }
+    }
+  ],
+  "total_votes": {
+    "P1": 336,
+    "P2": 348,
+    "P3": 316
+  },
+  "amateur_votes": {
+    "P1": 317,
+    "P2": 222,
+    "P3": 161
+  },
+  "pro_votes": {
+    "P1": 19,
+    "P2": 126,
+    "P3": 155
+  },
+  "criteria_scores": {
+    "P1": {
+      "Esthétique": 4.8,
+      "Modernité": 4.7,
+      "Crédibilité data": 3.2,
+      "Décision rapide": 3.4,
+      "Engagement": 4.6,
+      "Différenciation": 4.5
+    },
+    "P2": {
+      "Esthétique": 3.8,
+      "Modernité": 4.2,
+      "Crédibilité data": 4.9,
+      "Décision rapide": 4.3,
+      "Engagement": 3.7,
+      "Différenciation": 4.7
+    },
+    "P3": {
+      "Esthétique": 4.0,
+      "Modernité": 4.3,
+      "Crédibilité data": 3.6,
+      "Décision rapide": 4.8,
+      "Engagement": 4.4,
+      "Différenciation": 3.8
+    }
+  },
+  "previous_vote_context": {
+    "A_split_battle": 349,
+    "B_radial_gauge": 307,
+    "C_tug_of_war": 344,
+    "note": "Le vote précédent (A/B/C) portait sur la carte duelle, pas sur le redesign global"
+  }
+}
