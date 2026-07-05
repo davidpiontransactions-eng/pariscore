@@ -5294,7 +5294,7 @@ async function loadBetminesPicks() {
       const probCell = p.best_pick?.probability != null
         ? `<span class="bm-prob-pill" style="background:rgba(0,230,118,0.1);color:${probColor(p.best_pick.probability)};">${p.best_pick.probability}%</span>`
         : '<span style="color:var(--text3,#5a6068);">—</span>';
-      return `<tr onclick="openBetminesModal('${p.bm_match_id}')">
+      return `<tr onclick="openBetminesModal('${_jsStr(p.bm_match_id)}')">
         <td style="white-space:nowrap;font-size:10px;">${liveBadge}<span style="color:var(--text3,#5a6068);">${date} ${time}</span></td>
         <td><div style="font-weight:600;">${_escapeHtmlSafe(p.home_team)} ${score} <span style="color:var(--text3,#5a6068);">vs</span> ${_escapeHtmlSafe(p.away_team)}</div><div style="font-size:9px;color:var(--text3,#5a6068);">${_escapeHtmlSafe(p.country || '')} · ${_escapeHtmlSafe(p.league || '')}</div></td>
         <td style="text-align:center;">${pickCell}</td>
@@ -7570,7 +7570,7 @@ function _slbCardHtml(bet) {
   return `<article class="pslts-slb-card" data-tier="${tier}" data-rule="${bet.ruleId}" role="${role}">
     <div class="pslts-slb-header">
       <span class="pslts-slb-title">${bet.icon || ''} ${_psLtsEscape(bet.title)}</span>
-      <button type="button" class="pslts-slb-dismiss" aria-label="Ignorer alerte" onclick="_slbDismiss('${bet.ruleId}')">×</button>
+      <button type="button" class="pslts-slb-dismiss" aria-label="Ignorer alerte" onclick="_slbDismiss('${_jsStr(bet.ruleId)}')">×</button>
     </div>
     <div class="pslts-slb-label">${_psLtsEscape(bet.label)}</div>
     <div class="pslts-slb-meta">
@@ -13237,12 +13237,12 @@ function renderOddsDeltaCell(m) {
     if (shortening) {
       const v = shortening.best ? safeFixed(shortening.best.value, 2) : '?';
       const bk = shortening.best ? shortening.best.name : '';
-      bsdBadge = `<div class="odds-delta-pill drop" onclick="showOddsGraph('${m.id}',event)" title="BSD: ${shortening.label} en SHORTENING (cote qui baisse — sharp money). Best ${v} @ ${bk}. ${m.bsd_odds_summary.books_count} books.">${shortening.label} ▼ ${v}</div>`;
+      bsdBadge = `<div class="odds-delta-pill drop" onclick="showOddsGraph('${_jsStr(m.id)}',event)" title="BSD: ${shortening.label} en SHORTENING (cote qui baisse — sharp money). Best ${v} @ ${bk}. ${m.bsd_odds_summary.books_count} books.">${shortening.label} ▼ ${v}</div>`;
     } else {
       const drifting = legs.find(l => l.mov === 'DRIFTING');
       if (drifting) {
         const v = drifting.best ? safeFixed(drifting.best.value, 2) : '?';
-        bsdBadge = `<div class="odds-delta-pill rise" onclick="showOddsGraph('${m.id}',event)" title="BSD: ${drifting.label} en DRIFTING (cote qui monte). Best ${v}. ${m.bsd_odds_summary.books_count} books.">${drifting.label} ▲ ${v}</div>`;
+        bsdBadge = `<div class="odds-delta-pill rise" onclick="showOddsGraph('${_jsStr(m.id)}',event)" title="BSD: ${drifting.label} en DRIFTING (cote qui monte). Best ${v}. ${m.bsd_odds_summary.books_count} books.">${drifting.label} ▲ ${v}</div>`;
       }
     }
   }
@@ -13266,7 +13266,7 @@ function renderOddsDeltaCell(m) {
   const pct = prev > 0 ? Math.round(Math.abs(best.v) / prev * 100) : 0;
   const cls = best.v <= -0.1 ? 'drop' : best.v >= 0.1 ? 'rise' : 'flat';
   const arrow = best.v < 0 ? '▼' : best.v > 0 ? '▲' : '●';
-  return `<div class="odds-delta-pill ${cls}" onclick="showOddsGraph('${m.id}',event)" title="Historique des cotes — clic pour graphique">${best.label} ${arrow}${Math.abs(best.v).toFixed(2)}${pct >= 2 ? ` ${pct}%` : ''}</div>`;
+  return `<div class="odds-delta-pill ${cls}" onclick="showOddsGraph('${_jsStr(m.id)}',event)" title="Historique des cotes — clic pour graphique">${best.label} ${arrow}${Math.abs(best.v).toFixed(2)}${pct >= 2 ? ` ${pct}%` : ''}</div>`;
 }
 
 let _oddsGraphChart = null;
@@ -14134,7 +14134,7 @@ function buildTop5Prematch(matches) {
 
   body.innerHTML = top5.map(({ m, bestVal, bestLabel }) => {
     const betCls = bestVal >= 75 ? 't3c-safe' : bestVal >= 55 ? 't3c-value' : 't3c-risky';
-    return `<div class="lt5-card" onclick="openInsights('${m.id}')">
+    return `<div class="lt5-card" onclick="openInsights('${_jsStr(m.id)}')">
       <div class="lt5-match">${m.home_team} — ${m.away_team} <span style="color:var(--text3)">(${m.league})</span></div>
       <div class="lt5-bet" style="background:${bestVal>=75?'rgba(226,0,26,0.08)':bestVal>=55?'#F4F4F4':'#F4F4F4'};color:${bestVal>=75?'#E2001A':bestVal>=55?'#1A1A1A':'#888'};">${bestLabel} · ${safeFixed(bestVal, 0)}%</div>
     </div>`;
@@ -15002,7 +15002,7 @@ const label = country
     const _skillPids = (m.topButteurs || []).filter(p => p.id).slice(0, 4).map(p => p.id).join(',');
     tr.innerHTML = `
       <td style="min-width:60px;text-align:center;">
-        <button class="fav-btn ${favActive}" onclick="toggleFavorite('${m.id}',this)" title="Ajouter aux favoris">★</button>
+        <button class="fav-btn ${favActive}" onclick="toggleFavorite('${_jsStr(m.id)}',this)" title="Ajouter aux favoris">★</button>
         <div style="font-family:var(--font-mono);font-size:12px;font-weight:700;">${time}</div>
         <div class="t3c-datesub" style="font-size:10px;margin-top:1px;">${date}</div>
         <div style="margin-top:3px;">${_live ? '<span class="dt3-tier dt3-t-live">⚡ LIVE</span>' : vbTier === 'hot' ? '<span class="dt3-tier dt3-t-hot">💎 HOT</span>' : vbTier === 'try' ? '<span class="dt3-tier dt3-t-try">✓ BET</span>' : ''}</div>
@@ -15071,7 +15071,7 @@ const label = country
           const xgRow = (xgH !== null && xgA !== null)
             ? `<div class="live-btn-xg"><span class="xg-h">xG ${(+xgH).toFixed(1)}</span><span style="color:var(--text3)">|</span><span class="xg-a">${(+xgA).toFixed(1)}</span></div>`
             : '';
-          return `<div style="margin-top:5px;"><button class="live-btn" onclick="openLiveDetail('${m.id}')" title="Détail live — xG Dom/Ext">🔴 LIVE${xgRow}</button></div>`;
+          return `<div style="margin-top:5px;"><button class="live-btn" onclick="openLiveDetail('${_jsStr(m.id)}')" title="Détail live — xG Dom/Ext">🔴 LIVE${xgRow}</button></div>`;
         })() : ''}
       </td>
       <td style="min-width:130px;font-size:8px;font-family:var(--font-mono);padding:4px 6px !important;line-height:1.4;${_rkPctBg}">
@@ -15133,8 +15133,8 @@ const label = country
       })()}</td>
       <td style="min-width:105px;padding:6px 8px !important;vertical-align:middle;">
         <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
-          <button class="ins-btn" style="font-size:10px;padding:4px 8px;" onclick="event.stopPropagation();openInsights('${m.id}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
-          <button class="ai-gen-btn" style="font-size:10px;padding:4px 8px;" onclick="event.stopPropagation();openDeepAnalysis('${m.id}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
+          <button class="ins-btn" style="font-size:10px;padding:4px 8px;" onclick="event.stopPropagation();openInsights('${_jsStr(m.id)}')" title="PariScore Insights — Hub Stats Elite">STATS</button>
+          <button class="ai-gen-btn" style="font-size:10px;padding:4px 8px;" onclick="event.stopPropagation();openDeepAnalysis('${_jsStr(m.id)}',event)" title="Analyse Pro IA — Power Score · Top 5 Paris">AI-AL</button>
         </div>
         ${_live && m.live_intensity != null ? `<div style="display:flex;align-items:center;gap:5px;margin-top:6px;padding:3px 6px;background:rgba(237,28,36,0.07);border-radius:4px;border:1px solid rgba(237,28,36,0.15);"><span style="font-size:9px;color:#ed1c24;font-weight:700;">⚡ Live</span><span style="font-size:12px;font-weight:800;color:${m.live_intensity>=60?'#E2001A':m.live_intensity>=30?'#d97706':'#888'};font-family:var(--font-mono);">${m.live_intensity}</span>${_footPressureSparkline(m.id)}</div>` : ''}
         ${_live ? (() => { const xgH = m.live_xg && m.live_xg.home != null ? m.live_xg.home : (m.expectedGoals && m.expectedGoals.home != null ? m.expectedGoals.home : null); const xgA = m.live_xg && m.live_xg.away != null ? m.live_xg.away : (m.expectedGoals && m.expectedGoals.away != null ? m.expectedGoals.away : null); return (xgH !== null && xgA !== null) ? '<div style="margin-top:3px;font-size:10px;font-family:var(--font-mono);color:var(--text3);">xG <span style="color:var(--text2);font-weight:700;">'+Number(xgH).toFixed(1)+'</span> – <span style="color:var(--text2);font-weight:700;">'+Number(xgA).toFixed(1)+'</span></div>' : ''; })() : ''}
@@ -15143,7 +15143,7 @@ const label = country
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
           ${flagImg(m.sport)}<span style="color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60px;">${m.league}</span>
           ${renderCoachTooltip(m)}
-          <span style="margin-left:auto;cursor:pointer;" onclick="openRadarModal('${m.id}')" title="Stats avancées">📊</span>
+          <span style="margin-left:auto;cursor:pointer;" onclick="openRadarModal('${_jsStr(m.id)}')" title="Stats avancées">📊</span>
         </div>
         ${m.h2h && m.h2h.total > 0
           ? `<div style="font-size:9px;font-family:var(--font-mono);color:var(--text3);">H2H (${m.h2h.total}): <span style="color:${m.h2h.wins>=3?'#15803D':m.h2h.wins>=1?'#1A1A1A':'#888'}">${m.h2h.summary}</span>${m.h2h.form ? ` <span style="color:var(--text3);">[${m.h2h.form}]</span>` : ''}</div>`
@@ -17541,7 +17541,7 @@ function buildStatsTabForMode(d, activeMode) {
   `;
 
   const btn = (mode, label) =>
-    `<button id="ins-stats-btn-${mode}" onclick="insSetStatsMode('${mode}')" style="background:${mode===activeMode?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode===activeMode?'700':'400'} 11px/1 var(--font-sans);color:${mode===activeMode?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">${label}</button>`;
+    `<button id="ins-stats-btn-${mode}" onclick="insSetStatsMode('${_jsStr(mode)}')" style="background:${mode===activeMode?'var(--green)':'var(--bg4)'};border:0;padding:5px 12px;border-radius:14px;font:${mode===activeMode?'700':'400'} 11px/1 var(--font-sans);color:${mode===activeMode?'#000':'var(--text2)'};cursor:pointer;transition:all .15s">${label}</button>`;
 
   const statsHeader = activeMode === 'global' ? '' :
     `<span style="color:var(--green);font-weight:400;margin-left:6px">${activeMode==='home'?'(Dom)':'(Ext)'}</span>`;
@@ -20405,8 +20405,8 @@ function drawLDCockpit(m) {
           <div style="color:${probColor};font-weight:800;font-size:13px;">${p.prob}%</div>
           <div style="color:var(--text3);font-size:9px;">fair ${p.fair}</div>
         </div>
-        <button onclick="quickAddBet(${JSON.stringify(p).replace(/"/g,'&quot;')},'${m.id || ''}')" title="Tracker dans Mes Paris" style="background:var(--green);color:#000;border:none;padding:4px 6px;border-radius:4px;font:700 9px/1 var(--font-mono);cursor:pointer;letter-spacing:.05em;">+ PARI</button>
-        <button onclick="openBookmakerDeeplink('${m.id || ''}', this)" title="Ouvrir bookmaker (1xbet/Winamax/Betclic)" style="background:#ff6b00;color:#fff;border:none;padding:4px 6px;border-radius:4px;font:700 9px/1 var(--font-mono);cursor:pointer;letter-spacing:.05em;">📲 BK</button>
+        <button onclick="quickAddBet(${JSON.stringify(p).replace(/"/g,'&quot;')},'${_jsStr(m.id) || ''}')" title="Tracker dans Mes Paris" style="background:var(--green);color:#000;border:none;padding:4px 6px;border-radius:4px;font:700 9px/1 var(--font-mono);cursor:pointer;letter-spacing:.05em;">+ PARI</button>
+        <button onclick="openBookmakerDeeplink('${_jsStr(m.id) || ''}', this)" title="Ouvrir bookmaker (1xbet/Winamax/Betclic)" style="background:#ff6b00;color:#fff;border:none;padding:4px 6px;border-radius:4px;font:700 9px/1 var(--font-mono);cursor:pointer;letter-spacing:.05em;">📲 BK</button>
       </div>`;
     }).join('');
   }
@@ -21880,7 +21880,7 @@ function buildLiveTop5Panel() {
   body.innerHTML = top5.map(({ m, rec, xgH, xgA, goalsH, goalsA }) => {
     const betColor = rec.type === 'over' ? 'var(--green)' : rec.type === 'btts' ? 'var(--amber)' : rec.type === 'under' ? 'var(--blue)' : 'var(--text3)';
     const betBg = rec.type === 'over' ? 'rgba(0,230,118,0.1)' : rec.type === 'btts' ? 'rgba(255,167,38,0.1)' : rec.type === 'under' ? 'rgba(41,182,246,0.1)' : 'transparent';
-    return `<div class="lt5-card" onclick="openLiveDetail('${m.id}')">
+    return `<div class="lt5-card" onclick="openLiveDetail('${_jsStr(m.id)}')">
       <div class="lt5-match">${m.home_team} — ${m.away_team} <span style="color:var(--text3)">(${m.league})</span></div>
       <div class="lt5-score">${goalsH} - ${goalsA} <span style="font-size:10px;color:var(--text3)">(${m.live_minute}′)</span></div>
       <div class="lt5-bet" style="color:${betColor};background:${betBg};">${rec.label}</div>
@@ -21930,7 +21930,7 @@ async function buildLivePredictionsPanel() {
       const mid = p.matchId || p.id || '';
       const scoreText = typeof p.score === 'object' ? `${p.score.home}-${p.score.away}` : (p.score || '');
       const matchLabel = `${p.home_team} — ${p.away_team}`;
-      return `<div class="lp-card" onclick="openLiveDetail('${mid}')" title="Cliquez pour le détail live">
+      return `<div class="lp-card" onclick="openLiveDetail('${_jsStr(mid)}')" title="Cliquez pour le détail live">
         <div class="lp-card-head">
           <span class="lp-card-icon">${p.icon || '🎯'}</span>
           <span class="lp-card-type ${tier}">${tier === 'safe' ? '🛡 SAFE' : tier === 'medium' ? '📈 MEDIUM' : '💎 VALUE'}</span>
@@ -21992,6 +21992,12 @@ async function loadHeroAccuracy() {
     badge.style.display = 'flex';
   } catch {}
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ESCAPE HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+// Helper: escape string for JS string literal inside HTML onclick attribute
+function _jsStr(s) { return String(s).replace(/'/g, "\\'"); }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  AFFILIATION GA — helper buildAffiliateUrl (1st-party redirect /r/ anti-AdBlock)
@@ -22129,7 +22135,7 @@ function renderTopMatchesGrid(matches) {
       : edge > 0 ? `+${safeFixed(edge, 1)}% edge`
       : pick.label || '—';
     const badgeCls = (conf < 60 && edge <= 0) ? 'ppc-badge neutral' : 'ppc-badge';
-    return `<div class="ps-pill-card" onclick="goToMatch('${m.id}')">
+    return `<div class="ps-pill-card" onclick="goToMatch('${_jsStr(m.id)}')">
       <div style="flex:1;min-width:0;overflow:hidden;">
         <div class="ppc-league">${leagueShort} · ${day} ${time}</div>
         <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
@@ -22563,7 +22569,7 @@ function _renderStratCard(m, key) {
   const ui = STRATEGIES_UI.find(s => s.key === key);
   const leagueShort = (m.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
   const xg = m.expectedGoals ? `xG ${safeFixed(m.expectedGoals.home, 1)}-${safeFixed(m.expectedGoals.away, 1)}` : '';
-  return `<div class="ps-pill-card" onclick="openInsightsById('${m.id}')">
+  return `<div class="ps-pill-card" onclick="openInsightsById('${_jsStr(m.id)}')">
     <div style="flex:1;min-width:0;overflow:hidden;">
       <div class="ppc-league">${leagueShort} · ${dateStr}</div>
       <div class="ppc-teams">${m.home_team}<span style="font-weight:400;font-size:12px;color:#aaa;"> vs </span>${m.away_team}</div>
@@ -22585,8 +22591,8 @@ function _renderStratCard(m, key) {
         <div class="ppc-odds">${odd}</div>
       </div>
       <div style="display:flex;gap:4px;margin-top:2px;">
-        <button onclick="event.stopPropagation();openInsightsById('${m.id}')" style="background:#F4F4F4;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#1A1A1A;cursor:pointer;font-weight:600;">Stats</button>
-        <button onclick="event.stopPropagation();openPowerScore('${m.id}')" style="background:#1A1A1A;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;font-weight:600;">⚡ PS</button>
+        <button onclick="event.stopPropagation();openInsightsById('${_jsStr(m.id)}')" style="background:#F4F4F4;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#1A1A1A;cursor:pointer;font-weight:600;">Stats</button>
+        <button onclick="event.stopPropagation();openPowerScore('${_jsStr(m.id)}')" style="background:#1A1A1A;border:none;border-radius:4px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;font-weight:600;">⚡ PS</button>
       </div>
     </div>
   </div>`;
@@ -24325,7 +24331,7 @@ function _dhOpenDrillModal(m) {
       <div class="dh-drill-row" style="color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Stratégies IA tagguées</div>
       <div class="dh-drill-row">${strats}</div>
       <div style="margin-top:14px;">
-        <button type="button" class="dh-tool-btn" onclick="_dhOpenReplay('${escapeHtml(m.id)}')" style="background:linear-gradient(135deg,var(--dh-cyan,#38bdf8) 0%,#0891b2 100%);color:#0f172a;font-weight:700;border-color:transparent;">🎬 Match Replay</button>
+        <button type="button" class="dh-tool-btn" onclick="_dhOpenReplay('${_jsStr(m.id)}')" style="background:linear-gradient(135deg,var(--dh-cyan,#38bdf8) 0%,#0891b2 100%);color:#0f172a;font-weight:700;border-color:transparent;">🎬 Match Replay</button>
       </div>`;
   }
   const overlay = document.createElement('div');
@@ -26894,7 +26900,7 @@ async function loadHotPicks() {
       const ciColor = ci >= 80 ? '#E2001A' : ci >= 60 ? '#1A1A1A' : '#888';
       // Stratégie badge : fond gris clair, texte noir
       const leagueShort = (p.league || '').split(' ').map(w => w[0]).join('').slice(0,4).toUpperCase() || '?';
-      return `<div class="ps-pill-card" onclick="goToMatch('${p.id}')">
+      return `<div class="ps-pill-card" onclick="goToMatch('${_jsStr(p.id)}')">
         <div style="flex-shrink:0;font-family:var(--font-head);font-size:20px;font-weight:900;color:${i===0?'#E2001A':i<=2?'#1A1A1A':'#ccc'};min-width:32px;">${rankNum}</div>
         <div style="flex:1;min-width:0;overflow:hidden;">
           <div class="ppc-league">${leagueShort} · ${dateStr}</div>
@@ -26962,7 +26968,7 @@ async function loadSureBets() {
       // Value / confiance : rouge si haut, noir sinon
       const viColor = vi >= 70 ? '#E2001A' : '#1A1A1A';
       const ciColor = ci >= 80 ? '#E2001A' : '#1A1A1A';
-      return `<div class="ps-pill-card" onclick="goToMatch('${b.id}')">
+      return `<div class="ps-pill-card" onclick="goToMatch('${_jsStr(b.id)}')">
         <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;">
           <div style="background:${lvlBg};color:${lvlColor};font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;">${lvl}/10</div>
           <div style="font-size:9px;color:#888;">${lvlLabel}</div>
@@ -28309,7 +28315,7 @@ function renderCompGrid() {
     if (m.surebet != null) flags.push(`<span class="comp-gflag sb" title="Arbitrage +${m.surebet}%">SURE</span>`);
     if (m.valuebet != null && m.valuebet >= 3) flags.push(`<span class="comp-gflag vb" title="Edge ${m.valuebet}%">VALUE</span>`);
     if (m.decote != null) flags.push(`<span class="comp-gflag dc" title="Cote 1 ${m.decote}">DÉCOTE</span>`);
-    html += `<div class="comp-grow" onclick="openCompDetail('${m.id}')">
+    html += `<div class="comp-grow" onclick="openCompDetail('${_jsStr(m.id)}')">
       <div class="comp-gtime">${dm}<b>${hm}</b></div>
       <div class="comp-gteams">${esc(m.home_team)} <span style="color:var(--cq-mut)">v</span> ${esc(m.away_team)}<small>${esc(m.league)}</small></div>
       <div class="comp-godd best">${od(m.best1)}${m.best1 ? compOddBk(m.bk1) : ''}</div>
