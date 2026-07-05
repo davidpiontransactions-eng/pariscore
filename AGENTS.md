@@ -81,6 +81,7 @@ node server.js    # Port 3000, requires .env with API keys
 - Frontend fetches from `/api/v1/...`
 - Async pattern: `(async () => { ... })().catch(err => ...)` — never bare `await` at top level
 - **CRITICAL**: `STRATEGIES` object in server.js and `STRATEGIES_UI` array in pariscore.html must stay in sync
+- **XSS PREVENTION**: Toute variable interpolée dans un `onclick="..."` en HTML string doit être wrappée avec `_jsStr(variable)` pour échapper les apostrophes (`'` → `\'`). Ne pas utiliser `escapeHtml()` qui n'échappe pas les apostrophes.
 
 ### Quality & Testing
 - **No test suite, no linter, no typecheck.** Ad-hoc scripts only: `test-integrity.js`, `fix-matches.js`, `compare-apis.js`
