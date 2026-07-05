@@ -256,35 +256,44 @@ async function main() {
     await page.goto(url, { waitUntil: "load", timeout });
     console.error("[page-agent] Page loaded:", url);
 
+    // Capture page state BEFORE any interaction that might cause navigation
+    // (pariscore.html SPA can navigate when Page Agent interacts with it)
+    const initialPageState = await page.evaluate(() => ({
+      url: location.href,
+      title: document.title,
+    })).catch(() => ({ url, title: "" }));
+
     if (llm === "demo") {
       // --- DEMO MODE: auto-init CDN, window.pageAgent already ready ---
       console.error("[page-agent] Injecting Page Agent CDN (auto-init mode)...");
       await page.addScriptTag({ url: CDN_AUTOINIT });
       await page.waitForFunction(() => typeof window.pageAgent?.execute === "function", { timeout: 15000 });
+      // Small settle delay to let page stabilize (SPA might trigger navigation on load)
+      await new Promise(r => setTimeout(r, 1500));
       console.error("[page-agent] pageAgent ready. Executing command with demo LLM...");
 
-      const result = await page.evaluate(async (cmd) => {
-        try {
-          const output = await window.pageAgent.execute(cmd);
-          // Extract just the data field from Page Agent response
-          const parsed = typeof output === "string" ? JSON.parse(output) : output;
-          const data = parsed?.data || (typeof output === "string" ? output : JSON.stringify(output));
-          return { success: true, message: typeof data === "string" ? data : JSON.stringify(data) };
-        } catch (err) { return { success: false, message: err.message || String(err) }; }
-      }, command);
+      let result;
+      try {
+        result = await page.evaluate(async (cmd) => {
+          try {
+            const output = await window.pageAgent.execute(cmd);
+            // Extract just the data field from Page Agent response
+            const parsed = typeof output === "string" ? JSON.parse(output) : output;
+            const data = parsed?.data || (typeof output === "string" ? output : JSON.stringify(output));
+            return { success: true, message: typeof data === "string" ? data : JSON.stringify(data) };
+          } catch (err) { return { success: false, message: err.message || String(err) }; }
+        }, command);
+      } catch (evalErr) {
+        // Execution context destroyed = Page Agent triggered a navigation on the SPA
+        result = { success: false, message: "[navigation] Page navigated during Page Agent execution: " + evalErr.message };
+      }
 
-      const pageState = await page.evaluate(() => ({
-        url: location.href,
-        title: document.title,
-        bodyLength: document.body ? document.body.innerText.length : 0,
-      }));
-
-      if (screenshotPath) { await page.screenshot({ path: screenshotPath }); }
+      if (screenshotPath) { try { await page.screenshot({ path: screenshotPath }); } catch {} }
 
       console.log(JSON.stringify({
         success: result.success,
         result: result.message,
-        page: { url: pageState.url, title: pageState.title },
+        page: { url: initialPageState.url, title: initialPageState.title },
         meta: { llm: "demo" },
       }, null, 2));
     } else {
@@ -299,36 +308,37 @@ async function main() {
       console.error("[page-agent] Injecting Page Agent CDN (autoInit=false)...");
       await page.addScriptTag({ url: CDN_MANUAL });
       await page.waitForFunction(() => typeof window.PageAgent === "function", { timeout: 15000 });
+      // Small settle delay to let page stabilize (SPA might trigger navigation on load)
+      await new Promise(r => setTimeout(r, 1500));
       console.error("[page-agent] Page Agent constructor ready. Initializing with Gemini...");
 
-      const result = await page.evaluate(async ({ cmd, apiKey }) => {
-        try {
-          const instance = new window.PageAgent({
-            baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-            model: "gemini-2.5-flash",
-            apiKey: apiKey,
-            language: "en-US",
-          });
-          const output = await instance.execute(cmd);
-          // Extract just the data field from Page Agent response
-          const parsed = typeof output === "string" ? JSON.parse(output) : output;
-          const data = parsed?.data || (typeof output === "string" ? output : JSON.stringify(output));
-          return { success: true, message: typeof data === "string" ? data : JSON.stringify(data) };
-        } catch (err) { return { success: false, message: err.message || String(err) }; }
-      }, { cmd: command, apiKey: GEMINI_API_KEY });
+      let result;
+      try {
+        result = await page.evaluate(async ({ cmd, apiKey }) => {
+          try {
+            const instance = new window.PageAgent({
+              baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+              model: "gemini-2.5-flash",
+              apiKey: apiKey,
+              language: "en-US",
+            });
+            const output = await instance.execute(cmd);
+            // Extract just the data field from Page Agent response
+            const parsed = typeof output === "string" ? JSON.parse(output) : output;
+            const data = parsed?.data || (typeof output === "string" ? output : JSON.stringify(output));
+            return { success: true, message: typeof data === "string" ? data : JSON.stringify(data) };
+          } catch (err) { return { success: false, message: err.message || String(err) }; }
+        }, { cmd: command, apiKey: GEMINI_API_KEY });
+      } catch (evalErr) {
+        result = { success: false, message: "[navigation] Page navigated during Page Agent execution: " + evalErr.message };
+      }
 
-      const pageState = await page.evaluate(() => ({
-        url: location.href,
-        title: document.title,
-        bodyLength: document.body ? document.body.innerText.length : 0,
-      }));
-
-      if (screenshotPath) { await page.screenshot({ path: screenshotPath }); }
+      if (screenshotPath) { try { await page.screenshot({ path: screenshotPath }); } catch {} }
 
       console.log(JSON.stringify({
         success: result.success,
         result: result.message,
-        page: { url: pageState.url, title: pageState.title },
+        page: { url: initialPageState.url, title: initialPageState.title },
         meta: { llm: "gemini-2.5-flash", proxy: "page.route" },
       }, null, 2));
     }
