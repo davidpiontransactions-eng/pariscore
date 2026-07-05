@@ -1,0 +1,25 @@
+🚀 Initializing Z-AI SDK...
+🔎 Searching images: "Andrey Rublev tennis player portrait"
+✅ Got 2 images
+{
+  "success": true,
+  "query": "Andrey Rublev tennis player portrait",
+  "count": 2,
+  "ranked": false,
+  "results": [
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/765d3f71ab16.jpg",
+      "caption": "",
+      "source": "ArtStation",
+      "original_width": "900px",
+      "original_height": "1188px"
+    },
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/979348ecf1c7.jpg",
+      "caption": "",
+      "source": "YouTube",
+      "original_width": "1280px",
+      "original_height": "720px"
+    }
+  ]
+}

@@ -1,0 +1,1037 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SetPoint — Tennis Prematch API",
+    "version": "1.0.0",
+    "description": "Public REST API for SetPoint, a tennis prematch prediction app. Returns matches with Elo+Forme+Surface+H2H probabilities, multi-bookmaker odds (vig-removed), H2H history, Elo progression, and push/email value-bet alert subscriptions.\n\nBase URL: `https://setpoint.example`. All endpoints are JSON in / JSON out.",
+    "contact": {
+      "name": "SetPoint",
+      "email": "contact@setpoint.example"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://setpoint.example/license"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://setpoint.example",
+      "description": "Production"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development"
+    }
+  ],
+  "tags": [
+    {
+      "name": "tennis",
+      "description": "Tennis match data — predictions, odds, H2H, Elo progression"
+    },
+    {
+      "name": "push",
+      "description": "Web Push subscriptions and test notifications"
+    },
+    {
+      "name": "email",
+      "description": "Email alert subscriptions and test emails"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Surface": {
+        "type": "string",
+        "enum": ["Dur", "Terre battue", "Gazon"],
+        "description": "Court surface (Dur = Hard, Terre battue = Clay, Gazon = Grass)"
+      },
+      "Form": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["W", "L"]
+        },
+        "description": "Recent form, most recent last. W = win, L = loss."
+      },
+      "Player": {
+        "type": "object",
+        "required": ["id", "name", "shortName", "rank", "elo", "photoUrl", "color", "form"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable player identifier (slug)",
+            "example": "sabalenka"
+          },
+          "name": {
+            "type": "string",
+            "description": "Full display name",
+            "example": "Aryna Sabalenka"
+          },
+          "shortName": {
+            "type": "string",
+            "description": "Uppercase short label used on scoreboards",
+            "example": "SABALENKA"
+          },
+          "rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "ATP/WTA ranking",
+            "example": 1
+          },
+          "elo": {
+            "type": "integer",
+            "description": "General Elo rating",
+            "example": 2052
+          },
+          "surfaceElo": {
+            "type": "integer",
+            "description": "Elo restricted to the upcoming surface (defaults to `elo` if absent)",
+            "example": 2090
+          },
+          "photoUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "Player photo URL",
+            "example": "https://sfile.chatglm.cn/images-ppt/cb2fb094e8bd.jpg"
+          },
+          "color": {
+            "type": "string",
+            "description": "Hex color attached to the player for UI charts",
+            "example": "#1B4332"
+          },
+          "form": {
+            "$ref": "#/components/schemas/Form"
+          },
+          "country": {
+            "type": "string",
+            "description": "ISO 3-letter country code",
+            "example": "BLR"
+          }
+        }
+      },
+      "H2HMatch": {
+        "type": "object",
+        "required": ["date", "tournament", "surface", "winnerId", "score"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-21T00:00:00Z"
+          },
+          "tournament": {
+            "type": "string",
+            "example": "Australian Open"
+          },
+          "surface": {
+            "$ref": "#/components/schemas/Surface"
+          },
+          "winnerId": {
+            "type": "string",
+            "example": "sabalenka"
+          },
+          "score": {
+            "type": "string",
+            "description": "Scoreline, comma-separated sets",
+            "example": "6-0, 6-3"
+          }
+        }
+      },
+      "MatchStats": {
+        "type": "object",
+        "required": ["form", "eloGap", "surface", "h2h", "ic", "confidence"],
+        "properties": {
+          "form": {
+            "type": "string",
+            "description": "Human-readable recent form summary",
+            "example": "5V-1D"
+          },
+          "eloGap": {
+            "type": "number",
+            "description": "Elo difference (playerA − playerB). Positive = favourite.",
+            "example": 293
+          },
+          "surface": {
+            "$ref": "#/components/schemas/Surface"
+          },
+          "h2h": {
+            "type": "string",
+            "description": "Head-to-head record `wins-losses` for playerA",
+            "example": "5-2"
+          },
+          "ic": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            },
+            "description": "95% confidence interval [low, high] in percent",
+            "example": [78, 89]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Model confidence score (0 = max uncertainty, 1 = max confidence)",
+            "example": 0.81
+          }
+        }
+      },
+      "BookmakerOdd": {
+        "type": "object",
+        "required": ["bookmaker", "decimalA", "decimalB", "impliedProbA", "impliedProbB", "margin"],
+        "properties": {
+          "bookmaker": {
+            "type": "string",
+            "example": "Bet365"
+          },
+          "decimalA": {
+            "type": "number",
+            "description": "Decimal odds offered on playerA",
+            "example": 1.18
+          },
+          "decimalB": {
+            "type": "number",
+            "description": "Decimal odds offered on playerB",
+            "example": 4.75
+          },
+          "impliedProbA": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Vig-removed implied probability for playerA (percent)",
+            "example": 84
+          },
+          "impliedProbB": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Vig-removed implied probability for playerB (percent)",
+            "example": 16
+          },
+          "margin": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Bookmaker margin / vig (e.g. 0.025 = 2.5%)",
+            "example": 0.025
+          }
+        }
+      },
+      "OddsSummary": {
+        "type": "object",
+        "required": ["bookmaker", "decimalA", "decimalB"],
+        "properties": {
+          "bookmaker": {
+            "type": "string",
+            "example": "Bet365"
+          },
+          "decimalA": {
+            "type": "number",
+            "example": 1.18
+          },
+          "decimalB": {
+            "type": "number",
+            "example": 4.75
+          }
+        }
+      },
+      "TennisMatch": {
+        "type": "object",
+        "required": [
+          "id",
+          "tournament",
+          "round",
+          "scheduledAt",
+          "playerA",
+          "playerB",
+          "probA",
+          "probB",
+          "stats",
+          "model",
+          "modelUpdatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable match identifier",
+            "example": "m1"
+          },
+          "tournament": {
+            "type": "string",
+            "example": "Wimbledon"
+          },
+          "round": {
+            "type": "string",
+            "example": "8èmes de finale"
+          },
+          "scheduledAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Match kick-off time (UTC)",
+            "example": "2026-07-08T14:00:00Z"
+          },
+          "playerA": {
+            "allOf": [{ "$ref": "#/components/schemas/Player" }],
+            "description": "Favourite (proba > 50)"
+          },
+          "playerB": {
+            "allOf": [{ "$ref": "#/components/schemas/Player" }],
+            "description": "Challenger (proba ≤ 50)"
+          },
+          "probA": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Model probability of playerA winning (percent)",
+            "example": 84
+          },
+          "probB": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Model probability of playerB winning (percent)",
+            "example": 16
+          },
+          "stats": {
+            "$ref": "#/components/schemas/MatchStats"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model name / version",
+            "example": "Elo+Forme+Surface+H2H"
+          },
+          "modelUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the prediction was last recomputed",
+            "example": "2026-07-05T10:45:00Z"
+          },
+          "odds": {
+            "$ref": "#/components/schemas/OddsSummary"
+          },
+          "allOdds": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BookmakerOdd" },
+            "description": "Multi-bookmaker odds for the comparator"
+          },
+          "h2hHistory": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/H2HMatch" },
+            "description": "Detailed H2H history (most recent first)"
+          }
+        }
+      },
+      "PrematchResponse": {
+        "type": "object",
+        "required": ["matches", "source", "updatedAt"],
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TennisMatch" }
+          },
+          "source": {
+            "type": "string",
+            "enum": ["cache", "mock", "odds-api"],
+            "description": "Where the data came from — `cache` (≤60s old), `mock` (enriched mock odds), or `odds-api` (live The Odds API)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the data (server time)"
+          }
+        }
+      },
+      "EloHistoryPoint": {
+        "type": "object",
+        "required": ["date", "elo"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "elo": {
+            "type": "integer"
+          }
+        }
+      },
+      "PlayerEloHistory": {
+        "type": "object",
+        "required": ["playerId", "currentElo", "history"],
+        "properties": {
+          "playerId": { "type": "string" },
+          "currentElo": { "type": "integer" },
+          "history": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EloHistoryPoint" }
+          }
+        }
+      },
+      "EloHistoryResponse": {
+        "type": "object",
+        "required": ["matchId", "a", "b"],
+        "properties": {
+          "matchId": { "type": "string", "example": "m1" },
+          "a": { "$ref": "#/components/schemas/PlayerEloHistory" },
+          "b": { "$ref": "#/components/schemas/PlayerEloHistory" }
+        }
+      },
+      "PushSubscription": {
+        "type": "object",
+        "required": ["endpoint", "keys"],
+        "description": "Standard W3C PushSubscription object returned by `serviceWorkerRegistration.pushManager.subscribe()`.",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "format": "uri",
+            "description": "Browser-specific push service endpoint URL",
+            "example": "https://fcm.googleapis.com/fcm/send/abc123"
+          },
+          "expirationTime": {
+            "type": ["integer", "null"],
+            "description": "Subscription expiration timestamp (ms since epoch), or null if it never expires"
+          },
+          "keys": {
+            "type": "object",
+            "required": ["p256dh", "auth"],
+            "properties": {
+              "p256dh": {
+                "type": "string",
+                "description": "ECDH P-256 public key, base64url"
+              },
+              "auth": {
+                "type": "string",
+                "description": "Authentication secret, base64url"
+              }
+            }
+          }
+        }
+      },
+      "PushSubscribeResponse": {
+        "type": "object",
+        "required": ["success", "count"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "count": {
+            "type": "integer",
+            "description": "Total number of registered subscriptions after this call",
+            "example": 3
+          }
+        }
+      },
+      "ValueBetAlert": {
+        "type": "object",
+        "required": [
+          "matchId",
+          "playerA",
+          "playerB",
+          "probA",
+          "bookmaker",
+          "decimalA",
+          "impliedProbA"
+        ],
+        "description": "Value-bet alert payload — sent to /api/push/test and /api/email/test",
+        "properties": {
+          "matchId": { "type": "string", "example": "m1" },
+          "playerA": { "type": "string", "example": "Aryna Sabalenka" },
+          "playerB": { "type": "string", "example": "Naomi Osaka" },
+          "probA": {
+            "type": "number",
+            "description": "Model probability for playerA (percent)",
+            "example": 84
+          },
+          "bookmaker": { "type": "string", "example": "Bet365" },
+          "decimalA": {
+            "type": "number",
+            "description": "Bookmaker decimal odds on playerA",
+            "example": 1.18
+          },
+          "impliedProbA": {
+            "type": "number",
+            "description": "Vig-removed bookmaker implied probability for playerA (percent)",
+            "example": 84
+          }
+        }
+      },
+      "PushTestResponse": {
+        "type": "object",
+        "required": ["success", "sent", "failed", "total"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "sent": {
+            "type": "integer",
+            "description": "Number of notifications successfully dispatched"
+          },
+          "failed": {
+            "type": "integer",
+            "description": "Number of notifications that failed to send"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total subscriptions attempted"
+          }
+        }
+      },
+      "EmailSubscription": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address to subscribe / unsubscribe",
+            "example": "fan@setpoint.example"
+          }
+        }
+      },
+      "EmailSubscribeResponse": {
+        "type": "object",
+        "required": ["success", "count"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "count": {
+            "type": "integer",
+            "description": "Total number of subscribers after this call",
+            "example": 12
+          }
+        }
+      },
+      "EmailTestResponse": {
+        "type": "object",
+        "required": ["success", "sent", "total", "mode"],
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "sent": {
+            "type": "integer",
+            "description": "Number of emails successfully handed off (SMTP) or logged (console)"
+          },
+          "failed": {
+            "type": "integer",
+            "description": "Number of emails that failed to send"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total subscribers the email was attempted for"
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["smtp", "console"],
+            "description": "`smtp` when SMTP_HOST is configured, `console` (graceful degradation) otherwise"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message",
+            "example": "Invalid email format"
+          }
+        }
+      }
+    },
+    "securitySchemes": {}
+  },
+  "paths": {
+    "/api/tennis/prematch": {
+      "get": {
+        "tags": ["tennis"],
+        "summary": "List upcoming prematch matches",
+        "description": "Returns upcoming tennis matches with REAL predicted probabilities computed by the Elo+Forme+Surface+H2H engine, plus multi-bookmaker odds (vig-removed). Results are cached for 60 seconds server-side. When the `ODDS_API_KEY` env var is set, live odds are fetched from The Odds API; otherwise enriched mock odds (5 bookmakers per match) are used. Predictions are ALWAYS recomputed from the local model — bookmaker implied probabilities are never trusted for the displayed %.",
+        "operationId": "getPrematchMatches",
+        "responses": {
+          "200": {
+            "description": "Match list with predictions, odds and H2H",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PrematchResponse" },
+                "examples": {
+                  "default": {
+                    "summary": "3 upcoming Wimbledon matches",
+                    "value": {
+                      "matches": [
+                        {
+                          "id": "m1",
+                          "tournament": "Wimbledon",
+                          "round": "8èmes de finale",
+                          "scheduledAt": "2026-07-08T14:00:00Z",
+                          "playerA": {
+                            "id": "sabalenka",
+                            "name": "Aryna Sabalenka",
+                            "shortName": "SABALENKA",
+                            "rank": 1,
+                            "elo": 2052,
+                            "surfaceElo": 2090,
+                            "photoUrl": "https://sfile.chatglm.cn/images-ppt/cb2fb094e8bd.jpg",
+                            "color": "#1B4332",
+                            "form": ["W", "W", "W", "W", "W", "L"],
+                            "country": "BLR"
+                          },
+                          "playerB": {
+                            "id": "osaka",
+                            "name": "Naomi Osaka",
+                            "shortName": "OSAKA",
+                            "rank": 14,
+                            "elo": 1759,
+                            "surfaceElo": 1740,
+                            "photoUrl": "https://sfile.chatglm.cn/images-ppt/f277d164b034.jpg",
+                            "color": "#5C2D91",
+                            "form": ["L", "W", "W", "L", "W", "W"],
+                            "country": "JPN"
+                          },
+                          "probA": 84,
+                          "probB": 16,
+                          "stats": {
+                            "form": "5V-1D",
+                            "eloGap": 293,
+                            "surface": "Gazon",
+                            "h2h": "5-2",
+                            "ic": [78, 89],
+                            "confidence": 0.81
+                          },
+                          "model": "Elo+Forme+Surface+H2H",
+                          "modelUpdatedAt": "2026-07-05T10:45:00Z",
+                          "odds": { "bookmaker": "Bet365", "decimalA": 1.18, "decimalB": 4.75 },
+                          "allOdds": [
+                            { "bookmaker": "Bet365", "decimalA": 1.18, "decimalB": 4.75, "impliedProbA": 84, "impliedProbB": 16, "margin": 0.025 }
+                          ]
+                        }
+                      ],
+                      "source": "mock",
+                      "updatedAt": "2026-07-05T10:45:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while computing predictions or fetching odds",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to compute predictions" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tennis/elo-history": {
+      "get": {
+        "tags": ["tennis"],
+        "summary": "Get Elo progression for both players of a match",
+        "description": "Returns the 12-month Elo progression for both players of the requested match. Uses real Elo computed offline from Jeff Sackmann's tennis_atp / tennis_wta match CSVs (3-year window) for the 6 tracked players; falls back to a reverse-computed synthetic history for unknown player ids.",
+        "operationId": "getEloHistory",
+        "parameters": [
+          {
+            "name": "matchId",
+            "in": "query",
+            "required": true,
+            "description": "Match identifier (one of `m1`, `m2`, `m3` in the mock dataset)",
+            "schema": { "type": "string" },
+            "example": "m1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Elo history for both players",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EloHistoryResponse" },
+                "examples": {
+                  "default": {
+                    "value": {
+                      "matchId": "m1",
+                      "a": {
+                        "playerId": "sabalenka",
+                        "currentElo": 2052,
+                        "history": [
+                          { "date": "2023-07-01T00:00:00Z", "elo": 1980 },
+                          { "date": "2024-01-21T00:00:00Z", "elo": 2010 },
+                          { "date": "2025-06-15T00:00:00Z", "elo": 2052 }
+                        ]
+                      },
+                      "b": {
+                        "playerId": "osaka",
+                        "currentElo": 1759,
+                        "history": [
+                          { "date": "2023-07-01T00:00:00Z", "elo": 1820 },
+                          { "date": "2024-01-21T00:00:00Z", "elo": 1780 },
+                          { "date": "2025-06-15T00:00:00Z", "elo": 1759 }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `matchId` query parameter",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Missing matchId query parameter" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while computing the Elo history",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to compute Elo history" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/subscribe": {
+      "post": {
+        "tags": ["push"],
+        "summary": "Register a Web Push subscription",
+        "description": "Stores a W3C `PushSubscription` (returned by `serviceWorkerRegistration.pushManager.subscribe()`) in the in-memory subscription store. Deduplicates by `endpoint` — re-subscribing the same endpoint is idempotent. Returns 201 with the new total subscription count.",
+        "operationId": "subscribePush",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PushSubscription" },
+              "examples": {
+                "default": {
+                  "value": {
+                    "endpoint": "https://fcm.googleapis.com/fcm/send/eXaMpLe123",
+                    "expirationTime": null,
+                    "keys": {
+                      "p256dh": "BOuY4f3k9...base64url",
+                      "auth": "aBcDeFgH...base64url"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription stored (or already existed)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PushSubscribeResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "success": true, "count": 3 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid subscription payload (missing or empty `endpoint`)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Invalid subscription payload" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while storing the subscription",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to store subscription" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/push/test": {
+      "post": {
+        "tags": ["push"],
+        "summary": "Send a test value-bet push notification",
+        "description": "Dispatches a value-bet alert Web Push notification to every registered subscription. Requires the `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` env vars to be set (returns 503 otherwise). Returns 400 if no subscriptions are registered yet.",
+        "operationId": "sendTestPush",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ValueBetAlert" },
+              "examples": {
+                "default": {
+                  "value": {
+                    "matchId": "m1",
+                    "playerA": "Aryna Sabalenka",
+                    "playerB": "Naomi Osaka",
+                    "probA": 84,
+                    "bookmaker": "Bet365",
+                    "decimalA": 1.18,
+                    "impliedProbA": 84
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test push dispatched",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PushTestResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "success": true, "sent": 3, "failed": 0, "total": 3 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No subscriptions registered",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "No subscriptions registered" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while dispatching push notifications",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to send push notifications" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/email/subscribe": {
+      "post": {
+        "tags": ["email"],
+        "summary": "Subscribe an email address to value-bet alerts",
+        "description": "Validates the email format, normalizes it (trim + lowercase), dedupes by address (idempotent — re-subscribing the same address returns 201 without creating a duplicate), and stores it in the in-memory subscriber set. SMTP credentials are NEVER touched here — subscription only records the address.",
+        "operationId": "subscribeEmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmailSubscription" },
+              "examples": {
+                "default": {
+                  "value": { "email": "fan@setpoint.example" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Email subscribed (or already registered)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EmailSubscribeResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "success": true, "count": 12 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email format",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Invalid email format" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while storing the subscription",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to store subscription" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/email/unsubscribe": {
+      "post": {
+        "tags": ["email"],
+        "summary": "Unsubscribe an email address from value-bet alerts",
+        "description": "Removes the email from the in-memory subscriber set. Returns 200 even if the address was not registered (idempotent) so the client can clear local state optimistically without worrying about a 404.",
+        "operationId": "unsubscribeEmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EmailSubscription" },
+              "examples": {
+                "default": {
+                  "value": { "email": "fan@setpoint.example" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email unsubscribed (or was not registered)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EmailSubscribeResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "success": true, "count": 11 }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid email format",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Invalid email format" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while removing the subscription",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to remove subscription" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/email/test": {
+      "post": {
+        "tags": ["email"],
+        "summary": "Send a test value-bet email to all subscribers",
+        "description": "Sends a value-bet alert email to every registered subscriber. When SMTP is not configured (no `SMTP_HOST` env), emails are logged to the server console instead (graceful degradation) so the endpoint remains useful in dev / demo environments. Returns 200 with `sent: 0` if no subscribers are registered (still considered successful — just no audience yet).",
+        "operationId": "sendTestEmail",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ValueBetAlert" },
+              "examples": {
+                "default": {
+                  "value": {
+                    "matchId": "m1",
+                    "playerA": "Aryna Sabalenka",
+                    "playerB": "Naomi Osaka",
+                    "probA": 84,
+                    "bookmaker": "Bet365",
+                    "decimalA": 1.18,
+                    "impliedProbA": 84
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test email dispatched (or skipped — no audience)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EmailTestResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "success": true, "sent": 12, "failed": 0, "total": 12, "mode": "smtp" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body — missing or wrongly-typed fields",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Invalid payload — expected matchId, playerA, playerB, probA, bookmaker, decimalA, impliedProbA" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error while sending the test email",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "examples": {
+                  "default": {
+                    "value": { "error": "Failed to send test email" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

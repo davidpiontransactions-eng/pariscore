@@ -1,0 +1,10 @@
+[NBA-Elo] Season start 2025-10-21 — fetching scoreboards…
+  …30/228 dates, 213 games
+  …60/228 dates, 398 games
+  …90/228 dates, 624 games
+  …120/228 dates, 815 games
+  …150/228 dates, 1040 games
+  …180/228 dates, 1236 games
+  …210/228 dates, 1302 games
+[NBA-Elo] 1313 matchs terminés — replay Elo + backtest…
+[NBA-Elo] OK — 1313 games · Brier 0.2093 (baseline 0.25) · acc 66.2% → C:\Users\david\Documents\dev PariScore\ParisScorebis\data\nba_elo.json

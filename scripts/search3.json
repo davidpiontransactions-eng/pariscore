@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://www.flerlagetwins.com/2019/03/radial-progress-bars_19.html",
+    "name": "Radial Progress Bars - The Flerlage Twins",
+    "snippet": "The radial progress bar provides additional context by breaking it up into segments that help you quickly understand the percentages.",
+    "host_name": "www.flerlagetwins.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=1TXDFH83uV8",
+    "name": "How to Make PROGRESS Circle and Bar CHARTS with NATIVE",
+    "snippet": "In this video, I'm going to show you how to use the Native Power BI visuals to create progress circle and bar charts using donut and 100% ...",
+    "host_name": "www.youtube.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=MuWZHUtjbrw",
+    "name": "How to Create a Rounded Half Donut Progress Chart in Tableau",
+    "snippet": "This chart is perfect for visualizing KPIs, percentages, or targets and adds a clean, modern look to your Tableau dashboards. Tableau: https ...",
+    "host_name": "www.youtube.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://datavizproject.com",
+    "name": "Data Viz Project | Collection of data visualizations to get inspired",
+    "snippet": "Interested in your own custom designed visualizations? Ferdio is a leading infographic and data visualization agency specialized in transforming data and ...",
+    "host_name": "datavizproject.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=KbAmWC2AuSk",
+    "name": "Progress Circle Chart in Excel - Part 1 of 2 - YouTube",
+    "snippet": "Sign up for our Excel webinar, times added weekly: https://www.excelcampus.com/blueprint-registration/ The progress circle (doughnut) chart ...",
+    "host_name": "www.youtube.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www2.strategy.com/producthelp/2021/Library/en-us/Content/creating_a_donut_chart.htm",
+    "name": "Create a Donut Chart",
+    "snippet": "To Create a Progress Donut Chart · Open a dashboard. · In the toolbar, click Visualization . · Point to Pie and select Progress Donut Chart. · In the Datasets panel ...",
+    "host_name": "www2.strategy.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.excelcampus.com/charts/progress-doughnut-chart",
+    "name": "Progress Doughnut Chart with Conditional Formatting in Excel",
+    "snippet": "Learn how to create a progress doughnut chart or circle chart in Excel. This chart displays a progress bar with the percentage of completion on a single metric.",
+    "host_name": "www.excelcampus.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://chartload.com/charts/half-donut-chart",
+    "name": "Gauge & Half Donut Chart Maker — Free, No Signup - ChartLoad",
+    "snippet": "Make a gauge or half-donut chart online free — no signup. Plot KPIs, progress & proportions on a semicircular gauge and export PNG, SVG, PDF.",
+    "host_name": "chartload.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

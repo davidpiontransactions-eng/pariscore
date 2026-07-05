@@ -1,0 +1,40 @@
+{
+  "name": "SetPoint — Tennis Prematch",
+  "short_name": "SetPoint",
+  "description": "Probabilités de victoire tennis, modèle Elo+Forme+Surface+H2H",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E1217",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "utilities"],
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Favoris clairs",
+      "short_name": "Favoris",
+      "url": "/?filter=favorites",
+      "description": "Matchs avec probabilité ≥ 70%"
+    },
+    {
+      "name": "Matchs serrés",
+      "short_name": "Serrés",
+      "url": "/?filter=balanced",
+      "description": "Matchs avec probabilité < 60%"
+    }
+  ]
+}

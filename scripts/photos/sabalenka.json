@@ -1,0 +1,25 @@
+🚀 Initializing Z-AI SDK...
+🔎 Searching images: "Aryna Sabalenka tennis player portrait"
+✅ Got 2 images
+{
+  "success": true,
+  "query": "Aryna Sabalenka tennis player portrait",
+  "count": 2,
+  "ranked": false,
+  "results": [
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/cb2fb094e8bd.jpg",
+      "caption": "",
+      "source": "Vogue",
+      "original_width": "2560px",
+      "original_height": "3417px"
+    },
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/e750e5154269.jpg",
+      "caption": "",
+      "source": "Reddit",
+      "original_width": "1080px",
+      "original_height": "1080px"
+    }
+  ]
+}

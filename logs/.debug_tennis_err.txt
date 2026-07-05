@@ -1,0 +1,506 @@
+  [33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif.[0m
+  [33m[VAPID] Clés auto-générées (NON-PERSISTÉES) — copier ces lignes dans .env:[0m
+    VAPID_PUBLIC_KEY=BNLq2U1otTS72ofMIlocZgIuuelLNOdaiTkTtqFhHkl88yfOnq31aEm_cEpOnZb6Jn3EFxjKaLnk8ebbp248Wdw
+    VAPID_PRIVATE_KEY=MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgwJ7vCd1JDBKRpVITtcS_XhFhNGPgrkr8rdq8CKNLi0-hRANCAATS6tlNaLU0u9qHzCJaHGYCLrnpSzTnWok5E7ahYR5JfPMnzp6t9WhJv3BKTp2W-iZ9xBcYymi55PHm26duPFnc
+[31m[SANITY] 375 data anomalies detected:[0m
+  [31m• manchester united: empty form (real data)[0m
+  [31m• brighton hove albion: empty form (real data)[0m
+  [31m• leeds united: empty form (real data)[0m
+  [31m• west ham united: empty form (real data)[0m
+  [31m• ipswich town: empty form (real data)[0m
+  [31m• southampton: empty form (real data)[0m
+  [31m• hull city: empty form (real data)[0m
+  [31m• derby county: empty form (real data)[0m
+  [31m• sheffield united: empty form (real data)[0m
+  [31m• queens park rangers: empty form (real data)[0m
+  [31m... and 365 more[0m
+[31m[ANTI‑CRASH] Uncaught Exception:[0m _runDailyTTOop is not defined
+ReferenceError: _runDailyTTOop is not defined
+    at Object.<anonymous> (C:\Users\david\Documents\dev PariScore\ParisScorebis\server.js:38015:1)
+    at Module._compile (node:internal/modules/cjs/loader:1830:14)
+    at Object..js (node:internal/modules/cjs/loader:1961:10)
+    at Module.load (node:internal/modules/cjs/loader:1553:32)
+    at Module._load (node:internal/modules/cjs/loader:1355:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 2s
+[CacheBuffer] Invalid data from bsd/bsd_bulk_2026-05-26_2026-06-02. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd/bsd_bulk_2026-05-26_2026-06-02
+  [RapidFree] A-League: réponse inattendue (HTTP 429)
+  [Forme] "Grêmio" → fallback forme depuis "gremio novorizontino" (DWW)
+  [Forme] "Millonarios" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "O'Higgins" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Palestino" → forme synthétisée depuis PPG (WWDLL)
+  [Forme] "Deportivo Riestra" → fallback forme depuis "deportivo alaves" (LWWWW)
+  [Forme] "São Paulo" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "San Lorenzo" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Deportivo Recoleta" → fallback forme depuis "deportivo alaves" (LWWWW)
+  [Forme] "Santos" → fallback forme depuis "santos laguna" (WLWDW)
+  [Forme] "Deportivo Cuenca" → fallback forme depuis "deportivo alaves" (LWWWW)
+  [BuildMatch] "Atlético-MG" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "Botafogo" → fallback forme depuis "botafogo sp" (LLDDD)
+  [Coherence] ⚠ FUZZY AMBIGUË: "Cienciano del Cusco" → clé "cienciano" plus proche de Away "Juventud". Home forcé simStats.
+  [BuildMatch] "Cienciano del Cusco" (Home) — stats simulées (non trouvé en DB)
+  [BuildMatch] "Juventud" (Away) — stats simulées (non trouvé en DB)
+  [Forme] "Audax Italiano" → forme synthétisée depuis PPG (WWLLL)
+  [Forme] "Racing Club" → forme synthétisée depuis PPG (WLLLL)
+  [Forme] "Independiente Petrolero" → forme synthétisée depuis PPG (WWWDD)
+  [Forme] "Vasco da Gama" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Barracas Central" → forme synthétisée depuis PPG (WWLLL)
+  [Forme] "River Plate" → fallback forme depuis "rivers united" (LLLDL)
+  [Forme] "América de Cali" → forme synthétisée depuis PPG (WWWLL)
+  [Forme] "Macará" → forme synthétisée depuis PPG (WWLLL)
+  [Forme] "Tigre" → fallback forme depuis "tigres uanl" (LWDDW)
+  [Forme] "Lanús" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Mirassol" → forme synthétisée depuis PPG (LLLLL)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "Always Ready" → "club always ready" (away)
+  [Forme] "Liga de Quito" → forme synthétisée depuis PPG (WWWLL)
+  [Forme] "Estudiantes de La Plata" → forme synthétisée depuis PPG (WWWDD)
+  [Forme] "Independiente Medellín" → forme synthétisée depuis PPG (WWLLL)
+  [Forme] "Flamengo" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Coquimbo Unido" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Deportes Tolima" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Independiente del Valle" → forme synthétisée depuis PPG (WWWWL)
+  [Forme] "Rosario Central" → forme synthétisée depuis PPG (WWWLL)
+  [Forme] "Libertad" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Independiente Rivadavia" → forme synthétisée depuis PPG (WWWDD)
+  [Forme] "Corinthians" → forme synthétisée depuis PPG (WWWWW)
+  [Forme] "Platense" → forme synthétisée depuis PPG (WDLLL)
+  [Forme] "Fluminense" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Independiente Santa Fe" → forme synthétisée depuis PPG (WWDLL)
+  [Forme] "Cerro Porteño" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Palmeiras" → forme synthétisée depuis PPG (WWWWW)
+  [Forme] "Atlético Junior" → fallback forme depuis "atletico torque" (DDWWW)
+  [Forme] "Boca Juniors" → forme synthétisée depuis PPG (WWWLL)
+  [Forme] "Universidad Católica" → fallback forme depuis "universidad central" (LWLLW)
+  [Forme] "Cruzeiro" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Athletico-PR" → forme synthétisée depuis PPG (WDDLL)
+  [Forme] "Mirassol" → forme synthétisée depuis PPG (LLLLL)
+  [BuildMatch] "Atlético-MG" (Away) — stats simulées (non trouvé en DB)
+  [Forme] "Vasco da Gama" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Remo" → fallback forme depuis "remo stars" (LLWW)
+  [Forme] "São Paulo" → forme synthétisée depuis PPG (LLLLL)
+  [Forme] "América Mineiro" → forme synthétisée depuis PPG (WDDLL)
+  [Forme] "Avaí" → forme synthétisée depuis PPG (WWWDL)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "Novorizontino" → "gremio novorizontino" (away)
+  [Forme] "Cuiabá" → forme synthétisée depuis PPG (WDDLL)
+  [Forme] "Ponte Preta" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Aalesund" → forme synthétisée depuis PPG (WDDLL)
+  [Forme] "Hamarkameratene" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Fredrikstad" → forme synthétisée depuis PPG (WWDLL)
+  [Forme] "IK Start" → forme synthétisée depuis PPG (DDLLL)
+  [Forme] "KFUM Oslo" → forme dérivée de l'historique (LL)
+  [Forme] "Tromso" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Rosenborg" → forme synthétisée depuis PPG (WDLLL)
+  [Forme] "Bodo/Glimt" → forme synthétisée depuis PPG (WWWLL)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "SK Brann" → "sk brann" (home)
+  [Forme] "SK Brann" → forme dérivée de l'historique (LLD)
+  [Forme] "Sarpsborg FK" → forme synthétisée depuis PPG (WDLLL)
+  [Forme] "Vålerenga" → forme synthétisée depuis PPG (WWDLL)
+  [Forme] "Kristiansund BK" → forme dérivée de l'historique (DLL)
+  [Forme] "Molde" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Sandefjord" → forme synthétisée depuis PPG (WWDLL)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "IF Elfsborg" → "if elfsborg" (away)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "IF Brommapojkarna" → "if brommapojkarna" (away)
+  [Forme] "Monza" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "Catanzaro" → forme synthétisée depuis PPG (WWDLL)
+  [Forme] "Shelbourne" → forme synthétisée depuis PPG (WWDDL)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "San Antonio FC" → "san antonio fc" (away)
+  [BuildMatch] "Charleston Battery" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "Charleston Battery" → forme synthétisée depuis PPG (WWDLL)
+  [BuildMatch] Fuzzy retry via xsTeamMatch: "Hartford Athletic" → "athletic club" (home)
+  [Coherence] ⚠ FUZZY AMBIGUË: "Hartford Athletic" → clé "athletic club" plus proche de Away "New Mexico United". Home forcé simStats.
+  [BuildMatch] "Hartford Athletic" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "Hartford Athletic" → forme synthétisée depuis PPG (WWWDL)
+  [BuildMatch] "Louisville City FC" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "Louisville City FC" → forme synthétisée depuis PPG (WWWDL)
+  [BuildMatch] "Pittsburgh Riverhounds" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "Pittsburgh Riverhounds" → forme synthétisée depuis PPG (WWWDD)
+  [Coherence] ⚠ FUZZY AMBIGUË: "Colorado Springs Switchbacks FC" → clé "colorado rapids" plus proche de Home "Oakland Roots". Away forcé simStats.
+  [BuildMatch] "Colorado Springs Switchbacks FC" (Away) — stats simulées (non trouvé en DB)
+  [BuildMatch] "El Paso Locomotive FC" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "El Paso Locomotive FC" → forme synthétisée depuis PPG (WWDDL)
+  [BuildMatch] "Loudoun United FC" (Away) — stats simulées (non trouvé en DB)
+  [Forme] "Loudoun United FC" → forme synthétisée depuis PPG (WWWLL)
+  [BuildMatch] "Las Vegas Lights FC" (Home) — stats simulées (non trouvé en DB)
+  [BuildMatch] "FC Tulsa" (Away) — stats simulées (non trouvé en DB)
+  [Forme] "Las Vegas Lights FC" → forme synthétisée depuis PPG (WWWDL)
+  [Forme] "FC Tulsa" → forme synthétisée depuis PPG (WDDLL)
+  [BuildMatch] "Phoenix Rising FC" (Home) — stats simulées (non trouvé en DB)
+  [Forme] "Phoenix Rising FC" → forme synthétisée depuis PPG (WWWLL)
+  [Forme] "Cobresal" → forme synthétisée depuis PPG (WDDLL)
+  [Forme] "Ñublense" → forme synthétisée depuis PPG (WWDDL)
+  [Forme] "Universidad de Concepción" → fallback forme depuis "universidad central" (LWLLW)
+  [Forme] "Unión La Calera" → fallback forme depuis "union sportive yacoub el mansour" (WDDWD)
+  [Forme] "La Serena" → forme synthétisée depuis PPG (WWLLL)
+  [Forme] "Colo Colo" → fallback forme depuis "colon" (LDWWL)
+  [Forme] "Universidad de Chile" → fallback forme depuis "universidad central" (LWLLW)
+  [Forme] "Deportes Concepcion" → forme synthétisée depuis PPG (WLLLL)
+  [Forme] "Rayo Vallecano" → forme dérivée de l'historique (LWDLW)
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 4s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 8s
+  [Boot] ⚠ fetchOdds: fetchOdds timeout (25000ms)
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 16s
+[CacheBuffer] Invalid data from bsd_standings/7_2. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/7_2
+  [DEBUG STANDINGS] BSD KO pour ligue 2 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/8_3. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/8_3
+  [DEBUG STANDINGS] BSD KO pour ligue 3 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/33_11. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/33_11
+  [DEBUG STANDINGS] BSD KO pour ligue 11 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/29_12. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/29_12
+  [DEBUG STANDINGS] BSD KO pour ligue 12 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/32_13. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/32_13
+  [DEBUG STANDINGS] BSD KO pour ligue 13 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/1_39. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/1_39
+  [DEBUG STANDINGS] BSD KO pour ligue 39 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/12_40. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/12_40
+  [DEBUG STANDINGS] BSD KO pour ligue 40 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/39_45. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/39_45
+  [DEBUG STANDINGS] BSD KO pour ligue 45 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/40_48. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/40_48
+  [DEBUG STANDINGS] BSD KO pour ligue 48 — ajout au fallback API-Football
+  [DENYLIST] Exclu "Rodez AF" (key:"rodez af") de ligue 61 — équipe misclassifiée par BSD
+  [DENYLIST] Exclu "Red Star FC" (key:"red star fc") de ligue 61 — équipe misclassifiée par BSD
+[CacheBuffer] Invalid data from bsd_standings/6_61. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/6_61
+  [DEBUG STANDINGS] BSD KO pour ligue 61 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/44_63. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/44_63
+  [DEBUG STANDINGS] BSD KO pour ligue 63 — ajout au fallback API-Football
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 32s
+[CacheBuffer] Invalid data from bsd_standings/9_71. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/9_71
+  [DEBUG STANDINGS] BSD KO pour ligue 71 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/34_72. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/34_72
+  [DEBUG STANDINGS] BSD KO pour ligue 72 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/35_73. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/35_73
+  [DEBUG STANDINGS] BSD KO pour ligue 73 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/5_78. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/5_78
+  [DEBUG STANDINGS] BSD KO pour ligue 78 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/43_81. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/43_81
+  [DEBUG STANDINGS] BSD KO pour ligue 81 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/10_88. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/10_88
+  [DEBUG STANDINGS] BSD KO pour ligue 88 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/2_94. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/2_94
+  [DEBUG STANDINGS] BSD KO pour ligue 94 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/49_98. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/49_98
+[CacheBuffer] Invalid data from bsd_standings/54_103. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/54_103
+[CacheBuffer] Invalid data from bsd_standings/25_106. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/25_106
+  [DEBUG STANDINGS] BSD KO pour ligue 106 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/26_113. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/26_113
+  [DEBUG STANDINGS] BSD KO pour ligue 113 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/4_135. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/4_135
+  [DEBUG STANDINGS] BSD KO pour ligue 135 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/42_137. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/42_137
+  [DEBUG STANDINGS] BSD KO pour ligue 137 — ajout au fallback API-Football
+  [Tennis Odds] ⚠️ PariScore — Odds API quota faible : 0/500 restants (<10%). Fetch tennis basculera en mode low-quota (fenêtre J+1).
+  [Tennis Odds] ⚠️ Quota Odds API épuisé. Fetch tennis suspendu 6h (cotes marché → fallback cote équitable).
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+[CacheBuffer] Invalid data from bsd_standings/3_140. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/3_140
+  [DEBUG STANDINGS] BSD KO pour ligue 140 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/38_141. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/38_141
+  [DEBUG STANDINGS] BSD KO pour ligue 141 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/41_143. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/41_143
+  [DEBUG STANDINGS] BSD KO pour ligue 143 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/14_144. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/14_144
+  [DEBUG STANDINGS] BSD KO pour ligue 144 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/52_169. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/52_169
+  [DEBUG STANDINGS] BSD KO pour ligue 169 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/22_172. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/22_172
+  [DEBUG STANDINGS] BSD KO pour ligue 172 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/13_188. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/13_188
+  [DEBUG STANDINGS] BSD KO pour ligue 188 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/53_200. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/53_200
+  [DEBUG STANDINGS] BSD KO pour ligue 200 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/11_203. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/11_203
+  [DEBUG STANDINGS] BSD KO pour ligue 203 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/15_207. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/15_207
+  [DEBUG STANDINGS] BSD KO pour ligue 207 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/19_218. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/19_218
+  [DEBUG STANDINGS] BSD KO pour ligue 218 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/55_244. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/55_244
+  [DEBUG STANDINGS] BSD KO pour ligue 244 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/18_253. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/18_253
+  [DEBUG STANDINGS] BSD KO pour ligue 253 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/23_283. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/23_283
+  [DEBUG STANDINGS] BSD KO pour ligue 283 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/50_292. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/50_292
+  [ESPN] K-League 1 (kor.1) — HTTP 400
+  [DEBUG STANDINGS] BSD KO pour ligue 292 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/17_307. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/17_307
+  [DEBUG STANDINGS] BSD KO pour ligue 307 — ajout au fallback API-Football
+[CacheBuffer] Invalid data from bsd_standings/24_318. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/24_318
+  [DEBUG STANDINGS] BSD KO pour ligue 318 — ajout au fallback API-Football
+  [DEBUG STANDINGS] Standings vides BSD 27 saison 188 status=200
+[CacheBuffer] Invalid data from bsd_standings/27_999. Schema mismatch.
+[CacheBuffer] VIDE : aucun cache bsd_standings/27_999
+  [DEBUG STANDINGS] BSD KO pour ligue 999 — ajout au fallback API-Football
+  [ESPN] J2 League (jpn.2) — HTTP 400
+  [ESPN] Ligue 99 (slug jpn.2) → vide/échec
+  [Cron:Stats] 40 ligue(s) BSD en échec (2, 3, 11, 12, 13, 39, 40, 45, 48, 61, 63, 71, 72, 73, 78, 81, 88, 94, 106, 113, 135, 137, 140, 141, 143, 144, 169, 172, 188, 200, 203, 207, 218, 244, 253, 283, 292, 307, 318, 999) — PAS de fallback API-Football (anti-contamination saison N-1), dernière table BSD conservée
+  [Fuzzy] "aifk" → "aik" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "vjs" → "vps" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "aek athen" → "aek athens" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "ferencvarosi tc" → "ferencvaros tc" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "ae kifisias" → "ae kifisia" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "aifk" → "aik" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "vjs" → "vps" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "aek athen" → "aek athens" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "ferencvarosi tc" → "ferencvaros tc" (dist=1) — ATTENTION: match approximatif
+  [Fuzzy] "ae kifisias" → "ae kifisia" (dist=1) — ATTENTION: match approximatif
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [Tennis] ESPN WTA fetch failed: Timeout
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [Tennis] ESPN WTA fetch failed: Timeout
+[TRACE:sofascore_live_idx] Timeout
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+[TRACE:sofascore_live_idx] Timeout
+  [Tennis] BSD live error: Timeout
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN WTA fetch failed: Timeout
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+[TRACE:sofascore_live_idx] Timeout
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [Tennis] BSD live error: Timeout
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [KOA] matchmx Aleksa Krivokapic error: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] handshake refusé: HTTP/1.1 502 Bad Gateway
+  [BSD-WS] déconnecté, reconnect dans 60s
+  [BSD-WS] déconnecté, reconnect dans 2s
+  [Tennis] ESPN ATP fetch failed: Timeout
+  [Tennis] ESPN WTA fetch failed: Timeout
+  [BSD-WS] déconnecté, reconnect dans 2s

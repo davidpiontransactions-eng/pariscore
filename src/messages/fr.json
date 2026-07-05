@@ -1,0 +1,466 @@
+{
+  "common": {
+    "appName": "SetPoint",
+    "tabName": "Tennis Prematch",
+    "loading": "Chargement...",
+    "loadingShort": "Chargement…",
+    "refresh": "Actualiser",
+    "filters": "Filtres avancés",
+    "today": "{n} matchs aujourd'hui",
+    "noMatchTitle": "Aucun match pour ce filtre",
+    "noMatchHint": "Essayez un autre filtre pour voir d'autres matchs.",
+    "liveBadge": "Live odds",
+    "demoBadge": "Démo",
+    "connected": "Connecté au flux live",
+    "connectedLatency": "Connecté au flux live · {n} ms",
+    "connecting": "Connexion au flux live en cours…",
+    "disconnected": "Flux live déconnecté — affichage des dernières données connues",
+    "disconnectedShort": "Hors ligne",
+    "connectingShort": "Connexion…",
+    "liveShort": "Live",
+    "footerSource": "Source",
+    "footerUpdated": "MAJ",
+    "footerCopyright": "Probabilités générées par modèle propriétaire",
+    "footerOnline": "Données à jour",
+    "footerWarning": "Les prédictions sont fournies à titre indicatif et ne garantissent aucun résultat. Le pari peut comporter des risques · Joueurs majeurs uniquement · 18+",
+    "errorTitle": "Erreur de chargement",
+    "errorBody": "Impossible de récupérer les matchs.",
+    "retry": "Réessayer",
+    "liveModel": "Modèle Elo+Forme+Surface",
+    "heroTitle": "Tennis · Prematch",
+    "heroDesc": "Probabilités de victoire mises à jour en continu. Cliquez sur « Détail du modèle » pour voir la décomposition, l'intervalle de confiance et la forme récente.",
+    "languageLabel": "Changer de langue",
+    "languageToggle": "Basculer en {locale}"
+  },
+  "filters": {
+    "all": "Tous",
+    "allHint": "Tous les matchs",
+    "favorites": "Favoris clairs",
+    "favoritesHint": "Proba ≥ 70%",
+    "balanced": "Matchs serrés",
+    "balancedHint": "Proba < 60%",
+    "starred": "Mes favoris",
+    "starredHint": "Matchs étoilés"
+  },
+  "match": {
+    "win": "WIN",
+    "vs": "VS",
+    "liveAria": "Match en direct",
+    "addFavorite": "Ajouter aux favoris",
+    "removeFavorite": "Retirer des favoris",
+    "set": "Set {n}",
+    "detail": "Détail",
+    "detailHide": "Masquer",
+    "analysis": "Analyse complète",
+    "analysisShort": "Analyse",
+    "bet": "Parier",
+    "model": "Modèle",
+    "modelLabel": "Modèle :",
+    "modelUpdated": "MAJ",
+    "live": "Live",
+    "serving": "{name} au service",
+    "servingAria": "Score en direct : {score}, {points}, {server} au service",
+    "offline": "Hors ligne",
+    "seeStats": "Voir les stats détaillées",
+    "hideStats": "Masquer les stats",
+    "form": "Forme",
+    "eloGap": "Elo gap",
+    "surface": "Surface",
+    "h2h": "H2H",
+    "ic95": "IC 95%",
+    "confidence": "Confiance",
+    "decompLabel": "Décomposition modèle",
+    "decompValue": "{model} · Elo {eloA} vs {eloB}",
+    "decompHint": "Contribution Elo 62% · Forme 24% · Surface 14%",
+    "icLabel": "Intervalle de confiance 95%",
+    "icValue": "[{lo}%, {hi}%]",
+    "icHint": "Probabilité centrale {prob}% · amplitude {amp} points",
+    "eloGapLabel": "Écart Elo",
+    "eloGapValue": "+{n} points",
+    "eloGapHint": "Surface {surface} · H2H {h2h} pour {player}",
+    "formLabel": "Forme récente",
+    "formHint": "{pa} : {fa} · {pb} : {fb}",
+    "warning": "Avertissement",
+    "warningText": "les probabilités sont des estimations issues d'un modèle statistique et ne constituent pas une garantie de résultat. Pariez de manière responsable."
+  },
+  "detail": {
+    "title": "Analyse complète",
+    "subtitle": "{tournament} · {round} · Analyse complète",
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "h2h": "H2H",
+      "form": "Forme",
+      "odds": "Cotes"
+    },
+    "model": "Modèle",
+    "modelHint": "Elo+Forme+Surface+H2H blend",
+    "centralProb": "Probabilité centrale",
+    "centralProbValue": "{a}% / {b}%",
+    "centralProbHint": "{a} / {b}",
+    "eloGap": "Écart Elo",
+    "eloGapValue": "+{n}",
+    "eloGapHint": "Surface: {surface}",
+    "confidence": "Confiance",
+    "confidenceValue": "{n}%",
+    "confidenceHint": "IC 95%: [{lo}, {hi}]",
+    "probLabel": "Probabilité",
+    "icTitle": "Intervalle de confiance 95% — {player}",
+    "icSummary": "IC [{lo}, {hi}] · médiane {med}%",
+    "h2hDirect": "H2H direct",
+    "h2hMatches": "{n} matchs",
+    "h2hBySurface": "H2H par surface",
+    "h2hHistory": "Historique des confrontations",
+    "recentForm": "Forme récente (6 derniers matchs)",
+    "eloProgression": "Progression Elo (12 derniers mois)",
+    "simulation": "simulation",
+    "formWin": "Victoire",
+    "formLoss": "Défaite",
+    "formMatchLabel": "Match {n}",
+    "valueBet": "Value bet détecté",
+    "valueBetText": "Notre modèle estime {player} à {prob}% mais certains bookmakers l'évaluent plus bas → potentiel value.",
+    "valueBetCount": "{player}: {n} cote value",
+    "valueBetCountPlural": "{player}: {n} cotes value",
+    "bestOdd": "Meilleure cote {player}",
+    "bestOddAt": "@ {bookmaker}",
+    "bookmaker": "Bookmaker",
+    "margin": "Marge",
+    "best": "best",
+    "tableHint": "Cliquez sur une colonne pour trier. Les cotes « best » sont surlignées en vert. La marge correspond à la commission du bookmaker (vig).",
+    "noOdds": "Cotes multi-bookmakers non disponibles pour ce match."
+  },
+  "time": {
+    "inMinutes": "dans {n} min",
+    "minutesAgo": "il y a {n} min",
+    "inHours": "dans {n} h",
+    "hoursAgo": "il y a {n} h",
+    "inDays": "dans {n} j",
+    "daysAgo": "il y a {n} j",
+    "justNow": "à l'instant"
+  },
+  "theme": {
+    "toggle": "Changer de thème",
+    "toLight": "Passer en mode clair",
+    "toDark": "Passer en mode sombre"
+  },
+  "consent": {
+    "title": "Nous respectons votre vie privée",
+    "description": "Nous utilisons des cookies pour faire fonctionner le site (session, langue, thème) et, avec votre consentement, pour mesurer l'audience et améliorer l'expérience.",
+    "privacyLink": "En savoir plus",
+    "acceptAll": "Tout accepter",
+    "analyticsOnly": "Analyse uniquement",
+    "reject": "Refuser",
+    "showDetails": "Afficher les détails",
+    "categories": {
+      "necessary": {
+        "title": "Cookies nécessaires",
+        "desc": "Indispensables au fonctionnement du site : session, langue, thème, préférences. Ne peuvent pas être désactivés."
+      },
+      "analytics": {
+        "title": "Cookies d'analyse",
+        "desc": "Nous permettent de comprendre comment vous utilisez le site (PostHog, anonymisé) afin de l'améliorer. Aucune donnée personnelle n'est revendue."
+      },
+      "marketing": {
+        "title": "Cookies marketing",
+        "desc": "Utilisés pour mesurer l'efficacité de nos campagnes et personnaliser le contenu. Optionnels."
+      }
+    }
+  },
+  "push": {
+    "tooltip": "Activer les alertes value bet",
+    "subscribed": "Alertes value bet activées",
+    "subscribe": "Activer",
+    "unsubscribe": "Désactiver",
+    "testAlert": "Tester l'alerte",
+    "notSupported": "Notifications non supportées par ce navigateur",
+    "permissionDenied": "Autorisation de notification refusée",
+    "testAlertSent": "Alerte de test envoyée"
+  },
+  "email": {
+    "tooltip": "Activer les alertes email",
+    "subscribed": "Alertes email activées sur {email}",
+    "subscribe": "Activer",
+    "unsubscribe": "Désactiver",
+    "placeholder": "votre@email.com",
+    "invalid": "Email invalide",
+    "testAlert": "Tester l'alerte email"
+  },
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "subtitle": "Comment nous gérons vos données et vos choix",
+    "intro": {
+      "title": "Notre engagement",
+      "body": "SetPoint respecte votre vie privée. Nous collectons le minimum nécessaire au fonctionnement du site et, avec votre consentement explicite, des données anonymisées pour améliorer l'expérience. Aucune donnée personnelle n'est revendue à des tiers."
+    },
+    "categories": {
+      "title": "Catégories de cookies"
+    },
+    "storage": {
+      "title": "Durée de stockage",
+      "consent": "Consentement (setpoint-consent)",
+      "consentDuration": "180 jours — vous pouvez le révoquer à tout moment via ce panneau",
+      "locale": "Langue (NEXT_LOCALE)",
+      "localeDuration": "1 an — mémorise votre choix de langue",
+      "theme": "Thème (theme)",
+      "themeDuration": "1 an — mémorise votre préférence dark/light"
+    },
+    "rights": {
+      "title": "Vos droits RGPD",
+      "body": "Conformément au RGPD (Règlement Général sur la Protection des Données), vous disposez des droits suivants sur vos données personnelles :",
+      "items": {
+        "access": "Droit d'accès — obtenir une copie de vos données",
+        "rectify": "Droit de rectification — corriger des données inexactes",
+        "erase": "Droit à l'effacement — supprimer vos données",
+        "limit": "Droit à la limitation — geler le traitement",
+        "portability": "Droit à la portabilité — exporter vos données",
+        "object": "Droit d'opposition — refuser le traitement"
+      }
+    },
+    "contact": {
+      "title": "Contact DPO",
+      "body": "Pour exercer vos droits ou pour toute question relative au traitement de vos données, vous pouvez contacter notre Délégué à la Protection des Données :"
+    },
+    "currentStatus": "Votre consentement actuel",
+    "reset": "Réinitialiser",
+    "status": {
+      "alwaysOn": "Obligatoire",
+      "enabled": "Activé",
+      "disabled": "Désactivé",
+      "all": "Tout accepté",
+      "analyticsOnly": "Analyse uniquement",
+      "rejected": "Refusé"
+    },
+    "footer": {
+      "manageCookies": "Gérer les cookies"
+    }
+  },
+  "scanner": {
+    "status": "Scanner de value bets",
+    "description": "Scan automatique toutes les 5 minutes",
+    "alertsSent": "{n} value bet(s) détecté(s)",
+    "noAlerts": "Aucun value bet détecté",
+    "lastScan": "Dernier scan"
+  },
+  "digest": {
+    "tooltip": "Activer le digest quotidien",
+    "tooltipOn": "Digest quotidien activé",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "title": "Digest quotidien",
+    "body": "{n} value bets détectés aujourd'hui",
+    "noBets": "Aucun value bet aujourd'hui"
+  },
+  "paperTrading": {
+    "title": "Paper Trading",
+    "subtitle": "Simulez vos paris sans risque (argent virtuel)",
+    "trigger": "Paper Trading",
+    "virtualBankroll": "Bankroll virtuelle",
+    "warning": "Mode simulation",
+    "warningText": "Aucun argent réel n'est engagé. Le paper trading vous permet de tester vos stratégies sans risque financier.",
+    "history": "Historique des paris simulés",
+    "emptyHistory": "Aucun pari simulé. Cliquez sur « Paper » sur un match pour commencer.",
+    "stats": {
+      "totalBets": "Paris simulés",
+      "pending": "En cours",
+      "winRate": "Taux de réussite"
+    },
+    "status": {
+      "pending": "En cours",
+      "won": "Gagné",
+      "lost": "Perdu"
+    },
+    "actions": {
+      "markWon": "Marquer comme gagné",
+      "markLost": "Marquer comme perdu",
+      "delete": "Supprimer",
+      "clearAll": "Tout effacer"
+    },
+    "settings": {
+      "initialBankroll": "Bankroll virtuelle initiale (points)",
+      "save": "Enregistrer",
+      "initialHint": "Montant de départ en points virtuels (par défaut 10 000)."
+    },
+    "bet": {
+      "title": "Paper bet",
+      "stake": "Mise (points)",
+      "potentialPayout": "Gain potentiel",
+      "cancel": "Annuler",
+      "placeBet": "Simuler le pari"
+    }
+  },
+  "comparator": {
+    "title": "Comparateur de bookmakers",
+    "subtitle": "Comparez les cotes et marges tous matchs confondus",
+    "trigger": "Comparateur",
+    "sections": {
+      "overview": "Vue d'ensemble",
+      "bestOdds": "Meilleures cotes par match",
+      "valueBets": "Value bets détectés"
+    },
+    "columns": {
+      "bookmaker": "Bookmaker",
+      "avgMargin": "Marge moyenne",
+      "bestOddsCount": "Meilleures cotes",
+      "valueBetCount": "Value bets",
+      "match": "Match",
+      "bestA": "Meilleure cote A",
+      "bestB": "Meilleure cote B",
+      "marginRange": "Marge (min-max)",
+      "player": "Joueur",
+      "modelProba": "Modèle",
+      "impliedProba": "Implied",
+      "edge": "Edge",
+      "odd": "Cote"
+    },
+    "noValueBets": "Aucun value bet détecté",
+    "valueBetBadge": "Value bet"
+  },
+  "bankroll": {
+    "title": "Bankroll",
+    "subtitle": "Suivez vos paris et vos gains",
+    "trigger": "Bankroll",
+    "currentBankroll": "Bankroll actuelle",
+    "tabs": {
+      "overview": "Vue d'ensemble",
+      "history": "Historique",
+      "settings": "Réglages",
+      "stats": "Statistiques"
+    },
+    "stats": {
+      "totalBets": "Paris totaux",
+      "pending": "En cours",
+      "won": "Gagnés",
+      "lost": "Perdus",
+      "winRate": "Taux de réussite"
+    },
+    "status": {
+      "pending": "En cours",
+      "won": "Gagné",
+      "lost": "Perdu"
+    },
+    "actions": {
+      "markWon": "Marquer comme gagné",
+      "markLost": "Marquer comme perdu",
+      "delete": "Supprimer",
+      "clearAll": "Tout effacer"
+    },
+    "emptyHistory": "Aucun pari enregistré. Cliquez sur « Parier » sur un match pour commencer.",
+    "export": {
+      "csv": "Exporter CSV",
+      "json": "Exporter JSON",
+      "csvHint": "Pour Excel / Google Sheets",
+      "jsonHint": "Sauvegarde complète (bets + stats)"
+    },
+    "settings": {
+      "initialBankroll": "Bankroll initiale",
+      "save": "Enregistrer",
+      "initialHint": "Montant de départ de votre bankroll (par défaut 1000 €). Le bénéfice est calculé à partir de ce montant.",
+      "warning": "Avertissement",
+      "warningText": "Les données sont stockées localement dans votre navigateur. Elles ne sont pas synchronisées entre appareils et peuvent être effacées si vous videz le cache."
+    },
+    "advancedStats": {
+      "byBookmaker": "Par bookmaker",
+      "byPlayer": "Par joueur",
+      "byMonth": "Par mois",
+      "bookmaker": "Bookmaker",
+      "player": "Joueur",
+      "month": "Mois",
+      "profit": "Profit",
+      "roi": "ROI",
+      "winRate": "Taux de réussite",
+      "bets": "Paris",
+      "noData": "Pas encore de données suffisantes",
+      "noDataHint": "Placez et réglez des paris pour voir apparaître les statistiques avancées."
+    },
+    "bet": {
+      "title": "Enregistrer un pari",
+      "betOn": "Parier sur",
+      "odds": "Cote",
+      "stake": "Mise (€)",
+      "potentialPayout": "Gain potentiel",
+      "cancel": "Annuler",
+      "placeBet": "Parier",
+      "currentBankroll": "Bankroll actuelle"
+    }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page introuvable",
+      "description": "La page que vous cherchez n'existe pas ou a été déplacée. Vérifiez l'URL ou retournez à l'accueil.",
+      "home": "Accueil",
+      "back": "Retour"
+    },
+    "error": {
+      "title": "Une erreur est survenue",
+      "subtitle": "Nous sommes désolés pour ce désagrément",
+      "description": "Notre équipe a été automatiquement notifiée. Vous pouvez réessayer ou retourner à l'accueil.",
+      "retry": "Réessayer",
+      "home": "Accueil"
+    },
+    "feedback": {
+      "title": "Signaler un problème",
+      "subtitle": "Aidez-nous à améliorer SetPoint",
+      "type": "Type de problème",
+      "types": {
+        "bug": "Bug technique",
+        "data": "Donnée incorrecte",
+        "ux": "Problème d'interface",
+        "other": "Autre"
+      },
+      "description": "Décrivez le problème (optionnel)",
+      "placeholder": "Que s'est-il passé ?",
+      "submit": "Envoyer",
+      "cancel": "Annuler",
+      "success": "Merci ! Votre signalement a été envoyé.",
+      "trigger": "Signaler un problème"
+    }
+  },
+  "about": {
+    "title": "Comment ça marche ?",
+    "subtitle": "Comprendre notre modèle de prédiction",
+    "trigger": "Comment ça marche ?",
+    "close": "Fermer",
+    "sections": {
+      "approach": {
+        "title": "Notre approche",
+        "body": "SetPoint combine trois signaux complémentaires pour estimer la probabilité de victoire de chaque joueur : un classement Elo (ajusté par surface), une mesure de forme récente, et l'historique direct des confrontations (H2H). Aucun signal pris isolément ne suffit — le modèle les fusionne avec des poids fixes : Elo 70 %, Forme 20 %, H2H 10 %. Le résultat est une probabilité centrale accompagnée d'un intervalle de confiance à 95 %."
+      },
+      "elo": {
+        "title": "Le modèle Elo",
+        "body": "Le classement Elo attribue à chaque joueur un nombre qui évolue après chaque match : battre un joueur mieux classé rapporte plus de points que battre un outsider. La probabilité de victoire se déduit de l'écart Δ (Elo A − Elo B) via une fonction logistique. Quelques repères : Δ = +200 ≈ 76 %, Δ = +400 ≈ 91 %, Δ = −200 ≈ 24 %.\n\nPour tenir compte de la surface (dur, terre battue, gazon), nous calculons un Elo « blended » : 55 % Elo sur la surface du match + 45 % Elo général. Un spécialiste de terre battue reçoit donc un bonus sur cette surface.",
+        "formula": "P(A gagne) = 1 / (1 + 10^(-Δ/400))"
+      },
+      "form": {
+        "title": "Forme récente",
+        "body": "La forme est calculée sur les 6 derniers matchs (W = 1, L = 0) avec une décroissance exponentielle : le match le plus récent pèse le plus, les plus anciens pèsent moins. L'idée est qu'une victoire d'il y a deux mois est moins informative qu'une victoire hier. Le poids de chaque match i (i = 0 = le plus récent) suit 0.85^i. La différence de score de forme entre les deux joueurs est ensuite convertie en probabilité via une logistique."
+      },
+      "h2h": {
+        "title": "H2H direct",
+        "body": "L'historique des confrontations directes entre les deux joueurs capture ce que l'Elo général ne voit pas : styles qui se contrarient, bloquage psychologique, etc. Nous utilisons le ratio simple victoires / (victoires + défaites) sur les confrontations directes. En l'absence d'historique (0 match), le score est neutre (0,5). Le H2H pèse 10 % dans la probabilité finale — suffisant pour corriger l'Elo sans dominer."
+      },
+      "ic": {
+        "title": "Intervalle de confiance",
+        "body": "Chaque probabilité est livrée avec un intervalle de confiance à 95 % (IC 95 %). Pour l'estimer, nous tirons 1000 échantillons en ajoutant un bruit gaussien aux trois composantes (Elo, Forme, H2H) avec des écarts-types σ_Elo = 0.04, σ_Forme = 0.08, σ_H2H = 0.10, puis nous prenons les percentiles 2,5 % et 97,5 % des probabilités simulées.\n\nPlus l'IC est large, plus le modèle est incertain. La confiance affichée est : Confidence = 1 − (largeur IC / 40). Un IC de [60, 70] traduit une forte confiance ; un IC de [40, 75] indique un match très incertain."
+      },
+      "limits": {
+        "title": "Limites",
+        "body": "Le modèle est statistique, pas déterministe. Il ne sait pas capturer : les blessures ou la fatigue non annoncées, les changements de coach récents, la motivation spécifique à un tournoi, les conditions météo (vent, humidité), l'effet d'une foule, ni les chocs émotionnels. Les surfaces sont partiellement prises en compte via l'Elo blended, mais le modèle reste aveugle aux micro-fragilités (un service cassé en début de match, etc.). Les probabilités reflètent une moyenne attendue — pas une garantie."
+      },
+      "transparency": {
+        "title": "Transparence",
+        "body": "Pour chaque match, nous affichons : la probabilité centrale, l'IC 95 %, un score de confiance (0-100 %), et la décomposition du modèle (Elo / Forme / H2H / Surface). Pas de boîte noire : vous voyez exactement quels signaux poussent la probabilité dans un sens ou dans l'autre. Si un pronostic vous surprend, ouvrez le détail pour comprendre."
+      }
+    }
+  },
+  "apiDocs": {
+    "title": "Documentation API",
+    "subtitle": "Intégrez SetPoint à vos outils",
+    "trigger": "API",
+    "downloadSpec": "Télécharger OpenAPI",
+    "copyCurl": "Copier curl",
+    "copied": "Copié !",
+    "endpoints": "Endpoints",
+    "parameters": "Paramètres",
+    "response": "Réponse",
+    "example": "Exemple"
+  }
+}

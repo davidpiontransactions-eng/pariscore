@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://www.youtube.com/shorts/4NXPbsvLqjc",
+    "name": "How are Elo Ratings Calculated in Tennis? - YouTube",
+    "snippet": "How are Elo Ratings calculated in tennis? The Elo system updates every player's rating ... win or loss was, and how much the system is willing to ...",
+    "host_name": "www.youtube.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/askmath/comments/1ldacri/using_the_elo_method_to_calculate_rankings_in_my",
+    "name": "Using the ELO method to calculate rankings in my tennis league and",
+    "snippet": "This is the basic ELO formula I am using to calculate the ranking, where A and B are the average ratings of the two players on each team.",
+    "host_name": "www.reddit.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.tylerjrichards.com/Ping_pong.html",
+    "name": "Exploring Win Probabilities and Time Series Elo Ranking in Python",
+    "snippet": "Here is an implementation of the Elo ranking mechanism from scratch. An Elo score is for measuring relative skill, even when players have not directly competed.",
+    "host_name": "www.tylerjrichards.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://en.wikipedia.org/wiki/Elo_rating_system",
+    "name": "Elo rating system - Wikipedia",
+    "snippet": "The Elo rating system is a method for calculating the relative skill levels of players, originally designed for rating chess players.",
+    "host_name": "en.wikipedia.org",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.tumblr.com/fbitennis/129032969454/rescaling-elo-for-tennis",
+    "name": "Rescaling ELO for Tennis – @fbitennis on Tumblr",
+    "snippet": "I propose that tennis ELO uses a difference of 250 points to equate to a 75% probability of winning the tennis match, by using 500 as the denominator in the ...",
+    "host_name": "www.tumblr.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://arxiv.org/html/2412.14427v1",
+    "name": "Elo Ratings in the Presense of Intransitivity - arXiv",
+    "snippet": "This paper studies how the Elo rating system behaves when the underlying modelling assumptions are not met. The Elo rating system is a popular ...",
+    "host_name": "arxiv.org",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  }
+]

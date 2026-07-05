@@ -1,0 +1,25 @@
+🚀 Initializing Z-AI SDK...
+🔎 Searching images: "Daniil Medvedev tennis player portrait"
+✅ Got 2 images
+{
+  "success": true,
+  "query": "Daniil Medvedev tennis player portrait",
+  "count": 2,
+  "ranked": false,
+  "results": [
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/05c2dd9ee59d.jpg",
+      "caption": "",
+      "source": "eBay",
+      "original_width": "1200px",
+      "original_height": "900px"
+    },
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/befb3ba6e1d6.jpg",
+      "caption": "",
+      "source": "eBay",
+      "original_width": "1200px",
+      "original_height": "900px"
+    }
+  ]
+}

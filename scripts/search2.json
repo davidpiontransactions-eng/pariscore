@@ -1,0 +1,74 @@
+[
+  {
+    "url": "https://www.instagram.com/reel/DXPKhBnjPkE",
+    "name": "make tennis betting more intuitive, real-time, and data  - Instagram",
+    "snippet": "A modern mobile UI with a bold sports-focused visual style. Clear categories for quick match discovery. Live updates and betting sections ...",
+    "host_name": "www.instagram.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://dribbble.com/shots/26651591-TennisBetting-Web-Match-Overview-Dashboard",
+    "name": "TennisBetting Web – Match Overview Dashboard - Dribbble",
+    "snippet": "TennisBetting is a web platform that visualizes live match stats, player performance, and betting odds, helping users track games and make data- ...",
+    "host_name": "dribbble.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.mdpi.com/2673-9909/5/3/77",
+    "name": "Tennis Game Dynamic Prediction Model Based on Players  - MDPI",
+    "snippet": "The algorithm has an average accuracy of 84% and provides real-time predictions of each player's chances of winning the match. Our findings indicate that ...",
+    "host_name": "www.mdpi.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://tennis-api.com/news/how-to-build-a-tennis-prediction-model-using-tennis-api-data",
+    "name": "How to Build a Tennis Prediction Model Using Tennis API Data",
+    "snippet": "This guide explains how developers can use Tennis API data to design a practical prediction workflow, choose useful model features, avoid data ...",
+    "host_name": "tennis-api.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.youtube.com/watch?v=N4JDlSTMOck&vl=en",
+    "name": "I Trained AI to Predict Sports (again) - YouTube",
+    "snippet": "... tennis data: https://github.com/JeffSackmann/tennis_atp Music I Used in this Video: https://share.epidemicsound.com/7i1d0b Current Subs:",
+    "host_name": "www.youtube.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.reddit.com/r/sportsanalytics/comments/1njm2b5/looking_for_feedback_on_a_tennis_match_prediction",
+    "name": "Looking for feedback on a tennis match prediction model I built",
+    "snippet": "I like setting limit orders 8-10 points below opening odds on players with at least a .7 utr difference, higher elo, and win probability above ...",
+    "host_name": "www.reddit.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://nycdatascience.com/blog/student-works/utilizing-data-to-predict-winners-of-tennis-matches",
+    "name": "Utilizing Data to Predict Winners of Tennis Matches",
+    "snippet": "I built various machine learning models to use data to predict the winners of matches on the professional Women's Tennis Association (WTA) Tour.",
+    "host_name": "nycdatascience.com",
+    "rank": 6,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/jgollub1/tennis_match_prediction",
+    "name": "jgollub1/tennis_match_prediction: Research on calculating  - GitHub",
+    "snippet": "This project explores new approaches and also implements known methods, evaluating models on tens of thousands of ATP/WTA matches from the twenty-first century.",
+    "host_name": "github.com",
+    "rank": 7,
+    "date": "",
+    "favicon": ""
+  }
+]

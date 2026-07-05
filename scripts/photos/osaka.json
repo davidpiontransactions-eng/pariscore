@@ -1,0 +1,25 @@
+🚀 Initializing Z-AI SDK...
+🔎 Searching images: "Naomi Osaka tennis player portrait"
+✅ Got 2 images
+{
+  "success": true,
+  "query": "Naomi Osaka tennis player portrait",
+  "count": 2,
+  "ranked": false,
+  "results": [
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/f277d164b034.jpg",
+      "caption": "",
+      "source": "BBC",
+      "original_width": "2560px",
+      "original_height": "1440px"
+    },
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/d9080720fabd.jpg",
+      "caption": "",
+      "source": "Vogue India",
+      "original_width": "851px",
+      "original_height": "1277px"
+    }
+  ]
+}

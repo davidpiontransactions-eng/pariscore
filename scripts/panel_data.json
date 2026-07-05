@@ -1,0 +1,120 @@
+{
+  "total_panel": 1000,
+  "amateur_size": 700,
+  "pro_size": 300,
+  "personas": [
+    {
+      "id": "casual",
+      "label": "Casuel occasionnel",
+      "description": "Pari 1-3x/mois, pense avant un grand chelem",
+      "size": 250,
+      "segment": "Amateur",
+      "votes": {
+        "A": 150,
+        "B": 70,
+        "C": 30
+      }
+    },
+    {
+      "id": "regular",
+      "label": "Amateur régulier",
+      "description": "Pari 1x/sem, suit le circuit ATP/WTA",
+      "size": 300,
+      "segment": "Amateur",
+      "votes": {
+        "A": 144,
+        "B": 96,
+        "C": 60
+      }
+    },
+    {
+      "id": "passionate",
+      "label": "Amateur passionné",
+      "description": "Plusieurs paris/sem, connait Elo & surfaces",
+      "size": 150,
+      "segment": "Amateur",
+      "votes": {
+        "A": 33,
+        "B": 72,
+        "C": 45
+      }
+    },
+    {
+      "id": "semipro",
+      "label": "Semi-pro",
+      "description": "Bankroll management, value betting",
+      "size": 150,
+      "segment": "Pro",
+      "votes": {
+        "A": 15,
+        "B": 45,
+        "C": 90
+      }
+    },
+    {
+      "id": "pro",
+      "label": "Pro bettor",
+      "description": "Pari = revenu principal ou complément",
+      "size": 100,
+      "segment": "Pro",
+      "votes": {
+        "A": 6,
+        "B": 19,
+        "C": 75
+      }
+    },
+    {
+      "id": "tipster",
+      "label": "Tipster / analyste",
+      "description": "Publie des pronostics, audience sociale",
+      "size": 50,
+      "segment": "Pro",
+      "votes": {
+        "A": 1,
+        "B": 5,
+        "C": 44
+      }
+    }
+  ],
+  "total_votes": {
+    "A": 349,
+    "B": 307,
+    "C": 344
+  },
+  "amateur_votes": {
+    "A": 327,
+    "B": 238,
+    "C": 135
+  },
+  "pro_votes": {
+    "A": 22,
+    "B": 69,
+    "C": 209
+  },
+  "criteria_scores": {
+    "A": {
+      "Lecture 1s": 4.6,
+      "Clarté proba": 4.5,
+      "Confiance data": 3.4,
+      "Esthétique": 4.7,
+      "Décision rapide": 4.6,
+      "Mobile": 4.2
+    },
+    "B": {
+      "Lecture 1s": 4.8,
+      "Clarté proba": 4.2,
+      "Confiance data": 4.0,
+      "Esthétique": 4.9,
+      "Décision rapide": 4.3,
+      "Mobile": 4.0
+    },
+    "C": {
+      "Lecture 1s": 4.4,
+      "Clarté proba": 4.9,
+      "Confiance data": 4.8,
+      "Esthétique": 4.0,
+      "Décision rapide": 3.9,
+      "Mobile": 4.5
+    }
+  }
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "url": "https://www.reddit.com/r/sportsanalytics/comments/1u1edzs/is_there_a_tennis_data_api_that_returns_the_full",
+    "name": "Is there a tennis data API that returns the full draw sheet (byes",
+    "snippet": "Free app for Platform Tennis tournaments, winter leagues, and Elo rankings - no spreadsheets needed. Prediction using AI ML system .",
+    "host_name": "www.reddit.com",
+    "rank": 0,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://the-odds-api.com/sports/tennis-odds.html",
+    "name": "Tennis Odds API",
+    "snippet": "The Odds API covers tennis odds for live and upcoming matches in a simple JSON API. The following competitions are currently covered: Grand Slams, ATP 1000, ...",
+    "host_name": "the-odds-api.com",
+    "rank": 1,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.stevegtennis.com/h2h-predictions/tennis-api",
+    "name": "Tennis API – Access ATP & WTA Data, Stats and Predictions",
+    "snippet": "Our API provides structured access to ATP, WTA and ITF tennis data, including live scores, player stats, rankings, fixtures, head-to-head records and ...",
+    "host_name": "www.stevegtennis.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com/bradklassen/elo-rating-tennis-predictions",
+    "name": "bradklassen/elo-rating-tennis-predictions - GitHub",
+    "snippet": "Using Elo Ratings to predict tennis matches. The goal of the project is to accurately predict upcoming tennis matches. Elo ratings are used to evaluate the ...",
+    "host_name": "github.com",
+    "rank": 3,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://tennisapidoc.matchstat.com",
+    "name": "Tennis API (ATP, WTA, ITF) — Documentation",
+    "snippet": "The API includes detailed player profiles with match history, titles, finals, surface summaries, player photos and performance breakdowns, plus ...",
+    "host_name": "tennisapidoc.matchstat.com",
+    "rank": 4,
+    "date": "",
+    "favicon": ""
+  },
+  {
+    "url": "https://www.goalserve.com/en/sport-data-feeds/tennis-api/coverage",
+    "name": "Tennis API Data Feeds | Tennis Live Score API Coverage - Goalserve",
+    "snippet": "API provide Fixtures, Live scores, Results, Prematch and Inplay Odds. Data availalbe in XML and JSON formats.",
+    "host_name": "www.goalserve.com",
+    "rank": 5,
+    "date": "",
+    "favicon": ""
+  }
+]

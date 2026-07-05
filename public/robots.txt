@@ -1,0 +1,11 @@
+# robots.txt — SetPoint (Tennis Prematch)
+# Polite crawling rules for search engine bots.
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /api/sentry-test
+Crawl-delay: 1
+
+# Sitemap location (absolute URL)
+Sitemap: https://setpoint.example/sitemap.xml

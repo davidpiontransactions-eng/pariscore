@@ -1,0 +1,25 @@
+🚀 Initializing Z-AI SDK...
+🔎 Searching images: "Jannik Sinner tennis player portrait"
+✅ Got 2 images
+{
+  "success": true,
+  "query": "Jannik Sinner tennis player portrait",
+  "count": 2,
+  "ranked": false,
+  "results": [
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/f3083e0d32c5.jpg",
+      "caption": "",
+      "source": "Vedantu",
+      "original_width": "1024px",
+      "original_height": "1536px"
+    },
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/79bf1a95de25.jpg",
+      "caption": "",
+      "source": "Alamy",
+      "original_width": "941px",
+      "original_height": "1390px"
+    }
+  ]
+}

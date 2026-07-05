@@ -1,0 +1,86 @@
+name: Refresh Elo
+
+# Task ID: CRON-1
+# Monthly auto-refresh of src/lib/prediction/elo-data.json.
+#
+# Re-runs scripts/fetch-tennis-data.ts (downloads ATP+WTA CSVs from the
+# Jeff Sackmann mirror network, recomputes Elo for 6 target players) and
+# commits the regenerated JSON back to main on a best-effort basis.
+#
+# Triggers:
+#   - schedule:  1st of each month at 03:00 UTC
+#   - workflow_dispatch:  manual "Run workflow" button in the Actions tab
+#
+# Commit uses `[skip ci]` so the auto-commit does NOT re-trigger the
+# lint / build / e2e / load-test workflows (avoids a CI loop).
+
+on:
+  schedule:
+    # min hour dom month dow — 03:00 UTC on day-of-month 1
+    - cron: "0 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry-run (do not write or commit)"
+        type: boolean
+        required: false
+        default: false
+
+# Monthly runs are not time-critical and we never want two refreshes
+# racing each other for the same commit. Do NOT cancel in-progress —
+# a half-finished run would leave the repo without an updated JSON.
+concurrency:
+  group: refresh-elo
+  cancel-in-progress: false
+
+permissions:
+  # Required for the bot to push the regenerated JSON back to main.
+  contents: write
+
+jobs:
+  refresh:
+    name: Refresh Elo data
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout (full history, persist credentials)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies (frozen lockfile)
+        run: bun install --frozen-lockfile
+
+      - name: Regenerate Elo data
+        # --dry-run when triggered manually with the checkbox ticked: the
+        # script validates the download + computation but does NOT write
+        # the JSON file. Useful for debugging mirror availability.
+        run: bun run scripts/fetch-tennis-data.ts ${{ inputs.dry_run == true && '--dry-run' || '' }}
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- src/lib/prediction/elo-data.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected changes in src/lib/prediction/elo-data.json"
+            git diff --stat -- src/lib/prediction/elo-data.json
+          fi
+
+      - name: Commit & push regenerated JSON
+        if: steps.diff.outputs.changed == 'true' && inputs.dry_run != true
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/prediction/elo-data.json
+          git commit -m "chore(data): refresh Elo data [skip ci]"
+          git push

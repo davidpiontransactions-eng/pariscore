@@ -1,0 +1,25 @@
+🚀 Initializing Z-AI SDK...
+🔎 Searching images: "Carlos Alcaraz tennis player portrait"
+✅ Got 2 images
+{
+  "success": true,
+  "query": "Carlos Alcaraz tennis player portrait",
+  "count": 2,
+  "ranked": false,
+  "results": [
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/987e0dbb7368.jpg",
+      "caption": "",
+      "source": "South China Morning Post",
+      "original_width": "1024px",
+      "original_height": "1276px"
+    },
+    {
+      "original_url": "https://sfile.chatglm.cn/images-ppt/8c1b373ad1a9.jpg",
+      "caption": "",
+      "source": "eBay",
+      "original_width": "1200px",
+      "original_height": "962px"
+    }
+  ]
+}

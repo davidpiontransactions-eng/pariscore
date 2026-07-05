@@ -1,0 +1,171 @@
+[BSD-STATS-ETL] mode=all | ligues=65 | dry=false
+[BSD-STATS-ETL] DB: C:\Users\david\Documents\dev PariScore\ParisScorebis\pariscore.db
+[BSD-STATS-ETL] standings L1 | Premier League 25/26 : 20 équipes
+[BSD-STATS-ETL] standings L1 | Premier League 24/25 : 20 équipes
+[BSD-STATS-ETL] standings L1 | Premier League 23/24 : 20 équipes
+[BSD-STATS-ETL] standings L1 | Premier League 22/23 : 20 équipes
+[BSD-STATS-ETL] standings L1 | Premier League 21/22 : 20 équipes
+[BSD-STATS-ETL] standings L2 | Liga Portugal 25/26 : 18 équipes
+[BSD-STATS-ETL] standings L2 | Liga Portugal 24/25 : 18 équipes
+[BSD-STATS-ETL] standings L2 | Liga Portugal 23/24 : 18 équipes
+[BSD-STATS-ETL] standings L2 | Primeira Liga 22/23 : 18 équipes
+[BSD-STATS-ETL] standings L2 | Primeira Liga 21/22 : 18 équipes
+[BSD-STATS-ETL] standings L7 | UEFA Champions League 25/26 : 36 équipes
+[BSD-STATS-ETL] standings L7 | UEFA Champions League 24/25 : 36 équipes
+[BSD-STATS-ETL] standings L7 | UEFA Champions League 23/24 : 31 équipes
+[BSD-STATS-ETL] standings L7 | UEFA Champions League 22/23 : 32 équipes
+[BSD-STATS-ETL] standings L7 | UEFA Champions League 21/22 : 31 équipes
+[BSD-STATS-ETL] standings L8 | UEFA Europa League 25/26 : 36 équipes
+[BSD-STATS-ETL] standings L9 | Brasileiro Serie A 2026 : 20 équipes
+[BSD-STATS-ETL] standings L9 | Brasileiro Serie A 2025 : 20 équipes
+[BSD-STATS-ETL] standings L9 | Brasileirão Betano 2024 : 20 équipes
+[BSD-STATS-ETL] standings L9 | Brasileirão Série A 2023 : 19 équipes
+[BSD-STATS-ETL] standings L9 | Brasileirão Série A 2022 : 20 équipes
+[BSD-STATS-ETL] standings L10 | VriendenLoterij Eredivisie 25/26 : 18 équipes
+[BSD-STATS-ETL] standings L10 | Eredivisie 24/25 : 18 équipes
+[BSD-STATS-ETL] standings L10 | Eredivisie 23/24 : 18 équipes
+[BSD-STATS-ETL] standings L10 | Eredivisie 22/23 : 18 équipes
+[BSD-STATS-ETL] standings L10 | Eredivisie 21/22 : 18 équipes
+[BSD-STATS-ETL] standings L11 | Super Lig 25/26 : 18 équipes
+[BSD-STATS-ETL] standings L11 | Super Lig 24/25 : 17 équipes
+[BSD-STATS-ETL] standings L11 | Super Lig 23/24 : 18 équipes
+[BSD-STATS-ETL] standings L12 | Championship 25/26 : 24 équipes
+[BSD-STATS-ETL] standings L12 | Championship 24/25 : 24 équipes
+[BSD-STATS-ETL] standings L12 | Championship 23/24 : 24 équipes
+[BSD-STATS-ETL] standings L12 | Championship 22/23 : 24 équipes
+[BSD-STATS-ETL] standings L12 | Championship 21/22 : 24 équipes
+[BSD-STATS-ETL] standings L13 | Premiership 25/26 : 12 équipes
+[BSD-STATS-ETL] standings L13 | Premiership 24/25 : 12 équipes
+[BSD-STATS-ETL] standings L13 | Premiership 23/24 : 12 équipes
+[BSD-STATS-ETL] standings L14 | Pro League 25/26 : 16 équipes
+[BSD-STATS-ETL] standings L15 | Super League 25/26 : 12 équipes
+[BSD-STATS-ETL] standings L15 | Super League 24/25 : 12 équipes
+[BSD-STATS-ETL] standings L15 | Super League 23/24 : 12 équipes
+[BSD-STATS-ETL] standings L17 | Saudi Pro League 25/26 : 18 équipes
+[BSD-STATS-ETL] standings L18 | MLS 2026 : 30 équipes
+[BSD-STATS-ETL] standings L18 | MLS 2025 : 30 équipes
+[BSD-STATS-ETL] standings L19 | Liga MX, Apertura 2025 : 18 équipes
+[BSD-STATS-ETL] standings L20 | Liga MX, Clausura 2026 : 18 équipes
+[BSD-STATS-ETL] standings L22 | Parva Liga 25/26 : 16 équipes
+[BSD-STATS-ETL] standings L22 | Parva Liga 24/25 : 16 équipes
+[BSD-STATS-ETL] standings L22 | Parva Liga 23/24 : 16 équipes
+[BSD-STATS-ETL] standings L23 | Superliga 25/26 : 16 équipes
+[BSD-STATS-ETL] standings L23 | Superliga 24/25 : 12 équipes
+[BSD-STATS-ETL] standings L23 | Liga I 23/24 : 12 équipes
+[BSD-STATS-ETL] standings L24 | Super League 25/26 : 14 équipes
+[BSD-STATS-ETL] standings L24 | Super League 24/25 : 14 équipes
+[BSD-STATS-ETL] standings L24 | Stoiximan Super League 23/24 : 14 équipes
+[BSD-STATS-ETL] standings L25 | Ekstraklasa 25/26 : 18 équipes
+[BSD-STATS-ETL] standings L25 | Ekstraklasa 24/25 : 18 équipes
+[BSD-STATS-ETL] standings L25 | Ekstraklasa 23/24 : 18 équipes
+[BSD-STATS-ETL] standings L26 | Allsvenskan 2026 : 16 équipes
+[BSD-STATS-ETL] standings L26 | Allsvenskan 2025 : 17 équipes
+[BSD-STATS-ETL] standings L26 | Allsvenskan 2024 : 15 équipes
+[BSD-STATS-ETL] standings L26 | Allsvenskan 2023 : 16 équipes
+[BSD-STATS-ETL] standings L27 | World Cup 2022 : 32 équipes
+[BSD-STATS-ETL] standings L27 | World Cup 2018 : 31 équipes
+[BSD-STATS-ETL] standings L27 | 2017/2018 : 31 équipes
+[BSD-STATS-ETL] standings L28 | Premier League 25/26 : 20 équipes
+[BSD-STATS-ETL] standings L31 | Int. Friendly Games 2026 : 175 équipes
+[BSD-STATS-ETL] standings L31 | Int. Friendly Games 2025 : 2 équipes
+[BSD-STATS-ETL] standings L34 | Brasileiro Serie B 2026 : 20 équipes
+[BSD-STATS-ETL] standings L36 | Liga F Moeve 25/26 : 16 équipes
+[BSD-STATS-ETL] standings L38 : aucune saison
+[BSD-STATS-ETL] standings L39 : aucune saison
+[BSD-STATS-ETL] standings L40 : aucune saison
+[BSD-STATS-ETL] standings L41 : aucune saison
+[BSD-STATS-ETL] standings L42 : aucune saison
+[BSD-STATS-ETL] standings L43 : aucune saison
+[BSD-STATS-ETL] standings L44 : aucune saison
+[BSD-STATS-ETL] standings L46 : aucune saison
+[BSD-STATS-ETL] standings L47 : aucune saison
+[BSD-STATS-ETL] standings L48 : aucune saison
+[BSD-STATS-ETL] standings L49 : aucune saison
+[BSD-STATS-ETL] standings L50 : aucune saison
+[BSD-STATS-ETL] standings L51 : aucune saison
+[BSD-STATS-ETL] standings L52 | Chinese Super League 2026 : 16 équipes
+[BSD-STATS-ETL] standings L52 | Chinese Super League 2025 : 16 équipes
+[BSD-STATS-ETL] standings L52 | Chinese Super League 2024 : 16 équipes
+[BSD-STATS-ETL] standings L52 | Super League 2023 : 16 équipes
+[BSD-STATS-ETL] standings L53 : aucune saison
+[BSD-STATS-ETL] standings L54 : aucune saison
+[BSD-STATS-ETL] standings L55 : aucune saison
+[BSD-STATS-ETL] standings L56 : aucune saison
+[BSD-STATS-ETL] standings L57 : aucune saison
+[BSD-STATS-ETL] standings L58 : aucune saison
+[BSD-STATS-ETL] standings L59 : aucune saison
+[BSD-STATS-ETL] standings L60 : aucune saison
+[BSD-STATS-ETL] standings L61 : aucune saison
+[BSD-STATS-ETL] standings L62 : aucune saison
+[BSD-STATS-ETL] standings L63 : aucune saison
+[BSD-STATS-ETL] standings L64 : aucune saison
+[BSD-STATS-ETL] standings L65 : aucune saison
+[BSD-STATS-ETL] standings L66 : aucune saison
+[BSD-STATS-ETL] standings L67 : aucune saison
+[BSD-STATS-ETL] standings L68 : aucune saison
+[BSD-STATS-ETL] standings L69 : aucune saison
+[BSD-STATS-ETL] matches — 380 events déjà en base (resume-safe)
+[BSD-STATS-ETL] L1 | 2025-2026 : 0 insérés (0 avec stats, 4p)
+[BSD-STATS-ETL] L2 | 2025-2026 : 308 insérés (308 avec stats, 4p)
+[BSD-STATS-ETL] L3 | 2025-2026 : 380 insérés (380 avec stats, 4p)
+[BSD-STATS-ETL] L4 | 2025-2026 : 380 insérés (380 avec stats, 4p)
+[BSD-STATS-ETL] L5 | 2025-2026 : 308 insérés (308 avec stats, 4p)
+[BSD-STATS-ETL] L6 | 2025-2026 : 309 insérés (309 avec stats, 4p)
+[BSD-STATS-ETL] L7 | 2025-2026 : 255 insérés (216 avec stats, 3p)
+[BSD-STATS-ETL] L8 | 2025-2026 : 237 insérés (212 avec stats, 3p)
+[BSD-STATS-ETL] L9 | 2025-2026 : 454 insérés (399 avec stats, 5p)
+[BSD-STATS-ETL] L10 | 2025-2026 : 321 insérés (321 avec stats, 4p)
+[BSD-STATS-ETL] L11 | 2025-2026 : 306 insérés (306 avec stats, 4p)
+[BSD-STATS-ETL] L12 | 2025-2026 : 556 insérés (556 avec stats, 6p)
+[BSD-STATS-ETL] L13 | 2025-2026 : 234 insérés (230 avec stats, 3p)
+[BSD-STATS-ETL] L14 | 2025-2026 : 313 insérés (313 avec stats, 4p)
+[BSD-STATS-ETL] L15 | 2025-2026 : 223 insérés (223 avec stats, 3p)
+[BSD-STATS-ETL] L17 | 2025-2026 : 306 insérés (306 avec stats, 4p)
+[BSD-STATS-ETL] L18 | 2025-2026 : 393 insérés (393 avec stats, 4p)
+[BSD-STATS-ETL] L19 | 2025-2026 : 144 insérés (144 avec stats, 2p)
+[BSD-STATS-ETL] L20 | 2025-2026 : 167 insérés (167 avec stats, 2p)
+[BSD-STATS-ETL] L22 | 2025-2026 : 278 insérés (274 avec stats, 3p)
+[BSD-STATS-ETL] L23 | 2025-2026 : 297 insérés (296 avec stats, 3p)
+[BSD-STATS-ETL] L24 | 2025-2026 : 260 insérés (236 avec stats, 3p)
+[BSD-STATS-ETL] L25 | 2025-2026 : 289 insérés (289 avec stats, 3p)
+[BSD-STATS-ETL] L26 | 2025-2026 : 185 insérés (185 avec stats, 2p)
+[BSD-STATS-ETL] L28 | 2025-2026 : 377 insérés (185 avec stats, 4p)
+[BSD-STATS-ETL] L29 | 2025-2026 : 154 insérés (62 avec stats, 2p)
+[BSD-STATS-ETL] L30 | 2025-2026 : 52 insérés (51 avec stats, 1p)
+[BSD-STATS-ETL] L31 | 2025-2026 : 250 insérés (144 avec stats, 3p)
+[BSD-STATS-ETL] L32 | 2025-2026 : 125 insérés (125 avec stats, 2p)
+[BSD-STATS-ETL] L33 | 2025-2026 : 112 insérés (112 avec stats, 2p)
+[BSD-STATS-ETL] L34 | 2025-2026 : 117 insérés (117 avec stats, 2p)
+[BSD-STATS-ETL] L35 | 2025-2026 : 126 insérés (117 avec stats, 2p)
+[BSD-STATS-ETL] L36 | 2025-2026 : 240 insérés (240 avec stats, 3p)
+[BSD-STATS-ETL] L38 | 2025-2026 : 466 insérés (466 avec stats, 5p)
+[BSD-STATS-ETL] L39 | 2025-2026 : 123 insérés (81 avec stats, 2p)
+[BSD-STATS-ETL] L40 | 2025-2026 : 92 insérés (92 avec stats, 1p)
+[BSD-STATS-ETL] L41 | 2025-2026 : 137 insérés (89 avec stats, 2p)
+[BSD-STATS-ETL] L42 | 2025-2026 : 45 insérés (41 avec stats, 1p)
+[BSD-STATS-ETL] L43 | 2025-2026 : 63 insérés (63 avec stats, 1p)
+[BSD-STATS-ETL] L44 | 2025-2026 : 198 insérés (78 avec stats, 2p)
+[BSD-STATS-ETL] L46 | 2025-2026 : 68 insérés (65 avec stats, 1p)
+[BSD-STATS-ETL] L47 | 2025-2026 : 239 insérés (22 avec stats, 3p)
+[BSD-STATS-ETL] L48 | 2025-2026 : 31 insérés (10 avec stats, 1p)
+[BSD-STATS-ETL] L49 | 2025-2026 : 200 insérés (200 avec stats, 2p)
+[BSD-STATS-ETL] L50 | 2025-2026 : 90 insérés (90 avec stats, 1p)
+[BSD-STATS-ETL] L51 | 2025-2026 : 15 insérés (12 avec stats, 1p)
+[BSD-STATS-ETL] L52 | 2025-2026 : 216 insérés (216 avec stats, 3p)
+[BSD-STATS-ETL] L53 | 2025-2026 : 184 insérés (168 avec stats, 2p)
+[BSD-STATS-ETL] L54 | 2025-2026 : 89 insérés (89 avec stats, 1p)
+[BSD-STATS-ETL] L55 | 2025-2026 : 58 insérés (58 avec stats, 1p)
+[BSD-STATS-ETL] L56 | 2025-2026 : 112 insérés (9 avec stats, 2p)
+[BSD-STATS-ETL] L57 | 2025-2026 : 133 insérés (133 avec stats, 2p)
+[BSD-STATS-ETL] L58 | 2025-2026 : 156 insérés (34 avec stats, 2p)
+[BSD-STATS-ETL] L59 | 2025-2026 : 10 insérés (0 avec stats, 1p)
+[BSD-STATS-ETL] L60 | 2025-2026 : 106 insérés (0 avec stats, 2p)
+[BSD-STATS-ETL] L61 | 2025-2026 : 8 insérés (1 avec stats, 1p)
+[BSD-STATS-ETL] L62 | 2025-2026 : 36 insérés (6 avec stats, 1p)
+[BSD-STATS-ETL] L64 | 2025-2026 : 4 insérés (4 avec stats, 1p)
+
+[BSD-STATS-ETL] === RÉSULTAT FINAL ===
+[BSD-STATS-ETL] match_stats_history insérés : 11335 (9931 avec stats)
+[BSD-STATS-ETL] team_season_stats rows : 1595
+[BSD-STATS-ETL] Erreurs : 0
+[BSD-STATS-ETL] Durée : 9.9 min
