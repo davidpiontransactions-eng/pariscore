@@ -26891,7 +26891,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         allPrematch.forEach(function(m){ if(m.tournament) _tnMap[m.tournament] = 1; });
         var _tnKeys = Object.keys(_tnMap).sort();
         var _tnOpts = '<option value="all">Tous</option>';
-        _tnKeys.forEach(function(t){ _tnOpts += '<option value="'+esc(t)+'"'+(_tournament===t?' selected':'')+'>'+esc(t)+'</option>'; });
+        _tnKeys.forEach(function(t){ _tnOpts += '<option value="'+root.Scope.esc(t)+'"'+(_tournament===t?' selected':'')+'>'+root.Scope.esc(t)+'</option>'; });
         pEl.innerHTML = '<div class="sc-filterbar" id="tennis-filterbar">'
           + '<div class="sc-filter-group">'
           + '<span class="sc-filter-label">Surface</span>'
