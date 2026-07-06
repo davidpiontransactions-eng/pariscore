@@ -298,10 +298,10 @@ export default function Home() {
                 {t("tabName")}
               </span>
             </div>
-            {data?.source === "odds-api" && (
+            {(data?.source === "odds-api" || data?.source === "bsd") && (
               <Badge variant="outline" className="ml-1 gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {t("liveBadge")}
+                {data?.source === "bsd" ? "BSD Live" : t("liveBadge")}
               </Badge>
             )}
             {data?.source === "mock" && (

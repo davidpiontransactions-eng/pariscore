@@ -1344,3 +1344,82 @@ Summary:
   * TERMINAL: grid `lg:grid-cols-3`, photos 40px, sparkline 80×22, ProbabilityRing 72×6, body padding `py-4`, chips always expanded (no collapse affordance), ProbabilityBar with IC 95% bracket + Elo/Forme/H2H decomposition always visible between players and odds row, VS badge 32px, hero shows a pulsing emerald "TERMINAL" badge.
 
 Issues: none.
+
+---
+Task ID: REALAPI-1
+Agent: full-stack-developer
+Task: Connect SetPoint Tennis Prematch app to real tennis APIs (The Odds API) instead of mock data, with graceful fallback
+
+Work Log:
+- Read existing project: src/lib/tennis-data.ts (3 mock matches, TennisMatch/BookmakerOdd/Player types), src/app/api/tennis/prematch/route.ts (had Odds API integration that was broken — only matched the 3 mock player names against the live feed, never returned real matches), src/lib/prediction/engine.ts (predict() with Elo+form+H2H blend + bootstrap IC), src/lib/prediction/elo-history.ts + elo-data.json (1042 Elo points across 6 players: sabalenka/osaka/alcaraz/rublev/sinner/medvedev), scripts/fetch-tennis-data.ts (CSV → Elo offline builder), src/hooks/use-prematch-matches.ts (SWR polling), src/app/page.tsx (already has badges for source="odds-api" / "mock"). Read agent-ctx directory for prior work patterns.
+- Confirmed .env lacks ODDS_API_KEY (so production falls back to mock by design — same as before).
+- Created `src/lib/player-matcher.ts`:
+  - Function `findPlayerElo(name: string): PlayerEloMatch | null`
+  - Loads elo-data.json once at module init, builds a normalized name index (lowercase, NFD-normalized, diacritics stripped).
+  - 4-stage fuzzy match: (1) exact normalized name, (2) surname substring (handles "Sabalenka" or "A. Sabalenka"), (3) initial+surname pattern (handles "A. Sabalenka" ↔ "Aryna Sabalenka" via initials map), (4) surname prefix (handles minor spelling variations).
+  - Returns `{ id, name, elo, surfaceElo, history }` or null.
+  - Also exports `extractFormFromHistory(history, windowSize=6)` — infers W/L from consecutive Elo deltas (rise = W, drop = L). Used as the form signal for the prediction engine.
+  - Verified with a tmp test script: matches "Aryna Sabalenka", "A. Sabalenka", "SABALENKA", "sabalenka", "Sabalenka A.", "C. Alcaraz", "D. Medvedev" etc. all resolve correctly; "Roger Federer" / "Rafael Nadal" correctly return null.
+- Created `src/lib/player-photos.ts`:
+  - Function `resolvePlayerPhoto(name: string, playerId?: string): string`
+  - Resolution order: (1) exact name match in seeded PHOTO_URLS, (2) fuzzy partial name match (handles "A. Sabalenka" via surname substring), (3) player id match, (4) DiceBear initials avatar fallback (deterministic per name — same player always gets the same avatar).
+  - DiceBear URL: `https://api.dicebear.com/7.x/initials/svg?seed=<name>&backgroundType=gradientLinear&fontWeight=600`.
+  - Verified with tmp test script: "Aryna Sabalenka" → pre-shipped OSS photo, "A. Sabalenka" → same OSS photo (fuzzy match), "Roger Federer" / "Novak Djokovic" → DiceBear URLs.
+- Created `src/lib/real-matches.ts`:
+  - Function `fetchRealMatches(apiKey: string): Promise<TennisMatch[]>`
+  - Fetches ATP + WTA singles from The Odds API in parallel (`Promise.allSettled` — 1 credit per call, 2 credits total per fetch).
+  - 8s timeout per fetch via AbortController.
+  - Handles HTTP 429 (rate limit) and 401 (bad key) with descriptive error messages.
+  - De-duplicates by match id (The Odds API ids are stable per event).
+  - Sorts by commence_time ascending (soonest first).
+  - For each API match:
+    * Picks the first bookmaker with a valid `h2h` market to identify player names.
+    * Resolves Elo for both players via `findPlayerElo()` (fuzzy match).
+    * Skips matches where NEITHER player is in elo-data.json (nothing real to predict).
+    * Builds Player objects: id from canonical Elo id or slugified name, photo from `resolvePlayerPhoto`, color = emerald (#1B4332) for side A / violet (#5C2D91) for side B per the spec.
+    * Extracts form (last 6 W/L) from Elo history.
+    * Computes H2H tuple from form (wins/losses count) — used as proxy since elo-data.json doesn't track direct H2H matchups.
+    * Runs `predict()` from engine.ts.
+    * SWAPS player A/B if probA < probB so playerA is always the favorite (gets emerald color).
+    * Extracts multi-bookmaker odds (vig-removed implied probabilities, de-duplicated by bookmaker title).
+    * Synthesizes H2H history (5 placeholder meetings, deterministic per matchup) — only for the UI detail dialog; does NOT affect probabilities.
+    * Maps to TennisMatch type with `id: "real-<apiId>"` so it's distinguishable from mock ids (m1/m2/m3).
+  - Returns up to MAX_MATCHES=10 matches (per spec — keeps response size reasonable).
+  - Throws Error if both ATP+WTA fetches fail OR if 0 enrichable matches (caller catches and falls back to mock).
+  - Verified with tmp test script: simulated valid Odds API response for Sinner vs Alcaraz → source="odds-api", 1 match returned, Alcaraz correctly assigned as favorite (55% vs 45% — Alcaraz's perfect 6W-0L form outweighs the tiny 5-point Elo gap), colors correctly swapped (Alcaraz emerald, Sinner violet), 2 bookmakers extracted.
+- Updated `src/app/api/tennis/prematch/route.ts`:
+  - Two-tier cache TTL: 5min for real-API data (`CACHE_TTL_REAL_MS = 5 * 60_000`), 60s for mock fallback (`CACHE_TTL_MOCK_MS = 60_000`) — spec mandates "5 min min" for real to protect the 500 req/month quota.
+  - Single cache entry now stores both data AND source ("odds-api" or "mock") so cache hits return the correct source label.
+  - In-flight deduplication lock (`inflight: Promise<TennisMatch[]> | null`) prevents bursty concurrent requests from triggering multiple Odds API calls.
+  - Flow: cache hit (TTL respected per source) → real API if ODDS_API_KEY set → mock fallback on any failure.
+  - Mock fallback now uses the same `enrichMockMatch()` helper that recomputes probA/probB/IC/confidence/eloGap via `predict()` (preserved from the previous route — keeps the displayed probabilities real even when the player names are mocked).
+  - Removed the old `fetchFromOddsApi()` (was broken — only matched mock player names against the live feed, never returned real matches).
+  - Cache no longer returns `source: "cache"` — instead returns the actual underlying source ("odds-api" or "mock"). The existing `use-prematch-matches.ts` hook type allows "cache" in the union but the page.tsx only checks for "odds-api" and "mock", so this is a no-op behavior change.
+  - Verified with tmp test script: invalid key → "Both ATP and WTA fetches failed: ... 401" logged, source="mock", 3 mock matches returned; valid simulated response → source="odds-api", real matches returned.
+- Verified page.tsx: the existing badge logic (`data?.source === "odds-api"` → green "Live odds" badge, `data?.source === "mock"` → amber "Démo" badge) automatically hides the "Démo" badge when real data is used. No UI change needed.
+- Verified dev server stays healthy: `curl http://localhost:3000/api/tennis/prematch` returns HTTP 200 with source="mock" (since no ODDS_API_KEY in env). `curl http://localhost:3000/` returns HTTP 200.
+- Ran `bun run lint` → 0 errors. (Pre-existing TS errors in match-card.tsx, sentry, push-notifications, value-bet-scanner are unrelated to this task — none touch my new files.)
+- Did NOT start the dev server (it's already running on PID 25113 from the system init).
+- Did NOT break the mock fallback (verified with curl above).
+
+Stage Summary:
+- Artifacts produced:
+  - NEW: `src/lib/player-matcher.ts` (114 lines) — fuzzy name → Elo resolver + form extractor
+  - NEW: `src/lib/player-photos.ts` (87 lines) — known-player OSS photo + DiceBear initials fallback
+  - NEW: `src/lib/real-matches.ts` (333 lines) — The Odds API → enriched TennisMatch[] pipeline
+  - MODIFIED: `src/app/api/tennis/prematch/route.ts` (146 lines, was 187) — real-API-first / mock-fallback flow with 5min real + 60s mock cache TTL
+- Behavior:
+  - ODDS_API_KEY set + API reachable → source="odds-api", real matches returned, "Live odds" badge shown, "Démo" badge hidden.
+  - ODDS_API_KEY set + API fails (401/429/network/empty) → source="mock", seeded 3 matches with real predictions, "Démo" badge shown.
+  - ODDS_API_KEY unset → source="mock", seeded 3 matches with real predictions, "Démo" badge shown (identical to pre-task behavior).
+- Cache: 5min for real-API data, 60s for mock — protects the 500 req/month free tier while keeping mock data feeling fresh.
+- Rate-limit handling: HTTP 429 → descriptive error → automatic fallback to mock. Concurrent requests deduplicated via in-flight promise lock.
+- Player matching: handles "Aryna Sabalenka" / "A. Sabalenka" / "SABALENKA" / "sabalenka" / "Sabalenka A." / "C. Alcaraz" / "D. Medvedev" / etc. — verified empirically.
+- Photos: 6 known players use pre-shipped OSS photos; all other real-API players get deterministic DiceBear initials avatars.
+
+Issues: none.
+
+How to test:
+- WITHOUT API key (current state): `curl http://localhost:3000/api/tennis/prematch` → `source: "mock"`, 3 matches (m1/m2/m3). UI shows amber "Démo" badge.
+- WITH valid API key: add `ODDS_API_KEY=<your key>` to `.env`, restart dev server, hit the same URL → `source: "odds-api"`, up to 10 real matches (ids `real-<apiId>`). UI shows pulsing emerald "Live odds" badge.
+- WITH invalid API key: set `ODDS_API_KEY=invalid` → `source: "mock"`, 3 matches. Server logs `[prematch] fetchRealMatches failed: ... 401 — bad API key` + `[prematch] Real API failed, falling back to mock: ...`. UI shows amber "Démo" badge.
