@@ -1,186 +1,145 @@
 import { NextResponse } from "next/server";
 import { MATCHES, type TennisMatch, type BookmakerOdd } from "@/lib/tennis-data";
 import { predict, type PlayerInputs } from "@/lib/prediction/engine";
+import { fetchRealMatches } from "@/lib/real-matches";
+import { fetchBSDMatches } from "@/lib/bsd-fetcher";
 
-// In-memory cache (60s TTL) — prevents hammering The Odds API
-type CacheEntry = { data: TennisMatch[]; at: number };
-const CACHE_TTL_MS = 60_000;
+// Cache config:
+//   - BSD / Odds API: 5-minute TTL (API limits)
+//   - Mock fallback: 60-second TTL
+const CACHE_TTL_REAL_MS = 5 * 60_000;
+const CACHE_TTL_MOCK_MS = 60_000;
+
+type Source = "bsd" | "odds-api" | "mock";
+
+type CacheEntry = {
+  data: TennisMatch[];
+  source: Source;
+  at: number;
+};
 let cache: CacheEntry | null = null;
 
-// Simple in-memory lock to avoid duplicate concurrent fetches
 let inflight: Promise<TennisMatch[]> | null = null;
 
 /**
  * GET /api/tennis/prematch
  *
- * Returns upcoming tennis matches with REAL predicted probabilities computed
- * by our Elo+Forme+Surface+H2H engine, plus multi-bookmaker odds (vig-removed).
+ * Priority: BSD > The Odds API > Mock
  *
- * Strategy:
- *   1. Return cached data if fresh (≤ 60s)
- *   2. Fetch odds from The Odds API if ODDS_API_KEY is set
- *   3. Otherwise use enriched mock odds (5 bookmakers per match)
- *   4. ALWAYS compute probA/probB/IC/confidence from our prediction engine
- *      (do NOT trust bookmaker implied probabilities for the displayed %)
+ * 1. BSD (sports.bzzoiro.com) — if BSD_API_KEY + BSD_TENNIS_ENABLED=true
+ * 2. The Odds API — if ODDS_API_KEY set
+ * 3. Mock fallback — enriched with real prediction engine
  */
 export async function GET() {
   const now = Date.now();
+  const bsdKey = process.env.BSD_API_KEY;
+  const bsdEnabled = process.env.BSD_TENNIS_ENABLED === "true";
+  const oddsKey = process.env.ODDS_API_KEY;
 
-  // 1. Cache
-  if (cache && now - cache.at < CACHE_TTL_MS) {
+  // 1. Cache hit?
+  if (cache && now - cache.at < cacheTtl(cache.source)) {
     return NextResponse.json({
       matches: cache.data,
-      source: "cache",
+      source: cache.source,
       updatedAt: new Date(cache.at).toISOString(),
     });
   }
 
-  // 2. Try live API
-  const apiKey = process.env.ODDS_API_KEY;
-  if (apiKey && !inflight) {
-    inflight = fetchFromOddsApi(apiKey).catch((err) => {
-      console.error("[prematch] Odds API failed:", err);
-      return null;
-    });
-  }
-
-  let liveOdds: Map<string, BookmakerOdd[]> | null = null;
-  if (inflight) {
+  // 2. Try BSD first (priority source)
+  if (bsdKey && bsdEnabled) {
     try {
-      liveOdds = await inflight;
-    } finally {
-      inflight = null;
+      const bsdMatches = await fetchBSDMatches();
+      cache = { data: bsdMatches, source: "bsd", at: now };
+      console.log("[prematch] BSD source —", bsdMatches.length, "matches");
+      return NextResponse.json({
+        matches: bsdMatches,
+        source: "bsd",
+        updatedAt: new Date(now).toISOString(),
+      });
+    } catch (err) {
+      console.error("[prematch] BSD failed, trying Odds API:", (err as Error).message);
+      // fall through to Odds API
     }
   }
 
-  // 3. Always recompute predictions from our engine
-  const matches = MATCHES.map((m) => {
-    const playerAInputs: PlayerInputs = {
-      id: m.playerA.id,
-      name: m.playerA.name,
-      elo: m.playerA.elo,
-      surfaceElo: m.playerA.surfaceElo ?? m.playerA.elo,
-      form: m.playerA.form,
-      h2h: parseH2H(m.stats.h2h), // wins/losses for player A
-    };
-    const playerBInputs: PlayerInputs = {
-      id: m.playerB.id,
-      name: m.playerB.name,
-      elo: m.playerB.elo,
-      surfaceElo: m.playerB.surfaceElo ?? m.playerB.elo,
-      form: m.playerB.form,
-      h2h: { won: parseH2H(m.stats.h2h).lost, lost: parseH2H(m.stats.h2h).won },
-    };
-    const pred = predict(playerAInputs, playerBInputs);
+  // 3. Try The Odds API
+  if (oddsKey) {
+    if (!inflight) {
+      inflight = fetchRealMatches(oddsKey).catch((err) => {
+        console.error("[prematch] fetchRealMatches failed:", err.message);
+        throw err;
+      });
+    }
+    try {
+      const realMatches = await inflight;
+      inflight = null;
+      cache = { data: realMatches, source: "odds-api", at: now };
+      return NextResponse.json({
+        matches: realMatches,
+        source: "odds-api",
+        updatedAt: new Date(now).toISOString(),
+      });
+    } catch (err) {
+      inflight = null;
+      console.error("[prematch] Odds API failed, falling back to mock:", (err as Error).message);
+    }
+  }
 
-    // Merge live odds if available, else use mock allOdds
-    const allOdds = liveOdds?.get(m.id) ?? m.allOdds ?? [];
-
-    // Pick the best (highest) odds for each player — value bet indicator
-    const bestA = allOdds.reduce((max, o) => (o.decimalA > max ? o.decimalA : max), 0);
-    const bestB = allOdds.reduce((max, o) => (o.decimalB > max ? o.decimalB : max), 0);
-    const bestBookmakerA = allOdds.find((o) => o.decimalA === bestA)?.bookmaker;
-    const bestBookmakerB = allOdds.find((o) => o.decimalB === bestB)?.bookmaker;
-
-    return {
-      ...m,
-      probA: pred.probA,
-      probB: pred.probB,
-      stats: {
-        ...m.stats,
-        ic: pred.ic,
-        confidence: pred.confidence,
-        eloGap: pred.eloGap,
-      },
-      model: pred.model,
-      allOdds,
-      odds: allOdds[0]
-        ? {
-            bookmaker: allOdds[0].bookmaker,
-            decimalA: allOdds[0].decimalA,
-            decimalB: allOdds[0].decimalB,
-          }
-        : m.odds,
-      // Stash best-value info for UI hints (not in the public type but useful)
-      ...(bestBookmakerA ? { _bestOddsA: { bookmaker: bestBookmakerA, decimal: bestA } } : {}),
-      ...(bestBookmakerB ? { _bestOddsB: { bookmaker: bestBookmakerB, decimal: bestB } } : {}),
-    } as TennisMatch;
-  });
-
-  cache = { data: matches, at: now };
-
+  // 4. Mock fallback
+  const matches = MATCHES.map((m) => enrichMockMatch(m));
+  cache = { data: matches, source: "mock", at: now };
   return NextResponse.json({
     matches,
-    source: liveOdds ? "odds-api" : "mock",
+    source: "mock",
     updatedAt: new Date(now).toISOString(),
   });
+}
+
+function cacheTtl(source: Source): number {
+  return source === "mock" ? CACHE_TTL_MOCK_MS : CACHE_TTL_REAL_MS;
+}
+
+function enrichMockMatch(m: TennisMatch): TennisMatch {
+  const h2hA = parseH2H(m.stats.h2h);
+  const playerAInputs: PlayerInputs = {
+    id: m.playerA.id,
+    name: m.playerA.name,
+    elo: m.playerA.elo,
+    surfaceElo: m.playerA.surfaceElo ?? m.playerA.elo,
+    form: m.playerA.form,
+    h2h: h2hA,
+  };
+  const playerBInputs: PlayerInputs = {
+    id: m.playerB.id,
+    name: m.playerB.name,
+    elo: m.playerB.elo,
+    surfaceElo: m.playerB.surfaceElo ?? m.playerB.elo,
+    form: m.playerB.form,
+    h2h: { won: h2hA.lost, lost: h2hA.won },
+  };
+  const pred = predict(playerAInputs, playerBInputs);
+
+  const allOdds: BookmakerOdd[] = m.allOdds ?? [];
+
+  return {
+    ...m,
+    probA: pred.probA,
+    probB: pred.probB,
+    stats: {
+      ...m.stats,
+      ic: pred.ic,
+      confidence: pred.confidence,
+      eloGap: pred.eloGap,
+    },
+    model: pred.model,
+    allOdds,
+    odds: allOdds[0]
+      ? { bookmaker: allOdds[0].bookmaker, decimalA: allOdds[0].decimalA, decimalB: allOdds[0].decimalB }
+      : m.odds,
+  } as TennisMatch;
 }
 
 function parseH2H(h2h: string): { won: number; lost: number } {
   const [won, lost] = h2h.split("-").map((n) => parseInt(n, 10));
   return { won: won || 0, lost: lost || 0 };
 }
-
-/**
- * Fetch upcoming tennis matches from The Odds API, return per-match odds
- * from ALL bookmakers (for the comparator).
- */
-async function fetchFromOddsApi(
-  apiKey: string
-): Promise<Map<string, BookmakerOdd[]> | null> {
-  const url = `https://api.the-odds-api.com/v4/sports/tennis_atp_singles/odds/?apiKey=${apiKey}&regions=eu&oddsFormat=decimal`;
-  const res = await fetch(url, { next: { revalidate: 60 } });
-  if (!res.ok) {
-    console.error(`[prematch] Odds API HTTP ${res.status}`);
-    return null;
-  }
-  const raw = (await res.json()) as OddsApiMatch[];
-  if (!Array.isArray(raw) || raw.length === 0) return null;
-
-  const result = new Map<string, BookmakerOdd[]>();
-  for (const m of MATCHES) {
-    const apiMatch = raw.find(
-      (r) =>
-        r.bookmakers?.[0]?.markets?.[0]?.outcomes?.some(
-          (o) => o.name === m.playerA.name
-        )
-    );
-    if (!apiMatch) continue;
-
-    const odds: BookmakerOdd[] = [];
-    for (const bm of apiMatch.bookmakers ?? []) {
-      const market = bm.markets?.[0];
-      if (!market) continue;
-      const outcomeA = market.outcomes.find((o) => o.name === m.playerA.name);
-      const outcomeB = market.outcomes.find((o) => o.name === m.playerB.name);
-      if (!outcomeA?.price || !outcomeB?.price) continue;
-
-      const invA = 1 / outcomeA.price;
-      const invB = 1 / outcomeB.price;
-      const vig = invA + invB;
-      const impliedProbA = Math.round((invA / vig) * 100);
-      odds.push({
-        bookmaker: bm.title,
-        decimalA: outcomeA.price,
-        decimalB: outcomeB.price,
-        impliedProbA,
-        impliedProbB: 100 - impliedProbA,
-        margin: Math.round((vig - 1) * 1000) / 1000,
-      });
-    }
-    if (odds.length > 0) result.set(m.id, odds);
-  }
-  return result;
-}
-
-type OddsApiMatch = {
-  id: string;
-  commence_time: string;
-  bookmakers?: {
-    title: string;
-    markets: {
-      key: string;
-      outcomes: { name: string; price: number }[];
-    }[];
-  }[];
-};
