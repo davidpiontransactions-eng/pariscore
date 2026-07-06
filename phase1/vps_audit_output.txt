@@ -1,0 +1,1357 @@
+############################################################
+#  PARISCORE VPS AUDIT — 2026-07-06T23:40:52Z
+############################################################
+
+===== [01] SYSTÈME — OS / KERNEL / UPTIME / LOAD =====
+--- uname / etc / issue ---
+Linux vps-e9076027 6.14.0-37-generic #37-Ubuntu SMP PREEMPT_DYNAMIC Fri Nov 14 22:10:32 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+
+PRETTY_NAME="Ubuntu 25.04"
+NAME="Ubuntu"
+VERSION_ID="25.04"
+VERSION="25.04 (Plucky Puffin)"
+VERSION_CODENAME=plucky
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=plucky
+LOGO=ubuntu-logo
+
+--- uptime / load ---
+ 01:40:52 up 52 days,  4:19,  6 users,  load average: 1.82, 1.02, 0.61
+
+--- CPU info (résumé) ---
+4
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           40 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  4
+On-line CPU(s) list:                     0-3
+Vendor ID:                               GenuineIntel
+Model name:                              Intel Core Processor (Haswell, no TSX)
+CPU family:                              6
+Model:                                   60
+Thread(s) per core:                      1
+Core(s) per socket:                      1
+Socket(s):                               4
+Stepping:                                1
+BogoMIPS:                                4788.90
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 syscall nx rdtscp lm constant_tsc rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm cpuid_fault pti tpr_shadow flexpriority ept vpid ept_ad fsgsbase bmi1 avx2 smep bmi2 erms invpcid xsaveopt arat vnmi md_clear
+Virtualization:                          VT-x
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               128 KiB (4 instances)
+L1i cache:                               128 KiB (4 instances)
+L2 cache:                                16 MiB (4 instances)
+L3 cache:                                64 MiB (4 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-3
+
+--- memory ---
+               total        used        free      shared  buff/cache   available
+Mem:           7.6Gi       1.4Gi       4.3Gi       220Ki       2.1Gi       6.1Gi
+Swap:          2.0Gi       1.5Gi       495Mi
+
+--- disk usage ---
+Filesystem     Type   Size  Used Avail Use% Mounted on
+/dev/sda1      ext4    72G   39G   34G  54% /
+/dev/sda13     ext4   989M  129M  794M  14% /boot
+/dev/sda15     vfat   105M  6.1M   99M   6% /boot/efi
+
+--- iostat (si disponible) ---
+loop0            0.00      0.00     0.00   0.00    0.00     1.27    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.00
+sda              0.56     28.35     0.25  31.21    0.28    50.69   15.81    455.18    15.02  48.72    1.03    28.80    2.11   9280.01     0.00   0.00    0.15  4391.67    2.56    0.19    0.02   0.19
+
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           2.26    0.00    0.75    0.00    0.00   96.98
+
+Device            r/s     rkB/s   rrqm/s  %rrqm r_await rareq-sz     w/s     wkB/s   wrqm/s  %wrqm w_await wareq-sz     d/s     dkB/s   drqm/s  %drqm d_await dareq-sz     f/s f_await  aqu-sz  %util
+loop0            0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.00
+sda              0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.00
+
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           3.52    0.00    1.01    0.25    0.00   95.23
+
+Device            r/s     rkB/s   rrqm/s  %rrqm r_await rareq-sz     w/s     wkB/s   wrqm/s  %wrqm w_await wareq-sz     d/s     dkB/s   drqm/s  %drqm d_await dareq-sz     f/s f_await  aqu-sz  %util
+loop0            0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.00   0.00
+sda             67.00    712.00   111.00  62.36    0.31    10.63    0.00      0.00     0.00   0.00    0.00     0.00    0.00      0.00     0.00   0.00    0.00     0.00    0.00    0.00    0.02   1.20
+
+
+
+===== [02] RÉSEAU — PORTS ÉCOUTE / FIREWALL / FAIL2BAN =====
+--- ports en écoute (IPv4 + IPv6) ---
+State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess                                       
+LISTEN 0      2048         0.0.0.0:8000       0.0.0.0:*    users:(("uvicorn",pid=226442,fd=13))         
+LISTEN 0      4096      127.0.0.54:53         0.0.0.0:*                                                 
+LISTEN 0      4096   127.0.0.53%lo:53         0.0.0.0:*                                                 
+LISTEN 0      511          0.0.0.0:5173       0.0.0.0:*    users:(("node",pid=216145,fd=17))            
+LISTEN 0      511          0.0.0.0:443        0.0.0.0:*                                                 
+LISTEN 0      4096         0.0.0.0:22         0.0.0.0:*                                                 
+LISTEN 0      511          0.0.0.0:80         0.0.0.0:*                                                 
+LISTEN 0      4096       127.0.0.1:11434      0.0.0.0:*                                                 
+LISTEN 0      4096       127.0.0.1:8191       0.0.0.0:*                                                 
+LISTEN 0      511                *:3000             *:*    users:(("node /home/ubun",pid=1310918,fd=26))
+LISTEN 0      512                *:3001             *:*    users:(("bun",pid=1048610,fd=70))            
+LISTEN 0      4096            [::]:22            [::]:*                                                 
+
+--- connexions établies (top 20) ---
+Recv-Q Send-Q               Local Address:Port         Peer Address:Port 
+0      0                     51.75.21.239:53728        188.114.96.2:443  
+0      0                     51.75.21.239:443        52.167.144.182:55696
+0      0                     51.75.21.239:443        52.167.144.196:58856
+0      0                     51.75.21.239:22          64.226.96.149:42564
+0      1620                  51.75.21.239:22            37.65.65.25:21420
+0      0      [2001:41d0:305:2100::1:2fd]:55416 [2a06:98c1:3120::2]:443  
+
+--- ufw status ---
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+80,443/tcp (Nginx Full)    ALLOW IN    Anywhere                  
+22/tcp                     ALLOW IN    Anywhere                  
+Anywhere                   DENY IN     37.65.65.25               
+Anywhere                   DENY IN     78.153.140.0/24           
+80,443/tcp (Nginx Full (v6)) ALLOW IN    Anywhere (v6)             
+22/tcp (v6)                ALLOW IN    Anywhere (v6)             
+
+
+--- iptables (résumé) ---
+Chain INPUT (policy DROP)
+num  target     prot opt source               destination         
+1    ufw-before-logging-input  all  --  0.0.0.0/0            0.0.0.0/0           
+2    ufw-before-input  all  --  0.0.0.0/0            0.0.0.0/0           
+3    ufw-after-input  all  --  0.0.0.0/0            0.0.0.0/0           
+4    ufw-after-logging-input  all  --  0.0.0.0/0            0.0.0.0/0           
+5    ufw-reject-input  all  --  0.0.0.0/0            0.0.0.0/0           
+6    ufw-track-input  all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain FORWARD (policy DROP)
+num  target     prot opt source               destination         
+1    DOCKER-USER  all  --  0.0.0.0/0            0.0.0.0/0           
+2    DOCKER-FORWARD  all  --  0.0.0.0/0            0.0.0.0/0           
+3    ufw-before-logging-forward  all  --  0.0.0.0/0            0.0.0.0/0           
+4    ufw-before-forward  all  --  0.0.0.0/0            0.0.0.0/0           
+5    ufw-after-forward  all  --  0.0.0.0/0            0.0.0.0/0           
+6    ufw-after-logging-forward  all  --  0.0.0.0/0            0.0.0.0/0           
+7    ufw-reject-forward  all  --  0.0.0.0/0            0.0.0.0/0           
+8    ufw-track-forward  all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain OUTPUT (policy ACCEPT)
+num  target     prot opt source               destination         
+1    ufw-before-logging-output  all  --  0.0.0.0/0            0.0.0.0/0           
+2    ufw-before-output  all  --  0.0.0.0/0            0.0.0.0/0           
+3    ufw-after-output  all  --  0.0.0.0/0            0.0.0.0/0           
+4    ufw-after-logging-output  all  --  0.0.0.0/0            0.0.0.0/0           
+5    ufw-reject-output  all  --  0.0.0.0/0            0.0.0.0/0           
+6    ufw-track-output  all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER (1 references)
+num  target     prot opt source               destination         
+1    ACCEPT     tcp  --  0.0.0.0/0            172.17.0.2           tcp dpt:8191
+2    DROP       all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-BRIDGE (1 references)
+num  target     prot opt source               destination         
+1    DOCKER     all  --  0.0.0.0/0            0.0.0.0/0           
+
+Chain DOCKER-CT (1 references)
+num  target     prot opt source               destination         
+
+--- fail2ban status ---
+(fail2ban non installé)
+
+--- nftables ---
+table ip filter {
+	chain ufw-before-logging-input {
+	}
+
+	chain ufw-before-logging-output {
+	}
+
+	chain ufw-before-logging-forward {
+	}
+
+	chain ufw-before-input {
+		iifname "lo" counter packets 19498174 bytes 34914849035 accept
+		ct state related,established counter packets 89611082 bytes 431922417503 accept
+		ct state invalid counter packets 1758236 bytes 957300145 jump ufw-logging-deny
+		ct state invalid counter packets 1758236 bytes 957300145 drop
+		ip protocol icmp icmp type destination-unreachable counter packets 0 bytes 0 accept
+		ip protocol icmp icmp type time-exceeded counter packets 0 bytes 0 accept
+		ip protocol icmp icmp type parameter-problem counter packets 0 bytes 0 accept
+		ip protocol icmp icmp type echo-request counter packets 2119471 bytes 77656673 accept
+		udp sport 67 udp dport 68 counter packets 0 bytes 0 accept
+		counter packets 2038377 bytes 154902138 jump ufw-not-local
+		ip daddr 224.0.0.251 udp dport 5353 counter packets 0 bytes 0 accept
+		ip daddr 239.255.255.250 udp dport 1900 counter packets 0 bytes 0 accept
+		counter packets 2038377 bytes 154902138 jump ufw-user-input
+	}
+
+	chain ufw-before-output {
+		oifname "lo" counter packets 19258176 bytes 34902369139 accept
+		ct state related,established counter packets 65867056 bytes 36035826523 accept
+		counter packets 2417875 bytes 164326812 jump ufw-user-output
+
+===== [03] SSH CONFIG — SÉCURITÉ ACCÈS =====
+--- sshd_config (options critiques) ---
+KbdInteractiveAuthentication no
+UsePAM yes
+X11Forwarding yes
+PasswordAuthentication yes
+PasswordAuthentication no
+
+--- utilisateurs avec shell ---
+root:0:/bin/bash
+ubuntu:1000:/bin/bash
+
+--- sudoers ---
+Defaults	env_reset
+Defaults	mail_badpass
+Defaults	secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults	use_pty
+root	ALL=(ALL:ALL) ALL
+%admin ALL=(ALL) ALL
+%sudo	ALL=(ALL:ALL) ALL
+@includedir /etc/sudoers.d
+90-cloud-init-users
+README
+
+--- dernières connexions (last) ---
+
+--- dernières authentifications échouées (lastb) ---
+(lastb non accessible)
+
+===== [04] PM2 — PROCESS / APP STATUS =====
+--- pm2 list ---
+┌────┬────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name           │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 18 │ pariscore      │ default     │ 0.2.0   │ fork    │ 1310918  │ 93s    │ 0    │ online    │ 0%       │ 491.0mb  │ ubuntu   │ disabled │
+│ 14 │ tennis-live    │ default     │ N/A     │ fork    │ 1048609  │ 26h    │ 0    │ online    │ 0%       │ 2.6mb    │ ubuntu   │ disabled │
+└────┴────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+
+--- pm2 jlist (détails JSON) ---
+[{"pid":1048609,"name":"tennis-live","pm2_env":{"name":"tennis-live","filter_env":[],"namespace":"default","cwd":"/home/ubuntu/pariscore/mini-services/tennis-live","args":["-c","bun run dev"],"env":{"SHELL":"/bin/bash","PWD":"/home/ubuntu/pariscore/mini-services/tennis-live","LOGNAME":"ubuntu","XDG_SESSION_TYPE":"tty","HOME":"/home/ubuntu","LANG":"C.UTF-8","LS_COLORS":"rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:","SSH_CONNECTION":"37.65.65.25 22225 51.75.21.239 22","LESSCLOSE":"/usr/bin/lesspipe %s %s","XDG_SESSION_CLASS":"user","TERM":"xterm-256color","LESSOPEN":"| /usr/bin/lesspipe %s","USER":"ubuntu","SHLVL":"1","XDG_SESSION_ID":"25166","XDG_RUNTIME_DIR":"/run/user/1000","SSH_CLIENT":"37.65.65.25 22225 22","DEBUGINFOD_URLS":"https://debuginfod.ubuntu.com ","BUN_INSTALL":"/home/ubuntu/.bun","XDG_DATA_DIRS":"/usr/local/share:/usr/share:/var/lib/snapd/desktop","PATH":"/home/ubuntu/.local/bin:/home/ubuntu/.bun/bin:/home/ubuntu/.bun/bin:/home/ubuntu/.local/share/pi-node/node-v22.22.3-linux-x64/bin:/home/ubuntu/.local/bin:/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1000/bus","SSH_TTY":"/dev/pts/0","OLDPWD":"/home/ubuntu/pariscore","_":"/usr/bin/pm2","PM2_USAGE":"CLI","PM2_HOME":"/home/ubuntu/.pm2","tennis-live":{},"unique_id":"aef8da9e-42dd-4236-80fe-5948bc64fe66"},"merge_logs":true,"vizion":true,"autostart":true,"autorestart":true,"watch":false,"instance_var":"NODE_APP_INSTANCE","pmx":true,"automation":true,"treekill":true,"username":"ubuntu","windowsHide":true,"kill_retry_time":100,"node_args":[],"pm_exec_path":"/usr/bin/bash","pm_cwd":"/home/ubuntu/pariscore/mini-services/tennis-live","exec_interpreter":"none","exec_mode":"fork_mode","instances":1,"pm_out_log_path":"/home/ubuntu/.pm2/logs/tennis-live-out.log","pm_err_log_path":"/home/ubuntu/.pm2/logs/tennis-live-error.log","pm_pid_path":"/home/ubuntu/.pm2/pids/tennis-live-14.pid","km_link":false,"vizion_running":false,"NODE_APP_INSTANCE":0,"SHELL":"/bin/bash","PWD":"/home/ubuntu/pariscore/mini-services/tennis-live","LOGNAME":"ubuntu","XDG_SESSION_TYPE":"tty","HOME":"/home/ubuntu","LANG":"C.UTF-8","LS_COLORS":"rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.7z=01;31:*.ace=01;31:*.alz=01;31:*.apk=01;31:*.arc=01;31:*.arj=01;31:*.bz=01;31:*.bz2=01;31:*.cab=01;31:*.cpio=01;31:*.crate=01;31:*.deb=01;31:*.drpm=01;31:*.dwm=01;31:*.dz=01;31:*.ear=01;31:*.egg=01;31:*.esd=01;31:*.gz=01;31:*.jar=01;31:*.lha=01;31:*.lrz=01;31:*.lz=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.lzo=01;31:*.pyz=01;31:*.rar=01;31:*.rpm=01;31:*.rz=01;31:*.sar=01;31:*.swm=01;31:*.t7z=01;31:*.tar=01;31:*.taz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tgz=01;31:*.tlz=01;31:*.txz=01;31:*.tz=01;31:*.tzo=01;31:*.tzst=01;31:*.udeb=01;31:*.war=01;31:*.whl=01;31:*.wim=01;31:*.xz=01;31:*.z=01;31:*.zip=01;31:*.zoo=01;31:*.zst=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:","SSH_CONNECTION":"37.65.65.25 22225 51.75.21.239 22","LESSCLOSE":"/usr/bin/lesspipe %s %s","XDG_SESSION_CLASS":"user","TERM":"xterm-256color","LESSOPEN":"| /usr/bin/lesspipe %s","USER":"ubuntu","SHLVL":"1","XDG_SESSION_ID":"25166","XDG_RUNTIME_DIR":"/run/user/1000","SSH_CLIENT":"37.65.65.25 22225 22","DEBUGINFOD_URLS":"https://debuginfod.ubuntu.com ","BUN_INSTALL":"/home/ubuntu/.bun","XDG_DATA_DIRS":"/usr/local/share:/usr/share:/var/lib/snapd/desktop","PATH":"/home/ubuntu/.local/bin:/home/ubuntu/.bun/bin:/home/ubuntu/.bun/bin:/home/ubuntu/.local/share/pi-node/node-v22.22.3-linux-x64/bin:/home/ubuntu/.local/bin:/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1000/bus","SSH_TTY":"/dev/pts/0","OLDPWD":"/home/ubuntu/pariscore","_":"/usr/bin/pm2","PM2_USAGE":"CLI","PM2_HOME":"/home/ubuntu/.pm2","unique_id":"aef8da9e-42dd-4236-80fe-5948bc64fe66","status":"online","pm_uptime":1783285648475,"axm_actions":[],"axm_monitor":{},"axm_options":{},"axm_dynamic":{},"created_at":1783285648475,"pm_id":14,"restart_time":0,"unstable_restarts":0,"version":"N/A"},"pm_id":14,"monit":{"memory":2760704,"cpu":0}},{"pid":1310918,"name":"pariscore","pm2_env":{"name":"pariscore","cwd":"/home/ubuntu/pariscore","log_date_format":"YYYY-MM-DDTHH:mm:ss","time":true,"env":{"SHELL":"/bin/bash","PWD":"/home/ubuntu/pariscore","LOGNAME":"ubuntu","XDG_SESSION_TYPE":"tty","HOME":"/home/ubuntu","LANG":"C.UTF-8","SSH_CONNECTION":"37.65.65.25 21978 51.75.21.239 22","XDG_SESSION_CLASS":"user","USER":"ubuntu","SHLVL":"1","XDG_SESSION_ID":"25934","XDG_RUNTIME_DIR":"/run/user/1000","SSH_CLIENT":"37.65.65.25 21978 22","PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1000/bus","OLDPWD":"/home/ubuntu","_":"/usr/bin/pm2","PM2_USAGE":"CLI","PM2_JSON_PROCESSING":"true","NODE_ENV":"production","PORT":3000,"PM2_HOME":"/home/ubuntu/.pm2","max_memory_restart":"2G","pariscore":"{\"max_memory_restart\":\"2G\"}","unique_id":"2d6cc602-dde6-4531-8137-f99de388bdeb"},"max_memory_restart":"2G","instances":1,"kill_timeout":5000,"vizion":true,"autostart":true,"autorestart":true,"watch":false,"exec_mode":"fork_mode","instance_var":"NODE_APP_INSTANCE","pmx":true,"automation":true,"treekill":true,"username":"ubuntu","windowsHide":true,"kill_retry_time":100,"namespace":"default","node_args":[],"pm_exec_path":"/home/ubuntu/pariscore/server.js","pm_cwd":"/home/ubuntu/pariscore","exec_interpreter":"node","pm_out_log_path":"/home/ubuntu/pariscore/logs/pariscore.out-18.log","pm_err_log_path":"/home/ubuntu/pariscore/logs/pariscore.err-18.log","pm_pid_path":"/home/ubuntu/.pm2/pids/pariscore-18.pid","km_link":false,"vizion_running":false,"NODE_APP_INSTANCE":0,"SHELL":"/bin/bash","PWD":"/home/ubuntu/pariscore","LOGNAME":"ubuntu","XDG_SESSION_TYPE":"tty","HOME":"/home/ubuntu","LANG":"C.UTF-8","SSH_CONNECTION":"37.65.65.25 21978 51.75.21.239 22","XDG_SESSION_CLASS":"user","USER":"ubuntu","SHLVL":"1","XDG_SESSION_ID":"25934","XDG_RUNTIME_DIR":"/run/user/1000","SSH_CLIENT":"37.65.65.25 21978 22","PATH":"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin","DBUS_SESSION_BUS_ADDRESS":"unix:path=/run/user/1000/bus","OLDPWD":"/home/ubuntu","_":"/usr/bin/pm2","PM2_USAGE":"CLI","PM2_JSON_PROCESSING":"true","NODE_ENV":"production","PORT":3000,"PM2_HOME":"/home/ubuntu/.pm2","pariscore":"{\"max_memory_restart\":\"2G\"}","unique_id":"2d6cc602-dde6-4531-8137-f99de388bdeb","status":"online","pm_uptime":1783381160811,"axm_actions":[{"action_name":"km:heapdump","action_type":"internal","arity":2},{"action_name":"km:cpu:profiling:start","action_type":"internal","arity":2},{"action_name":"km:cpu:profiling:stop","action_type":"internal","arity":1},{"action_name":"km:heap:sampling:start","action_type":"internal","arity":2},{"action_name":"km:heap:sampling:stop","action_type":"internal","arity":1}],"axm_monitor":{"Heap Size":{"historic":true,"unit":"MiB","type":"internal/v8/heap/total","value":"363.43"},"Heap Usage":{"historic":true,"unit":"%","type":"internal/v8/heap/usage","value":50.32},"Used Heap Size":{"historic":true,"unit":"MiB","type":"internal/v8/heap/used","value":"182.87"},"Active requests":{"historic":true,"type":"internal/libuv/requests","value":0},"Active handles":{"historic":true,"type":"internal/libuv/handles","value":6},"Event Loop Latency":{"historic":true,"unit":"ms","type":"internal/libuv/latency/p50","value":"0.70"},"Event Loop Latency p95":{"historic":true,"unit":"ms","type":"internal/libuv/latency/p95","value":"3139.35"},"HTTP Mean Latency":{"historic":true,"unit":"ms","type":"internal/http/builtin/latency/p50","value":3},"HTTP P95 Latency":{"historic":true,"unit":"ms","type":"internal/http/builtin/latency/p95","value":205.99999999999994},"HTTP":{"historic":true,"unit":"req/min","type":"internal/http/builtin/reqs","value":0.21}},"axm_options":{"error":true,"heapdump":true,"feature.profiler.heapsnapshot":false,"feature.profiler.heapsampling":true,"feature.profiler.cpu_js":true,"latency":true,"catchExceptions":true,"profiling":true,"metrics":{"v8":true,"network":false,"eventLoop":true,"runtime":true,"http":true},"standalone":false,"tracing":{"enabled":false,"outbound":false},"module_conf":{"max_memory_restart":"2G"},"apm":{"type":"node","version":"8.0.0"},"module_name":"pariscore","module_version":"7.0.1","max_memory_restart":"2G"},"axm_dynamic":{},"created_at":1783381160811,"pm_id":18,"restart_time":0,"unstable_restarts":0,"version":"0.2.0","node_version":"20.20.2"},"pm_id":18,"monit":{"memory":515891200,"cpu":13}}]
+--- pm2 describe pariscore ---
+ Describing process with id 18 - name pariscore 
+┌────────────────────┬──────────────────────────────────────────────────┐
+│ status             │ online                                           │
+│ name               │ pariscore                                        │
+│ namespace          │ default                                          │
+│ version            │ 0.2.0                                            │
+│ restarts           │ 0                                                │
+│ max memory restart │ 2G                                               │
+│ uptime             │ 94s                                              │
+│ script path        │ /home/ubuntu/pariscore/server.js                 │
+│ script args        │ N/A                                              │
+│ error log path     │ /home/ubuntu/pariscore/logs/pariscore.err-18.log │
+│ out log path       │ /home/ubuntu/pariscore/logs/pariscore.out-18.log │
+│ pid path           │ /home/ubuntu/.pm2/pids/pariscore-18.pid          │
+│ interpreter        │ node                                             │
+│ interpreter args   │ N/A                                              │
+│ script id          │ 18                                               │
+│ exec cwd           │ /home/ubuntu/pariscore                           │
+│ exec mode          │ fork_mode                                        │
+│ node.js version    │ 20.20.2                                          │
+│ node env           │ production                                       │
+│ watch & reload     │ ✘                                                │
+│ unstable restarts  │ 0                                                │
+│ created at         │ 2026-07-06T23:39:20.811Z                         │
+└────────────────────┴──────────────────────────────────────────────────┘
+Process configuration
+┌────────────────────┬────┐
+│ max_memory_restart │ 2G │
+└────────────────────┴────┘
+ Actions available 
+┌────────────────────────┐
+│ km:heapdump            │
+│ km:cpu:profiling:start │
+│ km:cpu:profiling:stop  │
+│ km:heap:sampling:start │
+│ km:heap:sampling:stop  │
+└────────────────────────┘
+ Trigger via: pm2 trigger pariscore <action_name>
+
+ Code metrics value 
+┌────────────────────────┬───────────────────────┐
+│ Heap Size              │ 363.43 MiB            │
+│ Heap Usage             │ 50.32 %               │
+│ Used Heap Size         │ 182.87 MiB            │
+│ Active requests        │ 0                     │
+│ Active handles         │ 6                     │
+│ Event Loop Latency     │ 0.70 ms               │
+│ Event Loop Latency p95 │ 3139.35 ms            │
+│ HTTP Mean Latency      │ 3 ms                  │
+│ HTTP P95 Latency       │ 205.99999999999994 ms │
+│ HTTP                   │ 0.21 req/min          │
+└────────────────────────┴───────────────────────┘
+ Divergent env variables from local env 
+┌────────────────┬───────────────────────────────────┐
+│ PWD            │ /home/ubuntu/pariscore            │
+│ SSH_CONNECTION │ 37.65.65.25 21978 51.75.21.239 22 │
+│ XDG_SESSION_ID │ 25934                             │
+│ SSH_CLIENT     │ 37.65.65.25 21978 22              │
+└────────────────┴───────────────────────────────────┘
+
+
+--- pm2 logs (50 dernières lignes) ---
+[TAILING] Tailing last 50 lines for [pariscore] process (change the value with --lines option)
+/home/ubuntu/pariscore/logs/pariscore.err-18.log last 50 lines:
+18|parisco | 2026-07-06T23:40:47:   [DEBUG STANDINGS] Standings vides BSD 8 saison 1269 status=200
+18|parisco | 2026-07-06T23:40:47: [CacheBuffer] Invalid data from bsd_standings/8_3. Schema mismatch.
+18|parisco | 2026-07-06T23:40:47: [CacheBuffer] VIDE : aucun cache bsd_standings/8_3
+18|parisco | 2026-07-06T23:40:47:   [DEBUG STANDINGS] BSD KO pour ligue 3 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:51:   [DEBUG STANDINGS] Standings vides BSD 59 saison 1480 status=200
+18|parisco | 2026-07-06T23:40:51: [CacheBuffer] Invalid data from bsd_standings/59_30. Schema mismatch.
+18|parisco | 2026-07-06T23:40:51: [CacheBuffer] VIDE : aucun cache bsd_standings/59_30
+18|parisco | 2026-07-06T23:40:51:   [DEBUG STANDINGS] BSD KO pour ligue 30 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:52:   [DEBUG STANDINGS] Standings vides BSD 58 saison 1491 status=200
+18|parisco | 2026-07-06T23:40:52: [CacheBuffer] Invalid data from bsd_standings/58_34. Schema mismatch.
+18|parisco | 2026-07-06T23:40:52: [CacheBuffer] VIDE : aucun cache bsd_standings/58_34
+18|parisco | 2026-07-06T23:40:52:   [DEBUG STANDINGS] BSD KO pour ligue 34 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:52:   [DEBUG STANDINGS] Standings vides BSD 68 saison 1080 status=200
+18|parisco | 2026-07-06T23:40:52: [CacheBuffer] Invalid data from bsd_standings/68_36. Schema mismatch.
+18|parisco | 2026-07-06T23:40:52: [CacheBuffer] VIDE : aucun cache bsd_standings/68_36
+18|parisco | 2026-07-06T23:40:52:   [DEBUG STANDINGS] BSD KO pour ligue 36 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] Standings vides BSD 1 saison 1058 status=200
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] Invalid data from bsd_standings/1_39. Schema mismatch.
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] VIDE : aucun cache bsd_standings/1_39
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] BSD KO pour ligue 39 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] Standings vides BSD 12 saison 1111 status=200
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] Invalid data from bsd_standings/12_40. Schema mismatch.
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] VIDE : aucun cache bsd_standings/12_40
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] BSD KO pour ligue 40 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] Standings vides BSD 39 saison 1270 status=200
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] Invalid data from bsd_standings/39_45. Schema mismatch.
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] VIDE : aucun cache bsd_standings/39_45
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] BSD KO pour ligue 45 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] Standings vides BSD 40 saison 1092 status=200
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] Invalid data from bsd_standings/40_48. Schema mismatch.
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] VIDE : aucun cache bsd_standings/40_48
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] BSD KO pour ligue 48 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] Standings vides BSD 6 saison 1311 status=200
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] Invalid data from bsd_standings/6_61. Schema mismatch.
+18|parisco | 2026-07-06T23:40:53: [CacheBuffer] VIDE : aucun cache bsd_standings/6_61
+18|parisco | 2026-07-06T23:40:53:   [DEBUG STANDINGS] BSD KO pour ligue 61 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:54:   [DEBUG STANDINGS] Standings vides BSD 44 saison 1178 status=200
+18|parisco | 2026-07-06T23:40:54: [CacheBuffer] Invalid data from bsd_standings/44_63. Schema mismatch.
+18|parisco | 2026-07-06T23:40:54: [CacheBuffer] VIDE : aucun cache bsd_standings/44_63
+18|parisco | 2026-07-06T23:40:54:   [DEBUG STANDINGS] BSD KO pour ligue 63 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:54:   [OddsPapi:Alert] tour=2579 erreur: OddsPapi 429 {"error":{"message":"Request limit exceeded","code":"REQUEST_LIMIT_EXCEEDED","details":"You have exceeded your request l
+18|parisco | 2026-07-06T23:40:54:   [OddsPapi:Alert] tour=2583 erreur: OddsPapi 429 {"error":{"message":"Request limit exceeded","code":"REQUEST_LIMIT_EXCEEDED","details":"You have exceeded your request l
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] Standings vides BSD 35 saison 78 status=200
+18|parisco | 2026-07-06T23:40:55: [CacheBuffer] Invalid data from bsd_standings/35_73. Schema mismatch.
+18|parisco | 2026-07-06T23:40:55: [CacheBuffer] VIDE : aucun cache bsd_standings/35_73
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] BSD KO pour ligue 73 — ajout au fallback API-Football
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] Standings vides BSD 5 saison 1091 status=200
+18|parisco | 2026-07-06T23:40:55: [CacheBuffer] Invalid data from bsd_standings/5_78. Schema mismatch.
+18|parisco | 2026-07-06T23:40:55: [CacheBuffer] VIDE : aucun cache bsd_standings/5_78
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] BSD KO pour ligue 78 — ajout au fallback API-Football
+
+
+--- pm2 logs (out, 50 dernières lignes) ---
+[TAILING] Tailing last 50 lines for [pariscore] process (change the value with --lines option)
+/home/ubuntu/pariscore/logs/pariscore.out-18.log last 50 lines:
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Remo — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Mirassol — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Chapecoense — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54: [CacheBuffer] Updated bsd_standings/9_71
+18|parisco | 2026-07-06T23:40:54:   [BSD] Ligue 71 → OK (20 équipes)
+18|parisco | 2026-07-06T23:40:54:   [DATA AUDIT] "Serie B" (BSD 34 / config 72) — Standings sync started.
+18|parisco | 2026-07-06T23:40:54:   [DEBUG STANDINGS] Fetching league BSD 34 (config 72)…
+18|parisco | 2026-07-06T23:40:54:   [DEBUG STANDINGS] BSD 34 → seasonId=52
+18|parisco | 2026-07-06T23:40:54:   [BSD-TV] pre-fetch FR 2026-07-06→2026-07-13: 18 broadcasts
+18|parisco | 2026-07-06T23:40:54:   [DEBUG STANDINGS] BSD 34 → 20 équipes reçues
+18|parisco | 2026-07-06T23:40:54:   [DATA MAPPING] BSD standings sample — keys: position, team, team_id, played, won, drawn, lost, gf, ga, gd, pts, xgf, xga, xgd, xg_games, form, live
+18|parisco | 2026-07-06T23:40:54:   [DATA MAPPING] BSD sample: team=Grêmio Novorizontino, played=16, gf=27, ga=14, form=WWWDW
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Grêmio Novorizontino — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [DATA MAPPING] Buts extraits pour Grêmio Novorizontino : 1.69 marqués, 0.88 encaissés (home) | 1.63 marqués, 0.88 encaissés (away) | form: WWWDW
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Criciúma — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Vila Nova FC — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Fortaleza — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Juventude — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour São Bernardo — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Sport Recife — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Operário-PR — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Goiás — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Cuiabá — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Athletic Club — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Náutico — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Atlético Goianiense — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Clube De Regatas Brasil — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Londrina — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Ceará — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Botafogo-SP — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Avaí — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour Ponte Preta — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54:   [BSD] Splits estimés (50/50 ratio) pour América Mineiro — BSD ne fournit pas played_home/played_away
+18|parisco | 2026-07-06T23:40:54: [CacheBuffer] Updated bsd_standings/34_72
+18|parisco | 2026-07-06T23:40:54:   [BSD] Ligue 72 → OK (20 équipes)
+18|parisco | 2026-07-06T23:40:54:   [DATA AUDIT] "Copa do Brasil" (BSD 35 / config 73) — Standings sync started.
+18|parisco | 2026-07-06T23:40:54:   [DEBUG STANDINGS] Fetching league BSD 35 (config 73)…
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] BSD 35 → seasonId=78
+18|parisco | 2026-07-06T23:40:55:   [LiveDBG] build=livefix-v3 date=2026-07-06 bsdEvents=6 avecLiveScore=2 matchedEnBase=2 statuts={"finished":4,"2nd_half":2}
+18|parisco | 2026-07-06T23:40:55:   [LiveDBG] matchés(cross-provider)=2 (dont sig=0) patches=0
+18|parisco | 2026-07-06T23:40:55:   [DATA AUDIT] "Bundesliga" (BSD 5 / config 78) — Standings sync started.
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] Fetching league BSD 5 (config 78)…
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] BSD 5 → seasonId=1091
+18|parisco | 2026-07-06T23:40:55:   [DATA AUDIT] "DFB Pokal" (BSD 43 / config 81) — Standings sync started.
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] Fetching league BSD 43 (config 81)…
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] BSD 43 → seasonId=1210
+18|parisco | 2026-07-06T23:40:55:   [DATA AUDIT] "Eredivisie" (BSD 10 / config 88) — Standings sync started.
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] Fetching league BSD 10 (config 88)…
+18|parisco | 2026-07-06T23:40:55: [MMA] DRatings: 27 fights indexed
+18|parisco | 2026-07-06T23:40:55:   [DEBUG STANDINGS] BSD 10 → seasonId=1268
+
+
+===== [05] DOCKER — CONTAINERS / IMAGES / COMPOSE =====
+--- docker ps ---
+CONTAINER ID   IMAGE                                      COMMAND                  CREATED       STATUS       PORTS                                NAMES
+05478cbae2be   ghcr.io/flaresolverr/flaresolverr:latest   "/usr/bin/dumb-init …"   4 weeks ago   Up 4 weeks   127.0.0.1:8191->8191/tcp, 8192/tcp   flaresolverr
+
+--- docker images ---
+IMAGE                                      ID             DISK USAGE   CONTENT SIZE   EXTRA
+ghcr.io/flaresolverr/flaresolverr:latest   139dfee1c6f8       1.04GB          282MB   U    
+
+--- docker compose (si pariscore-compose existe) ---
+NAME                STATUS              CONFIG FILES
+
+===== [06] APPLICATION — RÉPERTOIRE / GIT / FICHIERS =====
+PARIS_DIR=/home/ubuntu/pariscore
+
+--- ls -la (top level) ---
+total 5235480
+-rw-rw-r--   1 ubuntu ubuntu         50 Jul  5 22:52 #
+drwxrwxr-x  61 ubuntu ubuntu      24576 Jul  7 01:39 .
+drwxr-x--x  22 ubuntu ubuntu       4096 Jul  7 01:13 ..
+-rw-rw-r--   1 ubuntu ubuntu        764 Jul  5 22:52 .HANDOFF.md
+drwxrwxr-x   3 ubuntu ubuntu       4096 May 15 13:10 .agents
+drwxrwxr-x   5 ubuntu ubuntu       4096 Jul  5 02:55 .beads
+-rw-rw-r--   1 ubuntu ubuntu        655 Jun 28 20:28 .cbmignore
+drwxrwxr-x   8 ubuntu ubuntu       4096 Jul  7 01:38 .claude
+drwxrwxr-x  17 ubuntu ubuntu      16384 Jul  7 01:38 .context
+-rw-rw-r--   1 ubuntu ubuntu         44 Jul  5 12:43 .cron_match_stats_state.json
+-rw-rw-r--   1 ubuntu ubuntu      23294 May 26 15:15 .debug_tennis_err.txt
+-rw-rw-r--   1 ubuntu ubuntu     231646 May 26 18:02 .debug_tennis_log.txt
+drwxrwxr-x   2 ubuntu ubuntu       4096 Jul  5 03:29 .deploy-backups
+drwxrwxr-x   5 ubuntu ubuntu       4096 Jun 29 16:58 .design-fix-backup-20260629-145847
+drwxrwxr-x   2 ubuntu ubuntu       4096 Jun  9 12:46 .dmux
+-rw-rw-r--   1 ubuntu ubuntu        866 May 27 01:38 .dockerignore
+-rw-------   1 ubuntu ubuntu       4010 Jul  7 01:38 .env
+-rw-rw-r--   1 ubuntu ubuntu       1738 Jul  7 01:38 .env.example
+-rw-------   1 ubuntu ubuntu       3893 Jul  7 01:37 .env.pre-jwt-rot-20260707-013736
+drwxrwxr-x   7 ubuntu ubuntu       4096 Jul  7 01:38 .git
+-rw-rw-r--   1 ubuntu ubuntu         13 Jun 30 02:05 .gitattributes
+drwxrwxr-x   3 ubuntu ubuntu       4096 Jun 25 23:54 .github
+-rw-rw-r--   1 ubuntu ubuntu       1249 Jul  7 01:38 .gitignore
+-rw-rw-r--   1 ubuntu ubuntu       1160 May 21 10:12 .gitleaks.toml
+drwxrwxr-x   2 ubuntu ubuntu       4096 Jul  7 01:38 .gstack
+-rw-rw-r--   1 ubuntu ubuntu       1268 Jun 29 21:48 .mcp.json
+drwxrwxr-x  10 ubuntu ubuntu       4096 Jul  6 07:13 .next
+drwxrwxr-x   4 ubuntu ubuntu       4096 Jul  3 15:29 .opencode
+drwxrwxr-x   3 ubuntu ubuntu       4096 Jun  9 12:46 .pi
+drwxrwxr-x   4 ubuntu ubuntu       4096 Jun 17 18:42 .planning
+drwxrwxr-x   7 ubuntu ubuntu       4096 May 28 15:10 .venv-catboost
+drwxrwxr-x   7 ubuntu ubuntu       4096 May 28 12:31 .venv-data
+drwxrwxr-x   2 ubuntu ubuntu       4096 Jul  7 01:38 .vscode
+drwxrwxr-x   7 ubuntu ubuntu       4096 Jun  9 12:46 .worktrees
+-rw-rw-r--   1 ubuntu ubuntu     141830 Jul  5 22:52 01_prematch.png
+-rw-rw-r--   1 ubuntu ubuntu     141673 Jul  5 22:52 02_live.png
+-rw-rw-r--   1 ubuntu ubuntu     141832 Jul  5 22:52 03_valuebets.png
+-rw-rw-r--   1 ubuntu ubuntu     141877 Jul  5 22:52 04_analytics.png
+-rw-rw-r--   1 ubuntu ubuntu      59503 Jun  9 12:46 2406324.md
+-rw-rw-r--   1 ubuntu ubuntu    6666914 Jun  9 12:46 2406324.pdf
+-rw-rw-r--   1 ubuntu ubuntu      12754 Jul  5 22:52 AGENTS.md
+drwxrwxr-x   3 ubuntu ubuntu       4096 Jun  9 12:46 API
+-rw-rw-r--   1 ubuntu ubuntu      27392 Jul  5 22:52 ARCHITECTURE.md
+-rw-rw-r--   1 ubuntu ubuntu      27089 Jun 26 12:06 AUDIT_LIVE_TENNIS_REPORT.md
+-rw-rw-r--   1 ubuntu ubuntu      12314 Jun 26 12:06 AUDIT_MATCHS_TENNIS_REPORT.md
+-rw-rw-r--   1 ubuntu ubuntu       7696 Jun 26 12:06 AUDIT_OTHER_TABS_REPORT.md
+-rw-rw-r--   1 ubuntu ubuntu      19457 Jun 26 12:06 AUDIT_PARIS_TENNIS_REPORT.md
+-rw-rw-r--   1 ubuntu ubuntu      29775 Jun 26 17:08 AUDIT_PHOTOS_REPORT.md
+-rw-rw-r--   1 ubuntu ubuntu      18035 Jun 25 23:54 AUDIT_TOP_TENNIS_REPORT.md
+-rw-rw-r--   1 ubuntu ubuntu      32263 Jun 26 12:06 AUDIT_TOP_TENNIS_REPORT_v2.md
+-rw-rw-r--   1 ubuntu ubuntu      45835 Jun 17 22:45 BRAINSTORMING_UX_5_PROFILS.md
+-rw-rw-r--   1 ubuntu ubuntu      12624 Jun 20 01:33 BUGS-POWERSCORE-TOP10.md
+-rw-rw-r--   1 ubuntu ubuntu     194053 Jul  7 01:38 CHANGELOG.md
+-rw-rw-r--   1 ubuntu ubuntu      23937 Jun 17 22:45 CLASSEMENT_FINAL_METRIQUES.md
+-rw-rw-r--   1 ubuntu ubuntu      46637 Jun 18 14:25 CLAUDE.md
+-rw-rw-r--   1 ubuntu ubuntu      25029 Jul  5 22:52 CONTRIBUTING.md
+-rw-rw-r--   1 ubuntu ubuntu        493 Jul  5 22:52 Caddyfile
+-rw-rw-r--   1 ubuntu ubuntu      10493 Jun 30 14:14 DEBUG_AUTOMATION_PIPELINE.md
+-rw-rw-r--   1 ubuntu ubuntu       7058 Jun  9 21:07 DEBUG_WOM_DISCORD.md
+
+--- taille totale du dossier ---
+11G	/home/ubuntu/pariscore
+1.4G	/home/ubuntu/pariscore/node_modules
+972M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-30T13-42-08-621Z-wal
+648M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-06-29T10-43-16-812Z
+205M	/home/ubuntu/pariscore/frontend
+143M	/home/ubuntu/pariscore/pariscore.db
+133M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-30T13-42-08-621Z
+119M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-28T01-51-41-482Z
+119M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-27T23-42-24-123Z
+119M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-27T21-27-38-634Z
+119M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-27T21-08-53-524Z
+118M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-26T13-16-17-114Z
+117M	/home/ubuntu/pariscore/pariscore.db.corrupt-2026-05-26T10-26-26-305Z
+104M	/home/ubuntu/pariscore/Test avant Prod
+103M	/home/ubuntu/pariscore/DiscordSetup.exe
+70M	/home/ubuntu/pariscore/database.sqlite.zip
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260707_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260706_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260705_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260704_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260703_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260702_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260701_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260630_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260629_000001
+64M	/home/ubuntu/pariscore/historique_tennis.json.bak_20260628_000001
+
+--- git status / branch / dernier commit ---
+branch courante : main
+HEAD commit    : deeb9c58798eea7d87b32d9f9fa8fe31839b52a3 2026-07-07 01:27:38 +0200 chore(security): Phase 1 — untrack sensitive files + enrich .gitignore
+
+--- git status (court) ---
+ M cache/tennis_serve_deltas.json
+ M data/betwatch_wom.json
+?? .debug_tennis_err.txt
+?? .debug_tennis_log.txt
+?? .deploy-backups/
+?? DiscordSetup.exe
+?? "Test avant Prod/"
+?? cache/player-photos/1.png
+?? cache/player-photos/100.png
+?? cache/player-photos/1000.png
+?? cache/player-photos/1001.png
+?? cache/player-photos/1002.png
+?? cache/player-photos/1003.png
+?? cache/player-photos/1004.png
+?? cache/player-photos/1008.png
+?? cache/player-photos/1009.png
+?? cache/player-photos/101.png
+?? cache/player-photos/1010.png
+?? cache/player-photos/1011.png
+?? cache/player-photos/1012.png
+?? cache/player-photos/1013.png
+?? cache/player-photos/1014.png
+?? cache/player-photos/1018.png
+?? cache/player-photos/1019.png
+?? cache/player-photos/102.png
+?? cache/player-photos/1023.png
+?? cache/player-photos/1027.png
+?? cache/player-photos/1031.png
+?? cache/player-photos/1032.png
+?? cache/player-photos/1034.png
+?? cache/player-photos/1036.png
+?? cache/player-photos/1037.png
+?? cache/player-photos/1039.png
+?? cache/player-photos/1047.png
+?? cache/player-photos/106.png
+?? cache/player-photos/1063.png
+?? cache/player-photos/1066.png
+?? cache/player-photos/108.png
+?? cache/player-photos/1091.png
+?? cache/player-photos/11.png
+
+--- 20 derniers commits ---
+deeb9c5 chore(security): Phase 1 — untrack sensitive files + enrich .gitignore
+d115a4f fix(security): Phase 1 — JWT_SECRET + ADMIN_PASSWORD fail-fast + BLOCKED_FILES étendu
+681cdc2 chore: incident report + deploy-setpoint script + changelog v12.87
+505502d fix: bulletproof API route — dynamic imports + global try/catch
+96006eb fix: bulletproof API route — dynamic imports + global try/catch
+e2b1c76 fix: critical build error — getPhotoUrl → resolvePlayerPhoto
+a185e25 feat(v14): connect BSD Sports API as primary source
+86cbe68 feat(v12): backtest badge + terminal mode toggle
+d0d6216 feat(v12): backtest badge + terminal mode toggle
+95ff99d feat: SetPoint Tennis Prematch v10 - full app
+fc0bd61 feat: SetPoint Tennis Prematch v10
+c8c477f feat: page-agent dual-mode runner (demo/gemini), localhost proxy, output compact
+2ca4c28 chore(cycling): re-scrap stage 2 with weather
+da403e3 fix(cycling): stage2 bug - timezone Paris + cache 5min + poll 10min
+d26358a fix: esc is not defined dans renderActiveTab — utiliser root.Scope.esc(t) au lieu de esc(t)
+317f0bf fix: add remaining _jsStr wraps for showOddsGraph/openInsights etc
+953b4c3 fix: nested-ternary syntax in sc-decision-badge concat
+55ed3f1 docs: add XSS onclick fix session notes to AGENTS.md
+a16d0a7 fix: sanitize 20 onclick template-literal interpolations in pariscore.js
+e2da37c fix tennisCard: unify JS string delimiters, add gauge/badge CSS
+
+--- fichiers modifiés localement (non commit) — taille ---
+-rw-rw-r-- 1 ubuntu ubuntu 34872 Jul  7 01:40 /home/ubuntu/pariscore/cache/tennis_serve_deltas.json
+-rw-rw-r-- 1 ubuntu ubuntu 11554 Jul  7 01:40 /home/ubuntu/pariscore/data/betwatch_wom.json
+-rw-rw-r-- 1 ubuntu ubuntu 23294 May 26 15:15 /home/ubuntu/pariscore/.debug_tennis_err.txt
+-rw-rw-r-- 1 ubuntu ubuntu 231646 May 26 18:02 /home/ubuntu/pariscore/.debug_tennis_log.txt
+total 143404
+drwxrwxr-x  2 ubuntu ubuntu      4096 Jul  5 03:29 .
+drwxrwxr-x 61 ubuntu ubuntu     24576 Jul  7 01:39 ..
+-rw-rw-r--  1 ubuntu ubuntu      3771 Jul  5 03:29 .env.20260705-032941
+-rw-r--r--  1 ubuntu ubuntu 146808832 Jul  5 03:29 pariscore.db.20260705-032941
+-rw-rw-r-- 1 ubuntu ubuntu 107226856 May 14 20:13 /home/ubuntu/pariscore/DiscordSetup.exe
+
+===== [07] CONFIG — .env (SANITISÉ) / ecosystem / nginx / caddy =====
+--- .env (valeurs masquées) ---
+PORT=***
+ADMIN_PASSWORD=Par***
+DATABASE_URL=ton***
+API_FOOTBALL_KEY=686***
+ODDS_API_KEY=8a6***
+GEMINI_API_KEY=AQ.***
+GROQ_API_KEY=gsk***
+FOOTBALL_DATA_API_KEY=faf***
+TELEGRAM_BOT_TOKEN=894***
+TELEGRAM_CHAT_IDS=<empty>
+ALERT_EDGE_THRESHOLD=***
+RAPIDAPI_KEY=b07***
+MATCHSTAT_API_KEY=b07***
+TENNISAPI1_API_KEY=b07***
+TENNISAPI1_HOST=ten***
+BSD_API_KEY=bc2***
+BSD_TENNIS_ENABLED=***
+FREE_FOOTBALL_RAPIDAPI_KEY=b07***
+ODDSPAPI_KEY=b07***
+ODDSPAPI_HOST=odd***
+ODDSPAPI_V4_KEY=e2e***
+APIFY_TOKEN=api***
+BSD_TENNIS_ENABLED=***
+CATBOOST_ENABLED=***
+VAPID_PUBLIC_KEY=BI3***
+VAPID_PRIVATE_KEY=MIG***
+DISCORD_MORNING_PICKS_WEBHOOK_URL=htt***
+DISCORD_TENNIS_MORNING_WEBHOOK_URL=htt***
+DISCORD_FOOT_WEBHOOK_URL=htt***
+DISCORD_WEBHOOK_URL=htt***
+DISCORD_DEPLOY_WEBHOOK_URL=htt***
+FLARESOLVERR_URL=htt***
+TELEGRAM_BOT_TOKEN=870***
+TELEGRAM_ALLOWED_USERS=870***
+TENNIS_ELO_SOURCE=***
+BETA_TESTER_PASSWORD=ZVu***
+ALLOWED_ORIGIN=htt***
+JWT_SECRET=72c***
+NODE_ENV=pro***
+
+--- ecosystem.config.js ---
+/*
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  PariScore — PM2 ecosystem config
+ * ══════════════════════════════════════════════════════════════════════════════
+ *  Trois process gérés par PM2 :
+ *    1. `pariscore`                   : serveur HTTP principal (Node.js + SSE + cron internes)
+ *    2. `pariscore-cron-rg`           : job découplé Roland Garros prefetch toutes les 2h
+ *    3. `pariscore-cron-match-stats`  : rafraîchissement quotidien match_stats_history
+ *    4. `pariscore-vault-daily`      : note quotidienne vault Obsidian (05:00 UTC)
+ *    5. `pariscore-vault-weekly`     : revue hebdo modèles (lundi 08:00 UTC)
+ *
+ *  Lancement initial (VPS) :
+ *    pm2 start ecosystem.config.js
+ *    pm2 save                # persiste pour reboot
+ *    pm2 startup             # génère le script systemd
+ *
+ *  Lancement targeted :
+ *    pm2 start ecosystem.config.js --only pariscore
+ *    pm2 start ecosystem.config.js --only pariscore-cron-rg
+ *    pm2 start ecosystem.config.js --only pariscore-cron-match-stats
+ *    pm2 start ecosystem.config.js --only pariscore-vault-daily
+ *    pm2 start ecosystem.config.js --only pariscore-vault-weekly
+ *
+ *  Logs :
+ *    pm2 logs pariscore --lines 100
+ *    pm2 logs pariscore-cron-rg --lines 50
+ *    pm2 logs pariscore-cron-match-stats --lines 50
+ *
+ *  Restart :
+ *    pm2 restart pariscore
+ *    pm2 restart pariscore-cron-rg     # force immediate refresh RG
+ *    pm2 restart pariscore-cron-match-stats  # force run now
+ *
+ *  Status :
+ *    pm2 status
+ *    pm2 describe pariscore-cron-rg    # voir prochain cron_restart
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+module.exports = {
+  apps: [
+    {
+      // === Serveur HTTP principal ===
+      name: 'pariscore',
+      script: 'server.js',
+      cwd: '/home/ubuntu/pariscore',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      kill_timeout: 5000, // laisse le graceful shutdown terminer wal_checkpoint(TRUNCATE) avant SIGKILL
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000,
+      },
+      error_file: 'logs/pariscore.err.log',
+      out_file: 'logs/pariscore.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Roland Garros prefetch ===
+      // Toutes les 2h pile (00:00, 02:00, 04:00, ...). Process meurt après
+      // exécution, PM2 le relance au prochain tick cron.
+      name: 'pariscore-cron-rg',
+      script: 'tools/cron-rg-prefetch.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 */2 * * *', // chaque heure paire (UTC selon serveur)
+      autorestart: false,           // PM2 ne redémarre PAS sur exit (cron only)
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        // Note : ce script appelle le serveur principal via HTTP localhost
+        // (POST /api/v1/admin/rg-refresh). Pas de require(server.js) donc
+        // pas de SKIP_LISTEN nécessaire. RG_REFRESH_TOKEN doit matcher
+        // celui défini dans .env du process 'pariscore'.
+      },
+      error_file: 'logs/cron-rg.err.log',
+
+--- Caddyfile ---
+:81 {
+	@transform_port_query {
+		query XTransformPort=*
+	}
+
+	handle @transform_port_query {
+		reverse_proxy localhost:{query.XTransformPort} {
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	handle {
+		reverse_proxy localhost:3000 {
+			header_up Host {host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+}
+
+--- nginx (sites activés) ---
+pariscore
+# HTTP — fallback default (IP, etc.) → redirige vers pariscore.fr
+server {
+    listen 80 default_server;
+    server_name _;
+
+    location / {
+        return 301 https://pariscore.fr$request_uri;
+    }
+}
+
+server {
+    listen 80;
+    server_name pariscore.fr www.pariscore.fr;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS — site SetPoint via pariscore.fr
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name pariscore.fr www.pariscore.fr;
+
+    ssl_certificate /etc/letsencrypt/live/pariscore.fr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/pariscore.fr/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 1000;
+    gzip_proxied any;
+    gzip_vary on;
+
+    # Cache statique Next.js
+    location /_next/static/ {
+        proxy_pass http://localhost:3000;
+        proxy_cache_valid 200 1y;
+        add_header Cache-Control "public, immutable, max-age=31536000";
+        access_log off;
+    }
+
+    # Routes API Next.js (tennis, email, push, sentry)
+    location /api/tennis/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+    }
+
+    location /api/email/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location /api/push/ {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location = /api/sentry-test {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # API FastAPI backend (health, predictions)
+
+--- /etc/hosts (réseau local) ---
+127.0.0.1	localhost
+
+# The following lines are desirable for IPv6 capable hosts
+::1	ip6-localhost	ip6-loopback
+fe00::0	ip6-localnet
+ff00::0	ip6-mcastprefix
+ff02::1	ip6-allnodes
+ff02::2	ip6-allrouters
+ff02::3	ip6-allhosts
+
+127.0.1.1	vps-e9076027.vps.ovh.net	vps-e9076027
+
+
+===== [08] BASE DE DONNÉES — SQLITE =====
+--- fichiers *.db (tailles) ---
+-rw-r--r-- 1 ubuntu ubuntu 12M May 28 02:15 ./pariscore.db.corrupt-2026-05-28T00-16-19-245Z
+-rw-r--r-- 1 ubuntu ubuntu 11M May 26 15:10 ./pariscore.db.corrupt-2026-05-26T13-16-17-114Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 4.9M May 28 03:50 ./pariscore.db.corrupt-2026-05-28T01-51-41-482Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 4.9M May 28 01:39 ./pariscore.db.corrupt-2026-05-27T23-42-24-123Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 32K May 28 00:52 ./pariscore.db.corrupt-2026-05-27T23-42-24-123Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 972M May 30 15:42 ./pariscore.db.corrupt-2026-05-30T13-42-08-621Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 32K May 27 23:16 ./pariscore.db.corrupt-2026-05-27T21-16-53-553Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 32K May 26 12:13 ./pariscore.db.corrupt-2026-05-26T10-26-26-305Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 648M Jun 29 12:43 ./pariscore.db.corrupt-2026-06-29T10-43-16-812Z
+-rw-r--r-- 1 ubuntu ubuntu 118M May 26 15:10 ./pariscore.db.corrupt-2026-05-26T13-16-17-114Z
+-rw-r--r-- 1 ubuntu ubuntu 119M May 28 03:50 ./pariscore.db.corrupt-2026-05-28T01-51-41-482Z
+-rw-r--r-- 1 ubuntu ubuntu 33M Jul  7 01:40 ./pariscore.db-wal
+-rw-r--r-- 1 ubuntu ubuntu 32K May 28 00:52 ./pariscore.db.corrupt-2026-05-28T01-51-41-482Z-shm
+-rw-rw-r-- 1 ubuntu ubuntu 0 May 28 03:42 ./database.db-wal
+-rw-r--r-- 1 ubuntu ubuntu 119M May 28 00:54 ./pariscore.db.corrupt-2026-05-27T23-42-24-123Z
+-rw-r--r-- 1 ubuntu ubuntu 9.9M May 27 23:13 ./pariscore.db.corrupt-2026-05-27T21-16-53-553Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 4.1M May 26 12:22 ./pariscore.db.corrupt-2026-05-26T10-26-26-305Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 119M May 27 23:07 ./pariscore.db.corrupt-2026-05-27T21-08-53-524Z
+-rw-r--r-- 1 ubuntu ubuntu 96K Jul  7 01:40 ./pariscore.db-shm
+-rw-r--r-- 1 ubuntu ubuntu 1.9M May 27 23:10 ./pariscore.db.corrupt-2026-05-27T21-16-53-553Z
+-rw-r--r-- 1 ubuntu ubuntu 9.9M May 27 23:07 ./pariscore.db.corrupt-2026-05-27T21-08-53-524Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 32K May 27 23:24 ./pariscore.db.corrupt-2026-05-27T21-27-38-634Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 2.1M May 27 23:24 ./pariscore.db.corrupt-2026-05-27T21-27-38-634Z-wal
+-rw-rw-r-- 1 ubuntu ubuntu 32K Jun 10 17:09 ./database.db-shm
+-rw-r--r-- 1 ubuntu ubuntu 32K May 26 14:50 ./pariscore.db.corrupt-2026-05-26T13-16-17-114Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 32K May 27 22:53 ./pariscore.db.corrupt-2026-05-27T21-08-53-524Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 141M Jul  5 03:29 ./.deploy-backups/pariscore.db.20260705-032941
+-rw-r--r-- 1 ubuntu ubuntu 44K May 19 21:01 ./recovered.db
+-rw-r--r-- 1 ubuntu ubuntu 4.0M Jul  7 01:40 ./data/metrics-cache.db-wal
+-rw-r--r-- 1 ubuntu ubuntu 188K Jul  7 01:40 ./data/metrics-cache.db
+-rw-r--r-- 1 ubuntu ubuntu 32K Jul  7 01:40 ./data/metrics-cache.db-shm
+-rw-r--r-- 1 ubuntu ubuntu 143M Jul  7 01:40 ./pariscore.db
+-rw-r--r-- 1 ubuntu ubuntu 119M May 27 23:21 ./pariscore.db.corrupt-2026-05-27T21-27-38-634Z
+-rw-r--r-- 1 ubuntu ubuntu 2.0M May 30 15:42 ./pariscore.db.corrupt-2026-05-30T13-42-08-621Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 7.7M May 18 12:43 ./Test avant Prod/pariscore.db-wal
+-rw-r--r-- 1 ubuntu ubuntu 32K May 18 11:53 ./Test avant Prod/pariscore.db-shm
+-rw-rw-r-- 1 ubuntu ubuntu 32K May 16 02:02 ./Test avant Prod/database.db-shm
+-rw-r--r-- 1 ubuntu ubuntu 78M May 18 12:43 ./Test avant Prod/pariscore.db
+-rw-r--r-- 1 ubuntu ubuntu 449M May 30 15:42 ./pariscore.db.corrupt-2026-05-30T13-42-08-621Z
+-rw-r--r-- 1 ubuntu ubuntu 117M May 26 12:14 ./pariscore.db.corrupt-2026-05-26T10-26-26-305Z
+
+--- integrity check pariscore.db ---
+ok
+
+--- quick_check ---
+ok
+
+--- WAL / SHM files ---
+-rw-r--r-- 1 ubuntu ubuntu 188K Jul  7 01:40 data/metrics-cache.db
+-rw-r--r-- 1 ubuntu ubuntu  32K Jul  7 01:40 data/metrics-cache.db-shm
+-rw-r--r-- 1 ubuntu ubuntu 4.0M Jul  7 01:40 data/metrics-cache.db-wal
+-rw-rw-r-- 1 ubuntu ubuntu  32K Jun 10 17:09 database.db-shm
+-rw-rw-r-- 1 ubuntu ubuntu    0 May 28 03:42 database.db-wal
+-rw-r--r-- 1 ubuntu ubuntu 143M Jul  7 01:40 pariscore.db
+-rw-r--r-- 1 ubuntu ubuntu  96K Jul  7 01:40 pariscore.db-shm
+-rw-r--r-- 1 ubuntu ubuntu  33M Jul  7 01:41 pariscore.db-wal
+-rw-r--r-- 1 ubuntu ubuntu 117M May 26 12:14 pariscore.db.corrupt-2026-05-26T10-26-26-305Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 26 12:13 pariscore.db.corrupt-2026-05-26T10-26-26-305Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 4.1M May 26 12:22 pariscore.db.corrupt-2026-05-26T10-26-26-305Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 118M May 26 15:10 pariscore.db.corrupt-2026-05-26T13-16-17-114Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 26 14:50 pariscore.db.corrupt-2026-05-26T13-16-17-114Z-shm
+-rw-r--r-- 1 ubuntu ubuntu  11M May 26 15:10 pariscore.db.corrupt-2026-05-26T13-16-17-114Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 119M May 27 23:07 pariscore.db.corrupt-2026-05-27T21-08-53-524Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 27 22:53 pariscore.db.corrupt-2026-05-27T21-08-53-524Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 9.9M May 27 23:07 pariscore.db.corrupt-2026-05-27T21-08-53-524Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 1.9M May 27 23:10 pariscore.db.corrupt-2026-05-27T21-16-53-553Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 27 23:16 pariscore.db.corrupt-2026-05-27T21-16-53-553Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 9.9M May 27 23:13 pariscore.db.corrupt-2026-05-27T21-16-53-553Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 119M May 27 23:21 pariscore.db.corrupt-2026-05-27T21-27-38-634Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 27 23:24 pariscore.db.corrupt-2026-05-27T21-27-38-634Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 2.1M May 27 23:24 pariscore.db.corrupt-2026-05-27T21-27-38-634Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 119M May 28 00:54 pariscore.db.corrupt-2026-05-27T23-42-24-123Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 28 00:52 pariscore.db.corrupt-2026-05-27T23-42-24-123Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 4.9M May 28 01:39 pariscore.db.corrupt-2026-05-27T23-42-24-123Z-wal
+-rw-r--r-- 1 ubuntu ubuntu  12M May 28 02:15 pariscore.db.corrupt-2026-05-28T00-16-19-245Z
+-rw-r--r-- 1 ubuntu ubuntu 119M May 28 03:50 pariscore.db.corrupt-2026-05-28T01-51-41-482Z
+-rw-r--r-- 1 ubuntu ubuntu  32K May 28 00:52 pariscore.db.corrupt-2026-05-28T01-51-41-482Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 4.9M May 28 03:50 pariscore.db.corrupt-2026-05-28T01-51-41-482Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 449M May 30 15:42 pariscore.db.corrupt-2026-05-30T13-42-08-621Z
+-rw-r--r-- 1 ubuntu ubuntu 2.0M May 30 15:42 pariscore.db.corrupt-2026-05-30T13-42-08-621Z-shm
+-rw-r--r-- 1 ubuntu ubuntu 972M May 30 15:42 pariscore.db.corrupt-2026-05-30T13-42-08-621Z-wal
+-rw-r--r-- 1 ubuntu ubuntu 648M Jun 29 12:43 pariscore.db.corrupt-2026-06-29T10-43-16-812Z
+
+--- journal_mode / WAL status ---
+wal
+
+--- liste des tables (compte) ---
+39
+
+--- top 20 tables par taille (row count) ---
+25555  tennis_matches
+23197  tennis_matches_internal
+15251  tennis_elo
+6105  tennis_alerts
+6035  tennis_players_elo
+3283  tennis_enrich_snap
+1797  matchstat_players
+375  foot_alerts
+314  api_cache
+264  match_stats_history
+251  tennis_koa_matchmx
+153  kv
+148  tennis_ta_cache
+97  closing_odds
+71  mma_predictions
+60  api_cache_buffer
+6  sqlite_sequence
+2  affiliates
+1  users
+1  newsletter
+
+--- Sample users table (count + 5 rows anonymisées) ---
+1
+
+===== [09] LOGS — TAILLE / ERREURS RÉCENTES =====
+--- fichiers de logs (tailles) ---
+-rw-r--r-- 1 ubuntu ubuntu 4.7K Jul  1 05:00 ./logs/cron-match-stats.err-10.log
+-rw-r--r-- 1 ubuntu ubuntu  94K Jul  5 05:00 ./logs/cron-match-stats.out-10.log
+-rw-r--r-- 1 ubuntu ubuntu  77K Jul  5 22:00 ./logs/cron-rg.err-1.log
+-rw-r--r-- 1 ubuntu ubuntu 119K Jul  5 22:00 ./logs/cron-rg.out-1.log
+-rw-rw-r-- 1 ubuntu ubuntu 8.4K Jul  6 06:00 ./logs/cron-tennis-elo.log
+-rw-rw-r-- 1 ubuntu ubuntu 2.3K Jul  6 18:00 ./logs/cycling-cron.log
+-rw-rw-r-- 1 ubuntu ubuntu  26K Jul  7 01:35 ./logs/db-health-alerts.log
+-rw-rw-r-- 1 ubuntu ubuntu 449K Jul  7 00:01 ./logs/etl-football.log
+-rw-rw-r-- 1 ubuntu ubuntu  32K Jul  6 02:00 ./logs/etl-tennis-internal.log
+-rw-r--r-- 1 ubuntu ubuntu 960K May 24 09:38 ./logs/pariscore.err-0.log
+-rw-r--r-- 1 ubuntu ubuntu 8.8K Jul  7 01:40 ./logs/pariscore.err-18.log
+-rw-r--r-- 1 ubuntu ubuntu    0 Jun 23 11:45 ./logs/pariscore.err-9.log
+-rw-r--r-- 1 ubuntu ubuntu  11M May 24 09:38 ./logs/pariscore.out-0.log
+-rw-r--r-- 1 ubuntu ubuntu 118K Jul  7 01:40 ./logs/pariscore.out-18.log
+-rw-r--r-- 1 ubuntu ubuntu    0 Jun 23 11:45 ./logs/pariscore.out-9.log
+-rw-rw-r-- 1 ubuntu ubuntu 5.8K Jul  4 00:00 ./logs/scientific_watch.log
+
+--- pm2 logs pariscore (chemins + tailles) ---
+-rw-rw-r-- 1 ubuntu ubuntu  13M May 23 14:33 /home/ubuntu/.pm2/logs/pariscore-error-0.log
+-rw-r--r-- 1 ubuntu ubuntu 113M Jul  6 19:47 /home/ubuntu/.pm2/logs/pariscore-error.log
+-rw-rw-r-- 1 ubuntu ubuntu  30M May 23 14:37 /home/ubuntu/.pm2/logs/pariscore-out-0.log
+-rw-r--r-- 1 ubuntu ubuntu 278M Jul  7 01:38 /home/ubuntu/.pm2/logs/pariscore-out.log
+
+--- 50 dernières erreurs (server.err / pm2 error) ---
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+    at async m (.next/server/chunks/ssr/_5240df7b._.js:1:6765)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+    at async m (.next/server/chunks/ssr/_5240df7b._.js:1:6765)
+⨯ Error: Failed to load static file for page: /500 ENOENT: no such file or directory, open '/home/ubuntu/pariscore/.next/standalone/.next/server/pages/500.html'
+    at ignore-listed frames
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+    at Object.get (.next/server/chunks/[root-of-the-server]__e3ecfd17._.js:5:16798)
+[prematch] Odds API HTTP 404
+[prematch] Odds API HTTP 404
+[prematch] Odds API HTTP 404
+
+--- compte des erreurs par type (top 20 patterns) ---
+   1791 [API ERROR]: Cannot write headers after they are sent to the client
+    704 Error [ERR_HTTP_HEADERS_SENT]: Cannot write headers after they are sent to the client
+    184 [TennisRank] err: Too many parameter values were provided
+    184 [TennisDR] err: Too many parameter values were provided
+     42 ⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/_not-found" does not exist. This is a bug in Next.js.
+     32 SyntaxError: Identifier 'FIGHTER_PHOTOS' has already been declared
+     16 SyntaxError: missing ) after argument list
+     16 SyntaxError: Unexpected token '<<'
+     16 Error: Cannot find module 'next-intl/plugin'
+     15 T: ReferenceError: svgIcon is not defined
+      7 T: ReferenceError: esc is not defined
+      6 T: RangeError: Invalid time value
+      5     throw new ERR_HTTP_HEADERS_SENT('write');
+      4 T: ReferenceError: factors is not defined
+      3 Error: Failed to find Server Action "x". This request might be from an older or newer deployment.
+      2 ⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/" does not exist. This is a bug in Next.js.
+      2 T: ReferenceError: showPage is not defined
+      2 T: ReferenceError: liveCard is not defined
+      1 ⨯ Error: Failed to load static file for page: /500 ENOENT: no such file or directory, open '/home/ubuntu/pariscore/.next/standalone/.next/server/pages/500.html'
+      1 TypeError: verification
+
+--- journalctl (50 dernières lignes pariscore) ---
+-- No entries --
+
+--- systemd services parisc* ---
+  pariscore-api.service                          loaded    active   running Pariscore API - FastAPI backend
+
+===== [10] CRON — JOBS PLANIFIÉS =====
+--- crontab user ubuntu ---
+*/5 * * * * curl -fsS http://localhost:3000/api/v1/db-health >/dev/null || echo "[$(date -Iseconds)] PariScore DB unhealthy" >> /home/ubuntu/pariscore/logs/db-health-alerts.log
+0 0 * * * cd /home/ubuntu/pariscore && bash .context/run_etl_2024_2026.sh >> /home/ubuntu/pariscore/logs/etl-football.log 2>&1
+0 0 * * 6 /usr/bin/python3 /home/ubuntu/pariscore/scripts/fetchScientificPapers.py >> /home/ubuntu/pariscore/logs/scientific_watch.log 2>&1
+0 2 * * * cd /home/ubuntu/pariscore && node tools/build-tennis-internal-history.js >> /home/ubuntu/pariscore/logs/etl-tennis-internal.log 2>&1
+0 5 * * 0 cd /home/ubuntu/pariscore && node tools/refresh_hltv_team_mapstats.js >> /tmp/hltv_mapstats.log 2>&1
+0 6 1,15 * * cd /home/ubuntu/pariscore && node tools/generate_map_rankings_md.js >> /tmp/map_rankings.log 2>&1
+30 12 * * * cd /home/ubuntu/pariscore && node tools/refresh_wnba_elo.js >> /tmp/wnba_elo.log 2>&1
+*/20 * * * * cd /home/ubuntu/pariscore && FLARESOLVERR_URL=http://localhost:8191 node tools/scrape-betwatch-wom.js >> /tmp/betwatch.log 2>&1
+0 6 * * 1 cd /home/ubuntu/pariscore && bash scripts/cron-tennis-elo.sh
+0 18 * * * cd /home/ubuntu/pariscore && python3 /home/ubuntu/pariscore/scripts/scraper-cyclingstage-favourites.py --current --force >> /home/ubuntu/pariscore/logs/cycling-cron.log 2>&1 # PARISCORE-CYCLING-SCRAPER
+
+--- crontab root ---
+(pas de crontab root)
+
+--- /etc/cron.d/ ---
+total 24
+drwxr-xr-x   2 root root 4096 May 15 14:32 .
+drwxr-xr-x 119 root root 4096 Jul  3 10:45 ..
+-rw-r--r--   1 root root  102 Mar 15  2025 .placeholder
+-rw-r--r--   1 root root  802 Apr 16  2023 certbot
+-rw-r--r--   1 root root  188 Jan  7  2025 e2scrub_all
+-rw-r--r--   1 root root  400 Aug 15  2024 sysstat
+
+--- pm2 crons (depuis ecosystem) ---
+ *    pm2 describe pariscore-cron-rg    # voir prochain cron_restart
+ * ══════════════════════════════════════════════════════════════════════════════
+ */
+module.exports = {
+--
+      cron_restart: '0 */2 * * *', // chaque heure paire (UTC selon serveur)
+      autorestart: false,           // PM2 ne redémarre PAS sur exit (cron only)
+      instances: 1,
+      exec_mode: 'fork',
+--
+      cron_restart: '0 3 * * *', // chaque nuit à 03:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+--
+      cron_restart: '0 5 * * *', // chaque matin à 05:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+--
+      cron_restart: '0 8 * * 1', // chaque lundi à 08:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+
+--- systemd timers (pariscor*) ---
+
+===== [11] SÉCURITÉ — KERNEL / SYSCTL / OPEN FILES =====
+--- ulimit current process ---
+real-time non-blocking time  (microseconds, -R) unlimited
+core file size              (blocks, -c) 0
+data seg size               (kbytes, -d) unlimited
+scheduling priority                 (-e) 0
+file size                   (blocks, -f) unlimited
+pending signals                     (-i) 30833
+max locked memory           (kbytes, -l) 992072
+max memory size             (kbytes, -m) unlimited
+open files                          (-n) 1024
+pipe size                (512 bytes, -p) 8
+POSIX message queues         (bytes, -q) 819200
+real-time priority                  (-r) 0
+stack size                  (kbytes, -s) 8192
+cpu time                   (seconds, -t) unlimited
+max user processes                  (-u) 30833
+virtual memory              (kbytes, -v) unlimited
+file locks                          (-x) unlimited
+
+--- sysctl (sécurité réseau) ---
+net.ipv4.tcp_syncookies = 1
+net.ipv4.ip_forward = 1
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 1
+net.ipv4.conf.all.accept_source_route = 0
+kernel.randomize_va_space = 2
+
+--- fichiers SUID ---
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/gpasswd
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/chsh
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/passwd
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/chfn
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/su
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/mount
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/newgrp
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/bin/umount
+/var/lib/docker/rootfs/overlayfs/05478cbae2be2cd211cdab0d48ee95f75d0a17d9facd98c307b131aff79bcebc/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/gpasswd
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/chsh
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/passwd
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/chfn
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/su
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/mount
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/newgrp
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/1/fs/usr/bin/umount
+/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/7/fs/usr/lib/dbus-1.0/dbus-daemon-launch-helper
+
+--- /etc/passwd permissions ---
+-rw-r--r-- 1 root root   1781 Jun 23 11:03 /etc/passwd
+-rw-r----- 1 root shadow  939 Jun 23 11:03 /etc/shadow
+-r--r----- 1 root root   1800 Feb 19  2025 /etc/sudoers
+
+--- processus consommant le plus de mémoire ---
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+ubuntu   1310918 43.5  3.5 1489772 277936 ?      Ssl  01:39   0:59 node /home/ubuntu/pariscore/server.js
+root         362  0.0  2.0 248292 165732 ?       S<s  May15  54:10 /usr/lib/systemd/systemd-journald
+ubuntu    821051  0.1  1.4 932604 115196 ?       Ssl  Jun08  62:32 /usr/local/bin/python -u /app/flaresolverr.py
+ubuntu   1964244  0.1  0.9 539032 72068 ?        Sl   Jun13  39:23 python3 hermes-agent/hermes gateway
+ubuntu   3216217  0.7  0.8 50949276 68552 ?      Ssl  Jun30  70:20 /usr/lib/chromium/chromium --show-component-extension-options --enable-gpu-rasterization --no-default-browser-check --disable-pings --media-router=0 --disable-dev-shm-usage --enable-remote-extensions --load-extension= --no-sandbox --window-size=1920,1080 --disable-search-engine-choice-screen --disable-setuid-sandbox --disable-dev-shm-usage --no-zygote --ignore-certificate-errors --ignore-ssl-errors --accept-lang=C.UTF-8 --user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 --remote-debugging-host=127.0.0.1 --remote-debugging-port=51453 --user-data-dir=/tmp/tmpf4q5xa2b --lang=C.UTF-8 --no-default-browser-check --no-first-run --no-sandbox --test-type --headless=new --window-size=1920,1080 --start-maximized --no-sandbox --log-level=0
+ubuntu      1008  0.1  0.5 1301360 41452 ?       Ssl  May15 114:40 PM2 v7.0.1: God Daemon (/home/ubuntu/.pm2)
+root      291860  0.0  0.5 2208912 41164 ?       Ssl  May31  16:10 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+ubuntu   1314494 98.5  0.5  54064 40572 ?        Rs   01:41   0:00 /home/ubuntu/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run
+ubuntu   1048610  0.4  0.4 73995328 38788 ?      Rl   Jul05   7:25 bun --hot index.ts
+
+--- processus consommant le plus de CPU ---
+USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+ubuntu   1314494 97.2  0.5  54064 40704 ?        Rs   01:41   0:00 /home/ubuntu/.hermes/hermes-agent/venv/bin/python -m hermes_cli.main gateway run
+ubuntu   1310918 43.4  3.5 1489772 277936 ?      Ssl  01:39   0:59 node /home/ubuntu/pariscore/server.js
+root     1314495  7.6  0.1  14616  8960 ?        Ss   01:41   0:00 sshd-session: [accepted]
+ubuntu   3216290  1.6  0.3 50794380 29496 ?      Sl   Jun30 150:44 /usr/lib/chromium/chromium --type=gpu-process --no-sandbox --disable-dev-shm-usage --enable-gpu-rasterization --headless=new --ozone-platform=headless --use-angle=swiftshader-webgl --crashpad-handler-pid=3671811 --enable-crash-reporter=,built on Debian GNU/Linux 12 (bookworm) --noerrdialogs --user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 --user-data-dir=/tmp/tmpf4q5xa2b --change-stack-guard-on-fork=enable --gpu-preferences=UAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAAQAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAYAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAgAAAAAAAAA --shared-files --field-trial-handle=3,i,18333496937137989638,3110071624737509070,262144 --disable-features=PaintHolding --variations-seed-version --pseudonymization-salt-handle=7,i,236054276292489199,6104228743314986611,4 --trace-process-track-uuid=3190708988185955192 --log-level=0 --no-first-run --ozone-platform=headless --ozone-override-screen-size=800,600
+ubuntu   3216217  0.7  0.8 50949276 68552 ?      Ssl  Jun30  70:20 /usr/lib/chromium/chromium --show-component-extension-options --enable-gpu-rasterization --no-default-browser-check --disable-pings --media-router=0 --disable-dev-shm-usage --enable-remote-extensions --load-extension= --no-sandbox --window-size=1920,1080 --disable-search-engine-choice-screen --disable-setuid-sandbox --disable-dev-shm-usage --no-zygote --ignore-certificate-errors --ignore-ssl-errors --accept-lang=C.UTF-8 --user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 --remote-debugging-host=127.0.0.1 --remote-debugging-port=51453 --user-data-dir=/tmp/tmpf4q5xa2b --lang=C.UTF-8 --no-default-browser-check --no-first-run --no-sandbox --test-type --headless=new --window-size=1920,1080 --start-maximized --no-sandbox --log-level=0
+ubuntu   1048610  0.4  0.4 73995328 38788 ?      Sl   Jul05   7:25 bun --hot index.ts
+ubuntu    226442  0.2  0.2 1294116 21220 ?       Ssl  Jun21  57:48 /home/ubuntu/pariscorebis/.venv/bin/python3 /home/ubuntu/pariscorebis/.venv/bin/uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+root      291684  0.1  0.3 2089236 30320 ?       Ssl  May31  91:52 /usr/bin/containerd
+ubuntu      1008  0.1  0.5 1301360 41452 ?       Ssl  May15 114:40 PM2 v7.0.1: God Daemon (/home/ubuntu/.pm2)
+
+===== [12] CERTIFICATS TLS / HTTPS =====
+--- certificats letsencrypt ---
+README
+pariscore.fr
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Found the following certs:
+  Certificate Name: pariscore.fr
+    Serial Number: 6c156ecccaa8db3092fa1e113ff7524e616
+    Key Type: ECDSA
+    Domains: pariscore.fr www.pariscore.fr
+    Expiry Date: 2026-08-13 11:43:13+00:00 (VALID: 37 days)
+    Certificate Path: /etc/letsencrypt/live/pariscore.fr/fullchain.pem
+    Private Key Path: /etc/letsencrypt/live/pariscore.fr/privkey.pem
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+--- test HTTPS (si domaine connu) ---
+-- pariscore.fr --
+HTTP/2 200 
+server: nginx/1.26.3 (Ubuntu)
+date: Mon, 06 Jul 2026 23:41:38 GMT
+content-type: text/html; charset=utf-8
+vary: Accept-Encoding
+cache-control: no-cache
+vary: Accept-Encoding
+x-content-type-options: nosniff
+-- www.pariscore.fr --
+HTTP/2 200 
+server: nginx/1.26.3 (Ubuntu)
+date: Mon, 06 Jul 2026 23:41:38 GMT
+content-type: text/html; charset=utf-8
+vary: Accept-Encoding
+cache-control: no-cache
+vary: Accept-Encoding
+x-content-type-options: nosniff
+-- api.pariscore.fr --
+
+===== [13] VERSIONS LOGICIELLES INSTALLÉES =====
+--- node / npm / bun ---
+v20.20.2
+10.8.2
+/usr/bin/node
+/usr/bin/npm
+
+--- python ---
+Python 3.13.3
+/usr/bin/python3
+/usr/bin/pip3
+
+--- sqlite ---
+3.46.1 2024-08-13 09:16:08 c9c2ab54ba1f5f46360f1b4f35d849cd3f080e6fc2b6c60e91b16c63f69aalt1 (64-bit)
+
+--- nginx / caddy ---
+nginx version: nginx/1.26.3 (Ubuntu)
+
+--- git ---
+git version 2.48.1
+
+--- pm2 ---
+7.0.1
+
+===== [14] SANITY CHECK — ENDPOINTS LOCAUX =====
+--- GET / (status + headers) ---
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Cache-Control: no-cache
+Vary: Accept-Encoding
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss:; frame-ancestors 'none'; object-src 'none'
+Date: Mon, 06 Jul 2026 23:41:39 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+--- GET /api/v1/status ---
+{"status":"ok","ready":true,"matchCount":38,"teamCount":993,"lastOddsUpdate":"2026-07-06T23:40:14.820Z","lastStatsUpdate":"2026-07-06T23:41:16.196Z","oddsQuota":null,"statsQuota":null,"uptime":138.554643282,"bsd_connected":true,"cache_buffer":{"valid_entries":32,"expired_entries":28,"description":"24h resilience layer (fallback si API échoue)"},"fbref_advanced":{"teams":20,"last_load":"2026-07-06T23:39:24.432Z"},"telegramChats":0,"tennisTelegramChats":0,"discordWebhook":true,"tennisEloPlayers":6035,"tennisGlicko2Players":8}
+--- GET / (header X-Robots-Tag, CSP) ---
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https: wss:; frame-ancestors 'none'; object-src 'none'
+
+--- Test accès .jwt_secret (devrait être bloqué) ---
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+Date: Mon, 06 Jul 2026 23:41:39 GMT
+
+--- Test accès .env (devrait être bloqué) ---
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+Date: Mon, 06 Jul 2026 23:41:39 GMT
+
+===== [15] RÉSUMÉ / AUTRES =====
+--- fichiers récemment modifiés (24h) ---
+/home/ubuntu/pariscore/worklog.md
+/home/ubuntu/pariscore/.env
+/home/ubuntu/pariscore/.vscode/extensions.json
+/home/ubuntu/pariscore/.vscode/settings.json
+/home/ubuntu/pariscore/.vscode/tasks.json
+/home/ubuntu/pariscore/.vscode/launch.json
+/home/ubuntu/pariscore/vps_audit_output.txt
+/home/ubuntu/pariscore/upload/pasted_image_1783286837470.png
+/home/ubuntu/pariscore/upload/Pasted Content_1783282521231.txt
+/home/ubuntu/pariscore/historique_tennis.json.bak_20260707_000001
+/home/ubuntu/pariscore/logs/etl-football.log
+/home/ubuntu/pariscore/logs/pariscore.out-18.log
+/home/ubuntu/pariscore/logs/cron-tennis-elo.log
+/home/ubuntu/pariscore/logs/etl-tennis-internal.log
+/home/ubuntu/pariscore/logs/db-health-alerts.log
+/home/ubuntu/pariscore/logs/cycling-cron.log
+/home/ubuntu/pariscore/logs/pariscore.err-18.log
+/home/ubuntu/pariscore/download/test_panel_redesign_1000.md
+/home/ubuntu/pariscore/download/v11-p2p3-fusion.png
+/home/ubuntu/pariscore/download/3-propositions-redesign-tennis.md
+/home/ubuntu/pariscore/download/setpoint-v12.zip
+/home/ubuntu/pariscore/download/setpoint-v13.zip
+/home/ubuntu/pariscore/download/setpoint-v10.zip
+/home/ubuntu/pariscore/download/POSTMORTEM-critical-bug.md
+/home/ubuntu/pariscore/download/v11-bet-slip.png
+/home/ubuntu/pariscore/download/panel_redesign_notes.png
+/home/ubuntu/pariscore/download/panel_redesign_votes.png
+/home/ubuntu/pariscore/pariscore.db-wal
+/home/ubuntu/pariscore/server.js
+/home/ubuntu/pariscore/pariscore.db-shm
+
+--- fichiers appartenant à root dans pariscore (suspect) ---
+
+--- espacio libre inode ---
+Filesystem      Inodes  IUsed   IFree IUse% Mounted on
+/dev/sda1      9282560 678259 8604301    8% /
+/dev/sda13       65536    605   64931    1% /boot
+/dev/sda15           0      0       0     - /boot/efi
+
+
+############################################################
+#  FIN AUDIT VPS — 2026-07-06T23:41:39Z
+############################################################

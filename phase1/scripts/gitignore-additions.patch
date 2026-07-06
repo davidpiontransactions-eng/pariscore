@@ -1,0 +1,48 @@
+diff --git a/.gitignore b/.gitignore
+index 3d67daa..f579228 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -51,4 +51,41 @@ prompt
+ 
+ server.log
+ # Skills directory
+-/skills/
+\ No newline at end of file
++/skills/
++# Large files (GitHub 100MB limit)
++*.db
++*.zip
++download/
++
++# =============================================================================
++# Phase 1 security additions (AUDIT-2026-07 — BUG-002/007/008/027/048)
++# =============================================================================
++# Secrets
++.jwt_secret
++
++# SQLite WAL/SHM/journal (données users — non couverts par *.db)
++*.db-wal
++*.db-shm
++*.db-journal
++database.db
++database.db-*
++
++# Backups
++*.bak
++*.backup
++
++# Logs d'erreur
++*.err
++
++# Scripts Ops avec IP VPS hardcodée
++deploy-ovh.ps1
++vps/deploy-ovh.ps1
++
++# Python bytecode
++__pycache__/
++*.pyc
++
++# Exports documents
++exports/*.docx
++exports/*.pdf
++exports/*.xlsx
