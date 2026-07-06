@@ -1,4 +1,18 @@
 # PariScore — Journal des modifications
+## [v12.87] — 2026-07-06 — Fix critique SetPoint Next.js chunks 404
+
+### Corrigé
+- **SetPoint Tennis Prematch** : chunks JS `/_next/static/chunks/*.js` retournaient HTTP 404
+  - Root cause : `.next/static/` pas copié dans `.next/standalone/.next/static/` après le build
+  - npm run build incluait `next build` mais le `cp` des statiques échouait silencieusement
+  - Conséquence : page affichait "0 matchs aujourd'hui" + squelettes infinis + tous les boutons désactivés
+  - Fix : correction du pipeline build dans `package.json` + création de `scripts/deploy-setpoint.sh`
+
+### Ajouté
+- **scripts/deploy-setpoint.sh** : script de déploiement dédié SetPoint (Next.js standalone)
+  - Pipeline : git pull → npm install → npm run build → copie statiques → pm2 restart → vérification PM2
+  - Distinct de `scripts/update_vps.sh` (legacy PariScore) pour ne rien casser
+
 
 ## [v12.86] — 2026-06-25 — Sprint stabilisation P0/P1 + fix navbar critique
 
@@ -2754,4 +2768,5 @@ Nouveau fichier de configuration des ligues extrait de `server.js` :
 ### Changed
 - **Priorité redéfinie** : La prospection comparative et l'analyse des chatbots concurrents sont placées en tête de liste pour la session de 15h20[cite: 1].
 - Le développement technique (SSE/Chatbot) est suspendu jusqu'à la finalisation complète de l'audit.
+
 
