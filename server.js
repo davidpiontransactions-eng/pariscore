@@ -245,6 +245,13 @@ const BLOCKED_FILES = [
   'package.json', 'package-lock.json', '.gitignore',
   'server.js', 'CLAUDE.md', 'CHANGELOG.md', 'AUDIT.md',
   'render.yaml', 'fix-matches.js', 'test-integrity.js',
+  // BUG-019 (audit Phase 1) : empêcher le serving HTTP de fichiers sensibles
+  // supplémentaires (secret JWT persisté, fichiers DB alternatifs, manifests
+  // de déploiement, Dockerfiles, backups .bak, lockfiles additionnels).
+  '.jwt_secret', 'database.db', 'database.db-wal', 'database.db-shm',
+  'ecosystem.config.js', 'deploy.sh', 'deploy-ovh.ps1', 'Caddyfile',
+  'Dockerfile', 'docker-compose.yml', 'docker-compose.prod.yml',
+  'bun.lock', 'server.js.bak', 'pariscore.html.bak',
 ];
 const BLOCKED_DIRS = ['.git', 'node_modules', '.context', '.planning', '.claude', '.beads', 'tests', 'transfermarkt-api'];
 const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 Mo
@@ -19186,25 +19193,15 @@ function getClientIp(req) {
 }
 
 // ─── JWT (HMAC-SHA256, natif Node.js crypto) ─────────────────────────────────
-// JWT_SECRET : env prioritaire. Sinon secret PERSISTÉ sur disque (.jwt_secret,
-// gitignored, mode 600) — sans ça chaque restart pm2 régénérait un secret
-// aléatoire et invalidait TOUTES les sessions (admin + membres) → 403 partout.
-const JWT_SECRET = process.env.JWT_SECRET || (() => {
-  try {
-    const p = path.join(__dirname, '.jwt_secret');
-    if (fs.existsSync(p)) {
-      const s = fs.readFileSync(p, 'utf8').trim();
-      if (s.length >= 32) return s;
-    }
-    const gen = crypto.randomBytes(32).toString('hex');
-    fs.writeFileSync(p, gen, { mode: 0o600 });
-    console.warn('  [JWT] JWT_SECRET absent de .env — secret persistant créé (.jwt_secret). Ajoute JWT_SECRET au .env pour le maîtriser.');
-    return gen;
-  } catch (e) {
-    console.warn('  [JWT] persistance .jwt_secret impossible (' + e.message + ') — fallback éphémère : sessions invalidées au restart.');
-    return crypto.randomBytes(32).toString('hex');
-  }
-})();
+// BUG-001 (audit Phase 1) : fail-fast strict — JWT_SECRET DOIT venir de
+// process.env (>= 32 chars), quel que soit NODE_ENV. Le fallback sur le fichier
+// .jwt_secret (auto-généré + persisté) est supprimé : il masquait une
+// configuration manquante et exposait un secret sur disque en clair.
+if (!process.env.JWT_SECRET || String(process.env.JWT_SECRET).length < 32) {
+  console.error('  \x1b[31m[FATAL] JWT_SECRET absent ou < 32 chars dans process.env. Refus de booter. Définir JWT_SECRET (>= 32 chars) dans .env.\x1b[0m');
+  throw new Error('JWT_SECRET requis (>= 32 chars) — boot avorté');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_TTL = 7 * 24 * 3600;  // 7 jours — comptes admin
 const JWT_TTL_MATCHDAY = 24 * 3600;      // 24h — Matchday Pass
 const JWT_TTL_USER = 30 * 24 * 3600; // 30 jours — membres
@@ -19698,29 +19695,23 @@ function srvPlanGate(req, res, pathname) {
 // Utilisateurs admin en mémoire (admin panel) — PBKDF2 salé
 const USERS = new Map(); // { username: { hash, salt, role, forceChange: bool } }
 function initUsers() {
-  // Fail-fast en production : refuser de booter avec des credentials par défaut hardcodés.
-  // Les valeurs 'pariscore2026'/'Beta2026' ne doivent JAMAIS être actives en prod.
-  if (process.env.NODE_ENV === 'production') {
-    if (!process.env.ADMIN_PASSWORD) {
-      console.error('  \x1b[31m[FATAL] NODE_ENV=production mais ADMIN_PASSWORD absent. Refus de booter avec un mot de passe par défaut. Définir ADMIN_PASSWORD dans .env.\x1b[0m');
-      throw new Error('ADMIN_PASSWORD requis en production');
-    }
-    if (!process.env.BETA_TESTER_PASSWORD) {
-      console.error('  \x1b[31m[FATAL] NODE_ENV=production mais BETA_TESTER_PASSWORD absent. Refus de booter avec un mot de passe par défaut. Définir BETA_TESTER_PASSWORD dans .env.\x1b[0m');
-      throw new Error('BETA_TESTER_PASSWORD requis en production');
-    }
+  // BUG-004 (audit Phase 1) : fail-fast strict quel que soit NODE_ENV. Les
+  // valeurs 'pariscore2026'/'Beta2026' ne doivent JAMAIS être actives (ni dev,
+  // ni prod) — le fallback `|| '...'` est supprimé. Min 12 chars par secret.
+  // initUsers() est appelé au module-load, donc AVANT server.listen().
+  if (!process.env.ADMIN_PASSWORD || String(process.env.ADMIN_PASSWORD).length < 12) {
+    console.error('  \x1b[31m[FATAL] ADMIN_PASSWORD absent ou < 12 chars dans process.env. Refus de booter. Définir ADMIN_PASSWORD (>= 12 chars) dans .env.\x1b[0m');
+    throw new Error('ADMIN_PASSWORD requis (>= 12 chars) — boot avorté');
   }
-  if (!process.env.ADMIN_PASSWORD) {
-    console.error('  \x1b[31m[SECURITY] ADMIN_PASSWORD absent de .env — mot de passe par défaut DANGEREUX actif (dev only). Définir ADMIN_PASSWORD immédiatement.\x1b[0m');
+  if (!process.env.BETA_TESTER_PASSWORD || String(process.env.BETA_TESTER_PASSWORD).length < 12) {
+    console.error('  \x1b[31m[FATAL] BETA_TESTER_PASSWORD absent ou < 12 chars dans process.env. Refus de booter. Définir BETA_TESTER_PASSWORD (>= 12 chars) dans .env.\x1b[0m');
+    throw new Error('BETA_TESTER_PASSWORD requis (>= 12 chars) — boot avorté');
   }
-  const adminPass = process.env.ADMIN_PASSWORD || 'pariscore2026';
+  const adminPass = process.env.ADMIN_PASSWORD;
   const { hash, salt } = hashPasswordSync(adminPass);
   USERS.set('admin', { hash, salt, role: 'admin', forceChange: !process.env.ADMIN_PASSWORD });
   // Compte beta partagé — accès total (pro_all), expiration gérée au login
-  if (!process.env.BETA_TESTER_PASSWORD) {
-    console.warn('  \x1b[33m[SECURITY] BETA_TESTER_PASSWORD absent de .env — mot de passe par défaut actif (dev only).\x1b[0m');
-  }
-  const betaPass = process.env.BETA_TESTER_PASSWORD || 'Beta2026';
+  const betaPass = process.env.BETA_TESTER_PASSWORD;
   const b = hashPasswordSync(betaPass);
   USERS.set(BETA_TESTER_USER, { hash: b.hash, salt: b.salt, role: 'pro_all', forceChange: false });
 }
