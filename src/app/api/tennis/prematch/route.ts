@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
 import { MATCHES, type TennisMatch, type BookmakerOdd } from "@/lib/tennis-data";
 import { predict, type PlayerInputs } from "@/lib/prediction/engine";
-import { fetchRealMatches } from "@/lib/real-matches";
-import { fetchBSDMatches } from "@/lib/bsd-fetcher";
 
-// Cache config:
-//   - BSD / Odds API: 5-minute TTL (API limits)
-//   - Mock fallback: 60-second TTL
+// NOTE: bsd-fetcher and real-matches are loaded dynamically inside try/catch
+// to prevent a top-level import crash from taking down the entire route.
+// The mock fallback (MATCHES + predict) is always available.
+
 const CACHE_TTL_REAL_MS = 5 * 60_000;
 const CACHE_TTL_MOCK_MS = 60_000;
 
@@ -26,73 +25,99 @@ let inflight: Promise<TennisMatch[]> | null = null;
  *
  * Priority: BSD > The Odds API > Mock
  *
- * 1. BSD (sports.bzzoiro.com) — if BSD_API_KEY + BSD_TENNIS_ENABLED=true
- * 2. The Odds API — if ODDS_API_KEY set
- * 3. Mock fallback — enriched with real prediction engine
+ * Bulletproof: the entire handler is wrapped in try/catch.
+ * If EVERYTHING fails, mock data is returned (3 demo matches).
  */
 export async function GET() {
-  const now = Date.now();
-  const bsdKey = process.env.BSD_API_KEY;
-  const bsdEnabled = process.env.BSD_TENNIS_ENABLED === "true";
-  const oddsKey = process.env.ODDS_API_KEY;
+  try {
+    const now = Date.now();
+    const bsdKey = process.env.BSD_API_KEY;
+    const bsdEnabled = process.env.BSD_TENNIS_ENABLED === "true";
+    const oddsKey = process.env.ODDS_API_KEY;
 
-  // 1. Cache hit?
-  if (cache && now - cache.at < cacheTtl(cache.source)) {
+    // 1. Cache hit?
+    if (cache && now - cache.at < cacheTtl(cache.source)) {
+      return NextResponse.json({
+        matches: cache.data,
+        source: cache.source,
+        updatedAt: new Date(cache.at).toISOString(),
+      });
+    }
+
+    // 2. Try BSD first (priority source) — dynamic import
+    if (bsdKey && bsdEnabled) {
+      try {
+        const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
+        const bsdMatches = await fetchBSDMatches();
+        cache = { data: bsdMatches, source: "bsd", at: now };
+        console.log("[prematch] BSD source —", bsdMatches.length, "matches");
+        return NextResponse.json({
+          matches: bsdMatches,
+          source: "bsd",
+          updatedAt: new Date(now).toISOString(),
+        });
+      } catch (err) {
+        console.error("[prematch] BSD failed:", (err as Error).message);
+        // fall through to Odds API
+      }
+    }
+
+    // 3. Try The Odds API — dynamic import
+    if (oddsKey) {
+      try {
+        if (!inflight) {
+          const { fetchRealMatches } = await import("@/lib/real-matches");
+          inflight = fetchRealMatches(oddsKey).catch((err) => {
+            console.error("[prematch] fetchRealMatches failed:", err.message);
+            throw err;
+          });
+        }
+        try {
+          const realMatches = await inflight;
+          inflight = null;
+          cache = { data: realMatches, source: "odds-api", at: now };
+          return NextResponse.json({
+            matches: realMatches,
+            source: "odds-api",
+            updatedAt: new Date(now).toISOString(),
+          });
+        } catch (err) {
+          inflight = null;
+          console.error("[prematch] Odds API failed:", (err as Error).message);
+        }
+      } catch (err) {
+        inflight = null;
+        console.error("[prematch] Odds API module failed:", (err as Error).message);
+      }
+    }
+
+    // 4. Mock fallback — ALWAYS works
+    return mockResponse(now);
+  } catch (fatalErr) {
+    // ABSOLUTE last resort — if something totally unexpected crashes
+    console.error("[prematch] FATAL — returning mock:", (fatalErr as Error).message);
+    return mockResponse(Date.now());
+  }
+}
+
+function mockResponse(now: number): NextResponse {
+  try {
+    const matches = MATCHES.map((m) => enrichMockMatch(m));
+    cache = { data: matches, source: "mock", at: now };
     return NextResponse.json({
-      matches: cache.data,
-      source: cache.source,
-      updatedAt: new Date(cache.at).toISOString(),
+      matches,
+      source: "mock",
+      updatedAt: new Date(now).toISOString(),
+    });
+  } catch {
+    // If even enrichMockMatch crashes, return raw MATCHES without enrichment
+    console.error("[prematch] enrichMockMatch failed — returning raw matches");
+    return NextResponse.json({
+      matches: MATCHES,
+      source: "mock",
+      updatedAt: new Date(now).toISOString(),
     });
   }
-
-  // 2. Try BSD first (priority source)
-  if (bsdKey && bsdEnabled) {
-    try {
-      const bsdMatches = await fetchBSDMatches();
-      cache = { data: bsdMatches, source: "bsd", at: now };
-      console.log("[prematch] BSD source —", bsdMatches.length, "matches");
-      return NextResponse.json({
-        matches: bsdMatches,
-        source: "bsd",
-        updatedAt: new Date(now).toISOString(),
-      });
-    } catch (err) {
-      console.error("[prematch] BSD failed, trying Odds API:", (err as Error).message);
-      // fall through to Odds API
-    }
-  }
-
-  // 3. Try The Odds API
-  if (oddsKey) {
-    if (!inflight) {
-      inflight = fetchRealMatches(oddsKey).catch((err) => {
-        console.error("[prematch] fetchRealMatches failed:", err.message);
-        throw err;
-      });
-    }
-    try {
-      const realMatches = await inflight;
-      inflight = null;
-      cache = { data: realMatches, source: "odds-api", at: now };
-      return NextResponse.json({
-        matches: realMatches,
-        source: "odds-api",
-        updatedAt: new Date(now).toISOString(),
-      });
-    } catch (err) {
-      inflight = null;
-      console.error("[prematch] Odds API failed, falling back to mock:", (err as Error).message);
-    }
-  }
-
-  // 4. Mock fallback
-  const matches = MATCHES.map((m) => enrichMockMatch(m));
-  cache = { data: matches, source: "mock", at: now };
-  return NextResponse.json({
-    matches,
-    source: "mock",
-    updatedAt: new Date(now).toISOString(),
-  });
 }
 
 function cacheTtl(source: Source): number {
