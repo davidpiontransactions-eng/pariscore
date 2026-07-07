@@ -540,6 +540,52 @@
   @keyframes sc-blink { 50% { opacity: 0.4; } }
   @media (prefers-reduced-motion: reduce) { .sc-live-badge { animation: none; } }
 
+  /* ═══ Live pulses (Task 3.3 — signaux déclencheurs live) ═══ */
+  .sc-pulse { padding: 6px 16px; font-size: 12px; font-weight: 600; }
+  .sc-pulse-break {
+    background: rgba(239,68,68,0.2); color: var(--sc-tier-avoid);
+    animation: sc-pulse-anim 1.6s infinite;
+  }
+  .sc-pulse-momentum {
+    background: rgba(16,185,129,0.15); color: var(--sc-tier-strong);
+    animation: sc-pulse-anim 1.6s infinite;
+  }
+  .sc-pulse-drift { background: rgba(245,158,11,0.15); color: var(--sc-tier-moderate); }
+  @keyframes sc-pulse-anim {
+    0%, 100% { box-shadow: 0 0 0 0 currentColor; }
+    50% { box-shadow: 0 0 8px 2px currentColor; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sc-pulse-break, .sc-pulse-momentum { animation: none; }
+  }
+
+  /* ═══ Stratégies P3 (Task 3.4) + Mode Pro (Task 3.6) ═══ */
+  .sc-strategies { padding: 8px 0; }
+  .sc-strat-consensus {
+    background: rgba(59,130,246,0.1); padding: 8px 12px;
+    border-radius: 6px; margin-bottom: 12px; font-size: 14px;
+    border-left: 3px solid var(--sc-player-p2);
+  }
+  .sc-strat-row { margin-bottom: 10px; }
+  .sc-strat-label { font-size: 12px; color: var(--sc-text-muted); margin-bottom: 4px; }
+  .sc-strat-label small { color: var(--sc-text-muted); opacity: 0.7; font-size: 10px; }
+  .sc-strat-bar {
+    position: relative; height: 18px; background: rgba(255,255,255,0.08);
+    border-radius: 4px; overflow: hidden;
+  }
+  .sc-strat-fill { height: 100%; background: var(--sc-player-p1); transition: width 0.3s; }
+  .sc-strat-bar span {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-family: var(--sc-font-mono); color: var(--sc-text);
+  }
+  .sc-pro-layer { margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
+  .sc-pro-layer summary { cursor: pointer; color: var(--sc-text-muted); font-size: 12px; padding: 4px 0; }
+  .sc-pro-content pre {
+    font-size: 10px; color: var(--sc-text-muted); overflow-x: auto;
+    background: rgba(0,0,0,0.3); padding: 8px; border-radius: 4px;
+    max-height: 200px; overflow-y: auto;
+  }
+
   /* ═══ Ligne P1 Terminal (scan dense) ═══ */
   .sc-scan-row {
     display: flex; align-items: center; gap: 12px;
@@ -26134,7 +26180,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
         + '<div class="sc-meta">' + metaHtml + '</div>'
         + insightHtml
         + chipsHtml
-        + '<button class="sc-expand sc-tap-min" aria-expanded="false" aria-controls="det-' + _jsStr(m.id) + '" onclick="Scope._toggle(this)">▶ Analyse détaillée</button>'
+        + '<button class="sc-expand sc-tap-min" aria-expanded="false" aria-controls="det-' + _jsStr(m.id) + '" onclick="Scope._decToggle(this)">▶ Analyse détaillée</button>'
       + '</div>'
       + '<footer class="sc-decision-action">' + betBtnHtml + '</footer>'
       + '<div class="sc-detail" id="det-' + _jsStr(m.id) + '" hidden></div>'
@@ -26191,12 +26237,98 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var g1 = last ? (num(last.p1) || 0) : 0;
     var g2 = last ? (num(last.p2) || 0) : 0;
     var pt = m.current_point || '';
-    return '<div class="sc-live-score"><span class="sc-live-badge">🔴 LIVE</span> ' + s1 + '-' + s2 + ' · ' + g1 + '-' + g2 + ' · ' + esc(pt) + (m.serving ? ' 🎾' : '') + '</div>';
+    var serving = m.serving ? ' 🎾' : '';
+    var html = '<div class="sc-live-score"><span class="sc-live-badge">🔴 LIVE</span> ' + s1 + '-' + s2 + ' · ' + g1 + '-' + g2 + ' · ' + esc(pt) + serving + '</div>';
+
+    // ═══ Pulses sur signaux déclencheurs live (Task 3.3) ═══
+    // 1. BPPI critique (break point pressure)
+    var bppi = m.bppi || {};
+    var p1Bppi = num(bppi.p1), p2Bppi = num(bppi.p2);
+    if ((p1Bppi && p1Bppi > 1.5) || (p2Bppi && p2Bppi > 1.5)) {
+      var breakSide = p1Bppi > p2Bppi ? 'p2' : 'p1'; // serveur sous pression
+      var breakName = breakSide === 'p1' ? (m.player2 && m.player2.name) : (m.player1 && m.player1.name);
+      html += '<div class="sc-pulse sc-pulse-break">🔴 BREAK POINT — ' + esc(shortName(breakName || '')) + ' sous pression</div>';
+    }
+    // 2. Momentum shift
+    var mom = m.momentum || {};
+    if (mom.kfs_confidence && num(mom.kfs_confidence) > 0.7 && mom.kfs_direction && mom.kfs_direction !== 'neutral') {
+      var momPlayer = mom.kfs_direction === 'p1' ? (m.player1 && m.player1.name) : (m.player2 && m.player2.name);
+      html += '<div class="sc-pulse sc-pulse-momentum">📈 MOMENTUM ' + esc(shortName(momPlayer || '')) + '</div>';
+    }
+    // 3. DR divergent du score ("le score ment")
+    if (m.dr_exact != null) {
+      var dr = num(m.dr_exact);
+      var leadingSide = s1 > s2 ? 'p1' : (s2 > s1 ? 'p2' : null);
+      var drSide = dr > 0 ? 'p1' : 'p2';
+      if (leadingSide && leadingSide !== drSide && Math.abs(dr) >= 0.3) {
+        var undervalued = drSide === 'p1' ? (m.player1 && m.player1.name) : (m.player2 && m.player2.name);
+        html += '<div class="sc-pulse sc-pulse-drift">⚠ Le score ment — value ' + esc(shortName(undervalued || '')) + '</div>';
+      }
+    }
+    return html;
   }
   function _decToggleFav(id) {
     toggleFav(id);
     // Re-render la liste pour mettre à jour l'étoile
     if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
+  }
+
+  // ═══ Stratégies P3 (câble /api/v1/tennis/strategies/:matchId) + Mode Pro ═══
+  // Réf: DESIGN-DOC §5.3 + §5.4 + §6.4. Lazy fetch au tap sur accordéon Analyse.
+  function renderStrategies(matchId, container) {
+    if (!container) return;
+    container.innerHTML = '<div class="sc-loading">Chargement stratégies…</div>';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/v1/tennis/strategies/' + encodeURIComponent(matchId), true);
+    xhr.timeout = 6000;
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        try {
+          var data = JSON.parse(xhr.responseText);
+          var strats = data.strategies || [];
+          var cons = data.consensus || {};
+          var consensusHtml = (cons.probP1 != null)
+            ? '<div class="sc-strat-consensus">Consensus modèle : <b>' + cons.probP1.toFixed(0) + '% / ' + cons.probP2.toFixed(0) + '%</b></div>'
+            : '';
+          var stratsHtml = strats.map(function(s) {
+            var p1 = num(s.probP1), p2 = num(s.probP2);
+            var widthP1 = Math.max(5, Math.min(95, p1));
+            return '<div class="sc-strat-row">'
+              + '<div class="sc-strat-label">' + esc(s.label || '') + ' <small>' + esc(s.description || '') + '</small></div>'
+              + '<div class="sc-strat-bar"><div class="sc-strat-fill" style="width:' + widthP1 + '%"></div><span>' + p1.toFixed(0) + '% / ' + p2.toFixed(0) + '%</span></div>'
+              + '</div>';
+          }).join('');
+          var proHtml = '<details class="sc-pro-layer"><summary>Mode Pro (data brute)</summary>'
+            + '<div class="sc-pro-content"><pre>' + esc(JSON.stringify(data, null, 2)) + '</pre></div></details>';
+          container.innerHTML = '<div class="sc-strategies">' + consensusHtml + stratsHtml + proHtml + '</div>';
+        } catch(e) {
+          container.innerHTML = '<div class="sc-error">Stratégies indisponibles (parsing).</div>';
+        }
+      } else {
+        container.innerHTML = '<div class="sc-error">Stratégies indisponibles (' + xhr.status + ').</div>';
+      }
+    };
+    xhr.ontimeout = function() { container.innerHTML = '<div class="sc-error">Délai dépassé.</div>'; };
+    xhr.onerror = function() { container.innerHTML = '<div class="sc-error">Erreur réseau.</div>'; };
+    xhr.send();
+  }
+
+  // Accordéon dédié decisionCard : ouvre/ferme le <div id="det-{id}"> + lazy fetch stratégies
+  function _decToggle(btn) {
+    var controlsId = btn.getAttribute('aria-controls');
+    if (!controlsId) return;
+    var detail = document.getElementById(controlsId);
+    if (!detail) return;
+    var isExpanded = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+    btn.textContent = (isExpanded ? '▶' : '▼') + ' Analyse détaillée';
+    detail.hidden = isExpanded;
+    // Lazy fetch stratégies au premier expand
+    if (!isExpanded && !detail.dataset.loaded) {
+      detail.dataset.loaded = '1';
+      var matchId = controlsId.replace(/^det-/, '');
+      renderStrategies(matchId, detail);
+    }
   }
 
   // ═══ Ligne P1 « Terminal » (scan dense, vue liste) ═══
@@ -27014,6 +27146,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     decisionCard: decisionCard,
     scanRow: scanRow,
     betModal: betModal,
+    renderStrategies: renderStrategies,
+    _decToggle: _decToggle,
     selectMatch: function(id) { storeSet({ selectedMatchId: id }); },
     // bd 2.6 — bascule carte (P2) ↔ liste scan (P1). Préférence via le store.
     setView: function(mode) {
