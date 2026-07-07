@@ -425,6 +425,49 @@
   }
   .sc-bet-dialog-close:hover { color: var(--sc-text); }
 
+  /* ═══ Contenu modale Parier ═══ */
+  .sc-loading, .sc-error, .sc-empty {
+    color: var(--sc-text-muted);
+    padding: 20px;
+    text-align: center;
+  }
+  .sc-error { color: var(--sc-tier-avoid); }
+  .sc-bet-verdict {
+    background: rgba(16,185,129,0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    font-size: 15px;
+    border-left: 3px solid var(--sc-tier-strong);
+  }
+  .sc-bet-verdict-player { color: var(--sc-text-muted); font-size: 12px; }
+  .sc-bet-book {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    background: rgba(255,255,255,0.03);
+    gap: 8px;
+  }
+  .sc-bet-book-best {
+    background: rgba(16,185,129,0.15);
+    border: 1px solid var(--sc-tier-strong);
+    font-weight: 600;
+  }
+  .sc-bet-book-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc-bet-book-odds { font-family: var(--sc-font-mono); font-weight: 700; min-width: 60px; text-align: right; }
+  .sc-bet-book-player { color: var(--sc-text-muted); font-size: 12px; min-width: 80px; text-align: right; }
+  .sc-bet-all { margin-top: 12px; }
+  .sc-bet-all summary {
+    cursor: pointer;
+    color: var(--sc-text-muted);
+    font-size: 13px;
+    padding: 8px;
+  }
+  .sc-bet-books-all .sc-bet-book { background: rgba(255,255,255,0.02); font-size: 13px; }
+
   /* ═══ Carte P2 Décision ═══ */
   .sc-decision-card {
     background: var(--sc-bg-elev);
@@ -26192,6 +26235,127 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       + '</article>';
   }
 
+  // ═══ Modale Parier (câble /api/v1/tennis/odds-comparison/:matchId) ═══
+  // Réf: redesign-tennis/DESIGN-DOC-REDESIGN-TENNIS.md §6.3
+  var _betModalCache = {};
+  var _betModalTimer = null;
+  function betModal(matchId) {
+    var dialog = document.getElementById('sc-bet-dialog');
+    var body = document.getElementById('sc-bet-dialog-body');
+    var title = document.getElementById('sc-bet-dialog-title');
+    if (!dialog || !body) return;
+
+    title.textContent = 'Comparaison bookmakers';
+    body.innerHTML = '<div class="sc-loading">Chargement des cotes…</div>';
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      dialog.setAttribute('open', ''); // fallback très vieux navigateur
+    }
+
+    // Cache 60s
+    var now = Date.now();
+    if (_betModalCache[matchId] && (now - _betModalCache[matchId].ts < 60000)) {
+      _renderBetModal(matchId, _betModalCache[matchId].data);
+      return;
+    }
+
+    // Abort timer précédent + timeout 6s + retry 1×
+    if (_betModalTimer) clearTimeout(_betModalTimer);
+    var retryDone = false;
+    function fetchOdds() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/api/v1/tennis/odds-comparison/' + encodeURIComponent(matchId), true);
+      xhr.timeout = 6000;
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            _betModalCache[matchId] = { ts: Date.now(), data: data };
+            _renderBetModal(matchId, data);
+          } catch(e) {
+            body.innerHTML = '<div class="sc-error">Erreur de parsing des cotes.</div>';
+          }
+        } else if (xhr.status === 404 && !retryDone) {
+          retryDone = true;
+          body.innerHTML = '<div class="sc-loading">Préparation des cotes en cours…</div>';
+          _betModalTimer = setTimeout(fetchOdds, 3000); // retry 1× après 3s
+        } else {
+          body.innerHTML = '<div class="sc-error">Cotes indisponibles (statut ' + xhr.status + '). Réessayez dans 30s.</div>';
+        }
+      };
+      xhr.ontimeout = function() {
+        if (!retryDone) {
+          retryDone = true;
+          body.innerHTML = '<div class="sc-loading">Préparation des cotes…</div>';
+          _betModalTimer = setTimeout(fetchOdds, 3000);
+        } else {
+          body.innerHTML = '<div class="sc-error">Délai dépassé. Réessayez dans 30s.</div>';
+        }
+      };
+      xhr.onerror = function() {
+        body.innerHTML = '<div class="sc-error">Erreur réseau. Vérifiez votre connexion.</div>';
+      };
+      xhr.send();
+    }
+    fetchOdds();
+  }
+
+  function _renderBetModal(matchId, data) {
+    var body = document.getElementById('sc-bet-dialog-body');
+    if (!body) return;
+    var bv = data.best_value || {};
+    var books = (data.theoddsapi && data.theoddsapi.bookmakers) || [];
+
+    // Ligne verdict
+    var verdictHtml = '';
+    if (bv && bv.player && bv.odds) {
+      var edgePct = bv.edge != null ? (bv.edge * 100).toFixed(1) : '?';
+      verdictHtml = '<div class="sc-bet-verdict">Best : <b>' + esc(bv.book || '—') + '</b> ' + Number(bv.odds).toFixed(2)
+        + ' — value +' + edgePct + '%<br><span class="sc-bet-verdict-player">' + esc(bv.player) + '</span></div>';
+    }
+
+    // Top books (theoddsapi → flatten en p1/p2 odds par book)
+    var allBooks = [];
+    books.forEach(function(b) {
+      (b.h2h || []).forEach(function(outcomes) {
+        var p1o = null, p2o = null;
+        for (var i = 0; i < outcomes.length; i++) {
+          if (data.player1 && outcomes[i].name === data.player1.name) p1o = outcomes[i].price;
+          if (data.player2 && outcomes[i].name === data.player2.name) p2o = outcomes[i].price;
+        }
+        if (p1o || p2o) {
+          allBooks.push({
+            book: b.title || b.key,
+            p1_odds: p1o, p2_odds: p2o,
+            best_odds: Math.max(p1o || 0, p2o || 0),
+            best_side: (p1o || 0) >= (p2o || 0) ? 'p1' : 'p2'
+          });
+        }
+      });
+    });
+    allBooks.sort(function(a, b) { return b.best_odds - a.best_odds; });
+    var top3 = allBooks.slice(0, 3).map(function(b, i) {
+      var bestPlayerName = b.best_side === 'p1' ? (data.player1 && data.player1.name) : (data.player2 && data.player2.name);
+      return '<div class="sc-bet-book' + (i === 0 ? ' sc-bet-book-best' : '') + '">'
+        + '<span class="sc-bet-book-name">' + esc(b.book) + '</span>'
+        + '<span class="sc-bet-book-odds">' + Number(b.best_odds).toFixed(2) + '</span>'
+        + '<span class="sc-bet-book-player">' + esc(shortName(bestPlayerName || '')) + '</span>'
+        + '</div>';
+    }).join('');
+
+    var allBooksHtml = allBooks.map(function(b) {
+      var bestPlayerName = b.best_side === 'p1' ? (data.player1 && data.player1.name) : (data.player2 && data.player2.name);
+      return '<div class="sc-bet-book"><span>' + esc(b.book) + '</span><span>' + Number(b.best_odds).toFixed(2) + '</span><span>' + esc(shortName(bestPlayerName || '')) + '</span></div>';
+    }).join('');
+
+    body.innerHTML = '<div class="sc-bet-modal">'
+      + verdictHtml
+      + '<div class="sc-bet-books">' + (top3 || '<div class="sc-empty">Aucun bookmaker disponible</div>') + '</div>'
+      + (allBooks.length > 3 ? '<details class="sc-bet-all"><summary>Tous les books (' + allBooks.length + ')</summary><div class="sc-bet-books-all">' + allBooksHtml + '</div></details>' : '')
+      + '</div>';
+  }
+
   /* ── Premier Card (compacte N1) ───────────────────────────────────── */
   function premierCard(m){
     var p1=m.player1||{},p2=m.player2||{};
@@ -26849,6 +27013,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     svgIcon:svgIcon,esc:esc,shortName:shortName,
     decisionCard: decisionCard,
     scanRow: scanRow,
+    betModal: betModal,
     selectMatch: function(id) { storeSet({ selectedMatchId: id }); },
     // bd 2.6 — bascule carte (P2) ↔ liste scan (P1). Préférence via le store.
     setView: function(mode) {
