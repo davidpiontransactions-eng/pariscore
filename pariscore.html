@@ -25228,6 +25228,16 @@ a:focus-visible,
 .sc-view-btn{background:none;border:none;color:var(--sc-text-muted);padding:8px 14px;cursor:pointer;min-height:var(--sc-tap-min);font-size:13px}
 .sc-view-btn.active{background:var(--sc-bg-elev);color:var(--sc-text)}
 @media (min-width:1024px){.sc-view-toggle{display:none}}
+/* ═══ Master-detail desktop (Phase 3.1) ═══ */
+.sc-master-detail{display:grid;grid-template-columns:40% 60%;gap:16px;align-items:start}
+.sc-master-list{max-height:calc(100vh - 220px);overflow-y:auto;padding-right:8px}
+/* Surlignage de la ligne sélectionnée dans la master list */
+.sc-master-list .sc-scan-row.selected{border-color:var(--sc-accent,#00e676);box-shadow:0 0 0 1px var(--sc-accent,#00e676) inset;background:rgba(0,230,118,.06)}
+.sc-master-list .sc-scan-row.selected .sc-scan-players{color:var(--sc-text,#fff)}
+.sc-master-detail-panel{position:sticky;top:90px;max-height:calc(100vh - 180px);overflow-y:auto}
+.sc-master-detail-panel .sc-decision-card{margin-bottom:0}
+.sc-empty{color:var(--sc-text-muted,#64748b);padding:40px;text-align:center;background:var(--sc-bg-elev,#182030);border-radius:var(--sc-card-radius,12px)}
+@media (max-width:1023px){.sc-master-detail{display:none}}
 /* scrollable table wrapper */
 .sc-table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg2);max-height:560px}
 /* utility */
@@ -27207,6 +27217,36 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     });
   }
 
+  // Filtres prematch (surface + tournoi + tri) — factorisés pour réutilisation
+  // par le rendu mobile ET la branche desktop master-detail (Phase 3.1).
+  function applyPrematchFilters(list) {
+    var _surface = _state.surfaceFilter || 'all';
+    var _tournament = _state.tournamentFilter || 'all';
+    var _sort = _state.sortFilter || 'importance';
+    var _filtered = list.slice();
+    if (_surface !== 'all') _filtered = _filtered.filter(function(m){ return String(m.surface||'') === _surface; });
+    if (_tournament !== 'all') _filtered = _filtered.filter(function(m){ return (m.tournament||'') === _tournament; });
+    if (_sort === 'edge') {
+      _filtered.sort(function(a,b){
+        function _edge(x){ return x.best_ev_model ? (Number(x.best_ev_model.prob||0)/100 - 1/Number(x.best_ev_model.odds||1)) : 0; }
+        return _edge(b) - _edge(a);
+      });
+    } else if (_sort === 'time') {
+      _filtered.sort(function(a,b){ var as=a.start_time||'', bs=b.start_time||''; return as<bs?-1:as>bs?1:0; });
+    }
+    return _filtered;
+  }
+
+  // Surligne le scanRow sélectionné dans la master list desktop (Phase 3.1).
+  // Toggle la classe .selected sur la ligne dont data-match-id === id.
+  function _highlightMasterSelection(id) {
+    var rows = document.querySelectorAll('.sc-master-list .sc-scan-row, .sc-master-list [data-match-id]');
+    for (var i = 0; i < rows.length; i++) {
+      var rid = rows[i].getAttribute('data-match-id');
+      rows[i].classList.toggle('selected', id != null && String(rid) === String(id));
+    }
+  }
+
   function renderActiveTab() {
     if (!root.Scope) return;
     var tab = _state.activeTab;
@@ -27219,6 +27259,57 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     var allPrematch = root.Scope.sortMatchesByImportance(filterBySearch(getPrematch()));
     var allLive = root.Scope.sortMatchesByImportance(filterBySearch(getLive()));
     var _q = _state.searchQuery ? _state.searchQuery.trim() : '';
+
+    // ═══ Desktop master-detail (≥1024px) — Phase 3.1 ═══
+    // Liste scanRow persistante (40%) + panneau détail decisionCard (60%).
+    // Le match reste visible pendant l'analyse. Sélection via store observable.
+    var isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+    if (isDesktop && (tab === 'prematch' || tab === 'live')) {
+      var _dSource = (tab === 'prematch') ? applyPrematchFilters(allPrematch) : allLive.slice();
+      if (!_dSource.length) {
+        // Liste vide : conserve le rendu emptyState du flux mobile (plus riche).
+        var _dMsg = (tab === 'prematch')
+          ? (_state.loading ? 'Chargement des matchs…' : (_q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match à venir. Cliquez sur Rafraîchir.'))
+          : (_state.liveError ? '⚠️ Erreur live : ' + (_state.error || 'réseau') + ' — réessai automatique dans 60 s.'
+             : (_state.loading ? 'Chargement des matchs live…' : (_q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match en direct pour le moment.')));
+        pEl.innerHTML = emptyState(_dMsg);
+        return;
+      }
+      // Auto-sélection du premier match si rien de sélectionné (panneau non vide).
+      var _curSel = root.Scope.store.get().selectedMatchId;
+      var _selId = _curSel || (_dSource[0] && _dSource[0].id);
+      var _selMatch = _dSource.filter(function(m){ return String(m.id) === String(_selId); })[0] || _dSource[0];
+      if (!_curSel && _selMatch) {
+        // Initialise la sélection sans re-render immédiat (on rend déjà ci-dessous).
+        root.Scope.store.set({ selectedMatchId: _selMatch.id });
+      }
+      // Marque le scanRow sélectionné pour le surlignage (classe .selected côté scanRow).
+      var _listHtml = '<div class="sc-master-list">' + _dSource.map(function(m){
+        return root.Scope.scanRow(m);
+      }).join('') + '</div>';
+      var _detailHtml = '<div class="sc-master-detail-panel">'
+        + (_selMatch ? root.Scope.decisionCard(_selMatch) : '<div class="sc-empty">Sélectionnez un match</div>')
+        + '</div>';
+      pEl.innerHTML = '<div class="sc-master-detail">' + _listHtml + _detailHtml + '</div>';
+      // Surligne la ligne sélectionnée.
+      _highlightMasterSelection(_selMatch && _selMatch.id);
+
+      // Abonnement au store : re-render du seul panneau détail (une seule fois).
+      // Évite les multi-abonnements à chaque render via le flag global.
+      if (!window._scMasterDetailSub) {
+        window._scMasterDetailSub = root.Scope.store.subscribe(function(state) {
+          if (!window.matchMedia('(min-width: 1024px)').matches) return;
+          var panel2 = document.querySelector('.sc-master-detail-panel');
+          if (!panel2) return;
+          var allMatches = _state.matches || [];
+          var match = allMatches.filter(function(m){ return String(m.id) === String(state.selectedMatchId); })[0];
+          if (match) panel2.innerHTML = root.Scope.decisionCard(match);
+          _highlightMasterSelection(state.selectedMatchId);
+        });
+      }
+      return; // Skip le rendu mobile/cartes
+    }
+
     if (tab === 'prematch') {
       if (!allPrematch.length) {
         var _msg = _state.loading ? 'Chargement des matchs…' : (_q ? 'Aucun match trouvé pour « ' + _q + ' ».' : 'Aucun match à venir. Cliquez sur Rafraîchir.');
@@ -27228,17 +27319,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         var _surface = _state.surfaceFilter || 'all';
         var _tournament = _state.tournamentFilter || 'all';
         var _sort = _state.sortFilter || 'importance';
-        var _filtered = allPrematch.slice();
-        if (_surface !== 'all') _filtered = _filtered.filter(function(m){ return String(m.surface||'') === _surface; });
-        if (_tournament !== 'all') _filtered = _filtered.filter(function(m){ return (m.tournament||'') === _tournament; });
-        if (_sort === 'edge') {
-          _filtered.sort(function(a,b){
-            function _edge(x){ return x.best_ev_model ? (Number(x.best_ev_model.prob||0)/100 - 1/Number(x.best_ev_model.odds||1)) : 0; }
-            return _edge(b) - _edge(a);
-          });
-        } else if (_sort === 'time') {
-          _filtered.sort(function(a,b){ var as=a.start_time||'', bs=b.start_time||''; return as<bs?-1:as>bs?1:0; });
-        }
+        var _filtered = applyPrematchFilters(allPrematch);
         // Dropdown tournois
         var _tnMap = {};
         allPrematch.forEach(function(m){ if(m.tournament) _tnMap[m.tournament] = 1; });
