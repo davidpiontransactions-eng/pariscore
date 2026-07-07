@@ -497,6 +497,26 @@
   @keyframes sc-blink { 50% { opacity: 0.4; } }
   @media (prefers-reduced-motion: reduce) { .sc-live-badge { animation: none; } }
 
+  /* ═══ Ligne P1 Terminal (scan dense) ═══ */
+  .sc-scan-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; min-height: 64px;
+    background: var(--sc-bg-elev); border-radius: 8px;
+    cursor: pointer; transition: background 0.15s;
+    margin-bottom: 6px;
+  }
+  .sc-scan-row:hover, .sc-scan-row:focus { background: rgba(255,255,255,0.04); outline: none; }
+  .sc-scan-ev {
+    font-family: var(--sc-font-mono); font-size: 20px; font-weight: 700;
+    min-width: 76px; text-align: right;
+  }
+  .sc-scan-main { flex: 1; min-width: 0; }
+  .sc-scan-players { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-scan-meta { font-size: 11px; color: var(--sc-text-muted); margin-top: 2px; }
+  .sc-scan-odds { font-family: var(--sc-font-mono); font-size: 16px; color: var(--sc-text-muted); min-width: 50px; text-align: right; }
+  .sc-scan-live { font-size: 12px; color: var(--sc-tier-avoid); white-space: nowrap; font-family: var(--sc-font-mono); }
+  .sc-scan-trap { color: var(--sc-tier-avoid); font-size: 12px; }
+
   /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C1-B FOUNDATIONS
      Scope strict : .ps-mobile-v2 (classe posee par swap script <head>)
@@ -26119,6 +26139,42 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
   }
 
+  // ═══ Ligne P1 « Terminal » (scan dense, vue liste) ═══
+  // Réf: redesign-tennis/DESIGN-DOC-REDESIGN-TENNIS.md §6.2
+  // Toggle scan mobile + grille desktop. Tap = sélection master-detail (Phase 3).
+  function scanRow(m) {
+    if (!m) return '';
+    var vb = valueBet(m);
+    var tier = vb ? vb.tier : 'neutral';
+    var p1 = m.player1 || {}, p2 = m.player2 || {};
+    var st = new Date(m.commence_time || m.start_time || Date.now());
+    var timeStr = st.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    var evHtml = vb
+      ? '<div class="sc-scan-ev" style="color:var(--sc-tier-' + tier + ')">' + (vb.ev_pct >= 0 ? '+' : '') + vb.ev_pct.toFixed(1) + '%</div>'
+      : '<div class="sc-scan-ev sc-text-muted">—</div>';
+    var oddsHtml = vb ? '<div class="sc-scan-odds">@' + num(vb.odds, 2) + '</div>' : '';
+    var liveHtml = '';
+    if (m.tab === 'live') {
+      var s1 = m.player1_sets != null ? m.player1_sets : 0;
+      var s2 = m.player2_sets != null ? m.player2_sets : 0;
+      liveHtml = '<div class="sc-scan-live">🔴 ' + s1 + '-' + s2 + ' 🎾</div>';
+    }
+    var trapMark = (m.traps && m.traps.length) ? ' <span class="sc-scan-trap" title="' + _jsStr(m.traps.join(', ')) + '">⚠</span>' : '';
+    return '<article class="sc-scan-row sc-tier-' + tier + '" data-match-id="' + _jsStr(m.id) + '" tabindex="0" role="button"'
+      + ' aria-label="' + tier + ' ' + _jsStr(shortName(p1.name || '?')) + ' vs ' + _jsStr(shortName(p2.name || '?')) + ' EV ' + (vb ? vb.ev_pct.toFixed(1) : '0') + '%"'
+      + ' onclick="Scope.selectMatch(\'' + _jsStr(m.id) + '\')"'
+      + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){Scope.selectMatch(\'' + _jsStr(m.id) + '\')}"'
+      + '>'
+      + evHtml
+      + '<div class="sc-scan-main">'
+        + '<div class="sc-scan-players">' + esc(shortName(p1.name || '?')) + ' · ' + esc(shortName(p2.name || '?')) + trapMark + '</div>'
+        + '<div class="sc-scan-meta">' + esc(m.tournament || '?') + ' · ' + esc(m.surface || '?') + ' · ' + timeStr + '</div>'
+      + '</div>'
+      + oddsHtml
+      + liveHtml
+      + '</article>';
+  }
+
   /* ── Premier Card (compacte N1) ───────────────────────────────────── */
   function premierCard(m){
     var p1=m.player1||{},p2=m.player2||{};
@@ -26775,6 +26831,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
     decisionCard: decisionCard,
+    scanRow: scanRow,
+    selectMatch: function(id) { storeSet({ selectedMatchId: id }); },
     prematchCard:prematchCard,premierCard:premierCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
