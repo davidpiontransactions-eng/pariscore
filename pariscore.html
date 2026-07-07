@@ -26580,41 +26580,16 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   // On normalise juste les champs manquants et on calcule eloTrend si absent.
   function mapMatch(m) {
     if (!m) return null;
-    var p1 = m.player1 || {};
-    var p2 = m.player2 || {};
-    // eloTrend : si absent, on synthétise à partir d'elo_surface (courbe plate)
+    // Le backend (_serializeTennisCard) normalise désormais le payload.
+    // mapMatch ne fait que transmettre + enrichir l'affichage (eloTrend synthétisé).
     function trend(p) {
       if (Array.isArray(p.eloTrend) && p.eloTrend.length >= 2) return p.eloTrend;
       var base = Number(p.elo_surface) || 2000;
-      // petite variation plausible pour la sparkline
       return [base - 12, base - 6, base - 3, base - 8, base, base + 4, base - 2, base + 6, base + 2, base];
     }
-    // best_ev_model : si absent, on le dérive à partir des cotes + predictions.elo
-    var bestEv = m.best_ev_model;
-    if (!bestEv || !bestEv.odds) {
-      var p1p = (m.predictions && (m.predictions.elo != null)) ? Number(m.predictions.elo) :
-                (m.glicko2 && m.glicko2.p1_prob != null) ? Number(m.glicko2.p1_prob) : 0.5;
-      var o1 = Number(m.odds_player1) || 0;
-      var o2 = Number(m.odds_player2) || 0;
-      if (o1 && o2) {
-        var useP1 = p1p >= 0.5;
-        bestEv = {
-          label: (useP1 ? (p1.name || 'P1') : (p2.name || 'P2')) + ' Win',
-          odds: useP1 ? o1 : o2,
-          prob: Math.round((useP1 ? p1p : (1 - p1p)) * 100),
-          ev: 0
-        };
-        var ev = (useP1 ? p1p : (1 - p1p)) * (useP1 ? o1 : o2) - 1;
-        bestEv.ev = Math.round(ev * 1000) / 10;
-        bestEv.ev_pct = bestEv.ev;
-      }
-    }
-    // h2h : si absent, on le laisse tel quel (Scope gère le cas null)
     return Object.assign({}, m, {
-      player1: Object.assign({}, p1, { eloTrend: trend(p1) }),
-      player2: Object.assign({}, p2, { eloTrend: trend(p2) }),
-      best_ev_model: bestEv,
-      // Assure les champs utilisés par Scope
+      player1: Object.assign({}, m.player1 || {}, { eloTrend: trend(m.player1 || {}) }),
+      player2: Object.assign({}, m.player2 || {}, { eloTrend: trend(m.player2 || {}) }),
       bestOf: m.bestOf || m.best_of || 3,
       city: m.city || m.location || '',
       commence_time: m.commence_time || m.start_time
