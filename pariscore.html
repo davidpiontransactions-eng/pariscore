@@ -26574,26 +26574,50 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     renderActiveTab();
   }
 
-  // ── Auto-refresh (60s) ────────────────────────────────────────────────
+  // ── Auto-refresh adaptatif (20s live / 90s prematch) ──────────────────
   var _timer = null;
+  var _interval = 90000; // défaut prematch (recalculé par _computeRefreshInterval au démarrage)
+  var _visBound = false; // garde contre les bindings multiples de visibilitychange
+  function _computeRefreshInterval() {
+    var matches = (_state.matches || []);
+    // Critère live cohérent avec getLive() : _isLive OU status live/progress/playing/in-play
+    var hasLive = matches.some(function (m) {
+      return m._isLive || m.is_live || m.tab === 'live' || /live|progress|playing|in.play/i.test(String(m.status || ''));
+    });
+    return hasLive ? 20000 : 90000;
+  }
   function startAutoRefresh() {
     if (_timer) clearInterval(_timer);
+    _interval = _computeRefreshInterval();
     _timer = setInterval(function () {
       // Ne rafraîchir que si la page tennis est visible (display !== none)
       var page = document.getElementById('page-tennis');
-      if (page && page.style.display !== 'none') fetchData();
-    }, 60000);
-    // bd live-015 : pause polling quand onglet navigateur caché (économies batterie/CPU/serveur)
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) {
-        if (_timer) { clearInterval(_timer); _timer = null; }
-      } else {
-        // Reprendre immédiatement + relancer le cycle 60s (refresh instantané au retour)
-        var page = document.getElementById('page-tennis');
-        if (page && page.style.display !== 'none') fetchData();
-        if (!_timer) startAutoRefresh();
+      if (page && page.style.display !== 'none') {
+        fetchData();
+        // Recalculer l'intervalle après chaque fetch (un match peut être passé live)
+        var newInt = _computeRefreshInterval();
+        if (newInt !== _interval) {
+          _interval = newInt;
+          clearInterval(_timer);
+          startAutoRefresh();
+        }
       }
-    });
+    }, _interval);
+    // bd live-015 : pause polling quand onglet navigateur caché (économies batterie/CPU/serveur)
+    // Garde contre les bindings multiples : on n'attache le listener qu'une seule fois.
+    if (!_visBound) {
+      _visBound = true;
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          if (_timer) { clearInterval(_timer); _timer = null; }
+        } else {
+          // Reprendre immédiatement + relancer le cycle adaptatif (refresh instantané au retour)
+          var page = document.getElementById('page-tennis');
+          if (page && page.style.display !== 'none') fetchData();
+          if (!_timer) startAutoRefresh();
+        }
+      });
+    }
   }
 
   // ── API publique ──────────────────────────────────────────────────────
