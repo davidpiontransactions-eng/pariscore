@@ -53,6 +53,54 @@ Les routes Next.js (`/api/email/*`, `/api/push/*`, `/api/tennis/prematch`) retou
 
 → Hors périmètre de cet incident (à traiter séparément si besoin).
 
+---
+
+## 9. Activation du Next.js (suite de session)
+
+Après clarification architecturale, le Next.js standalone a été **démarré et exposé** en production pour activer les features email/push/tennis-prematch qui étaient jusqu'alors en 404.
+
+### 9.1 Opération effectuée
+
+1. **Démarrage Next.js standalone via PM2** (id 20, nom `pariscore-next`) sur le port **3005** :
+   ```
+   PORT=3005 NODE_ENV=production pm2 start server.js \
+     --name pariscore-next \
+     --cwd /home/ubuntu/pariscore/.next/standalone
+   ```
+   - Boot OK (`✓ Ready in 119ms`)
+   - RAM : 106 Mo
+   - `pm2 save` effectué → persistance au reboot
+
+2. **Routing nginx** : les règles `/api/tennis/`, `/api/email/`, `/api/push/`, `/api/sentry-test` (qui pointaient vers le port 3000 = legacy, qui ne les a pas) ont été redirigées vers le port **3005** (Next.js).
+   - Backups : `/home/ubuntu/nginx-sites-enabled-backup-20260707-022221.conf` (et 2 autres)
+   - **Piège rencontré** : `sites-enabled/pariscore` était un fichier régulier (pas un symlink de `sites-available`), le premier `sed` modifiait le mauvais fichier. Corrigé en modifiant directement `sites-enabled` puis en sync vers `sites-available`.
+   - `nginx -t` OK + reload.
+
+### 9.2 Architecture finale (post-fix)
+
+| Route publique | Port cible | Backend |
+|---|---|---|
+| `/api/v1/*` | 3000 | Legacy Node.js (business) |
+| `/api/tennis/*` | **3005** | Next.js (prematch/backtest/elo-history) |
+| `/api/email/*` | **3005** | Next.js (newsletters) |
+| `/api/push/*` | **3005** | Next.js (notifications push) |
+| `/api/sentry-test` | **3005** | Next.js (test Sentry) |
+| `/api/*` (générique) | 8000 | FastAPI uvicorn |
+| `/socket.io/` | 3001 | tennis-live (bun) |
+| `/` et `/_next/static/` | 3000 | Legacy (sert `pariscore.html`) |
+
+### 9.3 Tests post-activation
+
+| Endpoint via pariscore.fr | Code | Backend |
+|---|---|---|
+| `/api/tennis/prematch` | **200** (données BSD) | Next.js ✅ |
+| `/api/email/subscribe` | 405 (POST attendu) | Next.js ✅ |
+| `/api/push/subscribe` | 405 (POST attendu) | Next.js ✅ |
+| `/api/v1/status` | 200 | Legacy ✅ |
+| `/api/v1/matches` | 401 (auth) | Legacy ✅ |
+
+**E2E Playwright** : 0 erreur console, message "Impossible de récupérer" absent, 12 routes API en 200 — aucune régression sur le legacy.
+
 ## 3. Diagnostic (étapes)
 
 1. `curl https://pariscore.fr/api/v1/matches` → 404 (alors que `curl http://localhost:3000/api/v1/matches` → 401, route qui existe)
