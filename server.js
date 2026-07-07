@@ -41540,6 +41540,32 @@ if (pathname.startsWith('/api/v1/tennis/strategies/') && req.method === 'GET') {
   }
 }
 
+// ═══ Endpoint coverage data tennis (admin-only, remplace _auditLivePayload) ═══
+if (pathname === '/api/v1/tennis/coverage' && req.method === 'GET') {
+  var stats = { ts: Date.now(), total: 0, coverage: { bsd_stats: 0, welo: 0, odds: 0, momentum: 0, player_photo: 0 }, stale_odds: 0, avg_odds_age_ms: 0 };
+  var count = 0, ageSum = 0;
+  if (typeof _tennisVBCache !== 'undefined' && _tennisVBCache && _tennisVBCache.forEach) {
+    _tennisVBCache.forEach(function(entry) {
+      if (!entry || !entry.result || !entry.result.body || !Array.isArray(entry.result.body.matches)) return;
+      entry.result.body.matches.forEach(function(m) {
+        stats.total++;
+        if (m._bsd_stats || m.live_stats) stats.coverage.bsd_stats++;
+        if (m.player1 && m.player1.elo_surface) stats.coverage.welo++;
+        if (m.odds && m.odds.p1 && m.odds.p1.odds) stats.coverage.odds++;
+        if (m.momentum) stats.coverage.momentum++;
+        if (m.player1 && m.player1.photo) stats.coverage.player_photo++;
+        if (m.odds && m.odds.stale) stats.stale_odds++;
+        if (m.odds && m.odds.age_ms) { ageSum += m.odds.age_ms; count++; }
+      });
+    });
+  }
+  if (count) stats.avg_odds_age_ms = Math.round(ageSum / count);
+  Object.keys(stats.coverage).forEach(function(k) {
+    stats.coverage[k] = stats.total ? Math.round(stats.coverage[k] / stats.total * 100) : 0;
+  });
+  return jsonResponse(res, 200, stats);
+}
+
 // Route odds-comparison tennis (multi-bookmaker)
 if (pathname.startsWith('/api/v1/tennis/odds-comparison/') && req.method === 'GET') {
   try {
