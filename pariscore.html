@@ -16106,6 +16106,10 @@ function psSetLang(v) {
         <input type="search" id="sc-search-input" placeholder="Rechercher joueur ou tournoi…" autocomplete="off" aria-label="Rechercher">
         <button class="sc-search-clear" id="sc-search-clear" type="button" title="Effacer" aria-label="Effacer la recherche">✕</button>
       </div>
+      <div class="sc-view-toggle" role="group" aria-label="Mode d'affichage">
+        <button class="sc-view-btn active" data-view="card" onclick="Scope.setView('card')" aria-pressed="true">📋 Carte</button>
+        <button class="sc-view-btn" data-view="scan" onclick="Scope.setView('scan')" aria-pressed="false">≡ Scan</button>
+      </div>
     </header>
 
     <!-- ═══ PANELS ═══ -->
@@ -25218,6 +25222,12 @@ a:focus-visible,
 .sc-grid-3{grid-template-columns:1fr}
 @media (min-width:769px){.sc-grid-2{grid-template-columns:repeat(2,1fr)}.sc-grid-3{grid-template-columns:repeat(2,1fr)}}
 @media (min-width:1201px){.sc-grid-3{grid-template-columns:repeat(3,1fr)}}
+.sc-grid-1{display:flex;flex-direction:column}
+/* ═══ Toggle Scan rapide (mobile <1024px) ═══ */
+.sc-view-toggle{display:inline-flex;border:1px solid rgba(255,255,255,0.1);border-radius:8px;overflow:hidden;margin-left:8px}
+.sc-view-btn{background:none;border:none;color:var(--sc-text-muted);padding:8px 14px;cursor:pointer;min-height:var(--sc-tap-min);font-size:13px}
+.sc-view-btn.active{background:var(--sc-bg-elev);color:var(--sc-text)}
+@media (min-width:1024px){.sc-view-toggle{display:none}}
 /* scrollable table wrapper */
 .sc-table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--bg2);max-height:560px}
 /* utility */
@@ -26830,6 +26840,19 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     decisionCard: decisionCard,
     scanRow: scanRow,
     selectMatch: function(id) { storeSet({ selectedMatchId: id }); },
+    // bd 2.6 — bascule carte (P2) ↔ liste scan (P1). Préférence via le store.
+    setView: function(mode) {
+      storeSet({ viewMode: mode });
+      // Mettre à jour aria-pressed + classe active
+      var btns = document.querySelectorAll('.sc-view-btn');
+      for (var i = 0; i < btns.length; i++) {
+        var isActive = btns[i].getAttribute('data-view') === mode;
+        btns[i].classList.toggle('active', isActive);
+        btns[i].setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      }
+      // Re-render la liste
+      if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
+    },
     prematchCard:prematchCard,premierCard:premierCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
@@ -27243,7 +27266,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           + '<button class="sc-filter-btn' + (_sort==='time'?' active':'') + '" data-filter="sort" data-value="time">Horaire</button>'
           + '</div>'
           + '</div>'
-          + '<div class="sc-grid sc-grid-3">' + _filtered.map(function(m){ return root.Scope.decisionCard(m); }).join('') + '</div>';
+          + '<div class="sc-grid ' + ((root.Scope.store.get().viewMode === 'scan') ? 'sc-grid-1' : 'sc-grid-3') + '">' + _filtered.map(function(m){ return (root.Scope.store.get().viewMode === 'scan') ? root.Scope.scanRow(m) : root.Scope.decisionCard(m); }).join('') + '</div>';
         // Wire-up filtres via délégation (une seule fois)
         if (!pEl._filterWired) {
           pEl._filterWired = true;
@@ -27294,7 +27317,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           var _gt = _gm[0].tour || '';
           _gHtml += '<div class="sc-tour-group">';
           _gHtml += '<div class="sc-tour-header">' + root.Scope.svgIcon('trophy',14) + ' <span class="name">' + root.Scope.esc(tn) + '</span> <span class="tour">' + root.Scope.esc(_gt) + '</span> <span class="count">' + _gm.length + ' matchs</span></div>';
-          _gHtml += '<div class="sc-grid sc-grid-2">' + _gm.map(root.Scope.decisionCard).join('') + '</div>';
+          _gHtml += '<div class="sc-grid ' + ((root.Scope.store.get().viewMode === 'scan') ? 'sc-grid-1' : 'sc-grid-2') + '">' + _gm.map(function(m){ return (root.Scope.store.get().viewMode === 'scan') ? root.Scope.scanRow(m) : root.Scope.decisionCard(m); }).join('') + '</div>';
           _gHtml += '</div>';
         });
         pEl.innerHTML = _gHtml;
