@@ -26186,8 +26186,6 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           _state.matches.filter(function(m){ return !m._isLive && !_liveIdsNow[m.id]; })
         );
         _state.lastFetch = Date.now();
-        // bd audit-fix : log diagnostic payload live
-        try { _auditLivePayload(liveMatches, 'fetchData:live'); } catch(_) {}
         publishStatus('Dernière màj : ' + new Date().toLocaleTimeString('fr-FR') + ' · ' + _state.matches.length + ' matchs live');
         updateKpiBar(_state.matches);
         renderActiveTab();
@@ -26246,59 +26244,6 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         renderActiveTab();
         return [];
       });
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // bd audit-fix : Intercepteur diagnostic payload live
-  // Log ce que le serveur envoie VRAIMENT pour identifier champs manquants.
-  // À retirer en prod après diagnostic (ou garder silencieux si 100% OK).
-  // ═══════════════════════════════════════════════════════════════════════
-  function _auditLivePayload(matches, source) {
-    if (!Array.isArray(matches) || !matches.length) {
-      console.warn('[AuditLive] payload VIDE depuis', source);
-      return;
-    }
-    var stats = {
-      source: source, total: matches.length,
-      with_bsd_stats: 0, with_serve_momentum: 0, with_momentum_series: 0,
-      with_dr_exact: 0, with_current_point: 0, with_serving: 0,
-      with_player_photo: 0, with_player_id: 0
-    };
-    matches.forEach(function(m) {
-      if (m._bsd_stats || m.live_stats) stats.with_bsd_stats++;
-      if (m.serve_momentum) stats.with_serve_momentum++;
-      if (m.momentum_series) stats.with_momentum_series++;
-      if (m.dr_exact) stats.with_dr_exact++;
-      if (m.current_point) stats.with_current_point++;
-      if (m.serving != null) stats.with_serving++;
-      if (m.player1 && (m.player1.photo || m.player1.id)) stats.with_player_photo++;
-      if (m.player1 && m.player1.id) stats.with_player_id++;
-    });
-    // Échantillonner le 1er match live pour voir le schéma exact reçu
-    var sample = matches.find(function(m){return m.is_live;}) || matches[0];
-    if (sample) {
-      var bsdStats = sample._bsd_stats || sample.live_stats || {};
-      var nullCount = Object.keys(bsdStats).filter(function(k){return bsdStats[k]==null;}).length;
-      console.log('[AuditLive] sample match id=' + sample.id + ' tour=' + sample.tour +
-        ' | _bsd_stats nulls=' + nullCount + '/' + Object.keys(bsdStats).length +
-        ' | momentum_series=' + (sample.momentum_series ? sample.momentum_series.games?.length + ' games' : 'null') +
-        ' | serving=' + sample.serving + ' | current_point=' + (sample.current_point||'null') +
-        ' | player1.id=' + (sample.player1?.id||'null') + ' player1.photo=' + (sample.player1?.photo?'YES':'null'));
-    }
-    // Warn si coverage faible
-    if (stats.with_bsd_stats < stats.total / 2) {
-      console.warn('[AuditLive] ⚠️ ' + stats.with_bsd_stats + '/' + stats.total + ' matchs ont _bsd_stats');
-    }
-    if (stats.with_momentum_series === 0) {
-      console.warn('[AuditLive] ⚠️ AUCUN match n\'a momentum_series — _tennisServeHist vide côté serveur');
-    }
-    if (stats.with_player_photo === 0) {
-      console.warn('[AuditLive] ⚠️ AUCUN match n\'a player1.photo ni player1.id — fallback ui-avatars');
-    }
-    console.log('[AuditLive] ' + stats.with_bsd_stats + '/' + stats.total + ' bsd_stats | ' +
-      stats.with_momentum_series + '/' + stats.total + ' momentum | ' +
-      stats.with_current_point + '/' + stats.total + ' current_point');
-    return stats;
   }
 
   function publishStatus(msg, isError) {
@@ -26730,8 +26675,6 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     },
     /** Démarre l'auto-refresh (appelé quand on entre sur la page tennis) */
     startAutoRefresh: startAutoRefresh,
-    // bd audit-fix : exposer pour debug console (window.TennisScope._auditLivePayload(matches))
-    _auditLivePayload: _auditLivePayload,
     /** Stoppe l'auto-refresh (appelé quand on quitte la page tennis) */
     stopAutoRefresh: function () {
       if (_timer) { clearInterval(_timer); _timer = null; }
