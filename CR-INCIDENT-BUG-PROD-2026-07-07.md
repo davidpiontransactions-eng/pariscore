@@ -23,17 +23,35 @@ Le frontend `pariscore.html` (servi par le Node.js sur `/`) appelle `/api/v1/mat
 
 Le frontend recevait donc un 404 au lieu du 401 `AUTH_REQUIRED` attendu, et affichait le message d'erreur générique au lieu d'ouvrir le modal d'authentification.
 
-### Architecture réelle (post-diagnostic)
+### Architecture réelle (post-diagnostic approfondi)
 
-| Port | Process | Rôle |
-|---|---|---|
-| 3000 | Node.js `pariscore` (PM2 id 18) | **Backend officiel** : sert `pariscore.html` + routes `/api/v1/*` |
-| 3001 | bun `tennis-live` (PM2 id 14) | WebSocket tennis live |
-| 5173 | node dev server | Dev (à investiguer) |
-| 8000 | uvicorn FastAPI | Backend secondaire (routes `/api/*` non-`v1`) |
-| 443 | nginx | Reverse proxy public |
+Le repo `ParisScorebis` contient **deux stacks qui coexistent légitimement** avec des rôles différents :
 
-**Note** : SetPoint (Next.js) **n'est pas actif** sur pariscore.fr — le backend officiel est bien le Node.js `server.js`.
+| Stack | Code | Routes API | Rôle |
+|---|---|---|---|
+| **Legacy Node.js** | `server.js` (52 074 lignes) + `pariscore.html` | `/api/v1/*` (matches, auth, admin, tennis/live, forecasts, value-bets, accuracy, affiliates...) | **Cœur business** — sert le site `pariscore.fr` |
+| **Next.js/React** | `src/app/` + `next.config.ts` + Prisma + Radix UI | `/api/email/*`, `/api/push/*`, `/api/tennis/{prematch,backtest,elo-history}`, `/api/sentry-test` (12 routes) | **Features complémentaires** (newsletters, notifications push, analytics) |
+
+**Ports sur le VPS** :
+
+| Port | Process | État | Rôle |
+|---|---|---|---|
+| 3000 | Node.js legacy `pariscore` (PM2 id 18) | 🟢 Tourne | Sert `pariscore.fr` (business) |
+| 3000 (conflit) | Next.js standalone (build 2026-07-06) | 🔴 Buildé mais **non démarré** | Features email/push — inactives |
+| 3001 | bun `tennis-live` | 🟢 Tourne | WebSocket tennis live |
+| 5173 | Vite React dev (`pariscorebis/frontend`) | 🟡 Dev | Frontend dev React |
+| 8000 | uvicorn FastAPI | 🟡 Tourne | Backend secondaire |
+| 443 | nginx | 🟢 Reverse proxy | Public |
+
+**Conclusion architecture** : le legacy Node.js n'est **pas obsolète** — il porte l'intégralité du cœur business. Le Next.js est une app complémentaire (email/push/analytics) qui n'a pas vocation à remplacer les routes `/api/v1/*`. Mon fix nginx qui réactive le legacy pour `/api/v1/*` est donc **correct**.
+
+### Limitation résiduelle identifiée
+
+Les routes Next.js (`/api/email/*`, `/api/push/*`, `/api/tennis/prematch`) retournent **404** car le Next.js standalone n'est pas démarré. Ce n'est pas lié au bug initial (qui concernait `/api/v1/matches`). Si ces features sont attendues en production, il faudra :
+1. Démarrer le Next.js standalone sur un port séparé (ex: 3005)
+2. Ajouter une règle nginx `location /api/email/`, `/api/push/` → port 3005
+
+→ Hors périmètre de cet incident (à traiter séparément si besoin).
 
 ## 3. Diagnostic (étapes)
 
@@ -96,9 +114,10 @@ location /api/v1/ {
 
 ## 7. Leçons
 
-1. **Migration SetPoint → PariScore inachevée** : la config nginx a été adaptée pour SetPoint mais n'a jamais été restaurée pour le backend Node.js `pariscore`. Le `CR-LANCEMENT` Phase 1 mentionnait bien le serveur Node.js comme backend, mais la confusion "SetPoint est le nouveau backend" a failli nous induire en erreur.
+1. **Architecture hybride mal documentée** : le repo contient legacy + Next.js sans doc claire des rôles respectifs. La confusion "Next.js remplace le legacy" était infondée — ce sont des stacks complémentaires. **Action** : documenter dans `CLAUDE.md` que `server.js` = cœur business, `src/app/` = features email/push.
 2. **Le fix aurait pu être trouvé plus tôt** si un test E2E post-déploiement avait été systématique (le BILAN §6.3 le prévoit pour Phase 2, mais pas Phase 1).
 3. **Recommendation** : ajouter un healthcheck post-déploiement qui vérifie `https://pariscore.fr/api/v1/status` après chaque release.
+4. **Config nginx instable** : la présence de règles SetPoint legacy (`/api/tennis/`, `/api/email/`, `/api/push/`) pointant vers le port 3000 alors que le Next.js (qui porte ces routes) n'y tourne pas → règle morte. À nettoyer si le Next.js n'est pas démarré, ou à faire pointer vers 3005 si on le démarre.
 
 ## 8. Actions preventives recommandées
 
