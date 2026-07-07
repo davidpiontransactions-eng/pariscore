@@ -25323,6 +25323,33 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     return '<span class="sc-signal sc-signal-'+t+'">'+lbl+'</span>';
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // Helper value-bet unifié — remplace la logique dupliquée dans
+  // premierCard, liveCardCompact, topBets, prematchCard.
+  // Source unique : m.signal (calculé par le serializer serveur _serializeTennisCard).
+  // ═══════════════════════════════════════════════════════════════════════
+  function valueBet(m) {
+    if (!m || !m.signal) return null;
+    var sig = m.signal;
+    var tierEV = sig.ev_pct >= 5 ? 'strong' : (sig.ev_pct >= 2 ? 'moderate' : 'neutral');
+    var confTier = { high: 'strong', medium: 'moderate', low: 'neutral' }[sig.confidence] || 'neutral';
+    var RANK = { avoid: 0, neutral: 1, moderate: 2, strong: 3 };
+    var tier = RANK[tierEV] <= RANK[confTier] ? tierEV : confTier;
+    if (m.traps && m.traps.indexOf('trap_bet') !== -1) tier = 'avoid';
+    return {
+      label: sig.label,
+      side: sig.side,
+      prob: sig.prob,
+      odds: sig.odds,
+      ev_pct: sig.ev_pct,
+      tier: tier,
+      stale: sig.stale,
+      trap: !!(m.traps && m.traps.length),
+      playerName: (sig.side === 'p1' && m.player1) ? m.player1.name :
+                  (sig.side === 'p2' && m.player2) ? m.player2.name : null
+    };
+  }
+
   /* ── Surface badge ────────────────────────────────────────────────── */
   function surfaceBadge(surf, tournamentName){
     var s=String(surf||'').toLowerCase();
@@ -25816,17 +25843,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var ev1=ev(p1p,o1),ev2=ev(1-p1p,o2);
     var k1=kelly(p1p,o1),k2=kelly(1-p1p,o2);
     // top value bet
-    var topVB=null;
-    if(m.best_ev_model&&m.best_ev_model.odds){
-      var be=m.best_ev_model;var mp=num(be.prob)/100;var ipb=1/num(be.odds);
-      topVB={label:be.label,odds:num(be.odds,2),modelProb:mp,impliedProb:ipb,ev:ev(mp,num(be.odds)),kelly:kelly(mp,num(be.odds)),edge:mp-ipb};
-    }else{
-      var cands=[{label:(p1.name||'P1')+' Win',odds:o1,mp:p1p,ip:imp.p1},{label:(p2.name||'P2')+' Win',odds:o2,mp:1-p1p,ip:imp.p2}];
-      cands.forEach(function(c){c.ev=ev(c.mp,c.odds);c.kelly=kelly(c.mp,c.odds);c.edge=c.mp-c.ip;});
-      cands.sort(function(a,b){return b.edge-a.edge;});
-      topVB=cands[0];
+    var topVB = valueBet(m);
+    if (!topVB) {
+      topVB = { label: 'N/A', side: null, prob: 0.5, odds: 0, ev_pct: 0, tier: 'neutral', stale: false, trap: false, playerName: null };
     }
-    var topTier=tier(topVB.edge,topVB.ev,topVB.kelly);
+    var topTier = topVB.tier;
     var st=new Date(m.start_time||m.commence_time||Date.now());
     var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     var dateStr=st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
@@ -25882,7 +25903,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</div>'
       +'<div class="sc-premier-decision">'
       +'<div class="sc-premier-decision-badge sc-premier-badge-'+(isStrong?'strong':isModerate?'moderate':'neutral')+'">'+signalBadge(topTier)+'</div>'
-      +'<div class="sc-premier-decision-detail">Edge <b>'+(topVB.edge*100).toFixed(1)+'%</b> · Kelly <b>'+(topVB.kelly*100).toFixed(0)+'%</b></div>'
+      +'<div class="sc-premier-decision-detail">EV <b>'+(topVB.ev_pct>=0?'+':'')+topVB.ev_pct.toFixed(1)+'%</b> · Cote <b>'+(topVB.odds||0).toFixed(2)+'</b>'+(topVB.stale?' <span style="opacity:.6">⚠ stale</span>':'')+'</div>'
       +'</div>'
       +'<div class="sc-premier-odds p2">'
       +'<span class="sc-premier-odd-val">'+(o2?o2.toFixed(2):'—')+'</span>'
@@ -26133,16 +26154,16 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       return h;
     }
 
-    // === Value bet calcul (remonté pour décision immédiate) ===
-    var _hasBet=false,_betHtml='';
-    if(o1&&o2&&liveProb!=null&&isFinite(liveProb)){
-      var ev1=liveProb*o1-1,ev2=(1-liveProb)*o2-1,bv=Math.max(ev1,ev2);
-      var bs=ev1>=ev2?'P1':'P2',bo=ev1>=ev2?o1:o2,bn=ev1>=ev2?p1n:p2n;
-      var tt='avoid';if(bv>=0.08)tt='strong';else if(bv>=0.03)tt='moderate';
-      _hasBet=tt!=='avoid';
-      _betHtml='<div class="sc-lc-bet '+(tt==='strong'?'strong':tt==='moderate'?'moderate':'avoid')+'">'
-        +'<b>BET '+esc(bn)+' @ '+bo.toFixed(2)+'</b> · EV '+(bv>=0?'+':'')+(bv*100).toFixed(1)+'% '+signalBadge(tt)
-        +'</div>';
+    // === Value bet (source unique : m.signal via helper valueBet) ===
+    var _topVB = valueBet(m);
+    var _hasBet = _topVB && _topVB.tier !== 'neutral' && _topVB.tier !== 'avoid';
+    var _betHtml = '';
+    if (_topVB && _hasBet) {
+      var bn = _topVB.playerName || '?';
+      var bo = Number(_topVB.odds) || 0;
+      _betHtml = '<div class="sc-lc-bet ' + (_topVB.tier === 'strong' ? 'strong' : _topVB.tier === 'moderate' ? 'moderate' : 'avoid') + '">'
+        + '<b>BET ' + esc(bn) + ' @ ' + bo.toFixed(2) + '</b> · EV ' + (_topVB.ev_pct >= 0 ? '+' : '') + _topVB.ev_pct.toFixed(1) + '% ' + signalBadge(_topVB.tier)
+        + '</div>';
     }
 
     var html='<div class="sc-livecard" data-match-id="'+esc(m.id)+'">';
@@ -26463,7 +26484,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   /* ── Public API ───────────────────────────────────────────────────── */
   var Scope={
     // helpers exposés (utiles pour réutilisation dans Pariscore)
-    p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
+    p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,valueBet:valueBet,
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
     tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
