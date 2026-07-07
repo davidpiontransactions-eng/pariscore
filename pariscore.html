@@ -24223,7 +24223,7 @@ a:focus-visible,
 .sc-trader-ev{margin:4px 0;font-size:12px;font-weight:600}
 .sc-trader-ev .pos{color:var(--green,#00e676)}.sc-trader-ev .neg{color:var(--red,#ef4444)}
 .sc-trader-dr,.sc-trader-bppi{margin:2px 0;font-size:11px;color:var(--text3,#94a3b8)}
-/* bd liveCardCompact : carte live compacte trading-style */
+/* bd decisionCard : carte décision trading-style (détail pliable) */
 .sc-detail.open{display:block}
 .sc-livecard{background:var(--bg2,#0e121e);border:1px solid var(--border2,rgba(255,255,255,.08));border-radius:var(--radius,8px);padding:6px 8px;display:flex;flex-direction:column;gap:4px;font-family:var(--font-body,sans-serif)}
 .sc-lc-header{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--text3,#94a3b8);gap:6px;flex-wrap:wrap}
@@ -24557,7 +24557,6 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
  *
  * Hooks d'intégration :
  *   Scope.renderPrematchGrid(el, matches)
- *   Scope.renderLiveGrid(el, matches)
  *   Scope.renderValueBets(el, matches)
  *   Scope.renderAnalytics(el, matches, matchId?)
  *   Scope.enhanceCard(cardEl, match)          // enrichit une carte tn2-card existante
@@ -24677,7 +24676,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   // ═══════════════════════════════════════════════════════════════════════
   // Helper value-bet unifié — remplace la logique dupliquée dans
-  // premierCard, liveCardCompact, topBets, prematchCard.
+  // premierCard, topBets, prematchCard.
   // Source unique : m.signal (calculé par le serializer serveur _serializeTennisCard).
   // ═══════════════════════════════════════════════════════════════════════
   function valueBet(m) {
@@ -25796,222 +25795,6 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</svg>';
   }
 
-  /* ── Carte live ───────────────────────────────────────────────────── */
-  function liveCardCompact(m){
-    // bd live-005 : normaliser liveProbability (backend peut envoyer 65 au lieu de 0.65)
-    var liveProb;
-    if(m.liveProbability!=null){
-      liveProb=Number(m.liveProbability);
-      if(!isFinite(liveProb)) liveProb=p1WinProb(m);     // fallback si NaN/non-numérique
-      else if(liveProb>1) liveProb=liveProb/100;          // pourcentage → fraction
-    } else liveProb=p1WinProb(m);
-    liveProb=Math.max(0.001,Math.min(0.999,liveProb));    // clamp 0.1%-99.9%
-    var mom=m.momentum||{};
-    var dir=mom.kfs_direction||'neutral';
-    var conf=num(mom.kfs_confidence,0);
-    var score=dir==='p1'?conf:(dir==='p2'?-conf:0);
-    var p1Pct=((score+100)/200)*100;
-    var col=score>15?'var(--green)':(score<-15?'var(--blue)':'var(--amber)');
-    var st=m._bsd_stats||{};
-    var p1n=shortName(m.player1&&m.player1.name||'?');
-    var p2n=shortName(m.player2&&m.player2.name||'?');
-    var s1=m.player1_sets!=null?m.player1_sets:0,s2=m.player2_sets!=null?m.player2_sets:0;
-    var sa=Array.isArray(m.sets)?m.sets:[],_ls=sa.length?sa[sa.length-1]:null;
-    var g1=_ls?(num(_ls.p1)||0):0,g2=_ls?(num(_ls.p2)||0):0,_pt=m.current_point||'';
-    var o1=num(m.odds_player1),o2=num(m.odds_player2);
-    // Photo helper — bd photo-fix : passer m.tour comme circuitHint pour éviter collisions ATP/WTA
-    var _ph1='',_ph2='';
-    try{_ph1=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player1||{}, m.tour||m.discipline):'';}catch(e){}
-    try{_ph2=window.getPlayerPhotoUrl?window.getPlayerPhotoUrl(m.player2||{}, m.tour||m.discipline):'';}catch(e){}
-    var _phHtml=function(url,name){var n=encodeURIComponent(name||'?');var fallback='https://ui-avatars.com/api/?name='+n+'&background=161c2a&color=94a3b8&size=88&bold=true';var src=url||fallback;return '<img class="sc-lc-photo" src="'+esc(src)+'" alt="'+esc(name||'')+'" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\''+fallback+'\';}">';};
-    // Helper formatage duel P1/P2 : decimals=true → 2 chiffres après virgule (% et ratings),
-    // decimals=false → entier (compteurs aces/df/BPPI). Le plus grand des deux est mis en vert.
-    // pct=true → normalise les fractions 0-1 en pourcentages 0-100 (BSD/ESPN renvoient
-    // parfois 0.65 pour 65%, parfois 65 directement → on uniformise en 0-100).
-    // bd live-008 : _pct teste v==null AVANT num() (sinon undefined→0→"0.00%" au lieu de "—")
-    function _pct(v){
-      if(v==null||v===''||isNaN(Number(v))) return null;
-      var n=Number(v); return n>1?n:n*100;
-    }
-    // bd live-021 : _fmt et _vs supprimés (code mort, jamais appelés)
-    // Duel miroir 3D : barre comparative P1 (gauche, vert) vs P2 (droite, bleu).
-    // opts: {unit:'%', max:100, decimals:true, pct:true}. Si pas de max → max dynamique.
-    // Le gagnant (valeur + haute) reçoit la classe win (glow renforcé).
-    function _duel(label,v1,v2,opts){
-      opts=opts||{};
-      // bd live-008 : tester v1/v2==null AVANT num() (sinon undefined→0 fausse "donnée présente")
-      var _has1 = v1!=null && v1!=='' && !isNaN(Number(v1));
-      var _has2 = v2!=null && v2!=='' && !isNaN(Number(v2));
-      var n1 = _has1 ? (opts.pct ? _pct(v1) : Number(v1)) : null;
-      var n2 = _has2 ? (opts.pct ? _pct(v2) : Number(v2)) : null;
-      var has1 = n1!=null && !isNaN(n1), has2 = n2!=null && !isNaN(n2);
-      var d=opts.decimals!==false;
-      var s1=has1?(d?n1.toFixed(2):String(Math.round(n1))):'—';
-      var s2=has2?(d?n2.toFixed(2):String(Math.round(n2))):'—';
-      var unit=opts.unit||'';
-      var max=opts.max!=null?opts.max:(Math.max(has1?n1:0,has2?n2:0,1));
-      // Ratio : chaque côté fait 50% max de la ligne. v/max*50.
-      var r1=has1?Math.max(2,Math.min(50,(n1/max)*50)):0;
-      var r2=has2?Math.max(2,Math.min(50,(n2/max)*50)):0;
-      var w1=has1&&has2&&n1>n2, w2=has1&&has2&&n2>n1;
-      var h='<div class="sc-duel">'
-        +'<div class="sc-duel-lbl">'+esc(label)+'</div>'
-        +'<div class="sc-duel-row">'
-        +'<span class="sc-duel-val p1'+(w1?' win':'')+'">'+s1+unit+'</span>'
-        +'<div class="sc-duel-track">'
-        +'<div class="sc-duel-side p1"><div class="sc-duel-fill p1'+(w1?' win':'')+'" style="width:'+(r1*2)+'%"></div></div>'
-        +'<div class="sc-duel-side p2"><div class="sc-duel-fill p2'+(w2?' win':'')+'" style="width:'+(r2*2)+'%"></div></div>'
-        +'</div>'
-        +'<span class="sc-duel-val p2'+(w2?' win':'')+'">'+s2+unit+'</span>'
-        +'</div></div>';
-      return h;
-    }
-
-    // === Value bet (source unique : m.signal via helper valueBet) ===
-    var _topVB = valueBet(m);
-    var _hasBet = _topVB && _topVB.tier !== 'neutral' && _topVB.tier !== 'avoid';
-    var _betHtml = '';
-    if (_topVB && _hasBet) {
-      var bn = _topVB.playerName || '?';
-      var bo = Number(_topVB.odds) || 0;
-      _betHtml = '<div class="sc-lc-bet ' + (_topVB.tier === 'strong' ? 'strong' : _topVB.tier === 'moderate' ? 'moderate' : 'avoid') + '">'
-        + '<b>BET ' + esc(bn) + ' @ ' + bo.toFixed(2) + '</b> · EV ' + (_topVB.ev_pct >= 0 ? '+' : '') + _topVB.ev_pct.toFixed(1) + '% ' + signalBadge(_topVB.tier)
-        + '</div>';
-    }
-
-    var html='<div class="sc-livecard" data-match-id="'+esc(m.id)+'">';
-
-    // 1. Header ultra-compact (1 ligne) : tournoi + round + badge surface + favori ★
-    html+='<div class="sc-lc-header"><span class="sc-lc-tour">'+svgIcon('trophy',11)+' '+esc((m.tournament||'').slice(0,22))+'</span>'
-      +'<span class="sc-lc-round">'+esc(m.round||'')+(m.bestOf||m.best_of?' Bo'+(m.bestOf||m.best_of):'')+' · '+surfaceBadge(m.surface,m.tournament)+'</span>'+favStar(m)+'</div>';
-
-    // 2. Score Zone (l'élément dominant — photos + noms + sets + games + serveur)
-    html+='<div class="sc-lc-score">';
-    // bd live-004+live-010 : esc(p1n/p2n) contre XSS + parseInt(m.serving) pour accepter string "1"/"2" du backend
-    var _srv = m.serving!=null ? (parseInt(m.serving,10)||0) : 0;
-    html+='<div class="sc-lc-player'+(_srv===1?' serving':'')+'">'+_phHtml(_ph1,m.player1&&m.player1.name)+'<div><b>'+esc(p1n)+'</b><span>'+s1+'</span></div></div>';
-    html+='<div class="sc-lc-mid"><div class="sc-lc-games">'+g1+'-'+g2+'</div>'+(m.current_point?'<div class="sc-lc-pt">'+esc(_pt)+'</div>':'')+(_srv?'<div class="sc-lc-srv">🎾 '+(_srv===1?esc(p1n):esc(p2n))+'</div>':'')+'</div>';
-    html+='<div class="sc-lc-player p2'+(_srv===2?' serving':'')+'">'+_phHtml(_ph2,m.player2&&m.player2.name)+'<div><b>'+esc(p2n)+'</b><span>'+s2+'</span></div></div>';
-    html+='</div>';
-
-    // 3. ACTION ZONE — Value bet remonté IMMÉDIATEMENT sous le score (décision en 1 sec)
-    if(_hasBet){
-      html+=_betHtml;
-    } else {
-      html+='<div class="sc-lc-bet none">Aucun value bet · EV&lt;3% (attente meilleur prix)</div>';
-    }
-
-    // 4. VALIDATION ZONE — KPIs en barres horizontales ultra-compactes
-    // 4a. Barre proba modèle (Modèle vs implicite) — label à gauche, cote à droite
-    var _impP1=o1?(1/o1):null;
-    html+='<div class="sc-lc-kpi"><span class="sc-lc-kpi-lbl">Modèle</span>';
-    html+='<div class="sc-lc-proba"><div class="sc-lc-proba-p1" style="width:'+(liveProb*100)+'%;background:var(--green)">'+(liveProb*100).toFixed(0)+'%</div><div class="sc-lc-proba-p2" style="width:'+((1-liveProb)*100)+'%;background:var(--blue)">'+((1-liveProb)*100).toFixed(0)+'%</div></div>';
-    html+='<span class="sc-lc-kpi-val">'+(_impP1!=null?'Cote '+o1.toFixed(2):'—')+'</span></div>';
-
-    // 4b. Chart momentum par set (P1 haut / P2 bas, courbe par jeu)
-    html+='<div class="sc-lc-kpi sc-lc-kpi-momchart"><span class="sc-lc-kpi-lbl">Momentum</span>';
-    html+='<div class="sc-lc-momchart">'+momentumChart(m)+'</div>';
-    html+='</div>';
-
-    // 4c. Ligne DR + OU pills fusionnées (1 ligne horizontale)
-    html+='<div class="sc-lc-kpirow">';
-    // bd live-020 : guard dr>0 pour éviter 1/0=Infinity
-    if(m.dr_exact&&m.dr_exact.dr!=null&&m.dr_exact.dr>0){
-      var dr=m.dr_exact.dr;
-      html+='<span class="sc-lc-dr-chip">DR <b style="color:'+(dr>=1?'var(--green)':'var(--blue)')+'">'+(dr>=1?'P1 ':'P2 ')+(dr>=1?dr:(1/dr)).toFixed(2)+'</b></span>';
-    }
-    // bd live-009 : guards !=null sur chaque champ pour éviter "undefined%"
-    if(m.set_ou){
-      var ou=m.set_ou;
-      if(ou.o75!=null) html+='<span class="sc-lc-ou-pill'+(ou.o75>=65?' hi':'')+'">O7.5 '+ou.o75+'%</span>';
-      if(ou.o85!=null) html+='<span class="sc-lc-ou-pill'+(ou.o85>=65?' hi':'')+'">O8.5 '+ou.o85+'%</span>';
-      if(ou.u125!=null) html+='<span class="sc-lc-ou-pill'+(ou.u125>=65?' hi':'')+'">U12.5 '+ou.u125+'%</span>';
-    }
-    html+='</div>';
-
-    // 5. Bouton accordéon (libellé harmonisé via data-label)
-    // bd live-001+live-016+live-019 : persistance état + ARIA + ID valide + backslash retiré
-    var _isOpen=_expandedMatchIds.has(String(m.id));
-    var _detId='det-'+String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_');
-    html+='<button class="sc-expand'+(_isOpen?' open':'')+'" onclick="Scope._toggle(this)" data-match-id="'+(typeof escapeHtml==='function'?escapeHtml:esc)(m.id)+'" aria-expanded="'+(_isOpen?'true':'false')+'" aria-controls="'+esc(_detId)+'" data-label-closed="📊 Analyse détaillée" data-label-open="Masquer l\'analyse"><span class="lbl">'+(_isOpen?'Masquer l\'analyse':'📊 Analyse détaillée')+'</span><span class="chev">▾</span></button>';
-    html+='<div class="sc-detail'+(_isOpen?' open':'')+'" id="'+esc(_detId)+'" role="region">';
-
-    // Panel 1 — LIVE temps réel (duels miroir 3D)
-    html+='<div class="sc-seclbl">'+svgIcon('radio',12)+' Stats Live (temps réel)</div>';
-    html+='<div class="sc-stat-panel">';
-    var sm=m.serve_momentum||{};
-    var run=sm.run||{};
-    if(run.player){
-      // bd live-004+live-010 : parseInt(run.player) + esc(p1n/p2n) (même bug que ligne 25957)
-      var _rp = run.player!=null ? (parseInt(run.player,10)||0) : 0;
-      if(_rp)html+='<div class="sc-stat-row"><span>Série en cours</span><b style="color:'+(_rp===1?'var(--green)':'var(--blue)')+'">'+(_rp===1?esc(p1n):esc(p2n))+' '+run.len+' pts</b></div>';
-    }
-    html+=_duel('% 1ère balle gagnée',st.p1_first_won,st.p2_first_won,{pct:true,unit:'%'});
-    html+=_duel('% 2ème balle gagnée',st.p1_second_won,st.p2_second_won,{pct:true,unit:'%'});
-    html+=_duel('% 1er service en jeu',st.p1_first_pct,st.p2_first_pct,{pct:true,unit:'%'});
-    html+=_duel('Aces',st.p1_aces,st.p2_aces,{decimals:false});
-    html+=_duel('Double fautes',st.p1_df,st.p2_df,{decimals:false});
-    if(m.current_point)html+='<div class="sc-stat-row"><span>Point actuel</span><b>'+esc(m.current_point)+'</b></div>';
-    html+='</div>';
-
-    // Panel 2 — Indicateurs parieur (duels miroir 3D)
-    var tourName=(m.tour||'').toUpperCase();
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Indicateurs '+tourName+'</div>';
-    html+='<div class="sc-stat-panel">';
-    if(st.p1_bp_saved!=null||st.p2_bp_saved!=null){
-      html+=_duel('Balles de break sauvées',st.p1_bp_saved,st.p2_bp_saved,{decimals:false});
-    }
-    if(m.bppi&&(m.bppi.p1!=null||m.bppi.p2!=null)){
-      html+=_duel('Indice dominance',m.bppi.p1,m.bppi.p2,{max:100,decimals:false});
-    }
-    if(st.p1_ret_won!=null||st.p2_ret_won!=null){
-      html+=_duel('% retours gagnés',st.p1_ret_won,st.p2_ret_won,{pct:true,unit:'%'});
-    }
-    html+='</div>';
-
-    // Panel 3 — DR chart évolution + par set
-    var _drDetail='';
-    try{
-      // DR set courant (toujours affiché si dr_exact dispo) — bd live-020 : guard dr>0
-      if(m.dr_exact&&m.dr_exact.dr!=null&&m.dr_exact.dr>0){
-        var _dr=m.dr_exact.dr,_drl=_dr>=1?'P1':'P2',_drv=_dr>=1?_dr:(1/_dr);
-        _drDetail+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('scale',12)+' Dominance Ratio (set courant)</div>';
-        _drDetail+='<div class="sc-stat-row"><span>DR</span><b style="color:'+(_dr>=1?'var(--green)':'var(--blue)')+'">'+_drl+' '+_drv.toFixed(2)+'</b></div>';
-        if(m.dr_exact.p1Serve!=null)_drDetail+='<div class="sc-stat-row"><span>Serve P1/P2</span><b>'+num(m.dr_exact.p1Serve)+' / '+num(m.dr_exact.p2Serve)+'</b></div>';
-        if(m.dr_exact.p1Ret!=null)_drDetail+='<div class="sc-stat-row"><span>Return P1/P2</span><b>'+num(m.dr_exact.p1Ret)+' / '+num(m.dr_exact.p2Ret)+'</b></div>';
-      }
-      // DR chart : bouton qui ouvre un popup avec DR Set + DR Match
-      // bd dr-popup-fix : escapeHtml (et non esc) pour échapper quotes ' et " — sinon
-      // un matchId contenant une apostrophe (ex: "t_O'Connor_Alcaraz") casse l'inline
-      // onclick (SyntaxError: missing ) after argument list) et le popup ne s'ouvre pas.
-      var _drCount = (m.dr_series && m.dr_series.p1) ? m.dr_series.p1.length : 0;
-      var _drMatchId = (typeof escapeHtml === 'function' ? escapeHtml : esc)(m.id || '');
-      _drDetail+='<button class="sc-dr-popup-btn" data-dr-match-id="' + _drMatchId + '" onclick="openDRPopup(this.getAttribute(\'data-dr-match-id\'))">' + svgIcon('chart',12) + ' DR évolution (' + _drCount + ' points) ▸</button>';
-      _drDetail+='<div id="dr-popup-data-' + _drMatchId + '" style="display:none">' + (typeof escapeHtml === 'function' ? escapeHtml : esc)(JSON.stringify({series:m.dr_series||null, perSet:m.dr_per_set||null, exact:m.dr_exact||null})) + '</div>';
-      if(m.dr_per_set){
-        var _sl=Object.keys(m.dr_per_set).sort(function(a,b){return +a-+b;});
-        if(_sl.length){
-          _drDetail+='<div class="sc-seclbl" style="margin-top:6px">'+svgIcon('scale',12)+' DR moyen par set</div>';
-          _drDetail+='<div class="sc-dr-setrow">';
-          _sl.forEach(function(s){var d=m.dr_per_set[s];var ld=d.dr_p1>=d.dr_p2?'P1':'P2';_drDetail+='<span class="sc-dr-set">Set '+(parseInt(s)+1)+' : <b style="color:'+(d.dr_p1>=d.dr_p2?'var(--green)':'var(--blue)')+'">'+ld+' '+Math.max(d.dr_p1,d.dr_p2).toFixed(2)+'</b></span>';});
-          _drDetail+='</div>';
-        }
-      }
-    }catch(e){ console.warn('[liveCardCompact] DR detail render error for match', m && m.id, ':', e && e.message); }
-    html+=_drDetail;
-
-    // Scouting Report (remplace Facteurs/Marchés — profils forces/faiblesses + lecture parieur + top bets)
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' Scouting Report</div>';
-    html+=scoutProfile(m.player1)+scoutProfile(m.player2);
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(m);
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+(typeof h2hBlock==='function'?h2hBlock(m):'<div class="sc-stat-row"><span>H2H indisponible</span></div>');
-    html+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(m);
-
-    html+='</div>'; // fin sc-detail
-    html+='</div>'; // fin sc-livecard
-    return html;
-  }
-
   function valueBetsTable(matches,opts){
     opts=opts||{};
     var filter=opts.filter||'all'; // all|strong|moderate
@@ -26221,16 +26004,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       // Re-render la liste
       if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
     },
-    prematchCard:prematchCard,premierCard:premierCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
+    prematchCard:prematchCard,premierCard:premierCard,valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
     // rendus haut niveau (injectent dans un élément du DOM)
 
     renderPrematchGrid:function(el,matches){
       el.innerHTML='<div class="sc-grid sc-grid-3">'+matches.map(premierCard).join('')+'</div>';
-    },
-    renderLiveGrid:function(el,matches){
-      el.innerHTML='<div class="sc-grid sc-grid-2">'+matches.map(liveCardCompact).join('')+'</div>';
     },
     renderValueBets:function(el,matches,opts){
       _vbHost=el;_vbMatches=matches;_vbOpts=opts||{filter:"all",sort:"edge"};_rerenderVB();},
