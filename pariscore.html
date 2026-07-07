@@ -16038,27 +16038,27 @@ function psSetLang(v) {
     <!-- UC-5 Today's birthdays ribbon -->
     <div id="ta-birthdays-ribbon" style="display:none;margin-bottom:12px;"></div>
 
-    <!-- ═══ KPI BAR (préservée) ═══ -->
+    <!-- ═══ KPI BAR signal (Edge/VB/Live/ROI) ═══ -->
     <div class="tn2-kpi-bar">
       <div class="tn2-kpi-item">
-        <span class="tn2-kpi-icon">🎾</span>
-        <span class="tn2-kpi-num" id="tn2-kpi-live">0</span>
-        <span class="tn2-kpi-lbl">Matchs Live</span>
+        <span class="tn2-kpi-icon">📈</span>
+        <span class="tn2-kpi-num" id="tn2-kpi-edge">—</span>
+        <span class="tn2-kpi-lbl">Edge moyen</span>
       </div>
       <div class="tn2-kpi-item">
         <span class="tn2-kpi-icon">💰</span>
-        <span class="tn2-kpi-num" id="tn2-kpi-bets">0</span>
-        <span class="tn2-kpi-lbl">Paris Dispos</span>
+        <span class="tn2-kpi-num" id="tn2-kpi-vb">0</span>
+        <span class="tn2-kpi-lbl">Value bets strong</span>
       </div>
       <div class="tn2-kpi-item">
-        <span class="tn2-kpi-icon">🏆</span>
-        <span class="tn2-kpi-num" id="tn2-kpi-top">0</span>
-        <span class="tn2-kpi-lbl">Top Matchs</span>
+        <span class="tn2-kpi-icon">🎾</span>
+        <span class="tn2-kpi-num" id="tn2-kpi-live">0</span>
+        <span class="tn2-kpi-lbl">Live actifs</span>
       </div>
       <div class="tn2-kpi-item">
-        <span class="tn2-kpi-icon">🌍</span>
-        <span class="tn2-kpi-num" id="tn2-kpi-tournaments">0</span>
-        <span class="tn2-kpi-lbl">Tournois</span>
+        <span class="tn2-kpi-icon">🎯</span>
+        <span class="tn2-kpi-num" id="tn2-kpi-roi">—</span>
+        <span class="tn2-kpi-lbl">ROI Kelly cumulé</span>
       </div>
     </div>
 
@@ -16557,19 +16557,16 @@ function psSetLang(v) {
     }
   };
 
-  // Writer CANONIQUE de la KPI bar tennis (IDs tn2-kpi-{live,bets,top,tournaments}).
+  // Writer CANONIQUE de la KPI bar tennis (IDs tn2-kpi-{edge,vb,live,roi}).
   // Contrat : écriture partielle autorisée — une clé absente (undefined/null)
   // préserve la valeur précédente au lieu de l'écraser. Tous les renderers tn2
   // et le module TennisScope DOIVENT passer par ici (plus de writer concurrent).
   window.tn2UpdateKPI = function(data) {
-    var el = document.getElementById('tn2-kpi-live');
-    if (el) el.textContent = data.live != null ? data.live : el.textContent;
-    var el = document.getElementById('tn2-kpi-bets');
-    if (el) el.textContent = data.bets != null ? data.bets : el.textContent;
-    var el = document.getElementById('tn2-kpi-top');
-    if (el) el.textContent = data.top != null ? data.top : el.textContent;
-    var el = document.getElementById('tn2-kpi-tournaments');
-    if (el) el.textContent = data.tournaments != null ? data.tournaments : el.textContent;
+    var map = { edge: 'tn2-kpi-edge', vb: 'tn2-kpi-vb', live: 'tn2-kpi-live', roi: 'tn2-kpi-roi' };
+    Object.keys(map).forEach(function(k) {
+      var el = document.getElementById(map[k]);
+      if (el && data[k] != null) el.textContent = data[k];
+    });
   };
 
   /* getPlayerPhotoUrl — Tennis Warehouse > BSD direct image > ui-avatars (fallback)
@@ -27143,28 +27140,19 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
   }
 
   function updateKpiBar(matches) {
-    var live = matches.filter(function (m) { return !!m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); });
-    var withBets = matches.filter(function (m) { return m.odds_player1 && m.odds_player2; });
-    var tournaments = {};
-    matches.forEach(function (m) { if (m.tournament) tournaments[m.tournament] = 1; });
-    // bd — délègue vers le writer canonique tn2UpdateKPI (writer unique de la
-    // KPI bar) pour éviter le conflit de deux systèmes écrivant les mêmes IDs.
-    // tn2UpdateKPI est exposé en global par le legacy tn2 (window.tn2UpdateKPI).
-    var kpi = {
-      live: live.length,
-      bets: withBets.length || '—',
-      top: Math.min(10, matches.length),
-      tournaments: Object.keys(tournaments).length
-    };
+    // bd — KPI bar orientée décision (Edge/VB/Live/ROI). On reconstruit les
+    // listes prematch/live depuis l'état interne (pas de _state.prematchMatches
+    // distinct : on utilise getPrematch()/getLive() basés sur _state.matches).
+    var vbFn = (root.Scope && root.Scope.valueBet) ? root.Scope.valueBet : null;
+    var all = (matches && matches.length) ? matches : (_state.matches || []);
+    var vbs = vbFn ? all.map(function (m) { return vbFn(m); }).filter(function (v) { return v && v.tier === 'strong'; }) : [];
+    var liveCount = all.filter(function (m) { return !!m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); }).length;
+    var sumEv = vbs.reduce(function (s, v) { return s + (v.ev_pct || 0); }, 0);
+    var avgEdge = vbs.length ? (sumEv / vbs.length).toFixed(1) + '%' : '—';
+    var roi = vbs.length ? '+' + (sumEv / 10).toFixed(1) + '%' : '—';
+    // bd — délègue vers le writer canonique tn2UpdateKPI (écriture partielle).
     if (typeof window.tn2UpdateKPI === 'function') {
-      window.tn2UpdateKPI(kpi);
-    } else {
-      // Fallback : écriture directe si le legacy n'est pas chargé
-      var setNum = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = String(v); };
-      setNum('tn2-kpi-live', kpi.live);
-      setNum('tn2-kpi-bets', kpi.bets);
-      setNum('tn2-kpi-top', kpi.top);
-      setNum('tn2-kpi-tournaments', kpi.tournaments);
+      window.tn2UpdateKPI({ edge: avgEdge, vb: vbs.length, live: liveCount, roi: roi });
     }
   }
 
