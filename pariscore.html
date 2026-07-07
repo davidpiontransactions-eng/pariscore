@@ -351,6 +351,51 @@
     --z-toast: 11000;
   }
 
+  /* ═══ Redesign Tennis — Design tokens ═══ */
+  /* Réf: redesign-tennis/DESIGN-DOC-REDESIGN-TENNIS.md §9.1 */
+  :root {
+    /* Palette monochrome */
+    --sc-bg: #0B1120;
+    --sc-bg-elev: #111827;
+    --sc-text: #E2E8F0;
+    --sc-text-muted: #94A3B8;
+
+    /* Tier sémantique */
+    --sc-tier-strong: #10B981;
+    --sc-tier-moderate: #F59E0B;
+    --sc-tier-neutral: #64748B;
+    --sc-tier-avoid: #EF4444;
+
+    /* Joueurs */
+    --sc-player-p1: #E2E8F0;
+    --sc-player-p2: #3B82F6;
+
+    /* Typography */
+    --sc-font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sc-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --sc-ev-size: 28px;
+
+    /* Layout */
+    --sc-card-radius: 12px;
+    --sc-tap-min: 44px;
+    --sc-tier-border: 4px;
+  }
+
+  /* Classes tier utilitaires */
+  .sc-tier-strong { border-left: var(--sc-tier-border) solid var(--sc-tier-strong); }
+  .sc-tier-moderate { border-left: var(--sc-tier-border) solid var(--sc-tier-moderate); }
+  .sc-tier-neutral { border-left: var(--sc-tier-border) solid var(--sc-tier-neutral); opacity: 0.85; }
+  .sc-tier-avoid { border-left: var(--sc-tier-border) solid var(--sc-tier-avoid); }
+
+  .sc-ev-pct {
+    font-family: var(--sc-font-mono);
+    font-size: var(--sc-ev-size);
+    font-weight: 700;
+    line-height: 1;
+  }
+  .sc-tap-min { min-width: var(--sc-tap-min); min-height: var(--sc-tap-min); }
+  .sc-text-muted { color: var(--sc-text-muted); }
+
   /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C1-B FOUNDATIONS
      Scope strict : .ps-mobile-v2 (classe posee par swap script <head>)
