@@ -38893,6 +38893,160 @@ function _canonTennisName(name, tour) {
 
 // ────────────────────────────────────────────────────────────────────────────
 
+// ═══════════════════════════════════════════════════════════════════════
+// Serializer tennis canonique — normalise un match avant envoi HTTP.
+// Le frontend ne doit plus deviner le type des champs (proba 0-1 vs 65, etc.).
+// Contrat : voir redesign-tennis/CONTRAT-DATA.md
+// ═══════════════════════════════════════════════════════════════════════
+function _serializeTennisCard(m) {
+  if (!m || typeof m !== 'object') return null;
+
+  // --- Joueurs (toujours objets, champs null si absents) ---
+  function serializePlayer(p) {
+    p = p || {};
+    return {
+      id: p.id || null,
+      name: p.name || null,
+      country: p.country || null,
+      flag: p.flag || null,
+      photo: p.photo || null,
+      rank: (typeof p.rank === 'number') ? p.rank : (p.rank ? Number(p.rank) : null),
+      elo_surface: (typeof p.elo_surface === 'number') ? p.elo_surface : null,
+      surf_rank: p.surf_rank || null,
+      surf_rank_total: p.surf_rank_total || null,
+      surf_form: p.surf_form || null,
+      l5_pts: (typeof p.l5_pts === 'number') ? p.l5_pts : null,
+      l10_pts: (typeof p.l10_pts === 'number') ? p.l10_pts : null,
+      powerscore: (typeof p.powerscore === 'number') ? p.powerscore : null,
+      serve_index: p.serve_index || null,
+      receive_index: p.receive_index || null,
+      serve_hold_pct: p.serve_hold_pct || null,
+      return_pct: p.return_pct || null,
+      gamesLast14Days: p.gamesLast14Days || null
+    };
+  }
+
+  var p1 = serializePlayer(m.player1);
+  var p2 = serializePlayer(m.player2);
+
+  // --- Cotes (toujours objet ou null, stale + age_ms) ---
+  var odds = null;
+  if (m.odds && m.odds.p1 && m.odds.p2) {
+    var oddsTs = m.odds.ts || m._odds_ts || Date.now();
+    var ageMs = Date.now() - oddsTs;
+    var isLive = (m.is_live || m.status === 'live' || m.tab === 'live');
+    var staleThreshold = isLive ? 600000 : 14400000; // 10min live, 4h prematch
+    odds = {
+      p1: { odds: Number(m.odds.p1.odds) || null, book: m.odds.p1.book || null },
+      p2: { odds: Number(m.odds.p2.odds) || null, book: m.odds.p2.book || null },
+      stale: ageMs > staleThreshold,
+      age_ms: ageMs
+    };
+  }
+
+  // --- Fair (Shin devig, toujours objet ou null, proba 0-1) ---
+  var fair = null;
+  if (m.fair && m.fair.p1 != null) {
+    fair = {
+      p1: _normalizeProb(m.fair.p1),
+      p2: _normalizeProb(m.fair.p2),
+      margin: m.fair.margin != null ? Number(m.fair.margin) : null,
+      method: m.fair.method || null
+    };
+  }
+
+  // --- Signal (EV% pilote, toujours objet ou null) ---
+  var signal = _computeSignal(m, odds, fair);
+
+  // --- Traps (array, jamais undefined) ---
+  var traps = [];
+  if (m.trap_bet) traps.push('trap_bet');
+  if (odds && odds.stale) traps.push('drift');
+  if (m.player1 && m.player1.gamesLast14Days > 12) traps.push('fatigue');
+  if (m.player2 && m.player2.gamesLast14Days > 12) traps.push('fatigue');
+  if ((p1.surf_rank_total !== null && p1.surf_rank_total < 20) ||
+      (p2.surf_rank_total !== null && p2.surf_rank_total < 20)) {
+    traps.push('surface_elo_low');
+  }
+  if (!signal && (!p1.elo_surface || !p2.elo_surface)) {
+    traps.push('data_insufficient');
+  }
+
+  return {
+    id: String(m.id || ''),
+    tab: m.is_live || m.status === 'live' ? 'live' : 'prematch',
+    tour: m.tour || null,
+    tournament: m.tournament || null,
+    surface: m.surface || null,
+    round: m.round || null,
+    bestOf: Number(m.best_of || m.bestOf || 3),
+    commence_time: m.start_time || m.commence_time || null,
+    status: m.status || null,
+    player1: p1,
+    player2: p2,
+    odds: odds,
+    fair: fair,
+    signal: signal,
+    traps: traps,
+    _raw_predictions: m.predictions || null,
+    _raw_best_ev_model: m.best_ev_model || null
+  };
+}
+
+// Normalise une proba : accepte 0.62, 62, "62%", renvoie toujours 0-1
+function _normalizeProb(p) {
+  if (p == null) return null;
+  var n = Number(p);
+  if (!isFinite(n)) return null;
+  return n > 1 ? n / 100 : n;
+}
+
+// Calcule le signal canonique {label, side, prob, ev_pct, confidence, stale}
+function _computeSignal(m, odds, fair) {
+  if (!odds || !odds.p1.odds || !odds.p2.odds) return null;
+  if (!fair || fair.p1 == null) return null;
+
+  var be = m.best_ev_model;
+  var side, probModel, evPct, oddsVal;
+  if (be && be.odds) {
+    side = be.side || (be.ev >= 0 ? 'p1' : 'p2');
+    probModel = be.p_model || (side === 'p1' ? fair.p1 : fair.p2);
+    oddsVal = Number(be.odds);
+    evPct = (typeof be.ev === 'number') ? be.ev : ((probModel * oddsVal - 1) * 100);
+  } else {
+    var ev1 = fair.p1 * odds.p1.odds - 1;
+    var ev2 = fair.p2 * odds.p2.odds - 1;
+    if (ev1 >= ev2) {
+      side = 'p1'; probModel = fair.p1; oddsVal = odds.p1.odds; evPct = ev1 * 100;
+    } else {
+      side = 'p2'; probModel = fair.p2; oddsVal = odds.p2.odds; evPct = ev2 * 100;
+    }
+  }
+
+  var hasBSD = m.predictions && m.predictions.bsd;
+  var hasWEloSurface = m.player1 && m.player2 && m.player1.elo_surface && m.player2.elo_surface;
+  // Échantillon surface suffisant (>= 150 matchs) : gate de fiabilité de l'ELO surface.
+  var hasSurfSample = m.player1 && m.player2 &&
+    (m.player1.surf_rank_total >= 150) && (m.player2.surf_rank_total >= 150);
+  var confScore = (hasBSD ? 1 : 0) + (hasWEloSurface ? 1 : 0) + (hasSurfSample ? 1 : 0);
+  // Sans échantillon surface suffisant, l'ELO surface n'est pas fiable → plafond 'medium'.
+  var confidence = (!hasSurfSample)
+    ? (confScore >= 1 ? 'medium' : 'low')
+    : (confScore >= 2 ? 'high' : confScore === 1 ? 'medium' : 'low');
+
+  return {
+    label: 'VALUE ' + (evPct >= 0 ? '+' : '') + evPct.toFixed(1) + '%',
+    side: side,
+    prob: probModel,
+    ev_pct: Math.round(evPct * 10) / 10,
+    odds: oddsVal,
+    confidence: confidence,
+    stale: odds.stale
+  };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 async function _buildTennisValueBetsCore({ date }) {
   const dateClean = date ? String(date).replace(/[^0-9-]/g, '').slice(0, 10) : '';
   let bsdMatches = [];
@@ -39551,7 +39705,7 @@ async function _buildTennisValueBetsCore({ date }) {
     status: 200,
     body: {
       count: enriched.length,
-      matches: enriched,
+      matches: enriched.map(_serializeTennisCard),
       meta: {
         match_source: matchSource,
         degraded: matchSource !== 'bsd',
@@ -52066,6 +52220,11 @@ setInterval(function() {
   try { if (typeof globalThis.__metricsCache !== "undefined" && globalThis.__metricsCache.prune) globalThis.__metricsCache.prune(); } catch(_) {}
   if (process.env.DEBUG_CACHE_PURGE === "1") console.log("[CachePurge] hourly cleanup done");
 }, 60 * 60 * 1000);
+
+// Export pour tests (non exposé en runtime HTTP)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports._serializeTennisCardForTest = _serializeTennisCard;
+}
 
 
 
