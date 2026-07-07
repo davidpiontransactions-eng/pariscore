@@ -425,6 +425,78 @@
   }
   .sc-bet-dialog-close:hover { color: var(--sc-text); }
 
+  /* ═══ Carte P2 Décision ═══ */
+  .sc-decision-card {
+    background: var(--sc-bg-elev);
+    border-radius: var(--sc-card-radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .sc-decision-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-wrap: wrap;
+  }
+  .sc-signal-badge {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: bold; flex-shrink: 0;
+  }
+  .sc-signal-strong { background: rgba(16,185,129,0.2); color: var(--sc-tier-strong); }
+  .sc-signal-moderate { background: rgba(245,158,11,0.2); color: var(--sc-tier-moderate); }
+  .sc-signal-avoid { background: rgba(239,68,68,0.2); color: var(--sc-tier-avoid); }
+  .sc-signal-neutral { background: rgba(100,116,139,0.2); color: var(--sc-tier-neutral); }
+  .sc-decision-players { flex: 1; font-size: 15px; font-weight: 600; min-width: 0; }
+  .sc-vs { color: var(--sc-text-muted); font-size: 12px; font-weight: 400; }
+  .sc-fav { background: none; border: none; color: var(--sc-tier-moderate); font-size: 20px; cursor: pointer; }
+  .sc-trap-pill {
+    font-size: 11px; padding: 2px 8px; border-radius: 12px;
+    background: rgba(239,68,68,0.15); color: var(--sc-tier-avoid);
+  }
+  .sc-decision-context { padding: 12px 16px; }
+  .sc-verdict { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .sc-proba-bar {
+    position: relative; height: 20px; background: rgba(255,255,255,0.08);
+    border-radius: 4px; margin: 8px 0; overflow: hidden;
+  }
+  .sc-proba-fill { height: 100%; background: var(--sc-player-p1); transition: width 0.3s; }
+  .sc-proba-label {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-family: var(--sc-font-mono); color: var(--sc-text);
+  }
+  .sc-meta { font-size: 12px; color: var(--sc-text-muted); margin: 4px 0; }
+  .sc-insight { font-size: 12px; color: var(--sc-tier-moderate); margin: 4px 0; }
+  .sc-market-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .sc-market-chip {
+    font-size: 11px; padding: 4px 10px; border-radius: 12px;
+    background: rgba(59,130,246,0.15); color: var(--sc-player-p2);
+    border: 1px solid rgba(59,130,246,0.3);
+  }
+  .sc-expand {
+    background: none; border: 1px solid rgba(255,255,255,0.1);
+    color: var(--sc-text-muted); padding: 8px 12px; border-radius: 6px;
+    cursor: pointer; margin-top: 8px; width: 100%; text-align: left;
+  }
+  .sc-expand:hover { background: rgba(255,255,255,0.03); }
+  .sc-decision-action { padding: 0 16px 16px; }
+  .sc-bet-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 8px;
+    background: var(--sc-tier-strong); color: white; font-weight: 700; font-size: 16px;
+    cursor: pointer; min-height: var(--sc-tap-min);
+  }
+  .sc-bet-btn:hover { filter: brightness(1.1); }
+  .sc-bet-btn-disabled {
+    width: 100%; padding: 14px; border-radius: 8px;
+    background: rgba(255,255,255,0.05); color: var(--sc-text-muted);
+    text-align: center; font-size: 16px;
+  }
+  .sc-live-score { padding: 8px 16px; background: rgba(239,68,68,0.08); font-family: var(--sc-font-mono); font-size: 14px; }
+  .sc-live-badge { color: var(--sc-tier-avoid); font-weight: 700; animation: sc-blink 2s infinite; }
+  @keyframes sc-blink { 50% { opacity: 0.4; } }
+  @media (prefers-reduced-motion: reduce) { .sc-live-badge { animation: none; } }
+
   /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C1-B FOUNDATIONS
      Scope strict : .ps-mobile-v2 (classe posee par swap script <head>)
@@ -25335,6 +25407,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
   function shortName(name){if(!name)return '?';var p=String(name).trim().split(/\s+/);return p.length>1?p[p.length-1]:p[0];}
   function firstName(name){if(!name)return '?';var p=String(name).trim().split(/\s+/);return p[0];}
+  // XSS: échappe les apostrophes/backslash/quotes pour interpolation dans onclick="..." HTML string.
+  // Obligatoire (AGENTS.md §XSS) — escapeHtml/esc n'échappent PAS les apostrophes pour un contexte JS.
+  function _jsStr(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
 
   // Convertit un emoji drapeau (regional indicators) en code pays ISO-2.
   // 🇪🇸 → ES · 🇮🇹 → IT · 🇷🇸 → RS · 🇷🇺 → RU · 🇺🇸 → US · 🇩🇪 → DE …
@@ -25924,6 +25999,124 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(m)
       +'</div>'
       +'</div></div>';
+  }
+
+  // ═══ Carte P2 « Décision » (pédagogique, 3 zones VERDICT/CONTEXTE/ACTION) ═══
+  // Réf: redesign-tennis/DESIGN-DOC-REDESIGN-TENNIS.md §6.1
+  // Remplace premierCard (prematch) et liveCard (live) par une carte unique.
+  function decisionCard(m) {
+    if (!m) return '';
+    var vb = valueBet(m);
+    var tier = vb ? vb.tier : 'neutral';
+    var p1 = m.player1 || {}, p2 = m.player2 || {};
+    var p1n = shortName(p1.name || '?');
+    var p2n = shortName(p2.name || '?');
+    var st = new Date(m.commence_time || m.start_time || Date.now());
+    var timeStr = st.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+    // ZONE 1 : VERDICT (header)
+    var evHtml = vb ? '<div class="sc-ev-pct" style="color:var(--sc-tier-' + tier + ')">' + (vb.ev_pct >= 0 ? '+' : '') + vb.ev_pct.toFixed(1) + '%</div>' : '';
+    var verdictHtml = vb
+      ? '<div class="sc-verdict">' + esc(vb.label) + ' — ' + esc(vb.playerName || '') + '</div>'
+      : '<div class="sc-verdict sc-text-muted">Pas de signal</div>';
+    var trapHtml = (m.traps && m.traps.length)
+      ? '<span class="sc-trap-pill" title="' + _jsStr(m.traps.join(', ')) + '">⚠ ' + m.traps.length + '</span>'
+      : '';
+    var favHtml = '<button class="sc-fav sc-tap-min" aria-label="Favori" onclick="_decToggleFav(\'' + _jsStr(m.id) + '\')">' + (isFav(m.id) ? '★' : '☆') + '</button>';
+
+    // ZONE 2 : CONTEXTE
+    var sig = m.signal || {};
+    var probaBarHtml = (sig.prob != null && m.fair) ? _decProbaBar(sig.prob, m.fair.p1) : '';
+    var metaHtml = '🎾 ' + esc(m.surface || '?') + ' · ' + esc(m.tournament || '?') + ' · Bo' + (m.bestOf || 3) + ' · ' + timeStr;
+    var insightHtml = _decInsight(m);
+    var chipsHtml = _decMarketChips(m);
+
+    // ZONE 3 : ACTION
+    var betBtnHtml = (vb && vb.tier !== 'neutral')
+      ? '<button class="sc-bet-btn sc-tap-min" onclick="Scope.betModal(\'' + _jsStr(m.id) + '\')">🎯 Parier</button>'
+      : '<div class="sc-bet-btn-disabled" aria-label="Pas de value bet">—</div>';
+
+    // Live specifics (score + pulses)
+    var liveHtml = (m.tab === 'live') ? _decLiveScore(m) : '';
+
+    return '<article class="sc-decision-card sc-tier-' + tier + '" data-match-id="' + _jsStr(m.id) + '">'
+      + '<header class="sc-decision-head">'
+        + '<span class="sc-signal-badge sc-signal-' + tier + '" aria-label="Verdict ' + tier + '">' + _decSignalIcon(tier) + '</span>'
+        + evHtml
+        + '<div class="sc-decision-players">' + esc(p1n) + ' <span class="sc-vs">vs</span> ' + esc(p2n) + '</div>'
+        + favHtml
+        + trapHtml
+      + '</header>'
+      + liveHtml
+      + '<div class="sc-decision-context">'
+        + verdictHtml
+        + probaBarHtml
+        + '<div class="sc-meta">' + metaHtml + '</div>'
+        + insightHtml
+        + chipsHtml
+        + '<button class="sc-expand sc-tap-min" aria-expanded="false" aria-controls="det-' + _jsStr(m.id) + '" onclick="Scope._toggle(this)">▶ Analyse détaillée</button>'
+      + '</div>'
+      + '<footer class="sc-decision-action">' + betBtnHtml + '</footer>'
+      + '<div class="sc-detail" id="det-' + _jsStr(m.id) + '" hidden></div>'
+      + '</article>';
+  }
+
+  // Helpers internes à decisionCard (préfixés _dec pour éviter conflits)
+  function _decProbaBar(modelProb, fairP1) {
+    var mp = Math.round(modelProb * 100);
+    var ip = Math.round(fairP1 * 100);
+    return '<div class="sc-proba-bar" aria-label="Modèle ' + mp + '% vs marché ' + ip + '%">'
+      + '<div class="sc-proba-fill" style="width:' + mp + '%"></div>'
+      + '<span class="sc-proba-label">' + mp + '% vs ' + ip + '% marché</span>'
+      + '</div>';
+  }
+  function _decInsight(m) {
+    if (!m.player1 || !m.player2) return '';
+    var g1 = m.player1.gamesLast14Days || 0;
+    var g2 = m.player2.gamesLast14Days || 0;
+    if (g1 > 12) return '<div class="sc-insight">💡 ' + esc(shortName(m.player1.name)) + ' fatigué (' + g1 + ' matchs/14j)</div>';
+    if (g2 > 12) return '<div class="sc-insight">💡 ' + esc(shortName(m.player2.name)) + ' fatigué (' + g2 + ' matchs/14j)</div>';
+    // Surface specialist
+    var e1 = m.player1.elo_surface || 0, e2 = m.player2.elo_surface || 0;
+    var gap = Math.abs(e1 - e2);
+    if (gap > 100 && (m.player1.surf_rank_total >= 20 || m.player2.surf_rank_total >= 20)) {
+      var spec = e1 > e2 ? shortName(m.player1.name) : shortName(m.player2.name);
+      return '<div class="sc-insight">🎾 ' + esc(spec) + ' spécialiste surface (gap +' + gap + ')</div>';
+    }
+    return '';
+  }
+  function _decSignalIcon(tier) {
+    return tier === 'strong' ? '▲' : tier === 'moderate' ? '●' : tier === 'avoid' ? '▼' : '○';
+  }
+  function _decMarketChips(m) {
+    var chips = [];
+    if (m.tab === 'live' && m.set_ou) {
+      var o = m.set_ou;
+      if (o.o85 != null && o.o85 >= 0.55) chips.push('Over 8.5j +' + Math.round((o.o85 - 0.5) * 100) + '%');
+      if (o.u125 != null && o.u125 >= 0.55) chips.push('Under 12.5j +' + Math.round((o.u125 - 0.5) * 100) + '%');
+    }
+    if (m.tab === 'prematch' && m._raw_predictions && m._raw_predictions.at_least_one_set) {
+      var alos = m._raw_predictions.at_least_one_set;
+      var maxSide = alos.p1 >= alos.p2 ? { name: m.player1 && m.player1.name, pct: alos.p1 } : { name: m.player2 && m.player2.name, pct: alos.p2 };
+      if (maxSide.pct >= 0.55) chips.push(shortName(maxSide.name) + ' 1 set +' + Math.round((maxSide.pct - 0.5) * 100) + '%');
+    }
+    if (!chips.length) return '';
+    return '<div class="sc-market-chips">' + chips.map(function(c) { return '<span class="sc-market-chip">' + esc(c) + '</span>'; }).join('') + '</div>';
+  }
+  function _decLiveScore(m) {
+    var s1 = m.player1_sets != null ? m.player1_sets : 0;
+    var s2 = m.player2_sets != null ? m.player2_sets : 0;
+    var sets = Array.isArray(m.sets) ? m.sets : [];
+    var last = sets.length ? sets[sets.length - 1] : null;
+    var g1 = last ? (num(last.p1) || 0) : 0;
+    var g2 = last ? (num(last.p2) || 0) : 0;
+    var pt = m.current_point || '';
+    return '<div class="sc-live-score"><span class="sc-live-badge">🔴 LIVE</span> ' + s1 + '-' + s2 + ' · ' + g1 + '-' + g2 + ' · ' + esc(pt) + (m.serving ? ' 🎾' : '') + '</div>';
+  }
+  function _decToggleFav(id) {
+    toggleFav(id);
+    // Re-render la liste pour mettre à jour l'étoile
+    if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
   }
 
   /* ── Premier Card (compacte N1) ───────────────────────────────────── */
@@ -26581,6 +26774,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
     tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
+    decisionCard: decisionCard,
     prematchCard:prematchCard,premierCard:premierCard,liveCard:liveCardCompact,valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
@@ -27003,7 +27197,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           + '<button class="sc-filter-btn' + (_sort==='time'?' active':'') + '" data-filter="sort" data-value="time">Horaire</button>'
           + '</div>'
           + '</div>'
-          + '<div class="sc-grid sc-grid-3">' + _filtered.map(function(m){ return root.Scope.premierCard(m); }).join('') + '</div>';
+          + '<div class="sc-grid sc-grid-3">' + _filtered.map(function(m){ return root.Scope.decisionCard(m); }).join('') + '</div>';
         // Wire-up filtres via délégation (une seule fois)
         if (!pEl._filterWired) {
           pEl._filterWired = true;
@@ -27054,7 +27248,7 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
           var _gt = _gm[0].tour || '';
           _gHtml += '<div class="sc-tour-group">';
           _gHtml += '<div class="sc-tour-header">' + root.Scope.svgIcon('trophy',14) + ' <span class="name">' + root.Scope.esc(tn) + '</span> <span class="tour">' + root.Scope.esc(_gt) + '</span> <span class="count">' + _gm.length + ' matchs</span></div>';
-          _gHtml += '<div class="sc-grid sc-grid-2">' + _gm.map(root.Scope.liveCard).join('') + '</div>';
+          _gHtml += '<div class="sc-grid sc-grid-2">' + _gm.map(root.Scope.decisionCard).join('') + '</div>';
           _gHtml += '</div>';
         });
         pEl.innerHTML = _gHtml;
