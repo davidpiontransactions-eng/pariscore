@@ -1,4 +1,40 @@
 # PariScore — Journal des modifications
+## [v12.88] — 2026-07-07 — Redesign UI Tennis Prematch & Live (Hybride Dashboard-Carte)
+
+### Ajouté — Refonte complète de l'onglet Tennis Prematch/Live
+- **Hybride Dashboard-Carte** : master-detail desktop (≥1024px, split 40/60 liste + panneau détail) + carte pédagogique mobile par défaut + toggle « Scan rapide » (vue liste dense).
+- **Signal EV% pilote** : helper `valueBet(m)` unifié (remplace la logique dupliquée dans 4 fonctions), tier Strong/Moderate/Neutral/Avoid, cap de confiance `min(tier_EV, tier_confiance)`.
+- **Serializer serveur canonique** `_serializeTennisCard(m)` : stabilise le contrat data (fini proba 0.65 vs 65, predictions.elo scalar vs object). Signal `m.signal {label, side, prob, ev_pct, odds, confidence, stale}` + `m.traps []`.
+- **Carte P2 Décision** `decisionCard(m)` : 3 zones (VERDICT / CONTEXTE / ACTION), verdict en langage parieur, bouton Parier proéminent, chips marchés (set_ou, at_least_one_set), insights contextuels (fatigue, surface specialist), pills pièges ⚠.
+- **Ligne P1 Terminal** `scanRow(m)` : vue liste ultra-dense (EV% 28px mono, bordure tier, accessible clavier Enter/Espace).
+- **Modale Parier multi-bookmaker** : câble la route dormante `/api/v1/tennis/odds-comparison/:id` via `<dialog>` natif. Lazy fetch + timeout 6s + retry + cache 60s. Classement books par edge.
+- **Stratégies consensus** : câble la route dormante `/api/v1/tennis/strategies/:id` (5 jauges momentum/surface/form/fatigue/confidence + consensus P1/P2). Fin du placeholder.
+- **Live pulses** : BREAK POINT (BPPI > 1.5), MOMENTUM (kfs_confidence > 0.7), « le score ment » (DR divergent |dr| ≥ 0.3). Respect prefers-reduced-motion.
+- **Mode Pro dépliable** : dump JSON brut (predictions, best_ev_model) pour parieurs avancés.
+- **KPI bar signal** : Edge moyen / Value bets strong / Live actifs / ROI Kelly cumulé (remplace live/bets/top/tournaments).
+- **Endpoint `/api/v1/tennis/coverage`** : observabilité data (couverture BSD/WElo/odds/momentum/photos en %, stale_odds, avg_odds_age_ms). Remplace le diagnostic `_auditLivePayload` en prod.
+- **Design system** : tokens CSS `.sc-*` (palette monochrome + 4 tiers sémantiques, typographie mono, zones tap 44px).
+- **Mini-store observable** `Scope.store` + `<dialog>` HTML5 natif (focus trap + Escape + restore-focus).
+
+### Modifié
+- **`mapMatch` allégé** : ne compense plus un backend instable, le serializer serveur garantit le contrat.
+- **Polling adaptatif** : 20s si match live, 90s sinon (avant : 60s fixe). Recalcul après chaque fetch. Bug fix bonus : listener `visibilitychange` n'est plus multi-bindé.
+- **Unification favoris** : `ps_tennis_favs` (localStorage) devient source unique, `m.favorite` payload legacy n'est plus lu.
+- **`tn2UpdateKPI`** réécrit avec pattern d'écriture partielle préservé (map edge/vb/live/roi).
+
+### Supprimé — Nettoyage dette technique
+- **`OLD_TENNIS_DEPRECATED`** : −941 lignes CSS mort (grand bloc 17494→18416 + 19 marqueurs). Classes `.tn2-*` actives préservées.
+- **`liveCardCompact`** : −220 lignes (remplacé par `decisionCard`). `renderLiveGrid` retiré.
+- **`_auditLivePayload`** : intercepteur diagnostic en prod retiré (3 zones), remplacé par endpoint `/coverage`.
+- **Bouton « Stratégies » placeholder** : remplacé par câblage réel.
+
+### Méthodologie
+- Conception collaborative : 4 expertises (webdesigner, data scientist, ingénieur data, expert paris).
+- Vote panel simulé 1000 votants (8 segments pondérés) : P2 40,7% / P3 34,8% / P1 24,5% → décision hybride.
+- Exécution 4 phases + 4 jalons (J1 fondations, J2 composants, J3 dashboard, fin).
+- 19 commits, +4589/−1332 lignes, 54 fichiers.
+- QA statique OK (syntax, a11y WCAG AA, non-régression).
+
 ## [v12.87] — 2026-07-06 — Fix critique SetPoint Next.js chunks 404
 
 ### Corrigé
