@@ -396,6 +396,35 @@
   .sc-tap-min { min-width: var(--sc-tap-min); min-height: var(--sc-tap-min); }
   .sc-text-muted { color: var(--sc-text-muted); }
 
+  /* ═══ Modale Parier (<dialog> natif) ═══ */
+  .sc-bet-dialog {
+    border: none;
+    border-radius: var(--sc-card-radius);
+    background: var(--sc-bg-elev);
+    color: var(--sc-text);
+    padding: 0;
+    max-width: 90vw;
+    max-height: 85vh;
+    width: 480px;
+  }
+  .sc-bet-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(2px);
+  }
+  .sc-bet-dialog-content { display: flex; flex-direction: column; max-height: 85vh; }
+  .sc-bet-dialog-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
+    position: sticky; top: 0; background: var(--sc-bg-elev);
+  }
+  .sc-bet-dialog-body { padding: 20px; overflow-y: auto; }
+  .sc-bet-dialog-close {
+    background: none; border: none; color: var(--sc-text-muted);
+    font-size: 20px; cursor: pointer; padding: 8px;
+    min-width: var(--sc-tap-min); min-height: var(--sc-tap-min);
+  }
+  .sc-bet-dialog-close:hover { color: var(--sc-text); }
+
   /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C1-B FOUNDATIONS
      Scope strict : .ps-mobile-v2 (classe posee par swap script <head>)
@@ -25281,6 +25310,24 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 (function (root) {
   'use strict';
 
+  // ═══ Mini-store observable (vanilla, zéro dépendance) ═══
+  // Pattern subscribe/emit pour le master-detail desktop (Phase 3).
+  // Le panneau détail s'abonnera à selectedMatchId ; le toggle scan à viewMode.
+  var _storeState = { selectedMatchId: null, viewMode: 'card', filters: {} };
+  var _storeSubs = [];
+  function storeGet() { return _storeState; }
+  function storeSet(patch) {
+    _storeState = Object.assign({}, _storeState, patch);
+    for (var i = 0; i < _storeSubs.length; i++) _storeSubs[i](_storeState);
+  }
+  function storeSubscribe(fn) {
+    _storeSubs.push(fn);
+    return function unsubscribe() {
+      var idx = _storeSubs.indexOf(fn);
+      if (idx !== -1) _storeSubs.splice(idx, 1);
+    };
+  }
+
   /* ── Helpers ─────────────────────────────────────────────────────── */
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function num(v,d){var n=Number(v);if(!isFinite(n))return 0;return d?Math.round(n*Math.pow(10,d))/Math.pow(10,d):n;}
@@ -26530,6 +26577,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   var Scope={
     // helpers exposés (utiles pour réutilisation dans Pariscore)
     p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,valueBet:valueBet,
+    store: { get: storeGet, set: storeSet, subscribe: storeSubscribe },
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
     tournamentTier:tournamentTier,bestRank:bestRank,sortMatchesByImportance:sortMatchesByImportance,
     svgIcon:svgIcon,esc:esc,shortName:shortName,
@@ -27398,6 +27446,18 @@ function _drPopupChart(p1, p2) {
 .sc-dr-popup-btn{width:100%;padding:8px 12px;background:linear-gradient(135deg,var(--bg3,#131722) 0%,var(--bg2,#0e121e) 100%);border:1px solid var(--border2,rgba(255,255,255,.08));border-radius:8px;color:var(--text2,#cbd5e1);font-size:12px;font-family:var(--font-mono,monospace);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)}
 .sc-dr-popup-btn:hover{border-color:var(--green,#00e676);color:var(--green,#00e676);transform:translateY(-1px)}
 </style>
+<!-- ═══ Modale Parier (<dialog> natif a11y) ═══ -->
+<dialog id="sc-bet-dialog" class="sc-bet-dialog">
+  <div class="sc-bet-dialog-content">
+    <header class="sc-bet-dialog-head">
+      <h3 id="sc-bet-dialog-title">Parier</h3>
+      <button class="sc-bet-dialog-close" aria-label="Fermer" onclick="document.getElementById('sc-bet-dialog').close()">✕</button>
+    </header>
+    <div id="sc-bet-dialog-body" class="sc-bet-dialog-body">
+      <!-- Contenu injecté par Scope.betModal(matchId) en Phase 3 -->
+    </div>
+  </div>
+</dialog>
 </body>
 </html>
 
