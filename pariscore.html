@@ -16707,8 +16707,10 @@ function psSetLang(v) {
     }
     var favorites = [];
     var rest = [];
+    // Source unique des favoris : ps_tennis_favs (localStorage) via Scope.isFav
+    var _isFavFn = (window.Scope && typeof Scope.isFav === 'function') ? Scope.isFav : null;
     for (var i = 0; i < filtered.length; i++) {
-      if (filtered[i].favorite) favorites.push(filtered[i]);
+      if (_isFavFn && _isFavFn(filtered[i].id)) favorites.push(filtered[i]);
       else rest.push(filtered[i]);
     }
     var sorted = favorites.concat(rest);
