@@ -25126,6 +25126,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var p2n = shortName(p2.name || '?');
     var st = new Date(m.commence_time || m.start_time || Date.now());
     var timeStr = st.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    // Date : juste l'heure si aujourd'hui, sinon date courte + heure (prematch à venir).
+    var _isToday = st.toDateString() === new Date().toDateString();
+    var dateStr = _isToday ? timeStr : st.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + timeStr;
 
     // ZONE 1 : VERDICT (header)
     var evHtml = vb ? '<div class="sc-ev-pct" style="color:var(--sc-tier-' + tier + ')">' + (vb.ev_pct >= 0 ? '+' : '') + vb.ev_pct.toFixed(1) + '%</div>' : '';
@@ -25140,7 +25143,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // ZONE 2 : CONTEXTE
     var sig = m.signal || {};
     var probaBarHtml = (sig.prob != null && m.fair) ? _decProbaBar(sig.prob, m.fair.p1) : '';
-    var metaHtml = '🎾 ' + esc(m.surface || '?') + ' · ' + esc(m.tournament || '?') + ' · Bo' + (m.bestOf || 3) + ' · ' + timeStr;
+    var metaHtml = '🎾 ' + esc(m.surface || '?') + ' · ' + esc(m.tournament || '?') + ' · Bo' + (m.bestOf || 3) + ' · ' + dateStr;
     var insightHtml = _decInsight(m);
     var chipsHtml = _decMarketChips(m);
 
@@ -25328,6 +25331,9 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var p1 = m.player1 || {}, p2 = m.player2 || {};
     var st = new Date(m.commence_time || m.start_time || Date.now());
     var timeStr = st.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    // Date : juste l'heure si aujourd'hui, sinon date courte + heure (scan prematch à venir).
+    var _isToday = st.toDateString() === new Date().toDateString();
+    var dateStr = _isToday ? timeStr : st.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ' + timeStr;
     var evHtml = vb
       ? '<div class="sc-scan-ev" style="color:var(--sc-tier-' + tier + ')">' + (vb.ev_pct >= 0 ? '+' : '') + vb.ev_pct.toFixed(1) + '%</div>'
       : '<div class="sc-scan-ev sc-text-muted">—</div>';
@@ -25347,7 +25353,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       + evHtml
       + '<div class="sc-scan-main">'
         + '<div class="sc-scan-players">' + esc(shortName(p1.name || '?')) + ' · ' + esc(shortName(p2.name || '?')) + trapMark + '</div>'
-        + '<div class="sc-scan-meta">' + esc(m.tournament || '?') + ' · ' + esc(m.surface || '?') + ' · ' + timeStr + '</div>'
+        + '<div class="sc-scan-meta">' + esc(m.tournament || '?') + ' · ' + esc(m.surface || '?') + ' · ' + dateStr + '</div>'
       + '</div>'
       + oddsHtml
       + liveHtml
