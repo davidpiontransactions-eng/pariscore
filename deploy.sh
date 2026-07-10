@@ -14,7 +14,8 @@ echo "[deploy] Setting pull strategy to merge (no more divergence hint)..."
 git config pull.rebase false
 
 echo "[deploy] Restarting pm2..."
-pm2 restart server
+# Le process PM2 s'appelle 'pariscore' (pas 'server'). --update-env recharge .env.
+pm2 restart pariscore --update-env
 
 echo "[deploy] Done. Current commit:"
 git log --oneline -1
