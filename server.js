@@ -39876,10 +39876,20 @@ if (pathname === '/api/v1/tennis/live' && req.method === 'GET') {
   // Sérialisation canonique _serializeTennisCard (signal/traps) — sans elle, le
   // frontend (mapMatch allégé) ne synthétise plus m.signal/m.traps et l'onglet Live
   // perd EV%, pills pièges, pulses et bouton Parier (fix review B2).
-  // Filtre matchs terminés : la source BSD continue de servir les matchs finis dans
-  // /api/v2/matches/live/, il faut les exclure de l'onglet Live (sinon accumulation).
+  // Filtre matchs non-live : la source BSD/ESPN sert aussi les matchs terminés ET
+  // à venir dans /matches/live/. L'onglet Live ne doit contenir QUE les matchs en cours.
+  // _isTennisMatchLive = ni terminé, ni à venir (status pre/À VENIR/scheduled + 0-0).
   const cached = (_tennisLiveCache.data || [])
-    .filter(m => !_isTennisMatchFinished(m))
+    .filter(function (m) {
+      if (_isTennisMatchFinished(m)) return false; // exclut terminés
+      // Exclut "à venir" : pas encore commencés (is_live false + score 0-0 + status pré-match)
+      var st = String(m.status || '').toLowerCase();
+      if (/à\s*venir|scheduled|pre|upcoming|not\s*start/.test(st)) return false;
+      if (m.is_live === false && (m.player1_sets == null || m.player1_sets === 0) &&
+          (m.player2_sets == null || m.player2_sets === 0) &&
+          (!Array.isArray(m.sets) || m.sets.length === 0)) return false;
+      return true;
+    })
     .map(_serializeTennisCard)
     .filter(Boolean);
   return jsonResponse(res, 200, cached);
