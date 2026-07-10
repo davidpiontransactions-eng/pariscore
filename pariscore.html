@@ -25112,80 +25112,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     return h;
   }
 
-  /* ── Carte prematch complète ──────────────────────────────────────── */
-  function prematchCard(m){
-    var p1=m.player1||{},p2=m.player2||{};
-    var p1p=p1WinProb(m);
-    var o1=num(m.odds_player1),o2=num(m.odds_player2);
-    var imp=implied(o1,o2);
-    var ev1=ev(p1p,o1),ev2=ev(1-p1p,o2);
-    var k1=kelly(p1p,o1),k2=kelly(1-p1p,o2);
-    // top value bet
-    var topVB=null;
-    if(m.best_ev_model&&m.best_ev_model.odds){
-      var be=m.best_ev_model;var mp=num(be.prob)/100;var ipb=1/num(be.odds);
-      topVB={label:be.label,odds:num(be.odds,2),modelProb:mp,impliedProb:ipb,ev:ev(mp,num(be.odds)),kelly:kelly(mp,num(be.odds)),edge:mp-ipb};
-    }else{
-      // choisir le meilleur entre P1/P2
-      var cands=[{label:(p1.name||'P1')+' Win',odds:o1,mp:p1p,ip:imp.p1},{label:(p2.name||'P2')+' Win',odds:o2,mp:1-p1p,ip:imp.p2}];
-      cands.forEach(function(c){c.ev=ev(c.mp,c.odds);c.kelly=kelly(c.mp,c.odds);c.edge=c.mp-c.ip;});
-      cands.sort(function(a,b){return b.edge-a.edge;});
-      topVB=cands[0];
-    }
-    var topTier=tier(topVB.edge,topVB.ev,topVB.kelly);
-    var isStrong=topTier==='strong',isModerate=topTier==='moderate';
-    var isLive=!!m._isLive;
-    var st=new Date(m.start_time||m.commence_time||Date.now());
-    var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    var dateStr=st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
-
-    var eloTrend1=p1.eloTrend||[p1.elo_surface||2000];
-    var eloTrend2=p2.eloTrend||[p2.elo_surface||2000];
-
-    return '<div class="sc-card" data-match-id="'+esc(m.id)+'">'
-      +'<div class="sc-card-head">'
-      +'<div class="tour">'+svgIcon('trophy',14)+'<span class="name">'+esc(m.tournament||'')+'</span></div>'
-      +surfaceBadge(m.surface, m.tournament)
-      +favStar(m)
-      +'</div>'
-      +'<div class="sc-card-body">'
-      // meta
-      +'<div class="sc-meta">'
-      +'<span>'+svgIcon('pin',11)+' '+esc(m.city||'')+'</span><span class="sep">·</span>'
-      +'<span>'+svgIcon('clock',11)+' '+dateStr+' '+timeStr+'</span>'
-      +'<span class="sc-badge">'+esc(m.round||'')+'</span>'
-      +'<span class="sc-badge">Bo'+(m.bestOf||3)+'</span>'
-      +(m.prizePool?'<span class="sc-badge sc-badge-prize">'+esc(m.prizePool)+'</span>':'')
-      +'</div>'
-      // players + gauge
-      +'<div class="sc-players">'
-      +playerBlock(p1,'left','#00e676',p1p,eloTrend1)
-      +'<div class="sc-gauge-col">'
-      +gauge(p1p,{size:130})
-       +'<div class="sc-decision-badge "'+(isStrong?'strong':isModerate?'moderate':'neutral')+'><strong>'+(isStrong?'▲':isModerate?'◆':'○')+'</strong> '+(isStrong?'VALUE FORTE':isModerate?'Value':'Neutre')+' <span style="opacity:.7;font-weight:400;font-size:9px">'+(topVB.edge*100).toFixed(0)+'%</span></div>'
-      +'</div>'
-      +playerBlock(p2,'right','#0077ff',1-p1p,eloTrend2)
-      +'</div>'
-      // odds
-      +'<div class="sc-odds">'
-      +oddBox(shortName(p1.name),o1,ev1,ev1>0)
-      +'<div class="sc-odd-mid"><div class="lbl">Score proj.</div><div class="val">'+esc(projectedScore(p1p,m.bestOf))+'</div><div class="sub">'+(expectedGames(m))+' jeux</div></div>'
-      +oddBox(shortName(p2.name),o2,ev2,ev2>0)
-      +'</div>'
-      // top value
-      +'<div class="sc-callout"><div class="ico">'+svgIcon('zap',16)+'</div><div class="body"><div class="title"><b>'+esc(topVB.label)+'</b>'+signalBadge(topTier)+(isLive?signalBadge('live'):'')+'</div>'
-      +'<div class="stats">Cote '+topVB.odds.toFixed(2)+' · Edge '+(topVB.edge*100).toFixed(1)+'% · EV '+(topVB.ev*100).toFixed(1)+'% · Kelly '+(topVB.kelly*100).toFixed(1)+'%</div></div></div>'
-      // expand
-      +'<button class="sc-expand" onclick="Scope._toggle(this)" data-match-id="'+(typeof escapeHtml==='function'?escapeHtml:esc)(m.id)+'" aria-expanded="false" aria-controls="det-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" data-label-closed="Analyse détaillée · Facteurs · H2H · Marchés" data-label-open="Masquer l\'analyse"><span class="lbl">Analyse détaillée · Facteurs · H2H · Marchés</span><span class="chev">▾</span></button>'
-      +'<div class="sc-detail" id="det-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region">'
-      +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
-      +scoutProfile(p1)+scoutProfile(p2)
-      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(m)
-      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(m)
-      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(m)
-      +'</div>'
-      +'</div></div>';
-  }
+  /* ── prematchCard RETIRÉ (Track D 5.6) — remplacé par decisionCard/scanRow ── */
 
   // ═══ Carte P2 « Décision » (pédagogique, 3 zones VERDICT/CONTEXTE/ACTION) ═══
   // Réf: redesign-tennis/DESIGN-DOC-REDESIGN-TENNIS.md §6.1
@@ -25550,91 +25477,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       + '</div>';
   }
 
-  /* ── Premier Card (compacte N1) ───────────────────────────────────── */
-  function premierCard(m){
-    var p1=m.player1||{},p2=m.player2||{};
-    var p1p=p1WinProb(m);
-    var o1=num(m.odds_player1),o2=num(m.odds_player2);
-    var imp=implied(o1,o2);
-    var ev1=ev(p1p,o1),ev2=ev(1-p1p,o2);
-    var k1=kelly(p1p,o1),k2=kelly(1-p1p,o2);
-    // top value bet
-    var topVB = valueBet(m);
-    if (!topVB) {
-      topVB = { label: 'N/A', side: null, prob: 0.5, odds: 0, ev_pct: 0, tier: 'neutral', stale: false, trap: false, playerName: null };
-    }
-    var topTier = topVB.tier;
-    var st=new Date(m.start_time||m.commence_time||Date.now());
-    var timeStr=st.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    var dateStr=st.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
-    var isStrong=topTier==='strong';
-    var isModerate=topTier==='moderate';
-
-    // photo joueurs via getPlayerPhotoUrl (reprend le pattern de playerBlock)
-    function _ph(p){
-      var _u='';
-      try{ _u=(typeof window.getPlayerPhotoUrl==='function')?window.getPlayerPhotoUrl(p):''; }catch(e){}
-      if(_u){
-        var _n=encodeURIComponent(String(p.name||'?'));
-        return '<img src="'+esc(_u)+'" alt="" class="sc-premier-photo" loading="lazy" onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\'https://ui-avatars.com/api/?name='+_n+'&background=172132&color=fff&size=80\';}">';
-      }
-      return '<div class="sc-premier-photo-init">'+esc((p.name||'?')[0])+'</div>';
-    }
-
-    return '<div class="sc-premier-card" data-match-id="'+esc(m.id)+'">'
-      // ── Header ──
-      +'<div class="sc-premier-head">'
-      +'<div class="sc-premier-head-left">'
-      +'<span class="sc-premier-tournament">'+esc(m.tournament||'')+'</span>'
-      +surfaceBadge(m.surface,m.tournament)
-      +'<span class="sc-premier-sep">·</span>'
-      +'<span class="sc-premier-round">'+esc(m.round||'')+'</span>'
-      +'</div>'
-      +'<div class="sc-premier-head-right">'
-      +'<span class="sc-premier-date">'+dateStr+' '+timeStr+'</span>'
-      +favStar(m)
-      +'</div>'
-      +'</div>'
-      // ── VS ──
-      +'<div class="sc-premier-vs">'
-      +'<div class="sc-premier-player p1">'
-      +'<div class="sc-premier-photo-wrap">'+_ph(p1)+'</div>'
-      +'<div class="sc-premier-pname">'+esc(p1.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p1.rank||'—')+(p1.flag?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+'</div>'
-      +'<div class="sc-premier-pelo">Elo '+(p1.elo_surface||'—')+'</div>'
-      +'</div>'
-      +'<div class="sc-premier-gauge">'+gauge(p1p,{size:80,opt:p1p,sup:p1p,inf:p1p,p1n:shortName(p1.name),p2n:shortName(p2.name)})+'</div>'
-      +'<div class="sc-premier-player p2">'
-      +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
-      +'<div class="sc-premier-pname">'+esc(p2.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p2.rank||'—')+(p2.flag?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+'</div>'
-      +'<div class="sc-premier-pelo">Elo '+(p2.elo_surface||'—')+'</div>'
-      +'</div>'
-      +'</div>'
-      // ── Decision strip ──
-      +'<div class="sc-premier-action">'
-      +'<div class="sc-premier-odds">'
-      +'<span class="sc-premier-odd-val">'+(o1?o1.toFixed(2):'—')+'</span>'
-      +'<span class="sc-premier-odd-lbl">'+esc(shortName(p1.name))+'</span>'
-      +'</div>'
-      +'<div class="sc-premier-decision">'
-      +'<div class="sc-premier-decision-badge sc-premier-badge-'+(isStrong?'strong':isModerate?'moderate':'neutral')+'">'+signalBadge(topTier)+'</div>'
-      +'<div class="sc-premier-decision-detail">EV <b>'+(topVB.ev_pct>=0?'+':'')+topVB.ev_pct.toFixed(1)+'%</b> · Cote <b>'+(topVB.odds||0).toFixed(2)+'</b>'+(topVB.stale?' <span style="opacity:.6">⚠ stale</span>':'')+'</div>'
-      +'</div>'
-      +'<div class="sc-premier-odds p2">'
-      +'<span class="sc-premier-odd-val">'+(o2?o2.toFixed(2):'—')+'</span>'
-      +'<span class="sc-premier-odd-lbl">'+esc(shortName(p2.name))+'</span>'
-      +'</div>'
-      +'</div>'
-      // ── Expand buttons ──
-      +'<div class="sc-premier-buttons">'
-      +'<button class="sc-premier-btn" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>📊 Analyse</span><span class="chev">▾</span></button>'
-      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>🎯 Stratégies</span><span class="chev">▾</span></button>'
-      +'</div>'
-      // ── Detail panel ──
-      +'<div class="sc-premier-detail" id="pdet-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region" style="display:none"></div>'
-      +'</div>';
-  }
+  /* ── premierCard RETIRÉ (Track D 5.6) — remplacé par decisionCard/scanRow ── */
 
   function playerBlock(p,align,color,prob,trend){
     var cc=flagToCC(p.flag);
@@ -25932,9 +25775,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
   // module-level host tracking for re-render on filter/sort
   var _vbHost=null,_vbMatches=null,_vbOpts={filter:'all',sort:'edge'};
-  // bd live-001 : persistance état d'expansion des accordéons (cross-re-render).
-  // Variable module-level dans le Scope IIFE (pas dans _state qui est dans le TennisScope IIFE).
-  var _expandedMatchIds=new Set();
+  // _expandedMatchIds RETIRÉ (Track D 5.6) — n'était utilisé que par _toggle (legacy, supprimé).
   // bd live-025 : compteur module-level pour IDs gradient SVG uniques (évite collisions si match IDs dupliqués)
   var _chartSeq=0;
 
@@ -26033,73 +25874,22 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       // Re-render la liste
       if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
     },
-    prematchCard:prematchCard,premierCard:premierCard,valueBetsTable:valueBetsTable,
+    // prematchCard/premierCard RETIRÉS (Track D 5.6) — remplacés par decisionCard/scanRow
+    valueBetsTable:valueBetsTable,
     scoutProfile:scoutProfile,bettorRead:bettorRead,topBets:topBets,
 
     // rendus haut niveau (injectent dans un élément du DOM)
 
-    renderPrematchGrid:function(el,matches){
-      el.innerHTML='<div class="sc-grid sc-grid-3">'+matches.map(premierCard).join('')+'</div>';
-    },
     renderValueBets:function(el,matches,opts){
       _vbHost=el;_vbMatches=matches;_vbOpts=opts||{filter:"all",sort:"edge"};_rerenderVB();},
     renderAnalytics:function(el,matches,matchId){
-      var m=matchId?matches.filter(function(x){return x.id===matchId;})[0]:matches[0];
+      var m=matchId?matches.filter(function(x){return x.id===matchId})[0]:matches[0];
       if(!m){el.innerHTML='<div style="padding:32px;text-align:center;color:var(--text3)">Aucun match.</div>';return;}
       el.innerHTML=analyticsPanel(m);
     },
 
-    // interne : toggle détail + re-filter + re-sort
-    // bd live-001+live-016 : persistance état + maj aria-expanded au toggle
-    _toggle:function(btn){
-      var d=btn.nextElementSibling;
-      var open=btn.classList.toggle('open');
-      d.classList.toggle('open',open);
-      var lbl=btn.querySelector('span.lbl')||btn.querySelector('span:not(.chev)');
-      if(lbl){
-        lbl.textContent=open?(btn.getAttribute('data-label-open')||"Masquer l'analyse"):(btn.getAttribute('data-label-closed')||lbl.textContent);
-      }
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      // Persistance pour survivre au re-render polling/recherche/filtre
-      var mid=btn.getAttribute('data-match-id');
-      if(mid){
-        if(open) _expandedMatchIds.add(String(mid));
-        else _expandedMatchIds.delete(String(mid));
-      }
-    },
+    // interne : re-filter + re-sort
     _refilter:function(val){_vbOpts.filter=val;_rerenderVB();},
-    _togglePremier:function(btn,mode){
-      var mid=btn.getAttribute('data-match-id');
-      var d=document.getElementById('pdet-'+String(mid||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'));
-      if(!d)return;
-      var open=btn.classList.toggle('open');
-      d.style.display=open?'block':'none';
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(!open)return;
-      if(d.getAttribute('data-loaded'))return;
-      d.setAttribute('data-loaded','1');
-      if(mode==='analyse'){
-        var match=null;
-        if(typeof TennisScope!=='undefined'&&TennisScope._state&&TennisScope._state.matches){
-          for(var i=0;i<TennisScope._state.matches.length;i++){
-            if(String(TennisScope._state.matches[i].id)===String(mid)){match=TennisScope._state.matches[i];break;}
-          }
-        }
-        if(!match){
-          d.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px">Analyse non disponible.</div>';
-          return;
-        }
-        d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'
-          +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
-          +scoutProfile(match.player1)+scoutProfile(match.player2)
-          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(match)
-          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(match)
-          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
-          +'</div>';
-      }else if(mode==='strategies'){
-        d.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Strategies disponibles dans la prochaine version.</div>';
-      }
-    },
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
     // favoris ★
     isFav:isFav,
