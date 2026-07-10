@@ -16187,6 +16187,10 @@ function psSetLang(v) {
         </div>
         <div class="sc-actions">
           <span class="sc-status" id="sc-status">Initialisation…</span>
+          <div class="sc-chrome-toggle" role="group" aria-label="Affichage">
+            <button class="sc-chrome-btn active" id="sc-chrome-tournaments" data-chrome="tournaments" type="button" title="Afficher / cacher la barre des tournois" aria-pressed="true"><span class="sc-chrome-icon">🏆</span>Tournois</button>
+            <button class="sc-chrome-btn active" id="sc-chrome-filters" data-chrome="filters" type="button" title="Afficher / cacher la barre de filtres" aria-pressed="true"><span class="sc-chrome-icon">🎚️</span>Filtres</button>
+          </div>
           <button class="sc-refresh-btn" id="sc-refresh-btn" type="button" title="Rafraîchir les données">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             Rafraîchir
@@ -24407,6 +24411,18 @@ a:focus-visible,
 .sc-view-btn{background:none;border:none;color:var(--sc-text-muted);padding:8px 14px;cursor:pointer;min-height:var(--sc-tap-min);font-size:13px}
 .sc-view-btn.active{background:var(--sc-bg-elev);color:var(--sc-text)}
 @media (min-width:1024px){.sc-view-toggle{display:none}}
+/* ═══ Toggles d'affichage (barre tournois + filtres) ═══ */
+.sc-chrome-toggle{display:inline-flex;gap:6px;margin-left:8px;flex-wrap:wrap}
+.sc-chrome-btn{background:var(--sc-bg-elev,#182030);border:1px solid rgba(255,255,255,0.1);color:var(--sc-text-muted,#64748b);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;min-height:var(--sc-tap-min,40px);display:inline-flex;align-items:center;gap:5px;transition:all .15s;font-family:inherit}
+.sc-chrome-btn:hover{border-color:rgba(0,230,118,0.4);color:var(--sc-text,#fff)}
+.sc-chrome-btn.active{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.5);color:var(--sc-accent,#00e676)}
+.sc-chrome-btn .sc-chrome-icon{font-size:14px;line-height:1}
+/* État caché : sidebar repliée → main prend toute la largeur */
+html.ps-desktop-v1 body[data-page="tennis"] #page-tennis.tn-no-sidebar{grid-template-columns:0 1fr !important}
+html.ps-desktop-v1 body[data-page="tennis"] #page-tennis.tn-no-sidebar > .ps-sidebar{display:none}
+/* Filtres cachés */
+.sc-filterbar.tn-hidden{display:none}
+@media (max-width:1023px){.sc-chrome-btn[data-chrome="tournaments"]{display:none}}
 /* ═══ Master-detail desktop (Phase 3.1) ═══ */
 .sc-master-detail{display:grid;grid-template-columns:40% 60%;gap:16px;align-items:start}
 .sc-master-list{max-height:calc(100vh - 220px);overflow-y:auto;padding-right:8px}
@@ -25993,7 +26009,12 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     searchQuery: '', // recherche texte joueur/tournoi (prematch + live)
     surfaceFilter: 'all', // filtre surface (all|Hard|Clay|Grass)
     tournamentFilter: 'all', // filtre tournoi (all|<nom>)
-    sortFilter: 'importance' // tri (importance|edge|time)
+    sortFilter: 'importance', // tri (importance|edge|time)
+    // Préférences d'affichage (persistantes via localStorage)
+    chrome: {
+      tournaments: true,  // sidebar tournois visible par défaut
+      filters: true       // barre de filtres visible par défaut
+    }
   };
 
   // ── Mapping Pariscore → Scope shape ────────────────────────────────────
@@ -26403,6 +26424,8 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       addMatchSelector(pEl, matchId);
     }
     setWatermark(tab);
+    // Réappliquer les préférences d'affichage (filterbar régénérée à chaque rendu)
+    applyChrome();
   }
 
   function emptyState(msg) {
@@ -26594,6 +26617,42 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     getState: function () { return Object.assign({}, _state, { matches: _state.matches.slice() }); }
   };
 
+  // ── Toggle d'affichage (barre tournois + filtres) ────────────────────
+  function _chromeKey() { return 'ps_tennis_chrome'; }
+  function loadChrome() {
+    try {
+      var raw = localStorage.getItem(_chromeKey());
+      if (raw) {
+        var saved = JSON.parse(raw);
+        if (saved && typeof saved === 'object') {
+          _state.chrome.tournaments = saved.tournaments !== false;
+          _state.chrome.filters = saved.filters !== false;
+        }
+      }
+    } catch (e) { /* localStorage indisponible, on garde les défauts */ }
+  }
+  function saveChrome() {
+    try { localStorage.setItem(_chromeKey(), JSON.stringify(_state.chrome)); } catch (e) {}
+  }
+  function applyChrome() {
+    var pageTennis = document.getElementById('page-tennis');
+    if (pageTennis) pageTennis.classList.toggle('tn-no-sidebar', !_state.chrome.tournaments);
+    // La filterbar est rendue dynamiquement → on toggle toutes les .sc-filterbar existantes
+    var fbs = document.querySelectorAll('#page-tennis .sc-filterbar');
+    fbs.forEach(function (fb) { fb.classList.toggle('tn-hidden', !_state.chrome.filters); });
+    // États ARIA + visuel des boutons
+    var btnTour = document.getElementById('sc-chrome-tournaments');
+    var btnFil = document.getElementById('sc-chrome-filters');
+    if (btnTour) { btnTour.classList.toggle('active', _state.chrome.tournaments); btnTour.setAttribute('aria-pressed', String(_state.chrome.tournaments)); }
+    if (btnFil) { btnFil.classList.toggle('active', _state.chrome.filters); btnFil.setAttribute('aria-pressed', String(_state.chrome.filters)); }
+  }
+  function toggleChrome(which) {
+    if (which !== 'tournaments' && which !== 'filters') return;
+    _state.chrome[which] = !_state.chrome[which];
+    saveChrome();
+    applyChrome();
+  }
+
   // ── Wire-up au chargement ─────────────────────────────────────────────
   function wireUp() {
     var navBtns = document.querySelectorAll('#sc-nav button');
@@ -26603,6 +26662,13 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
     // Refresh button
     var refreshBtn = document.getElementById('sc-refresh-btn');
     if (refreshBtn) refreshBtn.addEventListener('click', fetchData);
+    // Chrome toggles (barre tournois + filtres)
+    loadChrome();
+    applyChrome(); // applique l'état initial (sidebar + boutons) avant le 1er rendu
+    var btnTour = document.getElementById('sc-chrome-tournaments');
+    var btnFil = document.getElementById('sc-chrome-filters');
+    if (btnTour) btnTour.addEventListener('click', function () { toggleChrome('tournaments'); });
+    if (btnFil) btnFil.addEventListener('click', function () { toggleChrome('filters'); });
     // Init auto si l'élément racine existe
     if (document.getElementById('sc-panel-prematch')) {
       root.TennisScope.init();
