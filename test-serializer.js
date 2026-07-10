@@ -38,6 +38,32 @@ assert.ok(out.signal.ev_pct > 0, 'ev_pct positif');
 assert.strictEqual(out.signal.confidence, 'medium', 'confidence medium (pas high car surf_rank_total < 150)');
 assert.deepStrictEqual(out.traps, [], 'pas de traps');
 
+// ── Test score live (fix bug score figé — régression B2) ───────────────────
+var mockLiveMatch = {
+  id: 'live-1', status: 'live', is_live: true, tour: 'ATP', tournament: 'Wimbledon',
+  surface: 'Grass', player1: { name: 'Fery' }, player2: { name: 'Zverev' },
+  player1_sets: 1, player2_sets: 2,
+  sets: [{ p1: 6, p2: 4 }, { p1: 3, p2: 6 }, { p1: 2, p2: 4 }],
+  current_set_index: 2, current_point: '15-30', serving: 1,
+  current_game_p1: 2, current_game_p2: 4,
+  odds_player1: 1.65, odds_player2: 2.20,
+  momentum: { p1: 0.6, p2: 0.4 }
+};
+var liveOut = _serializeTennisCard(mockLiveMatch);
+assert.strictEqual(liveOut.tab, 'live', 'live tab');
+assert.strictEqual(liveOut.is_live, true, 'is_live bool');
+assert.strictEqual(liveOut.player1_sets, 1, 'player1_sets préservé');
+assert.strictEqual(liveOut.player2_sets, 2, 'player2_sets préservé');
+assert.ok(Array.isArray(liveOut.sets) && liveOut.sets.length === 3, 'sets array préservé');
+assert.strictEqual(liveOut.current_point, '15-30', 'current_point préservé');
+assert.strictEqual(liveOut.serving, 1, 'serving préservé');
+assert.strictEqual(liveOut.current_game_p2, 4, 'current_game_p2 préservé');
+assert.strictEqual(liveOut.odds_player1, 1.65, 'odds_player1 préservé');
+assert.deepStrictEqual(liveOut.momentum, { p1: 0.6, p2: 0.4 }, 'momentum préservé');
+// Match prematch sans champs live → null (pas de régression prematch)
+assert.strictEqual(out.player1_sets, null, 'prematch: player1_sets null');
+assert.strictEqual(out.sets, null, 'prematch: sets null');
+
 // ── Tests complémentaires helpers (Track D 5.9) ────────────────────────────
 assert.strictEqual(_normalizeProb(0.62), 0.62, 'normalizeProb 0.62');
 assert.strictEqual(_normalizeProb(62), 0.62, 'normalizeProb 62 → 0.62');
@@ -46,5 +72,5 @@ assert.strictEqual(_normalizeProb('abc'), null, 'normalizeProb NaN → null');
 assert.strictEqual(_normalizeProb('62'), 0.62, 'normalizeProb "62" → 0.62');
 assert.strictEqual(_computeSignal({}, null, null), null, 'computeSignal sans odds → null');
 
-console.log('✅ Track D 5.9 : serializer module OK (extraction + helpers)');
+console.log('✅ Serializer OK : extraction + helpers + champs score live préservés');
 console.log(JSON.stringify(out.signal, null, 2));

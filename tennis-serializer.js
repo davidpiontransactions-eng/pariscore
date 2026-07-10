@@ -95,6 +95,7 @@ function serializeTennisCard(m) {
   return {
     id: String(m.id || ''),
     tab: m.is_live || m.status === 'live' ? 'live' : 'prematch',
+    is_live: !!(m.is_live || m.status === 'live'),
     tour: m.tour || null,
     tournament: m.tournament || null,
     surface: m.surface || null,
@@ -108,6 +109,23 @@ function serializeTennisCard(m) {
     fair: fair,
     signal: signal,
     traps: traps,
+    // ── Champs score live (fix bug score figé — régression B2) ──
+    // Transfert direct depuis le cache _tennisLiveCache. Le frontend les lit
+    // conditionnellement (pariscore.html mapMatch), donc ils DOIVENT survivre
+    // au serializer, sinon le score live (sets/jeux/point/service) disparaît.
+    player1_sets: (m.player1_sets != null) ? m.player1_sets : null,
+    player2_sets: (m.player2_sets != null) ? m.player2_sets : null,
+    sets: Array.isArray(m.sets) ? m.sets : null,
+    current_set_index: (m.current_set_index != null) ? m.current_set_index : null,
+    current_point: (m.current_point != null) ? m.current_point : null,
+    serving: (m.serving != null) ? m.serving : null,
+    current_game_p1: (m.current_game_p1 != null) ? m.current_game_p1 : null,
+    current_game_p2: (m.current_game_p2 != null) ? m.current_game_p2 : null,
+    // Cotes live flat (distinctes de odds structuré ci-dessus — legacy front)
+    odds_player1: (m.odds_player1 != null) ? m.odds_player1 : null,
+    odds_player2: (m.odds_player2 != null) ? m.odds_player2 : null,
+    // Momentum/champs live enrichis par pollTennisLive (préserver pour le front)
+    momentum: m.momentum || null,
     _raw_predictions: m.predictions || null,
     _raw_best_ev_model: m.best_ev_model || null
   };
