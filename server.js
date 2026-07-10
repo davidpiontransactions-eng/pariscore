@@ -39853,12 +39853,35 @@ async function handleTennisBSD(pathSuffix, cacheKey, ttlMs) {
   }
 }
 
+// Détecte un match de tennis terminé (pour exclusion de l'onglet Live).
+// Réutilise le check canonique isFinished (cf. server.js archivage ELO/tennisHistory)
+// + flag is_live calculé par les normaliseurs BSD/ESPN.
+function _isTennisMatchFinished(m) {
+  if (!m) return true;
+  if (m.is_live === true) return false; // explicitement live
+  var st = String(m.status || '').toLowerCase();
+  if (/finish|complete|ended|cancel|walkover|retired|abandon|\bwo\b|post/.test(st)) return true;
+  // Heurique score : best-of 3 gagné à 2 sets, best-of 5 à 3
+  if (m.player1_sets != null && m.player2_sets != null) {
+    var target = Number(m.best_of || m.bestOf || 3) === 5 ? 3 : 2;
+    if (m.player1_sets >= target || m.player2_sets >= target) return true;
+  }
+  // ESPN : state 'post' est parfois matérialisé par status 'TERMINÉ'
+  if (/termin/i.test(String(m.status || ''))) return true;
+  return false;
+}
+
 if (pathname === '/api/v1/tennis/live' && req.method === 'GET') {
   // Return enriched live data from poll cache (includes glicko2, momentum, odds).
   // Sérialisation canonique _serializeTennisCard (signal/traps) — sans elle, le
   // frontend (mapMatch allégé) ne synthétise plus m.signal/m.traps et l'onglet Live
   // perd EV%, pills pièges, pulses et bouton Parier (fix review B2).
-  const cached = (_tennisLiveCache.data || []).map(_serializeTennisCard).filter(Boolean);
+  // Filtre matchs terminés : la source BSD continue de servir les matchs finis dans
+  // /api/v2/matches/live/, il faut les exclure de l'onglet Live (sinon accumulation).
+  const cached = (_tennisLiveCache.data || [])
+    .filter(m => !_isTennisMatchFinished(m))
+    .map(_serializeTennisCard)
+    .filter(Boolean);
   return jsonResponse(res, 200, cached);
 }
 if (pathname === '/api/v1/tennis/live-raw' && req.method === 'GET') {

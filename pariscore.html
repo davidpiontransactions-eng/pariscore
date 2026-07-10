@@ -25979,7 +25979,10 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
         var liveMatches = liveArr.map(function (m) {
           var mapped = mapMatch(m);
           if (!mapped) return null;
-          mapped._isLive = true;
+          // _isLive basé sur le flag serveur is_live (ne plus forcer true aveuglément —
+          // sinon les matchs terminés reçus transitoirement s'affichent dans l'onglet Live).
+          mapped._isLive = (m.is_live === true) ||
+            !/finish|complete|ended|termin/i.test(String(m.status || ''));
           if (m.dr_series) mapped.dr_series = m.dr_series;
           if (m.dr_per_set) mapped.dr_per_set = m.dr_per_set;
           if (m.liveProbability != null) mapped.liveProbability = m.liveProbability;
