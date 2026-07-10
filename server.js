@@ -39989,8 +39989,11 @@ async function handleTennisBSD(pathSuffix, cacheKey, ttlMs) {
 }
 
 if (pathname === '/api/v1/tennis/live' && req.method === 'GET') {
-  // Return enriched live data from poll cache (includes glicko2, momentum, odds)
-  const cached = _tennisLiveCache.data || [];
+  // Return enriched live data from poll cache (includes glicko2, momentum, odds).
+  // Sérialisation canonique _serializeTennisCard (signal/traps) — sans elle, le
+  // frontend (mapMatch allégé) ne synthétise plus m.signal/m.traps et l'onglet Live
+  // perd EV%, pills pièges, pulses et bouton Parier (fix review B2).
+  const cached = (_tennisLiveCache.data || []).map(_serializeTennisCard).filter(Boolean);
   return jsonResponse(res, 200, cached);
 }
 if (pathname === '/api/v1/tennis/live-raw' && req.method === 'GET') {
