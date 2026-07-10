@@ -32,6 +32,7 @@ const EloCalculator = require('./eloCalculator'); // WElo (Weighted Elo) Tennis 
 const { TennisGlicko2 } = require('./glicko2Calculator'); // Glicko-2 Tennis Skills (serve/return)
 const { TennisMomentumTracker } = require('./momentumTennis'); // K-Flow + SM momentum
 const { PlayerMomentumScorer } = require('./playerMomentum'); // OSS Pulse momentum scoring
+const tennisSerializer = require('./tennis-serializer'); // serializeTennisCard/normalizeProb/computeSignal (module partagé, bd 5.9)
 const oddspapi = require('./oddspapi'); // source secondaire Comparateur (inerte si ODDSPAPI_KEY absent)
 const oddsRapidApi = require('./odds-rapidapi'); // enrichissement cotes fetchOdds() (inerte si RAPIDAPI_KEY absent)
 const oddsApiFootball = require('./odds-apifootball'); // bd zia — enrichissement cotes API-Football (opt-in via USE_API_FOOTBALL_ODDS=1)
@@ -6209,6 +6210,10 @@ function initSQLite() {
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_msh_date ON match_stats_history(match_date)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_msh_league_season ON match_stats_history(bsd_league_id, season)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS ai_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, matchId TEXT NOT NULL, rating INTEGER NOT NULL, ts INTEGER NOT NULL)`);
+  // Track D 5.7 — télémétrie adoption produit (events anonymes : feature usage, toggles, A/B)
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS feature_events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_name TEXT NOT NULL, event_data TEXT, session_id TEXT, user_id INTEGER, ts INTEGER NOT NULL)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_feature_events_name_ts ON feature_events(event_name, ts)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_feature_events_session ON feature_events(session_id)`);
   sqldb.exec(`CREATE TABLE IF NOT EXISTS matchday_passes (id INTEGER PRIMARY KEY AUTOINCREMENT, session_id TEXT UNIQUE NOT NULL, token TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)`);
   // bd s77m — table idempotency webhook Stripe (anti-rejeu : un event_id traité une seule fois)
   sqldb.exec(`CREATE TABLE IF NOT EXISTS stripe_events (
@@ -38898,152 +38903,12 @@ function _canonTennisName(name, tour) {
 // Le frontend ne doit plus deviner le type des champs (proba 0-1 vs 65, etc.).
 // Contrat : voir redesign-tennis/CONTRAT-DATA.md
 // ═══════════════════════════════════════════════════════════════════════
-function _serializeTennisCard(m) {
-  if (!m || typeof m !== 'object') return null;
-
-  // --- Joueurs (toujours objets, champs null si absents) ---
-  function serializePlayer(p) {
-    p = p || {};
-    return {
-      id: p.id || null,
-      name: p.name || null,
-      country: p.country || null,
-      flag: p.flag || null,
-      photo: p.photo || null,
-      rank: (typeof p.rank === 'number') ? p.rank : (p.rank ? Number(p.rank) : null),
-      elo_surface: (typeof p.elo_surface === 'number') ? p.elo_surface : null,
-      surf_rank: p.surf_rank || null,
-      surf_rank_total: p.surf_rank_total || null,
-      surf_form: p.surf_form || null,
-      l5_pts: (typeof p.l5_pts === 'number') ? p.l5_pts : null,
-      l10_pts: (typeof p.l10_pts === 'number') ? p.l10_pts : null,
-      powerscore: (typeof p.powerscore === 'number') ? p.powerscore : null,
-      serve_index: p.serve_index || null,
-      receive_index: p.receive_index || null,
-      serve_hold_pct: p.serve_hold_pct || null,
-      return_pct: p.return_pct || null,
-      gamesLast14Days: p.gamesLast14Days || null
-    };
-  }
-
-  var p1 = serializePlayer(m.player1);
-  var p2 = serializePlayer(m.player2);
-
-  // --- Cotes (toujours objet ou null, stale + age_ms) ---
-  var odds = null;
-  if (m.odds && m.odds.p1 && m.odds.p2) {
-    var oddsTs = m.odds.ts || m._odds_ts || Date.now();
-    var ageMs = Date.now() - oddsTs;
-    var isLive = (m.is_live || m.status === 'live' || m.tab === 'live');
-    var staleThreshold = isLive ? 600000 : 14400000; // 10min live, 4h prematch
-    odds = {
-      p1: { odds: Number(m.odds.p1.odds) || null, book: m.odds.p1.book || null },
-      p2: { odds: Number(m.odds.p2.odds) || null, book: m.odds.p2.book || null },
-      stale: ageMs > staleThreshold,
-      age_ms: ageMs
-    };
-  }
-
-  // --- Fair (Shin devig, toujours objet ou null, proba 0-1) ---
-  var fair = null;
-  if (m.fair && m.fair.p1 != null) {
-    fair = {
-      p1: _normalizeProb(m.fair.p1),
-      p2: _normalizeProb(m.fair.p2),
-      margin: m.fair.margin != null ? Number(m.fair.margin) : null,
-      method: m.fair.method || null
-    };
-  }
-
-  // --- Signal (EV% pilote, toujours objet ou null) ---
-  var signal = _computeSignal(m, odds, fair);
-
-  // --- Traps (array, jamais undefined) ---
-  var traps = [];
-  if (m.trap_bet) traps.push('trap_bet');
-  if (odds && odds.stale) traps.push('drift');
-  if (m.player1 && m.player1.gamesLast14Days > 12) traps.push('fatigue');
-  if (m.player2 && m.player2.gamesLast14Days > 12) traps.push('fatigue');
-  if ((p1.surf_rank_total !== null && p1.surf_rank_total < 20) ||
-      (p2.surf_rank_total !== null && p2.surf_rank_total < 20)) {
-    traps.push('surface_elo_low');
-  }
-  if (!signal && (!p1.elo_surface || !p2.elo_surface)) {
-    traps.push('data_insufficient');
-  }
-
-  return {
-    id: String(m.id || ''),
-    tab: m.is_live || m.status === 'live' ? 'live' : 'prematch',
-    tour: m.tour || null,
-    tournament: m.tournament || null,
-    surface: m.surface || null,
-    round: m.round || null,
-    bestOf: Number(m.best_of || m.bestOf || 3),
-    commence_time: m.start_time || m.commence_time || null,
-    status: m.status || null,
-    player1: p1,
-    player2: p2,
-    odds: odds,
-    fair: fair,
-    signal: signal,
-    traps: traps,
-    _raw_predictions: m.predictions || null,
-    _raw_best_ev_model: m.best_ev_model || null
-  };
-}
-
-// Normalise une proba : accepte 0.62, 62, "62%", renvoie toujours 0-1
-function _normalizeProb(p) {
-  if (p == null) return null;
-  var n = Number(p);
-  if (!isFinite(n)) return null;
-  return n > 1 ? n / 100 : n;
-}
-
-// Calcule le signal canonique {label, side, prob, ev_pct, confidence, stale}
-function _computeSignal(m, odds, fair) {
-  if (!odds || !odds.p1.odds || !odds.p2.odds) return null;
-  if (!fair || fair.p1 == null) return null;
-
-  var be = m.best_ev_model;
-  var side, probModel, evPct, oddsVal;
-  if (be && be.odds) {
-    side = be.side || (be.ev >= 0 ? 'p1' : 'p2');
-    probModel = be.p_model || (side === 'p1' ? fair.p1 : fair.p2);
-    oddsVal = Number(be.odds);
-    evPct = (typeof be.ev === 'number') ? be.ev : ((probModel * oddsVal - 1) * 100);
-  } else {
-    var ev1 = fair.p1 * odds.p1.odds - 1;
-    var ev2 = fair.p2 * odds.p2.odds - 1;
-    if (ev1 >= ev2) {
-      side = 'p1'; probModel = fair.p1; oddsVal = odds.p1.odds; evPct = ev1 * 100;
-    } else {
-      side = 'p2'; probModel = fair.p2; oddsVal = odds.p2.odds; evPct = ev2 * 100;
-    }
-  }
-
-  var hasBSD = m.predictions && m.predictions.bsd;
-  var hasWEloSurface = m.player1 && m.player2 && m.player1.elo_surface && m.player2.elo_surface;
-  // Échantillon surface suffisant (>= 150 matchs) : gate de fiabilité de l'ELO surface.
-  var hasSurfSample = m.player1 && m.player2 &&
-    (m.player1.surf_rank_total >= 150) && (m.player2.surf_rank_total >= 150);
-  var confScore = (hasBSD ? 1 : 0) + (hasWEloSurface ? 1 : 0) + (hasSurfSample ? 1 : 0);
-  // Sans échantillon surface suffisant, l'ELO surface n'est pas fiable → plafond 'medium'.
-  var confidence = (!hasSurfSample)
-    ? (confScore >= 1 ? 'medium' : 'low')
-    : (confScore >= 2 ? 'high' : confScore === 1 ? 'medium' : 'low');
-
-  return {
-    label: 'VALUE ' + (evPct >= 0 ? '+' : '') + evPct.toFixed(1) + '%',
-    side: side,
-    prob: probModel,
-    ev_pct: Math.round(evPct * 10) / 10,
-    odds: oddsVal,
-    confidence: confidence,
-    stale: odds.stale
-  };
-}
+// Les 3 fonctions ci-dessous sont désormais extraites dans le module partagé
+// tennis-serializer.js (Track D / 5.9). Les alias _-préfixés préservent tous
+// les sites d'appel existants (server.js + test-serializer.js) sans refactor.
+const _serializeTennisCard = tennisSerializer.serializeTennisCard;
+const _normalizeProb = tennisSerializer.normalizeProb;
+const _computeSignal = tennisSerializer.computeSignal;
 
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -41543,8 +41408,9 @@ if (pathname.startsWith('/api/v1/tennis/strategies/') && req.method === 'GET') {
   }
 }
 
-// ═══ Endpoint coverage data tennis (admin-only, remplace _auditLivePayload) ═══
-if (pathname === '/api/v1/tennis/coverage' && req.method === 'GET') {
+// ═══ Coverage data tennis : calcul réutilisable (endpoint + alerting Track D 5.8) ═══
+// Extrait du handler HTTP pour servir aussi au cron d'alerting (5.8).
+function _computeTennisCoverage() {
   var stats = { ts: Date.now(), total: 0, coverage: { bsd_stats: 0, welo: 0, odds: 0, momentum: 0, player_photo: 0 }, stale_odds: 0, avg_odds_age_ms: 0 };
   var count = 0, ageSum = 0;
   if (typeof _tennisVBCache !== 'undefined' && _tennisVBCache && _tennisVBCache.forEach) {
@@ -41566,7 +41432,132 @@ if (pathname === '/api/v1/tennis/coverage' && req.method === 'GET') {
   Object.keys(stats.coverage).forEach(function(k) {
     stats.coverage[k] = stats.total ? Math.round(stats.coverage[k] / stats.total * 100) : 0;
   });
-  return jsonResponse(res, 200, stats);
+  // stale_odds en % pour faciliter les seuils d'alerting
+  stats.stale_odds_pct = stats.total ? Math.round(stats.stale_odds / stats.total * 100) : 0;
+  return stats;
+}
+
+// ═══ Endpoint coverage data tennis (admin-only, remplace _auditLivePayload) ═══
+if (pathname === '/api/v1/tennis/coverage' && req.method === 'GET') {
+  return jsonResponse(res, 200, _computeTennisCoverage());
+}
+
+// ═══ Alerting coverage tennis (Track D 5.8) ═══
+// Alerte si la couverture des cotes ou la fraîcheur des données dégradent
+// l'expérience parieur. Seuils : cov_odds < 60% OU stale_odds_pct > 30%.
+// Throttle 1 alerte / 6h par type pour éviter le spam (kv tennis_coverage_alert_lastsent).
+const TENNIS_COVERAGE_THRESHOLDS = { min_cov_odds: 60, max_stale_odds_pct: 30, alert_cooldown_ms: 6 * 3600 * 1000 };
+
+async function _checkTennisCoverageAlerts() {
+  try {
+    if (typeof _tennisVBCache === 'undefined' || !_tennisVBCache) return;
+    var stats = _computeTennisCoverage();
+    if (!stats.total || stats.total < 5) return; // pas assez de matchs pour juger
+
+    var alerts = [];
+    if (stats.coverage.odds < TENNIS_COVERAGE_THRESHOLDS.min_cov_odds) {
+      alerts.push('📉 Couverture cotes <b>' + stats.coverage.odds + '%</b> (seuil ' + TENNIS_COVERAGE_THRESHOLDS.min_cov_odds + '%) — ' + stats.total + ' matchs');
+    }
+    if (stats.stale_odds_pct > TENNIS_COVERAGE_THRESHOLDS.max_stale_odds_pct) {
+      alerts.push('⏰ Cotes périmées <b>' + stats.stale_odds_pct + '%</b> (seuil ' + TENNIS_COVERAGE_THRESHOLDS.max_stale_odds_pct + '%) — age moy ' + Math.round(stats.avg_odds_age_ms / 60000) + 'min');
+    }
+    if (!alerts.length) return;
+
+    // Throttle : 1 alerte / cooldown par session (kv en mémoire, pas de persistance)
+    var now = Date.now();
+    if (typeof global._tennisCovAlertLastSent === 'undefined') global._tennisCovAlertLastSent = 0;
+    if (now - global._tennisCovAlertLastSent < TENNIS_COVERAGE_THRESHOLDS.alert_cooldown_ms) return;
+    global._tennisCovAlertLastSent = now;
+
+    var msg = '🎾 <b>Alerte coverage tennis</b>\n\n' + alerts.join('\n') + '\n\n<i>Détail: /api/v1/tennis/coverage</i>';
+    console.warn('[Tennis Coverage] Alerte:', alerts.join(' | '));
+    if (typeof broadcastTennisTelegramAlert === 'function') {
+      await broadcastTennisTelegramAlert(msg);
+    }
+    if (typeof sendDiscordAlert === 'function') {
+      await sendDiscordAlert({ title: '🎾 Alerte coverage tennis', description: alerts.join('\n'), color: 16753920 });
+    }
+  } catch (e) {
+    console.error('[Tennis Coverage] check error:', e && e.message ? e.message : e);
+  }
+}
+
+// Cron coverage : check toutes les 10 min (démarré après le boot, cf. setTimeout plus bas)
+var _tennisCoverageTimer = null;
+function _startTennisCoverageCron() {
+  if (_tennisCoverageTimer) return; // idempotent
+  _tennisCoverageTimer = setInterval(_checkTennisCoverageAlerts, 10 * 60 * 1000);
+  console.log('[Tennis Coverage] cron alerting démarré (10min, seuils cov<' + TENNIS_COVERAGE_THRESHOLDS.min_cov_odds + '% / stale>' + TENNIS_COVERAGE_THRESHOLDS.max_stale_odds_pct + '%)');
+}
+
+// ═══ Télémétrie adoption produit (Track D 5.7) ═══
+// Whitelist d'events produits autorisés (évite l'ingestion arbitraire).
+const FEATURE_EVENT_WHITELIST = new Set([
+  'tennis_view_toggle',     // bascule carte P2 ↔ scan P1 (data: { mode: 'card'|'scan' })
+  'tennis_bet_modal_open',  // ouverture modale Parier (data: { matchId })
+  'tennis_fav_toggle',      // favori ajouté/retiré (data: { matchId, action: 'add'|'remove' })
+  'tennis_strategy_expand'  // accordéon stratégies consensus ouvert
+]);
+const FEATURE_EVENT_RATE_LIMIT_MS = 5000; // throttle 5s par session+event
+
+// POST /api/v1/telemetry/event — ingestion publique (anonyme, whitelistée, throttlée)
+if (pathname === '/api/v1/telemetry/event' && req.method === 'POST') {
+  try {
+    var body = await readBodyLimited(req, 4096);
+    var payload = JSON.parse(body);
+    var eventName = String(payload.event || '').slice(0, 64);
+    if (!FEATURE_EVENT_WHITELIST.has(eventName)) {
+      return jsonResponse(res, 400, { error: 'event_not_allowed' });
+    }
+    // session_id : header ou payload (anonyme, généré côté front). user_id optionnel (JWT si dispo).
+    var sessionId = String(payload.session_id || req.headers['x-session-id'] || '').slice(0, 64);
+    var userId = null;
+    try { var authUser = getAuthUser(req); if (authUser && authUser.userId) userId = authUser.userId; } catch (_) {}
+    // Throttle en mémoire : 1 event identique / session / 5s
+    var throttleKey = sessionId + ':' + eventName;
+    var now = Date.now();
+    if (typeof global._featureEvtThrottle === 'undefined') global._featureEvtThrottle = new Map();
+    var last = global._featureEvtThrottle.get(throttleKey);
+    if (last && (now - last) < FEATURE_EVENT_RATE_LIMIT_MS) {
+      return jsonResponse(res, 200, { ok: true, throttled: true });
+    }
+    global._featureEvtThrottle.set(throttleKey, now);
+    // Purge périodique du Map throttle (> 1000 entrées)
+    if (global._featureEvtThrottle.size > 1000) global._featureEvtThrottle.clear();
+
+    sqldb.prepare('INSERT INTO feature_events (event_name, event_data, session_id, user_id, ts) VALUES (?, ?, ?, ?, ?)').run(
+      eventName,
+      JSON.stringify(payload.data || {}).slice(0, 2048),
+      sessionId || null,
+      userId,
+      now
+    );
+    return jsonResponse(res, 200, { ok: true });
+  } catch (e) {
+    return jsonResponse(res, 400, { error: 'invalid_payload' });
+  }
+}
+
+// GET /api/v1/telemetry/feature-usage — lecture admin (adoption par feature)
+if (pathname === '/api/v1/telemetry/feature-usage' && req.method === 'GET') {
+  var authUser = getAuthUser(req);
+  if (!authUser || authUser.role !== 'admin') return jsonResponse(res, 403, { error: 'admin_required' });
+  var since = safeInt(query.since, Date.now() - 7 * 86400000); // défaut 7 derniers jours
+  var rows = sqldb.prepare(`
+    SELECT event_name,
+           COUNT(*) AS total,
+           COUNT(DISTINCT session_id) AS unique_sessions,
+           COUNT(DISTINCT user_id) AS unique_users
+    FROM feature_events WHERE ts >= ?
+    GROUP BY event_name ORDER BY total DESC
+  `).all(since);
+  // Spécifique tennis_view_toggle : répartition card vs scan
+  var toggleBreakdown = sqldb.prepare(`
+    SELECT json_extract(event_data, '$.mode') AS mode, COUNT(*) AS n
+    FROM feature_events WHERE event_name = 'tennis_view_toggle' AND ts >= ?
+    GROUP BY mode
+  `).all(since);
+  return jsonResponse(res, 200, { since, events: rows, tennis_view_toggle_breakdown: toggleBreakdown });
 }
 
 // Route odds-comparison tennis (multi-bookmaker)
@@ -51326,6 +51317,9 @@ console.log('  [TT-OOP] cron armé — prefetch quotidien à 8h00 Europe/Paris')
 // Tennis live (ESPN) — poll dédié toutes les 30 s, indépendant du football
 setInterval(() => pollTennisLive().catch(e => console.warn('[Tennis]', e.message)), 30 * 1000);
 pollTennisLive().catch(e => console.warn('[Tennis bootstrap]', e.message));
+
+// Tennis coverage alerting (Track D 5.8) — check toutes les 10min après +2min (cache warmup)
+setTimeout(() => _startTennisCoverageCron(), 2 * 60 * 1000);
 
 // CS2 live — poll every 30 s (matches cache TTL = 30 s, poll aligns)
 setInterval(() => cs2Service.getCs2Matches(BSD_API_KEY).catch(e => console.warn('[CS2 poll]', e.message)), 30 * 1000);

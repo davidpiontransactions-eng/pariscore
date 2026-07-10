@@ -25437,6 +25437,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var title = document.getElementById('sc-bet-dialog-title');
     if (!dialog || !body) return;
 
+    // Track D 5.7 — télémétrie : ouverture modale Parier
+    _psTrackEvent('tennis_bet_modal_open', { matchId: String(matchId) });
     title.textContent = 'Comparaison bookmakers';
     body.innerHTML = '<div class="sc-loading">Chargement des cotes…</div>';
     if (typeof dialog.showModal === 'function') {
@@ -25959,6 +25961,25 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   /* ── Favoris (★) — persistance localStorage ──────────────────────── */
   // Clé localStorage (convention projet : ps_*).
   var _FAV_KEY='ps_tennis_favs';
+  // Track D 5.7 — télémétrie adoption produit. session_id persistant (anonyme), fire-and-forget.
+  var _PS_SESSION_ID = (function(){
+    try {
+      var sid = localStorage.getItem('ps_sid');
+      if (!sid) { sid = 's_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); localStorage.setItem('ps_sid', sid); }
+      return sid;
+    } catch (e) { return 's_' + Date.now().toString(36); }
+  })();
+  function _psTrackEvent(eventName, data) {
+    try {
+      if (typeof fetch !== 'function') return;
+      fetch('/api/v1/telemetry/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Session-Id': _PS_SESSION_ID },
+        body: JSON.stringify({ event: eventName, session_id: _PS_SESSION_ID, data: data || {} }),
+        keepalive: true // permet l'envoi même si la page unload
+      }).catch(function () {}); // silencieux : la télémétrie ne doit jamais casser l'UX
+    } catch (e) { /* no-op */ }
+  }
   // Set vivant des IDs favoris (chargé une fois au démarrage du module).
   var _favIds=(function(){
     try{ var raw=localStorage.getItem(_FAV_KEY); return raw?new Set(JSON.parse(raw)):new Set(); }catch(e){ return new Set(); }
@@ -25968,9 +25989,12 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   var _onFavToggle=null;
   function toggleFav(id){
     id=String(id);
-    if(_favIds.has(id)) _favIds.delete(id);
+    var isAdding = !_favIds.has(id);
+    if(!isAdding) _favIds.delete(id);
     else _favIds.add(id);
     try{ localStorage.setItem(_FAV_KEY, JSON.stringify(Array.from(_favIds))); }catch(e){}
+    // Track D 5.7 — télémétrie : favori ajouté/retiré
+    _psTrackEvent('tennis_fav_toggle', { matchId: id, action: isAdding ? 'add' : 'remove' });
     if(_onFavToggle) _onFavToggle();
   }
   // Bouton étoile à insérer dans le header des cartes.
@@ -26004,6 +26028,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
         btns[i].classList.toggle('active', isActive);
         btns[i].setAttribute('aria-pressed', isActive ? 'true' : 'false');
       }
+      // Track D 5.7 — télémétrie adoption (card vs scan)
+      _psTrackEvent('tennis_view_toggle', { mode: mode });
       // Re-render la liste
       if (window.TennisScope && TennisScope.renderActiveTab) TennisScope.renderActiveTab();
     },
