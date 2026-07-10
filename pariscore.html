@@ -498,6 +498,35 @@
     font-size: 11px; padding: 2px 8px; border-radius: 12px;
     background: rgba(239,68,68,0.15); color: var(--sc-tier-avoid);
   }
+  /* Bloc joueurs VS (photos centrées — design de référence) */
+  .sc-decision-vs {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 14px 16px;
+  }
+  .sc-pcol { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; min-width: 0; }
+  .sc-pcol-left { align-items: flex-start; }
+  .sc-pcol-right { align-items: flex-end; }
+  .sc-pimg {
+    width: 72px; height: 72px; border-radius: 50%; object-fit: cover; object-position: top;
+    border: 2px solid rgba(255,255,255,0.12); background: var(--sc-bg-elev, #1a2230);
+    margin-bottom: 6px; flex-shrink: 0;
+  }
+  .sc-pimg-fallback {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: var(--sc-text-muted);
+    background: rgba(255,255,255,0.06);
+  }
+  .sc-pname { font-size: 14px; font-weight: 600; line-height: 1.2; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sc-prank { font-size: 11px; color: var(--sc-text-muted); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+  .sc-pflag { font-size: 14px; line-height: 1; }
+  .sc-pelo { font-size: 10px; color: var(--sc-player-p1, #00e676); font-family: var(--sc-font-mono); margin-top: 1px; }
+  .sc-pcol-right .sc-pelo { color: var(--sc-player-p2, #0077ff); }
+  .sc-vs-mid { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 4px; flex-shrink: 0; min-width: 56px; }
+  .sc-vs-label { font-size: 18px; font-weight: 800; color: var(--sc-text-muted); letter-spacing: 1px; }
+  @media (max-width: 480px) {
+    .sc-pimg { width: 56px; height: 56px; }
+    .sc-pname { font-size: 13px; }
+  }
   .sc-decision-context { padding: 12px 16px; }
   .sc-verdict { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
   .sc-proba-bar {
@@ -25163,7 +25192,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
         + favHtml
         + trapHtml
       + '</header>'
-      + liveHtml
+      // Bloc joueurs VS (photos centrées — cf. design de référence)
+      + '<div class="sc-decision-vs">'
+        + _decPlayerPhoto(p1, 'left')
+        + '<div class="sc-vs-mid">' + (m.tab === 'live' ? _decLiveScore(m) : '<span class="sc-vs-label">VS</span>') + '</div>'
+        + _decPlayerPhoto(p2, 'right')
+      + '</div>'
+      + (m.tab === 'live' ? '' : liveHtml)
       + '<div class="sc-decision-context">'
         + verdictHtml
         + probaBarHtml
@@ -25203,6 +25238,33 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
   function _decSignalIcon(tier) {
     return tier === 'strong' ? '▲' : tier === 'moderate' ? '●' : tier === 'avoid' ? '▼' : '○';
+  }
+  // Photo joueur pour decisionCard : getPlayerPhotoUrl (DB Tennis Warehouse > BSD > ui-avatars)
+  function _decPlayerPhoto(p, side) {
+    if (!p) return '';
+    var url = '';
+    try { url = (typeof window.getPlayerPhotoUrl === 'function') ? window.getPlayerPhotoUrl(p) : ''; } catch (e) {}
+    var name = String(p.name || '?');
+    var rank = (p.rank != null && p.rank) ? '#' + p.rank : '';
+    var flag = p.flag ? '<span class="sc-pflag">' + esc(p.flag) + '</span>' : '';
+    var elo = (p.elo_surface != null) ? '<div class="sc-pelo">Elo ' + Math.round(p.elo_surface) + '</div>' : '';
+    if (url) {
+      return '<div class="sc-pcol sc-pcol-' + side + '">'
+        + '<img class="sc-pimg" src="' + esc(url) + '" alt="' + esc(name) + '" loading="lazy"'
+        + ' onerror="if(this.src.indexOf(\'ui-avatars\')===-1){this.onerror=null;this.src=\'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=172132&color=fff&size=120&bold=true\';}">'
+        + '<div class="sc-pname">' + esc(shortName(name)) + '</div>'
+        + '<div class="sc-prank">' + rank + flag + '</div>'
+        + elo
+        + '</div>';
+    }
+    // Fallback initiales (pas d'URL du tout)
+    var initials = name.split(/\s+/).map(function (s) { return (s[0] || '').toUpperCase(); }).join('').slice(0, 2);
+    return '<div class="sc-pcol sc-pcol-' + side + '">'
+      + '<div class="sc-pimg sc-pimg-fallback">' + esc(initials) + '</div>'
+      + '<div class="sc-pname">' + esc(shortName(name)) + '</div>'
+      + '<div class="sc-prank">' + rank + flag + '</div>'
+      + elo
+      + '</div>';
   }
   function _decMarketChips(m) {
     var chips = [];

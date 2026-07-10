@@ -21883,9 +21883,16 @@ async function handleAPI(req, res, pathname, query) {
   // GET /api/v1/tennis/player-photos — Carte des photos joueurs tennis (Tennis Warehouse)
   if (pathname === '/api/v1/tennis/player-photos' && req.method === 'GET') {
     try {
-      var photoMap = JSON.parse(require('fs').readFileSync('./data/tennis-player-photos.json', 'utf8'));
+      // Cherche aux 2 emplacements (data/ = convention projet, racine = legacy)
+      var fsP = require('fs');
+      var pathP = require('path');
+      var photoMap = null;
+      for (var i = 0; i < 2 && !photoMap; i++) {
+        var p = i === 0 ? './data/tennis-player-photos.json' : './tennis-player-photos.json';
+        try { if (fsP.existsSync(p)) photoMap = JSON.parse(fsP.readFileSync(p, 'utf8')); } catch (_) {}
+      }
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-      return res.end(JSON.stringify({ ok: true, photos: photoMap }));
+      return res.end(JSON.stringify({ ok: true, photos: photoMap || {} }));
     } catch (e) {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       return res.end(JSON.stringify({ ok: true, photos: {} }));
