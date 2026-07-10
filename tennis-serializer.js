@@ -126,6 +126,11 @@ function serializeTennisCard(m) {
     odds_player2: (m.odds_player2 != null) ? m.odds_player2 : null,
     // Momentum/champs live enrichis par pollTennisLive (préserver pour le front)
     momentum: m.momentum || null,
+    momentum_series: m.momentum_series || null,   // chart DR évolution (pariscore.html momentumChart)
+    dr_series: m.dr_series || null,               // série temporelle Dominance Ratio
+    dr_per_set: m.dr_per_set || null,             // DR agrégé par set
+    bppi: m.bppi || null,                         // Break Point Pressure Index
+    liveProbability: (m.liveProbability != null) ? m.liveProbability : null, // proba live réajustée au score
     _raw_predictions: m.predictions || null,
     _raw_best_ev_model: m.best_ev_model || null
   };
