@@ -1,0 +1,30 @@
+{
+  "_comment": "Source unique de vérité pour le calendrier TdF 2026. Lue par services/cyclingService.js ET scripts/scraper-cyclingstage-favourites.js. Dates corrigées le 2026-07-12 : jours de repos = 13 et 20 juillet (avant, cyclingService.js décalait toute la 2e/3e semaine d'un jour). Routes/km/type conservés depuis le service v1.",
+  "race": "Tour de France 2026",
+  "version": 2,
+  "updated_at": "2026-07-12",
+  "rest_days": ["2026-07-13", "2026-07-20"],
+  "stages": [
+    { "stage": 1,  "date": "2026-07-04", "route": "Barcelona → Barcelona",            "km": 19.6,  "type": "TTT",      "elev": 280,  "country": "Spain",    "winnerType": "team" },
+    { "stage": 2,  "date": "2026-07-05", "route": "Tarragona → Barcelona",            "km": 168.3, "type": "Hills",    "elev": 2100, "country": "Spain",    "winnerType": "rider" },
+    { "stage": 3,  "date": "2026-07-06", "route": "Barcelona → Andorra",              "km": 182.0, "type": "Mountain", "elev": 4200, "country": "Andorra",  "winnerType": "rider" },
+    { "stage": 4,  "date": "2026-07-07", "route": "Andorra → Lleida",                 "km": 175.0, "type": "Hills",    "elev": 2500, "country": "Spain",    "winnerType": "rider" },
+    { "stage": 5,  "date": "2026-07-08", "route": "Andorra → Andorra",                "km": 159.0, "type": "Mountain", "elev": 4100, "country": "Andorra",  "winnerType": "rider" },
+    { "stage": 6,  "date": "2026-07-09", "route": "Lleida → Perpignan",               "km": 190.0, "type": "Flat",     "elev": 900,  "country": "France",   "winnerType": "rider" },
+    { "stage": 7,  "date": "2026-07-10", "route": "Perpignan → Montpellier",          "km": 165.0, "type": "Flat",     "elev": 600,  "country": "France",   "winnerType": "rider" },
+    { "stage": 8,  "date": "2026-07-11", "route": "Montpellier → Nîmes",              "km": 165.0, "type": "Flat",     "elev": 800,  "country": "France",   "winnerType": "rider" },
+    { "stage": 9,  "date": "2026-07-12", "route": "Nîmes → Puy de Dôme",              "km": 184.5, "type": "Mountain", "elev": 3800, "country": "France",   "winnerType": "rider" },
+    { "stage": 10, "date": "2026-07-14", "route": "Clermont-Ferrand → Bordeaux",      "km": 210.0, "type": "Flat",     "elev": 1200, "country": "France",   "winnerType": "rider" },
+    { "stage": 11, "date": "2026-07-15", "route": "Bordeaux → Toulouse",              "km": 185.0, "type": "Flat",     "elev": 700,  "country": "France",   "winnerType": "rider" },
+    { "stage": 12, "date": "2026-07-16", "route": "Toulouse → Plateau de Beille",     "km": 168.0, "type": "Mountain", "elev": 4000, "country": "France",   "winnerType": "rider" },
+    { "stage": 13, "date": "2026-07-17", "route": "Pamiers → Superbagnères",          "km": 145.0, "type": "Mountain", "elev": 3800, "country": "France",   "winnerType": "rider" },
+    { "stage": 14, "date": "2026-07-18", "route": "Tarbes → Hautacam",                "km": 152.0, "type": "Mountain", "elev": 4500, "country": "France",   "winnerType": "rider" },
+    { "stage": 15, "date": "2026-07-19", "route": "Pau → Pau (ITT)",                  "km": 32.0,  "type": "ITT",      "elev": 380,  "country": "France",   "winnerType": "rider" },
+    { "stage": 16, "date": "2026-07-21", "route": "Agen → Limoges",                   "km": 195.0, "type": "Hills",    "elev": 1600, "country": "France",   "winnerType": "rider" },
+    { "stage": 17, "date": "2026-07-22", "route": "Limoges → Alès",                   "km": 188.0, "type": "Hills",    "elev": 2000, "country": "France",   "winnerType": "rider" },
+    { "stage": 18, "date": "2026-07-23", "route": "Alès → Valence",                   "km": 210.0, "type": "Hills",    "elev": 1800, "country": "France",   "winnerType": "rider" },
+    { "stage": 19, "date": "2026-07-24", "route": "Valence → Col de la Madeleine",    "km": 165.0, "type": "Mountain", "elev": 4600, "country": "France",   "winnerType": "rider" },
+    { "stage": 20, "date": "2026-07-25", "route": "Grenoble → Isola 2000",            "km": 175.0, "type": "Mountain", "elev": 4800, "country": "France",   "winnerType": "rider" },
+    { "stage": 21, "date": "2026-07-26", "route": "Thoiry → Paris Champs-Élysées",    "km": 133.0, "type": "Flat",     "elev": 600,  "country": "France",   "winnerType": "rider" }
+  ]
+}
