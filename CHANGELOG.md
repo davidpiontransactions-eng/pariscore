@@ -1,4 +1,31 @@
 # PariScore — Journal des modifications
+## [v12.89] — 2026-07-13 — Fix matchs fantômes en vue Prematch Tennis + durcissement deploy.sh
+
+### Corrigé
+- **Matchs obsolètes en vue Prematch Tennis** (match Nordea Open du 6 juillet encore affiché le 13 juillet)
+  - Root cause : `_buildTennisValueBetsCore` (`server.js`) ne filtrait **jamais** par date/heure, uniquement par un denylist de statuts `_TN_VB_FINISHED` qui laisse passer `scheduled`/`NS`/`''`. Combiné à une requête BSD volontairement sans `status=` pour les dates + cache SQLite TTL 4h, un match passé non reclassé par BSD survivait indéfiniment.
+  - La logique de filtrage temporel existait déjà 3000 lignes plus loin (`server.js:41970`, endpoint `/upcoming`) mais avait été omise dans le builder value-bets qui alimente le front.
+  - Fix 3 couches, grâce 30 min, comparaison ms epoch insensible au fuseau :
+    - `server.js` : garde-fou temporel dans `_buildTennisValueBetsCore` avant le return (exclut `start_time < now - 30min`)
+    - `pariscore.html` : `getPrematch()` filtre côté client (défense en profondeur si backend injoignable)
+    - `src/app/api/tennis/prematch/route.ts` : utilitaire `filterStaleMatches()` appliqué aux 3 sources (BSD, Odds API, mock)
+- **`deploy.sh` échouait silencieusement** (`git checkout ... || true` masquait les erreurs de checkout — cause du déploiement manuel nécessaire le 13 juillet)
+
+### Ajouté
+- **`scripts/purge_tennis_vb_cache.sql`** : purge one-shot du cache SQLite (clés `bsd_tennis_value_bets_*`, `bsd_tennis_matches_*`, `bsd_tennis_preds_*` + `tennis_enrich_snap`) pour forcer un re-fetch frais post-deploy. Idempotente.
+- **`deploy.sh` durci** : `set -euo pipefail` (échec explicite), `cd` racine projet, vérif `HEAD = origin/main` post-reset, purge SQL intégrée, restart des 2 process PM2 (`pariscore` + `pariscore-next`), health check `/api/v1/status` avec 5 retries.
+- **`.gitattributes`** : force `*.sh` et `*.sql` en LF côté repo (corrige le bug `set: pipefail: invalid option name` causé par CRLF Windows→Linux).
+
+### Testé
+- `node --check server.js` OK + bloc TennisScope `pariscore.html` se parse sans erreur
+- `tsc --noEmit` : aucune erreur dans `src/app/api/tennis/prematch/route.ts`
+- `bash -n deploy.sh` : syntaxe valide ; exécution réelle sur VPS : 6/6 étapes vertes (fetch, reset, purge SQL, 2 restarts PM2, health check HTTP 200)
+- Vérif prod : `/api/v1/tennis/value-bets` ne renvoie aucun match passé >30 min, match fantôme absent
+
+### Périmètre
+- Pas de script d'assainissement DB (aucune table persistante de matchs prematch — les matchs viennent en temps réel de BSD + cache TTL, auto-purge)
+- DEV `pariscore/` resynchronisé sur le code source git (préserve `.env`, `*.db`, `data/historique_*`, configs locales)
+
 ## [v12.88] — 2026-07-13 — Enrichissement live logos équipes + championnats
 
 ### Ajouté
