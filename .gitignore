@@ -89,3 +89,48 @@ __pycache__/
 exports/*.docx
 exports/*.pdf
 exports/*.xlsx
+
+# =============================================================================
+# Hardening post-purge (2026-07-13) — éviter nouvelle pollution historique
+# Règles déduites des 3.5 Go de blobs purgés via git-filter-repo
+# =============================================================================
+
+# DB corrompues (sauvegardées par crash recovery — jamais à commiter)
+*.db.corrupt-*
+pariscore.db.corrupt-*
+
+# Backups DB datés (cron deploy)
+.deploy-backups/
+*.db.20*       # snapshots datés type pariscore.db.20260705-032941
+*.db-backup-*
+
+# Backups historiques datés (cron daily backup)
+historique_*.json.bak_*
+historique_*.json.bak
+*.json.bak_*
+
+# Binaires / installateurs non-projet
+*.exe
+*.msi
+*.dmg
+
+# Archives volumineuses (zips de release)
+download/*.zip
+download/*.tar.gz
+download/*.7z
+
+# Dossiers internals (jamais à pousser)
+.dolt/
+beads/
+.backups/
+backups/
+
+# Dumps et exports
+*.dump
+*.sql.gz
+*.dump.gz
+
+# Outils/scripts persos non-projet
+prompt
+.opencode/
+.cursorsql/
