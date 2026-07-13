@@ -51,6 +51,7 @@ const betexplorerService = require('./services/betexplorerService'); // BetExplo
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catch (_) {}
 let tnnsLiveScraper = null; try { tnnsLiveScraper = require('./services/tnnsLiveScraper'); } catch (_) { /* TNNS scraper optionnel */ }
+let liveLogoEnricher = null; try { liveLogoEnricher = require('./services/liveLogoEnricher'); } catch (_) { /* enrichissement logos live optionnel */ }
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -2883,6 +2884,39 @@ async function searchSofascoreTeam(teamName) {
   } catch (e) { return null; }
 }
 
+// ─── Wikipedia API fallback pour logos équipes (quand Sofascore est bloqué) ──
+const WIKI_DELAY_MS = 500;
+let _wikiLastCall = 0;
+async function searchWikipediaTeam(teamName) {
+  try {
+    // Rate limit: 2 req/s
+    const now = Date.now();
+    const wait = Math.max(0, WIKI_DELAY_MS - (now - _wikiLastCall));
+    if (wait > 0) await new Promise(r => setTimeout(r, wait));
+    _wikiLastCall = Date.now();
+
+    // 1. Search Wikipedia for best page
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(teamName + ' football club')}&limit=3&format=json&origin=*`;
+    const searchRes = await httpsGet(searchUrl, { 'User-Agent': 'PariScore/2.0 (logo-fallback)' }, 8000);
+    if (searchRes.status !== 200 || !Array.isArray(searchRes.data) || searchRes.data.length < 4) return null;
+    const pages = (searchRes.data[3] || []).filter(p => p.startsWith('https://en.wikipedia.org/wiki/'));
+    if (!pages.length) return null;
+    const pageTitle = decodeURIComponent(pages[0].split('/wiki/')[1]);
+
+    // 2. Get page image
+    const imgUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&titles=${encodeURIComponent(pageTitle)}&pithumbsize=200&format=json&origin=*`;
+    const imgRes = await httpsGet(imgUrl, { 'User-Agent': 'PariScore/2.0 (logo-fallback)' }, 8000);
+    if (imgRes.status !== 200) return null;
+    const pages2 = imgRes.data?.query?.pages || {};
+    for (const id of Object.keys(pages2)) {
+      if (id === '-1') continue;
+      const thumb = pages2[id]?.thumbnail?.source;
+      if (thumb) return { name: teamName, wikiUrl: thumb };
+    }
+    return null;
+  } catch (e) { return null; }
+}
+
 // -------------------------------------------------
 //  BSD: Fiche détaillée joueur
 // -------------------------------------------------
@@ -3840,6 +3874,38 @@ function lookupTeamLogo(name) {
     if (row) result = { url: row.logo_url, bsdId: row.bsd_id };
   } catch (e) { /* DB pas prête */ }
   _teamLogoMemCache.set(norm, result); // cache même null (évite re-lookup)
+  return result;
+}
+
+// Lookup logo championnat/league par nom (normalisé). Miroir de lookupTeamLogo pour league_logos.
+// Délégué au module services/liveLogoEnricher si chargé ; sinon fallback DB direct (sans cache mémoire).
+const _leagueLogoMemCache = new Map();
+function lookupLeagueLogo(name, sport) {
+  if (!name) return null;
+  if (liveLogoEnricher && typeof liveLogoEnricher.lookupLeagueLogo === 'function') {
+    return liveLogoEnricher.lookupLeagueLogo(name, sport);
+  }
+  // Fallback DB direct (avant init du module, ou si require a échoué)
+  const norm = _normalizeTeamName(name);
+  if (!norm) return null;
+  const cacheKey = sport ? `${norm}|${sport}` : norm;
+  if (_leagueLogoMemCache.has(cacheKey)) return _leagueLogoMemCache.get(cacheKey);
+  let result = null;
+  try {
+    let row;
+    if (sport) {
+      row = sqldb && sqldb.prepare('SELECT bsd_league_id, logo_url FROM league_logos WHERE name_norm = ? AND sport = ? LIMIT 1').get(norm, sport);
+    } else {
+      row = sqldb && sqldb.prepare('SELECT bsd_league_id, logo_url FROM league_logos WHERE name_norm = ? LIMIT 1').get(norm);
+    }
+    if (!row && norm.length >= 3) {
+      row = sqldb && sqldb.prepare(
+        "SELECT bsd_league_id, logo_url FROM league_logos WHERE name_norm LIKE ? OR ? LIKE '%' || name_norm || '%' LIMIT 1"
+      ).get(norm + '%', norm);
+    }
+    if (row) result = { url: row.logo_url, bsdLeagueId: row.bsd_league_id };
+  } catch (e) { /* DB pas prête */ }
+  _leagueLogoMemCache.set(cacheKey, result);
   return result;
 }
 
@@ -6432,6 +6498,20 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_team_logos_norm ON team_logos(name_norm)`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_team_logos_name ON team_logos(name)`);
+  // ── Cache logos championnats/ligues (enrichissement live — miroir de team_logos) ──
+  // Populé par services/liveLogoEnricher.js (BSD image_path → TheSportsDB lookupleague).
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS league_logos (
+    bsd_league_id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    name_norm TEXT NOT NULL,
+    country TEXT,
+    sport TEXT,
+    logo_url TEXT NOT NULL,
+    source TEXT,
+    indexed_at INTEGER NOT NULL
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_league_logos_norm ON league_logos(name_norm)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_league_logos_sport ON league_logos(sport)`);
   // ── API Cache Buffer (24h resilience layer — fallback si API échoue) ──
   sqldb.exec(`CREATE TABLE IF NOT EXISTS api_cache_buffer (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20634,7 +20714,14 @@ function getTopMatchesByTimeframe(timeframe, limit) {
     .map(m => ({ ...m, topPick: computeTopPick(m), _score: matchEngagementScore(m) }))
     .sort((a, b) => b._score - a._score)
     .slice(0, limit)
-    .map(m => { delete m._score; return m; });
+    .map(m => {
+      delete m._score;
+      const home = lookupTeamLogo(m.home_team);
+      const away = lookupTeamLogo(m.away_team);
+      m.home_logo = home?.url || null;
+      m.away_logo = away?.url || null;
+      return m;
+    });
 }
 
 // ─── /api/v1/league-hub/:oddsKey — Standings + Top scorer pour hub ligue ─────
@@ -22893,6 +22980,21 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
       console.error('[Forecasts:Football:Trending]', e.message);
       return jsonResponse(res, 500, { error: e.message });
     }
+  }
+
+  // ── Batch logos équipes (bd pariscore-v2-logos-perf) ──────────────────────
+  // GET /api/v1/team-logos?names=TeamA,TeamB,... → { "TeamA": {url,bsdId}, ... }
+  // 1 seule requête au lieu de 20 (lookup index local team_logos, ~0ms/équipe).
+  if (pathname === '/api/v1/team-logos') {
+    const raw = (query.names || '').toString();
+    let names = [];
+    if (raw) names = raw.split(',').map(s => s.trim()).filter(Boolean).slice(0, 40);
+    const out = {};
+    for (const n of names) {
+      const local = lookupTeamLogo(n);
+      out[n] = local ? { url: local.url, bsdId: local.bsdId } : { url: null };
+    }
+    return jsonResponse(res, 200, out, { 'Cache-Control': 'public, max-age=300' });
   }
 
   // Fallback API interne
@@ -33155,21 +33257,31 @@ const server = http.createServer(async (req, res) => {
                 }
             }
 
+            // 3. Wikipedia API (fallback quand Sofascore est bloqué)
+            if (!result) {
+                const wiki = await searchWikipediaTeam(name);
+                if (wiki?.wikiUrl) {
+                    result = { url: wiki.wikiUrl, source: 'wikipedia' };
+                }
+            }
+
             if (!result) {
                 return res.writeHead(404, { 'Content-Type': 'application/json' })
                           .end(JSON.stringify({ url: null }));
             }
 
-            // Mise en cache pour 30 jours
-            db.prepare(
-                'INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)'
-            ).run(
-                cacheKey,
-                JSON.stringify(result),
-                'logo',
-                Date.now(),
-                Date.now() + 30 * 24 * 3600 * 1000
-            );
+            // Mise en cache pour 30 jours (FIX P0a : db→sqldb, bd pariscore-v2-logos-perf)
+            try {
+                sqldb.prepare(
+                    'INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)'
+                ).run(
+                    cacheKey,
+                    JSON.stringify(result),
+                    'logo',
+                    Date.now(),
+                    Date.now() + 30 * 24 * 3600 * 1000
+                );
+            } catch (cacheErr) { /* non bloquant */ }
 
             res.writeHead(200, { 'Content-Type': 'application/json' })
               .end(JSON.stringify(result));
@@ -46918,9 +47030,11 @@ if (pathname === '/api/v1/refresh' && req.method === 'POST') {
                     return res.end(JSON.stringify({ url: null }));
                 }
 
-                // Cache 30 jours
-                db.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
-                  .run(cacheKey, JSON.stringify(result), 'logo', Date.now(), Date.now() + 30 * 24 * 3600 * 1000);
+                // Cache 30 jours (FIX P0a : db→sqldb)
+                try {
+                  sqldb.prepare('INSERT OR REPLACE INTO api_cache (key, data, source, created_at, expires_at) VALUES (?, ?, ?, ?, ?)')
+                    .run(cacheKey, JSON.stringify(result), 'logo', Date.now(), Date.now() + 30 * 24 * 3600 * 1000);
+                } catch (cacheErr) { /* non bloquant */ }
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(result));
@@ -50222,6 +50336,22 @@ async function bootInit() {
             }).catch(e => console.warn('[Boot] Index logos équipes échec:', e.message));
         }, 8000); // délai pour laisser le serveur HTTP devenir responsive d'abord
     }
+    // ── Enrichissement logos live (équipes + championnats) — services/liveLogoEnricher
+    // Worker cron 60s qui scanne db.matches, cache-first (team_logos + league_logos),
+    // cascade lib/logo-cascade en miss, broadcast SSE matches_update si changements.
+    if (liveLogoEnricher) {
+        try {
+            liveLogoEnricher.init({
+                db, sqldb, lookupTeamLogo,
+                broadcastSSE, matchesForBroadcast, buildMeta,
+                sseClientsRef: sseClients,
+            });
+            // 1er tick à 90s (après rebuildTeamLogosIndex à 8s + fetchStats à 30s)
+            setTimeout(() => liveLogoEnricher.enrichOnce().catch(e => console.warn('[Boot] LogoEnricher 1er tick:', e.message)), 90000);
+        } catch (e) {
+            console.warn('[Boot] LogoEnricher init échoué:', e.message);
+        }
+    }
 
     // bd ParisScorebis-h6a — Tennis Abstract Elo scraper status notice
     // Scaffold tool lives at tools/scrape-tennis-abstract-elo.js. It is DISABLED
@@ -50458,6 +50588,10 @@ setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]
 // TM squad values + blessés actifs toutes 3h (fly.dev ~20 req/tick, safe)
 setInterval(() => cronEnrichTMSquads().catch(e => console.warn('[TM Squads]', e.message)), 3 * 3600 * 1000);
 setTimeout(() => cronEnrichTMSquads().catch(() => {}), 2 * 60 * 1000); // 1er tick 2min après boot
+// bd ParisScorebis-logo-live — Enrichissement logos équipes+ligues depuis db.matches (cache-first → cascade)
+if (liveLogoEnricher) {
+    setInterval(() => liveLogoEnricher.enrichOnce().catch(e => console.warn('[LogoEnricher]', e.message)), 60 * 1000);
+}
 
 // bd h68q — WOM auto-publish : mouvement d'argent Betfair (provider WOM local) → carte Discord BSD #weight-of-money
 if (WOM_AP_ENABLED) {
