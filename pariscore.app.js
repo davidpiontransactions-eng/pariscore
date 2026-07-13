@@ -1134,34 +1134,85 @@ function _renderF1Grid(drivers) {
 }
 
 // ─── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ───
+// FIX 2026-07-13 : backoff d'erreur appliqué pour de vrai (setInterval codé dur ne
+// l'appliquait jamais → l'UI spammeait l'API toutes les 5 min même en cas d'échec
+// continu). Remplacé par setTimeout récursif qui reprogramme réellement avec
+// _cycErrBackoff. Ajout d'un fetch parallèle de /_health pour afficher l'âge des
+// données (stale/degraded/critical) à l'utilisateur.
 var _cycPoll = null, _cycErrBackoff = 300000;
-var _cycFavPoll = null;
+var _cycFavPoll = null, _cycFavErrBackoff = 600000;
+var _CYC_BASE_MS = 300000;   // 5 min — intervalle nominal (modèle)
+var _CYC_FAV_MS = 600000;    // 10 min — intervalle nominal (favoris)
+var _CYC_MAX_MS = 3600000;   // 1 h — plafond backoff
 function _cycEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
 window.initCyclingPage = function () {
-  _cycErrBackoff = 300000;
+  _cycErrBackoff = _CYC_BASE_MS;
+  _cycFavErrBackoff = _CYC_FAV_MS;
   _fetchAndRenderCycling();
   _fetchAndRenderCyclingFavourites();
-  if (_cycPoll) clearInterval(_cycPoll);
-  _cycPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling(); }, 300000);
-  if (_cycFavPoll) clearInterval(_cycFavPoll);
-  _cycFavPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites(); }, 600000);
+  // Polling récursif via setTimeout (pas setInterval) pour que _cycErrBackoff
+  // soit réellement appliqué : succès → reset à l'intervalle nominal, erreur →
+  // double jusqu'à 1h.
+  if (_cycPoll) clearTimeout(_cycPoll);
+  (function _schedCyc() {
+    _cycPoll = setTimeout(function () {
+      if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling();
+      if (document.body.dataset.page === 'cycling') _schedCyc(); // reprogramme quoiqu'il arrive
+      else _schedCyc(); // reste programmé même si page cachée (le fetch est gardé)
+    }, _cycErrBackoff);
+  })();
+  if (_cycFavPoll) clearTimeout(_cycFavPoll);
+  (function _schedCycFav() {
+    _cycFavPoll = setTimeout(function () {
+      if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites();
+      _schedCycFav();
+    }, _cycFavErrBackoff);
+  })();
 };
-if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearInterval(_cycFavPoll); _cycFavPoll = null; } };
+if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearTimeout(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearTimeout(_cycFavPoll); _cycFavPoll = null; } };
+// Fetch parallèle de /_health pour signaler l'âge des données scraping.
+// Non bloquant : si /_health échoue, on ne casse pas le rendu principal.
+function _fetchCyclingHealth() {
+  return fetch('/api/v1/cycling/_health', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (h) {
+      // Badge à injecter dans cyc-status (appelant décide du rendu)
+      if (!h || h.ok === false) return null;
+      return h;
+    })
+    .catch(function () { return null; });
+}
+// Construit le suffixe de statut basé sur la santé du pipeline scraping.
+function _cycHealthSuffix(h) {
+  if (!h) return '';
+  if (h.status === 'healthy') return '';
+  if (h.status === 'degraded') {
+    var missing = (h.missing_stages && h.missing_stages.length) ? ' · ' + h.missing_stages.length + ' étape(s) manquante(s)' : '';
+    return ' · ⚠️ données partielles' + missing;
+  }
+  // stale | critical : données vieillissantes
+  var age = (h.last_update_age_hours != null) ? h.last_update_age_hours : '?';
+  return ' · ⏳ données de il y a ' + age + 'h (pipeline en cours de refresh)';
+}
 function _fetchAndRenderCycling() {
-  fetch('/api/v1/cycling', { cache: 'no-store' })
-    .then(function(r) { return r.json(); })
-    .then(function(j) {
+  // Lancement parallèle : données + santé du pipeline
+  Promise.all([
+    fetch('/api/v1/cycling', { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return null; }),
+    _fetchCyclingHealth()
+  ])
+    .then(function (results) {
+      var j = results[0], h = results[1];
       var st = document.getElementById('cyc-status'), rb = document.getElementById('cyc-race-badge'), nt = document.getElementById('cyc-note'), cb = document.getElementById('cyc-bets'), cg = document.getElementById('cyc-grid');
       if (!j || j.ok === false) {
-        if (st) st.textContent = 'Données cyclisme indisponibles';
+        if (st) st.textContent = 'Données cyclisme indisponibles' + _cycHealthSuffix(h);
         if (cb) cb.innerHTML = '';
         if (cg) cg.innerHTML = '';
-        _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
+        _cycErrBackoff = Math.min(_cycErrBackoff * 2, _CYC_MAX_MS);
         return;
       }
-      _cycErrBackoff = 300000;
+      _cycErrBackoff = _CYC_BASE_MS; // reset backoff sur succès
       if (rb && j.race) rb.textContent = j.race;
-      if (st) st.textContent = 'Étape ' + (j.stage || '') + ' · ' + (j.route || '') + ' (' + (j.type || '') + ') · ' + (j.date || '') + ' · ' + Number(j.sims || 0).toLocaleString('fr') + ' sims' + (j.calibrated ? '' : ' · non calibré');
+      if (st) st.textContent = 'Étape ' + (j.stage || '') + ' · ' + (j.route || '') + ' (' + (j.type || '') + ') · ' + (j.date || '') + ' · ' + Number(j.sims || 0).toLocaleString('fr') + ' sims' + (j.calibrated ? '' : ' · non calibré') + _cycHealthSuffix(h);
       _renderCyclingBets(j.bets || []);
       _renderCyclingGrid(j.riders || []);
       if (nt) nt.textContent = j.note || '';
@@ -1169,7 +1220,7 @@ function _fetchAndRenderCycling() {
     .catch(function () {
       var st = document.getElementById('cyc-status');
       if (st) st.textContent = 'Erreur de chargement cyclisme (prochain essai dans ' + Math.round(_cycErrBackoff / 1000) + 's)';
-      _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
+      _cycErrBackoff = Math.min(_cycErrBackoff * 2, _CYC_MAX_MS);
     });
 }
 // Fetch les favoris de l'étape courante depuis cyclingstage.com (via backend)

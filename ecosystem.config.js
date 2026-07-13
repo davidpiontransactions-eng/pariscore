@@ -2,12 +2,13 @@
  * ══════════════════════════════════════════════════════════════════════════════
  *  PariScore — PM2 ecosystem config
  * ══════════════════════════════════════════════════════════════════════════════
- *  Trois process gérés par PM2 :
+ *  Six process gérés par PM2 :
  *    1. `pariscore`                   : serveur HTTP principal (Node.js + SSE + cron internes)
  *    2. `pariscore-cron-rg`           : job découplé Roland Garros prefetch toutes les 2h
  *    3. `pariscore-cron-match-stats`  : rafraîchissement quotidien match_stats_history
  *    4. `pariscore-vault-daily`      : note quotidienne vault Obsidian (05:00 UTC)
  *    5. `pariscore-vault-weekly`     : revue hebdo modèles (lundi 08:00 UTC)
+ *    6. `pariscore-cron-cycling`     : scraper cyclisme cyclingstage.com 3×/jour (Tour)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -20,6 +21,7 @@
  *    pm2 start ecosystem.config.js --only pariscore-cron-match-stats
  *    pm2 start ecosystem.config.js --only pariscore-vault-daily
  *    pm2 start ecosystem.config.js --only pariscore-vault-weekly
+ *    pm2 start ecosystem.config.js --only pariscore-cron-cycling
  *
  *  Logs :
  *    pm2 logs pariscore --lines 100
@@ -138,6 +140,33 @@ module.exports = {
       },
       error_file: 'logs/vault-weekly.err.log',
       out_file: 'logs/vault-weekly.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job cycling scraper (Tour de France 2026) ===
+      // FIX 2026-07-13 : le pipeline cyclisme reposait uniquement sur setup-cycling-cron.sh
+      // (crontab système manuel). Si oubli d'installation → données stale >24h →
+      // getHealth() retourne stale → 503 sur /_health, sans mécanisme de relance
+      // automatique. On ajoute un cron PM2 comme pour RG et match-stats, qui tourne
+      // 3×/jour pendant le Tour (les favoris évoluent : abandons, météo, interviews).
+      // Le scraper détermine l'étape du jour via stages-calendar.json (--current).
+      // Période Tour : 4-26 juillet 2026 (hors période il ne fait rien de nuisible,
+      // le scraper détecte l'absence d'étape et no-op).
+      name: 'pariscore-cron-cycling',
+      script: 'scripts/scraper-cyclingstage-favourites.js',
+      args: '--current --force',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 6,12,18 * * *', // 3×/jour à 06:00, 12:00, 18:00 UTC
+      autorestart: false,               // cron-only, ne redémarre pas sur exit
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-cycling.err.log',
+      out_file: 'logs/cron-cycling.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },

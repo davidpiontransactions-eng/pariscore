@@ -1,12 +1,12 @@
 {
   "race": "Tour de France 2026",
   "source": "cyclingstage.com",
-  "last_update": "2026-07-05T10:44:54.762352+00:00",
+  "last_update": "2026-07-13T12:06:25.650Z",
   "stages": {
     "1": {
       "stage": 1,
       "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-1-contenders-tdf-2026/",
-      "scraped_at": "2026-07-03T08:50:16.497951+00:00",
+      "scraped_at": "2026-07-12T11:12:19.957Z",
       "title": "Tour de France 2026 Favourites stage 1: Looking for the best finisher",
       "description": "The yellow jersey awaits the rider who posts the fastest time on the team time trial course. Given the 7% gradient over the final 800 metres, the punchy climbers will almost certainly drop their team-mates in the finale in an attempt to ride into yellow.\n\n(Slideshow route/profile)\n\nUnlike an oldschool team time trial, where the time of the fifth rider across the line counts, each rider will be credited with his own individual time. The formula for taking the yellow jersey therefore appears straightforward: blast around the Barcelona course as quickly as possible as a team, before the designated leader goes clear in the finale to set the fastest time. To make that work, you need a squad full of strong time trialists who are willing to work for one another, and a leader with a punchy finishing kick.\n\nSeamless teamwork will be crucial during the flat opening section, and that remains largely the case on the first of the two climbs in the finale. It rises for 1.1 kilometres at an average gradient of 5.1%, so some teams may choose to continue from this point with only their strongest climbers. After a short flat section, the road dips slightly before the explosive final ascent of 800 metres at 7%.\n\nVisma | Lease a Bike recently won a team time trial run under the same format at the Tour Auvergne-Rhône-Alpes, with Netcompany-INEOS finishing a close second. Comparisons are difficult, however, as the teams will not be lining up at the Tour with exactly the same riders.\n\nSpecial mention should also go to Van der Poel’s individual time trial at the Tour de Suisse. He matched Pogacar’s time to finish second, but what really stood out was the determination with which he attacked the course on his time trial bike – hardly his weapon of choice. It raised the question: could he be targeting Barcelona?",
       "favourites_raw": "*** UAE Emirates (Pogacar), Visma | Lease a Bike (Vingegaard)\n\n** Red Bull-BORA-hansgrohe (Evenepoel), Netcompany-INEOS (Arensman, Vauquelin)\n\n* Lidl-Trek (Ayuso, Skjelmose), Decathlon CMA CGM (Seixas), Alpecin Premier Tech (Van der Poel), EF Education-EasyPost (Carapaz)",
@@ -70,15 +70,15 @@
           ]
         }
       ],
-      "weather_forecast": "Weather forecast:\n\nThe Tour starts in sunny conditions. During the team time trial, temperatures are expected to reach 29°C and the wind will come from the south at around 18 km/h. Conditions are stable between start and finish, so all teams will start under the same circumstances, ensuring a fair race.",
-      "publication_info": "First published on 17 June - last update 30 June: weather forecest added",
+      "weather_forecast": null,
+      "publication_info": "First published on 17 June - last update 4 July: weather forecast updated",
       "status": "ok",
       "error": null
     },
     "2": {
       "stage": 2,
       "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-2-contenders-tdf-2026/",
-      "scraped_at": "2026-07-05T10:44:54.757241+00:00",
+      "scraped_at": "2026-07-12T11:12:21.896Z",
       "title": "Tour de France 2026 Favourites stage 2: A puncher’s paradise",
       "description": "Stage 2 of the Tour comes to a head on a hilly circuit in Barcelona, tackled three times by the riders, each lap featuring two sharp, punchy climbs. The first is 1.6 kilometres at 9.3%, and the second, which doubles as the finish, is 600 metres at 7%.\n\n(Slideshow route/profile)\n\nPunchers will be licking their lips while eyeing the finishing circuit of stage 2. After a relatively unremarkable opening, the riders can test their climbing legs on the Côte de Begues – 6.1 kilometres at 6.5% – but the real focus is on Montjuïc in Barcelona, which the riders reach with just under 30 kilometres remaining.\n\nFrom there, an enthralling spectacle is almost guaranteed. The riders quickly hit the first of two climbs, which leads up to Montjuïc Castle and serves up 1.6 kilometres at an average of 9.3%, with ramps of up to 13%. Just below the summit it flattens out slightly before a 1-kilometre descent to the foot of the second climb, the Côte de l’Estadi Olímpic, which offers 700 metres at 7%.\n\nAfter two laps of 12.2 kilometres, the finish comes at the top of that 700-metre climb at 7%.\n\nLast year, the Tour peloton – with Pogacar and Van der Poel in leading roles – served up two days of spectacle on similar punchy finales at the start of the Tour. One win went to the Slovenian, the other to the Dutchman. What will we get this time?",
       "favourites_raw": "*** Mathieu van der Poel, Tadej Pogacar, Tom Pidcock\n\n** Maxim Van Gils, Paul Seixas, Romain Grégoire, Mathias Vacek\n\n* Juan Ayuso, Jonas Vingegaard, Mads Pedersen, Lenny Martinez, Kévin Vauquelin",
@@ -170,6 +170,1868 @@
       ],
       "weather_forecast": null,
       "publication_info": "First published on 18 June - last updated 5 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "3": {
+      "stage": 3,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-3-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:23.782Z",
+      "title": "Tour de France 2026 Favourites stage 3: Yellow jersey for the taking",
+      "description": "The favourites for overall victory have battled for the yellow jersey over the opening two days, but stage 3 offers the perfect opportunity to hand it over to a rider further down the pecking order. The Tour is still long, and the Pyrenean stage is demanding, but not enough to turn it into a battle among the giants.\n\n(Slideshow route/profile)\n\nPut another way, for riders with their sights set on overall victory, there is not much to be gained on stage 3. With a podium ceremony every day – along with all the duties that come with wearing the yellow jersey – leading the Tour de France is an energy-sapping affair. So, paradoxically, the aim could be to lose cycling’s most coveted jersey, and the simplest way to do that is to allow the day’s breakaway plenty of leeway.\n\nGiven the likelihood that the attackers will get the chance to fight it out for both the stage win and the yellow jersey, there will be no shortage of interest in getting into the break. After 10 kilometres, the riders tackle a climb of 7.6 kilometres at 4.5%, and it remains to be seen whether the break will already have gone clear at the summit. From there, the riders head across flat to gently rolling roads towards the Pyrenees.\n\nAfter just over 100 kilometres, the road begins to rise gradually before leading onto the Collada de Toses, a climb of 9.3 kilometres at 6.5%. From the summit, there are still almost 70 kilometres remaining, with the Col du Calvaire (11.4 kilometres at 4.1%) forming the approach to the finale. The Col de la Quillane (1.9 kilometres at 4%) offers another chance to put rivals under pressure, before the final climb to the ski resort above Les Angles: 4.7 kilometres at 4.6%, with the final 1.7 kilometres rising at 6.5%.\n\nAll in all, more than enough ammunition for an intriguing battle, with the stage win – and quite possibly a new yellow jersey – at stake.",
+      "favourites_raw": "*** Lennert Van Eetvelt, Mathias Vacek, Alex Baudin, Harold Tejada\n\n** Ben O'Connor, Ben Healy, George Bennett, Kévin Vauquelin, Valentin Paret-Peintre\n\n* Warren Barguil, Ion Izagirre, Luke Plapp, Clément Braz Afonso, Einer Rubio, Pablo Castrillo",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Lennert Van Eetvelt"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathias Vacek"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Alex Baudin"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Harold Tejada"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Ben O'Connor"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Ben Healy"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "George Bennett"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Kévin Vauquelin"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Valentin Paret-Peintre"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Warren Barguil"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Ion Izagirre"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Luke Plapp"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Clément Braz Afonso"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Einer Rubio"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pablo Castrillo"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 18 June - last updated 6 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "4": {
+      "stage": 4,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-4-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:25.559Z",
+      "title": "Tour de France 2026 Favourites stage 4: Half the peloton rolls the dice",
+      "description": "Stage 4 of the Tour de France is one to watch. It is the sort of stage where half the peloton fancies its chances of the stage win, and that usually leads to a spectacle.\n\n(Slideshow route/profile)\n\nThe riders tackle 2,700 metres of climbing on the road from Carcassonne to Foix. A quintessential in-between stage: too tough for the sprinters, and not demanding enough for the GC riders to make the difference. This opens the door for a breakaway.\n\nOn the other hand, given the opening three days of the Tour, it is quite likely that the yellow jersey has already changed shoulders by stage 3. If so, chances are that it rests on the shoulders of a rider who will be keen to keep it for as long as possible. Someone with no real GC ambitions, but who will be relishing the chance to ride in one of the most coveted jerseys in cycling — as will his team. Expect them to do everything they can to control the race where possible.\n\nWhether they succeed is another matter entirely…\n\nIn theory, the parcours is ideal for the breakaway. But if the yellow jersey’s team keeps a tight grip on proceedings and gives the attackers little room to manoeuvre, a reduced bunch sprint in Foix is by no means out of the question.\n\nShould that happen, let's hope everbody stays upright. Very close to the line, with only 320 metres to go, the riders turn right to cross the River Ariège, before tackling a gently rising finishing straight.\n\nPure sprinters, in any case, will find the route too demanding. After a series of relatively straightforward hills in the opening phase, the second half features some tougher climbs. The Col de Coudins rises for 10.7 kilometres at 5.5%, while the Col de Montségur is 6.9 kilometres at 6.6%. From the summit, there are just over 35 kilometres to the finish in Foix.",
+      "favourites_raw": "*** Maxim Van Gils, Magnus Cort, Romain Grégoire, Mathias Vacek\n\n** Tim Wellens, Michael Matthews, Mads Pedersen, Filippo Ganna, Jasper Stuyven\n\n* Florian Vermeersch, Mathieu van der Poel, Quinn Simmons, Matteo Trentin, Jonas Abrahamsen",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Maxim Van Gils"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Magnus Cort"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Romain Grégoire"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathias Vacek"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Tim Wellens"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Michael Matthews"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Filippo Ganna"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Jasper Stuyven"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Florian Vermeersch"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mathieu van der Poel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Quinn Simmons"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Matteo Trentin"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jonas Abrahamsen"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 18 June - last updated 7 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "5": {
+      "stage": 5,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-5-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:27.328Z",
+      "title": "Tour de France 2026 Favourites stage 5: For fast men #1",
+      "description": "All signs point to the Tour de France's first bunch sprint being decided on the streets of Pau. So, gentlemen sprinters, on your marks, get set... go!\n\n(Slideshow route/profile)\n\nWith 1,600 metres of climbing, the route is far from pancake-flat, but that is unlikely to prevent a bunch sprint. The only categorised climb, the Côte de Baleix, could have posed a problem for the fast men with its 1 kilometre at 8.8%, but not at this point, with 25.6 kilometres still remaining. The entire run-in is flat to gently rolling.\n\nAfter winning three sprints in 2024, Jasper Philipsen made a flying start to last year's Tour by sprinting into the yellow jersey on the opening day. At the next opportunity for the sprinters, he crashed heavily and was forced to abandon the race on the spot. Tim Merlier went on to win that stage and added another victory later in the race. The only other bunch sprint was won by Jonathan Milan.\n\nOn paper, Olav Kooij, Jasper Philipsen and Tim Merlier are the fastest sprinters in this year's Tour. They recently went head to head at the Tour of Belgium, where honours ended even, with each of them taking one stage victory. On one occasion, however, another sprinter got the better of them, as Girmay claimed victory in the opening stage.",
+      "favourites_raw": "*** Tim Merlier, Jasper Philipsen, Olav Kooij\n\n** Biniam Girmay, Mads Pedersen, Max Kanter, Arvid de Kleijn\n\n* Fernando Gaviria, Pascal Ackermann, Pavel Bittner, Phil Bauhaus",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tim Merlier"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Olav Kooij"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Biniam Girmay"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Max Kanter"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Arvid de Kleijn"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Fernando Gaviria"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pascal Ackermann"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pavel Bittner"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Phil Bauhaus"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 18 June - last updated 8 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "6": {
+      "stage": 6,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-6-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:29.197Z",
+      "title": "Tour de France 2026 Favourites stage 6: Clash in the Pyrenees",
+      "description": "Will we get a GC showdown on the final day in the Pyrenees? Given the demanding route, featuring both the Aspin and the Tourmalet, you would think – and certainly hope – so. Then again, the finale is not especially difficult.\n\n(Slideshow route/profile)\n\nThe key challenge comes in the back-to-back ascents of the Col d'Aspin and the Col du Tourmalet as the race enters the final 80 kilometres. The GC riders could make the difference on those climbs, particularly on the latter. After that, the route is far less demanding.\n\nFrom the summit of the Tourmalet, there are just under 40 kilometres remaining. More than half of that is a fast descent to Luz-Saint-Sauveur, after which the final climb to Gavarnie-Gèdre begins. It rises for 18.7 kilometres at an average gradient of 3.7% – not exactly the sort of climb where you would expect a fierce battle between GC contenders. Then again, if the field has already been shattered on the Tourmalet, it may be a different story.\n\nIn short, the final Pyrenean stage could unfold in any number of ways. Following a largely uneventful opening of 106 kilometres, the Aspin–Tourmalet double act takes centre stage, after which the finishing climb is little more than a long, gently rising false flat.\n\nThe big question hanging over this stage is: what do the GC riders want to do?",
+      "favourites_raw": "*** Tadej Pogacar, Jonas Vingegaard, Paul Seixas, Remco Evenepoel\n\n** Tom Pidcock, Juan Ayuso, Ben Healy, Lennert Van Eetvelt, Richard Carapaz\n\n* Mattias Skjelmose, Isaac del Toro, Thymen Arensman, Lenny Martinez, Sergio Higuita",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Ben Healy"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lennert Van Eetvelt"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Richard Carapaz"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mattias Skjelmose"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Isaac del Toro"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Sergio Higuita"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 18 June - last updated 9 July: weather conditions updated",
+      "status": "ok",
+      "error": null
+    },
+    "7": {
+      "stage": 7,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-7-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:30.983Z",
+      "title": "Tour de France 2026 Favourites stage 7: For fast men #2",
+      "description": "With no more than 850 metres of elevation gain over 175.1 kilometres, stage 8 is the flattest stage of the Tour de France. So yes, it's hard to see anything other than a bunch sprint in Bordeaux.\n\n(Slideshow route/profile)\n\nThe riders travel from Hagetmau, in the foothills of the Pyrenees, to Bordeaux. Along the way, the riders encounter just one small climb. It is crested with a little under 40 kilometres remaining, but even if the finish had been at the top, a sprint would still have been a realistic outcome. The Côte de Béguey is little more than a bump in the road: 1.2 kilometres at an average gradient of 4.4%.\n\nLast year’s Tour de France featured four bunch sprints. Tim Merlier won two of them, while Jasper Philipsen and Jonathan Milan claimed one apiece. The Italian will not be on the start line this year.\n\nOlav Kooij dominated the first bunch sprint of this year's Tour, finishing comfortably ahead of Max Kanter and Tim Merlier.",
+      "favourites_raw": "*** Tim Merlier, Jasper Philipsen, Olav Kooij\n\n** Biniam Girmay, Max Kanter, Søren Wærenskjold\n\n* Pascal Ackermann, Fernando Gaviria, Phil Bauhaus, Milan Fretin",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tim Merlier"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Olav Kooij"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Biniam Girmay"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Max Kanter"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Søren Wærenskjold"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pascal Ackermann"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Fernando Gaviria"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Phil Bauhaus"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Milan Fretin"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 25 June - last updated 10 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "8": {
+      "stage": 8,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-8-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:32.783Z",
+      "title": "Tour de France 2026 Favourites stage 8: For fast men #3",
+      "description": "Sprinters have to be patient during the opening week of the Tour de France, but then they suddenly get two opportunities on back-to-back days. It would take a major surprise for stage 8 not to end in a bunch sprint.\n\n(Slideshow route/profile)\n\nThe route from Périgueux to Bergerac features just 1,150 metres of elevation gain. There are two category-4 climbs along the route, the last of which – 2.2 kilometres at 5.6% – is crested with 40 kilometres remaining. The remainder of the route is as flat as a pancake.\n\nWith 10 kilometres to go, the riders are already on the outskirts of Bergerac. Rather than heading straight into the town centre, however, they first loop around the southern side of town before approaching the finish from the opposite direction. The final 1.5 kilometres feature two right-angle bends, the last coming just under 500 metres from the line.\n\nOn paper, Olav Kooij, Jasper Philipsen and Tim Merlier are the strongest sprinters in this year's Tour. All three recently sharpened their form at the Baloise Belgium Tour, where they shared the spoils with one stage win each. Biniam Girmay also got on the scoresheet with a victory.\n\nSo far, it's Kooij 1, Merlier 1, Philipsen 0, Girmay 0 in this Tour. Who will take the spoils in Bergerac? The more technical finale sets this stage apart from those in Pau and Bordeaux, where Kooij and Merlier emerged victorious.",
+      "favourites_raw": "*** Tim Merlier, Jasper Philipsen, Olav Kooij\n\n** Biniam Girmay, Fernando Gaviria, Max Kanter, Milan Fretin\n\n* Pascal Ackermann, Mads Pedersen, Søren Wærenskjold, Phil Bauhaus",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tim Merlier"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Olav Kooij"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Biniam Girmay"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Fernando Gaviria"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Max Kanter"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Milan Fretin"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pascal Ackermann"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Søren Wærenskjold"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Phil Bauhaus"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 25 June - last updated 11 July: weather forecast updated/small>",
+      "status": "ok",
+      "error": null
+    },
+    "9": {
+      "stage": 9,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-9-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:34.561Z",
+      "title": "Tour de France 2026 Favourites stage 9: Attackers in the Massif Central",
+      "description": "The last stage before the first rest day offers the perfect opportunity for another full-on effort. The roads are either climbing or descending all day long. Sprinters will feel queasy just looking at the profile, while GC riders are unlikely to see much to gain or lose. Enter: the attackers!\n\n(Slideshow route/profile)\n\nA string of climbs dot the route from Malemort to Ussel. From the very start the road tilts upwards, and by the time the riders reach kilometre 47 they will already have tackled three ascents. Only the final one in the sequence is deemed KOM-worthy, but they will undoubtely have taken their toll. The pace is expected to be high from the start with attacks coming thick and fast, as this is the kind of stage that every rider with a sense of adventure has marked down as a chance for eternal glory.\n\nSure. the route for stage 9 has been altered because of the heat, but the list of favourites remains unchanged.\n\nPoints for the mountains classification are on offer on the climb towards kilometre 47, the Côte des Naves (2.3 kilometres at 7.4%), and KOM contenders will need to be alert in the punishing mid-section that follows, with plenty of points still up for grabs on the Puy de Lachaud (3.6 kilometres at 5.3%), Suc au May (3.8 kilometres at 7.7%), the Côte de la Croix de Pey (7 kilometres at 4.9%) and Mont Bessou (900 metres at 7.3%).\n\nStill 24.5 kilometres remain atop the Mont Bessou, which is a relatively straightforward section.\n\nAs GC contenders won’t be bothered by this kind of terrain – with little to gain or lose – the door will be wide open for a group of attackers to go all-in. It will be interesting to see how long it takes for the break to go clear. It could easily be only halfway through the race, which would make it a must-see stage.",
+      "favourites_raw": "*** Mathieu van der Poel, Tom Pidcock, Mathias Vacek, Pablo Castrillo\n\n** Romain Grégoire, Lennert Van Eetvelt, Mads Pedersen, Marco Frigo, Luke Plapp\n\n* Richard Carapaz, Michael Storer, Alex Aranburu, Mauro Schmid, Clément Braz Afonso",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathieu van der Poel"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathias Vacek"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Pablo Castrillo"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Romain Grégoire"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lennert Van Eetvelt"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Marco Frigo"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Luke Plapp"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Richard Carapaz"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Michael Storer"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Alex Aranburu"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mauro Schmid"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Clément Braz Afonso"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 25 June - last update 12 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "10": {
+      "stage": 10,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-10-contenders-tdf-2026/",
+      "scraped_at": "2026-07-13T12:06:25.643Z",
+      "title": "Tour de France 2026 Favourites stage 10: Spectacular run to Le Lioran",
+      "description": "Will Tadej Pogacar be out for revenge? Two years ago, Jonas Vingegaard edged him out in a photo finish in Le Lioran. However it unfolds, stage 10 offers plenty of material for a compelling battle, be it for the GC or just for the stage win.\n\n(Slideshow route/profile)\n\nTwo years ago, Tadej Pogacar and Jonas Vingegaard delivered a thrilling finale. The two rivals engaged in a titanic battle over the last 30 kilometres, which ultimately ended in a sprint-à-deux, with the Dane pipping the Slovenian.\n\nWill we see a similar scenario unfold? It is Bastille Day, and the French will opt for a different outcome. They are eyeing Paul Seixas as a potential stage winner, with Lenny Martinez ideally joining him on the podium.\n\nThe route has echoes of Liège–Bastogne–Liège. As in La Doyenne, the opening phase is relatively straightforward, with the first 65 kilometres covering rolling to flat terrain. The Côte Pailrehols (3 kilometres at 7.2%) provides the first uphill test, but the climbing action really ignites with the Côte de la Griffoul (5.9 kilometres at 6.7%). Shortly afterwards, the Col de Prat de Bouc (3.1 kilometres at 6.5%) adds further difficulty.\n\nAfter the Côte de Murat (5.2 kilometres at 5.3%), the tension ramps up on the Puy Mary (7.8 kilometres at 6%), before the Col de Pertus (4.4 kilometres at 8.5%) delivers the hardest test of the day. A descent of just over 5 kilometres then leads onto the Col de Font de Cère (3.1 kilometres at 5.8%). From the summit, it is 2.7 kilometres to the finish in Le Lioran, mostly downhill before a final ramp of 7.4% inside the last 500 metres.\n\nWill Pogacar be out for revenge? Two years ago, he had his team control the race before launching an attack on the Puy Mary, only for Vingegaard to bridge across on the Col de Pertus. The Slovenian won the sprint for bonus seconds at the summit, but at the line it was the other way around, with the Dane edging him out by the smallest of margins – more a psychological blow than anything else.",
+      "favourites_raw": "*** Tadej Pogacar, Jonas Vingegaard, Paul Seixas, Juan Ayuso\n\n** Remco Evenepoel, Tom Pidcock, Isaac del Toro, Lenny Martinez\n\n* Maxim Van Gils, Lennert Van Eetvelt, Richard Carapaz, Quinn Simmons",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Isaac del Toro"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Maxim Van Gils"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Lennert Van Eetvelt"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Richard Carapaz"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Quinn Simmons"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 29 June - last updated 13 July: weather forecast updated",
+      "status": "ok",
+      "error": null
+    },
+    "11": {
+      "stage": 11,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-11-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:38.306Z",
+      "title": "Tour de France 2026 Favourites stage 11: For fast men #4",
+      "description": "The riders face 1,400 metres of elevation gain over 161.3 kilometres. That is hardly enough to trouble the sprinters, especially as the only climbs come well before the finish. Barring the unexpected, the 10th stage should end in a bunch sprint.\n\n(Slideshow route/profile)\n\nThe Côte de Billonière (1 kilometre at 5.8%) and the Côte de Billy-Chévannes (1.4 kilometres at 6%) are the only climbs of the day. The latter is crested with 37.9 kilometres remaining before the finish in Nevers.\n\nIt will be the fourth time the Tour de France finishes in Nevers, and each of the previous three editions ended in a sprint, won by Eric Leman (1971), Guido Bontempi (1986) and Alessandro Petacchi (2003). All signs point to another bunch sprint this time around.\n\nOn paper, Olav Kooij, Jasper Philipsen and Tim Merlier are the strongest sprinters in this year's Tour. They recently went head to head at the Baloise Belgium Tour, where each claimed one stage victory. On the first day, however, they had to settle for the minor placings as Biniam Girmay took the opening stage.\n\nThe Tour de France tally now stands at: Merlier 2, Kooij 1, Philipsen 0, Girmay 0. Who will come out on top in Nevers?",
+      "favourites_raw": "*** Tim Merlier, Olav Kooij\n\n** Biniam Girmay, Jasper Philipsen, Max Kanter\n\n* Pascal Ackermann, Fernando Gaviria, Mads Pedersen, Pavel Bittner",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tim Merlier"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Olav Kooij"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Biniam Girmay"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Max Kanter"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pascal Ackermann"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Fernando Gaviria"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pavel Bittner"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 29 June - last updated 9 July: weather forecast added",
+      "status": "ok",
+      "error": null
+    },
+    "12": {
+      "stage": 12,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-12-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:40.143Z",
+      "title": "Tour de France 2026 Favourites stage 12: For fast men #5",
+      "description": "On the route from Magny-Cours to Chalon-sur-Saône, the riders tackle just under 1,800 metres of elevation gain, so it is by no means completely flat. Even so, there is every chance that the fast men will have the final say on the banks of the Saône.\n\n(Slideshow route/profile)\n\nAt the final test for the sprinters ahead of the Tour, the Baloise Belgium Tour, stage wins were taken by Girmay, Merlier, Kooij and Philipsen. They are the sprinters to watch in this year’s Tour de France.\n\nFor Girmay, it was only his second victory of the season. After opening his account in February at the Volta a la Comunitat Valenciana, he then went quiet until the Belgian Tour. Philipsen had already celebrated victories at Nokere Koerse, In Flanders Fields (formerly Gent-Wevelgem) and the Copenhagen Sprint, while both Merlier and Kooij were sidelined for much of the spring.\n\nThe Belgian returned in early April with a win at the Scheldeprijs, before also taking the Ronde van Limburg and three stages at the Tour of Hungary. Kooij came back to racing even later, but struck immediately with two wins at the Boucles de la Mayenne in late May.\n\nStage 12 is all but certain to end in a sprint. Along the way, the riders tackle a number of rolling sections as well as three categorised climbs: the Côte de Lanty (2 kilometres at 4%), the Côte de Cuzy (2.4 kilometres at 5.4%) and the Côte de Montagny-lès-Buxy (2.6 kilometres at 4.3%). These are so insignificant that the peloton would have to make a major miscalculation for the race not to end in a bunch sprint.",
+      "favourites_raw": "*** Tim Merlier, Olav Kooij\n\n** Jasper Philipsen, Biniam Girmay, Max Kanter\n\n* Pascal Ackermann, Mads Pedersen, Pavel Bittner",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tim Merlier"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Olav Kooij"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Biniam Girmay"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Max Kanter"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pascal Ackermann"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Pavel Bittner"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 29 June",
+      "status": "ok",
+      "error": null
+    },
+    "13": {
+      "stage": 13,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-13-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:41.931Z",
+      "title": "Tour de France 2026 Favourites stage 13: For daredevil descenders",
+      "description": "The longest stage of the Tour is set to appeal to the breakaway specialists. It is a predominantly flat 205.8-kilometre route, but with two climbs in the final 40 kilometres. The Ballon d’Alsace, crested with just under 30 kilometres remaining, is likely to sit heavily on the legs of the sprinters.\n\n(Slideshow route/profile)\n\nAt around 2,400 metres, the total amount of climbing should not pose a problem. But because the ascents come in quick succession and are packed into the run-up to the finale, the sprinters are likely to be out of contention.\n\nThe Ballon d’Alsace summit comes with just under 30 kilometres to go – a relatively long distance in terms of kilometres, but effectively much shorter in racing time, as roughly half of it is downhill. Riders dropped on the Ballon d’Alsace will have little opportunity to recover lost ground.\n\nThe route is fairly straightforward: around 150 kilometres of flat terrain before the Col des Croix (5.1 kilometres at 4.8%) offers a warm-up for the Ballon d’Alsace, an 8.9-kilometre climb at an average gradient of 6.9%. From the summit, there are still 29.9 kilometres to the finish.\n\nThat begins with a 16-kilometre descent, followed by a false-flat section descending towards a 670-metre ramp at 5.1% in Valdoie. From there, the route continues to fall gently all the way to Belfort.\n\nThe key question beforehand is what the GC teams will decide to do. A breakaway is easy to control on a route like this, but will they believe they can make a difference on the Ballon d’Alsace and the subsequent descent? Probably not. That would open the door for the attackers – particularly given that the move is likely to go clear on the flat, while the stage is decided on a climb and the descent that follows. The winner will need to be a strong climber, a capable descender, and quite possibly a fast finisher as well.\n\nHow the race unfolds depends on the standings; we will update this article during the Tour.",
+      "favourites_raw": "*** Tom Pidcock, Matej Mohoric, Julian Alaphilippe, Mathias Vacek\n\n** Mathieu van der Poel, Romain Grégoire, Maxim van Gils, Kévin Vauquelin\n\n* Mads Pedersen, Magnus Cort, Michael Matthews, Quinten Hermans, Alex Baudin",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Matej Mohoric"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Julian Alaphilippe"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathias Vacek"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mathieu van der Poel"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Romain Grégoire"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Maxim van Gils"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Kévin Vauquelin"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Magnus Cort"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Michael Matthews"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Quinten Hermans"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Alex Baudin"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 29 June",
+      "status": "ok",
+      "error": null
+    },
+    "14": {
+      "stage": 14,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-14-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:43.792Z",
+      "title": "Tour de France 2026 Favourites stage 14: GC showdown in the Vosges",
+      "description": "Over 155.3 kilometres, the riders take on 3,800 metres of climbing. Although the finish is not uphill, the GC contenders are expected to go all-out en route to the ski resort of Le Markstein. Whether that also decides the stage win is another question, but we hope it does.\n\n(Slideshow route/profile)\n\nThe riders travel from Alsace into the nearby Vosges mountains. They soon tackle the Grand Ballon (21.5 kilometres at 4.8%) before passing the finish line shortly afterwards. They then head out on a 111.4-kilometre loop over the Col du Page (9.8 kilometres at 4.7%), Ballon d’Alsace (8.9 kilometres at 6.9%), Col du Schirm (3.7 kilometres at 5.3%), Col du Hundsruck (3.6 kilometres at 5.2%) and Col du Haag (11.2 kilometres at 7.3%), before returning to the plateau where the finish is located – though this time from a different side.\n\nThe Col du Haag provides a fascinating obstacle. The road first climbs for 4 kilometres at an average of 9% to Geishouse, before a short descent. From there, the route continues at a fairly steady gradient, which ramps up again in the final kilometre below the summit, where it averages 9.5%. Once over the top, there are still 5.9 kilometres of rolling terrain to the finish.\n\nA finale like this seems tailor-made for Pogacar, although Vingegaard or Seixas will not be ruling themselves out. Whether the GC contenders go for the stage win or merely for time gains in Le Markstein remains to be seen, but the 14th stage promises to be a real blockbuster.\n\nHow the race unfolds depends on the standings; we will update this article during the Tour.",
+      "favourites_raw": "*** Tadej Pogacar, Jonas Vingegaard, Paul Seixas\n\n** Lenny Martinez, Mattias Skjelmose, Sepp Kuss, Isaac del Toro\n\n* Remco Evenepoel, Michael Storer, Thymen Arensman, Tobias Halland Johannessen",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mattias Skjelmose"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Sepp Kuss"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Isaac del Toro"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Michael Storer"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Tobias Halland Johannessen"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 30 June",
+      "status": "ok",
+      "error": null
+    },
+    "15": {
+      "stage": 15,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-15-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:45.563Z",
+      "title": "Tour de France 2026 Favourites stage 15: All-out on final climb",
+      "description": "In the 15th stage of the Tour de France, the riders head through the Alps. The route features four categorised climbs, with the final ascent by far the hardest. It is almost certain that the GC contenders will test each other, but whether that will also be for the stage win remains to be seen.\n\n(Slideshow route/profile)\n\nGiven the route, it is quite possible that the breakaway is allowed plenty of leeway, leading to a battle on two fronts. First, the attackers fighting for the stage win, and then the GC contenders trying to put time into each other on the brutal climb to the line.\n\nThe opening phase is perfect for an intriguing fight to get into the breakaway. The route gradually rises on false-flat roads over the first 22 kilometres before a short descent precedes the Côte des Rousses 6.6 kilometres at 5.1%. Even after the KOM sprint, the road continues to rise gently for another 9 kilometres.\n\nFalse flat remains the defining feature for much of the following section as the road drops into the Rhône valley. After a small climb, the riders cross the river and begin the tougher second half of the race. First, the Col de la Croisette (4.6 kilometres at 11.2%) offers a taste of the steep gradients to come on the final climb.\n\nStraight out of the descent, the Côte du Mont (2.1 kilometres at 8.3%) provides a punchy little effort, before the route descends in false-flat fashion towards the foot of the final climb, which is a brute: 11.3 kilometres at 9.1%. Anyone looking to hurt their rivals will want to do so in the first 4 kilometres, a section that kicks up into the double-digit gradients.\n\nIn short, apart from the Col de la Croisette, there is little on the road to the final climb that cannot be controlled by a strong climbing team. So the pre-stage question is: will the GC teams want that? It is hard to say at this point, although we are currently leaning towards a breakaway stage win.\n\nOn 14 June, Del Toro crossed the line in celebration on the Plateau des Solaison. That day, the Mexican won the final stage of the Tour Auvergne-Rhône-Alpes and sealed the overall victory. It was the first edition of the Critérium du Dauphiné to be held under that rather unwieldy name.\n\nHow the race unfolds depends on the standings; we will update this article during the Tour.",
+      "favourites_raw": "*** Thymen Arensman, Lenny Martinez, Sepp Kuss, Richard Carapaz\n\n** Matthew Riccitello, Isaac del Toro, Egan Bernal, Mattias Skjelmose\n\n* Tadej Pogacar, Jonas Vingegaard, Paul Seixas, Remco Evenepoel, Juan Ayuso",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Sepp Kuss"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Richard Carapaz"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Matthew Riccitello"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Isaac del Toro"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Egan Bernal"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mattias Skjelmose"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 30 June",
+      "status": "ok",
+      "error": null
+    },
+    "16": {
+      "stage": 16,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-16-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:47.488Z",
+      "title": "Tour de France 2026 Favourites stage 16: Evenepoel versus Ganna",
+      "description": "Multiple world champions Remco Evenepoel and Filippo Ganna are the leading favourites to win the individual time trial to Thonon-les-Bains, while Joshua Tarling will be hoping to steal the limelight. At the same time, the GC contenders also have a big day ahead of them.\n\n(Slideshow route/profile)\n\nIt has been a while since Filippo Ganna last got the better of Remco Evenepoel in a time trial. For that, we have to go back to the Vuelta a España in 2023. On that occasion, the Italian was 16 seconds quicker over a 25.8-kilometre course featuring a 600-metre climb at 6.5%, while the rest of the route was flat.\n\nThis time, the course is rather different, which plays even more into Evenepoel's hands. In fact, the route seems tailor-made for the Belgian. Right from the start, the riders tackle a 9.7-kilometre climb averaging 4.3%. It is uphill, but without brutally steep gradients, meaning the pace is likely to remain high and allowing Evenepoel to make the most of his aerodynamic advantage.\n\nA descent followed by a flat to gently rolling section completes the 26.1-kilometre course.",
+      "favourites_raw": "*** Remco Evenepoel, Filippo Ganna, Joshua Tarling\n\n** Tadej Pogacar, Jonas Vingegaard, Juan Ayuso, Daan Hoole\n\n* Thymen Arensman, Paul Seixas, Brandon McNulty, Edoardo Affini",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Filippo Ganna"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Joshua Tarling"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Daan Hoole"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Brandon McNulty"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Edoardo Affini"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 1 July",
+      "status": "ok",
+      "error": null
+    },
+    "17": {
+      "stage": 17,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-17-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:49.299Z",
+      "title": "Tour de France 2026 Favourites stage 17: Sprinters or attackers",
+      "description": "Earlier in the Tour, the 17th stage would almost certainly have ended in a bunch sprint. With just four days to go before Paris, however, that is far from certain. The opening phase is fairly hilly, and if a strong breakaway slips clear, the outcome could be very different.\n\n(Slideshow route/profile)\n\nThe opening phase is tailor-made for a strong breakaway to form. Anyone who still has the legs after nearly three weeks of racing has a golden opportunity to make a move that could turn out to be glorious at the end of the day. If the likes of Matej Mohoric, Kasper Asgreen, Quinn Simmons, Mathieu van der Poel and Jasper Stuyven (to name just a few) join forces, the sprint teams will have a hard time to keep things under control.\n\nFeaturing four climbs, the opening 60 kilometres are hilly indeed. The toughest is the Col des Prés (3.5 kilometres at 6.8%), while the other three are around 1.5 kilometres long at just over 5%. Nothing too severe, but after almost three weeks of racing, more than enough for a strong breakaway to build a significant advantage.\n\nAround halfway through the stage, the riders also tackle the Col de Couz (8 kilometres at 3%), before the finale serves up one last obstacle. With just 3 kilometres remaining, the road rises for 2.6 kilometres at an average gradient of 4%.\n\nAll in all, there are plenty of reasons why the sprint teams should not take a bunch finish for granted. Then again, with the redesigned final stage in Paris, this could well be the sprinters' last realistic opportunity for victory.\n\nMuch will depend on the strength of the breakaway. If only a small group of lesser-known riders slips away, the sprint teams will almost certainly commit fully to the chase. But if seasoned escape artists such as Matej Mohoric and Kasper Asgreen make the move, it becomes a different story. It would certainly not be the first time that a so-called sprinters' stage at the end of a Grand Tour is won from the breakaway.",
+      "favourites_raw": "*** Olav Kooij, Matej Mohoric, Maxim Van Gils, Dorian Godon\n\n** Tim Merlier, Jasper Philipsen, Kasper Asgreen, Quinn Simmons\n\n* Mathieu van der Poel, Jasper Stuyven, Mauro Schmid, Anthon Charmig",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Olav Kooij"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Matej Mohoric"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Maxim Van Gils"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Dorian Godon"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Tim Merlier"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Kasper Asgreen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Quinn Simmons"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mathieu van der Poel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jasper Stuyven"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Mauro Schmid"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Anthon Charmig"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 1 July",
+      "status": "ok",
+      "error": null
+    },
+    "18": {
+      "stage": 18,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-18-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:51.117Z",
+      "title": "Tour de France 2026 Favourites stage 18: Attackers in the Alps",
+      "description": "Stage 18 of the Tour de France kicks off a three-stage mountain trilogy. It is the easiest of the three, so you might expect the GC contenders to keep their powder dry for the two days ahead, that both finish in Alpe d’Huez. If so, the road will be open for a strong breakaway to fight for glory.\n\n(Slideshow route/profile)\n\nWho the lucky ones will be is hard to predict in advance. During a Grand Tour, there are always GC contenders whose GC ambitions have faded who transform into dangerous stage hunters. There are also strong climbers who target stage wins from the very start. With the tough stages now coming back-to-back in the final week, their time has also come.\n\nThe route is relatively straightforward for a mountain stage. The riders tackle 3,900 metres of climbing over 185.2 kilometres. After a flat opening of around 20 kilometres, the Côte d’Engins (11.4 kilometres at 5.4%) provides the first launch pad for strong breakaway climbers. Then comes the Côte de Monteynard (9.7 kilometres at 5%), before a prolonged rolling section featuring the Côte des Terrasses (2.5 kilometres at 6.5%) as its main difficulty.\n\nThe rolling terrain gradually turns into an uphill false flat in the final 32 kilometres. The Côte de Saint-Léger-les-Mélèzes spikes this section with around 20 kilometres to go (2.5 kilometres at 6.5%), after which the road continues to rise steadily towards the foot of the finish climb.\n\nThe road to the line in Orcières-Merlette averages 6.7% over 7.1 kilometres. It is a fairly steady effort.\n\nHow the race unfolds depends on the standings; we will update this article during the Tour.",
+      "favourites_raw": "*** Thymen Arensman, Remco Evenepoel, Tom Pidcock, Lenny Martinez, Torstein Træen\n\n** Luke Plapp, Lennert van Eetvelt, George Bennett, Mattias Skjelmose, Harold Tejada\n\n* Tadej Pogacar, Paul Seixas, Jonas Vingegaard, Warren Barguil, Valentin-Paret Peintre",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Torstein Træen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Luke Plapp"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lennert van Eetvelt"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "George Bennett"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mattias Skjelmose"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Harold Tejada"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Warren Barguil"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Valentin-Paret Peintre"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 1 July",
+      "status": "ok",
+      "error": null
+    },
+    "19": {
+      "stage": 19,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-19-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:52.885Z",
+      "title": "Tour de France 2026 Favourites stage 19: Monster stage to Alpe d&#039;Huez",
+      "description": "The final two mountain stages of the Tour de France both finish in Alpe d'Huez. Stage 19 takes the riders to the legendary ski resort via its iconic traditional ascent. Short, intense and packed with climbing, the race could provide the perfect opportunity for the eventual Tour winner to put the finishing touch on his triumph by conquering this monster stage.\n\n(Slideshow route/profile)\n\nLet us hope that the battle for the Tour title is still wide open at this point. Will it be Tadej Pogacar for a fifth crown? Jonas Vingegaard for a third? Paul Seixas for his first? Or... will we witness a complete shock?\n\nA Tour winner's palmarès almost feels incomplete without a victory atop Alpe d'Huez after its legendary 21 hairpin bends, especially following a stage as brutal as this one. Straight from the start, the riders tackle the Col Bayard (4.7 kilometres at 7.2%), before taking on the Col du Noyer (7.2 kilometres at 8.5%). After the descent, the route settles into several dozen kilometres of flat to gently rolling roads. In theory, that makes any breakaway relatively easy to control – assuming one has even formed after those opening climbs. It is entirely possible that nobody manages to get away, in which case the stage would appear tailor-made for the GC contenders.\n\nIf no breakaway has gone clear by then, a short climb from the shores of Lac du Sautet after 52 kilometres could provide another launch pad, although it is hardly a long effort: 2.7 kilometres at 6%. The rolling roads then continue before the Col d’Ornon signals the start of the decisive finale after just over 95 kilometres. Following the 5.4-kilometre climb at 6.4%, the riders descend to Bourg-d'Oisans, at the foot of the final ascent. From there, the road to Alpe d'Huez climbs for 13.8 kilometres at an average gradient of 8.1%.\n\nWe just suggested that every Tour de France winner should have an Alpe d'Huez stage victory on their palmarès, but that is perhaps a little unfair. Only five overall Tour winners have won a stage finishing in Alpe d'Huez: Fausto Coppi, Bernard Hinault, Joop Zoetemelk, Carlos Sastre and Geraint Thomas.\n\nHow the race unfolds depends on the standings; we will update this article during the Tour.",
+      "favourites_raw": "*** Tadej Pogacar, Jonas Vingegaard, Paul Seixas\n\n** Juan Ayuso, Thymen Arensman, Lenny Martinez, Isaac del Toro\n\n* Sepp Kuss, Remco Evenepoel, Richard Carapaz, Egan Bernal, Jai Hindley",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Isaac del Toro"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Sepp Kuss"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Richard Carapaz"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Egan Bernal"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jai Hindley"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 2 July",
+      "status": "ok",
+      "error": null
+    },
+    "20": {
+      "stage": 20,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-20-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:54.677Z",
+      "title": "Tour de France 2026 Favourites stage 20: Who conquers the toughest stage?",
+      "description": "Featuring the Col de la Croix de Fer, Col du Télégraphe, Col du Galibier, Col de Sarenne and a summit finish in Alpe d'Huez, the penultimate stage is, on paper, the toughest of the entire Tour de France. We expect a showdown between the GC contenders, although a strong breakaway rider could just as easily steal the honours.\n\n(Slideshow route/profile)\n\nThere is every chance that the GC contenders will not want to let victory in the toughest stage of this year's Tour slip through their fingers. Which brings us to the usual suspects: Tadej Pogacar and Jonas Vingegaard, with Paul Seixas waiting in the wings. Of the three, the Slovenian holds by far the strongest hand.\n\nStage 19 finishes on Alpe d'Huez via the traditional approach, while Stage 20 ends at the same location after an unprecedented finale. Rather than tackling the iconic climb with its 21 hairpins, the riders reach the ski resort via the Col de Sarenne. This 12.8-kilometre climb at an average gradient of 7.3% is followed by a 9-kilometre descent, featuring a gently rising section halfway down. The final sting then comes in the shape of a 3.7-kilometre kicker at 6.2%, with the opening 2 kilometres averaging just under 9%.\n\nBefore that finale, the riders must first conquer the Col de la Croix de Fer (24 kilometres at 5.2%), Col du Télégraphe (11.9 kilometres at 7.1%) and Col du Galibier (17.7 kilometres at 6.9%).\n\nHow the race unfolds depends on the standings; we will update this article during the Tour.",
+      "favourites_raw": "*** Tadej Pogacar, Jonas Vingegaard, Paul Seixas\n\n** Thymen Arensman, Lenny Martinez, Isaac del Toro, Sepp Kuss\n\n* Remco Evenepoel, Tobias Halland Johannessen, Juan Ayuso, Jai Hindley",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Jonas Vingegaard"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Thymen Arensman"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Lenny Martinez"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Isaac del Toro"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Sepp Kuss"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Remco Evenepoel"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Tobias Halland Johannessen"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Juan Ayuso"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jai Hindley"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 2 July",
+      "status": "ok",
+      "error": null
+    },
+    "21": {
+      "stage": 21,
+      "url": "https://www.cyclingstage.com/tour-de-france-2026-favourites/stage-21-contenders-tdf-2026/",
+      "scraped_at": "2026-07-12T11:12:56.446Z",
+      "title": "Tour de France 2026 Favourites stage 21: Heroes of the Elysian Fields",
+      "description": "Every rider who reaches the Champs-Élysées is a hero, but two earn a special place in history: the overall winner and the rider who triumphs in the final stage after the cobbled battle on Montmartre. Mathieu van der Poel, how about following in Wout van Aert's footsteps?\n\n(Slideshow route/profile)\n\nChamps-Élysées is French for Elysian Fields, a reference to the Elysium of Greek mythology – the final resting place of heroic souls. What a fitting finish for the world's greatest cycling race!\n\nFor years, the finale in Paris followed a familiar script, but the introduction of three finishing laps featuring the cobbled climb to Montmartre gave the final stage a new dimension last year. The hero of the day was Wout van Aert. He dropped Tadej Pogacar on the Côte de la Butte Montmartre before riding solo to victory. There will be no repeat this year, however, as the Belgian is unfortunately absent from the Tour.\n\nThe Côte de la Butte Montmartre climbs for 1.1 kilometres at an average gradient of 5.9%. The ascent is tackled three times in total, with the final passage coming 10.3 kilometres from the finish. From there, it is a straightforward run-in to the finish on the Champs-Élysées.",
+      "favourites_raw": "*** Mathieu van der Poel, Mads Pedersen, Tadej Pogacar\n\n** Tom Pidcock, Jasper Philipsen, Maxim Van Gils, Mathias Vacek\n\n* Magnus Cort, Jasper Stuyven, Arnaud De Lie, Paul Seixas, Matej Mohoric",
+      "favourites": [
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mathieu van der Poel"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Mads Pedersen"
+          ]
+        },
+        {
+          "tier": "***",
+          "team": null,
+          "riders": [
+            "Tadej Pogacar"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Tom Pidcock"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Jasper Philipsen"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Maxim Van Gils"
+          ]
+        },
+        {
+          "tier": "**",
+          "team": null,
+          "riders": [
+            "Mathias Vacek"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Magnus Cort"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Jasper Stuyven"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Arnaud De Lie"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Paul Seixas"
+          ]
+        },
+        {
+          "tier": "*",
+          "team": null,
+          "riders": [
+            "Matej Mohoric"
+          ]
+        }
+      ],
+      "weather_forecast": null,
+      "publication_info": "First published on 2 July",
       "status": "ok",
       "error": null
     }

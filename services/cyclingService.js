@@ -25,8 +25,13 @@ const DNF_BASE = { TTT:0.05, Flat:0.04, Hills:0.12, Mountain:0.25, ITT:0.03 };
 
 const BETA_CLIMB = 1.4, BETA_SPRINT = 0.9, BETA_GC = 0.7, BETA_FORM = 0.5;
 
-// ── 21 étapes TDF 2026 (données consolidées des fichiers cycling-design/stages/) ──
-const STAGES = [
+// ── 21 étapes TDF 2026 ─────────────────────────────────────────────────────────
+// Source unique : data/cycling/stages-calendar.json (partagé avec le scraper Node).
+// BUGFIX 2026-07-12 : le tableau inline hardcodait l'étape 10 au 2026-07-13, qui est
+// un jour de repos. Tout le calendrier était décalé d'un jour à partir de l'étape 10.
+// On lit désormais le JSON qui contient les dates corrigées (repos = 13 & 20 juillet),
+// avec ce tableau en fallback de sécurité si le fichier manque (ne jamais casser).
+const _STAGES_FALLBACK = [
   { stage:1, date:'2026-07-04', route:'Barcelona → Barcelona',     km:19.6,  type:'TTT',    elev:280,  country:'Spain', winnerType:'team' },
   { stage:2, date:'2026-07-05', route:'Tarragona → Barcelona',     km:168.3, type:'Hills',  elev:2100, country:'Spain', winnerType:'rider' },
   { stage:3, date:'2026-07-06', route:'Barcelona → Andorra',       km:182.0, type:'Mountain',elev:4200, country:'Andorra', winnerType:'rider' },
@@ -36,19 +41,40 @@ const STAGES = [
   { stage:7, date:'2026-07-10', route:'Perpignan → Montpellier',   km:165.0, type:'Flat',   elev:600,  country:'France', winnerType:'rider' },
   { stage:8, date:'2026-07-11', route:'Montpellier → Nîmes',       km:165.0, type:'Flat',   elev:800,  country:'France', winnerType:'rider' },
   { stage:9, date:'2026-07-12', route:'Nîmes → Puy de Dôme',      km:184.5, type:'Mountain',elev:3800, country:'France', winnerType:'rider' },
-  { stage:10,date:'2026-07-13', route:'Clermont-Ferrand → Bordeaux',km:210.0, type:'Flat',   elev:1200, country:'France', winnerType:'rider' },
-  { stage:11,date:'2026-07-14', route:'Bordeaux → Toulouse',       km:185.0, type:'Flat',   elev:700,  country:'France', winnerType:'rider' },
-  { stage:12,date:'2026-07-15', route:'Toulouse → Plateau de Beille',km:168.0,type:'Mountain',elev:4000,country:'France', winnerType:'rider' },
-  { stage:13,date:'2026-07-16', route:'Pamiers → Superbagnères',   km:145.0, type:'Mountain',elev:3800, country:'France', winnerType:'rider' },
-  { stage:14,date:'2026-07-17', route:'Tarbes → Hautacam',         km:152.0, type:'Mountain',elev:4500, country:'France', winnerType:'rider' },
-  { stage:15,date:'2026-07-18', route:'Pau → Pau (ITT)',           km:32.0,  type:'ITT',    elev:380,  country:'France', winnerType:'rider' },
-  { stage:16,date:'2026-07-20', route:'Agen → Limoges',            km:195.0, type:'Hills',  elev:1600, country:'France', winnerType:'rider' },
-  { stage:17,date:'2026-07-21', route:'Limoges → Alès',            km:188.0, type:'Hills',  elev:2000, country:'France', winnerType:'rider' },
-  { stage:18,date:'2026-07-22', route:'Alès → Valence',            km:210.0, type:'Hills',  elev:1800, country:'France', winnerType:'rider' },
-  { stage:19,date:'2026-07-23', route:'Valence → Col de la Madeleine',km:165.0,type:'Mountain',elev:4600,country:'France', winnerType:'rider' },
+  { stage:10,date:'2026-07-14', route:'Clermont-Ferrand → Bordeaux',km:210.0, type:'Flat',   elev:1200, country:'France', winnerType:'rider' },
+  { stage:11,date:'2026-07-15', route:'Bordeaux → Toulouse',       km:185.0, type:'Flat',   elev:700,  country:'France', winnerType:'rider' },
+  { stage:12,date:'2026-07-16', route:'Toulouse → Plateau de Beille',km:168.0,type:'Mountain',elev:4000,country:'France', winnerType:'rider' },
+  { stage:13,date:'2026-07-17', route:'Pamiers → Superbagnères',   km:145.0, type:'Mountain',elev:3800, country:'France', winnerType:'rider' },
+  { stage:14,date:'2026-07-18', route:'Tarbes → Hautacam',         km:152.0, type:'Mountain',elev:4500, country:'France', winnerType:'rider' },
+  { stage:15,date:'2026-07-19', route:'Pau → Pau (ITT)',           km:32.0,  type:'ITT',    elev:380,  country:'France', winnerType:'rider' },
+  { stage:16,date:'2026-07-21', route:'Agen → Limoges',            km:195.0, type:'Hills',  elev:1600, country:'France', winnerType:'rider' },
+  { stage:17,date:'2026-07-22', route:'Limoges → Alès',            km:188.0, type:'Hills',  elev:2000, country:'France', winnerType:'rider' },
+  { stage:18,date:'2026-07-23', route:'Alès → Valence',            km:210.0, type:'Hills',  elev:1800, country:'France', winnerType:'rider' },
+  { stage:19,date:'2026-07-24', route:'Valence → Col de la Madeleine',km:165.0,type:'Mountain',elev:4600,country:'France', winnerType:'rider' },
   { stage:20,date:'2026-07-25', route:'Grenoble → Isola 2000',     km:175.0, type:'Mountain',elev:4800, country:'France', winnerType:'rider' },
   { stage:21,date:'2026-07-26', route:'Thoiry → Paris Champs-Élysées',km:133.0,type:'Flat',  elev:600,  country:'France', winnerType:'rider' },
 ];
+// Recharge le calendrier si le fichier change (mtime), comme les autres caches du module.
+var _stagesCalendarMtime = -1;
+var STAGES = _STAGES_FALLBACK;
+function _loadStagesFromCalendar() {
+  try {
+    var path = require('path');
+    var fs = require('fs');
+    var calPath = path.join(__dirname, '..', 'data', 'cycling', 'stages-calendar.json');
+    if (!fs.existsSync(calPath)) return; // fallback reste actif
+    var stat = fs.statSync(calPath);
+    if (stat.mtimeMs === _stagesCalendarMtime) return; // inchangé
+    var raw = JSON.parse(fs.readFileSync(calPath, 'utf8'));
+    if (raw && Array.isArray(raw.stages) && raw.stages.length === 21) {
+      STAGES = raw.stages;
+      _stagesCalendarMtime = stat.mtimeMs;
+    }
+  } catch (e) {
+    // Silent fallback : on garde _STAGES_FALLBACK pour ne jamais casser le service.
+  }
+}
+_loadStagesFromCalendar();
 
 // ── Riders database (TDF 2026) ─────────────────────────────────────────────────
 const RIDERS = [
@@ -102,8 +128,30 @@ function _clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 function _empty(reason, extra) { return Object.assign({ ok: false, reason: reason || 'not_implemented', updatedAt: null }, extra || {}); }
 function _z(arr) { var v = arr.filter(function(x) { return x != null && isFinite(x); }); var n = v.length || 1; var m = v.reduce(function(a, b) { return a + b; }, 0) / n; var sd = Math.sqrt(v.reduce(function(a, b) { return a + (b - m) * (b - m); }, 0) / n) || 1; return { m: m, sd: sd }; }
 
+// ── Cache mémoire TTL (aligné sur le pattern f1Service.js/_cached) ────────────
+// FIX 2026-07-13 : _model() relançait 4000 sims Monte-Carlo à CHAQUE requête
+// /api/v1/cycling, alors que F1/basket/CS2 cachent tous leur sortie modèle. Le
+// cyclisme est le seul vertical sans cache mémoire → gaspi CPU notable sous
+// charge. On réutilise le même helper _cached que f1Service.js (éprouvé).
+var TTL_MODEL = 10 * 60 * 1000; // sortie modèle : 10 min (aligné F1 TTL_BETS=15min,
+                                // plus court car l'étape peut changer d'un jour à l'autre)
+var _cycCache = {};
+function _cached(key, ttl, loader) {
+  var c = _cycCache[key];
+  if (c && (Date.now() - c.ts) < ttl) return c.data;
+  // Loader synchrone ici (_model ne fait pas d'I/O réseau, seulement du calcul CPU)
+  var data = null;
+  try { data = loader(); } catch (e) { data = null; }
+  if (data != null) { _cycCache[key] = { ts: Date.now(), data: data }; return data; }
+  // En cas d'échec : sert l'ancienne valeur (stale vaut mieux que rien), comme f1Service
+  return c ? c.data : null;
+}
+// Invalidation explicite (utile si on veut forcer un refresh après scraping)
+function _invalidateCycModelCache() { _cycCache = {}; }
+
 // ── Find current stage ─────────────────────────────────────────────────────────
 function _currentStage() {
+  _loadStagesFromCalendar(); // recharge si le calendrier a changé (scraping/correction)
   var t = _today();
   for (var i = 0; i < STAGES.length; i++) { var s = STAGES[i]; if (s.date >= t) return s; }
   return STAGES[STAGES.length - 1];
@@ -213,9 +261,24 @@ function _generateBets(riders, stage, probs) {
 }
 
 // ── Main model ─────────────────────────────────────────────────────────────────
+// FIX 2026-07-13 : sortie modèle cachée 10 min (TTL_MODEL) pour ne pas relancer
+// 4000 sims Monte-Carlo à chaque requête. La clé intègre le n° d'étape + la date
+// du jour → invalidation naturelle quand _currentStage() change (changement de
+// jour ou passage en nouvelle étape), sans logique d'invalidation manuelle.
+// Fallback-safe : si le calcul échoue, sert l'ancienne valeur (comme f1Service).
 async function _model() {
   var stage = _currentStage();
   if (!stage) return null;
+  // Clé de cache : étape + date du jour. Si la date change (minuit Europe/Paris)
+  // ou que le calendrier fait avancer l'étape courante, la clé change → recompute.
+  var cacheKey = 'cyc_model_s' + stage.stage + '_' + _today();
+  var cached = _cached(cacheKey, TTL_MODEL, function () {
+    return _computeModel(stage);
+  });
+  return cached;
+}
+
+function _computeModel(stage) {
   var ridersR = RIDERS.map(function(r) {
     return Object.assign({}, r, { _strength: _strengthForStage(r, stage) });
   });
@@ -633,20 +696,35 @@ async function getStageFavourites(stageN, options) {
   };
 
   // Champs textuels : version EN par défaut, ou version traduite si dispo
-  if (lang !== 'en' && i18nData && i18nData.stages && i18nData.stages[String(stageN)] && i18nData.stages[String(stageN)].i18n && i18nData.stages[String(stageN)].i18n[lang]) {
-    var tr = i18nData.stages[String(stageN)].i18n[lang];
-    response.title = tr.title || stageData.title;
-    response.description = tr.description || stageData.description;
-    response.weather_forecast = tr.weather_forecast || stageData.weather_forecast;
-    response.publication_info = tr.publication_info || stageData.publication_info;
+  // BUGFIX 2026-07-12 : le drapeau `translated` était mis à `(lang !== 'en')` même
+  // quand aucune traduction n'existait → le frontend affichait un badge "Traduit auto"
+  // sur du contenu anglais brut. Désormais `translated` reflète la réalité : true
+  // seulement si on a réellement servi une traduction pour cette langue.
+  var trEntry = null;
+  if (lang !== 'en' && i18nData && i18nData.stages && i18nData.stages[String(stageN)] && i18nData.stages[String(stageN)].i18n) {
+    trEntry = i18nData.stages[String(stageN)].i18n[lang];
+  }
+  if (trEntry) {
+    // Traduction trouvée pour cette langue : on l'utilise champ par champ, avec
+    // fallback individuel sur l'EN si un champ spécifique manque dans la traduction.
+    response.title = trEntry.title || stageData.title;
+    response.description = trEntry.description || stageData.description;
+    response.weather_forecast = trEntry.weather_forecast || stageData.weather_forecast;
+    response.publication_info = trEntry.publication_info || stageData.publication_info;
     response.translated = true;
     response.translated_at = i18nData.i18n_last_update;
   } else {
+    // Aucune traduction trouvée pour cette langue : on sert l'EN brut.
     response.title = stageData.title;
     response.description = stageData.description;
     response.weather_forecast = stageData.weather_forecast;
     response.publication_info = stageData.publication_info;
-    response.translated = (lang !== 'en');
+    response.translated = false;
+    // Indique au frontend pourquoi on sert de l'EN (pour affichage honnête)
+    if (lang !== 'en') {
+      response.fallback_reason = 'no_translation';
+      response.fallback_lang = 'en';
+    }
   }
 
   // Favouris avec photos + logos
@@ -821,6 +899,82 @@ async function getClassifications(stageN, options) {
   };
 }
 
+// ── Health check (fraîcheur du scraping) ───────────────────────────────────────
+// Vérifie l'âge de data/cycling/stage-favourites.json pour détecter un pipeline
+// de scraping à l'arrêt. Sert la route /api/v1/cycling/_health.
+// Alerte si > STALE_THRESHOLD_H (défaut 24h).
+var STALE_THRESHOLD_H = 24;
+async function getHealth() {
+  _loadStagesFromCalendar();
+  var result = {
+    ok: true,
+    status: 'healthy',
+    checked_at: new Date().toISOString(),
+    current_stage: null,
+    scraped_stages: 0,
+    expected_stages: STAGES.length,
+    missing_stages: [],
+    last_update: null,
+    last_update_age_hours: null,
+    stale: false,
+    calendar_version: null,
+  };
+
+  // Étape courante selon le calendrier
+  var cs = _currentStage();
+  if (cs) result.current_stage = cs.stage;
+
+  // Lecture du JSON scrapé
+  var data = _loadStageFavourites();
+  if (!data) {
+    result.ok = false;
+    result.status = 'critical';
+    result.error = 'stage-favourites.json introuvable — scraper jamais exécuté ou fichier supprimé';
+    return result;
+  }
+  result.last_update = data.last_update || null;
+  if (data.stages) {
+    result.scraped_stages = Object.keys(data.stages).length;
+    // Étapes manquantes (parmi les 21 attendues)
+    for (var i = 1; i <= STAGES.length; i++) {
+      if (!data.stages[String(i)]) result.missing_stages.push(i);
+    }
+  }
+
+  // Âge du dernier update
+  if (data.last_update) {
+    try {
+      var ageMs = Date.now() - new Date(data.last_update).getTime();
+      result.last_update_age_hours = +(ageMs / 3600000).toFixed(2);
+      if (result.last_update_age_hours > STALE_THRESHOLD_H) {
+        result.stale = true;
+        result.status = 'stale';
+      }
+    } catch (e) {
+      result.last_update_age_hours = null;
+    }
+  } else {
+    result.stale = true;
+    result.status = 'stale';
+  }
+
+  // Version du calendrier (pour confirmer qu'on lit le fichier corrigé)
+  try {
+    var path = require('path');
+    var fs = require('fs');
+    var calPath = path.join(__dirname, '..', 'data', 'cycling', 'stages-calendar.json');
+    var raw = JSON.parse(fs.readFileSync(calPath, 'utf8'));
+    result.calendar_version = raw.version || null;
+  } catch (e) { /* ignore */ }
+
+  // Statut dégradé si étapes manquantes
+  if (result.missing_stages.length && result.status === 'healthy') {
+    result.status = 'degraded';
+  }
+
+  return result;
+}
+
 module.exports = {
   getCyclingStages: getCyclingStages,
   getCyclingBets: getCyclingBets,
@@ -828,6 +982,7 @@ module.exports = {
   getCyclingFull: getCyclingFull,
   getStageFavourites: getStageFavourites,
   getClassifications: getClassifications,
+  getHealth: getHealth,
   // Expose pour la route statique images
   _getRiderPhotoPath: function (slug) {
     var photos = _loadPhotosIndex();
