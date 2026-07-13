@@ -1,1 +1,15 @@
 TODO.md text
+
+# Scripts shell doivent rester en LF (CRLF casse set -euo pipefail sur Linux).
+# Évite le bug "set: pipefail: invalid option name" au déploiement depuis Windows.
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# Fichiers SQL (exécutés par sqlite3 sur le VPS) — LF par sécurité.
+*.sql       text eol=lf
+
+# Fichiers Windows-only — laissent CRLF intact.
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
