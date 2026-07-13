@@ -1,0 +1,14 @@
+description = "Generate a new screen design with Stitch"
+agent = "build"
+model = "opencode/big-pickle"
+
+[prompt]
+template = """
+Use the stitch-design-generate skill to create a new screen design in Stitch.
+Project context: {{input}}
+
+1. Load the skill: skill load stitch-design-generate
+2. Follow the SKILL.md instructions for generate-from-text flow
+3. Apply the current design system from .stitch/DESIGN.md if available
+4. Save results to .stitch/screens/
+"""

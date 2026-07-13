@@ -1,0 +1,8 @@
+{
+  "test": "venv_exists",
+  "started_at": "2026-07-13T18:50:12.816Z",
+  "venv_dir": "C:\\Users\\David\\ZCodeProject\\pariscore\\.venv-langflow",
+  "exists": true,
+  "python": true,
+  "success": true
+}

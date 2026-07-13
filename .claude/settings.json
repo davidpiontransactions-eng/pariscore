@@ -2,14 +2,25 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
-            "type": "command",
             "command": "bash $HOME/.claude/skills/gstack/careful/bin/check-careful.sh",
-            "statusMessage": "Vérification commandes destructives..."
+            "statusMessage": "Vérification commandes destructives...",
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": "Bash"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bd prime --hook-json",
+            "type": "command"
+          }
+        ],
+        "matcher": ""
       }
     ]
   }

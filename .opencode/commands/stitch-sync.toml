@@ -1,0 +1,13 @@
+description = "Sync frontend code to Stitch design"
+agent = "build"
+model = "opencode/big-pickle"
+
+[prompt]
+template = """
+Use the stitch-design-code-to-design skill to convert our frontend code to a Stitch design.
+
+1. skill load stitch-design-code-to-design
+2. Extract HTML from the running app
+3. Extract DESIGN.md from src/
+4. Upload to Stitch project
+"""

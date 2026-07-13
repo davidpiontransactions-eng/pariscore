@@ -1,0 +1,7 @@
+{
+  "test": "wrapper_status_stopped",
+  "started_at": "2026-07-13T18:50:13.163Z",
+  "returncode": 1,
+  "output": "{\n  \"pid\": null,\n  \"process_running\": false,\n  \"pid_file\": false,\n  \"venv_exists\": true,\n  \"langflow_binary\": true\n}\n",
+  "success": true
+}

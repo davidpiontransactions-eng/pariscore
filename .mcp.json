@@ -38,7 +38,10 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-memory"
-      ]
+      ],
+      "env": {
+        "MEMORY_FILE_PATH": "C:/Users/David/ZCodeProject/pariscore/.context/memory.jsonl"
+      }
     },
     "git": {
       "command": "uvx",
@@ -54,6 +57,51 @@
         "-y",
         "@playwright/mcp@latest"
       ]
+    },
+    "frontendchecklist": {
+      "type": "http",
+      "url": "https://mcp.frontendchecklist.io"
+    },
+    "stitch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@_davideast/stitch-mcp",
+        "proxy"
+      ],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}"
+      }
+    },
+    "crawl4ai": {
+      "command": "python",
+      "args": [
+        "C:/Users/David/ZCodeProject/pariscore/scripts/crawl4ai-mcp-server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "scrapling": {
+      "command": "scrapling",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "scrapy": {
+      "command": "python",
+      "args": [
+        "C:/Users/David/ZCodeProject/pariscore/scripts/scrapy-mcp-server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
     }
   }
 }
