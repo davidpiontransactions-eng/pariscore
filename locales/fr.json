@@ -3134,5 +3134,7 @@
   "cyc.tier_contender": "Prétendants",
   "cyc.tier_outsider": "Outsiders",
   "cyc.translation_badge": "Traduit automatiquement",
-  "cyc.translated_at": "Traduit le"
+  "cyc.translated_at": "Traduit le",
+  "cyc.source_only": "Texte source (EN)",
+  "cyc.not_yet_translated_title": "Traduction en cours de génération"
 }

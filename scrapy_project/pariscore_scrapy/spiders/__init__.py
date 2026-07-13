@@ -1,0 +1,1 @@
+"""PariScore Scrapy spiders package."""

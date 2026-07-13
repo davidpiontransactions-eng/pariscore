@@ -1,0 +1,16 @@
+description = "Start a Devin Fusion session: main agent + sidekick agent for cost-efficient frontier-quality engineering."
+
+prompt = """
+You are entering a Devin Fusion session.
+
+1. Load the `devin-fusion` skill.
+2. Adopt the `fusion-main` agent persona.
+3. Ask the user for the task if not already provided.
+4. Classify the task (judgment load vs mechanical load).
+5. Produce a plan where each step is assigned to either `main` or `sidekick`.
+6. Delegate sidekick steps via the `task` tool.
+7. Maintain `.opencode/fusion-state.json`.
+8. Perform final review before reporting to the user.
+
+Start by confirming you are in Fusion mode and summarize the classification of the user's request.
+"""

@@ -1,0 +1,13 @@
+description = "Generate multi-page site via Stitch loop"
+agent = "build"
+model = "opencode/big-pickle"
+
+[prompt]
+template = """
+Use the stitch-utils-loop skill to generate a complete multi-page website with Stitch.
+
+1. skill load stitch-utils-loop
+2. Read .stitch/next-prompt.md (the baton)
+3. Follow the baton protocol
+4. Generate, integrate, verify, pass the baton
+"""

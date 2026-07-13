@@ -2,3 +2,16 @@ sofascore-wrapper==1.1.1
 soccerdata==1.9.0
 ScraperFC>=4.5.0
 playwright>=1.42.0
+# Scrapling — adaptive web scraping (3 fetchers + MCP server natif)
+# pip install "scrapling[fetchers,ai,shell]" puis `scrapling install`
+scrapling[fetchers,ai,shell]>=0.4.11
+# Scrapy — framework de crawling massif (spiders + pipelines + MCP wrapper)
+scrapy>=2.17.0
+# Langflow — NON INCLUS ICI (venv isolé séparé).
+# Langflow tire ~200 deps (tout LangChain + FastAPI + SQLAlchemy) qui casseraient
+# les versions pydantic/starlette/uvicorn dont Scrapling et le MCP dépendent.
+# Installé dans .venv-langflow/ via :
+#   uv venv .venv-langflow --python 3.12
+#   VIRTUAL_ENV=$(pwd)/.venv-langflow uv pip install langflow
+# Ou via : node scripts/langflow-cli.js install
+# Skill: /langflow — service web (port 7860), MCP bidirectionnel.

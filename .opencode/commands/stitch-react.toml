@@ -1,0 +1,13 @@
+description = "Convert Stitch designs to React components"
+agent = "build"
+model = "opencode/big-pickle"
+
+[prompt]
+template = """
+Use the stitch-build-react skill to convert Stitch screens to React components.
+
+1. skill load stitch-build-react
+2. Follow all GATE phases (fetch, extract, validate)
+3. Generate components in src/components/stitch/
+4. Run validation scripts
+"""

@@ -61,6 +61,18 @@
       "skillPath": "skills/cfb-data/SKILL.md",
       "computedHash": "377350c0f603921f68b092d7f8d2d21404a8e85fb32de893cfc953adf87deca8"
     },
+    "code-review-xeaser": {
+      "source": "xeaser/dotfiles",
+      "sourceType": "github",
+      "skillPath": "opencode/skills/code-review/SKILL.md",
+      "computedHash": "8700c5f4268e99f20866fe936c5bb738100a2ac9b5c35a3fc98150c294bbb814"
+    },
+    "code-reviewer": {
+      "source": "farmage/opencode-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-reviewer/SKILL.md",
+      "computedHash": "8caf9e91a229fed73c7edc7d018eae482acf29f24a61f4cdc47c8a20a06e4103"
+    },
     "compress": {
       "source": "juliusbrussee/caveman",
       "sourceType": "github",
@@ -78,6 +90,12 @@
       "sourceType": "github",
       "skillPath": "skills/golf-data/SKILL.md",
       "computedHash": "125ad7b9696e5ae32ffbf6203920830bed53cdb972e37741a78645caa1f9e551"
+    },
+    "hallmark": {
+      "source": "nutlope/hallmark",
+      "sourceType": "github",
+      "skillPath": "skills/hallmark/SKILL.md",
+      "computedHash": "d3a20aae61e43793d74932c92b63bcad5882e73ec1c8545b858910fd95b25136"
     },
     "higgsfield-generate": {
       "source": "higgsfield-ai/skills",
@@ -156,6 +174,12 @@
       "sourceType": "github",
       "skillPath": "skills/sports-reporter/SKILL.md",
       "computedHash": "352c04ec653f607a93b36438c23f54efe4e831f30e6f4e64eae54e72da14c6aa"
+    },
+    "staff-engineer-review": {
+      "source": "TheArchitectit/awesome-opencode-skills",
+      "sourceType": "github",
+      "skillPath": "staff-engineer-review/SKILL.md",
+      "computedHash": "b3258b672a551842650d3deac2fa1b9dda02f417c8da9e1c651b099d972bda39"
     },
     "tennis-data": {
       "source": "machina-sports/sports-skills",

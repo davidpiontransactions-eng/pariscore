@@ -3134,5 +3134,7 @@
   "cyc.tier_contender": "Contenders",
   "cyc.tier_outsider": "Outsiders",
   "cyc.translation_badge": "Auto-translated",
-  "cyc.translated_at": "Translated on"
+  "cyc.translated_at": "Translated on",
+  "cyc.source_only": "Source text (EN)",
+  "cyc.not_yet_translated_title": "Translation being generated"
 }

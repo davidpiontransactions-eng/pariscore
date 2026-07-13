@@ -1,0 +1,7 @@
+{
+  "test": "binary_present",
+  "started_at": "2026-07-13T18:50:12.817Z",
+  "binary": "C:\\Users\\David\\ZCodeProject\\pariscore\\.venv-langflow\\Scripts\\langflow.exe",
+  "exists": true,
+  "success": true
+}

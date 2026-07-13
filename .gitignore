@@ -90,47 +90,75 @@ exports/*.docx
 exports/*.pdf
 exports/*.xlsx
 
-# =============================================================================
-# Hardening post-purge (2026-07-13) — éviter nouvelle pollution historique
-# Règles déduites des 3.5 Go de blobs purgés via git-filter-repo
-# =============================================================================
-
-# DB corrompues (sauvegardées par crash recovery — jamais à commiter)
-*.db.corrupt-*
-pariscore.db.corrupt-*
-
-# Backups DB datés (cron deploy)
-.deploy-backups/
-*.db.20*       # snapshots datés type pariscore.db.20260705-032941
-*.db-backup-*
-
-# Backups historiques datés (cron daily backup)
-historique_*.json.bak_*
-historique_*.json.bak
-*.json.bak_*
-
-# Binaires / installateurs non-projet
-*.exe
-*.msi
-*.dmg
-
-# Archives volumineuses (zips de release)
-download/*.zip
-download/*.tar.gz
-download/*.7z
-
-# Dossiers internals (jamais à pousser)
+# Beads / Dolt files (added by bd init)
 .dolt/
-beads/
-.backups/
-backups/
+.beads-credential-key
+.beads/proxieddb/
 
-# Dumps et exports
-*.dump
-*.sql.gz
-*.dump.gz
+# =============================================================================
+# Scrapy artifacts (intégration 2026-07-13)
+.archive/
+.codex/
+.zcode/
+.stitch/
+5.5/
 
-# Outils/scripts persos non-projet
-prompt
-.opencode/
-.cursorsql/
+# Generated screenshots / temp files
+hybrid-*.png
+_tmp_*.js
+qa-*.js
+verify-*.bat
+verify-*.ps1
+nul
+
+# Beads runtime
+.beads/interactions.jsonl
+.beads/*.jsonl
+
+# Context runtime
+.context/memory.jsonl
+
+# scrapy_project/
+scrapy_project/.scrapy/
+scrapy_project/.mcp-output/
+scrapy_project/.mcp-crawl-*.jsonl
+data/scrapy-tests/
+data/scrapling-tests/
+
+# =============================================================================
+# Langflow artifacts (intégration 2026-07-13)
+# =============================================================================
+# Venv isolé (~2GB) — ne jamais committer
+.venv-langflow/
+# Runtime state (PID + logs)
+.langflow/
+# Langflow SQLite DB (flows définis localement)
+langflow.db
+langflow.db-*
+
+# =============================================================================
+# system-design-primer clone (intégration 2026-07-13)
+# =============================================================================
+# Clone shallow (24MB) de donneMartin/system-design-primer — ressource de lecture.
+# Pas committé (dispo publiquement sur GitHub, alourdirait le repo pour rien).
+# Le skill .agents/skills/system-design/ EST committé (il encode les principes).
+# Pour re-cloner : git clone --depth 1 https://github.com/donnemartin/system-design-primer.git docs/system-design-primer
+docs/system-design-primer/
+
+# =============================================================================
+# Visual regression baselines (skill visual-regression 2026-07-13)
+# =============================================================================
+# Screenshots avant/après pour valider les modifs design — locaux, non committés.
+.hallmark-baseline/
+
+# System-level skills installed in project (have own .git)
+.agents/skills/gantt-chart/
+
+# =============================================================================
+# Multi-plateforme skills sync (2026-07-14)
+# =============================================================================
+# .opencode/skills/ est une junction vers .agents/skills/ (source unique).
+# Ce n'est PAS un vrai dossier — git ne doit pas le tracker.
+.opencode/skills
+# Backup de l'ancien dossier .opencode/skills/ avant junction (à supprimer manuellement après validation)
+.opencode/skills.bak/

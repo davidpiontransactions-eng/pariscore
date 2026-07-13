@@ -1,0 +1,7 @@
+{
+  "test": "langflow_version",
+  "started_at": "2026-07-13T18:50:12.818Z",
+  "returncode": 0,
+  "output": "1.10.2",
+  "success": true
+}

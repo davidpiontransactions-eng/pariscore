@@ -1,0 +1,47 @@
+{
+  "tests": [
+    {
+      "test": "venv_exists",
+      "started_at": "2026-07-13T18:50:12.816Z",
+      "venv_dir": "C:\\Users\\David\\ZCodeProject\\pariscore\\.venv-langflow",
+      "exists": true,
+      "python": true,
+      "success": true
+    },
+    {
+      "test": "binary_present",
+      "started_at": "2026-07-13T18:50:12.817Z",
+      "binary": "C:\\Users\\David\\ZCodeProject\\pariscore\\.venv-langflow\\Scripts\\langflow.exe",
+      "exists": true,
+      "success": true
+    },
+    {
+      "test": "langflow_version",
+      "started_at": "2026-07-13T18:50:12.818Z",
+      "returncode": 0,
+      "output": "1.10.2",
+      "success": true
+    },
+    {
+      "test": "wrapper_help",
+      "started_at": "2026-07-13T18:50:13.078Z",
+      "returncode": 0,
+      "has_commands": true,
+      "success": true
+    },
+    {
+      "test": "wrapper_status_stopped",
+      "started_at": "2026-07-13T18:50:13.163Z",
+      "returncode": 1,
+      "output": "{\n  \"pid\": null,\n  \"process_running\": false,\n  \"pid_file\": false,\n  \"venv_exists\": true,\n  \"langflow_binary\": true\n}\n",
+      "success": true
+    }
+  ],
+  "summary": {
+    "venv_exists": true,
+    "binary_present": true,
+    "langflow_version": true,
+    "wrapper_help": true,
+    "wrapper_status_stopped": true
+  }
+}
