@@ -27062,7 +27062,18 @@ window.Scope._esc = window.Scope._esc || function(s){return String(s==null?"":s)
       return tour === t || tour.indexOf(t + ' ') === 0 || tour.indexOf(' ' + t) !== -1 || tour.indexOf('(' + t) !== -1;
     });
   }
-  function getPrematch() { return filterByTournament(_state.matches.filter(function (m) { return !m._isLive && !/live|progress|playing|in.play/i.test(String(m.status || '')); })); }
+  function getPrematch() {
+    // Garde-fou temporel côté client (défense en profondeur): si le backend
+    // est injoignable, _state.matches stale est re-rendu par le .catch du fetch.
+    // On exclut ici les matchs passés (>30min) pour ne jamais afficher de
+    // "match fantôme", même en mode dégradé.
+    var _now = Date.now(), _graceMs = 30 * 60 * 1000;
+    return filterByTournament(_state.matches.filter(function (m) {
+      if (m._isLive || /live|progress|playing|in.play/i.test(String(m.status || ''))) return false;
+      var _ms = m.start_time ? Date.parse(m.start_time) : NaN;
+      return !Number.isFinite(_ms) || _ms >= _now - _graceMs;
+    }));
+  }
   function getLive() { return filterByTournament(_state.matches.filter(function (m) { return m._isLive || /live|progress|playing|in.play/i.test(String(m.status || '')); })); }
 
   // Recherche texte — filtre sur nom joueur (p1/p2) et tournoi.

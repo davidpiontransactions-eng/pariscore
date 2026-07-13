@@ -39758,6 +39758,26 @@ async function _buildTennisValueBetsCore({ date }) {
 
   for (const _e of enriched) { try { _e.predictive = computeTennisPredictiveBets(_e); } catch (e) { _e.predictive = null; _trackCatch('tennis', 'vb_predictive_bets', e); } }
   console.log(`  [TennisVB] build done — ${enriched.length} matchs en ${Date.now() - _vbT0}ms · snap_stored=${_snapStored} · live_rehydrated=${_rehydratedLive} · live_orphans=${_liveOrphans} · snap_map_size=${_tennisEnrichSnap.size}`);
+
+  // Garde-fou temporel: exclut les matchs passés non reclassés par BSD
+  // (cause des "matchs fantômes" en prematch — ex: match J-7 dont le statut
+  // BSD est resté scheduled/NS/vide). Grâce 30min pour drift horloge +
+  // délai détection live (un match qui démarre ne doit pas disparaître).
+  // Même logique qu'en 41970 (endpoint /upcoming), appliquée à value-bets.
+  const _TN_NOW_MS = Date.now();
+  const _TN_PAST_GRACE_MS = 30 * 60 * 1000;
+  const _tnBefore = enriched.length;
+  for (let _i = enriched.length - 1; _i >= 0; _i--) {
+    const _st = enriched[_i].start_time;
+    const _ms = _st ? Date.parse(_st) : NaN;
+    if (Number.isFinite(_ms) && _ms < _TN_NOW_MS - _TN_PAST_GRACE_MS) {
+      enriched.splice(_i, 1); // match passé → retirer
+    }
+  }
+  if (enriched.length < _tnBefore) {
+    console.log(`  [TennisVB] garde-fou temporel: ${_tnBefore - enriched.length} match(s) passé(s) exclu(s) (grâce 30min)`);
+  }
+
   return {
     status: 200,
     body: {
