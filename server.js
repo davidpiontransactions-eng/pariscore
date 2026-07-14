@@ -39228,18 +39228,21 @@ async function _buildTennisValueBetsCore({ date }) {
   // Fallback : le winner_rank/loser_rank du match le plus récent dans tennis_matches
   // (25437 rows, ~99% couverture). C'est le rang officiel ATP/WTA au moment du
   // dernier match joué — suffisamment frais (le rang évolue lentement).
+  // Note SQLite : ORDER BY interdit dans les SELECT d'un UNION ALL — on prend
+  // le min(winner_rank, loser_rank) du match le plus récent du joueur (gagnant
+  // ou perdant), ce qui reflète son vrai rang au dernier match joué.
   const _stmtRecentRank = (() => {
     try {
       return sqldb.prepare(
         `SELECT rk FROM (
-           SELECT winner_rank AS rk FROM tennis_matches
-             WHERE LOWER(winner_name) = LOWER(?) AND winner_rank IS NOT NULL AND winner_rank > 0
-             ORDER BY tourney_date DESC LIMIT 1
+           SELECT winner_name AS nm, winner_rank AS rk, tourney_date AS td FROM tennis_matches
+             WHERE winner_rank IS NOT NULL AND winner_rank > 0
            UNION ALL
-           SELECT loser_rank AS rk FROM tennis_matches
-             WHERE LOWER(loser_name) = LOWER(?) AND loser_rank IS NOT NULL AND loser_rank > 0
-             ORDER BY tourney_date DESC LIMIT 1
-         ) ORDER BY rk LIMIT 1`
+           SELECT loser_name AS nm, loser_rank AS rk, tourney_date AS td FROM tennis_matches
+             WHERE loser_rank IS NOT NULL AND loser_rank > 0
+         )
+         WHERE LOWER(nm) = LOWER(?)
+         ORDER BY td DESC LIMIT 1`
       );
     } catch (_) { console.warn('[vb] _stmtRecentRank prepare', _?.message); return null; }
   })();
@@ -39259,7 +39262,7 @@ async function _buildTennisValueBetsCore({ date }) {
     // 2. Fallback : winner_rank/loser_rank du dernier match (tennis_matches)
     if (_stmtRecentRank) {
       try {
-        const row = _stmtRecentRank.get(n, n);
+        const row = _stmtRecentRank.get(n);
         if (row && row.rk) return row.rk;
       } catch (_) { /* rank indisponible */ }
     }
