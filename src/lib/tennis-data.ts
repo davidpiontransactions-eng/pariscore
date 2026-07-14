@@ -15,6 +15,21 @@ export type Player = {
   color: string; // hex, attached to the player
   form: ("W" | "L")[]; // most recent last
   country?: string;
+  // --- Stats enrichies (depuis pariscore.db via /api/tennis/player-stats) ---
+  // Optionnels : absents tant que le batch n'a pas été résolu. L'UI affiche
+  // un fallback `—` quand la valeur est null (joueur inconnu / base vide).
+  atpRank?: number | null;
+  wtaRank?: number | null;
+  /** Elo sur la surface du match (calculé, pas un alias de surfaceElo). */
+  dbEloSurface?: number | null;
+  /** Rang Elo Surface (classement du joueur sur cette surface). */
+  surfaceEloRank?: number | null;
+  /** Surface PowerScore [0-100]. */
+  sps?: number | null;
+  /** Rang SPS (classement du joueur sur cette surface). */
+  spsRank?: number | null;
+  /** Confiance du SPS (1 = sample suffisant). */
+  spsConfidence?: number | null;
 };
 
 export type H2HMatch = {

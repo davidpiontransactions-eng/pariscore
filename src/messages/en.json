@@ -496,5 +496,16 @@
     "count": "{n} selection(s)",
     "alreadyInSlip": "Already in bet slip",
     "vs": "vs"
+  },
+  "statline": {
+    "rank": "Ranking",
+    "rankUnknown": "Unknown ranking",
+    "elo": "Standard Elo",
+    "eloUnknown": "Unknown Elo (player not found in database)",
+    "surfaceTitle": "Surface: {surface}",
+    "eloSurface": "Surface Elo",
+    "surfaceDetails": "Surface stats details",
+    "confidence": "Confidence {pct}% · {n} matches",
+    "sparklineAria": "30-day Elo trend {name}"
   }
 }

@@ -21,10 +21,10 @@ import {
 import { useTranslations } from "next-intl";
 import { ProbabilityRing } from "./probability-ring";
 import { ProbabilityBar } from "./probability-bar";
-import { Sparkline } from "./sparkline";
 import { FormDots } from "./form-dots";
 import { StatChip } from "./stat-chip";
 import { BacktestBadge } from "./backtest-badge";
+import { PlayerStatline } from "./player-statline";
 import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -33,6 +33,19 @@ import { useEloSparkline } from "@/hooks/use-elo-sparkline";
 import { useEmailAlerts } from "@/hooks/use-email-alerts";
 import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";
+import { usePlayerStats } from "@/hooks/use-player-stats";
+
+// Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
+// des stats enrichies. Identique à player-matcher.ts:normalize et db.ts.
+function normForLookup(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 import { useAnalytics } from "@/components/analytics-provider";
 import {
   Tooltip,
@@ -103,6 +116,14 @@ export function MatchCard({
   const bestOddA = match.allOdds?.reduce((max, o) => (o.decimalA > max.decimalA ? o : max));
   const bestOddB = match.allOdds?.reduce((max, o) => (o.decimalB > max.decimalB ? o : max));
   const { playerA, playerB, stats, model, modelUpdatedAt } = match;
+
+  // Stats enrichies (Elo Surface, SPS, rangs) depuis pariscore.db. Un seul
+  // fetch SWR pour les 2 joueurs du match, indexé par nom normalisé. Retourne
+  // un map vide si la base est absente (local dev) → le statline affiche —.
+  const playerStatsNames = `${playerA.name},${playerB.name}`;
+  const { data: playerStatsMap } = usePlayerStats(playerStatsNames, stats.surface);
+  const statsA = playerStatsMap?.[normForLookup(playerA.name)];
+  const statsB = playerStatsMap?.[normForLookup(playerB.name)];
 
   const isLive = liveState?.isLive === true;
   // Live probabilities override the static prematch ones when the match is live.
@@ -312,6 +333,8 @@ export function MatchCard({
             sparklineData={sparklineA}
             bestOdd={bestOddA ? { decimal: bestOddA.decimalA, bookmaker: bestOddA.bookmaker } : undefined}
             terminalMode={terminalMode}
+            enrichedStats={statsA}
+            surface={stats.surface}
           />
           <div className="flex items-center justify-center sm:py-0">
             <div
@@ -336,6 +359,8 @@ export function MatchCard({
             sparklineData={sparklineB}
             bestOdd={bestOddB ? { decimal: bestOddB.decimalB, bookmaker: bestOddB.bookmaker } : undefined}
             terminalMode={terminalMode}
+            enrichedStats={statsB}
+            surface={stats.surface}
           />
         </div>
 
@@ -662,6 +687,8 @@ function PlayerBlock({
   sparklineData = [],
   bestOdd,
   terminalMode = false,
+  enrichedStats,
+  surface,
 }: {
   player: TennisMatch["playerA"];
   prob: number;
@@ -673,6 +700,10 @@ function PlayerBlock({
   sparklineData?: number[];
   bestOdd?: { decimal: number; bookmaker: string };
   terminalMode?: boolean;
+  /** Stats enrichies résolues (Elo Surface, SPS, rangs) pour ce joueur. */
+  enrichedStats?: import("@/lib/tennis-stats/types").PlayerStats | null;
+  /** Surface du match (libellé UI). */
+  surface?: string;
 }) {
   // Photo dimensions: full 72px in simple mode, shrunk to 40px in terminal
   // mode so more of the card real-estate goes to the dense data overlays
@@ -725,21 +756,15 @@ function PlayerBlock({
         >
           {player.name}
         </h3>
-        <div className="mt-0.5 flex items-center gap-2 font-mono text-xs text-muted-foreground">
-          <span>#{player.rank}</span>
-          <span className="text-border">·</span>
-          <span>Elo {player.elo}</span>
-          {sparklineData.length > 1 && (
-            <Sparkline
-              data={sparklineData}
-              width={sparkWidth}
-              height={sparkHeight}
-              color={player.color}
-              strokeWidth={1.5}
-              ariaLabel={`Tendance Elo 30 jours ${player.name}`}
-            />
-          )}
-        </div>
+        <PlayerStatline
+          player={player}
+          stats={enrichedStats}
+          surface={surface ?? "Dur"}
+          sparklineData={sparklineData}
+          sparkWidth={sparkWidth}
+          sparkHeight={sparkHeight}
+          terminalMode={terminalMode}
+        />
         {/* Form dots */}
         <div className="mt-1.5">
           <FormDots

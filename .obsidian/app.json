@@ -1,0 +1,8 @@
+{
+  "baseFontSize": 14,
+  "promptDelete": false,
+  "alwaysUpdateLinks": true,
+  "newFileLocation": "current",
+  "useMarkdownLinks": false,
+  "showLineNumber": true
+}
