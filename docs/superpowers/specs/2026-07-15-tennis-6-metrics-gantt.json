@@ -1,0 +1,40 @@
+{
+  "title": "Tennis Prematch — Enrichissement 6 métriques",
+  "timeline": {
+    "title": "Phases",
+    "labels": ["P1: Diagnostic", "P2: Data (SPS cron)", "P3: Backend", "P4: Frontend", "P5: Intégration", "P6: Déploiement"]
+  },
+  "tracks": [
+    {
+      "name": "Data (cron SPS)",
+      "items": [
+        { "label": "Réparer cron_sps_updater.py (source tennis_matches_internal)", "start": "P2: Data (SPS cron)", "end": "P2: Data (SPS cron)", "color": "#3b82f6" },
+        { "label": "Backfill initial player_surface_scores", "start": "P2: Data (SPS cron)", "end": "P3: Backend", "color": "#3b82f6" },
+        { "label": "Brancher cron dans ecosystem.config.js (pm2)", "start": "P5: Intégration", "end": "P5: Intégration", "color": "#3b82f6" }
+      ]
+    },
+    {
+      "name": "Backend (server.js)",
+      "items": [
+        { "label": "_getPlayerRank: fallback winner_rank (métrique #2)", "start": "P3: Backend", "end": "P3: Backend", "color": "#10b981" },
+        { "label": "Fiabiliser getTennisSurfStats (surf_rank/ps_rank)", "start": "P3: Backend", "end": "P3: Backend", "color": "#10b981" },
+        { "label": "Vérifier value-bets: 6 champs attachés", "start": "P3: Backend", "end": "P4: Frontend", "color": "#10b981" }
+      ]
+    },
+    {
+      "name": "Frontend (pariscore.html)",
+      "items": [
+        { "label": "premierCard: statline 6 métriques + badges surface", "start": "P4: Frontend", "end": "P4: Frontend", "color": "#f59e0b" },
+        { "label": "CSS .sc-premier-sps / .sc-premier-surfrank", "start": "P4: Frontend", "end": "P5: Intégration", "color": "#f59e0b" }
+      ]
+    },
+    {
+      "name": "Validation & Déploiement",
+      "items": [
+        { "label": "Test backend: curl value-bets Zandschulp", "start": "P5: Intégration", "end": "P5: Intégration", "color": "#ef4444" },
+        { "label": "Test frontend: Playwright pariscore.fr onglet Tennis", "start": "P5: Intégration", "end": "P6: Déploiement", "color": "#ef4444" },
+        { "label": "Commit + push + déploy VPS + vérif prod", "start": "P6: Déploiement", "end": "P6: Déploiement", "color": "#ef4444" }
+      ]
+    }
+  ]
+}
