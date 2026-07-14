@@ -29398,8 +29398,15 @@ function _tennisLookupEloPair(p1Name, p2Name, tour, surface) {
     surface_used: surfaceUsed,
     p1_all: p1All ? { elo: Math.round(p1All.elo), matches: p1All.matches_count } : null,
     p2_all: p2All ? { elo: Math.round(p2All.elo), matches: p2All.matches_count } : null,
-    p1_surface: p1Surf ? { elo: Math.round(p1Surf.elo), matches: p1Surf.matches_count, surface } : null,
-    p2_surface: p2Surf ? { elo: Math.round(p2Surf.elo), matches: p2Surf.matches_count, surface } : null,
+    // FIX #— / Elo — : si la surface du match est inconnue (tournoi BSD non résolu
+    // par resolveTennisSurfaceSync — ex. Nordea Open), p1Surf/p2Surf sont null.
+    // On retombe sur l'Elo ALL (blended) plutôt que d'envoyer elo_surface=null →
+    // le frontend affichait "Elo —" même quand l'Elo global existe. Ce fallback
+    // garantit qu'un joueur connu en base affiche toujours un Elo.
+    p1_surface: p1Surf ? { elo: Math.round(p1Surf.elo), matches: p1Surf.matches_count, surface }
+                       : (p1All ? { elo: Math.round(p1All.elo), matches: p1All.matches_count, surface: 'ALL' } : null),
+    p2_surface: p2Surf ? { elo: Math.round(p2Surf.elo), matches: p2Surf.matches_count, surface }
+                       : (p2All ? { elo: Math.round(p2All.elo), matches: p2All.matches_count, surface: 'ALL' } : null),
   };
 }
 
@@ -31552,10 +31559,10 @@ function _mapSurfaceToElo(surf) {
 // (ex: "Internazionali BNL d'Italia" = Rome = Clay) et la surface par défaut
 // d'une swing. Dernier recours seulement.
 const _TENNIS_SURFACE_KEYWORDS = [
-  ['Clay', ['roland garros', 'french open', 'internazionali', ' rome', 'madrid', 'monte carlo', 'monte-carlo', 'montecarlo', 'hamburg', 'barcelona', 'estoril', 'munich', 'bastad', 'gstaad', 'kitzbuhel', 'umag', 'bucharest', 'geneva', 'lyon', 'cordoba', 'buenos aires', ' rio ', 'santiago', 'houston', 'marrakech', 'oeiras', 'bordeaux', 'roma', 'clarins', 'parma', 'saint-malo', 'saint malo', 'iasi', 'florence', 'turin clay']],
+  ['Clay', ['roland garros', 'french open', 'internazionali', ' rome', 'madrid', 'monte carlo', 'monte-carlo', 'montecarlo', 'hamburg', 'barcelona', 'estoril', 'munich', 'bastad', 'gstaad', 'kitzbuhel', 'umag', 'bucharest', 'geneva', 'lyon', 'cordoba', 'buenos aires', ' rio ', 'santiago', 'houston', 'marrakech', 'oeiris', 'bordeaux', 'roma', 'clarins', 'parma', 'saint-malo', 'saint malo', 'iasi', 'florence', 'turin clay', 'nordea', 'atv bancomat', 'aschaffenburg']],
   ['Grass', ['wimbledon', 'halle', 'queen', 'hertogenbosch', 'eastbourne', 'newport', 'mallorca', 'bad homburg', ' berlin', 'birmingham', 'nottingham', 'stuttgart open', 'libema', 'hsbc', 'terra']],
   // Hard: UTR/PTT circuits (typically hard), Grand Slams hard, and common hard-court venues
-  ['Hard', ['utr ptt', 'utr pro', ' utr ', 'australian open', 'us open', 'flushing', 'indian wells', 'miami open', 'cincinnati', 'toronto', 'montreal', 'beijing', 'shanghai', 'dubai', 'doha', 'abu dhabi', 'brisbane', 'sydney']],
+  ['Hard', ['utr ptt', 'utr pro', ' utr ', 'australian open', 'us open', 'flushing', 'indian wells', 'miami open', 'cincinnati', 'toronto', 'montreal', 'beijing', 'shanghai', 'dubai', 'doha', 'abu dhabi', 'brisbane', 'sydney', 'enka', 'istanbul']],
   ['Carpet', ['carpet']],
 ];
 
