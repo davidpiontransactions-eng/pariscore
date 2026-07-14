@@ -30,7 +30,7 @@
       "args": [
         "-y",
         "@modelcontextprotocol/server-filesystem",
-        "C:/Users/david/Documents/dev PariScore/ParisScorebis"
+        "C:/Users/David/ZCodeProject/pariscore"
       ]
     },
     "memory": {
@@ -48,7 +48,7 @@
       "args": [
         "mcp-server-git",
         "--repository",
-        "C:/Users/david/Documents/dev PariScore/ParisScorebis"
+        "C:/Users/David/ZCodeProject/pariscore"
       ]
     },
     "playwright": {
@@ -101,6 +101,17 @@
       "env": {
         "PYTHONIOENCODING": "utf-8",
         "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "agentmemory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agentmemory/agentmemory"
+      ],
+      "env": {
+        "AGENTMEMORY_PORT": "3111",
+        "AGENTMEMORY_VIEWER_PORT": "3113"
       }
     }
   }

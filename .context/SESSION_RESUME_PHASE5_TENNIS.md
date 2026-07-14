@@ -31,7 +31,7 @@
 | **`git` non installé** en local | Toutes ops git via API GitHub + token | Installer Git for Windows OU continuer via API |
 | **`bd` non installé** | 5.2 impossible | Installer bd OU skip 5.2 |
 | **`node` non installé** | `node --check` impossible en local | CI GitHub le fait sur la PR |
-| **Token GitHub compromis** | `ghp_nI8nAX…` circulé en clair | **À révoquer/régénérer** sur github.com/settings/tokens |
+| **Token GitHub compromis** | `[REVOKED]…` circulé en clair | **À révoquer/régénérer** sur github.com/settings/tokens |
 
 ---
 
@@ -49,7 +49,7 @@
 - **Repo** : `davidpiontransactions-eng/pariscore` (public, default `main`)
 - **Branche travail** : `redesign-tennis-prematch-live` (HEAD `f96933b`)
 - **PR** : #2
-- **Token** : `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` — **à régénérer avant reprise**
+- **Token** : `[REVOKED]` — **à régénérer avant reprise**
 - **Fichiers clés** :
   - GANTT : `.context/GANTT-PHASE5-REDESIGN-TENNIS.md`
   - Diff PR : `C:\Users\David\AppData\Local\Temp\pr2.diff` (peut être périmé, re-télécharger si besoin)

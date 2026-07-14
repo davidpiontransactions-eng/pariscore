@@ -80,6 +80,17 @@
 | `git` | Commits atomiques (1 commit = 1 sous-tâche) |
 | `memory` | Stocker l'état d'avancement inter-session (quelle phase commencée, quels onglets faits) |
 
+### Automation & Outils ajoutés cette session
+
+- **Ray 2.56.0** installé (`pip install ray`) — fonctionne sous Windows, init ~7s
+- **`scripts/ray-design-unify.py`** (338 lignes) — automate Ray pour unifier le design system :
+  - `scan` : liste toutes les valeurs hex inline dans les blocs `<style>` de chaque sport
+  - `analyze` : compare hex vs tokens, catégorise (match/mismatch/pending)
+  - `replace` : remplace les hex identifiés par `var(--sport-accent)` — **⚠️ ATTENTION** : 14 hex restants après `analyze` sont des déclarations intentionnelles (pas de correspondance directe avec un token)
+  - `validate` : vérifie que tous les hex remplaçables sont traités
+- **MCP agentmemory** ajouté (commit `7fae0ca`) — connaissances persistantes inter-sessions
+- **Blocké** : vLLM (pas de wheel Windows, build from source timeout 300s, GTX 1050 4Go VRAM insuffisante)
+
 **À NE PAS installer (incompatibles avec le monolithe actuel)** :
 - ❌ Chromatic MCP → nécessite Storybook + composants React isolés. Devient pertinent **après** migration Next.js.
 - ❌ 21st.dev Magic MCP → génère du React/shadcn. Idem, après migration.
@@ -111,22 +122,22 @@ toggle dark/light**. Cycling est le modèle de propreté à suivre.
 
 #### Phase 1 — Réconciliation design system (priorité absolue, ~5 j)
 
-- [ ] **1.1 Réconcilier les 4 blocs `:root` du tennis en 1** — 2 j
-  - Supprimer `--tn2-*` (L23139-23169), `--ps-*` (L24226-24253), `--tl-*` (L24551-24574)
-  - Aliaser toutes les références vers les variables globales home (`--bg`, `--bg2`, `--bg3`, `--accent`, `--border`)
-  - Le bloc `sc-*` (L24955) le fait déjà partiellement (`var(--bg2)`) — étendre ce pattern
-  - **Gain** : cohérence visuelle instantanée + -300 lignes CSS
+- [x] **1.1 Réconcilier les 4 blocs `:root` du tennis en 1** — ✅ FAIT (2026-07-14)
+  - Passe 1 : 18/31 `--tn2-*` aliasés → globaux (`a730fa3`)
+  - Passe 2 : 18/25 `--ps-*` aliasés → globaux (`ac174c8`)
+  - Passe 3 : 19/22 `--tl-*` aliasés → globaux (`7adab5e`)
+  - Validation visuelle : `match: true`, `mismatchPercentage: 0.0` (`b8e4c4e`)
+  - Bloc `sc-*` déjà 100% aligné (pas de `:root` dédié)
+  - **Gain** : ~60 tokens supprimés, zéro régression visuelle
 
-- [ ] **1.2 Définir tokens `--sport-accent` par onglet** — 1 j
-  ```css
-  :root { --sport-accent: var(--accent); --sport-bg: var(--bg); --sport-card: var(--bg2); }
-  #page-tennis  { --sport-accent: #ccff00; }  /* jaune balle */
-  #page-cycling { --sport-accent: #f4d03f; }  /* jaune maillot TdF */
-  #page-mma     { --sport-accent: #E3001B; --sport-secondary: #D4AF37; }
-  #page-f1      { --sport-accent: #ff0043; }
-  #page-cs2     { --sport-accent: #00d4ff; }  /* cyan neon gamer */
-  #page-nba, #page-wnba { --sport-accent: #ff6b00; }  /* aliasing assumé */
-  ```
+- [~] **1.2 Définir tokens `--sport-accent` par onglet** — 🟡 EN COURS (2026-07-14)
+  - ✅ Tokens ajoutés dans `:root` global + `#page-*` selecteurs (commit `3062a64`)
+  - ✅ NBA/WNBA : 6x `#ff6b00` → `var(--sport-accent)` safe alias (commit `4174e66`)
+  - ✅ Tennis/F1 : remplacement `#ff6d2e`/`#ff0043` → `var(--sport-accent)` (color change)
+  - ✅ Script `scripts/ray-design-unify.py` : Ray scan/analyze/replace/validate (7 workers/sport)
+  - ⏳ CS2 : `#E3001B` → `var(--sport-accent)` (color change rouge→cyan `#00d4ff`)
+  - ⏳ MMA : `#E3001B` → `var(--sport-accent)` (même rouge que CS2)
+  - ⏳ Validation visuelle APRES vs baseline
 
 - [ ] **1.3 Unifier le système de cards** — 1 j
   - Choisir UN système (le plus complet = `sc-card`/`sc-livecard` tennis)
