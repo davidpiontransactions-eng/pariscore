@@ -1,11 +1,94 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-07 (Phase 1 exécutée)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (ajout Design System Unification)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · Phase 2 patches prêts · Phase 3 planifiée · Phase 4 backlog
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · 🟡 **DS-Unify Phase 1.2 en cours** · Phase 2 patches prêts · Phase 3 planifiée · Phase 4 backlog
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ![Gantt visuel](./GANTT_pariscore.png)
+
+---
+
+## 0. Gantt Design System Unification (branche `feat/design-system-unify`)
+
+> **Projet parallèle** : harmonisation CSS post-audit Hallmark (80 findings). Branche dédiée, merge à la fin de chaque phase.
+
+```
+Juillet 2026
+Semaine 29 (14-18)        │ Semaine 30 (21-25)        │ Semaine 31 (28-30)
+┌─────────────────────────┼───────────────────────────┼──────────────────────┐
+│ ████ PHASE 1.1 ████     │                           │                      │
+│ ████ PHASE 1.2 ████░░░░ │ ░░░░ PHASE 1.3 ░░░░░      │                      │
+│                         │ ░░░░ PHASE 1.4 ░░░░░      │                      │
+│                         │ ░░░░ PHASE 1.5 ░░░░░      │                      │
+│                         │ ░░ PHASE 2.x ░░░░░░░░░    │ ░░ PHASE 3.x ░░░░    │
+└─────────────────────────┴───────────────────────────┴──────────────────────┘
+```
+
+### Dépendances
+
+```
+Phase 1.1 → Phase 1.2 → Phase 1.3 → Phase 1.4 → Phase 1.5
+                              ↓
+                         Phase 2.x (parallélisable)
+                              ↓
+                         Phase 3.x
+```
+
+### Gantt détaillé
+
+```mermaid
+gantt
+    title Design System Unification (branche feat/design-system-unify)
+    dateFormat  YYYY-MM-DD
+    axisFormat  %a %d/%m
+
+    section Phase 1 — Réconciliation
+    1.1 Réconcilier 4 blocs :root tennis       :done, ds1-1, 2026-07-14, 1d
+    1.2 Tokens --sport-accent par onglet        :active, ds1-2, after ds1-1, 1d
+    1.3 Unifier système de cards                :ds1-3, after ds1-2, 1d
+    1.4 Standardiser keyframes partagés         :ds1-4, after ds1-2, 0.5d
+    1.5 Réconcilier comparateur                 :ds1-5, after ds1-2, 0.5d
+
+    section Phase 2 — Nettoyage par onglet
+    2.1 Supprimer invented metrics              :ds2-1, after ds1-3, 0.5d
+    2.2 Remplacer emojis → SVG                  :ds2-2, after ds2-1, 2d
+    2.3 Désactiver eyebrows décoratifs          :ds2-3, after ds2-1, 0.5d
+    2.4 Couper fade-up scroll-reveal            :ds2-4, after ds2-1, 0.5d
+    2.5 Nettoyer CS2 (le + slop)                :ds2-5, after ds2-4, 2d
+    2.6 Nettoyer MMA tokens improvisation       :ds2-6, after ds2-5, 1d
+    2.7 transition:all → listes explicites      :ds2-7, after ds2-4, 1d
+
+    section Phase 3 — Home + Systèmes globaux
+    3.1 Purge fonts 9→3                         :ds3-1, after ds2-7, 0.5d
+    3.2 Glassmorphism 100→20 occ.               :ds3-2, after ds3-1, 1d
+    3.3 Système élévation par luminosité         :ds3-3, after ds3-1, 1d
+    3.4 Dédupliquer 468 gradients→15 classes    :ds3-4, after ds3-3, 0.5d
+    3.5 Système z-index nommé 6 niveaux         :ds3-5, after ds3-4, 0.5d
+
+    section Automation & Infra
+    Script Ray design-unify (scan/analyze/replace/validate) :done, ds-auto, 2026-07-14, 0.5d
+    Ray 2.56.0 Windows install + test           :done, ds-ray, 2026-07-14, 0.25d
+    MCP agentmemory inter-session               :done, ds-mem, 2026-07-14, 0.25d
+    Validation visuelle (screenshots diff)      :active, ds-vis, after ds1-2, 0.5d
+```
+
+### Statut par phase DS-Unify
+
+| Phase | Tâches done | Tâches total | % | Statut |
+|---|---|---|---|---|
+| Phase 1 | 1.2 | 5 | 24% | 🟡 1.1 ✅, 1.2 🟡 en cours |
+| Phase 2 | 0 | 7 | 0% | ⏳ Planifié |
+| Phase 3 | 0 | 5 | 0% | 📅 Backlog |
+| Automation | 3 | 4 | 75% | 🟡 Validation visuelle restante |
+| **Total** | **4.2** | **21** | **20%** | 🟡 Phase 1.1 faite, Phase 1.2 à terminer |
+
+### Travail restant immédiat (Phase 1.2)
+
+1. ⏳ Remplacer `#E3001B` → `var(--sport-accent)` dans bloc CS2 (l22215-22727)
+2. ⏳ Remplacer `#E3001B` → `var(--sport-accent)` dans bloc MMA (l22920-23130)
+3. ⏳ Validation visuelle : screenshot APRÈS + diff contre baseline AVANT
+4. ⏳ Vérifier que les 14 hex restants (détectés par `ray-design-unify.py analyze`) sont bien intentionnels
 
 ---
 
