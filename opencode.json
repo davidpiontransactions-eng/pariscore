@@ -67,7 +67,8 @@
     "AGENTS.md",
     ".opencode/instructions/devin-fusion-auto.md",
     ".opencode/instructions/token-saver-auto.md",
-    ".opencode/instructions/memory-kg-auto.md"
+    ".opencode/instructions/memory-kg-auto.md",
+    ".opencode/instructions/agentmemory-auto.md"
   ],
   "agent": {
     "leader": {
