@@ -263,6 +263,71 @@ def _parse_iso(s: str) -> datetime:
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
+# ─── DB-direct match source (fallback quand l'API /upcoming est vide) ─────────
+# FIX 2026-07-15 : la route /api/v1/tennis/upcoming renvoie 0 matchs exploitables
+# (format minimal sans player_ids cohérents), donc player_surface_scores restait
+# vide. Cette source lit directement tennis_matches_internal (23197 rows en prod)
+# et génère un UpcomingMatch synthétique par joueur actif — garantissant que
+# TOUS les joueurs récents sont traités par le calcul SPS, pas seulement ceux
+# d'un lookahead 24-36h.
+_DB_ACTIVE_WINDOW_DAYS = int(os.environ.get("SPS_ACTIVE_WINDOW_DAYS", "365"))
+
+
+def fetch_active_players_from_db(
+    db_path: str = DB_PATH,
+    window_days: int = _DB_ACTIVE_WINDOW_DAYS,
+) -> list[UpcomingMatch]:
+    """
+    Source DB directe : génère un UpcomingMatch synthétique par joueur actif
+    (ayant joué dans les `window_days` derniers jours), dédupliqué par
+    (player_id, surface). Couverture 100% des joueurs qu'on est susceptible
+    d'afficher. Fallback robuste quand l'API HTTP /upcoming est vide.
+    """
+    cutoff_ms = int((datetime.now(timezone.utc) - timedelta(days=window_days)).timestamp() * 1000)
+    now = datetime.now(timezone.utc)
+    conn = sqlite3.connect(db_path)
+    try:
+        # Joueurs actifs uniques (winner + loser) par surface, avec leur nom.
+        rows = conn.execute(
+            """
+            SELECT winner_player_id AS pid, winner_name AS pname, surface, tour
+            FROM tennis_matches_internal
+            WHERE match_date >= ? AND surface IN ('Hard','Clay','Grass')
+              AND tour IN ('ATP','WTA') AND winner_player_id IS NOT NULL
+            UNION
+            SELECT loser_player_id AS pid, loser_name AS pname, surface, tour
+            FROM tennis_matches_internal
+            WHERE match_date >= ? AND surface IN ('Hard','Clay','Grass')
+              AND tour IN ('ATP','WTA') AND loser_player_id IS NOT NULL
+            """,
+            (cutoff_ms, cutoff_ms),
+        ).fetchall()
+    finally:
+        conn.close()
+
+    seen: set[tuple[str, str]] = set()
+    out: list[UpcomingMatch] = []
+    for pid, pname, surface, tour in rows:
+        if pid is None:
+            continue
+        key = (str(pid), surface.lower())
+        if key in seen:
+            continue
+        seen.add(key)
+        circuit: Literal["ATP", "WTA"] = "WTA" if str(tour).upper() == "WTA" else "ATP"
+        out.append(UpcomingMatch(
+            match_id=f"db-{pid}-{surface.lower()}",
+            surface=surface.lower(),  # type: ignore[arg-type]
+            circuit=circuit,
+            player_a_id=str(pid),
+            player_b_id="0",  # dummy — seul player_a est traité par le pipeline
+            kickoff_utc=now,
+            player_a_name=str(pname or ""),
+            player_b_name="",
+        ))
+    return out
+
+
 # ─── Player stats source: SQLite rolling aggregator ───────────────────────────
 
 class PlayerStatsSource:
@@ -746,13 +811,20 @@ class SPSPipeline:
 
     def run(self) -> PipelineStats:
         t0 = time.monotonic()
+        # Source 1 : API HTTP /upcoming (lookahead 24-36h).
+        matches: list[UpcomingMatch] = []
         try:
             matches = fetch_upcoming_matches(self.api_url)
         except MatchSourceError as e:
-            logger.error("Cannot fetch upcoming matches: %s", e)
-            stats = PipelineStats(errors=1)
-            self.store.write_heartbeat(stats)
-            return stats
+            logger.warning("HTTP /upcoming unavailable: %s — falling back to DB", e)
+
+        # Source 2 (fallback FIX 2026-07-15) : si l'API renvoie 0 matchs, lire
+        # directement tennis_matches_internal pour traiter TOUS les joueurs
+        # actifs. Garantit que player_surface_scores est peuplé même quand la
+        # route upcoming est vide (cas actuel en prod).
+        if not matches:
+            logger.info("HTTP /upcoming returned 0 matches — using DB active-players source")
+            matches = fetch_active_players_from_db(self.db_path)
 
         logger.info(
             "Fetched %d upcoming matches.%s",

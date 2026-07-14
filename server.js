@@ -39224,13 +39224,46 @@ async function _buildTennisValueBetsCore({ date }) {
       );
     } catch (_) { console.warn('[vb] _stmtPlayerRank prepare', _?.message); return null; }
   })();
-  const _getPlayerRank = (name, tour) => {
-    if (!name || !tour || !_stmtPlayerRank) return null;
+  // FIX 2026-07-15 (métrique #2) : atp_rank/wta_rank sont vides (0/6035 peuplés).
+  // Fallback : le winner_rank/loser_rank du match le plus récent dans tennis_matches
+  // (25437 rows, ~99% couverture). C'est le rang officiel ATP/WTA au moment du
+  // dernier match joué — suffisamment frais (le rang évolue lentement).
+  const _stmtRecentRank = (() => {
     try {
-      const row = _stmtPlayerRank.get(name.trim(), tour);
-      if (!row) return null;
-      return tour === 'WTA' ? (row.wta_rank || null) : (row.atp_rank || null);
-    } catch (_) { return null; }
+      return sqldb.prepare(
+        `SELECT rk FROM (
+           SELECT winner_rank AS rk FROM tennis_matches
+             WHERE LOWER(winner_name) = LOWER(?) AND winner_rank IS NOT NULL AND winner_rank > 0
+             ORDER BY tourney_date DESC LIMIT 1
+           UNION ALL
+           SELECT loser_rank AS rk FROM tennis_matches
+             WHERE LOWER(loser_name) = LOWER(?) AND loser_rank IS NOT NULL AND loser_rank > 0
+             ORDER BY tourney_date DESC LIMIT 1
+         ) ORDER BY rk LIMIT 1`
+      );
+    } catch (_) { console.warn('[vb] _stmtRecentRank prepare', _?.message); return null; }
+  })();
+  const _getPlayerRank = (name, tour) => {
+    if (!name || !tour) return null;
+    const n = name.trim();
+    // 1. Source prioritaire : tennis_players_elo.atp_rank/wta_rank (vide actuellement)
+    if (_stmtPlayerRank) {
+      try {
+        const row = _stmtPlayerRank.get(n, tour);
+        if (row) {
+          const r = tour === 'WTA' ? (row.wta_rank || null) : (row.atp_rank || null);
+          if (r) return r;
+        }
+      } catch (_) { /* fall through */ }
+    }
+    // 2. Fallback : winner_rank/loser_rank du dernier match (tennis_matches)
+    if (_stmtRecentRank) {
+      try {
+        const row = _stmtRecentRank.get(n, n);
+        if (row && row.rk) return row.rk;
+      } catch (_) { /* rank indisponible */ }
+    }
+    return null;
   };
 
   // Pre-fetch TennisTemple court maps for all tournaments in this batch (cached 45min).

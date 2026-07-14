@@ -26097,15 +26097,15 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-premier-player p1">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p1)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p1.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p1.rank||'—')+(p1.flag?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+'</div>'
-      +'<div class="sc-premier-pelo">Elo '+(p1.elo_surface||'—')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p1.rank||'')+(p1.flag?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p1.elo_surface||'')+(p1.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p1.powerscore):'')+'</div>'
+      +(p1.surf_rank?'<div class="sc-premier-surfrank">#'+p1.surf_rank+(p1.surf_rank_total?'/'+p1.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</div>':'')
       +'</div>'
       +'<div class="sc-premier-gauge">'+gauge(p1p,{size:80,opt:p1p,sup:p1p,inf:p1p,p1n:shortName(p1.name),p2n:shortName(p2.name)})+'</div>'
       +'<div class="sc-premier-player p2">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p2.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p2.rank||'—')+(p2.flag?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+'</div>'
-      +'<div class="sc-premier-pelo">Elo '+(p2.elo_surface||'—')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p2.rank||'')+(p2.flag?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p2.elo_surface||'')+(p2.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p2.powerscore):'')+'</div>'
+      +(p2.surf_rank?'<div class="sc-premier-surfrank">#'+p2.surf_rank+(p2.surf_rank_total?'/'+p2.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</div>':'')
       +'</div>'
       +'</div>'
       // -- Decision strip --
