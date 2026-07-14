@@ -1,8 +1,8 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 7 — DS-Unify Phase 3.4 Gradient dedup 38 remplacements)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 8 — DS-Unify Phase 3.5 z-index 70 remplacements)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)**
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)**
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ![Gantt visuel](./GANTT_pariscore.png)
@@ -66,7 +66,7 @@ gantt
      3.2 Glassmorphism 100→20 occ.               :ds3-2, after ds3-1, 1d
       3.3 Système élévation par luminosité         :done, ds3-3, after ds3-1, 1d
       3.4 Dédupliquer 468 gradients→11 classes (38 repl.) :done, ds3-4, after ds3-3, 0.5d
-     3.5 Système z-index nommé 6 niveaux         :ds3-5, after ds3-4, 0.5d
+     3.5 Système z-index nommé 6 niveaux         :done, ds3-5, after ds3-4, 0.5d
 
     section Automation & Infra
     Script Ray design-unify (scan/analyze/replace/validate) :done, ds-auto, 2026-07-14, 0.5d
@@ -78,12 +78,12 @@ gantt
 ### Statut par phase DS-Unify
 
 | Phase | Tâches done | Tâches total | % | Statut |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|---|
 | Phase 1 | 5 | 5 | 100% | ✅ 1.1-1.5 tous complétés |
 | Phase 2 | 7 | 7 | 100% | ✅ 2.1-2.7 tous complétés |
-| Phase 3 | 4 | 5 | 80% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 · ✅ 3.3 Shadow 14 repl. · ✅ 3.4 Gradient 38 repl., 11 vars |
+| Phase 3 | 5 | 5 | 100% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 · ✅ 3.3 Shadow 14 repl. · ✅ 3.4 Gradient 38 repl., 11 vars · ✅ 3.5 z-index 70 repl., 6 vars |
 | Automation | 3 | 4 | 75% | 🟡 Validation visuelle restante |
-| **Total** | **19** | **21** | **90%** | 🟢 Phase 1+2+3.1-3.4 terminées |
+| **Total** | **20** | **21** | **95%** | 🟢 Phase 1+2+3.1-3.5 terminées |
 | **Infra Git/VPS** | **3** | **3** | **100%** | ✅ Token nettoyé, push GitHub, VPS déployé |
 
 ### ✅ Session 2 — Terminé (2026-07-14 après-midi)
@@ -152,7 +152,20 @@ gantt
 - ✅ Vérification syntaxe : 0 définitions corrompues, 11/11 vars intactes
 - ✅ **Résultat** : 38 raw linear-gradient remplacés — ~406 grads uniques restants (non déduplicables)
 
-### Prochaine tâche : Phase 3.5 — Système z-index nommé (6 niveaux)
+### ✅ Session 8 — DS-Unify Phase 3.5 complète (2026-07-14 Session 8)
+
+- ✅ Phase 3.5.1 : Scan 146 z-index, distribution par valeur, identification 42 valeurs distinctes
+- ✅ Phase 3.5.2 : Définition 6 variables `--cf-z-*` dans `:root` :
+  - `--cf-z-base: 1`, `--cf-z-sticky: 2`, `--cf-z-deco: 5`, `--cf-z-floating: 100`, `--cf-z-panel: 1000`, `--cf-z-overlay: 9000`
+- ✅ Phase 3.5.3 : 6 classes utilitaires `.cf-u-z-*` ajoutées
+- ✅ Phase 3.5.4 : Remplacement de 70 valeurs z-index brutes par des variables :
+  - `z:1→var(--cf-z-base)` ×21 · `z:2→var(--cf-z-sticky)` ×17 · `z:5→var(--cf-z-deco)` ×8 · `z:6→var(--cf-z-deco)` ×3
+  - `z:100→var(--cf-z-floating)` ×4 · `z:200→var(--cf-z-floating)` ×4
+  - `z:1000→var(--cf-z-panel)` ×7 · `z:9000→var(--cf-z-overlay)` ×6
+- ✅ DESIGN_CHARTER.md section 8 mise à jour avec les 6 tiers, classes utilitaires, et architecture 9000+
+- ✅ **Résultat** : 70 raw z-index remplacés — valeurs fines (10, 50, 1010-1100, 9100-10002) conservées pour l'imbrication inter-composants
+
+### Prochaine tâche : Phase 3.6 — ? (ex. consolidation CSS ou validation visuelle finale)
 
 ---
 
@@ -446,12 +459,12 @@ Le Gantt est mis à jour quand :
 ## 10. Status tracking (à mettre à jour quotidiennement)
 
 | Phase | Tâches done | Tâches total | % | Statut global |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | Phase 1 | 11 | 11 | 100% | ✅ **EXÉCUTÉE** — 4 CRITICAL éliminés, `DIFF_GITHUB_VPS.md` GO CONDITIONNEL |
 | Phase 2 | 9 | 13 | 69% | 🟡 Patches backend prêts, frontend en attente |
-| Phase 3 | 0 | 16 | 0% | ⏳ Planifié (sécurité) · ✅ DS-Unify Ph3.1-3.4 faites |
+| Phase 3 | 0 | 16 | 0% | ⏳ Planifié (sécurité) · ✅ DS-Unify Ph3.1-3.5 terminées |
 | Phase 4 | 0 | 8 | 0% | 📅 Backlog |
-| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.4 terminées · Prochain : Phase 3.5 z-index |
+| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.5 terminées · Prochain : validation visuelle ou Phase 4 |
 
 ---
 

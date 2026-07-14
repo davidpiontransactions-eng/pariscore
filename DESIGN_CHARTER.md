@@ -162,17 +162,60 @@
 
 ---
 
-## 8. z-index
+## 8. z-index (6 Tiers)
 
-Le système de z-index sera formalisé en Phase 3.5. En attendant :
+### 8.1 Variables CSS
 
-| Niveau | Valeur (approx.) | Usage |
-|---|---|---|
-| Base | `1` | Éléments dans le flux |
-| Sticky nav | `9001` | Barre de navigation |
-| Overlay | `9985` | Help, info |
-| Modal | `10000` | Modales, popups |
-| Système | `99999` | Toasts, notifications critiques |
+| Token | Valeur | Niveau | Usage |
+|---|---|---|---|
+| `--cf-z-base` | `1` | **Sol** | Pseudo-elements, badges, cartes de fond |
+| `--cf-z-sticky` | `2` | **Socle** | Sticky table cells, hero, hovers |
+| `--cf-z-deco` | `5` | **Décoration** | En-têtes sticky, décorations de tableau |
+| `--cf-z-floating` | `100` | **Flottant** | Dropdowns, tooltips, petites fenêtres |
+| `--cf-z-panel` | `1000` | **Panneau** | Panneaux overlay, modales de base |
+| `--cf-z-overlay` | `9000` | **Overlay** | Overlays d'arrière-plan, backdrops |
+
+### 8.2 Classes utilitaires
+
+| Classe | Z-index |
+|---|---|
+| `.cf-u-z-base` | `var(--cf-z-base)` |
+| `.cf-u-z-sticky` | `var(--cf-z-sticky)` |
+| `.cf-u-z-deco` | `var(--cf-z-deco)` |
+| `.cf-u-z-floating` | `var(--cf-z-floating)` |
+| `.cf-u-z-panel` | `var(--cf-z-panel)` |
+| `.cf-u-z-overlay` | `var(--cf-z-overlay)` |
+
+### 8.3 Règle
+
+**Interdiction** d'écrire `z-index: 1`, `z-index: 2`, `z-index: 5/6`, `z-index: 100/200`, `z-index: 1000`, ou `z-index: 9000` en dur dans les feuilles de style. Ces valeurs doivent passer par `var(--cf-z-*)`.  
+Les valeurs intermédiaires (ex: `10`, `50`, `1010-1100`, `9100-10002`) sont autorisées pour le calibrage fin entre composants d'un même niveau.
+
+### 8.4 Architecture des niveaux supérieurs (9000+)
+
+Les modales et overlays utilisent des valeurs fines (9000 → 10002) pour permettre l'imbrication. La section en fin de fichier CSS (`#theme-toggle` → `#page-locked`, lignes ~19710-19746) définit les priorités explicites via `!important` :
+
+- `11000` — Theme toggle (floating bottom-right)
+- `10002` — Skip link (accessibilité clavier)
+- `10001` — Odds graph tooltip
+- `10000` — MMA modal overlay
+- `9999` — Auth modal / radar overlay / dh-drill / bm-modal
+- `9998` — RG pick card
+- `9997` — RG pick backdrop
+- `9996` — Tennis modal
+- `9990` — Radar overlay (override)
+- `9989` — Security banner
+- `9985` — Strat help overlay
+- `9980` — Betmines modal
+- `9950` — Drill modal
+- `9500` — Profiles modal
+- `9400` — Live tennis sheet
+- `9300` — MLS panel dropdown
+- `9200` — Mob filter sheet
+- `9100` — Mob filter overlay
+- `9001` — Bottom nav
+- `9000` — Strategy setup, page-locked
+- `7000` — Page lock overlay
 
 ---
 
