@@ -163,9 +163,12 @@ gantt
   - `z:100→var(--cf-z-floating)` ×4 · `z:200→var(--cf-z-floating)` ×4
   - `z:1000→var(--cf-z-panel)` ×7 · `z:9000→var(--cf-z-overlay)` ×6
 - ✅ DESIGN_CHARTER.md section 8 mise à jour avec les 6 tiers, classes utilitaires, et architecture 9000+
+- ✅ Commit `6c27ac3` poussé GitHub + déployé VPS
 - ✅ **Résultat** : 70 raw z-index remplacés — valeurs fines (10, 50, 1010-1100, 9100-10002) conservées pour l'imbrication inter-composants
 
-### Prochaine tâche : Phase 3.6 — ? (ex. consolidation CSS ou validation visuelle finale)
+### ✅ DS-Unify — 100% COMPLÈTE (Phases 1-5, 21/21 tâches)
+
+Toute la branche `feat/design-system-unify` est mergée, déployée et stable. Le projet revient au plan de remédiation principal (Phases 2-4 sécurité).
 
 ---
 
