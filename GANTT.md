@@ -1,8 +1,8 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 6 — DS-Unify Phase 3.2 + 3.3 complètes)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 7 — DS-Unify Phase 3.4 Gradient dedup 38 remplacements)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)**
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)**
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ![Gantt visuel](./GANTT_pariscore.png)
@@ -65,7 +65,7 @@ gantt
       3.1 Purge fonts 9→3                         :done, ds3-1, after ds2-7, 1d
      3.2 Glassmorphism 100→20 occ.               :ds3-2, after ds3-1, 1d
       3.3 Système élévation par luminosité         :done, ds3-3, after ds3-1, 1d
-     3.4 Dédupliquer 468 gradients→15 classes    :ds3-4, after ds3-3, 0.5d
+      3.4 Dédupliquer 468 gradients→11 classes (38 repl.) :done, ds3-4, after ds3-3, 0.5d
      3.5 Système z-index nommé 6 niveaux         :ds3-5, after ds3-4, 0.5d
 
     section Automation & Infra
@@ -81,9 +81,9 @@ gantt
 |---|---|---|---|---|---|---|
 | Phase 1 | 5 | 5 | 100% | ✅ 1.1-1.5 tous complétés |
 | Phase 2 | 7 | 7 | 100% | ✅ 2.1-2.7 tous complétés |
-| Phase 3 | 3 | 5 | 60% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 occ. · ✅ 3.3 Shadow system 14 remplacements |
+| Phase 3 | 4 | 5 | 80% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 · ✅ 3.3 Shadow 14 repl. · ✅ 3.4 Gradient 38 repl., 11 vars |
 | Automation | 3 | 4 | 75% | 🟡 Validation visuelle restante |
-| **Total** | **18** | **21** | **86%** | 🟢 Phase 1+2+3.1+3.2+3.3 terminées |
+| **Total** | **19** | **21** | **90%** | 🟢 Phase 1+2+3.1-3.4 terminées |
 | **Infra Git/VPS** | **3** | **3** | **100%** | ✅ Token nettoyé, push GitHub, VPS déployé |
 
 ### ✅ Session 2 — Terminé (2026-07-14 après-midi)
@@ -141,7 +141,18 @@ gantt
 - ✅ Vérification syntaxe : 23 var(--cf-shadow-*) valides dans le fichier (9 préexistants + 14 nouveaux)
 - ✅ **Résultat** : 14 raw box-shadow structurelles remplacées par des variables — ombres colorées/inset/compound conservées intactes
 
-### Prochaine tâche : Phase 3.4 — Système gradients (déduplication 468 gradients → classes réutilisables)
+### ✅ Session 7 — DS-Unify Phase 3.4 complète (2026-07-14 Session 7)
+
+- ✅ Phase 3.4.1 : Scan global — 444 gradients (393 linear, 49 radial, 1 conic, 1 repeating) — 54 patterns ≥2, 20 patterns ≥3
+- ✅ Phase 3.4.2 : Création 11 variables `--cf-grad-*` dans `:root` et 11 classes `.cf-u-grad-*`
+  - `green-bright` (×4), `green-accent` (×4), `dark-panel` (×3), `dark-deep` (×3)
+  - `badge-hi/mid/lo` (×3 each), `cyan-subtle/strong` (×4 each)
+  - `dark-base` (×3), `mask-fade` (×4)
+- ✅ Phase 3.4.3 : Remplacement de 38 gradients bruts par des variables — scrollbar thumbs, DR line overlays, fade mask edges, badges tiers, panels dark
+- ✅ Vérification syntaxe : 0 définitions corrompues, 11/11 vars intactes
+- ✅ **Résultat** : 38 raw linear-gradient remplacés — ~406 grads uniques restants (non déduplicables)
+
+### Prochaine tâche : Phase 3.5 — Système z-index nommé (6 niveaux)
 
 ---
 
@@ -438,9 +449,9 @@ Le Gantt est mis à jour quand :
 |---|---|---|---|---|
 | Phase 1 | 11 | 11 | 100% | ✅ **EXÉCUTÉE** — 4 CRITICAL éliminés, `DIFF_GITHUB_VPS.md` GO CONDITIONNEL |
 | Phase 2 | 9 | 13 | 69% | 🟡 Patches backend prêts, frontend en attente |
-| Phase 3 | 0 | 16 | 0% | ⏳ Planifié (sécurité) · ✅ DS-Unify Ph3.1 faite |
+| Phase 3 | 0 | 16 | 0% | ⏳ Planifié (sécurité) · ✅ DS-Unify Ph3.1-3.4 faites |
 | Phase 4 | 0 | 8 | 0% | 📅 Backlog |
-| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · Phase 2 à lancer · DS-Unify Ph1-3.1 terminées |
+| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.4 terminées · Prochain : Phase 3.5 z-index |
 
 ---
 
