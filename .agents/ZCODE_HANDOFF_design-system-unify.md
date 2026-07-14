@@ -1,23 +1,47 @@
-# Handoff ZCode — Design System Unification Phase 1.2 (2026-07-14)
+# Handoff ZCode — Design System Unification (2026-07-14 Session 2)
 
-> **Branche**: `feat/design-system-unify` (11 commits)
-> **Session**: 2026-07-14, OpenCode
-> **Priorité**: Finir Phase 1.2 → validation visuelle → Phase 2
+> **Branche**: `feat/design-system-unify` (12 commits, root = `bbc253a`)
+> **Session**: 2026-07-14 Session 2 — OpenCode
+> **Priorité**: Finir Phase 1.2 (CS2/MMA) → validation visuelle → Phase 2
 
 ---
 
-## Résumé exécutif sur la session
+## ✅ Session 2 — Terminé
+
+### Problème : GitHub Secret Scanning bloquait le push
+
+Un token `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` dans `.context/SESSION_RESUME_PHASE5_TENNIS.md` au commit `41dff86` était détecté par GitHub.
+
+### Solution appliquée
+
+| Étape | Commande | Statut |
+|-------|----------|--------|
+| 1. Amender `41dff86` (token → `[REVOKED]`) | `git commit --amend` | ✅ `bbc253a` |
+| 2. Rebase 12 commits sur `bbc253a` | `git rebase --onto bbc253a 41dff86` | ✅ Historique propre |
+| 3. Push force | `git push --force-with-lease` | ✅ GitHub accepté |
+| 4. Déploiement VPS | `git fetch ... && git reset --hard` | ✅ pm2 restart OK |
+
+### VPS
+
+- **Hôte** : ubuntu@51.75.21.239
+- **Chemin** : `~/pariscore` (pas `/var/www/pariscore`)
+- **Branche** : `feat/design-system-unify` (tracking `origin/feat/design-system-unify`)
+- **Statut** : HTTP 200, branché sur la branche design
+
+---
+
+## Résumé exécutif du projet
 
 ### ✅ Phase 1.1 — TERMINÉE (3 passes, 0 régression visuelle)
 
 | Passe | Tokens aliasés | Commit | Statut |
 |-------|---------------|--------|--------|
-| Passe 1 (tn2) | 18/31 → globaux BETMART | `a730fa3` | ✅ Validé |
-| Passe 2 (ps) | 18/25 → globaux BETMART | `ac174c8` | ✅ Validé |
-| Passe 3 (tl) | 19/22 → globaux BETMART | `7adab5e` | ✅ Validé |
-| **Validation finale** | match:true, mismatch:0.0% | `b8e4c4e` | ✅ Zéro régression |
+| Passe 1 (tn2) | 18/31 → globaux BETMART | `065975c` | ✅ Validé |
+| Passe 2 (ps) | 18/25 → globaux BETMART | `a11eff9` | ✅ Validé |
+| Passe 3 (tl) | 19/22 → globaux BETMART | `b65a6bc` | ✅ Validé |
+| **Validation finale** | match:true, mismatch:0.0% | `e67b4f9` | ✅ Zéro régression |
 
-### 🟡 Phase 1.2 — EN COURS
+### 🟡 Phase 1.2 — EN COURS (CS2/MMA restent)
 
 | Sport | Tokens ajoutés | Remplacements | Statut |
 |-------|---------------|---------------|--------|
@@ -28,22 +52,13 @@
 | MMA | `--sport-accent: #E3001B` | `#E3001B` → `var(--sport-accent)` | ⏳ Reste |
 | Cycling | `--sport-accent: #f4d03f` | Déjà propre, peu d'hex inline | ⏳ Reste |
 
-### 🔧 Automation
-
-| Outil | Statut | Détail |
-|-------|--------|--------|
-| **Ray 2.56.0** | ✅ Installé | `pip install ray`, OK Windows, init ~7s |
-| **`scripts/ray-design-unify.py`** | ✅ Fonctionnel | 338 lignes, scan/analyze/replace/validate |
-| **MCP agentmemory** | ✅ Configuré | Sauvegarde inter-session dans `.context/memory.jsonl` |
-| **vLLM** | ❌ Bloqué | Pas de wheel Windows, GTX 1050 4Go insuffisant |
-
 ---
 
 ## Travail restant immédiat
 
 ### 1. Phase 1.2 — Remplacer `#E3001B` inline dans CS2 et MMA
 
-**Fichier**: `pariscore/pariscore.html`
+**Fichier**: `pariscore.html`
 - **CS2 bloc**: l22215-22727 — remplacer `#E3001B` → `var(--sport-accent)`
 - **MMA bloc**: l22920-23130 — remplacer `#E3001B` → `var(--sport-accent)`
 
@@ -56,7 +71,6 @@ python scripts/ray-design-unify.py replace --sport mma --interactive
 ### 2. Validation visuelle Phase 1.2
 
 ```bash
-# Déjà fait (baseline + screenshot)
 # 1. Screenshot APRÈS chaque sport modifié
 agent-browser screenshot
 # 2. Diff contre baseline
@@ -70,7 +84,7 @@ Le changement `#E3001B` (rouge) → `#00d4ff` (cyan) est un changement de couleu
 
 ### 4. Vérifier les 14 hex restants
 
-Le script `ray-design-unify.py analyze` détecte 14 valeurs hex sans correspondance avec des tokens. Ce sont des **déclarations intentionnelles** (définitions de tokens, gradients, etc.), pas des remplacements oubliés.
+Le script `ray-design-unify.py analyze` détecte 14 valeurs hex sans correspondance avec des tokens. Ce sont des déclarations intentionnelles (définitions de tokens, gradients, etc.), pas des remplacements oubliés.
 
 ---
 
@@ -130,13 +144,13 @@ pariscore/
 | **2.x** | Nettoyage Hallmark par onglet (CS2, MMA, emojis, etc.) | 7 jours |
 | **3.x** | Nettoyage home + globaux (fonts, glassmorphism, gradients) | 3 jours |
 
-Voir `todo.md` lignes 112-218 pour le plan détaillé et `GANTT.md` section 0 pour le Gantt Mermaid.
+Voir `GANTT.md` section 0 pour le Gantt Mermaid à jour.
 
 ---
 
 ## Notes techniques
 
-- **Dev server**: `cmd /c npx next dev -p 3000` (car `bun run dev` cassé sur Windows — pipe `2>&1 | tee` échoue)
+- **Dev server**: `cmd /c npx next dev -p 3000` (car `bun run dev` cassé sur Windows)
 - **Playwright**: Chrome 150 dans `C:\Users\David\.agent-browser\browsers\chrome-150.0.7871.115`
 - **bd** trouvé dans PATH : `C:\Users\David\AppData\Roaming\npm\bd.ps1`
 - **Dossier `.hallmark-baseline/`** gitignoré, commit forcé avec `-f`

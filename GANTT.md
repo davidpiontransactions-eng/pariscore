@@ -1,8 +1,8 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (ajout Design System Unification)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 2 — rebase token, push GitHub, déploiement VPS)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · 🟡 **DS-Unify Phase 1.2 en cours** · Phase 2 patches prêts · Phase 3 planifiée · Phase 4 backlog
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · 🟡 **DS-Unify Phase 1.2 en cours (CS2/MMA restent)** · ✅ Branche nettoyée du token + push GitHub + VPS déployé
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ![Gantt visuel](./GANTT_pariscore.png)
@@ -19,6 +19,8 @@ Semaine 29 (14-18)        │ Semaine 30 (21-25)        │ Semaine 31 (28-30)
 ┌─────────────────────────┼───────────────────────────┼──────────────────────┐
 │ ████ PHASE 1.1 ████     │                           │                      │
 │ ████ PHASE 1.2 ████░░░░ │ ░░░░ PHASE 1.3 ░░░░░      │                      │
+│ ████ SESSION2 ████      │                           │                      │
+│ (rebase+push+VPS)       │                           │                      │
 │                         │ ░░░░ PHASE 1.4 ░░░░░      │                      │
 │                         │ ░░░░ PHASE 1.5 ░░░░░      │                      │
 │                         │ ░░ PHASE 2.x ░░░░░░░░░    │ ░░ PHASE 3.x ░░░░    │
@@ -76,12 +78,19 @@ gantt
 ### Statut par phase DS-Unify
 
 | Phase | Tâches done | Tâches total | % | Statut |
-|---|---|---|---|---|
-| Phase 1 | 1.2 | 5 | 24% | 🟡 1.1 ✅, 1.2 🟡 en cours |
+|---|---|---|---|---|---|
+| Phase 1 | 1.2 | 5 | 24% | 🟡 1.1 ✅, 1.2 🟡 CS2/MMA restent |
 | Phase 2 | 0 | 7 | 0% | ⏳ Planifié |
 | Phase 3 | 0 | 5 | 0% | 📅 Backlog |
 | Automation | 3 | 4 | 75% | 🟡 Validation visuelle restante |
-| **Total** | **4.2** | **21** | **20%** | 🟡 Phase 1.1 faite, Phase 1.2 à terminer |
+| **Total** | **4.2** | **21** | **20%** | 🟡 Phase 1.2 CS2/MMA à finir |
+| **Infra Git/VPS** | **3** | **3** | **100%** | ✅ Token nettoyé, push GitHub, VPS déployé |
+
+### ✅ Session 2 — Terminé (2026-07-14 après-midi)
+
+- ✅ Rebase : `41dff86` (token) → `bbc253a` (amended) — branche nettoyée
+- ✅ Push GitHub : `feat/design-system-unify` poussé avec `--force-with-lease`
+- ✅ VPS déployé : `~/pariscore` sur `feat/design-system-unify`, pm2 restart OK
 
 ### Travail restant immédiat (Phase 1.2)
 
