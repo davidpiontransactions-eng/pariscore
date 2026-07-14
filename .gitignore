@@ -162,3 +162,9 @@ docs/system-design-primer/
 .opencode/skills
 # Backup de l'ancien dossier .opencode/skills/ avant junction (à supprimer manuellement après validation)
 .opencode/skills.bak/
+
+# =============================================================================
+# Graphify knowledge graph (généré, pas commit)
+# =============================================================================
+graphify-out/
+plugin-error.log

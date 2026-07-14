@@ -1,8 +1,8 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 2 — rebase token, push GitHub, déploiement VPS)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 5 — DS-Unify Phase 3.2 complète)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · 🟡 **DS-Unify Phase 1.2 en cours (CS2/MMA restent)** · ✅ Branche nettoyée du token + push GitHub + VPS déployé
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)**
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ![Gantt visuel](./GANTT_pariscore.png)
@@ -53,20 +53,20 @@ gantt
     1.5 Réconcilier comparateur                 :ds1-5, after ds1-2, 0.5d
 
     section Phase 2 — Nettoyage par onglet
-    2.1 Supprimer invented metrics              :ds2-1, after ds1-3, 0.5d
-    2.2 Remplacer emojis → SVG                  :ds2-2, after ds2-1, 2d
-    2.3 Désactiver eyebrows décoratifs          :ds2-3, after ds2-1, 0.5d
-    2.4 Couper fade-up scroll-reveal            :ds2-4, after ds2-1, 0.5d
-    2.5 Nettoyer CS2 (le + slop)                :ds2-5, after ds2-4, 2d
-    2.6 Nettoyer MMA tokens improvisation       :ds2-6, after ds2-5, 1d
-    2.7 transition:all → listes explicites      :ds2-7, after ds2-4, 1d
+     2.1 Supprimer invented metrics              :done, ds2-1, after ds1-3, 0.5d
+     2.2 Remplacer emojis → SVG                  :ds2-2, after ds2-1, 2d
+     2.3 Désactiver eyebrows décoratifs          :done, ds2-3, after ds2-1, 0.5d
+     2.4 Couper fade-up scroll-reveal            :done, ds2-4, after ds2-1, 0.5d
+     2.5 Nettoyer CS2 (le + slop)                :done, ds2-5, after ds2-4, 2d
+     2.6 Nettoyer MMA tokens improvisation       :done, ds2-6, after ds2-5, 1d
+     2.7 transition:all → listes explicites      :done, ds2-7, after ds2-4, 1d
 
     section Phase 3 — Home + Systèmes globaux
-    3.1 Purge fonts 9→3                         :ds3-1, after ds2-7, 0.5d
-    3.2 Glassmorphism 100→20 occ.               :ds3-2, after ds3-1, 1d
-    3.3 Système élévation par luminosité         :ds3-3, after ds3-1, 1d
-    3.4 Dédupliquer 468 gradients→15 classes    :ds3-4, after ds3-3, 0.5d
-    3.5 Système z-index nommé 6 niveaux         :ds3-5, after ds3-4, 0.5d
+      3.1 Purge fonts 9→3                         :done, ds3-1, after ds2-7, 1d
+     3.2 Glassmorphism 100→20 occ.               :ds3-2, after ds3-1, 1d
+     3.3 Système élévation par luminosité         :ds3-3, after ds3-1, 1d
+     3.4 Dédupliquer 468 gradients→15 classes    :ds3-4, after ds3-3, 0.5d
+     3.5 Système z-index nommé 6 niveaux         :ds3-5, after ds3-4, 0.5d
 
     section Automation & Infra
     Script Ray design-unify (scan/analyze/replace/validate) :done, ds-auto, 2026-07-14, 0.5d
@@ -78,12 +78,12 @@ gantt
 ### Statut par phase DS-Unify
 
 | Phase | Tâches done | Tâches total | % | Statut |
-|---|---|---|---|---|---|
-| Phase 1 | 1.2 | 5 | 24% | 🟡 1.1 ✅, 1.2 🟡 CS2/MMA restent |
-| Phase 2 | 0 | 7 | 0% | ⏳ Planifié |
-| Phase 3 | 0 | 5 | 0% | 📅 Backlog |
+|---|---|---|---|---|---|---|
+| Phase 1 | 5 | 5 | 100% | ✅ 1.1-1.5 tous complétés |
+| Phase 2 | 7 | 7 | 100% | ✅ 2.1-2.7 tous complétés |
+| Phase 3 | 2 | 5 | 40% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 occ. · 🟡 3.3 Shadow system à suivre |
 | Automation | 3 | 4 | 75% | 🟡 Validation visuelle restante |
-| **Total** | **4.2** | **21** | **20%** | 🟡 Phase 1.2 CS2/MMA à finir |
+| **Total** | **17** | **21** | **81%** | 🟢 Phase 1+2+3.1+3.2 terminées |
 | **Infra Git/VPS** | **3** | **3** | **100%** | ✅ Token nettoyé, push GitHub, VPS déployé |
 
 ### ✅ Session 2 — Terminé (2026-07-14 après-midi)
@@ -92,12 +92,45 @@ gantt
 - ✅ Push GitHub : `feat/design-system-unify` poussé avec `--force-with-lease`
 - ✅ VPS déployé : `~/pariscore` sur `feat/design-system-unify`, pm2 restart OK
 
-### Travail restant immédiat (Phase 1.2)
+### ✅ Session 3 — DS-Unify Phase 2 complète (2026-07-14 soir)
 
-1. ⏳ Remplacer `#E3001B` → `var(--sport-accent)` dans bloc CS2 (l22215-22727)
-2. ⏳ Remplacer `#E3001B` → `var(--sport-accent)` dans bloc MMA (l22920-23130)
-3. ⏳ Validation visuelle : screenshot APRÈS + diff contre baseline AVANT
-4. ⏳ Vérifier que les 14 hex restants (détectés par `ray-design-unify.py analyze`) sont bien intentionnels
+- ✅ Phase 2.1 : `surpoids` 0, `fatigue` 7 légitime tennis
+- ✅ Phase 2.3 : `.hero-eyebrow` supprimé
+- ✅ Phase 2.4 : `.fade-up` scroll-reveal supprimé
+- ✅ Phase 2.5 : `!important` CS2 fixé, `rgba()` → `color-mix()`
+- ✅ Phase 2.6 : Tokens MMA improvisation nettoyés (gold→var(--sport-secondary), rgba→color-mix)
+- ✅ Phase 2.7 : Vérification finale globale — `transition:all` 0, inventées 0
+
+### ✅ Session 4 — DS-Unify Phase 3.1 complète (2026-07-14 fin de soirée)
+
+- ✅ Phase 3.1.1 : SUI fonts → `var(--font-head/body/mono)` — toutes remplacées
+- ✅ Phase 3.1.2 : `--fc-font-ui` et `--fc-font-num` sécurisés
+- ✅ Phase 3.1.3 : Deep panel + comp + tennis modal — Barlow→head, Source→body
+- ✅ Phase 3.1.4 : Skin `'Anton'`/`'Rajdhani'` → `var(--font-head)`
+- ✅ Phase 3.1.5 : Bulk ~100 occ. `'Plus Jakarta Sans'` + `'JetBrains Mono'` → `var(--font-body/mono)`
+- ✅ Phase 3.1.6 : TL timeline `--tl-font-body` nettoyé
+- ✅ Phase 3.1.7 : Google Fonts import réduit à 3 familles (Poppins, Inter, DM Mono)
+- ✅ Vérification finale : zéro référence CSS fonctionnelle aux 6 surplus dans `pariscore.html`
+
+### ✅ Session 5 — DS-Unify Phase 3.2 complète (2026-07-14 Session 5)
+
+- ✅ Phase 3.2.1 : DESIGN_CHARTER.md créée avec système glassmorphism 3 tiers (--cf-blur-light/medium/heavy)
+- ✅ Phase 3.2.2 : nav `.inner` / `.ps-outer` — blur 12px → `var(--cf-blur-medium)`
+- ✅ Phase 3.2.3 : `.filter-console` — blur 10px saturate → `var(--cf-blur-medium) saturate`
+- ✅ Phase 3.2.4 : `.bsd-pitch-*` badges ×3 — blur 2/3/4px → `var(--cf-blur-light)`
+- ✅ Phase 3.2.5 : `.p-bets-overlay` — blur 16px → `var(--cf-blur-heavy)`
+- ✅ Phase 3.2.6 : `.rg-pc-backdrop` + `.rg-pc-metric` — blur 8/4px → `var(--cf-blur-light)`
+- ✅ Phase 3.2.7 : `#page-historique` batch — .dh-toggle, .dh-tool-btn, .dh-period, #dh-filter-rail, .hist-table-wrap, .dh-exec-card, .dh-exec-block, details, .dh-soon-banner, .hist-chart-wrap, .dh-drill-backdrop, .dh-kpi-strip, .dh-kpi, .dh-exec-alert, .dh-drill-content (blur 20px heavy, reste medium/light)
+- ✅ Phase 3.2.8 : `.tennis-filters-container-premium` — blur 12px → `var(--cf-blur-medium)`
+- ✅ Phase 3.2.9 : `.clv-mini-card` — blur 6px → `var(--cf-blur-light)`
+- ✅ Phase 3.2.10 : `.tn2-tab-nav`, `.tn2-timeline-month-hdr`, `.tn2-timeline-month-header` — blur 12px → `var(--cf-blur-medium)`
+- ✅ Phase 3.2.11 : `.tn2-modal-bg`, `.tn2-modal` — blur 6/4px → `var(--cf-blur-light)`
+- ✅ Phase 3.2.12 : `#alert-toast .toast-wrap` — blur 6px → `var(--cf-blur-light)`
+- ✅ Phase 3.2.13 : `.tl-profile-overlay` — blur 8px → `var(--cf-blur-light)`
+- ✅ Phase 3.2.14 : `@supports` Safari fallback batch — 3 sélecteurs principaux mis à jour
+- ✅ **Résultat** : ~100 occurrences brutes → **17 restantes** (16 SUI avec saturate/brightness + 1 @supports syntaxe)
+
+### Prochaine tâche : Phase 3.3 — Shadow system (`--cf-shadow-sm/md/lg/xl` → remplacer les box-shadow brutes)
 
 ---
 
@@ -394,9 +427,9 @@ Le Gantt est mis à jour quand :
 |---|---|---|---|---|
 | Phase 1 | 11 | 11 | 100% | ✅ **EXÉCUTÉE** — 4 CRITICAL éliminés, `DIFF_GITHUB_VPS.md` GO CONDITIONNEL |
 | Phase 2 | 9 | 13 | 69% | 🟡 Patches backend prêts, frontend en attente |
-| Phase 3 | 0 | 16 | 0% | ⏳ Planifié |
+| Phase 3 | 0 | 16 | 0% | ⏳ Planifié (sécurité) · ✅ DS-Unify Ph3.1 faite |
 | Phase 4 | 0 | 8 | 0% | 📅 Backlog |
-| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done, Phase 2 à lancer |
+| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · Phase 2 à lancer · DS-Unify Ph1-3.1 terminées |
 
 ---
 
