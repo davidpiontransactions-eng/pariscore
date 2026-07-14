@@ -323,6 +323,11 @@
      --radius-xl: 16px;
      --radius-sm: 6px;
      --radius-pill: 999px;
+    /* ── Sport accent tokens (surchargés par #page-*) ── */
+    --sport-accent: var(--accent);
+    --sport-secondary: var(--blue);
+    --sport-bg: var(--bg);
+    --sport-card: var(--bg2);
     /* Safe area */
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -350,6 +355,15 @@
     --z-overlay: 9000;
     --z-toast: 11000;
   }
+
+  /* ── Sport accent per page ── */
+  #page-tennis  { --sport-accent: #ccff00; }
+  #page-cycling { --sport-accent: #f4d03f; }
+  #page-mma     { --sport-accent: #E3001B; --sport-secondary: #D4AF37; }
+  #page-f1      { --sport-accent: #ff0043; }
+  #page-cs2     { --sport-accent: #00d4ff; }
+  #page-nba,
+  #page-wnba    { --sport-accent: #ff6b00; }
 
   /* ===========================================================
      bd rcmw V12 Mobile Premium B — Chantier C1-B FOUNDATIONS
