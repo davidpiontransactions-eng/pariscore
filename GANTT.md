@@ -1,8 +1,8 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 5 — DS-Unify Phase 3.2 complète)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 6 — DS-Unify Phase 3.2 + 3.3 complètes)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)**
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)**
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ![Gantt visuel](./GANTT_pariscore.png)
@@ -64,7 +64,7 @@ gantt
     section Phase 3 — Home + Systèmes globaux
       3.1 Purge fonts 9→3                         :done, ds3-1, after ds2-7, 1d
      3.2 Glassmorphism 100→20 occ.               :ds3-2, after ds3-1, 1d
-     3.3 Système élévation par luminosité         :ds3-3, after ds3-1, 1d
+      3.3 Système élévation par luminosité         :done, ds3-3, after ds3-1, 1d
      3.4 Dédupliquer 468 gradients→15 classes    :ds3-4, after ds3-3, 0.5d
      3.5 Système z-index nommé 6 niveaux         :ds3-5, after ds3-4, 0.5d
 
@@ -81,9 +81,9 @@ gantt
 |---|---|---|---|---|---|---|
 | Phase 1 | 5 | 5 | 100% | ✅ 1.1-1.5 tous complétés |
 | Phase 2 | 7 | 7 | 100% | ✅ 2.1-2.7 tous complétés |
-| Phase 3 | 2 | 5 | 40% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 occ. · 🟡 3.3 Shadow system à suivre |
+| Phase 3 | 3 | 5 | 60% | ✅ 3.1 Purge fonts · ✅ 3.2 Glassmorphism 100→17 occ. · ✅ 3.3 Shadow system 14 remplacements |
 | Automation | 3 | 4 | 75% | 🟡 Validation visuelle restante |
-| **Total** | **17** | **21** | **81%** | 🟢 Phase 1+2+3.1+3.2 terminées |
+| **Total** | **18** | **21** | **86%** | 🟢 Phase 1+2+3.1+3.2+3.3 terminées |
 | **Infra Git/VPS** | **3** | **3** | **100%** | ✅ Token nettoyé, push GitHub, VPS déployé |
 
 ### ✅ Session 2 — Terminé (2026-07-14 après-midi)
@@ -130,7 +130,18 @@ gantt
 - ✅ Phase 3.2.14 : `@supports` Safari fallback batch — 3 sélecteurs principaux mis à jour
 - ✅ **Résultat** : ~100 occurrences brutes → **17 restantes** (16 SUI avec saturate/brightness + 1 @supports syntaxe)
 
-### Prochaine tâche : Phase 3.3 — Shadow system (`--cf-shadow-sm/md/lg/xl` → remplacer les box-shadow brutes)
+### ✅ Session 6 — DS-Unify Phase 3.3 complète (2026-07-14 Session 6)
+
+- ✅ Phase 3.3.1 : Scan global box-shadow — 524 occurrences total, 429 brutes non-var, 132 inset, 32 none, 58 var(--cf-*)
+- ✅ Phase 3.3.2 : Identification 69 ombres structurelles neutres (rgba(0,0,0) uniquement) candidates au remplacement
+- ✅ Phase 3.3.3 : Remplacement ciblé 14 occurrences structurelles (modales, dropdowns, cartes, tooltips, badges)
+  - `var(--cf-shadow-sm)` × 4 : hybrid-td-bar-fill, tsd-top badge
+  - `var(--cf-shadow-md)` × 9 : dropdowns, card hover, modale, KPI, search results, notifications
+  - `var(--cf-shadow-lg)` × 1 : modal premium avec compound inset+glow
+- ✅ Vérification syntaxe : 23 var(--cf-shadow-*) valides dans le fichier (9 préexistants + 14 nouveaux)
+- ✅ **Résultat** : 14 raw box-shadow structurelles remplacées par des variables — ombres colorées/inset/compound conservées intactes
+
+### Prochaine tâche : Phase 3.4 — Système gradients (déduplication 468 gradients → classes réutilisables)
 
 ---
 
