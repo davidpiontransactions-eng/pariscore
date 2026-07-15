@@ -24972,8 +24972,8 @@ a:focus-visible,
 /* === TennisScope ï¿½ Portage Option A pour Pariscore === */
 /* bd live-023 : dï¿½finition .sc-wm supprimï¿½e (conflit z-index 5 vs 0 ï¿½ la dï¿½finition ligne ~25053 gagne et ï¿½crasait celle-ci) */
 /* -- Jauge de probabilitï¿½ semi-circulaire ------------------------------ */
-.sc-gauge-wrap{display:flex;flex-direction:row;align-items:center;gap:6px}
-.sc-gauge-center{font-family:var(--font-mono);font-weight:800;fill:var(--text)}
+.sc-gauge-wrap{display:flex;flex-direction:row;align-items:center;gap:6px;isolation:isolate;position:relative}
+.sc-gauge-center{font-family:var(--font-mono);font-weight:800;fill:var(--text);dominant-baseline:central;text-anchor:middle}
 .sc-gauge-label{font-family:var(--font-mono);font-size:9px;fill:var(--text3);letter-spacing:.08em}
 .sc-gauge-legend{display:flex;justify-content:space-between;width:100%;padding:0 2px;margin-top:-2px;font-size:9px;color:var(--text3)}
 .sc-gauge-legend .p1 small{color:var(--green)}
@@ -25570,7 +25570,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     return 'avoid';
   }
   function signalBadge(t){
-    var lbl={strong:'VALUE FORTE',moderate:'Value',avoid:'ï¿½ ï¿½viter',live:'LIVE'}[t];
+    var lbl={strong:'VALUE FORTE',moderate:'Value',avoid:'Ã  Ã©viter',live:'LIVE'}[t];
     return '<span class="sc-signal sc-signal-'+t+'">'+lbl+'</span>';
   }
 
@@ -25851,20 +25851,20 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     // Badge Service
     var hLvl=_badgeLvl(hold,75,60,true);
     var hSub = (sRank&&sTot) ? (sRank+'e/'+sTot) : (hold!=null?hold.toFixed(0)+'%':'n/d');
-    h+='<div class="sc-scout-badge '+hLvl+'"><span class="ico">??</span><span class="b-lbl">Service</span><span class="b-sub">'+hSub+'</span></div>';
+    h+='<div class="sc-scout-badge '+hLvl+'"><span class="ico">'+svgIcon('zap',12)+'</span><span class="b-lbl">Service</span><span class="b-sub">'+hSub+'</span></div>';
     // Badge Retour
     var rLvl=_badgeLvl(ret,32,24,true);
     var rSub = (rRank&&rTot) ? (rRank+'e/'+rTot) : (ret!=null?ret.toFixed(0)+'%':'n/d');
-    h+='<div class="sc-scout-badge '+rLvl+'"><span class="ico">??</span><span class="b-lbl">Retour</span><span class="b-sub">'+rSub+'</span></div>';
+    h+='<div class="sc-scout-badge '+rLvl+'"><span class="ico">'+svgIcon('target',12)+'</span><span class="b-lbl">Retour</span><span class="b-sub">'+rSub+'</span></div>';
     // Badge Forme (l5_pts sur 5)
     var fPct = l5!=null ? (l5/5*100) : null;
     var fLvl=_badgeLvl(fPct,60,40,true);
     var fSub = l5!=null ? (Math.round(l5)+'V / 5') : 'n/d';
-    h+='<div class="sc-scout-badge '+fLvl+'"><span class="ico">??</span><span class="b-lbl">Forme L5</span><span class="b-sub">'+fSub+'</span></div>';
+    h+='<div class="sc-scout-badge '+fLvl+'"><span class="ico">'+svgIcon('chart',12)+'</span><span class="b-lbl">Forme L5</span><span class="b-sub">'+fSub+'</span></div>';
     // Badge Elo surface
     var eLvl=_badgeLvl(elo,2000,1800,true);
     var eSub = elo!=null ? (Math.round(elo)+' pts') : 'n/d';
-    h+='<div class="sc-scout-badge '+eLvl+'"><span class="ico">?</span><span class="b-lbl">Elo surface</span><span class="b-sub">'+eSub+'</span></div>';
+    h+='<div class="sc-scout-badge '+eLvl+'"><span class="ico">'+svgIcon('trophy',12)+'</span><span class="b-lbl">Elo surface</span><span class="b-sub">'+eSub+'</span></div>';
     h+='</div></div>';
     return h;
   }
@@ -26116,14 +26116,14 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-premier-player p1">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p1)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p1.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p1.rank||'')+(p1.flag?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p1.elo_surface||'')+(p1.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p1.powerscore):'')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p1.rank||'')+(flagToCC(p1.flag)?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">Â·</span> Elo '+(p1.elo_surface||'')+(p1.powerscore!=null?' <span class="sc-premier-metric-sep">Â·</span> SPS '+Math.round(p1.powerscore):'')+'</div>'
       +(p1.surf_rank?'<span class="sc-premier-surfrank">#'+p1.surf_rank+(p1.surf_rank_total?'/'+p1.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</span>':'')
       +'</div>'
       +'<div class="sc-premier-gauge">'+gauge(p1p,{size:80,opt:p1p,sup:p1p,inf:p1p,p1n:shortName(p1.name),p2n:shortName(p2.name)})+'</div>'
       +'<div class="sc-premier-player p2">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p2.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p2.rank||'')+(p2.flag?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p2.elo_surface||'')+(p2.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p2.powerscore):'')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p2.rank||'')+(flagToCC(p2.flag)?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">Â·</span> Elo '+(p2.elo_surface||'')+(p2.powerscore!=null?' <span class="sc-premier-metric-sep">Â·</span> SPS '+Math.round(p2.powerscore):'')+'</div>'
       +(p2.surf_rank?'<span class="sc-premier-surfrank">#'+p2.surf_rank+(p2.surf_rank_total?'/'+p2.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</span>':'')
       +'</div>'
       +'</div>'
@@ -26145,7 +26145,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       // -- Expand buttons --
       +'<div class="sc-premier-buttons">'
       +'<button class="sc-premier-btn" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('chart',12)+' Analyse</span><span class="chev">?</span></button>'
-      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('target',12)+' Stratégies</span><span class="chev">?</span></button>'
+      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('target',12)+' Stratï¿½gies</span><span class="chev">?</span></button>'
       +'</div>'
       // -- Detail panel --
       +'<div class="sc-premier-detail" id="pdet-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region" style="display:none"></div>'
@@ -26720,7 +26720,7 @@ var _premierMatchCache=new Map();
 function _renderPredictive(preds){
   if(!preds||!preds.length)return '';
   var top=preds.filter(function(p){return p.ev>0;}).sort(function(a,b){return b.score-a.score;}).slice(0,4);
-  if(!top.length)return '<div style="padding:8px;color:var(--text3);font-size:11px">Aucun pari positif détecté.</div>';
+  if(!top.length)return '<div style="padding:8px;color:var(--text3);font-size:11px">Aucun pari positif dï¿½tectï¿½.</div>';
   var mkLabel={'ML':'Vainqueur','SET1':'Set 1','SETEXACT':'Score exact','SET1PLUS':'e1 set','GAMES':'Total jeux','SETS':'Total sets'};
   return top.map(function(p){
     var lbl=mkLabel[p.mkt]||p.mkt;
@@ -26742,9 +26742,9 @@ function _renderStrategies(data,m){
   var aos=p.at_least_one_set||{};
   var sp=p.set_probs||{};
   var ma=p.most_aces||{};
-  var h='<div class="sc-seclbl">'+svgIcon('target',12)+' Lecture stratégique</div>';
-  // 1. Probabilité match (blend Elo+BSD)
-  h+='<div class="sc-strat-row"><span class="sc-strat-name">Victoire (modèle)</span>';
+  var h='<div class="sc-seclbl">'+svgIcon('target',12)+' Lecture stratï¿½gique</div>';
+  // 1. Probabilitï¿½ match (blend Elo+BSD)
+  h+='<div class="sc-strat-row"><span class="sc-strat-name">Victoire (modï¿½le)</span>';
   h+='<span class="sc-strat-val"><b>'+esc(p1n)+' '+p1+'%</b>  '+esc(p2n)+' '+p2+'%</span></div>';
   // 2. Outsetter value (au moins 1 set)
   if(aos.p1!=null||aos.p2!=null){
@@ -26771,7 +26771,7 @@ function _renderStrategies(data,m){
     h+='<div class="sc-strat-row sc-strat-highlight"><span class="sc-strat-name">Value bet (EV)</span>';
     h+='<span class="sc-strat-val"><b>'+esc(be.label||be.player||'')+' @ '+(be.odds||0).toFixed(2)+' (EV '+evPct+'%)</b></span></div>';
   }
-  h+='<div class="sc-strat-note" style="margin-top:8px;font-size:10px;color:var(--text3)">Calculé depuis Elo+BSD+Markov  pas de cote bookmaker multi-marchés.</div>';
+  h+='<div class="sc-strat-note" style="margin-top:8px;font-size:10px;color:var(--text3)">Calculï¿½ depuis Elo+BSD+Markov  pas de cote bookmaker multi-marchï¿½s.</div>';
   return h;
 }
 
@@ -26839,7 +26839,7 @@ var Scope={
           +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
           +'</div>';
       }else if(mode==='strategies'){
-        if(!match){d.innerHTML='<div style="padding:12px;color:var(--text3);font-size:11px">Stratégies indisponibles.</div>';return;}
+        if(!match){d.innerHTML='<div style="padding:12px;color:var(--text3);font-size:11px">Stratï¿½gies indisponibles.</div>';return;}
         d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'+_renderStrategies(null,match)+'</div>';
       }
     },
