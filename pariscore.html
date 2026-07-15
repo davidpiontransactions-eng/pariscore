@@ -25340,6 +25340,19 @@ a:focus-visible,
 .sc-premier-btn.secondary:hover{background:rgba(0,119,255,.08);color:#4499ff;border-color:rgba(0,119,255,.2)}
 /* detail panel */
 .sc-premier-detail{padding:0 12px 12px;border-top:1px solid var(--border,rgba(255,255,255,.05))}
+.sc-strat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border,rgba(0,0,0,.05));gap:8px}
+.sc-strat-name{font-size:11px;color:var(--text2,#475569);font-weight:500}
+.sc-strat-val{font-size:11px;font-family:var(--font-mono,DM Mono,monospace);color:var(--text,#0f172a);text-align:right}
+.sc-strat-val b{font-weight:700}
+.sc-strat-highlight{background:var(--accent-bg,rgba(0,230,118,.08));border-radius:6px;padding:8px 6px;margin:4px 0}
+.sc-strat-highlight .sc-strat-val b{color:var(--accent,#00e676)}
+.sc-pred-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border,rgba(0,0,0,.04))}
+.sc-pred-mkt{font-size:11px;font-weight:600;color:var(--text2,#475569);min-width:80px}
+.sc-pred-side{font-size:11px;color:var(--text,#0f172a);flex:1}
+.sc-pred-ev{font-size:11px;font-family:var(--font-mono,DM Mono,monospace);font-weight:600}
+.sc-pred-ev-strong{color:var(--accent,#00e676)}
+.sc-pred-ev-moderate{color:var(--amber,#f59e0b)}
+.sc-pred-ev-neutral{color:var(--text3,#64748b)}
 /* quick decision badge tiers */
 .sc-premier-badge-strong .sc-badge{background:rgba(0,230,118,.15)!important;color:var(--accent,#00e676)!important;border-color:rgba(0,230,118,.3)!important}
 .sc-premier-badge-moderate .sc-badge{background:rgba(255,193,7,.12)!important;color:#ffc107!important;border-color:rgba(255,193,7,.25)!important}
@@ -26718,31 +26731,47 @@ function _renderPredictive(preds){
   }).join('');
 }
 
-// R4: render 5 strategy pillars + consensus from /api/v1/tennis/strategies/
+// R4: render strategies from m.predictions (self-sufficient, no gated API)
 function _renderStrategies(data,m){
-  var s=data.strategies||[];
-  var cons=data.consensus||{};
-  var p1n=m?shortName(m.player1&&m.player1.name||'P1'):'P1';
-  var p2n=m?shortName(m.player2&&m.player2.name||'P2'):'P2';
-  var h='<div class="sc-seclbl">'+svgIcon('target',12)+' 5 piliers stratégiques</div>';
-  h+='<div class="sc-strat-grid">';
-  s.forEach(function(str){
-    var p1=str.probP1||0,p2=str.probP2||0;
-    var lean=p1>p2?p1n:p2n;
-    var leanPct=Math.max(p1,p2);
-    h+='<div class="sc-strat-pillar"><div class="sc-strat-label">'+esc(str.label||str.key)+'</div>';
-    h+='<div class="sc-strat-bar"><span style="width:'+p1+'%" class="sc-strat-fill p1"></span></div>';
-    h+='<div class="sc-strat-lean">'+esc(lean)+' '+leanPct.toFixed(0)+'%</div>';
-    if(str.description)h+='<div class="sc-strat-desc">'+esc(str.description)+'</div>';
-    h+='</div>';
-  });
-  h+='</div>';
-  if(cons.probP1!=null){
-    h+='<div class="sc-strat-consensus"><span>Consensus</span><b>'+esc(p1n)+' '+(cons.probP1||0).toFixed(0)+'%  '+esc(p2n)+' '+(cons.probP2||0).toFixed(0)+'%</b></div>';
+  // data may be null (API 403 gated)  build entirely from match object
+  var p=m&&m.predictions||{};
+  var bl=(p.blended||p.elo||{});
+  var p1=Math.round((bl.p1||0)*100),p2=Math.round((bl.p2||0)*100);
+  var p1n=m?shortName((m.player1&&m.player1.name)||'P1'):'P1';
+  var p2n=m?shortName((m.player2&&m.player2.name)||'P2'):'P2';
+  var aos=p.at_least_one_set||{};
+  var sp=p.set_probs||{};
+  var ma=p.most_aces||{};
+  var h='<div class="sc-seclbl">'+svgIcon('target',12)+' Lecture stratégique</div>';
+  // 1. Probabilité match (blend Elo+BSD)
+  h+='<div class="sc-strat-row"><span class="sc-strat-name">Victoire (modèle)</span>';
+  h+='<span class="sc-strat-val"><b>'+esc(p1n)+' '+p1+'%</b>  '+esc(p2n)+' '+p2+'%</span></div>';
+  // 2. Outsetter value (au moins 1 set)
+  if(aos.p1!=null||aos.p2!=null){
+    var ao1=Math.round((aos.p1||0)*100),ao2=Math.round((aos.p2||0)*100);
+    var aolean=ao1>ao2?p2n+' (outsider)':p1n+' (outsider)';
+    var aomax=Math.max(ao1,ao2);
+    h+='<div class="sc-strat-row"><span class="sc-strat-name">e1 set (value outsider)</span>';
+    h+='<span class="sc-strat-val">'+esc(aolean)+' '+aomax+'%</span></div>';
   }
-  if(m&&m.predictive&&m.predictive.length){
-    h+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top paris multi-marchés</div>'+_renderPredictive(m.predictive);
+  // 3. Profil set (Markov serve/return)
+  if(sp.p1_hold!=null){
+    h+='<div class="sc-strat-row"><span class="sc-strat-name">Hold service (S1)</span>';
+    h+='<span class="sc-strat-val">'+esc(p1n)+' '+Math.round((sp.p1_hold||0)*100)+'% / '+esc(p2n)+' '+Math.round((sp.p2_hold||0)*100)+'%</span></div>';
   }
+  // 4. Aces / dominateur service
+  if(ma&&(ma.favorite||ma.p1_aces!=null)){
+    var aceN=ma.favorite||'';
+    h+='<div class="sc-strat-row"><span class="sc-strat-name">Aces (King of Aces)</span>';
+    h+='<span class="sc-strat-val">'+esc(aceN)+'</span></div>';
+  }
+  // 5. Edge match-winner (depuis best_ev_model)
+  if(m&&m.best_ev_model&&m.best_ev_model.ev){
+    var be=m.best_ev_model;var evPct=(be.ev*100).toFixed(1);
+    h+='<div class="sc-strat-row sc-strat-highlight"><span class="sc-strat-name">Value bet (EV)</span>';
+    h+='<span class="sc-strat-val"><b>'+esc(be.label||be.player||'')+' @ '+(be.odds||0).toFixed(2)+' (EV '+evPct+'%)</b></span></div>';
+  }
+  h+='<div class="sc-strat-note" style="margin-top:8px;font-size:10px;color:var(--text3)">Calculé depuis Elo+BSD+Markov  pas de cote bookmaker multi-marchés.</div>';
   return h;
 }
 
@@ -26810,17 +26839,8 @@ var Scope={
           +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
           +'</div>';
       }else if(mode==='strategies'){
-        d.innerHTML='<div class="sc-detail" style="border:none;padding:0"><div class="sc-seclbl">'+svgIcon('target',12)+' Stratégies</div><div style="padding:8px;color:var(--text3);font-size:11px">Chargement&</div></div>';
-        if(match&&match.predictive&&match.predictive.length){d.innerHTML+='<div class="sc-seclbl" style="margin-top:8px">'+svgIcon('zap',12)+' Top paris</div>'+_renderPredictive(match.predictive);}
-        fetch('/api/v1/tennis/strategies/'+encodeURIComponent(mid)).then(function(r){return r.ok?r.json():null;}).then(function(data){
-          if(!data||!data.strategies){
-            if(!(match&&match.predictive&&match.predictive.length)){d.innerHTML='<div class="sc-detail" style="border:none;padding:0"><div class="sc-seclbl">'+svgIcon('target',12)+' Stratégies</div><div style="padding:12px;color:var(--text3);font-size:11px">Aucune stratégie (cache en chauffe).</div></div>';}
-            return;
-          }
-          d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'+_renderStrategies(data,match)+'</div>';
-        }).catch(function(){
-          if(!(match&&match.predictive&&match.predictive.length)){d.innerHTML='<div style="padding:12px;color:var(--text3);font-size:11px">Stratégies indisponibles.</div>';}
-        });
+        if(!match){d.innerHTML='<div style="padding:12px;color:var(--text3);font-size:11px">Stratégies indisponibles.</div>';return;}
+        d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'+_renderStrategies(null,match)+'</div>';
       }
     },
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
