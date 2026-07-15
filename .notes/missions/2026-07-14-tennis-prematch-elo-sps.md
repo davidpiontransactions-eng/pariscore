@@ -1,13 +1,16 @@
 # Tennis Prematch — Bug Elo/Ranking + Enrichissement SPS
 
 > **Mission**: Régression `#—` / `Elo —` sur les PlayerCards Tennis Prematch + enrichissement 6 métriques.
-> **Statut**: ✅ Implémentation terminée — typecheck OK (0 nouvelle erreur), en attente validation visuelle
-> **Date**: 2026-07-14
-- [x] Étape 1 : Debug (`#—` / `Elo —`) — diagnostic livré
-- [x] Étape 2 : Enrichissement données (6 métriques) — couche DB + route API
-- [x] Étape 3 : Intégration UI — composant PlayerStatline + tooltips
-- [x] Câblage Graphify — graphe rafraîchi (23582 nœuds, commit fde22bb)
-- [ ] Validation visuelle du match Zandschulp vs Vallejo (requiert DB peupleable)
+> **Statut**: ✅✅ MISSION TERMINÉE — 6/6 métriques affichées sur pariscore.fr (validé navigateur)
+> **Date**: 2026-07-14 → 2026-07-15
+- [x] Étape 1 : Debug (`#—` / `Elo —`) — cause racine legacy identifiée (surface null)
+- [x] Étape 2 : Enrichissement données — cron SPS réparé + backfill 11032 rows
+- [x] Étape 3 : UI legacy premierCard — 6 métriques + badges surface
+- [x] Validation pariscore.fr navigateur — Playwright confirme #55 · Elo 1758 · SPS 49
+
+## 🎉 Résultat final (15/07/2025 02:00 UTC)
+Zandschulp sur pariscore.fr onglet Tennis : `#55 · Elo 1758 · SPS 49` + badge `#223/1346 Clay`
+Toutes les 6 métriques opérationnelles. Cron SPS pm2 `pariscore-cron-sps` tourne 2×/jour.
 
 ## 📦 Fichiers livrés (implémentation)
 
