@@ -1,0 +1,42 @@
+{
+  "title": "premierCard Refonte complète — bugs + typo + layout + Stratégies",
+  "timeline": {
+    "title": "Phases",
+    "labels": ["R1: Bugs structurels", "R2: Typo 4 tailles", "R3: Statline 2 lignes", "R4: Section Stratégies", "R5: Tests+Deploy"]
+  },
+  "tracks": [
+    {
+      "name": "Structure (fondation)",
+      "items": [
+        { "label": "B1: fix lookup Analyse (Map<id,match>)", "start": "R1: Bugs structurels", "end": "R1: Bugs structurels", "color": "#ef4444" },
+        { "label": "B2: persistance panels (_expandedPremierIds)", "start": "R1: Bugs structurels", "end": "R1: Bugs structurels", "color": "#ef4444" },
+        { "label": "B3: fix icônes mojibake → svgIcon", "start": "R1: Bugs structurels", "end": "R2: Typo 4 tailles", "color": "#ef4444" }
+      ]
+    },
+    {
+      "name": "Typo & Layout",
+      "items": [
+        { "label": "Échelle 4 tailles (11/15 + tokens)", "start": "R2: Typo 4 tailles", "end": "R2: Typo 4 tailles", "color": "#f59e0b" },
+        { "label": "Hiérarchie: Edge 11px, cotes 700, pname 15px", "start": "R2: Typo 4 tailles", "end": "R3: Statline 2 lignes", "color": "#f59e0b" },
+        { "label": "Statline 2 lignes (labels Inter / chiffres mono)", "start": "R3: Statline 2 lignes", "end": "R3: Statline 2 lignes", "color": "#f59e0b" },
+        { "label": "Badge surface → header (un seul bleu charter)", "start": "R3: Statline 2 lignes", "end": "R4: Section Stratégies", "color": "#f59e0b" }
+      ]
+    },
+    {
+      "name": "Section Stratégies",
+      "items": [
+        { "label": "renderStrategies() — 5 piliers + consensus", "start": "R4: Section Stratégies", "end": "R4: Section Stratégies", "color": "#3b82f6" },
+        { "label": "Wire /api/v1/tennis/strategies/ + m.predictive", "start": "R4: Section Stratégies", "end": "R4: Section Stratégies", "color": "#3b82f6" },
+        { "label": "Fallback predictive si API 404", "start": "R4: Section Stratégies", "end": "R5: Tests+Deploy", "color": "#3b82f6" }
+      ]
+    },
+    {
+      "name": "Tests & Déploiement",
+      "items": [
+        { "label": "Playwright: B1 Analyse marche, B2 panel persiste", "start": "R5: Tests+Deploy", "end": "R5: Tests+Deploy", "color": "#10b981" },
+        { "label": "Playwright: 4 tailles typo, Stratégies rendue", "start": "R5: Tests+Deploy", "end": "R5: Tests+Deploy", "color": "#10b981" },
+        { "label": "commit + push + VPS deploy", "start": "R5: Tests+Deploy", "end": "R5: Tests+Deploy", "color": "#10b981" }
+      ]
+    }
+  ]
+}
