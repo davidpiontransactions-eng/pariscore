@@ -25312,11 +25312,11 @@ a:focus-visible,
 .sc-premier-photo-wrap{width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--bg3,#1e2a3d);display:flex;align-items:center;justify-content:center;margin-bottom:2px;flex:0 0 36px}
 .sc-premier-photo{width:100%;height:100%;object-fit:cover}
 .sc-premier-photo-init{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--text2,#94a3b8)}
-.sc-premier-pname{font-size:13px;font-weight:700;color:var(--text,#0f172a);line-height:1.2;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-premier-pname{font-size:15px;font-weight:700;color:var(--text,#0f172a);line-height:1.2;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sc-premier-prank{font-size:10px;color:var(--text2,#94a3b8);font-family:var(--font-mono,DM Mono,monospace);display:flex;align-items:center;gap:3px;flex-wrap:wrap;line-height:1.4}
-.sc-premier-pelo{font-size:9px;color:var(--text3,#64748b)}
-.sc-premier-surfrank{display:inline-flex;align-items:center;padding:1px 6px;font-size:9px;font-weight:600;font-family:var(--font-mono,DM Mono,monospace);color:#0284c7;background:rgba(14,165,233,0.10);border:1px solid rgba(14,165,233,0.20);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
-.sc-premier-sps{display:inline-flex;align-items:center;padding:1px 6px;font-size:9px;font-weight:500;font-family:var(--font-mono,DM Mono,monospace);color:var(--text3,#707e94);background:rgba(255,255,255,0.04);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
+.sc-premier-pelo{font-size:11px;color:var(--text3,#64748b)}
+.sc-premier-surfrank{display:inline-flex;align-items:center;padding:1px 6px;font-size:11px;font-weight:600;font-family:var(--font-mono,DM Mono,monospace);color:var(--blue,#0077ff);background:rgba(14,165,233,0.10);border:1px solid rgba(14,165,233,0.20);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
+.sc-premier-sps{display:inline-flex;align-items:center;padding:1px 6px;font-size:11px;font-weight:500;font-family:var(--font-mono,DM Mono,monospace);color:var(--text3,#707e94);background:rgba(255,255,255,0.04);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
 .sc-premier-metrics{display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap}
 .sc-premier-metric-sep{color:var(--text3,#707e94);margin:0 1px;flex-shrink:0}
 .sc-premier-gauge{flex:0 0 auto;padding:0 2px}
@@ -25325,16 +25325,16 @@ a:focus-visible,
 .sc-premier-action{display:flex;align-items:center;padding:6px 12px 8px;gap:10px}
 .sc-premier-odds{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
 .sc-premier-odds.p2{align-items:flex-end}
-.sc-premier-odd-val{font-size:15px;font-weight:800;font-family:var(--font-mono,DM Mono,monospace);color:var(--text,#fff);line-height:1.2}
-.sc-premier-odd-lbl{font-size:9px;color:var(--text3,#64748b);text-transform:uppercase;letter-spacing:.03em}
+.sc-premier-odd-val{font-size:15px;font-weight:700;font-family:var(--font-mono,DM Mono,monospace);color:var(--text,#fff);line-height:1.2}
+.sc-premier-odd-lbl{font-size:11px;color:var(--text3,#64748b);text-transform:uppercase;letter-spacing:.03em}
 .sc-premier-decision{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
-.sc-premier-decision-detail{font-size:9px;color:var(--text2,#94a3b8);text-align:center;line-height:1.3;white-space:nowrap}
+.sc-premier-decision-detail{font-size:11px;color:var(--text2,#94a3b8);text-align:center;line-height:1.3;white-space:nowrap}
 .sc-premier-decision-detail b{color:var(--text,#fff)}
 /* buttons */
 .sc-premier-buttons{display:flex;gap:6px;padding:0 12px 10px}
 .sc-premier-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 8px;background:var(--bg3,#1e2a3d);color:var(--text2,#94a3b8);border:1px solid var(--border,rgba(255,255,255,.06));border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:background .15s,color .15s,border-color .15s;white-space:nowrap}
 .sc-premier-btn:hover{background:rgba(0,230,118,.08);color:var(--accent,#00e676);border-color:rgba(0,230,118,.2)}
-.sc-premier-btn .chev{font-size:8px;transition:transform .2s;margin-left:auto}
+.sc-premier-btn .chev{font-size:11px;transition:transform .2s;margin-left:auto}
 .sc-premier-btn.open .chev{transform:rotate(180deg)}
 .sc-premier-btn.secondary{font-size:10px}
 .sc-premier-btn.secondary:hover{background:rgba(0,119,255,.08);color:#4499ff;border-color:rgba(0,119,255,.2)}
@@ -26082,6 +26082,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       return '<div class="sc-premier-photo-init">'+esc((p.name||'?')[0])+'</div>';
     }
 
+    _premierMatchCache.set(String(m.id),m);
+    var _isOpen=_expandedPremierIds.has(String(m.id));
     return '<div class="sc-premier-card" data-match-id="'+esc(m.id)+'">'
       // -- Header --
       +'<div class="sc-premier-head">'
@@ -26129,8 +26131,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</div>'
       // -- Expand buttons --
       +'<div class="sc-premier-buttons">'
-      +'<button class="sc-premier-btn" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>?? Analyse</span><span class="chev">?</span></button>'
-      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>?? Stratï¿½gies</span><span class="chev">?</span></button>'
+      +'<button class="sc-premier-btn" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('chart',12)+' Analyse</span><span class="chev">?</span></button>'
+      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('target',12)+' Stratégies</span><span class="chev">?</span></button>'
       +'</div>'
       // -- Detail panel --
       +'<div class="sc-premier-detail" id="pdet-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region" style="display:none"></div>'
@@ -26652,6 +26654,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   // bd live-001 : persistance ï¿½tat d'expansion des accordï¿½ons (cross-re-render).
   // Variable module-level dans le Scope IIFE (pas dans _state qui est dans le TennisScope IIFE).
   var _expandedMatchIds=new Set();
+var _expandedPremierIds=new Set();
+var _premierMatchCache=new Map();
   // bd live-025 : compteur module-level pour IDs gradient SVG uniques (ï¿½vite collisions si match IDs dupliquï¿½s)
   var _chartSeq=0;
 
@@ -26699,7 +26703,50 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   }
 
   /* -- Public API ----------------------------------------------------- */
-  var Scope={
+  // R4: render predictive multi-market bets (from m.predictive, already computed by backend)
+function _renderPredictive(preds){
+  if(!preds||!preds.length)return '';
+  var top=preds.filter(function(p){return p.ev>0;}).sort(function(a,b){return b.score-a.score;}).slice(0,4);
+  if(!top.length)return '<div style="padding:8px;color:var(--text3);font-size:11px">Aucun pari positif détecté.</div>';
+  var mkLabel={'ML':'Vainqueur','SET1':'Set 1','SETEXACT':'Score exact','SET1PLUS':'e1 set','GAMES':'Total jeux','SETS':'Total sets'};
+  return top.map(function(p){
+    var lbl=mkLabel[p.mkt]||p.mkt;
+    var evCls=p.ev>0.08?'strong':p.ev>0.04?'moderate':'neutral';
+    return '<div class="sc-pred-row"><span class="sc-pred-mkt">'+lbl+'</span>'
+      +'<span class="sc-pred-side">'+(p.label||p.side||'')+'</span>'
+      +'<span class="sc-pred-ev sc-pred-ev-'+evCls+'">EV '+(p.ev*100).toFixed(1)+'%</span></div>';
+  }).join('');
+}
+
+// R4: render 5 strategy pillars + consensus from /api/v1/tennis/strategies/
+function _renderStrategies(data,m){
+  var s=data.strategies||[];
+  var cons=data.consensus||{};
+  var p1n=m?shortName(m.player1&&m.player1.name||'P1'):'P1';
+  var p2n=m?shortName(m.player2&&m.player2.name||'P2'):'P2';
+  var h='<div class="sc-seclbl">'+svgIcon('target',12)+' 5 piliers stratégiques</div>';
+  h+='<div class="sc-strat-grid">';
+  s.forEach(function(str){
+    var p1=str.probP1||0,p2=str.probP2||0;
+    var lean=p1>p2?p1n:p2n;
+    var leanPct=Math.max(p1,p2);
+    h+='<div class="sc-strat-pillar"><div class="sc-strat-label">'+esc(str.label||str.key)+'</div>';
+    h+='<div class="sc-strat-bar"><span style="width:'+p1+'%" class="sc-strat-fill p1"></span></div>';
+    h+='<div class="sc-strat-lean">'+esc(lean)+' '+leanPct.toFixed(0)+'%</div>';
+    if(str.description)h+='<div class="sc-strat-desc">'+esc(str.description)+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  if(cons.probP1!=null){
+    h+='<div class="sc-strat-consensus"><span>Consensus</span><b>'+esc(p1n)+' '+(cons.probP1||0).toFixed(0)+'%  '+esc(p2n)+' '+(cons.probP2||0).toFixed(0)+'%</b></div>';
+  }
+  if(m&&m.predictive&&m.predictive.length){
+    h+='<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top paris multi-marchés</div>'+_renderPredictive(m.predictive);
+  }
+  return h;
+}
+
+var Scope={
     // helpers exposï¿½s (utiles pour rï¿½utilisation dans Pariscore)
     p1WinProb:p1WinProb,implied:implied,ev:ev,kelly:kelly,tier:tier,signalBadge:signalBadge,
     gauge:gauge,momentumBar:momentumBar,formDots:formDots,surfaceBadge:surfaceBadge,
@@ -26750,20 +26797,11 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       var open=btn.classList.toggle('open');
       d.style.display=open?'block':'none';
       btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open){_expandedPremierIds.add(String(mid));}else{_expandedPremierIds.delete(String(mid));}
       if(!open)return;
-      if(d.getAttribute('data-loaded'))return;
-      d.setAttribute('data-loaded','1');
+      var match=_premierMatchCache.get(String(mid));
       if(mode==='analyse'){
-        var match=null;
-        if(typeof TennisScope!=='undefined'&&TennisScope._state&&TennisScope._state.matches){
-          for(var i=0;i<TennisScope._state.matches.length;i++){
-            if(String(TennisScope._state.matches[i].id)===String(mid)){match=TennisScope._state.matches[i];break;}
-          }
-        }
-        if(!match){
-          d.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3);font-size:12px">Analyse non disponible.</div>';
-          return;
-        }
+        if(!match){d.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3);font-size:11px">Analyse non disponible.</div>';return;}
         d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'
           +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
           +scoutProfile(match.player1)+scoutProfile(match.player2)
@@ -26772,7 +26810,17 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
           +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
           +'</div>';
       }else if(mode==='strategies'){
-        d.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Strategies disponibles dans la prochaine version.</div>';
+        d.innerHTML='<div class="sc-detail" style="border:none;padding:0"><div class="sc-seclbl">'+svgIcon('target',12)+' Stratégies</div><div style="padding:8px;color:var(--text3);font-size:11px">Chargement&</div></div>';
+        if(match&&match.predictive&&match.predictive.length){d.innerHTML+='<div class="sc-seclbl" style="margin-top:8px">'+svgIcon('zap',12)+' Top paris</div>'+_renderPredictive(match.predictive);}
+        fetch('/api/v1/tennis/strategies/'+encodeURIComponent(mid)).then(function(r){return r.ok?r.json():null;}).then(function(data){
+          if(!data||!data.strategies){
+            if(!(match&&match.predictive&&match.predictive.length)){d.innerHTML='<div class="sc-detail" style="border:none;padding:0"><div class="sc-seclbl">'+svgIcon('target',12)+' Stratégies</div><div style="padding:12px;color:var(--text3);font-size:11px">Aucune stratégie (cache en chauffe).</div></div>';}
+            return;
+          }
+          d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'+_renderStrategies(data,match)+'</div>';
+        }).catch(function(){
+          if(!(match&&match.predictive&&match.predictive.length)){d.innerHTML='<div style="padding:12px;color:var(--text3);font-size:11px">Stratégies indisponibles.</div>';}
+        });
       }
     },
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
