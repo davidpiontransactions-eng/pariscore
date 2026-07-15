@@ -170,5 +170,29 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
+    {
+      // === Cron job SPS (Surface PowerScore) — tennis prematch enrichment ===
+      // Calcule le SPS [0-100] de tous les joueurs actifs (tennis_matches_internal)
+      // et peuple player_surface_scores. Sans ce cron, les métriques SPS + rang SPS
+      // sont vides → affichage "SPS —" dans premierCard.
+      // FIX 2026-07-15 : le cron lit tennis_matches_internal directement (5516
+      // joueurs) au lieu de l'HTTP /upcoming (qui renvoyait 0 match).
+      name: 'pariscore-cron-sps',
+      script: 'cron_sps_updater.py',
+      interpreter: 'python3',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 5,17 * * *', // 2×/jour à 05:30 et 17:30 UTC
+      autorestart: false,             // cron-only
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        PARISCORE_DB_PATH: '/home/ubuntu/pariscore/pariscore.db',
+      },
+      error_file: 'logs/cron-sps.err.log',
+      out_file: 'logs/cron-sps.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
   ],
 };
