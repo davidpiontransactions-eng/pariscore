@@ -1,0 +1,44 @@
+{
+  "title": "Tennis Prematch 6 métriques — Mission complète ✅ TERMINÉ",
+  "timeline": {
+    "title": "Phases",
+    "labels": ["P1: Diagnostic", "P2: Data (SPS cron)", "P3: Backend", "P4: Frontend v1", "P5: Brainstorm+Spec", "P6: UI Refonte", "P7: Validation finale"]
+  },
+  "tracks": [
+    {
+      "name": "Data",
+      "items": [
+        { "label": "✅ Diagnostic DB prod (15251 rows tennis_elo)", "start": "P1: Diagnostic", "end": "P1: Diagnostic", "color": "#10b981" },
+        { "label": "✅ Réparer cron_sps_updater.py (source DB)", "start": "P2: Data (SPS cron)", "end": "P2: Data (SPS cron)", "color": "#10b981" },
+        { "label": "✅ Backfill: 11032 SPS écrits (0 erreur)", "start": "P2: Data (SPS cron)", "end": "P3: Backend", "color": "#10b981" },
+        { "label": "✅ pm2 pariscore-cron-sps (2×/jour)", "start": "P4: Frontend v1", "end": "P5: Brainstorm+Spec", "color": "#10b981" }
+      ]
+    },
+    {
+      "name": "Backend (server.js)",
+      "items": [
+        { "label": "✅ Fix Elo — (resolveTennisSurfaceSync mots-clés)", "start": "P1: Diagnostic", "end": "P2: Data (SPS cron)", "color": "#10b981" },
+        { "label": "✅ Fallback Elo ALL quand surface inconnue", "start": "P1: Diagnostic", "end": "P2: Data (SPS cron)", "color": "#10b981" },
+        { "label": "✅ _getPlayerRank fallback winner_rank", "start": "P3: Backend", "end": "P3: Backend", "color": "#10b981" },
+        { "label": "✅ Fix UNION ALL syntaxe SQLite", "start": "P3: Backend", "end": "P4: Frontend v1", "color": "#10b981" }
+      ]
+    },
+    {
+      "name": "Frontend (pariscore.html)",
+      "items": [
+        { "label": "✅ premierCard v1: statline + badges", "start": "P4: Frontend v1", "end": "P5: Brainstorm+Spec", "color": "#10b981" },
+        { "label": "✅ Audit UI: 3 bugs identifiés", "start": "P5: Brainstorm+Spec", "end": "P6: UI Refonte", "color": "#f59e0b" },
+        { "label": "✅ Refonte: mono+pill, font-mono, séparateurs ·", "start": "P6: UI Refonte", "end": "P6: UI Refonte", "color": "#10b981" },
+        { "label": "✅ Couleurs light mode (surfrank sky-blue)", "start": "P6: UI Refonte", "end": "P7: Validation finale", "color": "#10b981" }
+      ]
+    },
+    {
+      "name": "Process & Validation",
+      "items": [
+        { "label": "✅ Brainstorming multi-expertise + spec", "start": "P5: Brainstorm+Spec", "end": "P5: Brainstorm+Spec", "color": "#10b981" },
+        { "label": "✅ Playwright: 6/6 métriques rendues", "start": "P7: Validation finale", "end": "P7: Validation finale", "color": "#10b981" },
+        { "label": "✅ Couleurs lisibles confirmées prod", "start": "P7: Validation finale", "end": "P7: Validation finale", "color": "#10b981" }
+      ]
+    }
+  ]
+}

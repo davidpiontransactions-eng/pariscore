@@ -1,5 +1,5 @@
 {
-  "title": "Tennis Prematch — Refonte UI statline 6 métriques",
+  "title": "Tennis Prematch — Refonte UI statline 6 métriques ✅ TERMINÉ",
   "timeline": {
     "title": "Étapes",
     "labels": ["S1: Décision design", "S2: CSS charte", "S3: Template", "S4: Test local", "S5: Déploiement", "S6: Validation"]
@@ -8,31 +8,25 @@
     {
       "name": "Design",
       "items": [
-        { "label": "Valider 1 des 3 layouts (mono+pill / 2-lignes / micro-badges)", "start": "S1: Décision design", "end": "S1: Décision design", "color": "#f59e0b" }
+        { "label": "✅ Design mono+pill validé et implémenté", "start": "S1: Décision design", "end": "S1: Décision design", "color": "#10b981" }
       ]
     },
     {
-      "name": "CSS (pariscore.html)",
+      "name": "CSS + Template (pariscore.html)",
       "items": [
-        { "label": "B1: .sc-premier-surfrank → 9px pill tennis-yellow", "start": "S2: CSS charte", "end": "S2: CSS charte", "color": "#10b981" },
-        { "label": "B2: .sc-premier-prank → var(--text2) #94a3b8", "start": "S2: CSS charte", "end": "S2: CSS charte", "color": "#10b981" },
-        { "label": "B3: restaurer .sc-premier-pelo ou var(--text3)", "start": "S2: CSS charte", "end": "S2: CSS charte", "color": "#10b981" },
-        { "label": "var(--font-mono) sur valeurs numériques", "start": "S2: CSS charte", "end": "S2: CSS charte", "color": "#10b981" }
+        { "label": "✅ B1: séparateurs mojibake → ·", "start": "S2: CSS charte", "end": "S3: Template", "color": "#10b981" },
+        { "label": "✅ B2: prank var(--font-mono) + flex", "start": "S2: CSS charte", "end": "S3: Template", "color": "#10b981" },
+        { "label": "✅ B3: surfrank inline pill 9px", "start": "S2: CSS charte", "end": "S3: Template", "color": "#10b981" },
+        { "label": "✅ surfrank sky-blue (light mode)", "start": "S3: Template", "end": "S4: Test local", "color": "#10b981" },
+        { "label": "✅ pname fallback #0f172a", "start": "S3: Template", "end": "S4: Test local", "color": "#10b981" }
       ]
     },
     {
-      "name": "Template (premierCard)",
+      "name": "Déploiement & Validation",
       "items": [
-        { "label": "Éditer L26100-26101 + L26107-26108 (via iconv-lite, CP1252)", "start": "S3: Template", "end": "S3: Template", "color": "#3b82f6" },
-        { "label": "valider: node scripts/validate-css-conventions.js", "start": "S3: Template", "end": "S3: Template", "color": "#3b82f6" }
-      ]
-    },
-    {
-      "name": "Déploiement",
-      "items": [
-        { "label": "git commit + push origin main", "start": "S5: Déploiement", "end": "S5: Déploiement", "color": "#ef4444" },
-        { "label": "ssh VPS: git pull + pm2 restart pariscore", "start": "S5: Déploiement", "end": "S5: Déploiement", "color": "#ef4444" },
-        { "label": "Playwright: surfrank=9px, prank=#94a3b8, font-mono", "start": "S6: Validation", "end": "S6: Validation", "color": "#ef4444" }
+        { "label": "✅ commit 06b032e + 881ca0e + push", "start": "S5: Déploiement", "end": "S5: Déploiement", "color": "#10b981" },
+        { "label": "✅ VPS git pull + pm2 restart", "start": "S5: Déploiement", "end": "S6: Validation", "color": "#10b981" },
+        { "label": "✅ Playwright: pname #0f172a, prank #475569, surfrank #0284c7", "start": "S6: Validation", "end": "S6: Validation", "color": "#10b981" }
       ]
     }
   ]

@@ -1,31 +1,26 @@
-# Gantt Chart — Refonte UI statline 6 métriques
+# Gantt — Refonte UI statline (mise à jour finale)
 
 ```
-Tennis Prematch — Refonte UI statline 6 métriques
+Tennis Prematch — Refonte UI statline 6 métriques ✅ TERMINÉ
 ═══════════════════════════════════════════════════════════════
             S1        S2        S3        S4        S5        S6
             Décision  CSS       Template  Test      Deploy    Valid
 ─────────────────────────────────────────────────────────────────
 Design
-  valider layout  ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+  ✅ mono+pill validé  ████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
 ─────────────────────────────────────────────────────────────────
-CSS (charte)
-  B1 surfrank 9px     ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  B2 prank text2      ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  B3 pelo text3       ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  font-mono valeurs   ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+CSS + Template
+  ✅ B1 séparateurs ·     ████████████████████░░░░░░░░░░░░░░░░░░░░
+  ✅ B2 prank font-mono   ████████████████████░░░░░░░░░░░░░░░░░░░░
+  ✅ B3 surfrank 9px pill ████████████████████░░░░░░░░░░░░░░░░░░░░
+  ✅ surfrank sky-blue         ████████████████░░░░░░░░░░░░░░░░░░
+  ✅ pname fallback dark       ████████████████░░░░░░░░░░░░░░░░░░
 ─────────────────────────────────────────────────────────────────
-Template
-  éditer L26100+L26107        ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-  validate-css-conventions         ████░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-─────────────────────────────────────────────────────────────────
-Déploiement
-  commit + push                       ░░░░░░░░░░░░░░██████░░░░░░░░░░
-  ssh VPS + pm2 restart                            ██████░░░░░░░░░░
-  Playwright validation                                      ██████
+Déploiement & Validation
+  ✅ commit + push                           ░░░░░░░░░░░░████████░░
+  ✅ VPS + pm2 restart                                   ████████░░
+  ✅ Playwright couleurs OK                                       ████
 ═══════════════════════════════════════════════════════════════
-Durée estimée : ~1h (CSS + template ciblés, pas de refonte globale)
+Commits: 06b032e (UI fixes) + 881ca0e (couleurs light mode)
+Validé: pname #0f172a, prank #475569, surfrank #0284c7
 ```
-
-> Source JSON : `2026-07-15-ui-refonte-gantt.json`
-> Rendu SVG : `python3 scripts/render_gantt.py` (nécessite package `gantt_chart_skill` — non installé)
