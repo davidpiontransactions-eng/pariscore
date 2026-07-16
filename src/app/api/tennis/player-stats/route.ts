@@ -15,6 +15,8 @@
 // dégrade en affichant `—` pour les valeurs manquantes.
 
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
+import { ValidationError } from "@/lib/api-error";
 import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
 
 const CACHE_TTL_MS = 60_000; // 1 min — cohérent avec /api/tennis/prematch
@@ -35,7 +37,7 @@ export async function GET(request: Request) {
       .slice(0, 50); // cap anti-abus
 
     if (names.length === 0) {
-      return NextResponse.json({ error: "Missing 'names' param" }, { status: 400 });
+      throw new ValidationError("Missing 'names' param");
     }
 
     const cacheKey = `${names.join("|")}@${surface}`;
@@ -49,7 +51,8 @@ export async function GET(request: Request) {
     return NextResponse.json(map);
   } catch (err) {
     // Dégradation gracieuse — on ne casse jamais le prematch.
-    console.error("[player-stats] error:", (err as Error).message);
-    return NextResponse.json({}, { status: 200 });
+    return apiErrorHandler(err, "tennis/player-stats", () =>
+      NextResponse.json({}, { status: 200 })
+    );
   }
 }

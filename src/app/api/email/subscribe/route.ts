@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
 import {
   isValidEmail,
   normalizeEmail,
@@ -38,10 +39,6 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (err) {
-    console.error("[email/subscribe] error", err);
-    return NextResponse.json(
-      { error: "Failed to store subscription" },
-      { status: 500 }
-    );
+    return apiErrorHandler(err, "email/subscribe");
   }
 }

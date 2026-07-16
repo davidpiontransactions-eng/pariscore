@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
+import { ValidationError } from "@/lib/api-error";
 import { subscribersRef } from "@/lib/email/store";
 import { sendEmail, type SendResult } from "@/lib/email/send";
 
@@ -160,10 +162,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
     if (!isDigestPayload(body)) {
-      return NextResponse.json(
-        { error: "Invalid digest payload" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid digest payload");
     }
 
     const { subject, text, html } = buildDigestEmail(body.bets);
@@ -203,10 +202,6 @@ export async function POST(request: Request) {
       subject,
     });
   } catch (err) {
-    console.error("[email/digest] error", err);
-    return NextResponse.json(
-      { error: "Failed to send digest" },
-      { status: 500 }
-    );
+    return apiErrorHandler(err, "email/digest");
   }
 }

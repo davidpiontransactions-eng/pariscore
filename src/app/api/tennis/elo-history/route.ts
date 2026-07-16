@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
+import { ValidationError, NotFoundError } from "@/lib/api-error";
 import { MATCHES } from "@/lib/tennis-data";
 import { computeEloHistory } from "@/lib/prediction/elo-history";
 
@@ -17,24 +19,25 @@ import { computeEloHistory } from "@/lib/prediction/elo-history";
  * }
  */
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const matchId = searchParams.get("matchId");
+  try {
+    const { searchParams } = new URL(request.url);
+    const matchId = searchParams.get("matchId");
 
-  if (!matchId) {
-    return NextResponse.json(
-      { error: "Missing matchId query parameter" },
-      { status: 400 }
-    );
+    if (!matchId) {
+      throw new ValidationError("Missing matchId query parameter");
+    }
+
+    const match = MATCHES.find((m) => m.id === matchId);
+    if (!match) {
+      throw new NotFoundError("Match not found");
+    }
+
+    return NextResponse.json({
+      matchId,
+      a: computeEloHistory(match.playerA),
+      b: computeEloHistory(match.playerB),
+    });
+  } catch (err) {
+    return apiErrorHandler(err, "tennis/elo-history");
   }
-
-  const match = MATCHES.find((m) => m.id === matchId);
-  if (!match) {
-    return NextResponse.json({ error: "Match not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({
-    matchId,
-    a: computeEloHistory(match.playerA),
-    b: computeEloHistory(match.playerB),
-  });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
 import {
   isValidEmail,
   normalizeEmail,
@@ -35,10 +36,6 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (err) {
-    console.error("[email/unsubscribe] error", err);
-    return NextResponse.json(
-      { error: "Failed to remove subscription" },
-      { status: 500 }
-    );
+    return apiErrorHandler(err, "email/unsubscribe");
   }
 }

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
+import { ValidationError } from "@/lib/api-error";
 import { computeBacktestAccuracy } from "@/lib/prediction/backtest";
 
 // Static lookup → cache responses 1h in-memory.
@@ -35,54 +37,52 @@ export async function GET(request: Request) {
   const eloGapRaw = searchParams.get("eloGap");
   const eloGap = eloGapRaw === null ? NaN : Number(eloGapRaw);
 
-  if (!surface) {
-    return NextResponse.json(
-      { error: "Missing 'surface' query param" },
-      { status: 400 }
-    );
-  }
-  if (Number.isNaN(eloGap)) {
-    return NextResponse.json(
-      { error: "Missing or invalid 'eloGap' query param (number expected)" },
-      { status: 400 }
-    );
-  }
+  try {
+    if (!surface) {
+      throw new ValidationError("Missing 'surface' query param");
+    }
+    if (Number.isNaN(eloGap)) {
+      throw new ValidationError("Missing or invalid 'eloGap' query param (number expected)");
+    }
 
-  const cacheKey = `${surface}|${eloGap}`;
-  const now = Date.now();
-  const hit = cache.get(cacheKey);
-  if (hit && now - hit.at < CACHE_TTL_MS) {
+    const cacheKey = `${surface}|${eloGap}`;
+    const now = Date.now();
+    const hit = cache.get(cacheKey);
+    if (hit && now - hit.at < CACHE_TTL_MS) {
+      return NextResponse.json({
+        accuracy: hit.accuracy,
+        sampleSize: hit.sampleSize,
+        bucket: hit.bucket,
+        surface: hit.surface,
+        eloGap: hit.eloGap,
+        cachedAt: new Date(hit.at).toISOString(),
+      });
+    }
+
+    const { accuracy, sampleSize, bucket } = computeBacktestAccuracy(
+      surface,
+      eloGap
+    );
+
+    const entry: CacheEntry = {
+      accuracy,
+      sampleSize,
+      bucket,
+      surface,
+      eloGap,
+      at: now,
+    };
+    cache.set(cacheKey, entry);
+
     return NextResponse.json({
-      accuracy: hit.accuracy,
-      sampleSize: hit.sampleSize,
-      bucket: hit.bucket,
-      surface: hit.surface,
-      eloGap: hit.eloGap,
-      cachedAt: new Date(hit.at).toISOString(),
+      accuracy,
+      sampleSize,
+      bucket,
+      surface,
+      eloGap,
+      cachedAt: new Date(now).toISOString(),
     });
+  } catch (err) {
+    return apiErrorHandler(err, "tennis/backtest");
   }
-
-  const { accuracy, sampleSize, bucket } = computeBacktestAccuracy(
-    surface,
-    eloGap
-  );
-
-  const entry: CacheEntry = {
-    accuracy,
-    sampleSize,
-    bucket,
-    surface,
-    eloGap,
-    at: now,
-  };
-  cache.set(cacheKey, entry);
-
-  return NextResponse.json({
-    accuracy,
-    sampleSize,
-    bucket,
-    surface,
-    eloGap,
-    cachedAt: new Date(now).toISOString(),
-  });
 }

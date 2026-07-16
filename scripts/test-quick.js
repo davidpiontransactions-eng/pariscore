@@ -1,14 +1,3 @@
-/**
- * test-quick.js — Quick quality gate pour PariScore
- * Usage : node scripts/test-quick.js
- * 
- * Checks :
- *   1. Syntaxe Node.js (node --check server.js)
- *   2. Sync STRATEGIES ↔ STRATEGIES_UI des clés
- *   3. DB SQLite integrity (si pariscore.db existe)
- *   4. Résumé pass/fail
- */
-
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
@@ -23,6 +12,20 @@ function check(name, ok, detail) {
   else { failed++; errors.push(name + " : " + detail); console.log("  \u274c " + name + " \u2014 " + detail); }
 }
 
+function extractKeysFromObject(src, objName) {
+  const re = new RegExp("(?:const|let|var)\\s+" + objName + "\\s*=\\s*\\{([\\s\\S]+?)\\};");
+  const match = src.match(re);
+  if (!match) return null;
+  return [...match[1].matchAll(/^\s{2}(\w+):\s*\{/gm)].map(m => m[1]);
+}
+
+function extractKeysFromArray(src, arrName) {
+  const re = new RegExp("(?:const|let|var)\\s+" + arrName + "\\s*=\\s*\\[([\\s\\S]+?)\\];");
+  const match = src.match(re);
+  if (!match) return null;
+  return [...match[1].matchAll(/['\"](\w+)['\"]/g)].map(m => m[1]);
+}
+
 // -- 1. Syntax check server.js --
 console.log("\n\ud83d\udce6 1. Syntaxe Node.js");
 try {
@@ -32,36 +35,55 @@ try {
   check("server.js", false, e.stderr.toString().split("\n")[0]);
 }
 
-// -- 2. Sync STRATEGIES <-> STRATEGIES_UI --
-console.log("\n\ud83d\udd17 2. Sync STRATEGIES (server.js) <-> STRATEGIES_UI (pariscore.html)");
+// -- 2. Sync STRATEGIES keys --
+console.log("\n\ud83d\udd17 2. Sync STRATEGIES keys");
 try {
-  const srv = fs.readFileSync(path.join(ROOT, "server.js"), "utf8");
-  const ui  = fs.readFileSync(path.join(ROOT, "pariscore.html"), "utf8");
+  const canonicalPath = path.join(ROOT, "packages/shared/src/strategies.ts");
+  const canonicalSrc = fs.readFileSync(canonicalPath, "utf8");
+  const canonicalKeys = extractKeysFromArray(canonicalSrc, "STRATEGY_KEYS");
 
-  const strMatch = srv.match(/const STRATEGIES\s*=\s*\{([\s\S]+?)\};/);
-  if (!strMatch) { check("STRATEGIES parsable", false, "const introuvable"); }
-  else {
-    const srvKeys = [...strMatch[1].matchAll(/^\s{2}(\w+):\s*\{/gm)].map(m => m[1]);
-    
-    const uiMatch = ui.match(/const STRATEGIES_UI\s*=\s*\[([\s\S]+?)\];/);
-    if (!uiMatch) { console.log("  ⚠️  STRATEGIES_UI introuvable dans pariscore.html (worktree feature) — skip"); check("STRATEGIES_UI (frontend)", true); }
-    else {
-      const uiKeys = [...uiMatch[1].matchAll(/key\s*:\s*['"](\w+)['"]/g)].map(m => m[1]);
+  if (!canonicalKeys) {
+    check("canonical STRATEGY_KEYS", false, "introuvable dans packages/shared/src/strategies.ts");
+  } else {
+    // server.js
+    const srv = fs.readFileSync(path.join(ROOT, "server.js"), "utf8");
+    const srvKeys = extractKeysFromObject(srv, "STRATEGIES");
 
-      const srvSet = new Set(srvKeys);
-      const uiSet  = new Set(uiKeys);
-
-      const missingUI = srvKeys.filter(k => !uiSet.has(k));
-      const missingSrv = uiKeys.filter(k => !srvSet.has(k));
-
-      if (missingUI.length === 0 && missingSrv.length === 0) {
-        check("STRATEGIES synced", true);
+    if (!srvKeys) {
+      check("STRATEGIES (server.js)", false, "const introuvable");
+    } else {
+      const missingSrv = canonicalKeys.filter(k => !srvKeys.includes(k));
+      const extraSrv = srvKeys.filter(k => !canonicalKeys.includes(k));
+      if (missingSrv.length === 0 && extraSrv.length === 0) {
+        check("STRATEGIES (server.js) synced with canonical", true);
       } else {
-        if (missingUI.length) check("STRATEGIES keys in server.js but missing in STRATEGIES_UI", false, missingUI.join(", "));
-        if (missingSrv.length) check("STRATEGIES_UI keys in frontend but missing in STRATEGIES", false, missingSrv.join(", "));
+        if (missingSrv.length) check("STRATEGIES (server.js) manquantes vs canonical", false, missingSrv.join(", "));
+        if (extraSrv.length) check("STRATEGIES (server.js) en trop vs canonical", false, extraSrv.join(", "));
       }
+      check("STRATEGIES count : " + srvKeys.length + " keys in server.js, " + canonicalKeys.length + " canonical", true);
+    }
 
-      check("STRATEGIES count : " + srvKeys.length + " keys in server.js, " + uiKeys.length + " keys in frontend", true);
+    // pariscore.html STRATEGIES_UI
+    const uiPath = path.join(ROOT, "pariscore.html");
+    if (fs.existsSync(uiPath)) {
+      const ui = fs.readFileSync(uiPath, "utf8");
+      const uiMatch = ui.match(/const STRATEGIES_UI\s*=\s*\[([\s\S]+?)\];/);
+      if (!uiMatch) {
+        console.log("  \u26a0\ufe0f  STRATEGIES_UI introuvable dans pariscore.html (worktree feature) \u2014 skip");
+        check("STRATEGIES_UI (frontend)", true);
+      } else {
+        const uiKeys = [...uiMatch[1].matchAll(/key\s*:\s*['"](\w+)['"]/g)].map(m => m[1]);
+        const missingUI = canonicalKeys.filter(k => !uiKeys.includes(k));
+        const extraUI = uiKeys.filter(k => !canonicalKeys.includes(k));
+        if (missingUI.length === 0 && extraUI.length === 0) {
+          check("STRATEGIES_UI (frontend) synced with canonical", true);
+        } else {
+          if (missingUI.length) check("STRATEGIES_UI manquantes vs canonical", false, missingUI.join(", "));
+          if (extraUI.length) check("STRATEGIES_UI en trop vs canonical", false, extraUI.join(", "));
+        }
+      }
+    } else {
+      console.log("  \u26a0\ufe0f  pariscore.html introuvable (skip)");
     }
   }
 } catch (e) {

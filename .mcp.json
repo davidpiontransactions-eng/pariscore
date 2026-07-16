@@ -109,6 +109,14 @@
         "-y",
         "@agentmemory/mcp"
       ]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "shadcn@latest",
+        "mcp"
+      ]
     }
   }
 }

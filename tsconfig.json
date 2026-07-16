@@ -26,6 +26,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@pariscore/shared": [
+        "./packages/shared/src"
+      ],
+      "@pariscore/shared/*": [
+        "./packages/shared/src/*"
       ]
     }
   },

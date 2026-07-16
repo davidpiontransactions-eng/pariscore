@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
+import { ValidationError } from "@/lib/api-error";
 import { getSubscriptions } from "@/app/api/push/subscribe/route";
 
 /**
@@ -69,10 +71,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
     if (!isDigestPayload(body)) {
-      return NextResponse.json(
-        { error: "Invalid digest payload" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid digest payload");
     }
 
     const bets = body.bets;
@@ -166,10 +165,6 @@ export async function POST(request: Request) {
       body: bodyText,
     });
   } catch (err) {
-    console.error("[push/digest] error", err);
-    return NextResponse.json(
-      { error: "Failed to send digest" },
-      { status: 500 }
-    );
+    return apiErrorHandler(err, "push/digest");
   }
 }

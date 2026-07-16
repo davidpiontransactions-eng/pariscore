@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
 import { MATCHES, type TennisMatch, type BookmakerOdd } from "@/lib/tennis-data";
 import { predict, type PlayerInputs } from "@/lib/prediction/engine";
 
@@ -115,9 +116,7 @@ export async function GET() {
     // 4. Mock fallback — ALWAYS works
     return mockResponse(now);
   } catch (fatalErr) {
-    // ABSOLUTE last resort — if something totally unexpected crashes
-    console.error("[prematch] FATAL — returning mock:", (fatalErr as Error).message);
-    return mockResponse(Date.now());
+    return apiErrorHandler(fatalErr, "tennis/prematch", () => mockResponse(Date.now()));
   }
 }
 
