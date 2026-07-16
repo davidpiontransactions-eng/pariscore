@@ -1,6 +1,6 @@
 ---
-name: shadcn-ui
-description: Expert guidance for integrating and building applications with shadcn/ui components, including component discovery, installation, customization, and best practices.
+name: stitch-shadcn
+description: Expert guidance for integrating and building applications with shadcn/ui components, including component discovery, installation, customization, and best practices. (Stitch design→code variant — for PariScore-specific automation, use the shadcn-ui skill instead)
 allowed-tools:
   - "shadcn*:*"
   - "mcp_shadcn*"
