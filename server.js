@@ -47707,6 +47707,11 @@ footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--bg4);font-siz
                 "object-src 'none'";
         }
 
+        // Bypass dev tennis : si TENNIS_DEV_BYPASS=1 dans .env, set cookie pour psAccess() client
+        if (isHtml && process.env.TENNIS_DEV_BYPASS === '1') {
+          headers['Set-Cookie'] = 'tennis_dev_bypass=1; Path=/; SameSite=Lax';
+        }
+
         // admin.html : jamais indexé (défense + budget crawl).
         if (filePath.toLowerCase().endsWith('admin.html')) {
             headers['X-Robots-Tag'] = 'noindex, nofollow';

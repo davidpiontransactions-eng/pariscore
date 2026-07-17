@@ -1,0 +1,44 @@
+{
+  "title": "PariScore — Priorités 1 & 2 (17-25 Juillet)",
+  "tracks": [
+    {
+      "name": "🔴 P1 — Debug Boutons Tennis",
+      "color": "#ff4444",
+      "items": [
+        { "label": "Étape 1: Console client F12", "start": "2026-07-17", "end": "2026-07-17" },
+        { "label": "Étape 2: Playwright elementFromPoint", "start": "2026-07-17", "end": "2026-07-17" },
+        { "label": "Étape 3: Onglet actif par défaut", "start": "2026-07-17", "end": "2026-07-17" },
+        { "label": "Étape 4: Fallback event delegation", "start": "2026-07-17", "end": "2026-07-18" },
+        { "label": "Validation + déploiement VPS", "start": "2026-07-18", "end": "2026-07-18" }
+      ]
+    },
+    {
+      "name": "🟠 P2 — Unification Design System",
+      "color": "#ff8800",
+      "items": [
+        { "label": "1.2 CS2 + MMA tokens → sport-accent", "start": "2026-07-17", "end": "2026-07-18" },
+        { "label": "1.3 Unifier système de cards", "start": "2026-07-18", "end": "2026-07-19" },
+        { "label": "1.4 Standardiser keyframes", "start": "2026-07-19", "end": "2026-07-19" },
+        { "label": "1.5 Réconcilier comparateur", "start": "2026-07-19", "end": "2026-07-20" },
+        { "label": "2.1 Supprimer invented metrics", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "2.2 Remplacer emojis → SVG", "start": "2026-07-20", "end": "2026-07-22" },
+        { "label": "2.3 Désactiver eyebrows .section-label", "start": "2026-07-22", "end": "2026-07-22" },
+        { "label": "2.4 Couper fade-up scroll-reveal", "start": "2026-07-22", "end": "2026-07-22" },
+        { "label": "2.5 Nettoyer CS2 (slop)", "start": "2026-07-22", "end": "2026-07-24" },
+        { "label": "2.6 Nettoyer MMA tokens", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "2.7 transition:all → explicite", "start": "2026-07-24", "end": "2026-07-25" }
+      ]
+    },
+    {
+      "name": "🧹 P3 — Nettoyage Global",
+      "color": "#44bb44",
+      "items": [
+        { "label": "3.1 Purge fonts 9→3", "start": "2026-07-25", "end": "2026-07-25" },
+        { "label": "3.2 Glassmorphism cleanup", "start": "2026-07-25", "end": "2026-07-26" },
+        { "label": "3.3 Système élévation bg", "start": "2026-07-26", "end": "2026-07-27" },
+        { "label": "3.4 Dédupliquer gradients", "start": "2026-07-27", "end": "2026-07-27" },
+        { "label": "3.5 Système z-index nommé", "start": "2026-07-27", "end": "2026-07-28" }
+      ]
+    }
+  ]
+}

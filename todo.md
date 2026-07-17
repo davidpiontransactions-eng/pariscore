@@ -1,5 +1,141 @@
 # PariScore — Todo / Follow-ups
 
+## 🔴 PRIORITÉ DEMAIN (2026-07-18) — Debug boutons Analyse/Stratégies carte prematch
+
+### Contexte (où on s'est arrêtés, 2026-07-17 soir)
+
+David signale que les boutons **Analyse** / **Stratégies** de la carte prematch
+tennis ne fonctionnent toujours pas, malgré le cache-buster bumpé
+(`250711-04` → `250717-01`) déployé au commit `6d7a261`.
+
+### État de l'investigation (Reviewer en chef — 6 tests Playwright le 17/07 soir)
+
+**Le code est prouvé CORRECT en production** (test direct via Playwright sur le
+VPS, commit `6d7a261`) :
+
+```
+Test 6 (clic réel après activation onglet Tennis) :
+  visibleBtns: 154
+  before: "none"        ← panneau fermé
+  after: "block"        ← panneau OUVERT après clic
+  afterLen: 5138        ← 5138 chars (Scouting/H2H/Top Bets)
+  Erreurs: 0
+```
+
+`Scope._togglePremier(btn, 'analyse')` ouvre bien `#pdet-<id>` et injecte
+5138 chars. **Aucune erreur console.** Le blocage est donc **côté client
+navigateur**, pas dans le code serveur.
+
+### Plan pour demain (par ordre de priorité)
+
+#### Étape 1 — Obtenir la VRAIE erreur côté client (5 min)
+
+Le code étant prouvé correct, il faut **l'erreur exacte côté navigateur**.
+Demander à David :
+
+1. Ouvrir `https://51.75.21.239/` en **navigation privée** (élimine cache +
+   extensions).
+2. Onglet **🔒 Tennis**.
+3. Ouvrir la console **F12** avant de cliquer.
+4. Cliquer sur **Analyse** d'une carte prematch.
+5. **Screenshot de la console** (surtout si bannière rouge `[PSCATCH]`).
+6. Onglet Network : vérifier que `pariscore.app.js?v=250717-01` est bien chargé.
+
+→ Bannière `[PSCATCH]` : on a la stack exacte, correction ciblée.
+→ Rien (aucune erreur, aucun toggle) : pointer-events / overlay intercepte le
+  clic (cf. Étape 2).
+
+#### Étape 2 — Vérifier le clic réel (Playwright approfondi)
+
+Le test du soir a montré que `locator.click()` timeout (élément intercepté)
+mais `btn.click()` direct marche. → suspect : **overlay CSS** avec
+`pointer-events:auto` au-dessus du bouton. Vérifier `z-index` de la jauge,
+`.sc-premier-gauge`, et tout élément `position:absolute`.
+
+```js
+// Script Playwright à recréer
+import { chromium } from 'playwright';
+const b = await chromium.launch();
+const p = await (await b.newContext({ignoreHTTPSErrors:true})).newPage();
+await p.goto('https://51.75.21.239/',{waitUntil:'domcontentloaded'});
+await p.waitForTimeout(4000);
+// Activer tennis, trouver bouton visible, vérifier elementFromPoint au centre
+const probe = await p.evaluate(() => {
+  const nav=[...document.querySelectorAll('[onclick]')].find(e=>/tennis/i.test(e.textContent));
+  if(nav)nav.click();
+  // ... puis elementFromPoint sur le 1er .sc-premier-btn visible
+});
+```
+
+#### Étape 3 — Piste onglet actif par défaut
+
+Découvert : `#page-tennis` est en `display:none` au chargement. Vérifier :
+- Quel onglet est actif au premier load ?
+- Faut-il faire de Tennis l'onglet par défaut ?
+- Le bouton "🔒 Tennis" est-il bien visible/cliquable sur mobile ?
+
+#### Étape 4 — Si tout échoue : hardening défensif
+
+Ajouter un fallback **event delegation** au document (si l'inline `onclick`
+est cassé par un re-render) :
+
+```js
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.sc-premier-btn');
+  if (btn) { /* fallback si inline ne se déclenche pas */ }
+});
+```
+
+À n'utiliser que si l'Étape 1 confirme que l'inline ne se déclenche pas.
+
+### Autres tâches en suspens (backlog session courante)
+
+- [ ] **Validation visuelle jauge** : confirmer le rendu réel de la jauge 270°
+      (arc vert visible, aiguille, label "A.") sur Rublev/Baez. Code validé
+      unitairement (9 probas, aucun NaN) mais pas visuellement.
+- [ ] **Pérenniser les tests Playwright** dans `tests/` (les scripts
+      temporaires `test-toggle*.mjs` ont été supprimés après usage).
+- [ ] **Beads** : créer un issue `bd` pour tracer ce bug si pas résolu demain
+      (profil conservateur → proposer la commande, ne pas l'exécuter).
+
+### Commits récents (à conserver en tête)
+
+- `6d7a261` — bump cache-buster (dernier déployé sur VPS)
+- `af64bb5` — couleur jauge visible + aiguille + label initiale prénom
+- `e05a392` — jauge orientée vainqueur prédit + vert réservé au favori
+- `92bd6bc` — jauge Win désaxée refonte circle+dasharray
+- `6ab61fe` — refonte jauge 270° + icônes + boutons (Phase 4 _premierDetailHTML)
+
+### Commandes utiles pour demain
+
+```bash
+# État du déploiement
+ssh ubuntu@51.75.21.239 "cd ~/pariscore && git log --oneline -3"
+
+# Re-déployer si besoin
+ssh ubuntu@51.75.21.239 "cd ~/pariscore && bash deploy.sh"
+
+# Reproduire en local
+bun run dev   # http://localhost:3000
+
+# Mise à jour Graphify après modifs
+"/c/Users/David/AppData/Roaming/Python/Python312/Scripts/graphify.exe" update .
+```
+
+### Mémo — Skills disponibles (ne pas réinventer)
+
+- `gstack-investigate` — debug systématique root-cause
+- `gstack-qa` — QA visuelle navigateur (ouvre un vrai browser, trouve bugs)
+- `bd` (beads) — issue tracking (`bd ready`, `bd show <id>`, `bd close <id>`)
+- `graphify explain "<concept>"` — interroger le graphe de connaissance
+
+---
+
+*Créé le 2026-07-17 soir. Code prouvé correct — la clé demain est d'obtenir
+l'erreur console côté client (F12) ou le screenshot de la bannière [PSCATCH].*
+
+---
+
 ## 🔴 PRIORITÉ DEMAIN (2026-07-14) — Unification du design system (post-audit Hallmark)
 
 > ⚠️ **LIRE D'ABORD : `REDESIGN_WORKFLOW_OPENCODE.md`** — workflow complet avec Gantt,

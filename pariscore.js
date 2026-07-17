@@ -26746,6 +26746,10 @@ function psAccess() {
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     footPro = true; tennisPro = true;
   }
+  // Bypass dev via cookie TENNIS_DEV_BYPASS (set par server.js si .env contient TENNIS_DEV_BYPASS=1)
+  if (typeof document !== 'undefined' && document.cookie.indexOf('tennis_dev_bypass=1') !== -1) {
+    footPro = true; tennisPro = true;
+  }
   return {
     role, loggedIn: !!u,
     footPro, tennisPro,

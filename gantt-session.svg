@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="812" height="576" viewBox="0 0 812 576" role="img">
+<title>PariScore — Priorités 1 &amp; 2 (17-25 Juillet)</title>
+<desc>PariScore — Priorités 1 &amp; 2 (17-25 Juillet) — 2026-07-16 to 2026-07-27</desc>
+<style>
+text{font-family:Menlo,Consolas,monospace;fill:#122033;}
+.title{font-size:24px;font-weight:700;}
+.subtitle{font-size:12px;fill:#526072;}
+.axis-title{font-size:11px;font-weight:700;fill:#526072;letter-spacing:0.06em;}
+.track-label{font-size:13px;font-weight:700;}
+.axis-text{font-size:12px;font-weight:700;fill:#314255;}
+.bar-label{font-size:12px;font-weight:700;}
+.bar-label-outside{font-size:12px;font-weight:700;fill:#122033;}
+</style>
+<rect width="812" height="576" fill="#f7f3ea"/>
+<rect x="0" y="0" width="812" height="76" fill="#efe8d8"/>
+<text x="24" y="34" class="title">PariScore — Priorités 1 &amp; 2 (17-25 Juillet)</text>
+<text x="24" y="56" class="subtitle">2026-07-16 to 2026-07-27</text>
+<text x="340" y="80" class="axis-title">DATES</text>
+<rect x="340" y="92" width="432" height="54" fill="#e9dfca"/>
+<rect x="340" y="92" width="36" height="54" fill="#efe4ce"/>
+<line x1="340" y1="92" x2="340" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="358" y="124" text-anchor="middle" class="axis-text">Jul 16</text>
+<rect x="376" y="92" width="36" height="54" fill="#e6dac1"/>
+<line x1="376" y1="92" x2="376" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="394" y="124" text-anchor="middle" class="axis-text">Jul 17</text>
+<rect x="412" y="92" width="36" height="54" fill="#efe4ce"/>
+<line x1="412" y1="92" x2="412" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="430" y="124" text-anchor="middle" class="axis-text">Jul 18</text>
+<rect x="448" y="92" width="36" height="54" fill="#e6dac1"/>
+<line x1="448" y1="92" x2="448" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="466" y="124" text-anchor="middle" class="axis-text">Jul 19</text>
+<rect x="484" y="92" width="36" height="54" fill="#efe4ce"/>
+<line x1="484" y1="92" x2="484" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="502" y="124" text-anchor="middle" class="axis-text">Jul 20</text>
+<rect x="520" y="92" width="36" height="54" fill="#e6dac1"/>
+<line x1="520" y1="92" x2="520" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="538" y="124" text-anchor="middle" class="axis-text">Jul 21</text>
+<rect x="556" y="92" width="36" height="54" fill="#efe4ce"/>
+<line x1="556" y1="92" x2="556" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="574" y="124" text-anchor="middle" class="axis-text">Jul 22</text>
+<rect x="592" y="92" width="36" height="54" fill="#e6dac1"/>
+<line x1="592" y1="92" x2="592" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="610" y="124" text-anchor="middle" class="axis-text">Jul 23</text>
+<rect x="628" y="92" width="36" height="54" fill="#efe4ce"/>
+<line x1="628" y1="92" x2="628" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="646" y="124" text-anchor="middle" class="axis-text">Jul 24</text>
+<rect x="664" y="92" width="36" height="54" fill="#e6dac1"/>
+<line x1="664" y1="92" x2="664" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="682" y="124" text-anchor="middle" class="axis-text">Jul 25</text>
+<rect x="700" y="92" width="36" height="54" fill="#efe4ce"/>
+<line x1="700" y1="92" x2="700" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="718" y="124" text-anchor="middle" class="axis-text">Jul 26</text>
+<rect x="736" y="92" width="36" height="54" fill="#e6dac1"/>
+<line x1="736" y1="92" x2="736" y2="146" stroke="#cabca1" stroke-width="1"/>
+<text x="754" y="124" text-anchor="middle" class="axis-text">Jul 27</text>
+<line x1="772" y1="92" x2="772" y2="146" stroke="#cabca1" stroke-width="1"/>
+<line x1="340" y1="146" x2="772" y2="146" stroke="#cabca1" stroke-width="1"/>
+<line x1="340" y1="146" x2="340" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="376" y1="146" x2="376" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="412" y1="146" x2="412" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="448" y1="146" x2="448" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="484" y1="146" x2="484" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="520" y1="146" x2="520" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="556" y1="146" x2="556" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="592" y1="146" x2="592" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="628" y1="146" x2="628" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="664" y1="146" x2="664" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="700" y1="146" x2="700" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="736" y1="146" x2="736" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<line x1="772" y1="146" x2="772" y2="544" stroke="#d8d1c2" stroke-width="1"/>
+<rect x="0" y="146" width="340" height="136" fill="#fbf8f2"/>
+<rect x="340" y="146" width="432" height="136" fill="#fbf8f2"/>
+<text x="24" y="219" class="track-label">🔴 P1 — Debug Boutons Tennis</text>
+<line x1="0" y1="146" x2="772" y2="146" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="180" x2="772" y2="180" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="214" x2="772" y2="214" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="248" x2="772" y2="248" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="282" x2="772" y2="282" stroke="#ddd3be" stroke-width="1"/>
+<rect x="382" y="152" width="24" height="22" rx="7" ry="7" fill="#ff4444" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="412" y="169" class="bar-label-outside">Étape 1: Console client F12</text>
+<rect x="382" y="186" width="24" height="22" rx="7" ry="7" fill="#ff4444" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="412" y="203" class="bar-label-outside">Étape 2: Playwright elementFromPoint</text>
+<rect x="382" y="220" width="24" height="22" rx="7" ry="7" fill="#ff4444" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="412" y="237" class="bar-label-outside">Étape 3: Onglet actif par défaut</text>
+<rect x="382" y="254" width="60" height="22" rx="7" ry="7" fill="#ff4444" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="392" y="271" class="bar-label" fill="#ffffff">Étape 4: Fallback event delegation</text>
+<rect x="418" y="152" width="24" height="22" rx="7" ry="7" fill="#ff4444" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="448" y="169" class="bar-label-outside">Validation + déploiement VPS</text>
+<rect x="0" y="290" width="340" height="136" fill="#f3ede2"/>
+<rect x="340" y="290" width="432" height="136" fill="#f3ede2"/>
+<text x="24" y="363" class="track-label">🟠 P2 — Unification Design System</text>
+<line x1="0" y1="290" x2="772" y2="290" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="324" x2="772" y2="324" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="358" x2="772" y2="358" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="392" x2="772" y2="392" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="426" x2="772" y2="426" stroke="#ddd3be" stroke-width="1"/>
+<rect x="382" y="296" width="60" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="392" y="313" class="bar-label" fill="#ffffff">1.2 CS2 + MMA tokens → sport-accent</text>
+<rect x="418" y="330" width="60" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="428" y="347" class="bar-label" fill="#ffffff">1.3 Unifier système de cards</text>
+<rect x="454" y="296" width="24" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="484" y="313" class="bar-label-outside">1.4 Standardiser keyframes</text>
+<rect x="454" y="364" width="60" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="464" y="381" class="bar-label" fill="#ffffff">1.5 Réconcilier comparateur</text>
+<rect x="490" y="296" width="24" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="520" y="313" class="bar-label-outside">2.1 Supprimer invented metrics</text>
+<rect x="490" y="330" width="96" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="500" y="347" class="bar-label" fill="#ffffff">2.2 Remplacer emojis → SVG</text>
+<rect x="562" y="296" width="24" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="592" y="313" class="bar-label-outside">2.3 Désactiver eyebrows .section-label</text>
+<rect x="562" y="364" width="24" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="592" y="381" class="bar-label-outside">2.4 Couper fade-up scroll-reveal</text>
+<rect x="562" y="398" width="96" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="572" y="415" class="bar-label" fill="#ffffff">2.5 Nettoyer CS2 (slop)</text>
+<rect x="634" y="296" width="24" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="664" y="313" class="bar-label-outside">2.6 Nettoyer MMA tokens</text>
+<rect x="634" y="330" width="60" height="22" rx="7" ry="7" fill="#ff8800" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="644" y="347" class="bar-label" fill="#ffffff">2.7 transition:all → explicite</text>
+<rect x="0" y="434" width="340" height="102" fill="#fbf8f2"/>
+<rect x="340" y="434" width="432" height="102" fill="#fbf8f2"/>
+<text x="24" y="490" class="track-label">🧹 P3 — Nettoyage Global</text>
+<line x1="0" y1="434" x2="772" y2="434" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="468" x2="772" y2="468" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="502" x2="772" y2="502" stroke="#ddd3be" stroke-width="1"/>
+<line x1="0" y1="536" x2="772" y2="536" stroke="#ddd3be" stroke-width="1"/>
+<rect x="670" y="440" width="24" height="22" rx="7" ry="7" fill="#44bb44" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="700" y="457" class="bar-label-outside">3.1 Purge fonts 9→3</text>
+<rect x="670" y="474" width="60" height="22" rx="7" ry="7" fill="#44bb44" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="680" y="491" class="bar-label" fill="#ffffff">3.2 Glassmorphism cleanup</text>
+<rect x="706" y="440" width="60" height="22" rx="7" ry="7" fill="#44bb44" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="716" y="457" class="bar-label" fill="#ffffff">3.3 Système élévation bg</text>
+<rect x="742" y="474" width="24" height="22" rx="7" ry="7" fill="#44bb44" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="772" y="491" class="bar-label-outside">3.4 Dédupliquer gradients</text>
+<rect x="742" y="508" width="NaN" height="22" rx="7" ry="7" fill="#44bb44" stroke="#17324d" stroke-opacity="0.15"/>
+<text x="NaN" y="525" class="bar-label-outside">3.5 Système z-index nommé</text>
+</svg>
