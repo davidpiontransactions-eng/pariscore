@@ -27608,6 +27608,10 @@ document.addEventListener('keydown', function(e) {
   if (d.getElementById('plan-modal')?.classList.contains('open')) { closePlanModal(); return; }
   if (d.getElementById('import-modal')?.classList.contains('open')) { closeImportModal(); return; }
   if (d.getElementById('modal')?.classList.contains('open')) { closeModal(); return; }
+  // Popup DR evolution (Tennis Live) — utilise display:flex, pas .open.
+  // Ajouté 2026-07-17 (recommandation rapport DR popup bug #6) :
+  // Escape fermait tous les modals sauf celui-ci.
+  if ((el = d.getElementById('dr-popup-modal')) && el.style.display === 'flex') { closeDRPopup(); return; }
   // Bottom-sheets mobiles
   if ((el = d.getElementById('bn-more-sheet')) && el.classList.contains('open')) { bnCloseMore(); return; }
   if ((el = d.getElementById('mob-filter-sheet')) && el.classList.contains('open')) { closeMobFilters(); return; }
