@@ -25328,6 +25328,8 @@ a:focus-visible,
 .sc-pg-label{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-size:6px;letter-spacing:.14em;color:var(--text3,#64748b);text-transform:uppercase;font-family:var(--font-mono,DM Mono,monospace);pointer-events:none}
 .sc-pg-arc-bg{stroke:rgba(255,255,255,.08)}
 .sc-pg-arc-val{animation:gauge-fill-in .8s ease-out forwards;transform-origin:center;filter:drop-shadow(0 0 4px currentColor)}
+.sc-pg-needle{filter:drop-shadow(0 0 2px currentColor)}
+.sc-pg-pivot{filter:drop-shadow(0 0 2px currentColor)}
 /* decision strip */
 .sc-premier-action{display:flex;align-items:center;padding:6px 12px 8px;gap:10px}
 .sc-premier-odds{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -26073,32 +26075,44 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     opts = opts || {};
     var size = opts.size || 76;
     var p = clamp(favProb, 0, 1);
-    // Jauge 270° via <circle> + stroke-dasharray (technique robuste, pas de path/arc manuel).
-    // La jauge est orientée FAVORI : favProb est toujours ≥0.50 (l'appelant passe max(p1,p2)).
-    // Couleur verte réservée au favori, avec nuance de dominance :
-    //   ≥0.70 vert vif (favori net), 0.55-0.70 vert standard, 0.50-0.55 vert pâle (match serré).
-    // opts.label : libellé sous le % (ex: "WIN RUBLEV") — défaut "WIN P1".
+    // Jauge 270° via <circle> + stroke-dasharray (technique robuste) + aiguille.
+    // Orientée FAVORI : favProb ≥0.50 (l'appelant passe max(p1,p2)).
+    // Fix 2026-07-17c : dasharray de l'arc-val calculé sur valLen directement
+    // (l'ancienne version réutilisait le dasharray du bg + offset → l'arc coloré
+    // se confondait avec le gris et n'apparaissait pas, d'où "pas de couleur").
     var stroke = opts.stroke || 6;
     var r = (size - stroke) / 2;
     var cx = size / 2, cy = size / 2;
     var SWEEP = 270, GAP = 90;
     var circ = 2 * Math.PI * r;
-    var bgLen = circ * (SWEEP / 360);
-    var valLen = bgLen * p;
-    // Palette verte (favori) : dominance croissante.
-    var col = p >= 0.70 ? '#00e676' : (p >= 0.55 ? '#00e676' : '#5eead4');
+    var bgLen = circ * (SWEEP / 360);      // longueur de l'arc de fond (75% du cercle)
+    var valLen = bgLen * p;                // portion colorée = p × fond
+    // Palette verte (favori) : nuance de dominance.
+    var col = p >= 0.55 ? '#00e676' : '#5eead4';
     var pct = Math.round(p * 100);
-    var rot = 90 + GAP / 2;                // 135° : origine bas-gauche
-    var dashVisible = bgLen.toFixed(2);
-    var dashHidden = (circ - bgLen).toFixed(2);
-    var offVal = (bgLen - valLen).toFixed(2);
+    var rot = 90 + GAP / 2;                // 135° : origine bas-gauche, sens horaire
+    // BG arc : dessine bgLen puis cache le reste.
+    var bgDash = bgLen.toFixed(2) + ' ' + (circ - bgLen).toFixed(2);
+    // VAL arc : dessine UNIQUEMENT valLen (sa portion), cache tout le reste.
+    // C'est la correction clé : pas de dashoffset, juste un dasharray propre.
+    var valDash = valLen.toFixed(2) + ' ' + (circ - valLen).toFixed(2);
+    // Aiguille : angle absolu dans le sweep. À p=0 → début (135°), à p=1 → fin (135°+270°=45°).
+    // Position = début + p×sweep, converti en rotation absolue depuis la verticale.
+    var needleAng = rot + SWEEP * p;       // 135° + 270p
+    var needleLen = r - 2;
+    // Extrémité de l'aiguille (depuis le centre, rotation needleAng).
+    // Convention SVG : 0°=droite, sens horaire (y vers le bas). On calcule x,y.
+    var nrad = needleAng * Math.PI / 180;
+    var nx = cx + needleLen * Math.cos(nrad);
+    var ny = cy + needleLen * Math.sin(nrad);
     var label = opts.label || 'WIN P1';
-    // Escaper le label (nom joueur peut contenir des accents)
     label = String(label).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; });
     return '<div class="sc-pg-wrap" style="width:' + size + 'px;height:' + size + 'px">'
       + '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">'
-      + '<circle class="sc-pg-arc-bg" cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(2) + '" fill="none" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + dashVisible + ' ' + dashHidden + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"/>'
-      + '<circle class="sc-pg-arc-val" cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(2) + '" fill="none" stroke="' + col + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + dashVisible + ' ' + dashHidden + '" stroke-dashoffset="' + offVal + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"/>'
+      + '<circle class="sc-pg-arc-bg" cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(2) + '" fill="none" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + bgDash + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"/>'
+      + '<circle class="sc-pg-arc-val" cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(2) + '" fill="none" stroke="' + col + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + valDash + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"/>'
+      + '<line class="sc-pg-needle" x1="' + cx + '" y1="' + cy + '" x2="' + nx.toFixed(2) + '" y2="' + ny.toFixed(2) + '" stroke="' + col + '" stroke-width="2.5" stroke-linecap="round"/>'
+      + '<circle class="sc-pg-pivot" cx="' + cx + '" cy="' + cy + '" r="3" fill="' + col + '"/>'
       + '</svg>'
       + '<div class="sc-pg-pct">' + pct + '%</div>'
       + '<div class="sc-pg-label">' + label + '</div>'
@@ -26171,13 +26185,13 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +(p1.surf_rank?'<span class="sc-premier-surfrank">#'+p1.surf_rank+(p1.surf_rank_total?'/'+p1.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</span>':'')
       +'</div>'
       +'<div class="sc-premier-gauge">'+(function(){
-        // Jauge orientée vainqueur prédit : affiche la proba du FAVORI (toujours ≥50%),
-        // en vert, avec le nom du favori en label. Évite l'affichage contre-intuitif
-        // d'un faible % rouge quand P2 est favori.
+        // Jauge orientée vainqueur prédit : proba du FAVORI (≥50%), vert, label = initiale prénom.
+        // Label "A." pour Andrey (initiale du prénom + point) — lisible dans 76px.
         var _favP1 = p1p >= 0.5;
         var _favProb = _favP1 ? p1p : (1 - p1p);
-        var _favName = shortName(_favP1 ? p1.name : p2.name);
-        return premierGauge(_favProb, { size: 76, label: 'WIN ' + _favName });
+        var _favFull = _favP1 ? (p1.name||'P1') : (p2.name||'P2');
+        var _initial = (_favFull.trim()[0] || '?').toUpperCase() + '.';
+        return premierGauge(_favProb, { size: 76, label: _initial });
       })()+'</div>'
       +'<div class="sc-premier-player p2">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
