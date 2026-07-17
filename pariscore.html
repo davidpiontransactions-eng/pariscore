@@ -25313,7 +25313,7 @@ a:focus-visible,
 .sc-premier-photo{width:100%;height:100%;object-fit:cover}
 .sc-premier-photo-init{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--text2,#94a3b8)}
 .sc-premier-pname{font-size:15px;font-weight:700;color:var(--text,#0f172a);line-height:1.2;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sc-premier-prank{font-size:11px;color:var(--text2,#94a3b8);font-family:var(--font-mono,DM Mono,monospace);display:flex;align-items:center;gap:3px;flex-wrap:wrap;line-height:1.4}
+.sc-premier-prank{font-size:11px;color:var(--text2,#94a3b8);font-family:var(--font-mono,DM Mono,monospace);display:flex;align-items:center;gap:2px;flex-wrap:nowrap;white-space:nowrap;line-height:1.4;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .sc-premier-pelo{font-size:11px;color:var(--text3,#64748b)}
 .sc-premier-surfrank{display:inline-flex;align-items:center;padding:1px 6px;font-size:11px;font-weight:600;font-family:var(--font-mono,DM Mono,monospace);color:var(--blue,#0077ff);background:rgba(14,165,233,0.10);border:1px solid rgba(14,165,233,0.20);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
 .sc-premier-sps{display:inline-flex;align-items:center;padding:1px 6px;font-size:11px;font-weight:500;font-family:var(--font-mono,DM Mono,monospace);color:var(--text3,#707e94);background:rgba(255,255,255,0.04);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
@@ -25321,6 +25321,13 @@ a:focus-visible,
 .sc-premier-metric-sep{color:var(--text3,#707e94);margin:0 1px;flex-shrink:0}
 .sc-premier-gauge{flex:0 0 auto;padding:0 2px}
 .sc-premier-gauge svg{display:block}
+/* premierGauge — jauge Win 270° (arc moderne avec overlay HTML, pas de <text> SVG) */
+.sc-pg-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.sc-pg-wrap svg{display:block;overflow:visible}
+.sc-pg-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono,DM Mono,monospace);font-weight:800;font-size:18px;color:var(--text,#fff);pointer-events:none}
+.sc-pg-label{position:absolute;left:0;right:0;bottom:14%;text-align:center;font-size:7px;letter-spacing:.16em;color:var(--text3,#64748b);text-transform:uppercase;font-family:var(--font-mono,DM Mono,monospace);pointer-events:none}
+.sc-pg-arc-bg{stroke:var(--bg3,#1e2a3d)}
+.sc-pg-arc-val{animation:gauge-fill-in .8s ease-out forwards;transform-origin:center}
 /* decision strip */
 .sc-premier-action{display:flex;align-items:center;padding:6px 12px 8px;gap:10px}
 .sc-premier-odds{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -26058,6 +26065,55 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'</div></div>';
   }
 
+  /* -- Jauge Win 270° moderne (premierGauge) -------------------------- *
+   * Refonte 2026-07-17 : remplace gauge() pour premierCard.
+   * Arc 270° (gap en bas) + overlay HTML pour le % (plus de <text> SVG
+   * superposé à l'aiguille). gauge() reste intact pour prematchCard. */
+  function premierGauge(p1Prob, opts){
+    opts = opts || {};
+    var size = opts.size || 96;
+    var p1 = clamp(p1Prob, 0, 1);
+    // Géométrie de l'arc 270° : de 225° (bas-gauche) à -45° (bas-droite), gap 90° en bas.
+    var stroke = 8;                       // épaisseur trait
+    var r = size/2 - stroke;              // rayon utile
+    var cx = size/2, cy = size/2;
+    var START = 135, SWEEP = 270;         // degrés (START=135 → 225 en screen, SWEEP=270)
+    // Couleur dynamique selon proba P1
+    var col = p1 >= 0.55 ? 'var(--green,#00e676)' : (p1 >= 0.45 ? 'var(--amber,#ffc107)' : 'var(--red,#ef4444)');
+    // Convertit angle (deg, 0=droite, sens horaire depuis top) en point du cercle.
+    // On utilise le convention SVG : 0°=droite, sens anti-horaire. START=135° = bas-gauche.
+    function pt(deg, rad){
+      var rd = (deg) * Math.PI / 180;
+      return { x: cx + rad * Math.cos(rd), y: cy - rad * Math.sin(rd) };
+    }
+    // Arc path : start→end, large-arc-flag=1 si sweep>180.
+    function arcPath(deg0, deg1, rad){
+      var s = pt(deg0, rad), e = pt(deg1, rad);
+      var large = Math.abs(deg1 - deg0) > 180 ? 1 : 0;
+      // sweep-flag=1 : sens horaire visuel (y inversé en SVG)
+      return 'M ' + s.x.toFixed(2) + ' ' + s.y.toFixed(2)
+           + ' A ' + rad.toFixed(2) + ' ' + rad.toFixed(2) + ' 0 ' + large + ' 1 ' + e.x.toFixed(2) + ' ' + e.y.toFixed(2);
+    }
+    // Arc complet (fond gris) : START → START+SWEEP
+    var bgPath = arcPath(START, START + SWEEP, r);
+    // Arc valeur : proportion = p1 (0..1) du sweep total
+    var valEnd = START + SWEEP * p1;
+    var valPath = arcPath(START, valEnd, r);
+    // Longueur pour animation stroke-dasharray (préserve gauge-fill-in CSS)
+    var circ = 2 * Math.PI * r;
+    var arcLen = circ * (SWEEP / 360);
+    var valLen = arcLen * p1;
+    var pct = Math.round(p1 * 100);
+    return '<div class="sc-pg-wrap" style="width:' + size + 'px;height:' + size + 'px">'
+      + '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">'
+      + '<path class="sc-pg-arc-bg" d="' + bgPath + '" fill="none" stroke-width="' + stroke + '" stroke-linecap="round"/>'
+      + '<path class="sc-pg-arc-val" d="' + valPath + '" fill="none" stroke="' + col + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + arcLen.toFixed(1) + '" stroke-dashoffset="' + (arcLen - valLen).toFixed(1) + '"/>'
+      + '</svg>'
+      + '<div class="sc-pg-pct">' + pct + '%</div>'
+      + '<div class="sc-pg-label">Win P1</div>'
+      + '</div>';
+  }
+
   /* -- Premier Card (compacte N1) ------------------------------------- */
   function premierCard(m){
     var p1=m.player1||{},p2=m.player2||{};
@@ -26097,13 +26153,17 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
 
     _premierMatchCache.set(String(m.id),m);
     var _isOpen=_expandedPremierIds.has(String(m.id));
+    // bd premier-state-fix : mode ouvert mémorisé pour restaurer au re-render.
+    var _openMode=_premierOpenMode.get(String(m.id))||'analyse';
+    var _btnAnalOpen=_isOpen && _openMode==='analyse';
+    var _btnStratOpen=_isOpen && _openMode==='strategies';
     return '<div class="sc-premier-card" data-match-id="'+esc(m.id)+'">'
       // -- Header --
       +'<div class="sc-premier-head">'
       +'<div class="sc-premier-head-left">'
       +'<span class="sc-premier-tournament">'+esc(m.tournament||'')+'</span>'
       +surfaceBadge(m.surface,m.tournament)
-      +'<span class="sc-premier-sep">é</span>'
+      +'<span class="sc-premier-sep">'+svgIcon('pin',11)+'</span>'
       +'<span class="sc-premier-round">'+esc(m.round||'')+'</span>'
       +'</div>'
       +'<div class="sc-premier-head-right">'
@@ -26116,21 +26176,21 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-premier-player p1">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p1)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p1.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p1.rank||'')+(flagToCC(p1.flag)?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p1.elo_surface||'')+(p1.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p1.powerscore):'')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p1.rank||'—')+(flagToCC(p1.flag)?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p1.elo_surface||'—')+(p1.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p1.powerscore):'')+'</div>'
       +(p1.surf_rank?'<span class="sc-premier-surfrank">#'+p1.surf_rank+(p1.surf_rank_total?'/'+p1.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</span>':'')
       +'</div>'
-      +'<div class="sc-premier-gauge">'+gauge(p1p,{size:80,opt:p1p,sup:p1p,inf:p1p,p1n:shortName(p1.name),p2n:shortName(p2.name)})+'</div>'
+      +'<div class="sc-premier-gauge">'+premierGauge(p1p,{size:96})+'</div>'
       +'<div class="sc-premier-player p2">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p2.name||'?')+'</div>'
-      +'<div class="sc-premier-prank">#'+(p2.rank||'')+(flagToCC(p2.flag)?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p2.elo_surface||'')+(p2.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p2.powerscore):'')+'</div>'
+      +'<div class="sc-premier-prank">#'+(p2.rank||'—')+(flagToCC(p2.flag)?' <span class="sc-flag">'+flagToCC(p2.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p2.elo_surface||'—')+(p2.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p2.powerscore):'')+'</div>'
       +(p2.surf_rank?'<span class="sc-premier-surfrank">#'+p2.surf_rank+(p2.surf_rank_total?'/'+p2.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</span>':'')
       +'</div>'
       +'</div>'
       // -- Decision strip --
       +'<div class="sc-premier-action">'
       +'<div class="sc-premier-odds">'
-      +'<span class="sc-premier-odd-val">'+(o1?o1.toFixed(2):'é')+'</span>'
+      +'<span class="sc-premier-odd-val">'+(o1?o1.toFixed(2):'—')+'</span>'
       +'<span class="sc-premier-odd-lbl">'+esc(shortName(p1.name))+'</span>'
       +'</div>'
       +'<div class="sc-premier-decision">'
@@ -26138,17 +26198,18 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-premier-decision-detail">Edge <b>'+(topVB.edge*100).toFixed(1)+'%</b> · Kelly <b>'+(topVB.kelly*100).toFixed(0)+'%</b></div>'
       +'</div>'
       +'<div class="sc-premier-odds p2">'
-      +'<span class="sc-premier-odd-val">'+(o2?o2.toFixed(2):'é')+'</span>'
+      +'<span class="sc-premier-odd-val">'+(o2?o2.toFixed(2):'—')+'</span>'
       +'<span class="sc-premier-odd-lbl">'+esc(shortName(p2.name))+'</span>'
       +'</div>'
       +'</div>'
       // -- Expand buttons --
+      // bd premier-state-fix : _btnAnalOpen/_btnStratOpen déclenchent .open + aria-expanded.
       +'<div class="sc-premier-buttons">'
-      +'<button class="sc-premier-btn" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('chart',12)+' Analyse</span><span class="chev">▾</span></button>'
-      +'<button class="sc-premier-btn secondary" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="false"><span>'+svgIcon('target',12)+' Stratégies</span><span class="chev">▾</span></button>'
+      +'<button class="sc-premier-btn'+(_btnAnalOpen?' open':'')+'" onclick="Scope._togglePremier(this,\'analyse\')" data-match-id="'+esc(m.id)+'" aria-expanded="'+(_btnAnalOpen?'true':'false')+'"><span>'+svgIcon('chart',12)+' Analyse</span><span class="chev">▾</span></button>'
+      +'<button class="sc-premier-btn secondary'+(_btnStratOpen?' open':'')+'" onclick="Scope._togglePremier(this,\'strategies\')" data-match-id="'+esc(m.id)+'" aria-expanded="'+(_btnStratOpen?'true':'false')+'"><span>'+svgIcon('target',12)+' Stratégies</span><span class="chev">▾</span></button>'
       +'</div>'
-      // -- Detail panel --
-      +'<div class="sc-premier-detail" id="pdet-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region" style="display:none"></div>'
+      // -- Detail panel (pré-rempli si _isOpen pour éviter le flash vide au re-render) --
+      +'<div class="sc-premier-detail" id="pdet-'+esc(String(m.id||'unknown').replace(/[^a-zA-Z0-9_-]/g,'_'))+'" role="region" style="display:'+(_isOpen?'block':'none')+'">'+(_isOpen?_premierDetailHTML(m,_openMode):'')+'</div>'
       +'</div>';
   }
 
@@ -26167,14 +26228,14 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     }
     return '<div class="sc-player '+(align==='right'?'right':'')+'">'
       +'<div class="sc-player-photo">'+_phImg+'</div>'
-      +'<div class="sc-player-top">'+(cc?'<span class="sc-flag">'+cc+'</span>':'')+'<span>#'+(p.rank||'é')+'</span></div>'
+      +'<div class="sc-player-top">'+(cc?'<span class="sc-flag">'+cc+'</span>':'')+'<span>#'+(p.rank||'—')+'</span></div>'
       +'<div class="sc-player-name">'+esc(p.name||'?')+'</div>'
-      +'<div class="sc-player-form">Forme <b>'+(p.form!=null?num(p.form):'é')+'</b>'+formDots(p.form)+'</div>'
-      +'<div class="sc-elo-spark">'+sparkline(trend,color)+'<small>Elo '+(p.elo_surface||'é')+'</small></div>'
+      +'<div class="sc-player-form">Forme <b>'+(p.form!=null?num(p.form):'—')+'</b>'+formDots(p.form)+'</div>'
+      +'<div class="sc-elo-spark">'+sparkline(trend,color)+'<small>Elo '+(p.elo_surface||'—')+'</small></div>'
       +'</div>';
   }
   function oddBox(lbl,odds,evv,hl){
-    return '<div class="sc-odd '+(hl?'value':'')+'"><div class="lbl">'+esc(lbl)+'</div><div class="val">'+(odds?odds.toFixed(2):'é')+'</div><div class="ev '+(evv>0?'pos':'neg')+'">EV '+(evv>=0?'+':'')+(evv*100).toFixed(1)+'%</div></div>';
+    return '<div class="sc-odd '+(hl?'value':'')+'"><div class="lbl">'+esc(lbl)+'</div><div class="val">'+(odds?odds.toFixed(2):'—')+'</div><div class="ev '+(evv>0?'pos':'neg')+'">EV '+(evv>=0?'+':'')+(evv*100).toFixed(1)+'%</div></div>';
   }
   function projectedScore(p1p,bestOf){
     bestOf=bestOf||3;
@@ -26667,8 +26728,32 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
   // bd live-001 : persistance état d'expansion des accordéons (cross-re-render).
   // Variable module-level dans le Scope IIFE (pas dans _state qui est dans le TennisScope IIFE).
   var _expandedMatchIds=new Set();
-var _expandedPremierIds=new Set();
-var _premierMatchCache=new Map();
+  var _expandedPremierIds=new Set();
+  var _premierMatchCache=new Map();
+  // bd premier-state-fix : mémorise le mode ouvert par match ('analyse'|'strategies')
+  // pour restaurer le bon panneau après un re-render (polling/filtre). Sans ça,
+  // un re-render replie la carte même si _expandedPremierIds contient l'ID, et le
+  // mode précédemment ouvert est perdu (on retombait sur le panneau vide).
+  var _premierOpenMode=new Map();
+  // Helper de rendu du détail premier (mutualisé entre premierCard et _togglePremier).
+  // Extraction DRY : évite la divergence entre le pré-remplissage au render et l'injection au clic.
+  function _premierDetailHTML(match, mode){
+    if(!match){
+      var na = mode==='strategies' ? 'Stratégies indisponibles.' : 'Analyse non disponible.';
+      return '<div style="padding:12px;text-align:center;color:var(--text3);font-size:11px">'+na+'</div>';
+    }
+    if(mode==='strategies'){
+      return '<div class="sc-detail" style="border:none;padding:0">'+_renderStrategies(null,match)+'</div>';
+    }
+    // défaut : analyse
+    return '<div class="sc-detail" style="border:none;padding:0">'
+      +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
+      +scoutProfile(match.player1)+scoutProfile(match.player2)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(match)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(match)
+      +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
+      +'</div>';
+  }
   // bd live-025 : compteur module-level pour IDs gradient SVG uniques (évite collisions si match IDs dupliqués)
   var _chartSeq=0;
 
@@ -26733,7 +26818,7 @@ function _renderPredictive(preds){
 
 // R4: render strategies from m.predictions (self-sufficient, no gated API)
 function _renderStrategies(data,m){
-  // data may be null (API 403 gated)  build entirely from match object
+  // data may be null (API 403 gated) — build entirely from match object
   var p=m&&m.predictions||{};
   var bl=(p.blended||p.elo||{});
   var p1=Math.round((bl.p1||0)*100),p2=Math.round((bl.p2||0)*100);
@@ -26745,7 +26830,7 @@ function _renderStrategies(data,m){
   var h='<div class="sc-seclbl">'+svgIcon('target',12)+' Lecture stratégique</div>';
   // 1. Probabilité match (blend Elo+BSD)
   h+='<div class="sc-strat-row"><span class="sc-strat-name">Victoire (modèle)</span>';
-  h+='<span class="sc-strat-val"><b>'+esc(p1n)+' '+p1+'%</b>  '+esc(p2n)+' '+p2+'%</span></div>';
+  h+='<span class="sc-strat-val"><b>'+esc(p1n)+' '+p1+'%</b> — '+esc(p2n)+' '+p2+'%</span></div>';
   // 2. Outsetter value (au moins 1 set)
   if(aos.p1!=null||aos.p2!=null){
     var ao1=Math.round((aos.p1||0)*100),ao2=Math.round((aos.p2||0)*100);
@@ -26771,7 +26856,7 @@ function _renderStrategies(data,m){
     h+='<div class="sc-strat-row sc-strat-highlight"><span class="sc-strat-name">Value bet (EV)</span>';
     h+='<span class="sc-strat-val"><b>'+esc(be.label||be.player||'')+' @ '+(be.odds||0).toFixed(2)+' (EV '+evPct+'%)</b></span></div>';
   }
-  h+='<div class="sc-strat-note" style="margin-top:8px;font-size:10px;color:var(--text3)">Calculé depuis Elo+BSD+Markov  pas de cote bookmaker multi-marchés.</div>';
+  h+='<div class="sc-strat-note" style="margin-top:8px;font-size:10px;color:var(--text3)">Calculé depuis Elo+BSD+Markov — pas de cote bookmaker multi-marchés.</div>';
   return h;
 }
 
@@ -26826,21 +26911,21 @@ var Scope={
       var open=btn.classList.toggle('open');
       d.style.display=open?'block':'none';
       btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open){_expandedPremierIds.add(String(mid));}else{_expandedPremierIds.delete(String(mid));}
-      if(!open)return;
-      var match=_premierMatchCache.get(String(mid));
-      if(mode==='analyse'){
-        if(!match){d.innerHTML='<div style="padding:12px;text-align:center;color:var(--text3);font-size:11px">Analyse non disponible.</div>';return;}
-        d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'
-          +'<div class="sc-seclbl">'+svgIcon('trophy',12)+' Scouting Report</div>'
-          +scoutProfile(match.player1)+scoutProfile(match.player2)
-          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('target',12)+' Lecture parieur</div>'+bettorRead(match)
-          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('trophy',12)+' H2H</div>'+h2hBlock(match)
-          +'<div class="sc-seclbl" style="margin-top:10px">'+svgIcon('zap',12)+' Top 3 Bets</div>'+topBets(match)
-          +'</div>';
-      }else if(mode==='strategies'){
-        if(!match){d.innerHTML='<div style="padding:12px;color:var(--text3);font-size:11px">Stratégies indisponibles.</div>';return;}
-        d.innerHTML='<div class="sc-detail" style="border:none;padding:0">'+_renderStrategies(null,match)+'</div>';
+      if(open){
+        _expandedPremierIds.add(String(mid));
+        _premierOpenMode.set(String(mid),mode); // mémorise le mode pour restauration au re-render
+        // Mode exclusif : un seul panneau à la fois — replier les boutons frères.
+        var card=btn.closest('.sc-premier-card');
+        if(card){
+          card.querySelectorAll('.sc-premier-btn').forEach(function(b){
+            if(b!==btn){b.classList.remove('open');b.setAttribute('aria-expanded','false');}
+          });
+        }
+        var match=_premierMatchCache.get(String(mid));
+        d.innerHTML=_premierDetailHTML(match,mode);
+      }else{
+        _expandedPremierIds.delete(String(mid));
+        _premierOpenMode.delete(String(mid));
       }
     },
     _resort:function(val){_vbOpts.sort=val;_rerenderVB();},
