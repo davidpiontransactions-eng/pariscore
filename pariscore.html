@@ -25323,7 +25323,7 @@ a:focus-visible,
 .sc-premier-gauge svg{display:block}
 /* premierGauge — jauge Win 270° (arc moderne avec overlay HTML, pas de <text> SVG) */
 .sc-pg-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;line-height:1}
-.sc-pg-wrap svg{display:block;overflow:visible}
+.sc-pg-wrap svg{display:block;overflow:hidden}
 .sc-pg-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono,DM Mono,monospace);font-weight:800;font-size:18px;color:var(--text,#fff);pointer-events:none}
 .sc-pg-label{position:absolute;left:0;right:0;bottom:14%;text-align:center;font-size:7px;letter-spacing:.16em;color:var(--text3,#64748b);text-transform:uppercase;font-family:var(--font-mono,DM Mono,monospace);pointer-events:none}
 .sc-pg-arc-bg{stroke:var(--bg3,#1e2a3d)}
@@ -26073,41 +26073,32 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     opts = opts || {};
     var size = opts.size || 96;
     var p1 = clamp(p1Prob, 0, 1);
-    // Géométrie de l'arc 270° : de 225° (bas-gauche) à -45° (bas-droite), gap 90° en bas.
-    var stroke = 8;                       // épaisseur trait
-    var r = size/2 - stroke;              // rayon utile
-    var cx = size/2, cy = size/2;
-    var START = 135, SWEEP = 270;         // degrés (START=135 → 225 en screen, SWEEP=270)
-    // Couleur dynamique selon proba P1
+    // Jauge 270° via <circle> + stroke-dasharray (technique robuste, pas de path/arc manuel).
+    // Fix 2026-07-17 : l'ancienne version utilisait un SVG path M..A.. avec trig START=135
+    // dont le calcul de y était inversé (sin(135°)>0 mais y=cy-r·sin → haut au lieu de bas),
+    // faisant flotter l'arc au-dessus du header NORDEA OPEN. La technique circle garantit
+    // un anneau confiné dans son viewBox, jamais de débordement.
+    var stroke = 8;
+    var r = (size - stroke) / 2;          // rayon utile (le cercle tient dans [0,size])
+    var cx = size / 2, cy = size / 2;
+    var SWEEP = 270;                       // degrés de l'arc (gap 90° en bas)
+    var GAP = 360 - SWEEP;                 // 90°
+    var circ = 2 * Math.PI * r;            // circonférence totale
+    var bgLen = circ * (SWEEP / 360);      // longueur visible de l'anneau (75% du cercle)
+    var valLen = bgLen * p1;               // portion colorée
     var col = p1 >= 0.55 ? 'var(--green,#00e676)' : (p1 >= 0.45 ? 'var(--amber,#ffc107)' : 'var(--red,#ef4444)');
-    // Convertit angle (deg, 0=droite, sens horaire depuis top) en point du cercle.
-    // On utilise le convention SVG : 0°=droite, sens anti-horaire. START=135° = bas-gauche.
-    function pt(deg, rad){
-      var rd = (deg) * Math.PI / 180;
-      return { x: cx + rad * Math.cos(rd), y: cy - rad * Math.sin(rd) };
-    }
-    // Arc path : start→end, large-arc-flag=1 si sweep>180.
-    function arcPath(deg0, deg1, rad){
-      var s = pt(deg0, rad), e = pt(deg1, rad);
-      var large = Math.abs(deg1 - deg0) > 180 ? 1 : 0;
-      // sweep-flag=1 : sens horaire visuel (y inversé en SVG)
-      return 'M ' + s.x.toFixed(2) + ' ' + s.y.toFixed(2)
-           + ' A ' + rad.toFixed(2) + ' ' + rad.toFixed(2) + ' 0 ' + large + ' 1 ' + e.x.toFixed(2) + ' ' + e.y.toFixed(2);
-    }
-    // Arc complet (fond gris) : START → START+SWEEP
-    var bgPath = arcPath(START, START + SWEEP, r);
-    // Arc valeur : proportion = p1 (0..1) du sweep total
-    var valEnd = START + SWEEP * p1;
-    var valPath = arcPath(START, valEnd, r);
-    // Longueur pour animation stroke-dasharray (préserve gauge-fill-in CSS)
-    var circ = 2 * Math.PI * r;
-    var arcLen = circ * (SWEEP / 360);
-    var valLen = arcLen * p1;
     var pct = Math.round(p1 * 100);
+    // Rotation : un <circle> SVG démarre à 3h (0°). On pivote de 135° pour placer le
+    // début de l'arc en bas-gauche (gap 90° centré en bas). 135° = 180° - GAP/2.
+    var rot = 90 + GAP / 2;                // = 135° : origine bas-gauche, sens horaire
+    // dasharray = [portion visible, portion cachée] ; dashoffset recule pour révéler valLen
+    var dashVisible = bgLen.toFixed(2);
+    var dashHidden = (circ - bgLen).toFixed(2);
+    var offVal = (bgLen - valLen).toFixed(2);
     return '<div class="sc-pg-wrap" style="width:' + size + 'px;height:' + size + 'px">'
       + '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">'
-      + '<path class="sc-pg-arc-bg" d="' + bgPath + '" fill="none" stroke-width="' + stroke + '" stroke-linecap="round"/>'
-      + '<path class="sc-pg-arc-val" d="' + valPath + '" fill="none" stroke="' + col + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + arcLen.toFixed(1) + '" stroke-dashoffset="' + (arcLen - valLen).toFixed(1) + '"/>'
+      + '<circle class="sc-pg-arc-bg" cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(2) + '" fill="none" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + dashVisible + ' ' + dashHidden + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"/>'
+      + '<circle class="sc-pg-arc-val" cx="' + cx + '" cy="' + cy + '" r="' + r.toFixed(2) + '" fill="none" stroke="' + col + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-dasharray="' + dashVisible + ' ' + dashHidden + '" stroke-dashoffset="' + offVal + '" transform="rotate(' + rot + ' ' + cx + ' ' + cy + ')"/>'
       + '</svg>'
       + '<div class="sc-pg-pct">' + pct + '%</div>'
       + '<div class="sc-pg-label">Win P1</div>'
