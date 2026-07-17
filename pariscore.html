@@ -25313,7 +25313,7 @@ a:focus-visible,
 .sc-premier-photo{width:100%;height:100%;object-fit:cover}
 .sc-premier-photo-init{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--text2,#94a3b8)}
 .sc-premier-pname{font-size:15px;font-weight:700;color:var(--text,#0f172a);line-height:1.2;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sc-premier-prank{font-size:11px;color:var(--text2,#94a3b8);font-family:var(--font-mono,DM Mono,monospace);display:flex;align-items:center;gap:2px;flex-wrap:nowrap;white-space:nowrap;line-height:1.4;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sc-premier-prank{font-size:10px;color:var(--text2,#94a3b8);font-family:var(--font-mono,DM Mono,monospace);display:flex;align-items:center;gap:2px;flex-wrap:nowrap;white-space:nowrap;line-height:1.3;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .sc-premier-pelo{font-size:11px;color:var(--text3,#64748b)}
 .sc-premier-surfrank{display:inline-flex;align-items:center;padding:1px 6px;font-size:11px;font-weight:600;font-family:var(--font-mono,DM Mono,monospace);color:var(--blue,#0077ff);background:rgba(14,165,233,0.10);border:1px solid rgba(14,165,233,0.20);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
 .sc-premier-sps{display:inline-flex;align-items:center;padding:1px 6px;font-size:11px;font-weight:500;font-family:var(--font-mono,DM Mono,monospace);color:var(--text3,#707e94);background:rgba(255,255,255,0.04);border-radius:var(--radius-pill,999px);line-height:1.5;white-space:nowrap;letter-spacing:.01em}
@@ -25324,10 +25324,10 @@ a:focus-visible,
 /* premierGauge — jauge Win 270° (arc moderne avec overlay HTML, pas de <text> SVG) */
 .sc-pg-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;line-height:1}
 .sc-pg-wrap svg{display:block;overflow:hidden}
-.sc-pg-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono,DM Mono,monospace);font-weight:800;font-size:18px;color:var(--text,#fff);pointer-events:none}
-.sc-pg-label{position:absolute;left:0;right:0;bottom:14%;text-align:center;font-size:7px;letter-spacing:.16em;color:var(--text3,#64748b);text-transform:uppercase;font-family:var(--font-mono,DM Mono,monospace);pointer-events:none}
-.sc-pg-arc-bg{stroke:var(--bg3,#1e2a3d)}
-.sc-pg-arc-val{animation:gauge-fill-in .8s ease-out forwards;transform-origin:center}
+.sc-pg-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono,DM Mono,monospace);font-weight:800;font-size:15px;color:var(--text,#fff);pointer-events:none}
+.sc-pg-label{position:absolute;left:0;right:0;bottom:12%;text-align:center;font-size:6px;letter-spacing:.14em;color:var(--text3,#64748b);text-transform:uppercase;font-family:var(--font-mono,DM Mono,monospace);pointer-events:none}
+.sc-pg-arc-bg{stroke:rgba(255,255,255,.08)}
+.sc-pg-arc-val{animation:gauge-fill-in .8s ease-out forwards;transform-origin:center;filter:drop-shadow(0 0 4px currentColor)}
 /* decision strip */
 .sc-premier-action{display:flex;align-items:center;padding:6px 12px 8px;gap:10px}
 .sc-premier-odds{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
@@ -26071,14 +26071,16 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
    * superposé à l'aiguille). gauge() reste intact pour prematchCard. */
   function premierGauge(p1Prob, opts){
     opts = opts || {};
-    var size = opts.size || 96;
+    var size = opts.size || 76;
     var p1 = clamp(p1Prob, 0, 1);
     // Jauge 270° via <circle> + stroke-dasharray (technique robuste, pas de path/arc manuel).
     // Fix 2026-07-17 : l'ancienne version utilisait un SVG path M..A.. avec trig START=135
     // dont le calcul de y était inversé (sin(135°)>0 mais y=cy-r·sin → haut au lieu de bas),
     // faisant flotter l'arc au-dessus du header NORDEA OPEN. La technique circle garantit
     // un anneau confiné dans son viewBox, jamais de débordement.
-    var stroke = 8;
+    // Révision 2026-07-17b : size 76 (libère espace joueurs), stroke 6 (anneau fin),
+    // drop-shadow CSS pour faire ressortir l'arc coloré sur fond sombre.
+    var stroke = opts.stroke || 6;
     var r = (size - stroke) / 2;          // rayon utile (le cercle tient dans [0,size])
     var cx = size / 2, cy = size / 2;
     var SWEEP = 270;                       // degrés de l'arc (gap 90° en bas)
@@ -26086,7 +26088,8 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
     var circ = 2 * Math.PI * r;            // circonférence totale
     var bgLen = circ * (SWEEP / 360);      // longueur visible de l'anneau (75% du cercle)
     var valLen = bgLen * p1;               // portion colorée
-    var col = p1 >= 0.55 ? 'var(--green,#00e676)' : (p1 >= 0.45 ? 'var(--amber,#ffc107)' : 'var(--red,#ef4444)');
+    // Couleurs arc : teintes vives saturées + halo drop-shadow (défini en CSS).
+    var col = p1 >= 0.55 ? '#00e676' : (p1 >= 0.45 ? '#f59e0b' : '#ff1744');
     var pct = Math.round(p1 * 100);
     // Rotation : un <circle> SVG démarre à 3h (0°). On pivote de 135° pour placer le
     // début de l'arc en bas-gauche (gap 90° centré en bas). 135° = 180° - GAP/2.
@@ -26170,7 +26173,7 @@ var sk=document.getElementById('app-skeleton');if(sk)sk.style.display='none';
       +'<div class="sc-premier-prank">#'+(p1.rank||'—')+(flagToCC(p1.flag)?' <span class="sc-flag">'+flagToCC(p1.flag)+'</span>':'')+' <span class="sc-premier-metric-sep">·</span> Elo '+(p1.elo_surface||'—')+(p1.powerscore!=null?' <span class="sc-premier-metric-sep">·</span> SPS '+Math.round(p1.powerscore):'')+'</div>'
       +(p1.surf_rank?'<span class="sc-premier-surfrank">#'+p1.surf_rank+(p1.surf_rank_total?'/'+p1.surf_rank_total:'')+' '+(m.surface||'').slice(0,4)+'</span>':'')
       +'</div>'
-      +'<div class="sc-premier-gauge">'+premierGauge(p1p,{size:96})+'</div>'
+      +'<div class="sc-premier-gauge">'+premierGauge(p1p,{size:76})+'</div>'
       +'<div class="sc-premier-player p2">'
       +'<div class="sc-premier-photo-wrap">'+_ph(p2)+'</div>'
       +'<div class="sc-premier-pname">'+esc(p2.name||'?')+'</div>'
