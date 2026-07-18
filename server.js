@@ -48708,6 +48708,35 @@ function mergeLiveStatsData(primary, secondary) {
   return out;
 }
 
+// v10.77 — Tennis bridge: copie _bsd_stats dans le data pour que le render
+// _tnRenderLiveStatsTable() trouve p1_aces / p1_first_pct dans live_stats.
+// Protège aussi contre les strings avec % (BSD raw) et les NaN/undefined.
+function _bridgeTennisStats(match, data) {
+  const bsd = match._bsd_stats;
+  if (!bsd) return;
+  const _n = (v) => {
+    if (v == null) return null;
+    if (typeof v === 'number' && !isNaN(v)) return v;
+    const cleaned = String(v).replace(/%/g, '').trim();
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? null : n;
+  };
+  data.p1_aces       = _n(bsd.p1_aces);
+  data.p2_aces       = _n(bsd.p2_aces);
+  data.p1_df         = _n(bsd.p1_df);
+  data.p2_df         = _n(bsd.p2_df);
+  data.p1_first_pct  = _n(bsd.p1_first_pct);
+  data.p2_first_pct  = _n(bsd.p2_first_pct);
+  data.p1_first_won  = _n(bsd.p1_first_won);
+  data.p2_first_won  = _n(bsd.p2_first_won);
+  data.p1_bp_saved   = _n(bsd.p1_bp_saved);
+  data.p2_bp_saved   = _n(bsd.p2_bp_saved);
+  data.p1_ret_won    = _n(bsd.p1_ret_won);
+  data.p2_ret_won    = _n(bsd.p2_ret_won);
+  data.p1_total_pts  = _n(bsd.p1_total_pts);
+  data.p2_total_pts  = _n(bsd.p2_total_pts);
+}
+
 function applyLiveStats(match, data) {
   if (data.possession)         match.live_possession         = data.possession;
   if (data.shots)              match.live_shots              = data.shots;
@@ -48739,6 +48768,8 @@ function applyLiveStats(match, data) {
   if (data.cards)              match.live_cards              = data.cards;
   if (data.momentum)           match.live_momentum           = data.momentum;
   match.live_intensity = computeLiveIntensityFromSofa(data, match);
+  // v10.77 — Bridge tennis _bsd_stats vers live_stats (clés p1_aces / p1_first_pct / etc.)
+  _bridgeTennisStats(match, data);
   match.live_stats = {
     // Compatibilité existante
     possessionHome:        data.possession?.home       ?? match.live_stats?.possessionHome       ?? 50,
@@ -48784,6 +48815,21 @@ function applyLiveStats(match, data) {
     foulsAway:             data.fouls?.away             ?? match.live_stats?.foulsAway             ?? 0,
     offsidesHome:          data.offsides?.home          ?? match.live_stats?.offsidesHome          ?? 0,
     offsidesAway:          data.offsides?.away          ?? match.live_stats?.offsidesAway          ?? 0,
+    // v10.77 — Tennis stats bridge (depuis _bsd_stats via _bridgeTennisStats)
+    p1_aces:               data.p1_aces                ?? match.live_stats?.p1_aces               ?? null,
+    p2_aces:               data.p2_aces                ?? match.live_stats?.p2_aces               ?? null,
+    p1_df:                 data.p1_df                  ?? match.live_stats?.p1_df                 ?? null,
+    p2_df:                 data.p2_df                  ?? match.live_stats?.p2_df                 ?? null,
+    p1_first_pct:          data.p1_first_pct           ?? match.live_stats?.p1_first_pct          ?? null,
+    p2_first_pct:          data.p2_first_pct           ?? match.live_stats?.p2_first_pct          ?? null,
+    p1_first_won:          data.p1_first_won           ?? match.live_stats?.p1_first_won          ?? null,
+    p2_first_won:          data.p2_first_won           ?? match.live_stats?.p2_first_won          ?? null,
+    p1_bp_saved:           data.p1_bp_saved            ?? match.live_stats?.p1_bp_saved           ?? null,
+    p2_bp_saved:           data.p2_bp_saved            ?? match.live_stats?.p2_bp_saved           ?? null,
+    p1_ret_won:            data.p1_ret_won             ?? match.live_stats?.p1_ret_won            ?? null,
+    p2_ret_won:            data.p2_ret_won             ?? match.live_stats?.p2_ret_won            ?? null,
+    p1_total_pts:          data.p1_total_pts           ?? match.live_stats?.p1_total_pts          ?? null,
+    p2_total_pts:          data.p2_total_pts           ?? match.live_stats?.p2_total_pts          ?? null,
   };
 }
 
@@ -49377,6 +49423,8 @@ async function pollLiveScores() {
                 live_momentum:         (Array.isArray(m.live_momentum) ? m.live_momentum : null),
                 live_momentum_pct:     m.live_momentum_pct || null,
                 live_stats:            m.live_stats,
+    // v10.77 — Tennis _bsd_stats bridge: expose dans SSE live_patch pour _tnRenderLiveStatsTable
+    _bsd_stats:            m._bsd_stats || null,
             }));
             if (sseClients.size > 0) broadcastSSE('live_patch', { patches: fullPatches });
             if (patches.length > 0) console.log('[LivePoll] ' + patches.length + ' BSD patch(es) + ' + liveNow.length + ' Sofa enrichi(s)');

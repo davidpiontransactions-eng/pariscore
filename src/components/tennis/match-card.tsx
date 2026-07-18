@@ -25,6 +25,9 @@ import { FormDots } from "./form-dots";
 import { StatChip } from "./stat-chip";
 import { BacktestBadge } from "./backtest-badge";
 import { PlayerStatline } from "./player-statline";
+import { LiveStatsPanel } from "./live-stats-panel";
+
+
 import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
@@ -392,6 +395,17 @@ export function MatchCard({
               liveState.server === "A" ? playerA.name : playerB.name
             }
           />
+        )}
+
+        {/* Live stats panel */}
+        {isLive && liveState && (
+          <div className="mt-4">
+            <LiveStatsPanel
+              matchId={match.id}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+            />
+          </div>
         )}
 
         {/* Cotes bookmaker (si dispo) */}

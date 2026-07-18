@@ -2271,120 +2271,10 @@ function _tnRenderDrawerContent(m) {
 <div class="tn-drawer-section"><h4>Marché + Conf.</h4>${_tvbMarketCell(odds, bestEv)}${_tvbConfEdge(m.conf_edge)}${_tvbConfCell(elo, m.log_diff)}</div>
 <div class="tn-drawer-section"><h4>📊 Cotes BSD · ${m._bsd_odds ? (m._bsd_odds.books_count + ' books') : '…'}</h4><div class="tn-bsd-odds-wrap">${_tnRenderBSDOddsSection(m)}</div></div>
 <div class="tn-drawer-section"><h4>Alerte IA</h4>${aiBtn}</div>
-${(m.is_live && m.live_stats != null) ? `<div class="tn-drawer-section" style="grid-column:1/-1"><h4>📊 Stats Live</h4>${_tnRenderLiveStatsTable(m)}</div>` : ''}
-${ytSection}
+
 </div>`;
 }
 
-// ── Tennis Stats Live Panel ─────────────────────────────────────────────────
-function _tnToggleLiveStats(matchId) {
-  const panel = document.getElementById('tnlsp-' + matchId);
-  if (!panel) return;
-  const safeIdQ = String(matchId).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
-  const btn = document.querySelector(`.tn-live-row[data-tennis-id="${safeIdQ}"] .tn-stats-btn`);
-  if (!panel.hidden) {
-    panel.hidden = true;
-    if (btn) btn.classList.remove('active');
-    return;
-  }
-  if (panel.dataset.rendered !== String(matchId)) {
-    const m = (window._tennisLastFetch || []).find(x => String(x.id) === String(matchId));
-    if (!m) return; // match not in cache yet — don't mark rendered, retry on next click
-    panel.innerHTML = _tnRenderLiveStatsTable(m);
-    panel.dataset.rendered = String(matchId);
-  }
-  panel.hidden = false;
-  if (btn) btn.classList.add('active');
-}
-
-// T4 — per-set aces/DF breakdown for desktop stats panel
-function _tnRenderPerSetStats(m) {
-  if (!m || !Array.isArray(m.sets) || !m.sets.length) return '';
-  const hasData = m.sets.some(s => s.p1_aces != null || s.p2_aces != null || s.p1_df != null || s.p2_df != null);
-  if (!hasData) return '';
-  const p1S = m.player1 ? String(m.player1.name || 'J1').split(' ').pop() : 'J1';
-  const p2S = m.player2 ? String(m.player2.name || 'J2').split(' ').pop() : 'J2';
-  const dataRows = m.sets.map((s, i) => {
-    if (s.p1_aces == null && s.p2_aces == null && s.p1_df == null && s.p2_df == null) return '';
-    return `<tr style="font-size:10px;text-align:center;color:var(--text,#e8eaed);">
-      <td style="color:var(--text3,#5a6068)">S${i+1}</td>
-      <td style="color:#00e676">${s.p1_aces??'—'}</td><td style="color:#ff4d4d">${s.p1_df??'—'}</td>
-      <td style="color:#00e676">${s.p2_aces??'—'}</td><td style="color:#ff4d4d">${s.p2_df??'—'}</td>
-    </tr>`;
-  }).join('');
-  if (!dataRows.trim()) return '';
-  return `<div style="margin-top:10px;">
-<div style="font-size:9px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Aces / DF par set</div>
-<table class="tn-live-stats-table"><thead><tr style="font-size:9px;color:var(--text3);">
-<th></th><th>A</th><th>DF</th><th>A</th><th>DF</th>
-</tr><tr style="font-size:9px;color:var(--text3);"><th></th><th colspan="2" style="text-align:center;">${_escTennis(p1S)}</th><th colspan="2" style="text-align:center;">${_escTennis(p2S)}</th></tr></thead>
-<tbody>${dataRows}</tbody></table></div>`;
-}
-
-function _tnRenderLiveStatsTable(m) {
-  const p1 = m && m.player1 ? (m.player1.name || 'J1') : 'J1';
-  const p2 = m && m.player2 ? (m.player2.name || 'J2') : 'J2';
-  const raw = m && m.live_stats ? m.live_stats : null;
-  const hasBSD = raw && (raw.p1_aces != null || raw.p1_first_pct != null);
-  const s = hasBSD ? raw : {
-    p1_aces:5, p2_aces:2, p1_df:1, p2_df:4,
-    p1_first_pct:65, p2_first_pct:64,
-    p1_first_won:72, p2_first_won:77,
-    p1_bp_saved:5, p2_bp_saved:1,
-    p1_ret_won:37, p2_ret_won:39,
-    p1_total_pts:50, p2_total_pts:50,
-    _mock:true
-  };
-  const mockBadge = s._mock ? ' <span style="font-size:9px;color:var(--amber,#ffa726);">[DEMO]</span>' : '';
-  const _lastName = (n) => { const t = String(n||'').trim().split(' '); return t[t.length-1] || t[0] || '—'; };
-  const p1S = _lastName(p1);
-  const p2S = _lastName(p2);
-  const row = (label, v1, v2, hib, sfx) => {
-    if (v1 == null && v2 == null) return '';
-    const n1 = Number(v1)||0, n2 = Number(v2)||0, tie = n1===n2;
-    const p1w = tie ? false : (hib ? n1>n2 : n1<n2);
-    const p2w = tie ? false : !p1w;
-    const c1 = tie?'':(p1w?'tn-sv':'tn-sv-lo'), c2 = tie?'':(p2w?'tn-sv':'tn-sv-lo');
-    const d1 = v1!=null?_escTennis(String(v1)+(sfx||'')):'—';
-    const d2 = v2!=null?_escTennis(String(v2)+(sfx||'')):'—';
-    return `<tr><td class="${c1}">${d1}</td><td class="slbl">${_escTennis(label)}</td><td class="${c2}">${d2}</td></tr>`;
-  };
-  const rows = [
-    row('Aces', s.p1_aces, s.p2_aces, true),
-    row('Doubles fautes', s.p1_df, s.p2_df, false),
-    row('% 1er service', s.p1_first_pct, s.p2_first_pct, true, '%'),
-    row('% pts gagnés 1er srv', s.p1_first_won, s.p2_first_won, true, '%'),
-    row('Balles de break sauvées', s.p1_bp_saved, s.p2_bp_saved, true),
-    row('% pts gagnés au retour', s.p1_ret_won, s.p2_ret_won, true, '%'),
-    row('% points gagnés', s.p1_total_pts, s.p2_total_pts, true, '%'),
-  ].filter(Boolean).join('');
-  return `<div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-align:center;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;">📊 Statistiques Live${mockBadge}</div>
-<table class="tn-live-stats-table"><thead><tr>
-<th style="width:90px;text-align:center;">${_escTennis(p1S)}</th><th></th><th style="width:90px;text-align:center;">${_escTennis(p2S)}</th>
-</tr></thead><tbody>${rows}</tbody></table>${_tnRenderServiceCircles(s,p1,p2)}${_tnRenderPerSetStats(m)}`;
-}
-
-function _tnRenderServiceCircles(s, p1, p2) {
-  if (!s) return '';
-  const sP1=Number(s.p1_first_pct)||0, sP2=Number(s.p2_first_pct)||0;
-  const rP1=Number(s.p1_ret_won)||0, rP2=Number(s.p2_ret_won)||0;
-  if (!sP1 && !sP2) return '';
-  const p1S = p1 ? (p1.split(' ').pop()||p1) : 'J1';
-  const p2S = p2 ? (p2.split(' ').pop()||p2) : 'J2';
-  const circ = (pct, clr) => {
-    const r=20,cx=26,cy=26,C=+(2*Math.PI*r).toFixed(2),off=+(C-(pct/100)*C).toFixed(2);
-    return `<div class="tn-stats-circ"><svg width="52" height="52" viewBox="0 0 52 52"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${clr}" stroke-width="5" stroke-dasharray="${C}" stroke-dashoffset="${off}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/></svg><div class="tn-stats-circ-lbl">${pct}%</div></div>`;
-  };
-  const items = [];
-  if (sP1) items.push(`<div class="tn-stats-circ-item"><span>Service ${_escTennis(p1S)}</span>${circ(sP1,'#00e676')}</div>`);
-  if (sP2) items.push(`<div class="tn-stats-circ-item"><span>Service ${_escTennis(p2S)}</span>${circ(sP2,'#29b6f6')}</div>`);
-  if (rP1) items.push(`<div class="tn-stats-circ-item"><span>Retour ${_escTennis(p1S)}</span>${circ(rP1,'#ffa726')}</div>`);
-  if (rP2) items.push(`<div class="tn-stats-circ-item"><span>Retour ${_escTennis(p2S)}</span>${circ(rP2,'#ff4d4d')}</div>`);
-  return items.length ? `<div class="tn-stats-circs">${items.join('')}</div>` : '';
-}
-
-// @deprecated — TennisScope remplace ce rendu legacy. Éléments DOM (tennis-live-tbody) supprimés.
-// Conservé comme stub pour les callers existants (patchTennisLive, refresh général).
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
@@ -2464,7 +2354,6 @@ function renderTennisLive(matches) {
 ${_escTennis(m.status)}
 <div style="display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:2px;">
 ${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${safeId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
-${m.is_live && m.live_stats != null && safeId ? `<button class="tn-stats-btn" onclick="event.stopPropagation();_tnToggleLiveStats('${safeId}')" title="Statistiques live détaillées">📊 STATS</button>` : ''}
 </div>
 </span>
 </div>
@@ -12425,6 +12314,18 @@ function initSSE() {
         if (Array.isArray(p.live_momentum)) m.live_momentum = p.live_momentum;
         if (p.live_momentum_pct     !== undefined) m.live_momentum_pct     = p.live_momentum_pct;
         if (p.live_stats            !== undefined) m.live_stats            = p.live_stats;
+        // v10.77 — _bsd_stats bridge pour tennis live_stats (p1_aces, p1_first_pct...)
+        if (p._bsd_stats            !== undefined) m._bsd_stats            = p._bsd_stats;
+        // v10.77 — Si live_stats reçu mais tennis fields manquants, copie depuis _bsd_stats
+        if (m.live_stats && m._bsd_stats && m.live_stats.p1_aces === undefined) {
+          var _b = m._bsd_stats, _l = m.live_stats;
+          if (_b.p1_aces != null) _l.p1_aces = _b.p1_aces;
+          if (_b.p2_aces != null) _l.p2_aces = _b.p2_aces;
+          if (_b.p1_df != null) _l.p1_df = _b.p1_df;
+          if (_b.p2_df != null) _l.p2_df = _b.p2_df;
+          if (_b.p1_first_pct != null) _l.p1_first_pct = _b.p1_first_pct;
+          if (_b.p2_first_pct != null) _l.p2_first_pct = _b.p2_first_pct;
+        }
       });
       // [FIX live] live_patch ne re-rendait jamais le tableau → un match qui
       // passe LIVE en cours de session n'avait ni bouton LIVE ni Bets Live
@@ -12454,6 +12355,14 @@ function initSSE() {
           refreshLiveDetailModal(_liveDetailMatchId, { force: true }).catch(() => {});
         }
       }
+      // v10.77 — Si un panel stats tennis est ouvert et que le match a reçu _bsd_stats, invalide le cache
+      data.patches.forEach(function(p) {
+        if (!p._bsd_stats) return;
+        var panel = document.getElementById('tnlsp-' + p.id);
+        if (panel && panel.dataset.rendered === String(p.id)) {
+          delete panel.dataset.rendered;
+        }
+      });
     } catch(err) { console.warn('[SSE] live_patch error', err); }
   });
 
