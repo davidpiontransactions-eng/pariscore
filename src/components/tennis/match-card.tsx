@@ -117,8 +117,9 @@ export function MatchCard({
   const sparklineA = useEloSparkline(match.id, "a", 30);
   const sparklineB = useEloSparkline(match.id, "b", 30);
   // Best odds (P3 — Bet Action Hub)
-  const bestOddA = match.allOdds?.reduce((max, o) => (o.decimalA > max.decimalA ? o : max));
-  const bestOddB = match.allOdds?.reduce((max, o) => (o.decimalB > max.decimalB ? o : max));
+  // NB: .reduce() needs initial value — [] throws "Reduce of empty array with no initial value"
+  const bestOddA = match.allOdds?.reduce((max, o) => (o.decimalA > max.decimalA ? o : max), null);
+  const bestOddB = match.allOdds?.reduce((max, o) => (o.decimalB > max.decimalB ? o : max), null);
   const { playerA, playerB, stats, model, modelUpdatedAt } = match;
 
   // Stats enrichies (Elo Surface, SPS, rangs) depuis pariscore.db. Un seul
