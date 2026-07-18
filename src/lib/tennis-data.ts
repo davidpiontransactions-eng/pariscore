@@ -290,7 +290,7 @@ export const MATCHES: TennisMatch[] = [
  */
 export function formatRelativeTime(
   iso: string,
-  t: (key: string, params?: Record<string, unknown>) => string,
+  t: (key: string, params?: Record<string, string | number | Date>) => string,
   now: Date = new Date(),
 ): string {
   const d = new Date(iso);

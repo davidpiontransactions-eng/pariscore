@@ -23,6 +23,7 @@ type BookmakerAgg = {
   bookmaker: string;
   oddCount: number;
   totalMargin: number;
+  avgMargin: number;
   bestCount: number;
   valueBetCount: number;
 };
@@ -41,8 +42,8 @@ type ValueBet = {
 type MatchBestOdds = {
   matchId: string;
   matchLabel: string;
-  bestA: { odd: number; bookmaker: string } | null;
-  bestB: { odd: number; bookmaker: string } | null;
+  bestA: { odd: number; bookmaker: string };
+  bestB: { odd: number; bookmaker: string };
   minMargin: number;
   maxMargin: number;
   hasValueBet: boolean;
@@ -76,6 +77,7 @@ export function BookmakerComparatorDialog() {
           bookmaker: o.bookmaker,
           oddCount: 0,
           totalMargin: 0,
+          avgMargin: 0,
           bestCount: 0,
           valueBetCount: 0,
         };

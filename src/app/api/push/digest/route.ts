@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { ValidationError } from "@/lib/api-error";
 import { getSubscriptions } from "@/app/api/push/subscribe/route";
+import type { PushSubscription as WebPushSubscription } from "web-push";
 
 /**
  * POST /api/push/digest
@@ -140,7 +141,7 @@ export async function POST(request: Request) {
       subs.map(async (sub) => {
         try {
           await webpush.sendNotification(
-            sub as unknown as webpush.PushSubscription,
+            sub as unknown as WebPushSubscription,
             payload
           );
           sent++;

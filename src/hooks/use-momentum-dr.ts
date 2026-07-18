@@ -269,6 +269,13 @@ export function useMomentumDR(
 
   // If we have a new state, diff it with the previous one
   if (liveState && liveState !== prevStateRef.current) {
+    // Clear buffer on match ID change to avoid stale-data pollution
+    if (prevStateRef.current && liveState.matchId !== prevStateRef.current.matchId) {
+      bufferRef.current = [];
+      tickRef.current = 0;
+      settledRef.current = false;
+    }
+
     const outcomes = diffPoints(prevStateRef.current, liveState);
     prevStateRef.current = liveState;
 

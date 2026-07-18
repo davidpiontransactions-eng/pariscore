@@ -131,7 +131,8 @@
     "margin": "Marge",
     "best": "best",
     "tableHint": "Cliquez sur une colonne pour trier. Les cotes « best » sont surlignées en vert. La marge correspond à la commission du bookmaker (vig).",
-    "noOdds": "Cotes multi-bookmakers non disponibles pour ce match."
+    "noOdds": "Cotes multi-bookmakers non disponibles pour ce match.",
+    "otherBookmakers": "autres bookmakers"
   },
   "time": {
     "inMinutes": "dans {n} min",

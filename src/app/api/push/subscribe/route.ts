@@ -32,5 +32,5 @@ export function getSubscriptions(): readonly PushSubscription[] {
   return subscriptions;
 }
 
-// Type re-export for /api/push/test
-export type { PushSubscription };
+// PushSubscription is a global ServiceWorker type — not a local declaration,
+// so it cannot be re-exported. /api/push/test should use the global type directly.

@@ -3064,8 +3064,11 @@ function _tvbPlayerAlerts(sm, side) {
 // Marché replié : cote J1·J2 + best EV+ ; sinon état « indispo » (quota Odds).
 function _tvbMarketCell(odds, bestEv) {
   if (odds && odds.p1 && odds.p2 && odds.p1.odds != null && odds.p2.odds != null) {
+    const tvbKelly = bestEv?.kelly
+      ? ` | Kelly: ${(bestEv.kelly.half * 100).toFixed(1)}% (½) / ${(bestEv.kelly.full * 100).toFixed(1)}% (full)`
+      : '';
     const best = bestEv
-      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle${tvbKelly}">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '';
     return `<span class="tvb-odds">${safeFixed(odds.p1.odds, 2)} · ${safeFixed(odds.p2.odds, 2)}</span>${best ? '<span class="tvb-book">' + best + '</span>' : ''}`;
   }
@@ -4174,8 +4177,11 @@ function renderTennisValueBets(rawMatches) {
       ? `<span class="${_tvbEdgeCls(Math.max(evModel.p1, evModel.p2))}">${_tvbFmtEv(Math.max(evModel.p1, evModel.p2))}</span>`
       : '<span class="tvb-edge tvb-edge-neg">—</span>';
 
+    const kellyInfo = bestEv?.kelly
+      ? ` | Kelly: ${(bestEv.kelly.half * 100).toFixed(1)}% (½) / ${(bestEv.kelly.full * 100).toFixed(1)}% (full)`
+      : '';
     const bestCell = bestEv
-      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}${kellyInfo}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '<span class="tvb-best-badge tvb-best-neg">—</span>';
 
     const matchId = _escTennis(m.id || '');

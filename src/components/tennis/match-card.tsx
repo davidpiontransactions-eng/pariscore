@@ -117,9 +117,8 @@ export function MatchCard({
   const sparklineA = useEloSparkline(match.id, "a", 30);
   const sparklineB = useEloSparkline(match.id, "b", 30);
   // Best odds (P3 — Bet Action Hub)
-  // NB: .reduce() needs initial value — [] throws "Reduce of empty array with no initial value"
-  const bestOddA = match.allOdds?.reduce((max, o) => (o.decimalA > max.decimalA ? o : max), null);
-  const bestOddB = match.allOdds?.reduce((max, o) => (o.decimalB > max.decimalB ? o : max), null);
+  const bestOddA = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalA > max.decimalA ? o : max)) : null;
+  const bestOddB = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalB > max.decimalB ? o : max)) : null;
   const { playerA, playerB, stats, model, modelUpdatedAt } = match;
 
   // Stats enrichies (Elo Surface, SPS, rangs) depuis pariscore.db. Un seul
@@ -425,7 +424,7 @@ export function MatchCard({
 
         {/* Cotes bookmaker (si dispo) */}
         {match.odds && (
-          <div className="mt-4 flex items-center justify-center gap-3 text-[11px] text-muted-foreground">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
             <span className="font-semibold uppercase tracking-wider">
               {match.odds.bookmaker}
             </span>
@@ -443,6 +442,18 @@ export function MatchCard({
                 {match.odds.decimalB.toFixed(2)}
               </span>
             </span>
+            {match.allOdds && match.allOdds.length > 1 && onOpenDetail && (
+              <>
+                <span className="text-border" aria-hidden>·</span>
+                <button
+                  type="button"
+                  onClick={onOpenDetail}
+                  className="font-semibold text-emerald-600 transition-colors hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+                >
+                  +{match.allOdds.length - 1} {t("otherBookmakers")}
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

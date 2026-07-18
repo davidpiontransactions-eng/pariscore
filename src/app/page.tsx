@@ -324,10 +324,10 @@ export default function Home() {
                 {t("tabName")}
               </span>
             </div>
-            {(data?.source === "odds-api" || data?.source === "bsd") && (
+            {data?.source && data.source !== "mock" && (
               <Badge variant="outline" className="ml-1 gap-1 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {data?.source === "bsd" ? "BSD Live" : t("liveBadge")}
+                {t("liveBadge")}
               </Badge>
             )}
             {data?.source === "mock" && (
@@ -608,7 +608,7 @@ export default function Home() {
 
 function formatRelativeShort(
   iso: string,
-  t: (key: string, params?: Record<string, unknown>) => string,
+  t: (key: string, params?: Record<string, string | number | Date>) => string,
 ): string {
   const d = new Date(iso);
   const diff = Math.round((Date.now() - d.getTime()) / 1000);

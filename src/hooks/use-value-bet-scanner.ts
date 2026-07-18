@@ -33,7 +33,8 @@ function readAlerted(): Set<string> {
   if (typeof window === "undefined") return new Set();
   try {
     const raw = localStorage.getItem(ALERTED_KEY);
-    const set = raw ? new Set(JSON.parse(raw)) : new Set<string>();
+    const items: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+    const set = new Set(items);
     alertedRefSet.clear();
     for (const id of set) alertedRefSet.add(id);
     return set;

@@ -131,7 +131,8 @@
     "margin": "Margin",
     "best": "best",
     "tableHint": "Click a column to sort. “best” odds are highlighted in green. The margin corresponds to the bookmaker's commission (vig).",
-    "noOdds": "Multi-bookmaker odds are not available for this match."
+    "noOdds": "Multi-bookmaker odds are not available for this match.",
+    "otherBookmakers": "other bookmakers"
   },
   "time": {
     "inMinutes": "in {n} min",

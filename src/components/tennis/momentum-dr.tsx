@@ -27,9 +27,6 @@ interface MomentumDRProps {
   player1Color?: string;
   player2Color?: string;
   className?: string;
-  momentumSeries?: {
-    games: { n: number; w: number; brk: boolean; v: number; run: number; set: number }[];
-  } | null;
 }
 
 function qualLabel(absDr: number, p1Dom: boolean): string {
@@ -64,7 +61,6 @@ export function MomentumDR({
   player1Color = "#22c55e",
   player2Color = "#3b82f6",
   className,
-  momentumSeries,
 }: MomentumDRProps) {
   const {
     momentumA,
@@ -89,8 +85,8 @@ export function MomentumDR({
   const isNeut = !p1Dom && !p2Dom;
   const absDr = Math.abs(dr);
   const label = useMemo(() => qualLabel(absDr, p1Dom), [absDr, p1Dom]);
-  const p1Short = player1Name.split(" ").pop() || player1Name;
-  const p2Short = player2Name.split(" ").pop() || player2Name;
+  const p1Short = (player1Name || "").split(" ").pop() || player1Name || "J1";
+  const p2Short = (player2Name || "").split(" ").pop() || player2Name || "J2";
 
   const labelColor = isNeut
     ? "text-muted-foreground"
@@ -102,14 +98,18 @@ export function MomentumDR({
   const barColorP2 = p2Dom ? player2Color : "hsl(var(--muted-foreground) / 0.25)";
 
   useEffect(() => {
+    let mounted = true;
     function resize() {
-      if (containerRef.current) {
+      if (mounted && containerRef.current) {
         setChartW(containerRef.current.clientWidth - 32);
       }
     }
     resize();
     window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
+    return () => {
+      mounted = false;
+      window.removeEventListener("resize", resize);
+    };
   }, []);
 
   const setDividers = useMemo(() => {
@@ -148,8 +148,11 @@ export function MomentumDR({
       const pt = pointHistory[clamped];
       if (!pt) return;
       const y = SPARK_H / 2 - Math.max(-1, Math.min(1, drHistory[clamped])) * (SPARK_H / 2 - SPARK_MARGIN);
+      const rawX = (clamped / (drHistory.length - 1)) * svgW;
+      const tooltipW = 140; // approximate tooltip width in px
+      const clampedX = Math.max(tooltipW / 2, Math.min(svgW - tooltipW / 2, rawX));
       setTooltip({
-        x: (clamped / (drHistory.length - 1)) * svgW,
+        x: clampedX,
         y,
         dr: drHistory[clamped],
         set: pt.set,
@@ -440,11 +443,8 @@ export function MomentumDR({
             </div>
 
             {/* Footer */}
-            <div className="mt-1 flex items-center justify-between text-[9px] text-muted-foreground/50">
-              <span>{pointsTracked} pts suivis</span>
-              {momentumSeries?.games && (
-                <span>+ {momentumSeries.games.length} jeux (serveur)</span>
-              )}
+            <div className="mt-1 text-[9px] text-muted-foreground/50">
+              {pointsTracked} pts suivis
             </div>
           </motion.div>
         )}

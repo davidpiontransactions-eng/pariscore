@@ -2189,9 +2189,9 @@ function _tnRenderBSDOddsSection(m) {
   const o = m._bsd_odds;
   const bsdId = m._bsd_match_id || (String(m.id || '').replace(/^bsd_t_/, '') || null);
   if (!o && (!bsdId || !/^\d+$/.test(String(bsdId)))) return '';
-  const safeId = _escTennis(String(m.id || ''));
+  const onclickId = _jsStr(String(m.id || ''));
   if (!o) {
-    return `<button onclick="event.stopPropagation();_tnLoadBSDOdds('${safeId}')" style="font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);color:var(--text2,#8d9399);cursor:pointer;font-family:'DM Mono',monospace;">📊 Charger cotes live</button>`;
+    return `<button onclick="event.stopPropagation();_tnLoadBSDOdds('${onclickId}')" style="font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);color:var(--text2,#8d9399);cursor:pointer;font-family:'DM Mono',monospace;">📊 Charger cotes live</button>`;
   }
   const mv = (dir) => dir === 'SHORTENING'
     ? '<span style="color:#00e676;font-weight:700;" title="Shortening — argent sharp">↓</span>'
@@ -2238,9 +2238,9 @@ function _tnRenderDrawerContent(m) {
   const elo = m.predictions?.elo;
   const odds = m.odds;
   const bestEv = m.best_ev_model;
-  const matchId = _escTennis(String(m.id || ''));
+  const onclickId = _jsStr(String(m.id || ''));
   const aiBtn = matchId
-    ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
+    ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${onclickId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
     : '';
   const p1Name = m.player1?.name || '—';
   const p2Name = m.player2?.name || '—';
@@ -2335,11 +2335,12 @@ function renderTennisLive(matches) {
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';
     const safeId = _escTennis(String(m.id ?? ''));
+    const onclickId = _jsStr(String(m.id ?? '')); // XSS-safe dans onclick='...'
     const rowTitle = m._src === 'livescore'
       ? 'Voir détail LiveScore (sets et jeux par set)'
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
     const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
-    return `<div class="tn-live-row tennis-row-clickable${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
+    return `<div class="tn-live-row tennis-row-clickable${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${onclickId}')" title="${rowTitle}">
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
@@ -2353,7 +2354,7 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell ${_tennisStatusClass(m)}" role="cell" style="justify-content:center;flex-direction:column;gap:3px;">
 ${_escTennis(m.status)}
 <div style="display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:2px;">
-${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${safeId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
+${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${onclickId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
 </div>
 </span>
 </div>
@@ -2894,7 +2895,7 @@ function _tvbGamesOUStack(ouc, matchId) {
     if (!s || !s.best) continue;
     const cls = s.best.tier === 'strong' ? 'tgou-strong' : s.best.tier === 'mid' ? 'tgou-mid' : 'tgou-low';
     const lbl = 'S' + k.slice(-1);
-    rows.push(`<button type="button" class="tgou-srow ${cls}" onclick="event.stopPropagation();openTennisGamesPopup('${_escTennis(String(matchId || ''))}','${k}')" title="Détail Over/Under jeux — ${lbl}">`
+    rows.push(`<button type="button" class="tgou-srow ${cls}" onclick="event.stopPropagation();openTennisGamesPopup('${_jsStr(String(matchId || ''))}','${k}')" title="Détail Over/Under jeux — ${lbl}">`
       + `<span class="tgou-stag">${lbl}</span>`
       + `<span class="tgou-sbest">${s.best.label} ${s.best.prob}%</span></button>`);
   }
@@ -3120,8 +3121,11 @@ function _tvbPlayerAlerts(sm, side) {
 // Marché replié : cote J1·J2 + best EV+ ; sinon état « indispo » (quota Odds).
 function _tvbMarketCell(odds, bestEv) {
   if (odds && odds.p1 && odds.p2 && odds.p1.odds != null && odds.p2.odds != null) {
+    const tvbKelly = bestEv?.kelly
+      ? ` | Kelly: ${(bestEv.kelly.half * 100).toFixed(1)}% (½) / ${(bestEv.kelly.full * 100).toFixed(1)}% (full)`
+      : '';
     const best = bestEv
-      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle${tvbKelly}">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '';
     return `<span class="tvb-odds">${safeFixed(odds.p1.odds, 2)} · ${safeFixed(odds.p2.odds, 2)}</span>${best ? '<span class="tvb-book">' + best + '</span>' : ''}`;
   }
@@ -4230,18 +4234,22 @@ function renderTennisValueBets(rawMatches) {
       ? `<span class="${_tvbEdgeCls(Math.max(evModel.p1, evModel.p2))}">${_tvbFmtEv(Math.max(evModel.p1, evModel.p2))}</span>`
       : '<span class="tvb-edge tvb-edge-neg">—</span>';
 
+    const kellyInfo = bestEv?.kelly
+      ? ` | Kelly: ${(bestEv.kelly.half * 100).toFixed(1)}% (½) / ${(bestEv.kelly.full * 100).toFixed(1)}% (full)`
+      : '';
     const bestCell = bestEv
-      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}${kellyInfo}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '<span class="tvb-best-badge tvb-best-neg">—</span>';
 
     const matchId = _escTennis(m.id || '');
+    const onclickMatchId = _jsStr(m.id || '');
     // Ligne appariée à un évènement LiveScore live (m._live, id "ls:<eid>") →
     // ouvrir le détail LiveScore (résolvable) plutôt que le détail BSD avec un
     // id scheduled/ESPN non résolvable (sinon 404 "flux BSD indisponible").
-    const _tnDetailId = (m._live && m._live.id) ? _escTennis(String(m._live.id)) : matchId;
+    const _tnDetailId = (m._live && m._live.id) ? _jsStr(String(m._live.id)) : matchId;
     const onclick = _tnDetailId ? `onclick="openTennisDetail('${_tnDetailId}')"` : '';
     const aiBtn = matchId
-      ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
+      ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${onclickMatchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
       : '<span style="color:var(--text3,#5a6068);">—</span>';
 
     const sm = m.set_model;
@@ -4596,6 +4604,7 @@ function _tnTop10Card(m, rank) {
     + (d.movement != null ? `\nMouvement: ${d.movement}` : '');
 
   const safeId = _tnEsc(String(m.matchId || m.fixtureId || m.id || m.match_id || ''));
+  const onclickId = _jsStr(String(m.matchId || m.fixtureId || m.id || m.match_id || ''));
 
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   // [FIX 2026-06-20] Fallback ui-avatars quand player_id manquant → cascade fixBrokenPlayerPhoto
@@ -4711,7 +4720,7 @@ function _tnTop10Card(m, rank) {
 
     metricsHtml = '<div class="ps-metrics-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
       // SERVICE — Insight
-      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Service" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')}">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Service" onclick="event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'srv\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'srv\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-service)">🟦 SERVICE</span><span class="ps-metric-xxl-badge service">Noyau</span></div>'
         + '<div class="insight-metric-body">'
           + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestServer)+'</span> meilleure serveuse <span class="percent-neon">'+bestSrvPct+'%</span></p>'
@@ -4720,7 +4729,7 @@ function _tnTop10Card(m, rank) {
         + '</div>'
       + '</div>'
       // RETOUR — Insight
-      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Retour" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')}">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Retour" onclick="event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'ret\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'ret\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-return)">🟩 RETOUR</span><span class="ps-metric-xxl-badge return">Noyau</span></div>'
         + '<div class="insight-metric-body">'
           + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestReturner)+'</span> meilleure receveuse <span class="percent-neon">'+bestRetPct+'%</span></p>'
@@ -4729,7 +4738,7 @@ function _tnTop10Card(m, rank) {
         + '</div>'
       + '</div>'
       // H2H SURFACE — inchangé
-      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique H2H Surface" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')}">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique H2H Surface" onclick="event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'h2h\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'h2h\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-global)">⬜ H2H SURFACE</span><span class="ps-metric-xxl-badge global">Noyau</span></div>'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
           + '<span class="ps-metric-xxl-value">'+h2hStr+'</span>'
@@ -4752,7 +4761,7 @@ function _tnTop10Card(m, rank) {
   // crash visuel complet (cartes illisibles, données écrasées).
   // Maintenant : flex column sur .tn-t10-card, avec .tn-t10-card-body en grid 2 col
   // (players | odds) pour isoler le layout des cotes à droite.
-  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" tabindex="0" role="button" aria-label="Match ${_tnEsc(m.player1||'J1')} vs ${_tnEsc(m.player2||'J2')}, score ${m.score_top10!=null?m.score_top10.toFixed(1):'—'}/100, ${reasonLabel}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')}">
+  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" tabindex="0" role="button" aria-label="Match ${_tnEsc(m.player1||'J1')} vs ${_tnEsc(m.player2||'J2')}, score ${m.score_top10!=null?m.score_top10.toFixed(1):'—'}/100, ${reasonLabel}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${onclickId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${onclickId}')}">
   <div class="tn-t10-card-header">
     <div class="tn-t10-card-top">
       <span class="tn-t10-rank">#${rank}</span>
@@ -21982,7 +21991,7 @@ async function loadHeroAccuracy() {
 //  ESCAPE HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 // Helper: escape string for JS string literal inside HTML onclick attribute
-function _jsStr(s) { return String(s).replace(/'/g, "\\'"); }
+function _jsStr(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  AFFILIATION GA — helper buildAffiliateUrl (1st-party redirect /r/ anti-AdBlock)
