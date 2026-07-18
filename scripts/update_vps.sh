@@ -23,11 +23,11 @@ git reset --hard origin/main
 echo "[3/7] Pull..."
 git pull --rebase origin main
 
-echo "[4/7] npm install (omit dev)..."
-npm install --omit=dev --silent
-
-echo "[5/7] npm rebuild native modules (node version guard)..."
+echo "[4/7] npm rebuild native modules (node version guard)..."
 npm rebuild better-sqlite3
+
+echo "[5/7] npm install (omit dev)..."
+npm install --omit=dev --silent
 
 echo "[6/6] PM2 restart..."
 pm2 restart "$PM2_NAME" --update-env
