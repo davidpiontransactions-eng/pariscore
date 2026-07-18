@@ -26,6 +26,7 @@ import { StatChip } from "./stat-chip";
 import { BacktestBadge } from "./backtest-badge";
 import { PlayerStatline } from "./player-statline";
 import { LiveStatsPanel } from "./live-stats-panel";
+import { MomentumDR } from "./momentum-dr";
 
 
 import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
@@ -395,6 +396,19 @@ export function MatchCard({
               liveState.server === "A" ? playerA.name : playerB.name
             }
           />
+        )}
+
+        {/* Momentum DR — real-time EWMA-based dominance ratio */}
+        {isLive && liveState && (
+          <div className="mt-4">
+            <MomentumDR
+              liveState={liveState}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+            />
+          </div>
         )}
 
         {/* Live stats panel */}
