@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, lazy, Suspense } from "react";
+import { useMemo, useState, lazy, Suspense, Component, type ReactNode } from "react";
 import { Trophy, SlidersHorizontal, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, Code, FlaskConical, Scale } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
@@ -90,6 +90,31 @@ function buildSportsEventJsonLd(match: TennisMatch) {
     },
     url: `${SITE_URL}/`,
   };
+}
+
+// Error boundary to capture the intermittent client-side crash
+// and log the exact error message for diagnosis.
+class PageErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+  componentDidCatch(error: Error, info: { componentStack?: string }) {
+    console.error("[SetPoint CRASH]", error.message, error.stack);
+    if (typeof window !== "undefined") {
+      // Also expose it on window for remote inspection
+      (window as any).__SETPOINT_CRASH = { error: error.message, stack: error.stack, componentStack: info.componentStack };
+    }
+  }
+  render() {
+    if (this.state.error) {
+      return <div />; // Let the parent error.tsx handle the fallback UI
+    }
+    return this.props.children;
+  }
 }
 
 export default function Home() {
@@ -271,6 +296,7 @@ export default function Home() {
   };
 
   return (
+    <PageErrorBoundary>
     <div className="min-h-screen flex flex-col bg-background">
       {/* SportsEvent structured data (JSON-LD) — one per match.
           Uses the static MATCHES mock so the markup is present in the
@@ -576,6 +602,7 @@ export default function Home() {
         onOpenChange={setBetOpen}
       />
     </div>
+    </PageErrorBoundary>
   );
 }
 
