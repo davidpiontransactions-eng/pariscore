@@ -610,7 +610,7 @@ Le Gantt est mis à jour quand :
 | # | Alerte | Sévérité | Statut | Propriétaire |
 |---|---|---|---|---|
 | A1 | `pariscore-next` 100% CPU | ✅ Résolu | ✅ **RÉSOLU À LA RACINE** — cache `globalThis` (`ce26a61`). 70→1 fetch/5min | Ops |
-| **A9** | **🚨 ErrorBoundary affiché en prod (crash client)** | **🔴 Critique** | 🟡 **INVESTIGATION 2** : fix Tooltip (`a70b300`) a ÉCHOUÉ. HTML serveur valide, crash après hydration client. 2 agents relancés (QA Playwright + code-reviewer) pour stack trace exacte | Dev |
+| **A9** | **🚨 ErrorBoundary affiché en prod (crash client)** | **✅ Résolu** | ✅ **RÉSOLU + VALIDÉ PLAYWRIGHT** (`8f686bb`) — Root cause : double-wrap cache `ce26a61`. TypeError `matches is not iterable` dans `bookmaker-comparator-dialog.tsx`. Fix : 7 routes + 2 défenses client. Stack trace capturée par agent `e80b3493` | Dev |
 | A2 | Deception perçue `/setpoint/` + `tennis-live` simu | 🔴 Haute | 🟡 Plan en cours (`8f103161`) · synthetic cards ✅ (`616c502`) | Produit + Dev |
 | A3 | Bugs SPS bloquants (4) | 🔴 Haute | ✅ **RÉSOLU** — `af487e1` + `bacc68d` | Dev senior |
 | A4 | `pariscore` legacy (id 5) en doublon | 🟡 Moyenne | 📅 Backlog · ⚠️ Legacy à **93.8% CPU / 415 Mo** au dernier check (pire que pariscore-next !) | Dev senior |

@@ -4,47 +4,49 @@
 
 ## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + push fix elo-history
 
-### 🚨 BUG A9 — INVESTIGATION EN COURS (2ème itération 2026-07-20 00:10)
+### ✅ BUG A9 RÉSOLU (2026-07-20 00:15) — ErrorBoundary prod
 
-**Status** : ✗ Fix précédent (`a70b300` retrait Tooltip) **N'A PAS RÉSOLU** le bug.
-Le bug persiste en prod après deploy `e9ab28b`. **Théorie Tooltip fausse.**
+**Status** : ✅ **VALIDÉ PLAYWRIGHT** — bug résolu, prod fonctionnelle.
 
-**Nouveaux faits établis** (post-investigation manuelle) :
+**Root cause** (trouvée via stack trace Playwright par agent `e80b3493`) :
+- `TypeError: matches is not iterable` dans `bookmaker-comparator-dialog.tsx:73`
+- Route `/api/tennis/prematch` renvoyait en prod :
+  ```json
+  { "matches": { "data": [...], "source": "bsd", "at": 1784498157599 }, ... }
+  ```
+  au lieu de `{ "matches": [...] }` — `matches` était un **objet** au lieu d'un
+  **tableau**.
+- Le serveur ne loggait rien car pas d'exception — juste une shape JSON invalide
+  qui crashait au `for...of` côté navigateur.
 
-| Check | Résultat |
-|---|---|
-| HTML serveur | **200 OK, 83 Ko, contient SetPoint + nav complète + "Tennis · Prematch" hero** |
-| Visible body text | Nav 8 sports, hero tennis, "0 matchs aujourd'hui" |
-| `match-card` dans HTML | ABSENT — mais c'est normal (rendu client après fetch API) |
-| Tous les chunks JS | **19/19 × 200** (aucun asset manquant) |
-| Tous les CSS | **2/2 × 200** |
-| ErrorBoundary visible | **ABSENT du rendu serveur** (le "Une erreur" n'apparaît qu'en i18n dict) |
-| PM2 error.log | Vide |
-| `__SETPOINT_CRASH` | ABSENT du HTML |
+**Commit coupable** : `ce26a61` (cache globalThis, le mien).
+Le helper `createTtlCache()` wrappe déjà dans `{ data, at }`, mais les 7 routes
+migrées wrappaient **EN PLUS** manuellement dans `{ data, at }` → **double-wrap**.
+`cached.data` retournait donc l'objet interne au lieu du tableau.
 
-→ **Conclusion confirmée** : le HTML rendu par le serveur est **valide**.
-Le crash survient **après hydration côté client**, quand le JS s'exécute
-et remplace le contenu valide par l'ErrorBoundary.
+**Fix** (`8f686bb`) :
+1. **7 routes API** : retiré le wrap manuel `{ data, at }`, stockage direct du payload
+   (tennis/{prematch,live}, football/{matches,live}, cs2, cycling, f1)
+2. **2 composants client** : défense en profondeur via normalisation
+   `Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : []`
+   (bookmaker-comparator-dialog.tsx + tennis-tab-content.tsx)
 
-**Causes ÉLIMINÉES** (par investigation manuelle + fix précédent) :
-- ❌ Tooltip Radix (retiré dans `a70b300` — bug persiste)
-- ❌ Asset manquant / chunk 404 (19/19 OK)
-- ❌ Erreur serveur (0 log)
-- ❌ i18n keys manquantes (vérifié)
+**Validation Playwright post-deploy** :
+- 0 pageerror, 0 console.error
+- Match data présent : Ilya Ivashka service, sets 6-4 2-5, SPS 52 vs 59
+- Cartes synthetic actives : "Renta Tokuda · Elo 1628 · SPS 54 beta ·
+  Données live limitées" ← badge qui marche
+- ErrorBoundary NON visible ✅
+- Screenshot : `.context/screenshots/2026-07-19-evening/after-fix-8f686bb.png`
 
-**Causes encore possibles** :
-1. **TypeError runtime** quand un composant accède à une prop undefined
-   (ex: `match.playerA.rank` quand `match.playerA` est undefined)
-2. **Hydration mismatch** : texte/structure différent entre SSR et client
-3. **Erreur fetch async** au mount non gérée
-4. **Effet de bord** de l'un des commits `616c502`/`bacc68d`/`ce26a61`
+**Leçon apprise** : ne pas appliquer de fix sans stack trace exacte.
+La 1ère théorie (Tooltip Radix `a70b300`) était fausse et a fait perdre du temps.
+La 2ème itération (Playwright `e80b3493`) a capturé la stack trace réelle →
+identification précise en <10 min.
 
-**Investigation en cours** (2 agents) :
-- `e80b3493` — **QA Playwright** capture la stack trace navigateur exacte
-- `18e943d1` — **code-reviewer** audit forensique des commits suspects
+---
 
-**Sans stack trace, ne pas appliquer de nouveau fix** (risque de répéter
-l'erreur de théorie fausse). Attendre le rapport `e80b3493`.
+### 🟡 Décisions en attente (2 agents encore running)
 
 ---
 
