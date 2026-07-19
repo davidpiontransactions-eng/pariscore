@@ -1,5 +1,76 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Dev server",
+      "type": "shell",
+      "command": "bun run dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "🏗️ Build",
+      "type": "shell",
+      "command": "bun run build",
+      "group": "build",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "🧪 Test",
+      "type": "shell",
+      "command": "bun test",
+      "group": "test"
+    },
+    {
+      "label": "🔍 Lint",
+      "type": "shell",
+      "command": "bun run lint",
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "📝 TypeCheck",
+      "type": "shell",
+      "command": "bunx tsc --noEmit",
+      "group": "test",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "🗄️ DB: Push schema",
+      "type": "shell",
+      "command": "bun run db:push"
+    },
+    {
+      "label": "🗄️ DB: Generate client",
+      "type": "shell",
+      "command": "bun run db:generate"
+    },
+    {
+      "label": "🗄️ DB: Migrate dev",
+      "type": "shell",
+      "command": "bun run db:migrate"
+    },
+    {
+      "label": "📦 Prisma Studio",
+      "type": "shell",
+      "command": "bunx prisma studio"
+    },
+    {
+      "label": "🧹 Full check (lint + typecheck + test)",
+      "type": "shell",
+      "command": "bun run lint && bunx tsc --noEmit && bun test",
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish", "$tsc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
 }

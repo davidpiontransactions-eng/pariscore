@@ -8,6 +8,9 @@ import type { TennisMatch } from "@/lib/tennis-data";
  */
 export type FilterKey = "all" | "favorites" | "balanced" | "starred";
 
+/** Sort options for the prematch match list. */
+export type SortKey = "default" | "rank_asc" | "rank_desc" | "elo_asc" | "elo_desc";
+
 /** Internal accumulator attached to every match. */
 interface MatchWithEdge {
   match: TennisMatch;
@@ -37,10 +40,26 @@ const IS_BALANCED = (m: TennisMatch) => (m.probA ?? 50) < 60;
  *  - `valueBetCount` — matches where at least one bookmaker offers
  *    odds implying a probability 3+ points below the model's probA
  */
+/**
+ * Helper: best available rank for a match (lower = better).
+ * Uses player A's rank as the primary indicator.
+ */
+function matchRank(m: TennisMatch): number {
+  return m.playerA.rank ?? m.playerB.rank ?? 999;
+}
+
+/**
+ * Helper: average Elo of both players (higher = stronger match).
+ */
+function matchAvgElo(m: TennisMatch): number {
+  return ((m.playerA.elo ?? 1500) + (m.playerB.elo ?? 1500)) / 2;
+}
+
 export function useMatchFilter(
   matches: TennisMatch[],
   filter: FilterKey,
   favorites: Set<string>,
+  sortKey: SortKey = "default",
 ): { filtered: TennisMatch[]; valueBetCount: number } {
   return useMemo(() => {
     /* 1. Attach edge to every match ─────────────────── */
@@ -86,11 +105,25 @@ export function useMatchFilter(
       result = result.filter(({ match }) => favorites.has(match.id));
     }
 
-    /* 5. Sort — biggest edge first, then highest probA ─ */
+    /* 5. Sort ──────────────────────────────────────── */
     const filtered = result
-      .sort((a, b) => b.edge - a.edge || b.match.probA - a.match.probA)
+      .sort((a, b) => {
+        switch (sortKey) {
+          case "rank_asc":
+            return matchRank(a.match) - matchRank(b.match);
+          case "rank_desc":
+            return matchRank(b.match) - matchRank(a.match);
+          case "elo_asc":
+            return matchAvgElo(a.match) - matchAvgElo(b.match);
+          case "elo_desc":
+            return matchAvgElo(b.match) - matchAvgElo(a.match);
+          default:
+            // "default" — biggest edge first, then highest probA
+            return b.edge - a.edge || b.match.probA - a.match.probA;
+        }
+      })
       .map(({ match }) => match);
 
     return { filtered, valueBetCount };
-  }, [filter, matches, favorites]);
+  }, [filter, matches, favorites, sortKey]);
 }

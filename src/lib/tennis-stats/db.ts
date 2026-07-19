@@ -211,13 +211,18 @@ export function getPlayerStats(
   if (!normName) return null;
 
   // 1. Elo global + ranking ATP/WTA (join par player_name normalisé).
-  const overall = db
+  // FIX 2026-07-19 : certains joueurs ont 2 entrées dans tennis_players_elo
+  // (IDs différents selon la source). On prend la plus récente (updated_at DESC)
+  // et on retente avec la meilleure si aucune SPS n'est trouvée.
+  const allOveralls = db
     .prepare(
       `SELECT player_id, player_name, elo_rating, atp_rank, wta_rank, circuit
        FROM tennis_players_elo
-       WHERE LOWER(player_name) = ?`
+       WHERE LOWER(player_name) = ?
+       ORDER BY elo_rating DESC`
     )
-    .all(normName)[0] as OverallRow | undefined;
+    .all(normName) as OverallRow[];
+  const overall = allOveralls[0];
 
   // 2. Elo Surface (sur la surface du match).
   let eloSurface: number | null = null;
@@ -238,27 +243,34 @@ export function getPlayerStats(
   let spsRank: number | null = null;
   let spsConfidence: number | null = null;
   let spsMatches: number | null = null;
+  let spsPlayerId: string | null = null;
   if (dbSurface) {
     const spsRows = getSpsIndex(db, dbSurface);
-    // Pour la valeur + métadonnées, on lit la ligne la plus récente.
-    const spsMeta = db
-      .prepare(
-        `SELECT sps, confidence_full, matches_played
-         FROM player_surface_scores
-         WHERE surface = ? AND player_id = ?
-         ORDER BY computed_at DESC
-         LIMIT 1`
-      )
-      .all(dbSurface, overall?.player_id)[0] as SpsRow | undefined;
-    if (spsMeta) {
-      sps = spsMeta.sps;
-      spsConfidence = spsMeta.confidence_full;
-      spsMatches = spsMeta.matches_played;
+    // FIX 2026-07-19 : certains joueurs ont 2+ entrées dans tennis_players_elo
+    // avec des player_id différents (206173 vs 516 pour Sinner). On itère
+    // sur tous les PIDs jusqu'à trouver celui qui a un SPS en base.
+    const spsStmt = db.prepare(
+      `SELECT sps, confidence_full, matches_played
+       FROM player_surface_scores
+       WHERE surface = ? AND player_id = ?
+       ORDER BY computed_at DESC
+       LIMIT 1`
+    );
+    for (const candidate of allOveralls) {
+      const pid = candidate?.player_id;
+      if (!pid) continue;
+      const row = spsStmt.all(dbSurface, pid)[0] as SpsRow | undefined;
+      if (row && row.sps != null) {
+        sps = row.sps;
+        spsConfidence = row.confidence_full;
+        spsMatches = row.matches_played;
+        spsPlayerId = pid;
+        break;
+      }
     }
-    // Rang : position dans l'index trié DESC. On ne peut pas réutiliser
-    // matchIdx ci-dessus car l'index SPS est par player_id (numérique).
-    if (overall?.player_id && sps != null) {
-      const pid = Number(overall.player_id);
+    // Rang : position dans l'index trié DESC.
+    if (spsPlayerId && sps != null) {
+      const pid = Number(spsPlayerId);
       const idx = spsRows.findIndex((r) => r.player_id === pid);
       if (idx >= 0) spsRank = idx + 1;
     }

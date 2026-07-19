@@ -22,6 +22,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import type { Player } from "@/lib/tennis-data";
 import type { PlayerStats } from "@/lib/tennis-stats/types";
 import { Sparkline } from "./sparkline";
+import { fmtSPS } from "@/lib/tennis-stats/sps-utils";
 import { cn } from "@/lib/utils";
 
 const EM_DASH = "—";
@@ -115,7 +116,7 @@ export function PlayerStatline({
           <span className="text-border" aria-hidden>
             ·
           </span>
-          <span className="tabular-nums">SPS {fmt(sps)}</span>
+          <span className="tabular-nums">SPS {fmtSPS(sps)}</span>
         </>
       )}
       {/* Indicateur tooltip + sparkline */}
@@ -145,7 +146,7 @@ export function PlayerStatline({
               />
               <SurfaceMetric
                 label="SPS"
-                value={fmt(sps)}
+                value={fmtSPS(sps)}
                 rank={spsRank != null ? `#${spsRank}` : null}
               />
               {spsMatches != null && (

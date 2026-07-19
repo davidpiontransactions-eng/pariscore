@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, lazy, Suspense, Component, type ReactNode } from "react";
-import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal } from "lucide-react";
+import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
@@ -19,7 +19,7 @@ import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
-import { useMatchFilter, type FilterKey } from "@/hooks/use-match-filter";
+import { useMatchFilter, type FilterKey, type SortKey } from "@/hooks/use-match-filter";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
@@ -72,6 +72,7 @@ export function TennisTabContent() {
   const { track, getVariant, reloadFlags, setPersonProperties } = useAnalytics();
 
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [sortKey, setSortKey] = useState<SortKey>("default");
   const [detailMatch, setDetailMatch] = useState<TennisMatch | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [betMatch, setBetMatch] = useState<TennisMatch | null>(null);
@@ -159,7 +160,7 @@ export function TennisTabContent() {
 
   const matches: TennisMatch[] = data?.matches ?? [];
 
-  const { filtered, valueBetCount } = useMatchFilter(matches, filter, favorites);
+  const { filtered, valueBetCount } = useMatchFilter(matches, filter, favorites, sortKey);
 
   const handleFilter = (key: FilterKey) => {
     setFilter(key);
@@ -248,6 +249,36 @@ export function TennisTabContent() {
                 )}
               >
                 {f.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sort controls */}
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <ArrowUpDown className="h-3.5 w-3.5" />
+            <span className="font-medium">{tFilters("sortBy")}:</span>
+            {([
+              { key: "default" as SortKey, label: tFilters("sortDefault") },
+              { key: "rank_asc" as SortKey, label: tFilters("sortRankAsc") },
+              { key: "rank_desc" as SortKey, label: tFilters("sortRankDesc") },
+              { key: "elo_asc" as SortKey, label: tFilters("sortEloAsc") },
+              { key: "elo_desc" as SortKey, label: tFilters("sortEloDesc") },
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => {
+                  setSortKey(opt.key);
+                  track("sort_click", { sort: opt.key });
+                }}
+                className={cn(
+                  "rounded px-2 py-1 transition-colors",
+                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  sortKey === opt.key
+                    ? "bg-foreground/10 font-semibold text-foreground"
+                    : "hover:text-foreground"
+                )}
+              >
+                {opt.label}
               </button>
             ))}
           </div>

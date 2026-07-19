@@ -40,7 +40,13 @@
     "balanced": "Matchs serrés",
     "balancedHint": "Proba < 60%",
     "starred": "Mes favoris",
-    "starredHint": "Matchs étoilés"
+    "starredHint": "Matchs étoilés",
+    "sortBy": "Trier par",
+    "sortDefault": "Défaut",
+    "sortRankAsc": "Rang ↑",
+    "sortRankDesc": "Rang ↓",
+    "sortEloAsc": "Elo ↑",
+    "sortEloDesc": "Elo ↓"
   },
   "match": {
     "win": "WIN",
