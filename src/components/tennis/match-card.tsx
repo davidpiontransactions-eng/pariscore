@@ -1,26 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  ChevronDown,
-  Clock,
-  TrendingUp,
-  Trophy,
-  Activity,
-  Target,
-  Calendar,
-  Scale,
-  ExternalLink,
-  WifiOff,
-  BarChart3,
-  Star,
-  Mail,
-  Loader2,
-} from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProbabilityBar } from "./probability-bar";
 import { FormDots } from "./form-dots";
-import { BacktestBadge } from "./backtest-badge";
 import { PlayerStatline } from "./player-statline";
 import { StatsIndicatorsGrid } from "./stats-indicators-grid";
 import { PlayerBlock } from "./player-block";
@@ -28,9 +12,12 @@ import { QuickAddRing } from "./quick-add-ring";
 import { BestOddBadge } from "./best-odd-badge";
 import { LiveStatsPanel } from "./live-stats-panel";
 import { MomentumDR } from "./momentum-dr";
+import { MatchCardHeader } from "./match-card-header";
+import { MatchCardFooter } from "./match-card-footer";
+import { MatchCardDetail } from "./match-card-detail";
 
 
-import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
+import { type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
@@ -52,12 +39,7 @@ function normForLookup(s: string): string {
     .toLowerCase();
 }
 import { useAnalytics } from "@/components/analytics-provider";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -96,8 +78,6 @@ export function MatchCard({
   priority = false,
 }: Props) {
   const t = useTranslations("match");
-  const tTime = useTranslations("time");
-  const tEmail = useTranslations("email");
   const tSlip = useTranslations("betSlip");
   const { terminalMode } = useTerminalMode();
   const [open, setOpen] = useState(defaultOpen);
@@ -120,7 +100,7 @@ export function MatchCard({
   // Best odds (P3 — Bet Action Hub)
   const bestOddA = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalA > max.decimalA ? o : max)) : null;
   const bestOddB = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalB > max.decimalB ? o : max)) : null;
-  const { playerA, playerB, stats, model, modelUpdatedAt } = match;
+  const { playerA, playerB, stats, modelUpdatedAt } = match;
 
   // Stats enrichies (Elo Surface, SPS, rangs) depuis pariscore.db. Un seul
   // fetch SWR pour les 2 joueurs du match, indexé par nom normalisé. Retourne
@@ -265,64 +245,21 @@ export function MatchCard({
         "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background"
       )}
     >
-      {/* Header : tournoi + ronde + timer (+ LIVE badge when live) */}
-      <header className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-4 py-2 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Trophy className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{match.tournament}</span>
-          <span className="text-border">·</span>
-          <span className="shrink-0">{match.round}</span>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {isLive && (
-            <span
-              className="flex items-center gap-1 rounded-full bg-rose-600/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400"
-              aria-label={t("liveAria")}
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-600" />
-              </span>
-              {t("live")}
-            </span>
-          )}
-          <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            <span>
-              {isLive
-                ? t("set", { n: liveState!.currentSet })
-                : formatRelativeTime(match.scheduledAt, tTime)}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              toggle(match.id);
-              track("favorite_toggled", {
-                match_id: match.id,
-                player_a: playerA.name,
-                player_b: playerB.name,
-                added: !fav,
-              });
-            }}
-            aria-label={fav ? t("removeFavorite") : t("addFavorite")}
-            aria-pressed={fav}
-            className={cn(
-              "rounded-md p-1 transition-colors hover:bg-muted",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            )}
-          >
-            <Star
-              className={cn(
-                "h-3.5 w-3.5 transition-colors",
-                fav
-                  ? "fill-amber-400 text-amber-400"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            />
-          </button>
-        </div>
-      </header>
+      <MatchCardHeader
+        match={match}
+        isLive={isLive}
+        liveState={liveState}
+        isFav={fav}
+        onToggleFavorite={() => {
+          toggle(match.id);
+          track("favorite_toggled", {
+            match_id: match.id,
+            player_a: playerA.name,
+            player_b: playerB.name,
+            added: !fav,
+          });
+        }}
+      />
 
       {/* Corps : carte duelle A + VS + B */}
       <div className={cn("px-4 sm:px-6", terminalMode ? "py-4" : "py-6 sm:py-8")}>
@@ -537,153 +474,29 @@ export function MatchCard({
         </div>
       )}
 
-      {/* Footer : source modèle + CTA parier + CTA détail (+ offline indicator) */}
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-3 sm:px-6">
-        <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <Activity className="h-3.5 w-3.5" />
-            <span className="font-semibold">{t("modelLabel")}</span>
-            <span>{model}</span>
-          </span>
-          <BacktestBadge
-            surface={stats.surface}
-            eloGap={stats.eloGap}
-            className="ml-0.5"
-          />
-          <span className="text-border">·</span>
-          <span className="flex items-center gap-1.5">
-            <Clock className="h-3.5 w-3.5" />
-            <span>
-              {isLive && liveState
-                ? `${t("modelUpdated")} ${formatRelativeTime(liveState.lastUpdate, tTime)}`
-                : `${t("modelUpdated")} ${formatRelativeTime(modelUpdatedAt, tTime)}`}
-            </span>
-          </span>
-          {disconnected && (
-            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-              <span className="text-border">·</span>
-              <WifiOff className="h-3.5 w-3.5" />
-              <span className="font-semibold">{t("offline")}</span>
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleDetail}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold",
-              "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            )}
-            aria-expanded={open}
-            aria-controls={`match-${match.id}-details`}
-          >
-            {open ? t("detailHide") : t("detail")}
-            <ChevronDown
-              className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")}
-            />
-          </button>
-          {onOpenDetail && (
-            <button
-              type="button"
-              onClick={onOpenDetail}
-              className={cn(
-                "flex items-center gap-1.5 rounded-md border border-border/60 px-2.5 py-1.5 text-xs font-semibold",
-                "text-foreground transition-colors hover:bg-muted",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              )}
-            >
-              <BarChart3 className="h-3 w-3" />
-              <span className="hidden sm:inline">{t("analysis")}</span>
-              <span className="sm:hidden">{t("analysisShort")}</span>
-            </button>
-          )}
-          {match.odds && (
-            <TooltipProvider delayDuration={300}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={handleEmailTestAlert}
-                    disabled={emailSending}
-                    aria-label={tEmail("testAlert")}
-                    className={cn(
-                      "flex items-center justify-center rounded-md border border-border/60 p-1.5",
-                      "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      "disabled:cursor-not-allowed disabled:opacity-60"
-                    )}
-                  >
-                    {emailSending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Mail className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{tEmail("testAlert")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          <button
-            type="button"
-            onClick={handleBetCta}
-            className={cn(
-              "flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white",
-              "transition-colors hover:bg-emerald-700",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            )}
-          >
-            {t("bet")}
-            <ExternalLink className="h-3 w-3" />
-          </button>
-        </div>
-      </footer>
+      <MatchCardFooter
+        match={match}
+        statsA={statsA}
+        statsB={statsB}
+        isLive={isLive}
+        liveState={liveState}
+        disconnected={disconnected}
+        open={open}
+        emailSending={emailSending}
+        modelUpdatedAt={modelUpdatedAt}
+        onToggleDetail={handleToggleDetail}
+        onOpenDetail={onOpenDetail}
+        onEmailTestAlert={handleEmailTestAlert}
+        onBetCta={handleBetCta}
+      />
 
-      {/* Panneau détail — accordéon */}
       {open && (
-        <div
-          id={`match-${match.id}-details`}
-          className="border-t border-border/60 bg-muted/10 px-4 py-4 sm:px-6"
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <DetailItem
-              icon={<TrendingUp className="h-4 w-4" />}
-              label={t("decompLabel")}
-              value={t("decompValue", { model, eloA: playerA.elo, eloB: playerB.elo })}
-              hint={t("decompHint")}
-            />
-            <DetailItem
-              icon={<Target className="h-4 w-4" />}
-              label={t("icLabel")}
-              value={t("icValue", { lo: stats.ic[0], hi: stats.ic[1] })}
-              hint={t("icHint", { prob: probA, amp: stats.ic[1] - stats.ic[0] })}
-            />
-            <DetailItem
-              icon={<Scale className="h-4 w-4" />}
-              label={t("eloGapLabel")}
-              value={t("eloGapValue", { n: stats.eloGap })}
-              hint={t("eloGapHint", { surface: stats.surface, h2h: stats.h2h, player: playerA.shortName })}
-            />
-            <DetailItem
-              icon={<Calendar className="h-4 w-4" />}
-              label={t("formLabel")}
-              value={stats.form}
-              hint={t("formHint", {
-                pa: playerA.shortName,
-                fa: playerA.form.join("-"),
-                pb: playerB.shortName,
-                fb: playerB.form.join("-"),
-              })}
-            />
-          </div>
-
-          <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">
-            <span className="font-semibold">{t("warning")} :</span>{" "}
-            {t("warningText")}
-          </div>
-        </div>
+        <MatchCardDetail
+          match={match}
+          stats={stats}
+          playerA={playerA}
+          playerB={playerB}
+        />
       )}
     </article>
   );
@@ -751,29 +564,4 @@ function LiveScoreBar({
   );
 }
 
-function DetailItem({
-  icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-background/60 p-3">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em]">
-          {label}
-        </span>
-      </div>
-      <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
-        {value}
-      </span>
-      {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
-    </div>
-  );
-}
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, lazy, Suspense, Component, type ReactNode } from "react";
+import { useState, lazy, Suspense, Component, type ReactNode } from "react";
 import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
@@ -19,6 +19,7 @@ import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
+import { useMatchFilter, type FilterKey } from "@/hooks/use-match-filter";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
@@ -33,8 +34,6 @@ import {
 } from "@/lib/ab-test";
 import { BetDialog } from "@/components/bet-dialog";
 import { cn } from "@/lib/utils";
-
-type FilterKey = "all" | "favorites" | "balanced" | "starred";
 
 class TennisErrorBoundary extends Component<
   { children: ReactNode },
@@ -160,30 +159,7 @@ export function TennisTabContent() {
 
   const matches: TennisMatch[] = data?.matches ?? [];
 
-  const matchesWithEdge = useMemo(() => {
-    return matches.map((m) => {
-      let maxEdge = 0;
-      if (m.allOdds) {
-        for (const o of m.allOdds) {
-          const edge = m.probA - o.impliedProbA;
-          if (edge > maxEdge) maxEdge = edge;
-        }
-      }
-      return { match: m, edge: maxEdge };
-    });
-  }, [matches]);
-
-  const filtered = useMemo(() => {
-    let result = matchesWithEdge;
-    if (filter === "favorites") result = result.filter(({ match }) => match.probA >= 70);
-    else if (filter === "balanced") result = result.filter(({ match }) => match.probA < 60);
-    else if (filter === "starred") result = result.filter(({ match }) => favorites.has(match.id));
-    return result
-      .sort((a, b) => b.edge - a.edge || b.match.probA - a.match.probA)
-      .map(({ match }) => match);
-  }, [filter, matchesWithEdge, favorites]);
-
-  const valueBetCount = matchesWithEdge.filter(({ edge }) => edge >= 3).length;
+  const { filtered, valueBetCount } = useMatchFilter(matches, filter, favorites);
 
   const handleFilter = (key: FilterKey) => {
     setFilter(key);

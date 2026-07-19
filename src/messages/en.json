@@ -82,6 +82,8 @@
     "formHint": "{pa} : {fa} · {pb} : {fb}",
     "warning": "Warning",
     "warningText": "probabilities are estimates produced by a statistical model and do not constitute a guarantee of result. Please bet responsibly.",
+    "spsLabel": "SPS",
+    "spsRankLabel": "SPS Ranking",
     "backtest": {
       "label": "Model accuracy",
       "tooltip": "Model accuracy over {n} similar matches ({surface}, Elo gap {bucket})",
