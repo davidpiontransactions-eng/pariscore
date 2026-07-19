@@ -112,38 +112,25 @@ export function PlayerStatline({
       >
         Elo {eloIsFallback ? EM_DASH : fmt(eloDisplay)}
       </span>
-      {/* SPS (si dispo) — modèle expérimental, badge « beta » + tooltip */}
+      {/* SPS (si dispo) — modèle expérimental, badge « beta » statique.
+          Tooltip retiré temporairement (causait probable crash hydration
+          car rendu ~1000x par page via Radix PointerEvent listeners). */}
       {sps != null && (
         <>
           <span className="text-border" aria-hidden>
             ·
           </span>
-          <span className="inline-flex items-center gap-0.5 tabular-nums">
+          <span
+            className="inline-flex items-center gap-0.5 tabular-nums"
+            title={tTennis("spsExperimentalTooltip")}
+          >
             SPS {fmtSPS(sps)}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center align-middle"
-                  aria-label={tTennis("spsExperimentalTooltip")}
-                >
-                  <Badge
-                    variant="outline"
-                    className="ml-0.5 h-3 px-1 text-[9px] font-medium leading-none text-muted-foreground"
-                  >
-                    {tTennis("spsExperimentalBadge")}
-                  </Badge>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="bottom"
-                className="max-w-[220px] border bg-popover text-popover-foreground shadow-md"
-              >
-                <p className="py-0.5 text-[11px]">
-                  {tTennis("spsExperimentalTooltip")}
-                </p>
-              </TooltipContent>
-            </Tooltip>
+            <Badge
+              variant="outline"
+              className="ml-0.5 h-3 px-1 text-[9px] font-medium leading-none text-muted-foreground"
+            >
+              {tTennis("spsExperimentalBadge")}
+            </Badge>
           </span>
         </>
       )}
