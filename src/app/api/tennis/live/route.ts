@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import type { LiveMatchItem } from "@/lib/bsd-fetcher";
 
 const CACHE_TTL_MS = 30_000;
 
-let cache: { data: unknown[]; at: number } | null = null;
+let cache: { data: LiveMatchItem[]; at: number } | null = null;
 
 export async function GET() {
   try {

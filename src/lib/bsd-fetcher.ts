@@ -191,6 +191,105 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
   };
 }
 
+// ─── Live matches (BSD /api/v2/matches/live/) ───────────────────────────────
+
+export type LiveMatchItem = {
+  id: string;
+  playerA: { name: string };
+  playerB: { name: string };
+  setsDetail: Array<{ p1: number; p2: number }>;
+  currentGame: { p1: number; p2: number };
+  currentPoint: { p1: number; p2: number };
+  currentSet: number; // 0-indexed (0 = set 1)
+  server: "A" | "B";
+  liveProbA: number;
+  liveProbB: number;
+  isLive: boolean;
+};
+
+/**
+ * Fetch live tennis matches directly from the BSD live endpoint.
+ * Returns normalized match objects with scores, sets, server, and live probabilities.
+ */
+export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
+  const rawData = await bsdFetch("/api/v2/matches/live/");
+  const items = Array.isArray(rawData) ? rawData : [];
+
+  return items.map((m: Record<string, any>): LiveMatchItem | null => {
+    if (!m || !m.player1 || !m.player2) return null;
+
+    const nameA = m.player1.name || m.player1.short_name || "?";
+    const nameB = m.player2.name || m.player2.short_name || "?";
+    const statusStr = String(m.status || "").toLowerCase();
+    const finishedRx = /finish|complete|ended|cancel|walkover|retired|abandon|w_?o|post/;
+    const isLive = (/progress|live|playing|in_play|inplay|set/.test(statusStr) && !finishedRx.test(statusStr))
+      || (m.current_set != null && !finishedRx.test(statusStr));
+
+    // Parse per-set game scores from sets_detail
+    const setsDetail: Array<{ p1: number; p2: number }> = Array.isArray(m.sets_detail)
+      ? m.sets_detail.map((s: any) => ({
+          p1: s.p1 ?? s.player1 ?? 0,
+          p2: s.p2 ?? s.player2 ?? 0,
+        }))
+      : [];
+
+    // Current game scores
+    const gameP1 = m.current_game_p1 ?? 0;
+    const gameP2 = m.current_game_p2 ?? 0;
+
+    // Parse current point string like "15-30" or "40-AV"
+    let pointP1 = 0;
+    let pointP2 = 0;
+    if (m.current_point) {
+      const parts = String(m.current_point).split(/[-–—]/);
+      const ptVal = (s: string): number => {
+        const v = s.trim().toUpperCase();
+        if (v === "0" || v === "LOVE") return 0;
+        if (v === "15") return 1;
+        if (v === "30") return 2;
+        if (v === "40" || v === "AV" || v === "AD" || v === "ADV") return 3;
+        return 0;
+      };
+      pointP1 = parts[0] ? ptVal(parts[0]) : 0;
+      pointP2 = parts[1] ? ptVal(parts[1]) : 0;
+    }
+
+    // Determine server
+    const server: "A" | "B" = m.is_serving_p1 === true ? "A" : m.is_serving_p1 === false ? "B" : "A";
+
+    // Live probabilities from odds when available
+    let liveProbA = 50;
+    let liveProbB = 50;
+    if (m.odds_player1 != null && m.odds_player2 != null && m.odds_player1 > 0 && m.odds_player2 > 0) {
+      const invA = 1 / m.odds_player1;
+      const invB = 1 / m.odds_player2;
+      const total = invA + invB;
+      if (total > 0) {
+        liveProbA = Math.round((invA / total) * 100);
+        liveProbB = Math.round((invB / total) * 100);
+      }
+    }
+
+    // current_set is 1-based from BSD → convert to 0-indexed
+    const rawCurrentSet = m.current_set != null ? parseInt(String(m.current_set), 10) : NaN;
+    const currentSet = !isNaN(rawCurrentSet) && rawCurrentSet > 0 ? rawCurrentSet - 1 : (setsDetail.length > 0 ? setsDetail.length - 1 : 0);
+
+    return {
+      id: `bsd-${m.id}`,
+      playerA: { name: nameA },
+      playerB: { name: nameB },
+      setsDetail,
+      currentGame: { p1: gameP1, p2: gameP2 },
+      currentPoint: { p1: pointP1, p2: pointP2 },
+      currentSet,
+      server,
+      liveProbA,
+      liveProbB,
+      isLive,
+    };
+  }).filter((m: LiveMatchItem | null): m is LiveMatchItem => m !== null);
+}
+
 function extractForm(history: { elo: number; date: string }[]): ("W" | "L")[] {
   if (history.length < 2) return ["W", "L", "W", "L", "W", "L"];
   // Infer form from Elo progression: if Elo went up = W, down = L

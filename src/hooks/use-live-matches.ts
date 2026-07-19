@@ -29,7 +29,19 @@ export type UseLiveMatchesResult = {
 };
 
 type TennisLiveResponse = {
-  matches: { id: string; playerA: { name: string }; playerB: { name: string } }[];
+  matches: Array<{
+    id: string;
+    playerA: { name: string };
+    playerB: { name: string };
+    setsDetail: Array<{ p1: number; p2: number }>;
+    currentGame: { p1: number; p2: number };
+    currentPoint: { p1: number; p2: number };
+    currentSet: number;
+    server: "A" | "B";
+    liveProbA: number;
+    liveProbB: number;
+    isLive: boolean;
+  }>;
   source: string;
   updatedAt: string;
 };
@@ -38,7 +50,8 @@ const POLL_INTERVAL_MS = 30_000;
 
 /**
  * Hook that polls the REST API for live tennis matches.
- * Replaced the old Socket.IO hook after the gateway/service was decommissioned.
+ * Live data comes from BSD /api/v2/matches/live/ proxied through /api/tennis/live.
+ * IDs are normalized as bsd-<rawId> to match prematch IDs from usePrematchMatches.
  */
 export function useLiveMatches(): UseLiveMatchesResult {
   const [liveStates, setLiveStates] = useState<Record<string, LiveMatchState>>({});
@@ -61,19 +74,26 @@ export function useLiveMatches(): UseLiveMatchesResult {
         setLatency(Date.now() - t0);
         setConnectionStatus(data.matches.length > 0 ? "connected" : "connected");
 
-        // Map BSD match data to LiveMatchState format (score info from BSD);
-        // falls back to showing match IDs with isLive=false if no detailed score.
+        // Map BSD live match data to LiveMatchState format.
+        // IDs are bsd-<rawId> which matches the prematch ID format from fetchBSDMatches()
+        // (see buildMatch() in bsd-fetcher.ts: id: `bsd-${b.id ?? index}`).
         const map: Record<string, LiveMatchState> = {};
         for (const m of data.matches) {
+          if (!m.isLive) continue;
+
+          // Build per-set game-score arrays from setsDetail
+          const setsA: number[] = m.setsDetail.map((s) => s.p1);
+          const setsB: number[] = m.setsDetail.map((s) => s.p2);
+
           map[m.id] = {
             matchId: m.id,
             isLive: true,
-            currentSet: 0,
-            scoreA: { sets: [], games: 0, points: 0 },
-            scoreB: { sets: [], games: 0, points: 0 },
-            liveProbA: 50,
-            liveProbB: 50,
-            server: "A",
+            currentSet: m.currentSet,
+            scoreA: { sets: setsA, games: m.currentGame.p1, points: m.currentPoint.p1 },
+            scoreB: { sets: setsB, games: m.currentGame.p2, points: m.currentPoint.p2 },
+            liveProbA: m.liveProbA,
+            liveProbB: m.liveProbB,
+            server: m.server,
             lastUpdate: data.updatedAt,
           };
         }
