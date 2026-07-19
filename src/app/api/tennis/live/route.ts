@@ -5,8 +5,9 @@ import type { LiveMatchItem } from "@/lib/bsd-fetcher";
 
 const CACHE_TTL_MS = 30_000;
 
-type CachedMatches = { data: LiveMatchItem[]; at: number };
-const cache = createTtlCache<CachedMatches>("__tennisLiveCache");
+// createTtlCache already wraps in { data, at }, so we store only the payload.
+type CachedPayload = { matches: LiveMatchItem[] };
+const cache = createTtlCache<CachedPayload>("__tennisLiveCache");
 
 export async function GET() {
   try {
@@ -15,11 +16,11 @@ export async function GET() {
     const bsdEnabled = process.env.BSD_TENNIS_ENABLED === "true";
 
     const cached = cache.getEntry();
-    if (isFresh(cached, CACHE_TTL_MS)) {
+    if (cached && isFresh(cached, CACHE_TTL_MS)) {
       return NextResponse.json({
-        matches: cached!.data,
+        matches: cached.data.matches,
         source: "cache",
-        updatedAt: new Date(cached!.at).toISOString(),
+        updatedAt: new Date(cached.at).toISOString(),
       });
     }
 
@@ -27,7 +28,7 @@ export async function GET() {
       try {
         const { fetchBSDLiveMatches } = await import("@/lib/bsd-fetcher");
         const matches = await fetchBSDLiveMatches();
-        cache.set({ data: matches, at: now });
+        cache.set({ matches });
         return NextResponse.json({
           matches,
           source: "bsd",

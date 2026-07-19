@@ -65,7 +65,14 @@ export function BookmakerComparatorDialog() {
     };
   }, []);
 
-  const matches = data?.matches ?? [];
+  // Defensive normalization — protects against API shape drift (bug A9:
+  // matches could be returned as { data, source, at } object instead of array).
+  const rawMatches = data?.matches;
+  const matches = Array.isArray(rawMatches)
+    ? rawMatches
+    : Array.isArray((rawMatches as any)?.data)
+      ? (rawMatches as any).data
+      : [];
 
   // Aggregate by bookmaker
   const bookmakerAgg = useMemo<BookmakerAgg[]>(() => {

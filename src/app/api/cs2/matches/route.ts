@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 const CACHE_TTL = 5 * 60_000;
-const cache = createTtlCache<{ data: unknown; at: number }>("__cs2Cache");
+// createTtlCache already wraps in { data, at }, so we store only the payload.
+const cache = createTtlCache<unknown>("__cs2Cache");
 
 export async function GET() {
   const now = Date.now();
   const cached = cache.getEntry();
-  if (isFresh(cached, CACHE_TTL)) {
-    return NextResponse.json(cached!.data);
+  if (cached && isFresh(cached, CACHE_TTL)) {
+    return NextResponse.json(cached.data);
   }
 
   try {
@@ -19,7 +20,7 @@ export async function GET() {
     const matches = await cs2Service.getCs2Matches(key);
 
     const payload = { matches, source: "bsd", cache: cs2Service._getCacheStatus?.() ?? "unknown" };
-    cache.set({ data: payload, at: now });
+    cache.set(payload);
     return NextResponse.json(payload);
   } catch (err) {
     return NextResponse.json(

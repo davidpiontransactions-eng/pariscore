@@ -169,7 +169,13 @@ export function TennisTabContent() {
   // Merge live-only matches as synthetic cards: some live matches (e.g. ITF futures)
   // never appear in the prematch scheduled endpoint because BSD separates by status.
   // We build minimal TennisMatch objects so the MatchCard can render them with live overlays.
-  const matches: TennisMatch[] = data?.matches ?? [];
+  // Defensive normalization — protects against API shape drift (bug A9).
+  const rawMatches = data?.matches;
+  const matches: TennisMatch[] = Array.isArray(rawMatches)
+    ? rawMatches
+    : Array.isArray((rawMatches as any)?.data)
+      ? (rawMatches as any).data
+      : [];
 
   const matchesWithLive: TennisMatch[] = useMemo(() => {
     if (!liveMatchList.length) return matches;
