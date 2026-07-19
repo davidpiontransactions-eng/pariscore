@@ -105,10 +105,10 @@ exports/*.xlsx
 .stitch/
 5.5/
 
-# Generated screenshots / temp files
+# Generated screenshots / temp files (root-level only — scripts/qa-*.js are legit)
 hybrid-*.png
 _tmp_*.js
-qa-*.js
+/qa-*.js
 verify-*.bat
 verify-*.ps1
 nul

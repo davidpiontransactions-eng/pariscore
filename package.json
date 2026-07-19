@@ -11,6 +11,7 @@
     "start": "NODE_ENV=production node scripts/run-bun.js .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "test": "node scripts/run-bun.js test",
+    "qa:node": "node scripts/qa-node-check.js",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
