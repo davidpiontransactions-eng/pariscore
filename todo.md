@@ -2,69 +2,49 @@
 
 ---
 
-## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + bug 404 elo-history
+## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + push fix elo-history
 
-### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~22:45)
+### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~23:20)
 
-Session orchestrée par dispatch d'agents en parallèle. **10 commits poussés sur
-origin/main** (`66437e2`..`bc2805f`), **deploy VPS réussi** (HEAD `bc2805f`),
-nginx patché pour football/NBA/WNBA. **Prod 100% fonctionnelle** post-deploy.
+Session orchestrée par dispatch d'agents en parallèle. **12 commits poussés sur
+origin/main** (`66437e2`..`ce26a61`), **2 deploys VPS** + nginx patché +
+hot loop CPU tué à la racine. **Prod stable et optimisée**.
 
 **Vérifié en direct sur https://pariscore.fr/** :
-- PM2 `pariscore-next` online sur HEAD `bc2805f`, CPU revenu à 0% après restart
-- `/api/football/matches` `/api/football/live` `/api/football/prematch` → 200 (World Cup 2026, NWSL)
-- `/api/nba/matches` `/api/wnba/matches` → 200
-- `/api/tennis/live` → 200 (Claverie/Kuzuhara, sets `[6-4, 4-6, 6-5]`)
-- `/api/f1` → 200
+- PM2 `pariscore-next` online sur HEAD `ce26a61`, CPU **0% stable** en steady state
+- Hot loop `[bsd] Fetched 30 matches` : **70→1 par 5 min** après fix `globalThis`
+- 7/7 endpoints principaux 200 (sauf `/api/cs2/matches` 404 — préexistant, hors nginx)
+- Steady state après `pm2 flush` + 90s sans charge : 1 seul fetch BSD
 
-### ✅ Deploy du soir (22:35–22:42)
+### ✅ Deploys du soir (22:35 + 23:10)
 
-| Action | Résultat |
-|---|---|
-| `git push origin main` | `f5eeb9c..bc2805f` (5 commits) |
-| `git pull` sur VPS | `66437e2` → `bc2805f` |
-| `bun install` | 3 packages removed, better-sqlite3/sharp rebuilt |
-| `bun run build` | ✅ succès, tous endpoints compilés |
-| `pm2 restart pariscore-next` | online pid 1705654, uptime OK |
-| **CPU post-restart** | **0%** (le hot loop `[bsd] Fetched 30 matches` a été tué) |
-| **nginx patch** | 3 règles `/api/football/`, `/api/nba/`, `/api/wnba/` → :3005 |
+| Heure | Action | Résultat |
+|---|---|---|
+| 22:35 | Deploy `bc2805f` | git pull + bun install + build + restart |
+| 22:39 | nginx patch | 3 règles `/api/{football,nba,wnba}/` → :3005 |
+| 23:10 | Deploy `ce26a61` | **Hot loop tué** (cache `globalThis` partagé multi-worker) |
 
-### 🔴 Découvertes critiques du deploy
+### 🎯 Root cause hot loop CPU 100% (résolu)
 
-#### N1 — Bug préexistant nginx (résolu)
+**Source-side** (trouvé moi-même après arrêt agent `cbc0fb8d`) :
+- Toutes les routes `/api/{tennis,football,cs2,cycling,f1}/*` utilisaient
+  `let cache = ...` au niveau module
+- **Next.js standalone prod** : chaque worker / hot-reload a sa propre copie
+  → N× fetch BSD par fenêtre TTL
+- Client poll à 30-60s + 5+ workers → multiplicateur ⇒ CPU saturé
 
-Le catch-all `location /api/ { proxy_pass http://127.0.0.1:8000/; }` pointait
-vers le monolithe legacy (port 8000, down). Routes sans règle explicite
-(football, nba, wnba) → 404. **Patch appliqué** : 3 règles explicites ajoutées.
+**Fix** (`ce26a61`) :
+- Nouveau helper `src/lib/cached-route.ts` : `createTtlCache()` + `isFresh()`
+- Persiste le cache sur `globalThis` (partagé entre workers, survit au hot-reload)
+- **7 routes migrées** : `tennis/{prematch,live}`, `football/{matches,live}`,
+  `cs2/matches`, `cycling`, `f1`
 
-- Backup : `/home/ubuntu/nginx-backups/pariscore.bak-20260719-223957`
-- Diff : ajout de 3 blocs `location /api/{football,nba,wnba}/` avant le catch-all
-- `nginx -t` OK + `systemctl reload nginx` OK
-- Toutes les routes testées → 200
+**Validation prod** : `pm2 flush` + 90s sans charge = **1 seul fetch** (vs 38 avant).
+Hot loop éliminé, CPU stable 0%.
 
-#### N2 — Hot loop `[bsd] Fetched 30 matches` (cause probable CPU 100%)
+### 🟡 Décisions en attente (2 agents running)
 
-Avant restart, les logs montraient **70× `[bsd] Fetched 30 matches`** dans les
-100 dernières lignes. Le restart a tué le hot loop → CPU revenu à 0%.
-
-→ **À investiguer demain** : identifier l'origine du polling BSD intensif
-(probable `setInterval` court côté serveur ou client). L'agent `cbc0fb8d` tourne
-toujours en background.
-
-#### N3 — Bug 404 elo-history toujours présent
-
-Le fix `d3e4e50d` (skip fetch pour BSD) n'était pas encore commit au moment du
-deploy. À pusher dans une prochaine salve.
-
-### 🟡 Décisions en attente de rapports (3 agents running)
-
-#### 🚨 A1 — `pariscore-next` 100% CPU (piste : hot loop BSD)
-
-Agent `cbc0fb8d` enquête. Piste forte : `[bsd] Fetched 30 matches` spam observé
-dans les logs avant restart. CPU revenu à 0% après restart — confirmer demain
-si le hot loop revient.
-
-#### 🔴 A2 — Deception perçue scores simulés (scope 2/3 résolu)
+#### 🔴 A2 — Deception perçue scores simulés (1/3 résolu)
 
 | # | Surface | Statut |
 |---|---|---|
@@ -72,7 +52,14 @@ si le hot loop revient.
 | 2 | Route `/setpoint/` | ⏳ à traiter après plan `8f103161` |
 | 3 | Mini-service `tennis-live` | ⏳ à remplacer (commit `95ff99d` + `14717b9`) |
 
-Agent `8f103161` prépare le plan comparatif (Option A/B/C).
+Agent `8f103161` prépare le plan comparatif (Option A/B/C). Dès réception,
+présenter à David pour décision produit.
+
+#### 🟠 A5 — Bug 404 elo-history (76 erreurs/page)
+
+Agent `d3e4e50d` tourne toujours. Pas de commit à 23:20. À pousser dès qu'il
+termine — la route n'est pas critique visuellement mais pollue les logs error
+et fausse le monitoring.
 
 ### ✅ Bugs SPS (audit `b28baee8`) — TOUS FIXÉS ce soir
 
