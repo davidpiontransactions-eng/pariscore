@@ -8,6 +8,12 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sport-tennis: var(--sport-tennis);
+  --color-sport-football: var(--sport-football);
+  --color-sport-mma: var(--sport-mma);
+  --color-sport-cycling: var(--sport-cycling);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-card: var(--surface-card);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -47,6 +53,12 @@
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+  --sport-tennis: #10B981;
+  --sport-football: #0EA5E9;
+  --sport-mma: #EF4444;
+  --sport-cycling: #F59E0B;
+  --surface-dark: #0F0F1A;
+  --surface-card: #1A1A2E;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -81,6 +93,12 @@
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+  --sport-tennis: #10B981;
+  --sport-football: #0EA5E9;
+  --sport-mma: #EF4444;
+  --sport-cycling: #F59E0B;
+  --surface-dark: #0F0F1A;
+  --surface-card: #1A1A2E;
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);

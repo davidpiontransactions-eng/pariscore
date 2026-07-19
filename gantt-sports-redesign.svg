@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="808" height="598" viewBox="0 0 808 598" role="img" aria-labelledby="title desc">
+<title>Sports Tabs Redesign — Implementation</title>
+<desc>Sports Tabs Redesign — Implementation rendered across Phase 1: API Routes to Phase 4: Finalize</desc>
+<style>
+text { font-family: Menlo, Consolas, monospace; fill: #122033; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 12px; fill: #526072; }
+.axis-title { font-size: 11px; font-weight: 700; fill: #526072; letter-spacing: 0.06em; }
+.track-label { font-size: 13px; font-weight: 700; }
+.axis-text { font-size: 12px; font-weight: 700; fill: #314255; }
+.bar-label { font-size: 12px; font-weight: 700; }
+.bar-label-outside { font-size: 12px; font-weight: 700; fill: #122033; }
+</style>
+<rect width="808" height="598" fill="#f7f3ea" />
+<rect x="0" y="0" width="808" height="76" fill="#efe8d8" />
+<text x="24" y="34" class="title">Sports Tabs Redesign — Implementation</text>
+<text x="24" y="56" class="subtitle">Phase 1: API Routes to Phase 4: Finalize</text>
+<text x="240" y="80" class="axis-title">PHASES</text>
+<rect x="240" y="92" width="528" height="54" fill="#e9dfca" />
+<rect x="240" y="92" width="132" height="54" fill="#efe4ce" />
+<line x1="240" y1="92" x2="240" y2="146" stroke="#cabca1" stroke-width="1" />
+<text x="306.0" y="124.0" text-anchor="middle" class="axis-text">Phase 1: API Routes</text>
+<rect x="372" y="92" width="132" height="54" fill="#e6dac1" />
+<line x1="372" y1="92" x2="372" y2="146" stroke="#cabca1" stroke-width="1" />
+<text x="438.0" y="124.0" text-anchor="middle" class="axis-text">Phase 2: Components</text>
+<rect x="504" y="92" width="132" height="54" fill="#efe4ce" />
+<line x1="504" y1="92" x2="504" y2="146" stroke="#cabca1" stroke-width="1" />
+<text x="570.0" y="124.0" text-anchor="middle" class="axis-text">Phase 3: UI Refonte</text>
+<rect x="636" y="92" width="132" height="54" fill="#e6dac1" />
+<line x1="636" y1="92" x2="636" y2="146" stroke="#cabca1" stroke-width="1" />
+<text x="702.0" y="124.0" text-anchor="middle" class="axis-text">Phase 4: Finalize</text>
+<line x1="768" y1="92" x2="768" y2="146" stroke="#cabca1" stroke-width="1" />
+<line x1="240" y1="146" x2="768" y2="146" stroke="#cabca1" stroke-width="1" />
+<line x1="240" y1="146" x2="240" y2="566" stroke="#d8d1c2" stroke-width="1" />
+<line x1="372" y1="146" x2="372" y2="566" stroke="#d8d1c2" stroke-width="1" />
+<line x1="504" y1="146" x2="504" y2="566" stroke="#d8d1c2" stroke-width="1" />
+<line x1="636" y1="146" x2="636" y2="566" stroke="#d8d1c2" stroke-width="1" />
+<line x1="768" y1="146" x2="768" y2="566" stroke="#d8d1c2" stroke-width="1" />
+<rect x="0" y="146" width="240" height="34" fill="#fbf8f2" />
+<rect x="240" y="146" width="528" height="34" fill="#fbf8f2" />
+<text x="24" y="168.0" class="track-label">MMA</text>
+<line x1="0" y1="146" x2="768" y2="146" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="180" x2="768" y2="180" stroke="#ddd3be" stroke-width="1" />
+<rect x="246" y="152" width="120" height="22" rx="7" ry="7" fill="#8c5cf5" stroke="#17324d" stroke-opacity="0.15" />
+<text x="256" y="169" class="bar-label" fill="#ffffff">Route /api/mma/fights</text>
+<rect x="378" y="152" width="120" height="22" rx="7" ry="7" fill="#ffb703" stroke="#17324d" stroke-opacity="0.15" />
+<text x="388" y="169" class="bar-label" fill="#ffffff">MmaTabContent + MmaFightCard</text>
+<rect x="0" y="188" width="240" height="34" fill="#f3ede2" />
+<rect x="240" y="188" width="528" height="34" fill="#f3ede2" />
+<text x="24" y="210.0" class="track-label">Cycling</text>
+<line x1="0" y1="188" x2="768" y2="188" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="222" x2="768" y2="222" stroke="#ddd3be" stroke-width="1" />
+<rect x="246" y="194" width="120" height="22" rx="7" ry="7" fill="#8c5cf5" stroke="#17324d" stroke-opacity="0.15" />
+<text x="256" y="211" class="bar-label" fill="#ffffff">Route /api/cycling</text>
+<rect x="378" y="194" width="120" height="22" rx="7" ry="7" fill="#1f6feb" stroke="#17324d" stroke-opacity="0.15" />
+<text x="388" y="211" class="bar-label" fill="#ffffff">CyclingTabContent + CyclingStageCard</text>
+<rect x="0" y="230" width="240" height="34" fill="#fbf8f2" />
+<rect x="240" y="230" width="528" height="34" fill="#fbf8f2" />
+<text x="24" y="252.0" class="track-label">Cleanup</text>
+<line x1="0" y1="230" x2="768" y2="230" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="264" x2="768" y2="264" stroke="#ddd3be" stroke-width="1" />
+<rect x="246" y="236" width="120" height="22" rx="7" ry="7" fill="#e63946" stroke="#17324d" stroke-opacity="0.15" />
+<text x="256" y="253" class="bar-label" fill="#ffffff">Remove mock fallbacks</text>
+<rect x="0" y="272" width="240" height="34" fill="#f3ede2" />
+<rect x="240" y="272" width="528" height="34" fill="#f3ede2" />
+<text x="24" y="294.0" class="track-label">UI</text>
+<line x1="0" y1="272" x2="768" y2="272" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="306" x2="768" y2="306" stroke="#ddd3be" stroke-width="1" />
+<rect x="378" y="278" width="120" height="22" rx="7" ry="7" fill="#e63946" stroke="#17324d" stroke-opacity="0.15" />
+<text x="388" y="295" class="bar-label" fill="#ffffff">SportTabs component</text>
+<rect x="510" y="278" width="120" height="22" rx="7" ry="7" fill="#8c5cf5" stroke="#17324d" stroke-opacity="0.15" />
+<text x="520" y="295" class="bar-label" fill="#ffffff">page.tsx — 4 onglets + searchParams</text>
+<rect x="0" y="314" width="240" height="34" fill="#fbf8f2" />
+<rect x="240" y="314" width="528" height="34" fill="#fbf8f2" />
+<text x="24" y="336.0" class="track-label">Design</text>
+<line x1="0" y1="314" x2="768" y2="314" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="348" x2="768" y2="348" stroke="#ddd3be" stroke-width="1" />
+<rect x="510" y="320" width="120" height="22" rx="7" ry="7" fill="#4d908e" stroke="#17324d" stroke-opacity="0.15" />
+<text x="520" y="337" class="bar-label" fill="#ffffff">Design system tokens (palette, animations)</text>
+<rect x="0" y="356" width="240" height="34" fill="#f3ede2" />
+<rect x="240" y="356" width="528" height="34" fill="#f3ede2" />
+<text x="24" y="378.0" class="track-label">Tennis</text>
+<line x1="0" y1="356" x2="768" y2="356" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="390" x2="768" y2="390" stroke="#ddd3be" stroke-width="1" />
+<rect x="510" y="362" width="120" height="22" rx="7" ry="7" fill="#8c5cf5" stroke="#17324d" stroke-opacity="0.15" />
+<text x="520" y="379" class="bar-label" fill="#ffffff">Refonte Tennis TabContent + MatchCard</text>
+<rect x="0" y="398" width="240" height="34" fill="#fbf8f2" />
+<rect x="240" y="398" width="528" height="34" fill="#fbf8f2" />
+<text x="24" y="420.0" class="track-label">Football</text>
+<line x1="0" y1="398" x2="768" y2="398" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="432" x2="768" y2="432" stroke="#ddd3be" stroke-width="1" />
+<rect x="510" y="404" width="120" height="22" rx="7" ry="7" fill="#e63946" stroke="#17324d" stroke-opacity="0.15" />
+<text x="520" y="421" class="bar-label" fill="#ffffff">Refonte Football TabContent + Cards</text>
+<rect x="0" y="440" width="240" height="34" fill="#f3ede2" />
+<rect x="240" y="440" width="528" height="34" fill="#f3ede2" />
+<text x="24" y="462.0" class="track-label">QA</text>
+<line x1="0" y1="440" x2="768" y2="440" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="474" x2="768" y2="474" stroke="#ddd3be" stroke-width="1" />
+<rect x="510" y="446" width="120" height="22" rx="7" ry="7" fill="#e63946" stroke="#17324d" stroke-opacity="0.15" />
+<text x="520" y="463" class="bar-label" fill="#ffffff">Loading/Error/Empty states</text>
+<rect x="0" y="482" width="240" height="34" fill="#fbf8f2" />
+<rect x="240" y="482" width="528" height="34" fill="#fbf8f2" />
+<text x="24" y="504.0" class="track-label">Deploy</text>
+<line x1="0" y1="482" x2="768" y2="482" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="516" x2="768" y2="516" stroke="#ddd3be" stroke-width="1" />
+<rect x="642" y="488" width="120" height="22" rx="7" ry="7" fill="#1f6feb" stroke="#17324d" stroke-opacity="0.15" />
+<text x="652" y="505" class="bar-label" fill="#ffffff">Build + Deploy VPS</text>
+<rect x="0" y="524" width="240" height="34" fill="#f3ede2" />
+<rect x="240" y="524" width="528" height="34" fill="#f3ede2" />
+<text x="24" y="546.0" class="track-label">Meta</text>
+<line x1="0" y1="524" x2="768" y2="524" stroke="#ddd3be" stroke-width="1" />
+<line x1="0" y1="558" x2="768" y2="558" stroke="#ddd3be" stroke-width="1" />
+<rect x="642" y="530" width="120" height="22" rx="7" ry="7" fill="#4d908e" stroke="#17324d" stroke-opacity="0.15" />
+<text x="652" y="547" class="bar-label" fill="#ffffff">Graphify update</text>
+</svg>

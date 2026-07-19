@@ -1,0 +1,22 @@
+{
+  "title": "Sports Tabs Redesign — Implementation",
+  "timeline": {
+    "title": "Phases",
+    "labels": ["Phase 1: API Routes", "Phase 2: Components", "Phase 3: UI Refonte", "Phase 4: Finalize"]
+  },
+  "items": [
+    { "label": "Route /api/mma/fights", "track": "MMA", "start": "Phase 1: API Routes", "end": "Phase 1: API Routes" },
+    { "label": "Route /api/cycling", "track": "Cycling", "start": "Phase 1: API Routes", "end": "Phase 1: API Routes" },
+    { "label": "Remove mock fallbacks", "track": "Cleanup", "start": "Phase 1: API Routes", "end": "Phase 1: API Routes" },
+    { "label": "SportTabs component", "track": "UI", "start": "Phase 2: Components", "end": "Phase 2: Components" },
+    { "label": "MmaTabContent + MmaFightCard", "track": "MMA", "start": "Phase 2: Components", "end": "Phase 2: Components" },
+    { "label": "CyclingTabContent + CyclingStageCard", "track": "Cycling", "start": "Phase 2: Components", "end": "Phase 2: Components" },
+    { "label": "Design system tokens (palette, animations)", "track": "Design", "start": "Phase 3: UI Refonte", "end": "Phase 3: UI Refonte" },
+    { "label": "Refonte Tennis TabContent + MatchCard", "track": "Tennis", "start": "Phase 3: UI Refonte", "end": "Phase 3: UI Refonte" },
+    { "label": "Refonte Football TabContent + Cards", "track": "Football", "start": "Phase 3: UI Refonte", "end": "Phase 3: UI Refonte" },
+    { "label": "page.tsx — 4 onglets + searchParams", "track": "UI", "start": "Phase 3: UI Refonte", "end": "Phase 3: UI Refonte" },
+    { "label": "Loading/Error/Empty states", "track": "QA", "start": "Phase 3: UI Refonte", "end": "Phase 3: UI Refonte" },
+    { "label": "Build + Deploy VPS", "track": "Deploy", "start": "Phase 4: Finalize", "end": "Phase 4: Finalize" },
+    { "label": "Graphify update", "track": "Meta", "start": "Phase 4: Finalize", "end": "Phase 4: Finalize" }
+  ]
+}
