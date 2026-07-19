@@ -605,18 +605,19 @@ Le Gantt est mis à jour quand :
 | **Session 9 (2026-07-19)** | **10/12 agents** | **12 agents** | 83% | 🟢 12 commits poussés (`ed7e6ad`..`ce26a61`) + 2 deploys + nginx patch + **hot loop CPU tué à la racine** (cache `globalThis`) |
 | **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.5 · Session 9 en cours |
 
-### Alertes actives (post-Session 9, post-deploy 23:10)
+### Alertes actives (post-Session 9, post-deploy 23:30)
 
 | # | Alerte | Sévérité | Statut | Propriétaire |
 |---|---|---|---|---|
-| A1 | `pariscore-next` 100% CPU | ✅ Résolu | ✅ **RÉSOLU À LA RACINE** — hot loop tué via cache `globalThis` partagé multi-worker (`ce26a61`). Validation prod : 70→1 fetch / 5 min | Ops |
-| A2 | Deception perçue `/setpoint/` + `tennis-live` simu | 🔴 Haute | 🟡 Plan en cours (`8f103161`) · synthetic cards ✅ fixé (`616c502`) | Produit + Dev |
-| A3 | Bugs SPS bloquants (4) | 🔴 Haute | ✅ **RÉSOLU** — P0-1 `bacc68d`, P0-2/P0-3 `af487e1`, P0-4 `bacc68d` | Dev senior |
-| A4 | `pariscore` legacy (id 5) en doublon | 🟡 Moyenne | 📅 Backlog (décision dépréciation) | Dev senior |
-| A5 | 76× 404 `/api/tennis/elo-history` par page | 🟠 Moyenne | 🟡 Fix en cours (`d3e4e50d`) — pas encore commit | Dev |
-| A6 | Bug boutons Analyse/Stratégies | ✅ Résolu | ✅ **CLOS** — spécifique au monolithe vanilla non déployé | — |
-| A7 | nginx catch-all `/api/` → :8000 (legacy) | ✅ Résolu | ✅ **RÉSOLU** — 3 règles football/nba/wnba → :3005 | Ops |
-| A8 | Hot loop `[bsd] Fetched 30 matches` | ✅ Résolu | ✅ **RÉSOLU À LA RACINE** — `ce26a61` (cache `globalThis` partagé) | Ops |
+| A1 | `pariscore-next` 100% CPU | ✅ Résolu | ✅ **RÉSOLU À LA RACINE** — cache `globalThis` (`ce26a61`). 70→1 fetch/5min | Ops |
+| **A9** | **🚨 ErrorBoundary affiché en prod (crash client)** | **✅ Résolu** | ✅ **RÉSOLU** — `a70b300` : Tooltip Radix (rendu 1000×/page) remplacé par `title` natif. Root cause : saturation hydration React | Dev |
+| A2 | Deception perçue `/setpoint/` + `tennis-live` simu | 🔴 Haute | 🟡 Plan en cours (`8f103161`) · synthetic cards ✅ (`616c502`) | Produit + Dev |
+| A3 | Bugs SPS bloquants (4) | 🔴 Haute | ✅ **RÉSOLU** — `af487e1` + `bacc68d` | Dev senior |
+| A4 | `pariscore` legacy (id 5) en doublon | 🟡 Moyenne | 📅 Backlog · ⚠️ Legacy à **93.8% CPU / 415 Mo** au dernier check (pire que pariscore-next !) | Dev senior |
+| A5 | 76× 404 `/api/tennis/elo-history` par page | 🟠 Moyenne | 🟡 Fix en cours (`d3e4e50d`) | Dev |
+| A6 | Bug boutons Analyse/Stratégies | ✅ Résolu | ✅ **CLOS** | — |
+| A7 | nginx catch-all `/api/` → :8000 (legacy) | ✅ Résolu | ✅ **RÉSOLU** | Ops |
+| A8 | Hot loop `[bsd] Fetched 30 matches` | ✅ Résolu | ✅ **RÉSOLU À LA RACINE** | Ops |
 
 ### 10.1 Synthèse audit visuel prod (`594fa28b`, 22:15-22:25)
 

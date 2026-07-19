@@ -4,11 +4,33 @@
 
 ## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + push fix elo-history
 
-### 🚨 BUG CRITIQUE EN COURS (2026-07-19 23:35) — ErrorBoundary en prod
+### ✅ BUG A9 RÉSOLU (2026-07-19 23:55) — ErrorBoundary prod
 
-**Symptôme** : https://pariscore.fr/ affiche l'ErrorBoundary
-"Une erreur est survenue" au lieu du contenu normal. Serveur 200 OK,
-pas d'erreur loggée → **crash runtime côté client (React)**.
+**Symptôme** : https://pariscore.fr/ affichait l'ErrorBoundary "Une erreur est
+survenue" au lieu du contenu normal. Serveur 200 OK, pas d'erreur loggée.
+
+**Root cause** : commit `bacc68d` avait ajouté un `<Tooltip>` Radix autour du
+badge SPS dans `player-statline.tsx`. Rendu **~1000 fois par page** (558 SPS ×
+2 tooltips). Radix attache des PointerEvent listeners + useId() au mount →
+saturation pendant l'hydration React → erreur catchée par SentryErrorBoundary.
+
+**Fix** (`a70b300`) : remplacer le Tooltip interactif par un attribut `title`
+HTML natif. Préserve le badge "beta" + le texte tooltip (au hover natif).
+Zéro risque d'hydration car pas de listener Radix.
+
+**Validation prod** :
+- HTML 83 Ko, contient "SetPoint"
+- ErrorBoundary **non visible** (false)
+- 5/5 endpoints 200
+- CPU 0%, uptime stable
+
+**Fix alternatif considéré** : dynamic import avec `ssr: false`. Rejeté car le
+Tooltip nécessite hover (non accessible mobile) et le title natif donne la
+même info sans overhead Radix.
+
+---
+
+### 🟡 Décisions en attente (3 agents encore running)
 
 **Survenu après** : deploy des commits récents (`616c502`, `af487e1`,
 `bacc68d`, `ce26a61`, `fb7d3cd`).
