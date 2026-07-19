@@ -4,29 +4,47 @@
 
 ## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + push fix elo-history
 
-### ✅ BUG A9 RÉSOLU (2026-07-19 23:55) — ErrorBoundary prod
+### 🚨 BUG A9 — INVESTIGATION EN COURS (2ème itération 2026-07-20 00:10)
 
-**Symptôme** : https://pariscore.fr/ affichait l'ErrorBoundary "Une erreur est
-survenue" au lieu du contenu normal. Serveur 200 OK, pas d'erreur loggée.
+**Status** : ✗ Fix précédent (`a70b300` retrait Tooltip) **N'A PAS RÉSOLU** le bug.
+Le bug persiste en prod après deploy `e9ab28b`. **Théorie Tooltip fausse.**
 
-**Root cause** : commit `bacc68d` avait ajouté un `<Tooltip>` Radix autour du
-badge SPS dans `player-statline.tsx`. Rendu **~1000 fois par page** (558 SPS ×
-2 tooltips). Radix attache des PointerEvent listeners + useId() au mount →
-saturation pendant l'hydration React → erreur catchée par SentryErrorBoundary.
+**Nouveaux faits établis** (post-investigation manuelle) :
 
-**Fix** (`a70b300`) : remplacer le Tooltip interactif par un attribut `title`
-HTML natif. Préserve le badge "beta" + le texte tooltip (au hover natif).
-Zéro risque d'hydration car pas de listener Radix.
+| Check | Résultat |
+|---|---|
+| HTML serveur | **200 OK, 83 Ko, contient SetPoint + nav complète + "Tennis · Prematch" hero** |
+| Visible body text | Nav 8 sports, hero tennis, "0 matchs aujourd'hui" |
+| `match-card` dans HTML | ABSENT — mais c'est normal (rendu client après fetch API) |
+| Tous les chunks JS | **19/19 × 200** (aucun asset manquant) |
+| Tous les CSS | **2/2 × 200** |
+| ErrorBoundary visible | **ABSENT du rendu serveur** (le "Une erreur" n'apparaît qu'en i18n dict) |
+| PM2 error.log | Vide |
+| `__SETPOINT_CRASH` | ABSENT du HTML |
 
-**Validation prod** :
-- HTML 83 Ko, contient "SetPoint"
-- ErrorBoundary **non visible** (false)
-- 5/5 endpoints 200
-- CPU 0%, uptime stable
+→ **Conclusion confirmée** : le HTML rendu par le serveur est **valide**.
+Le crash survient **après hydration côté client**, quand le JS s'exécute
+et remplace le contenu valide par l'ErrorBoundary.
 
-**Fix alternatif considéré** : dynamic import avec `ssr: false`. Rejeté car le
-Tooltip nécessite hover (non accessible mobile) et le title natif donne la
-même info sans overhead Radix.
+**Causes ÉLIMINÉES** (par investigation manuelle + fix précédent) :
+- ❌ Tooltip Radix (retiré dans `a70b300` — bug persiste)
+- ❌ Asset manquant / chunk 404 (19/19 OK)
+- ❌ Erreur serveur (0 log)
+- ❌ i18n keys manquantes (vérifié)
+
+**Causes encore possibles** :
+1. **TypeError runtime** quand un composant accède à une prop undefined
+   (ex: `match.playerA.rank` quand `match.playerA` est undefined)
+2. **Hydration mismatch** : texte/structure différent entre SSR et client
+3. **Erreur fetch async** au mount non gérée
+4. **Effet de bord** de l'un des commits `616c502`/`bacc68d`/`ce26a61`
+
+**Investigation en cours** (2 agents) :
+- `e80b3493` — **QA Playwright** capture la stack trace navigateur exacte
+- `18e943d1` — **code-reviewer** audit forensique des commits suspects
+
+**Sans stack trace, ne pas appliquer de nouveau fix** (risque de répéter
+l'erreur de théorie fausse). Attendre le rapport `e80b3493`.
 
 ---
 
