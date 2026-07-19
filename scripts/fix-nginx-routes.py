@@ -72,7 +72,26 @@ new_cycling = '''    location ~ ^/api/cycling(?:/.*)?$ {
 c = c.replace(old_mma, new_mma)
 c = c.replace(old_cycling, new_cycling)
 
+# Add F1 location block next to cycling
+f1_block = '''
+    location ~ ^/api/f1(?:/.*)?$ {
+        proxy_pass http://localhost:3005;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 60s;
+    }'''
+
+if 'location ~ ^/api/f1' not in c:
+    c = c.replace("location /api/email/", f1_block + "\n\n    location /api/email/")
+    print("Added F1 location block")
+
 with open(path, "w") as f:
     f.write(c)
 
-print("Replaced prefix /api/mma/ and /api/cycling/ with regex locations ~ ^/api/mma(?:/.*)?$")
+print("Replaced prefix /api/mma/ and /api/cycling/ with regex locations")
