@@ -180,12 +180,22 @@ UI : https://pariscore.fr → onglet Football → plus de PSG/City mock si API O
 
 ---
 
+## Graphify (mis à jour 2026-07-19 soir)
+
+- Doc : `.context/docs/bsd-football-api-endpoints.md`
+- `graphify update .` → 31180+ nodes
+- Nœuds curés : `bsd_api_root`, `bsd_api_matches_notstarted`, `bsd_api_live`, `bsd_api_leagues`, `bsd_api_fixtures`, `bsd_api_teams`, `bsd_wrong_base_url`
+- Chemins vérifiés :
+  - `fetchBSDFootballPrematch()` → `BSD GET /api/matches/?status=notstarted`
+  - `bsd-football-fetcher.ts` → `fetchBSDFootballLive()` → `BSD GET /api/live/`
+- Query demain : `graphify query "BSD football API endpoints"`
+
 ## Prompt de reprise (copier-coller demain)
 
 ```
 Reprise session 2026-07-19. Lis .context/HANDOFF-2026-07-19-football-bsd.md
 
-Priorité 1: commit + push packages/pariscore-services + package.json workspace dep,
+Priorité 1: commit + push packages/pariscore-services + package.json workspace dep (déjà sur main si b7c6970),
 deploy VPS (bun install && bun run build && pm2 restart pariscore-next),
 vérifier /api/f1 et /api/football/matches|live|prematch.
 
