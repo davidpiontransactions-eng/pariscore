@@ -1,0 +1,44 @@
+{
+  "title": "Migration React Tennis Live Stats",
+  "timeline": {
+    "title": "Phases",
+    "labels": ["Phase 1: Hook", "Phase 2: Component", "Phase 3: Integration", "QA"]
+  },
+  "tracks": [
+    {
+      "name": "🧩 Hook",
+      "items": [
+        { "label": "Zod types (TennisLiveStats/SetStats/ServiceStats)", "start": "Phase 1: Hook", "end": "Phase 1: Hook" },
+        { "label": "SSE useTennisLiveStats(matchId) with retry", "start": "Phase 1: Hook", "end": "Phase 1: Hook" },
+        { "label": "DataSentinel + Normalize pattern ported", "start": "Phase 1: Hook", "end": "Phase 1: Hook" },
+        { "label": "Zod validation + SSR guard", "start": "Phase 1: Hook", "end": "Phase 1: Hook" }
+      ]
+    },
+    {
+      "name": "🎨 Component",
+      "items": [
+        { "label": "live-stats-panel.tsx structure (Card)", "start": "Phase 2: Component", "end": "Phase 2: Component" },
+        { "label": "Stat rows (Table + hi/lo coloring)", "start": "Phase 2: Component", "end": "Phase 2: Component" },
+        { "label": "Service circles (SVG Progress ring)", "start": "Phase 2: Component", "end": "Phase 2: Component" },
+        { "label": "Per-set breakdown table", "start": "Phase 2: Component", "end": "Phase 2: Component" },
+        { "label": "States: loading/error/empty/stale/DEMO", "start": "Phase 2: Component", "end": "Phase 2: Component" }
+      ]
+    },
+    {
+      "name": "🔗 Integration",
+      "items": [
+        { "label": "Mount into match card React wrapper", "start": "Phase 3: Integration", "end": "Phase 3: Integration" },
+        { "label": "Wire SSE live_patch → hook", "start": "Phase 3: Integration", "end": "Phase 3: Integration" },
+        { "label": "Cleanup legacy JS functions", "start": "Phase 3: Integration", "end": "Phase 3: Integration" }
+      ]
+    },
+    {
+      "name": "✅ QA",
+      "items": [
+        { "label": "node --check server.js + pariscore.js", "start": "QA", "end": "QA" },
+        { "label": "Lint + typecheck", "start": "QA", "end": "QA" },
+        { "label": "bun run build", "start": "QA", "end": "QA" }
+      ]
+    }
+  ]
+}

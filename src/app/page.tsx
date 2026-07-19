@@ -26,8 +26,9 @@ import { TennisTabContent } from "@/components/football/tennis-tab-content";
 import { FootballTabContent } from "@/components/football/football-tab-content";
 import { MmaTabContent } from "@/components/mma/mma-tab-content";
 import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
+import { F1TabContent } from "@/components/f1/f1-tab-content";
 
-type SportTab = "tennis" | "football" | "mma" | "cycling";
+type SportTab = "tennis" | "football" | "mma" | "cycling" | "f1";
 
 class PageErrorBoundary extends Component<
   { children: ReactNode },
@@ -120,6 +121,7 @@ export default function Home() {
         {activeTab === "football" && <FootballTabContent />}
         {activeTab === "mma" && <MmaTabContent />}
         {activeTab === "cycling" && <CyclingTabContent />}
+        {activeTab === "f1" && <F1TabContent />}
 
         {/* Footer */}
         <footer className="mt-auto border-t border-white/10 bg-zinc-900/20">

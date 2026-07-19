@@ -1,0 +1,56 @@
+{
+  "title": "PariScore — Tâches à faire (19-26 juillet)",
+  "tracks": [
+    {
+      "name": "SetPoint (nouvelle route)",
+      "items": [
+        { "label": "Error boundary + edge cases", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "Mobile responsive QA", "start": "2026-07-20", "end": "2026-07-21" },
+        { "label": "Tennis-live refresh SSE", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "SetPoint QA + deploy", "start": "2026-07-21", "end": "2026-07-22" }
+      ]
+    },
+    {
+      "name": "Tennis React Migration",
+      "items": [
+        { "label": "Live stats panel — edge cases", "start": "2026-07-20", "end": "2026-07-21" },
+        { "label": "Migrer odds-comparator → React", "start": "2026-07-21", "end": "2026-07-22" },
+        { "label": "Migrer probability-bar/ring → React", "start": "2026-07-22", "end": "2026-07-23" },
+        { "label": "Cleanup 7 legacy fn (suite)", "start": "2026-07-23", "end": "2026-07-23" }
+      ]
+    },
+    {
+      "name": "Match Card Refinement",
+      "items": [
+        { "label": "Skeleton loading states", "start": "2026-07-20", "end": "2026-07-21" },
+        { "label": "allOdds empty/null guards", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "Missing data fallbacks UI", "start": "2026-07-22", "end": "2026-07-22" }
+      ]
+    },
+    {
+      "name": "DR Chart Polish",
+      "items": [
+        { "label": "Null/partial data edge cases", "start": "2026-07-22", "end": "2026-07-22" },
+        { "label": "Tooltip UX amélioration", "start": "2026-07-22", "end": "2026-07-23" },
+        { "label": "Perf audit (re-renders)", "start": "2026-07-23", "end": "2026-07-23" }
+      ]
+    },
+    {
+      "name": "Backend & Ops",
+      "items": [
+        { "label": "Stripe DG — pricing decision", "start": "2026-07-21", "end": "2026-07-22" },
+        { "label": "Stripe DG — frontend CTAs", "start": "2026-07-22", "end": "2026-07-24" },
+        { "label": "Sackmann purge Phase 4.2+", "start": "2026-07-23", "end": "2026-07-25" }
+      ]
+    },
+    {
+      "name": "QA Global",
+      "items": [
+        { "label": "Lint + typecheck", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "QA Playwright (4 personas)", "start": "2026-07-24", "end": "2026-07-25" },
+        { "label": "Canary + health check", "start": "2026-07-25", "end": "2026-07-25" },
+        { "label": "Déploiement prod", "start": "2026-07-25", "end": "2026-07-26" }
+      ]
+    }
+  ]
+}
