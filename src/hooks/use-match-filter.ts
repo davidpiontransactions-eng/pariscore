@@ -43,15 +43,27 @@ const IS_BALANCED = (m: TennisMatch) => (m.probA ?? 50) < 60;
 /**
  * Helper: best available rank for a match (lower = better).
  * Uses player A's rank as the primary indicator.
+ *
+ * Synthetic cards carry rank=0 (placeholder, not null). The `??` operator
+ * would treat 0 as valid, polluting rank_asc sort with synthetic cards placed
+ * ahead of real ATP/WTA #1. We exclude synthetic cards explicitly and treat
+ * rank=0/null/undefined as missing.
  */
 function matchRank(m: TennisMatch): number {
-  return m.playerA.rank ?? m.playerB.rank ?? 999;
+  // Synthetic cards have rank=0 placeholder — exclude them from rank sort by pushing to end
+  if (m.synthetic) return 999;
+  const r = m.playerA.rank || m.playerB.rank; // || catches 0, null, undefined
+  return r && r > 0 ? r : 999;
 }
 
 /**
  * Helper: average Elo of both players (higher = stronger match).
+ *
+ * Synthetic cards push to end (Elo is a placeholder) to avoid polluting
+ * elo_asc/elo_desc sort.
  */
 function matchAvgElo(m: TennisMatch): number {
+  if (m.synthetic) return 0; // push to end
   return ((m.playerA.elo ?? 1500) + (m.playerB.elo ?? 1500)) / 2;
 }
 

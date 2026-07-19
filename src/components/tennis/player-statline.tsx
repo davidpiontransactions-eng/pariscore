@@ -19,6 +19,7 @@
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import type { Player } from "@/lib/tennis-data";
 import type { PlayerStats } from "@/lib/tennis-stats/types";
 import { Sparkline } from "./sparkline";
@@ -60,6 +61,7 @@ export function PlayerStatline({
   const w = sparkWidth ?? (terminalMode ? 80 : 50);
   const h = sparkHeight ?? (terminalMode ? 22 : 16);
   const t = useTranslations("statline");
+  const tTennis = useTranslations("tennis");
 
   // Résolution des valeurs : on privilégie les stats enrichies (DB), sinon
   // on retombe sur le `player.rank`/`player.elo` de la chaîne prematch
@@ -110,13 +112,39 @@ export function PlayerStatline({
       >
         Elo {eloIsFallback ? EM_DASH : fmt(eloDisplay)}
       </span>
-      {/* SPS (si dispo) */}
+      {/* SPS (si dispo) — modèle expérimental, badge « beta » + tooltip */}
       {sps != null && (
         <>
           <span className="text-border" aria-hidden>
             ·
           </span>
-          <span className="tabular-nums">SPS {fmtSPS(sps)}</span>
+          <span className="inline-flex items-center gap-0.5 tabular-nums">
+            SPS {fmtSPS(sps)}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center align-middle"
+                  aria-label={tTennis("spsExperimentalTooltip")}
+                >
+                  <Badge
+                    variant="outline"
+                    className="ml-0.5 h-3 px-1 text-[9px] font-medium leading-none text-muted-foreground"
+                  >
+                    {tTennis("spsExperimentalBadge")}
+                  </Badge>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="bottom"
+                className="max-w-[220px] border bg-popover text-popover-foreground shadow-md"
+              >
+                <p className="py-0.5 text-[11px]">
+                  {tTennis("spsExperimentalTooltip")}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </span>
         </>
       )}
       {/* Indicateur tooltip + sparkline */}

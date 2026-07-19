@@ -49,7 +49,9 @@
     "sortEloDesc": "Elo ↓"
   },
   "tennis": {
-    "syntheticBadge": "Données live limitées — pas de modèle prédictif"
+    "syntheticBadge": "Données live limitées — pas de modèle prédictif",
+    "spsExperimentalBadge": "beta",
+    "spsExperimentalTooltip": "Modèle expérimental — calibration en cours"
   },
   "match": {
     "win": "WIN",
