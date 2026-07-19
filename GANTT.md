@@ -1,9 +1,144 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-14 (Session 8 — DS-Unify Phase 3.5 z-index 70 remplacements)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-19 (Session 9 — orchestration multi-agents tennis-live + deception perçue + CPU pariscore-next)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)**
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟡 **Session 9 (2026-07-19)** : 6 commits poussés (`ed7e6ad`..`f5eeb9c`), VPS sync, 2 alertes ouvertes (CPU pariscore-next + deception perçue synthetic/simu)
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
+
+---
+
+## 0bis. Session 9 — Orchestration multi-agents (2026-07-19 soir)
+
+> **Objectif** : reprendre les actions de la session du 19/07 après-midi/soir
+> (commits `949eab3` → `66437e2`) via dispatch parallèle d'agents.
+
+### 9.1 Commits réalisés (6 poussés sur `origin/main`)
+
+| Hash | Sujet | Phase |
+|---|---|---|
+| `ed7e6ad` | `chore: add bun path resolver for cross-platform npm scripts` | Tooling |
+| `ec8648a` | `docs: add free providers API map (TheRundown/PropLine/Cloudbet + 8 wiki-entities)` | Documentation |
+| `b1c17f2` | `chore: document free providers env keys in .env.example` | Configuration |
+| `e3bc13e` | `chore: add opencode config` | Tooling |
+| `958111c` | `chore: update graphify opencode plugin` | Tooling |
+| `f5eeb9c` | `chore: track qa-node-check.js (narrow qa-*.js gitignore to root only)` | Tooling |
+
+**État final** : working tree 100% propre. `bun run qa:node` utilisable par toute l'équipe.
+
+### 9.2 Dispatch agents (9 lancés, 5 terminés, 4 en cours)
+
+| Agent ID | Mission | Statut | Livrable |
+|---|---|---|---|
+| Direct | Vérif VPS (PM2, endpoints, `BSD_TENNIS_ENABLED`) | ✅ | VPS sync `66437e2`, tennis live réel |
+| `04b0ad83` | Sécurité synthetic cards (XSS/ReDoS/cache/hashColor) | ✅ | 0 vuln bloquante, 1 🔴 deception perçue |
+| `4253382b` | Audit 3 processes VPS (tennis-live, pariscore-next, pariscore legacy) | ✅ | tennis-live = simu, pariscore-next 100% CPU |
+| `b1f9fb60` | Commits atomiques (5 commits) | ✅ | `ed7e6ad`..`958111c` |
+| `b28baee8` | Code review SPS module `671b869` | ✅ | 🔴 4 bugs bloquants (tri, circuit ATP, norm(), disclaimer) |
+| `d57ac9cc` | Fix synthetic cards badge disclaimer | ✅ | Commit `616c502` (5 fichiers, tsc/eslint clean) |
+| `cbc0fb8d` | 🚨 Diagnostic CPU pariscore-next | 🟡 running | — |
+| `8f103161` | Plan remplacement tennis-live simu → vrai BSD | 🟡 running | — |
+| `594fa28b` | Audit visuel Playwright prod | ✅ | **Prod OK** — 0 crash, 558 SPS OK, 7 live BSD OK ; 1 nouveau bug 404 elo-history ×76/page |
+| `61a814c1` | Fix SPS tools P0-2 (circuit ATP) + P0-3 (norm() unused) | ✅ | Commit `af487e1` |
+| `587b2d94` | Fix SPS frontend P0-1 (tri rank=0) + P0-4 (badge expérimental SPS) | ✅ | Commit `bacc68d` (4 fichiers, tsc/eslint clean) |
+| `4d7e9a4d` 🆕 | Fix 404 elo-history (76 erreurs/page sur matchs BSD live) | 🟡 running | — |
+
+### 9.2bis Commits locaux (non poussés, en attente de review David)
+
+| Hash | Sujet | Origine |
+|---|---|---|
+| `616c502` | `fix(tennis): add disclaimer badge for synthetic live cards` | Agent `d57ac9cc` — 5 fichiers, +86/-38 |
+| (à venir) | `fix(tennis): exclude synthetic from rank/elo sort + add experimental badge to SPS` | Agent `587b2d94` en cours |
+| (à venir) | `fix(tools): use real circuit in WTA sync + apply norm() to rank matching` | Agent `61a814c1` en cours |
+
+### 9.3 Alertes ouvertes (à traiter en priorité)
+
+#### 🚨 A1 — `pariscore-next` 100% CPU (en cours de diagnostic)
+
+- **Process** : PM2 id 2, entrypoint `~/pariscore/.next/standalone/server.js`, port 3005
+- **Symptôme** : CPU saturé en continu (uptime 56m, 25 restarts)
+- **Hypothèses** : `setInterval` serveur, hot loop, polling BSD intensif, memory leak
+- **Bloquant** : dégradation latence prod possible (502, timeout)
+- **Action** : `cbc0fb8d` en cours → fix immédiat dès identification
+
+#### 🔴 A2 — Deception perçue scores simulés (scope élargi)
+
+3 surfaces concernées :
+
+| # | Surface | Code | Risque |
+|---|---|---|---|
+| 1 | Onglet Tennis (synthetic cards) | `tennis-tab-content.tsx:189-226` | Anneau 50/50 + FormDots factices affichés comme prédictifs |
+| 2 | Route `/setpoint/` | frontend Next.js | Scores "live" simulés présentés comme réels |
+| 3 | Mini-service `tennis-live` | `mini-services/tennis-live/index.ts` (335 lignes) | `Math.random()` + drift toutes les 5s au lieu de vrai BSD |
+
+**Décision produit** : scope = "tout corriger" (salve complète).
+
+**Options en évaluation** (`8f103161`) :
+- A. Garder socket.io, remplacer `Math.random` par polling `/api/tennis/live`
+- B. Supprimer `tennis-live`, switch frontend SSE direct
+- C. Hybride : fallback simu SEULEMENT si BSD vide/erreur + disclaimer visible
+
+#### 🔴 A3 — Bugs SPS bloquants (audit `b28baee8`, post-graphify)
+
+4 problèmes critiques identifiés sur le module SPS (commit `671b869`) :
+
+| # | Bug | Fichier | Ligne | Priorité | Anti-collision |
+|---|---|---|---|---|---|
+| **P0-1** | Tri cassé : `rank: 0` des synthetic passe devant les vrais #1 (car `?? 999` ne filtre pas 0) | `src/hooks/use-match-filter.ts` | L47-49 | 🔴 | ⚠️ recoupe `d57ac9cc` → à fusionner |
+| **P0-2** | Circuit ATP hardcodé dans sync WTA : pollue la colonne circuit | `tools/sync-tennis-player-pids.js` | L116-119 | 🔴 | Safe — `tools/` isolé |
+| **P0-3** | `norm()` défini mais JAMAIS utilisé : matching cassé pour noms accentués | `tools/update-tennis-ranks.js` | L128 | 🔴 | Safe — `tools/` isolé |
+| **P0-4** | SPS non calibré : pas de backtest Brier + pas de disclaimer UI (conformité Hallmark + règle `pas de prod sans IC`) | `player-statline.tsx` + doc | — | 🟠 | ⚠️ recoupe `d57ac9cc` → à fusionner |
+
+**Stratégie d'orchestration** :
+- **Track indépendant** : P0-2 + P0-3 dans un agent dédié (`tools/*.js`, zéro collision)
+- **Track fusionné** : P0-1 + P0-4 + A2 (badge synthetic) → **un seul fix cohérent post-`d57ac9cc`**
+  - Attendre fin de `d57ac9cc` puis appliquer en complément du badge « Données limitées »
+  - Filtre `matchRank` pour exclure `0` et `match.synthetic === true`
+  - Badge « expérimental » sur `PlayerStatline` SPS + tooltip vers la doc
+
+### 9.4 Backlog ouvert (décisions à prendre)
+
+- [ ] **Dépréciation `pariscore` legacy (id 5)** : monolithe `server.js` 52 435 lignes
+      tourne en doublon avec `pariscore-next`. 458 restarts cumulés (SIGINT volontaires
+      = déploiements). `max_memory_restart: 2G` override manuel vs `1G` dans ecosystem.
+- [ ] **Validation visuelle jauge 270°** + SPS (Surface Power Score) non faite.
+- [ ] **Pérenniser tests Playwright** dans `tests/` (scripts temporaires supprimés).
+
+### 9.5 Gantt Session 9
+
+```mermaid
+gantt
+    title Session 9 — Orchestration multi-agents (2026-07-19 soir)
+    dateFormat  YYYY-MM-DD HH:mm
+    axisFormat  %H:%M
+
+    section Commits & Nettoyage
+    Vérif VPS direct (PM2 + endpoints)        :done, s9-vps, 2026-07-19 21:40, 5m
+    Agent b1f9fb60 (5 commits atomiques)       :done, s9-commit, 2026-07-19 21:45, 15m
+    Push 6 commits sur main                    :done, s9-push, 2026-07-19 22:05, 2m
+
+    section Investigations
+    Agent 04b0ad83 (sécurité synthetic)        :done, s9-sec, 2026-07-19 21:40, 3m
+    Agent 4253382b (audit processes VPS)       :done, s9-vps-audit, 2026-07-19 21:40, 5m
+    Agent cbc0fb8d (diagnostic CPU)            :active, s9-cpu, 2026-07-19 21:50, 10m
+    Agent 8f103161 (plan remplacement simu)    :active, s9-plan, 2026-07-19 21:55, 10m
+
+    section Fixes (à venir)
+    Fix hot loop pariscore-next                 :crit, s9-fix-cpu, after s9-cpu, 30m
+    Fix deception synthetic cards               :s9-fix-syn, after s9-plan, 30m
+    Fix /setpoint/ disclaimer                   :s9-fix-set, after s9-fix-syn, 20m
+    Validation visuelle Playwright              :s9-qa, after s9-fix-set, 20m
+```
+
+### 9.6 Impact sur le Gantt principal
+
+- **Phase 2 — P2-E (XSS innerHTML)** : partiellement couvert par l'audit `04b0ad83`
+  (vérifié : 0 XSS sur les synthetic cards). Le chantier XSS global (532 occ.)
+  reste sur sa tâche `p2-10`.
+- **Phase 4 — P4-A (refactoring server.js)** : confirmé par l'audit `4253382b`
+  (monolithe 52 435 lignes en doublon avec Next.js). La priorité de dépréciation
+  est remontée.
+
+---
 
 ![Gantt visuel](./GANTT_pariscore.png)
 
@@ -464,10 +599,38 @@ Le Gantt est mis à jour quand :
 | Phase | Tâches done | Tâches total | % | Statut global |
 |---|---|---|---|---|---|
 | Phase 1 | 11 | 11 | 100% | ✅ **EXÉCUTÉE** — 4 CRITICAL éliminés, `DIFF_GITHUB_VPS.md` GO CONDITIONNEL |
-| Phase 2 | 9 | 13 | 69% | 🟡 Patches backend prêts, frontend en attente |
+| Phase 2 | 9 | 13 | 69% | 🟡 Patches backend prêts, frontend en attente · 🔴 Session 9 a confirmé 0 XSS sur synthetic (audit `04b0ad83`) |
 | Phase 3 | 0 | 16 | 0% | ⏳ Planifié (sécurité) · ✅ DS-Unify Ph3.1-3.5 terminées |
-| Phase 4 | 0 | 8 | 0% | 📅 Backlog |
-| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.5 terminées · Prochain : validation visuelle ou Phase 4 |
+| Phase 4 | 0 | 8 | 0% | 📅 Backlog · 🔴 Session 9 confirme priorité dépréciation `server.js` legacy (`4253382b`) |
+| **Session 9 (2026-07-19)** | **9/12 agents** | **12 agents** | 75% | 🟡 6 commits poussés + 3 locaux à pousser ; 4/5 alertes résolues (SPS ✅, bug boutons ✅, deception synthetic ✅) |
+| **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.5 · Session 9 en cours |
+
+### Alertes actives (post-Session 9)
+
+| # | Alerte | Sévérité | Statut | Propriétaire |
+|---|---|---|---|---|
+| A1 | `pariscore-next` 100% CPU | 🚨 Critique | 🟡 Diagnostic en cours (`cbc0fb8d`) | Ops |
+| A2 | Deception perçue `/setpoint/` + `tennis-live` simu | 🔴 Haute | 🟡 Plan en cours (`8f103161`) · synthetic cards ✅ fixé (`616c502`) | Produit + Dev |
+| A3 | Bugs SPS bloquants (4) | 🔴 Haute | ✅ **RÉSOLU** — P0-1 `bacc68d`, P0-2/P0-3 `af487e1`, P0-4 `bacc68d` | Dev senior |
+| A4 | `pariscore` legacy (id 5) en doublon | 🟡 Moyenne | 📅 Backlog (décision dépréciation) | Dev senior |
+| A5 | 76× 404 `/api/tennis/elo-history` par page | 🟠 Moyenne | 🟡 Fix en cours (`d3e4e50d`) — découvert par audit visuel | Dev |
+| A6 | Bug boutons Analyse/Stratégies (todo 18/07) | ✅ Résolu | ✅ **CLOS** — spécifique au monolithe vanilla non déployé sur pariscore.fr | — |
+
+### 10.1 Synthèse audit visuel prod (`594fa28b`, 22:15-22:25)
+
+**Verdict** : prod visuellement OK, 0 crash, 0 pageerror.
+
+| Cible | Résultat |
+|---|---|
+| Stack pariscore.fr | **Next.js confirmé** (pas le monolithe vanilla) |
+| Synthetic live cards | Code déployé (`66437e2`), **dormant** (0 carte visible — tous live ont prematch) |
+| SPS gauge 270° | ✅ OK — 558 éléments, valeurs 39-64 |
+| Tennis live BSD | ✅ OK — 7 matchs live réels, overlay + scores OK |
+| Polices | ✅ Purge 9→3 weights confirmée ({500, 600, 700}) |
+| Bug boutons Analyse | ✅ Résolu (Dialog Radix fonctionne, `Scope._togglePremier` n'existe pas sur Next.js) |
+| Console | ⚠️ 76× 404 elo-history → A5 |
+
+**Artefacts** : `.context/screenshots/2026-07-19-evening/` (8 fichiers).
 
 ---
 

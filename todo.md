@@ -1,5 +1,175 @@
 # PariScore — Todo / Follow-ups
 
+---
+
+## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Déployer salve + décision simu tennis-live
+
+### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~22:40)
+
+Session orchestrée par dispatch d'agents en parallèle. **9 commits au-dessus de
+`66437e2`** (6 pushés + 3 en attente de push). **Prod visuellement OK**
+(audit Playwright).
+
+**Vérifié en direct sur https://pariscore.fr/** :
+- PM2 `pariscore-next` online, HEAD `66437e2` (pas encore re-build avec la salve)
+- Stack confirmée **Next.js** (X-Powered-By), pas le monolithe vanilla
+- 558 éléments SPS rendus, 7 matchs live BSD réels (Claverie/Kuzuhara, etc.)
+- 0 pageerror, 0 crash React, polices OK (purge 9→3 weights confirmée)
+
+### ✅ Salve de commits prête à pusher (3 locaux + David décide)
+
+| Hash | Sujet | Origine |
+|---|---|---|
+| `616c502` | `fix(tennis): add disclaimer badge for synthetic live cards` | Agent `d57ac9cc` |
+| `af487e1` | `fix(tools): use real circuit in WTA sync + apply norm() to rank matching` | Agent `61a814c1` |
+| `bacc68d` | `fix(tennis): exclude synthetic from rank/elo sort + add experimental badge to SPS` | Agent `587b2d94` |
+| (à venir) | `fix(tennis): skip elo-history fetch for BSD live matches (76× 404/page)` | Agent `d3e4e50d` running |
+
+```bash
+# Push quand validé :
+git push origin main
+# Puis deploy VPS :
+ssh -i $USERPROFILE/.ssh/id_rsa_pariscore ubuntu@51.75.21.239 \
+  'export PATH="/home/ubuntu/.bun/bin:$PATH"; cd ~/pariscore && git pull && bun install && bun run build && pm2 restart pariscore-next'
+```
+
+### 🟡 Décisions en attente de rapports (2 agents running)
+
+#### 🚨 A1 — `pariscore-next` 100% CPU
+
+Agent `cbc0fb8d` enquête (strace/top/perf). Hypothèses : `setInterval` serveur,
+hot loop, polling BSD intensif, memory leak, ou mini-service tennis-live qui
+appelle en boucle. **Fix immédiat dès identification**.
+
+#### 🔴 A2 — Deception perçue scores simulés (3 surfaces)
+
+Agent `8f103161` prépare le plan comparatif :
+- **Option A** — Garder socket.io, remplacer `Math.random` par fetch `/api/tennis/live`
+- **Option B** — Supprimer `tennis-live`, switch frontend SSE direct
+- **Option C** — Hybride : fallback simu SEULEMENT si BSD vide/erreur + disclaimer
+
+**Décision utilisateur** : scope = "tout corriger" → enclencher après réception du plan.
+
+**Surfaces concernées** :
+| # | Surface | Code | Statut |
+|---|---|---|---|
+| 1 | Onglet Tennis (synthetic cards) | `tennis-tab-content.tsx:189-226` | ✅ fixé (`616c502`) — mais dormant en prod ce soir (0 carte synthetic visible) |
+| 2 | Route `/setpoint/` | frontend Next.js | ⏳ à traiter après plan `8f103161` |
+| 3 | Mini-service `tennis-live` | `mini-services/tennis-live/index.ts` (335 lignes) | ⏳ à remplacer (commit `95ff99d` + `14717b9`) |
+
+### ✅ Bugs SPS (audit `b28baee8`) — TOUS FIXÉS ce soir
+
+| # | Bug | Fichier | Fix |
+|---|---|---|---|
+| P0-1 | Tri cassé : `rank: 0` des synthetic devant les vrais #1 | `use-match-filter.ts` | ✅ `bacc68d` — exclut `match.synthetic` + `\|\|` au lieu de `??` |
+| P0-2 | Circuit ATP hardcodé dans sync WTA | `tools/sync-tennis-player-pids.js` | ✅ `af487e1` — lit `r.circuit` depuis source, fallback NULL |
+| P0-3 | `norm()` inutilisé : matching cassé pour noms accentués | `tools/update-tennis-ranks.js` | ✅ `af487e1` — `OR LOWER(nm)=LOWER(?)` + post-filtre `norm()` JS |
+| P0-4 | SPS non calibré + pas de disclaimer | `player-statline.tsx` | ✅ `bacc68d` — badge « beta » + tooltip |
+
+**Backlog SPS reporté** (non bloquant) :
+- `sps-utils.ts` 0 test unitaire (8 fonctions pures)
+- `getSpsIndex` : `HAVING MAX(computed_at)` non-déterministe (SQLite bare column)
+- `extractSPS.rank ?? 999` incohérent avec `fmtSPSRank` (affiche `#999` au lieu de `—`)
+- `getPlayerStatsBatch` : N+1 requêtes (optimisable `IN (...)`)
+- Backtest Brier walk-forward à publier dans la doc SPS
+
+### ✅ Audit visuel Playwright (`594fa28b`) — VERDICT : prod OK
+
+| Cible | Verdict |
+|---|---|
+| Synthetic live cards (`66437e2`) | Code déployé, **dormant** (0 synthetic en prod ce soir — tous live ont prematch ID) |
+| SPS gauge 270° (`671b869`) | ✅ OK — 558 éléments, rendu propre |
+| Tennis live BSD scores réels | ✅ OK — 7 matchs live, overlay + scores OK |
+| Bug boutons Analyse/Stratégies (todo 18/07) | ✅ **RÉSOLU** sur Next.js (Dialog Radix fonctionne). Le bug `Scope._togglePremier`/`[PSCATCH]` était spécifique au monolithe vanilla **non déployé sur pariscore.fr** |
+| Console | ⚠️ 1 bug : 76× 404 `/api/tennis/elo-history` à chaque chargement de page → fix `d3e4e50d` en cours |
+
+**Screenshots** : `.context/screenshots/2026-07-19-evening/` (8 fichiers PNG/JSON).
+
+### ✅ Tous les agents de la session — récap
+
+| Agent | Mission | Statut | Livrable |
+|---|---|---|---|
+| Direct | Vérif VPS | ✅ | Sync `66437e2`, tennis live réel |
+| `04b0ad83` | Sécurité synthetic | ✅ | 0 vuln bloquante, 1 🔴 deception |
+| `4253382b` | Audit processes VPS | ✅ | tennis-live = simu, pariscore-next 100% CPU |
+| `b1f9fb60` | Commits atomiques (6) | ✅ | `ed7e6ad`..`f5eeb9c` |
+| `b28baee8` | Code review SPS | ✅ | 4 bugs bloquants identifiés |
+| `d57ac9cc` | Fix synthetic badge | ✅ | `616c502` |
+| `61a814c1` | Fix tools SPS P0-2/P0-3 | ✅ | `af487e1` |
+| `587b2d94` | Fix frontend SPS P0-1/P0-4 | ✅ | `bacc68d` |
+| `594fa28b` | Audit visuel Playwright | ✅ | Prod OK + bug 404 elo-history découvert |
+| `cbc0fb8d` 🚨 | Diagnostic CPU pariscore-next | 🟡 running | — |
+| `8f103161` | Plan remplacement simu tennis-live | 🟡 running | — |
+| `d3e4e50d` | Fix 404 elo-history | 🟡 running | — |
+
+### Backlog global reporté
+
+- [ ] **Déprécier `pariscore` legacy (id 5)** : monolithe `server.js` 52 435 lignes
+      en doublon avec `pariscore-next`. 458 restarts cumulés (SIGINT = déploiements).
+      `max_memory_restart: 2G` override manuel vs `1G` dans ecosystem.
+- [ ] **Backtest Brier SPS** à publier dans `.context/doc-sps-surface-power-score.md`
+      avant toute mise en avant produit de la métrique (règle `pas de prod sans IC`).
+- [ ] **Tests unitaires** `sps-utils.ts` (8 fonctions pures, 0 test).
+- [ ] **Fix `npm run lint` OOM** sur `.venv-langflow/.../assets/index-CUSa5eDp.js`
+      (Babel parser, >500KB). Problème préexistant confirmé par 2 agents.
+- [ ] **Pérenniser tests Playwright** dans `tests/` (scripts temporaires supprimés).
+- [ ] **Bug bouton tennis sidebar** (rollbacké 2026-07-11) — toujours en backlog.
+
+### Fichiers clés session
+
+| Fichier | Rôle |
+|---|---|
+| `src/components/football/tennis-tab-content.tsx:189-230` | Bloc synthetic cards (badge ajouté en `616c502`) |
+| `src/components/tennis/match-card.tsx:100-101` | Appel `useEloSparkline` (source du 404) |
+| `src/components/tennis/player-statline.tsx` | SPS + badge « beta » (`bacc68d`) |
+| `src/hooks/use-match-filter.ts` | Tri rank/elo (fix `bacc68d`) |
+| `src/app/api/tennis/elo-history/route.ts:26` | Lookup statique → 404 BSD |
+| (VPS) `~/pariscore/mini-services/tennis-live/index.ts` | Simu socket.io port 3001 |
+| (VPS) `~/pariscore/.next/standalone/server.js` | pariscore-next (CPU 100%) |
+
+### Autres tâches reportées (backlog)
+
+- [ ] **Décision `pariscore` legacy (id 5)** : monolithe 52 435 lignes tourne en
+      doublon avec `pariscore-next`. Devrait être déprécié une fois migration
+      confirmée. `max_memory_restart: 2G` override manuel (l'ecosystem dit `1G`).
+- [ ] **Validation visuelle jauge 270°** (Rublev/Baez) — code validé unitairement,
+      pas visuellement.
+- [ ] **Pérenniser tests Playwright** dans `tests/` (scripts temporaires supprimés).
+- [ ] **Beads** : créer un ticket pour tracer ce bug de deception si non résolu.
+
+### Commandes utiles pour demain
+
+```bash
+# État VPS
+ssh -i $USERPROFILE/.ssh/id_rsa_pariscore ubuntu@51.75.21.239 \
+  'export PATH="/home/ubuntu/.bun/bin:$PATH"; pm2 list'
+
+# Diagnostic CPU temps réel
+ssh -i $USERPROFILE/.ssh/id_rsa_pariscore ubuntu@51.75.21.239 \
+  'top -b -n 1 -p $(pgrep -f standalone/server.js)'
+
+# Re-déployer après fix
+ssh -i $USERPROFILE/.ssh/id_rsa_pariscore ubuntu@51.75.21.239 \
+  'export PATH="/home/ubuntu/.bun/bin:$PATH"; cd ~/pariscore && git pull && bun install && bun run build && pm2 restart pariscore-next'
+
+# Mise à jour Graphify
+"/c/Users/David/AppData/Roaming/Python/Python312/Scripts/graphify.exe" update .
+```
+
+### Fichiers clés session
+
+| Fichier | Rôle |
+|---|---|
+| `src/components/football/tennis-tab-content.tsx:189-226` | Bloc synthetic cards live |
+| `src/components/football/tennis-tab-content.tsx:38-50` | `hashColor()` (sécurisé) |
+| `src/hooks/use-live-matches.ts` | Hook source des matchs live BSD |
+| `src/lib/bsd-fetcher.ts:194-305` | `fetchBSDLiveMatches()` → BSD `/api/v2/matches/live/` |
+| `src/app/api/tennis/live/route.ts` | Cache TTL 30s, `BSD_TENNIS_ENABLED` gate |
+| (VPS) `~/pariscore/mini-services/tennis-live/index.ts` | Simu socket.io port 3001 |
+| (VPS) `~/pariscore/.next/standalone/server.js` | Pariscore-next (CPU 100%) |
+
+---
+
 ## 🔴 PRIORITÉ DEMAIN (2026-07-18) — Debug boutons Analyse/Stratégies carte prematch
 
 ### Contexte (où on s'est arrêtés, 2026-07-17 soir)

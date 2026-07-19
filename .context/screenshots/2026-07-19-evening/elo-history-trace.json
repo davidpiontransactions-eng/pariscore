@@ -1,0 +1,281 @@
+{
+  "eloCalls": [
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43038",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43054",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43048",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43051",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42945",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43053",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43052",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43041",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42975",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42943",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42973",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42940",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42941",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43098",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43095",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43105",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42936",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43108",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43109",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43110",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42939",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42938",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42970",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42971",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42966",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42967",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43102",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43104",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43120",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43097",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43035",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43047",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43046",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43126",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43049",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42993",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43082",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43054",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43051",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42945",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43053",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43052",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43041",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42975",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42940",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43098",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43105",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43108",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42938",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42970",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42971",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42966",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42967",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43102",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43104",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43120",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43097",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43047",
+      "at": "pre"
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43046",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43126",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43049",
+      "at": "pre",
+      "status": 404
+    },
+    {
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42993",
+      "at": "pre",
+      "status": 404
+    }
+  ],
+  "statusCounts": {
+    "404": 17,
+    "pending": 45
+  },
+  "sampleMatchIds": [
+    "bsd-43038",
+    "bsd-43054",
+    "bsd-43048",
+    "bsd-43051",
+    "bsd-42945"
+  ],
+  "openedVia": "card-click-fallback"
+}

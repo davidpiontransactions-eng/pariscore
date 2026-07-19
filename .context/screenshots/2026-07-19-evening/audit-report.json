@@ -1,0 +1,500 @@
+{
+  "meta": {
+    "url": "https://pariscore.fr/",
+    "ts": "2026-07-19T20:18:28.959Z",
+    "viewport": "1440x900 desktop"
+  },
+  "console": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43039"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43038"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43054"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43048"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43051"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42945"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43053"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43052"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43041"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42975"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42943"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42973"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42940"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42941"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43098"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43095"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43105"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42936"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43108"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43109"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43110"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42939"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42938"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42970"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42971"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42966"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42967"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43102"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43104"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43120"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42996"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43035"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43047"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43046"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43126"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43049"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42993"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43082"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43039"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43054"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42945"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43052"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42943"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42940"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43098"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43095"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43109"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43110"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42939"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42938"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42971"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43102"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42996"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43035"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43046"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43049"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43038"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43048"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43051"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43053"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43041"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42975"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42973"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42941"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43105"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42936"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43108"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42970"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42966"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42967"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43104"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43120"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43047"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43126"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-42993"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "https://pariscore.fr/api/tennis/elo-history?matchId=bsd-43082"
+    }
+  ],
+  "pageerrors": [],
+  "requests_failed": [],
+  "steps": [
+    {
+      "step": "01-home",
+      "status": "PASS",
+      "notes": "title=\"SetPoint · Tennis Prematch\""
+    },
+    {
+      "step": "stack-detect",
+      "status": "PASS",
+      "notes": "Next.js=true chunks=20 monolithe=false"
+    },
+    {
+      "step": "tennis-nav-candidates",
+      "status": "PASS",
+      "notes": "[{\"tag\":\"BUTTON\",\"txt\":\"tennis\",\"href\":\"\",\"aria\":\"\"}]"
+    },
+    {
+      "step": "tennis-nav-click",
+      "status": "PASS",
+      "notes": "clicked \"tennis\" (BUTTON)"
+    },
+    {
+      "step": "tennis-tab-reached",
+      "status": "PASS",
+      "notes": "ok"
+    },
+    {
+      "step": "02-tennis-prematch",
+      "status": "PASS",
+      "notes": "screenshot captured"
+    },
+    {
+      "step": "tennis-domfacts",
+      "status": "PASS",
+      "notes": "cards=130 liveOverlayEls=56 syntheticBadges=0 spsEls=558 fiftyFifty=2"
+    },
+    {
+      "step": "03-tennis-live-card",
+      "status": "PASS",
+      "notes": "live overlay card captured"
+    },
+    {
+      "step": "04-synthetic-card",
+      "status": "WARN",
+      "notes": "no synthetic card visible (locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator()"
+    },
+    {
+      "step": "05-card-detail-panel",
+      "status": "PASS",
+      "notes": "Dialog opened via card click (fallback)"
+    },
+    {
+      "step": "console-during-detail-click",
+      "status": "PASS",
+      "notes": "0 new console msgs; PSCATCH banner: no"
+    },
+    {
+      "step": "06-console-after-click",
+      "status": "PASS",
+      "notes": "console/network JSON + page snapshot saved"
+    }
+  ],
+  "domfacts": {
+    "title": "SetPoint · Tennis Prematch",
+    "xPoweredBy": "",
+    "bodyClass": "geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable antialiased bg-background text-foreground",
+    "stack": {
+      "hasNext": true,
+      "hasMonolithe": false,
+      "nextChunkCount": 20,
+      "fontLinks": []
+    },
+    "tennisTriggers": [
+      {
+        "tag": "BUTTON",
+        "txt": "tennis",
+        "href": "",
+        "aria": ""
+      }
+    ],
+    "tennis": {
+      "cardCount": 130,
+      "liveOverlayElCount": 56,
+      "syntheticBadgeCount": 0,
+      "syntheticBadgeTexts": [],
+      "fiftyFiftyCount": 2,
+      "spsElCount": 558,
+      "spsSample": [
+        {
+          "text": "SetPoint · Tennis Prematch{\"@context\":\"https://schema.org\",\"",
+          "style": "color-scheme: dark;"
+        },
+        {
+          "text": "((a,b,c,d,e,f,g,h)=>{let i=document.documentElement,j=[\"ligh",
+          "style": ""
+        }
+      ],
+      "fontWeights": [
+        "700",
+        "500",
+        "600"
+      ]
+    },
+    "detailOpened": true,
+    "consoleErrorsDuringClick": [],
+    "crashFlag": {
+      "__SETPOINT_CRASH": null
+    }
+  }
+}
