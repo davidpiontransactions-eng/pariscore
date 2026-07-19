@@ -4,11 +4,72 @@
 
 ## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + push fix elo-history
 
-### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~23:20)
+### 🚨 BUG CRITIQUE EN COURS (2026-07-19 23:35) — ErrorBoundary en prod
 
-Session orchestrée par dispatch d'agents en parallèle. **12 commits poussés sur
-origin/main** (`66437e2`..`ce26a61`), **2 deploys VPS** + nginx patché +
-hot loop CPU tué à la racine. **Prod stable et optimisée**.
+**Symptôme** : https://pariscore.fr/ affiche l'ErrorBoundary
+"Une erreur est survenue" au lieu du contenu normal. Serveur 200 OK,
+pas d'erreur loggée → **crash runtime côté client (React)**.
+
+**Survenu après** : deploy des commits récents (`616c502`, `af487e1`,
+`bacc68d`, `ce26a61`, `fb7d3cd`).
+
+**Investigation en cours** (3 pistes parallèles) :
+
+1. **Agent `d65005ad`** (Playwright) — capture la stack trace navigateur
+2. **Agent `9cb6f341`** (skill `code-reviewer`) — analyse statique des 4 commits
+3. **Investigation manuelle** — grep ciblé des suspects
+
+**Causes ÉLIMINÉES par investigation manuelle** :
+- ❌ Refactor `cached-route.ts` cassé → imports/exports OK, pas utilisé côté client
+- ❌ Imports manquants `Tooltip`/`Badge` → présents
+- ❌ Clés i18n manquantes (`spsExperimentalBadge`, `syntheticBadge`) → présentes en fr+en
+- ❌ Namespaces i18n (`match`, `tennis`, `statline`...) → tous définis
+- ❌ API `/api/tennis/elo-history` qui crash → renvoie 404 JSON valide, hook gère
+
+**Suspects restants** (à confirmer via stack trace) :
+1. Hydration mismatch (`Date.now()`, `Math.random()` au render)
+2. Re-render infini (`useMemo` avec `favorites: Set<string>` recréé)
+3. `usePlayerStats` ou `useEloSparkline` qui throw au mount
+4. Bug apparaissant uniquement en **build standalone** (minification/tree-shaking)
+
+**Éliminé par investigation locale** :
+- ❌ Reproduit en `bun run dev` : la page rend normalement (HTTP 200, SetPoint
+  title présent, dictionnaire i18n complet). Le "Une erreur est survenue" n'est
+  que la clé i18n sérialisée dans `__NEXT_DATA__`, pas l'ErrorBoundary rendu.
+- ❌ Crash **non reproductible en dev** → typique d'un bug qui n'apparaît
+  qu'en build standalone optimisé.
+
+**Décision** : attendre les 2 agents (`d65005ad` Playwright prod + `9cb6f341`
+code-reviewer) pour stack trace exacte. Fix ciblé ensuite, sans rollback
+des fonctionnalités utiles (synthetic badge + SPS disclaimer).
+
+**Théorie principale** (à valider par stack trace) :
+- `bacc68d` ajoute un `<Tooltip>` Radix dans `player-statline.tsx`
+- Rendu **558 fois** sur la page (chaque SPS visible)
+- Pendant l'hydration, Radix attache des PointerEvent listeners + utilise `useId()`
+- Si ordre/id diffère entre SSR et client → **hydration error** → ErrorBoundary catch
+- Le HTML serveur est valide (83 Ko, contient SetPoint), mais l'hydration client casse
+
+**Scénarios de fix préparés** :
+1. **Si Playwright confirme Tooltip** → fix chirurgical : wrapper dans `<Suspense>`
+   + `dynamic()` (rendu client-only) ou enlever le Tooltip (badge statique)
+2. **Si Playwright pointe ailleurs** → revert ciblé du composant coupable
+
+**Confirmation SSR** : `curl` direct à `localhost:3005` (bypass nginx) retourne
+HTTP 200 + HTML valide 83 Ko contenant "SetPoint". Pas d'erreur serveur.
+→ Le crash est **strictement côté client** (hydration React).
+
+**ErrorBoundary actif** : `SentryErrorBoundary` dans `src/app/layout.tsx:167`
+englobe `{children}` → attrape n'importe quelle erreur du rendu page. Affiche
+"L'équipe a été notifiée" + bouton "Recharger la page".
+
+---
+
+### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~23:25)
+
+Session orchestrée par dispatch d'agents en parallèle. **13 commits poussés sur
+origin/main** (`66437e2`..`fb7d3cd`), **3 deploys VPS** + nginx patché +
+hot loop CPU tué à la racine. **Prod stable et optimisée** (avant bug).
 
 **Vérifié en direct sur https://pariscore.fr/** :
 - PM2 `pariscore-next` online sur HEAD `ce26a61`, CPU **0% stable** en steady state
