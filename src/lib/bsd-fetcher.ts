@@ -6,6 +6,14 @@ import { predict, type PlayerInputs } from "@/lib/prediction/engine";
 import { findPlayerElo } from "@/lib/player-matcher";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 
+/** Tournois à exclure (UTR Pro, exhibitions) */
+const EXCLUDED_TOURNAMENTS = [/utr/i, /exhibition/i, /expo/i, /hopman/i, /laver\s*cup/i];
+
+function isExcludedTournament(name?: string): boolean {
+  if (!name) return false;
+  return EXCLUDED_TOURNAMENTS.some((re) => re.test(name));
+}
+
 const BSD_BASE = "https://sports.bzzoiro.com/tennis";
 const BSD_PHOTO_BASE = "https://sports.bzzoiro.com/img/tennis-player";
 
@@ -198,7 +206,9 @@ export async function fetchBSDMatches(): Promise<TennisMatch[]> {
   const matches = await bsdFetch("/api/v2/matches/?status=scheduled&limit=200");
 
   const tennisMatches: TennisMatch[] = [];
-  for (let i = 0; i < matches.length && tennisMatches.length < 10; i++) {
+  for (let i = 0; i < matches.length && tennisMatches.length < 30; i++) {
+    const bsdMatch = matches[i];
+    if (isExcludedTournament(bsdMatch.tournament?.name)) continue;
     const m = buildMatch(matches[i], i);
     if (m) tennisMatches.push(m);
   }
