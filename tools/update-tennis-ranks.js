@@ -89,9 +89,14 @@ function main() {
 
     log('INFO', `Found ${players.length} players in tennis_players_elo`);
 
-    // 2. Préparer la requête du dernier rang connu pour un nom donné
+    // 2. Préparer la requête du dernier rang connu pour un nom donné.
+    //    On match en SQL sur LOWER(nm) = LOWER(?) avec le nom BRUT en paramètre,
+    //    ET en OR avec le nom NORMALISÉ via norm() (sans accents) pour gérer les
+    //    noms accentués stockés différemment entre tennis_players_elo et
+    //    tennis_matches. LIMIT 20 car plusieurs candidats peuvent correspondre
+    //    en SQL (accents vs pas d'accents) ; on affine ensuite en JS via norm().
     const stmtLatestRank = db.prepare(`
-      SELECT rk, tour FROM (
+      SELECT nm, rk, td, tour FROM (
         SELECT winner_name AS nm, winner_rank AS rk, tourney_date AS td, tour
         FROM tennis_matches
         WHERE winner_rank IS NOT NULL AND winner_rank > 0
@@ -100,9 +105,9 @@ function main() {
         FROM tennis_matches
         WHERE loser_rank IS NOT NULL AND loser_rank > 0
       )
-      WHERE LOWER(nm) = LOWER(?)
+      WHERE LOWER(nm) = LOWER(?) OR LOWER(nm) = LOWER(?)
       ORDER BY td DESC
-      LIMIT 1
+      LIMIT 20
     `);
 
     // 3. Pour chaque joueur, trouver le dernier rang
@@ -125,7 +130,15 @@ function main() {
           continue;
         }
 
-        const row = stmtLatestRank.get(p.player_name);
+        // Matching par nom normalisé : on passe le nom BRUT et le nom norm()
+        // (sans accents) à la requête SQL, puis on affine en JS pour ne garder
+        // que le candidat dont norm(nm) === norm(player_name). C'était le bug
+        // P0-3 : avant on passait p.player_name BRUT à une query qui ne
+        // normalisait QUE la casse, ce qui cassait le matching pour tout nom
+        // accentué.
+        const normalized = norm(p.player_name);
+        const candidates = stmtLatestRank.all(p.player_name, normalized);
+        const row = candidates.find(c => norm(c.nm) === normalized);
         if (!row || !row.rk) {
           skipped++;
           continue;

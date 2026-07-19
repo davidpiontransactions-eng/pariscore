@@ -56,7 +56,7 @@ function main() {
     let skipped = 0;
 
     const srcPss = db.prepare(`
-      SELECT surface, sps, confidence_full, matches_played, computed_at
+      SELECT surface, sps, confidence_full, matches_played, computed_at, circuit
       FROM player_surface_scores
       WHERE player_id = ?
     `);
@@ -112,10 +112,14 @@ function main() {
           db.prepare('DELETE FROM player_surface_scores WHERE player_id = ?').run(targetPid);
 
           // Copier les nouvelles
+          // NOTE: circuit est lu depuis la source (player_surface_scores).
+          // On ne hardcode JAMAIS 'ATP' — si la source est NULL, on propage NULL
+          // plutôt que de polluer la colonne circuit pour les synchs WTA.
           for (const r of rows) {
+            const circuit = r.circuit != null ? r.circuit : null;
             dstInsert.run(
               targetPid, r.surface, `sync-${targetPid}-${r.surface}`,
-              'ATP', r.sps, r.sps || 0,
+              circuit, r.sps, r.sps || 0,
               r.confidence_full, r.matches_played, r.computed_at
             );
           }
