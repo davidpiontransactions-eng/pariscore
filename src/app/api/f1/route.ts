@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
+import { createRequire } from "module";
 
 const CACHE_TTL = 30 * 60_000;
 let cache: { data: unknown; at: number } | null = null;
 
-async function loadF1Service() {
-  return await import("../../../../../services/f1Service");
-}
+const _require = createRequire(import.meta.url);
 
 export async function GET() {
   const now = Date.now();
@@ -15,7 +14,7 @@ export async function GET() {
   }
 
   try {
-    const f1Service = await loadF1Service();
+    const f1Service = _require("../../../../../services/f1Service");
     const [driversData, racesData] = await Promise.all([
       f1Service.getF1Drivers(),
       f1Service.getF1Races(),
