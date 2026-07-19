@@ -1,8 +1,8 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-19 (Session 9 — orchestration multi-agents tennis-live + deception perçue + CPU pariscore-next)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-19 (Session 9 — deploy bc2805f + nginx patch football/nba/wnba)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟡 **Session 9 (2026-07-19)** : 6 commits poussés (`ed7e6ad`..`f5eeb9c`), VPS sync, 2 alertes ouvertes (CPU pariscore-next + deception perçue synthetic/simu)
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟢 **Session 9 (2026-07-19)** : 10 commits poussés (`ed7e6ad`..`bc2805f`), VPS déployé + nginx patché, 5/6 alertes résolues (SPS ✅, boutons ✅, deception synthetic ✅, nginx ✅, hot loop killed ✅)
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
 
 ---
@@ -605,16 +605,18 @@ Le Gantt est mis à jour quand :
 | **Session 9 (2026-07-19)** | **9/12 agents** | **12 agents** | 75% | 🟡 6 commits poussés + 3 locaux à pousser ; 4/5 alertes résolues (SPS ✅, bug boutons ✅, deception synthetic ✅) |
 | **Total** | **20** | **48** | **42%** | 🟢 Phase 1 done · DS-Unify Ph1-3.5 · Session 9 en cours |
 
-### Alertes actives (post-Session 9)
+### Alertes actives (post-Session 9, post-deploy 22:42)
 
 | # | Alerte | Sévérité | Statut | Propriétaire |
 |---|---|---|---|---|
-| A1 | `pariscore-next` 100% CPU | 🚨 Critique | 🟡 Diagnostic en cours (`cbc0fb8d`) | Ops |
+| A1 | `pariscore-next` 100% CPU | 🟡 Contenu | ✅ **Tué par restart** — piste : hot loop `[bsd] Fetched 30 matches`. À monitorer demain (revient-il ?) | Ops |
 | A2 | Deception perçue `/setpoint/` + `tennis-live` simu | 🔴 Haute | 🟡 Plan en cours (`8f103161`) · synthetic cards ✅ fixé (`616c502`) | Produit + Dev |
 | A3 | Bugs SPS bloquants (4) | 🔴 Haute | ✅ **RÉSOLU** — P0-1 `bacc68d`, P0-2/P0-3 `af487e1`, P0-4 `bacc68d` | Dev senior |
 | A4 | `pariscore` legacy (id 5) en doublon | 🟡 Moyenne | 📅 Backlog (décision dépréciation) | Dev senior |
-| A5 | 76× 404 `/api/tennis/elo-history` par page | 🟠 Moyenne | 🟡 Fix en cours (`d3e4e50d`) — découvert par audit visuel | Dev |
-| A6 | Bug boutons Analyse/Stratégies (todo 18/07) | ✅ Résolu | ✅ **CLOS** — spécifique au monolithe vanilla non déployé sur pariscore.fr | — |
+| A5 | 76× 404 `/api/tennis/elo-history` par page | 🟠 Moyenne | 🟡 Fix en cours (`d3e4e50d`) — pas dans le deploy du soir | Dev |
+| A6 | Bug boutons Analyse/Stratégies | ✅ Résolu | ✅ **CLOS** — spécifique au monolithe vanilla non déployé | — |
+| A7 | nginx catch-all `/api/` → :8000 (legacy) | 🔴 Haute | ✅ **RÉSOLU** — 3 règles football/nba/wnba → :3005, tous endpoints 200 | Ops |
+| A8 | Hot loop `[bsd] Fetched 30 matches` | 🟠 Moyenne | 🟡 Tué par restart, origine exacte à confirmer (`cbc0fb8d`) | Ops |
 
 ### 10.1 Synthèse audit visuel prod (`594fa28b`, 22:15-22:25)
 

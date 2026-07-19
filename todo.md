@@ -2,60 +2,77 @@
 
 ---
 
-## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Déployer salve + décision simu tennis-live
+## 🔴 PRIORITÉ DEMAIN (2026-07-20) — Décision simu tennis-live + bug 404 elo-history
 
-### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~22:40)
+### Contexte (où on s'est arrêtés, 2026-07-19 soir, ~22:45)
 
-Session orchestrée par dispatch d'agents en parallèle. **9 commits au-dessus de
-`66437e2`** (6 pushés + 3 en attente de push). **Prod visuellement OK**
-(audit Playwright).
+Session orchestrée par dispatch d'agents en parallèle. **10 commits poussés sur
+origin/main** (`66437e2`..`bc2805f`), **deploy VPS réussi** (HEAD `bc2805f`),
+nginx patché pour football/NBA/WNBA. **Prod 100% fonctionnelle** post-deploy.
 
 **Vérifié en direct sur https://pariscore.fr/** :
-- PM2 `pariscore-next` online, HEAD `66437e2` (pas encore re-build avec la salve)
-- Stack confirmée **Next.js** (X-Powered-By), pas le monolithe vanilla
-- 558 éléments SPS rendus, 7 matchs live BSD réels (Claverie/Kuzuhara, etc.)
-- 0 pageerror, 0 crash React, polices OK (purge 9→3 weights confirmée)
+- PM2 `pariscore-next` online sur HEAD `bc2805f`, CPU revenu à 0% après restart
+- `/api/football/matches` `/api/football/live` `/api/football/prematch` → 200 (World Cup 2026, NWSL)
+- `/api/nba/matches` `/api/wnba/matches` → 200
+- `/api/tennis/live` → 200 (Claverie/Kuzuhara, sets `[6-4, 4-6, 6-5]`)
+- `/api/f1` → 200
 
-### ✅ Salve de commits prête à pusher (3 locaux + David décide)
+### ✅ Deploy du soir (22:35–22:42)
 
-| Hash | Sujet | Origine |
+| Action | Résultat |
+|---|---|
+| `git push origin main` | `f5eeb9c..bc2805f` (5 commits) |
+| `git pull` sur VPS | `66437e2` → `bc2805f` |
+| `bun install` | 3 packages removed, better-sqlite3/sharp rebuilt |
+| `bun run build` | ✅ succès, tous endpoints compilés |
+| `pm2 restart pariscore-next` | online pid 1705654, uptime OK |
+| **CPU post-restart** | **0%** (le hot loop `[bsd] Fetched 30 matches` a été tué) |
+| **nginx patch** | 3 règles `/api/football/`, `/api/nba/`, `/api/wnba/` → :3005 |
+
+### 🔴 Découvertes critiques du deploy
+
+#### N1 — Bug préexistant nginx (résolu)
+
+Le catch-all `location /api/ { proxy_pass http://127.0.0.1:8000/; }` pointait
+vers le monolithe legacy (port 8000, down). Routes sans règle explicite
+(football, nba, wnba) → 404. **Patch appliqué** : 3 règles explicites ajoutées.
+
+- Backup : `/home/ubuntu/nginx-backups/pariscore.bak-20260719-223957`
+- Diff : ajout de 3 blocs `location /api/{football,nba,wnba}/` avant le catch-all
+- `nginx -t` OK + `systemctl reload nginx` OK
+- Toutes les routes testées → 200
+
+#### N2 — Hot loop `[bsd] Fetched 30 matches` (cause probable CPU 100%)
+
+Avant restart, les logs montraient **70× `[bsd] Fetched 30 matches`** dans les
+100 dernières lignes. Le restart a tué le hot loop → CPU revenu à 0%.
+
+→ **À investiguer demain** : identifier l'origine du polling BSD intensif
+(probable `setInterval` court côté serveur ou client). L'agent `cbc0fb8d` tourne
+toujours en background.
+
+#### N3 — Bug 404 elo-history toujours présent
+
+Le fix `d3e4e50d` (skip fetch pour BSD) n'était pas encore commit au moment du
+deploy. À pusher dans une prochaine salve.
+
+### 🟡 Décisions en attente de rapports (3 agents running)
+
+#### 🚨 A1 — `pariscore-next` 100% CPU (piste : hot loop BSD)
+
+Agent `cbc0fb8d` enquête. Piste forte : `[bsd] Fetched 30 matches` spam observé
+dans les logs avant restart. CPU revenu à 0% après restart — confirmer demain
+si le hot loop revient.
+
+#### 🔴 A2 — Deception perçue scores simulés (scope 2/3 résolu)
+
+| # | Surface | Statut |
 |---|---|---|
-| `616c502` | `fix(tennis): add disclaimer badge for synthetic live cards` | Agent `d57ac9cc` |
-| `af487e1` | `fix(tools): use real circuit in WTA sync + apply norm() to rank matching` | Agent `61a814c1` |
-| `bacc68d` | `fix(tennis): exclude synthetic from rank/elo sort + add experimental badge to SPS` | Agent `587b2d94` |
-| (à venir) | `fix(tennis): skip elo-history fetch for BSD live matches (76× 404/page)` | Agent `d3e4e50d` running |
+| 1 | Onglet Tennis (synthetic cards) | ✅ fixé (`616c502`) — dormant en prod ce soir |
+| 2 | Route `/setpoint/` | ⏳ à traiter après plan `8f103161` |
+| 3 | Mini-service `tennis-live` | ⏳ à remplacer (commit `95ff99d` + `14717b9`) |
 
-```bash
-# Push quand validé :
-git push origin main
-# Puis deploy VPS :
-ssh -i $USERPROFILE/.ssh/id_rsa_pariscore ubuntu@51.75.21.239 \
-  'export PATH="/home/ubuntu/.bun/bin:$PATH"; cd ~/pariscore && git pull && bun install && bun run build && pm2 restart pariscore-next'
-```
-
-### 🟡 Décisions en attente de rapports (2 agents running)
-
-#### 🚨 A1 — `pariscore-next` 100% CPU
-
-Agent `cbc0fb8d` enquête (strace/top/perf). Hypothèses : `setInterval` serveur,
-hot loop, polling BSD intensif, memory leak, ou mini-service tennis-live qui
-appelle en boucle. **Fix immédiat dès identification**.
-
-#### 🔴 A2 — Deception perçue scores simulés (3 surfaces)
-
-Agent `8f103161` prépare le plan comparatif :
-- **Option A** — Garder socket.io, remplacer `Math.random` par fetch `/api/tennis/live`
-- **Option B** — Supprimer `tennis-live`, switch frontend SSE direct
-- **Option C** — Hybride : fallback simu SEULEMENT si BSD vide/erreur + disclaimer
-
-**Décision utilisateur** : scope = "tout corriger" → enclencher après réception du plan.
-
-**Surfaces concernées** :
-| # | Surface | Code | Statut |
-|---|---|---|---|
-| 1 | Onglet Tennis (synthetic cards) | `tennis-tab-content.tsx:189-226` | ✅ fixé (`616c502`) — mais dormant en prod ce soir (0 carte synthetic visible) |
-| 2 | Route `/setpoint/` | frontend Next.js | ⏳ à traiter après plan `8f103161` |
-| 3 | Mini-service `tennis-live` | `mini-services/tennis-live/index.ts` (335 lignes) | ⏳ à remplacer (commit `95ff99d` + `14717b9`) |
+Agent `8f103161` prépare le plan comparatif (Option A/B/C).
 
 ### ✅ Bugs SPS (audit `b28baee8`) — TOUS FIXÉS ce soir
 
