@@ -48,6 +48,9 @@
     "sortEloAsc": "Elo ↑",
     "sortEloDesc": "Elo ↓"
   },
+  "tennis": {
+    "syntheticBadge": "Données live limitées — pas de modèle prédictif"
+  },
   "match": {
     "win": "WIN",
     "vs": "VS",

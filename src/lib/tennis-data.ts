@@ -70,6 +70,11 @@ export type TennisMatch = {
   allOdds?: BookmakerOdd[];
   // H2H detailed history for the detail page (Itération 3)
   h2hHistory?: H2HMatch[];
+  // Flag set on synthetic live-only cards (BSD match with no prematch ID):
+  // all predictive values (probA/probB, form, elo gap, IC, confidence) are
+  // placeholders. MatchCard renders a disclaimer badge and hides the fake
+  // predictive components to avoid perceived deception.
+  synthetic?: boolean;
 };
 
 export type BookmakerOdd = {

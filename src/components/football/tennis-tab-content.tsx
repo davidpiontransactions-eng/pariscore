@@ -223,6 +223,7 @@ export function TennisTabContent() {
         },
         model: "Live",
         modelUpdatedAt: new Date().toISOString(),
+        synthetic: true,
       });
     }
 

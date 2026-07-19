@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProbabilityBar } from "./probability-bar";
 import { FormDots } from "./form-dots";
@@ -26,6 +26,7 @@ import { useEmailAlerts } from "@/hooks/use-email-alerts";
 import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";
 import { usePlayerStats } from "@/hooks/use-player-stats";
+import { Badge } from "@/components/ui/badge";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
 // des stats enrichies. Identique à player-matcher.ts:normalize et db.ts.
@@ -79,6 +80,7 @@ export function MatchCard({
 }: Props) {
   const t = useTranslations("match");
   const tSlip = useTranslations("betSlip");
+  const tTennis = useTranslations("tennis");
   const { terminalMode } = useTerminalMode();
   const [open, setOpen] = useState(defaultOpen);
   // Terminal mode forces the stats chips to be always expanded — power
@@ -101,6 +103,11 @@ export function MatchCard({
   const bestOddA = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalA > max.decimalA ? o : max)) : null;
   const bestOddB = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalB > max.decimalB ? o : max)) : null;
   const { playerA, playerB, stats, modelUpdatedAt } = match;
+
+  // Synthetic live-only cards (no prematch ID): all predictive values are
+  // placeholders. We hide the fake predictive UI and show a disclaimer badge
+  // instead, to avoid the perceived deception flagged by the security audit.
+  const isSynthetic = match.synthetic === true;
 
   // Stats enrichies (Elo Surface, SPS, rangs) depuis pariscore.db. Un seul
   // fetch SWR pour les 2 joueurs du match, indexé par nom normalisé. Retourne
@@ -277,14 +284,16 @@ export function MatchCard({
               sparklineData={sparklineA}
               terminalMode={terminalMode}
             />
-            <div className="mt-1.5">
-              <FormDots
-                form={playerA.form}
-                color={playerA.color}
-                size="sm"
-                ariaLabel={`Forme récente ${playerA.name}`}
-              />
-            </div>
+            {!isSynthetic && (
+              <div className="mt-1.5">
+                <FormDots
+                  form={playerA.form}
+                  color={playerA.color}
+                  size="sm"
+                  ariaLabel={`Forme récente ${playerA.name}`}
+                />
+              </div>
+            )}
             {bestOddA && (
               <BestOddBadge
                 decimal={bestOddA.decimalA}
@@ -292,14 +301,25 @@ export function MatchCard({
                 className="mt-2"
               />
             )}
-            <QuickAddRing
-              prob={probA}
-              color={playerA.color}
-              winLabel={t("win")}
-              terminalMode={terminalMode}
-              onQuickAdd={() => handleQuickAdd("A")}
-              quickAddLabel={tSlip("quickAdd", { player: playerA.name })}
-            />
+            {isSynthetic ? (
+              <Badge
+                variant="outline"
+                className="mt-3 gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400"
+                title={tTennis("syntheticBadge")}
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {tTennis("syntheticBadge")}
+              </Badge>
+            ) : (
+              <QuickAddRing
+                prob={probA}
+                color={playerA.color}
+                winLabel={t("win")}
+                terminalMode={terminalMode}
+                onQuickAdd={() => handleQuickAdd("A")}
+                quickAddLabel={tSlip("quickAdd", { player: playerA.name })}
+              />
+            )}
           </PlayerBlock>
           <div className="flex items-center justify-center sm:py-0">
             <div
@@ -326,14 +346,16 @@ export function MatchCard({
               sparklineData={sparklineB}
               terminalMode={terminalMode}
             />
-            <div className="mt-1.5">
-              <FormDots
-                form={playerB.form}
-                color={playerB.color}
-                size="sm"
-                ariaLabel={`Forme récente ${playerB.name}`}
-              />
-            </div>
+            {!isSynthetic && (
+              <div className="mt-1.5">
+                <FormDots
+                  form={playerB.form}
+                  color={playerB.color}
+                  size="sm"
+                  ariaLabel={`Forme récente ${playerB.name}`}
+                />
+              </div>
+            )}
             {bestOddB && (
               <BestOddBadge
                 decimal={bestOddB.decimalB}
@@ -341,22 +363,35 @@ export function MatchCard({
                 className="mt-2"
               />
             )}
-            <QuickAddRing
-              prob={probB}
-              color={playerB.color}
-              winLabel={t("win")}
-              terminalMode={terminalMode}
-              onQuickAdd={() => handleQuickAdd("B")}
-              quickAddLabel={tSlip("quickAdd", { player: playerB.name })}
-            />
+            {isSynthetic ? (
+              <Badge
+                variant="outline"
+                className="mt-3 gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400"
+                title={tTennis("syntheticBadge")}
+              >
+                <AlertTriangle className="h-3 w-3" />
+                {tTennis("syntheticBadge")}
+              </Badge>
+            ) : (
+              <QuickAddRing
+                prob={probB}
+                color={playerB.color}
+                winLabel={t("win")}
+                terminalMode={terminalMode}
+                onQuickAdd={() => handleQuickAdd("B")}
+                quickAddLabel={tSlip("quickAdd", { player: playerB.name })}
+              />
+            )}
           </PlayerBlock>
         </div>
 
         {/* Terminal mode: ProbabilityBar with IC bracket + decomposition —
             always visible for power users, replacing the per-player rings
             with a single dense horizontal bar that exposes the IC 95%
-            bracket and the Elo / Forme / H2H weight decomposition inline. */}
-        {terminalMode && (
+            bracket and the Elo / Forme / H2H weight decomposition inline.
+            Skipped for synthetic cards: the IC bracket and weights would
+            be placeholders. */}
+        {terminalMode && !isSynthetic && (
           <div className="mt-4">
             <ProbabilityBar
               probA={probA}
@@ -444,8 +479,9 @@ export function MatchCard({
 
       {/* Stats chips — fusion C (collapsed in A/B variant "chips_collapsed").
           In terminal mode the chips are ALWAYS expanded (power-user view),
-          so we hide the collapse affordance entirely. */}
-      {chipsCollapsedByDefault && !terminalMode && (
+          so we hide the collapse affordance entirely. Skipped entirely for
+          synthetic cards: Surface / Écart Elo / IC 95% are placeholders. */}
+      {chipsCollapsedByDefault && !terminalMode && !isSynthetic && (
         <div className="px-4 sm:px-6">
           <button
             type="button"
@@ -465,7 +501,7 @@ export function MatchCard({
         </div>
       )}
 
-      {chipsExpanded && (
+      {chipsExpanded && !isSynthetic && (
         <div className="px-4 pb-4 sm:px-6">
           <StatsIndicatorsGrid
             stats={stats}

@@ -48,6 +48,9 @@
     "sortEloAsc": "Elo ↑",
     "sortEloDesc": "Elo ↓"
   },
+  "tennis": {
+    "syntheticBadge": "Limited live data — no predictive model"
+  },
   "match": {
     "win": "WIN",
     "vs": "VS",
