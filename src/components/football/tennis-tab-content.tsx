@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, lazy, Suspense, Component, type ReactNode } from "react";
+import { useState, useMemo, lazy, Suspense, Component, type ReactNode } from "react";
 import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
@@ -35,6 +35,14 @@ import {
 import { BetDialog } from "@/components/bet-dialog";
 import { cn } from "@/lib/utils";
 
+/** Simple deterministic color from a string. Used for synthetic live-match cards. */
+function hashColor(s: string): string {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  const hue = Math.abs(h) % 360;
+  return `hsl(${hue}, 60%, 40%)`;
+}
+
 class TennisErrorBoundary extends Component<
   { children: ReactNode },
   { error: Error | null }
@@ -66,7 +74,7 @@ export function TennisTabContent() {
   const tTerminal = useTranslations("terminal");
 
   const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
-  const { liveStates, connectionStatus, latency } = useLiveMatches();
+  const { liveStates, liveMatchList, connectionStatus, latency } = useLiveMatches();
   const { favorites, count: favCount } = useFavorites();
   const { terminalMode } = useTerminalMode();
   const { track, getVariant, reloadFlags, setPersonProperties } = useAnalytics();
@@ -158,9 +166,70 @@ export function TennisTabContent() {
     track("page_view", { route: "/", tab: "tennis_prematch" });
   }, [track]);
 
+  // Merge live-only matches as synthetic cards: some live matches (e.g. ITF futures)
+  // never appear in the prematch scheduled endpoint because BSD separates by status.
+  // We build minimal TennisMatch objects so the MatchCard can render them with live overlays.
   const matches: TennisMatch[] = data?.matches ?? [];
 
-  const { filtered, valueBetCount } = useMatchFilter(matches, filter, favorites, sortKey);
+  const matchesWithLive: TennisMatch[] = useMemo(() => {
+    if (!liveMatchList.length) return matches;
+
+    const prematchIds = new Set(matches.map((m) => m.id));
+    const synthetic: TennisMatch[] = [];
+
+    for (const lm of liveMatchList) {
+      if (!lm.isLive) continue;
+      if (prematchIds.has(lm.id)) continue; // already in prematch list, liveState will overlay
+
+      const nameA = lm.playerA.name;
+      const nameB = lm.playerB.name;
+      const shortA = nameA.split(" ").slice(-1)[0].toUpperCase();
+      const shortB = nameB.split(" ").slice(-1)[0].toUpperCase();
+
+      synthetic.push({
+        id: lm.id,
+        tournament: "Live",
+        round: "En direct",
+        scheduledAt: new Date().toISOString(),
+        playerA: {
+          id: nameA.toLowerCase().replace(/\s+/g, "_"),
+          name: nameA,
+          shortName: shortA,
+          rank: 0,
+          elo: 1500,
+          photoUrl: "",
+          color: hashColor(nameA),
+          form: ["W", "L", "W", "L", "W", "L"],
+        },
+        playerB: {
+          id: nameB.toLowerCase().replace(/\s+/g, "_"),
+          name: nameB,
+          shortName: shortB,
+          rank: 0,
+          elo: 1500,
+          photoUrl: "",
+          color: hashColor(nameB),
+          form: ["L", "W", "L", "W", "L", "W"],
+        },
+        probA: 50,
+        probB: 50,
+        stats: {
+          form: "LIVE",
+          eloGap: 0,
+          surface: "Dur",
+          h2h: "—",
+          ic: [0, 100],
+          confidence: 0,
+        },
+        model: "Live",
+        modelUpdatedAt: new Date().toISOString(),
+      });
+    }
+
+    return [...matches, ...synthetic];
+  }, [matches, liveMatchList]);
+
+  const { filtered, valueBetCount } = useMatchFilter(matchesWithLive, filter, favorites, sortKey);
 
   const handleFilter = (key: FilterKey) => {
     setFilter(key);
@@ -230,7 +299,7 @@ export function TennisTabContent() {
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Info className="h-3.5 w-3.5" />
-              <span>{t("today", { n: matches.length })}</span>
+              <span>{t("today", { n: matchesWithLive.length })}</span>
             </div>
           </div>
 

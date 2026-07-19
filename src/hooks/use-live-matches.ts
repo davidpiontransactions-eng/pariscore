@@ -24,24 +24,29 @@ export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
 export type UseLiveMatchesResult = {
   liveStates: Record<string, LiveMatchState>;
+  /** Basic info for each live match (id + player names). Used by TennisTabContent
+   *  to create synthetic cards for matches not present in prematch data. */
+  liveMatchList: Array<{ id: string; playerA: { name: string }; playerB: { name: string }; isLive: boolean }>;
   connectionStatus: ConnectionStatus;
   latency: number;
 };
 
+export type LiveMatchResponseItem = {
+  id: string;
+  playerA: { name: string };
+  playerB: { name: string };
+  setsDetail: Array<{ p1: number; p2: number }>;
+  currentGame: { p1: number; p2: number };
+  currentPoint: { p1: number; p2: number };
+  currentSet: number;
+  server: "A" | "B";
+  liveProbA: number;
+  liveProbB: number;
+  isLive: boolean;
+};
+
 type TennisLiveResponse = {
-  matches: Array<{
-    id: string;
-    playerA: { name: string };
-    playerB: { name: string };
-    setsDetail: Array<{ p1: number; p2: number }>;
-    currentGame: { p1: number; p2: number };
-    currentPoint: { p1: number; p2: number };
-    currentSet: number;
-    server: "A" | "B";
-    liveProbA: number;
-    liveProbB: number;
-    isLive: boolean;
-  }>;
+  matches: LiveMatchResponseItem[];
   source: string;
   updatedAt: string;
 };
@@ -55,6 +60,7 @@ const POLL_INTERVAL_MS = 30_000;
  */
 export function useLiveMatches(): UseLiveMatchesResult {
   const [liveStates, setLiveStates] = useState<Record<string, LiveMatchState>>({});
+  const [liveMatchList, setLiveMatchList] = useState<Array<{ id: string; playerA: { name: string }; playerB: { name: string }; isLive: boolean }>>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const [latency, setLatency] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -74,9 +80,16 @@ export function useLiveMatches(): UseLiveMatchesResult {
         setLatency(Date.now() - t0);
         setConnectionStatus(data.matches.length > 0 ? "connected" : "connected");
 
-        // Map BSD live match data to LiveMatchState format.
-        // IDs are bsd-<rawId> which matches the prematch ID format from fetchBSDMatches()
-        // (see buildMatch() in bsd-fetcher.ts: id: `bsd-${b.id ?? index}`).
+        // Store raw match list for TennisTabContent to build synthetic cards
+        const rawList = data.matches.map((m) => ({
+          id: m.id,
+          playerA: m.playerA,
+          playerB: m.playerB,
+          isLive: m.isLive,
+        }));
+        setLiveMatchList(rawList);
+
+        // Map BSD live match data to LiveMatchState format for overlay on existing cards
         const map: Record<string, LiveMatchState> = {};
         for (const m of data.matches) {
           if (!m.isLive) continue;
@@ -114,5 +127,5 @@ export function useLiveMatches(): UseLiveMatchesResult {
     };
   }, []);
 
-  return { liveStates, connectionStatus, latency };
+  return { liveStates, liveMatchList, connectionStatus, latency };
 }
