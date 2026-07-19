@@ -6,7 +6,7 @@ status: legacy-migration-in-progress
 tags: [vendor, api, odds, bookmakers, free-tier-limited, legacy]
 updated: 2026-05-22
 sources: ["server.js", ".claude/CLAUDE.md", "https://the-odds-api.com"]
-xref: [[edge-no-vig]], [[bsd-bzzoiro]], [[api-football]]
+xref: [[edge-no-vig]], [[bsd-bzzoiro]], [[api-football]], [[therundown]], [[propline]], [[oddsmagnet]], [[free-api-pariscore-field-map]]
 bd: [zia, bjv]
 ---
 
