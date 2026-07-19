@@ -66,7 +66,7 @@ export function PlayerStatline({
   const circuitLabel =
     stats?.atpRank != null ? "ATP" : stats?.wtaRank != null ? "WTA" : null;
 
-  const eloSurface = stats?.eloSurface ?? null;
+  const eloSurface = stats?.eloSurface != null ? Math.round(stats.eloSurface) : null;
   const surfaceEloRank = stats?.surfaceEloRank ?? null;
   const sps = stats?.sps ?? null;
   const spsRank = stats?.spsRank ?? null;
@@ -79,7 +79,7 @@ export function PlayerStatline({
 
   // Elo affiché : si la DB donne une vraie valeur ET qu'elle diffère du
   // fallback 1500, on l'utilise ; sinon on garde player.elo (mock case).
-  const eloDisplay = stats?.elo != null ? stats.elo : elo;
+  const eloDisplay = stats?.elo != null ? Math.round(stats.elo) : elo;
   const eloIsFallback = stats?.elo == null && player.elo === 1500;
 
   return (
