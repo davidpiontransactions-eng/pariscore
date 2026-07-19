@@ -27,31 +27,36 @@ echo "[4/7] npm rebuild native modules (node version guard)..."
 npm rebuild better-sqlite3
 
 echo "[5/7] npm install (omit dev)..."
-npm install --omit=dev --silent
+npm install --omit=dev --legacy-peer-deps --silent
 
-echo "[6/6] PM2 restart..."
+echo "[6/7] Next.js build..."
+npm run build 2>&1 || { echo "❌ Next.js build failed — deploy aborted"; exit 1; }
+
+echo "[7/7] PM2 restart..."
 pm2 restart "$PM2_NAME" --update-env
 
-# [6b] Cron RG découplé — garantir l'enregistrement (cron_restart '0 */2') après
+echo "[7b] PM2 restart Next.js..."
+pm2 restart pariscore-next --update-env
+
+# [7c] Cron RG découplé — garantir l'enregistrement (cron_restart '0 */2') après
 #      chaque deploy + reboot. startOrRestart = start si absent, restart si présent.
 #      autorestart:false (ecosystem) → "stopped" entre les ticks 2h = normal, pas une panne.
-echo "[6b] Cron RG (pariscore-cron-rg) — réenregistrement + persist..."
-pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env || echo "[6b] startOrRestart cron-rg échec (non bloquant)"
+echo "[7c] Cron RG (pariscore-cron-rg) — réenregistrement + persist..."
+pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env || echo "[7c] startOrRestart cron-rg échec (non bloquant)"
 
-echo "[6c] Cron match-stats (pariscore-cron-match-stats) — réenregistrement + persist..."
-pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env || echo "[6c] startOrRestart cron-match-stats échec (non bloquant)"
+echo "[7d] Cron match-stats (pariscore-cron-match-stats) — réenregistrement + persist..."
+pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env || echo "[7d] startOrRestart cron-match-stats échec (non bloquant)"
 
-pm2 save || echo "[6b] pm2 save échec (non bloquant)"
+pm2 save || echo "[7e] pm2 save échec (non bloquant)"
 
 echo ""
 echo "--- VPS mis à jour avec succès ! ---"
 echo "Commit actif : $(git log --oneline -1)"
 pm2 list
 
-# [7] Notification Discord — évolution du site (webhook depuis .env, jamais hardcodé)
+# [8] Notification Discord — évolution du site (webhook depuis .env, jamais hardcodé)
 WEBHOOK="$(grep -E '^DISCORD_DEPLOY_WEBHOOK_URL=' .env 2>/dev/null | cut -d= -f2- | tr -d '"' | tr -d "'")"
 if [ -n "$WEBHOOK" ]; then
-  COMMIT_LINE="$(git log --oneline -1 | sed 's/"/\\"/g')"
   COMMIT_HASH="$(git rev-parse --short HEAD)"
   COMMIT_MSG="$(git log -1 --pretty=%s | sed 's/"/\\"/g')"
   COMMIT_AUTHOR="$(git log -1 --pretty=%an | sed 's/"/\\"/g')"
@@ -73,14 +78,14 @@ if [ -n "$WEBHOOK" ]; then
 JSON
 )"
   curl -s -H "Content-Type: application/json" -X POST -d "$PAYLOAD" "$WEBHOOK" > /dev/null \
-    && echo "[7/7] Discord notifié ✓" \
-    || echo "[7/7] Discord échec (non bloquant)"
+    && echo "[8/8] Discord notifié ✓" \
+    || echo "[8/8] Discord échec (non bloquant)"
 else
-  echo "[7/7] DISCORD_DEPLOY_WEBHOOK_URL absent du .env — notif Discord skip"
+  echo "[8/8] DISCORD_DEPLOY_WEBHOOK_URL absent du .env — notif Discord skip"
 fi
 
-# [8] Tennis Elo recompute (optionnel)
+# [9] Tennis Elo recompute (optionnel)
 if [ "$1" = "--tennis-elo" ] || [ "${TENNIS_ELO:-0}" = "1" ]; then
-  echo "[8/8] Tennis Elo recompute..."
-  node tools/recompute-tennis-elo.js 2>&1 || echo "[8/8] Tennis Elo échec (non bloquant)"
+  echo "[9/9] Tennis Elo recompute..."
+  node tools/recompute-tennis-elo.js 2>&1 || echo "[9/9] Tennis Elo échec (non bloquant)"
 fi
