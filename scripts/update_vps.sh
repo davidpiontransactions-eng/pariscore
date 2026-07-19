@@ -26,8 +26,8 @@ git pull --rebase origin main
 echo "[4/7] npm rebuild native modules (node version guard)..."
 npm rebuild better-sqlite3
 
-echo "[5/7] npm install (omit dev)..."
-npm install --omit=dev --legacy-peer-deps --silent
+echo "[5/7] npm install (with dev for Next.js build)..."
+npm install --legacy-peer-deps --silent
 
 echo "[6/7] Next.js build..."
 npm run build 2>&1 || { echo "❌ Next.js build failed — deploy aborted"; exit 1; }
