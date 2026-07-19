@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   // better-sqlite3 est un module natif (binding C++) utilisé par la couche
   // tennis-stats pour lire pariscore.db. Il doit rester externe au bundle
   // server de Next.js — sinon le build standalone échoue à le résoudre.
-  serverExternalPackages: ["better-sqlite3"],
+  serverExternalPackages: ["better-sqlite3", "pariscore-services"],
 };
 
 // Sentry is conditionally wrapped — only when SENTRY_DSN is configured.

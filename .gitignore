@@ -2,6 +2,8 @@
 
 # dependencies
 node_modules
+!node_modules/pariscore-services/
+!node_modules/pariscore-services/**
 /.pnp
 .pnp.*
 .yarn/*

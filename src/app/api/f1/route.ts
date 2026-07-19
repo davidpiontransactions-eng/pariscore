@@ -1,27 +1,12 @@
 import { NextResponse } from "next/server";
-import { createRequire } from "module";
-import path from "path";
 
 const CACHE_TTL = 30 * 60_000;
 let cache: { data: unknown; at: number } | null = null;
 
-const _require = createRequire(import.meta.url);
-
-function resolveService(name: string): unknown {
-  const cwd = process.cwd();
-  const candidates = [
-    path.join(cwd, "services", name),
-    path.join(cwd, "..", "services", name),
-  ];
-  for (const p of candidates) {
-    try { return _require(p); } catch {}
-  }
-  return _require(path.join(cwd, "services", name));
-}
-
-const f1Service: { getF1Drivers: () => Promise<unknown>; getF1Races: () => Promise<unknown> } | null = (() => {
-  try { return resolveService("f1Service") as any; } catch { return null; }
-})();
+const getF1Drivers: () => Promise<{ season: string; round: number; race: string; drivers: unknown[]; bets: unknown[]; model: string; calibrated: boolean; note: string; sims: unknown }>
+  = require("pariscore-services").getF1Drivers;
+const getF1Races: () => Promise<{ next: string; races: unknown[] }>
+  = require("pariscore-services").getF1Races;
 
 export async function GET() {
   const now = Date.now();
@@ -30,14 +15,10 @@ export async function GET() {
     return NextResponse.json(cache.data);
   }
 
-  if (!f1Service) {
-    return NextResponse.json({ error: "f1 module not loaded" }, { status: 503 });
-  }
-
   try {
     const [driversData, racesData] = await Promise.all([
-      f1Service.getF1Drivers(),
-      f1Service.getF1Races(),
+      getF1Drivers(),
+      getF1Races(),
     ]);
 
     const payload = {
