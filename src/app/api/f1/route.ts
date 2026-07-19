@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 const CACHE_TTL = 30 * 60_000;
-let cache: { data: unknown; at: number } | null = null;
+const cache = createTtlCache<{ data: unknown; at: number }>("__f1Cache");
 
 const getF1Drivers: () => Promise<{ season: string; round: number; race: string; drivers: unknown[]; bets: unknown[]; model: string; calibrated: boolean; note: string; sims: unknown }>
   = require("pariscore-services").getF1Drivers;
@@ -11,8 +12,9 @@ const getF1Races: () => Promise<{ next: string; races: unknown[] }>
 export async function GET() {
   const now = Date.now();
 
-  if (cache && now - cache.at < CACHE_TTL) {
-    return NextResponse.json(cache.data);
+  const cached = cache.getEntry();
+  if (isFresh(cached, CACHE_TTL)) {
+    return NextResponse.json(cached!.data);
   }
 
   try {
@@ -36,7 +38,7 @@ export async function GET() {
       updatedAt: new Date().toISOString(),
     };
 
-    cache = { data: payload, at: now };
+    cache.set({ data: payload, at: now });
     return NextResponse.json(payload);
   } catch (err) {
     return NextResponse.json(

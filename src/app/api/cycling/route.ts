@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 const CACHE_TTL = 30 * 60_000;
-let cache: { data: unknown; at: number } | null = null;
+const cache = createTtlCache<{ data: unknown; at: number }>("__cyclingCache");
 
 export async function GET() {
   const now = Date.now();
 
-  if (cache && now - cache.at < CACHE_TTL) {
-    return NextResponse.json(cache.data);
+  const cached = cache.getEntry();
+  if (isFresh(cached, CACHE_TTL)) {
+    return NextResponse.json(cached!.data);
   }
 
   try {
@@ -15,7 +17,7 @@ export async function GET() {
     const data = await cyclingService.getCyclingFull();
     const favourites = await cyclingService.getStageFavourites().catch(() => []);
 
-    cache = { data: { ...data, favourites }, at: now };
+    cache.set({ data: { ...data, favourites }, at: now });
     return NextResponse.json({ ...data, favourites, source: "plackett-luce" });
   } catch (err) {
     return NextResponse.json(

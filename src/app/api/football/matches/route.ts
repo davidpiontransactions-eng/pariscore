@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 const CACHE_TTL = 5 * 60_000;
 
-let cache: { data: unknown[]; at: number } | null = null;
+type CachedMatches = { data: unknown[]; at: number };
+const cache = createTtlCache<CachedMatches>("__footballMatchesCache");
 
 export async function GET() {
   const now = Date.now();
 
-  if (cache && now - cache.at < CACHE_TTL) {
-    return NextResponse.json({ matches: cache.data, source: "bsd", updatedAt: new Date(cache.at).toISOString() });
+  const cached = cache.getEntry();
+  if (isFresh(cached, CACHE_TTL)) {
+    return NextResponse.json({ matches: cached!.data, source: "bsd", updatedAt: new Date(cached!.at).toISOString() });
   }
 
   try {
@@ -19,7 +22,7 @@ export async function GET() {
       fetchBSDFootballLive().catch(() => [] as never[]),
     ]);
     const matches = [...live, ...prematch];
-    cache = { data: matches, at: now };
+    cache.set({ data: matches, at: now });
     return NextResponse.json({ matches, source: "bsd", updatedAt: new Date(now).toISOString() });
   } catch (err) {
     console.error("[football] BSD failed:", (err as Error).message);

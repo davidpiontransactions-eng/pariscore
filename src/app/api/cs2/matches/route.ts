@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 const CACHE_TTL = 5 * 60_000;
-let cache: { data: unknown; at: number } | null = null;
+const cache = createTtlCache<{ data: unknown; at: number }>("__cs2Cache");
 
 export async function GET() {
   const now = Date.now();
-  if (cache && now - cache.at < CACHE_TTL) {
-    return NextResponse.json(cache.data);
+  const cached = cache.getEntry();
+  if (isFresh(cached, CACHE_TTL)) {
+    return NextResponse.json(cached!.data);
   }
 
   try {
@@ -16,8 +18,9 @@ export async function GET() {
 
     const matches = await cs2Service.getCs2Matches(key);
 
-    cache = { data: { matches, source: "bsd", cache: cs2Service._getCacheStatus?.() ?? "unknown" }, at: now };
-    return NextResponse.json(cache.data);
+    const payload = { matches, source: "bsd", cache: cs2Service._getCacheStatus?.() ?? "unknown" };
+    cache.set({ data: payload, at: now });
+    return NextResponse.json(payload);
   } catch (err) {
     return NextResponse.json(
       { error: "cs2 data unavailable", details: (err as Error).message },
