@@ -1,0 +1,7 @@
+{
+  "name": "pariscore-services",
+  "version": "0.0.1",
+  "private": true,
+  "main": "index.js",
+  "description": "Runtime bridge: Next.js API routes → legacy services/*.js (avoids Turbopack tracing outside src/)"
+}
