@@ -1,20 +1,10 @@
 import { NextResponse } from "next/server";
-import path from "path";
 
 const CACHE_TTL = 30 * 60_000;
 let cache: { data: unknown; at: number } | null = null;
 
-function loadF1Service() {
-  const cwd = process.cwd();
-  const tryPaths = [
-    path.join(cwd, "services", "f1Service"),
-    path.join(cwd, "..", "services", "f1Service"),
-    path.join(__dirname, "..", "..", "..", "..", "..", "..", "services", "f1Service"),
-  ];
-  for (const p of tryPaths) {
-    try { return require(p); } catch {}
-  }
-  throw new Error("Cannot find f1Service — tried all known paths");
+async function loadF1Service() {
+  return await import("../../../../../services/f1Service");
 }
 
 export async function GET() {
@@ -25,7 +15,7 @@ export async function GET() {
   }
 
   try {
-    const f1Service = loadF1Service();
+    const f1Service = await loadF1Service();
     const [driversData, racesData] = await Promise.all([
       f1Service.getF1Drivers(),
       f1Service.getF1Races(),
