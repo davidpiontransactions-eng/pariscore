@@ -1,7 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Volleyball, Footprints, Swords, Bike, Gauge } from "lucide-react";
+import {
+  Volleyball,
+  Footprints,
+  Swords,
+  Bike,
+  Gauge,
+  Crosshair,
+  Target,
+  Trophy,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TabDef = {
@@ -14,7 +23,10 @@ type TabDef = {
 const TABS: TabDef[] = [
   { id: "tennis", label: "Tennis", icon: Volleyball, accent: "bg-emerald-500" },
   { id: "football", label: "Football", icon: Footprints, accent: "bg-sky-500" },
+  { id: "cs2", label: "CS2", icon: Crosshair, accent: "bg-orange-500" },
   { id: "mma", label: "MMA", icon: Swords, accent: "bg-red-500" },
+  { id: "nba", label: "NBA", icon: Target, accent: "bg-sky-600" },
+  { id: "wnba", label: "WNBA", icon: Trophy, accent: "bg-purple-500" },
   { id: "cycling", label: "Cycling", icon: Bike, accent: "bg-amber-500" },
   { id: "f1", label: "F1", icon: Gauge, accent: "bg-red-600" },
 ] as const;

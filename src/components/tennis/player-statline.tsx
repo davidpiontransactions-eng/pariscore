@@ -51,10 +51,13 @@ export function PlayerStatline({
   stats,
   surface,
   sparklineData = [],
-  sparkWidth = 50,
-  sparkHeight = 16,
+  sparkWidth,
+  sparkHeight,
   terminalMode = false,
 }: Props) {
+  // Sparkline dimensions inherit from terminal mode when not explicit.
+  const w = sparkWidth ?? (terminalMode ? 80 : 50);
+  const h = sparkHeight ?? (terminalMode ? 22 : 16);
   const t = useTranslations("statline");
 
   // Résolution des valeurs : on privilégie les stats enrichies (DB), sinon
@@ -161,8 +164,8 @@ export function PlayerStatline({
       {sparklineData.length > 1 && (
         <Sparkline
           data={sparklineData}
-          width={sparkWidth}
-          height={sparkHeight}
+          width={w}
+          height={h}
           color={player.color}
           strokeWidth={1.5}
           ariaLabel={t("sparklineAria", { name: player.name })}

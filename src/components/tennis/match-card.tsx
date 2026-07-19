@@ -16,15 +16,16 @@ import {
   Star,
   Mail,
   Loader2,
-  Plus,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ProbabilityRing } from "./probability-ring";
 import { ProbabilityBar } from "./probability-bar";
 import { FormDots } from "./form-dots";
-import { StatChip } from "./stat-chip";
 import { BacktestBadge } from "./backtest-badge";
 import { PlayerStatline } from "./player-statline";
+import { StatsIndicatorsGrid } from "./stats-indicators-grid";
+import { PlayerBlock } from "./player-block";
+import { QuickAddRing } from "./quick-add-ring";
+import { BestOddBadge } from "./best-odd-badge";
 import { LiveStatsPanel } from "./live-stats-panel";
 import { MomentumDR } from "./momentum-dr";
 
@@ -328,18 +329,41 @@ export function MatchCard({
         <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-2">
           <PlayerBlock
             player={playerA}
-            prob={probA}
             align="left"
-            winLabel={t("win")}
             priority={priority}
-            onQuickAdd={() => handleQuickAdd("A")}
-            quickAddLabel={tSlip("quickAdd", { player: playerA.name })}
-            sparklineData={sparklineA}
-            bestOdd={bestOddA ? { decimal: bestOddA.decimalA, bookmaker: bestOddA.bookmaker } : undefined}
             terminalMode={terminalMode}
-            enrichedStats={statsA}
-            surface={stats.surface}
-          />
+          >
+            <PlayerStatline
+              player={playerA}
+              stats={statsA}
+              surface={stats.surface}
+              sparklineData={sparklineA}
+              terminalMode={terminalMode}
+            />
+            <div className="mt-1.5">
+              <FormDots
+                form={playerA.form}
+                color={playerA.color}
+                size="sm"
+                ariaLabel={`Forme récente ${playerA.name}`}
+              />
+            </div>
+            {bestOddA && (
+              <BestOddBadge
+                decimal={bestOddA.decimalA}
+                bookmaker={bestOddA.bookmaker}
+                className="mt-2"
+              />
+            )}
+            <QuickAddRing
+              prob={probA}
+              color={playerA.color}
+              winLabel={t("win")}
+              terminalMode={terminalMode}
+              onQuickAdd={() => handleQuickAdd("A")}
+              quickAddLabel={tSlip("quickAdd", { player: playerA.name })}
+            />
+          </PlayerBlock>
           <div className="flex items-center justify-center sm:py-0">
             <div
               className={cn(
@@ -354,18 +378,41 @@ export function MatchCard({
           </div>
           <PlayerBlock
             player={playerB}
-            prob={probB}
             align="right"
-            winLabel={t("win")}
             priority={priority}
-            onQuickAdd={() => handleQuickAdd("B")}
-            quickAddLabel={tSlip("quickAdd", { player: playerB.name })}
-            sparklineData={sparklineB}
-            bestOdd={bestOddB ? { decimal: bestOddB.decimalB, bookmaker: bestOddB.bookmaker } : undefined}
             terminalMode={terminalMode}
-            enrichedStats={statsB}
-            surface={stats.surface}
-          />
+          >
+            <PlayerStatline
+              player={playerB}
+              stats={statsB}
+              surface={stats.surface}
+              sparklineData={sparklineB}
+              terminalMode={terminalMode}
+            />
+            <div className="mt-1.5">
+              <FormDots
+                form={playerB.form}
+                color={playerB.color}
+                size="sm"
+                ariaLabel={`Forme récente ${playerB.name}`}
+              />
+            </div>
+            {bestOddB && (
+              <BestOddBadge
+                decimal={bestOddB.decimalB}
+                bookmaker={bestOddB.bookmaker}
+                className="mt-2"
+              />
+            )}
+            <QuickAddRing
+              prob={probB}
+              color={playerB.color}
+              winLabel={t("win")}
+              terminalMode={terminalMode}
+              onQuickAdd={() => handleQuickAdd("B")}
+              quickAddLabel={tSlip("quickAdd", { player: playerB.name })}
+            />
+          </PlayerBlock>
         </div>
 
         {/* Terminal mode: ProbabilityBar with IC bracket + decomposition —
@@ -482,22 +529,10 @@ export function MatchCard({
       )}
 
       {chipsExpanded && (
-        <div className="grid grid-cols-2 gap-2 px-4 pb-4 sm:grid-cols-3 sm:px-6 lg:grid-cols-6">
-          <StatChip label={t("form")} value={stats.form} />
-          <StatChip label={t("eloGap")} value={`+${stats.eloGap}`} />
-          <StatChip label={t("surface")} value={stats.surface} />
-          <StatChip label={t("h2h")} value={stats.h2h} />
-          <StatChip label={t("ic95")} value={`[${stats.ic[0]}, ${stats.ic[1]}]`} />
-          <StatChip
-            label={t("confidence")}
-            value={stats.confidence.toFixed(2)}
-            className={cn(
-              stats.confidence >= 0.75
-                ? "border-emerald-500/40 bg-emerald-500/5"
-                : stats.confidence >= 0.6
-                ? "border-amber-500/40 bg-amber-500/5"
-                : "border-rose-500/40 bg-rose-500/5"
-            )}
+        <div className="px-4 pb-4 sm:px-6">
+          <StatsIndicatorsGrid
+            stats={stats}
+            surface={stats.surface}
           />
         </div>
       )}
@@ -712,162 +747,6 @@ function LiveScoreBar({
         </span>
         {t("serving", { name: serverName })}
       </span>
-    </div>
-  );
-}
-
-function PlayerBlock({
-  player,
-  prob,
-  align,
-  winLabel,
-  priority = false,
-  onQuickAdd,
-  quickAddLabel,
-  sparklineData = [],
-  bestOdd,
-  terminalMode = false,
-  enrichedStats,
-  surface,
-}: {
-  player: TennisMatch["playerA"];
-  prob: number;
-  align: "left" | "right";
-  winLabel: string;
-  priority?: boolean;
-  onQuickAdd?: () => void;
-  quickAddLabel?: string;
-  sparklineData?: number[];
-  bestOdd?: { decimal: number; bookmaker: string };
-  terminalMode?: boolean;
-  /** Stats enrichies résolues (Elo Surface, SPS, rangs) pour ce joueur. */
-  enrichedStats?: import("@/lib/tennis-stats/types").PlayerStats | null;
-  /** Surface du match (libellé UI). */
-  surface?: string;
-}) {
-  // Photo dimensions: full 72px in simple mode, shrunk to 40px in terminal
-  // mode so more of the card real-estate goes to the dense data overlays
-  // (sparkline + probability bar + chips).
-  const photoSize = terminalMode ? 40 : 72;
-  // Sparkline width: 80px in terminal mode (more legible trend), 50px in
-  // simple mode (compact inline indicator next to the Elo number).
-  const sparkWidth = terminalMode ? 80 : 50;
-  const sparkHeight = terminalMode ? 22 : 16;
-  return (
-    <div
-      className={cn(
-        "flex flex-col items-center gap-3 sm:flex-row sm:gap-4",
-        align === "right" && "sm:flex-row-reverse",
-        terminalMode && "sm:gap-3"
-      )}
-    >
-      <div className="relative">
-        <div
-          className="absolute -inset-1 rounded-full opacity-20"
-          style={{ background: player.color }}
-          aria-hidden
-        />
-        <img
-          src={player.photoUrl}
-          alt={player.name}
-          width={photoSize}
-          height={photoSize}
-          className="relative rounded-full object-cover ring-2 ring-offset-2 ring-offset-background"
-          style={{
-            "--tw-ring-color": player.color,
-            width: photoSize,
-            height: photoSize,
-          } as React.CSSProperties}
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
-        />
-      </div>
-      <div
-        className={cn(
-          "flex flex-col items-center text-center sm:items-start sm:text-left",
-          align === "right" && "sm:items-end sm:text-right"
-        )}
-      >
-        <h3
-          className={cn(
-            "font-bold leading-tight tracking-tight",
-            terminalMode ? "text-sm sm:text-base" : "text-base sm:text-lg"
-          )}
-        >
-          {player.name}
-        </h3>
-        <PlayerStatline
-          player={player}
-          stats={enrichedStats}
-          surface={surface ?? "Dur"}
-          sparklineData={sparklineData}
-          sparkWidth={sparkWidth}
-          sparkHeight={sparkHeight}
-          terminalMode={terminalMode}
-        />
-        {/* Form dots */}
-        <div className="mt-1.5">
-          <FormDots
-            form={player.form}
-            color={player.color}
-            size="sm"
-            ariaLabel={`Forme récente ${player.name}`}
-          />
-        </div>
-        {/* Best odd */}
-        {bestOdd && (
-          <div className="mt-2 flex items-center gap-1.5 rounded-md bg-emerald-500/10 px-2 py-1 text-[11px]">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              @{bestOdd.decimal.toFixed(2)}
-            </span>
-            <span className="text-muted-foreground">{bestOdd.bookmaker}</span>
-          </div>
-        )}
-        {/* Probability ring — kept in BOTH modes because it remains the
-            primary per-player win-probability affordance and the quick-add
-            (+) button anchor. In terminal mode it shrinks slightly so it
-            doesn't dominate the denser card. The horizontal ProbabilityBar
-            (with IC + decomposition) is rendered above in the card body
-            when terminal mode is ON. */}
-        <div className="relative mt-3 inline-block">
-          <ProbabilityRing
-            value={prob}
-            size={terminalMode ? 72 : 92}
-            stroke={terminalMode ? 6 : 7}
-            color={player.color}
-            trackColor="currentColor"
-          >
-            <span
-              className={cn(
-                "font-bold tabular-nums",
-                terminalMode ? "text-base" : "text-xl"
-              )}
-              style={{ fontVariantNumeric: "tabular-nums" }}
-            >
-              {prob}%
-            </span>
-            <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-              {winLabel}
-            </span>
-          </ProbabilityRing>
-          {onQuickAdd && (
-            <button
-              type="button"
-              onClick={onQuickAdd}
-              aria-label={quickAddLabel}
-              title={quickAddLabel}
-              className={cn(
-                "absolute -bottom-1 -right-1 z-10 flex h-7 w-7 items-center justify-center rounded-full",
-                "border-2 border-background bg-emerald-600 text-white shadow-md",
-                "transition-all hover:scale-110 hover:bg-emerald-700",
-                "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              )}
-            >
-              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

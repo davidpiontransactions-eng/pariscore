@@ -24,11 +24,14 @@ import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { SportTabs } from "@/components/layout/sport-tabs";
 import { TennisTabContent } from "@/components/football/tennis-tab-content";
 import { FootballTabContent } from "@/components/football/football-tab-content";
+import { Cs2TabContent } from "@/components/cs2/cs2-tab-content";
 import { MmaTabContent } from "@/components/mma/mma-tab-content";
+import { NbaTabContent } from "@/components/nba/nba-tab-content";
+import { WnbaTabContent } from "@/components/wnba/wnba-tab-content";
 import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
 
-type SportTab = "tennis" | "football" | "mma" | "cycling" | "f1";
+type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1";
 
 class PageErrorBoundary extends Component<
   { children: ReactNode },
@@ -119,7 +122,10 @@ export default function Home() {
         {/* Content */}
         {activeTab === "tennis" && <TennisTabContent />}
         {activeTab === "football" && <FootballTabContent />}
+        {activeTab === "cs2" && <Cs2TabContent />}
         {activeTab === "mma" && <MmaTabContent />}
+        {activeTab === "nba" && <NbaTabContent />}
+        {activeTab === "wnba" && <WnbaTabContent />}
         {activeTab === "cycling" && <CyclingTabContent />}
         {activeTab === "f1" && <F1TabContent />}
 
