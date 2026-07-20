@@ -117,6 +117,39 @@
         "shadcn@latest",
         "mcp"
       ]
+    },
+    "context7": {
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "command": "npx"
+    },
+    "chrome-devtools": {
+      "args": [
+        "chrome-devtools-mcp@latest"
+      ],
+      "command": "npx"
+    },
+    "magic21": {
+      "args": [
+        "-y",
+        "@21st-dev/magic@latest"
+      ],
+      "command": "npx"
+    },
+    "browser-tools": {
+      "args": [
+        "@agentdeskai/browser-tools-server@latest"
+      ],
+      "command": "npx"
+    },
+    "lighthouse": {
+      "args": [
+        "-y",
+        "@danielsogl/lighthouse-mcp-server"
+      ],
+      "command": "npx"
     }
   }
 }

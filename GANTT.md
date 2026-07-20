@@ -1,9 +1,53 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-19 (Session 9 — deploy bc2805f + nginx patch football/nba/wnba)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-20 (Session 10 — Skills Tier 1 installés + bug sync-skills fixé)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟢 **Session 9 (2026-07-19)** : 10 commits poussés (`ed7e6ad`..`bc2805f`), VPS déployé + nginx patché, 5/6 alertes résolues (SPS ✅, boutons ✅, deception synthetic ✅, nginx ✅, hot loop killed ✅)
-> **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets)
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟢 **Session 9 (2026-07-19)** : 10 commits poussés (`ed7e6ad`..`bc2805f`), VPS déployé + nginx patché, 5/6 alertes résolues (SPS ✅, boutons ✅, deception synthetic ✅, nginx ✅, hot loop killed ✅) · 🆕 **Session 10 (2026-07-20)** : 10 skills Tier 1 frontend installés (tufte-data-viz, web-quality-*, design-review…), bug `sync-skills.js` path corrigé, awesome-design-md (74 DESIGN.md marques), ui-ux-pro-max-cli npm global
+> **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets) · `gantt-refonte-tennis.json` (sprint refonte tennis 20-30/07)
+
+---
+
+## 0ter. Session 10 — Skills Tier 1 frontend + bug sync-skills (2026-07-20)
+
+> **Objectif** : équiper le poste pour la refonte tennis avec les meilleurs skills
+> frontend externes (data-viz, audit qualité, design review). Détails dans `todo.md`
+> section « Frontend Tier 1 Skills — INSTALLÉS ».
+
+### 10.1 Skills installés (153 → **164** dans `.agents/tools/`)
+
+| Skill | Source | Rôle |
+|---|---|---|
+| **`tufte-data-viz`** | caylent | 🎯 data-viz Tufte (Recharts/ECharts/D3) — critique tennis |
+| `web-quality-audit` | addyosmani | Audit Lighthouse global |
+| `accessibility` | addyosmani | WCAG / a11y |
+| `best-practices` | addyosmani | Lighthouse best-practices |
+| `core-web-vitals` | addyosmani | LCP/INP/CLS |
+| `performance` | addyosmani | Audit perf |
+| `seo` | addyosmani | Audit SEO |
+| `design-review` | jezweb | QA visuelle sémantique |
+| `tailwind-theme-builder` | jezweb | Builder thème Tailwind v4 |
+| `react-patterns` | jezweb | Patterns React |
+
+### 10.2 Bonus installés
+
+- **`ui-ux-pro-max-cli` v2.11.0** (npm global) — 161 règles, 84 styles, 161 palettes
+- **`.agents/design-md/`** (74 DESIGN.md marques premium : airbnb, apple, claude, cursor, linear, vercel, stripe…)
+
+### 10.3 🐛 Bug corrigé : `scripts/sync-skills.js:28`
+
+Chemin hardcoded `opencode.json` racine → réel à `.opencode/opencode.json`.
+Sans ce fix, l'allowlist OpenCode restait vide (`"skill": []`).
+
+```diff
+- const OPENCODE_JSON = path.join(PROJECT_ROOT, "opencode.json");
++ const OPENCODE_JSON = path.join(PROJECT_ROOT, ".opencode", "opencode.json");
+```
+
+### 10.4 Sprint suivant : Refonte Tennis (20-30 juillet)
+
+Voir `gantt-refonte-tennis.json` (6 phases : Setup → P1 CRITICAL → P2 live-stats →
+P3 composants premium → P4 prematch → P5 polish → P6 deploy). Détails complets dans
+`todo.md` section « REFONTE ANALYSE TENNIS ».
 
 ---
 

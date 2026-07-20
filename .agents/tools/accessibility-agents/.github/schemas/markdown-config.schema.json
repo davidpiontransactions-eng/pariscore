@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/Community-Access/accessibility-agents/main/.github/schemas/markdown-config.schema.json",
+  "title": "Markdown Accessibility Scanner Configuration",
+  "description": "Configuration schema for .a11y-markdown-config.json used by .github/scripts/markdown-a11y-lint.mjs",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URI pointing to this schema file for editor intellisense."
+    },
+    "ignoredDirs": {
+      "type": "array",
+      "description": "Directory names to exclude from scanning (matched by basename only).",
+      "items": { "type": "string" },
+      "examples": [["node_modules", ".git", "dist"]]
+    },
+    "maxIssuesPerRule": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum number of issues reported per rule to avoid noisy output.",
+      "default": 20
+    },
+    "failOn": {
+      "type": "string",
+      "enum": ["none", "error", "warning"],
+      "description": "Gate level: 'none' never fails, 'error' fails on rule violations with severity=error, 'warning' fails on any violation.",
+      "default": "error"
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Output format options.",
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["text", "sarif", "both"],
+          "description": "Output format: human-readable text, SARIF JSON, or both.",
+          "default": "text"
+        },
+        "sarifPath": {
+          "type": "string",
+          "description": "Relative path from repo root where the SARIF file is written.",
+          "default": "artifacts/markdown-a11y.sarif"
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "description": "Per-rule overrides. Keys are rule IDs; values control enabled state and severity.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Set to false to disable this rule entirely."
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning"],
+            "description": "Override the default severity for this rule."
+          }
+        }
+      },
+      "properties": {
+        "md-img-alt": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Require alt text on all images."
+        },
+        "md-multi-h1": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Warn when more than one H1 heading appears in a file."
+        },
+        "md-heading-skip": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Warn when heading levels are skipped (e.g. H2 to H4)."
+        },
+        "md-emoji-heading": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Warn when emoji characters appear inside headings."
+        },
+        "md-link-ambiguous": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Warn when link text is non-descriptive (e.g. 'click here', 'read more')."
+        },
+        "md-bare-url": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Warn when a bare URL appears in prose without a descriptive label."
+        },
+        "md-table-desc": {
+          "$ref": "#/properties/rules/additionalProperties",
+          "description": "Warn when a table is not preceded by a description sentence."
+        }
+      }
+    }
+  }
+}

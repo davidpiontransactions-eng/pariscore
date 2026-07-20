@@ -1,0 +1,43 @@
+{
+  "editor.accessibilitySupport": "on",
+  "editor.linkedEditing": true,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true,
+
+  "github.copilot.chat.codeGeneration.useReferencedFiles": true,
+
+  "chat.agent.enabled": true,
+
+  "chat.useNestedAgentsMdFiles": false,
+
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 500,
+
+  "css.lint.important": "warning",
+
+  "html.validate.scripts": true,
+  "html.validate.styles": true,
+
+  "files.associations": {
+    "*.md": "markdown"
+  },
+
+  "json.schemas": [
+    {
+      "fileMatch": [".a11y-markdown-config.json"],
+      "url": "./.github/schemas/markdown-config.schema.json"
+    },
+    {
+      "fileMatch": [".a11y-office-config.json"],
+      "url": "./.github/schemas/office-config.schema.json"
+    },
+    {
+      "fileMatch": [".a11y-pdf-config.json"],
+      "url": "./.github/schemas/pdf-config.schema.json"
+    },
+    {
+      "fileMatch": [".a11y-epub-config.json"],
+      "url": "./.github/schemas/epub-config.schema.json"
+    }
+  ]
+}

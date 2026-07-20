@@ -1,0 +1,105 @@
+{
+  "title": "PariScore — Refonte Analyse Tennis + Skills Tier 1 (20-30 juillet)",
+  "timeline": {
+    "title": "Jours",
+    "labels": [
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-25",
+      "2026-07-26",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30"
+    ]
+  },
+  "tracks": [
+    {
+      "name": "🧰 Skills Tier 1 (install)",
+      "items": [
+        { "label": "✅ 10 skills installés (tufte-data-viz, web-quality-*, design-review…)", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "✅ Bug fix sync-skills.js (path opencode.json)", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "✅ awesome-design-md (74 DESIGN.md marques)", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "✅ ui-ux-pro-max-cli npm global (v2.11.0)", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "Commit + push skills", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "Installer MCP Context7 + Chrome DevTools", "start": "2026-07-21", "end": "2026-07-21" }
+      ]
+    },
+    {
+      "name": "P0 — Setup & audit",
+      "items": [
+        { "label": "impeccable audit src/components/tennis/", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "hallmark audit (anti-AI-slop)", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "visual-regression screenshots 'avant'", "start": "2026-07-20", "end": "2026-07-20" },
+        { "label": "Aligner palette DESIGN_CHARTER.md + sketch-findings-pariscore", "start": "2026-07-20", "end": "2026-07-21" },
+        { "label": "Créer branche refonte-tennis-v2", "start": "2026-07-20", "end": "2026-07-20" }
+      ]
+    },
+    {
+      "name": "P1 — Fixes CRITICAL 🔴",
+      "items": [
+        { "label": "SetScoreline.tsx (6-4 6-3 3-2)", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "CurrentGameScore.tsx (15/30/40/AD)", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "ServerIndicator.tsx (icône tennis)", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "Intégrer 3 composants dans match-card-header", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "Fix i18n date match-card-header.tsx:53", "start": "2026-07-21", "end": "2026-07-21" },
+        { "label": "Fix bug labels set momentum-dr.tsx:312,437", "start": "2026-07-21", "end": "2026-07-21" }
+      ]
+    },
+    {
+      "name": "P2 — Refonte live-stats-panel 🟠",
+      "items": [
+        { "label": "ServeStatsBars.tsx (1st in%, won%, 2nd won%)", "start": "2026-07-22", "end": "2026-07-23" },
+        { "label": "BreakPointsGrid.tsx (set-par-set 2/3)", "start": "2026-07-22", "end": "2026-07-23" },
+        { "label": "SetBySetTable.tsx (Sofascore-like)", "start": "2026-07-22", "end": "2026-07-23" },
+        { "label": "Supprimer 4 ServiceCircle (redondants)", "start": "2026-07-23", "end": "2026-07-23" },
+        { "label": "Ajouter truncate + tooltip headers table", "start": "2026-07-23", "end": "2026-07-23" }
+      ]
+    },
+    {
+      "name": "P3 — Nouveaux composants live premium 🟡",
+      "items": [
+        { "label": "WinProbabilityChart.tsx (ECharts live proba)", "start": "2026-07-24", "end": "2026-07-25" },
+        { "label": "PointTimeline.tsx (PBP jeu par jeu)", "start": "2026-07-24", "end": "2026-07-25" },
+        { "label": "StatsRadarChart.tsx (shadcn Radar P1 vs P2)", "start": "2026-07-24", "end": "2026-07-25" },
+        { "label": "Refonte momentum-dr.tsx (typo ≥11px, ARIA, 5 sets)", "start": "2026-07-25", "end": "2026-07-26" },
+        { "label": "useAnnouncer / LiveRegion (a11y scores live)", "start": "2026-07-25", "end": "2026-07-26" }
+      ]
+    },
+    {
+      "name": "P4 — Refonte prematch 🟠",
+      "items": [
+        { "label": "LastMatchesList.tsx (10 derniers matchs)", "start": "2026-07-26", "end": "2026-07-27" },
+        { "label": "Migrer <img> → next/image (fallback + ratio)", "start": "2026-07-26", "end": "2026-07-26" },
+        { "label": "Fusionner match-card-detail ↔ stats-indicators-grid", "start": "2026-07-27", "end": "2026-07-27" },
+        { "label": "Restaurer tooltip SPS via lazy mount (player-statline)", "start": "2026-07-27", "end": "2026-07-27" },
+        { "label": "Fix probability-bar.tsx (tick bg-foreground, décomposition interactive)", "start": "2026-07-27", "end": "2026-07-27" },
+        { "label": "Fix odds-comparator.tsx (a11y tri aria-sort)", "start": "2026-07-27", "end": "2026-07-27" }
+      ]
+    },
+    {
+      "name": "P5 — Polish & validation",
+      "items": [
+        { "label": "impeccable polish (micro-interactions)", "start": "2026-07-28", "end": "2026-07-28" },
+        { "label": "hallmark audit final", "start": "2026-07-28", "end": "2026-07-28" },
+        { "label": "visual-regression screenshots 'après' + diff", "start": "2026-07-28", "end": "2026-07-28" },
+        { "label": "fec-accessibility-testing (axe-core, WCAG)", "start": "2026-07-28", "end": "2026-07-29" },
+        { "label": "Tests Playwright pérennes tests/", "start": "2026-07-28", "end": "2026-07-29" },
+        { "label": "i18n complet (extraire FR hardcodés → namespace tennis)", "start": "2026-07-29", "end": "2026-07-29" },
+        { "label": "Core Web Vitals (LCP<2.5s, INP<200ms, CLS<0.1)", "start": "2026-07-29", "end": "2026-07-29" }
+      ]
+    },
+    {
+      "name": "P6 — Déploiement",
+      "items": [
+        { "label": "bun run build local + node --check", "start": "2026-07-30", "end": "2026-07-30" },
+        { "label": "Deploy VPS + pm2 restart", "start": "2026-07-30", "end": "2026-07-30" },
+        { "label": "Vérif prod (0 pageerror, 0 console.error)", "start": "2026-07-30", "end": "2026-07-30" },
+        { "label": "bd close tickets + bd remember décisions", "start": "2026-07-30", "end": "2026-07-30" }
+      ]
+    }
+  ]
+}

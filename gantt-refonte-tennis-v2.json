@@ -1,0 +1,231 @@
+{
+  "title": "PariScore — Refonte Tennis avec affectations Agent/Skill/MCP",
+  "timeline": {
+    "title": "Jours",
+    "labels": [
+      "2026-07-20",
+      "2026-07-21",
+      "2026-07-22",
+      "2026-07-23",
+      "2026-07-24",
+      "2026-07-25",
+      "2026-07-26",
+      "2026-07-27",
+      "2026-07-28",
+      "2026-07-29",
+      "2026-07-30"
+    ]
+  },
+  "tracks": [
+    {
+      "name": "P0 — Setup & audit",
+      "items": [
+        {
+          "label": "Audit impeccable composants tennis",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "main-orchestrator", "skill": "impeccable (audit)", "mcp": "—" }
+        },
+        {
+          "label": "Audit anti-AI-slop (hallmark)",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "main-orchestrator", "skill": "hallmark", "mcp": "—" }
+        },
+        {
+          "label": "Screenshots 'avant' (visual-regression)",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "main-orchestrator", "skill": "visual-regression", "mcp": "playwright" }
+        },
+        {
+          "label": "Aligner palette DESIGN_CHARTER",
+          "start": "2026-07-20", "end": "2026-07-21",
+          "assignment": { "agent": "ui-designer", "skill": "sketch-findings-pariscore", "mcp": "—" }
+        }
+      ]
+    },
+    {
+      "name": "P1 — Fixes CRITICAL 🔴",
+      "items": [
+        {
+          "label": "SetScoreline.tsx (6-4 6-3 3-2)",
+          "start": "2026-07-21", "end": "2026-07-21",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design + shadcn-ui", "mcp": "context7" }
+        },
+        {
+          "label": "CurrentGameScore.tsx (15/30/40/AD)",
+          "start": "2026-07-21", "end": "2026-07-21",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "context7" }
+        },
+        {
+          "label": "ServerIndicator.tsx (icône tennis)",
+          "start": "2026-07-21", "end": "2026-07-21",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "—" }
+        },
+        {
+          "label": "Intégrer 3 composants dans match-card-header",
+          "start": "2026-07-21", "end": "2026-07-21",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "chrome-devtools" }
+        },
+        {
+          "label": "Fix i18n date match-card-header.tsx:53",
+          "start": "2026-07-21", "end": "2026-07-21",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "—" }
+        },
+        {
+          "label": "Fix bug labels set momentum-dr.tsx",
+          "start": "2026-07-21", "end": "2026-07-21",
+          "assignment": { "agent": "main-orchestrator", "skill": "systematic-debugging", "mcp": "chrome-devtools" }
+        }
+      ]
+    },
+    {
+      "name": "P2 — Refonte live-stats-panel 🟠",
+      "items": [
+        {
+          "label": "ServeStatsBars.tsx (1st in%, won%, 2nd won%)",
+          "start": "2026-07-22", "end": "2026-07-23",
+          "assignment": { "agent": "frontend-developer", "skill": "tufte-data-viz + shadcn-ui", "mcp": "context7" }
+        },
+        {
+          "label": "BreakPointsGrid.tsx (set-par-set 2/3)",
+          "start": "2026-07-22", "end": "2026-07-23",
+          "assignment": { "agent": "frontend-developer", "skill": "tufte-data-viz", "mcp": "—" }
+        },
+        {
+          "label": "SetBySetTable.tsx (Sofascore-like)",
+          "start": "2026-07-22", "end": "2026-07-23",
+          "assignment": { "agent": "frontend-developer", "skill": "shadcn-ui + react-patterns", "mcp": "—" }
+        },
+        {
+          "label": "Supprimer 4 ServiceCircle (redondants)",
+          "start": "2026-07-23", "end": "2026-07-23",
+          "assignment": { "agent": "frontend-developer", "skill": "refactoring-agent", "mcp": "—" }
+        }
+      ]
+    },
+    {
+      "name": "P3 — Nouveaux composants live premium 🟡",
+      "items": [
+        {
+          "label": "WinProbabilityChart.tsx (ECharts live proba)",
+          "start": "2026-07-24", "end": "2026-07-25",
+          "assignment": { "agent": "frontend-developer", "skill": "tufte-data-viz + motion-framer", "mcp": "echarts (si installé) sinon recharts" }
+        },
+        {
+          "label": "PointTimeline.tsx (PBP jeu par jeu)",
+          "start": "2026-07-24", "end": "2026-07-25",
+          "assignment": { "agent": "frontend-developer", "skill": "tufte-data-viz", "mcp": "—" }
+        },
+        {
+          "label": "StatsRadarChart.tsx (shadcn Radar)",
+          "start": "2026-07-24", "end": "2026-07-25",
+          "assignment": { "agent": "frontend-developer", "skill": "tufte-data-viz + shadcn-ui", "mcp": "context7 (Recharts Radar)" }
+        },
+        {
+          "label": "Refonte momentum-dr.tsx (typo ≥11px, ARIA, 5 sets)",
+          "start": "2026-07-25", "end": "2026-07-26",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design + accessibility", "mcp": "—" }
+        },
+        {
+          "label": "useAnnouncer / LiveRegion (a11y scores)",
+          "start": "2026-07-25", "end": "2026-07-26",
+          "assignment": { "agent": "accessibility-tester", "skill": "react-utility-snippets + accessibility", "mcp": "—" }
+        }
+      ]
+    },
+    {
+      "name": "P4 — Refonte prematch 🟠",
+      "items": [
+        {
+          "label": "LastMatchesList.tsx (10 derniers matchs)",
+          "start": "2026-07-26", "end": "2026-07-27",
+          "assignment": { "agent": "frontend-developer", "skill": "shadcn-ui + react-patterns", "mcp": "—" }
+        },
+        {
+          "label": "Migrer <img> → next/image (fallback + ratio)",
+          "start": "2026-07-26", "end": "2026-07-26",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "context7 (next/image)" }
+        },
+        {
+          "label": "Fusionner match-card-detail ↔ stats-indicators-grid",
+          "start": "2026-07-27", "end": "2026-07-27",
+          "assignment": { "agent": "frontend-developer", "skill": "refactoring-agent", "mcp": "—" }
+        },
+        {
+          "label": "Restaurer tooltip SPS (lazy mount)",
+          "start": "2026-07-27", "end": "2026-07-27",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "—" }
+        },
+        {
+          "label": "Fix probability-bar + odds-comparator a11y",
+          "start": "2026-07-27", "end": "2026-07-27",
+          "assignment": { "agent": "accessibility-tester", "skill": "accessibility + best-practices", "mcp": "—" }
+        }
+      ]
+    },
+    {
+      "name": "P5 — Polish & validation",
+      "items": [
+        {
+          "label": "impeccable polish (micro-interactions)",
+          "start": "2026-07-28", "end": "2026-07-28",
+          "assignment": { "agent": "ui-designer", "skill": "impeccable (polish) + motion-framer", "mcp": "—" }
+        },
+        {
+          "label": "hallmark audit final",
+          "start": "2026-07-28", "end": "2026-07-28",
+          "assignment": { "agent": "main-orchestrator", "skill": "hallmark", "mcp": "—" }
+        },
+        {
+          "label": "visual-regression screenshots 'après' + diff",
+          "start": "2026-07-28", "end": "2026-07-28",
+          "assignment": { "agent": "main-orchestrator", "skill": "visual-regression", "mcp": "playwright" }
+        },
+        {
+          "label": "Audit a11y (axe-core, WCAG 2.2)",
+          "start": "2026-07-28", "end": "2026-07-29",
+          "assignment": { "agent": "accessibility-tester", "skill": "accessibility", "mcp": "frontendchecklist" }
+        },
+        {
+          "label": "Tests Playwright pérennes tests/",
+          "start": "2026-07-28", "end": "2026-07-29",
+          "assignment": { "agent": "test-engineer", "skill": "webapp-testing + e2e-testing", "mcp": "playwright" }
+        },
+        {
+          "label": "i18n complet (FR hardcodés → namespace tennis)",
+          "start": "2026-07-29", "end": "2026-07-29",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "—" }
+        },
+        {
+          "label": "Core Web Vitals (LCP<2.5s, INP<200ms, CLS<0.1)",
+          "start": "2026-07-29", "end": "2026-07-29",
+          "assignment": { "agent": "web-performance-auditor", "skill": "core-web-vitals + performance", "mcp": "lighthouse + chrome-devtools" }
+        }
+      ]
+    },
+    {
+      "name": "P6 — Déploiement",
+      "items": [
+        {
+          "label": "bun run build local + node --check",
+          "start": "2026-07-30", "end": "2026-07-30",
+          "assignment": { "agent": "main-orchestrator", "skill": "executing-plans", "mcp": "—" }
+        },
+        {
+          "label": "Deploy VPS + pm2 restart",
+          "start": "2026-07-30", "end": "2026-07-30",
+          "assignment": { "agent": "main-orchestrator", "skill": "ps-deploy", "mcp": "—" }
+        },
+        {
+          "label": "Vérif prod (0 pageerror, 0 console.error)",
+          "start": "2026-07-30", "end": "2026-07-30",
+          "assignment": { "agent": "main-orchestrator", "skill": "verification-before-completion", "mcp": "chrome-devtools + browser-tools" }
+        },
+        {
+          "label": "bd close + bd remember + CHANGELOG",
+          "start": "2026-07-30", "end": "2026-07-30",
+          "assignment": { "agent": "main-orchestrator", "skill": "ps-changelog", "mcp": "git" }
+        }
+      ]
+    }
+  ]
+}

@@ -25,7 +25,7 @@ const path = require("path");
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const AGENTS_TOOLS = path.join(PROJECT_ROOT, ".agents", "tools");
 const OPENCODE_SKILLS = path.join(PROJECT_ROOT, ".opencode", "skills");
-const OPENCODE_JSON = path.join(PROJECT_ROOT, "opencode.json");
+const OPENCODE_JSON = path.join(PROJECT_ROOT, ".opencode", "opencode.json");
 
 /**
  * Liste les noms de skills (dossiers contenant un SKILL.md).

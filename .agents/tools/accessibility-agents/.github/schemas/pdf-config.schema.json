@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PDF Accessibility Scan Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["enabled", "disabledRules", "severityFilter", "maxFileSize"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "description": { "type": "string" },
+    "enabled": { "type": "boolean" },
+    "disabledRules": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "severityFilter": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["error", "warning", "tip"]
+      },
+      "minItems": 1
+    },
+    "maxFileSize": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

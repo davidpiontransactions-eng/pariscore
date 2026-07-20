@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EPUB Accessibility Scan Config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["epub"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "string" },
+    "description": { "type": "string" },
+    "epub": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "disabledRules", "severityFilter", "maxFileSize"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "disabledRules": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "severityFilter": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["error", "warning", "tip"]
+          },
+          "minItems": 1
+        },
+        "maxFileSize": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
