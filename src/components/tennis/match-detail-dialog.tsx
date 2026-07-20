@@ -28,6 +28,7 @@ import { Calendar, Trophy, Target, Scale, TrendingUp, Activity } from "lucide-re
 import type { TennisMatch } from "@/lib/tennis-data";
 import { OddsComparator } from "./odds-comparator";
 import { useEloHistory } from "@/hooks/use-elo-history";
+import { getDateLocaleTag } from "@/lib/i18n-locales";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -36,15 +37,10 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-// BCP-47 tag for date formatting per locale
-const DATE_LOCALE: Record<string, string> = {
-  fr: "fr-FR",
-  en: "en-GB",
-};
-
 export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("detail");
   const locale = useLocale();
+  const dateLocale = getDateLocaleTag(locale);
   // Hooks must run unconditionally (before any early return)
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
 
@@ -65,7 +61,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
         const bPoint = eloHistoryData.b.history[i];
         return {
           date: point.date,
-          label: new Date(point.date).toLocaleDateString(locale, {
+          label: new Date(point.date).toLocaleDateString(dateLocale, {
             month: "short",
             year: "2-digit",
           }),
@@ -91,8 +87,6 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     [playerA.shortName]: counts.a,
     [playerB.shortName]: counts.b,
   }));
-
-  const dateLocale = DATE_LOCALE[locale] ?? "fr-FR";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

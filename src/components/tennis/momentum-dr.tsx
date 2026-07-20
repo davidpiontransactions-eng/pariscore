@@ -299,7 +299,8 @@ export function MomentumDR({
                   />
                 ))}
 
-                {/* Set labels */}
+                {/* Set labels — each divider sits at the END of set `d.set`,
+                    so label it with the set that just ended (not the next one). */}
                 {setDividers.map((d) => (
                   <text
                     key={`sl-${d.set}`}
@@ -309,7 +310,7 @@ export function MomentumDR({
                     fontSize={7}
                     fontFamily="monospace"
                     textAnchor="middle"
-                  >{`S${d.set + 1}`}</text>
+                  >{`S${d.set}`}</text>
                 ))}
 
                 {drHistory.length > 1 && (
