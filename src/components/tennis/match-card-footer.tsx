@@ -59,7 +59,7 @@ export function MatchCardFooter({
   return (
     <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-muted/20 px-4 py-3 sm:px-6">
       {/* Colonne gauche : SPS · classement · horodatage · offline */}
-      <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+      <div className="flex min-w-0 flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
         {/* SPS player A vs B */}
         <span className="flex items-center gap-1.5">
           <BarChart3 className="h-3.5 w-3.5" />
@@ -106,7 +106,7 @@ export function MatchCardFooter({
       </div>
 
       {/* Colonne droite : boutons d'action */}
-      <div className="flex items-center gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         {/* Détail accordéon */}
         <button
           type="button"

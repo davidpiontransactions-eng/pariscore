@@ -319,10 +319,10 @@ export function MatchCard({
             {isSynthetic ? (
               <Badge
                 variant="outline"
-                className="mt-3 gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400"
+                className="mt-3 max-w-full gap-1 whitespace-normal break-words text-center border-amber-500/40 text-amber-600 dark:text-amber-400"
                 title={tTennis("syntheticBadge")}
               >
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="h-3 w-3 shrink-0" />
                 {tTennis("syntheticBadge")}
               </Badge>
             ) : (
@@ -381,10 +381,10 @@ export function MatchCard({
             {isSynthetic ? (
               <Badge
                 variant="outline"
-                className="mt-3 gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400"
+                className="mt-3 max-w-full gap-1 whitespace-normal break-words text-center border-amber-500/40 text-amber-600 dark:text-amber-400"
                 title={tTennis("syntheticBadge")}
               >
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="h-3 w-3 shrink-0" />
                 {tTennis("syntheticBadge")}
               </Badge>
             ) : (

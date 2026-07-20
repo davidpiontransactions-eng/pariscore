@@ -48,7 +48,7 @@ export function PlayerBlock({
       />
       <div
         className={cn(
-          "flex flex-col items-center text-center sm:items-start sm:text-left",
+          "flex min-w-0 max-w-full flex-col items-center text-center sm:items-start sm:text-left",
           align === "right" && "sm:items-end sm:text-right"
         )}
       >
