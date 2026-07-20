@@ -1,0 +1,94 @@
+{
+  "title": "PariScore — Refonte Onglet Tennis + Recherche + Vraies Heures (Phases 7-9)",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-20 P7", "2026-07-21 P7", "2026-07-22 P8", "2026-07-23 P8", "2026-07-24 P9", "2026-07-25 P9"]
+  },
+  "tracks": [
+    {
+      "name": "P7 — Structure onglet tennis",
+      "items": [
+        {
+          "label": "Refactor TennisTabContent en 3 sous-onglets (Live / Aujourd'hui / Tournois)",
+          "start": "2026-07-20 P7", "end": "2026-07-20 P7",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design + shadcn-ui", "target": "src/components/football/tennis-tab-content.tsx" }
+        },
+        {
+          "label": "SubTabs component (Live/Today/Tournaments reusable)",
+          "start": "2026-07-20 P7", "end": "2026-07-20 P7",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "target": "src/components/tennis/tennis-sub-tabs.tsx (NOUVEAU)" }
+        },
+        {
+          "label": "TournamentsList (grille tournois ATP/WTA/ITF avec logos + pays)",
+          "start": "2026-07-20 P7", "end": "2026-07-21 P7",
+          "assignment": { "agent": "ui-designer", "skill": "shadcn-ui + frontend-design", "target": "src/components/tennis/tournaments-list.tsx (NOUVEAU)" }
+        },
+        {
+          "label": "API /api/tennis/tournaments (ATP/WTA/Challenger/ITF ce jour)",
+          "start": "2026-07-21 P7", "end": "2026-07-21 P7",
+          "assignment": { "agent": "main-orchestrator", "skill": "backend-patterns", "target": "src/app/api/tennis/tournaments/route.ts (NOUVEAU)" }
+        }
+      ]
+    },
+    {
+      "name": "P8 — Module recherche joueur/championnat",
+      "items": [
+        {
+          "label": "PlayerSearchBar (autocomplete debounced avec drapeau + photo)",
+          "start": "2026-07-22 P8", "end": "2026-07-22 P8",
+          "assignment": { "agent": "frontend-developer", "skill": "shadcn-ui (Command) + react-api-consumer", "target": "src/components/tennis/player-search-bar.tsx (NOUVEAU)" }
+        },
+        {
+          "label": "TournamentSearchBar (autocomplete tournois)",
+          "start": "2026-07-22 P8", "end": "2026-07-22 P8",
+          "assignment": { "agent": "frontend-developer", "skill": "shadcn-ui (Command) + react-api-consumer", "target": "src/components/tennis/tournament-search-bar.tsx (NOUVEAU)" }
+        },
+        {
+          "label": "API /api/tennis/search?q= (joueurs + tournois mélangés)",
+          "start": "2026-07-22 P8", "end": "2026-07-23 P8",
+          "assignment": { "agent": "main-orchestrator", "skill": "backend-patterns + api-design", "target": "src/app/api/tennis/search/route.ts (NOUVEAU)" }
+        },
+        {
+          "label": "PlayerProfilePage /tournament/[slug] + /player/[slug])",
+          "start": "2026-07-23 P8", "end": "2026-07-23 P8",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "target": "src/app/tennis/player/[slug]/page.tsx + src/app/tennis/tournament/[slug]/page.tsx (NOUVEAU)" }
+        },
+        {
+          "label": "Index DB prisma players + tournaments (si pas déjà)",
+          "start": "2026-07-23 P8", "end": "2026-07-23 P8",
+          "assignment": { "agent": "main-orchestrator", "skill": "prisma-patterns", "target": "prisma/schema.prisma" }
+        }
+      ]
+    },
+    {
+      "name": "P9 — Vraies heures via TennisTemple",
+      "items": [
+        {
+          "label": "Scraper TennisTemple (ATP/WTA schedule du jour) via scrapling",
+          "start": "2026-07-24 P9", "end": "2026-07-24 P9",
+          "assignment": { "agent": "main-orchestrator", "skill": "metier-scraping-websearch", "mcp": "scrapling", "target": "scripts/scrap-tennistemple.ts (NOUVEAU)" }
+        },
+        {
+          "label": "Normaliser les heures → UTC ISO + timezone tournoi",
+          "start": "2026-07-24 P9", "end": "2026-07-24 P9",
+          "assignment": { "agent": "main-orchestrator", "skill": "systematic-debugging", "target": "src/lib/tennistemple-parser.ts (NOUVEAU)" }
+        },
+        {
+          "label": "Merge schedule TennisTemple → matches BSD (match par nom)",
+          "start": "2026-07-24 P9", "end": "2026-07-25 P9",
+          "assignment": { "agent": "main-orchestrator", "skill": "metier-scraping-websearch", "target": "src/lib/schedule-merger.ts (NOUVEAU)" }
+        },
+        {
+          "label": "API /api/tennis/schedule (cache 5min, fallback BSD)",
+          "start": "2026-07-25 P9", "end": "2026-07-25 P9",
+          "assignment": { "agent": "main-orchestrator", "skill": "backend-patterns", "target": "src/app/api/tennis/schedule/route.ts (NOUVEAU)" }
+        },
+        {
+          "label": "Afficher vraie heure match dans MatchCardHeader (timezone tournoi)",
+          "start": "2026-07-25 P9", "end": "2026-07-25 P9",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "target": "src/components/tennis/match-card-header.tsx + i18n-locales.ts" }
+        }
+      ]
+    }
+  ]
+}

@@ -30,7 +30,8 @@
     "heroTitle": "Tennis · Prematch",
     "heroDesc": "Probabilités de victoire mises à jour en continu. Cliquez sur « Détail du modèle » pour voir la décomposition, l'intervalle de confiance et la forme récente.",
     "languageLabel": "Changer de langue",
-    "languageToggle": "Basculer en {locale}"
+    "languageToggle": "Basculer en {locale}",
+    "backToTennis": "Retour au tennis"
   },
   "filters": {
     "all": "Tous",

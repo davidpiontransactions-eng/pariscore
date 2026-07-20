@@ -30,7 +30,8 @@
     "heroTitle": "Tennis · Prematch",
     "heroDesc": "Win probabilities updated continuously. Click on “Model detail” to see the breakdown, confidence interval and recent form.",
     "languageLabel": "Switch language",
-    "languageToggle": "Switch to {locale}"
+    "languageToggle": "Switch to {locale}",
+    "backToTennis": "Back to tennis"
   },
   "filters": {
     "all": "All",
