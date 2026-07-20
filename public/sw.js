@@ -1,14 +1,19 @@
 // Service Worker — SetPoint PWA
-// Cache-first for static assets, network-first for API, offline fallback
-// + Web Push handler for value-bet alerts (PUSH-1)
+// Network-first for navigations + API, cache-first for static assets only.
+// Offline fallback. + Web Push handler for value-bet alerts (PUSH-1).
+//
+// HOTFIX 2026-07-20: bump v4 → v5 et navigations passées en network-first.
+// Avant, le HTML de navigation était servi cache-first → les nouveaux
+// déploiements frontend n'apparaissaient jamais chez les visiteurs ayant
+// déjà un SW installé. Désormais les navigations vont toujours au réseau
+// en premier (et tombent sur le cache `/` seulement hors-ligne).
 
-const CACHE_VERSION = "v4";
+const CACHE_VERSION = "v5";
 const STATIC_CACHE = `setpoint-static-${CACHE_VERSION}`;
 const API_CACHE = `setpoint-api-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
 
 const STATIC_ASSETS = [
-  "/",
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png",
@@ -44,6 +49,27 @@ self.addEventListener("fetch", (event) => {
   // Skip cross-origin requests (Next.js static, third-party)
   if (url.origin !== self.location.origin) return;
 
+  // HTML navigations: network-first (jamais cache-first sur le shell app).
+  // On ne met PAS "/" dans STATIC_ASSETS pour éviter qu'il soit pré-caché
+  // en cache-first. La stratégie ci-dessous va au réseau en premier et ne
+  // sert le cache que si le réseau échoue (offline).
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then((cached) => cached || caches.match("/"))
+        )
+    );
+    return;
+  }
+
   // API requests: network-first, fall back to cache
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(
@@ -60,24 +86,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets: cache-first
+  // Static assets (JS/CSS/images/fonts): cache-first
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
       return fetch(request)
         .then((response) => {
-          if (response.ok && response.type === "basic") {
+          if (response.ok && request.type === "basic") {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
           }
           return response;
         })
-        .catch(() => {
-          // If navigating and offline, serve cached home
-          if (request.mode === "navigate") {
-            return caches.match("/");
-          }
-        });
     })
   );
 });
