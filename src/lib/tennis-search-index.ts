@@ -24,7 +24,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "alejandro_davidovich_fokina",
     rank: 101,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ADFOKINA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ADFOKINA.jpg",
     circuit: "ATP",
   },
   {
@@ -33,7 +33,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "alex_de_minaur",
     rank: 16,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/DEMINAUR.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DEMINAUR.jpg",
     circuit: "ATP",
   },
   {
@@ -42,7 +42,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "alexander_zverev",
     rank: 4,
     country: "DE",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/AZVEREV.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/AZVEREV.jpg",
     circuit: "ATP",
   },
   {
@@ -51,7 +51,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "alexandra_eala",
     rank: 102,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ALEXANEALA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ALEXANEALA.jpg",
     circuit: "ATP",
   },
   {
@@ -60,7 +60,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "amanda_anisimova",
     rank: 103,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ANISIMOVA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ANISIMOVA.jpg",
     circuit: "ATP",
   },
   {
@@ -69,7 +69,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "andrey_rublev",
     rank: 7,
     country: "RU",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ARUBLEV.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ARUBLEV.jpg",
     circuit: "ATP",
   },
   {
@@ -96,7 +96,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "anna_kalinskaya",
     rank: 106,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/AKALINSKAYA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/AKALINSKAYA.jpg",
     circuit: "ATP",
   },
   {
@@ -105,7 +105,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "arthur_fils",
     rank: 18,
     country: "FR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ARTHURFILS.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ARTHURFILS.jpg",
     circuit: "ATP",
   },
   {
@@ -114,7 +114,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "aryna_sabalenka",
     rank: 107,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/SABALENKA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SABALENKA.jpg",
     circuit: "ATP",
   },
   {
@@ -123,7 +123,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "asia_muhammad",
     rank: 108,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/AMUHAMMAD.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/AMUHAMMAD.jpg",
     circuit: "ATP",
   },
   {
@@ -132,7 +132,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "barbora_krejcikova",
     rank: 109,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/BKREJCIKOVA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BKREJCIKOVA.jpg",
     circuit: "ATP",
   },
   {
@@ -141,7 +141,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "beatriz_haddad_maia",
     rank: 110,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/HADDADMA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/HADDADMA.jpg",
     circuit: "ATP",
   },
   {
@@ -150,7 +150,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "belinda_bencic",
     rank: 111,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/BBENCIC.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BBENCIC.jpg",
     circuit: "ATP",
   },
   {
@@ -159,7 +159,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "bethanie_mattek_sands",
     rank: 112,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MATSANDS.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MATSANDS.jpg",
     circuit: "ATP",
   },
   {
@@ -168,7 +168,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "bianca_andreescu",
     rank: 113,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/BANDREESCU.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BANDREESCU.jpg",
     circuit: "ATP",
   },
   {
@@ -177,7 +177,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "borna_coric",
     rank: 35,
     country: "HR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/CORIC.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/CORIC.jpg",
     circuit: "ATP",
   },
   {
@@ -186,7 +186,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "carlos_alcaraz",
     rank: 2,
     country: "ES",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/CALCARAZ.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/CALCARAZ.jpg",
     circuit: "ATP",
   },
   {
@@ -204,7 +204,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "casper_ruud",
     rank: 10,
     country: "NO",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/CASPRUUD.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/CASPRUUD.jpg",
     circuit: "ATP",
   },
   {
@@ -222,7 +222,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "coco_gauff",
     rank: 116,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/CGAUFF.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/CGAUFF.jpg",
     circuit: "ATP",
   },
   {
@@ -231,7 +231,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "danielle_collins",
     rank: 117,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/DCOLLINS.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DCOLLINS.jpg",
     circuit: "ATP",
   },
   {
@@ -240,7 +240,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "daniil_medvedev",
     rank: 5,
     country: "RU",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/DMEDVEDEV.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DMEDVEDEV.jpg",
     circuit: "ATP",
   },
   {
@@ -249,7 +249,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "daria_kasatkina",
     rank: 118,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/DKASAT.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DKASAT.jpg",
     circuit: "ATP",
   },
   {
@@ -258,7 +258,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "david_goffin",
     rank: 25,
     country: "BE",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/DGOFFIN.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DGOFFIN.jpg",
     circuit: "ATP",
   },
   {
@@ -267,7 +267,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "desirae_krawczyk",
     rank: 119,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/DKRAWCZYK.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DKRAWCZYK.jpg",
     circuit: "ATP",
   },
   {
@@ -276,7 +276,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "ekaterina_alexandrova",
     rank: 120,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/EALEXANDRO.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/EALEXANDRO.jpg",
     circuit: "ATP",
   },
   {
@@ -303,7 +303,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "elise_mertens",
     rank: 123,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/EMERTENS.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/EMERTENS.jpg",
     circuit: "ATP",
   },
   {
@@ -312,7 +312,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "emma_navarro",
     rank: 124,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/EMNAVARRO.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/EMNAVARRO.jpg",
     circuit: "ATP",
   },
   {
@@ -321,7 +321,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "felix_auger_aliassime",
     rank: 12,
     country: "CA",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/FAUGER.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/FAUGER.jpg",
     circuit: "ATP",
   },
   {
@@ -330,7 +330,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "flavio_cobolli",
     rank: 22,
     country: "IT",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/FLACOBOLLI.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/FLACOBOLLI.jpg",
     circuit: "ATP",
   },
   {
@@ -339,7 +339,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "francisco_cerundolo",
     rank: 15,
     country: "AR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/FCERUNDO.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/FCERUNDO.jpg",
     circuit: "ATP",
   },
   {
@@ -357,7 +357,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "grigor_dimitrov",
     rank: 17,
     country: "BG",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/GDIMITROV.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/GDIMITROV.jpg",
     circuit: "ATP",
   },
   {
@@ -366,7 +366,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "holger_rune",
     rank: 6,
     country: "DK",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/HOLRUNE.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/HOLRUNE.jpg",
     circuit: "ATP",
   },
   {
@@ -375,7 +375,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "hubert_hurkacz",
     rank: 126,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/HURKACZ.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/HURKACZ.jpg",
     circuit: "ATP",
   },
   {
@@ -384,7 +384,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "iga_swiatek",
     rank: 127,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ISWIATEK.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ISWIATEK.jpg",
     circuit: "ATP",
   },
   {
@@ -393,7 +393,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "iva_jovic",
     rank: 128,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/IVAJOVIC.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/IVAJOVIC.jpg",
     circuit: "ATP",
   },
   {
@@ -402,7 +402,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "jack_draper",
     rank: 9,
     country: "GB",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JDRAPER.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JDRAPER.jpg",
     circuit: "ATP",
   },
   {
@@ -411,7 +411,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "jannik_sinner",
     rank: 1,
     country: "IT",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JSINNER.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JSINNER.jpg",
     circuit: "ATP",
   },
   {
@@ -420,7 +420,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "jasmine_paolini",
     rank: 129,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JASPAOLINI.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JASPAOLINI.jpg",
     circuit: "ATP",
   },
   {
@@ -438,7 +438,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "jenson_brooksby",
     rank: 131,
     country: "US",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JBROOKSBY.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JBROOKSBY.jpg",
     circuit: "ATP",
   },
   {
@@ -447,7 +447,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "jessica_pegula",
     rank: 132,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JPEGULA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JPEGULA.jpg",
     circuit: "ATP",
   },
   {
@@ -456,7 +456,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "jiri_lehecka",
     rank: 133,
     country: "CZ",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JIRILEHECKA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JIRILEHECKA.jpg",
     circuit: "ATP",
   },
   {
@@ -465,7 +465,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "joao_fonseca",
     rank: 19,
     country: "BR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/JOAOFONSECA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JOAOFONSECA.jpg",
     circuit: "ATP",
   },
   {
@@ -474,7 +474,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "karen_khachanov",
     rank: 134,
     country: "RU",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/KKHACHANOV.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/KKHACHANOV.jpg",
     circuit: "ATP",
   },
   {
@@ -483,7 +483,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "karolina_muchova",
     rank: 135,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MUCHOVA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MUCHOVA.jpg",
     circuit: "ATP",
   },
   {
@@ -501,7 +501,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "katie_boulter",
     rank: 137,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/KBOULTER.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/KBOULTER.jpg",
     circuit: "ATP",
   },
   {
@@ -510,7 +510,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "leylah_fernandez",
     rank: 138,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/LFERNAND.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/LFERNAND.jpg",
     circuit: "ATP",
   },
   {
@@ -528,7 +528,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "madison_keys",
     rank: 140,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MADKEYS.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MADKEYS.jpg",
     circuit: "ATP",
   },
   {
@@ -537,7 +537,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "maja_chwalinska",
     rank: 141,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MCHWALINSK.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MCHWALINSK.jpg",
     circuit: "ATP",
   },
   {
@@ -546,7 +546,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "marcos_giron",
     rank: 142,
     country: "US",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MARCGIRON.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MARCGIRON.jpg",
     circuit: "ATP",
   },
   {
@@ -555,7 +555,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "maria_sakkari",
     rank: 143,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/SAKKARI.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SAKKARI.jpg",
     circuit: "ATP",
   },
   {
@@ -573,7 +573,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "marin_cilic",
     rank: 30,
     country: "HR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MCILIC.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MCILIC.jpg",
     circuit: "ATP",
   },
   {
@@ -591,7 +591,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "marta_kostyuk",
     rank: 146,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MKOSTYUK.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MKOSTYUK.jpg",
     circuit: "ATP",
   },
   {
@@ -609,7 +609,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "matteo_arnaldi",
     rank: 11,
     country: "IT",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MATARNALDI.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MATARNALDI.jpg",
     circuit: "ATP",
   },
   {
@@ -618,7 +618,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "matteo_berrettini",
     rank: 14,
     country: "IT",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MBERRETT.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MBERRETT.jpg",
     circuit: "ATP",
   },
   {
@@ -627,7 +627,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "miomir_kecmanovic",
     rank: 148,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/KECMANOVIC.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/KECMANOVIC.jpg",
     circuit: "ATP",
   },
   {
@@ -636,7 +636,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "mirra_andreeva",
     rank: 149,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/MANDREEVA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MANDREEVA.jpg",
     circuit: "ATP",
   },
   {
@@ -645,7 +645,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "naomi_osaka",
     rank: 150,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/NOSAKA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/NOSAKA.jpg",
     circuit: "ATP",
   },
   {
@@ -654,7 +654,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "nick_kyrgios",
     rank: 151,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/KYRGIOS.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/KYRGIOS.jpg",
     circuit: "ATP",
   },
   {
@@ -663,7 +663,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "novak_djokovic",
     rank: 3,
     country: "RS",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/NDJOKOVIC.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/NDJOKOVIC.jpg",
     circuit: "ATP",
   },
   {
@@ -672,7 +672,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "ons_jabeur",
     rank: 152,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/ONSJABEUR.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ONSJABEUR.jpg",
     circuit: "ATP",
   },
   {
@@ -681,7 +681,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "paula_badosa",
     rank: 153,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/PBADOSA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/PBADOSA.jpg",
     circuit: "ATP",
   },
   {
@@ -699,7 +699,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "roberto_bautista_agut",
     rank: 155,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/BAUTAGU.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BAUTAGU.jpg",
     circuit: "ATP",
   },
   {
@@ -708,7 +708,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "roger_federer",
     rank: 999,
     country: "CH",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/RFEDERER.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/RFEDERER.jpg",
     circuit: "ATP",
   },
   {
@@ -717,7 +717,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "sebastian_baez",
     rank: 13,
     country: "AR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/SEBASBAEZ.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SEBASBAEZ.jpg",
     circuit: "ATP",
   },
   {
@@ -726,7 +726,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "sebastian_korda",
     rank: 156,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/SEBKORDA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SEBKORDA.jpg",
     circuit: "ATP",
   },
   {
@@ -762,7 +762,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "sofia_kenin",
     rank: 160,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/SKENIN.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SKENIN.jpg",
     circuit: "ATP",
   },
   {
@@ -771,7 +771,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "sorana_cirstea",
     rank: 161,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/SCIRSTEA.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SCIRSTEA.jpg",
     circuit: "ATP",
   },
   {
@@ -780,7 +780,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "tallon_griekspoor",
     rank: 162,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/TGRIEKSPOOR.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/TGRIEKSPOOR.jpg",
     circuit: "ATP",
   },
   {
@@ -789,7 +789,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "taylor_fritz",
     rank: 8,
     country: "US",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/TFRITZ.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/TFRITZ.jpg",
     circuit: "ATP",
   },
   {
@@ -798,7 +798,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "tomas_martin_etcheverry",
     rank: 20,
     country: "AR",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/TMETCHEVER.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/TMETCHEVER.jpg",
     circuit: "ATP",
   },
   {
@@ -816,7 +816,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "veronika_kudermetova",
     rank: 164,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/VKUDERMET.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/VKUDERMET.jpg",
     circuit: "ATP",
   },
   {
@@ -834,7 +834,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     slug: "victoria_mboko",
     rank: 166,
     country: "XX",
-    photoUrl: "https://img.tennis-Warehouse.com/graphics-Resizer/headshots/VICKYMBOKO.jpg",
+    photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/VICKYMBOKO.jpg",
     circuit: "ATP",
   },
   {
