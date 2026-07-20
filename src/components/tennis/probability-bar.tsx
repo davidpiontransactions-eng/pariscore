@@ -67,15 +67,15 @@ export function ProbabilityBar({
         {ic && ic[0] !== undefined && ic[1] !== undefined && (
           <>
             <div
-              className="absolute inset-y-0 border-x-2 border-white/60"
+              className="absolute inset-y-0 border-x-2 border-foreground/60"
               style={{
                 left: `${ic[0]}%`,
                 right: `${100 - ic[1]}%`,
               }}
             />
-            {/* Median tick */}
+            {/* Median tick — Phase 4.D fix: bg-white was invisible in dark mode */}
             <div
-              className="absolute inset-y-0 w-0.5 bg-white"
+              className="absolute inset-y-0 w-0.5 bg-foreground"
               style={{ left: `${probA}%`, transform: "translateX(-50%)" }}
             />
           </>

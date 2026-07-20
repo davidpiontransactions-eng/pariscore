@@ -205,19 +205,42 @@ function Th({
   dir: "asc" | "desc";
   align?: "left" | "right";
 }) {
+  // Phase 4.D — a11y fix: <th onClick> alone is not keyboard accessible.
+  // We add aria-sort (WCAG 1.3.1), role="button" + tabIndex=0 + onKeyDown
+  // so screen readers announce sort state and keyboard users can trigger it.
+  const ariaSort: "ascending" | "descending" | "none" = active
+    ? dir === "asc"
+      ? "ascending"
+      : "descending"
+    : "none";
+
   return (
     <th
+      aria-sort={ariaSort}
+      scope="col"
       className={cn(
         "px-3 py-2 font-semibold",
         align === "right" && "text-right",
-        "cursor-pointer select-none transition-colors hover:bg-muted/60"
       )}
-      onClick={onClick}
     >
-      <span
+      <button
+        type="button"
+        onClick={onClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        aria-label={
+          ariaSort === "none"
+            ? `Trier par ${typeof children === "string" ? children : "colonne"}`
+            : `Trier par ${typeof children === "string" ? children : "colonne"} (actuellement ${dir === "asc" ? "croissant" : "décroissant"})`
+        }
         className={cn(
-          "inline-flex items-center gap-1",
-          align === "right" && "flex-row-reverse"
+          "inline-flex items-center gap-1 select-none transition-colors hover:text-foreground",
+          "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background rounded",
+          align === "right" && "flex-row-reverse",
         )}
       >
         {children}
@@ -228,7 +251,7 @@ function Th({
           )}
           style={{ transform: active && dir === "asc" ? "rotate(180deg)" : undefined }}
         />
-      </span>
+      </button>
     </th>
   );
 }
