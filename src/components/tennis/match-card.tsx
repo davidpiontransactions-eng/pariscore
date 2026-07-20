@@ -12,6 +12,9 @@ import { QuickAddRing } from "./quick-add-ring";
 import { BestOddBadge } from "./best-odd-badge";
 import { LiveStatsPanel } from "./live-stats-panel";
 import { MomentumDR } from "./momentum-dr";
+import { WinProbabilityChart } from "./win-probability-chart";
+import { PointTimeline } from "./point-timeline";
+import { LiveScoreAnnouncer } from "./live-score-announcer";
 import { MatchCardHeader } from "./match-card-header";
 import { MatchCardFooter } from "./match-card-footer";
 import { MatchCardDetail } from "./match-card-detail";
@@ -26,6 +29,7 @@ import { useEmailAlerts } from "@/hooks/use-email-alerts";
 import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";
 import { usePlayerStats } from "@/hooks/use-player-stats";
+import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { Badge } from "@/components/ui/badge";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
@@ -58,15 +62,10 @@ type Props = {
   priority?: boolean;
 };
 
-// Convert internal point index (0/1/2/3/4+) to tennis point notation.
-function formatPoints(pA: number, pB: number): string {
-  const v = (p: number) => ["0", "15", "30", "40"][p] ?? "40";
-  if (pA >= 3 && pB >= 3) {
-    if (pA === pB) return "40-40"; // deuce
-    return pA > pB ? "Av.-40" : "40-Av.";
-  }
-  return `${v(pA)}-${v(pB)}`;
-}
+// NOTE: formatPoints() was removed in Phase 4 — its only caller (LiveScoreBar)
+// was deleted because SetScoreline + CurrentGameScore + ServerIndicator in the
+// header now cover the same info more cleanly. The shared implementation
+// lives in src/lib/tennis-format.ts (used by current-game-score.tsx).
 
 export function MatchCard({
   match,
@@ -121,6 +120,15 @@ export function MatchCard({
   // Live probabilities override the static prematch ones when the match is live.
   const probA = isLive ? Math.round(liveState!.liveProbA) : match.probA;
   const probB = isLive ? Math.round(liveState!.liveProbB) : match.probB;
+
+  // Momentum hook for PointTimeline — also used by MomentumDR (each instance
+  // keeps its own ref-buffer but diffs the same liveState, so they stay in
+  // sync). We extract pointHistory + current set/game for the PointTimeline
+  // component below.
+  const momentum = useMomentumDR(isLive ? liveState : undefined);
+  const currentSetNum = (liveState?.currentSet ?? 0) + 1;
+  const currentGameNum =
+    liveState ? (liveState.scoreA.games + liveState.scoreB.games) + 1 : 1;
 
   // Terminal mode is sticky — when it's ON we never let the chips collapse,
   // even if the A/B variant would have collapsed them. This effect runs
@@ -407,21 +415,42 @@ export function MatchCard({
           </div>
         )}
 
-        {/* Live score — shown only when the match is live */}
-        {isLive && liveState && (
-          <LiveScoreBar
-            liveState={liveState}
-            serverName={
-              liveState.server === "A" ? playerA.name : playerB.name
-            }
-          />
-        )}
-
         {/* Momentum DR — real-time EWMA-based dominance ratio */}
         {isLive && liveState && (
           <div className="mt-4">
             <MomentumDR
               liveState={liveState}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+            />
+          </div>
+        )}
+
+        {/* Win probability curve (live) — area chart of liveProbA over time.
+            Phase 3 component integrated here in Phase 4. */}
+        {isLive && liveState && (
+          <div className="mt-4">
+            <WinProbabilityChart
+              probA={liveState.liveProbA}
+              probB={liveState.liveProbB}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+            />
+          </div>
+        )}
+
+        {/* Point timeline (live) — dots for each point of the current game.
+            Uses momentum.pointHistory filtered by current set/game. */}
+        {isLive && liveState && (
+          <div className="mt-4">
+            <PointTimeline
+              history={momentum.pointHistory}
+              currentSet={currentSetNum}
+              currentGame={currentGameNum}
               player1Name={playerA.name}
               player2Name={playerB.name}
               player1Color={playerA.color}
@@ -534,70 +563,17 @@ export function MatchCard({
           playerB={playerB}
         />
       )}
+
+      {/* Live score announcer — sr-only LiveRegion for screen readers.
+          Announces game/set wins, score changes, break points (WCAG 4.1.3). */}
+      {isLive && liveState && (
+        <LiveScoreAnnouncer
+          liveState={liveState}
+          player1Name={playerA.name}
+          player2Name={playerB.name}
+        />
+      )}
     </article>
   );
 }
-
-// Live score bar shown between the players and the odds when isLive === true.
-// Renders: "6-4, 3-2 · 30-15 · Sinner serving"
-function LiveScoreBar({
-  liveState,
-  serverName,
-}: {
-  liveState: LiveMatchState;
-  serverName: string;
-}) {
-  const t = useTranslations("match");
-  const { scoreA, scoreB } = liveState;
-
-  // Past sets joined with ", " — e.g. "6-4, 7-5"
-  const setsStr = scoreA.sets
-    .map((gA, i) => `${gA}-${scoreB.sets[i] ?? 0}`)
-    .join(", ");
-
-  // Current set games — e.g. "3-2"
-  const gamesStr = `${scoreA.games}-${scoreB.games}`;
-
-  // Combine sets + current games with ", " separator
-  const scoreStr = setsStr ? `${setsStr}, ${gamesStr}` : gamesStr;
-
-  // Current points — e.g. "30-15"
-  const pointsStr = formatPoints(scoreA.points, scoreB.points);
-
-  return (
-    <div
-      className={cn(
-        "mt-5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1",
-        "rounded-lg border border-rose-500/20 bg-rose-500/5 px-3 py-2",
-        "text-center text-xs font-medium text-rose-900 dark:text-rose-200",
-      )}
-      role="status"
-      aria-live="polite"
-      aria-label={t("servingAria", {
-        score: scoreStr,
-        points: pointsStr,
-        server: serverName,
-      })}
-    >
-      <span className="font-mono font-bold tabular-nums text-foreground">
-        {scoreStr}
-      </span>
-      <span className="text-rose-400/60" aria-hidden>
-        ·
-      </span>
-      <span className="font-mono tabular-nums">{pointsStr}</span>
-      <span className="text-rose-400/60" aria-hidden>
-        ·
-      </span>
-      <span className="flex items-center gap-1">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-600" />
-        </span>
-        {t("serving", { name: serverName })}
-      </span>
-    </div>
-  );
-}
-
 

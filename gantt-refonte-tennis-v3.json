@@ -1,0 +1,154 @@
+{
+  "title": "PariScore — Phases 4-5-6 Refonte Tennis (intégration + polish + deploy)",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-20 P4", "2026-07-21 P4", "2026-07-22 P4", "2026-07-23 P5", "2026-07-24 P5", "2026-07-25 P6"]
+  },
+  "tracks": [
+    {
+      "name": "P4.A — Intégration live (match-card.tsx)",
+      "items": [
+        {
+          "label": "Retirer LiveScoreBar (doublon avec LiveHeaderScore)",
+          "start": "2026-07-20 P4", "end": "2026-07-20 P4",
+          "assignment": { "agent": "main-orchestrator", "skill": "refactoring-agent", "target": "src/components/tennis/match-card.tsx:411-418 + LiveScoreBar fn 543-601" }
+        },
+        {
+          "label": "Intégrer WinProbabilityChart + PointTimeline après MomentumDR",
+          "start": "2026-07-20 P4", "end": "2026-07-20 P4",
+          "assignment": { "agent": "main-orchestrator", "skill": "react-nextjs-patterns", "target": "src/components/tennis/match-card.tsx (bloc isLive)" }
+        },
+        {
+          "label": "Intégrer LiveScoreAnnouncer (sr-only, fin de carte)",
+          "start": "2026-07-20 P4", "end": "2026-07-20 P4",
+          "assignment": { "agent": "main-orchestrator", "skill": "accessibility", "target": "src/components/tennis/match-card.tsx" }
+        }
+      ]
+    },
+    {
+      "name": "P4.B — Dialog + nouveau composant",
+      "items": [
+        {
+          "label": "Créer LastMatchesList.tsx (remplace BarChart binaire)",
+          "start": "2026-07-20 P4", "end": "2026-07-21 P4",
+          "assignment": { "agent": "frontend-developer", "skill": "shadcn-ui + react-patterns", "target": "src/components/tennis/last-matches-list.tsx (NOUVEAU)" }
+        },
+        {
+          "label": "Intégrer StatsRadarChart dans MatchDetailDialog (tab overview)",
+          "start": "2026-07-21 P4", "end": "2026-07-21 P4",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "target": "src/components/tennis/match-detail-dialog.tsx" }
+        },
+        {
+          "label": "Intégrer LastMatchesList dans tab form",
+          "start": "2026-07-21 P4", "end": "2026-07-21 P4",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "target": "src/components/tennis/match-detail-dialog.tsx:355" }
+        }
+      ]
+    },
+    {
+      "name": "P4.C — Refactors & migrations",
+      "items": [
+        {
+          "label": "next/image migration (fallback + ratio fixe)",
+          "start": "2026-07-21 P4", "end": "2026-07-22 P4",
+          "assignment": { "agent": "ui-designer", "skill": "react-nextjs-patterns", "target": "src/components/tennis/match-detail-dialog.tsx:152-180 + player-block.tsx" }
+        },
+        {
+          "label": "Fusionner match-card-detail ↔ stats-indicators-grid",
+          "start": "2026-07-22 P4", "end": "2026-07-22 P4",
+          "assignment": { "agent": "main-orchestrator", "skill": "refactoring-agent", "target": "src/components/tennis/match-card-detail.tsx + stats-indicators-grid.tsx" }
+        },
+        {
+          "label": "Restaurer tooltip SPS (lazy mount via dynamic)",
+          "start": "2026-07-22 P4", "end": "2026-07-22 P4",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "target": "src/components/tennis/player-statline.tsx:115-117" }
+        }
+      ]
+    },
+    {
+      "name": "P4.D — Fixes a11y ciblés",
+      "items": [
+        {
+          "label": "Fix probability-bar (tick bg-foreground + décomposition interactive)",
+          "start": "2026-07-22 P4", "end": "2026-07-22 P4",
+          "assignment": { "agent": "accessibility-tester", "skill": "accessibility + best-practices", "target": "src/components/tennis/probability-bar.tsx:78,95-113" }
+        },
+        {
+          "label": "Fix odds-comparator (aria-sort + onKeyDown + focus)",
+          "start": "2026-07-22 P4", "end": "2026-07-22 P4",
+          "assignment": { "agent": "accessibility-tester", "skill": "accessibility + best-practices", "target": "src/components/tennis/odds-comparator.tsx:195-233" }
+        }
+      ]
+    },
+    {
+      "name": "P5.A — Polish visuel",
+      "items": [
+        {
+          "label": "impeccable polish (micro-interactions, transitions)",
+          "start": "2026-07-23 P5", "end": "2026-07-23 P5",
+          "assignment": { "agent": "ui-designer", "skill": "impeccable (polish) + motion-framer", "target": "src/components/tennis/*" }
+        },
+        {
+          "label": "hallmark audit anti-AI-slop",
+          "start": "2026-07-23 P5", "end": "2026-07-23 P5",
+          "assignment": { "agent": "main-orchestrator", "skill": "hallmark", "target": "global" }
+        }
+      ]
+    },
+    {
+      "name": "P5.B — Validation",
+      "items": [
+        {
+          "label": "visual-regression screenshots 'après' + diff",
+          "start": "2026-07-23 P5", "end": "2026-07-24 P5",
+          "assignment": { "agent": "main-orchestrator", "skill": "visual-regression", "mcp": "playwright", "target": "tests/screenshots/tennis-refactor/" }
+        },
+        {
+          "label": "Audit a11y axe-core (WCAG 2.2)",
+          "start": "2026-07-24 P5", "end": "2026-07-24 P5",
+          "assignment": { "agent": "accessibility-tester", "skill": "accessibility", "mcp": "frontendchecklist", "target": "src/components/tennis/*" }
+        },
+        {
+          "label": "Tests Playwright pérennes tests/tennis-refactor.spec.ts",
+          "start": "2026-07-24 P5", "end": "2026-07-24 P5",
+          "assignment": { "agent": "test-engineer", "skill": "webapp-testing + e2e-testing", "mcp": "playwright", "target": "tests/tennis-refactor.spec.ts" }
+        },
+        {
+          "label": "i18n cleanup (extraire derniers FR hardcodés)",
+          "start": "2026-07-24 P5", "end": "2026-07-24 P5",
+          "assignment": { "agent": "main-orchestrator", "skill": "react-nextjs-patterns", "target": "src/components/tennis/* + src/messages/{fr,en}.json" }
+        },
+        {
+          "label": "Core Web Vitals (LCP/INP/CLS)",
+          "start": "2026-07-24 P5", "end": "2026-07-24 P5",
+          "assignment": { "agent": "web-performance-auditor", "skill": "core-web-vitals + performance", "mcp": "lighthouse + chrome-devtools", "target": "/setpoint/" }
+        }
+      ]
+    },
+    {
+      "name": "P6 — Déploiement",
+      "items": [
+        {
+          "label": "bun run build + node --check inline scripts",
+          "start": "2026-07-25 P6", "end": "2026-07-25 P6",
+          "assignment": { "agent": "main-orchestrator", "skill": "executing-plans", "target": "build artifacts" }
+        },
+        {
+          "label": "Deploy VPS (git pull + bun install + build + pm2 restart)",
+          "start": "2026-07-25 P6", "end": "2026-07-25 P6",
+          "assignment": { "agent": "main-orchestrator", "skill": "ps-deploy", "target": "VPS ubuntu@51.75.21.239" }
+        },
+        {
+          "label": "Vérif prod (0 pageerror + scores visibles)",
+          "start": "2026-07-25 P6", "end": "2026-07-25 P6",
+          "assignment": { "agent": "main-orchestrator", "skill": "verification-before-completion", "mcp": "chrome-devtools + browser-tools", "target": "https://pariscore.fr/" }
+        },
+        {
+          "label": "bd close + bd remember + CHANGELOG.md",
+          "start": "2026-07-25 P6", "end": "2026-07-25 P6",
+          "assignment": { "agent": "main-orchestrator", "skill": "ps-changelog", "mcp": "git", "target": ".beads/ + CHANGELOG.md" }
+        }
+      ]
+    }
+  ]
+}

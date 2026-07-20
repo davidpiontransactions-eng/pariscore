@@ -15,6 +15,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { ServeStatsBars } from "./serve-stats-bars";
+import { BreakPointsGrid } from "./break-points-grid";
+import { SetBySetTable } from "./set-by-set-table";
 
 interface LiveStatsPanelProps {
   matchId: string;
@@ -40,56 +43,6 @@ const STAT_ROWS: StatRowDef[] = [
   { p1Key: "p1_ret_won", p2Key: "p2_ret_won", label: "% pts gagnés au retour", suffix: "%", higherWins: true },
   { p1Key: "p1_total_pts", p2Key: "p2_total_pts", label: "% points gagnés", suffix: "%", higherWins: true },
 ];
-
-function ServiceCircle({
-  value,
-  label,
-  size = 80,
-  strokeWidth = 6,
-  color,
-}: {
-  value: number | null;
-  label: string;
-  size?: number;
-  strokeWidth?: number;
-  color: string;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const pct = value ?? 0;
-  const offset = circumference - (pct / 100) * circumference;
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="hsl(var(--muted))"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-all duration-500 ease-out"
-        />
-      </svg>
-      <span className="text-sm font-bold tabular-nums">{value !== null ? `${value}%` : "--"}</span>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-        {label}
-      </span>
-    </div>
-  );
-}
 
 export function LiveStatsPanel({
   matchId,
@@ -229,73 +182,34 @@ export function LiveStatsPanel({
           </TableBody>
         </Table>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <ServiceCircle
-            value={stats.p1_first_pct}
-            label="Service P1"
-            color="#22c55e"
-          />
-          <ServiceCircle
-            value={stats.p2_first_pct}
-            label="Service P2"
-            color="#3b82f6"
-          />
-          <ServiceCircle
-            value={stats.p1_ret_won}
-            label="Retour P1"
-            color="#22c55e"
-          />
-          <ServiceCircle
-            value={stats.p2_ret_won}
-            label="Retour P2"
-            color="#3b82f6"
-          />
-        </div>
+        {/* Phase 2 — Serve stats bars (style Sofascore "Performance").
+            Remplace le tableau stats précédent pour les 3 métriques % (1st in, 1st won, ret won).
+            Le tableau STAT_ROWS ci-dessus reste pour aces/DF/total (chiffres absolus). */}
+        <ServeStatsBars
+          stats={stats}
+          player1Name={player1Name}
+          player2Name={player2Name}
+        />
 
+        {/* Phase 2 — Break points matrix.
+            Affiche bp_saved (cumul) sous forme de dots colorés.
+            bp_faced n'est pas encore exposé par le hook → mode dégradé "saved only". */}
+        <BreakPointsGrid
+          bpSavedA={stats.p1_bp_saved}
+          bpSavedB={stats.p2_bp_saved}
+          player1Name={player1Name}
+          player2Name={player2Name}
+        />
+
+        {/* Phase 2 — Set-by-set table Sofascore-like.
+            Remplace l'ancien "Per-set breakdown" texte (aces/DF uniquement) par
+            une table dense avec colonne Score (winner en gras emerald). */}
         {stats.perSet.length > 0 && (
-          <div>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Per-set breakdown
-            </h4>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Set</TableHead>
-                  <TableHead className="text-center">
-                    {player1Name} Aces
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {player1Name} DF
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {player2Name} Aces
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {player2Name} DF
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {stats.perSet.map((s, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium">{i + 1}</TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {s.p1_aces !== null ? s.p1_aces : "--"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {s.p1_df !== null ? s.p1_df : "--"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {s.p2_aces !== null ? s.p2_aces : "--"}
-                    </TableCell>
-                    <TableCell className="text-center font-mono tabular-nums">
-                      {s.p2_df !== null ? s.p2_df : "--"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <SetBySetTable
+            perSet={stats.perSet}
+            player1Name={player1Name}
+            player2Name={player2Name}
+          />
         )}
       </CardContent>
     </Card>

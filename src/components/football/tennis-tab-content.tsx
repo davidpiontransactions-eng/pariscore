@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
 import { MatchCard } from "@/components/tennis/match-card";
+import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
+import { TournamentsList } from "@/components/tennis/tournaments-list";
 const MatchDetailDialog = lazy(() =>
   import("@/components/tennis/match-detail-dialog").then((m) => ({ default: m.MatchDetailDialog }))
 );
@@ -72,6 +74,7 @@ export function TennisTabContent() {
   const tPaper = useTranslations("paperTrading");
   const tComparator = useTranslations("comparator");
   const tTerminal = useTranslations("terminal");
+  const tTennis = useTranslations("tennis");
 
   const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
   const { liveStates, liveMatchList, connectionStatus, latency } = useLiveMatches();
@@ -238,6 +241,29 @@ export function TennisTabContent() {
 
   const { filtered, valueBetCount } = useMatchFilter(matchesWithLive, filter, favorites, sortKey);
 
+  // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
+  const [subTab, setSubTab] = useState<TennisSubTab>("today");
+
+  // Compteurs dynamiques pour les badges des SubTabs
+  const liveCount = useMemo(
+    () => liveMatchList.filter((m) => m.isLive).length,
+    [liveMatchList],
+  );
+  const todayCount = matchesWithLive.length;
+
+  // Filtrage par sous-onglet
+  const subFiltered = useMemo(() => {
+    if (subTab === "live") {
+      return filtered.filter((m) => liveStates[m.id]?.isLive);
+    }
+    return filtered; // "today" = tout
+  }, [subTab, filtered, liveStates]);
+
+  const handleSubTabChange = (tab: TennisSubTab) => {
+    setSubTab(tab);
+    track("sub_tab_click", { tab });
+  };
+
   const handleFilter = (key: FilterKey) => {
     setFilter(key);
     track("filter_click", { filter: key });
@@ -361,8 +387,22 @@ export function TennisTabContent() {
         </div>
       </section>
 
-      {/* Match list */}
+      {/* Phase 7 — Sous-onglets Live / Aujourd'hui / Tournois */}
+      <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
+        <TennisSubTabs
+          activeSubTab={subTab}
+          onSubTabChange={handleSubTabChange}
+          liveCount={liveCount}
+          todayCount={todayCount}
+        />
+      </div>
+
+      {/* Match list / Tournaments list */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+      {subTab === "tournaments" ? (
+        <TournamentsList />
+      ) : (
+        <>
         {error && (
           <div className="mb-6 flex items-start gap-3 rounded-lg border border-rose-500/40 bg-rose-500/5 p-4 text-sm text-rose-700 dark:text-rose-300">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -394,7 +434,7 @@ export function TennisTabContent() {
               </button>
             )}
             <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
-              {filtered.map((match, idx) => (
+              {subFiltered.map((match, idx) => (
                 <MatchCard
                   key={match.id}
                   match={match}
@@ -410,15 +450,19 @@ export function TennisTabContent() {
           </>
         )}
 
-        {!isLoading && filtered.length === 0 && !error && (
+        {!isLoading && subFiltered.length === 0 && !error && (
           <div className="mt-16 flex flex-col items-center justify-center gap-3 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <Trophy className="h-5 w-5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">{t("noMatchTitle")}</p>
+            <p className="text-sm font-medium">
+              {subTab === "live" ? tTennis("noLiveMatches") : t("noMatchTitle")}
+            </p>
             <p className="text-xs text-muted-foreground">{t("noMatchHint")}</p>
           </div>
         )}
+        </>
+      )}
       </main>
 
       <Suspense fallback={null}>

@@ -1,10 +1,14 @@
 "use client";
 
 import { Calendar, Clock, Star, Trophy } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
+import { getDateLocaleTag } from "@/lib/i18n-locales";
 import { cn } from "@/lib/utils";
+import { SetScoreline } from "./set-scoreline";
+import { CurrentGameScore } from "./current-game-score";
+import { ServerIndicator } from "./server-indicator";
 
 type Props = {
   match: TennisMatch;
@@ -29,6 +33,7 @@ export function MatchCardHeader({
 }: Props) {
   const t = useTranslations("match");
   const tTime = useTranslations("time");
+  const locale = useLocale();
 
   return (
     <header
@@ -50,7 +55,7 @@ export function MatchCardHeader({
         <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground/70">
           <Calendar className="h-3 w-3" />
           <span>
-            {new Intl.DateTimeFormat("fr-FR", {
+            {new Intl.DateTimeFormat(getDateLocaleTag(locale), {
               weekday: "short",
               day: "numeric",
               month: "short",
@@ -80,14 +85,14 @@ export function MatchCardHeader({
           </span>
         )}
 
-        <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-          <Clock className="h-3.5 w-3.5" />
-          <span>
-            {isLive
-              ? t("set", { n: liveState!.currentSet })
-              : formatRelativeTime(match.scheduledAt, tTime)}
-          </span>
-        </div>
+        {isLive && liveState ? (
+          <LiveHeaderScore match={match} liveState={liveState} />
+        ) : (
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{formatRelativeTime(match.scheduledAt, tTime)}</span>
+          </div>
+        )}
 
         <button
           type="button"
@@ -110,5 +115,44 @@ export function MatchCardHeader({
         </button>
       </div>
     </header>
+  );
+}
+
+/**
+ * Live score cluster rendered inside the header when the match is live.
+ *
+ * Stacks the three new score components — {@link SetScoreline},
+ * {@link CurrentGameScore}, {@link ServerIndicator} — replacing the old
+ * "Set N" placeholder so the header carries the actual match state
+ * (`6-4 6-3 3-2 · 30-15 · Sinner serving`) instead of just the set index.
+ *
+ * Kept in this file (not exported) because the layout is specific to the
+ * header's right column; the three child components stay reusable elsewhere.
+ */
+function LiveHeaderScore({
+  match,
+  liveState,
+}: {
+  match: TennisMatch;
+  liveState: LiveMatchState;
+}) {
+  const serverName =
+    liveState.server === "A" ? match.playerA.name : match.playerB.name;
+
+  return (
+    <div className="flex flex-col items-end gap-0.5">
+      <div className="flex items-center gap-1.5">
+        <SetScoreline
+          scoreA={liveState.scoreA}
+          scoreB={liveState.scoreB}
+        />
+        <span className="text-border" aria-hidden>·</span>
+        <CurrentGameScore
+          pointsA={liveState.scoreA.points}
+          pointsB={liveState.scoreB.points}
+        />
+      </div>
+      <ServerIndicator server={liveState.server} serverName={serverName} />
+    </div>
   );
 }

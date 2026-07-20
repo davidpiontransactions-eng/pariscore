@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1168" height="1432" viewBox="0 0 1168 1432" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .weekend { fill: #161b29; }
+  .title { fill: #e6edf3; font-size: 18px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 11px; }
+  .track-name { fill: #c9d1d9; font-size: 12px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item { fill: #00e676; }
+  .item-critical { fill: #ff6b6b; }
+  .item-premium { fill: #0077ff; }
+  .item-setup { fill: #a371f7; }
+  .item-done { fill: #2ea043; }
+  .item-label { fill: #e6edf3; font-size: 11px; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+</style>
+<rect class="bg" width="1168" height="1432"/>
+<text class="title" x="20" y="32">PariScore — Refonte Tennis avec affectations Agent/Skill/MCP</text>
+<text class="subtitle" x="20" y="50">11 jours · 7 tracks · 35 tâches · généré 2026-07-20</text>
+<rect class="grid-bg" x="220" y="60" width="924" height="30"/>
+<line class="grid-line" x1="220" y1="60" x2="220" y2="1422"/>
+<text class="header-date" x="262" y="79">20/07</text>
+<line class="grid-line" x1="304" y1="60" x2="304" y2="1422"/>
+<text class="header-date" x="346" y="79">21/07</text>
+<line class="grid-line" x1="388" y1="60" x2="388" y2="1422"/>
+<text class="header-date" x="430" y="79">22/07</text>
+<line class="grid-line" x1="472" y1="60" x2="472" y2="1422"/>
+<text class="header-date" x="514" y="79">23/07</text>
+<line class="grid-line" x1="556" y1="60" x2="556" y2="1422"/>
+<text class="header-date" x="598" y="79">24/07</text>
+<rect class="weekend" x="640" y="60" width="84" height="1372"/>
+<line class="grid-line" x1="640" y1="60" x2="640" y2="1422"/>
+<text class="header-date" x="682" y="79">25/07</text>
+<rect class="weekend" x="724" y="60" width="84" height="1372"/>
+<line class="grid-line" x1="724" y1="60" x2="724" y2="1422"/>
+<text class="header-date" x="766" y="79">26/07</text>
+<line class="grid-line" x1="808" y1="60" x2="808" y2="1422"/>
+<text class="header-date" x="850" y="79">27/07</text>
+<line class="grid-line" x1="892" y1="60" x2="892" y2="1422"/>
+<text class="header-date" x="934" y="79">28/07</text>
+<line class="grid-line" x1="976" y1="60" x2="976" y2="1422"/>
+<text class="header-date" x="1018" y="79">29/07</text>
+<line class="grid-line" x1="1060" y1="60" x2="1060" y2="1422"/>
+<text class="header-date" x="1102" y="79">30/07</text>
+<line class="grid-line" x1="1144" y1="60" x2="1144" y2="1422"/>
+<rect class="track-bg" x="0" y="92" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="110">P0 — Setup &amp; audit</text>
+<rect class="item item-setup" x="224" y="94" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="110">Audit impeccable composants tennis</text>
+<rect class="track-bg" x="0" y="124" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="142">P0 — Setup &amp; audit</text>
+<rect class="item item-setup" x="224" y="126" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="142">Audit anti-AI-slop (hallmark)</text>
+<rect class="track-bg" x="0" y="156" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="174">P0 — Setup &amp; audit</text>
+<rect class="item item" x="224" y="158" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="174">Screenshots &apos;avant&apos; (visual-regressio…</text>
+<rect class="track-bg" x="0" y="188" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="206">P0 — Setup &amp; audit</text>
+<rect class="item item" x="224" y="190" width="160" height="24" rx="4"/>
+<text class="item-label" x="230" y="206">Aligner palette DESIGN_CHARTER</text>
+<rect class="track-bg" x="0" y="234" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="252">P1 — Fixes CRITICAL 🔴</text>
+<rect class="item item" x="308" y="236" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="252">SetScoreline.tsx (6-4 6-3 3-2)</text>
+<rect class="track-bg" x="0" y="266" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="284">P1 — Fixes CRITICAL 🔴</text>
+<rect class="item item" x="308" y="268" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="284">CurrentGameScore.tsx (15/30/40/AD)</text>
+<rect class="track-bg" x="0" y="298" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="316">P1 — Fixes CRITICAL 🔴</text>
+<rect class="item item" x="308" y="300" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="316">ServerIndicator.tsx (icône tennis)</text>
+<rect class="track-bg" x="0" y="330" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="348">P1 — Fixes CRITICAL 🔴</text>
+<rect class="item item" x="308" y="332" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="348">Intégrer 3 composants dans match-card…</text>
+<rect class="track-bg" x="0" y="362" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="380">P1 — Fixes CRITICAL 🔴</text>
+<rect class="item item-done" x="308" y="364" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="380">Fix i18n date match-card-header.tsx:53</text>
+<rect class="track-bg" x="0" y="394" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="412">P1 — Fixes CRITICAL 🔴</text>
+<rect class="item item-done" x="308" y="396" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="412">Fix bug labels set momentum-dr.tsx</text>
+<rect class="track-bg" x="0" y="440" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="458">P2 — Refonte live-stats-p…</text>
+<rect class="item item" x="392" y="442" width="160" height="24" rx="4"/>
+<text class="item-label" x="398" y="458">ServeStatsBars.tsx (1st in%, won%, 2n…</text>
+<rect class="track-bg" x="0" y="472" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="490">P2 — Refonte live-stats-p…</text>
+<rect class="item item" x="392" y="474" width="160" height="24" rx="4"/>
+<text class="item-label" x="398" y="490">BreakPointsGrid.tsx (set-par-set 2/3)</text>
+<rect class="track-bg" x="0" y="504" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="522">P2 — Refonte live-stats-p…</text>
+<rect class="item item" x="392" y="506" width="160" height="24" rx="4"/>
+<text class="item-label" x="398" y="522">SetBySetTable.tsx (Sofascore-like)</text>
+<rect class="track-bg" x="0" y="536" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="554">P2 — Refonte live-stats-p…</text>
+<rect class="item item" x="476" y="538" width="76" height="24" rx="4"/>
+<text class="item-label" x="482" y="554">Supprimer 4 ServiceCircle (redondants)</text>
+<rect class="track-bg" x="0" y="582" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="600">P3 — Nouveaux composants …</text>
+<rect class="item item" x="560" y="584" width="160" height="24" rx="4"/>
+<text class="item-label" x="566" y="600">WinProbabilityChart.tsx (ECharts live…</text>
+<rect class="track-bg" x="0" y="614" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="632">P3 — Nouveaux composants …</text>
+<rect class="item item" x="560" y="616" width="160" height="24" rx="4"/>
+<text class="item-label" x="566" y="632">PointTimeline.tsx (PBP jeu par jeu)</text>
+<rect class="track-bg" x="0" y="646" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="664">P3 — Nouveaux composants …</text>
+<rect class="item item" x="560" y="648" width="160" height="24" rx="4"/>
+<text class="item-label" x="566" y="664">StatsRadarChart.tsx (shadcn Radar)</text>
+<rect class="track-bg" x="0" y="678" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="696">P3 — Nouveaux composants …</text>
+<rect class="item item" x="644" y="680" width="160" height="24" rx="4"/>
+<text class="item-label" x="650" y="696">Refonte momentum-dr.tsx (typo ≥11px, …</text>
+<rect class="track-bg" x="0" y="710" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="728">P3 — Nouveaux composants …</text>
+<rect class="item item" x="644" y="712" width="160" height="24" rx="4"/>
+<text class="item-label" x="650" y="728">useAnnouncer / LiveRegion (a11y score…</text>
+<rect class="track-bg" x="0" y="756" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="774">P4 — Refonte prematch 🟠</text>
+<rect class="item item" x="728" y="758" width="160" height="24" rx="4"/>
+<text class="item-label" x="734" y="774">LastMatchesList.tsx (10 derniers matc…</text>
+<rect class="track-bg" x="0" y="788" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="806">P4 — Refonte prematch 🟠</text>
+<rect class="item item" x="728" y="790" width="76" height="24" rx="4"/>
+<text class="item-label" x="734" y="806">Migrer &lt;img&gt; → next/image (fallback +…</text>
+<rect class="track-bg" x="0" y="820" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="838">P4 — Refonte prematch 🟠</text>
+<rect class="item item" x="812" y="822" width="76" height="24" rx="4"/>
+<text class="item-label" x="818" y="838">Fusionner match-card-detail ↔ stats-i…</text>
+<rect class="track-bg" x="0" y="852" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="870">P4 — Refonte prematch 🟠</text>
+<rect class="item item" x="812" y="854" width="76" height="24" rx="4"/>
+<text class="item-label" x="818" y="870">Restaurer tooltip SPS (lazy mount)</text>
+<rect class="track-bg" x="0" y="884" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="902">P4 — Refonte prematch 🟠</text>
+<rect class="item item-done" x="812" y="886" width="76" height="24" rx="4"/>
+<text class="item-label" x="818" y="902">Fix probability-bar + odds-comparator…</text>
+<rect class="track-bg" x="0" y="930" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="948">P5 — Polish &amp; validation</text>
+<rect class="item item" x="896" y="932" width="76" height="24" rx="4"/>
+<text class="item-label" x="902" y="948">impeccable polish (micro-interactions)</text>
+<rect class="track-bg" x="0" y="962" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="980">P5 — Polish &amp; validation</text>
+<rect class="item item-setup" x="896" y="964" width="76" height="24" rx="4"/>
+<text class="item-label" x="902" y="980">hallmark audit final</text>
+<rect class="track-bg" x="0" y="994" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1012">P5 — Polish &amp; validation</text>
+<rect class="item item" x="896" y="996" width="76" height="24" rx="4"/>
+<text class="item-label" x="902" y="1012">visual-regression screenshots &apos;après&apos;…</text>
+<rect class="track-bg" x="0" y="1026" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1044">P5 — Polish &amp; validation</text>
+<rect class="item item-setup" x="896" y="1028" width="160" height="24" rx="4"/>
+<text class="item-label" x="902" y="1044">Audit a11y (axe-core, WCAG 2.2)</text>
+<rect class="track-bg" x="0" y="1058" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1076">P5 — Polish &amp; validation</text>
+<rect class="item item" x="896" y="1060" width="160" height="24" rx="4"/>
+<text class="item-label" x="902" y="1076">Tests Playwright pérennes tests/</text>
+<rect class="track-bg" x="0" y="1090" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1108">P5 — Polish &amp; validation</text>
+<rect class="item item" x="980" y="1092" width="76" height="24" rx="4"/>
+<text class="item-label" x="986" y="1108">i18n complet (FR hardcodés → namespac…</text>
+<rect class="track-bg" x="0" y="1122" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1140">P5 — Polish &amp; validation</text>
+<rect class="item item" x="980" y="1124" width="76" height="24" rx="4"/>
+<text class="item-label" x="986" y="1140">Core Web Vitals (LCP&lt;2.5s, INP&lt;200ms,…</text>
+<rect class="track-bg" x="0" y="1168" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1186">P6 — Déploiement</text>
+<rect class="item item" x="1064" y="1170" width="76" height="24" rx="4"/>
+<text class="item-label" x="1070" y="1186">bun run build local + node --check</text>
+<rect class="track-bg" x="0" y="1200" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1218">P6 — Déploiement</text>
+<rect class="item item" x="1064" y="1202" width="76" height="24" rx="4"/>
+<text class="item-label" x="1070" y="1218">Deploy VPS + pm2 restart</text>
+<rect class="track-bg" x="0" y="1232" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1250">P6 — Déploiement</text>
+<rect class="item item" x="1064" y="1234" width="76" height="24" rx="4"/>
+<text class="item-label" x="1070" y="1250">Vérif prod (0 pageerror, 0 console.er…</text>
+<rect class="track-bg" x="0" y="1264" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="1282">P6 — Déploiement</text>
+<rect class="item item" x="1064" y="1266" width="76" height="24" rx="4"/>
+<text class="item-label" x="1070" y="1282">bd close + bd remember + CHANGELOG</text>
+<line class="sep" x1="0" y1="60" x2="1168" y2="60"/>
+</svg>

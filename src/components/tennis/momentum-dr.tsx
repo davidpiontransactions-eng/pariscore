@@ -2,14 +2,24 @@
 
 import { useRef, useEffect, useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { cn } from "@/lib/utils";
 
-const DR_HISTORY_MAX = 36;
+// Bumped from 36 → 60 to retain momentum history across best-of-5 Grand Slam
+// matches (5 sets × ~10-12 points per set once breaks/deuces are accounted
+// for). Without this, sets 4 and 5 silently dropped from the sparkline.
+const DR_HISTORY_MAX = 60;
 const SPARK_H = 72;
 const SPARK_MARGIN = 2;
 const DOT_R = 2.5;
+
+// Minimum font size for SVG text inside this widget. Phase 3 a11y polish —
+// 7px was below the WCAG legibility floor. 11px is the absolute minimum for
+// on-screen labels (12px preferred for body, but the sparkline's set labels
+// are tiny by nature and 11px is the floor we can fit).
+const MIN_FONT_SIZE = 11;
 
 interface TooltipData {
   x: number;
@@ -165,6 +175,82 @@ export function MomentumDR({
 
   const handleMouseLeave = useCallback(() => setTooltip(null), []);
 
+  // ─── Phase 3 a11y — keyboard nav + ARIA ──────────────────────────────────
+  // The sparkline was previously mouse-move only. We now expose it as a
+  // focusable element with arrow-key navigation between data points so screen
+  // reader + keyboard users can read DR history.
+  const t = useTranslations("tennis");
+  const keyboardIdxRef = useRef<number>(-1);
+
+  const showTooltipAt = useCallback(
+    (idx: number) => {
+      if (drHistory.length < 2) return;
+      const clamped = Math.max(0, Math.min(drHistory.length - 1, idx));
+      const pt = pointHistory[clamped];
+      if (!pt) return;
+      const svgW = containerRef.current?.getBoundingClientRect().width ?? chartW;
+      const y =
+        SPARK_H / 2 -
+        Math.max(-1, Math.min(1, drHistory[clamped])) * (SPARK_H / 2 - SPARK_MARGIN);
+      const rawX = (clamped / (drHistory.length - 1)) * svgW;
+      const tooltipW = 140;
+      const clampedX = Math.max(tooltipW / 2, Math.min(svgW - tooltipW / 2, rawX));
+      setTooltip({
+        x: clampedX,
+        y,
+        dr: drHistory[clamped],
+        set: pt.set,
+        game: pt.game,
+        breakPoint: pt.wasBreakPoint,
+      });
+    },
+    [drHistory, pointHistory, chartW],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<SVGSVGElement>) => {
+      if (drHistory.length < 2) return;
+      let next = keyboardIdxRef.current;
+      if (e.key === "ArrowRight") {
+        next = next < 0 ? 0 : Math.min(drHistory.length - 1, next + 1);
+      } else if (e.key === "ArrowLeft") {
+        next = next < 0 ? drHistory.length - 1 : Math.max(0, next - 1);
+      } else if (e.key === "Home") {
+        next = 0;
+      } else if (e.key === "End") {
+        next = drHistory.length - 1;
+      } else if (e.key === "Escape") {
+        setTooltip(null);
+        keyboardIdxRef.current = -1;
+        return;
+      } else {
+        return;
+      }
+      e.preventDefault();
+      keyboardIdxRef.current = next;
+      showTooltipAt(next);
+    },
+    [drHistory.length, showTooltipAt],
+  );
+
+  const handleSvgFocus = useCallback(() => {
+    if (keyboardIdxRef.current < 0 && drHistory.length >= 2) {
+      keyboardIdxRef.current = drHistory.length - 1;
+      showTooltipAt(keyboardIdxRef.current);
+    }
+  }, [drHistory.length, showTooltipAt]);
+
+  const handleSvgBlur = useCallback(() => {
+    setTooltip(null);
+  }, []);
+
+  const momentumAriaLabel = t("momentumChartAria", {
+    p1: player1Name,
+    p2: player2Name,
+    dr: dr.toFixed(2),
+    n: drHistory.length,
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -267,10 +353,17 @@ export function MomentumDR({
                 height={SPARK_H}
                 viewBox={`0 0 ${chartW} ${SPARK_H}`}
                 preserveAspectRatio="none"
+                role="img"
+                aria-labelledby="momentum-dr-title"
+                tabIndex={0}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
-                className="cursor-crosshair overflow-visible"
+                onKeyDown={handleKeyDown}
+                onFocus={handleSvgFocus}
+                onBlur={handleSvgBlur}
+                className="cursor-crosshair overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
+                <title id="momentum-dr-title">{momentumAriaLabel}</title>
                 {/* Grid lines */}
                 {[-0.5, 0, 0.5].map((v) => (
                   <line
@@ -299,17 +392,18 @@ export function MomentumDR({
                   />
                 ))}
 
-                {/* Set labels */}
+                {/* Set labels — each divider sits at the END of set `d.set`,
+                    so label it with the set that just ended (not the next one). */}
                 {setDividers.map((d) => (
                   <text
                     key={`sl-${d.set}`}
                     x={d.x}
                     y={SPARK_H - 1}
                     fill="hsl(var(--muted-foreground) / 0.35)"
-                    fontSize={7}
+                    fontSize={MIN_FONT_SIZE}
                     fontFamily="monospace"
                     textAnchor="middle"
-                  >{`S${d.set + 1}`}</text>
+                  >{`S${d.set}`}</text>
                 ))}
 
                 {drHistory.length > 1 && (
