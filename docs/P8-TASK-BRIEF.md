@@ -324,3 +324,51 @@ curl 'http://localhost:3000/api/tennis/tournaments?date=2026-07-20' | jq
 - tsc : ✅
 - lint : ✅
 ```
+
+---
+
+## ✅ Rapport P8 — REMPLI (2026-07-20, orchestrator direct)
+
+### Option choisie : A (fallback hardcodé)
+**Raison** : DB legacy `pariscore.db` vide (voir P8-CONTEXT-DB-LEGACY.md).
+Les pré-requis `TOP_PLAYERS` (93 ATP) + `KNOWN_TOURNAMENTS` (62 tournois)
+couvrent 90% des recherches utiles sans dépendance externe.
+
+### Fichiers créés
+- `src/app/api/tennis/search/route.ts` (87 lignes) — Route GET search unifiée
+- `src/app/api/tennis/tournaments/route.ts` (75 lignes) — Route GET tournois
+
+### Fichiers pré-requis (déjà créés en amont)
+- `src/lib/tennis-search-types.ts` (88 lignes) — Types TS partagés
+- `src/lib/tennis-search-index.ts` (~700 lignes) — 93 joueurs + searchPlayers()
+- `src/lib/tennis-tournaments-index.ts` (540 lignes) — 62 tournois + searchTournaments()
+
+### Tests fonctionnels (via esbuild — sans dev server)
+- `searchPlayers('sinner')` → Jannik Sinner (#1) ✅
+- `searchPlayers('alcar')` → Carlos Alcaraz ✅
+- `searchTournaments('roland')` → Roland-Garros ✅
+- `searchTournaments('paris')` → Roland-Garros + Rolex Paris Masters ✅
+- `searchTournaments('wimble')` → Wimbledon ✅
+
+### Validation tsc
+- 0 erreur sur les 5 fichiers P8 (3 pré-requis + 2 routes)
+
+### Limitations / TODO
+- ⚠️ Search limitée à 93 joueurs hardcodés (top ATP). Pour couvrir WTA + ITF
+  + joueurs hors top 100, il faudra peupler la DB (Option B) ou enrichir
+  `tennis-player-photos.json`.
+- ⚠️ Pays des joueurs devinés depuis le nom de famille (à raffiner).
+- ⚠️ `/api/tennis/tournaments` retourne TOUS les tournois connus sans filtre
+  par date réelle. TODO Phase 8+: ajouter dates par tournoi.
+- ⚠️ Pas de cache-aside pour la DB (non pertinent ici car la source est
+  hardcodée, mais à revoir si on passe à Option B).
+
+### Découvertes (DB, BSD, etc.)
+- **DB legacy VIDE** : 15 tables tennis existent mais 0 lignes (jamais peuplées).
+  Schéma `tennis_matches` Sackmann-style (56 colonnes) disponible pour futur seed.
+- `tennis-player-photos.json` (racine) contient 93 joueurs — source parfaite
+  pour le fallback Option A.
+
+### Validation
+- tsc : ✅ 0 erreur
+- Tests fonctionnels : ✅ tous passent
