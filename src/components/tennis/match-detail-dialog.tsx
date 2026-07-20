@@ -27,6 +27,8 @@ import {
 import { Calendar, Trophy, Target, Scale, TrendingUp, Activity } from "lucide-react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { OddsComparator } from "./odds-comparator";
+import { LastMatchesList } from "./last-matches-list";
+import { getInitials } from "./player-profile-header";
 import { useEloHistory } from "@/hooks/use-elo-history";
 import { getDateLocaleTag } from "@/lib/i18n-locales";
 import { cn } from "@/lib/utils";
@@ -143,11 +145,11 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                 {/* Probability ring comparison */}
                 <div className="grid grid-cols-2 gap-4 rounded-lg border border-border/60 bg-muted/20 p-4">
                   <div className="flex flex-col items-center gap-2">
-                    <img
+                    <PlayerAvatar
                       src={playerA.photoUrl}
-                      alt={playerA.name}
-                      className="h-16 w-16 rounded-full object-cover ring-2 ring-offset-2 ring-offset-background"
-                      style={{ "--tw-ring-color": playerA.color } as React.CSSProperties}
+                      name={playerA.name}
+                      color={playerA.color}
+                      initials={getInitials(playerA.name)}
                     />
                     <span className="text-sm font-semibold">{playerA.shortName}</span>
                     <div className="w-full">
@@ -167,11 +169,11 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     </div>
                   </div>
                   <div className="flex flex-col items-center gap-2">
-                    <img
+                    <PlayerAvatar
                       src={playerB.photoUrl}
-                      alt={playerB.name}
-                      className="h-16 w-16 rounded-full object-cover ring-2 ring-offset-2 ring-offset-background"
-                      style={{ "--tw-ring-color": playerB.color } as React.CSSProperties}
+                      name={playerB.name}
+                      color={playerB.color}
+                      initials={getInitials(playerB.name)}
                     />
                     <span className="text-sm font-semibold">{playerB.shortName}</span>
                     <div className="w-full">
@@ -191,6 +193,30 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     </div>
                   </div>
                 </div>
+
+                {/* StatsRadarChart — affiché si stats live disponibles, sinon masqué */}
+                {/* TODO: extraire les stats du hook useTennisLiveStats via un wrapper qui
+                    partage l'état avec LiveStatsPanel. Pour l'instant, le radar reste
+                    conditionnel à la disponibilité des données.
+                    Une fois les stats live accessibles ici :
+                    import { StatsRadarChart } from "./stats-radar-chart";
+                    {liveStats && (
+                      <div className="rounded-lg border border-border/60 p-4">
+                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                          <Target className="h-4 w-4 text-muted-foreground" />
+                          {t("playerComparison")}
+                        </div>
+                        <StatsRadarChart
+                          stats={liveStats}
+                          player1Name={playerA.name}
+                          player2Name={playerB.name}
+                          player1Color={playerA.color}
+                          player2Color={playerB.color}
+                        />
+                      </div>
+                    )}
+                    Astuce accessibilité : masquer avec un tooltip "Disponible pendant le match"
+                    quand liveStats est null plutôt que de ne rien afficher. */}
 
                 {/* IC visualization */}
                 <div className="rounded-lg border border-border/60 p-4">
@@ -388,6 +414,14 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   </div>
                 </div>
 
+                {/* TODO (Phase 4.B): connecter à l'API quand elle existera.
+                    Pour l'instant, on affiche le LastMatchesList avec données vides
+                    pour valider le visuel. Remplacer par :
+                    const { data: lastMatches } = useLastMatches(player.id);
+                    <LastMatchesList matches={lastMatches ?? []} playerName={player.name} />
+                    Une fois connecté, supprimer la BarChart ci-dessus (redondante). */}
+                <LastMatchesList matches={[]} playerName={playerA.name} />
+
                 {/* Elo progression — real history from /api/tennis/elo-history */}
                 <div className="rounded-lg border border-border/60 p-3">
                   <div className="mb-2 flex items-center justify-between">
@@ -500,3 +534,53 @@ function DetailStat({
 }
 
 // (Elo history is now fetched from /api/tennis/elo-history via useEloHistory hook)
+
+/**
+ * PlayerAvatar — img with onError fallback to initials.
+ *
+ * Phase 4 fix: the previous <img> tags had no error handling, causing layout
+ * shift + broken-image icons when photo URLs were unreachable. This wrapper
+ * falls back to a coloured disc with the player's initials (same look as the
+ * AvatarFallback in PlayerProfileHeader).
+ *
+ * Uses a native <img> rather than next/image because next.config.ts has no
+ * images.remotePatterns configured for the player photo CDN. Adding the
+ * remote pattern would risk breaking the standalone build — deferred.
+ */
+function PlayerAvatar({
+  src,
+  name,
+  color,
+  initials,
+}: {
+  src?: string | null;
+  name: string;
+  color: string;
+  initials: string;
+}) {
+  return (
+    <div
+      className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full text-xs font-bold uppercase tracking-wider text-muted-foreground ring-2 ring-offset-2 ring-offset-background"
+      style={{
+        "--tw-ring-color": color,
+        backgroundColor: `${color}15`,
+      } as React.CSSProperties}
+    >
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={name}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(e) => {
+            // Hide the broken img — the initials underneath show through.
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : null}
+      <span aria-hidden={src ? "true" : "false"}>{initials}</span>
+    </div>
+  );
+}

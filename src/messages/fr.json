@@ -92,7 +92,15 @@
     "pointTooltip": "{winner} remporte le point{bp}",
     "breakPointShort": " · balle de break",
     "breakPointsInGame": "{n} balles de break dans ce jeu",
-    "momentumChartAria": "Graphique de momentum entre {p1} et {p2} : dominance ratio actuel {dr}, {n} points tracés"
+    "momentumChartAria": "Graphique de momentum entre {p1} et {p2} : dominance ratio actuel {dr}, {n} points tracés",
+    "eloShort": "Elo",
+    "formShort": "Forme",
+    "h2hShort": "H2H",
+    "decompAria": "Décomposition du modèle : Elo {elo}%, Forme {form}%, H2H {h2h}%",
+    "vs": "vs",
+    "recentMatches": "Matchs récents",
+    "noRecentMatches": "Aucun match récent",
+    "ariaList": "{n} derniers matchs de {player}"
   },
   "match": {
     "win": "WIN",
@@ -203,7 +211,11 @@
     "best": "best",
     "tableHint": "Cliquez sur une colonne pour trier. Les cotes « best » sont surlignées en vert. La marge correspond à la commission du bookmaker (vig).",
     "noOdds": "Cotes multi-bookmakers non disponibles pour ce match.",
-    "otherBookmakers": "autres bookmakers"
+    "otherBookmakers": "autres bookmakers",
+    "sortAria": "Trier par {column}, actuellement {dir}. Activer pour inverser le tri",
+    "sortDirAscending": "croissant",
+    "sortDirDescending": "décroissant",
+    "sortDirNone": "non trié"
   },
   "time": {
     "inMinutes": "dans {n} min",
