@@ -51,7 +51,29 @@
   "tennis": {
     "syntheticBadge": "Données live limitées — pas de modèle prédictif",
     "spsExperimentalBadge": "beta",
-    "spsExperimentalTooltip": "Modèle expérimental — calibration en cours"
+    "spsExperimentalTooltip": "Modèle expérimental — calibration en cours",
+    "breakPoints": {
+      "title": "Balles de break",
+      "saved": "sauvées",
+      "faced": "confrontées",
+      "conversionRate": "Taux de conversion",
+      "ratio": "{saved}/{faced}",
+      "savedAria": "{player} a sauvé {saved} balles de break sur {faced}, taux de {rate}%",
+      "savedOnlyAria": "{player} a sauvé {saved} balles de break",
+      "noData": "Aucune balle de break enregistrée"
+    },
+    "firstServePct": "1er service",
+    "firstServeWonPct": "Pts gagnés sur 1er service",
+    "returnWonPct": "Pts gagnés au retour",
+    "ariaLead": "{a}% contre {b}% · {stat}, {leader} mène",
+    "ariaTie": "{a}% contre {b}% · {stat}, à égalité",
+    "ariaNoData": "{stat} — donnée non disponible",
+    "statSuffix": "{n}%",
+    "setBySet": "Détail par set",
+    "set": "Set",
+    "score": "Score",
+    "aces": "Aces",
+    "doubleFaults": "DF"
   },
   "match": {
     "win": "WIN",

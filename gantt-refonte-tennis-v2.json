@@ -43,37 +43,37 @@
       ]
     },
     {
-      "name": "P1 — Fixes CRITICAL 🔴",
+      "name": "P1 — Fixes CRITICAL 🔴 ✅ DONE",
       "items": [
         {
-          "label": "SetScoreline.tsx (6-4 6-3 3-2)",
-          "start": "2026-07-21", "end": "2026-07-21",
-          "assignment": { "agent": "frontend-developer", "skill": "react-component-design + shadcn-ui", "mcp": "context7" }
+          "label": "✅ SetScoreline.tsx (6-4 6-3 3-2) — commit 8ffcde7",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design + shadcn-ui + frontend-design", "mcp": "context7", "status": "done" }
         },
         {
-          "label": "CurrentGameScore.tsx (15/30/40/AD)",
-          "start": "2026-07-21", "end": "2026-07-21",
-          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "context7" }
+          "label": "✅ CurrentGameScore.tsx (15/30/40/AD) — commit 8ffcde7",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "context7", "status": "done" }
         },
         {
-          "label": "ServerIndicator.tsx (icône tennis)",
-          "start": "2026-07-21", "end": "2026-07-21",
-          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "—" }
+          "label": "✅ ServerIndicator.tsx (icône tennis) — commit 8ffcde7",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "frontend-developer", "skill": "react-component-design", "mcp": "—", "status": "done" }
         },
         {
-          "label": "Intégrer 3 composants dans match-card-header",
-          "start": "2026-07-21", "end": "2026-07-21",
-          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "chrome-devtools" }
+          "label": "✅ Intégrer 3 composants dans match-card-header — 8ffcde7",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "chrome-devtools", "status": "done" }
         },
         {
-          "label": "Fix i18n date match-card-header.tsx:53",
-          "start": "2026-07-21", "end": "2026-07-21",
-          "assignment": { "agent": "frontend-developer", "skill": "react-nextjs-patterns", "mcp": "—" }
+          "label": "✅ Fix i18n date match-card-header.tsx:53 + helper i18n-locales — 8ffcde7",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "main-orchestrator", "skill": "react-nextjs-patterns", "mcp": "—", "status": "done" }
         },
         {
-          "label": "Fix bug labels set momentum-dr.tsx",
-          "start": "2026-07-21", "end": "2026-07-21",
-          "assignment": { "agent": "main-orchestrator", "skill": "systematic-debugging", "mcp": "chrome-devtools" }
+          "label": "✅ Fix bug off-by-one labels set momentum-dr.tsx:313 — 8ffcde7",
+          "start": "2026-07-20", "end": "2026-07-20",
+          "assignment": { "agent": "main-orchestrator", "skill": "systematic-debugging", "mcp": "chrome-devtools", "status": "done" }
         }
       ]
     },
