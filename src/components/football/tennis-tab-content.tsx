@@ -56,11 +56,42 @@ class TennisErrorBoundary extends Component<
   componentDidCatch(error: Error, info: { componentStack?: string }) {
     console.error("[SetPoint CRASH]", error.message, error.stack);
     if (typeof window !== "undefined") {
-      (window as any).__SETPOINT_CRASH = { error: error.message, stack: error.stack, componentStack: info.componentStack };
+      (window as any).__SETPOINT_CRASH = {
+        error: error.message,
+        stack: error.stack,
+        componentStack: info.componentStack,
+        at: new Date().toISOString(),
+      };
     }
   }
   render() {
-    if (this.state.error) return <div />;
+    if (this.state.error) {
+      // Fallback visible (au lieu de <div/> vide qui donnait l'impression
+      // d'un "faux masque non fini"). Le user voit au moins qu'il y a eu
+      // une erreur et peut nous donner le message pour debug.
+      return (
+        <div className="mx-auto max-w-2xl px-4 py-12 text-center">
+          <div className="rounded-lg border border-rose-500/30 bg-rose-500/5 p-6">
+            <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+              Erreur temporaire sur l&apos;onglet tennis
+            </p>
+            <p className="mt-2 font-mono text-xs text-muted-foreground">
+              {this.state.error?.message ?? "Unknown error"}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                this.setState({ error: null });
+                if (typeof window !== "undefined") window.location.reload();
+              }}
+              className="mt-4 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Recharger
+            </button>
+          </div>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }
