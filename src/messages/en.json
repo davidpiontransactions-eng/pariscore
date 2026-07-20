@@ -101,7 +101,17 @@
     "vs": "vs",
     "recentMatches": "Recent matches",
     "noRecentMatches": "No recent matches",
-    "ariaList": "{n} most recent matches for {player}"
+    "ariaList": "{n} most recent matches for {player}",
+    "subTabLive": "Live",
+    "subTabToday": "Today",
+    "subTabTournaments": "Tournaments",
+    "subTabLiveAria": "Live matches ({n})",
+    "subTabTodayAria": "All today matches ({n})",
+    "subTabTournamentsAria": "ATP/WTA/ITF tournaments",
+    "subTabsAriaLabel": "Tennis sub-tabs",
+    "noLiveMatches": "No live matches",
+    "noTournaments": "No tournaments available",
+    "tournamentsLoadError": "Error loading tournaments: {error}"
   },
   "match": {
     "win": "WIN",
