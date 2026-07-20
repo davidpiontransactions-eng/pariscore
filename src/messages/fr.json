@@ -73,7 +73,26 @@
     "set": "Set",
     "score": "Score",
     "aces": "Aces",
-    "doubleFaults": "DF"
+    "doubleFaults": "DF",
+    "playerComparison": "Comparaison des joueurs",
+    "serviceAxis": "Service",
+    "firstWonAxis": "1er won",
+    "returnAxis": "Retour",
+    "totalPtsAxis": "Pts totaux",
+    "acesAxis": "Aces",
+    "dfAxis": "Précision",
+    "radarAria": "Comparaison des 6 statistiques principales : {p1} vs {p2}",
+    "winProbability": "Probabilité de victoire",
+    "balanced": "Match équilibré",
+    "winProbAria": "Probabilité de victoire : {p1} {p1Prob}% contre {p2} {p2Prob}%, sur {n} points",
+    "pointTimeline": "Timeline des points",
+    "pointTimelineAria": "Set {set}, jeu {game} : {p1} a gagné {p1Count} points, {p2} a gagné {p2Count} points, {bp} balles de break",
+    "gameInProgress": "Set {set} · Jeu {game}",
+    "noPointsYet": "Jeu en cours, aucun point joué",
+    "pointTooltip": "{winner} remporte le point{bp}",
+    "breakPointShort": " · balle de break",
+    "breakPointsInGame": "{n} balles de break dans ce jeu",
+    "momentumChartAria": "Graphique de momentum entre {p1} et {p2} : dominance ratio actuel {dr}, {n} points tracés"
   },
   "match": {
     "win": "WIN",
@@ -125,6 +144,15 @@
     "warningText": "les probabilités sont des estimations issues d'un modèle statistique et ne constituent pas une garantie de résultat. Pariez de manière responsable.",
     "spsLabel": "SPS",
     "spsRankLabel": "Classement SPS",
+    "liveAnnounce": {
+      "gameWonBy": "Jeu remporté par {player} {score} dans le set {set}",
+      "setWonBy": "Set {n} remporté par {player} {score}. Début du set {next}.",
+      "setWonByLast": "Set {n} remporté par {player} {score}.",
+      "scoreUpdate": "{points}, {server} au service",
+      "breakPointFor": "Balle de break pour {player}",
+      "server": "serveur",
+      "receiver": "receveur"
+    },
     "backtest": {
       "label": "Précision modèle",
       "tooltip": "Précision du modèle sur {n} matchs similaires ({surface}, écart Elo {bucket})",
