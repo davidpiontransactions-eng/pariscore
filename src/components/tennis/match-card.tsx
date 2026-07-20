@@ -283,9 +283,14 @@ export function MatchCard({
         <LiveScoreSubHeader match={match} liveState={liveState} />
       )}
 
-      {/* Corps : carte duelle A + VS + B */}
+      {/* Corps : carte duelle A + VS + B
+          Phase 4.D hotfix layout : grid-cols-3 strict (au lieu de 1fr_auto_1fr
+          qui s'effondrait sur grand nom de joueur). Chaque colonne est
+          min-w-0 (autorise le shrink) pour que truncate fonctionne dans
+          les noms longs (ex: "Frederico Ferreira Silva"). */}
       <div className={cn("px-4 sm:px-6", terminalMode ? "py-4" : "py-6 sm:py-8")}>
-        <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 sm:gap-4">
+          <div className="min-w-0 overflow-hidden">
           <PlayerBlock
             player={playerA}
             align="left"
@@ -336,18 +341,22 @@ export function MatchCard({
               />
             )}
           </PlayerBlock>
-          <div className="flex items-center justify-center sm:py-0">
+          </div>
+
+          <div className="flex items-center justify-center self-center px-1">
             <div
               className={cn(
                 "flex items-center justify-center rounded-full",
                 "border border-border/60 bg-muted/40 backdrop-blur-sm",
                 "text-xs font-bold tracking-wider text-muted-foreground",
-                terminalMode ? "h-8 w-8" : "h-11 w-11"
+                terminalMode ? "h-8 w-8 shrink-0" : "h-11 w-11 shrink-0"
               )}
             >
               {t("vs")}
             </div>
           </div>
+
+          <div className="min-w-0 overflow-hidden">
           <PlayerBlock
             player={playerB}
             align="right"
@@ -398,6 +407,7 @@ export function MatchCard({
               />
             )}
           </PlayerBlock>
+          </div>
         </div>
 
         {/* Terminal mode: ProbabilityBar with IC bracket + decomposition —

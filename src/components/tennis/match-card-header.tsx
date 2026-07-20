@@ -112,10 +112,6 @@ export function MatchCardHeader({
         </button>
       </div>
       </header>
-
-      {isLive && liveState && (
-        <LiveScoreSubHeader match={match} liveState={liveState} />
-      )}
     </>
   );
 }
