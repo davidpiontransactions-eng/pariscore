@@ -39,11 +39,14 @@ interface MomentumDRProps {
   className?: string;
 }
 
-function qualLabel(absDr: number, p1Dom: boolean): string {
-  if (absDr < 0.12) return "Neutre";
-  if (absDr < 0.30) return p1Dom ? "Léger avantage" : "Léger désavantage";
-  if (absDr < 0.55) return p1Dom ? "Momentum" : "Sous pression";
-  return p1Dom ? "Dominant" : "Dominé";
+// Returns an i18n key (under the "tennis" namespace) describing the current
+// momentum state. The key is resolved with `t(...)` inside the component so
+// the rendered label is localized.
+function qualLabelKey(absDr: number, p1Dom: boolean): string {
+  if (absDr < 0.12) return "qualNeutral";
+  if (absDr < 0.30) return p1Dom ? "qualSlightAdvantage" : "qualSlightDisadvantage";
+  if (absDr < 0.55) return p1Dom ? "qualMomentum" : "qualUnderPressure";
+  return p1Dom ? "qualDominant" : "qualDominated";
 }
 
 function buildPath(data: number[], w: number, h: number): string {
@@ -90,13 +93,15 @@ export function MomentumDR({
   const containerRef = useRef<HTMLDivElement>(null);
   const [chartW, setChartW] = useState(240);
 
+  const t = useTranslations("tennis");
+
   const p1Dom = momentumA > momentumB;
   const p2Dom = momentumB > momentumA;
   const isNeut = !p1Dom && !p2Dom;
   const absDr = Math.abs(dr);
-  const label = useMemo(() => qualLabel(absDr, p1Dom), [absDr, p1Dom]);
-  const p1Short = (player1Name || "").split(" ").pop() || player1Name || "J1";
-  const p2Short = (player2Name || "").split(" ").pop() || player2Name || "J2";
+  const label = useMemo(() => t(qualLabelKey(absDr, p1Dom)), [t, absDr, p1Dom]);
+  const p1Short = (player1Name || "").split(" ").pop() || player1Name || t("playerFallback1");
+  const p2Short = (player2Name || "").split(" ").pop() || player2Name || t("playerFallback2");
 
   const labelColor = isNeut
     ? "text-muted-foreground"
@@ -179,7 +184,6 @@ export function MomentumDR({
   // The sparkline was previously mouse-move only. We now expose it as a
   // focusable element with arrow-key navigation between data points so screen
   // reader + keyboard users can read DR history.
-  const t = useTranslations("tennis");
   const keyboardIdxRef = useRef<number>(-1);
 
   const showTooltipAt = useCallback(
@@ -272,7 +276,7 @@ export function MomentumDR({
       >
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Momentum DR
+          {t("momentumDR")}
         </span>
         <span className={cn("text-[10px] font-semibold uppercase tracking-wider", labelColor)}>
           {label}
@@ -342,7 +346,7 @@ export function MomentumDR({
             {/* Serve indicator */}
             <div className="mb-1.5 text-center">
               <span className="rounded-full bg-muted-foreground/10 px-2 py-0.5 text-[8px] font-mono text-muted-foreground/60">
-                Service: {serverLabel}
+                {t("servingLabel", { name: serverLabel })}
               </span>
             </div>
 
@@ -499,7 +503,7 @@ export function MomentumDR({
                         {tooltip.breakPoint && (
                           <>
                             <span className="text-muted-foreground/60">·</span>
-                            <span className="text-amber-500 font-bold">BREAK</span>
+                            <span className="text-amber-500 font-bold">{t("breakShort")}</span>
                           </>
                         )}
                       </div>
@@ -538,7 +542,7 @@ export function MomentumDR({
 
             {/* Footer */}
             <div className="mt-1 text-[9px] text-muted-foreground/50">
-              {pointsTracked} pts suivis
+              {t("pointsTracked", { n: pointsTracked })}
             </div>
           </motion.div>
         )}

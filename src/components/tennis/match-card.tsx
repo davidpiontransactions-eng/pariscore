@@ -15,7 +15,7 @@ import { MomentumDR } from "./momentum-dr";
 import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
-import { MatchCardHeader } from "./match-card-header";
+import { MatchCardHeader, LiveScoreSubHeader } from "./match-card-header";
 import { MatchCardFooter } from "./match-card-footer";
 import { MatchCardDetail } from "./match-card-detail";
 
@@ -275,6 +275,13 @@ export function MatchCard({
           });
         }}
       />
+
+      {/* Phase 4.D hotfix : sous-header live dédié pleine largeur pour
+          éviter le débordement du header (le cluster score + badge LIVE
+          + favori ne tenait pas dans la colonne droite). */}
+      {isLive && liveState && (
+        <LiveScoreSubHeader match={match} liveState={liveState} />
+      )}
 
       {/* Corps : carte duelle A + VS + B */}
       <div className={cn("px-4 sm:px-6", terminalMode ? "py-4" : "py-6 sm:py-8")}>

@@ -36,12 +36,13 @@ export function MatchCardHeader({
   const locale = useLocale();
 
   return (
-    <header
-      className={cn(
-        "flex items-center justify-between",
-        "border-b border-border/60 bg-muted/30 px-4 py-2 sm:px-6",
-      )}
-    >
+    <>
+      <header
+        className={cn(
+          "flex items-center justify-between gap-2",
+          "border-b border-border/60 bg-muted/30 px-4 py-2 sm:px-6",
+        )}
+      >
       {/* Colonne gauche : tournoi + ronde + date */}
       <div className="flex min-w-0 flex-col gap-0.5">
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
@@ -67,7 +68,7 @@ export function MatchCardHeader({
         </div>
       </div>
 
-      {/* Colonne droite : LIVE + timer + favori */}
+      {/* Colonne droite : LIVE + timer + favori (compact — score déplacé en sous-header) */}
       <div className="flex shrink-0 items-center gap-2">
         {isLive && (
           <span
@@ -85,14 +86,10 @@ export function MatchCardHeader({
           </span>
         )}
 
-        {isLive && liveState ? (
-          <LiveHeaderScore match={match} liveState={liveState} />
-        ) : (
-          <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-            <Clock className="h-3.5 w-3.5" />
-            <span>{formatRelativeTime(match.scheduledAt, tTime)}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          <span>{formatRelativeTime(match.scheduledAt, tTime)}</span>
+        </div>
 
         <button
           type="button"
@@ -114,22 +111,26 @@ export function MatchCardHeader({
           />
         </button>
       </div>
-    </header>
+      </header>
+
+      {isLive && liveState && (
+        <LiveScoreSubHeader match={match} liveState={liveState} />
+      )}
+    </>
   );
 }
 
 /**
- * Live score cluster rendered inside the header when the match is live.
+ * Sous-header live dédié — affiche le score complet (sets + jeu en cours +
+ * serveur) sur une barre séparée sous le header principal.
  *
- * Stacks the three new score components — {@link SetScoreline},
- * {@link CurrentGameScore}, {@link ServerIndicator} — replacing the old
- * "Set N" placeholder so the header carries the actual match state
- * (`6-4 6-3 3-2 · 30-15 · Sinner serving`) instead of just the set index.
- *
- * Kept in this file (not exported) because the layout is specific to the
- * header's right column; the three child components stay reusable elsewhere.
+ * Phase 4.D hotfix : le cluster score était précédemment dans la colonne
+ * droite du header, ce qui provoquait un débordement horizontal en prod
+ * (badge LIVE + favori + score + serveur dans un espace trop réduit).
+ * Solution A du brief : sous-header dédié pleine largeur, layout propre
+ * et responsive.
  */
-function LiveHeaderScore({
+export function LiveScoreSubHeader({
   match,
   liveState,
 }: {
@@ -140,18 +141,25 @@ function LiveHeaderScore({
     liveState.server === "A" ? match.playerA.name : match.playerB.name;
 
   return (
-    <div className="flex flex-col items-end gap-0.5">
-      <div className="flex items-center gap-1.5">
-        <SetScoreline
-          scoreA={liveState.scoreA}
-          scoreB={liveState.scoreB}
-        />
-        <span className="text-border" aria-hidden>·</span>
-        <CurrentGameScore
-          pointsA={liveState.scoreA.points}
-          pointsB={liveState.scoreB.points}
-        />
-      </div>
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-center gap-x-3 gap-y-1",
+        "border-b border-rose-500/20 bg-rose-500/5 px-4 py-2 sm:px-6",
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      <SetScoreline
+        scoreA={liveState.scoreA}
+        scoreB={liveState.scoreB}
+        className="text-sm"
+      />
+      <span className="text-rose-400/40" aria-hidden>·</span>
+      <CurrentGameScore
+        pointsA={liveState.scoreA.points}
+        pointsB={liveState.scoreB.points}
+      />
+      <span className="text-rose-400/40" aria-hidden>·</span>
       <ServerIndicator server={liveState.server} serverName={serverName} />
     </div>
   );
