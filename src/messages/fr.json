@@ -151,6 +151,7 @@
     "modelLabel": "Modèle :",
     "modelUpdated": "MAJ",
     "live": "Live",
+    "prematch": "À venir",
     "serving": "{name} au service",
     "servingAria": "Score en direct : {score}, {points}, {server} au service",
     "offline": "Hors ligne",

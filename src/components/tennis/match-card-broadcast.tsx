@@ -226,23 +226,33 @@ export function MatchCardBroadcast({
         {/* Scrim sombre pour contraste du texte blanc */}
         <div className="absolute inset-0 bg-black/40" aria-hidden />
 
-        {/* Overlay TOP : tournoi · round · date · LIVE · favori */}
+        {/* Overlay TOP — 3 colonnes : date (g) · tournoi+round centrés (m) · LIVE/favori (d)
+            R7.2 hotfix : tournoi + round déplacés au centre (avant à gauche en
+            compact). Permet une lecture broadcast TV claire : le tournoi est
+            l'identité visuelle forte du match, il mérite le centre. */}
         <div className="relative flex items-start justify-between gap-2 px-4 py-3 sm:px-6">
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-white/90">
-              <Trophy className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{match.tournament}</span>
-              <span className="text-white/40">·</span>
-              <span className="shrink-0 text-white/70">{match.round}</span>
-            </div>
+          {/* Gauche : date/heure uniquement */}
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/60">
-              <Calendar className="h-3 w-3" />
-              <span>{formattedDateTime}</span>
+              <Calendar className="h-3 w-3 shrink-0" />
+              <span className="truncate">{formattedDateTime}</span>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            {isLive && (
+          {/* Centre : tournoi (gros) + round (dessous) */}
+          <div className="flex shrink-0 flex-col items-center gap-0.5 text-center">
+            <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.1em] text-white sm:text-sm">
+              <Trophy className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+              <span className="max-w-[180px] truncate">{match.tournament}</span>
+            </div>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-white/70">
+              {match.round}
+            </span>
+          </div>
+
+          {/* Droite : statut LIVE/Prematch + favori */}
+          <div className="flex flex-1 items-start justify-end gap-2">
+            {isLive ? (
               <span className="flex items-center gap-1 rounded-full bg-rose-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
@@ -250,11 +260,11 @@ export function MatchCardBroadcast({
                 </span>
                 {t("live")}
               </span>
-            )}
-            {!isLive && (
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/70">
-                <Clock className="h-3.5 w-3.5" />
-              </div>
+            ) : (
+              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/70">
+                <Clock className="h-3 w-3" />
+                {t("prematch")}
+              </span>
             )}
             <button
               type="button"
