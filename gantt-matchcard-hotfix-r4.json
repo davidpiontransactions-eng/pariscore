@@ -1,0 +1,212 @@
+{
+  "title": "MatchCard Hotfix R4 — Photos Live + Elo/SPS entiers + Win Predictor %",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-21 R4", "2026-07-22 QA", "2026-07-23 Suivi"]
+  },
+  "tracks": [
+    {
+      "name": "🔧 Bugs corrigés (R4 — 21/07)",
+      "items": [
+        {
+          "label": "✅ Bug #1 — Photos LIVE absentes (resolvePlayerPhoto enrichi 3 layers + wiré)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-api-consumer + react-component-design",
+            "target": "src/lib/player-photos.ts + src/components/football/tennis-tab-content.tsx",
+            "commit": "b7498fd",
+            "layers": [
+              "OSS 6 stars (licensed)",
+              "Tennis Warehouse CDN (93 joueurs JSON)",
+              "DiceBear initials (fallback déterministe)"
+            ]
+          }
+        },
+        {
+          "label": "✅ Bug #2 — Elo décimal (Math.round dans tous les chemins via ??)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "aos-debugging-and-error-recovery",
+            "target": "src/components/tennis/player-statline.tsx",
+            "commit": "b7498fd",
+            "root_cause": "DB SQLite tennis_players_elo.elo_rating est REAL (flottant)"
+          }
+        },
+        {
+          "label": "✅ Bug #3 — SPS sans rang (#N affiché inline, guard spsRank > 0)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "frontend-design",
+            "target": "src/components/tennis/player-statline.tsx",
+            "commit": "b7498fd"
+          }
+        },
+        {
+          "label": "✅ Bug #4 — Win Predictor % masqué en live (ProbabilityBar + QuickAddRing réactivés)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design + tufte-data-viz",
+            "target": "src/components/tennis/match-card.tsx",
+            "commit": "b7498fd",
+            "insight": "liveProbA/B sont des probas RÉELLES (BSD cotes), pas placeholders"
+          }
+        },
+        {
+          "label": "✅ Guard probClamped [1,99] dans handleQuickAdd (évite odd=Infinity)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "aos-code-review-and-quality + aos-security-and-hardening",
+            "target": "src/components/tennis/match-card.tsx",
+            "commit": "b7498fd"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Quality Assurance — Validation visuelle",
+      "items": [
+        {
+          "label": "Code Review structuré (template officiel, verdict APPROVED)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "code-reviewer (skill dédié)",
+            "verdict": "APPROVED — 0 critical, 0 major, 2 minor optionnels",
+            "files_reviewed": [
+              "src/lib/player-photos.ts",
+              "src/components/football/tennis-tab-content.tsx",
+              "src/components/tennis/player-statline.tsx",
+              "src/components/tennis/match-card.tsx",
+              "src/messages/fr.json",
+              "src/messages/en.json"
+            ]
+          }
+        },
+        {
+          "label": "QA Playwright mobile 375px + desktop 1280px (mocks BSD+player-stats)",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skill": "playwright-mcp + webapp-testing",
+            "subagent": "qa-junior + qa-senior (parallèle)",
+            "target": "2 cartes live × 2 viewports = 8 screenshots",
+            "verdict": "VALIDÉ — convergence 2 profils",
+            "dom_proofs": [
+              "Imgs loaded:true × 2 par carte",
+              "Elo 2185/2075/1789/1862 (entiers, depuis mocks décimaux)",
+              "SPS 92#1, 88#3, 68#28, 76#11",
+              "ProbBar SINNER 67% 33% ALCARAZ + anneaux"
+            ]
+          }
+        },
+        {
+          "label": "Typecheck (tsc --noEmit) : 0 régression",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "verification-before-completion",
+            "result": "52 erreurs AVANT = 52 APRÈS (toutes pré-existantes sur frontend/ legacy)"
+          }
+        },
+        {
+          "label": "Lint (eslint) : 0 erreur, 0 warning",
+          "start": "2026-07-21 R4",
+          "end": "2026-07-21 R4",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "verification-before-completion",
+            "result": "PASS sur les 4 fichiers TS/TSX modifiés"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Suivi technique & Améliorations futures",
+      "items": [
+        {
+          "label": "Ticket #1 — probA+probB != 100 (arrondis séparés dans bsd-fetcher.ts)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns + aos-debugging-and-error-recovery",
+            "target": "src/lib/bsd-fetcher.ts (lignes 263-270)",
+            "note": "liveProbB = Math.round(...) indépendant de liveProbA → somme peut être 99 ou 101. Fix : liveProbB = 100 - liveProbA après arrondi A. Non observé sur captures actuelles (67+33, 42+58 = 100) mais edge case théorique.",
+            "non_blocking": "Hors scope R4 (bsd-fetcher.ts non modifié)"
+          }
+        },
+        {
+          "label": "Ticket #2 — SVG viewBox négatif desktop (Sparkline/Chart width <= 0)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "aos-debugging-and-error-recovery + react-performance",
+            "target": "src/components/tennis/sparkline.tsx ou win-probability-chart.tsx",
+            "note": "Console desktop : 'Error: <svg> attribute viewBox: A negative value is not valid. (0 0 -8 72)'. Pré-existant au R4, composant non touché. Fix : Math.max(0, w) dans le calcul de largeur.",
+            "non_blocking": "Bug antérieur"
+          }
+        },
+        {
+          "label": "Ticket #3 — Collapsage mobile sections analytiques live",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design + frontend-design",
+            "target": "src/components/tennis/match-card.tsx (MomentumDR + WinProbabilityChart + PointTimeline)",
+            "note": "Carte live atteint ~900-1000px en mobile. Regrouper les 3 sections analytiques dans un Collapsible shadcn déployé par défaut sur desktop, collapsé sur mobile. Nécessite ajout clé i18n liveAnalytics.",
+            "non_blocking": "Amélioration UX, pas un bug"
+          }
+        },
+        {
+          "label": "Ticket #4 — Cohérence visuelle photos (TW headshot vs DiceBear gradient)",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "frontend-design + design-system-unify",
+            "target": "src/components/tennis/player-profile-header.tsx",
+            "note": "Dans ~10% des duels : photo réelle (fond blanc) vs avatar gradient. Option : bg-muted/30 sur wrapper Avatar pour unifier, ou filtre grayscale-[20%] sur AvatarImage.",
+            "non_blocking": "Hétérogénéité acceptable (ring + halo coloré masque déjà)"
+          }
+        }
+      ]
+    }
+  ],
+  "agents": {
+    "frontend-developer": {
+      "description": "Dev frontend React/Next.js — components, Tailwind, layout, data viz",
+      "subagents": [],
+      "available_skills": ["react-component-design", "react-api-consumer", "frontend-design", "react-styling", "tufte-data-viz"]
+    },
+    "code-reviewer": {
+      "description": "Review qualité — template officiel (critical/major/minor/positive), sécurité, guards",
+      "subagents": [],
+      "available_skills": ["code-reviewer", "aos-code-review-and-quality", "aos-security-and-hardening", "staff-engineer-review", "verification-before-completion"]
+    },
+    "qa-engineer": {
+      "description": "QA — tests visuels Playwright, DOM extraction, edge cases",
+      "subagents": ["qa-junior", "qa-senior"],
+      "available_skills": ["playwright-mcp", "webapp-testing", "visual-regression", "e2e-testing"]
+    },
+    "backend-architect": {
+      "description": "Backend BSD fetcher, normalisation probas, schémas données",
+      "subagents": [],
+      "available_skills": ["backend-patterns", "aos-debugging-and-error-recovery"]
+    }
+  }
+}

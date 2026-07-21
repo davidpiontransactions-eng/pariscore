@@ -1,0 +1,155 @@
+{
+  "title": "MatchCard Hotfix R3 — Responsive & Overflow Live Card",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-21 R3", "2026-07-22 QA", "2026-07-23 Suivi"]
+  },
+  "tracks": [
+    {
+      "name": "🔧 Bugs corrigés (R3 — 21/07)",
+      "items": [
+        {
+          "label": "✅ Bug #1 — Statline overflow (flex-wrap + gap-y)",
+          "start": "2026-07-21 R3",
+          "end": "2026-07-21 R3",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design + frontend-design",
+            "target": "src/components/tennis/player-statline.tsx",
+            "commit": "present (ce commit)"
+          }
+        },
+        {
+          "label": "✅ Bug #2 — Avatar rogné (overflow-hidden retiré)",
+          "start": "2026-07-21 R3",
+          "end": "2026-07-21 R3",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "shadcn-ui (Avatar) + frontend-design",
+            "target": "src/components/tennis/match-card.tsx",
+            "commit": "present (ce commit)"
+          }
+        },
+        {
+          "label": "✅ Bug #3 — Structure VS (items-stretch → items-start)",
+          "start": "2026-07-21 R3",
+            "end": "2026-07-21 R3",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design",
+            "target": "src/components/tennis/match-card.tsx",
+            "commit": "present (ce commit)"
+          }
+        },
+        {
+          "label": "✅ Code Review + Typecheck (0 nouvelle erreur)",
+          "start": "2026-07-21 R3",
+          "end": "2026-07-21 R3",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "aos-code-review-and-quality + staff-engineer-review",
+            "verdict": "APPROVED"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Quality Assurance — Vérification visuelle",
+      "items": [
+        {
+          "label": "Visual regression : capture before/after responsive",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skill": "visual-regression + playwright-mcp",
+            "subagent": "browser-qa",
+            "target": "Capture écran 3 tailles : 375px / 768px / 1280px pour 3 matchs live"
+          }
+        },
+        {
+          "label": "Test responsive 320px→1920px (overflow check)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skill": "playwright-scanner + e2e-testing",
+            "subagent": "accessibility-lead",
+            "target": "Vérifier qu'aucun overflow horizontal résiduel sur MatchCard"
+          }
+        },
+        {
+          "label": "Terminal mode : statline flicker check",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "frontend-design + aos-performance-optimization",
+            "target": "src/components/tennis/player-statline.tsx (terminalMode branch)",
+            "note": "Vérifier visuellement que gap-x-1.5 gap-y-0.5 ne cause pas de bounce 1↔2 lignes au resize"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Suivi technique & Améliorations",
+      "items": [
+        {
+          "label": "Surveillance padding asymétrique Joueur 2",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skill": "aos-doubt-driven-development",
+            "target": "match-card.tsx pr-2 sm:pr-4",
+            "note": "Si le nom Joueur 2 tronque avant le Joueur 1, remplacer par overflow-visible sur ring Avatar"
+          }
+        },
+        {
+          "label": "Refactor : overflow-visible sur ring Avatar au lieu de padding",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "shadcn-ui (Avatar) + react-component-design",
+            "target": "src/components/tennis/player-profile-header.tsx",
+            "note": "Alternative plus propre : remplacer pr-2/pr-4 par overflow-visible sur le ring de l'avatar"
+          }
+        },
+        {
+          "label": "Ajouter commentaire de design rationale sur wrappers",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "aos-documentation-and-adrs",
+            "target": "src/components/tennis/match-card.tsx (commentaire grid)",
+            "note": "Expliquer pourquoi overflow-hidden a été retiré intentionnellement"
+          }
+        }
+      ]
+    }
+  ],
+  "agents": {
+    "frontend-developer": {
+      "description": "Dev frontend React/Next.js — components, Tailwind, layout",
+      "subagents": ["cavecrew-builder", "cavecrew-reviewer"],
+      "available_skills": ["react-component-design", "shadcn-ui", "frontend-design", "react-styling", "frontend-patterns"]
+    },
+    "qa-engineer": {
+      "description": "QA — tests visuels, responsive, régressions",
+      "subagents": ["browser-qa", "accessibility-lead"],
+      "available_skills": ["visual-regression", "playwright-mcp", "e2e-testing", "playwright-scanner"]
+    },
+    "code-reviewer": {
+      "description": "Review qualité — 5 dimensions (correctness, readability, architecture, security, performance)",
+      "subagents": [],
+      "available_skills": ["aos-code-review-and-quality", "staff-engineer-review", "code-reviewer"]
+    },
+    "main-orchestrator": {
+      "description": "Orchestrateur chef de projet — allocation ressources, décisions techniques",
+      "subagents": ["cavecrew-investigator", "council"],
+      "available_skills": ["aos-doubt-driven-development", "aos-documentation-and-adrs", "aos-planning-and-task-breakdown"]
+    }
+  }
+}

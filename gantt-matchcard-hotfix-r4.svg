@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="672" viewBox="0 0 560 672" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .title { fill: #e6edf3; font-size: 18px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 11px; }
+  .track-name { fill: #c9d1d9; font-size: 12px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item { fill: #00e676; }
+  .item-done { fill: #2ea043; }
+  .item-qa { fill: #0077ff; }
+  .item-followup { fill: #a371f7; }
+  .item-label { fill: #e6edf3; font-size: 11px; }
+  .track-label { fill: #8b949e; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+  .legend-box { fill: #131722; stroke: #1f2533; }
+  .legend-text { fill: #c9d1d9; font-size: 10px; }
+</style>
+<rect class="bg" width="560" height="672"/>
+<text class="title" x="20" y="32">MatchCard Hotfix R4 — Photos Live + Elo/SPS entiers + Win %</text>
+<text class="subtitle" x="20" y="50">3 jours · 3 tracks · 13 tâches · commit b7498fd · généré 2026-07-21</text>
+
+<!-- Timeline header -->
+<rect class="grid-bg" x="280" y="60" width="252" height="30"/>
+<line class="grid-line" x1="280" y1="60" x2="280" y2="660"/>
+<text class="header-date" x="322" y="79">21/07 R4</text>
+<line class="grid-line" x1="364" y1="60" x2="364" y2="660"/>
+<text class="header-date" x="406" y="79">22/07 QA</text>
+<line class="grid-line" x1="448" y1="60" x2="448" y2="660"/>
+<text class="header-date" x="490" y="79">23/07 Suivi</text>
+<line class="grid-line" x1="532" y1="60" x2="532" y2="660"/>
+
+<!-- Track label: Bugs corrigés -->
+<text class="track-label" x="10" y="100">🔧 BUGS CORRIGÉS (R4 — 21/07)</text>
+<line class="sep" x1="0" y1="105" x2="560" y2="105"/>
+
+<!-- Bug #1: Photos LIVE -->
+<rect class="track-bg" x="0" y="112" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="130">Photos LIVE absentes (3 layers…</text>
+<rect class="item item-done" x="284" y="114" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="130">✅ resolvePlayerPhoto + wir…</text>
+
+<!-- Bug #2: Elo décimal -->
+<rect class="track-bg" x="0" y="144" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="162">Elo décimal (DB REAL flottant…</text>
+<rect class="item item-done" x="284" y="146" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="162">✅ Math.round tous chemins</text>
+
+<!-- Bug #3: SPS sans rang -->
+<rect class="track-bg" x="0" y="176" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="194">SPS sans rang inline…</text>
+<rect class="item item-done" x="284" y="178" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="194">✅ #N + guard spsRank > 0</text>
+
+<!-- Bug #4: Win Predictor -->
+<rect class="track-bg" x="0" y="208" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="226">Win Predictor % masqué en liv…</text>
+<rect class="item item-done" x="284" y="210" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="226">✅ ProbabilityBar + Ring</text>
+
+<!-- Guard probClamped -->
+<rect class="track-bg" x="0" y="240" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="258">Guard probClamped [1,99]…</text>
+<rect class="item item-done" x="284" y="242" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="258">✅ évite odd=Infinity</text>
+
+<!-- Track label: QA -->
+<text class="track-label" x="10" y="292">🎯 QUALITY ASSURANCE</text>
+<line class="sep" x1="0" y1="297" x2="560" y2="297"/>
+
+<!-- Code Review -->
+<rect class="track-bg" x="0" y="304" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="322">Code Review (template officie…</text>
+<rect class="item item-qa" x="284" y="306" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="322">✅ APPROVED — 0 critical</text>
+
+<!-- QA Playwright -->
+<rect class="track-bg" x="0" y="336" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="354">QA Playwright mobile+desktop…</text>
+<rect class="item item-qa" x="284" y="338" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="354">✅ 2 profils convergents</text>
+
+<!-- Typecheck -->
+<rect class="track-bg" x="0" y="368" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="386">Typecheck (tsc --noEmit)…</text>
+<rect class="item item-qa" x="284" y="370" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="386">✅ 0 régression (52→52)</text>
+
+<!-- Lint -->
+<rect class="track-bg" x="0" y="400" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="418">Lint (eslint)…</text>
+<rect class="item item-qa" x="284" y="402" width="76" height="24" rx="4"/>
+<text class="item-label" x="290" y="418">✅ 0 erreur, 0 warning</text>
+
+<!-- Track label: Suivi -->
+<text class="track-label" x="10" y="452">📋 SUIVI TECHNIQUE &amp; AMÉLIORATIONS</text>
+<line class="sep" x1="0" y1="457" x2="560" y2="457"/>
+
+<!-- Ticket #1: probA+probB -->
+<rect class="track-bg" x="0" y="464" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="482">Ticket #1: probA+probB != 100…</text>
+<rect class="item item-followup" x="368" y="466" width="160" height="24" rx="4"/>
+<text class="item-label" x="374" y="482">bsd-fetcher.ts (liveProbB=100-A)</text>
+
+<!-- Ticket #2: SVG viewBox -->
+<rect class="track-bg" x="0" y="496" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="514">Ticket #2: SVG viewBox négatif…</text>
+<rect class="item item-followup" x="368" y="498" width="160" height="24" rx="4"/>
+<text class="item-label" x="374" y="514">sparkline.tsx Math.max(0,w)</text>
+
+<!-- Ticket #3: Collapsage mobile -->
+<rect class="track-bg" x="0" y="528" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="546">Ticket #3: Collapsage analytiqu…</text>
+<rect class="item item-followup" x="452" y="530" width="76" height="24" rx="4"/>
+<text class="item-label" x="458" y="546">Collapsible shadcn</text>
+
+<!-- Ticket #4: Cohérence photos -->
+<rect class="track-bg" x="0" y="560" width="276" height="28" rx="3"/>
+<text class="track-name" x="10" y="578">Ticket #4: Cohérence photos…</text>
+<rect class="item item-followup" x="452" y="562" width="76" height="24" rx="4"/>
+<text class="item-label" x="458" y="578">bg-muted/30 wrapper</text>
+
+<!-- Legend -->
+<rect class="legend-box" x="20" y="610" width="520" height="44" rx="4"/>
+<rect class="item-done" x="34" y="622" width="14" height="14" rx="2"/>
+<text class="legend-text" x="54" y="633">Bugs corrigés (R4)</text>
+<rect class="item-qa" x="170" y="622" width="14" height="14" rx="2"/>
+<text class="legend-text" x="190" y="633">QA validé</text>
+<rect class="item-followup" x="270" y="622" width="14" height="14" rx="2"/>
+<text class="legend-text" x="290" y="633">Suivi / tickets futurs</text>
+<text class="legend-text" x="400" y="633" font-style="italic">Hors scope R4 (pré-existant ou amélioration)</text>
+</svg>

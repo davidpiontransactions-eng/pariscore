@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="496" height="504" viewBox="0 0 496 504" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .weekend { fill: #161b29; }
+  .title { fill: #e6edf3; font-size: 18px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 11px; }
+  .track-name { fill: #c9d1d9; font-size: 12px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item { fill: #00e676; }
+  .item-critical { fill: #ff6b6b; }
+  .item-premium { fill: #0077ff; }
+  .item-setup { fill: #a371f7; }
+  .item-done { fill: #2ea043; }
+  .item-label { fill: #e6edf3; font-size: 11px; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+</style>
+<rect class="bg" width="496" height="504"/>
+<text class="title" x="20" y="32">MatchCard Hotfix R3 — Responsive &amp; Overflow Live Card</text>
+<text class="subtitle" x="20" y="50">3 jours · 3 tracks · 10 tâches · généré 2026-07-20</text>
+<rect class="grid-bg" x="220" y="60" width="252" height="30"/>
+<line class="grid-line" x1="220" y1="60" x2="220" y2="494"/>
+<text class="header-date" x="262" y="79">21/07</text>
+<line class="grid-line" x1="304" y1="60" x2="304" y2="494"/>
+<text class="header-date" x="346" y="79">22/07</text>
+<line class="grid-line" x1="388" y1="60" x2="388" y2="494"/>
+<text class="header-date" x="430" y="79">23/07</text>
+<line class="grid-line" x1="472" y1="60" x2="472" y2="494"/>
+<rect class="track-bg" x="0" y="92" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="110">🔧 Bugs corrigés (R3 — 21…</text>
+<rect class="item item-done" x="224" y="94" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="110">✅ Bug #1 — Statline overflow (flex-wr…</text>
+<rect class="track-bg" x="0" y="124" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="142">🔧 Bugs corrigés (R3 — 21…</text>
+<rect class="item item-done" x="224" y="126" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="142">✅ Bug #2 — Avatar rogné (overflow-hid…</text>
+<rect class="track-bg" x="0" y="156" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="174">🔧 Bugs corrigés (R3 — 21…</text>
+<rect class="item item-done" x="224" y="158" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="174">✅ Bug #3 — Structure VS (items-stretc…</text>
+<rect class="track-bg" x="0" y="188" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="206">🔧 Bugs corrigés (R3 — 21…</text>
+<rect class="item item-done" x="224" y="190" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="206">✅ Code Review + Typecheck (0 nouvelle…</text>
+<rect class="track-bg" x="0" y="234" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="252">🎯 Quality Assurance — Vé…</text>
+<rect class="item item" x="308" y="236" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="252">Visual regression : capture before/af…</text>
+<rect class="track-bg" x="0" y="266" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="284">🎯 Quality Assurance — Vé…</text>
+<rect class="item item" x="308" y="268" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="284">Test responsive 320px→1920px (overflo…</text>
+<rect class="track-bg" x="0" y="298" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="316">🎯 Quality Assurance — Vé…</text>
+<rect class="item item" x="308" y="300" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="316">Terminal mode : statline flicker check</text>
+<rect class="track-bg" x="0" y="344" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="362">📋 Suivi technique &amp; Amél…</text>
+<rect class="item item" x="392" y="346" width="76" height="24" rx="4"/>
+<text class="item-label" x="398" y="362">Surveillance padding asymétrique Joue…</text>
+<rect class="track-bg" x="0" y="376" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="394">📋 Suivi technique &amp; Amél…</text>
+<rect class="item item" x="392" y="378" width="76" height="24" rx="4"/>
+<text class="item-label" x="398" y="394">Refactor : overflow-visible sur ring …</text>
+<rect class="track-bg" x="0" y="408" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="426">📋 Suivi technique &amp; Amél…</text>
+<rect class="item item" x="392" y="410" width="76" height="24" rx="4"/>
+<text class="item-label" x="398" y="426">Ajouter commentaire de design rationa…</text>
+<line class="sep" x1="0" y1="60" x2="496" y2="60"/>
+</svg>
