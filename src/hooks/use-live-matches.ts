@@ -51,7 +51,12 @@ type TennisLiveResponse = {
   updatedAt: string;
 };
 
-const POLL_INTERVAL_MS = 30_000;
+// R6 hotfix (2026-07-21) : réduit de 30s à 8s pour permettre au MomentumDR
+// de capter des points entre polls. Sans ça, le diff entre snapshots
+// (5-15 points joués en 30s) rend l'algorithme inopérant — le buffer ne
+// se remplit jamais, settled reste false, le composant affiche 50/50.
+// Charge BSD × 4 (ticket suivi R6 #2 pour monitoring post-deploy).
+const POLL_INTERVAL_MS = 8_000;
 
 /**
  * Hook that polls the REST API for live tennis matches.

@@ -99,15 +99,21 @@ export function MomentumDR({
   const p2Dom = momentumB > momentumA;
   const isNeut = !p1Dom && !p2Dom;
   const absDr = Math.abs(dr);
-  const label = useMemo(() => t(qualLabelKey(absDr, p1Dom)), [t, absDr, p1Dom]);
+  // R6 hotfix : si pas encore assez de points (settled=false), on affiche
+  // "Calcul en cours" au lieu de "Neutre" — sinon l'utilisateur voit un
+  // état 50/50 trompeur qui ressemble à un vrai équilibre de match.
+  const isCollecting = !settled || pointsTracked < 4;
+  const label = useMemo(
+    () => (isCollecting ? t("qualCalculating") : t(qualLabelKey(absDr, p1Dom))),
+    [t, absDr, p1Dom, isCollecting],
+  );
   const p1Short = (player1Name || "").split(" ").pop() || player1Name || t("playerFallback1");
   const p2Short = (player2Name || "").split(" ").pop() || player2Name || t("playerFallback2");
 
-  const labelColor = isNeut
-    ? "text-muted-foreground"
-    : p1Dom
-    ? "text-emerald-500"
-    : "text-blue-500";
+  // R6 hotfix : couleurs dynamiques au lieu des classes en dur. Tailwind ne
+  // supporte pas les classes générées dynamiquement → style inline. On garde
+  // text-muted-foreground comme classe pour l'état neutre (couleur sémantique).
+  const dominantColor = isNeut ? undefined : p1Dom ? player1Color : player2Color;
 
   const barColorP1 = p1Dom ? player1Color : "hsl(var(--muted-foreground) / 0.25)";
   const barColorP2 = p2Dom ? player2Color : "hsl(var(--muted-foreground) / 0.25)";
@@ -275,10 +281,13 @@ export function MomentumDR({
         className="mb-2 flex w-full items-center justify-between"
       >
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: player1Color }} />
           {t("momentumDR")}
         </span>
-        <span className={cn("text-[10px] font-semibold uppercase tracking-wider", labelColor)}>
+        <span
+          className="text-[10px] font-semibold uppercase tracking-wider"
+          style={{ color: dominantColor }}
+        >
           {label}
         </span>
       </button>
@@ -312,12 +321,14 @@ export function MomentumDR({
                 transition={{ duration: 0.3, ease: "easeOut", type: "spring", stiffness: 300, damping: 25 }}
               >
                 <div
-                  className={cn(
-                    "h-5 w-0.5 rounded-full shadow-sm transition-colors duration-300",
-                    p1Dom && "bg-emerald-400",
-                    p2Dom && "bg-blue-400",
-                    isNeut && "bg-muted-foreground/50",
-                  )}
+                  className="h-5 w-0.5 rounded-full shadow-sm transition-colors duration-300"
+                  style={{
+                    backgroundColor: isNeut
+                      ? "hsl(var(--muted-foreground) / 0.5)"
+                      : p1Dom
+                        ? player1Color
+                        : player2Color,
+                  }}
                 />
               </motion.div>
             </div>
@@ -327,7 +338,10 @@ export function MomentumDR({
               <div className="flex items-center gap-1.5 min-w-0 flex-1">
                 <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: player1Color }} />
                 <span className="truncate font-semibold text-foreground">{p1Short}</span>
-                <span className={cn("shrink-0 font-mono font-bold tabular-nums", p1Dom ? "text-emerald-500" : "text-muted-foreground")}>
+                <span
+                  className="shrink-0 font-mono font-bold tabular-nums"
+                  style={{ color: p1Dom ? player1Color : undefined }}
+                >
                   {momentumA}%
                 </span>
               </div>
@@ -335,7 +349,10 @@ export function MomentumDR({
                 {dr >= 0 ? "+" : ""}{(dr * 100).toFixed(0)}
               </span>
               <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
-                <span className={cn("shrink-0 font-mono font-bold tabular-nums", p2Dom ? "text-blue-500" : "text-muted-foreground")}>
+                <span
+                  className="shrink-0 font-mono font-bold tabular-nums"
+                  style={{ color: p2Dom ? player2Color : undefined }}
+                >
                   {momentumB}%
                 </span>
                 <span className="truncate font-semibold text-foreground">{p2Short}</span>
@@ -409,6 +426,23 @@ export function MomentumDR({
                     textAnchor="middle"
                   >{`S${d.set}`}</text>
                 ))}
+
+                {/* R6 hotfix : placeholder quand pas encore assez de données.
+                    Évite l'affichage d'une zone vide sans explication (l'utilisateur
+                    voyait un graphe muet + barre 50/50 + "Neutre" = confusion). */}
+                {drHistory.length < 2 && (
+                  <text
+                    x={chartW / 2}
+                    y={SPARK_H / 2}
+                    fill="hsl(var(--muted-foreground) / 0.4)"
+                    fontSize={MIN_FONT_SIZE}
+                    fontFamily="monospace"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {t("qualCalculating")}
+                  </text>
+                )}
 
                 {drHistory.length > 1 && (
                   <>
@@ -493,7 +527,7 @@ export function MomentumDR({
                   >
                     <div className="rounded-md border border-border/60 bg-popover px-2 py-1 text-[10px] shadow-lg">
                       <div className="flex items-center gap-2 font-mono tabular-nums">
-                        <span className={tooltip.dr >= 0 ? "text-emerald-500" : "text-blue-500"}>
+                        <span style={{ color: tooltip.dr >= 0 ? player1Color : player2Color }}>
                           DR {(tooltip.dr * 100).toFixed(0)}
                         </span>
                         <span className="text-muted-foreground/60">·</span>
@@ -525,12 +559,14 @@ export function MomentumDR({
                     {setWinners.map((w, i) => (
                       <span
                         key={i}
-                        className={cn(
-                          "inline-block rounded-sm px-1 text-[7px] font-bold leading-[12px]",
-                          w === "A" && "bg-emerald-500/20 text-emerald-500",
-                          w === "B" && "bg-blue-500/20 text-blue-500",
-                          !w && "bg-muted-foreground/10 text-muted-foreground/50",
-                        )}
+                        className="inline-block rounded-sm px-1 text-[7px] font-bold leading-[12px]"
+                        style={
+                          w === "A"
+                            ? { backgroundColor: `${player1Color}33`, color: player1Color }
+                            : w === "B"
+                              ? { backgroundColor: `${player2Color}33`, color: player2Color }
+                              : { backgroundColor: "hsl(var(--muted-foreground) / 0.1)", color: "hsl(var(--muted-foreground) / 0.5)" }
+                        }
                       >
                         S{i + 1} {w === "A" ? p1Short[0] : w === "B" ? p2Short[0] : "—"}
                       </span>

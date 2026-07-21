@@ -1,0 +1,345 @@
+{
+  "title": "MatchCard Hotfix R6 — MomentumDR non fonctionnel (poll + UI + logique)",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-21 R6", "2026-07-22 QA", "2026-07-23 Suivi"]
+  },
+  "diagnostic": {
+    "symptom": "Le composant MomentumDR reste figé à 50/50, label 'Neutre' permanent, sparkline vide.",
+    "root_cause": "Inadéquation architecture : useMomentumDR reconstruit l'historique point-par-point via diff de snapshots LiveMatchState, mais le polling est à 30s + cache serveur 30s = ~60s réels entre snapshots. En tennis, 5-15 points sont joués en 30s → l'algorithme ne peut observer quasiment aucun point. Aucun flux SSE/WebSocket tennis point-par-point n'existe dans le projet (le socket.io présent est football-only). Aucune API externe gratuite n'offre du point-by-point temps-réel utilisable (free tiers ≤ 50-100 req/jour).",
+    "investigation_api": "Recherche web menée : API-Tennis.com ($40/mois), RapidAPI jjrm365 (50 req/jour, point-by-point premium), Sportradar (enterprise), Tennis-API.com ($10/mois). Aucune option gratuite viable pour poll ~8s/match. Scrapers open-source (haroldmli) trop fragiles (HTML parsing).",
+    "decision_produit": "Hotfix pragmatique : réduire poll à 8s + corriger les 6 bugs UI/logique. Le momentum restera approximatif mais visible. Ticket suivi pour API payante future."
+  },
+  "tracks": [
+    {
+      "name": "🐛 Diagnostic (4 investigations parallèles)",
+      "items": [
+        {
+          "label": "✅ Diagnostic logique : poll 30s incompatible avec diff point-à-point",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "explorer",
+            "skill": "systematic-debugging + aos-debugging-and-error-recovery",
+            "findings": [
+              "POLL_INTERVAL_MS = 30_000 (use-live-matches.ts:54)",
+              "CACHE_TTL_MS = 30_000 (api/tennis/live/route.ts:6) → ~60s réels",
+              "MAX_POINTS = 6 (use-momentum-dr.ts:128) trop faible, break silencieux ligne 240",
+              "tick partagé pour tous les points d'un même diff (use-momentum-dr.ts:283-291)",
+              "socket.io présent mais football-only (live_patch server.js:49429)"
+            ]
+          }
+        },
+        {
+          "label": "✅ Diagnostic UI : 6 bugs visuels/logiques confirmés",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "explorer",
+            "skill": "aos-debugging-and-error-recovery + aos-frontend-ui-engineering",
+            "findings": [
+              "Couleurs text-emerald-500/text-blue-500 en dur (10 sites, ignorent playerA.color)",
+              "Label 'Neutre' permanent (pas de garde settled, momentum-dr.tsx:102)",
+              "Pas d'état 'calcul en cours' (50/50 trompeur + opacity-60)",
+              "Sparkline vide si drHistory.length < 2",
+              "setWinners affiche set en cours (use-momentum-dr.ts:310-318)",
+              "breakIndices vide par manque de points"
+            ]
+          }
+        },
+        {
+          "label": "✅ Recherche Web : aucune API gratuite viable pour point-by-point",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skill": "metier-recherche-web + skills-websearch-documentation",
+            "mcp": "WebSearch",
+            "options_evaluees": [
+              "RapidAPI jjrm365 Tennis API : 50 req/jour (insuffisant)",
+              "API-Tennis.com : $40/mois, WSS viable",
+              "Tennis-API.com : $10/mois, point-by-point",
+              "Sportradar : enterprise",
+              "Scrapers open-source (haroldmli) : fragiles HTML"
+            ],
+            "verdict": "Aucune option gratuite viable → hotfix pragmatique"
+          }
+        },
+        {
+          "label": "✅ Décision produit validée (AskUserQuestion)",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skill": "aos-planning-and-task-breakdown",
+            "decisions": [
+              "Scope : Hotfix pragmatique (poll 8s + 6 corrections UI/logique)",
+              "État vide : Message explicite 'Calcul du momentum en cours' (pas de 50/50 trompeur)"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Fix #1 — Réduire le poll + cache (frontend-developer)",
+      "items": [
+        {
+          "label": "POLL_INTERVAL_MS 30s → 8s dans use-live-matches.ts",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-modern-react + aos-performance-optimization",
+            "target": "src/hooks/use-live-matches.ts:54",
+            "old": "const POLL_INTERVAL_MS = 30_000;",
+            "new": "const POLL_INTERVAL_MS = 8_000;",
+            "note": "8s = tradeoff entre charge serveur et granularité momentum. ~3-4 points max entre polls au lieu de 5-15."
+          }
+        },
+        {
+          "label": "CACHE_TTL_MS 30s → 8s dans api/tennis/live/route.ts",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns + aos-performance-optimization",
+            "target": "src/app/api/tennis/live/route.ts:6",
+            "old": "const CACHE_TTL_MS = 30_000;",
+            "new": "const CACHE_TTL_MS = 8_000;",
+            "note": "Aligné sur POLL_INTERVAL_MS client. Charge BSD × 4 (de 2 req/min à 7.5 req/min). À surveiller en prod."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Fix #2 — Logique diffPoints (backend-architect)",
+      "items": [
+        {
+          "label": "tick unique par point (boucle for interne)",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns + systematic-debugging",
+            "target": "src/hooks/use-momentum-dr.ts:283-291",
+            "bug": "tickRef.current += 1 AVANT la boucle → tous les points d'un diff reçoivent le même tick",
+            "fix": "Déplacer tickRef.current += 1 À L'INTÉRIEUR de la boucle for pour que chaque point ait un tick distinct"
+          }
+        },
+        {
+          "label": "MAX_POINTS 6 → 12 (couvre jeux complets)",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "aos-debugging-and-error-recovery",
+            "target": "src/hooks/use-momentum-dr.ts:128",
+            "old": "const MAX_POINTS = 6;",
+            "new": "const MAX_POINTS = 12;",
+            "rationale": "Avec poll 8s, ~3-4 points entre polls. 12 couvre les cas de fin de jeu (4 pts) + début suivant + break. Marge de sécurité."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Fix #3 — setWinners exclut set en cours (backend-architect)",
+      "items": [
+        {
+          "label": "Ignorer i === liveState.currentSet dans setWinners",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns",
+            "target": "src/hooks/use-momentum-dr.ts:310-318",
+            "bug": "Le set en cours affiche prématurément un winner. Ex: sets [6,6,0] vs [7,3,5] → 'S3 B' avant fin effective du set 3.",
+            "fix": "N'ajouter un winner que pour les sets STRICTEMENT inférieurs à currentSet (i < currentSet)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎨 Fix #4 — UI Couleurs dynamiques (frontend-developer)",
+      "items": [
+        {
+          "label": "Remplacer 10 classes text-emerald-500/text-blue-500 en dur par style inline",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "frontend-design + react-styling",
+            "target": "src/components/tennis/momentum-dr.tsx",
+            "sites": [
+              "ligne 109 labelColor p1Dom → style={{color: player1Color}}",
+              "ligne 110 labelColor p2Dom → style={{color: player2Color}}",
+              "ligne 278 pastille header → bg player1Color",
+              "ligne 317 curseur p1 → bg player1Color",
+              "ligne 318 curseur p2 → bg player2Color",
+              "ligne 330 % p1 → color player1Color",
+              "ligne 338 % p2 → color player2Color",
+              "ligne 496 tooltip DR → color conditionnelle",
+              "ligne 530 badge set A → bg/text player1Color",
+              "ligne 531 badge set B → bg/text player2Color"
+            ],
+            "rationale": "Tailwind ne supporte pas classes dynamiques → style inline. Cohérence avec playerA.color (peut être rouge, violet, etc.)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎨 Fix #5 — État non-trompeur quand peu de données (frontend-developer)",
+      "items": [
+        {
+          "label": "Label 'Calcul en cours' quand !settled + placeholder sparkline",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "aos-frontend-ui-engineering + react-component-design",
+            "target": "src/components/tennis/momentum-dr.tsx",
+            "spec": [
+              "Si !settled || pointsTracked < 4 : label 'qualCalculating' au lieu de 'qualNeutral'",
+              "Barre 50/50 remplacée par état grisé + texte 'Collecte des points en cours'",
+              "Placeholder sparkline : 'En attente de données' centré dans la zone SVG",
+              "Décision produit validée : Message explicite (pas 50/50 trompeur)"
+            ],
+            "i18n": "Ajouter clé tennis.qualCalculating + tennis.momentumCollecting dans fr.json + en.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Quality Assurance — Revue visuelle et code",
+      "items": [
+        {
+          "label": "Typecheck (tsc --noEmit) : 0 régression attendue",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "verification-before-completion",
+            "baseline": "48 erreurs pré-existantes"
+          }
+        },
+        {
+          "label": "Lint (eslint) : 0 erreur sur fichiers modifiés",
+          "start": "2026-07-21 R6",
+          "end": "2026-07-21 R6",
+          "assignment": { "agent": "code-reviewer", "skill": "verification-before-completion" }
+        },
+        {
+          "label": "QA Playwright mobile+desktop (momentum barre + couleurs + état non-trompeur)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skill": "playwright-mcp + webapp-testing + visual-regression",
+            "subagents": ["qa-junior", "qa-senior (parallèle)"],
+            "checks": [
+              "Barre momentum évolue dans le temps (pas figée 50/50)",
+              "Couleurs cohérentes avec playerA.color (pas seulement émeraude/bleu)",
+              "État 'Calcul en cours' visible quand peu de données",
+              "setWinners n'affiche pas le set en cours",
+              "Charge BSD acceptable (pas de 429 rate limit)"
+            ]
+          }
+        },
+        {
+          "label": "Code Review final (template officiel)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "code-reviewer + aos-security-and-hardening",
+            "focus": [
+              "POLL_INTERVAL 8s : impact charge BSD/serveur (×4 vs 30s)",
+              "tick unique : pas de régression sur setDividers",
+              "MAX_POINTS 12 : pas de boucle infinie (greedy convergence)",
+              "Couleurs dynamiques : pas de contraste cassé en dark mode"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Déploiement & Suivi",
+      "items": [
+        {
+          "label": "Commit + push origin/main",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": { "agent": "main-orchestrator", "skill": "aos-git-workflow-and-versioning" }
+        },
+        {
+          "label": "Deploy VPS (git pull + bun build + pm2 restart)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "sre",
+            "skill": "deployment-patterns",
+            "target": "ubuntu@51.75.21.239 /home/ubuntu/pariscore",
+            "monitoring": "Surveiller charge BSD (×4) sur 24h post-deploy. Si 429 → fallback POLL 15s."
+          }
+        },
+        {
+          "label": "graphify update . (knowledge graph post-modifications)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": { "agent": "main-orchestrator", "skill": "graphify (MCP local)" }
+        },
+        {
+          "label": "Ticket suivi #1 : intégrer API-Tennis.com WSS ($40/mois) pour true point-by-point",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "api-design + backend-patterns",
+            "target": "Nouveau src/lib/api-tennis-ws.ts + refactor useMomentumDR",
+            "rationale": "Résout définitivement la cause racine. Momentum serait précis au lieu d'approximatif. Décision budget à valider."
+          }
+        },
+        {
+          "label": "Ticket suivi #2 : tester charge BSD VPS post-deploy (429 rate limit ?)",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "sre",
+            "skill": "aos-observability-and-instrumentation",
+            "target": "Logs pm2 pariscore-next sur 24h. Si BSD retourne 429 → fallback POLL_INTERVAL_MS=15_000."
+          }
+        }
+      ]
+    }
+  ],
+  "agents": {
+    "main-orchestrator": {
+      "description": "Chef de projet — allocation, décisions produit, recherche web, déploiement",
+      "available_skills": ["aos-planning-and-task-breakdown", "metier-recherche-web", "aos-git-workflow-and-versioning", "graphify"]
+    },
+    "frontend-developer": {
+      "description": "Dev frontend React/Next.js — hooks, composants, polling, couleurs",
+      "available_skills": ["react-modern-react", "react-component-design", "aos-frontend-ui-engineering", "react-styling", "frontend-design"]
+    },
+    "backend-architect": {
+      "description": "Backend TypeScript — fetchers, hooks logiques, cache serveur",
+      "available_skills": ["backend-patterns", "systematic-debugging", "aos-debugging-and-error-recovery", "api-design"]
+    },
+    "code-reviewer": {
+      "description": "Review qualité — template officiel, sécurité charge, guards défensifs",
+      "available_skills": ["code-reviewer", "aos-code-review-and-quality", "aos-security-and-hardening", "verification-before-completion"]
+    },
+    "qa-engineer": {
+      "description": "QA — tests Playwright visuels, charge BSD, edge cases",
+      "subagents": ["qa-junior", "qa-senior"],
+      "available_skills": ["playwright-mcp", "webapp-testing", "visual-regression", "e2e-testing"]
+    },
+    "sre": {
+      "description": "Déploiement VPS — monitoring charge BSD × 4 post-poll 8s",
+      "available_skills": ["deployment-patterns", "aos-observability-and-instrumentation", "aos-shipping-and-launch"]
+    },
+    "explorer": {
+      "description": "Investigation read-only — diagnostic cause racine",
+      "available_skills": ["systematic-debugging", "aos-debugging-and-error-recovery"]
+    }
+  }
+}

@@ -101,6 +101,7 @@
     "playerFallback1": "P1",
     "playerFallback2": "P2",
     "qualNeutral": "Neutral",
+    "qualCalculating": "Calculating",
     "qualSlightAdvantage": "Slight advantage",
     "qualSlightDisadvantage": "Slight disadvantage",
     "qualMomentum": "Momentum",

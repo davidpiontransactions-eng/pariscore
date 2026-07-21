@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="780" viewBox="0 0 620 780" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .title { fill: #e6edf3; font-size: 16px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 10px; }
+  .track-name { fill: #c9d1d9; font-size: 11px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item-diag { fill: #58a6ff; }
+  .item-poll { fill: #f85149; }
+  .item-logic { fill: #d29922; }
+  .item-ui { fill: #2ea043; }
+  .item-qa { fill: #0077ff; }
+  .item-deploy { fill: #a371f7; }
+  .item-followup { fill: #6e7681; }
+  .item-label { fill: #e6edf3; font-size: 10px; }
+  .track-label { fill: #8b949e; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+  .legend-box { fill: #131722; stroke: #1f2533; }
+  .legend-text { fill: #c9d1d9; font-size: 9px; }
+  .critical { fill: #f85149; font-size: 10px; font-weight: 700; }
+</style>
+<rect class="bg" width="620" height="780"/>
+<text class="title" x="20" y="28">MatchCard Hotfix R6 — MomentumDR non fonctionnel</text>
+<text class="subtitle" x="20" y="44">7 bugs · 3 jours · 7 agents · poll 30s incompatible + 6 corrections UI/logique</text>
+
+<text class="critical" x="20" y="62">⚠️ Cause racine : poll 30s + cache 30s = ~60s entre snapshots, algorithme point-à-point inopérant</text>
+
+<rect class="grid-bg" x="320" y="74" width="282" height="30"/>
+<line class="grid-line" x1="320" y1="74" x2="320" y2="760"/>
+<text class="header-date" x="367" y="93">21/07 R6</text>
+<line class="grid-line" x1="414" y1="74" x2="414" y2="760"/>
+<text class="header-date" x="461" y="93">22/07 QA</text>
+<line class="grid-line" x1="508" y1="74" x2="508" y2="760"/>
+<text class="header-date" x="555" y="93">23/07 Suivi</text>
+<line class="grid-line" x1="602" y1="74" x2="602" y2="760"/>
+
+<text class="track-label" x="10" y="118">🐛 DIAGNOSTIC (4 INVESTIGATIONS PARALLÈLES)</text>
+<line class="sep" x1="0" y1="123" x2="620" y2="123"/>
+
+<rect class="track-bg" x="0" y="130" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="147">Logique : poll 30s incompatible diff…</text>
+<rect class="item item-diag" x="324" y="132" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="147">✅ explorer</text>
+
+<rect class="track-bg" x="0" y="160" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="177">UI : 6 bugs confirmés (couleurs, label…)…</text>
+<rect class="item item-diag" x="324" y="162" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="177">✅ explorer</text>
+
+<rect class="track-bg" x="0" y="190" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="207">Recherche Web : aucune API gratuite viable…</text>
+<rect class="item item-diag" x="324" y="192" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="207">✅ WebSearch MCP</text>
+
+<rect class="track-bg" x="0" y="220" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="237">Décisions produit (AskUserQuestion)…</text>
+<rect class="item item-diag" x="324" y="222" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="237">✅ Hotfix pragmatique</text>
+
+<text class="track-label" x="10" y="270">🔧 FIX #1 — RÉDUIRE LE POLL + CACHE</text>
+<line class="sep" x1="0" y1="275" x2="620" y2="275"/>
+
+<rect class="track-bg" x="0" y="282" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="299">POLL_INTERVAL_MS 30s → 8s…</text>
+<rect class="item item-poll" x="324" y="284" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="299">frontend-developer</text>
+
+<rect class="track-bg" x="0" y="312" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="329">CACHE_TTL_MS 30s → 8s…</text>
+<rect class="item item-poll" x="324" y="314" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="329">backend-architect</text>
+
+<text class="track-label" x="10" y="362">🔧 FIX #2 — LOGIQUE DIFFPOINTS</text>
+<line class="sep" x1="0" y1="367" x2="620" y2="367"/>
+
+<rect class="track-bg" x="0" y="374" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="391">tick unique par point (boucle for interne)…</text>
+<rect class="item item-logic" x="324" y="376" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="391">backend-architect</text>
+
+<rect class="track-bg" x="0" y="404" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="421">MAX_POINTS 6 → 12…</text>
+<rect class="item item-logic" x="324" y="406" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="421">backend-architect</text>
+
+<text class="track-label" x="10" y="454">🔧 FIX #3 + 🎨 #4 + #5 — UI/LOGIQUE</text>
+<line class="sep" x1="0" y1="459" x2="620" y2="459"/>
+
+<rect class="track-bg" x="0" y="466" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="483">setWinners exclut set en cours…</text>
+<rect class="item item-logic" x="324" y="468" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="483">backend-architect</text>
+
+<rect class="track-bg" x="0" y="496" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="513">Couleurs : 10 classes en dur → style…</text>
+<rect class="item item-ui" x="324" y="498" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="513">frontend-developer</text>
+
+<rect class="track-bg" x="0" y="526" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="543">État 'Calcul en cours' (non-trompeur)…</text>
+<rect class="item item-ui" x="324" y="528" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="543">frontend-developer</text>
+
+<text class="track-label" x="10" y="576">🎯 QUALITY ASSURANCE</text>
+<line class="sep" x1="0" y1="581" x2="620" y2="581"/>
+
+<rect class="track-bg" x="0" y="588" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="605">Typecheck + Lint…</text>
+<rect class="item item-qa" x="324" y="590" width="88" height="22" rx="4"/>
+<text class="item-label" x="330" y="605">code-reviewer</text>
+
+<rect class="track-bg" x="0" y="618" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="635">QA Playwright mobile+desktop…</text>
+<rect class="item item-qa" x="418" y="620" width="88" height="22" rx="4"/>
+<text class="item-label" x="424" y="635">qa-junior + senior</text>
+
+<rect class="track-bg" x="0" y="648" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="665">Code Review final (charge BSD × 4)…</text>
+<rect class="item item-qa" x="418" y="650" width="88" height="22" rx="4"/>
+<text class="item-label" x="424" y="665">code-reviewer</text>
+
+<text class="track-label" x="10" y="698">🚀 DÉPLOIEMENT &amp; SUIVI</text>
+<line class="sep" x1="0" y1="703" x2="620" y2="703"/>
+
+<rect class="track-bg" x="0" y="710" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="727">Commit + push + deploy VPS + graphify…</text>
+<rect class="item item-deploy" x="418" y="712" width="88" height="22" rx="4"/>
+<text class="item-label" x="424" y="727">orchestrator + sre</text>
+
+<rect class="track-bg" x="0" y="740" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="757">Tickets #1 (API WSS $40/mois) + #2 (charge BSD)…</text>
+<rect class="item item-followup" x="512" y="742" width="88" height="22" rx="4"/>
+<text class="item-label" x="518" y="757">backend + sre</text>
+</svg>

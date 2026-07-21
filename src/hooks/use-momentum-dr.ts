@@ -125,7 +125,10 @@ function diffPoints(
 
   // Build a composite score: (sets_won, games_in_current_set, points)
   // We'll simulate advancing point-by-point until we reach the current score.
-  const MAX_POINTS = 6; // safety limit: max points we expect between ticks
+  // R6 hotfix : relevé de 6 à 12 pour couvrir jeux complets (4 pts) + début
+  // suivant + break, surtout avec le nouveau poll 8s qui peut capter un peu
+  // plus de points en cas de jeu rapide ou de série de tiebreaks.
+  const MAX_POINTS = 12; // safety limit: max points we expect between ticks
 
   // Track simulated state
   let sA = { ...pA };
@@ -280,10 +283,12 @@ export function useMomentumDR(
     prevStateRef.current = liveState;
 
     if (outcomes.length > 0) {
-      tickRef.current += 1;
-
-      // Add all detected points to buffer, with proper tick stamps
+      // R6 hotfix : tick INCRÉMENTÉ À L'INTÉRIEUR de la boucle pour que
+      // chaque point détecté ait un tick distinct (avant : tous les points
+      // d'un même diff 30s recevaient le même tick → historique déformé,
+      // setDividers cassé, sparkline avec paliers au lieu d'une courbe).
       for (const outcome of outcomes) {
+        tickRef.current += 1;
         bufferRef.current.push({
           ...outcome,
           tick: tickRef.current,
@@ -311,6 +316,15 @@ export function useMomentumDR(
   if (liveState) {
     const maxSets = Math.max(liveState.scoreA.sets.length, liveState.scoreB.sets.length);
     for (let i = 0; i < maxSets; i++) {
+      // R6 hotfix : ne déclarer un winner que pour les sets STRICTEMENT
+      // clos (i < currentSet-1 = index < set en cours - 1). Avant, le set
+      // en cours affichait prématurément un winner (ex: [6,6,0] vs [7,3,5]
+      // → "S3 B" alors que le set 3 est encore en cours à 0-5).
+      // currentSet est 1-based, i est 0-based → i < currentSet - 1 = clos.
+      if (i >= currentSet - 1) {
+        setWinners.push(null);
+        continue;
+      }
       const a = liveState.scoreA.sets[i] ?? 0;
       const b = liveState.scoreB.sets[i] ?? 0;
       setWinners.push(a > b ? "A" : b > a ? "B" : null);

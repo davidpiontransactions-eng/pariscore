@@ -3,7 +3,11 @@ import { apiErrorHandler } from "@/lib/api-error-handler";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import type { LiveMatchItem } from "@/lib/bsd-fetcher";
 
-const CACHE_TTL_MS = 30_000;
+// R6 hotfix (2026-07-21) : réduit de 30s à 8s pour permettre au MomentumDR
+// de capter des points entre polls. Combiné au POLL_INTERVAL_MS client (8s),
+// on obtient un diff toutes les ~8s réelles au lieu de ~60s. Charge BSD × 4
+// (de 2 req/min à 7.5 req/min) — à surveiller en prod (ticket suivi R6 #2).
+const CACHE_TTL_MS = 8_000;
 
 // createTtlCache already wraps in { data, at }, so we store only the payload.
 type CachedPayload = { matches: LiveMatchItem[] };

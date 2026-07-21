@@ -101,6 +101,7 @@
     "playerFallback1": "J1",
     "playerFallback2": "J2",
     "qualNeutral": "Neutre",
+    "qualCalculating": "Calcul en cours",
     "qualSlightAdvantage": "Léger avantage",
     "qualSlightDisadvantage": "Léger désavantage",
     "qualMomentum": "Momentum",
