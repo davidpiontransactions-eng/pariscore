@@ -1,0 +1,284 @@
+{
+  "title": "MatchCard Hotfix R5 — Heure officielle (timezone) + Ordre tournois (prestige)",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-21 R5", "2026-07-22 QA", "2026-07-23 Suivi"]
+  },
+  "tracks": [
+    {
+      "name": "🐛 Diagnostic (4 investigations parallèles)",
+      "items": [
+        {
+          "label": "✅ Bug heure : Intl.DateTimeFormat sans timeZone → SSR UTC affiche 15:58 au lieu de 17:58 (Paris UTC+2)",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "explorer",
+            "skill": "systematic-debugging + aos-debugging-and-error-recovery",
+            "root_cause": "match-card-header.tsx:59 Intl.DateTimeFormat sans option timeZone → serveur SSR en UTC",
+            "sites": [
+              "src/components/tennis/match-card-header.tsx:59-67",
+              "src/components/tennis/match-detail-dialog.tsx:66,335",
+              "src/components/tennis/match-card-footer.tsx:94-95"
+            ],
+            "dead_code": "tennistemple-parser.ts + schedule-merger.ts (TZ correcte mais jamais appelés en prod)"
+          }
+        },
+        {
+          "label": "✅ Bug ordre : useMatchFilter default = edge DESC, probA DESC. Aucune notion de catégorie dans TennisMatch",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "explorer",
+            "skill": "systematic-debugging + aos-source-driven-development",
+            "root_cause": "TennisMatch.tournament est un string libre, jamais enrichi d'une catégorie. KNOWN_TOURNAMENTS (62 entrées) existe mais n'est jamais rattaché aux matchs",
+            "sites": [
+              "src/hooks/use-match-filter.ts:121-136 (default sort)",
+              "src/lib/tennis-data.ts:52-78 (type TennisMatch)",
+              "src/lib/tennis-tournaments-index.ts:12 (KNOWN_TOURNAMENTS)",
+              "src/components/tennis/tournaments-list.tsx:107-119 (categoryOrder privé)"
+            ]
+          }
+        },
+        {
+          "label": "✅ Décisions produit validées (AskUserQuestion)",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skill": "aos-planning-and-task-breakdown",
+            "decisions": [
+              "Timezone : navigateur dynamique (Intl.resolvedOptions().timeZone) avec guard mounted anti-hydration",
+              "Tri tournois : TOUJOURS prioriser (priority ASC primary sort), pas de toggle utilisateur"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Bug #1 — Heure officielle (timezone dynamique)",
+      "items": [
+        {
+          "label": "Créer helper formatMatchDateTime(iso, locale) avec guard mounted anti-hydration",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-modern-react + react-component-design + aos-frontend-ui-engineering",
+            "target": "src/lib/tennis-format.ts (helper centralisé)",
+            "spec": "Hook useMatchDateTime(iso, locale) → useState mounted + useEffect → Intl.DateTimeFormat(locale, { timeZone: Intl.resolvedOptions().timeZone })",
+            "anti_pattern": "NE PAS appeler Intl.resolvedOptions() au rendu SSR (TZ serveur = UTC)"
+          }
+        },
+        {
+          "label": "Appliquer le helper dans match-card-header.tsx (heure absolue + relative)",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design",
+            "target": "src/components/tennis/match-card-header.tsx:55-95",
+            "replaces": "Intl.DateTimeFormat inline lignes 59-67 + formatRelativeTime ligne 91"
+          }
+        },
+        {
+          "label": "Appliquer le helper dans match-detail-dialog.tsx (charte Elo + H2H)",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design",
+            "target": "src/components/tennis/match-detail-dialog.tsx:66,335",
+            "replaces": "toLocaleDateString sans timeZone"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 Bug #2 — Ordre tournois (prestige prioritaire)",
+      "items": [
+        {
+          "label": "Créer src/lib/tournament-priority.ts (mapping category → priority + resolver par nom)",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns + aos-source-driven-development",
+            "target": "src/lib/tournament-priority.ts (NOUVEAU)",
+            "spec": "Export TOURNAMENT_PRIORITY: Record<string, number> (Grand Slam=0, ATP Finals=1, ATP Masters 1000=2, ATP 500=3, ATP 250=4, WTA 1000=5, WTA 500=6, WTA 250=7, Challenger=8, ITF=9, Autres=10). Fonction resolveTournamentPriority(name: string): number via searchTournaments() + fallback regex (wimbledon|roland.?garros|us open|australian open → GS)",
+            "reuses": "categoryOrder privé de tournaments-list.tsx:107-119 + KNOWN_TOURNAMENTS de tennis-tournaments-index.ts:12"
+          }
+        },
+        {
+          "label": "Étendre TennisMatch.tournamentCategory + peupler dans bsd-fetcher + real-matches",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns + prisma-patterns",
+            "target": [
+              "src/lib/tennis-data.ts:52-78 (type TennisMatch + champ tournamentCategory?: string + tournamentPriority?: number)",
+              "src/lib/bsd-fetcher.ts:175-191 (buildMatch → appeler resolveTournamentPriority)",
+              "src/lib/real-matches.ts:257-285 (enrichMatch → idem)"
+            ]
+          }
+        },
+        {
+          "label": "Modifier useMatchFilter : priority ASC primary sort (default, rank, elo)",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-hooks + aos-frontend-ui-engineering",
+            "target": "src/hooks/use-match-filter.ts:121-136",
+            "new_sort": "default: tournamentPriority ASC → edge DESC → probA DESC. Tous les sortKey précédés par tournamentPriority ASC comme tiebreaker primaire.",
+            "user_decision": "TOUJOURS prioriser (pas de toggle)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Quality Assurance — Revue visuelle et code",
+      "items": [
+        {
+          "label": "Typecheck (tsc --noEmit) : 0 régression attendue",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "verification-before-completion + aos-code-review-and-quality",
+            "baseline": "52 erreurs pré-existantes (frontend/ legacy)"
+          }
+        },
+        {
+          "label": "Lint (eslint) : 0 erreur sur fichiers modifiés",
+          "start": "2026-07-21 R5",
+          "end": "2026-07-21 R5",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "verification-before-completion"
+          }
+        },
+        {
+          "label": "QA Playwright mobile 375px + desktop 1280px (heure + ordre tournois)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skill": "playwright-mcp + webapp-testing + visual-regression",
+            "subagents": ["qa-junior", "qa-senior (parallèle)"],
+            "checks": [
+              "Heure affichée en TZ navigateur (pas UTC)",
+              "Pas d'hydration mismatch (suppressHydrationWarning ou guard mounted)",
+              "Wimbledon/Roland-Garros apparaissent AVANT ITF/Challenger",
+              "Tri par edge/proba conserve comme tiebreaker secondaire"
+            ]
+          }
+        },
+        {
+          "label": "Code Review final (template officiel, verdict)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "code-reviewer + staff-engineer-review + aos-security-and-hardening",
+            "focus": [
+              "Guard anti-hydration robuste (pas de flash UTC→local)",
+              "Pas de régression sur value-bet (edge conservé comme tiebreaker)",
+              "resolveTournamentPriority déterministe (pas de mutation d'entrée)",
+              "Couverture des noms BSD variantes (regex fallback)"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Déploiement & Suivi",
+      "items": [
+        {
+          "label": "Commit + push origin/main",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skill": "aos-git-workflow-and-versioning"
+          }
+        },
+        {
+          "label": "Deploy VPS (git pull + bun build + pm2 restart + QA /api/tennis/*)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "sre",
+            "skill": "deployment-patterns + aos-shipping-and-launch",
+            "target": "ubuntu@51.75.21.239 /home/ubuntu/pariscore",
+            "post_check": "/api/tennis/player-stats retourne Elo entier + /api/tennis/live retourne matchs"
+          }
+        },
+        {
+          "label": "graphify update . (knowledge graph post-modifications)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skill": "graphify (MCP local)",
+            "note": "AST-only, no API cost"
+          }
+        },
+        {
+          "label": "Ticket suivi #1 : brancher mergeSchedules/tennistemple-parser (dead code TZ tournoi)",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "aos-deprecation-and-migration",
+            "target": "src/app/api/tennis/prematch/route.ts:42 (ajouter mergeSchedules)",
+            "non_blocking": "Amélioration future : heure officielle du tournoi au lieu de TZ utilisateur"
+          }
+        },
+        {
+          "label": "Ticket suivi #2 : vérifier doublons KNOWN_TOURNAMENTS (madrid-masters-madrid ATP 250 vs madrid-open Masters 1000)",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "aos-debugging-and-error-recovery",
+            "target": "src/lib/tennis-tournaments-index.ts:401-417",
+            "note": "Doublons + slugs avec espaces en début. Nettoyage data quality."
+          }
+        }
+      ]
+    }
+  ],
+  "agents": {
+    "main-orchestrator": {
+      "description": "Chef de projet — allocation ressources, décisions produit, déploiement",
+      "available_skills": ["aos-planning-and-task-breakdown", "aos-git-workflow-and-versioning", "graphify"]
+    },
+    "frontend-developer": {
+      "description": "Dev frontend React/Next.js — hooks, composants, Tailwind",
+      "available_skills": ["react-modern-react", "react-component-design", "aos-frontend-ui-engineering", "react-hooks"]
+    },
+    "backend-architect": {
+      "description": "Backend TypeScript — fetchers BSD/Odds, types, mappings données",
+      "available_skills": ["backend-patterns", "aos-source-driven-development", "prisma-patterns", "aos-deprecation-and-migration"]
+    },
+    "code-reviewer": {
+      "description": "Review qualité — template officiel, sécurité, guards défensifs",
+      "available_skills": ["code-reviewer", "staff-engineer-review", "aos-code-review-and-quality", "aos-security-and-hardening", "verification-before-completion"]
+    },
+    "qa-engineer": {
+      "description": "QA — tests Playwright visuels, edge cases, hydration mismatch",
+      "subagents": ["qa-junior", "qa-senior"],
+      "available_skills": ["playwright-mcp", "webapp-testing", "visual-regression", "e2e-testing"]
+    },
+    "sre": {
+      "description": "Déploiement VPS — git pull, build, pm2, health checks",
+      "available_skills": ["deployment-patterns", "aos-shipping-and-launch"]
+    },
+    "explorer": {
+      "description": "Investigation read-only — diagnostic cause racine, mapping codebase",
+      "available_skills": ["systematic-debugging", "aos-debugging-and-error-recovery", "aos-source-driven-development"]
+    }
+  }
+}

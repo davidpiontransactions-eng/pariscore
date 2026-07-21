@@ -61,6 +61,19 @@ export type TennisMatch = {
   stats: MatchStats;
   model: string;
   modelUpdatedAt: string; // ISO
+  /**
+   * Catégorie canonique du tournoi (R5 hotfix) — résolue depuis le nom BSD
+   * via `resolveTournamentCategory`. Ex: "Grand Slam", "ATP Masters 1000",
+   * "Challenger", "Autres". Optionnel pour préserver la rétro-compatibilité
+   * des mocks de dev.
+   */
+  tournamentCategory?: string;
+  /**
+   * Score de priorité (R5 hotfix) — 0 = plus prestigieux (Grand Slam),
+   * 10 = moins (Autres/ITF). Calculé depuis `tournamentCategory`.
+   * Utilisé comme critère de tri PRIMAIRE dans `useMatchFilter`.
+   */
+  tournamentPriority?: number;
   odds?: {
     bookmaker: string;
     decimalA: number;

@@ -4,7 +4,7 @@ import { Calendar, Clock, Star, Trophy } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
-import { getDateLocaleTag } from "@/lib/i18n-locales";
+import { useFormattedMatchTime } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 import { SetScoreline } from "./set-scoreline";
 import { CurrentGameScore } from "./current-game-score";
@@ -34,6 +34,12 @@ export function MatchCardHeader({
   const t = useTranslations("match");
   const tTime = useTranslations("time");
   const locale = useLocale();
+  // R5 hotfix : heure formatée dans la TZ du navigateur (pas UTC serveur).
+  const formattedDateTime = useFormattedMatchTime(
+    match.scheduledAt,
+    locale,
+    "full",
+  );
 
   return (
     <>
@@ -52,19 +58,10 @@ export function MatchCardHeader({
           <span className="shrink-0">{match.round}</span>
         </div>
 
-        {/* Date/heure précise du match */}
+        {/* Date/heure précise du match — R5 : TZ navigateur dynamique */}
         <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground/70">
           <Calendar className="h-3 w-3" />
-          <span>
-            {new Intl.DateTimeFormat(getDateLocaleTag(locale), {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            }).format(new Date(match.scheduledAt))}
-          </span>
+          <span>{formattedDateTime}</span>
         </div>
       </div>
 

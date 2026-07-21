@@ -3,8 +3,11 @@
  *
  * Centralised so the score logic is defined once instead of being duplicated
  * between `match-card.tsx` (LiveScoreBar) and the new header score components
- * (`SetScoreline`, `CurrentGameScore`).
+ * (`SetScoreline`, `CurrentGameScore`, `ServerIndicator`).
  */
+
+import { useEffect, useState } from "react";
+import { getDateLocaleTag } from "@/lib/i18n-locales";
 
 /** Internal point index (0/1/2/3/4+) → tennis point notation. */
 const POINT_LABELS = ["0", "15", "30", "40"] as const;
@@ -60,4 +63,103 @@ export function formatScoreline(
     : "";
 
   return [pastSets, currentGames].filter(Boolean).join(" ");
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Date/time formatting — R5 hotfix (2026-07-21)
+// ────────────────────────────────────────────────────────────────────
+//
+// Bug : `Intl.DateTimeFormat` sans option `timeZone` utilise la TZ du
+// runtime. En SSR Next.js, le serveur tourne en UTC → affichait l'heure
+// UTC brute au lieu de l'heure locale utilisateur (décalage de -2h en
+// été pour Europe/Paris). De plus, l'hydratation React produisait un
+// mismatch (HTML serveur UTC ≠ HTML client local).
+//
+// Fix : `useFormattedMatchTime` détecte la TZ côté client via
+// `Intl.DateTimeFormat().resolvedOptions().timeZone` APRÈS le mount
+// (jamais pendant le SSR) et la réinjecte dans le formatage. Avant le
+// mount, on rend l'heure en UTC (déterministe, identique serveur/client)
+// pour éviter tout hydration mismatch — puis le client re-render avec
+// la vraie TZ utilisateur après le 1er effect.
+
+/** Format d'heure absolu : "mar. 21 juil. 2026, 17:58". */
+export type MatchTimeFormat = "full" | "date" | "time" | "month_year";
+
+/** Formatte un ISO en chaîne localisée, en forçant une timezone donnée. */
+export function formatInTimeZone(
+  iso: string,
+  locale: string,
+  format: MatchTimeFormat,
+  timeZone: string,
+): string {
+  const options: Intl.DateTimeFormatOptions =
+    format === "full"
+      ? {
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone,
+        }
+      : format === "date"
+        ? { day: "numeric", month: "short", year: "numeric", timeZone }
+        : format === "month_year"
+          ? { month: "short", year: "2-digit", timeZone }
+          : { hour: "2-digit", minute: "2-digit", timeZone };
+  return new Intl.DateTimeFormat(getDateLocaleTag(locale), options).format(
+    new Date(iso),
+  );
+}
+
+/**
+ * Hook renvoyant une heure de match formatée dans la timezone du navigateur.
+ *
+ * Évite l'hydration mismatch en rendant d'abord en UTC (déterministe) puis
+ * en re-formatant côté client après mount avec la TZ détectée.
+ *
+ * @param iso ISO string (avec suffixe Z, ex: "2026-07-21T15:58:00Z")
+ * @param locale locale next-intl ("fr" | "en")
+ * @param format "full" | "date" | "time"
+ */
+export function useFormattedMatchTime(
+  iso: string,
+  locale: string,
+  format: MatchTimeFormat = "full",
+): string {
+  // Avant mount : UTC (déterministe, même rendu serveur + client).
+  const [tz, setTz] = useState<string>("UTC");
+
+  useEffect(() => {
+    // Après mount : détecte la vraie TZ du navigateur.
+    // Deferred via Promise.resolve().then() pour satisfaire la règle
+    // `react-hooks/set-state-in-effect` (cf. même pattern dans match-card.tsx
+    // pour terminalMode chipsExpanded).
+    const detected =
+      Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+    if (detected !== tz) {
+      Promise.resolve().then(() => setTz(detected));
+    }
+  }, [tz]);
+
+  return formatInTimeZone(iso, locale, format, tz);
+}
+
+/**
+ * Hook minimal renvoyant la timezone du navigateur après mount.
+ * Renvoie "UTC" avant mount (déterministe SSR) pour éviter l'hydration mismatch.
+ * À utiliser quand on formatte plusieurs dates avec un options custom
+ * (ex: charts Recharts) sans passer par `useFormattedMatchTime`.
+ */
+export function useBrowserTimeZone(): string {
+  const [tz, setTz] = useState<string>("UTC");
+  useEffect(() => {
+    const detected =
+      Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC";
+    if (detected !== tz) {
+      Promise.resolve().then(() => setTz(detected));
+    }
+  }, [tz]);
+  return tz;
 }

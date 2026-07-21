@@ -5,6 +5,7 @@ import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats, H2HMatch }
 import { predict, type PlayerInputs } from "@/lib/prediction/engine";
 import { findPlayerElo } from "@/lib/player-matcher";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
+import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
 
 /** Tournois à exclure (UTR Pro, exhibitions) */
 const EXCLUDED_TOURNAMENTS = [/utr/i, /exhibition/i, /expo/i, /hopman/i, /laver\s*cup/i];
@@ -172,9 +173,14 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     confidence: pred.confidence,
   };
 
+  // R5 hotfix : résolution catégorie + priorité tournoi pour le tri par prestige
+  const tournamentName = b.tournament?.name ?? "Tennis";
+
   return {
     id: `bsd-${b.id ?? index}`,
-    tournament: b.tournament?.name ?? "Tennis",
+    tournament: tournamentName,
+    tournamentCategory: resolveTournamentCategory(tournamentName),
+    tournamentPriority: resolveTournamentPriority(tournamentName),
     round: b.round ?? "Prematch",
     scheduledAt: b.start_time ?? b.commence_time ?? new Date().toISOString(),
     playerA,

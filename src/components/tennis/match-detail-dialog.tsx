@@ -30,7 +30,7 @@ import { OddsComparator } from "./odds-comparator";
 import { LastMatchesList } from "./last-matches-list";
 import { getInitials } from "./player-profile-header";
 import { useEloHistory } from "@/hooks/use-elo-history";
-import { getDateLocaleTag } from "@/lib/i18n-locales";
+import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -42,7 +42,8 @@ type Props = {
 export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("detail");
   const locale = useLocale();
-  const dateLocale = getDateLocaleTag(locale);
+  // R5 : TZ navigateur (avant mount = UTC, déterministe SSR)
+  const browserTz = useBrowserTimeZone();
   // Hooks must run unconditionally (before any early return)
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
 
@@ -63,10 +64,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
         const bPoint = eloHistoryData.b.history[i];
         return {
           date: point.date,
-          label: new Date(point.date).toLocaleDateString(dateLocale, {
-            month: "short",
-            year: "2-digit",
-          }),
+          label: formatInTimeZone(point.date, locale, "month_year", browserTz),
           [match.playerA.shortName]: point.elo,
           ...(bPoint ? { [match.playerB.shortName]: bPoint.elo } : {}),
         };
@@ -332,10 +330,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                             <div className="flex items-center gap-2">
                               <Calendar className="h-3 w-3 text-muted-foreground" />
                               <span className="font-mono text-muted-foreground">
-                                {new Date(h.date).toLocaleDateString(dateLocale, {
-                                  year: "2-digit",
-                                  month: "short",
-                                })}
+                                {formatInTimeZone(h.date, locale, "month_year", browserTz)}
                               </span>
                               <span className="text-muted-foreground">·</span>
                               <span className="font-medium">{h.tournament}</span>

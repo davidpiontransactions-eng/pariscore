@@ -30,6 +30,7 @@ import {
   type PlayerEloMatch,
 } from "@/lib/player-matcher";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
+import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
 
 const DEFAULT_ELO = 1500;
 const MAX_MATCHES = 10;
@@ -257,6 +258,8 @@ function enrichMatch(apiMatch: OddsApiMatch): TennisMatch | null {
   return {
     id: `real-${apiMatch.id}`,
     tournament,
+    tournamentCategory: resolveTournamentCategory(tournament),
+    tournamentPriority: resolveTournamentPriority(tournament),
     round: "Match",
     scheduledAt: apiMatch.commence_time ?? new Date().toISOString(),
     playerA: finalA,

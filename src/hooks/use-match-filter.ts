@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
+import { resolveTournamentPriority } from "@/lib/tournament-priority";
 
 /**
  * Keys for the prematch filter bar.
@@ -67,6 +68,22 @@ function matchAvgElo(m: TennisMatch): number {
   return ((m.playerA.elo ?? 1500) + (m.playerB.elo ?? 1500)) / 2;
 }
 
+/**
+ * Helper (R5 hotfix) : priorité de tournoi pour le tri par prestige.
+ *
+ * Inférieur = trié en premier. Règles :
+ *   - Si `tournamentPriority` est déjà peuplé (BSD/Odds), on l'utilise.
+ *   - Sinon (mocks, anciennes data), on résout à la volée depuis le nom.
+ *   - Les cartes LIVE synthétiques (`tournament === "Live"`) reçoivent une
+ *     priorité haute (1, équivalente ATP Finals) : l'utilisateur veut voir
+ *     en premier les matchs en cours, peu importe le tournoi réel.
+ */
+function matchTournamentPriority(m: TennisMatch): number {
+  if (m.tournamentPriority != null) return m.tournamentPriority;
+  if (m.tournament === "Live") return 1; // LIVE synthétique = haute priorité
+  return resolveTournamentPriority(m.tournament);
+}
+
 export function useMatchFilter(
   matches: TennisMatch[],
   filter: FilterKey,
@@ -117,9 +134,28 @@ export function useMatchFilter(
       result = result.filter(({ match }) => favorites.has(match.id));
     }
 
-    /* 5. Sort ──────────────────────────────────────── */
+    /* 5. Sort ────────────────────────────────────────
+     * R5 hotfix (2026-07-21) : le critère primaire `tournamentPriority ASC`
+     * (Grand Slam = 0 en premier) s'applique UNIQUEMENT au tri "default"
+     * (vue principale = value-bet). Les tris explicites rank_asc/elo_asc
+     * etc. honorent leur sémantique stricte — sinon un #10 ATP en ITF
+     * passerait avant un #200 ATP en Grand Slam sous "rank_asc", ce qui
+     * serait contre-intuitif pour l'utilisateur qui a explicitement
+     * demandé ce tri. Ajustement après revue QA + Code Reviewer.
+     *
+     * Décision produit : "Toujours prioriser" s'applique à la vue par
+     * défaut (value-bet). Pour les tris explicites, on honore l'intention.
+     */
     const filtered = result
       .sort((a, b) => {
+        // Critère primaire — prestige du tournoi (default seulement)
+        if (sortKey === "default") {
+          const pa = matchTournamentPriority(a.match);
+          const pb = matchTournamentPriority(b.match);
+          if (pa !== pb) return pa - pb;
+        }
+
+        // Critère secondaire (ou primaire pour les tris explicites)
         switch (sortKey) {
           case "rank_asc":
             return matchRank(a.match) - matchRank(b.match);
