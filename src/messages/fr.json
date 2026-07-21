@@ -155,6 +155,8 @@
     "serving": "{name} au service",
     "servingAria": "Score en direct : {score}, {points}, {server} au service",
     "offline": "Hors ligne",
+    "featuredTitle": "À la une — Tournois de la semaine",
+    "weekLabel": "Semaine {n}",
     "seeStats": "Voir les stats détaillées",
     "hideStats": "Masquer les stats",
     "deepAnalysis": "Analyse approfondie",

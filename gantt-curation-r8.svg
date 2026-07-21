@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="820" viewBox="0 0 640 820" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .title { fill: #e6edf3; font-size: 16px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 10px; }
+  .track-name { fill: #c9d1d9; font-size: 11px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item-data { fill: #f85149; }
+  .item-hook { fill: #d29922; }
+  .item-ui { fill: #2ea043; }
+  .item-integ { fill: #a371f7; }
+  .item-qa { fill: #0077ff; }
+  .item-deploy { fill: #56d364; }
+  .item-followup { fill: #6e7681; }
+  .item-label { fill: #e6edf3; font-size: 10px; }
+  .track-label { fill: #8b949e; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+  .legend-box { fill: #131722; stroke: #1f2533; }
+  .legend-text { fill: #c9d1d9; font-size: 9px; }
+  .highlight { fill: #f85149; font-size: 10px; font-weight: 700; }
+</style>
+<rect class="bg" width="640" height="820"/>
+<text class="title" x="20" y="28">Curation R8 — Tournois phares + Tri Elo Surface/SPS/Round + À la une</text>
+<text class="subtitle" x="20" y="44">18 tâches · 6 agents · 7 nouveaux fichiers · 5 modifiés · ~14.5h · EN ATTENTE GO</text>
+
+<text class="highlight" x="20" y="62">⏸️ En attente du GO utilisateur — conception terminée, exécution non démarrée</text>
+
+<rect class="grid-bg" x="340" y="74" width="282" height="30"/>
+<line class="grid-line" x1="340" y1="74" x2="340" y2="780"/>
+<text class="header-date" x="380" y="93">22/07 Build</text>
+<line class="grid-line" x1="420" y1="74" x2="420" y2="780"/>
+<text class="header-date" x="460" y="93">23/07 QA</text>
+<line class="grid-line" x1="500" y1="74" x2="500" y2="780"/>
+<text class="header-date" x="540" y="93">24/07 Suivi</text>
+<line class="grid-line" x1="580" y1="74" x2="580" y2="780"/>
+
+<text class="track-label" x="10" y="118">🏗️ COUCHE DONNÉES — MARQUEE + ROUND + RESOLVER</text>
+<line class="sep" x1="0" y1="123" x2="640" y2="123"/>
+
+<rect class="track-bg" x="0" y="130" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="147">T1 weekly-marquee.ts (ISO_WEEK → tournamentIds)</text>
+<rect class="item item-data" x="344" y="132" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="147">backend-arch</text>
+
+<rect class="track-bg" x="0" y="160" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="177">T2 round-priority.ts (regex round → 0-8)</text>
+<rect class="item item-data" x="344" y="162" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="177">backend-arch</text>
+
+<rect class="track-bg" x="0" y="190" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="207">T3 Fix 3 ids espace préfixe (Kitzbühel/Munich/Emilia)</text>
+<rect class="item item-data" x="344" y="192" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="207">backend-arch</text>
+
+<text class="track-label" x="10" y="240">🔀 COUCHE HOOKS — CURATION + FILTER ÉTENDU</text>
+<line class="sep" x1="0" y1="245" x2="640" y2="245"/>
+
+<rect class="track-bg" x="0" y="252" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="269">T4 use-match-curation.ts (featured/rest)</text>
+<rect class="item item-hook" x="344" y="254" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="269">frontend-dev</text>
+
+<rect class="track-bg" x="0" y="282" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="299">T5 Étendre use-match-filter (+3 SortKey + tournament filter)</text>
+<rect class="item item-hook" x="344" y="284" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="299">frontend-dev</text>
+
+<text class="track-label" x="10" y="332">🎨 COUCHE UI — CARROUSEL + CHIPS + PASTILLES</text>
+<line class="sep" x1="0" y1="337" x2="640" y2="337"/>
+
+<rect class="track-bg" x="0" y="344" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="361">T6 featured-matches-marquee.tsx (Carousel 'À la une')</text>
+<rect class="item item-ui" x="344" y="346" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="361">frontend-dev</text>
+
+<rect class="track-bg" x="0" y="374" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="391">T7 tournament-chips-bar.tsx (chips scrollables)</text>
+<rect class="item item-ui" x="344" y="376" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="391">frontend-dev</text>
+
+<rect class="track-bg" x="0" y="404" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="421">T8 sort-select.tsx (Select groupé + Drawer mobile)</text>
+<rect class="item item-ui" x="344" y="406" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="421">frontend-dev</text>
+
+<rect class="track-bg" x="0" y="434" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="451">T9 Pastilles qualité + round doré dans MatchCardBroadcast</text>
+<rect class="item item-ui" x="344" y="436" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="451">frontend-dev</text>
+
+<text class="track-label" x="10" y="484">🔌 INTÉGRATION + I18N</text>
+<line class="sep" x1="0" y1="489" x2="640" y2="489"/>
+
+<rect class="track-bg" x="0" y="496" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="513">T10 Intégration 3 sections dans tennis-tab-content.tsx</text>
+<rect class="item item-integ" x="344" y="498" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="513">frontend-dev</text>
+
+<rect class="track-bg" x="0" y="526" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="543">T11 Clés i18n FR + EN (8 nouvelles)</text>
+<rect class="item item-integ" x="344" y="528" width="74" height="22" rx="4"/>
+<text class="item-label" x="350" y="543">frontend-dev</text>
+
+<text class="track-label" x="10" y="576">🎯 QUALITY ASSURANCE</text>
+<line class="sep" x1="0" y1="581" x2="640" y2="581"/>
+
+<rect class="track-bg" x="0" y="588" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="605">T12 + T13 Typecheck + Lint</text>
+<rect class="item item-qa" x="424" y="590" width="74" height="22" rx="4"/>
+<text class="item-label" x="430" y="605">code-reviewer</text>
+
+<rect class="track-bg" x="0" y="618" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="635">T14 QA Playwright mobile+desktop</text>
+<rect class="item item-qa" x="424" y="620" width="74" height="22" rx="4"/>
+<text class="item-label" x="430" y="635">qa-junior+senior</text>
+
+<rect class="track-bg" x="0" y="648" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="665">T15 Code Review final (perf, a11y, data quality)</text>
+<rect class="item item-qa" x="424" y="650" width="74" height="22" rx="4"/>
+<text class="item-label" x="430" y="665">code-reviewer</text>
+
+<text class="track-label" x="10" y="698">🚀 DÉPLOIEMENT &amp; SUIVI</text>
+<line class="sep" x1="0" y1="703" x2="640" y2="703"/>
+
+<rect class="track-bg" x="0" y="710" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="727">T16-T18 Commit + push + deploy VPS + graphify</text>
+<rect class="item item-deploy" x="424" y="712" width="74" height="22" rx="4"/>
+<text class="item-label" x="430" y="727">orch+sre</text>
+
+<rect class="track-bg" x="0" y="740" width="336" height="26" rx="3"/>
+<text class="track-name" x="10" y="757">Tickets suivi #1 calendrier annuel + #2 multi-select + #3 admin</text>
+<rect class="item item-followup" x="504" y="742" width="74" height="22" rx="4"/>
+<text class="item-label" x="510" y="757">suivi futur</text>
+</svg>

@@ -1,0 +1,334 @@
+{
+  "title": "Curation R8 — Tournois phares semaine + Tri Elo Surface/SPS/Round + À la une",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-22 R8-conception", "2026-07-22 R8-build", "2026-07-23 QA", "2026-07-24 Suivi"]
+  },
+  "vision_produit": "3 couches : (1) Carrousel 'À la une' avec tournois phares de la semaine (S29 = Kitzbühel/Estoril/Hambourg), (2) Chips scrollables pour filtrer par tournoi, (3) Grille principale triée par Elo Surface + SPS + round du tournoi.",
+  "tracks": [
+    {
+      "name": "🏗️ Couche données — Marquee + Round + Resolver",
+      "items": [
+        {
+          "label": "Tâche 1 — src/lib/weekly-marquee.ts (Map ISO_WEEK → tournamentIds)",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "backend-architect",
+            "skills": ["backend-patterns", "aos-source-driven-development"],
+            "target": "src/lib/weekly-marquee.ts (NOUVEAU)",
+            "spec": "WEEKLY_MARQUEE: Record<string, {tournamentIds, order?}>. S29 2026 = Kitzbühel+Estoril+Hambourg. getCurrentIsoWeek(), getWeekMarquee() avec fallback ATP 500.",
+            "complexity": "S",
+            "effort": "0.5h"
+          }
+        },
+        {
+          "label": "Tâche 2 — src/lib/round-priority.ts (regex round → 0-8)",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "backend-architect",
+            "skills": ["backend-patterns"],
+            "target": "src/lib/round-priority.ts (NOUVEAU)",
+            "spec": "ROUND_PRIORITY: 8 regex (Finale=0, Demi=1, Quart=2, 8èmes=3, 16èmes=4, 32èmes=5, RoundRobin=6, Qualif=7). DEFAULT=8. resolveRoundPriority(round).",
+            "complexity": "S",
+            "effort": "0.5h"
+          }
+        },
+        {
+          "label": "Tâche 3 — Fix 3 ids avec espace préfixe dans tennis-tournaments-index.ts",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "backend-architect",
+            "skills": ["aos-debugging-and-error-recovery"],
+            "target": "src/lib/tennis-tournaments-index.ts",
+            "spec": "Supprimer espace préfixe sur ' omv-ecotherm-open' (Kitzbühel), ' BMW-open-munich', ' emilia-romagna-open'. Vérifier consumers via grep.",
+            "complexity": "S",
+            "effort": "0.5h"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔀 Couche hooks — Curation + Filter étendu",
+      "items": [
+        {
+          "label": "Tâche 4 — src/hooks/use-match-curation.ts (sépare featured/rest)",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["react-modern-react", "react-hooks"],
+            "target": "src/hooks/use-match-curation.ts (NOUVEAU)",
+            "spec": "useMatchCuration(sorted, marquee) → {featured, rest, hasFeatured}. featured = matchs dont tournamentId ∈ marquee.tournamentIds.",
+            "complexity": "S",
+            "effort": "1h"
+          }
+        },
+        {
+          "label": "Tâche 5 — Étendre use-match-filter.ts (+3 SortKey + FilterKey 'tournament')",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["react-modern-react", "backend-patterns"],
+            "target": "src/hooks/use-match-filter.ts",
+            "spec": "SortKey += surface_elo_desc|sps_desc|round_priority. FilterKey += tournament. Helpers : matchMaxSurfaceElo (fallback elo), matchMaxSps (fallback -1), matchRoundPriority. 5e arg options: {selectedTournamentId?}.",
+            "complexity": "M",
+            "effort": "1.5h"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎨 Couche UI — Carrousel + Chips + Pastilles",
+      "items": [
+        {
+          "label": "Tâche 6 — featured-matches-marquee.tsx (Carousel 'À la une')",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["react-component-design", "shadcn-ui", "frontend-design"],
+            "target": "src/components/tennis/featured-matches-marquee.tsx (NOUVEAU)",
+            "spec": "Carousel embla (déjà installé) + titre '🏆 À la une — Semaine 29' + sous-titre noms tournois. Cartes MatchCardBroadcast avec ring-amber-400/60. Responsive: mobile 1 carte+peek, desktop 2.5 cartes. Disparaît si featured vide.",
+            "complexity": "M",
+            "effort": "2h"
+          }
+        },
+        {
+          "label": "Tâche 7 — tournament-chips-bar.tsx (chips scrollables)",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["shadcn-ui", "frontend-design", "responsive-design"],
+            "target": "src/components/tennis/tournament-chips-bar.tsx (NOUVEAU)",
+            "spec": "ScrollArea horizontal + ToggleGroup type=single. Chip = Avatar 20px (logo via tournament-theme) + nom tronqué + compteur (n). Premier chip '🌍 Tous'. Généré dynamiquement depuis matchesWithLive. Masqué si ≤1 tournoi.",
+            "complexity": "M",
+            "effort": "2h"
+          }
+        },
+        {
+          "label": "Tâche 8 — SortSelect groupé (8 options) + Drawer mobile",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["shadcn-ui", "responsive-design"],
+            "target": "src/components/tennis/sort-select.tsx (NOUVEAU)",
+            "spec": "Select shadcn avec 3 groupes: Classement (rank↑/↓), Qualité (elo↑/↓, Elo Surface↓, SPS↓), Tournoi (Round↓, Pertinence). Mobile: Drawer bottom-sheet. Default='Pertinence' (était 'default').",
+            "complexity": "M",
+            "effort": "1.5h"
+          }
+        },
+        {
+          "label": "Tâche 9 — Pastilles qualité + round doré dans MatchCardBroadcast",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["react-component-design", "frontend-design"],
+            "target": "src/components/tennis/match-card-broadcast.tsx",
+            "spec": "Prop quality?: {topEloSurface?, topSps?} → pastille 8px (dorée si topEloSurface, cyan si topSps) à gauche du nom joueur. Round coloré text-amber-300 si Demi/Finale. Sobre, 0 nouveau texte.",
+            "complexity": "S",
+            "effort": "1h"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔌 Intégration tennis-tab-content + i18n",
+      "items": [
+        {
+          "label": "Tâche 10 — Intégration 3 sections dans tennis-tab-content.tsx",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["react-component-design", "react-api-consumer"],
+            "target": "src/components/football/tennis-tab-content.tsx",
+            "spec": "Ordre final: (1) Hero+filtres existants, (2) FeaturedMatchesMarquee, (3) TennisSubTabs, (4) TournamentChipsBar + SortSelect, (5) Grille principale (rest). State: selectedTournamentId, weekMarquee via getWeekMarquee().",
+            "complexity": "L",
+            "effort": "2h"
+          }
+        },
+        {
+          "label": "Tâche 11 — Clés i18n FR + EN (8 nouvelles)",
+          "start": "2026-07-22 R8-build",
+          "end": "2026-07-22 R8-build",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["aos-documentation-and-adrs"],
+            "target": "src/messages/{fr,en}.json",
+            "spec": "Clés: featuredTitle, featuredSubtitle, tournamentAll, sortRelevance, sortSurfaceElo, sortSps, sortRound, weekLabel. Namespace tennis.* et filters.*.",
+            "complexity": "S",
+            "effort": "0.5h"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Quality Assurance",
+      "items": [
+        {
+          "label": "Tâche 12 — TypeScript (tsc --noEmit) : 0 régression",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skills": ["verification-before-completion"],
+            "baseline": "24 erreurs pré-existantes"
+          }
+        },
+        {
+          "label": "Tâche 13 — ESLint : 0 erreur sur fichiers modifiés",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skills": ["verification-before-completion"]
+          }
+        },
+        {
+          "label": "Tâche 14 — QA Playwright mobile 375 + desktop 1280 (carrousel + chips + tris)",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skills": ["playwright-mcp", "webapp-testing", "visual-regression"],
+            "subagents": ["qa-junior", "qa-senior (parallèle)"],
+            "checks": [
+              "Carrousel 'À la une' affiche Kitzbühel/Estoril/Hambourg (S29)",
+              "Chips tournoi scrollables, sélection filtre la grille",
+              "Tri Elo Surface fonctionne (fallback elo si absent)",
+              "Tri SPS fonctionne (matchs sans SPS en fin)",
+              "Tri Round (Finale > Demi > Quart)",
+              "Pastilles dorées/cyan visibles sur top Elo/SPS",
+              "Round 'Finale'/'Demi' en doré dans header",
+              "Responsive mobile 375 : carrousel horizontal, chips 1 ligne",
+              "Carrousel disparaît si semaine sans marquee"
+            ]
+          }
+        },
+        {
+          "label": "Tâche 15 — Code Review final (template officiel)",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skills": ["code-reviewer", "aos-security-and-hardening", "accessibility", "staff-engineer-review"],
+            "focus": [
+              "Performance : carrousel embla + N MatchCardBroadcast (limiter 8 max)",
+              "A11y : Carousel role=region, chips radiogroup, select listbox",
+              "Régression : ancien comportement default conservé",
+              "Data quality : Kitzbühel category ATP 250 (pas ATP 500)",
+              "Sécurité : aucune injection (lookups statiques)"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Déploiement & Suivi",
+      "items": [
+        {
+          "label": "Tâche 16 — Commit + push origin/main",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skills": ["aos-git-workflow-and-versioning"]
+          }
+        },
+        {
+          "label": "Tâche 17 — Deploy VPS (git pull + bun build + pm2 restart)",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "sre",
+            "skills": ["deployment-patterns", "aos-shipping-and-launch"],
+            "target": "ubuntu@51.75.21.239 /home/ubuntu/pariscore",
+            "post_check": "Vérifier carrousel S29 visible + tris fonctionnels sur pariscore.fr"
+          }
+        },
+        {
+          "label": "Tâche 18 — graphify update . (knowledge graph post-refonte)",
+          "start": "2026-07-23 QA",
+          "end": "2026-07-23 QA",
+          "assignment": {
+            "agent": "main-orchestrator",
+            "skills": ["graphify (MCP local)"]
+          }
+        },
+        {
+          "label": "Ticket suivi #1 — Calendrier marquee annuel complet (toutes semaines 2026)",
+          "start": "2026-07-24 Suivi",
+          "end": "2026-07-24 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skills": ["ps-scrape-logos", "crawl4ai"],
+            "target": "src/lib/weekly-marquee.ts",
+            "rationale": "Scraper calendrier ATP/WTA officiel pour peupler WEEKLY_MARQUEE pour les 52 semaines de 2026."
+          }
+        },
+        {
+          "label": "Ticket suivi #2 — Multi-sélection tournois (chips toggle multiple)",
+          "start": "2026-07-24 Suivi",
+          "end": "2026-07-24 Suivi",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skills": ["shadcn-ui"],
+            "rationale": "Évolution : ToggleGroup type=multiple pour comparer 2-3 tournois côte à côte."
+          }
+        },
+        {
+          "label": "Ticket suivi #3 — Endpoint admin pour config marquee sans redeploy",
+          "start": "2026-07-24 Suivi",
+          "end": "2026-07-24 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skills": ["api-design", "prisma-patterns"],
+            "rationale": "Phase 2 : back-office produit pour éditer WEEKLY_MARQUEE sans commit."
+          }
+        }
+      ]
+    }
+  ],
+  "agents": {
+    "main-orchestrator": {
+      "description": "Chef de projet — allocation, décisions, déploiement",
+      "available_skills": ["aos-planning-and-task-breakdown", "aos-git-workflow-and-versioning", "graphify"]
+    },
+    "backend-architect": {
+      "description": "Backend TypeScript — maps, regex, data quality, résolveurs",
+      "available_skills": ["backend-patterns", "aos-source-driven-development", "aos-debugging-and-error-recovery", "api-design", "ps-scrape-logos", "crawl4ai"]
+    },
+    "frontend-developer": {
+      "description": "Dev frontend React/Next.js — hooks, composants shadcn, responsive",
+      "available_skills": ["react-modern-react", "react-component-design", "react-hooks", "react-api-consumer", "shadcn-ui", "frontend-design", "responsive-design", "aos-documentation-and-adrs"]
+    },
+    "code-reviewer": {
+      "description": "Review qualité — template officiel, sécurité, a11y, performance",
+      "available_skills": ["code-reviewer", "aos-code-review-and-quality", "aos-security-and-hardening", "verification-before-completion", "accessibility", "staff-engineer-review"]
+    },
+    "qa-engineer": {
+      "description": "QA visuels — Playwright mobile+desktop, edge cases",
+      "subagents": ["qa-junior", "qa-senior"],
+      "available_skills": ["playwright-mcp", "webapp-testing", "visual-regression"]
+    },
+    "sre": {
+      "description": "Déploiement VPS",
+      "available_skills": ["deployment-patterns", "aos-shipping-and-launch"]
+    }
+  },
+  "effort_total_estime": "14.5h (~2 jours dev)",
+  "fichiers_nouveaux": 7,
+  "fichiers_modifies": 5,
+  "questions_ouvertes_pour_utilisateur": [
+    "Kitzbühel : ATP 250 (réalité officielle, recommandé) ou ATP 500 (demande initiale) ?",
+    "Limite carrousel 'À la une' : 8 matchs max ou illimité (scroll) ?",
+    "Tri 'Pertinence' (default) : conserver tel quel (edge + prestige) ou redéfinir comme mix Elo Surface + SPS ?"
+  ]
+}

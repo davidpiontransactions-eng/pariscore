@@ -7,6 +7,7 @@ import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
 import { MatchCard } from "@/components/tennis/match-card";
 import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
+import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
 const MatchDetailDialog = lazy(() =>
@@ -23,6 +24,7 @@ import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useMatchFilter, type FilterKey, type SortKey } from "@/hooks/use-match-filter";
+import { useMatchCuration } from "@/hooks/use-match-curation";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
@@ -279,6 +281,11 @@ export function TennisTabContent() {
 
   const { filtered, valueBetCount } = useMatchFilter(matchesWithLive, filter, favorites, sortKey);
 
+  // R8 curation : sépare les matchs phares de la semaine (featured) du reste.
+  // La section "À la une" s'affiche en haut d'affiche, la grille principale
+  // ne contient plus que le reste pour éviter le doublon.
+  const curation = useMatchCuration(filtered);
+
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
 
@@ -289,13 +296,34 @@ export function TennisTabContent() {
   );
   const todayCount = matchesWithLive.length;
 
-  // Filtrage par sous-onglet
+  // Filtrage par sous-onglet — appliqué sur `filtered` (avec featured inclus
+  // pour les compteurs), mais la grille principale n'affiche que `rest`.
   const subFiltered = useMemo(() => {
     if (subTab === "live") {
       return filtered.filter((m) => liveStates[m.id]?.isLive);
     }
     return filtered; // "today" = tout
   }, [subTab, filtered, liveStates]);
+
+  // Version "rest" filtrée par sous-onglet (pour la grille principale).
+  // En live, on garde featured + rest (sinon les matchs phares live
+  // disparaîtraient du sous-onglet live). En "today", la grille n'affiche
+  // que `rest` car featured est déjà dans le carrousel.
+  const restForGrid = useMemo(() => {
+    if (subTab === "live") {
+      return curation.rest.filter((m) => liveStates[m.id]?.isLive);
+    }
+    return curation.rest;
+  }, [subTab, curation.rest, liveStates]);
+
+  // Featured filtré par sous-onglet (en live, on ne montre en carrousel que
+  // les featured live ; en "today", tous les featured).
+  const featuredForMarquee = useMemo(() => {
+    if (subTab === "live") {
+      return curation.featured.filter((m) => liveStates[m.id]?.isLive);
+    }
+    return curation.featured;
+  }, [subTab, curation.featured, liveStates]);
 
   const handleSubTabChange = (tab: TennisSubTab) => {
     setSubTab(tab);
@@ -425,6 +453,18 @@ export function TennisTabContent() {
         </div>
       </section>
 
+      {/* R8 — Section "À la une" : carrousel horizontal des tournois phares
+          de la semaine (ex S29 : Kitzbühel, Estoril, Hambourg). Disparaît
+          automatiquement si la semaine n'a pas de marquee configuré. */}
+      <FeaturedMatchesMarquee
+        featured={featuredForMarquee}
+        marquee={curation.marquee}
+        liveStates={liveStates}
+        hasFeatured={curation.hasFeatured && featuredForMarquee.length > 0}
+        onOpenDetail={openDetail}
+        onBetClick={openBet}
+      />
+
       {/* Phase 7 — Sous-onglets Live / Aujourd'hui / Tournois */}
       <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
         <TennisSubTabs
@@ -472,7 +512,7 @@ export function TennisTabContent() {
               </button>
             )}
             <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
-              {subFiltered.map((match, idx) => (
+              {restForGrid.map((match, idx) => (
                 <MatchCardBroadcast
                   key={match.id}
                   match={match}

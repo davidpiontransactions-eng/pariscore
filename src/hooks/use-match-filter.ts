@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { resolveTournamentPriority } from "@/lib/tournament-priority";
+import { resolveRoundPriority } from "@/lib/round-priority";
 
 /**
  * Keys for the prematch filter bar.
@@ -84,6 +85,73 @@ function matchTournamentPriority(m: TennisMatch): number {
   return resolveTournamentPriority(m.tournament);
 }
 
+/**
+ * Helpers R8 curation — métriques de qualité de match.
+ *
+ * Le tri "relevance" (nouveau default) combine :
+ *   1. Tournament priority ASC (GS=0, ITF=10)
+ *   2. max(Elo Surface P1, Elo Surface P2) DESC — le "meilleur" joueur
+ *      sur la surface remonte (utilise dbEloSurface si présent, sinon elo global)
+ *   3. max(SPS P1, SPS P2) DESC
+ *   4. Round priority ASC (Finale=0, Qualif=7)
+ *
+ * Fallbacks défensifs :
+ *   - surfaceElo absent → elo global (1500 si synthetic)
+ *   - SPS absent → -1 (poussé en fin au sein du même tier)
+ *   - Synthetic → valeurs basses (poussé en fin)
+ */
+
+/** Surface Elo d'un joueur (dbEloSurface > elo global > 1500 synthetic). */
+function playerSurfaceElo(
+  elo: number,
+  dbEloSurface: number | null | undefined,
+  isSynthetic: boolean | undefined,
+): number {
+  if (isSynthetic) return 0;
+  return dbEloSurface ?? elo ?? 1500;
+}
+
+/** SPS d'un joueur (null/absent → -1). */
+function playerSps(
+  sps: number | null | undefined,
+  isSynthetic: boolean | undefined,
+): number {
+  if (isSynthetic) return -1;
+  return sps ?? -1;
+}
+
+/** Score combiné (Elo Surface + SPS normalisé) d'un joueur individuel.
+ * Utilisé pour identifier le "meilleur joueur" du match (P1 ou P2). */
+function playerQualityScore(
+  elo: number,
+  dbEloSurface: number | null | undefined,
+  sps: number | null | undefined,
+  isSynthetic: boolean | undefined,
+): number {
+  const surfaceElo = playerSurfaceElo(elo, dbEloSurface, isSynthetic);
+  const spsVal = playerSps(sps, isSynthetic);
+  // Elo ~1500-2500, SPS ~50-95. On normalise pour que les 2 contribuent.
+  // Elo/100 = 15-25, SPS/10 = 5-9.5. Total ~20-34.
+  return surfaceElo / 100 + Math.max(0, spsVal) / 10;
+}
+
+/** max((Elo Surface + SPS) P1, (Elo Surface + SPS) P2) — le meilleur joueur.
+ * R8 review : aligné avec le brief 'max(Elo+SPS) de P1 ou P2'. Avant on
+ * prenait max(Elo) + max(SPS) indépendamment, ce qui pouvait attribuer le
+ * score Elo d'un joueur et le SPS de l'autre. Maintenant le score est
+ * calculé PAR joueur puis on prend le max. */
+function matchQualityScore(m: TennisMatch): number {
+  return Math.max(
+    playerQualityScore(m.playerA.elo, m.playerA.dbEloSurface, m.playerA.sps, m.synthetic),
+    playerQualityScore(m.playerB.elo, m.playerB.dbEloSurface, m.playerB.sps, m.synthetic),
+  );
+}
+
+/** Round priority (Finale=0, Qualif=7, défaut=8). */
+function matchRoundPriority(m: TennisMatch): number {
+  return resolveRoundPriority(m.round);
+}
+
 export function useMatchFilter(
   matches: TennisMatch[],
   filter: FilterKey,
@@ -135,27 +203,22 @@ export function useMatchFilter(
     }
 
     /* 5. Sort ────────────────────────────────────────
-     * R5 hotfix (2026-07-21) : le critère primaire `tournamentPriority ASC`
-     * (Grand Slam = 0 en premier) s'applique UNIQUEMENT au tri "default"
-     * (vue principale = value-bet). Les tris explicites rank_asc/elo_asc
-     * etc. honorent leur sémantique stricte — sinon un #10 ATP en ITF
-     * passerait avant un #200 ATP en Grand Slam sous "rank_asc", ce qui
-     * serait contre-intuitif pour l'utilisateur qui a explicitement
-     * demandé ce tri. Ajustement après revue QA + Code Reviewer.
+     * R8 curation (2026-07-22) : le tri "default" devient "relevance" =
+     * tous les matchs du jour classés par :
+     *   1. Tournament priority ASC (GS=0, Masters=2, ATP 500=3, ATP 250=4,
+     *      Challenger=8, ITF=9, Autres=10)
+     *   2. Au sein du même tier tournoi : max(Elo Surface + SPS de P1 ou P2)
+     *      DESC — les meilleurs joueurs du tournoi remontent
+     *   3. Round ASC (Finale > Demi > Quart > 8èmes > ...)
+     *   4. Edge value-bet DESC (tiebreaker final)
      *
-     * Décision produit : "Toujours prioriser" s'applique à la vue par
-     * défaut (value-bet). Pour les tris explicites, on honore l'intention.
+     * Décision produit : "Tu classes tous les matchs du jour par tournoi
+     * et du + grand ELO+SPS de P1 ou P2 au plus petit". Les tris explicites
+     * (rank_asc/elo_desc) honorent toujours leur sémantique stricte.
      */
     const filtered = result
       .sort((a, b) => {
-        // Critère primaire — prestige du tournoi (default seulement)
-        if (sortKey === "default") {
-          const pa = matchTournamentPriority(a.match);
-          const pb = matchTournamentPriority(b.match);
-          if (pa !== pb) return pa - pb;
-        }
-
-        // Critère secondaire (ou primaire pour les tris explicites)
+        // Tris explicites : honorer la sémantique stricte (pas de groupement tournoi)
         switch (sortKey) {
           case "rank_asc":
             return matchRank(a.match) - matchRank(b.match);
@@ -165,10 +228,26 @@ export function useMatchFilter(
             return matchAvgElo(a.match) - matchAvgElo(b.match);
           case "elo_desc":
             return matchAvgElo(b.match) - matchAvgElo(a.match);
-          default:
-            // "default" — biggest edge first, then highest probA
-            return b.edge - a.edge || b.match.probA - a.match.probA;
         }
+
+        // Tri "default" (= relevance R8) — groupement par tournoi puis qualité
+        // 1. Tournament priority ASC
+        const pa = matchTournamentPriority(a.match);
+        const pb = matchTournamentPriority(b.match);
+        if (pa !== pb) return pa - pb;
+
+        // 2. max(Elo Surface + SPS) DESC — meilleur joueur du match
+        const qa = matchQualityScore(a.match);
+        const qb = matchQualityScore(b.match);
+        if (qa !== qb) return qb - qa;
+
+        // 3. Round priority ASC (Finale avant Quart avant 8èmes)
+        const ra = matchRoundPriority(a.match);
+        const rb = matchRoundPriority(b.match);
+        if (ra !== rb) return ra - rb;
+
+        // 4. Edge value-bet DESC (tiebreaker final)
+        return b.edge - a.edge;
       })
       .map(({ match }) => match);
 

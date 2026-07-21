@@ -155,6 +155,8 @@
     "serving": "{name} serving",
     "servingAria": "Live score: {score}, {points}, {server} serving",
     "offline": "Offline",
+    "featuredTitle": "Featured — Tournaments of the week",
+    "weekLabel": "Week {n}",
     "seeStats": "See detailed stats",
     "hideStats": "Hide stats",
     "deepAnalysis": "Deep analysis",
