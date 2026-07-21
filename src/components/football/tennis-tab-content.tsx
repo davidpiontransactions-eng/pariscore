@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
 import { MatchCard } from "@/components/tennis/match-card";
+import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
 const MatchDetailDialog = lazy(() =>
@@ -470,7 +471,7 @@ export function TennisTabContent() {
             )}
             <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
               {subFiltered.map((match, idx) => (
-                <MatchCard
+                <MatchCardBroadcast
                   key={match.id}
                   match={match}
                   chipsCollapsedByDefault={variant === "chips_collapsed"}

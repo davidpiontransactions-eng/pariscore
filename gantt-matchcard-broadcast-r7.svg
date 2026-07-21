@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="640" viewBox="0 0 600 640" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .title { fill: #e6edf3; font-size: 16px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 10px; }
+  .track-name { fill: #c9d1d9; font-size: 11px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item-arch { fill: #f85149; }
+  .item-build { fill: #2ea043; }
+  .item-wire { fill: #d29922; }
+  .item-qa { fill: #0077ff; }
+  .item-deploy { fill: #a371f7; }
+  .item-followup { fill: #6e7681; }
+  .item-label { fill: #e6edf3; font-size: 10px; }
+  .track-label { fill: #8b949e; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+  .legend-box { fill: #131722; stroke: #1f2533; }
+  .legend-text { fill: #c9d1d9; font-size: 9px; }
+</style>
+<rect class="bg" width="600" height="640"/>
+<text class="title" x="20" y="28">MatchCard Broadcast R7 — Refonte style TV</text>
+<text class="subtitle" x="20" y="44">8 étapes · 6 agents · image fond + joueurs symétriques + score central + métriques colonne</text>
+
+<rect class="grid-bg" x="320" y="58" width="262" height="30"/>
+<line class="grid-line" x1="320" y1="58" x2="320" y2="600"/>
+<text class="header-date" x="365" y="77">21/07 R7</text>
+<line class="grid-line" x1="410" y1="58" x2="410" y2="600"/>
+<text class="header-date" x="455" y="77">22/07 QA</text>
+<line class="grid-line" x1="500" y1="58" x2="500" y2="600"/>
+<text class="header-date" x="545" y="77">23/07 Suivi</text>
+<line class="grid-line" x1="582" y1="58" x2="582" y2="600"/>
+
+<text class="track-label" x="10" y="104">🎨 ARCHITECTURE &amp; MAPPING</text>
+<line class="sep" x1="0" y1="109" x2="600" y2="109"/>
+
+<rect class="track-bg" x="0" y="116" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="133">Helper tournament-theme.ts (bgUrl+logo+surfaceColor)</text>
+<rect class="item item-arch" x="324" y="118" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="133">backend-architect</text>
+
+<rect class="track-bg" x="0" y="146" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="163">Copier assets vers public/tennis-logos/ (~500KB)</text>
+<rect class="item item-arch" x="324" y="148" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="163">sre</text>
+
+<text class="track-label" x="10" y="196">🎨 NOUVEAU COMPOSANT BROADCAST</text>
+<line class="sep" x1="0" y1="201" x2="600" y2="201"/>
+
+<rect class="track-bg" x="0" y="208" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="225">match-card-broadcast.tsx : Hero (fond + overlay + grid 3 col)</text>
+<rect class="item item-build" x="324" y="210" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="225">frontend-developer</text>
+
+<rect class="track-bg" x="0" y="238" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="255">PlayerMetrics inline : colonne 4 lignes</text>
+<rect class="item item-build" x="324" y="240" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="255">frontend-developer</text>
+
+<rect class="track-bg" x="0" y="268" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="285">Section détails repliable (Collapsible)</text>
+<rect class="item item-build" x="324" y="270" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="285">frontend-developer</text>
+
+<text class="track-label" x="10" y="318">🔌 WIRERING &amp; FALLBACKS</text>
+<line class="sep" x1="0" y1="323" x2="600" y2="323"/>
+
+<rect class="track-bg" x="0" y="330" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="347">Remplacer &lt;MatchCard&gt; par &lt;MatchCardBroadcast&gt;</text>
+<rect class="item item-wire" x="324" y="332" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="347">frontend-developer</text>
+
+<rect class="track-bg" x="0" y="360" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="377">Bug score dédoublé résolu (score rendu 1x centre)</text>
+<rect class="item item-wire" x="324" y="362" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="377">✅ centralisation</text>
+
+<rect class="track-bg" x="0" y="390" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="407">Fallbacks défensifs (tournoi/prematch/inconnu)</text>
+<rect class="item item-wire" x="324" y="392" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="407">frontend-developer</text>
+
+<text class="track-label" x="10" y="440">🎯 QUALITY ASSURANCE</text>
+<line class="sep" x1="0" y1="445" x2="600" y2="445"/>
+
+<rect class="track-bg" x="0" y="452" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="469">Typecheck + Lint</text>
+<rect class="item item-qa" x="324" y="454" width="84" height="22" rx="4"/>
+<text class="item-label" x="330" y="469">code-reviewer</text>
+
+<rect class="track-bg" x="0" y="482" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="499">QA Playwright mobile+desktop (score unique, image fond)</text>
+<rect class="item item-qa" x="414" y="484" width="84" height="22" rx="4"/>
+<text class="item-label" x="420" y="499">qa-junior + senior</text>
+
+<rect class="track-bg" x="0" y="512" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="529">Code Review final (responsive, a11y, perf)</text>
+<rect class="item item-qa" x="414" y="514" width="84" height="22" rx="4"/>
+<text class="item-label" x="420" y="529">code-reviewer</text>
+
+<text class="track-label" x="10" y="562">🚀 DÉPLOIEMENT &amp; SUIVI</text>
+<line class="sep" x1="0" y1="567" x2="600" y2="567"/>
+
+<rect class="track-bg" x="0" y="574" width="316" height="26" rx="3"/>
+<text class="track-name" x="10" y="591">Commit + push + deploy VPS + graphify</text>
+<rect class="item item-deploy" x="414" y="576" width="84" height="22" rx="4"/>
+<text class="item-label" x="420" y="591">orchestrator + sre</text>
+</svg>

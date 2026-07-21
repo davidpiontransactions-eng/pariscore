@@ -1,0 +1,236 @@
+{
+  "title": "MatchCard Broadcast R7 — Refonte carte style TV (image fond + score central + métriques colonne)",
+  "timeline": {
+    "title": "Jours",
+    "labels": ["2026-07-21 R7", "2026-07-22 QA", "2026-07-23 Suivi"]
+  },
+  "objectif": "Transformer la carte actuelle (header gris + duel empilé + sections) en carte style broadcast TV. Image de fond du tournoi + joueurs symétriques + score central en grand + métriques (classement WTA/ATP + Elo + SPS + Forme) en colonne 4 lignes sous chaque joueur. Résout le bug visuel du score 'dédoublé' (Header + SubHeader empilés) par centralisation.",
+  "tracks": [
+    {
+      "name": "🎨 Architecture & Mapping",
+      "items": [
+        {
+          "label": "Étape 1 — Helper tournament-theme.ts (mapping tournoi → bgUrl + logoUrl + surfaceColor)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "backend-patterns + aos-source-driven-development",
+            "target": "src/lib/tournament-theme.ts (NOUVEAU)",
+            "sources": ["assets/tennis-logos/map.json (19 tournois)", "src/lib/tennis-tournaments-index.ts (KNOWN_TOURNAMENTS 62 entries)"],
+            "fallback_surface": {"Dur": "#1e3a5f", "Terre battue": "#8b4513", "Gazon": "#2d5a2d"}
+          }
+        },
+        {
+          "label": "Étape 2 — Copier assets vers public/tennis-logos/ (~500KB, 19 fichiers)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "sre",
+            "skill": "deployment-patterns",
+            "command": "cp -rf assets/tennis-logos/* public/tennis-logos/",
+            "note": "Assets déjà existants (dormants), deviennent servables statiquement"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎨 Nouveau composant broadcast",
+      "items": [
+        {
+          "label": "Étape 3 — match-card-broadcast.tsx : Hero section (image fond + overlay top + grid 3 colonnes)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design + frontend-design + aos-frontend-ui-engineering",
+            "target": "src/components/tennis/match-card-broadcast.tsx (NOUVEAU)",
+            "layout": [
+              "Background : dégradé surface-color + logo tournoi watermark + scrim bg-black/40",
+              "Overlay top : TOURNOI · round · date · LIVE · favori",
+              "Grid 3 colonnes : Joueur A (left) | Score central | Joueur B (right)"
+            ],
+            "reuses": ["PlayerProfileHeader", "SetScoreline", "CurrentGameScore", "ServerIndicator"]
+          }
+        },
+        {
+          "label": "Étape 4 — PlayerMetrics inline : colonne 4 lignes (#rank / Elo / SPS#rank / Forme)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-component-design + frontend-design",
+            "target": "sous-composant dans match-card-broadcast.tsx",
+            "format": ["#1 ATP", "Elo 2458", "SPS 80 #1", "●●●●○"],
+            "extrait_de": "src/components/tennis/player-statline.tsx (mais vertical au lieu d'inline)"
+          }
+        },
+        {
+          "label": "Étape 5 — Section détails repliable (Collapsible shadcn)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "shadcn-ui + react-component-design",
+            "target": "section sous le hero dans match-card-broadcast.tsx",
+            "contient": ["ProbabilityBar", "MomentumDR", "WinProbabilityChart", "PointTimeline", "LiveStatsPanel", "StatsIndicatorsGrid", "Cotes", "MatchCardDetail"],
+            "default_open": "defaultOpen=true OU terminalMode=true"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔌 Wirering & Fallbacks",
+      "items": [
+        {
+          "label": "Étape 6 — Wirering : remplacer <MatchCard> par <MatchCardBroadcast> dans tennis-tab-content.tsx",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "react-api-consumer",
+            "target": "src/components/football/tennis-tab-content.tsx:473",
+            "note": "Interface props stable, pas de breaking change consommateur"
+          }
+        },
+        {
+          "label": "Étape 7 — Bug score dédoublé résolu par centralisation (score rendu 1x au centre)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "aos-debugging-and-error-recovery",
+            "fix": "Nouvelle carte ne rend le score qu'au centre du hero → ancien empilement Header + SubHeader disparaît",
+            "legacy_conservé": "match-card.tsx + match-card-header.tsx gardés en legacy non-supprimés"
+          }
+        },
+        {
+          "label": "Étape 8 — Fallbacks défensifs (tournoi inconnu / prematch / joueur inconnu)",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "frontend-developer",
+            "skill": "error-handling + aos-defensive-programming",
+            "fallbacks": [
+              "tournoi-theme ne résout pas → dégradé surface défaut + nom tournoi texte",
+              "liveState absent (prematch) → QuickAddRing (anneaux proba) au lieu de score central",
+              "playerStats absent (joueur inconnu) → '—' comme actuel"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎯 Quality Assurance",
+      "items": [
+        {
+          "label": "Typecheck (tsc --noEmit) : 0 régression attendue",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "verification-before-completion",
+            "baseline": "48 erreurs pré-existantes"
+          }
+        },
+        {
+          "label": "Lint (eslint) : 0 erreur sur fichiers modifiés",
+          "start": "2026-07-21 R7",
+          "end": "2026-07-21 R7",
+          "assignment": {"agent": "code-reviewer", "skill": "verification-before-completion"}
+        },
+        {
+          "label": "QA Playwright mobile 375px + desktop 1280px (prematch + live)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "qa-engineer",
+            "skill": "playwright-mcp + webapp-testing + visual-regression",
+            "subagents": ["qa-junior", "qa-senior (parallèle)"],
+            "checks": [
+              "Image fond tournoi visible (dégradé surface + logo)",
+              "Score rendu UNE SEULE FOIS au centre (bug dédoublement résolu)",
+              "Joueurs symétriques gauche/droite",
+              "Métriques colonne 4 lignes visibles et lisibles",
+              "Responsive 375px : pas de débordement, fallback 2 lignes si nécessaire",
+              "Section détails repliable fonctionne",
+              "Contraste overlay (texte blanc sur scrim bg-black/40) — a11y AA"
+            ]
+          }
+        },
+        {
+          "label": "Code Review final (template officiel)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "code-reviewer",
+            "skill": "code-reviewer + aos-security-and-hardening + accessibility",
+            "focus": [
+              "Responsive (colonnes joueur sur mobile étroit)",
+              "A11y : contraste overlay, ordre tab, aria-label",
+              "Perf : image fond lazy-loaded, pas de re-render excessif",
+              "Régression : composants réutilisés inchangés, interface props stable"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Déploiement & Suivi",
+      "items": [
+        {
+          "label": "Commit + push origin/main",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {"agent": "main-orchestrator", "skill": "aos-git-workflow-and-versioning"}
+        },
+        {
+          "label": "Deploy VPS (git pull + bun build + pm2 restart)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {
+            "agent": "sre",
+            "skill": "deployment-patterns + aos-shipping-and-launch",
+            "target": "ubuntu@51.75.21.239 /home/ubuntu/pariscore",
+            "post_check": "Assets /tennis-logos/ servables (HTTP 200) + cartes prematch/live affichent nouveau design"
+          }
+        },
+        {
+          "label": "graphify update . (knowledge graph post-refonte)",
+          "start": "2026-07-22 QA",
+          "end": "2026-07-22 QA",
+          "assignment": {"agent": "main-orchestrator", "skill": "graphify (MCP local)"}
+        },
+        {
+          "label": "Ticket suivi #1 : images fond plein cadre par tournoi (au lieu de dégradé)",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "ps-scrape-logos + crawl4ai",
+            "target": "public/courts/{wimbledon,rolandgarros,...}.jpg",
+            "rationale": "Amélioration esthétique : photos officielles des courts au lieu de dégradés colorés. Scraping ATP/WTA officiel ou OSS CDN."
+          }
+        },
+        {
+          "label": "Ticket suivi #2 : supprimer ancien match-card.tsx (legacy) après validation R7",
+          "start": "2026-07-23 Suivi",
+          "end": "2026-07-23 Suivi",
+          "assignment": {
+            "agent": "backend-architect",
+            "skill": "aos-deprecation-and-migration",
+            "rationale": "Si nouvelle carte broadcast validée en prod 7j sans régression → supprimer l'ancienne pour alléger le bundle."
+          }
+        }
+      ]
+    }
+  ],
+  "agents": {
+    "main-orchestrator": {"description": "Chef de projet", "available_skills": ["aos-planning-and-task-breakdown", "aos-git-workflow-and-versioning", "graphify"]},
+    "frontend-developer": {"description": "Dev frontend React/Next.js", "available_skills": ["react-component-design", "frontend-design", "aos-frontend-ui-engineering", "shadcn-ui", "react-api-consumer"]},
+    "backend-architect": {"description": "Backend TypeScript, mapping, assets", "available_skills": ["backend-patterns", "aos-source-driven-development", "ps-scrape-logos", "crawl4ai"]},
+    "code-reviewer": {"description": "Review qualité", "available_skills": ["code-reviewer", "aos-security-and-hardening", "verification-before-completion", "accessibility"]},
+    "qa-engineer": {"description": "QA visuels", "subagents": ["qa-junior", "qa-senior"], "available_skills": ["playwright-mcp", "webapp-testing", "visual-regression"]},
+    "sre": {"description": "Assets + déploy", "available_skills": ["deployment-patterns", "aos-shipping-and-launch"]}
+  }
+}
