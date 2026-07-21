@@ -230,8 +230,10 @@ export function TennisTabContent() {
 
       synthetic.push({
         id: lm.id,
-        tournament: "Live",
-        round: "En direct",
+        // R7.3 : vrai nom tournoi BSD (remplace le fallback "Live").
+        // Fallback propre si BSD ne renvoie pas le champ (anciens mocks).
+        tournament: lm.tournamentName || "Live",
+        round: lm.roundName || "En direct",
         scheduledAt: new Date().toISOString(),
         playerA: {
           id: nameA.toLowerCase().replace(/\s+/g, "_"),

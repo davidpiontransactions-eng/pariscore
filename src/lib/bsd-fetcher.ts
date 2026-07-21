@@ -211,6 +211,12 @@ export type LiveMatchItem = {
   liveProbA: number;
   liveProbB: number;
   isLive: boolean;
+  /** Nom du tournoi BSD (R7.3) — ex: "Segovia, Spain", "UTR PTT Waco Men 02".
+   *  Extrait depuis m.tournament.name pour remplacer le fallback "Live" des
+   *  cartes synthétiques. */
+  tournamentName?: string;
+  /** Round BSD (R7.3) — ex: "Round of 32", "Final". Extrait depuis m.round_name. */
+  roundName?: string;
 };
 
 /**
@@ -280,6 +286,13 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
     const rawCurrentSet = m.current_set != null ? parseInt(String(m.current_set), 10) : NaN;
     const currentSet = !isNaN(rawCurrentSet) && rawCurrentSet > 0 ? rawCurrentSet - 1 : (setsDetail.length > 0 ? setsDetail.length - 1 : 0);
 
+    // R7.3 : extrait nom tournoi + round depuis BSD (m.tournament.name, m.round_name).
+    // Évite le fallback "Live" / "En direct" sur les cartes synthétiques.
+    const tournamentName =
+      (m.tournament && (m.tournament.name || m.tournament.short_name)) || undefined;
+    const roundName =
+      m.round_name || m.round || undefined;
+
     return {
       id: `bsd-${m.id}`,
       playerA: { name: nameA },
@@ -292,6 +305,8 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
       liveProbA,
       liveProbB,
       isLive,
+      tournamentName,
+      roundName,
     };
   }).filter((m: LiveMatchItem | null): m is LiveMatchItem => m !== null);
 }

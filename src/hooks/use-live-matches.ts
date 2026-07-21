@@ -25,8 +25,16 @@ export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 export type UseLiveMatchesResult = {
   liveStates: Record<string, LiveMatchState>;
   /** Basic info for each live match (id + player names). Used by TennisTabContent
-   *  to create synthetic cards for matches not present in prematch data. */
-  liveMatchList: Array<{ id: string; playerA: { name: string }; playerB: { name: string }; isLive: boolean }>;
+   *  to create synthetic cards for matches not present in prematch data.
+   *  R7.3 : inclut tournamentName + roundName depuis BSD live. */
+  liveMatchList: Array<{
+    id: string;
+    playerA: { name: string };
+    playerB: { name: string };
+    isLive: boolean;
+    tournamentName?: string;
+    roundName?: string;
+  }>;
   connectionStatus: ConnectionStatus;
   latency: number;
 };
@@ -43,6 +51,10 @@ export type LiveMatchResponseItem = {
   liveProbA: number;
   liveProbB: number;
   isLive: boolean;
+  /** R7.3 : vrai nom du tournoi BSD (remplace le fallback "Live"). */
+  tournamentName?: string;
+  /** R7.3 : round BSD (remplace le fallback "En direct"). */
+  roundName?: string;
 };
 
 type TennisLiveResponse = {
@@ -65,7 +77,14 @@ const POLL_INTERVAL_MS = 8_000;
  */
 export function useLiveMatches(): UseLiveMatchesResult {
   const [liveStates, setLiveStates] = useState<Record<string, LiveMatchState>>({});
-  const [liveMatchList, setLiveMatchList] = useState<Array<{ id: string; playerA: { name: string }; playerB: { name: string }; isLive: boolean }>>([]);
+  const [liveMatchList, setLiveMatchList] = useState<Array<{
+    id: string;
+    playerA: { name: string };
+    playerB: { name: string };
+    isLive: boolean;
+    tournamentName?: string;
+    roundName?: string;
+  }>>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const [latency, setLatency] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -91,6 +110,8 @@ export function useLiveMatches(): UseLiveMatchesResult {
           playerA: m.playerA,
           playerB: m.playerB,
           isLive: m.isLive,
+          tournamentName: m.tournamentName,
+          roundName: m.roundName,
         }));
         setLiveMatchList(rawList);
 
