@@ -7,8 +7,15 @@
 // déploiements frontend n'apparaissaient jamais chez les visiteurs ayant
 // déjà un SW installé. Désormais les navigations vont toujours au réseau
 // en premier (et tombent sur le cache `/` seulement hors-ligne).
+//
+// HOTFIX 2026-07-22: bump v5 → v6 — force l'invalidation des caches SW
+// stale chez les utilisateurs qui ne voient pas les refontes R7 (carte
+// broadcast) et R8 (curation). Ces refontes ont ajouté la ProbabilityBar
+// (Win Predictor) dans la zone live analytique hors Collapsible. Sans ce
+// bump, certains navigateurs servent encore l'ancien bundle (barre cachée
+// dans le Collapsible fermé → invisibilité du Win Predictor prematch/live).
 
-const CACHE_VERSION = "v5";
+const CACHE_VERSION = "v6";
 const STATIC_CACHE = `setpoint-static-${CACHE_VERSION}`;
 const API_CACHE = `setpoint-api-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
