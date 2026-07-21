@@ -368,7 +368,99 @@ export function MatchCardBroadcast({
       </div>
 
       {/* ════════════════════════════════════════════════════════════════
-          SECTION DÉTAILS REPLIABLE
+          ZONE LIVE ANALYTIQUE — TOUJOURS VISIBLE (hors Collapsible)
+          R7.1 hotfix : ces composants étaient enfermés dans le Collapsible
+          fermé par défaut → MomentumDR et WinProbabilityChart invisibles
+          en live. Sortis pour correspondre au comportement de l'ancienne
+          carte (match-card.tsx) où ils étaient dans le corps.
+          ════════════════════════════════════════════════════════════════ */}
+      <div className="space-y-4 bg-card px-4 py-4 sm:px-6">
+        {/* Win Predictor — ProbabilityBar horizontale.
+            R7.1 : visible en live même pour synthetic (les probas sont
+            réelles depuis BSD), et en prematch pour les matchs riches. */}
+        {(isLive || !isSynthetic) && (
+          <ProbabilityBar
+            probA={probA}
+            probB={probB}
+            ic={!isSynthetic ? stats.ic : undefined}
+            colorA={playerA.color}
+            colorB={playerB.color}
+            shortNameA={playerA.shortName}
+            shortNameB={playerB.shortName}
+            weights={terminalMode && !isSynthetic ? { elo: 0.62, form: 0.24, h2h: 0.14 } : undefined}
+            showDecomposition={terminalMode && !isSynthetic}
+          />
+        )}
+
+        {/* Cotes bookmaker + bouton "+N autres bookmakers" */}
+        {match.odds && (
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+            <span className="font-semibold uppercase tracking-wider">
+              {match.odds.bookmaker}
+            </span>
+            <span className="text-border">·</span>
+            <span className="font-mono">
+              {playerA.shortName}{" "}
+              <span className="font-semibold text-foreground">
+                {match.odds.decimalA.toFixed(2)}
+              </span>
+            </span>
+            <span className="text-border">/</span>
+            <span className="font-mono">
+              {playerB.shortName}{" "}
+              <span className="font-semibold text-foreground">
+                {match.odds.decimalB.toFixed(2)}
+              </span>
+            </span>
+            {match.allOdds && match.allOdds.length > 1 && onOpenDetail && (
+              <>
+                <span className="text-border" aria-hidden>·</span>
+                <button
+                  type="button"
+                  onClick={onOpenDetail}
+                  className="font-semibold text-emerald-600 transition-colors hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+                >
+                  +{match.allOdds.length - 1} {t("otherBookmakers")}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Sections LIVE analytiques — MomentumDR + WinProbabilityChart +
+            PointTimeline TOUJOURS VISIBLES en live (R7.1 hotfix). */}
+        {isLive && liveState && (
+          <>
+            <MomentumDR
+              liveState={liveState}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+            />
+            <WinProbabilityChart
+              probA={liveState.liveProbA}
+              probB={liveState.liveProbB}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+            />
+            <PointTimeline
+              history={momentum.pointHistory}
+              currentSet={currentSetNum}
+              currentGame={currentGameNum}
+              player1Name={playerA.name}
+              player2Name={playerB.name}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+            />
+          </>
+        )}
+      </div>
+
+      {/* ════════════════════════════════════════════════════════════════
+          SECTION DÉTAILS REPLIABLE — stats secondaires + LiveStatsPanel
           ════════════════════════════════════════════════════════════════ */}
       <div className="bg-card">
         <Collapsible open={open} onOpenChange={setOpen}>
@@ -399,89 +491,14 @@ export function MatchCardBroadcast({
           </CollapsibleTrigger>
           <CollapsibleContent id={`match-details-${match.id}`}>
             <div className="space-y-4 px-4 py-4 sm:px-6">
-              {/* Win Predictor — ProbabilityBar horizontale */}
-              {!isSynthetic && (
-                <ProbabilityBar
-                  probA={probA}
-                  probB={probB}
-                  ic={stats.ic}
-                  colorA={playerA.color}
-                  colorB={playerB.color}
-                  shortNameA={playerA.shortName}
-                  shortNameB={playerB.shortName}
-                  weights={terminalMode ? { elo: 0.62, form: 0.24, h2h: 0.14 } : undefined}
-                  showDecomposition={terminalMode}
-                />
-              )}
-
-              {/* Cotes bookmaker + bouton "+N autres bookmakers" */}
-              {match.odds && (
-                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                  <span className="font-semibold uppercase tracking-wider">
-                    {match.odds.bookmaker}
-                  </span>
-                  <span className="text-border">·</span>
-                  <span className="font-mono">
-                    {playerA.shortName}{" "}
-                    <span className="font-semibold text-foreground">
-                      {match.odds.decimalA.toFixed(2)}
-                    </span>
-                  </span>
-                  <span className="text-border">/</span>
-                  <span className="font-mono">
-                    {playerB.shortName}{" "}
-                    <span className="font-semibold text-foreground">
-                      {match.odds.decimalB.toFixed(2)}
-                    </span>
-                  </span>
-                  {match.allOdds && match.allOdds.length > 1 && onOpenDetail && (
-                    <>
-                      <span className="text-border" aria-hidden>·</span>
-                      <button
-                        type="button"
-                        onClick={onOpenDetail}
-                        className="font-semibold text-emerald-600 transition-colors hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
-                      >
-                        +{match.allOdds.length - 1} {t("otherBookmakers")}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* Sections LIVE analytiques */}
+              {/* LiveStatsPanel (tableau stats détaillées) — dans repliable
+                  car verbeux, pas essentiel au scan live. */}
               {isLive && liveState && (
-                <>
-                  <MomentumDR
-                    liveState={liveState}
-                    player1Name={playerA.name}
-                    player2Name={playerB.name}
-                    player1Color={playerA.color}
-                    player2Color={playerB.color}
-                  />
-                  <WinProbabilityChart
-                    probA={liveState.liveProbA}
-                    probB={liveState.liveProbB}
-                    player1Name={playerA.name}
-                    player2Name={playerB.name}
-                    player1Color={playerA.color}
-                    player2Color={playerB.color}
-                  />
-                  <PointTimeline
-                    history={momentum.pointHistory}
-                    currentSet={currentSetNum}
-                    currentGame={currentGameNum}
-                    player1Name={playerA.name}
-                    player2Name={playerB.name}
-                    player1Color={playerA.color}
-                    player2Color={playerB.color}
-                  />
-                  <LiveStatsPanel
-                    matchId={match.id}
-                    player1Name={playerA.name}
-                    player2Name={playerB.name}
-                  />
-                </>
+                <LiveStatsPanel
+                  matchId={match.id}
+                  player1Name={playerA.name}
+                  player2Name={playerB.name}
+                />
               )}
 
               {/* Stats chips (fusion collapsable) */}
