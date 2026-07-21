@@ -187,11 +187,16 @@ export function MatchCard({
   const handleQuickAdd = (player: "A" | "B") => {
     const isA = player === "A";
     const playerName = isA ? playerA.name : playerB.name;
+    // R4 hotfix (2026-07-21) — review code reviewer : clamp de prob à
+    // [1, 99] pour éviter une division par 0 (prob=0 → odd=Infinity)
+    // ou un odd trivial (prob=100 → odd=1). Les probas live arrondies
+    // peuvent théoriquement toucher ces bornes.
+    const probClamped = Math.min(99, Math.max(1, isA ? probA : probB));
     const odd = match.odds
       ? isA
         ? match.odds.decimalA
         : match.odds.decimalB
-      : 1 / (isA ? probA / 100 : probB / 100);
+      : 1 / (probClamped / 100);
     const added = addToSlip({
       matchId: match.id,
       playerA: playerA.name,
@@ -287,10 +292,20 @@ export function MatchCard({
           Phase 4.D hotfix layout : grid-cols-3 strict (au lieu de 1fr_auto_1fr
           qui s'effondrait sur grand nom de joueur). Chaque colonne est
           min-w-0 (autorise le shrink) pour que truncate fonctionne dans
-          les noms longs (ex: "Frederico Ferreira Silva"). */}
+          les noms longs (ex: "Frederico Ferreira Silva").
+
+          R3 hotfix (2026-07-21) :
+          1. overflow-hidden retiré des wrappers Joueur 1 & 2 — l'avatar
+             (surtout Joueur 2, align="right" en flex-row-reverse) était
+             coupé sur son côté droit. Le truncate du <h3> a son propre
+             overflow:hidden via la classe Tailwind truncate ; le flex-wrap
+             du PlayerStatline gère le débordement des stats.
+          2. items-stretch → items-start pour que les 2 colonnes joueur
+             aient leur hauteur naturelle (la VS badge reste centrée via
+             self-center sur sa div). */}
       <div className={cn("px-4 sm:px-6", terminalMode ? "py-4" : "py-6 sm:py-8")}>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-2 sm:gap-4">
-          <div className="min-w-0 overflow-hidden">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2 sm:gap-4">
+          <div className="min-w-0">
           <PlayerBlock
             player={playerA}
             align="left"
@@ -321,7 +336,7 @@ export function MatchCard({
                 className="mt-2"
               />
             )}
-            {isSynthetic ? (
+            {isSynthetic && !isLive ? (
               <Badge
                 variant="outline"
                 className="mt-3 max-w-full gap-1 whitespace-normal break-words text-center border-amber-500/40 text-amber-600 dark:text-amber-400"
@@ -356,7 +371,7 @@ export function MatchCard({
             </div>
           </div>
 
-          <div className="min-w-0 overflow-hidden">
+          <div className="min-w-0 pr-2 sm:pr-4">
           <PlayerBlock
             player={playerB}
             align="right"
@@ -387,7 +402,7 @@ export function MatchCard({
                 className="mt-2"
               />
             )}
-            {isSynthetic ? (
+            {isSynthetic && !isLive ? (
               <Badge
                 variant="outline"
                 className="mt-3 max-w-full gap-1 whitespace-normal break-words text-center border-amber-500/40 text-amber-600 dark:text-amber-400"
@@ -410,12 +425,17 @@ export function MatchCard({
           </div>
         </div>
 
-        {/* Terminal mode: ProbabilityBar with IC bracket + decomposition —
-            always visible for power users, replacing the per-player rings
-            with a single dense horizontal bar that exposes the IC 95%
-            bracket and the Elo / Forme / H2H weight decomposition inline.
-            Skipped for synthetic cards: the IC bracket and weights would
-            be placeholders. */}
+        {/* Win Predictor — barre horizontale pleine largeur.
+            R4 hotfix (2026-07-21) : étendu à TOUS les matchs LIVE (plus
+            uniquement terminalMode). En live, liveProbA/liveProbB sont des
+            probas RÉELLES calculées depuis les cotes BSD (bsd-fetcher.ts),
+            pas des placeholders — les cacher au motif `synthetic=true`
+            privait l'utilisateur de l'info la plus importante.
+            - Terminal mode + match prematch riche : version complète avec
+              IC 95% bracket + décomposition Elo/Forme/H2H.
+            - Live (synthétique ou non) : version simple segments A/B + %.
+            - Prematch non-terminal : pas de barre (les anneaux QuickAddRing
+              par joueur suffisent). */}
         {terminalMode && !isSynthetic && (
           <div className="mt-4">
             <ProbabilityBar
@@ -428,6 +448,18 @@ export function MatchCard({
               shortNameB={playerB.shortName}
               weights={{ elo: 0.62, form: 0.24, h2h: 0.14 }}
               showDecomposition
+            />
+          </div>
+        )}
+        {isLive && liveState && !(terminalMode && !isSynthetic) && (
+          <div className="mt-4">
+            <ProbabilityBar
+              probA={probA}
+              probB={probB}
+              colorA={playerA.color}
+              colorB={playerB.color}
+              shortNameA={playerA.shortName}
+              shortNameB={playerB.shortName}
             />
           </div>
         )}

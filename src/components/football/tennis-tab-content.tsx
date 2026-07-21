@@ -35,6 +35,7 @@ import {
   type AbTestVariant,
 } from "@/lib/ab-test";
 import { BetDialog } from "@/components/bet-dialog";
+import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { cn } from "@/lib/utils";
 
 /** Simple deterministic color from a string. Used for synthetic live-match cards. */
@@ -237,7 +238,10 @@ export function TennisTabContent() {
           shortName: shortA,
           rank: 0,
           elo: 1500,
-          photoUrl: "",
+          // R4 hotfix (2026-07-21) : résolution photo réelle via
+          // resolvePlayerPhoto (6 stars OSS + ~90 joueurs Tennis Warehouse
+          // + fallback DiceBear). Avant : "" → AvatarFallback initiales.
+          photoUrl: resolvePlayerPhoto(nameA),
           color: hashColor(nameA),
           form: ["W", "L", "W", "L", "W", "L"],
         },
@@ -247,7 +251,7 @@ export function TennisTabContent() {
           shortName: shortB,
           rank: 0,
           elo: 1500,
-          photoUrl: "",
+          photoUrl: resolvePlayerPhoto(nameB),
           color: hashColor(nameB),
           form: ["L", "W", "L", "W", "L", "W"],
         },

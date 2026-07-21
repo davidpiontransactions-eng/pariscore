@@ -3,16 +3,21 @@
 // For known players (the 6 we track in `tennis-data.ts` PHOTO_URLS), use
 // the licensed OSS-hosted photos already shipped with the app.
 //
-// For any other player (real matches returned by The Odds API will
-// include many players we don't have pre-downloaded photos for), fall
-// back to a DiceBear initials avatar — deterministic per name, so the
-// same player always gets the same avatar across requests.
+// For ~90 ATP/WTA players (see `tennis-player-photos.json` at repo root),
+// use the public Tennis Warehouse headshots CDN.
+//
+// For any other player, fall back to a DiceBear initials avatar —
+// deterministic per name, so the same player always gets the same avatar
+// across requests.
 //
 // All URLs are remote (no local image bundling required). The avatar
 // service is `https://api.dicebear.com/7.x/initials/svg` which returns
 // a deterministic SVG given a seed string.
 
 import { MATCHES } from "@/lib/tennis-data";
+// Static mapping name → Tennis Warehouse headshot URL. Loaded once at
+// module init. Keys are lowercase full names ("jannik sinner").
+import tennisWarehousePhotos from "@/../tennis-player-photos.json";
 
 /**
  * Pre-shipped player photos (sourced via image-search, OSS-hosted).
@@ -29,13 +34,19 @@ const KNOWN_PHOTOS: Record<string, string> = {
 };
 
 /**
- * Build a name → photo URL lookup table from the seeded mock matches.
+ * Build a name → photo URL lookup table from the seeded mock matches +
+ * the Tennis Warehouse CDN mapping.
+ *
+ * Resolution layers (checked in order by `resolvePlayerPhoto`):
+ *   1. OSS-hosted photos (6 stars) — highest quality, licensed
+ *   2. Tennis Warehouse headshots (~90 ATP/WTA players)
  * Lets us reuse the photo for a known player even if their id differs
  * (e.g. an ATP match returned by The Odds API for Alcaraz will reuse
  * the seeded Alcaraz photo).
  */
 const NAME_TO_PHOTO: Map<string, string> = (() => {
   const m = new Map<string, string>();
+  // Layer 1 — 6 stars (OSS, licensed)
   for (const match of MATCHES) {
     for (const p of [match.playerA, match.playerB]) {
       m.set(p.name.toLowerCase(), p.photoUrl);
@@ -44,6 +55,14 @@ const NAME_TO_PHOTO: Map<string, string> = (() => {
   for (const [id, url] of Object.entries(KNOWN_PHOTOS)) {
     // Use the id as a fallback key — the matcher will fill the name.
     m.set(id.toLowerCase(), url);
+  }
+  // Layer 2 — ~90 ATP/WTA players (Tennis Warehouse CDN). Only set if
+  // not already covered by the OSS layer (don't downgrade a licensed
+  // photo to a CDN one for the 6 stars).
+  for (const [name, url] of Object.entries(tennisWarehousePhotos)) {
+    if (!m.has(name.toLowerCase())) {
+      m.set(name.toLowerCase(), url);
+    }
   }
   return m;
 })();

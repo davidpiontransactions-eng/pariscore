@@ -83,16 +83,20 @@ export function PlayerStatline({
   const hasSurfaceDetail =
     eloSurface != null || surfaceEloRank != null || sps != null || spsRank != null;
 
-  // Elo affiché : si la DB donne une vraie valeur ET qu'elle diffère du
-  // fallback 1500, on l'utilise ; sinon on garde player.elo (mock case).
-  const eloDisplay = stats?.elo != null ? Math.round(stats.elo) : elo;
+  // Elo affiché : on privilégie les stats enrichies (DB) sinon on
+  // retombe sur player.elo (mock case).
+  // R4 hotfix (2026-07-21) : Math.round appliqué dans TOUS les chemins —
+  // la DB SQLite stocke l'Elo comme REAL (flottant, ex: 1845.7) et le
+  // fallback player.elo peut aussi arriver décimal depuis certains flux.
+  // On round toujours plutôt que d'afficher des décimales trompeuses.
+  const eloDisplay = Math.round(stats?.elo ?? elo);
   const eloIsFallback = stats?.elo == null && player.elo === 1500;
 
   return (
     <div
       className={cn(
-        "mt-0.5 flex items-center gap-2 font-mono text-xs text-muted-foreground",
-        terminalMode && "gap-1.5"
+        "mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted-foreground",
+        terminalMode && "gap-x-1.5 gap-y-0.5"
       )}
     >
       {/* Ranking ATP/WTA */}
@@ -114,7 +118,11 @@ export function PlayerStatline({
       </span>
       {/* SPS (si dispo) — modèle expérimental, badge « beta » statique.
           Tooltip retiré temporairement (causait probable crash hydration
-          car rendu ~1000x par page via Radix PointerEvent listeners). */}
+          car rendu ~1000x par page via Radix PointerEvent listeners).
+          R4 hotfix (2026-07-21) : rang SPS affiché inline (#3) à côté de
+          la valeur pour exposer le classement surface sans nécessiter
+          l'ouverture du tooltip. Le tooltip Info conserve le détail
+          (Elo Surface, confiance, nb matchs). */}
       {sps != null && (
         <>
           <span className="text-border" aria-hidden>
@@ -125,6 +133,14 @@ export function PlayerStatline({
             title={tTennis("spsExperimentalTooltip")}
           >
             SPS {fmtSPS(sps)}
+            {spsRank != null && spsRank > 0 && (
+              <span
+                className="text-muted-foreground/80"
+                title={t("spsRankInline", { rank: spsRank })}
+              >
+                #{spsRank}
+              </span>
+            )}
             <Badge
               variant="outline"
               className="ml-0.5 h-3 px-1 text-[9px] font-medium leading-none text-muted-foreground"

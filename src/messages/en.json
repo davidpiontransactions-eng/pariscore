@@ -614,6 +614,7 @@
     "eloSurface": "Surface Elo",
     "surfaceDetails": "Surface stats details",
     "confidence": "Confidence {pct}% · {n} matches",
-    "sparklineAria": "30-day Elo trend {name}"
+    "sparklineAria": "30-day Elo trend {name}",
+    "spsRankInline": "SPS rank on this surface: #{rank}"
   }
 }
