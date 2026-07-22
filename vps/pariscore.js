@@ -8478,7 +8478,7 @@ const WINP_WEIGHTS_LIGHT = {
   elo_surface: 0.50, powerscore: 0.30, serve_index: 0.20,
 };
 
-const WINP_K = 4.0;
+const WINP_K = 10.0;
 const WINP_PROBA_MIN = 0.15;
 const WINP_PROBA_MAX = 0.85;
 const WINP_MISSING_THRESHOLD = 0.40;

@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mkdir -p .next/standalone/src/lib/tennis-elo/ && cp src/lib/tennis-elo/abstract-cache.json .next/standalone/src/lib/tennis-elo/ 2>/dev/null || true",
     "start": "NODE_ENV=production node scripts/run-bun.js .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "test": "node scripts/run-bun.js test",
@@ -16,6 +16,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
+    "scrape:elo": "bun run scripts/scrape-tennis-elo.ts",
+    "scrape:elo:dry": "bun run scripts/scrape-tennis-elo.ts --dry-run",
     "postinstall": "npm rebuild better-sqlite3 sharp 2>/dev/null || true"
   },
   "dependencies": {

@@ -4,8 +4,10 @@
 import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats, H2HMatch } from "@/lib/tennis-data";
 import { predict, type PlayerInputs } from "@/lib/prediction/engine";
 import { findPlayerElo } from "@/lib/player-matcher";
+import { lookupAbstractElo } from "@/lib/tennis-elo/lookup";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
+import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
 
 /** Tournois à exclure (UTR Pro, exhibitions) */
 const EXCLUDED_TOURNAMENTS = [/utr/i, /exhibition/i, /expo/i, /hopman/i, /laver\s*cup/i];
@@ -94,24 +96,44 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
   const nameB = b.player2.name;
   const surface = normalizeSurface(b.tournament?.surface);
 
-  // Find Elo data
-  const eloA = findPlayerElo(nameA);
-  const eloB = findPlayerElo(nameB);
+  // ─── Résolution Elo (4 sources, par priorité) ──────────────────────
+  //
+  // Source 1 : tennisabstract.com cache (1087 joueurs ATP+WTA)
+  // Source 2 : pariscore.db (tennis_players_elo / tennis_elo)
+  // Source 3 : elo-data.json (6 stars)
+  // Source 4 : 1500 (défaut)
+  const abstractA = lookupAbstractElo(nameA, surface);
+  const abstractB = lookupAbstractElo(nameB, surface);
+
+  const dbStats = getPlayerStatsBatch([nameA, nameB], surface);
+  const dbA = dbStats[Object.keys(dbStats).find((k) => k.includes(nameA.toLowerCase().split(" ").pop() ?? "")) ?? ""];
+  const dbB = dbStats[Object.keys(dbStats).find((k) => k.includes(nameB.toLowerCase().split(" ").pop() ?? "")) ?? ""];
+
+  const eloMatchA = findPlayerElo(nameA);
+  const eloMatchB = findPlayerElo(nameB);
+
+  const eloA = abstractA?.elo ?? dbA?.elo ?? eloMatchA?.elo ?? 1500;
+  const surfaceEloA = abstractA?.surfaceElo ?? dbA?.eloSurface ?? eloMatchA?.surfaceElo ?? eloA;
+  const formA = eloMatchA?.history ? extractForm(eloMatchA.history) : ["W", "L", "W", "L", "W", "L"];
+
+  const eloB = abstractB?.elo ?? dbB?.elo ?? eloMatchB?.elo ?? 1500;
+  const surfaceEloB = abstractB?.surfaceElo ?? dbB?.eloSurface ?? eloMatchB?.surfaceElo ?? eloB;
+  const formB = eloMatchB?.history ? extractForm(eloMatchB.history) : ["L", "W", "L", "W", "L", "W"];
 
   const playerAInputs: PlayerInputs = {
     id: b.player1.id ?? nameA.toLowerCase().replace(/\s+/g, "_"),
     name: nameA,
-    elo: eloA?.elo ?? 1500,
-    surfaceElo: eloA?.surfaceElo ?? eloA?.elo ?? 1500,
-    form: eloA ? extractForm(eloA.history) : ["W", "L", "W", "L", "W", "L"],
+    elo: eloA,
+    surfaceElo: surfaceEloA,
+    form: formA,
     h2h: { won: 3, lost: 2 },
   };
   const playerBInputs: PlayerInputs = {
     id: b.player2.id ?? nameB.toLowerCase().replace(/\s+/g, "_"),
     name: nameB,
-    elo: eloB?.elo ?? 1500,
-    surfaceElo: eloB?.surfaceElo ?? eloB?.elo ?? 1500,
-    form: eloB ? extractForm(eloB.history) : ["L", "W", "L", "W", "L", "W"],
+    elo: eloB,
+    surfaceElo: surfaceEloB,
+    form: formB,
     h2h: { won: 2, lost: 3 },
   };
 
