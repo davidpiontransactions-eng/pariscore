@@ -56,8 +56,9 @@ description: |
 | 2 | **TheSportsDB** (team logos) | `GET https://www.thesportsdb.com/api/v1/json/{KEY}/searchteams.php?t={name}` → `strLogo` (clé test) ou `strTeamBadge` (clé Pro) | Clé test `3` = gratuite, retourne `strLogo` (PNG) | Equipes mondiales | 2 req/s | 🟢 Haute — test vérifié 15/18 équipes européennes majeures résolues avec clé test `3` |
 | 2b | **TheSportsDB** (league logos) | `GET https://www.thesportsdb.com/api/v1/json/{KEY}/lookupleague.php?id={leagueId}` → `strLogo` | Clé test `3` OK | Logos de **championnats/leagues** | 2 req/s | 🟢 Haute — logos league sont gratuits |
 | 3 | **API-Football** | `GET https://v3.football.api-sports.io/teams?search={name}` → `team.logo` | `API_FOOTBALL_KEY` (header `x-apisports-key`) | 900+ équipes, logos CDN media.api-sports.io | ~1 req/s (quota plan) | 🟢 Haute — logos team toujours présents |
-| 4 | **Scraping HTML BSD** | `GET https://sports.bzzoiro.com/matches/{matchId}` → `<img class="team-logo">` | Aucune (page publique) | Logos équipes vus sur un match précis | 1 req/s | 🟡 Moyenne — nécessite de connaître un matchId |
-| 5 | **Fallback initiales** | Aucune (généré côté UI) | — | Universel | — | 🔴 Dernier recours — cercle CSS avec initiales |
+| 4 | **beSOCCER (CDN resfu)** | `data/resfu-ids.json` (mapping pré-backfillé) → `https://cdn.resfu.com/img_data/escudos/medium/{id}.jpg` | Aucune (CDN public) — mapping peuplé par Camoufox backfill | Équipes La Liga + adversaires collectés en bonus | Lecture JSON (zéro réseau runtime) | 🟢 Haute — CDN public stable, testé 200 OK |
+| 5 | **Scraping HTML BSD** | `GET https://sports.bzzoiro.com/matches/{matchId}` → `<img class="team-logo">` | Aucune (page publique) | Logos équipes vus sur un match précis | 1 req/s | 🟡 Moyenne — nécessite de connaître un matchId |
+| 6 | **Fallback initiales** | Aucune (généré côté UI) | — | Universel | — | 🔴 Dernier recours — cercle CSS avec initiales |
 
 ### Détail des limites par source
 
@@ -213,6 +214,92 @@ Sources logos CHAMPIONNATS (par ordre de fiabilité) :
 | 0 | Table curatée `TOP_LEAGUE_LOGOS` | 20 top leagues mondiales (EPL, La Liga, Serie A, Bundesliga, Ligue 1/2, UCL, UEL, MLS, etc.) | 🟢 Instantanée, 100% |
 | 1 | BSD `image_path` | Logos fournis par BSD dans le flux events | 🟢 Haute |
 | 2 | TheSportsDB `lookupleague.php` | Toutes leagues répertoriées (free key "3") | 🟡 Moyenne (listing par pays limité à 5/pays en free) |
+
+## Fix propagatio IDs BSD (2026-07-23) — Phase A
+
+**Cause racine des logos absents en Football Live** : BSD expose `home_team_id` (int) dans
+`/api/v2/events/`, mais `fetchBSDMatches` (server.js) mappait uniquement `home_team` (string) et
+**jetait l'ID**. Or le frontend `pariscore.js:teamLogoImg()` construit l'URL logo
+`/img/team/{home_bsd_id}/?bg=transparent` **directement depuis l'ID** — sans propagation de cet ID,
+les logos BSD n'apparaissaient jamais, même avec `team_logos` peuplé.
+
+**3 points de fix appliqués** (`server.js`) :
+1. `fetchBSDMatches` (~l.15485) — ajout `home_bsd_id: e.home_team_id || null` + `away_bsd_id`.
+2. `fetchBSDTeamFixtures` (~l.16278) — **bug sémantique corrigé** : `home_team_id: e.home_team?.id`
+   (ID BSD envoyé vers le CDN API-Football = 404) → `home_bsd_id` (CDN BSD = correct).
+3. `_bsdWsTryInjectMatch` (~l.49541) — propagation des IDs équipes sur les matchs synthétiques WS.
+
+→ Couverture **immédiate** de ~3600 équipes BSD via `/img/team/{id}/` (testé 200 OK PNG),
+sans dépendre du peuplement de `team_logos`.
+
+## Endpoints logos (DB consultation + refresh)
+
+| Endpoint | Méthode | Rôle |
+|----------|---------|------|
+| `/api/v1/team-logo?name=...` | GET | Lookup ponctuel (cache 30j, fallback Sofascore/Wikipedia) |
+| `/api/v1/team-logos?names=...` | GET | Batch lookup |
+| **`/api/v1/logos/teams`** | GET | **Consultation DB** : `?q=<search>&country=<c>&limit=<n>&offset=<n>&bsd_id=<id>`. Retourne `{count,total,results:[{bsd_id,name,short_name,country,logo_url,indexed_at}]}` |
+| **`/api/v1/logos/refresh`** | POST | **Force rebuild** `team_logos` (`rebuildTeamLogosIndex(true)`). Répond 202 (async), pagine `/teams/?page=N` puis `/img/team/{id}/`. Le boot ne rebuild que si count<100 OU >30j — cet endpoint permet un refresh manuel. |
+
+**Schéma `team_logos`** (la "DB Logos Equipes foot") :
+```sql
+CREATE TABLE team_logos (
+  bsd_id    INTEGER PRIMARY KEY,    -- ID BSD (positif) ou externalId() négatif [-1.9M;-1M]
+  name      TEXT NOT NULL,
+  short_name TEXT,
+  country   TEXT,
+  name_norm TEXT NOT NULL,          -- clé lookup normalisée (normalizeTeamName)
+  logo_url  TEXT NOT NULL,          -- /img/team/{bsd_id}/?bg=transparent (BSD) ou CDN externe
+  indexed_at INTEGER NOT NULL
+);
+```
+
+## Source 4 — beSOCCER via CDN resfu (2026-07-23)
+
+**Architecture en 2 temps** (Camoufox pour la découverte, CDN public pour le runtime) :
+
+```
+[fr.besoccer.com]  ← WAF Fastly (406 + JS challenge)
+       │  scripts/besoccer-backfill-ids.py (Camoufox stealth, ~3min/équipe)
+       ▼
+[data/resfu-ids.json]  ← mapping {name_norm → resfu_id} persistant
+       │  lib/logo-cascade.js sourceBeSoccer() (lecture JSON, zéro réseau)
+       ▼
+[https://cdn.resfu.com/img_data/escudos/medium/{id}.jpg]  ← CDN PUBLIC, fetch natif 200 OK
+```
+
+**Pourquoi ce split** : beSOCCER (`fr.besoccer.com`) bloque tout fetch non-navigateur (HTTP 406 +
+Client Challenge Fastly). Mais ses logos sont servis par un CDN public `cdn.resfu.com` **sans
+aucune protection** (testé : `equipos/2107.png` = Real Madrid, 200 OK, 353KB HD). Le défi est
+uniquement de **découvrir l'ID resfu** (qui n'est PAS dans l'URL beSOCCER, slug-only).
+
+**Workflow backfill** (one-shot, pas de runtime Camoufox) :
+```bash
+# 1. Backfill : 1 fetch Camoufox/équipe, collecte les adversaires en bonus (~13 équipes/fetch)
+python scripts/besoccer-backfill-ids.py --team "Real Madrid"
+python scripts/besoccer-backfill-ids.py --from-file teams.txt --limit 50
+
+# 2. Import en DB team_logos (cache-first, filtre faux positifs joueurs)
+node scripts/import-resfu-logos.js            # import data/resfu-ids.json
+node scripts/import-resfu-logos.js --dry-run  # aperçu
+node scripts/import-resfu-logos.js --force    # écrase URLs existantes
+```
+
+**Spike de validation (Phase B0)** — `scripts/test-besoccer-stealth.py` + `scripts/inspect-besoccer-dom.py` :
+- Camoufox v152.0.4 résout le challenge Fastly → HTTP 200 sur `/team/real-madrid` (vs 406 natif).
+- DOM rendu (47KB) expose les shields via `<img class="team-shield" src=".../escudos/medium/{id}.jpg" alt="{team}">`.
+- CDN resfu public : `escudos/medium/{id}.jpg` (shield), `equipos/{id}.png` (logo HD 120x),
+  `media/img/league_logos/{slug}.png` (championnats), `media/img/flags/round/{cc}.png` (drapeaux).
+
+**Dépendances** : `scrapling[camoufox]` + `camoufox fetch` (Firefox patché ~150MB, une fois).
+Runtime cascade : **zéro** (lecture JSON uniquement). Le frontend sert `logo_url` directement.
+
+**Limites connues** :
+- Le backfill collecte parfois des joueurs (initiales "D. Dumfries") à côté de shields → filtrés par
+  `_PLAYER_NAME_RE = /^[A-Z]\.\s/` dans `sourceBeSoccer` et `import-resfu-logos.js`.
+- Couverture limitée aux équipes dont on a crawlé la page + leurs adversaires visibles (matchs récents).
+  Pour une couverture large : backfiller les ~100 top équipes mondiales (`--from-file`).
+- beSOCCER déployant un WAF pour refuser l'extraction, usage interne PariScore (pas de redistribution).
 
 ---
 

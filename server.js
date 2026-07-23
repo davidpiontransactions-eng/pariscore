@@ -15484,6 +15484,12 @@ async function fetchBSDMatches(dateFrom, dateTo, leagueId = null) {
       id: `bsd_${e.id}`,
       home_team: e.home_team,
       away_team: e.away_team,
+      // [FIX logos live] BSD expose home_team_id/away_team_id (int) dans /api/v2/events/.
+      // Le frontend pariscore.js:teamLogoImg() construit /img/team/{home_bsd_id}/?bg=transparent
+      // directement — sans propagation de ces IDs, les logos équipes étaient absents (team_logos
+      // sous-peuplé + lookup par nom fragile). Propager l'ID BSD → logo immédiat pour ~3600 équipes.
+      home_bsd_id: e.home_team_id || null,
+      away_bsd_id: e.away_team_id || null,
       league: e.league?.name || 'Unknown',
       league_logo_url: e.league?.image_path ? bsdImgUrl(`https://sports.bzzoiro.com${e.league.image_path}`) : null,
       country: forceCountryForKnownCollisions(e.league?.name, e.league?.country || e.country || null, e.league?.id),
@@ -16275,8 +16281,11 @@ async function fetchBSDTeamFixtures(bsdTeamId, limit = 20, status = null) {
       status: e.status,
       home_team: e.home_team?.name || null,
       away_team: e.away_team?.name || null,
-      home_team_id: e.home_team?.id || null,
-      away_team_id: e.away_team?.id || null,
+      // [FIX logos] e.home_team?.id est un ID BSD (endpoint /events/?team=...), pas un ID API-Football.
+      // Avant il était mappé vers home_team_id → le frontend construisait media.api-sports.io/.../{id}.png
+      // (CDN API-Football, faux) → logo cassé. Mappage correct : home_bsd_id → /img/team/{id}/ (CDN BSD).
+      home_bsd_id: e.home_team?.id || null,
+      away_bsd_id: e.away_team?.id || null,
       home_score: e.home_score?.current ?? e.home_score?.display ?? null,
       away_score: e.away_score?.current ?? e.away_score?.display ?? null,
       league: e.league?.name || null,
@@ -33300,6 +33309,82 @@ const server = http.createServer(async (req, res) => {
 }
 
 // -------------------------------------------------
+//  POST /api/v1/logos/refresh — Force le rebuild de l'index team_logos
+//  Paginer /teams/?page=N (BSD) et peuple team_logos avec /img/team/{id}/.
+//  Aucun endpoint n'existait pour forcer le refresh (le boot ne rebuild que si
+//  count < 100 OU index > 30j). Utile après ajout de nouvelles ligues/équipes.
+// -------------------------------------------------
+if (pathname === '/api/v1/logos/refresh' && req.method === 'POST') {
+    if (!sqldb) {
+        return jsonResponse(res, 503, { ok: false, reason: 'SQLite indisponible' });
+    }
+    // Fire-and-forget : la pagination BSD peut prendre 30-60s (200 pages).
+    // On répond immédiatement 202 et lance le rebuild en arrière-plan.
+    rebuildTeamLogosIndex(true)
+        .then(result => {
+            console.log('[logos/refresh] rebuild terminé:', JSON.stringify(result));
+        })
+        .catch(e => console.warn('[logos/refresh] erreur:', e.message));
+    return jsonResponse(res, 202, {
+        ok: true,
+        message: 'Rebuild team_logos lancé en arrière-plan (force=true). Paginer /teams/ puis /img/team/{id}/.',
+        endpoint: '/api/v1/logos/teams',
+    });
+}
+
+// -------------------------------------------------
+//  GET /api/v1/logos/teams — Liste/consultation de la "DB Logos Equipes foot"
+//  Query: ?q=<search> (sur name/name_norm), ?country=<country>, ?sport=... (ignoré pour teams),
+//         ?limit=<n> (défaut 100, max 500), ?bsd_id=<id> (lookup direct).
+//  Lecture seule sur team_logos. Retourne {count, total, results:[{bsd_id,name,short_name,country,logo_url}]}.
+// -------------------------------------------------
+if (pathname === '/api/v1/logos/teams') {
+    if (!sqldb) {
+        return jsonResponse(res, 503, { ok: false, reason: 'SQLite indisponible' });
+    }
+    try {
+        const q = (query.q || '').toString().trim();
+        const country = (query.country || '').toString().trim();
+        const bsdId = (query.bsd_id || '').toString().trim();
+        const limit = Math.min(500, Math.max(1, parseInt(query.limit, 10) || 100));
+        const offset = Math.max(0, parseInt(query.offset, 10) || 0);
+
+        let where = [], params = [];
+        if (bsdId && /^\d+$/.test(bsdId)) {
+            where.push('bsd_id = ?'); params.push(Number(bsdId));
+        } else if (q) {
+            const norm = _normalizeTeamName(q);
+            // Recherche sur name (LIKE) OU name_norm (exact/préfixe) — index idx_team_logos_norm
+            where.push('(name LIKE ? OR name_norm LIKE ?)');
+            params.push(`%${q}%`, `${norm}%`);
+        }
+        if (country) {
+            where.push('LOWER(country) = LOWER(?)'); params.push(country);
+        }
+        const whereSql = where.length ? ('WHERE ' + where.join(' AND ')) : '';
+
+        const total = sqldb.prepare(`SELECT COUNT(*) as c FROM team_logos ${whereSql}`).get(...params).c;
+        const rows = sqldb.prepare(
+            `SELECT bsd_id, name, short_name, country, logo_url, indexed_at
+             FROM team_logos ${whereSql}
+             ORDER BY name COLLATE NOCASE
+             LIMIT ? OFFSET ?`
+        ).all(...params, limit, offset);
+
+        return jsonResponse(res, 200, {
+            ok: true,
+            count: rows.length,
+            total,
+            limit,
+            offset,
+            results: rows,
+        });
+    } catch (e) {
+        return jsonResponse(res, 500, { ok: false, reason: e.message });
+    }
+}
+
+// -------------------------------------------------
 //  GET /api/v1/player — Fiche détaillée joueur via BSD (par id ou nom)
 // -------------------------------------------------
 if (pathname === '/api/v1/player') {
@@ -49539,6 +49624,10 @@ async function _bsdWsTryInjectMatch(eid) {
     });
     if (!synthetic) return;
     synthetic._bsd_event_id = Number(k);
+    // [FIX logos live] Propager les IDs équipes BSD (dispos dans /api/v2/events/{id}/)
+    // pour que le frontend affiche le logo via /img/team/{id}/. Cf. fix identique dans fetchBSDMatches.
+    synthetic.home_bsd_id = e.home_team_id || null;
+    synthetic.away_bsd_id = e.away_team_id || null;
     synthetic._bsd_live_injected = true;
     synthetic.live_score = score;
     synthetic.live_minute = e.minute ?? null;

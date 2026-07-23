@@ -1,0 +1,72 @@
+{
+  "realmadrid": {
+    "name": "Real Madrid",
+    "resfu_id": 2107,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/2107.jpg?size=120x&lossy=1"
+  },
+  "athletic": {
+    "name": "Athletic Club",
+    "resfu_id": 347,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/347.jpg?size=120x&lossy=1"
+  },
+  "legans": {
+    "name": "Leganés",
+    "resfu_id": 1535,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/1535.jpg?size=120x&lossy=1"
+  },
+  "sevilla": {
+    "name": "Sevilla",
+    "resfu_id": 1102,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/1102.jpg?size=120x&lossy=1"
+  },
+  "realoviedo": {
+    "name": "Real Oviedo",
+    "resfu_id": 2115,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/2115.jpg?size=120x&lossy=1"
+  },
+  "barcelona": {
+    "name": "FC Barcelona",
+    "resfu_id": 429,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/429.jpg?size=120x&lossy=1"
+  },
+  "espanyol": {
+    "name": "Espanyol",
+    "resfu_id": 998,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/998.jpg?size=120x&lossy=1"
+  },
+  "rcdeportivo": {
+    "name": "RC Deportivo",
+    "resfu_id": 901,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/901.jpg?size=120x&lossy=1"
+  },
+  "realbetis": {
+    "name": "Real Betis",
+    "resfu_id": 486,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/486.jpg?size=120x&lossy=1"
+  },
+  "realsociedad": {
+    "name": "Real Sociedad",
+    "resfu_id": 2120,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/2120.jpg?size=120x&lossy=1"
+  },
+  "ddumfries": {
+    "name": "D. Dumfries",
+    "resfu_id": 1381,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/1381.jpg?size=120x&lossy=1"
+  },
+  "ikonate": {
+    "name": "I. Konate",
+    "resfu_id": 3845,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/3845.jpg?size=120x&lossy=1"
+  },
+  "mcucurella": {
+    "name": "M. Cucurella",
+    "resfu_id": 752,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/752.jpg?size=120x&lossy=1"
+  },
+  "frangarca": {
+    "name": "Fran García",
+    "resfu_id": 486,
+    "url": "https://cdn.resfu.com/img_data/escudos/medium/486.jpg?size=120x&lossy=1"
+  }
+}
