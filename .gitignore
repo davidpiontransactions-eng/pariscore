@@ -169,4 +169,5 @@ docs/system-design-primer/
 # Graphify knowledge graph (généré, pas commit)
 # =============================================================================
 graphify-out/
+.graphify/
 plugin-error.log
