@@ -26,8 +26,10 @@ type BSDResponse = {
   player2?: { name: string; id?: string };
   tournament?: { name?: string; surface?: string };
   status?: string;
+  match_date?: string; // champ réel renvoyé par BSD tennis (/tennis/api/v2/matches/)
   start_time?: string;
   commence_time?: string;
+  round_name?: string;
   round?: string;
   odds?: Array<{ bookmaker: string; player1_odds: number; player2_odds: number }>;
 };
@@ -203,8 +205,12 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     tournament: tournamentName,
     tournamentCategory: resolveTournamentCategory(tournamentName),
     tournamentPriority: resolveTournamentPriority(tournamentName),
-    round: b.round ?? "Prematch",
-    scheduledAt: b.start_time ?? b.commence_time ?? new Date().toISOString(),
+    round: b.round_name ?? b.round ?? "Prematch",
+    // FIX bug "heure = maintenant" : BSD tennis renvoie `match_date` (pas start_time/commence_time).
+    // L'ancien code `?? new Date().toISOString()` écrasait l'heure manquante par "maintenant",
+    // affichant 00:01 (l'instant du rendu) sur tous les matchs. On privilégie match_date,
+    // et en dernier recours on laisse undefined plutôt que d'inventer une heure fausse.
+    scheduledAt: b.match_date ?? b.start_time ?? b.commence_time ?? "",
     playerA,
     playerB,
     probA: pred.probA,
