@@ -1,5 +1,5 @@
 {
-  "title": "PariScore — Sessions 10-11 (20-22 Juillet)",
+  "title": "PariScore — Sessions 10-13 (14-25 Juillet)",
   "tracks": [
     {
       "name": "🔴 P1 — Debug Boutons Tennis",
@@ -35,6 +35,29 @@
       "color": "#44bb44",
       "items": [
         { "label": "3.1-3.5 (fonts/glass/shadow/gradient/z-index)", "start": "2026-07-25", "end": "2026-07-28" }
+      ]
+    },
+    {
+      "name": "🟣 S12 — ParisScorebis-bhpw: Refactor composants tennis",
+      "color": "#9b59b6",
+      "items": [
+        { "label": "6 nouveaux composants (CountryFlag, SurfaceBadge, PlayerVsBlock, KpiCard, ConfidenceInterval, TournamentBadge)", "start": "2026-07-24", "end": "2026-07-25" },
+        { "label": "Intégration match-detail-dialog (-218/+147 lignes)", "start": "2026-07-25", "end": "2026-07-25" },
+        { "label": "Support: tennis-format.ts, i18n en/fr, pariscore.html CSS", "start": "2026-07-25", "end": "2026-07-25" },
+        { "label": "Commit + push + VPS deploy (d25a76b)", "start": "2026-07-25", "end": "2026-07-25" }
+      ]
+    },
+    {
+      "name": "🟢 S12 — Fix config OpenCode (systematic-debugging)",
+      "color": "#2ecc71",
+      "items": [
+        { "label": "Typecheck 32s→5.8s (tsBuildInfoFile + exclusion 92MB externes)", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "7 erreurs TS résolues (294→0, dont 287 projets externes)", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "Crash OpenCode: clé skill invalide → allowlist filesystem", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "Hooks Claude Code incompatibles désactivés", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "PRODUCT.md + DESIGN.md (setup Impeccable)", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "COMPONENTS.md registry (anti-boucle hallucinations)", "start": "2026-07-24", "end": "2026-07-24" },
+        { "label": "Tuning concision agent (anti-narration)", "start": "2026-07-25", "end": "2026-07-25" }
       ]
     }
   ]
