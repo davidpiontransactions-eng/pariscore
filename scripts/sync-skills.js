@@ -27,6 +27,34 @@ const AGENTS_TOOLS = path.join(PROJECT_ROOT, ".agents", "tools");
 const OPENCODE_SKILLS = path.join(PROJECT_ROOT, ".opencode", "skills");
 const OPENCODE_JSON = path.join(PROJECT_ROOT, ".opencode", "opencode.json");
 
+// ─── Garde-fou (2026-07-24) ───────────────────────────────────────────────────
+// OpenCode >= 1.18 valide strictement le schéma opencode.json et rejette la clé
+// `skill` ("Unrecognized key: skill" → refus de démarrer). L'allowlist se fait
+// désormais au niveau FILESYSTEM via .agents/tools-active/ (junctions curatées),
+// pas via une clé JSON. Ce script régénère l'ancienne clé `skill` → re-crash.
+// On bloque donc son exécution tant que le nouveau mécanisme est en place.
+const TOOLS_ACTIVE = path.join(PROJECT_ROOT, ".agents", "tools-active");
+const isJunctionToActive = () => {
+  try {
+    return fs.realpathSync(OPENCODE_SKILLS) === fs.realpathSync(TOOLS_ACTIVE);
+  } catch {
+    return false;
+  }
+};
+if (fs.existsSync(TOOLS_ACTIVE) && isJunctionToActive()) {
+  console.error(
+    "⚠️  sync-skills.js désactivé — mécanisme d'allowlist obsolète.\n" +
+      "    OpenCode >= 1.18 rejette la clé `skill` dans opencode.json (schéma strict).\n" +
+      "    L'allowlist se fait désormais via le filesystem :\n" +
+      "      .opencode/skills  →  junction  →  .agents/tools-active/  (47 skills curatés)\n" +
+      "    Pour ajouter un skill à OpenCode, créez une junction dans tools-active/ :\n" +
+      '      cmd //c "mklink /J ...\\.agents\\tools-active\\<nom> ...\\.agents\\tools\\<nom>"\n' +
+      "    Ne relancez PAS ce script — il recréerait la clé invalide."
+  );
+  process.exit(2);
+}
+// ─── Fin garde-fou ────────────────────────────────────────────────────────────
+
 /**
  * Liste les noms de skills (dossiers contenant un SKILL.md).
  * @param {string} skillsDir

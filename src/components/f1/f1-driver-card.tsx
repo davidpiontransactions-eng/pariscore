@@ -91,7 +91,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
                 src={driver.photo}
                 alt={driver.name}
                 className="h-14 w-14 rounded-full object-cover ring-2"
-                style={{ ringColor: teamColor + "40" }}
+                style={{ boxShadow: `0 0 0 2px ${teamColor}40` }}
               />
             ) : (
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-bold uppercase text-white/60">

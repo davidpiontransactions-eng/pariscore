@@ -8,6 +8,7 @@
     ],
     "allowJs": true,
     "skipLibCheck": true,
+    "types": ["bun-types"],
     "strict": true,
     "noEmit": true,
     "noImplicitAny": false,
@@ -18,6 +19,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "plugins": [
       {
         "name": "next"
@@ -43,6 +45,11 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    ".next/standalone",
+    "DeepSeek-Reasonix",
+    "pariscore-design-fix",
+    "frontend",
+    "mini-services"
   ]
 }

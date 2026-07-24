@@ -59,6 +59,42 @@ cp -rf source dest          # NOT: cp -r source dest
 - `apt-get` - use `-y` flag
 - `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
+**CRITICAL — Shell environment is Git Bash, NOT Windows CMD.**
+The `$SHELL` is `/bin/bash.exe` (Git Bash / MSYS2). Despite running on Windows,
+**you MUST use POSIX/Bash syntax, never CMD syntax.** Mixing them is the #1 cause
+of frozen commands and silent failures this session. When in doubt, `echo $SHELL`
+confirms it.
+
+**CMD→Bash command translation table** (use the RIGHT column, ALWAYS):
+
+| Operation | ❌ CMD (WRONG — freezes/fails) | ✅ Bash (CORRECT) |
+|-----------|------|------|
+| List files | `dir /b "path"` | `ls "path"` |
+| Redirect stderr to void | `2>nul` / `>nul` | `2>/dev/null` |
+| Redirect both to void | `>nul 2>&1` | `>/dev/null 2>&1` |
+| Test dir exists | `if exist "X" (...) else (...)` | `if [ -d "X" ]; then ...; fi` |
+| Test file exists | `if exist "X"` | `if [ -f "X" ]; then ...; fi` |
+| Set env var | `set FOO=bar` | `export FOO=bar` |
+| Read env var | `%FOO%` | `$FOO` |
+| Print | `echo "hi"` | `echo "hi"` (same — but no `@echo off`) |
+| Cat a file | `type file` | `cat file` |
+| Create symlink/junction | `mklink /J dst src` | `ln -s src dst` (or `cmd //c "mklink..."` if a true NTFS junction is required) |
+| Delete recursively | `rmdir /s /q X` | `rm -rf X` |
+| Find files | `dir /s /b *.ts` | `find . -name "*.ts"` or Glob tool |
+| String contains | `echo %X% \| find "y"` | `echo "$X" \| grep "y"` |
+| Path separator | `\` (backslash) | `/` (forward slash) — Bash accepts `/` everywhere |
+
+**Why this matters:** `dir` in Git Bash is GNU `/usr/bin/dir`, NOT the CMD
+`dir` — it ignores `/b` and silently does the wrong thing. `2>nul` creates a
+literal file named `nul` (a reserved Windows device name → can freeze the shell).
+`if exist` is not a Bash construct at all. **When you feel like writing a Windows
+command, stop and write its Bash equivalent from the table.**
+
+**Glob hygiene:** avoid `**/*` globs over `.next/` (890 MB, 7890 files — build
+output). Scope globs to real source dirs (`src/**`, `app/**`). `.next/` is in
+`.gitignore` and excluded from `tsconfig.json`, but raw globs may still traverse
+it — scope them explicitly.
+
 ## Project: PariScore
 
 **Next.js 16 + Bun + React 19 + Prisma.** Full-stack TypeScript app. Legacy vanilla JS code (`server.js`, `pariscore.html`) being migrated to Next.js.
@@ -101,6 +137,17 @@ bun run start      # Production server (bun .next/standalone/server.js)
 - `bun:sqlite` available if needed (3-6x faster than better-sqlite3, no native addon)
 - **CRITICAL**: `STRATEGIES` object must stay in sync between legacy server.js and new Next.js config
 
+**CRITICAL — Component names: consult [COMPONENTS.md](./COMPONENTS.md) FIRST.**
+The #1 cause of agent loops this codebase: inventing component names that don't
+exist (`player-vs-block`, `country-flag`, `surface-badge`…) and re-searching them.
+**Before referencing any component:**
+1. Check COMPONENTS.md — it lists all 135 real components by category.
+2. If the name is NOT there, it does NOT exist. Do **not** retry with name
+   variants, do **not** loop searching. Either use the real name from the file,
+   create the component explicitly, or ask the user.
+3. One `ls src/components/<category>/` confirms reality — don't repeat it.
+4. If you add/remove a component, update COMPONENTS.md in the same change.
+
 ### Quality & Testing
 - **TypeScript**: strict mode (`typescript: ^5`)
 - **Linter**: ESLint 9 (`eslint-config-next`)
@@ -118,39 +165,68 @@ Available locally — use via `skill` tool for guided workflows:
 
 ### Multi-plateforme ZCode ↔ OpenCode (sync des skills)
 
-Les deux agents partagent **une source unique de vérité** pour les skills :
+Les deux agents partagent **une source unique de vérité** pour les skills, mais
+avec un mécanisme d'allowlist différent par agent :
 
 ```
-.agents/tools/         ← source unique (145 skills, lue par ZCode)
+.agents/tools/          ← source unique (171 skills, lue intégralement par ZCode)
+.agents/tools-active/   ← allowlist stricte (47 skills) = junctions → .agents/tools/<skill>
         ↑
-.opencode/skills/      ← junction Windows → .agents/tools/ (lue par OpenCode)
+.opencode/skills/       ← junction Windows → .agents/tools-active/ (lue par OpenCode)
 ```
 
-> **Note (2026-07-17)** : le dossier source était `.agents/skills/` et a été
-> renommé en `.agents/tools/` (commit `51b7a8e`). La junction Windows a été
-> recréée vers la nouvelle cible et le script de sync porté en Node.js.
+> **Note (2026-07-24)** : OpenCode **ne supporte PAS de clé `skill` dans
+> `opencode.json`** (schéma strict — provoque `Unrecognized key: skill` au
+> démarrage). L'allowlist se fait donc au niveau **filesystem** :
+> `.agents/tools-active/` ne contient que les junctions vers les skills
+> réellement utilisés, et `.opencode/skills` pointe vers ce dossier curaté.
 
-- **Ajouter un skill** : le créer dans `.agents/tools/<nom>/SKILL.md`. Il devient
-  immédiatement visible des deux côtés via la junction.
-- **Synchroniser l'allowlist OpenCode** (étape nécessaire après ajout) :
+- **ZCode** lit TOUS les skills de `.agents/tools/` (171) — pas d'allowlist.
+- **OpenCode** ne découvre que ceux de `.agents/tools-active/` (47) via la junction.
+- **Ajouter un skill à OpenCode** :
+  1. Le skill doit exister dans `.agents/tools/<nom>/SKILL.md`.
+  2. Créer une junction dedans : `cmd //c "mklink /J C:\…\.agents\tools-active\<nom> C:\…\.agents\tools\<nom>"`
+- **Sur un nouveau poste** : recréer les junctions manquantes
   ```bash
-  node scripts/sync-skills.js                # met à jour opencode.json
-  node scripts/sync-skills.js --check        # vérifie seulement (exit 1 si désynchronisé)
-  node scripts/sync-skills.js --verify-junction  # vérifie que la junction est active
+  # junction principale (allowlist)
+  cmd //c "mklink /J C:\…\pariscore\.opencode\skills C:\…\pariscore\.agents\tools-active"
+  # + une junction par skill actif vers .agents/tools/<skill>
   ```
-  (`python scripts/sync-skills.py` reste supporté via un shim qui délègue à Node —
-  utile sur les postes qui ont Python, mais le runtime officiel est Bun/Node.)
-- **Sur un nouveau poste** : recréer la junction si manquante
-  ```bash
-  cmd //c "mklink /J C:\...\pariscore\.opencode\skills C:\...\pariscore\.agents\tools"
-  ```
-  Puis `node scripts/sync-skills.js`.
+
+> ⚠️ **NE PAS relancer `node scripts/sync-skills.js`** : il réécrit l'ancienne clé
+> `skill` invalide dans `opencode.json` et fait crasher OpenCode au démarrage.
+> Le mécanisme d'allowlist est désormais filesystem-based (cf. ci-dessus).
 
 ### Context & History
 - **`CLAUDE.md`** — full roadmap, version history, persona as "CTO & Lead Data Scientist"
 - **`CHANGELOG.md`** — detailed change log by version
 - **`render.yaml`** — Render.com Blueprint deploy config
 - **`.context/`** — audit reports, test reports, strategy docs
+
+### Localisation des ressources (anti-glob sauvage)
+
+**RÈGLE : NE JAMAIS lancer de glob `**/*` ou de recherche récursive en dehors du
+projet courant (`C:\Users\David\ZCodeProject\pariscore`).** Un glob `**/*` sur
+`~\Dev`, `~\Desktop` ou `C:\Users\David` peut se figer ou boucler sous Windows
+(fichiers système, `.lnk`, reparse points). Si une ressource n'est pas dans le
+projet, utilise un **chemin absolu ciblé** depuis la liste ci-dessous.
+
+Ce dépôt (`ZCodeProject/pariscore`) est la **source unique**. Les autres dossiers
+sont des références externes, pas à scanner :
+
+| Ressource | Chemin absolu | Nature |
+|-----------|---------------|--------|
+| **Projet courant** | `C:\Users\David\ZCodeProject\pariscore` | ICI seulement — cwd normal |
+| Planning Gantt | `C:\Users\David\pariscore-predict-planning` | README + `*.json`/`*.svg` (hors repo, 3 fichiers) |
+| Ancien frontend | `C:\Users\David\ZCodeProject\frontend` | Référence UI legacy |
+| Design fix | `C:\Users\David\ZCodeProject\pariscore-design-fix` | Référence design legacy |
+| Miroirs git | `C:\Users\David\ZCodeProject\pariscore-git`, `…\pariscore-github` | Clones git, pas la source |
+| Autre projet | `C:\Users\David\ZCodeProject\DeepSeek-Reasonix` | Projet indépendant (ignorer) |
+| Références | `C:\Users\David\ZCodeProject\refs` | Docs de référence externes |
+
+**Si tu as besoin d'un fichier `tennis*` ou `pariscore*`** : cherche d'abord dans
+le projet courant avec un glob **relatif** (ex. `src/**/*tennis*`), puis demande
+à l'utilisateur plutôt que de sonder `~\Dev` ou `~\Desktop`.
 
 ### Deployment
 VPS (ubuntu@51.75.21.239) with Bun + pm2. Legacy also on Render.com via `render.yaml`.
