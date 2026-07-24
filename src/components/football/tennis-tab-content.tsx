@@ -10,6 +10,7 @@ import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
+import { TennisSearchBar } from "@/components/tennis/tennis-search-bar";
 const MatchDetailDialog = lazy(() =>
   import("@/components/tennis/match-detail-dialog").then((m) => ({ default: m.MatchDetailDialog }))
 );
@@ -400,6 +401,11 @@ export function TennisTabContent() {
               <Info className="h-3.5 w-3.5" />
               <span>{t("today", { n: matchesWithLive.length })}</span>
             </div>
+          </div>
+
+          {/* Module de recherche joueurs + tournois — visible quel que soit le sous-onglet tennis */}
+          <div className="mt-4">
+            <TennisSearchBar />
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">

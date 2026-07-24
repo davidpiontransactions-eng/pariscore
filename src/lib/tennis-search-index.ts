@@ -6,7 +6,7 @@
  * Pays devinés depuis le nom de famille (à raffiner).
  */
 
-import type { PlayerResult } from "./tennis-Search-Types";
+import type { PlayerResult } from "./tennis-search-types";
 
 export const TOP_PLAYERS: PlayerResult[] = [
   {

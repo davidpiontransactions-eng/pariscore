@@ -125,7 +125,13 @@
     "subTabsAriaLabel": "Tennis sub-tabs",
     "noLiveMatches": "No live matches",
     "noTournaments": "No tournaments available",
-    "tournamentsLoadError": "Error loading tournaments: {error}"
+    "tournamentsLoadError": "Error loading tournaments: {error}",
+    "searchPlaceholder": "Search for a player or tournament…",
+    "searchHint": "Type at least 2 characters",
+    "searchPlayersTitle": "Players",
+    "searchTournamentsTitle": "Tournaments",
+    "searchNoResults": "No results",
+    "searchLoading": "Searching…"
   },
   "match": {
     "win": "WIN",

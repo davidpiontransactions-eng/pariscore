@@ -125,7 +125,13 @@
     "subTabsAriaLabel": "Sous-onglets tennis",
     "noLiveMatches": "Aucun match en direct",
     "noTournaments": "Aucun tournoi disponible",
-    "tournamentsLoadError": "Erreur lors du chargement des tournois : {error}"
+    "tournamentsLoadError": "Erreur lors du chargement des tournois : {error}",
+    "searchPlaceholder": "Rechercher un joueur ou un tournoi…",
+    "searchHint": "Saisir au moins 2 caractères",
+    "searchPlayersTitle": "Joueurs",
+    "searchTournamentsTitle": "Tournois",
+    "searchNoResults": "Aucun résultat",
+    "searchLoading": "Recherche…"
   },
   "match": {
     "win": "WIN",

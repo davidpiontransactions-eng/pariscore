@@ -6,8 +6,8 @@
  *   - src/app/api/tennis/tournaments/route.ts
  *   - src/lib/tennis-search-index.ts
  *   - src/lib/tennis-tournaments-index.ts
- *   - src/components/tennis/player-search-bar.tsx (à créer)
- *   - src/components/tennis/tournament-search-bar.tsx (à créer)
+ *   - src/components/tennis/tennis-search-bar.tsx (composant unifié joueurs + tournois)
+ *   - src/hooks/use-tennis-search.ts
  */
 
 /** Joueur pour autocomplétion. */
