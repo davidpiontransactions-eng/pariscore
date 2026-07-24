@@ -1590,8 +1590,21 @@
     border-radius: var(--radius-lg);
     transition: background 200ms ease-out;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
   }
   html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-player.is-p2 { text-align: right; }
+  html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-photo {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--cf-bg-alt, #1e2328);
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,.08);
+  }
   html.ps-mobile-v2 #ps-live-tennis-sheet .pslts-player[data-serving="true"]::before {
     content: '';
     position: absolute; inset: 2px;

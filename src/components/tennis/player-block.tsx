@@ -2,6 +2,7 @@
 
 import type { Player } from "@/lib/tennis-data";
 import { PlayerProfileHeader } from "./player-profile-header";
+import { formatPlayerName } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -59,7 +60,7 @@ export function PlayerBlock({
           )}
           title={player.name}
         >
-          {player.name}
+          {formatPlayerName(player.name)}
         </h3>
         {children}
       </div>

@@ -24,11 +24,16 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { Calendar, Trophy, Target, Scale, TrendingUp, Activity } from "lucide-react";
+import { Calendar, Trophy, Scale, TrendingUp, Activity, Target, Check, X } from "lucide-react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { OddsComparator } from "./odds-comparator";
 import { LastMatchesList } from "./last-matches-list";
-import { getInitials } from "./player-profile-header";
+import { KpiCard } from "./kpi-card";
+import { ConfidenceInterval } from "./confidence-interval";
+import { CountryFlag } from "./country-flag";
+import { SurfaceBadge } from "./surface-badge";
+import { TournamentBadge } from "./tournament-badge";
+import { PlayerVsBlock } from "./player-vs-block";
 import { useEloHistory } from "@/hooks/use-elo-history";
 import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
@@ -39,26 +44,39 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+function FormDot({ result }: { result: "W" | "L" }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold",
+        result === "W"
+          ? "bg-emerald-500/20 text-emerald-600"
+          : "bg-rose-500/20 text-rose-600",
+      )}
+    >
+      {result === "W" ? <Check className="h-2 w-2" /> : <X className="h-2 w-2" />}
+    </span>
+  );
+}
+
 export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("detail");
   const locale = useLocale();
-  // R5 : TZ navigateur (avant mount = UTC, déterministe SSR)
   const browserTz = useBrowserTimeZone();
-  // Hooks must run unconditionally (before any early return)
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
 
   if (!match) return null;
 
   const { playerA, playerB, probA, probB, stats, allOdds, h2hHistory } = match;
 
-  // Form data for charts (most recent last, oldest first for x-axis)
+  const [h2hWinsA, h2hWinsB] = stats.h2h.split("-").map(Number);
+
   const formData = playerA.form.map((res, i) => ({
     match: i + 1,
     [playerA.shortName]: res === "W" ? 1 : 0,
     [playerB.shortName]: playerB.form[i] === "W" ? 1 : 0,
   }));
 
-  // Elo progression — fetched from /api/tennis/elo-history (real computed history)
   const eloProgression = (eloHistoryData && match
     ? eloHistoryData.a.history.map((point, i) => {
         const bPoint = eloHistoryData.b.history[i];
@@ -71,7 +89,6 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
       })
     : []) as Array<Record<string, string | number>>;
 
-  // H2H stats by surface
   const h2hBySurface = (h2hHistory ?? []).reduce(
     (acc, h) => {
       if (!acc[h.surface]) acc[h.surface] = { a: 0, b: 0 };
@@ -88,16 +105,51 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     [playerB.shortName]: counts.b,
   }));
 
+  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] w-[95vw] max-w-3xl overflow-hidden p-0">
         <DialogHeader className="border-b border-border/60 px-5 py-4">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Trophy className="h-4 w-4 text-emerald-600" />
-            {playerA.name} vs {playerB.name}
+          <div className="flex items-center gap-2">
+            <TournamentBadge category={match.tournamentCategory} />
+            <SurfaceBadge surface={stats.surface} />
+            <span className="ml-auto rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+              {t("title")}
+            </span>
+          </div>
+
+          <DialogTitle className="mt-2 flex items-center justify-between gap-2 text-base">
+            <div className="flex flex-1 items-center gap-2">
+              <CountryFlag countryCode={playerA.country} size="lg" />
+              <span className="truncate font-bold">{playerA.shortName}</span>
+            </div>
+            <span className="shrink-0 text-xs font-semibold text-muted-foreground">VS</span>
+            <div className="flex flex-1 items-center justify-end gap-2">
+              <span className="truncate font-bold">{playerB.shortName}</span>
+              <CountryFlag countryCode={playerB.country} size="lg" />
+            </div>
           </DialogTitle>
-          <DialogDescription className="text-xs">
-            {t("subtitle", { tournament: match.tournament, round: match.round })}
+
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Trophy className="h-3 w-3" />
+              <span>{match.tournament}</span>
+              <span className="text-muted-foreground/50">·</span>
+              <span>{match.round}</span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
+              <span>#{playerA.rank} Elo {playerA.elo}</span>
+              <span className="text-muted-foreground/50">/</span>
+              <span>#{playerB.rank} Elo {playerB.elo}</span>
+            </div>
+          </div>
+
+          <DialogDescription className="text-[11px] text-muted-foreground/70">
+            Modèle : {match.model}
+            {match.modelUpdatedAt && (
+              <> · Mis à jour : {formatInTimeZone(match.modelUpdatedAt, locale, "full", browserTz)}</>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -111,146 +163,109 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                 <TabsTrigger value="odds" className="text-xs">{t("tabs.odds")}</TabsTrigger>
               </TabsList>
 
-              {/* Overview tab */}
-              <TabsContent value="overview" className="mt-4 space-y-3">
+              <TabsContent value="overview" className="mt-4 space-y-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <DetailStat
+                  <KpiCard
                     icon={<TrendingUp className="h-4 w-4" />}
                     label={t("model")}
                     value={match.model}
-                    hint={t("modelHint")}
+                    description={t("modelHint")}
                   />
-                  <DetailStat
-                    icon={<Target className="h-4 w-4" />}
+                  <KpiCard
+                    icon={<Activity className="h-4 w-4" />}
                     label={t("centralProb")}
-                    value={t("centralProbValue", { a: probA, b: probB })}
-                    hint={t("centralProbHint", { a: playerA.shortName, b: playerB.shortName })}
+                    value={
+                      <div className="flex items-baseline gap-2">
+                        <span style={{ color: playerA.color }}>{probA}%</span>
+                        <span className="text-sm font-semibold text-muted-foreground">/</span>
+                        <span style={{ color: playerB.color }}>{probB}%</span>
+                      </div>
+                    }
+                    description={
+                      <span>
+                        {t("centralProbHint", { a: playerA.shortName, b: playerB.shortName })}
+                      </span>
+                    }
+                    trend={probA > probB ? "up" : "down"}
                   />
-                  <DetailStat
+                  <KpiCard
                     icon={<Scale className="h-4 w-4" />}
                     label={t("eloGap")}
-                    value={t("eloGapValue", { n: stats.eloGap })}
-                    hint={t("eloGapHint", { surface: stats.surface })}
+                    value={
+                      <span className={stats.eloGap >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                        {stats.eloGap > 0 ? "+" : ""}{stats.eloGap}
+                      </span>
+                    }
+                    description={t("eloGapHint", { surface: stats.surface })}
                   />
-                  <DetailStat
-                    icon={<Activity className="h-4 w-4" />}
+                  <KpiCard
+                    icon={<Target className="h-4 w-4" />}
                     label={t("confidence")}
-                    value={t("confidenceValue", { n: (stats.confidence * 100).toFixed(0) })}
-                    hint={t("confidenceHint", { lo: stats.ic[0], hi: stats.ic[1] })}
+                    value={`${(stats.confidence * 100).toFixed(0)}%`}
+                    description={t("confidenceHint", { lo: stats.ic[0], hi: stats.ic[1] })}
+                    badge={`IC 95%`}
                   />
                 </div>
 
-                {/* Probability ring comparison */}
-                <div className="grid grid-cols-2 gap-4 rounded-lg border border-border/60 bg-muted/20 p-4">
-                  <div className="flex flex-col items-center gap-2">
-                    <PlayerAvatar
-                      src={playerA.photoUrl}
-                      name={playerA.name}
-                      color={playerA.color}
-                      initials={getInitials(playerA.name)}
-                    />
-                    <span className="text-sm font-semibold">{playerA.shortName}</span>
-                    <div className="w-full">
-                      <div className="flex justify-between text-[11px] text-muted-foreground">
-                        <span>{t("probLabel")}</span>
-                        <span className="font-mono font-bold text-foreground">{probA}%</span>
-                      </div>
-                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${probA}%`,
-                            background: playerA.color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <PlayerAvatar
-                      src={playerB.photoUrl}
-                      name={playerB.name}
-                      color={playerB.color}
-                      initials={getInitials(playerB.name)}
-                    />
-                    <span className="text-sm font-semibold">{playerB.shortName}</span>
-                    <div className="w-full">
-                      <div className="flex justify-between text-[11px] text-muted-foreground">
-                        <span>{t("probLabel")}</span>
-                        <span className="font-mono font-bold text-foreground">{probB}%</span>
-                      </div>
-                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${probB}%`,
-                            background: playerB.color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* StatsRadarChart — affiché si stats live disponibles, sinon masqué */}
-                {/* TODO: extraire les stats du hook useTennisLiveStats via un wrapper qui
-                    partage l'état avec LiveStatsPanel. Pour l'instant, le radar reste
-                    conditionnel à la disponibilité des données.
-                    Une fois les stats live accessibles ici :
-                    import { StatsRadarChart } from "./stats-radar-chart";
-                    {liveStats && (
-                      <div className="rounded-lg border border-border/60 p-4">
-                        <div className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                          <Target className="h-4 w-4 text-muted-foreground" />
-                          {t("playerComparison")}
-                        </div>
-                        <StatsRadarChart
-                          stats={liveStats}
-                          player1Name={playerA.name}
-                          player2Name={playerB.name}
-                          player1Color={playerA.color}
-                          player2Color={playerB.color}
-                        />
-                      </div>
-                    )}
-                    Astuce accessibilité : masquer avec un tooltip "Disponible pendant le match"
-                    quand liveStats est null plutôt que de ne rien afficher. */}
-
-                {/* IC visualization */}
-                <div className="rounded-lg border border-border/60 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                    <Target className="h-4 w-4 text-muted-foreground" />
-                    {t("icTitle", { player: playerA.shortName })}
-                  </div>
-                  <div className="relative h-8 rounded-full bg-muted">
-                    <div
-                      className="absolute inset-y-0 rounded-full border-2 border-emerald-500/60 bg-emerald-500/20"
-                      style={{
-                        left: `${stats.ic[0]}%`,
-                        right: `${100 - stats.ic[1]}%`,
-                      }}
-                    />
-                    <div
-                      className="absolute inset-y-0 w-0.5 bg-emerald-600"
-                      style={{ left: `${probA}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 flex justify-between text-[11px] font-mono text-muted-foreground">
-                    <span>0%</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      {t("icSummary", { lo: stats.ic[0], hi: stats.ic[1], med: probA })}
+                <PlayerVsBlock
+                  playerA={{
+                    name: playerA.name,
+                    shortName: playerA.shortName,
+                    color: playerA.color,
+                    photoUrl: playerA.photoUrl,
+                    country: playerA.country,
+                    rank: playerA.rank,
+                    elo: playerA.elo,
+                  }}
+                  playerB={{
+                    name: playerB.name,
+                    shortName: playerB.shortName,
+                    color: playerB.color,
+                    photoUrl: playerB.photoUrl,
+                    country: playerB.country,
+                    rank: playerB.rank,
+                    elo: playerB.elo,
+                  }}
+                  probA={probA}
+                  probB={probB}
+                  playerSlot={(p) => (
+                    <span className="text-[10px] text-muted-foreground">
+                      #{p.rank} · Elo {p.elo}
                     </span>
-                    <span>100%</span>
-                  </div>
-                </div>
+                  )}
+                />
+
+                <ConfidenceInterval
+                  playerA={{
+                    shortName: playerA.shortName,
+                    value: probA,
+                    ciLow: stats.ic[0],
+                    ciHigh: stats.ic[1],
+                    color: playerA.color,
+                  }}
+                  playerB={{
+                    shortName: playerB.shortName,
+                    value: probB,
+                    ciLow: 100 - stats.ic[1],
+                    ciHigh: 100 - stats.ic[0],
+                    color: playerB.color,
+                  }}
+                  label={t("icTitle")}
+                  interpretation={t("icInterpretation", {
+                    player: playerA.shortName,
+                    lo: stats.ic[0],
+                    hi: stats.ic[1],
+                    level: 95,
+                  })}
+                  variant="v2"
+                />
               </TabsContent>
 
-              {/* H2H tab */}
               <TabsContent value="h2h" className="mt-4 space-y-3">
                 <div className="grid grid-cols-3 gap-2">
                   <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-center">
                     <div className="text-2xl font-bold" style={{ color: playerA.color }}>
-                      {stats.h2h.split("-")[0]}
+                      {h2hWinsA}
                     </div>
                     <div className="text-[10px] uppercase text-muted-foreground">
                       {playerA.shortName}
@@ -266,7 +281,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   </div>
                   <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-center">
                     <div className="text-2xl font-bold" style={{ color: playerB.color }}>
-                      {stats.h2h.split("-")[1]}
+                      {h2hWinsB}
                     </div>
                     <div className="text-[10px] uppercase text-muted-foreground">
                       {playerB.shortName}
@@ -274,7 +289,6 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   </div>
                 </div>
 
-                {/* H2H by surface chart */}
                 {h2hSurfaceData.length > 0 && (
                   <div className="rounded-lg border border-border/60 p-3">
                     <div className="mb-2 text-xs font-semibold text-muted-foreground">
@@ -310,7 +324,6 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   </div>
                 )}
 
-                {/* H2H history table */}
                 {h2hHistory && h2hHistory.length > 0 && (
                   <div className="overflow-hidden rounded-lg border border-border/60">
                     <div className="bg-muted/40 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -359,7 +372,6 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                 )}
               </TabsContent>
 
-              {/* Form tab */}
               <TabsContent value="form" className="mt-4 space-y-3">
                 <div className="rounded-lg border border-border/60 p-3">
                   <div className="mb-2 text-xs font-semibold text-muted-foreground">
@@ -409,15 +421,8 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   </div>
                 </div>
 
-                {/* TODO (Phase 4.B): connecter à l'API quand elle existera.
-                    Pour l'instant, on affiche le LastMatchesList avec données vides
-                    pour valider le visuel. Remplacer par :
-                    const { data: lastMatches } = useLastMatches(player.id);
-                    <LastMatchesList matches={lastMatches ?? []} playerName={player.name} />
-                    Une fois connecté, supprimer la BarChart ci-dessus (redondante). */}
                 <LastMatchesList matches={[]} playerName={playerA.name} />
 
-                {/* Elo progression — real history from /api/tennis/elo-history */}
                 <div className="rounded-lg border border-border/60 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div className="text-xs font-semibold text-muted-foreground">
@@ -480,7 +485,6 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                 </div>
               </TabsContent>
 
-              {/* Odds tab */}
               <TabsContent value="odds" className="mt-4">
                 {allOdds && allOdds.length > 0 ? (
                   <OddsComparator
@@ -503,79 +507,4 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   );
 }
 
-function DetailStat({
-  icon,
-  label,
-  value,
-  hint,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  hint?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-wider">
-          {label}
-        </span>
-      </div>
-      <div className="mt-1 font-mono text-sm font-bold tabular-nums">{value}</div>
-      {hint && <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>}
-    </div>
-  );
-}
 
-// (Elo history is now fetched from /api/tennis/elo-history via useEloHistory hook)
-
-/**
- * PlayerAvatar — img with onError fallback to initials.
- *
- * Phase 4 fix: the previous <img> tags had no error handling, causing layout
- * shift + broken-image icons when photo URLs were unreachable. This wrapper
- * falls back to a coloured disc with the player's initials (same look as the
- * AvatarFallback in PlayerProfileHeader).
- *
- * Uses a native <img> rather than next/image because next.config.ts has no
- * images.remotePatterns configured for the player photo CDN. Adding the
- * remote pattern would risk breaking the standalone build — deferred.
- */
-function PlayerAvatar({
-  src,
-  name,
-  color,
-  initials,
-}: {
-  src?: string | null;
-  name: string;
-  color: string;
-  initials: string;
-}) {
-  return (
-    <div
-      className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full text-xs font-bold uppercase tracking-wider text-muted-foreground ring-2 ring-offset-2 ring-offset-background"
-      style={{
-        "--tw-ring-color": color,
-        backgroundColor: `${color}15`,
-      } as React.CSSProperties}
-    >
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={name}
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 h-full w-full object-cover"
-          onError={(e) => {
-            // Hide the broken img — the initials underneath show through.
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
-      ) : null}
-      <span aria-hidden={src ? "true" : "false"}>{initials}</span>
-    </div>
-  );
-}

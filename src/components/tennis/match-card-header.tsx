@@ -34,11 +34,18 @@ export function MatchCardHeader({
   const t = useTranslations("match");
   const tTime = useTranslations("time");
   const locale = useLocale();
-  // R5 hotfix : heure formatée dans la TZ du navigateur (pas UTC serveur).
-  const formattedDateTime = useFormattedMatchTime(
+  // R5 hotfix : date et heure formatées dans la TZ du navigateur.
+  // Séparées en 2 formats distincts pour afficher l'horaire (ex: 14:30)
+  // obligatoirement dans la section date.
+  const formattedDate = useFormattedMatchTime(
     match.scheduledAt,
     locale,
-    "full",
+    "date",
+  );
+  const formattedTime = useFormattedMatchTime(
+    match.scheduledAt,
+    locale,
+    "time",
   );
 
   return (
@@ -58,10 +65,12 @@ export function MatchCardHeader({
           <span className="shrink-0">{match.round}</span>
         </div>
 
-        {/* Date/heure précise du match — R5 : TZ navigateur dynamique */}
+        {/* Date + heure précise du match — TZ navigateur dynamique */}
         <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground/70">
-          <Calendar className="h-3 w-3" />
-          <span>{formattedDateTime}</span>
+          <Calendar className="h-3 w-3 shrink-0" />
+          <span className="whitespace-nowrap">{formattedDate}</span>
+          <Clock className="h-3 w-3 shrink-0" />
+          <span className="whitespace-nowrap font-semibold text-foreground/60">{formattedTime}</span>
         </div>
       </div>
 

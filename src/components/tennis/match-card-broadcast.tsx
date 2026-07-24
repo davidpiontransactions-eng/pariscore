@@ -42,7 +42,7 @@ import { MatchCardDetail } from "./match-card-detail";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
 import { fmtSPS } from "@/lib/tennis-stats/sps-utils";
 import { resolveTournamentTheme } from "@/lib/tournament-theme";
-import { useFormattedMatchTime } from "@/lib/tennis-format";
+import { useFormattedMatchTime, formatPlayerName } from "@/lib/tennis-format";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { cn } from "@/lib/utils";
 
@@ -132,8 +132,11 @@ export function MatchCardBroadcast({
     ? liveState.scoreA.games + liveState.scoreB.games + 1
     : 1;
 
-  // Heure formatée en TZ navigateur (R5 hotfix).
-  const formattedDateTime = useFormattedMatchTime(match.scheduledAt, "fr", "full");
+  // Date et heure formatées en TZ navigateur (R5 hotfix).
+  // Séparées pour que l'horaire (ex: 14:30) soit clairement visible
+  // dans la section date de l'overlay top.
+  const formattedDate = useFormattedMatchTime(match.scheduledAt, "fr", "date");
+  const formattedTime = useFormattedMatchTime(match.scheduledAt, "fr", "time");
 
   // Track view once per mount.
   useEffect(() => {
@@ -231,11 +234,13 @@ export function MatchCardBroadcast({
             compact). Permet une lecture broadcast TV claire : le tournoi est
             l'identité visuelle forte du match, il mérite le centre. */}
         <div className="relative flex items-start justify-between gap-2 px-4 py-3 sm:px-6">
-          {/* Gauche : date/heure uniquement */}
+          {/* Gauche : date + heure */}
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
             <div className="flex items-center gap-1.5 text-[10px] font-medium text-white/60">
               <Calendar className="h-3 w-3 shrink-0" />
-              <span className="truncate">{formattedDateTime}</span>
+              <span className="whitespace-nowrap">{formattedDate}</span>
+              <Clock className="h-3 w-3 shrink-0" />
+              <span className="whitespace-nowrap font-semibold text-white/80">{formattedTime}</span>
             </div>
           </div>
 
@@ -634,12 +639,12 @@ function BroadcastPlayerColumn({
         priority={priority}
       />
 
-      {/* Nom du joueur (gros) */}
+      {/* Nom du joueur (gros) — formaté P. NOM */}
       <h3
         className="max-w-full truncate text-sm font-bold leading-tight text-white sm:text-base"
         title={player.name}
       >
-        {player.name}
+        {formatPlayerName(player.name)}
       </h3>
 
       {/* Colonne métriques 4 lignes (R7 review : white/60 minimum pour AA strict) */}

@@ -16,9 +16,6 @@ reference them.** The real equivalent (if any) is in the right column.
 
 | ❌ Invented name (DOES NOT EXIST) | ✅ Real name (or "create it") |
 |-----------------------------------|-------------------------------|
-| `player-vs-block` | `player-block` (singular) |
-| `country-flag` | _(none — create it if needed)_ |
-| `surface-badge` | _(none — surface shown inline in `match-card-header`)_ |
 | `match-header` | `match-card-header` |
 | `score-card` | `match-card` or `match-card-detail` |
 | `live-card` | `football-live-card` / `match-card-broadcast` |
@@ -31,18 +28,19 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 40 components
+## Tennis (`src/components/tennis/`) — 44 components
 
 | Component | File | Role |
 |-----------|------|------|
 | backtest-badge | backtest-badge.tsx | Badge indiquant qu'un backtest existe |
 | best-odd-badge | best-odd-badge.tsx | Meilleure cote trouvée pour un joueur |
 | break-points-grid | break-points-grid.tsx | Matrice visuelle des balles de break |
-| confidence-interval | confidence-interval.tsx | Intervalle de confiance de la prédiction |
+| confidence-interval | confidence-interval.tsx | Intervalle de confiance (dual-track V2) |
+| country-flag | country-flag.tsx | Drapeau du pays par code ISO |
 | current-game-score | current-game-score.tsx | Score du jeu en cours (0/15/30/40/Av.) |
 | featured-matches-marquee | featured-matches-marquee.tsx | Bandeau défilant des matchs à la une |
 | form-dots | form-dots.tsx | Forme récente en points colorés (● W / ○ L) |
-| kpi-card | kpi-card.tsx | Carte KPI générique |
+| kpi-card | kpi-card.tsx | Carte KPI générique (3-zone) |
 | last-matches-list | last-matches-list.tsx | Derniers matchs d'un joueur |
 | live-score-announcer | live-score-announcer.tsx | Annonce score pour lecteur d'écran (a11y) |
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
@@ -58,6 +56,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | player-profile-header | player-profile-header.tsx | En-tête profil joueur ("A. Rublev") |
 | player-profile-view | player-profile-view.tsx | Vue profil `/tennis/player/[slug]` |
 | player-statline | player-statline.tsx | Ligne de stats compacte sous le nom |
+| player-vs-block | player-vs-block.tsx | Layout duel VS avec avatars, drapeaux, barre prob |
 | point-timeline | point-timeline.tsx | Timeline horizontale des points joués |
 | probability-bar | probability-bar.tsx | Barre de probabilité (décomposition) |
 | probability-ring | probability-ring.tsx | Anneau de probabilité (SVG) |
@@ -70,8 +69,10 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | stat-chip | stat-chip.tsx | Chip de stat compact |
 | stats-indicators-grid | stats-indicators-grid.tsx | Grille hiérarchique des indicateurs match |
 | stats-radar-chart | stats-radar-chart.tsx | Radar chart des stats (6 axes) |
+| surface-badge | surface-badge.tsx | Badge surface (Dur/Terre battue/Gazon) |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |
 | tennis-sub-tabs | tennis-sub-tabs.tsx | Sous-onglets tennis |
+| tournament-badge | tournament-badge.tsx | Badge catégorie tournoi (GS/M1000/500) |
 | tournament-view | tournament-view.tsx | Vue `/tennis/tournament/[slug]` |
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |

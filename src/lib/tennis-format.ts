@@ -147,6 +147,42 @@ export function useFormattedMatchTime(
 }
 
 /**
+ * Formate un nom de joueur en "P. NOM" — initiale du prénom + nom en majuscules.
+ *
+ * Règles :
+ *  - Extrait le premier token comme prénom → initiale + "."
+ *  - Extrait le dernier token comme nom de famille → mis en uppercase
+ *  - Si un seul token, retourne le tout en uppercase
+ *  - Gère les diacritiques (normalise NFD avant d'extraire l'initiale)
+ *
+ * @example
+ *   formatPlayerName("Carlos Alcaraz")    // "C. ALCARAZ"
+ *   formatPlayerName("Carlos ALCARAZ")    // "C. ALCARAZ"
+ *   formatPlayerName("Jannik Sinner")     // "J. SINNER"
+ *   formatPlayerName("Naomi Osaka")       // "N. OSAKA"
+ *   formatPlayerName("Björn")             // "BJÖRN"
+ *   formatPlayerName("")                  // ""
+ */
+export function formatPlayerName(fullName: string): string {
+  const trimmed = fullName.trim();
+  if (!trimmed) return "";
+
+  const parts = trimmed.split(/\s+/);
+  if (parts.length === 1) return parts[0].toUpperCase();
+
+  // Initiale du prénom (premier token) : strip diacritiques + uppercase
+  const initial = parts[0]
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")[0]
+    ?.toUpperCase() ?? "?";
+
+  // Nom de famille (dernier token) : uppercase intégral
+  const lastName = parts[parts.length - 1].toUpperCase();
+
+  return `${initial}. ${lastName}`;
+}
+
+/**
  * Hook minimal renvoyant la timezone du navigateur après mount.
  * Renvoie "UTC" avant mount (déterministe SSR) pour éviter l'hydration mismatch.
  * À utiliser quand on formatte plusieurs dates avec un options custom
