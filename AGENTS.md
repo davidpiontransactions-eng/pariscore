@@ -2,6 +2,11 @@
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
+**Communication style: announce once, act silently, summarize at the end.**
+Do NOT narrate each step (*"Let me check…"*, *"Now I'll…"*, *"The X returned Y, so…"*).
+State intent in one short line, run your tool calls, then give a tight result summary.
+Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructions/communication.md).
+
 ## Session: XSS onclick template literals (2026-07-05)
 
 **Scope**: ParisScorebis-bhpw — 20 unescaped `${}` interpolations inside `onclick="..."` in template literals in `pariscore.js`. Single-quote injection could break JS context and redirect to phishing.
