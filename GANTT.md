@@ -1,9 +1,110 @@
 # PariScore — Gantt de remédiation & dispatch agents
 
-> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-20 (Session 10 — Skills Tier 1 installés + bug sync-skills fixé)
+> **Date** : 2026-07-06 (init) · **MAJ** : 2026-07-24 (Session 12 — Module de recherche tennis P8 UI + VPS deploy)
 > **Auteur** : Chef de projet
-> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟢 **Session 9 (2026-07-19)** : 10 commits poussés (`ed7e6ad`..`bc2805f`), VPS déployé + nginx patché, 5/6 alertes résolues (SPS ✅, boutons ✅, deception synthetic ✅, nginx ✅, hot loop killed ✅) · 🆕 **Session 10 (2026-07-20)** : 10 skills Tier 1 frontend installés (tufte-data-viz, web-quality-*, design-review…), bug `sync-skills.js` path corrigé, awesome-design-md (74 DESIGN.md marques), ui-ux-pro-max-cli npm global
+> **Statut** : ✅ **Phase 1 EXÉCUTÉE** (4 CRITICAL éliminés) · ✅ **DS-Unify Phase 2 complète** (2.1-2.7) · ✅ **DS-Unify Phase 3.1 complète (Purge fonts 9→3)** · ✅ **DS-Unify Phase 3.2 complète (Glassmorphism 100→17 occ.)** · ✅ **DS-Unify Phase 3.3 complète (Shadow system 14 remplacements)** · ✅ **DS-Unify Phase 3.4 complète (Gradient dedup 38 remplacements, 11 vars)** · ✅ **DS-Unify Phase 3.5 complète (z-index 70 remplacements, 6 vars)** · 🟢 **Session 9 (2026-07-19)** : 10 commits poussés (`ed7e6ad`..`bc2805f`), VPS déployé + nginx patché, 5/6 alertes résolues · 🆕 **Session 10 (2026-07-20)** : 10 skills Tier 1 frontend installés, bug `sync-skills.js` fixé · 🆕 **Session 11 (2026-07-22)** : Tennisabstract Elo scraper (1087 joueurs) + WINP_K 4→10 + VPS deploy + cron + GANTT · 🆕 **Session 12 (2026-07-24)** : Search bar tennis joueurs+tournois (P8 UI) + fix bug casse import + VPS deploy + graphify
 > **Livrables visuels** : `GANTT_pariscore.png` (Gantt visuel) · `PLANNING_PARISCORE.xlsx` (planning suivi 6 sheets) · `gantt-refonte-tennis.json` (sprint refonte tennis 20-30/07)
+
+---
+
+## 0quin. Session 12 — Module de recherche tennis P8 UI + VPS deploy (2026-07-24)
+
+> **Objectif** : intégrer le module de recherche joueurs + tournois dans l'onglet Tennis.
+> L'infrastructure backend P8 (types, données hardcodées 93 ATP/WTA + 62 tournois,
+> API `/api/tennis/search`, pages destinations `/tennis/{player,tournament}/[slug]`)
+> était **100% prête mais 0% intégrée** dans l'UI.
+> Solution : hook SWR + composant combobox shadcn (Popover + Command) dans le Hero.
+
+### 12.1 Nouveaux fichiers
+
+| Fichier | Rôle | Lignes |
+|---|---|---|
+| `src/hooks/use-tennis-search.ts` | Hook SWR + debounce 300ms, clé conditionnelle null si query < 2 chars, dégradation gracieuse | 78 |
+| `src/components/tennis/tennis-search-bar.tsx` | Combobox shadcn unifié (Popover+Command), `shouldFilter={false}`, 2 CommandGroup (Joueurs/Tournois), nav vers `/tennis/{player,tournament}/[slug]` | 270 |
+
+### 12.2 Modifications clés
+
+- **`src/components/football/tennis-tab-content.tsx`** : `<TennisSearchBar />` inséré dans le Hero (visible sur tous les sous-onglets tennis)
+- **`src/lib/tennis-search-index.ts`** : fix bug casse import `"./tennis-Search-Types"` → `"./tennis-search-types"` (aurait cassé build Linux/CI)
+- **`src/lib/tennis-search-types.ts`** : MAJ en-tête (composant unifié + hook)
+- **`src/messages/{fr,en}.json`** : 6 clés i18n `search*` (section `tennis`)
+
+### 12.3 Déploiement VPS
+
+| Étape | Statut |
+|---|---|
+| git push (`d0ed684`) | ✅ |
+| git pull + stash runtime | ✅ |
+| `bun run build` (exit 0, 29 routes) | ✅ |
+| pm2 restart `pariscore-next` (id 2, port 3005) | ✅ |
+| pm2 save (persist reboot) | ✅ |
+| Validation prod `pariscore.fr/api/tennis/search?q=alcaraz` | ✅ Carlos Alcaraz |
+| Home HTTP 200 · 0.35s | ✅ |
+
+### 12.4 Commit
+
+```
+d0ed684 feat(tennis): search bar joueurs + tournois dans le Hero (P8 UI)
+  7 files changed, 361 insertions(+), 5 deletions(-)
+```
+
+### 12.5 Décisions
+
+- **Emplacement** : Hero de l'onglet Tennis (visible Live/Aujourd'hui/Tournois) — choix utilisateur après clarification « à l'onglet tennis »
+- **Granularité** : vue unifiée (1 composant) plutôt que 2 séparés — `type=all` en un fetch
+- **Bug casse** : corrigé en passant (aurait cassé CI Linux/Docker)
+
+---
+
+## 0quat. Session 11 — Tennisabstract Elo scraper + WINP_K + VPS deploy (2026-07-22)
+
+> **Objectif** : résoudre les prédictions tennis plates 49-51% sur le site Next.js.
+> Root cause : tables Elo vides dans `pariscore.db` + cache incomplet (6 stars).
+> Solution : scraper tennisabstract.com (1087 joueurs ATP+WTA) + intégration dans
+> `bsd-fetcher.ts` comme source Elo #1. Fix legacy WINP_K 4.0→10.0.
+
+### 11.1 Tennisabstract Elo scraper (nouveau module)
+
+| Fichier | Rôle | Lignes |
+|---|---|---|
+| `src/lib/tennis-elo/scraper.ts` | Parse HTML tennisabstract → cache JSON (regex pure, 17 colonnes, Elo+hElo/cElo/gElo) | 113 |
+| `src/lib/tennis-elo/lookup.ts` | Fuzzy lookup (exact → surname → substring), reload disque 60s | 124 |
+| `src/lib/tennis-elo/abstract-cache.json` | Cache généré : **544 ATP + 543 WTA = 1087 joueurs** (166 KB) | — |
+| `scripts/scrape-tennis-elo.ts` | CLI entry point (`bun run scrape:elo`) | 41 |
+| `scripts/cron-setup.sh` | Installation cron hebdo (lundi 3:00 UTC) | 30 |
+
+### 11.2 Modifications clés
+
+- **`src/lib/bsd-fetcher.ts`** : source Elo primaire = tennisabstract > DB > elo-data.json > 1500
+- **Nettoyage** : tous les `as any` remplacés par des variables typées propres
+- **Build** : cache copié dans `.next/standalone/` pour la prod standalone
+- **`package.json`** : scripts `scrape:elo` + `scrape:elo:dry` ajoutés
+
+### 11.3 WINP_K legacy fix (3 fichiers)
+
+WINP_K 4.0 → 10.0 dans `pariscore.js`, `pariscore.app.js`, `vps/pariscore.js` :
+```diff
+- const WINP_K = 4.0;
++ const WINP_K = 10.0;
+```
+
+### 11.4 Déploiement VPS
+
+| Étape | Statut |
+|---|---|
+| git push (`eb70d64`) | ✅ |
+| git pull + bun run build (18.3s, 0 erreur) | ✅ |
+| pm2 restart pariscore (pid 1981206) | ✅ |
+| Scraper exécuté sur VPS (1087 joueurs OK) | ✅ |
+| Cron installé (lundi 3:00 UTC) | ✅ |
+| Validation prod prédictions (Elo > 1500 attendu) | ⏳ |
+
+### 11.5 Commit
+
+```
+eb70d64 feat: tennisabstract Elo scraper (1087 joueurs ATP+WTA) + WINP_K 4.0->10.0
+  10 files changed, 12308 insertions(+), 13 deletions(-)
+```
 
 ---
 
