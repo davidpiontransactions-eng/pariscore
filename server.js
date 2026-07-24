@@ -46692,8 +46692,31 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
   if (cached?.text) {
     console.log(`  [DeepStream] HIT cache — ${match.home_team} vs ${match.away_team}`);
     const cacheStats = match.stats || {};
-    const cacheMeta = (cacheStats.isReal ? 40 : 0) + (match.odds?.home ? 30 : 0) + (match.home_form ? 20 : 0) + ((match.expectedGoals?.home) ? 10 : 0);
-    try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence: cacheMeta, dataQuality: cacheStats.isReal ? 'RÉELLES' : 'ESTIMÉES' })}\n\n`); } catch { }
+    const cacheP = match.poisson || {};
+    const cacheXg = match.expectedGoals || {};
+    const cacheOdds = match.odds || {};
+    const cacheConfidence = (cacheStats.isReal ? 40 : 0) + (cacheOdds.home ? 30 : 0) + (match.home_form ? 20 : 0) + (cacheXg.home ? 10 : 0);
+    // I4 — divergences marché (same computation as non-cache path)
+    const cacheDivergences = [];
+    const cacheTotalOdds = (cacheOdds.home && cacheOdds.draw && cacheOdds.away) ? (1 / cacheOdds.home + 1 / cacheOdds.draw + 1 / cacheOdds.away) : 0;
+    if (cacheTotalOdds > 0) {
+      const impliedHome = (1 / cacheOdds.home) / cacheTotalOdds * 100;
+      const impliedDraw = (1 / cacheOdds.draw) / cacheTotalOdds * 100;
+      const impliedAway = (1 / cacheOdds.away) / cacheTotalOdds * 100;
+      [[`${match.home_team} victoire`, cacheP.homeWin, impliedHome], ['Nul', cacheP.draw, impliedDraw], [`${match.away_team} victoire`, cacheP.awayWin, impliedAway]].forEach(([label, poisson, implied]) => {
+        if (poisson != null && implied != null) {
+          const gap = Math.round(poisson - implied);
+          if (Math.abs(gap) >= 12) cacheDivergences.push({ label, poisson: Math.round(poisson), implied: Math.round(implied), gap });
+        }
+      });
+    }
+    // I5 — EV% par issue
+    const cacheEv1x2 = cacheTotalOdds > 0 ? {
+      home: cacheP.homeWin != null ? +((cacheP.homeWin / 100 * cacheOdds.home - 1) * 100).toFixed(1) : null,
+      draw: cacheP.draw != null ? +((cacheP.draw / 100 * cacheOdds.draw - 1) * 100).toFixed(1) : null,
+      away: cacheP.awayWin != null ? +((cacheP.awayWin / 100 * cacheOdds.away - 1) * 100).toFixed(1) : null,
+    } : null;
+    try { res.write(`event: meta\ndata: ${JSON.stringify({ confidence: cacheConfidence, dataQuality: cacheStats.isReal ? 'RÉELLES' : 'ESTIMÉES', divergences: cacheDivergences, lambda: cacheXg, ev1x2: cacheEv1x2, poisson: { homeWin: cacheP.homeWin, draw: cacheP.draw, awayWin: cacheP.awayWin, over25: cacheP.over25, btts: cacheP.btts }, odds: cacheOdds })}\n\n`); } catch { }
     // Stream depuis cache en gros chunks (≈0.2s au lieu de 3.5s)
     const words = cached.text.split(' ');
     const CHUNK_SIZE = 80;

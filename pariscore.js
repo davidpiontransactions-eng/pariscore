@@ -27277,7 +27277,7 @@ function renderDeepAnalysis(text) {
     console.log('[AI-AL] Section "REVUE DE PRESSE" détectée dans le texte brut ✓');
   }
   // Chirurgical emoji strip — remove any emoji the AI slipped through
-  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FEFF}\u{20D0}-\u{20FF}]/gu, '').trim();
+  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FEFF}\u{20D0}-\u{20FF}\u{200D}\u{25AA}-\u{25FE}\u{2702}-\u{27B0}\u{24C2}\u{2934}-\u{2935}\u{2B05}-\u{2B55}\u{3030}\u{303D}\u{3297}-\u{3299}\u{E0020}-\u{E007F}]/gu, '').trim();
   text = text.replace(/##[^\n]*SCRIPT TELEGRAM[\s\S]*?(?=\n##|\n\[DIRECTIVES|$)/i, '').trim();
 
   // ── Split code blocks out first ──────────────────────────────────────────
@@ -27325,10 +27325,10 @@ function renderDeepAnalysis(text) {
       if (!line) { flushPara(); continue; }
 
       // ── Press item DETECTION PRIORITAIRE (section 5) — avant section header
-      // Tolère "1. **Média** : "Citation"", "1. *Média*: Citation", "1. **Média** — citation", quotes droites/courbes
+      // Tolère "1. **Média** : \"Citation\"", "1. *Média*: Citation", "1. **Média** — citation", "1. **Media** : Citation.", quotes droites/courbes, guillemets, point avant/après fermeture
       if (currentSection === 5) {
         const pressStripped = line.replace(/^[-•\*]\s*/, '');
-        const pressM = pressStripped.match(/^\d+\s*[\.\)]\s*[\*_]{0,2}\s*([^*_\n:—–-]{2,80}?)\s*[\*_]{0,2}\s*[:：—–-]\s*[«"'""''`]?\s*(.+?)\s*[»"'""''`]?\.?\s*$/);
+        const pressM = pressStripped.match(/^\d+\s*[\.\)]\s*(?:\*{1,2})?\s*(.{2,50}?)\s*(?:\*{1,2})?\s*[:：—–-]+\s*(?:[«"'""''`])?\s*(.+?)\s*(?:[»"'""''`]|\.(?:\s|$))?\s*$/);
         if (pressM) {
           flushPara();
           const media = pressM[1].trim().replace(/^[\*_]+|[\*_]+$/g, '');
@@ -27366,7 +27366,7 @@ function renderDeepAnalysis(text) {
           // Section 5 = REVUE DE PRESSE — header customisé avec icône presse
           html += `<div class="dp-section-hdr">
             <span class="dp-section-num">${num}</span>
-            <span class="dp-section-title">📰 Revue de presse — Avis médias</span>
+            <span class="dp-section-title">Revue de presse — Avis médias</span>
           </div>`;
         } else {
           html += `<div class="dp-section-hdr">
@@ -27440,6 +27440,16 @@ function renderDeepAnalysis(text) {
           } else {
             html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(stripped))}</div></div>`;
           }
+          continue;
+        }
+
+        // ── Mise Kelly line in section 4 (render as monospace badge) ──────
+        const kellyM = line.match(/^Mise\s+Kelly\s*:\s*(.+)/i);
+        if (kellyM) {
+          flushPara();
+          const kellyVal = kellyM[1].trim();
+          const isNoValue = /pas\s+de\s+valeur/i.test(kellyVal);
+          html += `<div class="dp-kelly-row"><span class="dp-kelly-label">Kelly</span><span class="dp-kelly-val ${isNoValue ? 'no-value' : ''}">${dpEsc(kellyVal)}</span></div>`;
           continue;
         }
       }
