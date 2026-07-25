@@ -31,11 +31,23 @@ export function SetScoreline({ scoreA, scoreB, className }: Props) {
     b: scoreB.sets[i] ?? 0,
   }));
 
+  // FIX doublon score (2026-07-25) : garde-fou défensif. Si le dernier set de
+  // `sets[]` a exactement le même score que `games` (le set en cours), c'est
+  // que le set en cours a fuité dans sets[] côté source — on l'exclut pour ne
+  // pas l'afficher deux fois (une fois en gris "passé", une fois en vert
+  // "en cours"). Cas observé en prod sur Kasatkina-Bolkvadze pendant les
+  // transitions de set.
   const hasCurrentGames = scoreA.games > 0 || scoreB.games > 0;
+  const dedupedPastSets =
+    hasCurrentGames && pastSets.length > 0
+      ? pastSets.filter((s, i) =>
+          !(i === pastSets.length - 1 && s.a === scoreA.games && s.b === scoreB.games),
+        )
+      : pastSets;
 
   // Human-readable description for screen readers — spelled out set by set,
   // with the in-progress set framed as "X jeux à Y dans le set en cours".
-  const pastSetsSpoken = pastSets.map((s) => `${s.a}-${s.b}`).join(", ");
+  const pastSetsSpoken = dedupedPastSets.map((s) => `${s.a}-${s.b}`).join(", ");
   const ariaScore = hasCurrentGames
     ? pastSetsSpoken
       ? t("scoreAriaWithCurrent", {
@@ -58,7 +70,7 @@ export function SetScoreline({ scoreA, scoreB, className }: Props) {
       aria-label={t("scoreAria", { score: ariaScore })}
       role="img"
     >
-      {pastSets.map((s, i) => (
+      {dedupedPastSets.map((s, i) => (
         <span
           key={i}
           className="text-muted-foreground"
@@ -75,7 +87,7 @@ export function SetScoreline({ scoreA, scoreB, className }: Props) {
 
       {/* Edge case: no sets played and current games still 0-0 (e.g. pre-match
           warmup). Show a neutral 0-0 so the slot keeps its layout slot. */}
-      {!hasCurrentGames && pastSets.length === 0 && (
+      {!hasCurrentGames && dedupedPastSets.length === 0 && (
         <span className="text-muted-foreground">0-0</span>
       )}
     </span>

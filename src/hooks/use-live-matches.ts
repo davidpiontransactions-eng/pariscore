@@ -121,8 +121,19 @@ export function useLiveMatches(): UseLiveMatchesResult {
           if (!m.isLive) continue;
 
           // Build per-set game-score arrays from setsDetail
-          const setsA: number[] = m.setsDetail.map((s) => s.p1);
-          const setsB: number[] = m.setsDetail.map((s) => s.p2);
+          // BSD inclut le set en cours dans setsDetail — on ne garde que les sets
+          // COMPLÉTÉS via m.currentSet (0-indexed = nombre de sets finis) pour
+          // éviter un double affichage dans SetScoreline.
+          //
+          // FIX doublon score (2026-07-25) : BSD peut renvoyer un currentSet
+          // décalé pendant les transitions de set (ex: currentSet=2 alors qu'on
+          // joue le 2e set), ce qui fait fuiter le set en cours dans sets[] et
+          // le ré-afficher en gris en plus du vert de `games`. On borne donc
+          // completedCount : au maximum setsDetail.length - 1 (toujours exclure
+          // le dernier set de setsDetail, qui est le set en cours chez BSD).
+          const completedCount = Math.min(m.currentSet, m.setsDetail.length - 1);
+          const setsA: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p1);
+          const setsB: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p2);
 
           map[m.id] = {
             matchId: m.id,
