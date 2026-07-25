@@ -641,5 +641,15 @@
     "overTooltip": "Over {threshold} games : {prob}% de probabilité (modèle Barnett-Clarke + Poisson)",
     "fallbackHint": "Estimation (stats serve indisponibles, fallback Elo)",
     "lambdaLive": "λ restant : {lambda}"
+  },
+  "mostAces": {
+    "title": "Most aces",
+    "over": "Over",
+    "under": "Under",
+    "tie": "Égal",
+    "reco": "Reco",
+    "overTooltip": "Over {threshold} aces : {prob}% de probabilité (modèle Poisson-Skellam)",
+    "fallbackHint": "Estimation (stats aces indisponibles, fallback surface)",
+    "lambdaTotal": "λ total : {n}"
   }
 }

@@ -34,6 +34,7 @@ import { ServerIndicator } from "./server-indicator";
 import { QuickAddRing } from "./quick-add-ring";
 import { ProbabilityBar } from "./probability-bar";
 import { PredictiveBets } from "./predictive-bets";
+import { MostAcesCompare } from "./most-aces-compare";
 import { MomentumDR } from "./momentum-dr";
 import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
@@ -427,6 +428,30 @@ export function MatchCardBroadcast({
             statsB?.servePtsWonPct != null
               ? {
                   servePtsWonPct: statsB.servePtsWonPct,
+                  returnPtsWonPct: statsB.returnPtsWonPct ?? null,
+                }
+              : null
+          }
+          className="mt-2"
+        />
+
+        <MostAcesCompare
+          match={match}
+          liveState={isLive ? liveState : undefined}
+          serveStatsA={
+            statsA?.servePtsWonPct != null || statsA?.acesPct != null
+              ? {
+                  acesPct: statsA.acesPct ?? null,
+                  servePtsWonPct: statsA.servePtsWonPct ?? null,
+                  returnPtsWonPct: statsA.returnPtsWonPct ?? null,
+                }
+              : null
+          }
+          serveStatsB={
+            statsB?.servePtsWonPct != null || statsB?.acesPct != null
+              ? {
+                  acesPct: statsB.acesPct ?? null,
+                  servePtsWonPct: statsB.servePtsWonPct ?? null,
                   returnPtsWonPct: statsB.returnPtsWonPct ?? null,
                 }
               : null

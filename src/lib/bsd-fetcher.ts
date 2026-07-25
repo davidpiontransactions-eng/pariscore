@@ -4,6 +4,7 @@
 import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats, H2HMatch } from "@/lib/tennis-data";
 import { predict, type PlayerInputs, type MatchOutcome } from "@/lib/prediction/engine";
 import { predictTotalGames, type PredictionSurface } from "@/lib/prediction/total-games";
+import { predictMostAces, type AcesStats } from "@/lib/prediction/most-aces";
 import { findPlayerElo } from "@/lib/player-matcher";
 import { lookupAbstractElo } from "@/lib/tennis-elo/lookup";
 import { lookupServeStats } from "@/lib/tennis-dr/lookup";
@@ -174,6 +175,19 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     eloB,
   );
 
+  // Prédiction Most Aces (Poisson-Skellam). Réutilise les mêmes serveStats.
+  const acesA: AcesStats = {
+    acesPct: serveA.acesPct,
+    servePtsWonPct: serveA.servePtsWonPct,
+    returnPtsWonPct: serveA.returnPtsWonPct,
+  };
+  const acesB: AcesStats = {
+    acesPct: serveB.acesPct,
+    servePtsWonPct: serveB.servePtsWonPct,
+    returnPtsWonPct: serveB.returnPtsWonPct,
+  };
+  const maPred = predictMostAces(acesA, acesB, modelSurface, bestOf);
+
   const colorA = generateColor(nameA);
   const colorB = generateColor(nameB);
 
@@ -259,6 +273,20 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
       lambda: tgPred.lambda,
       recommendedBet: tgPred.recommendedBet,
       source: tgPred.source,
+    },
+    mostAcesPredictions: {
+      probAMoreAces: maPred.probAMoreAces,
+      probBMoreAces: maPred.probBMoreAces,
+      probTie: maPred.probTie,
+      probAWinsMarket: maPred.probAWinsMarket,
+      lambdaA: maPred.lambdaA,
+      lambdaB: maPred.lambdaB,
+      lambdaTotal: maPred.lambdaTotal,
+      over9_5: maPred.over9_5,
+      over12_5: maPred.over12_5,
+      over15_5: maPred.over15_5,
+      recommendedBet: maPred.recommendedBet,
+      source: maPred.source,
     },
   };
 }

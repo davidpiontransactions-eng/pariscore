@@ -42,6 +42,11 @@ export type PlayerStats = {
   /** #9 — % de points gagnés au retour. Heuristique (≈0.36 moyenne tour) faute
    *  de données adverses détaillées. null = indisponible. */
   returnPtsWonPct?: number | null;
+  /** #10 — % d'aces [0..100], médiane 10 derniers matchs surface. Alimente le
+   *  modèle Most Aces (src/lib/prediction/most-aces.ts). null = indisponible. */
+  acesPct?: number | null;
+  /** #11 — % de double fautes [0..100], médiane 10 derniers matchs surface. */
+  dfPct?: number | null;
 };
 
 /** Map indexé par nom normalisé de joueur. */

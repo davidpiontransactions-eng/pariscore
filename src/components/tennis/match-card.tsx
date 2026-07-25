@@ -5,6 +5,7 @@ import { ChevronDown, AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProbabilityBar } from "./probability-bar";
 import { PredictiveBets } from "./predictive-bets";
+import { MostAcesCompare } from "./most-aces-compare";
 import { FormDots } from "./form-dots";
 import { PlayerStatline } from "./player-statline";
 import { StatsIndicatorsGrid } from "./stats-indicators-grid";
@@ -489,6 +490,34 @@ export function MatchCard({
                 : null
             }
             className="mt-4"
+          />
+        )}
+
+        {/* Most Aces — comparaison A vs B (Poisson-Skellam) + Over/Under total.
+            Même pattern que PredictiveBets (prematch + live via liveState). */}
+        {!isSynthetic && (
+          <MostAcesCompare
+            match={match}
+            liveState={isLive ? liveState : undefined}
+            serveStatsA={
+              statsA?.servePtsWonPct != null || statsA?.acesPct != null
+                ? {
+                    acesPct: statsA.acesPct ?? null,
+                    servePtsWonPct: statsA.servePtsWonPct ?? null,
+                    returnPtsWonPct: statsA.returnPtsWonPct ?? null,
+                  }
+                : null
+            }
+            serveStatsB={
+              statsB?.servePtsWonPct != null || statsB?.acesPct != null
+                ? {
+                    acesPct: statsB.acesPct ?? null,
+                    servePtsWonPct: statsB.servePtsWonPct ?? null,
+                    returnPtsWonPct: statsB.returnPtsWonPct ?? null,
+                  }
+                : null
+            }
+            className="mt-2"
           />
         )}
 

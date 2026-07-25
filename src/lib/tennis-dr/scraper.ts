@@ -133,11 +133,13 @@ type ParsedRow = {
   date: string;
   surface: string; // "Hard" | "Clay" | "Grass" (TennisAbstract labels)
   dr: number | null; // null si cellule vide (match sans PBP)
-  // Stats de service (indices 11-13 du tableau TennisAbstract) — alimentent le
-  // modèle Over/Under Games (src/lib/prediction/total-games.ts). Null si absentes.
-  firstIn: number | null; // % premières balles (0-100)
-  firstWon: number | null; // % points gagnés sur 1re balle (0-100)
-  secondWon: number | null; // % points gagnés sur 2e balle (0-100)
+  // Stats de service (indices 9-13 du tableau TennisAbstract) — alimentent les
+  // modèles Over/Under Games + Most Aces (src/lib/prediction/). Null si absentes.
+  acesPct: number | null; // % d'aces (colonne A%, idx 9) [0..100]
+  dfPct: number | null; // % de double fautes (colonne DF%, idx 10) [0..100]
+  firstIn: number | null; // % premières balles (1stIn, idx 11) [0..100]
+  firstWon: number | null; // % points gagnés sur 1re balle (1st%, idx 12) [0..100]
+  secondWon: number | null; // % points gagnés sur 2e balle (2nd%, idx 13) [0..100]
 };
 
 /**
@@ -158,11 +160,17 @@ export function computeServePtsWonPct(
   return p1in * p1won + (1 - p1in) * p2won;
 }
 
-/** Stats de service agrégées par surface (médiane sur les 5 derniers matchs). */
+/** Stats de service agrégées par surface.
+ *  - servePtsWonPct/returnPtsWonPct : médiane sur les 5 derniers matchs (modèle games).
+ *  - acesPct/dfPct : médiane sur les 10 derniers matchs (modèle most aces, spec). */
 export type ServeStatsBucket = {
   /** Fraction de points gagnés au service [0..1], médiane 5 derniers matchs. */
   servePtsWonPct: number | null;
-  /** Nombre de matchs pris en compte. */
+  /** % d'aces [0..100], médiane 10 derniers matchs surface. Alimente Most Aces. */
+  acesPct: number | null;
+  /** % de double fautes [0..100], médiane 10 derniers matchs surface. */
+  dfPct: number | null;
+  /** Nombre de matchs pris en compte (le min des 2 fenêtres). */
   n: number;
 };
 
@@ -212,14 +220,16 @@ export function parseRecentResults(jsBody: string): ParsedRow[] {
     const drRaw = stripHtml(cells[8]); // "1.24" | "" si absent
     const dr = drRaw ? extractNumeric(cells[8]) : null;
 
-    // Stats de service (colonnes 11-13 : 1stIn, 1st%, 2nd%). Null si absentes
-    // (matchs sans PBP ou colonnes vides).
+    // Stats de service (colonnes 9-13 : A%, DF%, 1stIn, 1st%, 2nd%). Null si
+    // absentes (matchs sans PBP ou colonnes vides).
     const pctOrNull = (cell: string): number | null => {
       const raw = stripHtml(cell);
       if (!raw || !/^\d/.test(raw)) return null;
       const v = extractNumeric(cell);
       return v > 0 ? v : null;
     };
+    const acesPct = cells[9] ? pctOrNull(cells[9]) : null;
+    const dfPct = cells[10] ? pctOrNull(cells[10]) : null;
     const firstIn = cells[11] ? pctOrNull(cells[11]) : null;
     const firstWon = cells[12] ? pctOrNull(cells[12]) : null;
     const secondWon = cells[13] ? pctOrNull(cells[13]) : null;
@@ -228,6 +238,8 @@ export function parseRecentResults(jsBody: string): ParsedRow[] {
       date,
       surface,
       dr: dr && dr > 0 ? dr : null,
+      acesPct,
+      dfPct,
       firstIn,
       firstWon,
       secondWon,
@@ -266,6 +278,8 @@ export function aggregatePlayerDr(
     date: string;
     surface: string;
     dr: number;
+    acesPct: number | null;
+    dfPct: number | null;
     firstIn: number | null;
     firstWon: number | null;
     secondWon: number | null;
@@ -276,15 +290,36 @@ export function aggregatePlayerDr(
   const bySurface = (s: DrSurface) =>
     valid.filter((r) => r.surface === s).map((r) => r.dr);
 
-  // Stats de service agrégées par surface : médiane du servePtsWonPct calculé
-  // par match (formule computeServePtsWonPct), sur les 5 derniers matchs.
+  // Stats de service agrégées par surface :
+  //   - servePtsWonPct : médiane sur 5 derniers matchs (modèle games).
+  //   - acesPct/dfPct : médiane sur 10 derniers matchs (modèle most aces, spec).
   const buildServeBucket = (subset: typeof valid): ServeStatsBucket => {
+    // servePtsWonPct (fenêtre 5).
     const pcts = subset
       .map((r) => computeServePtsWonPct(r.firstIn, r.firstWon, r.secondWon))
       .filter((p): p is number => p != null)
-      .slice(0, 5); // 5 derniers matchs (déjà trié DESC)
-    if (pcts.length === 0) return { servePtsWonPct: null, n: 0 };
-    return { servePtsWonPct: computeMedian(pcts), n: pcts.length };
+      .slice(0, 5);
+    const servePtsWonPct = pcts.length > 0 ? computeMedian(pcts) : null;
+
+    // acesPct / dfPct (fenêtre 10, spécification Most Aces).
+    const aces = subset
+      .map((r) => r.acesPct)
+      .filter((p): p is number => p != null)
+      .slice(0, 10);
+    const dfs = subset
+      .map((r) => r.dfPct)
+      .filter((p): p is number => p != null)
+      .slice(0, 10);
+
+    if (servePtsWonPct == null && aces.length === 0) {
+      return { servePtsWonPct: null, acesPct: null, dfPct: null, n: 0 };
+    }
+    return {
+      servePtsWonPct,
+      acesPct: aces.length > 0 ? computeMedian(aces) : null,
+      dfPct: dfs.length > 0 ? computeMedian(dfs) : null,
+      n: Math.max(pcts.length, aces.length),
+    };
   };
 
   const serveStats = {

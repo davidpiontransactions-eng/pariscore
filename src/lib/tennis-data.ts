@@ -105,6 +105,29 @@ export type TennisMatch = {
     };
     source: "stats" | "elo-fallback" | "surface-fallback";
   };
+  /**
+   * Prédictions Most Aces (modèle Poisson-Skellam, src/lib/prediction/most-aces.ts).
+   * Comparaison A vs B + Over/Under aces totaux. Optionnel.
+   */
+  mostAcesPredictions?: {
+    probAMoreAces: number; // P(A > B) [0..100]
+    probBMoreAces: number; // P(B > A)
+    probTie: number; // P(A = B)
+    probAWinsMarket: number; // P(A gagne marché, tie réparti)
+    lambdaA: number; // E[aces A]
+    lambdaB: number; // E[aces B]
+    lambdaTotal: number; // E[aces total]
+    over9_5: number; // P(Over 9.5 aces total)
+    over12_5: number; // P(Over 12.5)
+    over15_5: number; // P(Over 15.5)
+    recommendedBet: {
+      market: "matchup" | "total";
+      direction: string; // "A" | "B" | "over" | "under"
+      prob: number;
+      threshold?: number;
+    };
+    source: "stats" | "surface-fallback";
+  };
 };
 
 export type BookmakerOdd = {

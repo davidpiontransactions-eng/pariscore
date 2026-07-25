@@ -281,10 +281,12 @@ export function getPlayerStats(
   // lookupDrMoyen retourne null si joueur absent du cache ; on ignore alors.
   const drMoyen5m = dbSurface ? lookupDrMoyen(name, dbSurface) : null;
 
-  // 5. Stats de service (modèle Over/Under Games). lookupServeStats renvoie
-  //    { servePtsWonPct, returnPtsWonPct } depuis le même cache DR étendu.
-  const serveStats =
-    dbSurface ? lookupServeStats(name, dbSurface) : { servePtsWonPct: null, returnPtsWonPct: null };
+  // 5. Stats de service (modèles Over/Under Games + Most Aces). lookupServeStats
+  //    renvoie { servePtsWonPct, returnPtsWonPct, acesPct, dfPct } depuis le
+  //    cache DR étendu (médianes 5 et 10 derniers matchs surface).
+  const serveStats = dbSurface
+    ? lookupServeStats(name, dbSurface)
+    : { servePtsWonPct: null, returnPtsWonPct: null, acesPct: null, dfPct: null };
 
   // Si on n'a absolument rien (joueur absent), on retourne null pour que
   // l'UI affiche le fallback `—` plutôt que des champs tous nuls.
@@ -309,6 +311,8 @@ export function getPlayerStats(
     drMoyen5m,
     servePtsWonPct: serveStats.servePtsWonPct,
     returnPtsWonPct: serveStats.returnPtsWonPct,
+    acesPct: serveStats.acesPct,
+    dfPct: serveStats.dfPct,
   };
 }
 
