@@ -627,6 +627,8 @@ function BroadcastPlayerColumn({
   const circuitLabel = stats?.atpRank != null ? "ATP" : stats?.wtaRank != null ? "WTA" : null;
   const sps = stats?.sps ?? null;
   const spsRank = stats?.spsRank ?? null;
+  // DR Moyen (5M) — médiane TennisAbstract filtrée surface (cache JSON).
+  const drMoyen5m = stats?.drMoyen5m ?? null;
 
   return (
     <div className="flex min-w-0 flex-col items-center gap-2 text-center sm:gap-3">
@@ -666,7 +668,15 @@ function BroadcastPlayerColumn({
         ) : (
           <span className="text-white/60">SPS {EM_DASH}</span>
         )}
-        {/* Ligne 4 : Forme (dots) */}
+        {/* Ligne 4 : DR Moyen (5M) — médiane TennisAbstract filtrée surface. */}
+        {drMoyen5m != null ? (
+          <span className="text-white/80" title="DR Moyen (5M) — médiane TennisAbstract (surface)">
+            DR {drMoyen5m.toFixed(2)}
+          </span>
+        ) : (
+          <span className="text-white/60">DR {EM_DASH}</span>
+        )}
+        {/* Ligne 5 : Forme (dots) */}
         {!isSynthetic && (
           <FormDots
             form={player.form}
