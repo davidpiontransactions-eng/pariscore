@@ -30,6 +30,11 @@ export type PlayerStats = {
   /** Bonus UX — nombre de matchs pris en compte pour le SPS.
    *  Source: player_surface_scores.matches_played. */
   spsMatches: number | null;
+  /** #7 — Dominance Ratio médian sur les 5 derniers matchs (filtré surface).
+   *  Source: tennisabstract /jsfrags/ via dr-cache.json (cron nocturne,
+   *  flag LEGAL_OVERRIDE_CONFIRMED). Fallback tous-surfaces si <3 matchs sur
+   *  la surface demandée. null = indisponible (joueur absent du cache). */
+  drMoyen5m?: number | null;
 };
 
 /** Map indexé par nom normalisé de joueur. */

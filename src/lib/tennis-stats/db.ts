@@ -19,6 +19,7 @@ import type {
   UISurface,
   DBSurface,
 } from "./types";
+import { lookupDrMoyen } from "@/lib/tennis-dr/lookup";
 
 // better-sqlite3 est un module natif CJS — import dynamique pour ne pas
 // casser le bundler Next.js en dev et éviter de le charger côté client.
@@ -276,6 +277,10 @@ export function getPlayerStats(
     }
   }
 
+  // 4. DR Moyen (5M) — médiane TennisAbstract filtrée surface (cache JSON).
+  // lookupDrMoyen retourne null si joueur absent du cache ; on ignore alors.
+  const drMoyen5m = dbSurface ? lookupDrMoyen(name, dbSurface) : null;
+
   // Si on n'a absolument rien (joueur absent), on retourne null pour que
   // l'UI affiche le fallback `—` plutôt que des champs tous nuls.
   if (
@@ -296,6 +301,7 @@ export function getPlayerStats(
     spsRank,
     spsConfidence,
     spsMatches,
+    drMoyen5m,
   };
 }
 

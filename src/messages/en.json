@@ -629,6 +629,8 @@
     "surfaceDetails": "Surface stats details",
     "confidence": "Confidence {pct}% · {n} matches",
     "sparklineAria": "30-day Elo trend {name}",
-    "spsRankInline": "SPS rank on this surface: #{rank}"
+    "spsRankInline": "SPS rank on this surface: #{rank}",
+    "drMoyen5m": "DR Avg (5M)",
+    "drMoyen5mTooltip": "Median Dominance Ratio over the last 5 matches (surface-filtered, source TennisAbstract)"
   }
 }

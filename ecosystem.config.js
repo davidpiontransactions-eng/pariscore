@@ -194,5 +194,29 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
+    {
+      // === Cron job DR Moyen (5M) — TennisAbstract /jsfrags/ scraper ===
+      // Scrape le Dominance Ratio des 5 derniers matchs (filtré surface) de
+      // chaque joueur top-200 ATP+WTA, peuple src/lib/tennis-dr/dr-cache.json.
+      // Sans ce cron, le token "DR x.xx" reste masqué dans premierCard (cache vide).
+      // ⚠️ /jsfrags/ est disallow par robots.txt TennisAbstract — le scraper
+      // exige LEGAL_OVERRIDE_CONFIRMED=1. Throttle 1 req/1.5s.
+      name: 'pariscore-cron-dr',
+      script: 'scripts/cron-tennis-dr.sh',
+      interpreter: 'bash',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 4 * * *', // quotidien à 04:00 UTC (DR évolue match-par-match)
+      autorestart: false,        // cron-only
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        LEGAL_OVERRIDE_CONFIRMED: '1', // bypass du garde-fou (assumé par l'opérateur)
+      },
+      error_file: 'logs/cron-dr.err.log',
+      out_file: 'logs/cron-dr.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
   ],
 };

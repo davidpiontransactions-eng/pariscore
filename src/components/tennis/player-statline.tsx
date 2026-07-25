@@ -150,6 +150,23 @@ export function PlayerStatline({
           </span>
         </>
       )}
+      {/* DR Moyen (5M) — médiane TennisAbstract des 5 derniers matchs,
+          filtrée par surface du match (fallback tous-surfaces si <3 matchs).
+          Source externe (cache JSON peuplé par cron) — peut être null tant
+          que le cache n'est pas généré ; le token est alors masqué. */}
+      {stats?.drMoyen5m != null && (
+        <>
+          <span className="text-border" aria-hidden>
+            ·
+          </span>
+          <span
+            className="tabular-nums"
+            title={t("drMoyen5mTooltip")}
+          >
+            DR {stats.drMoyen5m.toFixed(2)}
+          </span>
+        </>
+      )}
       {/* Indicateur tooltip + sparkline */}
       {hasSurfaceDetail && (
         <Tooltip>
@@ -179,6 +196,15 @@ export function PlayerStatline({
                 label="SPS"
                 value={fmtSPS(sps)}
                 rank={spsRank != null ? `#${spsRank}` : null}
+              />
+              <SurfaceMetric
+                label={t("drMoyen5m")}
+                value={
+                  stats?.drMoyen5m != null
+                    ? stats.drMoyen5m.toFixed(2)
+                    : EM_DASH
+                }
+                rank={null}
               />
               {spsMatches != null && (
                 <p className="pt-0.5 text-muted-foreground">
