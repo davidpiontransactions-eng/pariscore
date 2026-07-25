@@ -185,3 +185,6 @@ plugin-error.log
 # =============================================================================
 .agents/tools-active/
 .opencode/skills
+
+# Binaire OpenCode (165MB, dépasse limite GitHub)
+/opencode.exe

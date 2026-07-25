@@ -3,11 +3,20 @@
 
 import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats, H2HMatch } from "@/lib/tennis-data";
 import { predict, type PlayerInputs, type MatchOutcome } from "@/lib/prediction/engine";
+import { predictTotalGames, type PredictionSurface } from "@/lib/prediction/total-games";
 import { findPlayerElo } from "@/lib/player-matcher";
 import { lookupAbstractElo } from "@/lib/tennis-elo/lookup";
+import { lookupServeStats } from "@/lib/tennis-dr/lookup";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
 import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
+
+/** Mappe la surface UI (français) → surface du modèle total-games (anglais DB). */
+function toModelSurface(s: Surface): PredictionSurface {
+  if (s === "Gazon") return "Grass";
+  if (s === "Terre battue") return "Clay";
+  return "Hard";
+}
 
 /** Tournois à exclure (UTR Pro, exhibitions) */
 const EXCLUDED_TOURNAMENTS = [/utr/i, /exhibition/i, /expo/i, /hopman/i, /laver\s*cup/i];
@@ -141,6 +150,30 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
 
   const pred = predict(playerAInputs, playerBInputs);
 
+  // R5 hotfix : résolution catégorie + priorité tournoi pour le tri par prestige
+  const tournamentName = b.tournament?.name ?? "Tennis";
+
+  // Prédiction Over/Under Total Games (modèle Barnett-Clarke + Poisson).
+  // Stats serve/return depuis le cache DR étendu (TennisAbstract). Si absent,
+  // le moteur fallback sur l'Elo. Détecte le format best-of via la catégorie
+  // tournoi (Grand Slam ATP = best-of-5, sinon best-of-3).
+  const modelSurface = toModelSurface(surface);
+  const serveA = lookupServeStats(nameA, modelSurface);
+  const serveB = lookupServeStats(nameB, modelSurface);
+  // Les Grand Chelem ATP sont les seuls tournois réguliers en best-of-5.
+  // Sans signal de genre (men/women) fiable dans la prematch BSD response, on
+  // reste conservateur : best-of-3 partout (le marché Over 21.5 vise le BO3).
+  // À affiner si BSD expose le genre (tour/discipline) à l'avenir.
+  const bestOf: 3 | 5 = 3;
+  const tgPred = predictTotalGames(
+    serveA,
+    serveB,
+    modelSurface,
+    bestOf,
+    eloA,
+    eloB,
+  );
+
   const colorA = generateColor(nameA);
   const colorB = generateColor(nameB);
 
@@ -197,9 +230,6 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     confidence: pred.confidence,
   };
 
-  // R5 hotfix : résolution catégorie + priorité tournoi pour le tri par prestige
-  const tournamentName = b.tournament?.name ?? "Tennis";
-
   return {
     id: `bsd-${b.id ?? index}`,
     tournament: tournamentName,
@@ -222,6 +252,14 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     odds: allOdds[0]
       ? { bookmaker: allOdds[0].bookmaker, decimalA: allOdds[0].decimalA, decimalB: allOdds[0].decimalB }
       : undefined,
+    totalGamesPredictions: {
+      over18_5: tgPred.over18_5,
+      over19_5: tgPred.over19_5,
+      over21_5: tgPred.over21_5,
+      lambda: tgPred.lambda,
+      recommendedBet: tgPred.recommendedBet,
+      source: tgPred.source,
+    },
   };
 }
 

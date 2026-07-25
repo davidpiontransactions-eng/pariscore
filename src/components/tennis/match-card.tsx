@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ProbabilityBar } from "./probability-bar";
+import { PredictiveBets } from "./predictive-bets";
 import { FormDots } from "./form-dots";
 import { PlayerStatline } from "./player-statline";
 import { StatsIndicatorsGrid } from "./stats-indicators-grid";
@@ -462,6 +463,17 @@ export function MatchCard({
               shortNameB={playerB.shortName}
             />
           </div>
+        )}
+
+        {/* Paris prédictifs Over/Under Games (Barnett-Clarke + Poisson).
+            Prematch : depuis match.totalGamesPredictions (calcul bsd-fetcher).
+            Live : recalculé à chaque poll via liveState (λ restant). */}
+        {!isSynthetic && (
+          <PredictiveBets
+            match={match}
+            liveState={isLive ? liveState : undefined}
+            className="mt-4"
+          />
         )}
 
         {/* Momentum DR — real-time EWMA-based dominance ratio */}

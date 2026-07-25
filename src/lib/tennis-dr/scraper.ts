@@ -42,6 +42,15 @@ export type DrPlayerEntry = {
   Hard: DrBucket;
   Clay: DrBucket;
   Grass: DrBucket;
+  /** Stats de service par surface — alimentent le modèle Over/Under Games
+   *  (src/lib/prediction/total-games.ts). Absent pour les joueurs sans match
+   *  avec PBP sur la surface. */
+  serveStats?: {
+    all: ServeStatsBucket;
+    Hard: ServeStatsBucket;
+    Clay: ServeStatsBucket;
+    Grass: ServeStatsBucket;
+  };
 };
 
 export type DrCache = {
@@ -124,6 +133,37 @@ type ParsedRow = {
   date: string;
   surface: string; // "Hard" | "Clay" | "Grass" (TennisAbstract labels)
   dr: number | null; // null si cellule vide (match sans PBP)
+  // Stats de service (indices 11-13 du tableau TennisAbstract) — alimentent le
+  // modèle Over/Under Games (src/lib/prediction/total-games.ts). Null si absentes.
+  firstIn: number | null; // % premières balles (0-100)
+  firstWon: number | null; // % points gagnés sur 1re balle (0-100)
+  secondWon: number | null; // % points gagnés sur 2e balle (0-100)
+};
+
+/**
+ * Calcule le % global de points gagnés au service depuis les 3 stats de service.
+ * Formule : servePtsWon% = 1st%×1stIn + 2nd%×(1−1stIn), tout en fraction [0..1].
+ * Retourne null si l'une des 3 stats manque.
+ */
+export function computeServePtsWonPct(
+  firstIn: number | null,
+  firstWon: number | null,
+  secondWon: number | null,
+): number | null {
+  if (firstIn == null || firstWon == null || secondWon == null) return null;
+  // Les colonnes TennisAbstract sont en % (ex: 64.0), on convertit en fraction.
+  const p1in = firstIn / 100;
+  const p1won = firstWon / 100;
+  const p2won = secondWon / 100;
+  return p1in * p1won + (1 - p1in) * p2won;
+}
+
+/** Stats de service agrégées par surface (médiane sur les 5 derniers matchs). */
+export type ServeStatsBucket = {
+  /** Fraction de points gagnés au service [0..1], médiane 5 derniers matchs. */
+  servePtsWonPct: number | null;
+  /** Nombre de matchs pris en compte. */
+  n: number;
 };
 
 /**
@@ -172,7 +212,26 @@ export function parseRecentResults(jsBody: string): ParsedRow[] {
     const drRaw = stripHtml(cells[8]); // "1.24" | "" si absent
     const dr = drRaw ? extractNumeric(cells[8]) : null;
 
-    rows.push({ date, surface, dr: dr && dr > 0 ? dr : null });
+    // Stats de service (colonnes 11-13 : 1stIn, 1st%, 2nd%). Null si absentes
+    // (matchs sans PBP ou colonnes vides).
+    const pctOrNull = (cell: string): number | null => {
+      const raw = stripHtml(cell);
+      if (!raw || !/^\d/.test(raw)) return null;
+      const v = extractNumeric(cell);
+      return v > 0 ? v : null;
+    };
+    const firstIn = cells[11] ? pctOrNull(cells[11]) : null;
+    const firstWon = cells[12] ? pctOrNull(cells[12]) : null;
+    const secondWon = cells[13] ? pctOrNull(cells[13]) : null;
+
+    rows.push({
+      date,
+      surface,
+      dr: dr && dr > 0 ? dr : null,
+      firstIn,
+      firstWon,
+      secondWon,
+    });
   }
 
   return rows;
@@ -207,6 +266,9 @@ export function aggregatePlayerDr(
     date: string;
     surface: string;
     dr: number;
+    firstIn: number | null;
+    firstWon: number | null;
+    secondWon: number | null;
   }[];
 
   if (valid.length === 0) return null;
@@ -214,12 +276,31 @@ export function aggregatePlayerDr(
   const bySurface = (s: DrSurface) =>
     valid.filter((r) => r.surface === s).map((r) => r.dr);
 
+  // Stats de service agrégées par surface : médiane du servePtsWonPct calculé
+  // par match (formule computeServePtsWonPct), sur les 5 derniers matchs.
+  const buildServeBucket = (subset: typeof valid): ServeStatsBucket => {
+    const pcts = subset
+      .map((r) => computeServePtsWonPct(r.firstIn, r.firstWon, r.secondWon))
+      .filter((p): p is number => p != null)
+      .slice(0, 5); // 5 derniers matchs (déjà trié DESC)
+    if (pcts.length === 0) return { servePtsWonPct: null, n: 0 };
+    return { servePtsWonPct: computeMedian(pcts), n: pcts.length };
+  };
+
+  const serveStats = {
+    all: buildServeBucket(valid),
+    Hard: buildServeBucket(valid.filter((r) => r.surface === "Hard")),
+    Clay: buildServeBucket(valid.filter((r) => r.surface === "Clay")),
+    Grass: buildServeBucket(valid.filter((r) => r.surface === "Grass")),
+  };
+
   return {
     name,
     all: buildBucket(valid.map((r) => r.dr)),
     Hard: buildBucket(bySurface("Hard")),
     Clay: buildBucket(bySurface("Clay")),
     Grass: buildBucket(bySurface("Grass")),
+    serveStats,
   };
 }
 

@@ -632,5 +632,14 @@
     "spsRankInline": "Rang SPS sur cette surface : #{rank}",
     "drMoyen5m": "DR Moyen (5M)",
     "drMoyen5mTooltip": "Dominance Ratio médian sur les 5 derniers matchs (filtré surface, source TennisAbstract)"
+  },
+  "predictiveBets": {
+    "title": "Paris prédictifs (games)",
+    "over": "Over",
+    "under": "Under",
+    "reco": "Reco",
+    "overTooltip": "Over {threshold} games : {prob}% de probabilité (modèle Barnett-Clarke + Poisson)",
+    "fallbackHint": "Estimation (stats serve indisponibles, fallback Elo)",
+    "lambdaLive": "λ restant : {lambda}"
   }
 }

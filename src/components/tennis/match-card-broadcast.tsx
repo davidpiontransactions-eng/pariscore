@@ -33,6 +33,7 @@ import { CurrentGameScore } from "./current-game-score";
 import { ServerIndicator } from "./server-indicator";
 import { QuickAddRing } from "./quick-add-ring";
 import { ProbabilityBar } from "./probability-bar";
+import { PredictiveBets } from "./predictive-bets";
 import { MomentumDR } from "./momentum-dr";
 import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
@@ -406,6 +407,16 @@ export function MatchCardBroadcast({
             showDecomposition={terminalMode && !isSynthetic}
           />
         )}
+
+        {/* Paris prédictifs Over/Under Games (Barnett-Clarke + Poisson).
+            Prematch : depuis match.totalGamesPredictions.
+            Live : recalculé à chaque poll via liveState. Le composant se
+            masque lui-même pour les matchs synthetic. */}
+        <PredictiveBets
+          match={match}
+          liveState={isLive ? liveState : undefined}
+          className="mt-2"
+        />
 
         {/* Cotes bookmaker + bouton "+N autres bookmakers" */}
         {match.odds && (

@@ -156,6 +156,56 @@ function round2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * Stats de service d'un joueur pour une surface (médiane 5 derniers matchs).
+ *
+ * Stratégie identique à lookupDrMoyen :
+ *   1. Bucket surface si ≥1 match avec stats serve disponibles.
+ *   2. Sinon fallback tous-surfaces.
+ *   3. Sinon null.
+ *
+ * Retourne { servePtsWonPct, returnPtsWonPct } — `returnPtsWonPct` est déduit
+ * de l'adversaire moyen (1 − servePtsWonPct, heuristique faute de données
+ * adverses détaillées). Alimente predictTotalGames().
+ */
+export function lookupServeStats(
+  playerName: string,
+  surface: string,
+): { servePtsWonPct: number | null; returnPtsWonPct: number | null } {
+  const entry = findEntry(playerName);
+  if (!entry || !entry.serveStats) {
+    return { servePtsWonPct: null, returnPtsWonPct: null };
+  }
+
+  const dbSurface = resolveSurface(surface);
+  if (!dbSurface) {
+    return { servePtsWonPct: null, returnPtsWonPct: null };
+  }
+
+  // 1. Bucket surface.
+  const surfaceBucket = entry.serveStats[dbSurface];
+  if (surfaceBucket && surfaceBucket.servePtsWonPct != null) {
+    return {
+      servePtsWonPct: surfaceBucket.servePtsWonPct,
+      // Heuristique : returnPtsWonPct ≈ 1 − servePtsWonPct moyen tour (0.36).
+      // Sans données adverses, on assume la parité (un bon serveur est
+      // statistiquement un retourneur moyen). Le modèle total-games tolère null.
+      returnPtsWonPct: 0.36,
+    };
+  }
+
+  // 2. Fallback tous-surfaces.
+  if (entry.serveStats.all.servePtsWonPct != null) {
+    return {
+      servePtsWonPct: entry.serveStats.all.servePtsWonPct,
+      returnPtsWonPct: 0.36,
+    };
+  }
+
+  // 3. Aucune donnée serve.
+  return { servePtsWonPct: null, returnPtsWonPct: null };
+}
+
 /** Exposé pour debug / tests — nombre de joueurs en cache. */
 export function getCacheStats(): { count: number; lastUpdate: string } {
   const cache = getCache();

@@ -88,6 +88,23 @@ export type TennisMatch = {
   // placeholders. MatchCard renders a disclaimer badge and hides the fake
   // predictive components to avoid perceived deception.
   synthetic?: boolean;
+  /**
+   * Prédictions Over/Under Total Games (modèle Barnett-Clarke + Poisson,
+   * src/lib/prediction/total-games.ts). 3 seuils : 18.5 / 19.5 / 21.5 games.
+   * Optionnel — absent si le match est synthétique ou si le calcul échoue.
+   */
+  totalGamesPredictions?: {
+    over18_5: number; // P(Over 18.5) [0..100]
+    over19_5: number; // P(Over 19.5) [0..100]
+    over21_5: number; // P(Over 21.5) [0..100]
+    lambda: number; // E[total games] attendu (debug)
+    recommendedBet: {
+      threshold: 18.5 | 19.5 | 21.5;
+      direction: "over" | "under";
+      prob: number;
+    };
+    source: "stats" | "elo-fallback" | "surface-fallback";
+  };
 };
 
 export type BookmakerOdd = {
