@@ -415,6 +415,22 @@ export function MatchCardBroadcast({
         <PredictiveBets
           match={match}
           liveState={isLive ? liveState : undefined}
+          serveStatsA={
+            statsA?.servePtsWonPct != null
+              ? {
+                  servePtsWonPct: statsA.servePtsWonPct,
+                  returnPtsWonPct: statsA.returnPtsWonPct ?? null,
+                }
+              : null
+          }
+          serveStatsB={
+            statsB?.servePtsWonPct != null
+              ? {
+                  servePtsWonPct: statsB.servePtsWonPct,
+                  returnPtsWonPct: statsB.returnPtsWonPct ?? null,
+                }
+              : null
+          }
           className="mt-2"
         />
 

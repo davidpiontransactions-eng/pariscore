@@ -19,7 +19,7 @@ import type {
   UISurface,
   DBSurface,
 } from "./types";
-import { lookupDrMoyen } from "@/lib/tennis-dr/lookup";
+import { lookupDrMoyen, lookupServeStats } from "@/lib/tennis-dr/lookup";
 
 // better-sqlite3 est un module natif CJS — import dynamique pour ne pas
 // casser le bundler Next.js en dev et éviter de le charger côté client.
@@ -281,6 +281,11 @@ export function getPlayerStats(
   // lookupDrMoyen retourne null si joueur absent du cache ; on ignore alors.
   const drMoyen5m = dbSurface ? lookupDrMoyen(name, dbSurface) : null;
 
+  // 5. Stats de service (modèle Over/Under Games). lookupServeStats renvoie
+  //    { servePtsWonPct, returnPtsWonPct } depuis le même cache DR étendu.
+  const serveStats =
+    dbSurface ? lookupServeStats(name, dbSurface) : { servePtsWonPct: null, returnPtsWonPct: null };
+
   // Si on n'a absolument rien (joueur absent), on retourne null pour que
   // l'UI affiche le fallback `—` plutôt que des champs tous nuls.
   if (
@@ -302,6 +307,8 @@ export function getPlayerStats(
     spsConfidence,
     spsMatches,
     drMoyen5m,
+    servePtsWonPct: serveStats.servePtsWonPct,
+    returnPtsWonPct: serveStats.returnPtsWonPct,
   };
 }
 

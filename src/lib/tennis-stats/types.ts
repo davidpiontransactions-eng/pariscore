@@ -35,6 +35,13 @@ export type PlayerStats = {
    *  flag LEGAL_OVERRIDE_CONFIRMED). Fallback tous-surfaces si <3 matchs sur
    *  la surface demandée. null = indisponible (joueur absent du cache). */
   drMoyen5m?: number | null;
+  /** #8 — % de points gagnés au service (médiane 5 derniers matchs, surface).
+   *  Source: tennisabstract (cache DR étendu). Alimente le modèle Over/Under
+   *  Games. null = indisponible (fallback Elo côté modèle). */
+  servePtsWonPct?: number | null;
+  /** #9 — % de points gagnés au retour. Heuristique (≈0.36 moyenne tour) faute
+   *  de données adverses détaillées. null = indisponible. */
+  returnPtsWonPct?: number | null;
 };
 
 /** Map indexé par nom normalisé de joueur. */

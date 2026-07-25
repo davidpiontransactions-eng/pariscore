@@ -25,13 +25,17 @@ import {
   predictTotalGames,
   type PredictionSurface,
   type LiveGamesContext,
+  type ServeStats,
 } from "@/lib/prediction/total-games";
-import { lookupServeStats } from "@/lib/tennis-dr/lookup";
 
 type Props = {
   match: TennisMatch;
   /** Présent uniquement si le match est live. Déclenche le recalcul dynamique. */
   liveState?: LiveMatchState | null;
+  /** Stats de service des 2 joueurs (résolues côté serveur via usePlayerStats).
+   *  Évite d'importer lookupServeStats (node:fs) dans un composant client. */
+  serveStatsA?: ServeStats | null;
+  serveStatsB?: ServeStats | null;
   className?: string;
 };
 
@@ -71,7 +75,7 @@ type Prediction = {
   source: string;
 };
 
-export function PredictiveBets({ match, liveState, className }: Props) {
+export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, className }: Props) {
   const t = useTranslations("predictiveBets");
 
   // Masqué si match synthétique (live-only sans prematch) ou si prematch absent.
@@ -84,14 +88,13 @@ export function PredictiveBets({ match, liveState, className }: Props) {
     if (!liveState) {
       return prematch;
     }
-    // Recalcul live avec contexte (games restants).
+    // Recalcul live avec contexte (games restants). Stats serve depuis les
+    // props (résolues côté serveur via usePlayerStats) — pas d'import node:fs.
     const modelSurface = toModelSurface(match.stats.surface);
-    const serveA = lookupServeStats(match.playerA.name, modelSurface);
-    const serveB = lookupServeStats(match.playerB.name, modelSurface);
     const liveCtx = buildLiveContext(liveState);
     const result = predictTotalGames(
-      serveA,
-      serveB,
+      serveStatsA ?? { servePtsWonPct: null, returnPtsWonPct: null },
+      serveStatsB ?? { servePtsWonPct: null, returnPtsWonPct: null },
       modelSurface,
       3, // best-of-3 ( marché cible )
       match.playerA.elo,
@@ -112,8 +115,8 @@ export function PredictiveBets({ match, liveState, className }: Props) {
     liveState?.scoreA.sets.length,
     liveState?.scoreB.sets.length,
     match.stats.surface,
-    match.playerA.name,
-    match.playerB.name,
+    serveStatsA,
+    serveStatsB,
   ]);
 
   const isLive = !!liveState;
