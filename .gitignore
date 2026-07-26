@@ -188,3 +188,6 @@ plugin-error.log
 
 # Binaire OpenCode (165MB, dépasse limite GitHub)
 /opencode.exe
+
+*.msixbundle
+
