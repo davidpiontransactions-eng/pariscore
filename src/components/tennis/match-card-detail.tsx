@@ -46,30 +46,35 @@ export function MatchCardDetail({ match, stats, playerA, playerB }: Props) {
       id={`match-${match.id}-details`}
       className="border-t border-border/60 bg-muted/10 px-4 py-4 sm:px-6"
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <DetailItem
-          icon={<TrendingUp className="h-4 w-4" />}
+          icon={<TrendingUp className="h-4 w-4 shrink-0" />}
           label={t("decompLabel")}
-          value={t("decompValue", {
-            model: match.model,
-            eloA: playerA.elo,
-            eloB: playerB.elo,
-          })}
+          value={
+            <span className="flex w-full flex-wrap items-baseline gap-x-1.5">
+              <span className="whitespace-nowrap rounded bg-muted/60 px-1.5 py-0.5 text-[10px] font-normal leading-tight text-muted-foreground">
+                {match.model}
+              </span>
+              <span className="break-words">
+                Elo {playerA.elo.toFixed(0)} vs {playerB.elo.toFixed(0)}
+              </span>
+            </span>
+          }
           hint={t("decompHint")}
         />
         <DetailItem
-          icon={<Target className="h-4 w-4" />}
+          icon={<Target className="h-4 w-4 shrink-0" />}
           label={t("icLabel")}
-          value={t("icValue", { lo: stats.ic[0], hi: stats.ic[1] })}
+          value={t("icValue", { lo: stats.ic[0].toFixed(1), hi: stats.ic[1].toFixed(1) })}
           hint={t("icHint", {
-            prob: match.probA,
-            amp: stats.ic[1] - stats.ic[0],
+            prob: match.probA.toFixed(1),
+            amp: (stats.ic[1] - stats.ic[0]).toFixed(1),
           })}
         />
         <DetailItem
-          icon={<Scale className="h-4 w-4" />}
+          icon={<Scale className="h-4 w-4 shrink-0" />}
           label={t("eloGapLabel")}
-          value={t("eloGapValue", { n: stats.eloGap })}
+          value={t("eloGapValue", { n: stats.eloGap.toFixed(1) })}
           hint={t("eloGapHint", {
             surface: stats.surface,
             h2h: stats.h2h,
@@ -77,7 +82,7 @@ export function MatchCardDetail({ match, stats, playerA, playerB }: Props) {
           })}
         />
         <DetailItem
-          icon={<Calendar className="h-4 w-4" />}
+          icon={<Calendar className="h-4 w-4 shrink-0" />}
           label={t("formLabel")}
           value={stats.form}
           hint={t("formHint", {
@@ -109,22 +114,24 @@ function DetailItem({
 }: {
   icon: React.ReactNode;
   label: string;
-  value: string;
+  value: string | React.ReactNode;
   hint?: string;
 }) {
   return (
-    <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-background/60 p-3">
-      <div className="flex items-center gap-2 text-muted-foreground">
+    <div className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3">
+      <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em]">
+        <span className="break-words hyphens-auto text-[10px] font-semibold uppercase leading-tight tracking-[0.08em]">
           {label}
         </span>
       </div>
-      <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+      <span className="w-full break-words font-mono text-sm font-semibold tabular-nums leading-tight text-foreground">
         {value}
       </span>
       {hint && (
-        <span className="text-[11px] text-muted-foreground">{hint}</span>
+        <span className="w-full break-words hyphens-auto text-[11px] leading-relaxed text-muted-foreground">
+          {hint}
+        </span>
       )}
     </div>
   );

@@ -1,0 +1,155 @@
+{
+  "mcpServers": {
+    "bzzoiro-sports": {
+      "type": "http",
+      "url": "https://sports.bzzoiro.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${BSD_API_KEY}"
+      }
+    },
+    "sportdbdotdev": {
+      "type": "http",
+      "url": "https://api.sportdb.dev/mcp/",
+      "headers": {
+        "X-API-Key": "${SPORTDB_API_KEY}"
+      }
+    },
+    "sportradar": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.rapidapi.com",
+        "--header",
+        "x-api-host: sport-radar-api.p.rapidapi.com",
+        "--header",
+        "x-api-key: ${RAPIDAPI_KEY}"
+      ]
+    },
+    "project_fs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/David/ZCodeProject/pariscore"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {
+        "MEMORY_FILE_PATH": "C:/Users/David/ZCodeProject/pariscore/.context/memory.jsonl"
+      }
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "C:/Users/David/ZCodeProject/pariscore"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "frontendchecklist": {
+      "type": "http",
+      "url": "https://mcp.frontendchecklist.io"
+    },
+    "stitch": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@_davideast/stitch-mcp",
+        "proxy"
+      ],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}"
+      }
+    },
+    "crawl4ai": {
+      "command": "python",
+      "args": [
+        "C:/Users/David/ZCodeProject/pariscore/scripts/crawl4ai-mcp-server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "scrapling": {
+      "command": "scrapling",
+      "args": [
+        "mcp"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "scrapy": {
+      "command": "python",
+      "args": [
+        "C:/Users/David/ZCodeProject/pariscore/scripts/scrapy-mcp-server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "agentmemory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@agentmemory/mcp"
+      ]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "shadcn@latest",
+        "mcp"
+      ]
+    },
+    "context7": {
+      "args": [
+        "-y",
+        "@upstash/context7-mcp@latest"
+      ],
+      "command": "npx"
+    },
+    "chrome-devtools": {
+      "args": [
+        "chrome-devtools-mcp@latest"
+      ],
+      "command": "npx"
+    },
+    "magic21": {
+      "args": [
+        "-y",
+        "@21st-dev/magic@latest"
+      ],
+      "command": "npx"
+    },
+    "browser-tools": {
+      "args": [
+        "@agentdeskai/browser-tools-server@latest"
+      ],
+      "command": "npx"
+    },
+    "lighthouse": {
+      "args": [
+        "-y",
+        "@danielsogl/lighthouse-mcp-server"
+      ],
+      "command": "npx"
+    }
+  }
+}

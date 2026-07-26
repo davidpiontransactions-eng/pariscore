@@ -12,14 +12,21 @@ if (!bun) {
   process.exit(1);
 }
 
+const TIMEOUT_MS = parseInt(process.env.RUN_BUN_TIMEOUT_MS || '120000', 10);
+
 const args = process.argv.slice(2);
 const result = spawnSync(bun, args, {
   stdio: 'inherit',
+  timeout: TIMEOUT_MS || undefined,
   shell: false,
   env: process.env,
   cwd: process.cwd(),
 });
 
+if (result.status === null && result.signal === 'SIGTERM') {
+  console.error('[run-bun] timed out after ' + TIMEOUT_MS + 'ms');
+  process.exit(124);
+}
 if (result.error) {
   console.error('[run-bun] failed to spawn', bun, result.error.message);
   process.exit(1);

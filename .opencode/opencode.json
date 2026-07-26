@@ -1,16 +1,21 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "shell": "cmd",
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 10000
+  },
+  "provider": {
+    "deepseek": {
+      "options": {
+        "timeout": 600000,
+        "chunkTimeout": 60000
+      }
+    }
+  },
   "instructions": [
-    ".opencode/instructions/communication.md"
-  ],
-  "mcp": {
-    "stitch": { "enabled": false },
-    "magic21": { "enabled": false },
-    "browser-tools": { "enabled": false },
-    "lighthouse": { "enabled": false },
-    "chrome-devtools": { "enabled": false },
-    "frontendchecklist": { "enabled": false },
-    "shadcn": { "enabled": false },
-    "context7": { "enabled": false }
-  }
+    ".opencode/instructions/communication.md",
+    ".opencode/instructions/deepseek-optimisation.md"
+  ]
 }

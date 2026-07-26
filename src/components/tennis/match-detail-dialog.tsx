@@ -208,9 +208,9 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
               <span>{match.round}</span>
             </div>
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span>#{playerA.rank} Elo {playerA.elo}</span>
+              <span>#{playerA.rank} Elo {playerA.elo.toFixed(0)}</span>
               <span className="text-muted-foreground/50">/</span>
-              <span>#{playerB.rank} Elo {playerB.elo}</span>
+              <span>#{playerB.rank} Elo {playerB.elo.toFixed(0)}</span>
             </div>
           </div>
 
@@ -293,7 +293,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   probB={probB}
                   playerSlot={(p) => (
                     <span className="text-[10px] text-muted-foreground">
-                      #{p.rank} · Elo {p.elo}
+                      #{p.rank} · Elo {p.elo?.toFixed(0) ?? "N/A"}
                     </span>
                   )}
                 />

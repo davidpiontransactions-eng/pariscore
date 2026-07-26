@@ -39,22 +39,23 @@ function runPythonSidecar(args) {
     const pythonBin = process.env.PYTHON_BIN || 'python3';
     console.log(`[fbref] Spawn: ${pythonBin} ${PYTHON_SCRIPT} ${args.join(' ')}`);
     const child = spawn(pythonBin, [PYTHON_SCRIPT, ...args]);
+    const _fbrefTimer = setTimeout(() => { child.kill(); reject(new Error('Python sidecar timeout 5min')); }, 300000);
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (d) => { stdout += d.toString(); });
     child.stderr.on('data', (d) => {
       const txt = d.toString();
       stderr += txt;
-      // Forward stderr en temps reel pour visibilite progress
       process.stderr.write(`[python] ${txt}`);
     });
     child.on('close', (code) => {
+      clearTimeout(_fbrefTimer);
       if (code !== 0) {
         return reject(new Error(`Python sidecar exit ${code}: ${stderr.slice(0, 500)}`));
       }
       resolve({ stdout, stderr });
     });
-    child.on('error', reject);
+    child.on('error', (err) => { clearTimeout(_fbrefTimer); reject(err); });
   });
 }
 

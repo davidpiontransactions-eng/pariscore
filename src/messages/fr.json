@@ -177,7 +177,7 @@
     "decompLabel": "Décomposition modèle",
     "decompValue": "{model} · Elo {eloA} vs {eloB}",
     "decompHint": "Contribution Elo 62% · Forme 24% · Surface 14%",
-    "icLabel": "Intervalle de confiance 95%",
+    "icLabel": "Intervalle de confiance (95%)",
     "icValue": "[{lo}%, {hi}%]",
     "icHint": "Probabilité centrale {prob}% · amplitude {amp} points",
     "eloGapLabel": "Écart Elo",

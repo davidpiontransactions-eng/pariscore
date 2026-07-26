@@ -41,7 +41,7 @@ for (const rel of files) {
     continue;
   }
   try {
-    execFileSync(process.execPath, ['--check', full], { stdio: 'pipe' });
+    execFileSync(process.execPath, ['--check', full], { stdio: 'pipe', timeout: 30000 });
     report.syntax.push({ file: rel, status: 'ok' });
   } catch (e) {
     report.ok = false;

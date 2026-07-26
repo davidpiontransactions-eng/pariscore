@@ -3,7 +3,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
 function exists(file) {
   try {
@@ -13,17 +12,16 @@ function exists(file) {
   }
 }
 
-function fromWhere() {
-  try {
-    const out = execSync('where bun', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const line = String(out || '')
-      .split(/\r?\n/)
-      .map((s) => s.trim())
-      .find(Boolean);
-    return line && exists(line) ? line : null;
-  } catch (_) {
-    return null;
+function fromPath() {
+  const PATH = (process.env.Path || process.env.PATH || '').split(path.delimiter);
+  const exts = (process.env.PATHEXT || '.EXE;.COM;.BAT;.CMD').split(';');
+  for (const dir of PATH) {
+    for (const ext of exts) {
+      const full = path.join(dir, 'bun' + ext);
+      if (exists(full)) return full;
+    }
   }
+  return null;
 }
 
 function fromWinget() {
@@ -74,7 +72,7 @@ function findBun() {
     if (exists(c)) return c;
   }
 
-  return fromWhere() || fromWinget();
+  return fromPath() || fromWinget();
 }
 
 const bunPath = findBun();

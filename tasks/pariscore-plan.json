@@ -1,0 +1,55 @@
+{
+  "title": "Pariscore.fr — Plan d'Amélioration",
+  "timeline": {
+    "title": "Semaines",
+    "labels": ["S1", "S2", "S3", "S4"]
+  },
+  "tracks": [
+    {
+      "name": "Branding & SEO",
+      "items": [
+        { "label": "P0 Corriger marque metatags", "start": "S1", "end": "S1", "color": "#ef4444" },
+        { "label": "P0 Canonical URL pariscore.fr", "start": "S1", "end": "S1", "color": "#ef4444" },
+        { "label": "P1 Robots.txt Sitemap", "start": "S1", "end": "S2", "color": "#f97316" }
+      ]
+    },
+    {
+      "name": "Social Proof",
+      "items": [
+        { "label": "P0 Track record banniere", "start": "S1", "end": "S2", "color": "#ef4444" },
+        { "label": "P1 Compteur predictions", "start": "S2", "end": "S2", "color": "#f97316" },
+        { "label": "P1 Replay Hub transparence", "start": "S2", "end": "S3", "color": "#f97316" }
+      ]
+    },
+    {
+      "name": "Engagement",
+      "items": [
+        { "label": "P1 Contenu hors-match", "start": "S2", "end": "S3", "color": "#f97316" },
+        { "label": "P2 Filtre calendrier", "start": "S2", "end": "S2", "color": "#eab308" },
+        { "label": "P2 Smart Feed hors-match", "start": "S3", "end": "S4", "color": "#eab308" }
+      ]
+    },
+    {
+      "name": "Innovation",
+      "items": [
+        { "label": "Match IQ temps reel", "start": "S3", "end": "S4", "color": "#8b5cf6" },
+        { "label": "Comparateur cotes", "start": "S3", "end": "S4", "color": "#8b5cf6" }
+      ]
+    },
+    {
+      "name": "Monetisation",
+      "items": [
+        { "label": "Entonnoir Free Pro Elite", "start": "S4", "end": "S4", "color": "#06b6d4" },
+        { "label": "API access alerts Telegram", "start": "S4", "end": "S4", "color": "#06b6d4" }
+      ]
+    },
+    {
+      "name": "QA Deploy",
+      "items": [
+        { "label": "Audit a11y axe keyboard", "start": "S1", "end": "S2", "color": "#22c55e" },
+        { "label": "Core Web Vitals audit", "start": "S2", "end": "S3", "color": "#22c55e" },
+        { "label": "Deploiement continu VPS", "start": "S1", "end": "S4", "color": "#22c55e" }
+      ]
+    }
+  ]
+}

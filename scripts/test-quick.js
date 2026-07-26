@@ -29,7 +29,7 @@ function extractKeysFromArray(src, arrName) {
 // -- 1. Syntax check server.js --
 console.log("\n\ud83d\udce6 1. Syntaxe Node.js");
 try {
-  execSync("node --check server.js", { cwd: ROOT, stdio: "pipe" });
+  execSync("node --check server.js", { cwd: ROOT, stdio: "pipe", timeout: 30000 });
   check("server.js", true);
 } catch (e) {
   check("server.js", false, e.stderr.toString().split("\n")[0]);

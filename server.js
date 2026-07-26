@@ -50933,10 +50933,11 @@ setInterval(function() {
     _CB_PY_BIN, [_CB_TRAIN_SCRIPT, '--db', dbArg, '--models-dir', _CB_MODELS_DIR],
     { cwd: __dirname, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] }
   );
+  const _wtTimer = setTimeout(() => { child.kill(); console.warn('[CatBoost:WeeklyTrain] timed out after 5min'); }, 300000);
   let out = '';
   child.stdout.on('data', function(d) { out += d.toString(); });
   child.stderr.on('data', function(d) { process.stderr.write('[CatBoost:WeeklyTrain] ' + d); });
-  child.on('close', function(code) {
+  child.on('close', function(code) { clearTimeout(_wtTimer);
     if (code !== 0) { console.warn('[CatBoost] WeeklyTrain exit ' + code + ' — skip'); return; }
     try {
       const r = _cbParseOut(out);
@@ -51739,11 +51740,12 @@ function _runTennisInternalEtlJob() {
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+    const _etlTimer = setTimeout(() => { child.kill(); console.warn('  [Cron:TennisInternalETL] timed out after 5min'); }, 300000);
     let stderrTail = '';
     let stdoutTail = '';
     child.stdout.on('data', (b) => { stdoutTail = (stdoutTail + b.toString()).slice(-2000); });
     child.stderr.on('data', (b) => { stderrTail = (stderrTail + b.toString()).slice(-2000); });
-    child.on('close', (code) => {
+    child.on('close', (code) => { clearTimeout(_etlTimer);
       const elapsed = Date.now() - t0;
       const _sm = stdoutTail.match(/total\s*:\s*(\d+)/); const summary = _sm ? _sm[1] : '?';
       if (code === 0) {
@@ -51784,10 +51786,11 @@ if (TA_SERVE_STATS_SYNC) {
         env: process.env,
         stdio: ['ignore', 'pipe', 'pipe'],
       });
+      const _taTimer = setTimeout(() => { child.kill(); console.warn('  [Cron:TA-serve] timed out after 5min'); }, 300000);
       let stdoutTail = '';
       child.stdout.on('data', (b) => { stdoutTail = (stdoutTail + b.toString()).slice(-2000); process.stdout.write('[TA-serve] ' + b); });
       child.stderr.on('data', (b) => { process.stderr.write('[TA-serve] ' + b); });
-      child.on('close', (code) => {
+      child.on('close', (code) => { clearTimeout(_taTimer);
         const _updated = stdoutTail.match(/Matchs mis à jour:\s*(\d+)/);
         const summary = _updated ? _updated[1] : '?';
         if (code === 0) {
@@ -51798,6 +51801,7 @@ if (TA_SERVE_STATS_SYNC) {
         resolve();
       });
       child.on('error', (err) => {
+        clearTimeout(_taTimer);
         console.warn('  [Cron:TA-serve] spawn error:', err.message);
         resolve();
       });
@@ -51831,10 +51835,11 @@ if (TA_SERVE_STATS_SYNC) {
     const spsScript = path.join(__dirname, 'tools', 'build-tennis-sps-weekly.js');
     console.log('  [Cron:SPS] démarrage build-tennis-sps-weekly.js…');
     const child = cp.spawn('node', [spsScript], { cwd: __dirname, stdio: ['ignore', 'pipe', 'pipe'] });
+    const _spsTimer = setTimeout(() => { child.kill(); console.warn('  [Cron:SPS] timed out after 5min'); }, 300000);
     child.stdout.on('data', function(d) { process.stdout.write('[Cron:SPS] ' + d); });
     child.stderr.on('data', function(d) { process.stderr.write('[Cron:SPS] ' + d); });
-    child.on('exit', function(code) { console.log('  [Cron:SPS] terminé (exit ' + code + ')'); });
-    child.on('error', function(err) { console.warn('  [Cron:SPS] spawn error:', err.message); });
+    child.on('exit', function(code) { clearTimeout(_spsTimer); console.log('  [Cron:SPS] terminé (exit ' + code + ')'); });
+    child.on('error', function(err) { clearTimeout(_spsTimer); console.warn('  [Cron:SPS] spawn error:', err.message); });
   }
   setTimeout(function() { _runSPS(); setInterval(_runSPS, 24 * 3600 * 1000).unref(); }, delayMs).unref();
 })();

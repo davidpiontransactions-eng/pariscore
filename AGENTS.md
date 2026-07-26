@@ -64,36 +64,33 @@ cp -rf source dest          # NOT: cp -r source dest
 - `apt-get` - use `-y` flag
 - `brew` - use `HOMEBREW_NO_AUTO_UPDATE=1` env var
 
-**CRITICAL — Shell environment is Git Bash, NOT Windows CMD.**
-The `$SHELL` is `/bin/bash.exe` (Git Bash / MSYS2). Despite running on Windows,
-**you MUST use POSIX/Bash syntax, never CMD syntax.** Mixing them is the #1 cause
-of frozen commands and silent failures this session. When in doubt, `echo $SHELL`
-confirms it.
+**CRITICAL — Shell tool (Git Bash) FREEZES on this system. Use CMD.**
+The `shell`/`oc_bash` tools run **CMD**, not Git Bash. Any command using Bash
+syntax (`$VAR`, `2>/dev/null`, `ls`, `cat`, `cp -r`) will **freeze or fail**.
+Always use CMD syntax. When in doubt, use `echo %CD%` to confirm CMD is active.
 
-**CMD→Bash command translation table** (use the RIGHT column, ALWAYS):
+**Bash→CMD command translation table** (use the RIGHT column, ALWAYS):
 
-| Operation | ❌ CMD (WRONG — freezes/fails) | ✅ Bash (CORRECT) |
+| Operation | ❌ Bash (FREEZES) | ✅ CMD (WORKS) |
 |-----------|------|------|
-| List files | `dir /b "path"` | `ls "path"` |
-| Redirect stderr to void | `2>nul` / `>nul` | `2>/dev/null` |
-| Redirect both to void | `>nul 2>&1` | `>/dev/null 2>&1` |
-| Test dir exists | `if exist "X" (...) else (...)` | `if [ -d "X" ]; then ...; fi` |
-| Test file exists | `if exist "X"` | `if [ -f "X" ]; then ...; fi` |
-| Set env var | `set FOO=bar` | `export FOO=bar` |
-| Read env var | `%FOO%` | `$FOO` |
-| Print | `echo "hi"` | `echo "hi"` (same — but no `@echo off`) |
-| Cat a file | `type file` | `cat file` |
-| Create symlink/junction | `mklink /J dst src` | `ln -s src dst` (or `cmd //c "mklink..."` if a true NTFS junction is required) |
-| Delete recursively | `rmdir /s /q X` | `rm -rf X` |
-| Find files | `dir /s /b *.ts` | `find . -name "*.ts"` or Glob tool |
-| String contains | `echo %X% \| find "y"` | `echo "$X" \| grep "y"` |
-| Path separator | `\` (backslash) | `/` (forward slash) — Bash accepts `/` everywhere |
+| List files | `ls "path"` | `dir /b "path"` |
+| Redirect stderr to void | `2>/dev/null` | `2>nul` |
+| Redirect both to void | `>/dev/null 2>&1` | `>nul 2>&1` |
+| Test dir exists | `if [ -d "X" ]` | `if exist "X\\" (echo ok)` |
+| Test file exists | `if [ -f "X" ]` | `if exist "X" (echo ok)` |
+| Set env var | `export FOO=bar` | `set FOO=bar` |
+| Read env var | `$FOO` | `%FOO%` |
+| Cat a file | `cat file` | `type file` |
+| Copy file/dir | `cp -rf src dst` | `xcopy /E /Y src dst` |
+| Delete recursively | `rm -rf X` | `rmdir /s /q X` |
+| Find files | `find . -name "*.ts"` | `dir /s /b *.ts` |
+| Run JS check | `node --check file.js` | `node --check file.js` (works in both) |
+| Path separator | `/` or `\` | `\` (backslash) |
 
-**Why this matters:** `dir` in Git Bash is GNU `/usr/bin/dir`, NOT the CMD
-`dir` — it ignores `/b` and silently does the wrong thing. `2>nul` creates a
-literal file named `nul` (a reserved Windows device name → can freeze the shell).
-`if exist` is not a Bash construct at all. **When you feel like writing a Windows
-command, stop and write its Bash equivalent from the table.**
+**Why this matters:** On this Windows system, `bash` invokes Git Bash/MSYS2 which
+freezes the agent session indefinitely. CMD is the only reliable shell. `2>nul`
+in CMD is correct (redirects to NUL device). `ls`, `cat`, `grep` are NOT available
+in CMD. When in doubt, use CMD syntax from the table above.
 
 **Glob hygiene:** avoid `**/*` globs over `.next/` (890 MB, 7890 files — build
 output). Scope globs to real source dirs (`src/**`, `app/**`). `.next/` is in

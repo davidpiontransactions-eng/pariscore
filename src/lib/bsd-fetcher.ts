@@ -1,7 +1,13 @@
 // BSD Sports API fetcher — tennis matches from sports.bzzoiro.com
 // Priority source: BSD > The Odds API > Mock
+//
+// V2 (2026-07-26) : le fetch brut est délégué à bsd-tennis-service.ts.
+// Ce fichier ne garde que la couche de transformation BSDMatch → TennisMatch
+// (avec enrichissement Elo, prédictions, stats).
 
-import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats, H2HMatch } from "@/lib/tennis-data";
+import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats } from "@/lib/tennis-data";
+import type { BSDMatch, BSDLiveMatch } from "@/lib/bsd-tennis-service";
+import { fetchMatches, fetchLiveMatches, getPlayerPhotoUrl } from "@/lib/bsd-tennis-service";
 import { predict, type PlayerInputs, type MatchOutcome } from "@/lib/prediction/engine";
 import { predictTotalGames, type PredictionSurface } from "@/lib/prediction/total-games";
 import { predictMostAces, type AcesStats } from "@/lib/prediction/most-aces";
@@ -27,23 +33,6 @@ function isExcludedTournament(name?: string): boolean {
   return EXCLUDED_TOURNAMENTS.some((re) => re.test(name));
 }
 
-const BSD_BASE = "https://sports.bzzoiro.com/tennis";
-const BSD_PHOTO_BASE = "https://sports.bzzoiro.com/img/tennis-player";
-
-type BSDResponse = {
-  id: string;
-  player1?: { name: string; id?: string };
-  player2?: { name: string; id?: string };
-  tournament?: { name?: string; surface?: string };
-  status?: string;
-  match_date?: string; // champ réel renvoyé par BSD tennis (/tennis/api/v2/matches/)
-  start_time?: string;
-  commence_time?: string;
-  round_name?: string;
-  round?: string;
-  odds?: Array<{ bookmaker: string; player1_odds: number; player2_odds: number }>;
-};
-
 function normalizeSurface(s?: string): Surface {
   if (!s) return "Dur";
   const lower = s.toLowerCase();
@@ -64,7 +53,6 @@ function computeImpliedProbs(decimalA: number, decimalB: number): { a: number; b
 }
 
 function generateColor(name: string): string {
-  // Hash name to generate a consistent color
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -73,47 +61,18 @@ function generateColor(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-async function bsdFetch(endpoint: string): Promise<BSDResponse[]> {
-  const key = process.env.BSD_API_KEY;
-  if (!key) throw new Error("BSD_API_KEY not configured");
-
-  const url = `${BSD_BASE}${endpoint}`;
-  const res = await fetch(url, {
-    headers: {
-      Authorization: `Token ${key}`,
-      Accept: "application/json",
-    },
-    signal: AbortSignal.timeout(15000),
-  });
-
-  if (res.status === 402) {
-    console.error("[bsd] Sports Addon required — upgrade at https://sports.bzzoiro.com/pricing/");
-    throw new Error("BSD Sports Addon required (402)");
-  }
-  if (res.status === 429) {
-    throw new Error("BSD rate limited (429)");
-  }
-  if (!res.ok) {
-    throw new Error(`BSD HTTP ${res.status}`);
-  }
-
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data.results ?? []);
-}
-
-function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
-  if (!b.player1?.name || !b.player2?.name) return null;
-
+/**
+ * Transforme un BSDMatch (service V2) en TennisMatch (frontend).
+ * Enrichit avec Elo, forme, prédictions, stats serve, photos.
+ */
+function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
   const nameA = b.player1.name;
   const nameB = b.player2.name;
-  const surface = normalizeSurface(b.tournament?.surface);
+  if (!nameA || !nameB) return null;
+
+  const surface = normalizeSurface(b.tournament.surface);
 
   // ─── Résolution Elo (4 sources, par priorité) ──────────────────────
-  //
-  // Source 1 : tennisabstract.com cache (1087 joueurs ATP+WTA)
-  // Source 2 : pariscore.db (tennis_players_elo / tennis_elo)
-  // Source 3 : elo-data.json (6 stars)
-  // Source 4 : 1500 (défaut)
   const abstractA = lookupAbstractElo(nameA, surface);
   const abstractB = lookupAbstractElo(nameB, surface);
 
@@ -133,7 +92,7 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
   const formB: MatchOutcome[] = eloMatchB?.history ? extractForm(eloMatchB.history) : ["L", "W", "L", "W", "L", "W"];
 
   const playerAInputs: PlayerInputs = {
-    id: b.player1.id ?? nameA.toLowerCase().replace(/\s+/g, "_"),
+    id: String(b.player1.id ?? index),
     name: nameA,
     elo: eloA,
     surfaceElo: surfaceEloA,
@@ -141,7 +100,7 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     h2h: { won: 3, lost: 2 },
   };
   const playerBInputs: PlayerInputs = {
-    id: b.player2.id ?? nameB.toLowerCase().replace(/\s+/g, "_"),
+    id: String(b.player2.id ?? index),
     name: nameB,
     elo: eloB,
     surfaceElo: surfaceEloB,
@@ -151,31 +110,14 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
 
   const pred = predict(playerAInputs, playerBInputs);
 
-  // R5 hotfix : résolution catégorie + priorité tournoi pour le tri par prestige
-  const tournamentName = b.tournament?.name ?? "Tennis";
+  const tournamentName = b.tournament.name || "Tennis";
 
-  // Prédiction Over/Under Total Games (modèle Barnett-Clarke + Poisson).
-  // Stats serve/return depuis le cache DR étendu (TennisAbstract). Si absent,
-  // le moteur fallback sur l'Elo. Détecte le format best-of via la catégorie
-  // tournoi (Grand Slam ATP = best-of-5, sinon best-of-3).
   const modelSurface = toModelSurface(surface);
   const serveA = lookupServeStats(nameA, modelSurface);
   const serveB = lookupServeStats(nameB, modelSurface);
-  // Les Grand Chelem ATP sont les seuls tournois réguliers en best-of-5.
-  // Sans signal de genre (men/women) fiable dans la prematch BSD response, on
-  // reste conservateur : best-of-3 partout (le marché Over 21.5 vise le BO3).
-  // À affiner si BSD expose le genre (tour/discipline) à l'avenir.
   const bestOf: 3 | 5 = 3;
-  const tgPred = predictTotalGames(
-    serveA,
-    serveB,
-    modelSurface,
-    bestOf,
-    eloA,
-    eloB,
-  );
+  const tgPred = predictTotalGames(serveA, serveB, modelSurface, bestOf, eloA, eloB);
 
-  // Prédiction Most Aces (Poisson-Skellam). Réutilise les mêmes serveStats.
   const acesA: AcesStats = {
     acesPct: serveA.acesPct,
     servePtsWonPct: serveA.servePtsWonPct,
@@ -191,20 +133,18 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
   const colorA = generateColor(nameA);
   const colorB = generateColor(nameB);
 
-  // Build odds from BSD or compute implied
+  // Build odds from BSD match-level odds
   let allOdds: BookmakerOdd[] = [];
-  if (b.odds && b.odds.length > 0) {
-    allOdds = b.odds.map((o) => {
-      const probs = computeImpliedProbs(o.player1_odds, o.player2_odds);
-      return {
-        bookmaker: o.bookmaker,
-        decimalA: o.player1_odds,
-        decimalB: o.player2_odds,
-        impliedProbA: probs.a,
-        impliedProbB: probs.b,
-        margin: probs.margin,
-      };
-    });
+  if (b.odds_player1 != null && b.odds_player2 != null) {
+    const probs = computeImpliedProbs(b.odds_player1, b.odds_player2);
+    allOdds = [{
+      bookmaker: "Consensus",
+      decimalA: b.odds_player1,
+      decimalB: b.odds_player2,
+      impliedProbA: probs.a,
+      impliedProbB: probs.b,
+      margin: probs.margin,
+    }];
   }
 
   const playerA: Player = {
@@ -215,7 +155,7 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     elo: playerAInputs.elo,
     surfaceElo: playerAInputs.surfaceElo,
     photoUrl: b.player1.id
-      ? `${BSD_PHOTO_BASE}/${encodeURIComponent(b.player1.id)}/?bg=transparent`
+      ? getPlayerPhotoUrl(b.player1.id)
       : resolvePlayerPhoto(nameA),
     color: colorA,
     form: playerAInputs.form,
@@ -229,7 +169,7 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
     elo: playerBInputs.elo,
     surfaceElo: playerBInputs.surfaceElo,
     photoUrl: b.player2.id
-      ? `${BSD_PHOTO_BASE}/${encodeURIComponent(b.player2.id)}/?bg=transparent`
+      ? getPlayerPhotoUrl(b.player2.id)
       : resolvePlayerPhoto(nameB),
     color: colorB,
     form: playerBInputs.form,
@@ -245,16 +185,13 @@ function buildMatch(b: BSDResponse, index: number): TennisMatch | null {
   };
 
   return {
-    id: `bsd-${b.id ?? index}`,
+    id: `bsd-${b.id}`,
     tournament: tournamentName,
     tournamentCategory: resolveTournamentCategory(tournamentName),
     tournamentPriority: resolveTournamentPriority(tournamentName),
-    round: b.round_name ?? b.round ?? "Prematch",
-    // FIX bug "heure = maintenant" : BSD tennis renvoie `match_date` (pas start_time/commence_time).
-    // L'ancien code `?? new Date().toISOString()` écrasait l'heure manquante par "maintenant",
-    // affichant 00:01 (l'instant du rendu) sur tous les matchs. On privilégie match_date,
-    // et en dernier recours on laisse undefined plutôt que d'inventer une heure fausse.
-    scheduledAt: b.match_date ?? b.start_time ?? b.commence_time ?? "",
+    round: b.round_name ?? "Prematch",
+    // BSD V2 renvoie match_date (pas start_time/commence_time).
+    scheduledAt: b.match_date ?? "",
     playerA,
     playerB,
     probA: pred.probA,
@@ -305,27 +242,24 @@ export type LiveMatchItem = {
   liveProbA: number;
   liveProbB: number;
   isLive: boolean;
-  /** Nom du tournoi BSD (R7.3) — ex: "Segovia, Spain", "UTR PTT Waco Men 02".
-   *  Extrait depuis m.tournament.name pour remplacer le fallback "Live" des
-   *  cartes synthétiques. */
+  /** Nom du tournoi BSD (R7.3) — ex: "Segovia, Spain", "UTR PTT Waco Men 02". */
   tournamentName?: string;
-  /** Round BSD (R7.3) — ex: "Round of 32", "Final". Extrait depuis m.round_name. */
+  /** Round BSD (R7.3) — ex: "Round of 32", "Final". */
   roundName?: string;
 };
 
 /**
- * Fetch live tennis matches directly from the BSD live endpoint.
+ * Fetch live tennis matches via bsd-tennis-service (V2).
  * Returns normalized match objects with scores, sets, server, and live probabilities.
  */
 export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
-  const rawData = await bsdFetch("/api/v2/matches/live/");
-  const items = Array.isArray(rawData) ? rawData : [];
+  const rawData = await fetchLiveMatches();
 
-  return items.map((m: Record<string, any>): LiveMatchItem | null => {
-    if (!m || !m.player1 || !m.player2) return null;
+  return rawData.map((m: BSDLiveMatch): LiveMatchItem | null => {
+    if (!m.player1?.name || !m.player2?.name) return null;
 
-    const nameA = m.player1.name || m.player1.short_name || "?";
-    const nameB = m.player2.name || m.player2.short_name || "?";
+    const nameA = m.player1.name;
+    const nameB = m.player2.name;
     const statusStr = String(m.status || "").toLowerCase();
     const finishedRx = /finish|complete|ended|cancel|walkover|retired|abandon|w_?o|post/;
     const isLive = (/progress|live|playing|in_play|inplay|set/.test(statusStr) && !finishedRx.test(statusStr))
@@ -333,9 +267,9 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
 
     // Parse per-set game scores from sets_detail
     const setsDetail: Array<{ p1: number; p2: number }> = Array.isArray(m.sets_detail)
-      ? m.sets_detail.map((s: any) => ({
-          p1: s.p1 ?? s.player1 ?? 0,
-          p2: s.p2 ?? s.player2 ?? 0,
+      ? m.sets_detail.map((s) => ({
+          p1: s.p1 ?? 0,
+          p2: s.p2 ?? 0,
         }))
       : [];
 
@@ -377,15 +311,9 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
     }
 
     // current_set is 1-based from BSD → convert to 0-indexed
-    const rawCurrentSet = m.current_set != null ? parseInt(String(m.current_set), 10) : NaN;
-    const currentSet = !isNaN(rawCurrentSet) && rawCurrentSet > 0 ? rawCurrentSet - 1 : (setsDetail.length > 0 ? setsDetail.length - 1 : 0);
-
-    // R7.3 : extrait nom tournoi + round depuis BSD (m.tournament.name, m.round_name).
-    // Évite le fallback "Live" / "En direct" sur les cartes synthétiques.
-    const tournamentName =
-      (m.tournament && (m.tournament.name || m.tournament.short_name)) || undefined;
-    const roundName =
-      m.round_name || m.round || undefined;
+    const rawCurrentSet = m.current_set != null ? m.current_set : NaN;
+    const currentSet = !isNaN(rawCurrentSet) && rawCurrentSet > 0 ? rawCurrentSet - 1
+      : (setsDetail.length > 0 ? setsDetail.length - 1 : 0);
 
     return {
       id: `bsd-${m.id}`,
@@ -399,15 +327,14 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
       liveProbA,
       liveProbB,
       isLive,
-      tournamentName,
-      roundName,
+      tournamentName: m.tournament?.name || undefined,
+      roundName: m.round_name ?? undefined,
     };
   }).filter((m: LiveMatchItem | null): m is LiveMatchItem => m !== null);
 }
 
 function extractForm(history: { elo: number; date: string }[]): ("W" | "L")[] {
   if (history.length < 2) return ["W", "L", "W", "L", "W", "L"];
-  // Infer form from Elo progression: if Elo went up = W, down = L
   const recent = history.slice(-7);
   const form: ("W" | "L")[] = [];
   for (let i = 1; i < recent.length; i++) {
@@ -416,14 +343,16 @@ function extractForm(history: { elo: number; date: string }[]): ("W" | "L")[] {
   return form.slice(-6);
 }
 
+/** Fetch scheduled prematch matches via bsd-tennis-service (V2). */
 export async function fetchBSDMatches(): Promise<TennisMatch[]> {
-  const matches = await bsdFetch("/api/v2/matches/?status=scheduled&limit=200");
+  const page = await fetchMatches({ status: "scheduled", limit: 200 });
+  const matches = page.results ?? [];
 
   const tennisMatches: TennisMatch[] = [];
   for (let i = 0; i < matches.length && tennisMatches.length < 30; i++) {
     const bsdMatch = matches[i];
-    if (isExcludedTournament(bsdMatch.tournament?.name)) continue;
-    const m = buildMatch(matches[i], i);
+    if (isExcludedTournament(bsdMatch.tournament.name)) continue;
+    const m = buildMatch(bsdMatch, i);
     if (m) tennisMatches.push(m);
   }
 
