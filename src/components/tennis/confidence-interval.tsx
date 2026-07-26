@@ -15,6 +15,7 @@ type ConfidenceIntervalProps = {
   playerB: PlayerCI;
   confidenceLevel?: number;
   label?: string;
+  icon?: React.ReactNode;
   interpretation?: string;
   className?: string;
   variant?: "v1" | "v2";
@@ -67,15 +68,18 @@ export function ConfidenceInterval({
   playerB,
   confidenceLevel = 95,
   label = `Intervalle de confiance (IC ${confidenceLevel}%)`,
+  icon,
   interpretation,
   className,
   variant = "v1",
 }: ConfidenceIntervalProps) {
   return (
     <div className={cn("rounded-lg border border-border/60 bg-card p-4", className)}>
-      <div className="mb-3 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-        <span>🔒</span>
-        <span>{label}</span>
+      <div className="mb-3 flex items-center gap-1.5 min-w-0">
+        {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
+        <span className="truncate text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          {label}
+        </span>
       </div>
 
       {variant === "v2" ? (

@@ -29,28 +29,28 @@ export function KpiCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border border-border/60 bg-card p-4 min-h-[140px]",
+        "flex flex-col gap-3 rounded-lg border border-border/60 bg-card p-4",
         trend === "up" && "border-l-2 border-l-emerald-500",
         trend === "down" && "border-l-2 border-l-rose-500",
         className,
       )}
     >
       {header ?? (
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
           {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
           {label && (
-            <span className="text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <span className="truncate text-[0.65rem] font-bold uppercase tracking-[0.1em] text-muted-foreground">
               {label}
             </span>
           )}
           {badge && (
-            <span className="ml-auto rounded-full bg-accent/10 px-2 py-0.5 text-[0.6rem] font-semibold text-accent">
+            <span className="ml-auto shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[0.6rem] font-semibold text-accent">
               {badge}
             </span>
           )}
         </div>
       )}
-      <div className="text-xl font-extrabold leading-tight tracking-tight text-foreground">
+      <div className="break-words text-xl font-extrabold leading-tight tracking-tight text-foreground">
         {value}
       </div>
       {footer ?? (description && (
