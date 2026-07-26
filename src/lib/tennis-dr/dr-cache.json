@@ -1,5 +1,6783 @@
 {
-  "generatedAt": "2026-07-25T23:31:18.740Z",
-  "lastUpdate": "2026-07-25",
-  "players": {}
+  "generatedAt": "2026-07-26T21:22:41.636Z",
+  "lastUpdate": "2026-07-26",
+  "players": {
+    "jannik_sinner": {
+      "name": "Jannik Sinner",
+      "all": {
+        "drs": [
+          1.24,
+          1.81,
+          1.28,
+          1.62,
+          1.5
+        ],
+        "median": 1.5,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.45,
+          1.37,
+          1.42,
+          1.79,
+          2.51
+        ],
+        "median": 1.45,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.24,
+          1.81,
+          1.28,
+          1.62,
+          1.5
+        ],
+        "median": 1.5,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7502800000000001,
+          "acesPct": 15.55,
+          "dfPct": 2.55,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.709244,
+          "acesPct": 7.65,
+          "dfPct": 2.2,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.7502800000000001,
+          "acesPct": 17.6,
+          "dfPct": 3,
+          "n": 7
+        }
+      }
+    },
+    "carlos_alcaraz": {
+      "name": "Carlos Alcaraz",
+      "all": {
+        "drs": [
+          1.27,
+          0.82,
+          1.36,
+          1.61,
+          1.23
+        ],
+        "median": 1.27,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.98,
+          1.41,
+          0.9,
+          1.41,
+          2.43
+        ],
+        "median": 1.41,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          1.27,
+          0.82,
+          1.36,
+          1.61,
+          1.23
+        ],
+        "median": 1.27,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.62951,
+          "acesPct": 5.75,
+          "dfPct": 4.5,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.649168,
+          "acesPct": 6.15,
+          "dfPct": 2.6,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": 0.62951,
+          "acesPct": 5.9,
+          "dfPct": 4.95,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "alexander_zverev": {
+      "name": "Alexander Zverev",
+      "all": {
+        "drs": [
+          0.81,
+          2.13,
+          1.59,
+          1.14,
+          1.38
+        ],
+        "median": 1.38,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.97,
+          1.59,
+          1.2
+        ],
+        "median": 1.2,
+        "n": 3
+      },
+      "Grass": {
+        "drs": [
+          0.81,
+          2.13,
+          1.59,
+          1.14,
+          1.38
+        ],
+        "median": 1.38,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.744,
+          "acesPct": 15.45,
+          "dfPct": 2.55,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.641834,
+          "acesPct": 4.5,
+          "dfPct": 5.8,
+          "n": 3
+        },
+        "Grass": {
+          "servePtsWonPct": 0.744,
+          "acesPct": 15.45,
+          "dfPct": 2.55,
+          "n": 10
+        }
+      }
+    },
+    "novak_djokovic": {
+      "name": "Novak Djokovic",
+      "all": {
+        "drs": [
+          0.55,
+          1.12,
+          1.07,
+          0.86,
+          2.3
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.05,
+          1.18,
+          1.39,
+          0.78,
+          0.78
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.98
+        ],
+        "median": 0.98,
+        "n": 1
+      },
+      "Grass": {
+        "drs": [
+          0.55,
+          1.12,
+          1.07,
+          0.86,
+          2.3
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7078599999999999,
+          "acesPct": 7.95,
+          "dfPct": 2.8,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.653912,
+          "acesPct": 6.4,
+          "dfPct": 3.5999999999999996,
+          "n": 9
+        },
+        "Clay": {
+          "servePtsWonPct": 0.647216,
+          "acesPct": null,
+          "dfPct": 1.5,
+          "n": 1
+        },
+        "Grass": {
+          "servePtsWonPct": 0.7078599999999999,
+          "acesPct": 9.5,
+          "dfPct": 2.9,
+          "n": 6
+        }
+      }
+    },
+    "arthur_fils": {
+      "name": "Arthur Fils",
+      "all": {
+        "drs": [
+          0.92,
+          1.76,
+          0.26,
+          0.51,
+          1.41
+        ],
+        "median": 0.92,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.55,
+          0.9,
+          1.21,
+          3.14,
+          2.13
+        ],
+        "median": 1.21,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.26,
+          0.51,
+          1.41,
+          1.21,
+          1.49
+        ],
+        "median": 1.21,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.92,
+          1.76
+        ],
+        "median": 1.34,
+        "n": 2
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.668916,
+          "acesPct": 4.7,
+          "dfPct": 3.5,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.765958,
+          "acesPct": 7.3,
+          "dfPct": 3.2,
+          "n": 9
+        },
+        "Clay": {
+          "servePtsWonPct": 0.714663,
+          "acesPct": 4.2,
+          "dfPct": 3.5,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.7063330000000001,
+          "acesPct": 9.8,
+          "dfPct": 2.15,
+          "n": 2
+        }
+      }
+    },
+    "rafael_jodar": {
+      "name": "Rafael Jodar",
+      "all": {
+        "drs": [
+          0.94,
+          0.92,
+          2.12,
+          0.85,
+          1.56
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.85,
+          1.56,
+          1.27,
+          1.21,
+          0.7
+        ],
+        "median": 1.21,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.94,
+          0.92,
+          2.12
+        ],
+        "median": 0.94,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.59154,
+          "acesPct": 5.75,
+          "dfPct": 2.8,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.605294,
+          "acesPct": 5.1,
+          "dfPct": 2.05,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.59154,
+          "acesPct": 9.4,
+          "dfPct": 2.9,
+          "n": 3
+        }
+      }
+    },
+    "felix_auger_aliassime": {
+      "name": "Felix Auger Aliassime",
+      "all": {
+        "drs": [
+          0.89,
+          1.1,
+          1.99,
+          1.18,
+          1.79
+        ],
+        "median": 1.18,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.01,
+          1.68,
+          0.88,
+          0.67,
+          3.14
+        ],
+        "median": 1.01,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.89,
+          1.1,
+          1.99,
+          1.18,
+          1.79
+        ],
+        "median": 1.18,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7377100000000001,
+          "acesPct": 14.6,
+          "dfPct": 2.8,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.663072,
+          "acesPct": 10.1,
+          "dfPct": 1.85,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.7377100000000001,
+          "acesPct": 14.6,
+          "dfPct": 2.8,
+          "n": 10
+        }
+      }
+    },
+    "daniil_medvedev": {
+      "name": "Daniil Medvedev",
+      "all": {
+        "drs": [
+          0.99,
+          1.28,
+          1.44,
+          1.09,
+          1.29
+        ],
+        "median": 1.28,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.85,
+          1.44
+        ],
+        "median": 1.145,
+        "n": 2
+      },
+      "Clay": {
+        "drs": [
+          0.73,
+          1.07,
+          1.36,
+          1.16,
+          0.9
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.99,
+          1.28,
+          1.44,
+          1.09,
+          1.29
+        ],
+        "median": 1.28,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.663219,
+          "acesPct": 9.4,
+          "dfPct": 4.800000000000001,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.616908,
+          "acesPct": 7,
+          "dfPct": 4.949999999999999,
+          "n": 2
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6297999999999999,
+          "acesPct": 4.1,
+          "dfPct": 4.9,
+          "n": 8
+        },
+        "Grass": {
+          "servePtsWonPct": 0.663219,
+          "acesPct": 10.4,
+          "dfPct": 4.2,
+          "n": 9
+        }
+      }
+    },
+    "alex_de_minaur": {
+      "name": "Alex De Minaur",
+      "all": {
+        "drs": [
+          0.82,
+          1.26,
+          1.38,
+          1.7,
+          0.96
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.86,
+          1.37,
+          1.12,
+          1.12,
+          0.85
+        ],
+        "median": 1.12,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.82,
+          1.26,
+          1.38,
+          1.7,
+          0.96
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6469100000000001,
+          "acesPct": 5.9,
+          "dfPct": 3.9,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6045,
+          "acesPct": 1.4,
+          "dfPct": 3.65,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6469100000000001,
+          "acesPct": 5.9,
+          "dfPct": 3.9,
+          "n": 10
+        }
+      }
+    },
+    "casper_ruud": {
+      "name": "Casper Ruud",
+      "all": {
+        "drs": [
+          0.98,
+          1.27,
+          0.74,
+          0.8,
+          2.44
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.98,
+          1.27,
+          0.8,
+          2.44,
+          1.79
+        ],
+        "median": 1.27,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.74
+        ],
+        "median": 0.74,
+        "n": 1
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.638737,
+          "acesPct": 4.75,
+          "dfPct": 3.2,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.695875,
+          "acesPct": 4.7,
+          "dfPct": 3.2,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.603958,
+          "acesPct": 9.9,
+          "dfPct": 5.9,
+          "n": 1
+        }
+      }
+    },
+    "tommy_paul": {
+      "name": "Tommy Paul",
+      "all": {
+        "drs": [
+          0.91,
+          1.42,
+          2.63,
+          1.04,
+          1.26
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.98,
+          1.17,
+          1.41,
+          0.93,
+          1.71
+        ],
+        "median": 1.17,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.91,
+          1.42,
+          2.63,
+          1.04,
+          1.26
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.660504,
+          "acesPct": 8.55,
+          "dfPct": 2.9,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.616822,
+          "acesPct": 3.05,
+          "dfPct": 2.5,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.660504,
+          "acesPct": 11.55,
+          "dfPct": 2.9,
+          "n": 8
+        }
+      }
+    },
+    "ben_shelton": {
+      "name": "Ben Shelton",
+      "all": {
+        "drs": [
+          0.95,
+          0.85,
+          1.23,
+          1.36,
+          0.61
+        ],
+        "median": 0.95,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.95,
+          1.32,
+          1.03,
+          0.95,
+          1.19
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.95,
+          0.85,
+          1.23,
+          1.36,
+          0.61
+        ],
+        "median": 0.95,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.712864,
+          "acesPct": 11.2,
+          "dfPct": 3.5999999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.68481,
+          "acesPct": 9.1,
+          "dfPct": 2.75,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.712864,
+          "acesPct": 12.35,
+          "dfPct": 3.9499999999999997,
+          "n": 8
+        }
+      }
+    },
+    "jiri_lehecka": {
+      "name": "Jiri Lehecka",
+      "all": {
+        "drs": [
+          0.88,
+          1.03,
+          1.26,
+          1.41,
+          1.05
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.61,
+          1.81,
+          1.43,
+          1.04,
+          1.4
+        ],
+        "median": 1.4,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.63,
+          1.4,
+          0.71,
+          1.99,
+          1.52
+        ],
+        "median": 1.4,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.88,
+          1.03,
+          1.26,
+          1.41,
+          1.05
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6533640000000001,
+          "acesPct": 12.25,
+          "dfPct": 1.95,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.7330939999999999,
+          "acesPct": 10.4,
+          "dfPct": 2.7,
+          "n": 6
+        },
+        "Clay": {
+          "servePtsWonPct": 0.718784,
+          "acesPct": 10.8,
+          "dfPct": 2.3,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6533640000000001,
+          "acesPct": 12.4,
+          "dfPct": 1.9,
+          "n": 9
+        }
+      }
+    },
+    "taylor_fritz": {
+      "name": "Taylor Fritz",
+      "all": {
+        "drs": [
+          0.63,
+          1.44,
+          1.21,
+          1.8,
+          1.79
+        ],
+        "median": 1.44,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.96,
+          2.94,
+          1.36,
+          0.85,
+          1.48
+        ],
+        "median": 1.36,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.62
+        ],
+        "median": 0.62,
+        "n": 1
+      },
+      "Grass": {
+        "drs": [
+          0.63,
+          1.44,
+          1.21,
+          1.8,
+          1.79
+        ],
+        "median": 1.44,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.750088,
+          "acesPct": 19.7,
+          "dfPct": 2.1,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.726408,
+          "acesPct": 15.6,
+          "dfPct": 2,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.619024,
+          "acesPct": 11.1,
+          "dfPct": null,
+          "n": 1
+        },
+        "Grass": {
+          "servePtsWonPct": 0.750088,
+          "acesPct": 19.7,
+          "dfPct": 2.1,
+          "n": 10
+        }
+      }
+    },
+    "learner_tien": {
+      "name": "Learner Tien",
+      "all": {
+        "drs": [
+          0.92,
+          1.13,
+          0.7,
+          1.83,
+          1.11
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.72,
+          0.53,
+          1.09,
+          1.13,
+          1.24
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          1.11,
+          1.37,
+          1.19,
+          1.29,
+          0.64
+        ],
+        "median": 1.19,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.92,
+          1.13,
+          0.7,
+          1.83
+        ],
+        "median": 1.025,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6165860000000001,
+          "acesPct": 4.1,
+          "dfPct": 4.45,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.64047,
+          "acesPct": 11,
+          "dfPct": 7.1,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6165860000000001,
+          "acesPct": 3.3,
+          "dfPct": 4.9,
+          "n": 8
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6292800000000001,
+          "acesPct": 5.4,
+          "dfPct": 3.65,
+          "n": 4
+        }
+      }
+    },
+    "joao_fonseca": {
+      "name": "Joao Fonseca",
+      "all": {
+        "drs": [
+          0.66,
+          1.43,
+          1.16,
+          0.53,
+          1
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.71,
+          1.11
+        ],
+        "median": 0.91,
+        "n": 2
+      },
+      "Clay": {
+        "drs": [
+          1,
+          0.99,
+          0.68,
+          1.42,
+          1.34
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.66,
+          1.43,
+          1.16,
+          0.53
+        ],
+        "median": 0.9099999999999999,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.654652,
+          "acesPct": 4.05,
+          "dfPct": 2.25,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6379245,
+          "acesPct": 10.9,
+          "dfPct": 2.1,
+          "n": 2
+        },
+        "Clay": {
+          "servePtsWonPct": 0.672032,
+          "acesPct": 3.9,
+          "dfPct": 2.25,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6191040000000001,
+          "acesPct": 8.2,
+          "dfPct": 1.8,
+          "n": 4
+        }
+      }
+    },
+    "jakub_mensik": {
+      "name": "Jakub Mensik",
+      "all": {
+        "drs": [
+          0.93,
+          1.06,
+          1.02,
+          0.53,
+          1.33
+        ],
+        "median": 1.02,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.24,
+          1.32,
+          0.74,
+          0.96,
+          0.74
+        ],
+        "median": 0.96,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.53,
+          1.33,
+          0.94,
+          0.86,
+          1.38
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.93,
+          1.06,
+          1.02
+        ],
+        "median": 1.02,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6556,
+          "acesPct": 12.75,
+          "dfPct": 3.5,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.636252,
+          "acesPct": 17.2,
+          "dfPct": 4.1,
+          "n": 7
+        },
+        "Clay": {
+          "servePtsWonPct": 0.683,
+          "acesPct": 8.65,
+          "dfPct": 3.3,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6556,
+          "acesPct": 18.1,
+          "dfPct": 3.3,
+          "n": 3
+        }
+      }
+    },
+    "frances_tiafoe": {
+      "name": "Frances Tiafoe",
+      "all": {
+        "drs": [
+          0.81,
+          1.19,
+          1.28,
+          2.08,
+          1.57
+        ],
+        "median": 1.28,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.91,
+          1.1,
+          0.79,
+          1.23,
+          0.94
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.81,
+          1.19,
+          1.28,
+          2.08,
+          1.57
+        ],
+        "median": 1.28,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.711472,
+          "acesPct": 6.5,
+          "dfPct": 2.8499999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6199300000000001,
+          "acesPct": 2.9,
+          "dfPct": 2.8,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.711472,
+          "acesPct": 6.5,
+          "dfPct": 2.9,
+          "n": 10
+        }
+      }
+    },
+    "francisco_cerundolo": {
+      "name": "Francisco Cerundolo",
+      "all": {
+        "drs": [
+          0.55,
+          0.96,
+          1,
+          1.01,
+          1.55
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.89,
+          0.93,
+          1.88,
+          0.83,
+          2.26
+        ],
+        "median": 0.93,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.55,
+          0.96,
+          1,
+          1.01,
+          1.55
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5739510000000001,
+          "acesPct": 4.199999999999999,
+          "dfPct": 5.15,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6621600000000001,
+          "acesPct": 4.1,
+          "dfPct": 4.65,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5739510000000001,
+          "acesPct": 3.4,
+          "dfPct": 5.65,
+          "n": 6
+        }
+      }
+    },
+    "andrey_rublev": {
+      "name": "Andrey Rublev",
+      "all": {
+        "drs": [
+          0.94,
+          2.51,
+          1.38,
+          1.18,
+          2.04
+        ],
+        "median": 1.38,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.94,
+          2.51,
+          1.38,
+          1.18,
+          2.04
+        ],
+        "median": 1.38,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.76,
+          0.36
+        ],
+        "median": 0.56,
+        "n": 2
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7435100000000001,
+          "acesPct": 10.850000000000001,
+          "dfPct": 3.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.7435100000000001,
+          "acesPct": 9.55,
+          "dfPct": 2.45,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6102810000000001,
+          "acesPct": 9.8,
+          "dfPct": 10.75,
+          "n": 2
+        }
+      }
+    },
+    "raphael_collignon": {
+      "name": "Raphael Collignon",
+      "all": {
+        "drs": [
+          0.79,
+          0.71,
+          0.97,
+          1.07,
+          1.26
+        ],
+        "median": 0.97,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.79,
+          0.71,
+          0.97,
+          1.07,
+          1.26
+        ],
+        "median": 0.97,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.57,
+          0.96,
+          0.66,
+          1.15,
+          1.23
+        ],
+        "median": 0.96,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.634216,
+          "acesPct": 8.5,
+          "dfPct": 5.699999999999999,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.634216,
+          "acesPct": 4.800000000000001,
+          "dfPct": 5,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.70936,
+          "acesPct": 11.3,
+          "dfPct": 5.8,
+          "n": 7
+        }
+      }
+    },
+    "flavio_cobolli": {
+      "name": "Flavio Cobolli",
+      "all": {
+        "drs": [
+          0.71,
+          0.61,
+          1.22,
+          0.92,
+          1.03
+        ],
+        "median": 0.92,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.71,
+          0.7,
+          0.54,
+          1.16,
+          0.58
+        ],
+        "median": 0.7,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.61,
+          1.22,
+          0.92,
+          1.03,
+          0.99
+        ],
+        "median": 0.99,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.63058,
+          "acesPct": 7.15,
+          "dfPct": 2.8499999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.555721,
+          "acesPct": 5.3,
+          "dfPct": 4.3,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.63058,
+          "acesPct": 8.4,
+          "dfPct": 2.45,
+          "n": 6
+        }
+      }
+    },
+    "valentin_vacherot": {
+      "name": "Valentin Vacherot",
+      "all": {
+        "drs": [
+          0.75,
+          0.94,
+          1.26,
+          1.05,
+          0.74
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.83,
+          1.37,
+          1.54,
+          0.93,
+          1.47
+        ],
+        "median": 1.37,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.75,
+          0.94,
+          1.26,
+          1.05,
+          0.74
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.660716,
+          "acesPct": 5.9,
+          "dfPct": 3.3,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.738248,
+          "acesPct": 15.4,
+          "dfPct": 3.3,
+          "n": 9
+        },
+        "Clay": {
+          "servePtsWonPct": 0.660716,
+          "acesPct": 5.6,
+          "dfPct": 3.2,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "alejandro_davidovich_fokina": {
+      "name": "Alejandro Davidovich Fokina",
+      "all": {
+        "drs": [
+          0.75,
+          1.26,
+          0.91,
+          1.85,
+          2.35
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.75,
+          1.26,
+          0.89,
+          0.86,
+          0.58
+        ],
+        "median": 0.86,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.91,
+          1.85,
+          2.35,
+          1.31,
+          1.25
+        ],
+        "median": 1.31,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.668526,
+          "acesPct": 8.399999999999999,
+          "dfPct": 2.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.608072,
+          "acesPct": 6.8,
+          "dfPct": 1.2,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6857,
+          "acesPct": 8.95,
+          "dfPct": 2.5,
+          "n": 10
+        }
+      }
+    },
+    "alexander_bublik": {
+      "name": "Alexander Bublik",
+      "all": {
+        "drs": [
+          0.61,
+          1.27,
+          1.37,
+          1.31,
+          0.87
+        ],
+        "median": 1.27,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.61,
+          1.27,
+          1.37,
+          1.31,
+          0.87
+        ],
+        "median": 1.27,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.69,
+          1.23,
+          1.35,
+          1.35,
+          0.73
+        ],
+        "median": 1.23,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7002499999999999,
+          "acesPct": 14,
+          "dfPct": 3.1,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.7002499999999999,
+          "acesPct": 10.05,
+          "dfPct": 4.7,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.726094,
+          "acesPct": 15.55,
+          "dfPct": 3.1,
+          "n": 8
+        }
+      }
+    },
+    "alexander_blockx": {
+      "name": "Alexander Blockx",
+      "all": {
+        "drs": [
+          1.03,
+          1.19,
+          0.9,
+          0.79,
+          0.75
+        ],
+        "median": 0.9,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.03,
+          1.19,
+          0.9,
+          0.79,
+          0.63
+        ],
+        "median": 0.9,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.75
+        ],
+        "median": 0.75,
+        "n": 1
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.61464,
+          "acesPct": 6.55,
+          "dfPct": 4.75,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.59516,
+          "acesPct": 6.55,
+          "dfPct": 4.449999999999999,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6947949999999999,
+          "acesPct": 11.3,
+          "dfPct": 5.7,
+          "n": 1
+        }
+      }
+    },
+    "stefanos_tsitsipas": {
+      "name": "Stefanos Tsitsipas",
+      "all": {
+        "drs": [
+          1.41,
+          1.54,
+          1.13,
+          1.23,
+          1.93
+        ],
+        "median": 1.41,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.32,
+          2.6,
+          1.66
+        ],
+        "median": 1.66,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          1.41,
+          1.54,
+          1.13,
+          1.23,
+          1.93
+        ],
+        "median": 1.41,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.43,
+          2.09,
+          0.87
+        ],
+        "median": 0.87,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.745153,
+          "acesPct": 7.949999999999999,
+          "dfPct": 2.15,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.7538,
+          "acesPct": 7.7,
+          "dfPct": 1.8,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.745153,
+          "acesPct": 6.05,
+          "dfPct": 2.8499999999999996,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6766920000000001,
+          "acesPct": 14.7,
+          "dfPct": 1.5,
+          "n": 3
+        }
+      }
+    },
+    "tomas_machac": {
+      "name": "Tomas Machac",
+      "all": {
+        "drs": [
+          1.12,
+          1.03,
+          1.06,
+          0.82,
+          1.21
+        ],
+        "median": 1.06,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.99,
+          1.16,
+          0.32,
+          0.6,
+          0.82
+        ],
+        "median": 0.82,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          1.12,
+          1.03,
+          1.06,
+          0.82,
+          1.21
+        ],
+        "median": 1.06,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.636654,
+          "acesPct": 4.65,
+          "dfPct": 4.4,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.58068,
+          "acesPct": 4.8,
+          "dfPct": 2.95,
+          "n": 7
+        },
+        "Clay": {
+          "servePtsWonPct": 0.636654,
+          "acesPct": 4.5,
+          "dfPct": 4.3,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "lorenzo_musetti": {
+      "name": "Lorenzo Musetti",
+      "all": {
+        "drs": [
+          0.58,
+          1.07,
+          1.33,
+          0.5,
+          1.31
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.61,
+          1.12,
+          1.87,
+          1.23,
+          1.4
+        ],
+        "median": 1.23,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.58,
+          1.07,
+          1.33,
+          0.5,
+          1.31
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.597754,
+          "acesPct": 3.3,
+          "dfPct": 3.2,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.62788,
+          "acesPct": 6.4,
+          "dfPct": 2.8,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": 0.597754,
+          "acesPct": 3.3,
+          "dfPct": 2.8499999999999996,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "ugo_humbert": {
+      "name": "Ugo Humbert",
+      "all": {
+        "drs": [
+          0.91,
+          0.79,
+          1.12,
+          1.92,
+          1.57
+        ],
+        "median": 1.12,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.96,
+          0.99,
+          1.3,
+          0.51,
+          1.3
+        ],
+        "median": 0.99,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.91,
+          0.79,
+          1.12,
+          1.92,
+          1.57
+        ],
+        "median": 1.12,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6797949999999999,
+          "acesPct": 8.45,
+          "dfPct": 3.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6718,
+          "acesPct": 8.2,
+          "dfPct": 5.2,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6797949999999999,
+          "acesPct": 8.45,
+          "dfPct": 3.7,
+          "n": 10
+        }
+      }
+    },
+    "matteo_berrettini": {
+      "name": "Matteo Berrettini",
+      "all": {
+        "drs": [
+          0.8,
+          1.09,
+          1.22,
+          0.85,
+          1.33
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.73,
+          1.08,
+          1.33
+        ],
+        "median": 1.08,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          0.85,
+          1.33,
+          0.74,
+          0.77,
+          1.47
+        ],
+        "median": 0.85,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.8,
+          1.09,
+          1.22
+        ],
+        "median": 1.09,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6668160000000001,
+          "acesPct": 9.75,
+          "dfPct": 2.45,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.693464,
+          "acesPct": 14.5,
+          "dfPct": 1.6,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.650905,
+          "acesPct": 5.5,
+          "dfPct": 2.1,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.696264,
+          "acesPct": 16,
+          "dfPct": 2.4,
+          "n": 3
+        }
+      }
+    },
+    "luciano_darderi": {
+      "name": "Luciano Darderi",
+      "all": {
+        "drs": [
+          0.97,
+          1.05,
+          4.22,
+          0.72,
+          1.04
+        ],
+        "median": 1.04,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.97,
+          1.05,
+          4.22,
+          0.72,
+          1.04
+        ],
+        "median": 1.04,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.67,
+          0.58,
+          0.84
+        ],
+        "median": 0.67,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6607339999999999,
+          "acesPct": 5.9,
+          "dfPct": 2.9000000000000004,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6607339999999999,
+          "acesPct": 5.85,
+          "dfPct": 2.4000000000000004,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.616556,
+          "acesPct": 5.8,
+          "dfPct": 3.3,
+          "n": 3
+        }
+      }
+    },
+    "karen_khachanov": {
+      "name": "Karen Khachanov",
+      "all": {
+        "drs": [
+          1.09,
+          2.14,
+          1.21,
+          1.1,
+          1.01
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.77,
+          1.47,
+          0.91
+        ],
+        "median": 0.91,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          1.01,
+          1.16,
+          0.85,
+          1.28,
+          1.24
+        ],
+        "median": 1.16,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.09,
+          2.14,
+          1.21,
+          1.1
+        ],
+        "median": 1.155,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.659459,
+          "acesPct": 7.95,
+          "dfPct": 2.6500000000000004,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.680536,
+          "acesPct": 12.4,
+          "dfPct": 3.9000000000000004,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.655234,
+          "acesPct": 5.65,
+          "dfPct": 2,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6589525,
+          "acesPct": 9.600000000000001,
+          "dfPct": 3.1,
+          "n": 4
+        }
+      }
+    },
+    "dino_prizmic": {
+      "name": "Dino Prizmic",
+      "all": {
+        "drs": [
+          0.97,
+          1.64,
+          0.85,
+          0.98,
+          1.01
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.97,
+          1.64,
+          0.78,
+          1.95,
+          1.02
+        ],
+        "median": 1.02,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.85,
+          0.98,
+          1.01
+        ],
+        "median": 0.98,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.666574,
+          "acesPct": 5.35,
+          "dfPct": 3.45,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.653891,
+          "acesPct": 4.15,
+          "dfPct": 3.45,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.666574,
+          "acesPct": 6.5,
+          "dfPct": 2.9,
+          "n": 3
+        }
+      }
+    },
+    "brandon_nakashima": {
+      "name": "Brandon Nakashima",
+      "all": {
+        "drs": [
+          1.09,
+          1.21,
+          1,
+          1.04,
+          1.58
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1,
+          0.91,
+          1.85,
+          1.14,
+          1.17
+        ],
+        "median": 1.14,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.81,
+          1.74,
+          0.83,
+          0.61,
+          1.26
+        ],
+        "median": 0.83,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.09,
+          1.21,
+          1,
+          1.04,
+          1.58
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.66709,
+          "acesPct": 7.35,
+          "dfPct": 2.3499999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6949960000000001,
+          "acesPct": 15.8,
+          "dfPct": 1.6,
+          "n": 7
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6619160000000001,
+          "acesPct": 8.2,
+          "dfPct": 5.5,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.66709,
+          "acesPct": 8.2,
+          "dfPct": 2.9,
+          "n": 6
+        }
+      }
+    },
+    "daniel_merida_aguilar": {
+      "name": "Daniel Merida Aguilar",
+      "all": {
+        "drs": [
+          1.03,
+          1.16,
+          1.69,
+          2.28,
+          1.63
+        ],
+        "median": 1.63,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.03,
+          1.16,
+          1.69,
+          2.28,
+          1.63
+        ],
+        "median": 1.63,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.78,
+          1.15,
+          0.72
+        ],
+        "median": 0.78,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7140000000000001,
+          "acesPct": 2.65,
+          "dfPct": 4.15,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.7140000000000001,
+          "acesPct": 3.05,
+          "dfPct": 4.4,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.593016,
+          "acesPct": 6,
+          "dfPct": 2,
+          "n": 3
+        }
+      }
+    },
+    "jack_draper": {
+      "name": "Jack Draper",
+      "all": {
+        "drs": [
+          0.89,
+          2.16,
+          1.39,
+          1.46,
+          0.67
+        ],
+        "median": 1.39,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.82,
+          0.57,
+          0.95,
+          1.45,
+          1.49
+        ],
+        "median": 0.95,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.67
+        ],
+        "median": 0.67,
+        "n": 1
+      },
+      "Grass": {
+        "drs": [
+          0.89,
+          2.16,
+          1.39,
+          1.46,
+          0.81
+        ],
+        "median": 1.39,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7303580000000001,
+          "acesPct": 8.65,
+          "dfPct": 2.95,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.666794,
+          "acesPct": 10.8,
+          "dfPct": 2.95,
+          "n": 8
+        },
+        "Clay": {
+          "servePtsWonPct": 0.522166,
+          "acesPct": 4.3,
+          "dfPct": 8.7,
+          "n": 1
+        },
+        "Grass": {
+          "servePtsWonPct": 0.7303580000000001,
+          "acesPct": 13.25,
+          "dfPct": 3.4,
+          "n": 10
+        }
+      }
+    },
+    "hubert_hurkacz": {
+      "name": "Hubert Hurkacz",
+      "all": {
+        "drs": [
+          0.84,
+          1.1,
+          1.24,
+          1.35,
+          1.19
+        ],
+        "median": 1.19,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.71,
+          0.78,
+          1.08,
+          1.3,
+          2.48
+        ],
+        "median": 1.08,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.84,
+          1.1,
+          1.24,
+          1.35,
+          1.19
+        ],
+        "median": 1.19,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.706646,
+          "acesPct": 15.25,
+          "dfPct": 3,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.673313,
+          "acesPct": 13.399999999999999,
+          "dfPct": 2.55,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.706646,
+          "acesPct": 16.3,
+          "dfPct": 3.3,
+          "n": 7
+        }
+      }
+    },
+    "hamad_medjedovic": {
+      "name": "Hamad Medjedovic",
+      "all": {
+        "drs": [
+          0.83,
+          1.24,
+          0.96,
+          0.77,
+          0.98
+        ],
+        "median": 0.96,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.77,
+          0.98,
+          1,
+          1.33,
+          0.74
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.83,
+          1.24,
+          0.96
+        ],
+        "median": 0.96,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.599842,
+          "acesPct": 6.9,
+          "dfPct": 3.2,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.599842,
+          "acesPct": 7.6,
+          "dfPct": 3.1,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.728401,
+          "acesPct": 7.7,
+          "dfPct": 4.9,
+          "n": 3
+        }
+      }
+    },
+    "zizou_bergs": {
+      "name": "Zizou Bergs",
+      "all": {
+        "drs": [
+          1.08,
+          1.14,
+          1.1,
+          1.26,
+          0.97
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.98,
+          1.2,
+          0.88,
+          0.85,
+          1.19
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.08,
+          1.14,
+          1.1,
+          1.26,
+          0.97
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.621648,
+          "acesPct": 11.7,
+          "dfPct": 5.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.612674,
+          "acesPct": 10.35,
+          "dfPct": 5.95,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.621648,
+          "acesPct": 11.6,
+          "dfPct": 5.7,
+          "n": 9
+        }
+      }
+    },
+    "cameron_norrie": {
+      "name": "Cameron Norrie",
+      "all": {
+        "drs": [
+          0.83,
+          0.82,
+          0.71,
+          0.6,
+          0.62
+        ],
+        "median": 0.71,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.72,
+          0.71,
+          1.37,
+          1.23,
+          1.7
+        ],
+        "median": 1.23,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.71,
+          0.6,
+          0.62,
+          0.99,
+          0.97
+        ],
+        "median": 0.71,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.83,
+          0.82
+        ],
+        "median": 0.825,
+        "n": 2
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.578584,
+          "acesPct": 3.55,
+          "dfPct": 3.8499999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6570539999999999,
+          "acesPct": 5.7,
+          "dfPct": 3.65,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.625336,
+          "acesPct": 3.3499999999999996,
+          "dfPct": 3.9,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5940585,
+          "acesPct": 5.699999999999999,
+          "dfPct": 4.3,
+          "n": 2
+        }
+      }
+    },
+    "arthur_fery": {
+      "name": "Arthur Fery",
+      "all": {
+        "drs": [
+          0.47,
+          1.63,
+          0.85,
+          0.93,
+          1.29
+        ],
+        "median": 0.93,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.91,
+          1.15,
+          1.46,
+          1.27
+        ],
+        "median": 1.21,
+        "n": 4
+      },
+      "Grass": {
+        "drs": [
+          0.47,
+          1.63,
+          0.85,
+          0.93,
+          1.29
+        ],
+        "median": 0.93,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.637945,
+          "acesPct": 5,
+          "dfPct": 2.25,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6260485,
+          "acesPct": 4.8,
+          "dfPct": 3.2,
+          "n": 4
+        },
+        "Grass": {
+          "servePtsWonPct": 0.637945,
+          "acesPct": 5,
+          "dfPct": 2.25,
+          "n": 10
+        }
+      }
+    },
+    "juan_manuel_cerundolo": {
+      "name": "Juan Manuel Cerundolo",
+      "all": {
+        "drs": [
+          0.64,
+          1.03,
+          1.02,
+          1.02,
+          1.14
+        ],
+        "median": 1.02,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.64,
+          1.03,
+          1.02,
+          1.02,
+          1.14
+        ],
+        "median": 1.02,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.77,
+          0.91,
+          1.17,
+          1.04
+        ],
+        "median": 0.9750000000000001,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.64699,
+          "acesPct": 6.85,
+          "dfPct": 4.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.64699,
+          "acesPct": 6.35,
+          "dfPct": 2.75,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6413584999999999,
+          "acesPct": 7.75,
+          "dfPct": 5.3,
+          "n": 4
+        }
+      }
+    },
+    "roman_safiullin": {
+      "name": "Roman Safiullin",
+      "all": {
+        "drs": [
+          0.93,
+          1.51,
+          1.18,
+          1.31,
+          0.87
+        ],
+        "median": 1.18,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.83,
+          1.13,
+          0.88,
+          1.3,
+          1.11
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.93,
+          1.51,
+          1.18,
+          1.31,
+          0.87
+        ],
+        "median": 1.18,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.686833,
+          "acesPct": 9.25,
+          "dfPct": 3.35,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.617752,
+          "acesPct": 3.1,
+          "dfPct": 3.7,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.686833,
+          "acesPct": 9.25,
+          "dfPct": 3.2,
+          "n": 10
+        }
+      }
+    },
+    "alejandro_tabilo": {
+      "name": "Alejandro Tabilo",
+      "all": {
+        "drs": [
+          0.92,
+          0.85,
+          1.08,
+          0.67,
+          0.69
+        ],
+        "median": 0.85,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.92,
+          0.85,
+          1.08,
+          0.62,
+          1.13
+        ],
+        "median": 0.92,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.67,
+          0.69,
+          0.58
+        ],
+        "median": 0.67,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6193230000000001,
+          "acesPct": 5.5,
+          "dfPct": 3.1,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.628486,
+          "acesPct": 4.800000000000001,
+          "dfPct": 2.7,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5578559999999999,
+          "acesPct": 5.8,
+          "dfPct": 3.8,
+          "n": 3
+        }
+      }
+    },
+    "gael_monfils": {
+      "name": "Gael Monfils",
+      "all": {
+        "drs": [
+          0.68,
+          0.74,
+          1.3,
+          0.93,
+          1.48
+        ],
+        "median": 0.93,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.93,
+          1.48,
+          0.47,
+          1.26,
+          0.89
+        ],
+        "median": 0.93,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.68,
+          0.74,
+          1.3
+        ],
+        "median": 0.74,
+        "n": 3
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.627544,
+          "acesPct": 9.25,
+          "dfPct": 4.300000000000001,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.627904,
+          "acesPct": 9.7,
+          "dfPct": 5.5,
+          "n": 9
+        },
+        "Clay": {
+          "servePtsWonPct": 0.60279,
+          "acesPct": 8.8,
+          "dfPct": 3.2,
+          "n": 3
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "kamil_majchrzak": {
+      "name": "Kamil Majchrzak",
+      "all": {
+        "drs": [
+          1.09,
+          1.49,
+          0.56,
+          0.9,
+          1.42
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.42,
+          1.38,
+          1.29,
+          0.62
+        ],
+        "median": 0.9550000000000001,
+        "n": 4
+      },
+      "Clay": {
+        "drs": [
+          0.92,
+          0.58,
+          1.26
+        ],
+        "median": 0.92,
+        "n": 3
+      },
+      "Grass": {
+        "drs": [
+          1.09,
+          1.49,
+          0.56,
+          0.9,
+          1.42
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.688704,
+          "acesPct": 6.4,
+          "dfPct": 1.65,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6099425,
+          "acesPct": 8.4,
+          "dfPct": 2.55,
+          "n": 4
+        },
+        "Clay": {
+          "servePtsWonPct": 0.629778,
+          "acesPct": 7.6,
+          "dfPct": 3.25,
+          "n": 3
+        },
+        "Grass": {
+          "servePtsWonPct": 0.688704,
+          "acesPct": 6.4,
+          "dfPct": 1.6,
+          "n": 10
+        }
+      }
+    },
+    "matteo_arnaldi": {
+      "name": "Matteo Arnaldi",
+      "all": {
+        "drs": [
+          0.94,
+          1.27,
+          0.83,
+          0.57,
+          1.01
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.94,
+          1.27,
+          0.79,
+          1.18,
+          0.97
+        ],
+        "median": 0.97,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.83,
+          0.57,
+          1.01,
+          1.1
+        ],
+        "median": 0.9199999999999999,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.63524,
+          "acesPct": 5,
+          "dfPct": 3.9499999999999997,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.65561,
+          "acesPct": 3.5999999999999996,
+          "dfPct": 3.9499999999999997,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.609812,
+          "acesPct": 7.85,
+          "dfPct": 4.25,
+          "n": 4
+        }
+      }
+    },
+    "pablo_carreno_busta": {
+      "name": "Pablo Carreno Busta",
+      "all": {
+        "drs": [
+          0.98,
+          1.62,
+          0.9,
+          1.81,
+          1.08
+        ],
+        "median": 1.08,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.98,
+          1.62,
+          0.9,
+          1.81,
+          0.95
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.08,
+          0.98
+        ],
+        "median": 1.03,
+        "n": 2
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.622747,
+          "acesPct": 3.6500000000000004,
+          "dfPct": 2.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.61359,
+          "acesPct": 3.6500000000000004,
+          "dfPct": 2.9,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6414465,
+          "acesPct": 3.5,
+          "dfPct": 2.55,
+          "n": 2
+        }
+      }
+    },
+    "alex_michelsen": {
+      "name": "Alex Michelsen",
+      "all": {
+        "drs": [
+          1.45,
+          2.33,
+          1.96,
+          1.05,
+          0.85
+        ],
+        "median": 1.45,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.45,
+          2.33,
+          1.96,
+          1.05
+        ],
+        "median": 1.705,
+        "n": 4
+      },
+      "Clay": {
+        "drs": [
+          0.84,
+          1.13,
+          1.22,
+          0.81,
+          0.96
+        ],
+        "median": 0.96,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.85,
+          1.46,
+          1.9,
+          1.61,
+          0.9
+        ],
+        "median": 1.46,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.7409999999999999,
+          "acesPct": 5.35,
+          "dfPct": 5.1,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.7427455,
+          "acesPct": 6.3,
+          "dfPct": 3.15,
+          "n": 4
+        },
+        "Clay": {
+          "servePtsWonPct": 0.617132,
+          "acesPct": 5,
+          "dfPct": 4.9,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.672652,
+          "acesPct": 6.3,
+          "dfPct": 6.2,
+          "n": 5
+        }
+      }
+    },
+    "aryna_sabalenka": {
+      "name": "Aryna Sabalenka",
+      "all": {
+        "drs": [
+          0.66,
+          1.22,
+          1.17,
+          2.03,
+          0.74
+        ],
+        "median": 1.17,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.33,
+          1.62,
+          1.23,
+          1.38,
+          1.38
+        ],
+        "median": 1.38,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.97,
+          1.6,
+          1,
+          1.56,
+          1.67
+        ],
+        "median": 1.56,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.66,
+          1.22,
+          1.17,
+          2.03,
+          0.74
+        ],
+        "median": 1.17,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6382049999999999,
+          "acesPct": 8.05,
+          "dfPct": 3.5999999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.689295,
+          "acesPct": 6.55,
+          "dfPct": 2.4000000000000004,
+          "n": 6
+        },
+        "Clay": {
+          "servePtsWonPct": 0.692665,
+          "acesPct": 5.2,
+          "dfPct": 3.9499999999999997,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6382049999999999,
+          "acesPct": 8.9,
+          "dfPct": 3.4,
+          "n": 7
+        }
+      }
+    },
+    "elena_rybakina": {
+      "name": "Elena Rybakina",
+      "all": {
+        "drs": [
+          0.81,
+          1.65,
+          1.08,
+          0.84,
+          1.18
+        ],
+        "median": 1.08,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.62,
+          0.89,
+          1.92,
+          1.4,
+          1.4
+        ],
+        "median": 1.4,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          1.06,
+          1.72,
+          1.26,
+          1.47,
+          0.85
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.81,
+          1.65,
+          1.08,
+          0.84,
+          1.18
+        ],
+        "median": 1.08,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.66324,
+          "acesPct": 8.15,
+          "dfPct": 5.65,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.672305,
+          "acesPct": 13.4,
+          "dfPct": 3.4,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.617083,
+          "acesPct": 7.3,
+          "dfPct": 4.699999999999999,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.66324,
+          "acesPct": 8.15,
+          "dfPct": 5.65,
+          "n": 6
+        }
+      }
+    },
+    "jessica_pegula": {
+      "name": "Jessica Pegula",
+      "all": {
+        "drs": [
+          0.9,
+          1.22,
+          1.9,
+          1.41,
+          1.43
+        ],
+        "median": 1.41,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.48,
+          1.33,
+          2.96,
+          1.85,
+          0.69
+        ],
+        "median": 1.33,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.9,
+          1.22,
+          1.9,
+          1.41,
+          1.43
+        ],
+        "median": 1.41,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.596881,
+          "acesPct": 4.85,
+          "dfPct": 3.5999999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.628968,
+          "acesPct": 3.7,
+          "dfPct": 2.9,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.596881,
+          "acesPct": 5.4,
+          "dfPct": 1.95,
+          "n": 9
+        }
+      }
+    },
+    "karolina_muchova": {
+      "name": "Karolina Muchova",
+      "all": {
+        "drs": [
+          0.83,
+          0.95,
+          1.48,
+          1.37,
+          1.3
+        ],
+        "median": 1.3,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.71,
+          0.46,
+          1.06,
+          1.1,
+          1.03
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.83,
+          0.95,
+          1.48,
+          1.37,
+          1.3
+        ],
+        "median": 1.3,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.671478,
+          "acesPct": 6.35,
+          "dfPct": 3.1,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.51633,
+          "acesPct": 4.3,
+          "dfPct": 2.4000000000000004,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.671478,
+          "acesPct": 6.35,
+          "dfPct": 3.1,
+          "n": 10
+        }
+      }
+    },
+    "coco_gauff": {
+      "name": "Coco Gauff",
+      "all": {
+        "drs": [
+          1.05,
+          1.11,
+          1.06,
+          1.23,
+          1.18
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.91,
+          1.56,
+          1.09,
+          1.17,
+          1.24
+        ],
+        "median": 1.17,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.05,
+          1.11,
+          1.06,
+          1.23,
+          1.18
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.62638,
+          "acesPct": 3.5999999999999996,
+          "dfPct": 5.75,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5593710000000001,
+          "acesPct": 2.1500000000000004,
+          "dfPct": 6,
+          "n": 8
+        },
+        "Grass": {
+          "servePtsWonPct": 0.62638,
+          "acesPct": 7.6,
+          "dfPct": 6.1,
+          "n": 7
+        }
+      }
+    },
+    "marta_kostyuk": {
+      "name": "Marta Kostyuk",
+      "all": {
+        "drs": [
+          0.77,
+          2.15,
+          1.33,
+          1.46,
+          1.17
+        ],
+        "median": 1.33,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.36,
+          1.09,
+          1.52,
+          1.3,
+          1.44
+        ],
+        "median": 1.36,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.77,
+          2.15,
+          1.33,
+          1.46,
+          1.17
+        ],
+        "median": 1.33,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.655408,
+          "acesPct": 4.1,
+          "dfPct": 6.55,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6200600000000001,
+          "acesPct": 4.45,
+          "dfPct": 7,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.655408,
+          "acesPct": 5.55,
+          "dfPct": 4.8,
+          "n": 6
+        }
+      }
+    },
+    "iga_swiatek": {
+      "name": "Iga Swiatek",
+      "all": {
+        "drs": [
+          0.86,
+          1.77,
+          1.22,
+          1.05,
+          1.04
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.14,
+          0.85,
+          2.27,
+          1.5,
+          1.42
+        ],
+        "median": 1.42,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          1.04,
+          2.08,
+          1.81,
+          2.21,
+          1.3
+        ],
+        "median": 1.81,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.86,
+          1.77,
+          1.22,
+          1.05
+        ],
+        "median": 1.135,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.611262,
+          "acesPct": 3.2,
+          "dfPct": 5.15,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.633366,
+          "acesPct": 3.4,
+          "dfPct": 5.1,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.67374,
+          "acesPct": 3.8,
+          "dfPct": 3.3,
+          "n": 8
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6258170000000001,
+          "acesPct": 2.4,
+          "dfPct": 10.5,
+          "n": 4
+        }
+      }
+    },
+    "mirra_andreeva": {
+      "name": "Mirra Andreeva",
+      "all": {
+        "drs": [
+          1.03,
+          1.09,
+          0.76,
+          0.92,
+          1.39
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.92,
+          1.39,
+          1.34,
+          2.06,
+          0.74
+        ],
+        "median": 1.34,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.03,
+          1.09,
+          0.76
+        ],
+        "median": 1.03,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.594665,
+          "acesPct": 4.65,
+          "dfPct": 3.35,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.581752,
+          "acesPct": 3.1,
+          "dfPct": 3.1,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.594665,
+          "acesPct": 5.7,
+          "dfPct": 3.6,
+          "n": 3
+        }
+      }
+    },
+    "elina_svitolina": {
+      "name": "Elina Svitolina",
+      "all": {
+        "drs": [
+          0.76,
+          1.14,
+          0.86,
+          1.42,
+          2.13
+        ],
+        "median": 1.14,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.1,
+          0.96,
+          0.94,
+          1.36,
+          2.13
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.76,
+          1.14,
+          0.86,
+          1.42,
+          2.13
+        ],
+        "median": 1.14,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.545432,
+          "acesPct": 2.85,
+          "dfPct": 4.05,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5546,
+          "acesPct": 2.3,
+          "dfPct": 4.5,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.545432,
+          "acesPct": 6,
+          "dfPct": 6.5,
+          "n": 5
+        }
+      }
+    },
+    "linda_noskova": {
+      "name": "Linda Noskova",
+      "all": {
+        "drs": [
+          1.2,
+          1.31,
+          1.58,
+          1.33,
+          1.04
+        ],
+        "median": 1.31,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.6,
+          1.47,
+          1.3,
+          0.66,
+          0.91
+        ],
+        "median": 0.91,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.2,
+          1.31,
+          1.58,
+          1.33,
+          1.04
+        ],
+        "median": 1.31,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.693524,
+          "acesPct": 9.4,
+          "dfPct": 4.9,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.571741,
+          "acesPct": 8,
+          "dfPct": 8.15,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.693524,
+          "acesPct": 9.4,
+          "dfPct": 4.9,
+          "n": 10
+        }
+      }
+    },
+    "victoria_mboko": {
+      "name": "Victoria Mboko",
+      "all": {
+        "drs": [
+          0.9,
+          0.73,
+          1.1,
+          1.39,
+          1.35
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.95,
+          1.25,
+          1.61,
+          1.88,
+          0.82
+        ],
+        "median": 1.25,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.73,
+          1.1,
+          1.39,
+          1.35,
+          0.52
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.9
+        ],
+        "median": 0.9,
+        "n": 1
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.630508,
+          "acesPct": 7.4,
+          "dfPct": 6.699999999999999,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6775039999999999,
+          "acesPct": 8.899999999999999,
+          "dfPct": 7.4,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": 0.588057,
+          "acesPct": 3.5,
+          "dfPct": 5.3,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.630508,
+          "acesPct": 8.7,
+          "dfPct": 8.7,
+          "n": 1
+        }
+      }
+    },
+    "naomi_osaka": {
+      "name": "Naomi Osaka",
+      "all": {
+        "drs": [
+          0.68,
+          1.52,
+          1.68,
+          1.96,
+          1.45
+        ],
+        "median": 1.52,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.55,
+          2.52,
+          1.16,
+          0.64,
+          1.45
+        ],
+        "median": 1.16,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.68,
+          1.52,
+          1.68,
+          1.96,
+          1.45
+        ],
+        "median": 1.52,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6822159999999999,
+          "acesPct": 12.25,
+          "dfPct": 3.3,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5737159999999999,
+          "acesPct": 4.15,
+          "dfPct": 4.5,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6822159999999999,
+          "acesPct": 12.25,
+          "dfPct": 3.3,
+          "n": 10
+        }
+      }
+    },
+    "belinda_bencic": {
+      "name": "Belinda Bencic",
+      "all": {
+        "drs": [
+          0.94,
+          1.03,
+          2.77,
+          1.92,
+          0.82
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.06,
+          1.66,
+          1.27,
+          1.73
+        ],
+        "median": 1.4649999999999999,
+        "n": 4
+      },
+      "Clay": {
+        "drs": [
+          0.82,
+          1.87,
+          0.77,
+          1.26,
+          1.55
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.94,
+          1.03,
+          2.77,
+          1.92
+        ],
+        "median": 1.475,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.603768,
+          "acesPct": 3.5,
+          "dfPct": 4.65,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.679581,
+          "acesPct": 3.4,
+          "dfPct": 1.9,
+          "n": 4
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5971960000000001,
+          "acesPct": 3.5,
+          "dfPct": 4.8,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.65411,
+          "acesPct": 3.35,
+          "dfPct": 3.7,
+          "n": 4
+        }
+      }
+    },
+    "madison_keys": {
+      "name": "Madison Keys",
+      "all": {
+        "drs": [
+          0.75,
+          1.39,
+          1.29,
+          1.18,
+          1.73
+        ],
+        "median": 1.29,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.19,
+          1.09,
+          1.37,
+          1.79,
+          1.46
+        ],
+        "median": 1.37,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.75,
+          1.39,
+          1.29,
+          1.18,
+          1.73
+        ],
+        "median": 1.29,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.6668000000000001,
+          "acesPct": 5.5,
+          "dfPct": 5.65,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.652712,
+          "acesPct": 5.1,
+          "dfPct": 3.4,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6668000000000001,
+          "acesPct": 5.5,
+          "dfPct": 5.9,
+          "n": 10
+        }
+      }
+    },
+    "sorana_cirstea": {
+      "name": "Sorana Cirstea",
+      "all": {
+        "drs": [
+          0.96,
+          1.3,
+          1.1,
+          0.72,
+          1.05
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.64,
+          1.61,
+          1.68,
+          1.03,
+          2.06
+        ],
+        "median": 1.61,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.96,
+          1.3,
+          1.1,
+          0.72,
+          1.05
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.579221,
+          "acesPct": 5.050000000000001,
+          "dfPct": 3.05,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6887570000000001,
+          "acesPct": 5.35,
+          "dfPct": 3.2,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.579221,
+          "acesPct": 4.7,
+          "dfPct": 3.7,
+          "n": 5
+        }
+      }
+    },
+    "iva_jovic": {
+      "name": "Iva Jovic",
+      "all": {
+        "drs": [
+          0.82,
+          1.05,
+          1.63,
+          1.62,
+          0.72
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.86,
+          0.86,
+          1.52,
+          1.07,
+          0.77
+        ],
+        "median": 0.86,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.82,
+          1.05,
+          1.63,
+          1.62,
+          0.72
+        ],
+        "median": 1.05,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.570473,
+          "acesPct": 2.8,
+          "dfPct": 3.5999999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5126959999999999,
+          "acesPct": 3.8,
+          "dfPct": 2.7,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.570473,
+          "acesPct": 1.85,
+          "dfPct": 3.5999999999999996,
+          "n": 6
+        }
+      }
+    },
+    "jasmine_paolini": {
+      "name": "Jasmine Paolini",
+      "all": {
+        "drs": [
+          0.46,
+          1.13,
+          2.13,
+          1.2,
+          0.92
+        ],
+        "median": 1.13,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.87,
+          0.96,
+          0.96,
+          1.2,
+          1.22
+        ],
+        "median": 0.96,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.96,
+          1.2,
+          0.78,
+          1.09,
+          0.67
+        ],
+        "median": 0.96,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.46,
+          1.13,
+          2.13,
+          1.2,
+          0.92
+        ],
+        "median": 1.13,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.565125,
+          "acesPct": 3.3,
+          "dfPct": 2.2,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.599904,
+          "acesPct": 4.75,
+          "dfPct": 2.9,
+          "n": 6
+        },
+        "Clay": {
+          "servePtsWonPct": 0.55324,
+          "acesPct": 2.4,
+          "dfPct": 2.4,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.565125,
+          "acesPct": 2.2,
+          "dfPct": 1.5,
+          "n": 5
+        }
+      }
+    },
+    "barbora_krejcikova": {
+      "name": "Barbora Krejcikova",
+      "all": {
+        "drs": [
+          0.79,
+          1.33,
+          1.63,
+          1.51,
+          1.02
+        ],
+        "median": 1.33,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.79,
+          1.33,
+          1.63,
+          1.51,
+          1.02
+        ],
+        "median": 1.33,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [
+          0.73,
+          1.21,
+          0.97,
+          1.32,
+          0.85
+        ],
+        "median": 0.97,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.656552,
+          "acesPct": 4.3,
+          "dfPct": 7.3,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.656552,
+          "acesPct": 4.5,
+          "dfPct": 7.3,
+          "n": 9
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": 0.58242,
+          "acesPct": 7.8,
+          "dfPct": 4.3,
+          "n": 9
+        }
+      }
+    },
+    "elise_mertens": {
+      "name": "Elise Mertens",
+      "all": {
+        "drs": [
+          0.63,
+          1.12,
+          1.23,
+          1.18,
+          1.35
+        ],
+        "median": 1.18,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.72,
+          1.04,
+          1.27,
+          1.15,
+          1.92
+        ],
+        "median": 1.15,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.63,
+          1.12,
+          1.23,
+          1.18,
+          1.35
+        ],
+        "median": 1.18,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.574597,
+          "acesPct": 5.699999999999999,
+          "dfPct": 7.95,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5931249999999999,
+          "acesPct": 7,
+          "dfPct": 5,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.574597,
+          "acesPct": 5.699999999999999,
+          "dfPct": 7.95,
+          "n": 10
+        }
+      }
+    },
+    "alexandra_eala": {
+      "name": "Alexandra Eala",
+      "all": {
+        "drs": [
+          0.89,
+          1.16,
+          1.21,
+          1.96,
+          0.67
+        ],
+        "median": 1.16,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.98,
+          0.8,
+          1.24,
+          1.1
+        ],
+        "median": 1.04,
+        "n": 4
+      },
+      "Grass": {
+        "drs": [
+          0.89,
+          1.16,
+          1.21,
+          1.96,
+          0.67
+        ],
+        "median": 1.16,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.57964,
+          "acesPct": 4.449999999999999,
+          "dfPct": 3.45,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5505795,
+          "acesPct": 1.3,
+          "dfPct": 5,
+          "n": 4
+        },
+        "Grass": {
+          "servePtsWonPct": 0.57964,
+          "acesPct": 4.449999999999999,
+          "dfPct": 3.45,
+          "n": 10
+        }
+      }
+    },
+    "amanda_anisimova": {
+      "name": "Amanda Anisimova",
+      "all": {
+        "drs": [
+          0.72,
+          1.14,
+          2.26,
+          0.88,
+          2.33
+        ],
+        "median": 1.14,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.6,
+          1.43,
+          1.09,
+          0.55,
+          3.21
+        ],
+        "median": 1.09,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [
+          0.72,
+          1.14,
+          2.26,
+          0.88,
+          2.33
+        ],
+        "median": 1.14,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.637972,
+          "acesPct": 5.05,
+          "dfPct": 5.25,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.50014,
+          "acesPct": 4.15,
+          "dfPct": 4.550000000000001,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": 0.637972,
+          "acesPct": 4.8,
+          "dfPct": 6.800000000000001,
+          "n": 5
+        }
+      }
+    },
+    "anna_kalinskaya": {
+      "name": "Anna Kalinskaya",
+      "all": {
+        "drs": [
+          0.97,
+          1.07,
+          1.47,
+          0.73,
+          1.91
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.94,
+          0.57,
+          1.13
+        ],
+        "median": 0.94,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          0.46,
+          1.21,
+          0.94,
+          0.68,
+          0.73
+        ],
+        "median": 0.73,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.97,
+          1.07,
+          1.47,
+          0.73,
+          1.91
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.62888,
+          "acesPct": 5,
+          "dfPct": 7.15,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.581388,
+          "acesPct": 2.4,
+          "dfPct": 4.1,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.489228,
+          "acesPct": 2.85,
+          "dfPct": 6.9,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.62888,
+          "acesPct": 6.050000000000001,
+          "dfPct": 6,
+          "n": 6
+        }
+      }
+    },
+    "marketa_vondrousova": {
+      "name": "Marketa Vondrousova",
+      "all": {
+        "drs": [
+          1.41,
+          0.99,
+          0.67,
+          0.71,
+          1.13
+        ],
+        "median": 0.99,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.41,
+          0.99,
+          0.67,
+          0.71,
+          1.13
+        ],
+        "median": 0.99,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [
+          0.65,
+          1.26,
+          0.99,
+          1.35,
+          1.59
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.61886,
+          "acesPct": 7.95,
+          "dfPct": 6.800000000000001,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.61886,
+          "acesPct": 7.95,
+          "dfPct": 6.800000000000001,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": 0.59329,
+          "acesPct": 4.7,
+          "dfPct": 6.7,
+          "n": 6
+        }
+      }
+    },
+    "anastasia_potapova": {
+      "name": "Anastasia Potapova",
+      "all": {
+        "drs": [
+          0.69,
+          0.37,
+          0.19,
+          0.92,
+          0.75
+        ],
+        "median": 0.69,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.75,
+          1.53,
+          1.41,
+          1.1,
+          1.3
+        ],
+        "median": 1.3,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.69,
+          0.37,
+          0.19,
+          0.92
+        ],
+        "median": 0.53,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.477834,
+          "acesPct": 3.55,
+          "dfPct": 7.5,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.634112,
+          "acesPct": 4.9,
+          "dfPct": 7.550000000000001,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.46972949999999997,
+          "acesPct": 3.5,
+          "dfPct": 7.5,
+          "n": 4
+        }
+      }
+    },
+    "diana_shnaider": {
+      "name": "Diana Shnaider",
+      "all": {
+        "drs": [
+          0.86,
+          1.43,
+          0.88,
+          0.84,
+          0.4
+        ],
+        "median": 0.86,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.79,
+          1.1
+        ],
+        "median": 0.9450000000000001,
+        "n": 2
+      },
+      "Clay": {
+        "drs": [
+          0.4,
+          1.41,
+          0.8,
+          1.16,
+          0.4
+        ],
+        "median": 0.8,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.86,
+          1.43,
+          0.88,
+          0.84
+        ],
+        "median": 0.87,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5313129999999999,
+          "acesPct": 1.75,
+          "dfPct": 5.85,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.5996515,
+          "acesPct": null,
+          "dfPct": 6.5,
+          "n": 2
+        },
+        "Clay": {
+          "servePtsWonPct": 0.543328,
+          "acesPct": 1.3,
+          "dfPct": 5.9,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5325314999999999,
+          "acesPct": 2.05,
+          "dfPct": 5.35,
+          "n": 4
+        }
+      }
+    },
+    "marie_bouzkova": {
+      "name": "Marie Bouzkova",
+      "all": {
+        "drs": [
+          1.15,
+          1.34,
+          1.33,
+          0.89,
+          0.99
+        ],
+        "median": 1.15,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.15,
+          1.34,
+          1.33
+        ],
+        "median": 1.33,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          0.88,
+          1.95,
+          1.18
+        ],
+        "median": 1.18,
+        "n": 3
+      },
+      "Grass": {
+        "drs": [
+          0.89,
+          0.99,
+          1.31,
+          1.17,
+          1.07
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.596828,
+          "acesPct": 2.35,
+          "dfPct": 3.9,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.65235,
+          "acesPct": 4,
+          "dfPct": 4,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.564013,
+          "acesPct": 1.6,
+          "dfPct": 5.1,
+          "n": 3
+        },
+        "Grass": {
+          "servePtsWonPct": 0.596828,
+          "acesPct": 1.9,
+          "dfPct": 3.7,
+          "n": 10
+        }
+      }
+    },
+    "emma_navarro": {
+      "name": "Emma Navarro",
+      "all": {
+        "drs": [
+          0.69,
+          1.13,
+          1,
+          0.72,
+          0.95
+        ],
+        "median": 0.95,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.37,
+          1.4,
+          1.03,
+          1.16,
+          1.44
+        ],
+        "median": 1.37,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.69,
+          1.13,
+          1,
+          0.72,
+          0.95
+        ],
+        "median": 0.95,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.622042,
+          "acesPct": 5.5,
+          "dfPct": 3.7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.590325,
+          "acesPct": 1.9,
+          "dfPct": 4.35,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.622042,
+          "acesPct": 5.5,
+          "dfPct": 3.7,
+          "n": 10
+        }
+      }
+    },
+    "sonay_kartal": {
+      "name": "Sonay Kartal",
+      "all": {
+        "drs": [
+          0.72,
+          1.22,
+          1.07,
+          1.12,
+          0.79
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.72,
+          1.22,
+          1.07,
+          1.12,
+          0.79
+        ],
+        "median": 1.07,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.570091,
+          "acesPct": 3.4000000000000004,
+          "dfPct": 2.5999999999999996,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.570091,
+          "acesPct": 3.4000000000000004,
+          "dfPct": 2.5999999999999996,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "karolina_pliskova": {
+      "name": "Karolina Pliskova",
+      "all": {
+        "drs": [
+          0.56,
+          1.34,
+          0.58,
+          1.19,
+          1.16
+        ],
+        "median": 1.16,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.58,
+          1.54,
+          1.05,
+          0.98,
+          0.76
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.56,
+          1.34,
+          0.58,
+          1.19,
+          1.16
+        ],
+        "median": 1.16,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.545372,
+          "acesPct": 4.2,
+          "dfPct": 9.8,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5729500000000001,
+          "acesPct": 3.8,
+          "dfPct": 7.7,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.545372,
+          "acesPct": 3.9,
+          "dfPct": 9.8,
+          "n": 9
+        }
+      }
+    },
+    "jelena_ostapenko": {
+      "name": "Jelena Ostapenko",
+      "all": {
+        "drs": [
+          0.82,
+          2.01,
+          1.12,
+          0.66,
+          1.62
+        ],
+        "median": 1.12,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.77,
+          1.15,
+          1.13
+        ],
+        "median": 1.13,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          0.62,
+          2.2,
+          1.1,
+          1.11,
+          2.02
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.82,
+          2.01,
+          1.12,
+          0.66,
+          1.62
+        ],
+        "median": 1.12,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5619940000000001,
+          "acesPct": 7.699999999999999,
+          "dfPct": 10.6,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.5668,
+          "acesPct": 3.3,
+          "dfPct": 6.9,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.643182,
+          "acesPct": 5.05,
+          "dfPct": 9.65,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5619940000000001,
+          "acesPct": 9.1,
+          "dfPct": 11.4,
+          "n": 7
+        }
+      }
+    },
+    "ekaterina_alexandrova": {
+      "name": "Ekaterina Alexandrova",
+      "all": {
+        "drs": [
+          0.96,
+          1.13,
+          1.39,
+          0.35,
+          1.31
+        ],
+        "median": 1.13,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.95,
+          1.46
+        ],
+        "median": 1.205,
+        "n": 2
+      },
+      "Clay": {
+        "drs": [
+          0.84,
+          0.86,
+          0.6,
+          1.59,
+          0.57
+        ],
+        "median": 0.84,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.96,
+          1.13,
+          1.39,
+          0.35,
+          1.31
+        ],
+        "median": 1.13,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.604848,
+          "acesPct": 7.5,
+          "dfPct": 5.3,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6327214999999999,
+          "acesPct": 5.199999999999999,
+          "dfPct": 4.75,
+          "n": 2
+        },
+        "Clay": {
+          "servePtsWonPct": 0.49019999999999997,
+          "acesPct": 8.3,
+          "dfPct": 8.2,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.604848,
+          "acesPct": 8.399999999999999,
+          "dfPct": 4.8,
+          "n": 8
+        }
+      }
+    },
+    "katerina_siniakova": {
+      "name": "Katerina Siniakova",
+      "all": {
+        "drs": [
+          0.73,
+          1.13,
+          0.88,
+          0.68,
+          1.36
+        ],
+        "median": 0.88,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.67,
+          0.52,
+          1.08,
+          0.99,
+          1.08
+        ],
+        "median": 0.99,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.85,
+          1.06,
+          1.48,
+          1.02,
+          1.57
+        ],
+        "median": 1.06,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.73,
+          1.13,
+          0.88,
+          0.68,
+          1.36
+        ],
+        "median": 0.88,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.571223,
+          "acesPct": 4.6,
+          "dfPct": 6.6,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.539504,
+          "acesPct": 4.1,
+          "dfPct": 4.2,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.557178,
+          "acesPct": 4.6,
+          "dfPct": 4.3,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.571223,
+          "acesPct": 4.8,
+          "dfPct": 6.1,
+          "n": 7
+        }
+      }
+    },
+    "hailey_baptiste": {
+      "name": "Hailey Baptiste",
+      "all": {
+        "drs": [
+          0.47,
+          1.14,
+          0.63,
+          1,
+          1.29
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.81,
+          1.3,
+          1.26,
+          1.21,
+          1.72
+        ],
+        "median": 1.26,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.47,
+          1.14,
+          0.63,
+          1,
+          1.29
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5731519999999999,
+          "acesPct": 6.65,
+          "dfPct": 6.2,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.618526,
+          "acesPct": 8,
+          "dfPct": 5.55,
+          "n": 9
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5731519999999999,
+          "acesPct": 6.65,
+          "dfPct": 6,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    },
+    "qinwen_zheng": {
+      "name": "Qinwen Zheng",
+      "all": {
+        "drs": [
+          0.9,
+          1.42,
+          1.09,
+          0.89,
+          0.89
+        ],
+        "median": 0.9,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.9,
+          1.42,
+          1.09,
+          0.73,
+          1.08
+        ],
+        "median": 1.08,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.91,
+          1.47,
+          1.08,
+          0.92,
+          1.08
+        ],
+        "median": 1.08,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.89,
+          0.89,
+          1.14,
+          0.88,
+          1.32
+        ],
+        "median": 0.89,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.595402,
+          "acesPct": 12.5,
+          "dfPct": 5.75,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.595402,
+          "acesPct": 11.8,
+          "dfPct": 6.7,
+          "n": 7
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5928899999999999,
+          "acesPct": 14.1,
+          "dfPct": 6.5,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6517759999999999,
+          "acesPct": 12.5,
+          "dfPct": 7.25,
+          "n": 6
+        }
+      }
+    },
+    "maria_sakkari": {
+      "name": "Maria Sakkari",
+      "all": {
+        "drs": [
+          0.98,
+          1.74,
+          1.65,
+          1.91,
+          1.71
+        ],
+        "median": 1.71,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.98,
+          1.74,
+          1.65,
+          1.91,
+          1.71
+        ],
+        "median": 1.71,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.52,
+          0.68,
+          1.19,
+          0.83,
+          0.69
+        ],
+        "median": 0.69,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.47,
+          0.94,
+          1.29,
+          0.76,
+          0.72
+        ],
+        "median": 0.76,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.69095,
+          "acesPct": 5.95,
+          "dfPct": 4,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.69095,
+          "acesPct": 5.3,
+          "dfPct": 2.4,
+          "n": 5
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5076259999999999,
+          "acesPct": 4.5,
+          "dfPct": 1.5,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.54942,
+          "acesPct": 6.15,
+          "dfPct": 5.5,
+          "n": 5
+        }
+      }
+    },
+    "veronika_kudermetova": {
+      "name": "Veronika Kudermetova",
+      "all": {
+        "drs": [
+          0.73,
+          1.92,
+          0.98,
+          0.82,
+          1.46
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.73,
+          1.92,
+          0.98,
+          0.82,
+          1.46
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [
+          0.6,
+          1.17,
+          0.94,
+          0.95,
+          3.05
+        ],
+        "median": 0.95,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.57652,
+          "acesPct": 9.8,
+          "dfPct": 3.4,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.57652,
+          "acesPct": 9.8,
+          "dfPct": 3.4,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": 0.661544,
+          "acesPct": 8.4,
+          "dfPct": 4,
+          "n": 5
+        }
+      }
+    },
+    "emma_raducanu": {
+      "name": "Emma Raducanu",
+      "all": {
+        "drs": [
+          0.73,
+          1.39,
+          1.34,
+          1.39,
+          2
+        ],
+        "median": 1.39,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.31,
+          1.69,
+          0.82,
+          0.98,
+          0.48
+        ],
+        "median": 0.82,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.92
+        ],
+        "median": 0.92,
+        "n": 1
+      },
+      "Grass": {
+        "drs": [
+          0.73,
+          1.39,
+          1.34,
+          1.39,
+          2
+        ],
+        "median": 1.39,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.639504,
+          "acesPct": 4.95,
+          "dfPct": 7,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.5232969999999999,
+          "acesPct": 3.25,
+          "dfPct": 4.75,
+          "n": 8
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5287850000000001,
+          "acesPct": 5.7,
+          "dfPct": 10.3,
+          "n": 1
+        },
+        "Grass": {
+          "servePtsWonPct": 0.639504,
+          "acesPct": 4,
+          "dfPct": 3.7,
+          "n": 5
+        }
+      }
+    },
+    "ashlyn_krueger": {
+      "name": "Ashlyn Krueger",
+      "all": {
+        "drs": [
+          0.75,
+          1.46,
+          1.93,
+          1,
+          1.22
+        ],
+        "median": 1.22,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [
+          0.75,
+          1.46,
+          1.93,
+          1,
+          1.22
+        ],
+        "median": 1.22,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5764440000000001,
+          "acesPct": 6.25,
+          "dfPct": 7.75,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5764440000000001,
+          "acesPct": 6.25,
+          "dfPct": 7.75,
+          "n": 10
+        }
+      }
+    },
+    "caty_mcnally": {
+      "name": "Caty Mcnally",
+      "all": {
+        "drs": [
+          0.61,
+          1.15,
+          0.82,
+          1.74,
+          1.11
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.77,
+          1.38,
+          0.77,
+          0.98,
+          1.92
+        ],
+        "median": 0.98,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.61,
+          1.15,
+          0.82,
+          1.74,
+          1.11
+        ],
+        "median": 1.11,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.616104,
+          "acesPct": 2.1,
+          "dfPct": 6.35,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5235349999999999,
+          "acesPct": 1.5,
+          "dfPct": 3.3,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.616104,
+          "acesPct": 2.2,
+          "dfPct": 6.35,
+          "n": 9
+        }
+      }
+    },
+    "jaqueline_cristian": {
+      "name": "Jaqueline Cristian",
+      "all": {
+        "drs": [
+          0.62,
+          0.6,
+          1.38,
+          0.91,
+          1.1
+        ],
+        "median": 0.91,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.4,
+          1.05,
+          1.13,
+          0.56,
+          0.99
+        ],
+        "median": 0.99,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.91,
+          1.1,
+          1.52,
+          1.78,
+          0.95
+        ],
+        "median": 1.1,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.62,
+          0.6,
+          1.38
+        ],
+        "median": 0.62,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.544212,
+          "acesPct": 4.4,
+          "dfPct": 3.9,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.5742959999999999,
+          "acesPct": 5.75,
+          "dfPct": 4.4,
+          "n": 6
+        },
+        "Clay": {
+          "servePtsWonPct": 0.584296,
+          "acesPct": 2.6500000000000004,
+          "dfPct": 3.8,
+          "n": 8
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5605349999999999,
+          "acesPct": 6.3,
+          "dfPct": 6.75,
+          "n": 3
+        }
+      }
+    },
+    "paula_badosa": {
+      "name": "Paula Badosa",
+      "all": {
+        "drs": [
+          1.02,
+          1.46,
+          1.03,
+          0.65,
+          1.06
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.02,
+          1.46,
+          1.03,
+          0.65,
+          1.06
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1,
+          0.66,
+          1.01,
+          1.31,
+          0.79
+        ],
+        "median": 1,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.52066,
+          "acesPct": 4.449999999999999,
+          "dfPct": 7.949999999999999,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.52066,
+          "acesPct": 4.449999999999999,
+          "dfPct": 7.949999999999999,
+          "n": 10
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5999380000000001,
+          "acesPct": 5.3,
+          "dfPct": 9.3,
+          "n": 5
+        }
+      }
+    },
+    "elena_gabriela_ruse": {
+      "name": "Elena Gabriela Ruse",
+      "all": {
+        "drs": [
+          0.73,
+          0.87,
+          0.76,
+          1.38,
+          1.37
+        ],
+        "median": 0.87,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.73,
+          0.9,
+          0.83,
+          1.95,
+          0.95
+        ],
+        "median": 0.9,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.87,
+          0.76,
+          1.38,
+          1.37,
+          1.92
+        ],
+        "median": 1.37,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.569599,
+          "acesPct": 7.2,
+          "dfPct": 8.55,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.493326,
+          "acesPct": 4.5,
+          "dfPct": 6.5,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6663349999999999,
+          "acesPct": 7.2,
+          "dfPct": 8.55,
+          "n": 10
+        }
+      }
+    },
+    "taylor_townsend": {
+      "name": "Taylor Townsend",
+      "all": {
+        "drs": [
+          0.82,
+          0.89,
+          1.29,
+          0.66,
+          1.36
+        ],
+        "median": 0.89,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.05,
+          1.51,
+          0.75,
+          1.67,
+          1.24
+        ],
+        "median": 1.24,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.66,
+          1.36,
+          1.39,
+          1.9,
+          1.11
+        ],
+        "median": 1.36,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.82,
+          0.89,
+          1.29
+        ],
+        "median": 0.89,
+        "n": 3
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.624857,
+          "acesPct": 4.2,
+          "dfPct": 2.25,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.61725,
+          "acesPct": 5.6,
+          "dfPct": 3,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": 0.640622,
+          "acesPct": 4.1,
+          "dfPct": 2,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.624857,
+          "acesPct": 8.2,
+          "dfPct": 1.6,
+          "n": 3
+        }
+      }
+    },
+    "olga_danilovic": {
+      "name": "Olga Danilovic",
+      "all": {
+        "drs": [
+          0.88,
+          1.25,
+          0.62,
+          1.2,
+          0.83
+        ],
+        "median": 0.88,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.88,
+          1.25,
+          0.62,
+          1.2,
+          0.83
+        ],
+        "median": 0.88,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [
+          0.73,
+          1.22,
+          0.75,
+          1.19,
+          1.64
+        ],
+        "median": 1.19,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.492289,
+          "acesPct": 4.9,
+          "dfPct": 2.45,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.492289,
+          "acesPct": 4.9,
+          "dfPct": 2.45,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6308320000000001,
+          "acesPct": 8.8,
+          "dfPct": 6,
+          "n": 5
+        }
+      }
+    },
+    "mccartney_kessler": {
+      "name": "Mccartney Kessler",
+      "all": {
+        "drs": [
+          0.86,
+          3.38,
+          0.47,
+          1.24,
+          1.13
+        ],
+        "median": 1.13,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.56,
+          1.29,
+          1.31,
+          0.6,
+          0.94
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.86,
+          3.38,
+          0.47,
+          1.24,
+          1.13
+        ],
+        "median": 1.13,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.590053,
+          "acesPct": 2.15,
+          "dfPct": 5.35,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.537076,
+          "acesPct": 2.4,
+          "dfPct": 4.3,
+          "n": 7
+        },
+        "Grass": {
+          "servePtsWonPct": 0.590053,
+          "acesPct": 4.7,
+          "dfPct": 6.6,
+          "n": 5
+        }
+      }
+    },
+    "katie_boulter": {
+      "name": "Katie Boulter",
+      "all": {
+        "drs": [
+          0.59,
+          0.92,
+          0.33,
+          0.85,
+          1.67
+        ],
+        "median": 0.85,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.75,
+          1.19,
+          1.13
+        ],
+        "median": 1.13,
+        "n": 3
+      },
+      "Clay": {
+        "drs": [
+          0.9,
+          1.03,
+          0.94,
+          0.8,
+          1.34
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.59,
+          0.92,
+          0.33,
+          0.85,
+          1.67
+        ],
+        "median": 0.85,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.603243,
+          "acesPct": 4.35,
+          "dfPct": 8.8,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.595488,
+          "acesPct": 1.8,
+          "dfPct": 5.4,
+          "n": 3
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5743879999999999,
+          "acesPct": 5.45,
+          "dfPct": 6.8,
+          "n": 8
+        },
+        "Grass": {
+          "servePtsWonPct": 0.603243,
+          "acesPct": 3.7,
+          "dfPct": 10.45,
+          "n": 6
+        }
+      }
+    },
+    "maja_chwalinska": {
+      "name": "Maja Chwalinska",
+      "all": {
+        "drs": [
+          0.92,
+          0.79,
+          0.76,
+          1.03,
+          1.62
+        ],
+        "median": 0.92,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.79,
+          0.76,
+          1.03,
+          1.62,
+          1.56
+        ],
+        "median": 1.03,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.92
+        ],
+        "median": 0.92,
+        "n": 1
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.527216,
+          "acesPct": 2.2,
+          "dfPct": 3.3,
+          "n": 6
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.543601,
+          "acesPct": 2.2,
+          "dfPct": 3.0999999999999996,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.527216,
+          "acesPct": 2.2,
+          "dfPct": 3.3,
+          "n": 1
+        }
+      }
+    },
+    "magda_linette": {
+      "name": "Magda Linette",
+      "all": {
+        "drs": [
+          0.9,
+          0.92,
+          0.77,
+          1.38,
+          1.41
+        ],
+        "median": 0.92,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.9,
+          0.73,
+          0.88,
+          1.2,
+          0.67
+        ],
+        "median": 0.88,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [
+          0.64,
+          0.46,
+          1.61
+        ],
+        "median": 0.64,
+        "n": 3
+      },
+      "Grass": {
+        "drs": [
+          0.92,
+          0.77,
+          1.38,
+          1.41,
+          1.45
+        ],
+        "median": 1.38,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.565728,
+          "acesPct": 3.3499999999999996,
+          "dfPct": 3.6,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.55202,
+          "acesPct": 4.1,
+          "dfPct": 4,
+          "n": 7
+        },
+        "Clay": {
+          "servePtsWonPct": 0.48940400000000006,
+          "acesPct": 5.6,
+          "dfPct": 3.1500000000000004,
+          "n": 3
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6224480000000001,
+          "acesPct": 2.6,
+          "dfPct": 2.6,
+          "n": 5
+        }
+      }
+    },
+    "nikola_bartunkova": {
+      "name": "Nikola Bartunkova",
+      "all": {
+        "drs": [
+          1.01,
+          1.27,
+          0.83,
+          1.37,
+          1.2
+        ],
+        "median": 1.2,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          1.01,
+          1.27
+        ],
+        "median": 1.1400000000000001,
+        "n": 2
+      },
+      "Clay": {
+        "drs": [
+          0.74,
+          0.86,
+          1.09,
+          0.77,
+          2.12
+        ],
+        "median": 0.86,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.83,
+          1.37,
+          1.2,
+          0.87,
+          1.39
+        ],
+        "median": 1.2,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.633124,
+          "acesPct": 6.05,
+          "dfPct": 6.6,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.6079465,
+          "acesPct": 8.25,
+          "dfPct": 3,
+          "n": 2
+        },
+        "Clay": {
+          "servePtsWonPct": 0.6105280000000001,
+          "acesPct": 5.1,
+          "dfPct": 7,
+          "n": 5
+        },
+        "Grass": {
+          "servePtsWonPct": 0.633124,
+          "acesPct": 6.05,
+          "dfPct": 6.85,
+          "n": 10
+        }
+      }
+    },
+    "varvara_gracheva": {
+      "name": "Varvara Gracheva",
+      "all": {
+        "drs": [
+          0.83,
+          0.65,
+          0.6,
+          0.96,
+          1.14
+        ],
+        "median": 0.83,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.83,
+          0.65,
+          0.6,
+          0.96,
+          1.14
+        ],
+        "median": 0.83,
+        "n": 5
+      },
+      "Clay": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Grass": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.526378,
+          "acesPct": 3.45,
+          "dfPct": 5.45,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.526378,
+          "acesPct": 3.45,
+          "dfPct": 5.45,
+          "n": 10
+        },
+        "Clay": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Grass": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        }
+      }
+    }
+  }
 }

@@ -650,6 +650,7 @@
     "reco": "Reco",
     "overTooltip": "Over {threshold} aces : {prob}% de probabilité (modèle Poisson-Skellam)",
     "fallbackHint": "Estimation (stats aces indisponibles, fallback surface)",
+    "acesPerMatch": "aces/match",
     "lambdaTotal": "λ total : {n}"
   }
 }

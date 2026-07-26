@@ -150,13 +150,15 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
           />
         </div>
         <div className="flex justify-between text-[9px] font-mono tabular-nums">
-          <span title={`E[aces ${match.playerA.shortName}] = ${predictions.lambdaA}`}>
-            {match.playerA.shortName} {probAMoreAces}%
-          </span>
-          <span className="text-muted-foreground/60">{t("tie")} {probTie}%</span>
-          <span title={`E[aces ${match.playerB.shortName}] = ${predictions.lambdaB}`}>
-            {match.playerB.shortName} {probBMoreAces}%
-          </span>
+          <div className="flex flex-col items-start leading-tight">
+            <span>{match.playerA.shortName} {probAMoreAces}%</span>
+            <span className="text-muted-foreground/50 text-[8px]">{predictions.lambdaA} {t("acesPerMatch")}</span>
+          </div>
+          <span className="self-start text-muted-foreground/60">{t("tie")} {probTie}%</span>
+          <div className="flex flex-col items-end leading-tight">
+            <span>{match.playerB.shortName} {probBMoreAces}%</span>
+            <span className="text-muted-foreground/50 text-[8px]">{predictions.lambdaB} {t("acesPerMatch")}</span>
+          </div>
         </div>
       </div>
 
