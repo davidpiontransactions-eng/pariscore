@@ -47,7 +47,6 @@ export function QuickAddRing({
             "font-bold tabular-nums",
             terminalMode ? "text-base" : "text-xl"
           )}
-          style={{ fontVariantNumeric: "tabular-nums" }}
         >
           {prob}%
         </span>

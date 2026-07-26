@@ -132,11 +132,11 @@ export function PlayerProfileHeader({
         <AvatarImage
           src={photoUrl ?? undefined}
           alt={name}
+          width={dims.avatar}
+          height={dims.avatar}
           className="object-cover"
-          // priority: signale à Next/RSC de ne pas lazy-loader
           loading={priority ? "eager" : "lazy"}
-          // @ts-expect-error fetchpriority est un attribut HTML standard
-          fetchpriority={priority ? "high" : "auto"}
+          fetchPriority={priority ? "high" : "auto"}
         />
         <AvatarFallback
           className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
