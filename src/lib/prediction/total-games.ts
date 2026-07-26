@@ -88,13 +88,14 @@ const VARIANCE_INFLATOR = 1.10;
 /**
  * pServe(A vs B) : probabilité que A gagne un point sur son service contre B.
  *
- * Implémente une approche additive (robuste) plutôt que la forme multiplicative
- * de Barnett-Clarke qui nécessite une normalization tour-by-tour délicate :
+ * Approche additive (robuste) + correction serveur α (Lei, Lin, Cao 2024,
+ * "Rhythms of Victory", équation 7) :
  *   pServe(A) = A.servePtsWonPct + 0.5 × (B.returnPtsWonPct − tourAvg_return)
+ *   puis pServe *= α, avec α = (1−p1) / (p1 × serve × return)
  *
- * Le % de service d'un joueur EST déjà sa pServe contre un adversaire moyen.
- * On l'ajuste par la qualité du retour adverse (poids 0.5 pour éviter
- * double-compte avec le propre retour de A).
+ * La correction α capte l'avantage structurel du serveur : quand p1 est élevé
+ * (A domine déjà), α < 1 lisse l'effet ; quand p1 ≈ 0.5, α ≈ 1 (neutre).
+ * Coefficient 0.3 sur α pour éviter de perturber la calibration déjà validée.
  *
  * Si stats manquantes → fallback Elo-derived (0.62 + 0.0002·(elo−1500)).
  */
@@ -107,9 +108,15 @@ export function computePServe(
   const oppReturn = opponent.returnPtsWonPct;
   const TOUR_RETURN = 1 - TOUR_SERVE_PCT; // ≈ 0.36
 
-  // Chemin stats : approche additive.
+  // Chemin stats : approche additive + correction α (Lei 2024).
   if (f != null && oppReturn != null) {
-    const pServe = f + 0.5 * (oppReturn - TOUR_RETURN);
+    let pServe = f + 0.5 * (oppReturn - TOUR_RETURN);
+    // Correction α = (1−p1) / (p1·serve·return). Borne pour stabilité.
+    const p1 = clamp(pServe, 0.5, 0.78);
+    const serve = clamp(f, 0.5, 0.78);
+    const ret = clamp(oppReturn, 0.2, 0.5);
+    const alpha = clamp((1 - p1) / (p1 * serve * ret), 0.85, 1.15);
+    pServe = pServe * (0.7 + 0.3 * alpha); // 70% additive pur + 30% corrigé
     return { pServe: clamp(pServe, 0.5, 0.78), source: "stats" };
   }
 

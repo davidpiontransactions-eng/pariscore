@@ -179,6 +179,14 @@ async function main() {
     `Cache actuel : ${Object.keys(existingCache.players).length} joueur(s).`,
   );
 
+  // Merge incrémental intelligent : pour chaque joueur scrapé, on garde
+  // l'entrée la PLUS RICHE. Évite qu'un cache ancien (sans serveStats/acesPct)
+  // écrase une nouvelle entrée plus complète (bug détecté 2026-07-26 : tous
+  // les matchs tombaient sur le fallback surface car serveStats absent du à
+  // un merge avec un cache pré-extension).
+  const hasServeStats = (e: DrCache["players"][string] | undefined): boolean =>
+    !!e && !!e.serveStats && Object.keys(e.serveStats).length > 0;
+
   const out: DrCache = {
     generatedAt: new Date().toISOString(),
     lastUpdate: new Date().toISOString().slice(0, 10),
@@ -192,7 +200,13 @@ async function main() {
     i++;
     const result = await scrapeWithRetry(name);
     if (result) {
-      out.players[result.key] = result.entry;
+      // Merge intelligent : on ne remplace l'entrée existante que si la
+      // nouvelle est AU MOINS aussi riche (a serveStats ou l'ancienne n'en a
+      // pas). Évite de régresser vers un cache sans serveStats/acesPct.
+      const existing = out.players[result.key];
+      if (!existing || !hasServeStats(existing) || hasServeStats(result.entry)) {
+        out.players[result.key] = result.entry;
+      }
       ok++;
       const surfaceReport = ["all", "Hard", "Clay", "Grass"]
         .map((s) => {

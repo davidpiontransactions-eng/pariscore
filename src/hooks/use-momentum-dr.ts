@@ -22,6 +22,11 @@ import type { LiveMatchState } from "@/hooks/use-live-matches";
 
 const WINDOW_SIZE = 24; // Derniers 24 points (~2 jeux en moyenne)
 const ALPHA = 0.45; // EWMA smoothing factor (paper uses ~0.35–0.45 for real-time)
+// Constantes recalibrées depuis Lei, Lin, Cao — "Rhythms of Victory" (IEEE Access 2024) :
+//   Δ = 0.72  persistance du momentum d'un point au suivant (PSO-optimisé Wimbledon)
+//   TB = 1.25 bonus appliqué au gagnant d'un set par tiebreak (momentum spike)
+const DECAY_PER_POINT = 0.72; // était 0.88 (empirique) → calibrage peer-reviewed
+const TIEBREAK_BONUS = 1.25; // multiplicateur sur le dernier point d'un set gagné en TB
 const BREAK_WEIGHT = 1.5; // Multiplicateur pour points de break (SHAP-confirmed)
 const SERVE_WEIGHT = 1.0; // Baseline serve (le serveur a l'avantage)
 const RECEIVE_WEIGHT = 1.35; // Receveur qui gagne le point = +poids (break/surprise)
@@ -41,6 +46,10 @@ export type PointOutcome = {
   game: number;
   /** Timestamp (monotonic counter) */
   tick: number;
+  /** True si ce point conclut un set (set-winner point). Bonus TB applicable. */
+  isSetEnding?: boolean;
+  /** True si le set s'est joué en tiebreak (détecté via score 6-6). */
+  wasTiebreak?: boolean;
 };
 
 export type MomentumDRResult = {
@@ -212,7 +221,16 @@ function diffPoints(
     const resultA = tryPoint("A");
     if (resultA) {
       const wasBp = server !== "A" && isBreakPoint(sA.points, sB.points, server);
-      outcomes.push({ winner: "A", server, wasBreakPoint: wasBp, set: simSetNum, game: simGameNum, tick: i });
+      // Détection fin de set + tiebreak (bonus TB=1.25, Lei 2024).
+      const isSetEnding =
+        resultA.newA.sets.length > sA.sets.length ||
+        resultA.newB.sets.length > sB.sets.length;
+      const wasTiebreak = sA.games === 6 && sB.games === 6;
+      outcomes.push({
+        winner: "A", server, wasBreakPoint: wasBp,
+        set: simSetNum, game: simGameNum, tick: i,
+        isSetEnding, wasTiebreak,
+      });
       if (resultA.newA.games !== sA.games || resultA.newB.games !== sB.games) {
         simGameNum++;
         if (resultA.newA.sets.length > sA.sets.length || resultA.newB.sets.length > sB.sets.length) {
@@ -227,7 +245,15 @@ function diffPoints(
     const resultB = tryPoint("B");
     if (resultB) {
       const wasBp = server !== "B" && isBreakPoint(sA.points, sB.points, server);
-      outcomes.push({ winner: "B", server, wasBreakPoint: wasBp, set: simSetNum, game: simGameNum, tick: i });
+      const isSetEnding =
+        resultB.newA.sets.length > sA.sets.length ||
+        resultB.newB.sets.length > sB.sets.length;
+      const wasTiebreak = sA.games === 6 && sB.games === 6;
+      outcomes.push({
+        winner: "B", server, wasBreakPoint: wasBp,
+        set: simSetNum, game: simGameNum, tick: i,
+        isSetEnding, wasTiebreak,
+      });
       if (resultB.newA.games !== sA.games || resultB.newB.games !== sB.games) {
         simGameNum++;
         if (resultB.newA.sets.length > sA.sets.length || resultB.newB.sets.length > sB.sets.length) {
@@ -356,7 +382,9 @@ export function useMomentumDR(
   for (let i = 0; i < buffer.length; i++) {
     const pt = buffer[i];
     const age = buffer.length - 1 - i; // 0 = most recent
-    const recencyWeight = Math.pow(0.88, age); // ~0.88 decay factor per point
+    // Decay recalibré depuis "Rhythms of Victory" (IEEE Access 2024) : Δ=0.72
+    // (persistance momentum PSO-optimisée sur Wimbledon). Avant : 0.88 empirique.
+    const recencyWeight = Math.pow(DECAY_PER_POINT, age);
 
     // Context weight
     let contextWeight = 1.0;
@@ -366,6 +394,13 @@ export function useMomentumDR(
       contextWeight = SERVE_WEIGHT; // Holding serve = expected, baseline
     } else {
       contextWeight = RECEIVE_WEIGHT; // Breaking serve = significant momentum shift
+    }
+
+    // Bonus tiebreak (Lei 2024, TB=1.25) : le dernier point d'un set gagné en
+    // tiebreak crée un pic de momentum. On détecte via setWinners : si ce point
+    // conclut un set et que le score était 6-6 avant, on applique le bonus.
+    if (pt.isSetEnding && pt.wasTiebreak) {
+      contextWeight *= TIEBREAK_BONUS;
     }
 
     const w = recencyWeight * contextWeight;
