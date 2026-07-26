@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-26T21:22:41.636Z",
+  "generatedAt": "2026-07-26T23:17:43.605Z",
   "lastUpdate": "2026-07-26",
   "players": {
     "jannik_sinner": {
@@ -6776,6 +6776,211 @@
           "acesPct": null,
           "dfPct": null,
           "n": 0
+        }
+      }
+    },
+    "denis_shapovalov": {
+      "name": "Denis Shapovalov",
+      "all": {
+        "drs": [
+          1.02,
+          0.72,
+          1.39,
+          0.85,
+          0.72
+        ],
+        "median": 0.85,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [
+          0.8,
+          0.48,
+          1.02,
+          1.4
+        ],
+        "median": 0.91,
+        "n": 4
+      },
+      "Clay": {
+        "drs": [
+          0.72,
+          0.37,
+          0.63,
+          1.12,
+          1.16
+        ],
+        "median": 0.72,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          1.02,
+          0.72,
+          1.39,
+          0.85
+        ],
+        "median": 0.935,
+        "n": 4
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5713999999999999,
+          "acesPct": 6.3,
+          "dfPct": 7.65,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": 0.5777909999999999,
+          "acesPct": 5.4,
+          "dfPct": 6.15,
+          "n": 4
+        },
+        "Clay": {
+          "servePtsWonPct": 0.574125,
+          "acesPct": 3.1500000000000004,
+          "dfPct": 9.1,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.6192179999999999,
+          "acesPct": 11.2,
+          "dfPct": 6.6,
+          "n": 4
+        }
+      }
+    },
+    "corentin_moutet": {
+      "name": "Corentin Moutet",
+      "all": {
+        "drs": [
+          0.9,
+          0.86,
+          0.73,
+          1.06,
+          0.72
+        ],
+        "median": 0.86,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          1.16,
+          0.94,
+          0.8,
+          0.77,
+          1.3
+        ],
+        "median": 0.94,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.9,
+          0.86,
+          0.73,
+          1.06,
+          0.72
+        ],
+        "median": 0.86,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.5873200000000001,
+          "acesPct": 2.8,
+          "dfPct": 3.65,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.5764499999999999,
+          "acesPct": 2.3,
+          "dfPct": 2.4,
+          "n": 6
+        },
+        "Grass": {
+          "servePtsWonPct": 0.5873200000000001,
+          "acesPct": 3.2,
+          "dfPct": 4,
+          "n": 5
+        }
+      }
+    },
+    "nuno_borges": {
+      "name": "Nuno Borges",
+      "all": {
+        "drs": [
+          0.83,
+          1.79,
+          0.99,
+          1.63,
+          1.49
+        ],
+        "median": 1.49,
+        "n": 5
+      },
+      "Hard": {
+        "drs": [],
+        "median": null,
+        "n": 0
+      },
+      "Clay": {
+        "drs": [
+          0.83,
+          1.79,
+          0.99,
+          1.63,
+          1.49
+        ],
+        "median": 1.49,
+        "n": 5
+      },
+      "Grass": {
+        "drs": [
+          0.71,
+          1.35,
+          0.45,
+          1.73,
+          1.41
+        ],
+        "median": 1.35,
+        "n": 5
+      },
+      "serveStats": {
+        "all": {
+          "servePtsWonPct": 0.699482,
+          "acesPct": 8.75,
+          "dfPct": 2.2,
+          "n": 10
+        },
+        "Hard": {
+          "servePtsWonPct": null,
+          "acesPct": null,
+          "dfPct": null,
+          "n": 0
+        },
+        "Clay": {
+          "servePtsWonPct": 0.699482,
+          "acesPct": 8,
+          "dfPct": 2.55,
+          "n": 9
+        },
+        "Grass": {
+          "servePtsWonPct": 0.701278,
+          "acesPct": 8.4,
+          "dfPct": 2.4,
+          "n": 9
         }
       }
     }

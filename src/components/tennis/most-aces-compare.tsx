@@ -88,6 +88,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
   ]);
 
   const isLive = !!liveState;
+  const isFallback = predictions.source !== "stats";
   const {
     probAMoreAces,
     probBMoreAces,
@@ -126,9 +127,12 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
             </span>
           )}
         </span>
-        {predictions.source !== "stats" && (
-          <span className="text-[9px] text-muted-foreground/60" title={t("fallbackHint")}>
-            ~
+        {isFallback && (
+          <span
+            className="ml-1 rounded bg-amber-500/15 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400"
+            title={t("fallbackHint")}
+          >
+            {t("fallbackBadge")}
           </span>
         )}
       </div>
@@ -152,12 +156,16 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
         <div className="flex justify-between text-[9px] font-mono tabular-nums">
           <div className="flex flex-col items-start leading-tight">
             <span>{match.playerA.shortName} {probAMoreAces}%</span>
-            <span className="text-muted-foreground/50 text-[8px]">{predictions.lambdaA} {t("acesPerMatch")}</span>
+            <span className="text-muted-foreground/50 text-[8px]">
+              {isFallback ? t("fallbackAces") : `${predictions.lambdaA} ${t("acesPerMatch")}`}
+            </span>
           </div>
           <span className="self-start text-muted-foreground/60">{t("tie")} {probTie}%</span>
           <div className="flex flex-col items-end leading-tight">
             <span>{match.playerB.shortName} {probBMoreAces}%</span>
-            <span className="text-muted-foreground/50 text-[8px]">{predictions.lambdaB} {t("acesPerMatch")}</span>
+            <span className="text-muted-foreground/50 text-[8px]">
+              {isFallback ? t("fallbackAces") : `${predictions.lambdaB} ${t("acesPerMatch")}`}
+            </span>
           </div>
         </div>
       </div>

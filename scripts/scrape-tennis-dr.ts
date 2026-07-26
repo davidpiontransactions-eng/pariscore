@@ -12,7 +12,7 @@
  * Usage:
  *   LEGAL_OVERRIDE_CONFIRMED=1 bun run scripts/scrape-tennis-dr.ts
  *   LEGAL_OVERRIDE_CONFIRMED=1 bun run scripts/scrape-tennis-dr.ts --players="Jannik Sinner,Carlos Alcaraz"
- *   LEGAL_OVERRIDE_CONFIRMED=1 bun run scripts/scrape-tennis-dr.ts --top=200
+ *   LEGAL_OVERRIDE_CONFIRMED=1 bun run scripts/scrape-tennis-dr.ts --top=300
  *   bun run scripts/scrape-tennis-dr.ts --dry-run --players="Jannik Sinner"   # parse only, no write
  *
  * Flags:
@@ -93,7 +93,9 @@ function resolvePlayerList(): string[] {
       .filter(Boolean);
   }
   // Sinon : top N ATP + N WTA depuis abstract-cache.json.
-  const topN = topArg ? parseInt(topArg, 10) : 200;
+  // 300 depuis 2026-07-27 (avant : 200) — couvre les tableaux principaux ATP/WTA
+  // + qualifs majeures pour éviter le fallback Most Aces 43/43 sur joueurs hors cache.
+  const topN = topArg ? parseInt(topArg, 10) : 300;
   if (Number.isNaN(topN) || topN <= 0) {
     throw new Error(`--top invalide : "${topArg}"`);
   }
@@ -181,9 +183,15 @@ async function main() {
 
   // Merge incrémental intelligent : pour chaque joueur scrapé, on garde
   // l'entrée la PLUS RICHE. Évite qu'un cache ancien (sans serveStats/acesPct)
-  // écrase une nouvelle entrée plus complète (bug détecté 2026-07-26 : tous
-  // les matchs tombaient sur le fallback surface car serveStats absent du à
-  // un merge avec un cache pré-extension).
+  // écrase une nouvelle entrée plus complète.
+  //
+  // Historique bugs Most Aces (43/43 symétrique + aces/match figés) :
+  //   - 2026-07-26 : serveStats absent suite à un merge avec un cache
+  //     pré-extension → tous les matchs tombaient sur le fallback surface.
+  //   - 2026-07-27 : le cache ne couvrait que le top-100 → tout match BSD
+  //     impliquant un joueur hors top-100 (challengers/qualifs) retombait en
+  //     fallback Skellam symétrique (P(A>B)=P(B>A)=43%, λ=λBase). Fix : cron
+  //     passé à --top=300 (544 ATP + 543 WTA disponibles dans abstract-cache).
   const hasServeStats = (e: DrCache["players"][string] | undefined): boolean =>
     !!e && !!e.serveStats && Object.keys(e.serveStats).length > 0;
 

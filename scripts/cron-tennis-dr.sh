@@ -4,10 +4,15 @@
 #
 # Le DR (Dominance Ratio) évolue match-par-match, pas minute-par-minute :
 # un rafraîchissement quotidien suffit largement et reste poli envers
-# TennisAbstract (≤400 req/jour, throttle 1 req/1.5s).
+# TennisAbstract (≤600 req/jour, throttle 1 req/1.5s ≈ 15 min).
+#
+# top=300 (depuis 2026-07-27) : le cache top-100→200 laissait tomber en fallback
+# symétrique Most Aces (bug 43/43) tout match impliquant un joueur hors top.
+# 544 ATP + 543 WTA disponibles dans abstract-cache.json → top=300 couvre largement
+# les tableaux principaux ATP/WTA + qualifs majeures.
 #
 # Usage:
-#   bash scripts/cron-tennis-dr.sh          # exécution normale (top 200 ATP+WTA)
+#   bash scripts/cron-tennis-dr.sh          # exécution normale (top 300 ATP+WTA)
 #   bash scripts/cron-tennis-dr.sh --dry    # dry-run (parse sans écrire)
 set -e
 
@@ -35,12 +40,12 @@ cd "$DEPLOY_DIR"
 # (robots.txt de TennisAbstract disallow /jsfrags/). Voir scripts/scrape-tennis-dr.ts.
 if [ "$DRY" = "--dry" ]; then
   echo "[$TIMESTAMP] DRY-RUN — parse sans écriture" >> "$LOG_FILE"
-  bun run scripts/scrape-tennis-dr.ts --dry-run --top=200 2>&1 | tee -a "$LOG_FILE"
+  bun run scripts/scrape-tennis-dr.ts --dry-run --top=300 2>&1 | tee -a "$LOG_FILE"
   RC=$?
 else
   echo "[$TIMESTAMP] Scraping TennisAbstract /jsfrags/ → dr-cache.json..." >> "$LOG_FILE"
   LEGAL_OVERRIDE_CONFIRMED=1 \
-  bun run scripts/scrape-tennis-dr.ts --top=200 2>&1 | tee -a "$LOG_FILE"
+  bun run scripts/scrape-tennis-dr.ts --top=300 2>&1 | tee -a "$LOG_FILE"
   RC=$?
   echo "[$TIMESTAMP] Code retour scraper: $RC" >> "$LOG_FILE"
 

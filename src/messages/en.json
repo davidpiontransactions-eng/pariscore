@@ -650,6 +650,8 @@
     "reco": "Pick",
     "overTooltip": "Over {threshold} aces: {prob}% probability (Poisson-Skellam model)",
     "fallbackHint": "Estimate (aces stats unavailable, surface fallback)",
+    "fallbackBadge": "Est.",
+    "fallbackAces": "≈ estimated",
     "acesPerMatch": "aces/match",
     "lambdaTotal": "λ total: {n}"
   }
