@@ -1,118 +1,130 @@
 /**
- * Alerte "value bet" — déclenchée quand un joueur a un break d'avance (≥ 2 jeux
- * d'écart dans le set en cours) ET un DR match dominant (≥ 1.2).
+ * Alerte "value bet" — déclenchée quand le TOTAL de jeux joués dans le set
+ * atteint un palier pair (2, 4, 6, 8, 10, 12) ET qu'au moins un des deux
+ * joueurs a un DR match ≥ 1.2.
  *
- * Logique : ces 2 conditions combinées = signal fort que le joueur va gagner
- * le set (et potentiellement le match si set decisif). C'est un bon moment
- * pour parier sur lui avant que les cotes ne s'effondrent.
+ * RÈGLE (refonte 2026-07-28 — clarification utilisateur) :
+ *   À chaque palier pair de jeux joués dans le set, si DR P1 OU P2 ≥ 1.2,
+ *   on déclenche une alerte.
  *
- * Conditions :
- *   - Écart de jeux dans le set en cours ≥ 2 (ex: 4-2, 5-3, 6-4 — un "double
- *     break" ou break + confirmation)
- *   - DR match (ratio Sofascore proxy) du joueur qui mène ≥ 1.2 (dominance
- *     confirmée sur l'ensemble du match, pas juste un coup de chance sur le set)
+ *   Paliers : 2, 4, 6, 8, 10, 12 jeux (= chaque cycle "1 service + 1 retour"
+ *   joué = +2 jeux dans le set, indépendamment de qui gagne).
  *
- * Le critère DR ≥ 1.2 filtre les faux signaux : un joueur qui mène 4-2 dans
- * le set mais a un DR match de 0.95 (dominé globalement) n'est pas un value
- * bet — c'est probablement un set accroché qui peut basculer.
+ * Exemples concrets (DR ≥ 1.2 pour au moins un joueur supposé vrai) :
+ *   2-0, 1-1            → 2 jeux  → alerte (palier 1)
+ *   3-1, 4-0, 2-2       → 4 jeux  → alerte (palier 2)
+ *   4-2, 5-1, 6-0, 3-3  → 6 jeux  → alerte (palier 3)
+ *   4-4, 5-3, 6-2       → 8 jeux  → alerte (palier 4)
+ *   5-4, 6-3, 4-5       → 9 jeux  → PAS d'alerte (impair)
+ *   5-5, 6-4            → 10 jeux → alerte (palier 5)
+ *   6-5                 → 11 jeux → PAS d'alerte (impair)
+ *   6-6 (avant tiebreak)→ 12 jeux → alerte (palier 6)
+ *
+ * Pourquoi le TOTAL (et non l'écart) :
+ *   L'utilisateur veut être alerté à chaque "cycle complet" de service+retour,
+ *   peu importe qui gagne ces jeux. C'est plus régulier comme repère temporel
+ *   qu'une alerte sur écart (qui peut ne jamais se déclencher si le set est
+ *   serré 3-3 puis 4-4). Ici on vérifie la dominance DR tous les 2 jeux joués.
+ *
+ * Filtre DR ≥ 1.2 :
+ *   On évite d'alerter sur des sets équilibrés où personne ne domine. Le DR
+ *   proxy games+sets du match entier indique qui crée durablement l'écart.
  */
 
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { computeDrMatch } from "@/lib/dr-match";
 
-/** Écart minimum de jeux dans le set pour déclencher l'alerte. */
-const GAME_GAP_THRESHOLD = 2;
-/** DR match minimum du joueur qui mène pour confirmer la dominance. */
+/** Paliers pairs à vérifier : 2, 4, 6, 8, 10, 12 jeux joués dans le set. */
+const TOTAL_TIERS = [2, 4, 6, 8, 10, 12];
+/** DR match minimum (P1 OU P2) pour déclencher l'alerte. */
 const DR_MATCH_THRESHOLD = 1.2;
 
 export type ValueAlert = {
-  /** true si l'alerte est active. */
+  /** true si l'alerte est active (palier pair atteint + DR ≥ 1.2). */
   active: boolean;
-  /** Joueur qui déclenche l'alerte ("A" | "B" | null). */
+  /** Joueur dominant au DR match (pour afficher son nom dans la notif). */
   leader: "A" | "B" | null;
-  /** DR match du leader (pour affichage). */
+  /** DR du joueur dominant (pour affichage). */
   drLeader: number | null;
-  /** Écart de jeux dans le set (pour affichage). */
-  gameGap: number;
+  /** Total de jeux joués dans le set en cours (pour affichage). */
+  totalGamesInSet: number;
+  /** Palier courant atteint (1=2 jeux, 2=4 jeux, etc.). 0 si pas encore. */
+  tier: number;
   /** Score du set en cours (pour affichage). */
   setScore: { gamesA: number; gamesB: number } | null;
 };
 
 /**
  * Évalue l'alerte value bet sur un match live.
- *
- * RÈGLE (étendue 2026-07-28) : alerte à chaque fois que l'écart de jeux dans
- * le set en cours atteint un multiple de 2 (2, 4, 6…), tant qu'au moins UN des
- * deux joueurs a un DR match ≥ 1.2. Concrètement chaque cycle "1 service
- * gagné + 1 retour gagné" (= +2 jeux d'écart) déclenche une nouvelle alerte,
- * ce qui permet de suivre la confirmation de la dominance set par set.
- *
- * Avant : déclenchement unique sur le 1er passage à écart ≥ 2.
- * Maintenant : `active` reste true tant que l'écart ≥ 2 ET DR(qqu'un) ≥ 1.2.
- * Le composant suit lui-même le palier courant (cf. pip-match-row.tsx) pour
- * re-déclencher la notification à chaque nouveau multiple de 2.
- *
  * @param liveState — État live (depuis useLiveMatches/useLiveStream).
  */
 export function evaluateValueAlert(liveState: LiveMatchState | undefined): ValueAlert {
   if (!liveState) {
-    return { active: false, leader: null, drLeader: null, gameGap: 0, setScore: null };
+    return {
+      active: false,
+      leader: null,
+      drLeader: null,
+      totalGamesInSet: 0,
+      tier: 0,
+      setScore: null,
+    };
   }
 
   const gamesA = liveState.scoreA.games;
   const gamesB = liveState.scoreB.games;
-  const gap = Math.abs(gamesA - gamesB);
+  const totalGames = gamesA + gamesB;
 
-  // Pas assez d'écart dans le set → pas d'alerte.
-  if (gap < GAME_GAP_THRESHOLD) {
-    return { active: false, leader: null, drLeader: null, gameGap: gap, setScore: { gamesA, gamesB } };
+  // Palier pair atteint ? (total ∈ [2,4,6,8,10,12]).
+  const tier = TOTAL_TIERS.includes(totalGames)
+    ? TOTAL_TIERS.indexOf(totalGames) + 1
+    : 0;
+
+  // Si pas un palier, pas d'alerte (mais on garde les infos pour l'affichage).
+  if (tier === 0) {
+    return {
+      active: false,
+      leader: null,
+      drLeader: null,
+      totalGamesInSet: totalGames,
+      tier: 0,
+      setScore: { gamesA, gamesB },
+    };
   }
 
   // Calcule le DR match pour identifier le dominant.
   const drMatch = computeDrMatch(liveState);
   if (!drMatch) {
-    return { active: false, leader: null, drLeader: null, gameGap: gap, setScore: { gamesA, gamesB } };
+    return {
+      active: false,
+      leader: null,
+      drLeader: null,
+      totalGamesInSet: totalGames,
+      tier,
+      setScore: { gamesA, gamesB },
+    };
   }
 
-  // Qui mène au score dans le set ?
-  const scoreLeader: "A" | "B" = gamesA > gamesB ? "A" : "B";
-  const drLeader = scoreLeader === "A" ? drMatch.drA : drMatch.drB;
-
-  // RÈGLE : alerte si écart ≥ 2 ET (DR P1 ≥ 1.2 OU DR P2 ≥ 1.2).
-  // On teste les 2 joueurs (pas seulement le leader) car l'utilisateur a
-  // explicitement demandé "DR P1 ou P2 ≥ 1.2". En pratique, le joueur qui
-  // mène au score a presque toujours le meilleur DR (corrélation naturelle),
-  // mais tester les 2 couvre les cas où le dominé au score reste dominant
-  // globalement (ex: mène 4-2 dans le set mais perd le match jusqu'ici).
+  // RÈGLE : alerte si (DR P1 ≥ 1.2) OU (DR P2 ≥ 1.2).
   const drAnyDominant = drMatch.drA >= DR_MATCH_THRESHOLD || drMatch.drB >= DR_MATCH_THRESHOLD;
-  const active = gap >= GAME_GAP_THRESHOLD && drAnyDominant;
+
+  // Le "leader" pour l'affichage = celui qui a le meilleur DR (pas forcément
+  // celui qui mène au score — ex: mène 3-1 au set mais perd le match jusqu'ici).
+  const leader: "A" | "B" = drMatch.drA >= drMatch.drB ? "A" : "B";
+  const drLeader = leader === "A" ? drMatch.drA : drMatch.drB;
 
   return {
-    active,
-    leader: active ? scoreLeader : null,
+    active: drAnyDominant,
+    leader: drAnyDominant ? leader : null,
     drLeader,
-    gameGap: gap,
+    totalGamesInSet: totalGames,
+    tier,
     setScore: { gamesA, gamesB },
   };
 }
 
 /**
- * Calcule le palier d'alerte courant = nombre de cycles "service + retour"
- * complets (= floor(gap / 2)). Sert au composant à détecter un NOUVEAU palier
- * pour re-déclencher la notification.
- *   gap = 2 → palier 1
- *   gap = 3 → palier 1 (cycle incomplet, on attend le 4e jeu)
- *   gap = 4 → palier 2
- *   gap = 5 → palier 2
- *   gap = 6 → palier 3
- */
-export function getAlertTier(gameGap: number): number {
-  return Math.floor(gameGap / 2);
-}
-
-/**
  * Construit le titre/label pour une notification value alert.
- * Ex: "🔥 ALCARAZ mène 4-2 — DR match 1.34 (value bet)"
+ * Ex: "🔥 ALCARAZ dominant (DR 1.34) — 4 jeux joués dans le set"
  */
 export function formatValueAlertLabel(
   alert: ValueAlert,
@@ -122,9 +134,9 @@ export function formatValueAlertLabel(
     return null;
   }
   const { gamesA, gamesB } = alert.setScore;
-  const scoreStr = alert.leader === "A" ? `${gamesA}-${gamesB}` : `${gamesB}-${gamesA}`;
+  const scoreStr = `${gamesA}-${gamesB}`;
   return {
-    title: `🔥 ${leaderName} mène ${scoreStr} dans le set`,
-    body: `DR match ${alert.drLeader.toFixed(2)} (≥ 1.2) + ${alert.gameGap} jeux d'écart → value bet détecté`,
+    title: `🔥 ${leaderName} dominant (DR ${alert.drLeader.toFixed(2)})`,
+    body: `${alert.totalGamesInSet} jeux joués dans le set (${scoreStr}) · DR ≥ 1.2 → value bet à surveiller`,
   };
 }

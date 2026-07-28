@@ -27,7 +27,7 @@ import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
-import { evaluateValueAlert, formatValueAlertLabel, getAlertTier } from "@/lib/value-alert";
+import { evaluateValueAlert, formatValueAlertLabel } from "@/lib/value-alert";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -190,8 +190,8 @@ function PipMatchRowImpl({
   // sur Sofascore (ex: 1.14 = joueur domine 14%). Calculé sur tout le match.
   const drMatch = useMemo(() => computeDrMatch(liveState), [liveState]);
 
-  // Alerte value bet : ≥ 2 jeux d'écart dans le set + DR match (P1 ou P2) ≥ 1.2.
-  // RÉ-ARME à chaque nouveau palier pair (2, 4) et à chaque nouveau set.
+  // Alerte value bet : à chaque palier pair de jeux JOUÉS dans le set (2,4,6,8,10,12)
+  // + DR match (P1 ou P2) ≥ 1.2. Re-déclenche à chaque nouveau palier + reset par set.
   const valueAlert = useMemo(() => evaluateValueAlert(liveState), [liveState]);
 
   const playerA = match.playerA;
@@ -205,16 +205,15 @@ function PipMatchRowImpl({
 
   // Signal value alert au parent. Re-déclenche la notification 🔥 à chaque :
   //   - nouveau SET (currentSet change → reset du palier, re-arme pour ce set)
-  //   - nouveau PALIER d'écart pair dans le set (2 → 4, etc.)
-  // Le hook useBetNotify.applyValueAlert gère un cooldown 2 min/match pour
-  // éviter le spam si oscillation rapide autour d'un palier.
+  //   - nouveau PALIER de jeux JOUÉS pair dans le set (2, 4, 6, 8, 10, 12)
+  // Le hook useBetNotify.notifyValueAlert gère un cooldown 2 min/match.
   const lastSetRef = useRef<number>(-1);
   const lastTierRef = useRef<number>(0);
   useEffect(() => {
     if (!liveState || !onValueAlert) return;
 
     const currentSet = liveState.currentSet;
-    const currentTier = getAlertTier(valueAlert.gameGap);
+    const currentTier = valueAlert.tier;
 
     // Reset du suivi si on change de set (re-arme l'alerte pour le nouveau set).
     if (currentSet !== lastSetRef.current) {
@@ -254,11 +253,11 @@ function PipMatchRowImpl({
 
       {/* Contenu par-dessus le filigrane */}
       <div className="relative z-10">
-        {/* Badge 🔥 value alert : ≥ 2 jeux d'écart set + DR leader ≥ 1.2 */}
+        {/* Badge 🔥 value alert : palier pair jeux joués set + DR P1/P2 ≥ 1.2 */}
         {valueAlert.active && (
           <span
             className="absolute -top-1.5 -right-1.5 z-20 flex items-center gap-0.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-lg ring-2 ring-card animate-pulse"
-            title={`🔥 Value bet — ${valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name)} mène ${valueAlert.setScore?.gamesA}-${valueAlert.setScore?.gamesB} (DR match ${valueAlert.drLeader?.toFixed(2)})`}
+            title={`🔥 Value bet — ${valueAlert.totalGamesInSet} jeux joués dans le set (${valueAlert.setScore?.gamesA}-${valueAlert.setScore?.gamesB}) · ${valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name)} dominant (DR match ${valueAlert.drLeader?.toFixed(2)} ≥ 1.2)`}
           >
             🔥 value
           </span>
