@@ -270,6 +270,12 @@ function PipMatchRowImpl({
             )}
             <span className="truncate font-semibold text-foreground">{shortName(playerA.name)}</span>
           </span>
+          {/* Cote décimale live A (badge discret) */}
+          {isLive && liveState!.oddsA != null && (
+            <span className="rounded bg-amber-500/15 px-1 text-[9px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerA.name)} : ${liveState!.oddsA.toFixed(2)}`}>
+              {liveState!.oddsA.toFixed(2)}
+            </span>
+          )}
 
           {isLive ? (
             <span className="flex items-center gap-1 font-mono tabular-nums shrink-0">
@@ -297,6 +303,12 @@ function PipMatchRowImpl({
             )}
             <span className="truncate font-semibold text-foreground">{shortName(playerB.name)}</span>
           </span>
+          {/* Cote décimale live B (badge discret) */}
+          {isLive && liveState!.oddsB != null && (
+            <span className="rounded bg-amber-500/15 px-1 text-[9px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerB.name)} : ${liveState!.oddsB.toFixed(2)}`}>
+              {liveState!.oddsB.toFixed(2)}
+            </span>
+          )}
 
           {isLive ? (
             <span className="flex items-center gap-1 font-mono tabular-nums shrink-0">

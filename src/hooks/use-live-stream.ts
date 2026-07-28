@@ -64,6 +64,8 @@ function buildLiveStates(
       scoreB: { sets: setsB, games: m.currentGame.p2, points: m.currentPoint.p2 },
       liveProbA: m.liveProbA,
       liveProbB: m.liveProbB,
+      oddsA: m.oddsA ?? null,
+      oddsB: m.oddsB ?? null,
       server: m.server,
       lastUpdate: updatedAt,
     };

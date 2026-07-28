@@ -241,6 +241,9 @@ export type LiveMatchItem = {
   server: "A" | "B";
   liveProbA: number;
   liveProbB: number;
+  /** Cotes décimales live BSD (depuis odds_player1/2). null si indisponibles. */
+  oddsA: number | null;
+  oddsB: number | null;
   isLive: boolean;
   /** Nom du tournoi BSD (R7.3) — ex: "Segovia, Spain", "UTR PTT Waco Men 02". */
   tournamentName?: string;
@@ -326,6 +329,12 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
       server,
       liveProbA,
       liveProbB,
+      // Cotes décimales live (utiles pour le widget : affichage devant le joueur).
+      // On garde les valeurs brutes BSD (>0), null sinon.
+      oddsA:
+        m.odds_player1 != null && m.odds_player1 > 0 ? m.odds_player1 : null,
+      oddsB:
+        m.odds_player2 != null && m.odds_player2 > 0 ? m.odds_player2 : null,
       isLive,
       tournamentName: m.tournament?.name || undefined,
       roundName: m.round_name ?? undefined,

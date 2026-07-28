@@ -18,6 +18,10 @@ export type LiveMatchState = {
   liveProbA: number;
   liveProbB: number;
   server: "A" | "B";
+  /** Cote décimale live du joueur A (depuis BSD odds_player1). null si absente. */
+  oddsA: number | null;
+  /** Cote décimale live du joueur B (depuis BSD odds_player2). null si absente. */
+  oddsB: number | null;
   lastUpdate: string;
 };
 
@@ -52,6 +56,9 @@ export type LiveMatchResponseItem = {
   liveProbA: number;
   liveProbB: number;
   isLive: boolean;
+  /** Cotes décimales live BSD (depuis odds_player1/2). */
+  oddsA?: number | null;
+  oddsB?: number | null;
   /** R7.3 : vrai nom du tournoi BSD (remplace le fallback "Live"). */
   tournamentName?: string;
   /** R7.3 : round BSD (remplace le fallback "En direct"). */
@@ -156,6 +163,8 @@ export function useLiveMatches(): UseLiveMatchesResult {
             scoreB: { sets: setsB, games: m.currentGame.p2, points: m.currentPoint.p2 },
             liveProbA: m.liveProbA,
             liveProbB: m.liveProbB,
+            oddsA: m.oddsA ?? null,
+            oddsB: m.oddsB ?? null,
             server: m.server,
             lastUpdate: data.updatedAt,
           };
