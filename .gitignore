@@ -191,3 +191,21 @@ plugin-error.log
 
 *.msixbundle
 
+# =============================================================================
+# Jenkins / CI tooling locaux (artefacts perso, non committés)
+# =============================================================================
+# Fichiers d'install Jenkins, plugins (.jpi/.hpi), et scripts VPS/Jenkins
+# locaux — polluent git status et ne font pas partie du code applicatif.
+Jenkinsfile
+scripts/jenkins*
+scripts/jenkins/
+scripts/install-jenkins.sh
+scripts/dl-plugins.sh
+scripts/plugins/
+scripts/plugins2/
+scripts/plugins_pm/
+scripts/plugins_scp/
+scripts/plugins_v2/
+scripts/vps_scripts/
+*.war
+
