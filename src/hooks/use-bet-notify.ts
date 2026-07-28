@@ -19,6 +19,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DrDecisionLevel } from "@/lib/dr-decision";
+import { playTennisSound } from "@/lib/tennis-sound";
 
 const STORAGE_KEY = "setpoint-bet-notify";
 const COOLDOWN_MS = 120_000; // 2 min entre 2 notifs pour un même match
@@ -125,6 +126,12 @@ export function useBetNotify(): UseBetNotifyResult {
       // Maj de l'état AVANT d'envoyer (évite double-notif si la promise résout lentement).
       statesRef.current.set(matchId, { lastLevel: level, lastNotifiedAt: now });
 
+      // Son "poc" de balle (feu tricolore ✅ = 1 poc simple). Joué AVANT la
+      // notif native pour attirer l'œil/oreille même si l'utilisateur regarde
+      // ailleurs. Web Audio API = pas de fichier externe, déclenchable car le
+      // toggle 🔔 a été activé par un geste utilisateur explicite.
+      playTennisSound("bet");
+
       try {
         // registration.showNotification > new Notification : gère le clic via sw.js
         // (focus + navigate) et survit à la fermeture du document émetteur.
@@ -179,6 +186,10 @@ export function useBetNotify(): UseBetNotifyResult {
       const last = valueAlertCooldownRef.current.get(matchId);
       if (last && now - last < COOLDOWN_MS) return;
       valueAlertCooldownRef.current.set(matchId, now);
+
+      // Son "poc-poc" double pour la value alert (signal plus fort que le feu
+      // tricolore simple — marque le moment de value bet à ne pas rater).
+      playTennisSound("value");
 
       try {
         const reg = await navigator.serviceWorker.ready;
