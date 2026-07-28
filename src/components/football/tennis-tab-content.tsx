@@ -421,11 +421,18 @@ export function TennisTabContent() {
                   <button
                     type="button"
                     onClick={() => pip.open(<MatchPipWidget />)}
-                    title="Ouvrir le widget live en fenêtre flottante (reste au-dessus du bookmaker)"
+                    title={
+                      pip.mode === "pip"
+                        ? "Ouvrir le widget live en fenêtre always-on-top (reste au-dessus du bookmaker)"
+                        : "Ouvrir le widget live en fenêtre popup (votre navigateur ne supporte pas l'always-on-top natif — Chrome/Edge 116+ requis pour cette fonction)"
+                    }
                     className="inline-flex items-center gap-1 rounded text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-500/10 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <PictureInPicture2 className="h-3.5 w-3.5" />
                     Widget live
+                    {pip.mode === "popup" && (
+                      <span className="text-[9px] text-muted-foreground/60 ml-0.5">(popup)</span>
+                    )}
                   </button>
                 )}
               </div>

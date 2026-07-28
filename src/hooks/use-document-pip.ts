@@ -1,33 +1,45 @@
 "use client";
 
-// Hook Document Picture-in-Picture API.
+// Hook Document Picture-in-Picture API + FENÊTRE POPUP.
 //
-// Ouvre une fenêtre "always-on-top" (reste au-dessus de 1xWin+, le bookmaker)
-// contenant du contenu React live — pas une vidéo. Idéal pour le widget
-// PariScore : score + DR + bets visibles pendant que l'utilisateur parie.
+// Ouvre une fenêtre contenant du contenu React live — pas une vidéo. Idéal
+// pour le widget PariScore : score + DR + bets visibles pendant que
+// l'utilisateur parie sur 1xWin+.
 //
-// Spécifiques Document PiP (vs l'ancien `<video>.requestPictureInPicture`) :
-//   - `window.documentPictureInPicture.requestWindow()` (Chrome/Edge 116+)
-//   - Le PiP a son PROPRE `document` (DOM isolé du document principal)
-//   - Il faut donc CLONER manuellement les `<style>`/`<link>` du parent vers
-//     le PiP, sinon Tailwind/shadcn ne s'appliquent pas.
-//   - On mount un `createRoot` React séparé dans `pipWindow.document.body`.
+// 2 transports selon le support navigateur :
 //
-// Compatibilité : Chrome/Edge 116+, Opera 102+. PAS Firefox/Safari.
-// Feature detection via `"documentPictureInPicture" in window`.
+//   1. Document PiP natif (`documentPictureInPicture.requestWindow()`)
+//      - Chrome/Edge 116+, Opera 102+
+//      - Fenêtre ALWAYS-ON-TOP (reste au-dessus du bookmaker)
+//      - Le PiP a son PROPRE `document` (DOM isolé) → on clone les styles
+//
+//   2. Fallback fenêtre popup (`window.open()`)
+//      - Brave (Désactive Document PiP via Shields), Firefox, Safari, vieux Chromium
+//      - Pas d'always-on-top natif (mais l'utilisateur peut la garder au premier
+//        plan via Alt+Space → "Toujours au premier plan" sur Win11, ou la placer
+//        manuellement à côté du bookmaker)
+//      - Même isolation `document` que PiP → on clone aussi les styles
+//      - Survit aux changements d'onglet dans la fenêtre principale
+//
+// L'API publique est identique dans les 2 cas : le caller (tennis-tab-content)
+// ne sait pas quel transport est utilisé. `mode` expose l'info pour debug/UI.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { ReactNode } from "react";
 
+export type PipMode = "pip" | "popup";
+
 export type UseDocumentPipResult = {
-  /** true si l'API Document PiP est supportée par le navigateur. */
+  /** true si AU MOINS UN des 2 transports est dispo (toujours vrai en pratique). */
   supported: boolean;
-  /** true si la fenêtre PiP est actuellement ouverte. */
+  /** Quel transport sera utilisé : "pip" (natif) ou "popup" (fallback). */
+  mode: PipMode;
+  /** true si la fenêtre est actuellement ouverte. */
   isOpen: boolean;
-  /** Ouvre le PiP et mount le `content` React dedans. No-op si déjà ouvert. */
+  /** Ouvre le widget et mount le `content` React dedans. No-op si déjà ouvert. */
   open: (content: ReactNode) => Promise<void>;
-  /** Ferme le PiP. No-op si fermé. */
+  /** Ferme la fenêtre. No-op si fermée. */
   close: () => void;
 };
 
@@ -45,20 +57,26 @@ declare global {
   }
 }
 
+const WIDGET_WIDTH = 420;
+const WIDGET_HEIGHT = 580;
+
 export function useDocumentPip(): UseDocumentPipResult {
-  const [supported] = useState(
+  const [pipSupported] = useState(
     () =>
       typeof window !== "undefined" && "documentPictureInPicture" in window,
   );
+  // Popup toujours dispo (window.open existe partout). Le hook est donc
+  // "supported" même sur Brave/Firefox/Safari.
+  const supported = true;
+  const mode: PipMode = pipSupported ? "pip" : "popup";
+
   const [isOpen, setIsOpen] = useState(false);
-  const pipWindowRef = useRef<Window | null>(null);
+  // `Window` pour les 2 transports (PiP ET popup retournent un Window).
+  const winRef = useRef<Window | null>(null);
   const rootRef = useRef<Root | null>(null);
-  // Contenu React à render — on le garde en ref pour pouvoir le re-render
-  // si le caller appelle `open()` à nouveau avec un nouveau contenu.
-  const contentRef = useRef<ReactNode>(null);
 
   /** Clone tous les <style> et <link rel="stylesheet"> du document principal
-   *  vers le PiP. Sans ça, Tailwind n'est pas appliqué dans le PiP. */
+   *  vers la fenêtre cible. Sans ça, Tailwind n'est pas appliqué. */
   const cloneStyles = useCallback((targetDoc: Document) => {
     // 1. <style> inline (Tailwind 4 injecte ses styles ici en dev).
     document.querySelectorAll('style:not([data-pip="skip"])').forEach((style) => {
@@ -74,6 +92,97 @@ export function useDocumentPip(): UseDocumentPipResult {
       });
   }, []);
 
+  /** Initialise le document de la fenêtre cible (PiP ou popup) :
+   *  styles + fond sombre + mount React. */
+  const mountInWindow = useCallback(
+    (targetWindow: Window, content: ReactNode) => {
+      cloneStyles(targetWindow.document);
+      targetWindow.document.body.style.backgroundColor = "#0E1217";
+      targetWindow.document.body.style.margin = "0";
+      targetWindow.document.body.style.padding = "0";
+      targetWindow.document.documentElement.setAttribute("data-theme", "dark");
+      targetWindow.document.documentElement.classList.add("dark");
+
+      const root = createRoot(targetWindow.document.body);
+      rootRef.current = root;
+      root.render(content);
+      setIsOpen(true);
+
+      // Cleanup auto quand l'utilisateur ferme la fenêtre manuellement
+      // (croix, Alt+F4, ou fermeture popup).
+      const cleanup = () => {
+        if (rootRef.current) {
+          try {
+            rootRef.current.unmount();
+          } catch {
+            // ignore
+          }
+        }
+        rootRef.current = null;
+        winRef.current = null;
+        setIsOpen(false);
+      };
+      // `pagehide` couvre PiP (spec) ET popup (déclenche au close).
+      targetWindow.addEventListener("pagehide", cleanup);
+      // `beforeunload` est plus fiable pour les popups sur certains navigateurs.
+      targetWindow.addEventListener("beforeunload", cleanup);
+    },
+    [cloneStyles],
+  );
+
+  /** Ouvre via window.open() — fallback Brave/Firefox/Safari/vieux Chromium.
+   *  Déclaré AVANT openPip car openPip y fait référence (fallback runtime). */
+  const openPopup = useCallback(
+    async (content: ReactNode) => {
+      // about:blank pour avoir un document vierge à contrôler entièrement
+      // (sinon le popup charge une page complète et on perd le contrôle du DOM).
+      const popup = window.open(
+        "about:blank",
+        "pariscore-widget",
+        // Features Win11 : dimensions + position + pas de toolbar (compact).
+        `width=${WIDGET_WIDTH},height=${WIDGET_HEIGHT},` +
+          `left=${window.screenX + window.outerWidth - WIDGET_WIDTH - 20},` +
+          `top=${window.screenY + 80},` +
+          `toolbar=no,menubar=no,location=no,status=no,resizable=yes`,
+      );
+      if (!popup) {
+        // Bloqueur de popup actif → on prévient l'utilisateur.
+        console.error("[use-document-pip] popup bloqué par le navigateur");
+        alert(
+          "Le widget n'a pas pu s'ouvrir : popup bloqué par le navigateur.\n" +
+            "Autorise les popups pour pariscore.fr dans les paramètres.",
+        );
+        setIsOpen(false);
+        return;
+      }
+      winRef.current = popup;
+      // Donne un titre à la fenêtre popup (visible dans la barre des tâches Win11).
+      popup.document.title = "PariScore Live — Widget";
+      mountInWindow(popup, content);
+    },
+    [mountInWindow],
+  );
+
+  /** Ouvre via Document PiP natif (Chrome/Edge 116+).
+   *  Bascule sur openPopup si le PiP échoue runtime (Brave bloque au runtime
+   *  même si l'API est présente dans `window`). */
+  const openPip = useCallback(
+    async (content: ReactNode) => {
+      try {
+        const pipWindow = await window.documentPictureInPicture!.requestWindow({
+          width: WIDGET_WIDTH,
+          height: WIDGET_HEIGHT,
+        });
+        winRef.current = pipWindow;
+        mountInWindow(pipWindow, content);
+      } catch (err) {
+        console.error("[use-document-pip] requestWindow failed, fallback popup:", err);
+        await openPopup(content);
+      }
+    },
+    [mountInWindow, openPopup],
+  );
+
   /** Ferme proprement : unmount React + ferme la fenêtre. */
   const close = useCallback(() => {
     if (rootRef.current) {
@@ -84,76 +193,31 @@ export function useDocumentPip(): UseDocumentPipResult {
       }
       rootRef.current = null;
     }
-    if (pipWindowRef.current) {
+    if (winRef.current) {
       try {
-        pipWindowRef.current.close();
+        winRef.current.close();
       } catch {
         // déjà fermée
       }
-      pipWindowRef.current = null;
+      winRef.current = null;
     }
     setIsOpen(false);
   }, []);
 
   const open = useCallback(
     async (content: ReactNode) => {
-      if (!supported) {
-        console.warn("[use-document-pip] API non supportée (Chrome/Edge 116+ requis)");
-        return;
-      }
       // Si déjà ouvert, on met juste à jour le contenu (re-render).
-      if (pipWindowRef.current && rootRef.current) {
-        contentRef.current = content;
+      if (winRef.current && rootRef.current) {
         rootRef.current.render(content);
         return;
       }
-
-      try {
-        const pipWindow = await window.documentPictureInPicture!.requestWindow({
-          width: 420,
-          height: 580,
-        });
-        pipWindowRef.current = pipWindow;
-        contentRef.current = content;
-
-        // Clone les styles AVANT le 1er render (sinon flash sans styles).
-        cloneStyles(pipWindow.document);
-
-        // Fond sombre cohérent avec l'app principale (bg-card du thème).
-        pipWindow.document.body.style.backgroundColor = "#0E1217";
-        pipWindow.document.body.style.margin = "0";
-        pipWindow.document.body.style.padding = "0";
-        // data-theme pour que les sélecteurs CSS dark mode du projet matchent.
-        pipWindow.document.documentElement.setAttribute("data-theme", "dark");
-        pipWindow.document.documentElement.classList.add("dark");
-
-        // Mount React dans le document PiP (arbre React séparé du principal).
-        const root = createRoot(pipWindow.document.body);
-        rootRef.current = root;
-        root.render(content);
-        setIsOpen(true);
-
-        // Cleanup auto quand l'utilisateur ferme la fenêtre manuellement
-        // (croix ou Alt+F4) — sinon les refs restent vivantes et le prochain
-        // open() pense que c'est déjà ouvert.
-        pipWindow.addEventListener("pagehide", () => {
-          if (rootRef.current) {
-            try {
-              rootRef.current.unmount();
-            } catch {
-              // ignore
-            }
-          }
-          rootRef.current = null;
-          pipWindowRef.current = null;
-          setIsOpen(false);
-        });
-      } catch (err) {
-        console.error("[use-document-pip] requestWindow failed:", err);
-        setIsOpen(false);
+      if (pipSupported) {
+        await openPip(content);
+      } else {
+        await openPopup(content);
       }
     },
-    [supported, cloneStyles],
+    [pipSupported, openPip, openPopup],
   );
 
   // Cleanup au unmount du caller (ex: changement de page dans l'app principale).
@@ -166,9 +230,9 @@ export function useDocumentPip(): UseDocumentPipResult {
           // ignore
         }
       }
-      if (pipWindowRef.current) {
+      if (winRef.current) {
         try {
-          pipWindowRef.current.close();
+          winRef.current.close();
         } catch {
           // ignore
         }
@@ -176,5 +240,5 @@ export function useDocumentPip(): UseDocumentPipResult {
     };
   }, []);
 
-  return { supported, isOpen, open, close };
+  return { supported, mode, isOpen, open, close };
 }
