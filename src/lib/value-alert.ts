@@ -40,6 +40,18 @@ export type ValueAlert = {
 
 /**
  * Évalue l'alerte value bet sur un match live.
+ *
+ * RÈGLE (étendue 2026-07-28) : alerte à chaque fois que l'écart de jeux dans
+ * le set en cours atteint un multiple de 2 (2, 4, 6…), tant qu'au moins UN des
+ * deux joueurs a un DR match ≥ 1.2. Concrètement chaque cycle "1 service
+ * gagné + 1 retour gagné" (= +2 jeux d'écart) déclenche une nouvelle alerte,
+ * ce qui permet de suivre la confirmation de la dominance set par set.
+ *
+ * Avant : déclenchement unique sur le 1er passage à écart ≥ 2.
+ * Maintenant : `active` reste true tant que l'écart ≥ 2 ET DR(qqu'un) ≥ 1.2.
+ * Le composant suit lui-même le palier courant (cf. pip-match-row.tsx) pour
+ * re-déclencher la notification à chaque nouveau multiple de 2.
+ *
  * @param liveState — État live (depuis useLiveMatches/useLiveStream).
  */
 export function evaluateValueAlert(liveState: LiveMatchState | undefined): ValueAlert {
@@ -64,11 +76,16 @@ export function evaluateValueAlert(liveState: LiveMatchState | undefined): Value
 
   // Qui mène au score dans le set ?
   const scoreLeader: "A" | "B" = gamesA > gamesB ? "A" : "B";
-  // DR du leader (doit être ≥ 1.2 pour confirmer la dominance globale).
   const drLeader = scoreLeader === "A" ? drMatch.drA : drMatch.drB;
 
-  // Condition finale : écart ≥ 2 ET DR leader ≥ 1.2.
-  const active = gap >= GAME_GAP_THRESHOLD && drLeader >= DR_MATCH_THRESHOLD;
+  // RÈGLE : alerte si écart ≥ 2 ET (DR P1 ≥ 1.2 OU DR P2 ≥ 1.2).
+  // On teste les 2 joueurs (pas seulement le leader) car l'utilisateur a
+  // explicitement demandé "DR P1 ou P2 ≥ 1.2". En pratique, le joueur qui
+  // mène au score a presque toujours le meilleur DR (corrélation naturelle),
+  // mais tester les 2 couvre les cas où le dominé au score reste dominant
+  // globalement (ex: mène 4-2 dans le set mais perd le match jusqu'ici).
+  const drAnyDominant = drMatch.drA >= DR_MATCH_THRESHOLD || drMatch.drB >= DR_MATCH_THRESHOLD;
+  const active = gap >= GAME_GAP_THRESHOLD && drAnyDominant;
 
   return {
     active,
@@ -77,6 +94,20 @@ export function evaluateValueAlert(liveState: LiveMatchState | undefined): Value
     gameGap: gap,
     setScore: { gamesA, gamesB },
   };
+}
+
+/**
+ * Calcule le palier d'alerte courant = nombre de cycles "service + retour"
+ * complets (= floor(gap / 2)). Sert au composant à détecter un NOUVEAU palier
+ * pour re-déclencher la notification.
+ *   gap = 2 → palier 1
+ *   gap = 3 → palier 1 (cycle incomplet, on attend le 4e jeu)
+ *   gap = 4 → palier 2
+ *   gap = 5 → palier 2
+ *   gap = 6 → palier 3
+ */
+export function getAlertTier(gameGap: number): number {
+  return Math.floor(gameGap / 2);
 }
 
 /**

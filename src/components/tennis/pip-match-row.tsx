@@ -27,7 +27,7 @@ import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
-import { evaluateValueAlert, formatValueAlertLabel } from "@/lib/value-alert";
+import { evaluateValueAlert, formatValueAlertLabel, getAlertTier } from "@/lib/value-alert";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -190,7 +190,8 @@ function PipMatchRowImpl({
   // sur Sofascore (ex: 1.14 = joueur domine 14%). Calculé sur tout le match.
   const drMatch = useMemo(() => computeDrMatch(liveState), [liveState]);
 
-  // Alerte value bet : ≥ 2 jeux d'écart dans le set + DR match leader ≥ 1.2.
+  // Alerte value bet : ≥ 2 jeux d'écart dans le set + DR match (P1 ou P2) ≥ 1.2.
+  // RÉ-ARME à chaque nouveau palier pair (2, 4) et à chaque nouveau set.
   const valueAlert = useMemo(() => evaluateValueAlert(liveState), [liveState]);
 
   const playerA = match.playerA;
@@ -202,18 +203,33 @@ function PipMatchRowImpl({
     if (liveState) onBetSignal?.(decision.level);
   }, [decision.level, liveState, onBetSignal]);
 
-  // Signal value alert au parent (notification 🔥 si transition !active→active).
-  // Anti-spam : ne déclenche qu'au passage inactif→actif (pas à chaque maj tant
-  // que l'alerte reste active). Le parent gère le cooldown via useBetNotify.
-  const prevAlertActiveRef = useRef(false);
+  // Signal value alert au parent. Re-déclenche la notification 🔥 à chaque :
+  //   - nouveau SET (currentSet change → reset du palier, re-arme pour ce set)
+  //   - nouveau PALIER d'écart pair dans le set (2 → 4, etc.)
+  // Le hook useBetNotify.applyValueAlert gère un cooldown 2 min/match pour
+  // éviter le spam si oscillation rapide autour d'un palier.
+  const lastSetRef = useRef<number>(-1);
+  const lastTierRef = useRef<number>(0);
   useEffect(() => {
     if (!liveState || !onValueAlert) return;
-    const justActivated = valueAlert.active && !prevAlertActiveRef.current;
-    prevAlertActiveRef.current = valueAlert.active;
-    if (!justActivated) return;
-    const leaderName = valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name);
-    const label = formatValueAlertLabel(valueAlert, leaderName);
-    if (label) onValueAlert(label);
+
+    const currentSet = liveState.currentSet;
+    const currentTier = getAlertTier(valueAlert.gameGap);
+
+    // Reset du suivi si on change de set (re-arme l'alerte pour le nouveau set).
+    if (currentSet !== lastSetRef.current) {
+      lastSetRef.current = currentSet;
+      lastTierRef.current = 0;
+    }
+
+    // Déclencher si l'alerte est active ET on a atteint un nouveau palier.
+    const newTier = valueAlert.active && currentTier > lastTierRef.current;
+    if (newTier) {
+      lastTierRef.current = currentTier;
+      const leaderName = valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name);
+      const label = formatValueAlertLabel(valueAlert, leaderName);
+      if (label) onValueAlert(label);
+    }
   }, [valueAlert, liveState, onValueAlert, playerA.name, playerB.name]);
 
   // Couleur du DR actuel (vert si A domine, bleu si B domine).
