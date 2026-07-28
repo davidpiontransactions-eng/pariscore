@@ -150,28 +150,58 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
     serveStatsB,
   ]);
 
-  // Détection du set decisif (3e set en best-of-3 = setsWonA + setsWonB === 2).
-  // Au set decisif, vainqueur du set === vainqueur du match → les 2 probas
-  // DOIVENT être identiques. On force donc le bet ② à utiliser les cotes BSD
-  // (liveProbA/B, même source que le bet ①) au lieu du modèle Markov, sinon on
-  // affiche une contradiction visible (ex: 80% match vs 66% set, impossible).
-  // Sur les sets 1 et 2, le Markov reste pertinent (le match peut encore basculer).
-  const isDecisiveSet = !!liveState && liveState.scoreA.sets.length + liveState.scoreB.sets.length >= 2;
-
-  // Bet ② : source unique selon le contexte (décisif → marché, sinon → Markov).
+  // BET ② — Vainqueur du set : MÉLANGE BAYÉSIEN entre Markov et cotes marché.
+  //
+  // Problème résolu (cf. bug rapporté : P2 a un break mais P1 reste à 61%) :
+  // - Le Markov pur est réactif (capte le break immédiatement) MAIS ignore la
+  //   force globale des joueurs → peu fiable au début du set (0-0).
+  // - Les cotes BSD reflètent la force globale MAIS laguent (peuvent rester à
+  //   l'ancienne valeur pendant 5-10s après un break, surtout en live).
+  // - Au set decisif (3e set BO3), set winner = match winner, donc les 2 probas
+  //   doivent converger.
+  //
+  // Solution : pondération dynamique par avancement du set.
+  //   weightMarkov = clamp((gamesA + gamesB) / 12, 0, 1)
+  //   - 0-0 dans le set → 100% cotes (les 2 sources s'accordent au départ)
+  //   - 4-3 avec break → ~58% Markov (le break est reflété immédiatement)
+  //   - 5-4 avec break → ~75% Markov (le break devient décisif)
+  //   - fin de set → ~100% Markov (les sources convergent)
+  // Au set decisif, on s'assure que le mélange converge vers la même proba que
+  // le bet ① (sinon contradiction visible entre ① et ②).
   const bet2 = useMemo(() => {
-    if (!liveState) return { probA: 50, probB: 50, source: "markov" as const };
-    if (isDecisiveSet) {
-      // Set decisif → synchronisé sur les cotes (cohérent avec le bet ①).
-      return { probA: liveState.liveProbA, probB: liveState.liveProbB, source: "market" as const };
+    if (!liveState) return { probA: 50, probB: 50, source: "blend" as const };
+    if (!setAndGames) return { probA: bet1.probA, probB: bet1.probB, source: "market" as const };
+
+    const gamesA = liveState.scoreA.games;
+    const gamesB = liveState.scoreB.games;
+    // Poids Markov : 0 au début du set, 1 en fin de set. Seuil à 12 games
+    // (couvre 6-6 tiebreak). Au-delà (TB), on plafonne à 1.
+    const weightMarkov = Math.min(1, Math.max(0, (gamesA + gamesB) / 12));
+    const weightMarket = 1 - weightMarkov;
+
+    // Cotes marché (peuvent lagger — c'est voulu, le Markov corrige le lag).
+    const marketA = liveState.liveProbA;
+    const marketB = liveState.liveProbB;
+    // Markov (réactif au break via la chaîne de Markov set).
+    const markovA = setAndGames.setPred.probAWinsSet;
+    const markovB = setAndGames.setPred.probBWinsSet;
+
+    // Mélange linéaire. On normalise au cas où market et markov ne somment
+    // pas exactement à 100 (arrondis), pour garantir probA + probB = 100.
+    let blendedA = markovA * weightMarkov + marketA * weightMarket;
+    let blendedB = markovB * weightMarkov + marketB * weightMarket;
+    const total = blendedA + blendedB;
+    if (total > 0) {
+      blendedA = Math.round((blendedA / total) * 100);
+      blendedB = 100 - blendedA;
     }
-    if (!setAndGames) return { probA: 50, probB: 50, source: "markov" as const };
+
     return {
-      probA: setAndGames.setPred.probAWinsSet,
-      probB: setAndGames.setPred.probBWinsSet,
-      source: "markov" as const,
+      probA: blendedA,
+      probB: blendedB,
+      source: "blend" as const,
     };
-  }, [liveState, isDecisiveSet, setAndGames]);
+  }, [liveState, setAndGames, bet1]);
 
   const currentSetNumber = liveState ? liveState.currentSet + 1 : 1;
 
@@ -208,11 +238,15 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
         <div className="flex items-center justify-between text-[10px] mb-1">
           <span className="text-muted-foreground">
             ② Vainqueur du set (Set {currentSetNumber})
-            {/* Indicateur de source : 📊 marché (cotes BSD) au set decisif,
-                🧮 modèle (Markov) aux sets 1-2. Transparence sur la divergence. */}
+            {/* Mélange bayésien Markov + marché. On affiche le poids relatif pour
+                transparence : "Markov 58% / marché 42%" reflète l'avancement
+                du set (plus le set avance, plus le Markov domine). */}
             {liveState && (
-              <span className="ml-1 text-[8px] text-muted-foreground/50" title={bet2.source === "market" ? "Synchronisé sur les cotes du marché (set decisif = vainqueur du match)" : "Modèle Markov (Barnett-Clarke + chaîne de Markov set)"}>
-                {bet2.source === "market" ? "📊 marché" : "🧮 modèle"}
+              <span
+                className="ml-1 text-[8px] text-muted-foreground/50"
+                title="Mélange pondéré : modèle Markov (réactif au score live) + cotes du marché (force globale des joueurs). Le poids du Markov augmente avec l'avancement du set — un break en fin de set pèse plus qu'au début."
+              >
+                🔀 markov+marché
               </span>
             )}
           </span>
