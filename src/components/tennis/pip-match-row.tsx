@@ -21,12 +21,13 @@
 // Pas de next-intl (le PiP est un autre arbre React sans provider) → chaînes
 // FR en dur.
 
-import { memo, useEffect, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
+import { evaluateValueAlert, formatValueAlertLabel } from "@/lib/value-alert";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -39,6 +40,9 @@ type Props = {
   /** Callback de signal feu tricolore (notifiera si transition vers "bet").
    *  Le parent (MatchPipWidget) décide si les notifs sont activées. */
   onBetSignal?: (level: DrDecisionLevel) => void;
+  /** Callback de signal value alert (notifiera si transition vers active).
+   *  Déclenché quand ≥ 2 jeux d'écart set + DR leader ≥ 1.2. */
+  onValueAlert?: (label: { title: string; body: string }) => void;
   /** DR moyen match de A (médiane 5 derniers matchs, surface-filtré). */
   drMoyenA?: number | null;
   /** DR moyen match de B. */
@@ -173,6 +177,7 @@ function PipMatchRowImpl({
   expanded,
   onToggle,
   onBetSignal,
+  onValueAlert,
   drMoyenA,
   drMoyenB,
 }: Props) {
@@ -185,19 +190,36 @@ function PipMatchRowImpl({
   // sur Sofascore (ex: 1.14 = joueur domine 14%). Calculé sur tout le match.
   const drMatch = useMemo(() => computeDrMatch(liveState), [liveState]);
 
+  // Alerte value bet : ≥ 2 jeux d'écart dans le set + DR match leader ≥ 1.2.
+  const valueAlert = useMemo(() => evaluateValueAlert(liveState), [liveState]);
+
+  const playerA = match.playerA;
+  const playerB = match.playerB;
+  const isLive = !!liveState;
+
   // Signal feu tricolore au parent (pour notifications natives).
   useEffect(() => {
     if (liveState) onBetSignal?.(decision.level);
   }, [decision.level, liveState, onBetSignal]);
 
+  // Signal value alert au parent (notification 🔥 si transition !active→active).
+  // Anti-spam : ne déclenche qu'au passage inactif→actif (pas à chaque maj tant
+  // que l'alerte reste active). Le parent gère le cooldown via useBetNotify.
+  const prevAlertActiveRef = useRef(false);
+  useEffect(() => {
+    if (!liveState || !onValueAlert) return;
+    const justActivated = valueAlert.active && !prevAlertActiveRef.current;
+    prevAlertActiveRef.current = valueAlert.active;
+    if (!justActivated) return;
+    const leaderName = valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name);
+    const label = formatValueAlertLabel(valueAlert, leaderName);
+    if (label) onValueAlert(label);
+  }, [valueAlert, liveState, onValueAlert, playerA.name, playerB.name]);
+
   // Couleur du DR actuel (vert si A domine, bleu si B domine).
   const drColor = dr >= 0 ? "#22c55e" : "#3b82f6";
   const drPct = Math.round(dr * 100);
   const drLabel = `${drPct >= 0 ? "+" : ""}${drPct}`;
-
-  const playerA = match.playerA;
-  const playerB = match.playerB;
-  const isLive = !!liveState;
 
   return (
     <button
@@ -216,6 +238,15 @@ function PipMatchRowImpl({
 
       {/* Contenu par-dessus le filigrane */}
       <div className="relative z-10">
+        {/* Badge 🔥 value alert : ≥ 2 jeux d'écart set + DR leader ≥ 1.2 */}
+        {valueAlert.active && (
+          <span
+            className="absolute -top-1.5 -right-1.5 z-20 flex items-center gap-0.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-lg ring-2 ring-card animate-pulse"
+            title={`🔥 Value bet — ${valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name)} mène ${valueAlert.setScore?.gamesA}-${valueAlert.setScore?.gamesB} (DR match ${valueAlert.drLeader?.toFixed(2)})`}
+          >
+            🔥 value
+          </span>
+        )}
         {/* Joueur A */}
         <div className="flex items-center gap-2 text-[11px]">
           <span className="flex items-center gap-1 w-[80px] shrink-0">

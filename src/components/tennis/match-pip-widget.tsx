@@ -145,6 +145,16 @@ export function MatchPipWidget() {
     [betNotify],
   );
 
+  // Wrapper pour les value alerts (≥ 2 jeux d'écart + DR leader ≥ 1.2).
+  // Notification native 🔥 indépendante du feu tricolore (propre tag/cooldown).
+  const makeValueAlert = useCallback(
+    (matchId: string) =>
+      (label: { title: string; body: string }) => {
+        betNotify.notifyValueAlert(matchId, label);
+      },
+    [betNotify],
+  );
+
   const statusColor =
     connectionStatus === "connected"
       ? "bg-emerald-400"
@@ -237,6 +247,7 @@ export function MatchPipWidget() {
                     match.id,
                     `${shortName(match.playerA.name)} vs ${shortName(match.playerB.name)}`,
                   )}
+                  onValueAlert={makeValueAlert(match.id)}
                   drMoyenA={statsA?.drMoyen5m ?? null}
                   drMoyenB={statsB?.drMoyen5m ?? null}
                 />

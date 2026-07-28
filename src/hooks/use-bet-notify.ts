@@ -42,6 +42,12 @@ export type UseBetNotifyResult = {
    * transition `!bet → bet` + cooldown respecté. No-op si `enabled` est off.
    */
   notifyBet: (matchId: string, label: string, level: DrDecisionLevel) => void;
+  /**
+   * Notifie une value alert (≥ 2 jeux d'écart set + DR leader ≥ 1.2).
+   * Anti-spam indépendant du feu tricolore (propre cooldown, propre tag) pour
+   * ne pas masquer l'un avec l'autre.
+   */
+  notifyValueAlert: (matchId: string, label: { title: string; body: string }) => Promise<void>;
 };
 
 function readEnabled(): boolean {
@@ -159,5 +165,45 @@ export function useBetNotify(): UseBetNotifyResult {
     return () => window.removeEventListener("focus", handler);
   }, [supported]);
 
-  return { supported, enabled, permission, toggle, notifyBet };
+  // Anti-spam DÉDIÉ pour les value alerts (indépendant du feu tricolore).
+  // Map<matchId, lastNotifiedAt> — pas de notion de "level", juste un cooldown.
+  const valueAlertCooldownRef = useRef<Map<string, number>>(new Map());
+
+  const notifyValueAlert = useCallback(
+    async (matchId: string, label: { title: string; body: string }) => {
+      if (!enabled || !supported) return;
+      if (Notification.permission !== "granted") return;
+
+      // Cooldown : 1 notif value/match/2min max (anti-spam si oscillation).
+      const now = Date.now();
+      const last = valueAlertCooldownRef.current.get(matchId);
+      if (last && now - last < COOLDOWN_MS) return;
+      valueAlertCooldownRef.current.set(matchId, now);
+
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification(label.title, {
+          body: label.body,
+          tag: `value-${matchId}`, // dédoublonnage natif, INDEPENDANT du tag `bet-${matchId}`
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+        });
+      } catch (err) {
+        // Fallback new Notification si pas de SW.
+        if ("Notification" in window) {
+          try {
+            new Notification(label.title, {
+              body: label.body,
+              tag: `value-${matchId}`,
+            });
+          } catch {
+            console.warn("[use-bet-notify] value alert notification failed:", err);
+          }
+        }
+      }
+    },
+    [enabled, supported],
+  );
+
+  return { supported, enabled, permission, toggle, notifyBet, notifyValueAlert };
 }
