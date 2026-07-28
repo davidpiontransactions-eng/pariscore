@@ -21,11 +21,12 @@
 // Pas de next-intl (le PiP est un autre arbre React sans provider) → chaînes
 // FR en dur.
 
-import { memo, useEffect } from "react";
+import { memo, useEffect, useMemo } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
+import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -179,6 +180,11 @@ function PipMatchRowImpl({
   const { dr, drHistory, pointsTracked, settled } = useMomentumDR(liveState);
   const decision = getDrDecision(dr, pointsTracked, settled);
 
+  // DR "vrai" match (ratio Sofascore-style) : proxy games+sets.
+  // Différent du DR momentum (tanh ∈ [-1,+1]) : c'est le RATIO > 0 qu'on voit
+  // sur Sofascore (ex: 1.14 = joueur domine 14%). Calculé sur tout le match.
+  const drMatch = useMemo(() => computeDrMatch(liveState), [liveState]);
+
   // Signal feu tricolore au parent (pour notifications natives).
   useEffect(() => {
     if (liveState) onBetSignal?.(decision.level);
@@ -286,6 +292,38 @@ function PipMatchRowImpl({
             {isLive ? decision.icon : "—"}
           </span>
         </div>
+
+        {/* 4e ligne : DR match (vrai ratio Sofascore) + DR par set */}
+        {isLive && drMatch && (
+          <div className="flex items-center gap-1.5 mt-1 text-[8px] font-mono tabular-nums">
+            <span className="text-muted-foreground/60 shrink-0">DR match</span>
+            {/* DR match global par joueur */}
+            <span className={cn("font-semibold", drColorClass(drMatch.drA))} title={`DR match ${shortName(playerA.name)} = ${formatDr(drMatch.drA)}`}>
+              {shortName(playerA.name).substring(0, 4)} {formatDr(drMatch.drA)}
+            </span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className={cn("font-semibold", drColorClass(drMatch.drB))} title={`DR match ${shortName(playerB.name)} = ${formatDr(drMatch.drB)}`}>
+              {shortName(playerB.name).substring(0, 4)} {formatDr(drMatch.drB)}
+            </span>
+            {/* DR par set (si au moins 1 set joué) */}
+            {drMatch.drBySet.some((s) => s !== null) && (
+              <>
+                <span className="text-muted-foreground/40 ml-1">│sets</span>
+                {drMatch.drBySet.map((s, i) =>
+                  s ? (
+                    <span
+                      key={i}
+                      className={cn("font-semibold", drColorClass(s.drA))}
+                      title={`DR Set ${i + 1} — ${shortName(playerA.name)} ${formatDr(s.drA)} · ${shortName(playerB.name)} ${formatDr(s.drB)}`}
+                    >
+                      S{i + 1}:{formatDr(s.drA)}/{formatDr(s.drB)}
+                    </span>
+                  ) : null,
+                )}
+              </>
+            )}
+          </div>
+        )}
       </div>
     </button>
   );
