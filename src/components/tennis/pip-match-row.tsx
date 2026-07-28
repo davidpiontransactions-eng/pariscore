@@ -28,6 +28,8 @@ import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
 import { evaluateValueAlert, formatValueAlertLabel } from "@/lib/value-alert";
+import { computeSetOdds } from "@/lib/set-odds";
+import type { ServeStats } from "@/lib/prediction/total-games";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -47,6 +49,10 @@ type Props = {
   drMoyenA?: number | null;
   /** DR moyen match de B. */
   drMoyenB?: number | null;
+  /** Stats service/retour de A (pour modèle Barnett → cotes set). */
+  serveStatsA?: ServeStats | null;
+  /** Stats service/retour de B. */
+  serveStatsB?: ServeStats | null;
 };
 
 // ─── buildPath (cloné de momentum-dr.tsx:52) ─────────────────────────────
@@ -180,6 +186,8 @@ function PipMatchRowImpl({
   onValueAlert,
   drMoyenA,
   drMoyenB,
+  serveStatsA,
+  serveStatsB,
 }: Props) {
   // DR momentum — le hook maintient son propre buffer entre renders (refs).
   const { dr, drHistory, pointsTracked, settled } = useMomentumDR(liveState);
@@ -189,6 +197,31 @@ function PipMatchRowImpl({
   // Différent du DR momentum (tanh ∈ [-1,+1]) : c'est le RATIO > 0 qu'on voit
   // sur Sofascore (ex: 1.14 = joueur domine 14%). Calculé sur tout le match.
   const drMatch = useMemo(() => computeDrMatch(liveState), [liveState]);
+
+  // Cotes vainqueur du set EN COURS (dérivées du Markov + mélange bayésien marché).
+  // Affichées sous le score. Recalculées à chaque maj du score du set.
+  const setOdds = useMemo(
+    () =>
+      computeSetOdds(
+        liveState,
+        serveStatsA,
+        serveStatsB,
+        match.stats.surface,
+        match.playerA.elo,
+        match.playerB.elo,
+      ),
+    [
+      liveState?.scoreA.games,
+      liveState?.scoreB.games,
+      liveState?.liveProbA,
+      liveState?.liveProbB,
+      match.stats.surface,
+      match.playerA.elo,
+      match.playerB.elo,
+      serveStatsA,
+      serveStatsB,
+    ],
+  );
 
   // Alerte value bet : à chaque palier pair de jeux JOUÉS dans le set (2,4,6,8,10,12)
   // + DR match (P1 ou P2) ≥ 1.2. Re-déclenche à chaque nouveau palier + reset par set.
@@ -327,6 +360,20 @@ function PipMatchRowImpl({
             <DrMoyenBadge drMoyen={drMoyenB} />
           </span>
         </div>
+
+        {/* Cotes vainqueur du set en cours (sous le score, dérivées Markov) */}
+        {isLive && setOdds && (
+          <div className="flex items-center gap-1.5 mt-1 text-[9px] font-mono tabular-nums text-muted-foreground/80">
+            <span className="text-muted-foreground/50">Cotes set {setOdds.currentSetNumber}</span>
+            <span className="rounded bg-amber-500/15 px-1 text-amber-300 font-semibold" title={`Cote vainqueur set ${setOdds.currentSetNumber} — ${shortName(playerA.name)} : ${setOdds.oddsA.toFixed(2)}`}>
+              {shortName(playerA.name).substring(0, 4)} {setOdds.oddsA.toFixed(2)}
+            </span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="rounded bg-amber-500/15 px-1 text-amber-300 font-semibold" title={`Cote vainqueur set ${setOdds.currentSetNumber} — ${shortName(playerB.name)} : ${setOdds.oddsB.toFixed(2)}`}>
+              {shortName(playerB.name).substring(0, 4)} {setOdds.oddsB.toFixed(2)}
+            </span>
+          </div>
+        )}
 
         {/* 3e ligne : mini-sparkline DR momentum + valeur + feu tricolore */}
         <div className="flex items-center gap-2 mt-1 pt-1 border-t border-border/20">

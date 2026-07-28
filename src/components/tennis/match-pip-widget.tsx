@@ -250,6 +250,8 @@ export function MatchPipWidget() {
                   onValueAlert={makeValueAlert(match.id)}
                   drMoyenA={statsA?.drMoyen5m ?? null}
                   drMoyenB={statsB?.drMoyen5m ?? null}
+                  serveStatsA={serveStatsA}
+                  serveStatsB={serveStatsB}
                 />
                 {isExpanded && (
                   <PipBetPanel
