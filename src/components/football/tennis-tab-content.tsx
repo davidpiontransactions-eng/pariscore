@@ -210,6 +210,29 @@ export function TennisTabContent() {
     track("page_view", { route: "/", tab: "tennis_prematch" });
   }, [track]);
 
+  // R8 (2026-07-28) : auto-open du widget PiP si l'URL contient ?openWidget=1.
+  // Permet au shortcut PWA "Widget live" du manifest d'ouvrir directement le
+  // widget en 1 clic depuis l'écran d'accueil Win 11, sans avoir à chercher le
+  // bouton dans la toolbar. On nettoie le query param après ouverture pour
+  // éviter une ré-ouverture à chaque re-render.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!pip.supported) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("openWidget") !== "1") return;
+    // Petit délai pour laisser les données live arriver (sinon widget vide).
+    const timer = setTimeout(() => {
+      pip.open(<MatchPipWidget />);
+      // Nettoie l'URL sans recharger la page.
+      params.delete("openWidget");
+      const clean = params.toString();
+      const newUrl = clean ? `${window.location.pathname}?${clean}` : window.location.pathname;
+      window.history.replaceState({}, "", newUrl);
+      track("pip_auto_open", { source: "pwa_shortcut" });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [pip.supported]);
+
   // Merge live-only matches as synthetic cards: some live matches (e.g. ITF futures)
   // never appear in the prematch scheduled endpoint because BSD separates by status.
   // We build minimal TennisMatch objects so the MatchCard can render them with live overlays.

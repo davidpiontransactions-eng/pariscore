@@ -35,6 +35,12 @@
       "short_name": "Serrés",
       "url": "/?filter=balanced",
       "description": "Matchs avec probabilité < 60%"
+    },
+    {
+      "name": "Widget live",
+      "short_name": "Widget",
+      "url": "/?openWidget=1",
+      "description": "Ouvre le widget flottant always-on-top (DR Momentum + 5 bets) sur les matchs favoris en live"
     }
   ]
 }
