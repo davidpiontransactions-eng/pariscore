@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, lazy, Suspense, Component, type ReactNode } from "react";
-import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
@@ -27,6 +27,8 @@ import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useMatchFilter, type FilterKey, type SortKey } from "@/hooks/use-match-filter";
 import { useMatchCuration } from "@/hooks/use-match-curation";
 import { useAnalytics } from "@/components/analytics-provider";
+import { useDocumentPip } from "@/hooks/use-document-pip";
+import { MatchPipWidget } from "@/components/tennis/match-pip-widget";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { MATCHES } from "@/lib/tennis-data";
@@ -117,6 +119,9 @@ export function TennisTabContent() {
   const { favorites, count: favCount } = useFavorites();
   const { terminalMode } = useTerminalMode();
   const { track, getVariant, reloadFlags, setPersonProperties } = useAnalytics();
+  // Widget Document PiP — fenêtre always-on-top pour suivre les favoris live
+  // à côté du bookmaker (1xWin+). Connexion SSE indépendante dans le PiP.
+  const pip = useDocumentPip();
 
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sortKey, setSortKey] = useState<SortKey>("default");
@@ -389,6 +394,17 @@ export function TennisTabContent() {
                   <Scale className="h-3.5 w-3.5" />
                   {tComparator("trigger")}
                 </button>
+                {pip.supported && (
+                  <button
+                    type="button"
+                    onClick={() => pip.open(<MatchPipWidget />)}
+                    title="Ouvrir le widget live en fenêtre flottante (reste au-dessus du bookmaker)"
+                    className="inline-flex items-center gap-1 rounded text-xs font-medium text-emerald-600 transition-colors hover:bg-emerald-500/10 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <PictureInPicture2 className="h-3.5 w-3.5" />
+                    Widget live
+                  </button>
+                )}
               </div>
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                 {t("heroTitle")}

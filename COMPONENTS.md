@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 44 components
+## Tennis (`src/components/tennis/`) — 47 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -50,8 +50,11 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | match-card-footer | match-card-footer.tsx | Pied de carte de match |
 | match-card-header | match-card-header.tsx | En-tête de carte de match |
 | match-detail-dialog | match-detail-dialog.tsx | Dialogue d'analyse détaillée d'un match |
+| match-pip-widget | match-pip-widget.tsx | Conteneur du widget Document PiP (multi-matchs favoris live) |
 | momentum-dr | momentum-dr.tsx | Momentum (dynamic, best-of-5 aware) |
 | odds-comparator | odds-comparator.tsx | Comparateur de cotes |
+| pip-bet-panel | pip-bet-panel.tsx | Panneau 5 bets prédictifs (vainqueur match/set, Over games) |
+| pip-match-row | pip-match-row.tsx | Ligne compacte d'un match dans le widget PiP (score + DR + feu tricolore) |
 | player-block | player-block.tsx | Bloc joueur (avatar + nom + stats) |
 | player-profile-header | player-profile-header.tsx | En-tête profil joueur ("A. Rublev") |
 | player-profile-view | player-profile-view.tsx | Vue profil `/tennis/player/[slug]` |

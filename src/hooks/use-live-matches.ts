@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLiveStream } from "@/hooks/use-live-stream";
 
 export type SideScore = {
   sets: number[];
@@ -76,6 +77,13 @@ const POLL_INTERVAL_MS = 8_000;
  * IDs are normalized as bsd-<rawId> to match prematch IDs from usePrematchMatches.
  */
 export function useLiveMatches(): UseLiveMatchesResult {
+  // R8 (2026-07-28) : délègue au SSE temps réel si EventSource dispo, sinon
+  // fallback polling REST 8s. Le SSE pousse les maj < 1s (broker fan-out),
+  // idéal pour le widget Document PiP qui doit réagir à chaque point.
+  // Les 2 hooks ayant la MÊME signature, on peut switcher sans modifier
+  // aucun consommateur (tennis-tab-content, match-card, etc.).
+  const stream = useLiveStream();
+
   const [liveStates, setLiveStates] = useState<Record<string, LiveMatchState>>({});
   const [liveMatchList, setLiveMatchList] = useState<Array<{
     id: string;
@@ -89,8 +97,25 @@ export function useLiveMatches(): UseLiveMatchesResult {
   const [latency, setLatency] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Détection de la disponibilité du SSE (une seule fois, au mount).
+  // On utilise un state séparé pour éviter de conditionner le rendu pendant
+  // l'initialisation (évite un flash de polling quand le SSE est dispo).
+  const [sseActive, setSseActive] = useState(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // SSE dispo ? On l'active dès que la 1ère maj arrive (status connected).
+    // Tant qu'aucune maj, on laisse le polling tourner pour ne pas rester à vide.
+    if (stream.connectionStatus === "connected") {
+      setSseActive(true);
+    }
+  }, [stream.connectionStatus]);
+
+  // Polling REST — fallback uniquement si SSE inactif (Firefox/Safari anciens,
+  // ou serveur SSE HS). Code identique au comportement pré-R8.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sseActive) return; // SSE prend le relais, on arrête le polling
 
     const poll = async () => {
       const t0 = Date.now();
@@ -104,7 +129,6 @@ export function useLiveMatches(): UseLiveMatchesResult {
         setLatency(Date.now() - t0);
         setConnectionStatus(data.matches.length > 0 ? "connected" : "connected");
 
-        // Store raw match list for TennisTabContent to build synthetic cards
         const rawList = data.matches.map((m) => ({
           id: m.id,
           playerA: m.playerA,
@@ -115,22 +139,11 @@ export function useLiveMatches(): UseLiveMatchesResult {
         }));
         setLiveMatchList(rawList);
 
-        // Map BSD live match data to LiveMatchState format for overlay on existing cards
         const map: Record<string, LiveMatchState> = {};
         for (const m of data.matches) {
           if (!m.isLive) continue;
 
-          // Build per-set game-score arrays from setsDetail
-          // BSD inclut le set en cours dans setsDetail — on ne garde que les sets
-          // COMPLÉTÉS via m.currentSet (0-indexed = nombre de sets finis) pour
-          // éviter un double affichage dans SetScoreline.
-          //
-          // FIX doublon score (2026-07-25) : BSD peut renvoyer un currentSet
-          // décalé pendant les transitions de set (ex: currentSet=2 alors qu'on
-          // joue le 2e set), ce qui fait fuiter le set en cours dans sets[] et
-          // le ré-afficher en gris en plus du vert de `games`. On borne donc
-          // completedCount : au maximum setsDetail.length - 1 (toujours exclure
-          // le dernier set de setsDetail, qui est le set en cours chez BSD).
+          // FIX doublon score (2026-07-25) : cf. commentaire use-live-stream.ts.
           const completedCount = Math.min(m.currentSet, m.setsDetail.length - 1);
           const setsA: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p1);
           const setsB: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p2);
@@ -153,7 +166,6 @@ export function useLiveMatches(): UseLiveMatchesResult {
       }
     };
 
-    // Initial poll
     setConnectionStatus("connecting");
     poll();
 
@@ -162,7 +174,12 @@ export function useLiveMatches(): UseLiveMatchesResult {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, []);
+  }, [sseActive]);
 
+  // Si SSE actif, on retourne les données du stream. Sinon, les states locaux
+  // du polling fallback. Les 2 chemins exposent la même interface.
+  if (sseActive) {
+    return stream;
+  }
   return { liveStates, liveMatchList, connectionStatus, latency };
 }
