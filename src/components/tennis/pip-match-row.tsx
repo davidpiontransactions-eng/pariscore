@@ -2,18 +2,21 @@
 
 // Ligne compacte d'un match dans le widget Document PiP.
 //
-// Layout ~400px × ~64px replié :
-//   ┌────────────────────────────────────────────┐
-//   │ ALCARAZ ●  [6][4] 30   ▓▓▓▓▓░░  +62   ✅  │
-//   │ SINNER    [4][6] 15                       │
-//   └────────────────────────────────────────────┘
+// Layout ~400px × ~80px replié :
+//   ┌──────────────────────────────────────────────┐
+//   │ ALCARAZ ● [6][4] 30  DRmoy 1.32              │  ← ligne A + DR moyen
+//   │ SINNER   [4][6] 15  DRmoy 1.08               │  ← ligne B + DR moyen
+//   │     ╱╲___╱╲╱╲___╱╲╱╲___╱╲   +62   ✅          │  ← mini-sparkline DR momentum
+//   └──────────────────────────────────────────────┘
+//   (terrain de tennis en filigrane translucide derrière toute la ligne)
 //
 // Au clic sur la ligne → onToggle() déploie le panneau 5 bets (PipBetPanel)
 // juste en dessous. Un seul match déployé à la fois (géré par le parent).
 //
 // Réutilise :
-//   - useMomentumDR(liveState) pour le DR (barre + sparkline compact)
+//   - useMomentumDR(liveState) pour le DR momentum + drHistory (sparkline)
 //   - getDrDecision(dr, pointsTracked, settled) pour le feu tricolore
+//   - buildPath() cloné de momentum-dr.tsx (courbe Bézier centrée sur 0)
 //
 // Pas de next-intl (le PiP est un autre arbre React sans provider) → chaînes
 // FR en dur.
@@ -35,36 +38,126 @@ type Props = {
   /** Callback de signal feu tricolore (notifiera si transition vers "bet").
    *  Le parent (MatchPipWidget) décide si les notifs sont activées. */
   onBetSignal?: (level: DrDecisionLevel) => void;
+  /** DR moyen match de A (médiane 5 derniers matchs, surface-filtré). */
+  drMoyenA?: number | null;
+  /** DR moyen match de B. */
+  drMoyenB?: number | null;
 };
 
-/** Barre d'équilibre DR ultra-compacte (SVG inline, 60px de large).
- *  Version allégée de momentum-dr.tsx (pas de framer-motion ni tooltips). */
-function DrMiniBar({ dr, color }: { dr: number; color: string }) {
-  // dr ∈ [-1, +1] → position du curseur 0..100%.
-  // 0 = au centre. +1 = tout à droite (A domine). -1 = tout à gauche.
-  const pos = 50 + dr * 50;
+// ─── buildPath (cloné de momentum-dr.tsx:52) ─────────────────────────────
+// Construit un path SVG Bézier pour une série DR ∈ [-1, +1] centrée sur 0.
+// Identique au composant plein mais sans framer-motion (allégé pour le PiP).
+const SPARK_W = 80;
+const SPARK_H = 22;
+const SPARK_MARGIN = 2;
+
+function buildPath(data: number[], w: number, h: number): string {
+  if (data.length < 2) return "";
+  const mid = h / 2;
+  const range = h / 2 - SPARK_MARGIN;
+  const pts = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * w,
+    y: mid - Math.max(-1, Math.min(1, v)) * range,
+  }));
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i];
+    const p1 = pts[i + 1];
+    const cp1x = p0.x + (p1.x - p0.x) / 2;
+    d += ` C${cp1x},${p0.y} ${cp1x},${p1.y} ${p1.x},${p1.y}`;
+  }
+  return d;
+}
+
+/** Mini-sparkline DR momentum (SVG inline ~80×22px).
+ *  Montre l'évolution du DR sur les 24 derniers points joués.
+ *  Ligne médiane 0, courbe colorée selon le dominant, dernier point en évidence. */
+function DrSparkline({ drHistory, currentDr }: { drHistory: number[]; currentDr: number }) {
+  const path = buildPath(drHistory, SPARK_W, SPARK_H);
+  // Couleur selon le dominant actuel (vert A, bleu B).
+  const color = currentDr >= 0 ? "#22c55e" : "#3b82f6";
+  const mid = SPARK_H / 2;
+  // Dernier point (position x = bord droit, y selon currentDr).
+  const lastY = mid - Math.max(-1, Math.min(1, currentDr)) * (SPARK_H / 2 - SPARK_MARGIN);
+
+  // Area fill : ferme le path sous la ligne jusqu'à la médiane pour un effet "aire".
+  const areaPath = path ? `${path} L${SPARK_W},${mid} L0,${mid} Z` : "";
+
   return (
-    <svg width="60" height="8" viewBox="0 0 60 8" aria-hidden="true">
-      {/* fond */}
-      <rect x="0" y="2" width="60" height="4" rx="2" fill="currentColor" className="text-muted-foreground/20" />
-      {/* ligne médiane */}
-      <line x1="30" y1="0" x2="30" y2="8" stroke="currentColor" className="text-muted-foreground/40" strokeWidth="1" />
-      {/* curseur */}
-      <circle cx={pos} cy="4" r="3.5" fill={color} />
+    <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} aria-hidden="true">
+      {/* Ligne médiane (DR = 0 = équilibre parfait) */}
+      <line
+        x1="0" y1={mid} x2={SPARK_W} y2={mid}
+        stroke="currentColor" className="text-muted-foreground/30" strokeWidth="0.5"
+        strokeDasharray="2 2"
+      />
+      {path && (
+        <>
+          {/* Aire sous la courbe (translucide) */}
+          <path d={areaPath} fill={color} fillOpacity="0.12" />
+          {/* Courbe principale */}
+          <path d={path} fill="none" stroke={color} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          {/* Dernier point en évidence */}
+          <circle cx={SPARK_W} cy={lastY} r="2" fill={color} />
+        </>
+      )}
     </svg>
+  );
+}
+
+/** Terrain de tennis en filigrane translucide (SVG inline, ~8% opacité).
+ *  Dessine un court simplifié : limites + couloirs + filet + ligne de service.
+ *  Position absolute, pointer-events none, ne gêne pas les interactions. */
+function CourtBackground() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 w-full h-full"
+      preserveAspectRatio="none"
+      viewBox="0 0 200 60"
+      style={{ opacity: 0.08 }}
+    >
+      {/* Cadre extérieur (limites doubles) */}
+      <rect x="4" y="4" width="192" height="52" fill="none" stroke="currentColor" className="text-emerald-400" strokeWidth="0.8" />
+      {/* Couloirs de doubles */}
+      <rect x="4" y="10" width="192" height="40" fill="none" stroke="currentColor" className="text-emerald-400" strokeWidth="0.4" />
+      {/* Lignes de service (carré de service) */}
+      <line x1="4" y1="18" x2="196" y2="18" stroke="currentColor" className="text-emerald-400" strokeWidth="0.4" />
+      <line x1="4" y1="42" x2="196" y2="42" stroke="currentColor" className="text-emerald-400" strokeWidth="0.4" />
+      <line x1="100" y1="18" x2="100" y2="42" stroke="currentColor" className="text-emerald-400" strokeWidth="0.4" />
+      {/* Filet central */}
+      <line x1="100" y1="4" x2="100" y2="56" stroke="currentColor" className="text-emerald-400" strokeWidth="0.6" strokeDasharray="2 1.5" />
+      {/* Marques centrales (baseline) */}
+      <line x1="98" y1="4" x2="102" y2="4" stroke="currentColor" className="text-emerald-400" strokeWidth="0.5" />
+      <line x1="98" y1="56" x2="102" y2="56" stroke="currentColor" className="text-emerald-400" strokeWidth="0.5" />
+    </svg>
+  );
+}
+
+/** Pastille DR moyen match (médiane 5 derniers matchs, surface-filtré).
+ *  Couleur : vert si >1.2 (dominant historique), ambre si 0.9-1.2 (équilibré),
+ *  gris sinon (sous-performant au retour). */
+function DrMoyenBadge({ drMoyen }: { drMoyen: number | null | undefined }) {
+  if (drMoyen == null || !isFinite(drMoyen)) {
+    return <span className="text-[8px] text-muted-foreground/30 font-mono">DRmoy —</span>;
+  }
+  const val = drMoyen.toFixed(2);
+  const colorClass =
+    drMoyen >= 1.2 ? "text-emerald-300" : drMoyen >= 0.9 ? "text-amber-300" : "text-muted-foreground/70";
+  return (
+    <span className={cn("text-[8px] font-mono tabular-nums font-semibold", colorClass)} title={`DR moyen match : ${val} (médiane 5 derniers matchs)`}>
+      DRmoy {val}
+    </span>
   );
 }
 
 /** Score d'un jeu en format tennis : 0/15/30/40/Ad. */
 function formatPoint(p: number): string {
-  // Convention BSD : points encodés en valeur numérique 0/1/2/3 (cf.
-  // use-live-matches.ts:142-143 mapping depuis currentPoint.p1/p2).
-  // 0=0, 1=15, 2=30, 3=40, 4+=Ad/généralement géré par diff.
   if (p <= 0) return "0";
   if (p === 1) return "15";
   if (p === 2) return "30";
   if (p === 3) return "40";
-  return "Ad"; // 4+ = advantage (rare en valeur brute, mais défensif)
+  return "Ad";
 }
 
 /** Tronque un nom de joueur : garde le nom de famille (dernier mot) en uppercase. */
@@ -73,27 +166,31 @@ function shortName(fullName: string): string {
   return (parts[parts.length - 1] || fullName).toUpperCase();
 }
 
-function PipMatchRowImpl({ match, liveState, expanded, onToggle, onBetSignal }: Props) {
+function PipMatchRowImpl({
+  match,
+  liveState,
+  expanded,
+  onToggle,
+  onBetSignal,
+  drMoyenA,
+  drMoyenB,
+}: Props) {
   // DR momentum — le hook maintient son propre buffer entre renders (refs).
-  const { dr, pointsTracked, settled } = useMomentumDR(liveState);
+  const { dr, drHistory, pointsTracked, settled } = useMomentumDR(liveState);
   const decision = getDrDecision(dr, pointsTracked, settled);
 
   // Signal feu tricolore au parent (pour notifications natives).
-  // useEffect pour éviter l'appel pendant le render (side-effect propre).
   useEffect(() => {
     if (liveState) onBetSignal?.(decision.level);
   }, [decision.level, liveState, onBetSignal]);
 
-  // Couleur du curseur DR : joueur qui domine (vert pour A, bleu pour B).
+  // Couleur du DR actuel (vert si A domine, bleu si B domine).
   const drColor = dr >= 0 ? "#22c55e" : "#3b82f6";
   const drPct = Math.round(dr * 100);
   const drLabel = `${drPct >= 0 ? "+" : ""}${drPct}`;
 
   const playerA = match.playerA;
   const playerB = match.playerB;
-
-  // Si pas encore live (liveState absent), on affiche quand même les noms +
-  // un placeholder "prématch" — l'utilisateur peut ainsi préparer le widget.
   const isLive = !!liveState;
 
   return (
@@ -101,70 +198,94 @@ function PipMatchRowImpl({ match, liveState, expanded, onToggle, onBetSignal }: 
       type="button"
       onClick={onToggle}
       className={cn(
-        "w-full text-left rounded-lg border transition-colors",
+        "relative w-full text-left rounded-lg border transition-colors overflow-hidden",
         "px-2.5 py-2",
         expanded
           ? "border-primary/60 bg-primary/5"
           : "border-border/50 bg-card hover:bg-muted/30 hover:border-border",
       )}
     >
-      {/* Joueur A */}
-      <div className="flex items-center gap-2 text-[11px]">
-        <span className="flex items-center gap-1 w-[88px] shrink-0">
-          {/* Indicateur serveur */}
-          {isLive && liveState!.server === "A" && (
-            <span className="size-1.5 rounded-full bg-emerald-400" title="Au service" />
-          )}
-          <span className="truncate font-semibold text-foreground">{shortName(playerA.name)}</span>
-        </span>
+      {/* Terrain de tennis en filigrane translucide (décor, ne gêne pas le clic) */}
+      <CourtBackground />
 
-        {/* Score sets + jeu en cours */}
-        {isLive ? (
-          <span className="flex items-center gap-1 font-mono tabular-nums shrink-0">
-            {liveState!.scoreA.sets.map((s, i) => (
-              <span key={i} className="text-muted-foreground/80">{s}</span>
-            ))}
-            <span className="ml-1 font-semibold text-foreground">{liveState!.scoreA.games}</span>
-            <span className="text-amber-400">{formatPoint(liveState!.scoreA.points)}</span>
+      {/* Contenu par-dessus le filigrane */}
+      <div className="relative z-10">
+        {/* Joueur A */}
+        <div className="flex items-center gap-2 text-[11px]">
+          <span className="flex items-center gap-1 w-[80px] shrink-0">
+            {isLive && liveState!.server === "A" && (
+              <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" title="Au service" />
+            )}
+            <span className="truncate font-semibold text-foreground">{shortName(playerA.name)}</span>
           </span>
-        ) : (
-          <span className="text-[10px] text-muted-foreground/60 italic shrink-0">prématch</span>
-        )}
 
-        {/* DR mini-barre */}
-        <span className="ml-auto flex items-center gap-1.5 shrink-0">
-          <DrMiniBar dr={dr} color={drColor} />
-          <span className="font-mono tabular-nums text-[10px] w-8 text-right" style={{ color: drColor }}>
+          {isLive ? (
+            <span className="flex items-center gap-1 font-mono tabular-nums shrink-0">
+              {liveState!.scoreA.sets.map((s, i) => (
+                <span key={i} className="text-muted-foreground/80">{s}</span>
+              ))}
+              <span className="ml-1 font-semibold text-foreground">{liveState!.scoreA.games}</span>
+              <span className="text-amber-400">{formatPoint(liveState!.scoreA.points)}</span>
+            </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/60 italic shrink-0">prématch</span>
+          )}
+
+          {/* DR moyen match de A */}
+          <span className="ml-auto shrink-0">
+            <DrMoyenBadge drMoyen={drMoyenA} />
+          </span>
+        </div>
+
+        {/* Joueur B */}
+        <div className="flex items-center gap-2 text-[11px] mt-0.5">
+          <span className="flex items-center gap-1 w-[80px] shrink-0">
+            {isLive && liveState!.server === "B" && (
+              <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" title="Au service" />
+            )}
+            <span className="truncate font-semibold text-foreground">{shortName(playerB.name)}</span>
+          </span>
+
+          {isLive ? (
+            <span className="flex items-center gap-1 font-mono tabular-nums shrink-0">
+              {liveState!.scoreB.sets.map((s, i) => (
+                <span key={i} className="text-muted-foreground/80">{s}</span>
+              ))}
+              <span className="ml-1 font-semibold text-foreground">{liveState!.scoreB.games}</span>
+              <span className="text-amber-400">{formatPoint(liveState!.scoreB.points)}</span>
+            </span>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/60 italic shrink-0">prématch</span>
+          )}
+
+          {/* DR moyen match de B */}
+          <span className="ml-auto shrink-0">
+            <DrMoyenBadge drMoyen={drMoyenB} />
+          </span>
+        </div>
+
+        {/* 3e ligne : mini-sparkline DR momentum + valeur + feu tricolore */}
+        <div className="flex items-center gap-2 mt-1 pt-1 border-t border-border/20">
+          <span className="text-[8px] text-muted-foreground/60 shrink-0">DR momentum</span>
+          <span className="flex items-center gap-1.5 shrink-0">
+            <DrSparkline drHistory={drHistory} currentDr={dr} />
+          </span>
+          <span
+            className="ml-auto font-mono tabular-nums text-[10px] font-semibold shrink-0"
+            style={{ color: drColor }}
+          >
             {isLive ? drLabel : "—"}
           </span>
-        </span>
-      </div>
-
-      {/* Joueur B */}
-      <div className="flex items-center gap-2 text-[11px] mt-0.5">
-        <span className="flex items-center gap-1 w-[88px] shrink-0">
-          {isLive && liveState!.server === "B" && (
-            <span className="size-1.5 rounded-full bg-emerald-400" title="Au service" />
-          )}
-          <span className="truncate font-semibold text-foreground">{shortName(playerB.name)}</span>
-        </span>
-
-        {isLive ? (
-          <span className="flex items-center gap-1 font-mono tabular-nums shrink-0">
-            {liveState!.scoreB.sets.map((s, i) => (
-              <span key={i} className="text-muted-foreground/80">{s}</span>
-            ))}
-            <span className="ml-1 font-semibold text-foreground">{liveState!.scoreB.games}</span>
-            <span className="text-amber-400">{formatPoint(liveState!.scoreB.points)}</span>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0",
+              decision.bgClass,
+              decision.colorClass,
+            )}
+          >
+            {isLive ? decision.icon : "—"}
           </span>
-        ) : (
-          <span className="text-[10px] text-muted-foreground/60 italic shrink-0">prématch</span>
-        )}
-
-        {/* Feu tricolore */}
-        <span className={cn("ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0", decision.bgClass, decision.colorClass)}>
-          {isLive ? decision.icon : "—"}
-        </span>
+        </div>
       </div>
     </button>
   );

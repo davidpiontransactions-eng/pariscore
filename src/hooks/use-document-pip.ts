@@ -57,8 +57,8 @@ declare global {
   }
 }
 
-const WIDGET_WIDTH = 420;
-const WIDGET_HEIGHT = 580;
+const WIDGET_WIDTH = 440;
+const WIDGET_HEIGHT = 620;
 
 export function useDocumentPip(): UseDocumentPipResult {
   const [pipSupported] = useState(

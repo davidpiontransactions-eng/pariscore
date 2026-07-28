@@ -124,7 +124,12 @@ export function MatchPipWidget() {
       .map((m) => `${m.match.playerA.name},${m.match.playerB.name}`)
       .join(",");
   }, [liveFavoriteMatches]);
-  const { data: playerStatsMap } = usePlayerStats(allNames, "Dur");
+  // FIX surface (2026-07-28) : avant hardcodée "Dur" → drMoyen5m faussé sur
+  // terre/gazon. On prend la surface du 1er match (les matchs d'un même widget
+  // sont quasi toujours sur la même surface — même tournoi). Si mixte, on
+  // pourrait faire un call par surface, mais overkill pour un MVP.
+  const widgetSurface = liveFavoriteMatches[0]?.match.stats.surface || "Dur";
+  const { data: playerStatsMap } = usePlayerStats(allNames, widgetSurface);
 
   // Notifications natives feu tricolore ✅. Le hook gère l'anti-spam
   // (transition !bet→bet + cooldown 2 min) en interne via une Map en ref.
@@ -232,6 +237,8 @@ export function MatchPipWidget() {
                     match.id,
                     `${shortName(match.playerA.name)} vs ${shortName(match.playerB.name)}`,
                   )}
+                  drMoyenA={statsA?.drMoyen5m ?? null}
+                  drMoyenB={statsB?.drMoyen5m ?? null}
                 />
                 {isExpanded && (
                   <PipBetPanel
