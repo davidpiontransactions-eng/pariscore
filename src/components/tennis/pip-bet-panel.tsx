@@ -150,6 +150,29 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
     serveStatsB,
   ]);
 
+  // Détection du set decisif (3e set en best-of-3 = setsWonA + setsWonB === 2).
+  // Au set decisif, vainqueur du set === vainqueur du match → les 2 probas
+  // DOIVENT être identiques. On force donc le bet ② à utiliser les cotes BSD
+  // (liveProbA/B, même source que le bet ①) au lieu du modèle Markov, sinon on
+  // affiche une contradiction visible (ex: 80% match vs 66% set, impossible).
+  // Sur les sets 1 et 2, le Markov reste pertinent (le match peut encore basculer).
+  const isDecisiveSet = !!liveState && liveState.scoreA.sets.length + liveState.scoreB.sets.length >= 2;
+
+  // Bet ② : source unique selon le contexte (décisif → marché, sinon → Markov).
+  const bet2 = useMemo(() => {
+    if (!liveState) return { probA: 50, probB: 50, source: "markov" as const };
+    if (isDecisiveSet) {
+      // Set decisif → synchronisé sur les cotes (cohérent avec le bet ①).
+      return { probA: liveState.liveProbA, probB: liveState.liveProbB, source: "market" as const };
+    }
+    if (!setAndGames) return { probA: 50, probB: 50, source: "markov" as const };
+    return {
+      probA: setAndGames.setPred.probAWinsSet,
+      probB: setAndGames.setPred.probBWinsSet,
+      source: "markov" as const,
+    };
+  }, [liveState, isDecisiveSet, setAndGames]);
+
   const currentSetNumber = liveState ? liveState.currentSet + 1 : 1;
 
   return (
@@ -183,28 +206,34 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
       {/* BET #2 — Vainqueur du set actuel */}
       <div className="mb-2.5">
         <div className="flex items-center justify-between text-[10px] mb-1">
-          <span className="text-muted-foreground">② Vainqueur du set (Set {currentSetNumber})</span>
-          <ValueBadge prob={setAndGames ? Math.max(setAndGames.setPred.probAWinsSet, setAndGames.setPred.probBWinsSet) : 0} show={!!setAndGames} />
+          <span className="text-muted-foreground">
+            ② Vainqueur du set (Set {currentSetNumber})
+            {/* Indicateur de source : 📊 marché (cotes BSD) au set decisif,
+                🧮 modèle (Markov) aux sets 1-2. Transparence sur la divergence. */}
+            {liveState && (
+              <span className="ml-1 text-[8px] text-muted-foreground/50" title={bet2.source === "market" ? "Synchronisé sur les cotes du marché (set decisif = vainqueur du match)" : "Modèle Markov (Barnett-Clarke + chaîne de Markov set)"}>
+                {bet2.source === "market" ? "📊 marché" : "🧮 modèle"}
+              </span>
+            )}
+          </span>
+          <ValueBadge prob={liveState ? Math.max(bet2.probA, bet2.probB) : 0} show={!!liveState} />
         </div>
-        {setAndGames ? (
+        {liveState ? (
           <>
             <div className="flex items-center gap-2">
               <span className="w-[60px] truncate text-[10px] font-semibold">{nameA}</span>
               <div className="flex-1">
-                <DualBar
-                  probA={setAndGames.setPred.probAWinsSet}
-                  probB={setAndGames.setPred.probBWinsSet}
-                />
+                <DualBar probA={bet2.probA} probB={bet2.probB} />
               </div>
               <span className="w-8 text-right font-mono tabular-nums text-[10px] text-emerald-300">
-                {setAndGames.setPred.probAWinsSet}%
+                {bet2.probA}%
               </span>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="w-[60px] truncate text-[10px] font-semibold">{nameB}</span>
               <div className="flex-1" />
               <span className="w-8 text-right font-mono tabular-nums text-[10px] text-blue-300">
-                {setAndGames.setPred.probBWinsSet}%
+                {bet2.probB}%
               </span>
             </div>
           </>
