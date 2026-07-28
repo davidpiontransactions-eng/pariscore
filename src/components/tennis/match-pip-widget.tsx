@@ -10,10 +10,11 @@
 // sur une ligne → déploiement du panneau 5 bets (PipBetPanel) en dessous.
 // Un seul match déployé à la fois (toggle).
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLiveStream } from "@/hooks/use-live-stream";
 import { useFavorites } from "@/hooks/use-favorites";
 import { usePlayerStats } from "@/hooks/use-player-stats";
+import { useBetNotify } from "@/hooks/use-bet-notify";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { ServeStats } from "@/lib/prediction/total-games";
 import { PipMatchRow } from "@/components/tennis/pip-match-row";
@@ -23,6 +24,13 @@ import { PipBetPanel } from "@/components/tennis/pip-bet-panel";
  *  Doit matcher `normForLookup` côté match-card (sinon lookup rate). */
 function normForLookup(name: string): string {
   return name.trim().toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+}
+
+/** Tronque un nom de joueur : garde le nom de famille (dernier mot) en uppercase.
+ *  Cohérent avec pip-match-row.tsx / pip-bet-panel.tsx. */
+function shortName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/);
+  return (parts[parts.length - 1] || fullName).toUpperCase();
 }
 
 /** Construit un TennisMatch synthétique minimal depuis une entrée live BSD.
@@ -118,6 +126,20 @@ export function MatchPipWidget() {
   }, [liveFavoriteMatches]);
   const { data: playerStatsMap } = usePlayerStats(allNames, "Dur");
 
+  // Notifications natives feu tricolore ✅. Le hook gère l'anti-spam
+  // (transition !bet→bet + cooldown 2 min) en interne via une Map en ref.
+  const betNotify = useBetNotify();
+
+  // Wrapper stable pour passer à PipMatchRow. On mémorise le label du match
+  // (nom A vs B) au moment de l'appel — le hook fait le reste.
+  const makeBetSignal = useCallback(
+    (matchId: string, label: string) =>
+      (level: Parameters<typeof betNotify.notifyBet>[2]) => {
+        betNotify.notifyBet(matchId, label, level);
+      },
+    [betNotify],
+  );
+
   const statusColor =
     connectionStatus === "connected"
       ? "bg-emerald-400"
@@ -142,6 +164,29 @@ export function MatchPipWidget() {
             · {liveFavoriteMatches.length} match{liveFavoriteMatches.length > 1 ? "s" : ""} · {statusLabel}
           </span>
         </div>
+        {/* Toggle notifs feu tricolore — opt-in explicite (pas de spam surprise) */}
+        {betNotify.supported && (
+          <button
+            type="button"
+            onClick={() => betNotify.toggle()}
+            title={
+              betNotify.permission === "denied"
+                ? "Permission notifications refusée — réactivez-la dans les paramètres du navigateur"
+                : betNotify.enabled
+                  ? "Notifications ACTIVÉES — alerte quand un match passe à ✅ PARIE"
+                  : "Activer les notifications (alerte quand un match passe à ✅ PARIE)"
+            }
+            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+              betNotify.enabled
+                ? "bg-emerald-500/20 text-emerald-300"
+                : betNotify.permission === "denied"
+                  ? "bg-rose-500/15 text-rose-400/70 cursor-not-allowed"
+                  : "bg-muted/40 text-muted-foreground hover:bg-muted/60"
+            }`}
+          >
+            {betNotify.permission === "denied" ? "🔔 bloqué" : betNotify.enabled ? "🔔 ON" : "🔔 off"}
+          </button>
+        )}
       </div>
 
       {/* Liste des matchs */}
@@ -183,6 +228,10 @@ export function MatchPipWidget() {
                   liveState={liveState}
                   expanded={isExpanded}
                   onToggle={() => setExpandedId(isExpanded ? null : match.id)}
+                  onBetSignal={makeBetSignal(
+                    match.id,
+                    `${shortName(match.playerA.name)} vs ${shortName(match.playerB.name)}`,
+                  )}
                 />
                 {isExpanded && (
                   <PipBetPanel

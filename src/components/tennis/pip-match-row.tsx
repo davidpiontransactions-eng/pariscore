@@ -18,11 +18,11 @@
 // Pas de next-intl (le PiP est un autre arbre React sans provider) → chaînes
 // FR en dur.
 
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
-import { getDrDecision } from "@/lib/dr-decision";
+import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -32,6 +32,9 @@ type Props = {
   expanded: boolean;
   /** Bascule l'expansion (1 seul match déployé à la fois). */
   onToggle: () => void;
+  /** Callback de signal feu tricolore (notifiera si transition vers "bet").
+   *  Le parent (MatchPipWidget) décide si les notifs sont activées. */
+  onBetSignal?: (level: DrDecisionLevel) => void;
 };
 
 /** Barre d'équilibre DR ultra-compacte (SVG inline, 60px de large).
@@ -70,10 +73,16 @@ function shortName(fullName: string): string {
   return (parts[parts.length - 1] || fullName).toUpperCase();
 }
 
-function PipMatchRowImpl({ match, liveState, expanded, onToggle }: Props) {
+function PipMatchRowImpl({ match, liveState, expanded, onToggle, onBetSignal }: Props) {
   // DR momentum — le hook maintient son propre buffer entre renders (refs).
   const { dr, pointsTracked, settled } = useMomentumDR(liveState);
   const decision = getDrDecision(dr, pointsTracked, settled);
+
+  // Signal feu tricolore au parent (pour notifications natives).
+  // useEffect pour éviter l'appel pendant le render (side-effect propre).
+  useEffect(() => {
+    if (liveState) onBetSignal?.(decision.level);
+  }, [decision.level, liveState, onBetSignal]);
 
   // Couleur du curseur DR : joueur qui domine (vert pour A, bleu pour B).
   const drColor = dr >= 0 ? "#22c55e" : "#3b82f6";
