@@ -7,6 +7,14 @@
 // sous licence. Alternative légale : Sportradar Tennis API v3 ou
 // api-tennis.com WebSocket.
 //
+// ── STATUT T2.3 (2026-07-29) : DOCUMENTÉ + BLINDÉ, NON PRODUCTIF ──────────────
+// Ce module est un scaffold. fetchPBP retourne null car l'endpoint SPA interne
+// de TNNS (path API + cookie/token) reste INCONNU. Aucun reverse-engineering
+// n'a été effectué (décision utilisateur : documenter+blinder, pas de RE).
+// Le momentum live tennis est fourni par AISCORE (primaire), TNNS reste un
+// point d'extension inactif. Blindage : ENABLED gate, timeout 8s, cache 15s,
+// retour null propre → le pipeline ne crash jamais.
+//
 // Architecture : ce module est un SCAFFOLD prêt à brancher. TNNS est une SPA
 // (Nuxt/SPA) : le HTML servi ne contient généralement PAS de JSON inline
 // exploitable (window.__NUXT__, __NEXT_DATA__). Les vraies données transitent
@@ -15,6 +23,9 @@
 // les fonctions ci-dessous essaient des chemins raisonnables et retournent
 // gracieusement []/null quand rien n'est extractible. Le pipeline retombe
 // alors sur aiscore. Des TODO marquent où brancher le vrai endpoint.
+//
+// Logging conditionnel : TNNS_DEBUG=true active les logs détaillés (utile pour
+// diagnostiquer un futur branchement endpoint). Silencieux sinon.
 //
 // Zero-dépendance : uniquement `https` natif. Parsing manuel regex/string,
 // comme betexplorerService.js. Pas d'axios/cheerio/playwright.
@@ -26,6 +37,8 @@ const API_KEY    = () => process.env.TNNS_API_KEY || '';
 const BASE_URL   = () => process.env.TNNS_BASE_URL || 'https://tnnslive.com';
 const ENABLED    = () => process.env.TNNS_LIVE_ENABLED === 'true' && !!API_KEY();
 const TIMEOUT_MS = 8000;
+const TNNS_DEBUG = String(process.env.TNNS_DEBUG || 'false').toLowerCase() === 'true';
+const _dbg = (...a) => { if (TNNS_DEBUG) console.log('[TNNS]', ...a); };
 
 // ── Cache (matchId -> { data, ts }) ──────────────────────────────────────────
 const _cache = new Map();

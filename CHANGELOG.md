@@ -1,4 +1,152 @@
 # PariScore — Journal des modifications
+## [v12.92] — 2026-07-29 — P4 Tennis : évaluation make/buy + scaffold intégration (PROJET TERMINÉ)
+
+### Ajouté
+- **T4.1 + T4.2 + T4.3 — Évaluation Tennis-API.com & ShotQuality + décision make/buy** (`.context/P4-TENNIS-MAKE-BUY.md`) :
+  - **Tennis-API.com** : pricing 29/39/99 $/mois. Fournit PBP brut mais **PAS** momentum/WP/pressure (à calculer côté client). Feed PBP redondant avec aiscore (gratuit). Valeur résiduelle = RPW réel + odds(ROI) + coverage ITF. Risque : doc superficielle, aucun retour indépendant.
+  - **ShotQuality** : offre tennis riche (WP live + momentum + serve pressure + break points + rally length) mais **enterprise, devis requis**. Reporté.
+  - **DÉCISION : GO MAKE** — baseline maison solide (momentum Baldwin-McCurdy 2025 + WP Klaassen-Magnus Brier ~0.21 + aiscore PBP gratuit). BUY optionnel Tennis-API.com 39 $/mois uniquement si calibration RPW/ROI bloquante, après trial.
+- **Scaffold `services/tennisApiService.js`** — prêt à brancher Tennis-API.com (clone du pattern TNNS). Comble 3 gaps : RPW réel (remplace hardcoded 0.36), PBP fallback (3e source), odds ROI. Désactivé par défaut (`TENNIS_API_ENABLED`), jamais actif sans clé. TODO(trial) : endpoints exacts à confirmer.
+
+### Décision d'ingénierie (transparence)
+- **MAKE prioritaire** car le momentum tennis maison repose sur une **méthode académique récente** (Baldwin-McCurdy/Habib/Joseph 2025) et la WP Klaassen-Magnus est **déjà calibrée** (Brier ~0.21 documenté). Acheter Tennis-API.com n'apporterait que le feed PBP — déjà obtenu gratuitement via aiscore.
+- **Actions MAKE 0 € identifiées** (rapport §5.4) : recalibrer empiriquement la WP live, extraire rallyCount/shot_type d'aiscore, ajouter RPS au backtest tennis, dérivation RPW heuristique améliorée.
+
+### Testé
+- `node --check services/tennisApiService.js` ✓
+- Rapport basé sur documentation publique + baseline codebase réelle (aucun accès trial payant consommé)
+
+### Limite
+- Schéma JSON exact Tennis-API.com = à vérifier en trial (le PBP publié est illustratif/marketing). Le scaffold projette défensivement plusieurs variantes de nommage.
+
+## [v12.91] — 2026-07-29 — P2+P3 Live : fallbacks (Flashscore/ESPN/TNNS) + H2H + sentiment
+
+### Ajouté
+- **T2.1 — Flashscore Plan E : TTL 5min + cron in-process + factorisation** (`server.js`, `tools/import-flashscore-live-stats.js`) :
+  - Constante partagée `FLASHSCORE_LIVE_STATS_TTL_MS` (env var, défaut 5 min, miroir ETL/serveur) — élimine le couplage caché (TTL hardcoded 30 min avant).
+  - Cron in-process optionnel `_runFlashscoreETL` (setInterval 5min) qui déclenche l'ETL en subprocess **si** datasets Apify présents à la racine (no-op en dev). Combler le vide : l'ETL n'était déclenché par rien dans server.js.
+  - Test de parité `tests/lib/normkey-parity.test.ts` (14 tests) : valide la cohérence `normKey` (ETL) vs `_normKeyForLiveStream` (serveur) — protège contre une divergence silencieuse cassant le lookup.
+- **T2.2 — ESPN Win Probability soccer** (`server.js`) :
+  - `fetchESPNMatchWinProbability(match)` : résout l'eventId ESPN via scoreboard ligue + summary endpoint → `header.competitions[0].probability`. Cache 60s.
+  - **Champ séparé `m.espn_win_prob`** (n'écrase jamais `m.live_win_prob` BSD primaire) — seulement si BSD absent.
+  - Flag `ESPN_WP_ENABLED` (défaut true), fail-soft (hidden API instable), exposition route `/api/v1/live/bsd`.
+- **T2.3 — TNNS Live : documenté + blindé** (`services/tnnsLiveScraper.js`) :
+  - En-tête clarifie le statut (scaffold, endpoint SPA inconnu, licence Sportradar/TDI, activation = responsabilité utilisateur).
+  - Flag `TNNS_DEBUG` (logging conditionnel). **Aucun reverse-engineering** (décision utilisateur). Momentum live tennis reste fourni par aiscore.
+- **T3.1 — Route H2H football** (`server.js`) : `GET /api/v1/match/:id/h2h` réutilise `computeH2H` (history + archive_matches, top 5 confrontations) + cache `api_cache` 6h. Comble le gap V1 documenté (`MAPPING_BSD_V1_V2.md`).
+- **T3.2 — Sentiment dérivé maison** (`src/lib/prediction/live-features.ts`) : `sentimentHome`/`sentimentAway` [-1,+1] (blend momentum 40% + score 30% + xG 20% + possession 10%, tanh borné), **ajoutés en FIN de `FEATURE_ORDER`** (contrat stable). Zéro source externe (placeholder pour future source NLP). 6 tests verts.
+
+### Décisions d'ingénierie (transparence)
+- **ESPN WP = champ séparé** : `m.espn_win_prob` ne remplace jamais `m.live_win_prob`. Préserve la garde fallback Flashscore (`!live_score && !live_minute`) et évite d'écraser la WP Poisson BSD.
+- **TNNS = doc seule** : le scraper retourne `null` (endpoint réel inconnu). Pas de reverse-engineering (risque juridique licence Sportradar/TDI).
+- **Sentiment = dérivé maison** : aucune source sentiment légitime n'existe dans le codebase. Placeholder déterministe en attendant une vraie source NLP. Zéro risque juridique.
+- **Cron Flashscore in-process** : no-op si pas de datasets Apify (env dev). En production VPS, déclenche l'ETL toutes les 5 min.
+
+### Modifié
+- **`server.js`** : `FLASHSCORE_LIVE_STATS_TTL_MS` (~L4876), cron Flashscore (~L51257), `fetchESPNMatchWinProbability` + `_espnResolveEventId` (~L14632), hook `pollLiveScores` `espn_win_prob` (~L49745), exposition route (~L34960), route H2H (~L34910).
+- **`tools/import-flashscore-live-stats.js`** : TTL via env var (L24).
+- **`services/tnnsLiveScraper.js`** : en-tête doc statut + `TNNS_DEBUG`.
+- **`src/lib/prediction/live-features.ts`** : `sentimentHome`/`sentimentAway` + fin `FEATURE_ORDER`.
+
+### Testé
+- `node --check` : server.js + ETL + TNNS ✓
+- `bun test tests/lib/` : **37/37 pass** (23 live-features + 14 normkey-parity) — 73 expect calls
+- `tsc --noEmit` : pas d'erreur sur `live-features.ts`
+- TTL Flashscore partagé (env var miroir), parité normalisation validée
+
+### Limites
+- ESPN hidden API instable (403/changements sans avis) → cache + fail-soft + flag, jamais bloquant.
+- Couverture ESPN limitée (~50 ligues, pas Hongrie/Pologne) → WP ESPN absente = fallback silencieux.
+- Sentiment = placeholder (à remplacer par vraie source NLP si besoin métier).
+
+## [v12.90] — 2026-07-29 — P1 Live : stabilisation WebSocket BSD (watchdog + TTL adaptatif + rebalance)
+
+### Ajouté
+- **T1.2a — Watchdog d'inactivité WS** (`server.js`) : détection socket morte basée sur
+  `_bsdWsLastFrameTs` (dernier frame reçu), seuil 90s (`BSD_WS_INACTIVITY_MS`). Plus réactif que
+  l'ancien timeout TCP 120s : si BSD ne pousse plus rien (socket semi-open), reconnect agressif <90s
+  au lieu de 2 min de "trou noir". Initialisé au handshake (`_bsdWsConnectedAt` pour uptime).
+- **T1.2b — TTL enrich shotmap adaptatif** (`_bsdEnrichShotTTL`) : momentum/xG rafraîchis à **25s**
+  quand le WS est actif (vs 60s avant), 60s en fallback (WS down). Élimine le momentum "saccadé"
+  diagnostiqué : le goulot était le REST enrich (60s), pas le WS lui-même.
+- **T1.2c — Rebalance prioritaire des subscriptions** (`_bsdWsRebalanceSubs`) : au-delà du cap BSD
+  de 10 matchs/socket, swap intelligent (unsub le moins prioritaire → sub le pending le plus à fort
+  edge), throttle 1/min. Approche pragmatique préférée à un pool multi-sockets risqué dans le
+  monolithe 52k lignes.
+- **T1.3 — Observabilité WS enrichie** : routes `/api/v1/live/ws-status` + `/api/v1/bsd/ws-status`
+  exposent désormais `last_frame_age_s`, `frame_fresh`, `uptime_s`, `enrich_shot_ttl_ms`,
+  `enrich_shot_ttl_live`, `rebalance_last_age_s`.
+
+### Diagnostic T1.1 (conclusions clés)
+- Le WS BSD **n'est pas** le goulot de latence : les frames `livedata` (ball, situation, pressure)
+  sont temps réel ; les frames `event` (38 champs) viennent à ~30s **côté provider** (non corrigeable).
+- La **vraie latence momentum/xG** venait du REST enrich (TTL shotmap 60s) → corrigé via T1.2b.
+- Pas de watchdog frame avant T1.2a → détection socket morte jusqu'à 2 min.
+
+### Modifié
+- **`server.js`** : vars WS (`_bsdWsLastFrameTs`, `_bsdWsConnectedAt`, `BSD_WS_INACTIVITY_MS` ~L49959),
+  `_bsdEnrichShotTTL` + `_BSD_ENRICH_SHOT_TTL_LIVE` (~L50281), watchdog dans `_bsdWsHeartbeat` (~L50649),
+  `_bsdWsRebalanceSubs` (~L50693), `_bsdWsHandleJSON` trace frame (L50428), handshake init vars (~L50712),
+  enrich boucle `pollBSDLiveEnrichment` TTL adaptatif (~L50311), 2 routes ws-status (~L34809, ~L45056).
+
+### Testé
+- `node --check server.js` ✓
+- Assertions unitaires T1.2 : TTL adaptatif (25s live / 60s fallback / 60s stale) + watchdog (frame frais OK / stale reconnect) ✓
+- Vars T1 déclarées avant usage (TDZ safe), fonctions `function` hoistées ✓
+
+### Limites
+- Pool multi-sockets complet (vraie scalabilité >10 matchs) **différé** — approche rebalance privilégiée
+  (swap prioritaire vs reconstruction risquée du socket manager). Suffisant tant que <20 matchs live simultanés.
+- Latence intrinsèque des frames `event` (~30s) = côté provider BSD, non corrigeable côté PariScore.
+
+## [v12.89] — 2026-07-29 — P0 Live : dérivation Momentum/WP + persistance feature-store
+
+### Ajouté
+- **T0.1 — Pipeline features BSD** (`src/lib/prediction/live-features.ts`) : normalise les 38 champs
+  canoniques BSD en vecteur de features ML (scores, xG, possession, tirs, corners, big chances,
+  **cartons rouges/jaunes** [NOUVEAU non exploité], momentum tail6/volatility, défense/gardien).
+  `toFeatureVector()` + `FEATURE_ORDER` stable pour entraînement futur. 17 tests unitaires verts.
+- **T0.2 — Persistance `live_match_stats`** (server.js) : historisation minute-par-minute des
+  snapshots live BSD (blob JSON des 38 champs + colonnes xg/momentum extraites) en SQLite via
+  better-sqlite3. Feature-store pour calibrer/entraîner la WP live.
+  - DDL dans `initSQLite()` + 3 index (match+minute, match+ts, bsd_event_id)
+  - Helpers `recordLiveMatchStat` / `getLiveMatchStats` / `purgeOldLiveStats` (fail-soft `_apiCacheDbWarn`)
+  - Hook dans `pollLiveScores` (throttle 1 snapshot/match/minute) + cron purge >30j (toutes 2h)
+- **T0.4 — Momentum Index dérivé** (`computeLiveMomentumIndex`) : index normalisé [-1,+1], blend
+  multi-signaux (momentum array BSD signé 50%, possession 20%, xG diff 20%, dangerous attacks 10%),
+  lissage EMA fenêtre 10 min. Stocké `m.live_momentum_index`, exposé via `/api/v1/live/bsd`.
+- **T0.3 — Win Probability live calibrée** (`computeLiveWinProbability`) : matrice Poisson live 7×7
+  via `calcLiveAdjustedLambdas` (amélioré : cartons rouges -12%/rouge, **FIX momentum signé** l'ancien
+  filtre `m.team==='home'` était cassé, dangerous attacks) + `LIVE_CALIBRATION_BINS` shrinkage vers 50%
+  (Poisson live sur-estime la confiance, surtout début match). Sortie `{home,draw,away,confidence}`.
+  Stocké `m.live_win_prob`, exposé via `/api/v1/live/bsd`.
+- **T0.5 — Backtest Brier/RPS** (`tools/backtest-wp-live-brier.js`) : walk-forward mi-temps→final
+  sur `match_stats_history`, métriques Brier 3-classes (cible ≤0.18), RPS (cible ≤0.20), LogLoss,
+  reliability diagram 10 bins. Agnostique runtime (bun:sqlite / better-sqlite3).
+  Rapport : `.context/wp-live-backtest.md`.
+
+### Modifié
+- **`server.js`** : `initSQLite()` (DDL ~L6698), helpers (~L7269), `calcLiveAdjustedLambdas` (~L9366),
+  `LIVE_CALIBRATION_BINS`+`computeLiveWinProbability` (~L8994), `computeLiveMomentumIndex` (~L49854),
+  hook `pollLiveScores` (~L49630), exposition route `/api/v1/live/bsd` (~L34853), cron purge (~L50957).
+- **`calcLiveAdjustedLambdas`** : correction du momentum (signé BSD, pas `team` field inexistant) +
+  ajout cartons rouges + dangerous attacks. Compatibilité ascendante conservée (mêmes sorties si
+  features nouvelles absentes).
+
+### Testé
+- `node --check server.js` + `tools/backtest-wp-live-brier.js` ✓
+- `bun test tests/lib/live-features.test.ts` : 17/17 pass (44 expect calls)
+- `tsc --noEmit` : pas d'erreur sur nouveaux fichiers TS
+- DDL `live_match_stats` + INSERT/SELECT validés (in-memory)
+- Moteur Poisson backtest validé sur fixtures (somme PMF=1, lambdas corrects, calibration plus
+  prudente que le brut, Brier/RPS ordonnés)
+
+### Périmètre & limites
+- Focus football BSD WS (tennis hors scope T0 — phase P4 ultérieure)
+- Backtest n'a pas pu tourner sur vraies données (`match_stats_history` vide localement) : le moteur
+  est validé sur fixtures, la calibration fine viendra après accumulation de `live_match_stats` (T0.2)
+- Aucune nouvelle dépendance (pur JS/TS + better-sqlite3 existant)
+
 ## [v12.88] — 2026-07-13 — Enrichissement live logos équipes + championnats
 
 ### Ajouté

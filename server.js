@@ -4868,11 +4868,14 @@ function getSofascoreVenueReferee(match) {
 }
 
 // ─── bd qm6a Plan E — Flashscore live stats fallback (Apify dataset ETL) ─────
-// Lazy lookup api_cache key 'flashscore_live_stats_<normHome>_<normAway>'. TTL 30min.
+// Lazy lookup api_cache key 'flashscore_live_stats_<normHome>_<normAway>'.
+// T2.1a — TTL partagé (constante miroir de tools/import-flashscore-live-stats.js).
+// Les deux lisent la même env var FLASHSCORE_LIVE_STATS_TTL_MS (défaut 5 min).
 // Fallback live data quand BSD+ESPN+API-Football tous HS pour un match donné.
 const flashscoreLiveStatsMap = new Map();
 let flashscoreLiveStatsLoadedAt = 0;
 const FLASHSCORE_LIVE_STATS_RELOAD_MS = 60 * 1000;
+const FLASHSCORE_LIVE_STATS_TTL_MS = parseInt(process.env.FLASHSCORE_LIVE_STATS_TTL_MS) || (5 * 60 * 1000);
 
 function loadFlashscoreLiveStatsCache(force = false) {
   const now = Date.now();
@@ -6696,6 +6699,31 @@ function initSQLite() {
   )`);
   sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_match_timeline_match ON match_timeline_snapshots(match_id)`);
 
+  // ── T0.2 (PariScore Live) — live_match_stats : historisation minute-par-minute ──
+  // Snapshot JSON des 38 champs BSD canoniques (home/away) + colonnes ML extraites.
+  // Sert de feature-store pour entraîner/calibrer la Win Probability live (T0.3/T0.5).
+  // NB : match_timeline_snapshots (ci-dessus, schéma fixe) reste vide — cette table
+  // blob JSON est plus résiliente aux évolutions du schéma BSD (évite 76 colonnes figées).
+  // Auteur : DS-ML / BE-INT · Date : 2026-07-29
+  sqldb.exec(`CREATE TABLE IF NOT EXISTS live_match_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    match_id TEXT NOT NULL,
+    bsd_event_id TEXT,
+    minute INTEGER,
+    period TEXT,
+    score_home INTEGER,
+    score_away INTEGER,
+    xg_home REAL,
+    xg_away REAL,
+    momentum REAL,
+    intensity INTEGER,
+    stats_json TEXT NOT NULL,
+    ts INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+  )`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_lms_match_minute ON live_match_stats(match_id, minute)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_lms_match_ts     ON live_match_stats(match_id, ts)`);
+  sqldb.exec(`CREATE INDEX IF NOT EXISTS idx_lms_bsd_event    ON live_match_stats(bsd_event_id)`);
+
   // ── bd pbf BD-DATA-011 — CLV tracker (Closing Line Value) ──
   // closing_odds = snapshot des cotes brutes à T-5min..T-0 (kickoff). Source vérité CLV.
   // CLV = (taken_odds / closing_odds - 1) × 100  → métrique gold-standard skill parieur.
@@ -7241,6 +7269,105 @@ function apiCacheClear(source) {
     sqldb.prepare('DELETE FROM api_cache').run();
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  T0.2 — live_match_stats : persistance des snapshots live BSD (feature-store ML)
+//  Prepared statements au module-scope (pattern codebase), fail-soft via _apiCacheDbWarn.
+//  Auteur : BE-INT / DS-ML · 2026-07-29
+// ═══════════════════════════════════════════════════════════════════════════════
+const _liveStatsInsertStmt = () => {
+  try {
+    return sqldb.prepare(
+      `INSERT INTO live_match_stats
+       (match_id, bsd_event_id, minute, period, score_home, score_away, xg_home, xg_away, momentum, intensity, stats_json)
+       VALUES (@match_id, @bsd_event_id, @minute, @period, @score_home, @score_away, @xg_home, @xg_away, @momentum, @intensity, @stats_json)`
+    );
+  } catch (e) { _apiCacheDbWarn('liveStatsPrep', e); return null; }
+};
+let _liveStatsStmtCache = null;
+
+// Construit un snapshot normalisé des 38 champs BSD canoniques d'un match live.
+// Renvoie null si le match n'est pas live (pas de score/minute).
+function buildLiveStatSnapshot(m) {
+  if (!m || !m.id) return null;
+  if (!m.live_score && !m.live_minute) return null;
+  let scoreHome = null, scoreAway = null;
+  if (typeof m.live_score === 'string' && m.live_score.includes('-')) {
+    const parts = m.live_score.split('-').map(Number);
+    scoreHome = Number.isFinite(parts[0]) ? parts[0] : null;
+    scoreAway = Number.isFinite(parts[1]) ? parts[1] : null;
+  } else if (m.live_score && typeof m.live_score === 'object') {
+    scoreHome = m.live_score.home ?? null;
+    scoreAway = m.live_score.away ?? null;
+  }
+  // Snapshot JSON : tous les champs live_* canoniques présents sur le match.
+  const stats = {};
+  const LIVE_FIELDS = [
+    'live_possession', 'live_shots', 'live_shots_on_target', 'live_shots_off_target',
+    'live_shots_inside_box', 'live_shots_outside_box', 'live_shots_blocked', 'live_woodwork',
+    'live_corners', 'live_fouls', 'live_offsides', 'live_cards', 'live_passes', 'live_pass_accuracy',
+    'live_big_chances', 'live_big_chances_missed', 'live_big_chances_scored', 'live_touches_opp_box',
+    'live_final_third_entries', 'live_final_third_pct', 'live_saves', 'live_goals_prevented',
+    'live_interceptions', 'live_recoveries', 'live_tackles', 'live_aerial_duels', 'live_ground_duels',
+    'live_dribbles', 'live_dispossessed', 'live_crosses', 'live_long_balls', 'live_clearances',
+    'live_throw_ins', 'live_goal_kicks', 'live_free_kicks', 'live_momentum_pct', 'live_dangerous_attacks',
+    'live_momentum_index', 'live_win_prob',
+  ];
+  for (const f of LIVE_FIELDS) {
+    if (m[f] != null) stats[f] = m[f];
+  }
+  return {
+    match_id: String(m.id),
+    bsd_event_id: m._bsd_event_id != null ? String(m._bsd_event_id) : null,
+    minute: m.live_minute ?? null,
+    period: m.live_period || m.live_period || null,
+    score_home: scoreHome,
+    score_away: scoreAway,
+    xg_home: m.live_xg?.home ?? null,
+    xg_away: m.live_xg?.away ?? null,
+    momentum: m.live_momentum_index ?? null,
+    intensity: m.live_intensity ?? null,
+    stats_json: JSON.stringify(stats),
+  };
+}
+
+// Écrit un snapshot (fail-soft). Ne lève jamais.
+function recordLiveMatchStat(m) {
+  if (!sqldb) return;
+  const snap = buildLiveStatSnapshot(m);
+  if (!snap) return;
+  try {
+    if (!_liveStatsStmtCache) _liveStatsStmtCache = _liveStatsInsertStmt();
+    if (!_liveStatsStmtCache) return;
+    _liveStatsStmtCache.run(snap);
+  } catch (e) { _apiCacheDbWarn('liveStatsInsert', e); }
+}
+
+// Lecture de l'historique d'un match (replay ML / backtest).
+function getLiveMatchStats(matchId) {
+  if (!sqldb) return [];
+  try {
+    const rows = sqldb.prepare(
+      'SELECT minute, period, score_home, score_away, xg_home, xg_away, momentum, intensity, stats_json, ts FROM live_match_stats WHERE match_id = ? ORDER BY minute ASC, ts ASC'
+    ).all(String(matchId));
+    return (rows || []).map(r => {
+      let s = {};
+      try { s = JSON.parse(r.stats_json || '{}'); } catch (_) {}
+      return { ...r, stats: s };
+    });
+  } catch (e) { _apiCacheDbWarn('liveStatsGet', e); return []; }
+}
+
+// Purge des snapshots anciens (rétention). olderThanMs en millisecondes.
+function purgeOldLiveStats(olderThanMs = 30 * 24 * 60 * 60 * 1000) {
+  if (!sqldb) return 0;
+  try {
+    const cutoff = Math.floor((Date.now() - olderThanMs) / 1000);
+    const info = sqldb.prepare('DELETE FROM live_match_stats WHERE ts < ?').run(cutoff);
+    return info.changes || 0;
+  } catch (e) { _apiCacheDbWarn('liveStatsPurge', e); return 0; }
+}
+
 
 // ─── bd 3vn — TTL cache homogène (Phase 1) ──────────────────────────────────
 // Source unique TTL via cache_profiles.json (root projet, sibling de leagues_config.json).
@@ -8855,6 +8982,108 @@ function calibrateProbs(probs) {
   return calibrated;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  T0.3 — Win Probability LIVE football (calibrée, zéro-dépendance)
+//  Construit au-dessus de generateLiveScenarios (matrice Poisson live ajustée)
+//  + calibration spécifique au live. Le Poisson live sur-estime la confiance en
+//  début de match (peu d'events) → bins live plus conservateurs que le pré-match.
+//  Source : .context/BSD-LIVE-VS-SCRAPE.md + papier arxiv 2410.21484 (calibration > accuracy).
+//  Auteur : DS-ML · 2026-07-29
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Calibration BINS live (reliability diagram) — dérivée de CALIBRATION_BINS
+// mais plus conservatrice : shrinkage vers 50% (incertitude live > pré-match),
+// particulièrement marqué aux extrêmes (70-100%) où Poisson live surestime.
+const LIVE_CALIBRATION_BINS = [
+  { min: 0, max: 10, factor: 0.85 },   // shrink modéré
+  { min: 10, max: 20, factor: 0.88 },
+  { min: 20, max: 30, factor: 0.90 },
+  { min: 30, max: 40, factor: 0.93 },
+  { min: 40, max: 60, factor: 0.97 },  // zone centrale quasi-identité
+  { min: 60, max: 70, factor: 0.95 },
+  { min: 70, max: 80, factor: 0.91 },  // under marqué (Poisson live sur-estime)
+  { min: 80, max: 90, factor: 0.87 },
+  { min: 90, max: 100, factor: 0.83 }, // under fort — queue de Poisson + peu d'events
+];
+
+// Applique le shrinkage live à une proba 0-100. VERS l'intérieur (vers 50%).
+function _liveCalibrate(rawPct) {
+  if (rawPct == null || !Number.isFinite(rawPct)) return rawPct;
+  for (const bin of LIVE_CALIBRATION_BINS) {
+    if (rawPct >= bin.min && rawPct < bin.max) {
+      // shrinkage : rapproche de 50% (50 + (rawPct-50)*factor)
+      return Math.round((50 + (rawPct - 50) * bin.factor) * 10) / 10;
+    }
+  }
+  return Math.round(rawPct * 10) / 10;
+}
+
+// Win Probability live 1X2 calibrée. Ne lance jamais, renvoie null si impossible.
+function computeLiveWinProbability(match) {
+  if (!match || !match.live_score || !match.live_minute) return null;
+  const minute = parseInt(match.live_minute) || 0;
+  if (minute <= 0) return null;
+
+  // Voie 1 : génère la matrice Poisson live ajustée et somme les 1X2 directement.
+  // Indépendant du format des scénarios UI (plus robuste).
+  let homeWinRaw = null, drawRaw = null, awayWinRaw = null;
+  try {
+    const lambdas = calcLiveAdjustedLambdas(match);
+    if (!lambdas) return null;
+    let scoreH = 0, scoreA = 0;
+    if (typeof match.live_score === 'string' && match.live_score.includes('-')) {
+      const parts = match.live_score.split('-').map(Number);
+      scoreH = Number.isFinite(parts[0]) ? parts[0] : 0;
+      scoreA = Number.isFinite(parts[1]) ? parts[1] : 0;
+    } else if (match.live_score && typeof match.live_score === 'object') {
+      scoreH = match.live_score.home ?? 0;
+      scoreA = match.live_score.away ?? 0;
+    }
+    const MAX = 7;
+    let hWin = 0, draw = 0, aWin = 0;
+    for (let h = 0; h < MAX; h++) {
+      for (let a = 0; a < MAX; a++) {
+        const p = poissonPMF(lambdas.home, h) * poissonPMF(lambdas.away, a);
+        const finalH = scoreH + h, finalA = scoreA + a;
+        if (finalH > finalA) hWin += p;
+        else if (finalH === finalA) draw += p;
+        else aWin += p;
+      }
+    }
+    homeWinRaw = Math.round(hWin * 100);
+    drawRaw = Math.round(draw * 100);
+    awayWinRaw = Math.round(aWin * 100);
+  } catch (_) { return null; }
+
+  if (homeWinRaw == null || drawRaw == null || awayWinRaw == null) return null;
+
+  // Calibration live (shrinkage) puis renormalisation du 1X2.
+  let home = _liveCalibrate(homeWinRaw);
+  let draw = _liveCalibrate(drawRaw);
+  let away = _liveCalibrate(awayWinRaw);
+  const sum = home + draw + away;
+  if (sum > 0) {
+    home = Math.round(home / sum * 1000) / 10;
+    draw = Math.round(draw / sum * 1000) / 10;
+    away = Math.round(away / sum * 1000) / 10;
+  }
+
+  // Confidence : croît avec la minute (plus de données live) + écart de proba.
+  const dataQuality = minute >= 60 ? 0.95 : (minute >= 30 ? 0.80 : 0.60);
+  const maxProba = Math.max(home, away);
+  const confidence = Math.round(Math.min(99, maxProba * dataQuality));
+
+  return {
+    home,
+    draw,
+    away,
+    calibrated: true,
+    minute,
+    confidence,
+    method: 'poisson_live_calibrated',
+  };
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  P1 QUANT — BOOTSTRAP UQD (Uncertainty Quantification & Decision)
 //  Auteur : Hermes · Date : 2026-05-06
@@ -9155,10 +9384,13 @@ function calcLiveAdjustedLambdas(match) {
   const preWeight = 1 - liveWeight;
   let adjLambdaH = preLambdaH * preWeight + liveRateH * liveWeight;
   let adjLambdaA = preLambdaA * preWeight + liveRateA * liveWeight;
+  // T0.3 — Momentum BSD signé [-100,+100] (+ = home domine). FIX : l'ancien code
+  // filtrait sur `m.team === 'home'` (champ inexistant côté BSD) → biais toujours ~0.
   if (match.live_momentum && Array.isArray(match.live_momentum) && match.live_momentum.length > 3) {
     const recent = match.live_momentum.slice(-6);
-    const hMomentum = recent.filter(m => m.team === 'home').length / recent.length;
-    const momentumBias = (hMomentum - 0.5) * 0.3;
+    const vs = recent.map(p => (p && typeof p.v === 'number') ? p.v : 0);
+    const meanV = vs.reduce((a, b) => a + b, 0) / vs.length; // [-100,+100]
+    const momentumBias = (meanV / 100) * 0.3; // ±30% max
     adjLambdaH *= (1 + momentumBias);
     adjLambdaA *= (1 - momentumBias);
   }
@@ -9171,6 +9403,25 @@ function calcLiveAdjustedLambdas(match) {
       const possBias = (possRatio - 0.5) * 0.15;
       adjLambdaH *= (1 + possBias);
       adjLambdaA *= (1 - possBias);
+    }
+  }
+  // T0.3 — Carton rouge : désavantage numérique (NOUVEAU, non exploité avant).
+  // -12% par carton rouge sur le lambda de l'équipe sanctionnée (capé -30%).
+  const cardsH = match.live_cards?.home || {};
+  const cardsA = match.live_cards?.away || {};
+  const redH = parseInt(cardsH.red || 0) || 0;
+  const redA = parseInt(cardsA.red || 0) || 0;
+  if (redH > 0) adjLambdaH *= Math.max(0.70, 1 - redH * 0.12);
+  if (redA > 0) adjLambdaA *= Math.max(0.70, 1 - redA * 0.12);
+  // T0.3 — Dangerous attacks differential : pression offensive (biais léger).
+  const dang = match.live_dangerous_attacks;
+  if (dang && dang.home != null && dang.away != null) {
+    const total = (dang.home || 0) + (dang.away || 0);
+    if (total > 0) {
+      const ratio = dang.home / total;
+      const dangBias = (ratio - 0.5) * 0.08; // ±8% max
+      adjLambdaH *= (1 + dangBias);
+      adjLambdaA *= (1 - dangBias);
     }
   }
   adjLambdaH = Math.max(0.1, adjLambdaH * timeFactor);
@@ -14376,6 +14627,97 @@ async function fetchESPNLeagueScorers(configLeagueId, season) {
     console.warn(`  [TopScorers ESPN] ${slug} erreur:`, e.message);
     return [];
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  T2.2 — ESPN Win Probability soccer (hidden API, best-effort sous flag)
+//  Résout l'eventId ESPN via le scoreboard ligue (match par nom d'équipe), puis
+//  fetch le summary → header.competitions[0].probability. Cache 60s (live).
+//  NE remplace JAMAIS m.live_win_prob (BSD primaire) — champ séparé m.espn_win_prob.
+//  ESPN hidden API = non officielle, instable (403/changements sans avis) → fail-soft.
+//  Auteur : BE-INT · 2026-07-29
+// ═══════════════════════════════════════════════════════════════════════════════
+const ESPN_WP_ENABLED = String(process.env.ESPN_WP_ENABLED || 'true').toLowerCase() !== 'false';
+const ESPN_WP_CACHE_TTL = 60 * 1000; // 60s (live)
+
+// Résout l'eventId ESPN d'un match via le scoreboard ligue (date du jour).
+// Retourne { eventId, homeEspnId, awayEspnId } ou null si non trouvé.
+async function _espnResolveEventId(configLeagueId, homeName, awayName, matchDate) {
+  const slug = ESPN_SOCCER_SLUG[configLeagueId];
+  if (!slug || (!homeName && !awayName)) return null;
+  // Scoreboard : date YYYYMMDD (default = aujourd'hui)
+  let dStr = '';
+  if (matchDate) {
+    const dt = new Date(matchDate);
+    if (!isNaN(dt.getTime())) {
+      dStr = dt.getUTCFullYear() + String(dt.getUTCMonth() + 1).padStart(2, '0') + String(dt.getUTCDate()).padStart(2, '0');
+    }
+  }
+  const cacheKey = `espn_scoreboard_${slug}_${dStr || 'today'}`;
+  let board = apiCacheGet(cacheKey);
+  if (!board) {
+    try {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard${dStr ? '/dates/' + dStr : ''}`;
+      const res = await httpsGet(url);
+      if (res.status !== 200 || !res.data?.events) return null;
+      board = res.data.events.map(e => ({
+        id: e.id,
+        home: e.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team?.displayName,
+        away: e.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away')?.team?.displayName,
+        homeId: espnRefId(e.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team?.$ref || e.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home')?.team?.id ? `http://sports.core.api.espn.com/v2/sports/soccer/leagues/${slug}/teams/${e.competitions[0].competitors.find(c => c.homeAway === 'home').team.id}` : ''),
+      }));
+      apiCacheSet(cacheKey, board, 'espn_scoreboard', 5 * 60 * 1000);
+    } catch (_) { return null; }
+  }
+  // Matching par signature de nom (stopwords retirés, lowercase)
+  const sig = (n) => String(n || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(' ').filter(w => w.length >= 3 && !['club','fc','cf','ac','as','de','la','el'].includes(w))[0] || String(n || '').toLowerCase().trim();
+  const hSig = sig(homeName), aSig = sig(awayName);
+  for (const ev of board) {
+    const eh = sig(ev.home), ea = sig(ev.away);
+    if ((hSig && (eh === hSig || eh.includes(hSig) || hSig.includes(eh))) ||
+        (aSig && (ea === aSig || ea.includes(aSig) || aSig.includes(ea)))) {
+      return { eventId: ev.id, homeEspnId: ev.homeId || null };
+    }
+  }
+  return null;
+}
+
+// Fetch WP ESPN pour un match. Sortie alignée sur computeLiveWinProbability.
+// Retourne null si indisponible (fail-soft, ne lève jamais).
+async function fetchESPNMatchWinProbability(match) {
+  if (!ESPN_WP_ENABLED || !match) return null;
+  const configLeagueId = match.league_config_id || match.config_id || match.bsd_league_id;
+  const resolved = await _espnResolveEventId(configLeagueId, match.home_team, match.away_team, match.commence_time);
+  if (!resolved || !resolved.eventId) return null;
+  const cacheKey = `espn_wp_${resolved.eventId}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return cached;
+  try {
+    const slug = ESPN_SOCCER_SLUG[configLeagueId];
+    if (!slug) return null;
+    const res = await httpsGet(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${resolved.eventId}`);
+    if (res.status !== 200 || !res.data?.header?.competitions?.[0]) return null;
+    const comp = res.data.header.competitions[0];
+    const prob = comp.probability; // { homeWinPercentage: 0.xx } ou absent
+    if (!prob || prob.homeWinPercentage == null) return null;
+    const homePct = Math.round(Number(prob.homeWinPercentage) * 1000) / 10; // 0-100
+    const awayPct = Math.round((100 - homePct) * 10) / 10;
+    // Score courant (si match en cours)
+    const competitors = comp.competitors || [];
+    const home = competitors.find(c => c.homeAway === 'home');
+    const away = competitors.find(c => c.homeAway === 'away');
+    const minute = comp.status?.type?.shortDetail || comp.status?.type?.detail || null;
+    const out = {
+      home: homePct, draw: 0, away: awayPct,
+      calibrated: true,
+      minute: minute,
+      confidence: Math.round(Math.max(homePct, awayPct) * 0.9),
+      method: 'espn_hidden_summary',
+      source: 'espn',
+    };
+    apiCacheSet(cacheKey, out, 'espn_wp', ESPN_WP_CACHE_TTL);
+    return out;
+  } catch (_) { return null; }
 }
 
 // Joueurs clés d'une équipe dérivés des buteurs ESPN ligue (filtre par nom).
@@ -34555,10 +34897,43 @@ if (pathname === '/api/v1/live/ws-status') {
     cap: BSD_WS_SUB_CAP,
     last_pong_ms: _bsdWsLastPong || 0,
     last_pong_age_sec: _bsdWsLastPong ? Math.round((Date.now() - _bsdWsLastPong) / 1000) : null,
+    // T1.3 — latence observable (âge dernier frame reçu de BSD)
+    last_frame_age_sec: _bsdWsLastFrameTs ? Math.round((Date.now() - _bsdWsLastFrameTs) / 1000) : null,
+    frame_fresh: _bsdWsLastFrameTs && (Date.now() - _bsdWsLastFrameTs) < BSD_WS_INACTIVITY_MS,
+    enrich_shot_ttl_ms: _bsdEnrichShotTTL(),
     backoff_ms: _bsdWsBackoff,
     host: BSD_LIVE_WS_HOST,
     path: BSD_LIVE_WS_PATH,
   });
+}
+
+// T3.1 — GET /api/v1/match/:id/h2h — Head-to-Head football (top 5 confrontations).
+// Réutilise computeH2H (historique local history + archive_matches). Cache 6h
+// (le H2H change lentement). Gap documenté MAPPING_BSD_V1_V2.md (foot H2H absent V1).
+// Auteur : DATA-SC · 2026-07-29
+const _h2hRouteMatch = pathname.match(/^\/api\/v1\/match\/([^/?]+)\/h2h$/);
+if (_h2hRouteMatch && req.method === 'GET') {
+  const matchId = decodeURIComponent(_h2hRouteMatch[1]);
+  const m = (typeof db !== 'undefined' && db.matches) ? db.matches.find(x => x && x.id === matchId) : null;
+  if (!m || !m.home_team || !m.away_team) {
+    return jsonResponse(res, 404, { error: 'match_not_found', message: `Aucun match pour id "${matchId}"` });
+  }
+  // Cache 6h par paire d'équipes (clé normalisée insensitive au sens home/away)
+  const cacheKey = `h2h_${normName(m.home_team)}_${normName(m.away_team)}`;
+  const cached = apiCacheGet(cacheKey);
+  if (cached) return jsonResponse(res, 200, cached);
+  try {
+    const h2h = computeH2H(m.home_team, m.away_team);
+    if (!h2h) {
+      const empty = { home_team: m.home_team, away_team: m.away_team, summary: null, meetings: [], source: 'local', message: 'Aucune confrontation historique trouvée' };
+      return jsonResponse(res, 200, empty);
+    }
+    const payload = { match_id: m.id, home_team: m.home_team, away_team: m.away_team, ...h2h, cached_at: Date.now() };
+    apiCacheSet(cacheKey, payload, 'h2h', 6 * 3600 * 1000);
+    return jsonResponse(res, 200, payload);
+  } catch (e) {
+    return jsonResponse(res, 500, { error: 'h2h_failed', message: e.message });
+  }
 }
 
 if (pathname === '/api/v1/live/bsd') {
@@ -34603,7 +34978,10 @@ if (pathname === '/api/v1/live/bsd') {
     // sur ce champ array-shape. Consumers font Array.isArray() → empty state.
     momentum: (Array.isArray(m.live_momentum) ? m.live_momentum : null),
     momentum_pct: m.live_momentum_pct || null,
+    momentum_index: m.live_momentum_index ?? null,  // T0.4 — index dérivé [-1,+1]
     intensity: m.live_intensity || 0,
+    win_prob: m.live_win_prob || null,              // T0.3 — WP live calibrée {home,draw,away,confidence}
+    espn_win_prob: m.espn_win_prob || null,         // T2.2 — WP ESPN fallback (champ séparé, BSD primaire)
     edge: m.best_edge?.edge || 0,
     _source: m._source || 'odds_api',
   }));
@@ -44804,12 +45182,24 @@ if (pathname.startsWith('/api/v1/social/match/') && req.method === 'GET') {
 
 // GET /api/v1/bsd/ws-status — diagnostic WS live (admin only via footPro gate)
 if (pathname === '/api/v1/bsd/ws-status' && req.method === 'GET') {
+  const now = Date.now();
+  const frameAgeS = _bsdWsLastFrameTs ? Math.round((now - _bsdWsLastFrameTs) / 1000) : null;
+  // T1.3 — métriques latence/santé : âge dernier frame (= latence observable),
+  // uptime connexion, statut watchdog, TTL enrich adaptatif courant.
   return jsonResponse(res, 200, {
     enabled: BSD_LIVE_WS_ENABLED,
     connected: !!_bsdWsHandshakeDone,
     subscribed: Array.from(_bsdWsSubs),
     pending: [..._bsdWsPendingSubs],
-    last_pong_age_s: _bsdWsLastPong ? Math.round((Date.now() - _bsdWsLastPong) / 1000) : null,
+    last_pong_age_s: _bsdWsLastPong ? Math.round((now - _bsdWsLastPong) / 1000) : null,
+    // T1.3 — métriques T1.2 (latence + santé)
+    last_frame_age_s: frameAgeS,
+    frame_fresh: frameAgeS != null && frameAgeS < BSD_WS_INACTIVITY_MS / 1000,
+    uptime_s: _bsdWsConnectedAt ? Math.round((now - _bsdWsConnectedAt) / 1000) : null,
+    inactivity_threshold_s: BSD_WS_INACTIVITY_MS / 1000,
+    enrich_shot_ttl_ms: _bsdEnrichShotTTL(),   // 25000 si WS actif, 60000 sinon
+    enrich_shot_ttl_live: _bsdEnrichShotTTL() === _BSD_ENRICH_SHOT_TTL_LIVE,
+    rebalance_last_age_s: _bsdWsLastRebalanceTs ? Math.round((now - _bsdWsLastRebalanceTs) / 1000) : null,
     raw_logged: _bsdWsRawLogged,
     last_frames: _bsdWsLastFrames.slice(-5),
     db_matches_with_bsd_id: db.matches.filter(m => m && m._bsd_event_id != null).length,
@@ -49299,6 +49689,8 @@ async function pollLiveScoresSmart() {
    Fonction de polling des scores en direct
    ------------------------------------------------- */
 let _isPollingLive = false; // mutex anti-concurrence (setInterval 60s + route ?fresh=true 30s)
+// T0.2c — throttle snapshots live_match_stats : 1 snapshot/match/minute (évite spam DB)
+const _liveStatLastMin = new Map(); // matchId -> dernière minute persistée
 async function pollLiveScores() {
     if (_isPollingLive) return; // skip si poll déjà en cours → évite doublons alertes
     _isPollingLive = true;
@@ -49374,6 +49766,28 @@ async function pollLiveScores() {
             m.live_intensity = newIntensity;
             if (bl.status) m.status = bl.status;
             _livePatchSnapshot.set(m.id, sig);
+            // T0.4 — momentum index dérivé [-1,+1] (stocké sur le match)
+            try { m.live_momentum_index = computeLiveMomentumIndex(m); } catch (_) {}
+            // T0.3 — Win Probability live calibrée (stockée sur le match)
+            try { m.live_win_prob = computeLiveWinProbability(m); } catch (_) {}
+            // T2.2 — ESPN WP en CHAMP SÉPARÉ (fallback si BSD absent). Fire-and-forget
+            // async : mutera le match ; le prochain poll 20s le relaiera au frontend.
+            // Ne s'exécute que si BSD n'a pas produit de WP (live_win_prob == null).
+            if (m.live_win_prob == null && ESPN_WP_ENABLED) {
+              fetchESPNMatchWinProbability(m)
+                .then(wp => { if (wp) m.espn_win_prob = wp; })
+                .catch(() => {});
+            }
+            // Invalide l'ancienne WP ESPN si BSD est redevenu disponible
+            if (m.live_win_prob != null && m.espn_win_prob != null) m.espn_win_prob = null;
+            // T0.2c — persistance snapshot live_match_stats (throttle 1/min/match)
+            try {
+              const min = parseInt(m.live_minute || 0);
+              if (min > 0 && _liveStatLastMin.get(m.id) !== min) {
+                _liveStatLastMin.set(m.id, min);
+                recordLiveMatchStat(m);
+              }
+            } catch (_) {}
             patches.push(m);
         }
         console.log(`  [LiveDBG] matchés(cross-provider)=${_liveMatched} (dont sig=${_sigMatched}) patches=${patches.length}`);
@@ -49576,6 +49990,76 @@ function computeLiveIntensityFromBSD(live) {
     return Math.round(Math.min(intensity, 100));
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  T0.4 — Momentum Index dérivé [-1, +1] (maison, zéro-dépendance)
+//  Blend multi-signaux normalisé sur fenêtre glissante ~10 min :
+//    - momentum array BSD (signé [-100,+100]) — signal principal
+//    - possession ratio (0-1) — contrôle du jeu
+//    - xG differential — qualité des occasions
+//    - dangerous attacks differential — pression offensive
+//  Lissage EMA (exponential moving average) pour stabilité anti-bruit.
+//  +1 = domination home totale, -1 = domination away, 0 = équilibre.
+//  Auteur : DS-ML · 2026-07-29
+// ═══════════════════════════════════════════════════════════════════════════════
+function computeLiveMomentumIndex(m) {
+  if (!m) return 0;
+  let score = 0;
+  let weight = 0;
+
+  // 1) Momentum array BSD (signal le plus riche) — poids 0.50
+  if (Array.isArray(m.live_momentum) && m.live_momentum.length > 0) {
+    const tail = m.live_momentum.slice(-10); // fenêtre ~10 min
+    const vs = tail.map(p => (p && typeof p.v === 'number') ? p.v : 0);
+    if (vs.length > 0) {
+      // EMA : décroissance exponentielle vers le passé
+      const alpha = 2 / (vs.length + 1);
+      let ema = vs[0];
+      for (let i = 1; i < vs.length; i++) ema = alpha * vs[i] + (1 - alpha) * ema;
+      // Normalisation [-100,+100] → [-1,+1]
+      score += Math.max(-1, Math.min(1, ema / 100)) * 0.50;
+      weight += 0.50;
+    }
+  }
+
+  // 2) Possession ratio — poids 0.20
+  const poss = m.live_possession;
+  if (poss && poss.home != null && poss.away != null) {
+    const pH = parseFloat(poss.home) || 0;
+    const pA = parseFloat(poss.away) || 0;
+    if (pH + pA > 0) {
+      const ratio = pH / (pH + pA); // 0-1, 0.5 neutre
+      score += (ratio - 0.5) * 2 * 0.20; // (ratio-0.5)*2 → [-1,+1]
+      weight += 0.20;
+    }
+  }
+
+  // 3) xG differential — poids 0.20
+  const xg = m.live_xg;
+  if (xg && xg.home != null && xg.away != null) {
+    const diff = (xg.home - xg.away);
+    // tanh : borne douce, 3 xG d'écart ≈ saturation
+    score += Math.tanh(diff / 3) * 0.20;
+    weight += 0.20;
+  }
+
+  // 4) Dangerous attacks differential — poids 0.10
+  const dang = m.live_dangerous_attacks;
+  if (dang && dang.home != null && dang.away != null) {
+    const total = (dang.home || 0) + (dang.away || 0);
+    if (total > 0) {
+      const ratio = dang.home / total;
+      score += (ratio - 0.5) * 2 * 0.10;
+      weight += 0.10;
+    }
+  }
+
+  if (weight === 0) return 0;
+  // Renormalise par le poids effectif (signaux partiels → conservateur)
+  const idx = score / weight;
+  return Math.round(Math.max(-1, Math.min(1, idx)) * 1000) / 1000;
+}
+
+
 /* -------------------------------------------------
    BSD Live WebSocket (push <5s) — zero-dep RFC6455
    Token: process.env.BSD_LIVE_TOKEN (jamais hardcodé/commité).
@@ -49600,6 +50084,13 @@ const BSD_WS_SUB_CAP = 10;            // limite officielle BSD (10 matchs/socket
 let _bsdWsLastPong = 0;
 let _bsdWsHeartbeatTimer = null;
 let _bsdWsHandshakeDone = false;
+// T1.2a — watchdog d'inactivité : détection socket morte basée sur le dernier
+// FRAME reçu (live + pong), plus réactif que le seul timeout TCP 120s.
+// BSD pousse des frames régulièrement (livedata temps réel + event ~30s) → si
+// >90s sans rien, la socket est probablement semi-open → reconnect agressif.
+let _bsdWsLastFrameTs = 0;
+let _bsdWsConnectedAt = 0;
+const BSD_WS_INACTIVITY_MS = 90000; // 90s sans frame = socket morte présumée
 
 function _bsdWsLookupMatch(eid, home, away) {
   if (eid != null) {
@@ -49912,10 +50403,21 @@ function _bsdMergeShotmap(m, data) {
   }
 }
 
-// ── Poll REST enrichment — incidents (30s) + shotmap (60s) pour matchs WS live ─
+// ── Poll REST enrichment — incidents (30s) + shotmap (adaptatif) pour matchs WS live ─
 const _bsdLiveEnrichState = new Map(); // matchId → { lastIncidents, lastShotmap }
 const _BSD_ENRICH_INC_TTL  = 30 * 1000;
 const _BSD_ENRICH_SHOT_TTL = 60 * 1000;
+// T1.2b — TTL shotmap adaptatif : quand le WS est actif (connecté + frames frais),
+// on rafraîchit le momentum/xG plus souvent (25s) pour suivre la cadence des
+// frames event (~30s) au lieu de 60s. Sinon fallback 60s (WS down).
+// Évite le momentum "saccadé" identifié au diagnostic T1.1.
+const _BSD_ENRICH_SHOT_TTL_LIVE = 25 * 1000;
+function _bsdEnrichShotTTL() {
+  // WS actif = handshake done + dernier frame < 90s (vie)
+  const wsAlive = _bsdWsHandshakeDone && _bsdWsLastFrameTs
+    && (Date.now() - _bsdWsLastFrameTs) < BSD_WS_INACTIVITY_MS;
+  return wsAlive ? _BSD_ENRICH_SHOT_TTL_LIVE : _BSD_ENRICH_SHOT_TTL;
+}
 
 async function pollBSDLiveEnrichment() {
   // WR-02 fix: trust is_live as sole gate — avoids excluding 0-0 matches
@@ -49939,8 +50441,9 @@ async function pollBSDLiveEnrichment() {
         }
       } catch (e) { console.warn(`  [BSD-Enrich] incidents ${eid}:`, e.message); st.lastIncidents = now; }
     }
-    // Shotmap (momentum + xG/min)
-    if (!st.lastShotmap || (now - st.lastShotmap) > _BSD_ENRICH_SHOT_TTL) {
+    // Shotmap (momentum + xG/min) — TTL adaptatif T1.2b (25s si WS actif, 60s sinon)
+    const shotTTL = _bsdEnrichShotTTL();
+    if (!st.lastShotmap || (now - st.lastShotmap) > shotTTL) {
       try {
         const res = await bsdFetch(`/api/v2/events/${eid}/shotmap/`);
         st.lastShotmap = now; // always advance TTL
@@ -50070,6 +50573,8 @@ function _checkLiveAlerts(m, prevScoreStr) {
 }
 
 function _bsdWsHandleJSON(msg) {
+  // T1.2a — trace le dernier frame reçu pour le watchdog d'inactivité.
+  _bsdWsLastFrameTs = Date.now();
   // Ring buffer : garde 10 derniers frames pour GET /api/v1/bsd/ws-status
   try {
     const frame = { ts: Date.now(), type: msg.type || 'unknown', event_id: msg.event_id ?? null, payload: JSON.stringify(msg).slice(0, 300) };
@@ -50293,7 +50798,70 @@ function _bsdWsHeartbeat() {
     try { sock.end(); } catch (e) {}
     return;
   }
+  // T1.2a — Watchdog d'inactivité : si >90s sans AUCUN frame reçu (ni live, ni
+  // pong), la socket est probablement semi-open (TCP muet) → reconnect. Le pong
+  // watchdog seul ne suffit pas car le ping part toutes les 25s mais la socket
+  // peut être morte juste après un pong. Ce check se base sur les frames réels
+  // reçus de BSD (livedata temps réel + event ~30s) → détection <90s vs 120s TCP.
+  if (_bsdWsLastFrameTs && Date.now() - _bsdWsLastFrameTs > BSD_WS_INACTIVITY_MS) {
+    console.warn(`  [BSD-WS] inactivité ${Math.round((Date.now() - _bsdWsLastFrameTs) / 1000)}s > ${BSD_WS_INACTIVITY_MS / 1000}s → reconnect`);
+    if (_bsdWsHeartbeatTimer) { clearInterval(_bsdWsHeartbeatTimer); _bsdWsHeartbeatTimer = null; }
+    _bsdWsHandshakeDone = false;
+    _bsdWsSock = null;
+    try { sock.end(); } catch (e) {}
+    return;
+  }
   _bsdWsSendJSON({ action: 'ping' });
+
+  // T1.2c — Rééquilibrage des subscriptions (throttle 1/min). Si la file pending
+  // est non vide, on compare le match le MOINS prioritaire actuellement subscribed
+  // au PLUS prioritaire en pending ; si le pending gagne, on swap (unsub→sub).
+  // Évite le blocage des matchs à fort edge restés en pending après un pic de live.
+  // Note : le cap BSD de 10/socket est respecté (unsub libère un slot avant sub).
+  try { _bsdWsRebalanceSubs(); } catch (e) { /* fail-soft */ }
+}
+
+// T1.2c — Rééquilibrage prioritaire des subscriptions WS (cap 10/socket BSD).
+let _bsdWsLastRebalanceTs = 0;
+const _bsdWsEdgeOf = (m) => Math.abs((m && m.best_edge && m.best_edge.edge) || 0);
+function _bsdWsRebalanceSubs() {
+  if (!_bsdWsHandshakeDone) return;
+  const now = Date.now();
+  // Throttle : 1 rebalance / minute (le heartbeat tourne à 25s)
+  if (now - _bsdWsLastRebalanceTs < 60000) return;
+  if (_bsdWsPendingSubs.length === 0 || _bsdWsSubs.size < BSD_WS_SUB_CAP) {
+    _bsdWsLastRebalanceTs = now;
+    return;
+  }
+  _bsdWsLastRebalanceTs = now;
+  // Priorité pending : edge desc (résolu via db.matches)
+  const pendingRanked = _bsdWsPendingSubs
+    .map(eid => {
+      const m = db.matches.find(x => x && x._bsd_event_id != null && String(x._bsd_event_id) === String(eid));
+      return { eid, edge: m ? _bsdWsEdgeOf(m) : 0, m };
+    })
+    .filter(x => x.m) // ne promote que les matchs toujours live
+    .sort((a, b) => b.edge - a.edge);
+  if (!pendingRanked.length) return;
+  const topPending = pendingRanked[0];
+  // Moins prioritaire actuellement subscribed
+  const subRanked = Array.from(_bsdWsSubs).map(eid => {
+    const m = db.matches.find(x => x && x._bsd_event_id != null && String(x._bsd_event_id) === String(eid));
+    return { eid, edge: m ? _bsdWsEdgeOf(m) : 0, m };
+  }).sort((a, b) => a.edge - b.edge); // asc : le plus faible en tête
+  if (!subRanked.length) return;
+  const weakestSub = subRanked[0];
+  // Swap uniquement si le pending est strictement plus prioritaire (marge 0.5 edge)
+  if (topPending.edge > weakestSub.edge + 0.5) {
+    console.log(`  [BSD-WS] rebalance: unsub ${weakestSub.eid} (edge ${weakestSub.edge.toFixed(2)}) → sub ${topPending.eid} (edge ${topPending.edge.toFixed(2)})`);
+    _bsdWsUnsubscribe(weakestSub.eid);
+    // Le weakest retourné en pending pour un éventuel retour
+    if (!_bsdWsPendingSubs.includes(weakestSub.eid)) _bsdWsPendingSubs.push(weakestSub.eid);
+    // Retire le top du pending et subscribe
+    const idx = _bsdWsPendingSubs.indexOf(topPending.eid);
+    if (idx !== -1) _bsdWsPendingSubs.splice(idx, 1);
+    _bsdWsSubscribe(topPending.eid);
+  }
 }
 
 function _bsdWsSendFrame(sock, opcode, payload) {
@@ -50370,6 +50938,8 @@ function _bsdWsConnect() {
       _bsdWsHandshakeDone = true;
       _bsdWsBackoff = 2000;
       _bsdWsLastPong = Date.now();
+      _bsdWsLastFrameTs = Date.now(); // T1.2a — init watchdog
+      _bsdWsConnectedAt = Date.now(); // T1.2a — métrique uptime/latence connexion
       _bsdWsRawLogged = 0; // reset pour logger les premiers frames de chaque connexion
       _bsdWsLastFrames = [];
       console.log('  ✓ [BSD-WS] connecté (push live <5s) — démarrage subscribe loop');
@@ -50806,6 +51376,8 @@ setInterval(() => archiveThenPurge('15min').catch(e => console.error('[Cron] Arc
 setInterval(() => {
     if (typeof apiCacheCleanExpired === 'function') apiCacheCleanExpired();
     if (typeof oddsCacheCleanExpired === 'function') oddsCacheCleanExpired();
+    // T0.2c — purge snapshots live > 30 jours (rétention feature-store ML)
+    try { const n = purgeOldLiveStats(); if (n) console.log(`[Cron] live_match_stats purgés: ${n}`); } catch (_) {}
 }, 2 * 3600 * 1000);
 
 setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.message)), 20 * 1000);
@@ -50813,6 +51385,33 @@ setInterval(() => pollLiveScoresSmart().catch(e => console.warn('[Live]', e.mess
 setInterval(() => { try { _snapshotClosingOdds(); } catch (e) { console.warn('[CLV] cron:', e.message); } }, 60 * 1000);
 // bd c81b — Cron enrichissement BSD MCP (odds compare + predictions ML + polymarket) toutes 5min
 setInterval(() => cronEnrichBSDFullStack().catch(e => console.warn('[BSD Enrich]', e.message)), 5 * 60 * 1000);
+// T2.1b — Cron Flashscore Plan E in-process : déclenche l'ETL import-flashscore-live-stats
+// toutes 5min SI des datasets Apify sont présents à la racine (env VPS). En dev sans
+// datasets → no-op silencieux. Subprocess synchrone borné (timeout 30s), fail-soft.
+// Renvoie l'ETL jusqu'ici non déclenché par server.js (cron VPS externe non documenté).
+const FLASHSCORE_ETL_SCRIPT = path.join(__dirname, 'tools', 'import-flashscore-live-stats.js');
+const _hasFlashscoreDatasets = () => {
+  try {
+    const fs = require('fs');
+    return fs.readdirSync(__dirname).some(f => /^dataset_flashscore-live-matches_.*\.json$/i.test(f));
+  } catch (_) { return false; }
+};
+function _runFlashscoreETL() {
+  if (!_hasFlashscoreDatasets()) return; // no-op en dev
+  try {
+    const { spawnSync } = require('child_process');
+    const r = spawnSync(process.execPath, [FLASHSCORE_ETL_SCRIPT], {
+      cwd: __dirname, timeout: 30000, shell: false,
+      env: { ...process.env, FLASHSCORE_LIVE_STATS_TTL_MS: String(FLASHSCORE_LIVE_STATS_TTL_MS) },
+    });
+    if (r.status !== 0) {
+      console.warn(`  [Flashscore-ETL] exit=${r.status} ${String(r.stderr || '').slice(0, 200)}`);
+    } else if (process.env.FLASHSCORE_DEBUG) {
+      console.log('  [Flashscore-ETL] tick OK');
+    }
+  } catch (e) { console.warn('[Flashscore-ETL] cron err:', e.message); }
+}
+setInterval(_runFlashscoreETL, FLASHSCORE_LIVE_STATS_TTL_MS);
 // TM squad values + blessés actifs toutes 3h (fly.dev ~20 req/tick, safe)
 setInterval(() => cronEnrichTMSquads().catch(e => console.warn('[TM Squads]', e.message)), 3 * 3600 * 1000);
 setTimeout(() => cronEnrichTMSquads().catch(() => {}), 2 * 60 * 1000); // 1er tick 2min après boot

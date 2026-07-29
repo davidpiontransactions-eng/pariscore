@@ -21,7 +21,10 @@ const Database = require('better-sqlite3');
 
 const ROOT = __dirname.replace(/\\tools$/, '').replace(/\/tools$/, '');
 const DB_PATH = process.env.DATABASE_PATH || path.join(ROOT, 'pariscore.db');
-const TTL_MS = 30 * 60 * 1000;
+// T2.1a — TTL partagé via env var (constante miroir côté serveur server.js
+// FLASHSCORE_LIVE_STATS_TTL_MS). Défaut 5 min (données live, fraîcheur courte).
+// Override : FLASHSCORE_LIVE_STATS_TTL_MS=900000 pour 15min, etc.
+const TTL_MS = parseInt(process.env.FLASHSCORE_LIVE_STATS_TTL_MS) || (5 * 60 * 1000);
 const SOURCE = 'flashscore_live_stats';
 
 const DRY_RUN = process.argv.includes('--dry-run');
