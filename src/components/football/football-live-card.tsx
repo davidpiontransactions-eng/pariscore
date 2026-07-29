@@ -1,12 +1,15 @@
 "use client";
 
+import { Trophy, Clock, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FootballMatch } from "@/lib/football-data";
 
-function LiveBadge({ minute, status }: { minute: number; status: string }) {
+function LiveBadge({ minute, status, period }: { minute: number; status: string; period?: string }) {
   const isHT = status === "HT";
   const isFT = status === "FT" || status === "PEN";
-  const label = isFT ? "Terminé" : isHT ? "MI-TEMPS" : `${minute}'`;
+  // Indice de mi-temps : "2H" → 2e MT, sinon 1re MT (HT traité à part).
+  const half = period === "2H" ? "2M" : "1M";
+  const label = isFT ? "Terminé" : isHT ? "MI-TEMPS" : `${minute}' ${half}`;
 
   return (
     <span
@@ -25,6 +28,10 @@ function LiveBadge({ minute, status }: { minute: number; status: string }) {
       {label}
     </span>
   );
+}
+
+function formatKickoff(iso: string): string {
+  return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
 function StatRow({
@@ -61,28 +68,55 @@ function StatRow({
   );
 }
 
-export function FootballLiveCard({ match }: { match: FootballMatch }) {
+export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch; onOpenDetail?: () => void }) {
   const live = match.live;
   if (!live) return null;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-all hover:border-rose-500/50">
-      <div className="p-4">
+    <div className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-all hover:border-rose-500/50">
+      {/* Stade en filigrane (fond) — image BSD /img/venue/{id}/, masquée si absente/cassée */}
+      {match.venue?.id && (
+        <img
+          src={`https://sports.bzzoiro.com/img/venue/${match.venue.id}/`}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.07] dark:opacity-[0.05]"
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+      <div className="relative p-4">
         {/* Live header */}
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{match.league.logo}</span>
-            <span className="font-medium">{match.league.name}</span>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="shrink-0">{match.league.logo}</span>
+            <span className="truncate font-medium">{match.league.name}</span>
           </div>
-          <LiveBadge minute={live.minute} status={live.status} />
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/80">
+              <Clock className="h-3 w-3" />
+              {formatKickoff(match.scheduledAt)}
+            </span>
+            <LiveBadge minute={live.minute} status={live.status} period={live.period} />
+          </div>
         </div>
 
         {/* Score */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-muted">
-              {match.home.logo && (
-                <img src={match.home.logo} alt={match.home.name} className="h-7 w-7 object-contain" />
+              {match.home.logo ? (
+                <img
+                  src={match.home.logo}
+                  alt={match.home.name}
+                  className="h-7 w-7 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <Trophy className="h-5 w-5 text-muted-foreground" />
               )}
             </div>
             <span className="text-xs font-semibold">{match.home.shortName}</span>
@@ -96,8 +130,17 @@ export function FootballLiveCard({ match }: { match: FootballMatch }) {
           </div>
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-muted">
-              {match.away.logo && (
-                <img src={match.away.logo} alt={match.away.name} className="h-7 w-7 object-contain" />
+              {match.away.logo ? (
+                <img
+                  src={match.away.logo}
+                  alt={match.away.name}
+                  className="h-7 w-7 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+              ) : (
+                <Trophy className="h-5 w-5 text-muted-foreground" />
               )}
             </div>
             <span className="text-xs font-semibold">{match.away.shortName}</span>
@@ -127,6 +170,18 @@ export function FootballLiveCard({ match }: { match: FootballMatch }) {
               2 {match.odds.away.toFixed(2)}
             </span>
           </div>
+        )}
+
+        {/* CTA Momentum (graphe au clic) */}
+        {onOpenDetail && (
+          <button
+            onClick={onOpenDetail}
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Voir le momentum du match"
+          >
+            <Activity className="h-3 w-3" />
+            Momentum
+          </button>
         )}
       </div>
     </div>

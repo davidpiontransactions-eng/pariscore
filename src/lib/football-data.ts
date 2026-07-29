@@ -41,6 +41,8 @@ export type FootballLiveState = {
   awayScore: number;
   minute: number;
   status: "LIVE" | "HT" | "FT" | "PEN";
+  /** Période brute BSD (ex: "1H", "2H", "HT"). Permet de distinguer les mi-temps. */
+  period?: string;
   homePossession: number;
   homeShots: number;
   awayShots: number;
@@ -48,6 +50,12 @@ export type FootballLiveState = {
   awayShotsOnTarget: number;
   homeCorners: number;
   awayCorners: number;
+  /** Timeline momentum BSD [-100,+100] (signé, + = domicile domine). Lazy : absent du list live. */
+  momentum?: { minute: number; value: number }[];
+  /** xG incrémental par minute. Lazy : absent du list live. */
+  xgPerMinute?: { minute: number; home: number; away: number }[];
+  /** Buts (depuis shotmap BSD). Lazy : absent du list live. */
+  goals?: { minute: number; home: boolean; type: string }[];
 };
 
 export type FootballMatch = {
@@ -61,6 +69,8 @@ export type FootballMatch = {
   odds?: { bookmaker: string; home: number; draw: number; away: number };
   allOdds?: FootballMatchOdds[];
   live?: FootballLiveState | null;
+  /** Stade (image de fond filigrane via /img/venue/{id}/, pattern BSD public). */
+  venue?: { id: number; name: string; city?: string; country?: string } | null;
 };
 
 const LEAGUES: Record<string, League> = {

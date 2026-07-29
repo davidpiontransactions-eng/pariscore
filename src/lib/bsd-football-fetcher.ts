@@ -1,4 +1,9 @@
 import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState } from "@/lib/football-data";
+import { lookupClubLogo } from "@/lib/club-logos";
+
+// Hôte racine BSD (l'API sous /api, les images sous /img). Identique au legacy
+// server.js:3795 (BSD_ROOT_URL = BSD_BASE sans le suffixe /api).
+const BSD_IMAGE_ROOT = "https://sports.bzzoiro.com";
 
 const FLAG = (code: string) => String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
 
@@ -112,6 +117,25 @@ type BSDPaginatedResponse = {
   results: BSDFootballMatch[];
 };
 
+// ── Réponse BSD /v2/events/{id}/stats/ (endpoint "bd j6pz fix", non-paginé) ──
+// Champs confirmés par le normalizer legacy _bsdMergeShotmap (server.js:49892-49913).
+type BSDMomentumPoint = { m: number; v: number }; // v ∈ [-100,+100]
+type BSDXgPerMinute = { m: number; xg_home: number; xg_away: number; cum_home?: number; cum_away?: number };
+type BSDShot = {
+  min: number;
+  home: boolean;
+  type?: string; // 'goal' | 'miss' | 'save' | ...
+  gtype?: string | null; // regular | own | penalty (uniquement pour les buts)
+  xg: number;
+  xgot?: number | null;
+  player_id?: number | null;
+};
+type BSDMatchStatsResponse = {
+  momentum?: BSDMomentumPoint[];
+  xg_per_minute?: BSDXgPerMinute[];
+  shotmap?: BSDShot[];
+};
+
 const COUNTRY_FLAGS: Record<string, string> = {
   England: "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F",
   France: FLAG("FR"),
@@ -187,11 +211,16 @@ function mapLeague(l: BSDLeague): League {
 function mapTeam(name: string, obj?: BSDTeamObj, jerseys?: BSDJerseys, side?: "home" | "away"): Team {
   const id = obj?.id ? `bsd-team-${obj.id}` : name.toLowerCase().replace(/\s+/g, "_");
   const jerseyColor = side && jerseys ? jerseys[side]?.player?.base : undefined;
+  // Cascade logo : (1) URL publique BSD depuis team_obj.id (zéro scraping),
+  // (2) sinon seed football-logos.cc par nom normalisé, (3) "" → Trophy côté UI.
+  const logo = obj?.id
+    ? `${BSD_IMAGE_ROOT}/img/team/${obj.id}/?bg=transparent`
+    : lookupClubLogo(name) ?? "";
   return {
     id,
     name,
     shortName: obj?.short_name || shortName(name),
-    logo: "",
+    logo,
     color: jerseyColor ? `#${jerseyColor}` : generateColor(name),
     form: ["W", "D", "W", "L", "W"],
     rank: 0,
@@ -245,6 +274,7 @@ function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
     awayScore: m.away_score ?? 0,
     minute: m.current_minute ?? 0,
     status: m.status === "HT" || m.period === "HT" ? "HT" : "LIVE",
+    period: m.period,
     homePossession: ls?.home?.ball_possession ?? 50,
     homeShots: ls?.home?.total_shots ?? 0,
     awayShots: ls?.away?.total_shots ?? 0,
@@ -270,6 +300,9 @@ function buildMatch(m: BSDFootballMatch): FootballMatch {
     odds,
     allOdds,
     live: mapLiveState(m),
+    venue: m.venue
+      ? { id: m.venue.id, name: m.venue.name, city: m.venue.city, country: m.venue.country }
+      : null,
   };
 }
 
@@ -292,6 +325,60 @@ async function bsdFetch<T>(endpoint: string): Promise<T> {
 
   const data: BSDPaginatedResponse | BSDFootballMatch[] = await res.json();
   return (Array.isArray(data) ? data : data.results) as T;
+}
+
+/**
+ * Variante de `bsdFetch` pour les endpoints NON-paginés (réponse brute, sans
+ * wrapper {count, results}). Utilisée par /v2/events/{id}/stats/ qui renvoie
+ * directement { momentum, xg_per_minute, shotmap }.
+ */
+async function bsdFetchRaw<T>(endpoint: string): Promise<T> {
+  const key = process.env.BSD_API_KEY;
+  if (!key) throw new Error("BSD_API_KEY not configured");
+
+  const res = await fetch(`${BSD_BASE}${endpoint}`, {
+    headers: { Authorization: `Token ${key}`, Accept: "application/json" },
+    signal: AbortSignal.timeout(15000),
+  });
+  if (res.status === 402) throw new Error("BSD Sports Addon required (402)");
+  if (res.status === 429) throw new Error("BSD rate limited (429)");
+  if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
+  return (await res.json()) as T;
+}
+
+// ── Momentum / xG / buts d'un match live (endpoint /v2/events/{id}/stats/) ──
+// Normalisation défensive (optionals + ?? []) — cf. _bsdMergeShotmap legacy.
+export type FootballMatchStats = {
+  momentum: { minute: number; value: number }[]; // value ∈ [-100,+100]
+  xgPerMinute: { minute: number; home: number; away: number }[];
+  goals: { minute: number; home: boolean; type: string }[];
+};
+
+export async function fetchBSDMatchStats(matchId: string): Promise<FootballMatchStats> {
+  const raw = await bsdFetchRaw<BSDMatchStatsResponse>(`/v2/events/${matchId}/stats/`);
+
+  const momentum = (raw.momentum ?? [])
+    .filter((e) => e && Number.isFinite(e.m) && Number.isFinite(e.v))
+    .map((e) => ({ minute: Number(e.m), value: Math.max(-100, Math.min(100, Number(e.v))) }));
+
+  const xgPerMinute = (raw.xg_per_minute ?? [])
+    .filter((e) => e && Number.isFinite(e.m))
+    .map((e) => ({
+      minute: Number(e.m),
+      home: Number(e.xg_home || 0),
+      away: Number(e.xg_away || 0),
+    }));
+
+  // Buts = shots dont type === 'goal' (ou gtype présent pour un tir cadré).
+  const goals = (raw.shotmap ?? [])
+    .filter((s) => s && Number.isFinite(Number(s.min)) && (s.type === "goal" || s.gtype))
+    .map((s) => ({
+      minute: Number(s.min),
+      home: !!s.home,
+      type: s.gtype || s.type || "regular",
+    }));
+
+  return { momentum, xgPerMinute, goals };
 }
 
 export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {

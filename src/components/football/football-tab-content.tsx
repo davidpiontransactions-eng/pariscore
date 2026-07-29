@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, lazy, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import { Trophy, RefreshCw, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,12 @@ import { FootballLeagueBar } from "./football-filters";
 import { FootballMatchCard, FootballMatchCardSkeleton } from "./football-match-card";
 import { FootballLiveCard } from "./football-live-card";
 
+// Dialog de détail (momentum) — lazy : ne charge pas le code tant qu'aucun match
+// n'est ouvert. Miroir du pattern tennis (tennis-tab-content.tsx).
+const FootballMatchDetailDialog = lazy(() =>
+  import("./football-match-detail-dialog").then((m) => ({ default: m.FootballMatchDetailDialog })),
+);
+
 type FootFilter = "all" | "value" | "today";
 
 export function FootballTabContent() {
@@ -18,6 +24,14 @@ export function FootballTabContent() {
 
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [filter, setFilter] = useState<FootFilter>("all");
+
+  // Détail match (dialog momentum) — state lifté, une seule instance rendue.
+  const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const openDetail = (match: FootballMatch) => {
+    setDetailMatch(match);
+    setDetailOpen(true);
+  };
 
   const matches: FootballMatch[] = data?.matches ?? [];
 
@@ -61,7 +75,7 @@ export function FootballTabContent() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {liveMatches.map((m) => (
-              <FootballLiveCard key={m.id} match={m} />
+              <FootballLiveCard key={m.id} match={m} onOpenDetail={() => openDetail(m)} />
             ))}
           </div>
         </section>
@@ -128,7 +142,7 @@ export function FootballTabContent() {
       ) : prematchMatches.length > 0 ? (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {prematchMatches.map((m, idx) => (
-            <FootballMatchCard key={m.id} match={m} priority={idx < 2} />
+            <FootballMatchCard key={m.id} match={m} priority={idx < 2} onOpenDetail={() => openDetail(m)} />
           ))}
         </div>
       ) : (
@@ -144,6 +158,11 @@ export function FootballTabContent() {
           </p>
         </div>
       )}
+
+      {/* Dialog momentum — une seule instance, lazy-loadée */}
+      <Suspense fallback={null}>
+        <FootballMatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
+      </Suspense>
     </div>
   );
 }
