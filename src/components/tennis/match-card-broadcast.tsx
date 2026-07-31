@@ -42,6 +42,7 @@ import { LiveStatsPanel } from "./live-stats-panel";
 import { StatsIndicatorsGrid } from "./stats-indicators-grid";
 import { MatchCardDetail } from "./match-card-detail";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
+import { LiveStatsTrigger, LiveTennisStatsDrawer } from "./live-tennis-stats-drawer";
 import { CountryFlag } from "./country-flag";
 import { SportImage } from "@/components/ui/sport-image";
 import { getSportBg } from "@/lib/sport-images";
@@ -100,6 +101,7 @@ export function MatchCardBroadcast({
   const tTennis = useTranslations("tennis");
   const { terminalMode } = useTerminalMode();
   const [open, setOpen] = useState(defaultOpen || terminalMode);
+  const [statsDrawerOpen, setStatsDrawerOpen] = useState(false);
   const [chipsExpanded, setChipsExpanded] = useState(!chipsCollapsedByDefault || terminalMode);
   const { track } = useAnalytics();
   const { isFavorite, toggle } = useFavorites();
@@ -633,6 +635,9 @@ export function MatchCardBroadcast({
                 {t("placeBet")}
               </button>
             )}
+            {isLive && (
+              <LiveStatsTrigger onClick={() => setStatsDrawerOpen(true)} />
+            )}
             {onOpenDetail && (
               <button
                 type="button"
@@ -645,6 +650,24 @@ export function MatchCardBroadcast({
           </div>
         </div>
       </div>
+
+      {/* Live tennis stats drawer */}
+      {isLive && (
+        <LiveTennisStatsDrawer
+          open={statsDrawerOpen}
+          onOpenChange={setStatsDrawerOpen}
+          matchId={match.id}
+          playerAName={playerA.name}
+          playerBName={playerB.name}
+          playerAPhoto={playerA.photoUrl}
+          playerBPhoto={playerB.photoUrl}
+          playerAColor={playerA.color}
+          playerBColor={playerB.color}
+          playerACountry={playerA.country}
+          playerBCountry={playerB.country}
+          liveState={liveState ?? null}
+        />
+      )}
 
       {/* Live score announcer (sr-only, a11y) */}
       {isLive && liveState && (
