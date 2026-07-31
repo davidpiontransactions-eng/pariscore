@@ -100,7 +100,9 @@ export async function GET(request: Request) {
     // Repli officiel ATP/WTA quand l'agrégation interne est vide (base absente
     // en dev, ou stats match-par-match pas encore peuplées par l'ETL).
     if (payload.rows.length === 0) {
+      console.warn("[stats-leaderboard] internal empty, trying official fallback...");
       const official = getOfficialLeaderboard(params);
+      console.warn("[stats-leaderboard] official result:", official ? `${official.rows.length} rows (${official.source})` : "null");
       if (official) {
         payload = {
           rows: official.rows,
