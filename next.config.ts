@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   // server de Next.js — sinon le build standalone échoue à le résoudre.
   serverExternalPackages: ["better-sqlite3", "pariscore-services"],
 
+  // Caches des leaderboards officiels ATP/WTA (scripts/scrape-tour-leaderboards.py).
+  // lus par src/lib/tennis-stats/official-leaderboard.ts via fs.readFileSync.
+  // Sans cette directive, le build standalone ne les copie pas (chemin dynamique
+  // process.cwd() non tracé par le file tracing de Next.js).
+  outputFileTracingIncludes: {
+    "/api/tennis/stats-leaderboard": ["./data/tour-leaderboards/*.json"],
+  },
+
   // ─── Images : CDN autorisés pour next/image ─────────────────────────────
   images: {
     remotePatterns: [

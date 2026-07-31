@@ -178,6 +178,16 @@ plugin-error.log
 # TypeScript incremental build cache (machine-local, accélère tsc/next build)
 # =============================================================================
 .tsbuildinfo
+
+# =============================================================================
+# Artefacts de probing/scraping (sessions de dev, pas de production)
+# =============================================================================
+atp-*-out.txt
+wta-bundle.js
+graphify-out.txt
+scripts/probe-atp-*.py
+scripts/probe-wta-*.js
+scripts/headroom-proxy.ps1
 *.tsbuildinfo
 
 # =============================================================================

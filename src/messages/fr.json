@@ -102,7 +102,9 @@
       "emptyUnavailable": "Base de statistiques indisponible — les données de production ne sont pas présentes dans cet environnement.",
       "emptyNoPlayers": "Aucun joueur ne remplit les critères (≥ {min} matchs sur le périmètre).",
       "sampleNote": "Minimum {min} matchs sur le périmètre · abandons exclus",
-      "generatedAt": "Calculé le {date}"
+      "generatedAt": "Calculé le {date}",
+      "sourceOfficialAtp": "Données officielles atptour.com · 52 dernières semaines · éligibilité ATP",
+      "sourceOfficialWta": "Données officielles wtatennis.com · saison en cours · toutes surfaces · ≥ {min} matchs"
     },
     "syntheticBadge": "Données live limitées — pas de modèle prédictif",
     "spsExperimentalBadge": "beta",

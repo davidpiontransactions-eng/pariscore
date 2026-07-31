@@ -67,7 +67,9 @@ export interface LeaderboardRow {
   playerId: string | null;
   /** Code pays ISO alpha-2 minuscules (converti depuis l'IOC base via iocToIso2). */
   ioc: string | null;
-  matches: number;
+  /** Nombre de matchs dans le périmètre — null quand la source ne le publie pas
+   *  (leaderboard officiel ATP : seuil d'éligibilité appliqué côté atptour.com). */
+  matches: number | null;
   rating: number | null;
   // Board service
   firstServePct: number | null;
@@ -87,6 +89,9 @@ export interface LeaderboardRow {
   decidingSetsWonPct: number | null;
 }
 
+/** Provenance des données servies (défaut : agrégation interne temps réel). */
+export type LeaderboardSource = "internal" | "official-atp" | "official-wta";
+
 export interface LeaderboardResult {
   rows: LeaderboardRow[];
   meta: LeaderboardParams & {
@@ -94,6 +99,10 @@ export interface LeaderboardResult {
     generatedAt: string;
     /** true si la base est absente/vide — l'UI affiche l'état vide. */
     dataUnavailable: boolean;
+    /** Présent uniquement quand le repli officiel ATP/WTA a été servi. */
+    source?: LeaderboardSource;
+    /** Filtres réellement couverts par la source officielle (transparence UI). */
+    coverage?: { period: string; surface: string; vsRank: string };
   };
 }
 
@@ -574,7 +583,8 @@ export function aggregateLeaderboard(
   }
   out.sort(
     (x, y) =>
-      (y.rating ?? -Infinity) - (x.rating ?? -Infinity) || y.matches - x.matches
+      (y.rating ?? -Infinity) - (x.rating ?? -Infinity) ||
+      (y.matches ?? 0) - (x.matches ?? 0)
   );
   out.forEach((r, i) => {
     r.rank = i + 1;

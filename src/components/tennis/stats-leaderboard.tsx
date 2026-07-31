@@ -135,10 +135,10 @@ function sortRows(rows: LeaderboardRow[], key: StatKey, dir: SortDir): Leaderboa
   return [...rows].sort((a, b) => {
     const va = a[key];
     const vb = b[key];
-    if (va == null && vb == null) return b.matches - a.matches;
+    if (va == null && vb == null) return (b.matches ?? 0) - (a.matches ?? 0);
     if (va == null) return 1;
     if (vb == null) return -1;
-    return (va - vb) * mul || b.matches - a.matches;
+    return (va - vb) * mul || (b.matches ?? 0) - (a.matches ?? 0);
   });
 }
 
@@ -411,7 +411,7 @@ export function StatsLeaderboard() {
                     </TableCell>
                   ))}
                   <TableCell className="text-center text-xs text-muted-foreground tabular-nums">
-                    {row.matches}
+                    {row.matches ?? "—"}
                   </TableCell>
                 </TableRow>
               ))}
@@ -421,7 +421,13 @@ export function StatsLeaderboard() {
 
       {/* Pied : méthodologie + fraîcheur */}
       <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 px-4 py-2.5 text-[11px] text-muted-foreground sm:px-6">
-        <span>{t("sampleNote", { min: data?.meta.minMatches ?? 5 })}</span>
+        <span>
+          {data?.meta.source === "official-atp"
+            ? t("sourceOfficialAtp")
+            : data?.meta.source === "official-wta"
+              ? t("sourceOfficialWta", { min: data.meta.minMatches })
+              : t("sampleNote", { min: data?.meta.minMatches ?? 5 })}
+        </span>
         {generatedAt && <span>{t("generatedAt", { date: generatedAt })}</span>}
       </footer>
     </section>

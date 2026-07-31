@@ -2,6 +2,9 @@
 //
 // Leaderboard statistiques joueurs (type ATP Stats Leaderboard) calculé en
 // direct depuis `tennis_matches_internal` via src/lib/tennis-stats/leaderboard.
+// Si l'agrégation interne est vide (ETL Phase 4.1.1 en attente), repli sur les
+// caches officiels ATP/WTA scrapés (src/lib/tennis-stats/official-leaderboard)
+// — meta.source + meta.coverage signalent alors la provenance à l'UI.
 //
 // Query params (tous optionnels) :
 //   board=serve      — serve | return | pressure
@@ -35,6 +38,7 @@ import {
   type LeaderboardParams,
   type LeaderboardResult,
 } from "@/lib/tennis-stats/leaderboard";
+import { getOfficialLeaderboard } from "@/lib/tennis-stats/official-leaderboard";
 
 const CACHE_TTL_MS = 5 * 60_000; // 5 min — les stats changent lentement
 const CACHE_MAX_ENTRIES = 24; // combos de filtres récents (purge FIFO)
@@ -91,7 +95,26 @@ export async function GET(request: Request) {
       return NextResponse.json(hit.payload);
     }
 
-    const payload = getStatsLeaderboard(params);
+    let payload = getStatsLeaderboard(params);
+
+    // Repli officiel ATP/WTA quand l'agrégation interne est vide (base absente
+    // en dev, ou stats match-par-match pas encore peuplées par l'ETL).
+    if (payload.rows.length === 0) {
+      const official = getOfficialLeaderboard(params);
+      if (official) {
+        payload = {
+          rows: official.rows,
+          meta: {
+            ...params,
+            players: official.rows.length,
+            generatedAt: official.generatedAt,
+            dataUnavailable: false,
+            source: official.source,
+            coverage: official.coverage,
+          },
+        };
+      }
+    }
 
     // Purge FIFO simple si trop d'entrées.
     if (cache.size >= CACHE_MAX_ENTRIES) {

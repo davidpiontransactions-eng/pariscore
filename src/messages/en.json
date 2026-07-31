@@ -102,7 +102,9 @@
       "emptyUnavailable": "Statistics database unavailable — production data is not present in this environment.",
       "emptyNoPlayers": "No player meets the criteria (≥ {min} matches in scope).",
       "sampleNote": "Minimum {min} matches in scope · retirements excluded",
-      "generatedAt": "Computed on {date}"
+      "generatedAt": "Computed on {date}",
+      "sourceOfficialAtp": "Official atptour.com data · last 52 weeks · ATP eligibility",
+      "sourceOfficialWta": "Official wtatennis.com data · current season · all surfaces · ≥ {min} matches"
     },
     "syntheticBadge": "Limited live data — no predictive model",
     "spsExperimentalBadge": "beta",
