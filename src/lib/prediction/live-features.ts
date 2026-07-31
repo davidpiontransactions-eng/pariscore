@@ -129,7 +129,7 @@ const pair = (o: { home?: unknown; away?: unknown } | null | undefined) => {
 };
 
 /** Parse un score BSD (string "H-A" ou objet {home, away}). */
-export function parseScore(raw: BSDLiveMatch['live_score']): { home: number; away: number } {
+export function parseScore(raw: BSDLiveMatch['live_score'] | null): { home: number; away: number } {
   if (!raw) return { home: 0, away: 0 };
   if (typeof raw === 'object') {
     return { home: num(raw.home) ?? 0, away: num(raw.away) ?? 0 };

@@ -1,52 +1,48 @@
-# Session Memory — 2026-07-18
+# Session Memory — 2026-07-31 (Refonte UI/UX P5 — QA & Polish)
 
-## Task: Tennis Live Stats (BSD → SSE → React migration)
+## Résumé Exécutif
+Reprise de la session 2026-07-30 (P1-P4 complété, commit `1ed9576`). Exécution de P5 — QA & Polish : E2E tests, feature flags, PostHog tracking, corrections type.
 
-### Completed
-1. **Diagnostic** : 3 bugs dans `BSD WS → SSE → _tnRenderLiveStatsTable`
-   - Bug #1: `_bsd_stats` jamais mappé vers `live_stats` ni broadcast SSE → fallback DEMO
-   - Bug #2: `sfx='%'` double quand BSD renvoie `"65%"` → `é%` display
-   - Bug #3: `panel.dataset.rendered` empêche re-render après SSE update
+## Travail Réalisé (P5)
 
-2. **Fixes server.js** (48 lignes) :
-   - `_bridgeTennisStats(match, data)` : copie `_bsd_stats` → `data.*` avec sanitization NaN/`%`
-   - 14 keys tennis ajoutées à `live_stats` dans `applyLiveStats()`
-   - `_bsd_stats` ajouté aux `fullPatches` SSE
+### Corrections Préalables ✅
+- **tailwind.config.ts** : virgule manquante après `chart` → `chart,` (bloquait `tsc`)
+- **live-features.ts** : `parseScore(null)` accepté (ajout `| null` au type du paramètre)
+- **TSC** : 0 erreur après corrections
 
-3. **Fixes pariscore.js** (156 lignes) :
-   - `_tnSafeStatVal(v)` : coercion null-safe + cleanup `%`
-   - `_tnDataSentinel(m)` : validation stats avant render
-   - `_tnNormalizeTennisStats(m)` : merge `_bsd_stats` > `live_stats` > `sets[]`
-   - SSE live_patch handler : copie `_bsd_stats` → `live_stats` + invalide rendered flag
-   - `_tnToggleLiveStats` : retry avec `fetchTennisTop10()` avant fallback DEMO
-   - `_tnRenderServiceCircles()` : utilise `_tnSafeStatVal`
-   - Per-set stats : inlined avec normalized data
-   - Les deux fichiers passent `node --check`
+### Tâche 1 — Playwright E2E (24 tests) ✅
+Fichier `tests/refonte-v1.spec.ts` :
+- P1 Mobile Shell : 6 tests (bottom nav visible/masqué, 5 tabs, aria-selected, header)
+- P2 Data Viz : 6 tests (ConfidenceRing, EloChart, FormTimeline, StatsRadar, MomentumStoryline)
+- P3 Nouveaux Modules : 4 tests (OddsValueMatrix, H2HAdvanced, ScenarioSimulator, ValueHeatmap)
+- P4 Dashboard : 4 tests (TopValueBets, LiveNowCrossSport, QuickValueFilters, AIInsightCard)
+- Regression : 4 tests (title, sport tabs, theme toggle, language toggle)
+- PWA : 2 tests (manifest link, meta theme-color)
+- +1 bonus : no unhandled console errors
 
-4. **Config skills React** : 8 skills `jaballer/react-claude-skills` synchronisés
-   - Créé `opencode.json` avec allowlist de 153 skills
-   - Skills installés : `react-senior-ux`, `react-component-design`, `react-modern-react`, `react-api-consumer`, `react-performance`, `react-styling`, `react-utility-snippets`, `react-testing`
+### Tâche 5 — PostHog Feature Flags ✅
+- `src/lib/feature-flags.ts` : 10 flags refonte-v2-* + helper `isRefonteEnabled()`
+- `src/lib/analytics/refonte-events.ts` : 20 événements trackés (bottom nav, swipe, drawer, confidence ring, elo, form, radar, momentum, odds matrix, h2h, scenario, heatmap, dashboard, top value, live now, quick filter, ai insight)
 
-### Next steps (see todo.md)
-1. Hook `use-tennis-live-stats.ts` (Data Sentinel + SSE + Zod validation)
-2. Composant `live-stats-panel.tsx` (shadcn/ui Card/Table/Progress/Badge)
-3. Intégration dans le match card + cleanup legacy JS
+## Tâches P5 Restantes
+2. Lighthouse PWA >90 — à exécuter sur VPS
+3. WCAG 2.1 AA — audit contraste/aria/focus
+4. RGPD consent vérification — composants respectent consent gating (PostHog OK)
+6. PWA standalone smoke test — manifest + service worker
+7. Performance bundle <500KB gzip
+8. Revue finale GO/NO-GO
 
-### Key files
-- `pariscore.js` : legacy tennis live stats (~l.2324, SSE handler ~l.12458)
-- `server.js` : `_bridgeTennisStats` (~l.48708), `applyLiveStats` (~l.48753)
-- `src/hooks/use-live-matches.ts` : reference pattern socket.io hook
-- `src/lib/tennis-data.ts` : types TennisMatch/Player existants
-- `opencode.json` : skill allowlist (153 skills)
-- `todo.md` : remaining actions
+## Fichiers Créés (P5)
+- tests/refonte-v1.spec.ts (24 tests)
+- src/lib/feature-flags.ts (10 flags)
+- src/lib/analytics/refonte-events.ts (20 événements)
 
-### Architecture notes
-- Zod 4, socket.io-client ^4.8.3 disponibles
-- shadcn/ui style new-york, 48 composants installés
-- Tennis types existants dans `src/lib/tennis-data.ts` mais pas de types live stats React
-- SSR guard dans les hooks déjà pattern établi (`if (typeof window === 'undefined') return`)
+## Fichiers Modifiés (P5)
+- tailwind.config.ts (+1 virgule)
+- src/lib/prediction/live-features.ts (+| null)
 
-### Decisions
-- **XSS** : `_jsStr()` escape `'` → `&#39;` dans onclick template literals — 20 locations fixées
-- **Tennis live** : pas de React component existant → créer `src/components/tennis/`
-- **Data flow** : BSD WS → server.js → SSE `live_patch` → `useTennisLiveStats` hook → React component
+## Déploiement
+Commit: 1ed9576 (base) | TSC: clean ✅ | 24 E2E tests prêts
+
+## Docs Référence
+PROPOSITION_REFONTE_UI_UX_V1.md | docs/superpowers/plans/2026-07-30-refonte-v1-planning.md

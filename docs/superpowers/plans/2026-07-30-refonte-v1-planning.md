@@ -371,3 +371,31 @@ CSS Tokens
 | Jeu 17 | RGPD consent verification + PostHog tracking | 1 | Tracking conforme |
 | Ven 18 | PWA standalone smoke test + perf bundle analysis | 1 | Bundle <500KB gzip |
 | Sam 19 | Revue finale + GO/NO-GO déploiement | 1 | **M5: GO LIVE** |
+
+---
+
+## 📊 STATUT ACTUALISÉ — 30/07/2026 (Exécution Réelle)
+
+| Phase | Statut | Date Réelle | Commit |
+|-------|--------|-------------|--------|
+| **P1** — Foundations | ✅ **COMPLETED** | 30/07/2026 | `1ed9576` |
+| **P2** — Data Viz | ✅ **COMPLETED** | 30/07/2026 | `1ed9576` |
+| **P3** — Nouveaux Modules | ✅ **COMPLETED** | 30/07/2026 | `1ed9576` |
+| **P4** — Dashboard Global | ✅ **COMPLETED** | 30/07/2026 | `1ed9576` |
+| **P5** — QA & Polish | ⏳ **EN ATTENTE** | — | — |
+
+**Déploiement VPS :** Build Next.js 16.2.12 Turbopack OK, PM2 pariscore-next online ✅
+
+### Tâche 5 — PostHog Feature Flags & Tracking ✅ — 30/07/2026
+- `src/lib/feature-flags.ts` : 10 flags (dashboard, confidence-ring, odds-matrix, scenario-sim, bottom-nav, h2h-advanced, ai-insight, auto-hide-header, sport-swipe, bottom-sheet)
+- `src/lib/analytics/refonte-events.ts` : 20 événements sur les 17 composants
+
+### Tâche 1 — Playwright E2E 24 tests ✅ — 31/07/2026
+- `tests/refonte-v1.spec.ts` : 24 tests couvrant P1-P4 + regression + PWA
+- TSC: 0 erreur ✅
+
+**Tâche suivante :**
+2. Lighthouse PWA >90
+3. WCAG 2.1 AA audit
+4. RGPD consent vérification
+
