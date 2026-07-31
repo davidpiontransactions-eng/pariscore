@@ -47,16 +47,14 @@ export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
       role="tablist"
       aria-label="Sport selection"
     >
-      {/* Bannière fond sport actif (floutée + overlay sombre) */}
-      <div className="absolute inset-0 overflow-hidden opacity-30">
+      {/* Bannière fond sport actif (floutée via Unsplash + image/ blur param) */}
+      <div className="absolute inset-0 overflow-hidden opacity-50">
         <SportImage
           src={getSportBg(activeSport)}
           alt=""
           fill
-          darkOverlay
-          overlayIntensity="light"
-          blur
-          className="scale-110"
+          darkOverlay={false}
+          className="scale-110 blur-sm"
         />
       </div>
 

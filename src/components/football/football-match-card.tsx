@@ -50,14 +50,13 @@ export function FootballMatchCard({
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
       {/* Bannière ligue en fond (overlay sombre) */}
-      <div className="relative h-28 overflow-hidden sm:h-32">
+      <div className="relative h-36 overflow-hidden sm:h-44">
         <SportImage
           src={getLeagueBanner(null, "football")}
           alt={match.league.name}
           fill
           darkOverlay
-          overlayIntensity="heavy"
-          blur
+          overlayIntensity="medium"
           fallbackIcon={<Trophy className="h-8 w-8" />}
           sport="football"
         />

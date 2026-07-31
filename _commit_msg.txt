@@ -1,0 +1,6 @@
+fix: reduce image overlays - medium intensity for visibility
+
+- MatchCardBroadcast: heavy → medium overlay
+- FootballMatchCard: taller banner 36/44px + medium overlay
+- SportTabs: opacity 30%→50%, removed double overlay
+- FeaturedMatchesMarquee: heavy → medium overlay

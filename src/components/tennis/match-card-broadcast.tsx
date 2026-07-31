@@ -224,7 +224,7 @@ export function MatchCardBroadcast({
           alt=""
           fill
           darkOverlay
-          overlayIntensity="heavy"
+          overlayIntensity="medium"
           blur
           priority={priority}
         />

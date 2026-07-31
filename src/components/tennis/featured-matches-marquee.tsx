@@ -60,16 +60,15 @@ export function FeaturedMatchesMarquee({
       )}
       aria-label={t("featuredTitle")}
     >
-      {/* Fond section (flouté + overlay lourd) */}
+      {/* Fond section (flouté + overlay medium) */}
       <div className="absolute inset-0">
         <SportImage
           src={getSportBg("tennis")}
           alt=""
           fill
           darkOverlay
-          overlayIntensity="heavy"
-          blur
-          className="scale-110"
+          overlayIntensity="medium"
+          className="scale-110 blur-sm"
         />
       </div>
 
