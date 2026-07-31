@@ -16,7 +16,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 100,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Ajla_Tomljanovic_2022.jpg/220px-Ajla_Tomljanovic_2022.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "alejandro_davidovich_fokina",
@@ -52,7 +52,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 102,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ALEXANEALA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "amanda_anisimova",
@@ -61,7 +61,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 103,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ANISIMOVA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "andrey_rublev",
@@ -79,7 +79,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 104,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Anett_Kontaveit_2022.jpg/220px-Anett_Kontaveit_2022.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "angelique_kerber",
@@ -88,7 +88,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 105,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Angelique_Kerber_2019.jpg/220px-Angelique_Kerber_2019.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "anna_kalinskaya",
@@ -97,7 +97,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 106,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/AKALINSKAYA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "arthur_fils",
@@ -115,7 +115,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 107,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SABALENKA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "asia_muhammad",
@@ -124,7 +124,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 108,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/AMUHAMMAD.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "barbora_krejcikova",
@@ -133,7 +133,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 109,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BKREJCIKOVA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "beatriz_haddad_maia",
@@ -142,7 +142,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 110,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/HADDADMA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "belinda_bencic",
@@ -151,7 +151,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 111,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BBENCIC.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "bethanie_mattek_sands",
@@ -160,7 +160,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 112,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MATSANDS.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "bianca_andreescu",
@@ -169,7 +169,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 113,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/BANDREESCU.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "borna_coric",
@@ -196,7 +196,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 114,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Caroline_Garcia_2018.jpg/220px-Caroline_Garcia_2018.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "casper_ruud",
@@ -214,7 +214,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 115,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Catherine_McNally_2021.jpg/220px-Catherine_McNally_2021.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "coco_gauff",
@@ -223,7 +223,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 116,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/CGAUFF.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "danielle_collins",
@@ -232,7 +232,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 117,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DCOLLINS.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "daniil_medvedev",
@@ -250,7 +250,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 118,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DKASAT.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "david_goffin",
@@ -268,7 +268,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 119,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/DKRAWCZYK.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "ekaterina_alexandrova",
@@ -277,7 +277,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 120,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/EALEXANDRO.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "elena_rybakina",
@@ -286,7 +286,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 121,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Elena_Rybakina_2023.jpg/220px-Elena_Rybakina_2023.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "elina_svitolina",
@@ -295,7 +295,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 122,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Elina_Svitolina_2021.jpg/220px-Elina_Svitolina_2021.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "elise_mertens",
@@ -304,7 +304,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 123,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/EMERTENS.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "emma_navarro",
@@ -313,7 +313,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 124,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/EMNAVARRO.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "felix_auger_aliassime",
@@ -349,7 +349,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 125,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Garbine_Muguruza_2019.jpg/220px-Garbine_Muguruza_2019.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "grigor_dimitrov",
@@ -385,7 +385,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 127,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ISWIATEK.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "iva_jovic",
@@ -394,7 +394,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 128,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/IVAJOVIC.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "jack_draper",
@@ -421,7 +421,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 129,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JASPAOLINI.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "jelena_ostapenko",
@@ -430,7 +430,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 130,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Jelena_Ostapenko_2017.jpg/220px-Jelena_Ostapenko_2017.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "jenson_brooksby",
@@ -448,7 +448,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 132,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/JPEGULA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "jiri_lehecka",
@@ -484,7 +484,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 135,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MUCHOVA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "karolina_pliskova",
@@ -493,7 +493,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 136,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9f/Karolina_Pliskova_2019.jpg/220px-Karolina_Pliskova_2019.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "katie_boulter",
@@ -502,7 +502,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 137,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/KBOULTER.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "leylah_fernandez",
@@ -520,7 +520,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 139,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Liudmila_Samsonova_2022.jpg/220px-Liudmila_Samsonova_2022.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "madison_keys",
@@ -529,7 +529,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 140,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MADKEYS.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "maja_chwalinska",
@@ -538,7 +538,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 141,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MCHWALINSK.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "marcos_giron",
@@ -556,7 +556,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 143,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SAKKARI.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "maria_sakkari2",
@@ -565,7 +565,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 144,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Maria_Sakkari_2022.jpg/220px-Maria_Sakkari_2022.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "marin_cilic",
@@ -583,7 +583,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 145,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/Marketa_Vondrousova_2023.jpg/220px-Marketa_Vondrousova_2023.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "marta_kostyuk",
@@ -592,7 +592,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 146,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MKOSTYUK.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "martina_trevisan",
@@ -601,7 +601,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 147,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Martina_Trevisan_2022.jpg/220px-Martina_Trevisan_2022.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "matteo_arnaldi",
@@ -637,7 +637,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 149,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/MANDREEVA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "naomi_osaka",
@@ -646,7 +646,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 150,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/NOSAKA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "nick_kyrgios",
@@ -673,7 +673,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 152,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/ONSJABEUR.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "paula_badosa",
@@ -682,7 +682,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 153,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/PBADOSA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "petra_kvitova",
@@ -691,7 +691,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 154,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Petra_Kvitova_2019.jpg/220px-Petra_Kvitova_2019.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "roberto_bautista_agut",
@@ -736,7 +736,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 157,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Serena_Williams_2013_US_Open.jpg/220px-Serena_Williams_2013_US_Open.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "shuai_zhang",
@@ -754,7 +754,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 159,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Simona_Halep_2022.jpg/220px-Simona_Halep_2022.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "sofia_kenin",
@@ -763,7 +763,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 160,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SKENIN.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "sorana_cirstea",
@@ -772,7 +772,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 161,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/SCIRSTEA.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "tallon_griekspoor",
@@ -808,7 +808,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 163,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Venus_Williams_2018_Wimbledon.jpg/220px-Venus_Williams_2018_Wimbledon.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "veronika_kudermetova",
@@ -817,7 +817,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 164,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/VKUDERMET.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "victoria_azarenka",
@@ -826,7 +826,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 165,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Victoria_Azarenka_2020.jpg/220px-Victoria_Azarenka_2020.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "victoria_mboko",
@@ -835,7 +835,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 166,
     country: "XX",
     photoUrl: "https://img.tennis-warehouse.com/graphics-Resizer/headshots/VICKYMBOKO.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
   {
     id: "zhu_lin",
@@ -844,7 +844,7 @@ export const TOP_PLAYERS: PlayerResult[] = [
     rank: 167,
     country: "XX",
     photoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Zhu_Lin_2023.jpg/220px-Zhu_Lin_2023.jpg",
-    circuit: "ATP",
+    circuit: "WTA",
   },
 ];
 
