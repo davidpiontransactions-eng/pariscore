@@ -11,6 +11,8 @@
 //   football → /football/getMoney            (FREE — i rempli)
 //   tennis   → /tennis/getMoney sinon /unauthorized/tennis/getMoney
 //              ⚠️ Tennis = "Extra Sports" PAYANT. Sans session abonnée, i nullé.
+//              Nécessite BETWATCH_USER + BETWATCH_PASS dans .env pour login.
+//              Le login utilise la session browse/flaresolverr existante.
 //
 // Usage:
 //   node tools/scrape-betwatch-wom.js [YYYY-MM-DD] [+nbJours]
@@ -55,6 +57,106 @@ function resolveBrowse() {
     path.join(HOME, '.claude/skills/gstack/browse/dist/browse'),
   ].filter(Boolean);
   for (const c of cands) { try { if (fs.statSync(c).isFile()) return c; } catch {} }
+
+// ── Betwatch Authentication (for tennis WOM) ────────────────────────────────
+const BW_USER = () => process.env.BETWATCH_USER || '';
+const BW_PASS = () => process.env.BETWATCH_PASS || '';
+
+function bwLoginNeeded() { return !!(BW_USER() && BW_PASS()); }
+
+function bwLoginBrowse() {
+  // Login via gstack browse (headed browser) — fills form, submits, waits for redirect
+  const loginUrl = ORIGIN + '/account/login/?next=/tennis/';
+  console.log('[betwatch] Login: navigating to', loginUrl);
+  tryBrowse(['goto', loginUrl], 40000);
+  sleep(3000);
+  
+  // Fill credentials
+  tryBrowse(['js', `document.querySelector('input[name="username"],input[name="login"],input[name="email"],input[type="email"],input[type="text"]').value = '${BW_USER()}'`]);
+  sleep(500);
+  tryBrowse(['js', `document.querySelector('input[name="password"],input[type="password"]').value = '${BW_PASS()}'`]);
+  sleep(500);
+  
+  // Submit
+  tryBrowse(['js', `document.querySelector('form').submit()`]);
+  sleep(5000);
+  
+  // Check if login succeeded
+  const title = (tryBrowse(['js', 'document.title']) || '').trim();
+  const url = (tryBrowse(['js', 'location.href']) || '').trim();
+  console.log('[betwatch] Login result — title:', title, 'url:', url ? url.slice(0, 80) : '?');
+  
+  if (/login/i.test(url) || /login/i.test(title)) {
+    console.warn('[betwatch] Login FAILED — check BETWATCH_USER/PASS');
+    return false;
+  }
+  console.log('[betwatch] Login OK — tennis WOM unlocked');
+  return true;
+}
+
+async function bwLoginFS() {
+  // Login via FlareSolverr — POST to login endpoint
+  console.log('[betwatch] Login via FlareSolverr...');
+  const loginUrl = ORIGIN + '/account/login/';
+  
+  // First GET to get CSRF token + cookies
+  let res = await fsRequest(loginUrl);
+  if (!res || res.status !== 'ok') { console.warn('[betwatch] Login GET failed'); return false; }
+  
+  // Extract CSRF token from response HTML
+  const html = res.solution.response || '';
+  const csrfMatch = html.match(/csrfmiddlewaretoken['\" ]+value=['\"]([^'\"]+)['\"]/i);
+  const csrf = csrfMatch ? csrfMatch[1] : '';
+  
+  // Extract cookies from initial GET
+  const cookies = (res.solution.cookies || []).map(c => c.name + '=' + c.value).join('; ');
+  
+  // POST login via FlareSolverr
+  const postData = 'username=' + encodeURIComponent(BW_USER()) + '&password=' + encodeURIComponent(BW_PASS()) + (csrf ? '&csrfmiddlewaretoken=' + encodeURIComponent(csrf) : '') + '&next=%2Ftennis%2F';
+  
+  const postRes = await new Promise((resolve, reject) => {
+    const body = JSON.stringify({ 
+      cmd: 'request.post', 
+      url: loginUrl, 
+      postData: postData,
+      maxTimeout: 70000 
+    });
+    const u = new URL(FS_URL + '/v1');
+    const req = http.request({
+      hostname: u.hostname, port: u.port || 80, path: u.pathname, method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Content-Length': Buffer.byteLength(body),
+        'Cookie': cookies
+      }, 
+      timeout: 95000,
+    }, r => { let b = ''; r.on('data', c => (b += c)); r.on('end', () => { try { resolve(JSON.parse(b)); } catch (e) { reject(e); } }); });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('flaresolverr timeout')));
+    req.end(body);
+  });
+  
+  if (!postRes || postRes.status !== 'ok') { 
+    console.warn('[betwatch] Login POST failed:', postRes && postRes.message); 
+    return false; 
+  }
+  
+  // Check if we were redirected away from login
+  const finalUrl = postRes.solution.url || '';
+  if (/login/i.test(finalUrl)) {
+    console.warn('[betwatch] Login FAILED — credentials rejected (still on login page)');
+    return false;
+  }
+  console.log('[betwatch] Login OK via FlareSolverr — tennis WOM unlocked');
+  return true;
+}
+
+async function bwLogin() {
+  if (!bwLoginNeeded()) return false;
+  if (FS_URL) return bwLoginFS();
+  return bwLoginBrowse();
+}
+
   throw new Error('gstack browse binary introuvable (set BROWSE_BIN= ou FLARESOLVERR_URL=)');
 }
 const BROWSE = FS_URL ? null : resolveBrowse();
@@ -213,6 +315,12 @@ function postDiscord(webhook, content) {
     const title = warmCloudflareBrowse();
     if (/moment|Just/i.test(title) || !title) { console.error('[betwatch] ÉCHEC Cloudflare (browse) — "' + title + '"'); process.exit(2); }
     console.log('[betwatch] CF OK — "' + title + '"');
+  }
+
+  // Betwatch login for tennis WOM (Extra Sports = paywall)
+  if (bwLoginNeeded()) {
+    const loggedIn = await bwLogin();
+    if (!loggedIn) console.warn('[betwatch] Tennis WOM will be unavailable (login failed)');
   }
 
   const seen = new Map();
