@@ -75,7 +75,7 @@ function _loadSmarkets() {
   return _smarketsCache;
 }
 
-function _find(needle, cache) {
+function _lookup(needle, cache) {
   const c = cache;
   if (!c) return null;
   const h = norm(needle.home_team || needle.player1 || needle.p1);
@@ -96,10 +96,10 @@ function _find(needle, cache) {
 // Cherche l'entrée WOM pour un match PariScore (betwatch + smarkets fallback).
 function _find(match) {
   // 1. betwatch (football + tennis si login)
-  let hit = _find(match, _load());
+  let hit = _lookup(match, _load());
   if (hit) return hit;
   // 2. smarkets (tennis uniquement — fallback gratuit)
-  return _find(match, _loadSmarkets());
+  return _lookup(match, _loadSmarkets());
 }
 
 // Retourne le WOM au format betfairService (réutilise le panneau UI déjà câblé).

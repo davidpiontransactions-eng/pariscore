@@ -126,6 +126,8 @@ scrapy_project/.mcp-output/
 scrapy_project/.mcp-crawl-*.jsonl
 data/scrapy-tests/
 data/scrapling-tests/
+data/betwatch_wom.json
+data/smarkets_tennis_wom.json
 
 # =============================================================================
 # Langflow artifacts (intégration 2026-07-13)

@@ -52813,6 +52813,30 @@ if (!process.env.BETWATCH_DISABLED) {
   setTimeout(_runBetwatch, 10000); // premier run 10s après boot
 }
 
+// Smarkets Exchange WOM scraping toutes les 10 min → data/smarkets_tennis_wom.json
+// Alternative gratuite au Betwatch pour le tennis (API publique, pas géobloqué, pas login).
+// Désactivé si SMARKETS_DISABLED=1. Rate limit: ~10 appels/min (500ms entre chaque).
+if (!process.env.SMARKETS_DISABLED) {
+  const _smScript = require('path').join(__dirname, 'tools', 'scrape-smarkets-tennis-wom.js');
+  const _runSmarkets = () => {
+    const _p = require('child_process').spawn(process.execPath, [_smScript], { stdio: 'inherit', timeout: 90000 });
+    _p.on('error', e => console.warn('[Smarkets-cron] spawn error:', e.message));
+    _p.on('exit', code => {
+      if (code !== 0) { console.warn('[Smarkets-cron] exit code:', code); return; }
+      // Enrichit db.matches après chaque scrape réussi
+      try {
+        if (Array.isArray(db.matches) && womLocal?.fetchMatchWOM) {
+          let n = 0;
+          db.matches.forEach(m => { try { if (m.betfair_wom) return; const _bw = womLocal.fetchMatchWOM({ home_team: m.home_team, away_team: m.away_team }); if (_bw?.wom?.home != null) { m.betfair_wom = { h: _bw.wom.home, d: _bw.wom.draw, a: _bw.wom.away, total_matched: _bw.totalMatched || null, currency: 'GBP', source: 'smarkets', ts: _bw.ts }; n++; } } catch(_){} });
+          if (n > 0) console.log(`  [Smarkets-cron] ${n} match(es) enrichi(s) avec WOM smarkets`);
+        }
+      } catch(_) {}
+    });
+  };
+  setInterval(_runSmarkets, 10 * 60 * 1000);
+  setTimeout(_runSmarkets, 30000); // premier run 30s après boot (décalé vs betwatch 10s)
+}
+
 
 
 
