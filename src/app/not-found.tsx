@@ -1,18 +1,11 @@
-"use client";
+import { getTranslations } from "next-intl/server";
+import { Trophy, Home, RefreshCw } from "lucide-react";
 
-import { useEffect } from "react";
-import { useTranslations } from "next-intl";
-import { useAnalytics } from "@/components/analytics-provider";
-import { Trophy, RefreshCw, Home, AlertTriangle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+// not-found.tsx est prerendré statiquement par Next.js → doit être un Server Component.
+// Les hooks client (useTranslations, useAnalytics) ne sont pas disponibles ici.
 
-export default function NotFound() {
-  const t = useTranslations("errors");
-  const { track } = useAnalytics();
-
-  useEffect(() => {
-    track("404_viewed", { path: typeof window !== "undefined" ? window.location.pathname : "" });
-  }, [track]);
+export default async function NotFound() {
+  const t = await getTranslations("errors");
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 text-center">
@@ -27,14 +20,20 @@ export default function NotFound() {
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button onClick={() => (window.location.href = "/")} className="bg-emerald-600 hover:bg-emerald-700">
-          <Home className="mr-2 h-4 w-4" />
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+        >
+          <Home className="h-4 w-4" />
           {t("notFound.home")}
-        </Button>
-        <Button variant="outline" onClick={() => window.history.back()}>
-          <RefreshCw className="mr-2 h-4 w-4" />
+        </a>
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 rounded-md border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800 transition-colors"
+        >
+          <RefreshCw className="h-4 w-4" />
           {t("notFound.back")}
-        </Button>
+        </a>
       </div>
     </div>
   );
