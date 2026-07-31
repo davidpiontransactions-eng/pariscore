@@ -367,11 +367,8 @@ export function getOfficialLeaderboard(
   params: LeaderboardParams
 ): OfficialLeaderboardResult | null {
   try {
-    const result = params.tour === "atp" ? officialAtp(params) : officialWta(params);
-    console.warn("[official-leaderboard] DATA_DIR:", DATA_DIR, "tour:", params.tour, "result:", result ? `${result.rows.length} rows` : "null");
-    return result;
-  } catch (err) {
-    console.error("[official-leaderboard] ERREUR:", (err as Error).message, "DATA_DIR:", DATA_DIR);
+    return params.tour === "atp" ? officialAtp(params) : officialWta(params);
+  } catch {
     return null;
   }
 }
