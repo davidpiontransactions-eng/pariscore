@@ -137,15 +137,15 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 |-----------|------|------|
 | sport-tabs | sport-tabs.tsx | Onglets de navigation entre sports |
 
-## UI primitives (`src/components/ui/`) — 48 components (shadcn/ui, New York)
+## UI primitives (`src/components/ui/`) — 50 components (shadcn/ui, New York)
 
 Standard shadcn/ui set, owned in-repo. Full list: `accordion`, `alert`,
 `alert-dialog`, `aspect-ratio`, `avatar`, `badge`, `breadcrumb`, `button`,
 `calendar`, `card`, `carousel`, `chart`, `checkbox`, `collapsible`, `command`,
 `context-menu`, `dialog`, `drawer`, `dropdown-menu`, `form`, `hover-card`,
 `input-otp`, `input`, `label`, `menubar`, `navigation-menu`, `pagination`,
-`popover`, `progress`, `radio-group`, `resizable`, `scroll-area`, `select`,
-`separator`, `sheet`, `skeleton`, `slider`, `sonner`, `spinner`, `switch`,
+`player-avatar`, `popover`, `progress`, `radio-group`, `resizable`, `scroll-area`, `select`,
+`separator`, `sheet`, `skeleton`, `slider`, `sonner`, `spinner`, `sport-image`, `switch`,
 `table`, `tabs`, `textarea`, `toast`, `toggle`, `toggle-group`, `tooltip`,
 `typography`.
 

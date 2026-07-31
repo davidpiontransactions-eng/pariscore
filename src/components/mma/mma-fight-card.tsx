@@ -7,6 +7,7 @@ import { format, parseISO } from "date-fns";
 import { ProbabilityRing } from "@/components/tennis/probability-ring";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { FormTimeline } from "@/components/shared/form-timeline";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { cn } from "@/lib/utils";
 
 export type MmaFight = {
@@ -89,21 +90,12 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
         <div className="flex items-center justify-between gap-3">
           {/* Fighter A */}
           <div className="flex flex-1 flex-col items-center gap-2 text-center">
-            {fight.photo_a ? (
-              <img
-                src={fight.photo_a}
-                alt={fight.fighter_a}
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white/20"
-              />
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-bold uppercase text-white/60">
-                {fight.fighter_a
-                  .split(" ")
-                  .map((w) => w[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
-            )}
+            <PlayerAvatar
+              name={fight.fighter_a}
+              photoUrl={fight.photo_a}
+              size="lg"
+              sport="mma"
+            />
             <span className="text-sm font-bold leading-tight tracking-tight">
               {fight.fighter_a}
             </span>
@@ -158,21 +150,12 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
 
           {/* Fighter B */}
           <div className="flex flex-1 flex-col items-center gap-2 text-center">
-            {fight.photo_b ? (
-              <img
-                src={fight.photo_b}
-                alt={fight.fighter_b}
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white/10"
-              />
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-bold uppercase text-white/60">
-                {fight.fighter_b
-                  .split(" ")
-                  .map((w) => w[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
-            )}
+            <PlayerAvatar
+              name={fight.fighter_b}
+              photoUrl={fight.photo_b}
+              size="lg"
+              sport="mma"
+            />
             <span className="text-sm font-bold leading-tight tracking-tight">
               {fight.fighter_b}
             </span>

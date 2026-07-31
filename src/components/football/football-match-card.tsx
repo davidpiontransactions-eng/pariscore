@@ -5,6 +5,9 @@ import type { FootballMatch, Prediction } from "@/lib/football-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { FormTimeline } from "@/components/shared/form-timeline";
+import { SportImage } from "@/components/ui/sport-image";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { getLeagueBanner } from "@/lib/sport-images";
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso);
@@ -46,40 +49,53 @@ export function FootballMatchCard({
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
-      <div className="p-4">
-        {/* Header: league + time */}
-        <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
+      {/* Bannière ligue en fond (overlay sombre) */}
+      <div className="relative h-28 overflow-hidden sm:h-32">
+        <SportImage
+          src={getLeagueBanner(null, "football")}
+          alt={match.league.name}
+          fill
+          darkOverlay
+          overlayIntensity="heavy"
+          blur
+          fallbackIcon={<Trophy className="h-8 w-8" />}
+          sport="football"
+        />
+        {/* Texte ligue + round superposé */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-3">
           <div className="flex items-center gap-1.5">
-            <span>{match.league.logo}</span>
-            <span className="font-medium">{match.league.name}</span>
-            <span className="text-[10px] text-muted-foreground/60">·</span>
-            <span>{match.round}</span>
+            <span className="text-xs font-bold text-white/90">{match.league.logo}</span>
+            <span className="text-xs font-semibold text-white/80">{match.league.name}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 text-xs text-white/60">
             <Clock className="h-3 w-3" />
             <span>{formatKickoff(match.scheduledAt)}</span>
-            <span className="hidden text-[10px] text-muted-foreground/60 sm:inline">
+            <span className="hidden text-[10px] sm:inline">
               · {getDay(match.scheduledAt)}
             </span>
           </div>
+        </div>
+      </div>
+
+      <div className="p-4 pt-3">
+        {/* Round */}
+        <div className="mb-2 text-center">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            {match.round}
+          </span>
         </div>
 
         {/* Teams */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
           {/* Home */}
           <div className="flex flex-col items-center gap-1.5 text-center">
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
-              {match.home.logo ? (
-                <img
-                  src={match.home.logo}
-                  alt={match.home.name}
-                  className="h-8 w-8 object-contain"
-                  loading={priority ? "eager" : "lazy"}
-                />
-              ) : (
-                <Trophy className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
+            <PlayerAvatar
+              name={match.home.name}
+              photoUrl={match.home.logo}
+              color={match.home.color}
+              size="lg"
+              sport="football"
+            />
             <span className="text-sm font-semibold leading-tight">{match.home.shortName}</span>
             <FormTimeline form={match.home.form} showIndex={false} size="sm" />
           </div>
@@ -112,18 +128,13 @@ export function FootballMatchCard({
 
           {/* Away */}
           <div className="flex flex-col items-center gap-1.5 text-center">
-            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
-              {match.away.logo ? (
-                <img
-                  src={match.away.logo}
-                  alt={match.away.name}
-                  className="h-8 w-8 object-contain"
-                  loading={priority ? "eager" : "lazy"}
-                />
-              ) : (
-                <Trophy className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
+            <PlayerAvatar
+              name={match.away.name}
+              photoUrl={match.away.logo}
+              color={match.away.color}
+              size="lg"
+              sport="football"
+            />
             <span className="text-sm font-semibold leading-tight">{match.away.shortName}</span>
             <FormTimeline form={match.away.form} showIndex={false} size="sm" />
           </div>

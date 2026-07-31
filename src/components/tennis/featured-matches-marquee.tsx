@@ -6,6 +6,8 @@ import { MatchCardBroadcast } from "./match-card-broadcast";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import type { WeeklyMarqueeConfig } from "@/lib/weekly-marquee";
+import { SportImage } from "@/components/ui/sport-image";
+import { getSportBg } from "@/lib/sport-images";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -53,13 +55,26 @@ export function FeaturedMatchesMarquee({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-6xl px-4 pt-6 sm:px-6",
+        "relative mx-auto w-full max-w-6xl overflow-hidden px-4 pt-6 sm:px-6",
         className,
       )}
       aria-label={t("featuredTitle")}
     >
-      {/* Titre de section */}
-      <div className="mb-3 flex items-baseline justify-between gap-2">
+      {/* Fond section (flouté + overlay lourd) */}
+      <div className="absolute inset-0">
+        <SportImage
+          src={getSportBg("tennis")}
+          alt=""
+          fill
+          darkOverlay
+          overlayIntensity="heavy"
+          blur
+          className="scale-110"
+        />
+      </div>
+
+      {/* Titre de section (au-dessus du fond) */}
+      <div className="relative z-10 mb-3 flex items-baseline justify-between gap-2">
         <div>
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.1em] text-amber-500 dark:text-amber-400">
             <span aria-hidden>⭐</span>
@@ -78,8 +93,9 @@ export function FeaturedMatchesMarquee({
         )}
       </div>
 
-      {/* Carrousel horizontal */}
-      <Carousel
+      {/* Carrousel horizontal (au-dessus du fond) */}
+      <div className="relative z-10">
+        <Carousel
         opts={{
           align: "start",
           loop: false,
@@ -108,6 +124,7 @@ export function FeaturedMatchesMarquee({
         <CarouselPrevious className="hidden sm:flex" />
         <CarouselNext className="hidden sm:flex" />
       </Carousel>
+      </div>
     </section>
   );
 }

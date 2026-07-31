@@ -14,6 +14,29 @@ const nextConfig: NextConfig = {
   // tennis-stats pour lire pariscore.db. Il doit rester externe au bundle
   // server de Next.js — sinon le build standalone échoue à le résoudre.
   serverExternalPackages: ["better-sqlite3", "pariscore-services"],
+
+  // ─── Images : CDN autorisés pour next/image ─────────────────────────────
+  images: {
+    remotePatterns: [
+      // Logos équipes foot (existants)
+      { protocol: "https", hostname: "sfile.chatglm.cn" },
+      // Unsplash — visuels sportifs génériques
+      { protocol: "https", hostname: "images.unsplash.com" },
+      // API-Football — logos équipes / ligues (si dispo)
+      { protocol: "https", hostname: "media.api-sports.io" },
+      // Smarkets / Betwatch — photos joueurs tennis si fournies
+      { protocol: "https", hostname: "api.smarkets.com" },
+      { protocol: "https", hostname: "betwatch.fr" },
+      // BSD — logos / photos si exposés
+      { protocol: "https", hostname: "sports.bzzoiro.com" },
+      // Wikipedia / Commons — fallback logos ligues (CC)
+      { protocol: "https", hostname: "upload.wikimedia.org" },
+      // Placeholder local (fallback ultime)
+      { protocol: "https", hostname: "placehold.co" },
+    ],
+    // Formats modernes pour PWA légère
+    formats: ["image/avif", "image/webp"],
+  },
 };
 
 // Sentry is conditionally wrapped — only when SENTRY_DSN is configured.

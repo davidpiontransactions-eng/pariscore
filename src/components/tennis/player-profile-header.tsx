@@ -3,12 +3,8 @@
 /**
  * PlayerProfileHeader — Avatar + nom tronqué "A. Rublev"
  *
- * Composant réutilisable pour le haut de carte PREMATCH et LIVE.
- * Gère automatiquement :
- *   - Troncature du prénom : "Andrey Rublev" → "A. Rublev"
- *   - Photo joueur via Avatar shadcn (Radix)
- *   - Fallback initiales si photo manquante / erreur de chargement
- *   - Anneau coloré autour de l'avatar (couleur du joueur)
+ * Migré vers `<PlayerAvatar />` (next/image, fallback unifié, badge pays).
+ * Conserve l'API publique existante pour la rétro-compatibilité.
  *
  * Utilisation :
  *   <PlayerProfileHeader
@@ -16,15 +12,12 @@
  *     photoUrl="https://..."
  *     color="#B91C1C"
  *     size="lg"
+ *     countryCode="RU"
  *   />
  */
 
 import { cn } from "@/lib/utils";
-import {
-  Avatar,
-  AvatarImage,
-  AvatarFallback,
-} from "@/components/ui/avatar";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
 
 export type ProfileSize = "sm" | "md" | "lg";
 
@@ -37,17 +30,12 @@ type Props = {
   color?: string;
   /** Taille du profile : sm=40px, md=56px, lg=72px (défaut) */
   size?: ProfileSize;
+  /** Code pays ISO (optionnel — badge drapeau) */
+  countryCode?: string | null;
   /** Image prioritaire (loading eager + fetchPriority high) pour LCP */
   priority?: boolean;
   /** Classes additionnelles */
   className?: string;
-};
-
-// Map taille → dimensions en px
-const SIZE_MAP: Record<ProfileSize, { avatar: number; ring: number }> = {
-  sm: { avatar: 40, ring: 44 },
-  md: { avatar: 56, ring: 60 },
-  lg: { avatar: 72, ring: 76 },
 };
 
 /**
@@ -69,7 +57,6 @@ export function truncateName(fullName: string): string {
 
   // Premier token (prénom) → première lettre majuscule + point
   const firstName = parts[0];
-  // Prendre la première lettre réelle (ignore diacritiques pour le trim)
   const initial = firstName
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")[0]
@@ -104,47 +91,19 @@ export function PlayerProfileHeader({
   photoUrl,
   color = "#6366f1",
   size = "lg",
+  countryCode,
   priority = false,
   className,
 }: Props) {
-  const dims = SIZE_MAP[size];
-
   return (
-    <div className={cn("relative inline-flex shrink-0", className)}>
-      {/* Anneau lumineux arrière-plan */}
-      {color && (
-        <div
-          className="pointer-events-none absolute -inset-[2px] rounded-full opacity-20"
-          style={{ background: color }}
-          aria-hidden
-        />
-      )}
-
-      {/* Avatar Radix avec fallback initiales */}
-      <Avatar
-        className="relative ring-2 ring-offset-2 ring-offset-background"
-        style={{
-          width: dims.avatar,
-          height: dims.avatar,
-          "--tw-ring-color": color,
-        } as React.CSSProperties}
-      >
-        <AvatarImage
-          src={photoUrl ?? undefined}
-          alt={name}
-          width={dims.avatar}
-          height={dims.avatar}
-          className="object-cover"
-          loading={priority ? "eager" : "lazy"}
-          fetchPriority={priority ? "high" : "auto"}
-        />
-        <AvatarFallback
-          className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
-          style={{ backgroundColor: `${color}15` }}
-        >
-          {getInitials(name)}
-        </AvatarFallback>
-      </Avatar>
-    </div>
+    <PlayerAvatar
+      name={name}
+      photoUrl={photoUrl}
+      color={color}
+      size={size}
+      countryCode={countryCode}
+      priority={priority}
+      className={className}
+    />
   );
 }

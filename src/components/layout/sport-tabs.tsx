@@ -12,9 +12,11 @@ import {
   Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getSportBg, type SportId } from "@/lib/sport-images";
+import { SportImage } from "@/components/ui/sport-image";
 
 type TabDef = {
-  id: string;
+  id: SportId;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   accent: string;
@@ -37,13 +39,28 @@ type SportTabsProps = {
 };
 
 export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
+  const activeSport = (activeTab as SportId) || "football";
+
   return (
     <nav
       className="relative flex w-full overflow-x-auto bg-[#0F0F1A] scrollbar-hide"
       role="tablist"
       aria-label="Sport selection"
     >
-      <div className="flex min-w-max items-center gap-1 px-4 py-2">
+      {/* Bannière fond sport actif (floutée + overlay sombre) */}
+      <div className="absolute inset-0 overflow-hidden opacity-30">
+        <SportImage
+          src={getSportBg(activeSport)}
+          alt=""
+          fill
+          darkOverlay
+          overlayIntensity="light"
+          blur
+          className="scale-110"
+        />
+      </div>
+
+      <div className="relative z-10 flex min-w-max items-center gap-1 px-4 py-2.5">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;

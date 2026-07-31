@@ -42,6 +42,9 @@ import { LiveStatsPanel } from "./live-stats-panel";
 import { StatsIndicatorsGrid } from "./stats-indicators-grid";
 import { MatchCardDetail } from "./match-card-detail";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
+import { CountryFlag } from "./country-flag";
+import { SportImage } from "@/components/ui/sport-image";
+import { getSportBg } from "@/lib/sport-images";
 import { fmtSPS } from "@/lib/tennis-stats/sps-utils";
 import { resolveTournamentTheme } from "@/lib/tournament-theme";
 import { useFormattedMatchTime, formatPlayerName } from "@/lib/tennis-format";
@@ -210,13 +213,29 @@ export function MatchCardBroadcast({
           HERO BROADCAST — image fond + overlay + grid 3 colonnes
           ════════════════════════════════════════════════════════════════ */}
       <div
-        className="relative"
+        className="relative overflow-hidden"
         style={{
-          background: theme.background,
           minHeight: isLive ? 320 : 280,
         }}
       >
-        {/* Logo tournoi en watermark (si tournoi reconnu) */}
+        {/* Image sportive de fond (dégradé assombrissant intégré via SportImage) */}
+        <SportImage
+          src={getSportBg("tennis")}
+          alt=""
+          fill
+          darkOverlay
+          overlayIntensity="heavy"
+          blur
+          priority={priority}
+        />
+
+        {/* Fond thématique tournoi (par dessus l'image) */}
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{ background: theme.background }}
+          aria-hidden
+        />
+        {/* Logo tournoi watermark */}
         {theme.logoUrl && (
           <img
             src={theme.logoUrl}
@@ -228,8 +247,7 @@ export function MatchCardBroadcast({
           />
         )}
 
-        {/* Scrim sombre pour contraste du texte blanc */}
-        <div className="absolute inset-0 bg-black/40" aria-hidden />
+        {/* Scrim déjà géré par SportImage (overlayIntensity="heavy") */}
 
         {/* Overlay TOP — 3 colonnes : date (g) · tournoi+round centrés (m) · LIVE/favori (d)
             R7.2 hotfix : tournoi + round déplacés au centre (avant à gauche en
@@ -684,12 +702,13 @@ function BroadcastPlayerColumn({
 
   return (
     <div className="flex min-w-0 flex-col items-center gap-2 text-center sm:gap-3">
-      {/* Avatar + anneau couleur */}
+      {/* Avatar + anneau couleur + drapeau */}
       <PlayerProfileHeader
         name={player.name}
         photoUrl={player.photoUrl}
         color={player.color}
         size="md"
+        countryCode={player.country}
         priority={priority}
       />
 
@@ -703,8 +722,11 @@ function BroadcastPlayerColumn({
 
       {/* Colonne métriques 4 lignes (R7 review : white/60 minimum pour AA strict) */}
       <div className="flex flex-col items-center gap-0.5 font-mono text-[11px] tabular-nums">
-        {/* Ligne 1 : classement */}
-        <span className="text-white/80">
+        {/* Ligne 1 : classement + drapeau */}
+        <span className="flex items-center gap-1 text-white/80">
+          {player.country && (
+            <CountryFlag countryCode={player.country} size="sm" />
+          )}
           {rank != null ? `#${rank} ${circuitLabel ?? ""}` : `#${EM_DASH}`}
         </span>
         {/* Ligne 2 : Elo */}
