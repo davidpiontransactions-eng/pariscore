@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Component, type ReactNode, useCallback } from "react";
+import { useState, Component, type ReactNode, useCallback, useMemo } from "react";
 import {
   Trophy,
   Wallet,
@@ -35,6 +35,8 @@ import { F1TabContent } from "@/components/f1/f1-tab-content";
 import { TopValueBetsList } from "@/components/dashboard/top-value-bets";
 import { LiveNowCrossSport } from "@/components/dashboard/live-now-cross-sport";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
+import { usePrematchMatches } from "@/hooks/use-prematch-matches";
+import { useFootballMatches } from "@/hooks/use-football-matches";
 
 type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1";
 
@@ -72,9 +74,44 @@ export default function Home() {
 
   const [activeTab, setActiveTab] = useState<SportTab>("tennis");
 
+  // Real data hooks
+  const { data: tennisData } = usePrematchMatches();
+  const { data: footData } = useFootballMatches();
+
+  // Compute stats dynamically
+  const stats = useMemo(() => {
+    const tennisMatches = tennisData?.matches ?? [];
+    const footMatches = footData?.matches ?? [];
+
+    // Count value bets (edge > 0 across all bookmakers)
+    let tennisValues = 0;
+    for (const m of tennisMatches) {
+      if (!m.allOdds) continue;
+      for (const odd of m.allOdds) {
+        if (m.probA - odd.impliedProbA > 0 || m.probB - odd.impliedProbB > 0) {
+          tennisValues++;
+          break;
+        }
+      }
+    }
+
+    return {
+      tennis: { matchCount: tennisMatches.length, valueCount: tennisValues },
+      football: { matchCount: footMatches.length, valueCount: 0 },
+      totalValueBets: tennisValues,
+    };
+  }, [tennisData?.matches, footData?.matches]);
+
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab as SportTab);
   }, []);
+
+  const SPORT_CARDS = [
+    { id: "tennis" as const, label: "Tennis", emoji: "🎾", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
+    { id: "football" as const, label: "Football", emoji: "⚽", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
+    { id: "mma" as const, label: "MMA", emoji: "🥊", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
+    { id: "cycling" as const, label: "Cycling", emoji: "🚴", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
+  ];
 
   return (
     <PageErrorBoundary>
@@ -125,17 +162,14 @@ export default function Home() {
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6">
           <h1 className="text-2xl font-bold text-white">Bonjour</h1>
           <p className="text-sm text-zinc-400 mt-1">
-            3 value bets détectés aujourd&apos;hui
+            {stats.totalValueBets > 0
+              ? `${stats.totalValueBets} value bets détectés aujourd'hui`
+              : "Analyse des marchés en cours..."}
           </p>
 
           {/* Sport Trend Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-            {([
-              { id: "tennis", label: "Tennis", emoji: "🎾", matchCount: 14, valueCount: 5, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
-              { id: "football", label: "Football", emoji: "⚽", matchCount: 22, valueCount: 3, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
-              { id: "mma", label: "MMA", emoji: "🥊", matchCount: 8, valueCount: 2, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
-              { id: "cycling", label: "Cycling", emoji: "🚴", matchCount: 6, valueCount: 1, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
-            ] as const).map((sport) => (
+            {SPORT_CARDS.map((sport) => (
               <button
                 key={sport.id}
                 type="button"
