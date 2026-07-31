@@ -51,6 +51,24 @@ const config: Config = {
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
   			}
+  			confidence: {
+  				high: 'var(--confidence-high)',
+  				mid: 'var(--confidence-mid)',
+  				low: 'var(--confidence-low)'
+  			},
+  			edge: {
+  				positive: 'var(--edge-positive)',
+  				negative: 'var(--edge-negative)'
+  			},
+  			'live-pulse': 'var(--live-pulse)',
+  			'ai-insight': 'var(--ai-insight)',
+  			sport: {
+  				f1: 'var(--sport-f1)',
+  				cs2: 'var(--sport-cs2)',
+  				nba: 'var(--sport-nba)',
+  				wnba: 'var(--sport-wnba)'
+  			},
+  			'bg-deep': 'var(--bg-deep)'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

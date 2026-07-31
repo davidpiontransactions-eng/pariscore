@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { MapPin, Mountain, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { FormTimeline, type Outcome } from "@/components/shared/form-timeline";
+import { ConfidenceRing } from "@/components/shared/confidence-ring";
 
 export type StageData = {
   stage: number;
@@ -20,6 +22,8 @@ export type RiderFavourite = {
   prob: number;
   team: string;
   photo?: string;
+  /** Recent form – oldest to newest (used with FormTimeline). */
+  form?: Outcome[];
 };
 
 type Props = {
@@ -27,6 +31,8 @@ type Props = {
   favourites?: RiderFavourite[];
   priority?: boolean;
   index?: number;
+  /** Model confidence for this stage's prediction (0–1). When present, a ConfidenceRing is shown. */
+  confidenceScore?: number;
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -51,6 +57,7 @@ export function CyclingStageCard({
   favourites = [],
   priority = false,
   index = 0,
+  confidenceScore,
 }: Props) {
   const top3 = [...favourites].sort((a, b) => b.prob - a.prob).slice(0, 3);
   const maxProb = top3.length > 0 ? Math.max(...top3.map((r) => r.prob)) : 1;
@@ -108,6 +115,17 @@ export function CyclingStageCard({
             {stage.country}
           </span>
         </div>
+        {confidenceScore != null && (
+          <div className="mt-4 flex items-center justify-center border-t border-border/40 pt-3.5">
+            <ConfidenceRing
+              prob={top3[0]?.prob ?? 0}
+              confidence={confidenceScore}
+              color="#f59e0b"
+              size="sm"
+              label="Confiance IA"
+            />
+          </div>
+        )}
         {top3.length > 0 && (
           <div className="mt-4 border-t border-border/40 pt-3.5">
             <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">
@@ -166,6 +184,15 @@ export function CyclingStageCard({
                     <p className="mt-0.5 truncate text-[10px] text-gray-500">
                       {rider.team}
                     </p>
+                    {rider.form && rider.form.length > 0 && (
+                      <div className="mt-1">
+                        <FormTimeline
+                          form={rider.form}
+                          size="sm"
+                          color="#f59e0b"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

@@ -18,6 +18,7 @@ import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { openPaperTradingDialog } from "@/components/paper-trading-dialog";
 import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicator";
 import { Button } from "@/components/ui/button";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
@@ -28,6 +29,7 @@ import { useMatchFilter, type FilterKey, type SortKey } from "@/hooks/use-match-
 import { useMatchCuration } from "@/hooks/use-match-curation";
 import { useAnalytics } from "@/components/analytics-provider";
 import { useDocumentPip } from "@/hooks/use-document-pip";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MatchPipWidget } from "@/components/tennis/match-pip-widget";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
@@ -130,6 +132,8 @@ export function TennisTabContent() {
   const [betMatch, setBetMatch] = useState<TennisMatch | null>(null);
   const [betOpen, setBetOpen] = useState(false);
   const [variant, setVariant] = useState<AbTestVariant | null>(null);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const FILTERS: { key: FilterKey; label: string; hint: string }[] = [
     { key: "all", label: tFilters("all"), hint: tFilters("allHint") },
@@ -454,54 +458,117 @@ export function TennisTabContent() {
             <TennisSearchBar />
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => handleFilter(f.key)}
-                title={f.hint}
-                className={cn(
-                  "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  filter === f.key
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-background hover:bg-muted"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          {isMobile ? (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setFilterSheetOpen(true)} className="mt-4">
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                Filtres
+              </Button>
+              <BottomSheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen} title="Filtres">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-wrap gap-2">
+                    {FILTERS.map((f) => (
+                      <button
+                        key={f.key}
+                        onClick={() => handleFilter(f.key)}
+                        title={f.hint}
+                        className={cn(
+                          "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          filter === f.key
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border bg-background hover:bg-muted"
+                        )}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
 
-          {/* Sort controls */}
-          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <ArrowUpDown className="h-3.5 w-3.5" />
-            <span className="font-medium">{tFilters("sortBy")}:</span>
-            {([
-              { key: "default" as SortKey, label: tFilters("sortDefault") },
-              { key: "rank_asc" as SortKey, label: tFilters("sortRankAsc") },
-              { key: "rank_desc" as SortKey, label: tFilters("sortRankDesc") },
-              { key: "elo_asc" as SortKey, label: tFilters("sortEloAsc") },
-              { key: "elo_desc" as SortKey, label: tFilters("sortEloDesc") },
-            ] as const).map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => {
-                  setSortKey(opt.key);
-                  track("sort_click", { sort: opt.key });
-                }}
-                className={cn(
-                  "rounded px-2 py-1 transition-colors",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  sortKey === opt.key
-                    ? "bg-foreground/10 font-semibold text-foreground"
-                    : "hover:text-foreground"
-                )}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+                  {/* Sort controls */}
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <ArrowUpDown className="h-3.5 w-3.5" />
+                    <span className="font-medium">{tFilters("sortBy")}:</span>
+                    {([
+                      { key: "default" as SortKey, label: tFilters("sortDefault") },
+                      { key: "rank_asc" as SortKey, label: tFilters("sortRankAsc") },
+                      { key: "rank_desc" as SortKey, label: tFilters("sortRankDesc") },
+                      { key: "elo_asc" as SortKey, label: tFilters("sortEloAsc") },
+                      { key: "elo_desc" as SortKey, label: tFilters("sortEloDesc") },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.key}
+                        onClick={() => {
+                          setSortKey(opt.key);
+                          track("sort_click", { sort: opt.key });
+                        }}
+                        className={cn(
+                          "rounded px-2 py-1 transition-colors",
+                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                          sortKey === opt.key
+                            ? "bg-foreground/10 font-semibold text-foreground"
+                            : "hover:text-foreground"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </BottomSheet>
+            </>
+          ) : (
+            <>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => handleFilter(f.key)}
+                    title={f.hint}
+                    className={cn(
+                      "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      filter === f.key
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border bg-background hover:bg-muted"
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sort controls */}
+              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span className="font-medium">{tFilters("sortBy")}:</span>
+                {([
+                  { key: "default" as SortKey, label: tFilters("sortDefault") },
+                  { key: "rank_asc" as SortKey, label: tFilters("sortRankAsc") },
+                  { key: "rank_desc" as SortKey, label: tFilters("sortRankDesc") },
+                  { key: "elo_asc" as SortKey, label: tFilters("sortEloAsc") },
+                  { key: "elo_desc" as SortKey, label: tFilters("sortEloDesc") },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => {
+                      setSortKey(opt.key);
+                      track("sort_click", { sort: opt.key });
+                    }}
+                    className={cn(
+                      "rounded px-2 py-1 transition-colors",
+                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      sortKey === opt.key
+                        ? "bg-foreground/10 font-semibold text-foreground"
+                        : "hover:text-foreground"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </section>
 

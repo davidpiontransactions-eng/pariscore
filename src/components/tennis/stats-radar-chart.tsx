@@ -12,50 +12,75 @@ import {
   Tooltip,
   type TooltipProps,
 } from "recharts";
-import type { ServiceStats } from "@/hooks/use-tennis-live-stats";
 import { cn } from "@/lib/utils";
 
 /**
- * StatsRadarChart — Sofascore-style "Player Comparison" radar comparing
- * P1 vs P2 across 6 axes normalized to 0-100.
+ * StatsRadarChart — Sofascore-style radar comparing one or two players
+ * across 6 axes normalized to 0-100.
  *
- * Axes:
- *   1. Service          → p1_first_pct / p2_first_pct   (already 0-100)
- *   2. 1st serve won    → p1_first_won / p2_first_won   (already 0-100)
- *   3. Return           → p1_ret_won / p2_ret_won       (already 0-100)
- *   4. Total points     → p1_total_pts / p2_total_pts   (already 0-100)
- *   5. Aces             → p1_aces / p2_aces             (0-15 → 0-100)
- *   6. DF (inverse)     → 100 - df_norm                  (fewer DF = better)
+ * Axes (6 metrics):
+ *   1. Service       → first serve %         (0-100)
+ *   2. 1st won       → first serve won %     (0-100)
+ *   3. Return        → return points won %   (0-100)
+ *   4. Total pts     → total points won %    (0-100)
+ *   5. Aces          → ace count             (0-15 → 0-100)
+ *   6. DF Accuracy   → 100 − df_norm         (fewer DF = better)
  *
- * Tufte principles applied:
- *  - High data-ink ratio: faint polar grid, no chartjunk, no 3D, no gradient.
- *  - No native <Legend />: a custom legend below names the two players with
- *    their color swatch (Tufte rule 2: direct labels beat legends).
- *  - Gray default → overridden by the explicit Sofascore P1 emerald / P2 rose
- *    accents required by the spec (two-series comparison, ≤4 colors).
- *  - Plain-text tooltip (rule 14): no border, no shadow, just the values.
- *  - Accessibility: the container exposes an aria-label summarizing the chart;
- *    the tooltip is keyboard-accessible via Recharts' default focus behavior.
- *  - Performance: data transformation memoized with useMemo.
- *  - Responsive via ResponsiveContainer (fluid width, fixed compact height).
+ * Features:
+ *  - Single-player or two-player overlay (dataB is optional).
+ *  - Responsive dark theme via CSS custom properties.
+ *  - Custom legend below the chart with color swatches + initials.
+ *  - Tufte-style plain-text tooltip (no border/shadow/gradient).
+ *  - Accessible: aria-label + sr-only summary.
  */
 
-/** Default Sofascore-style accents (overridable via props). */
-const DEFAULT_P1_COLOR = "#00e676"; // emerald
-const DEFAULT_P2_COLOR = "#ff6b6b"; // rose
+// ---------------------------------------------------------------------------
+// Defaults
+// ---------------------------------------------------------------------------
 
-/** Aces normalization ceiling. 15+ aces in a match = 100 on the radar. */
+const DEFAULT_COLOR_A = "#00e676"; // emerald
+const DEFAULT_COLOR_B = "#ff6b6b"; // rose
+
+/** Raw ace count ceiling — 15+ aces → 100 on the radar. */
 const ACES_MAX = 15;
-/** DF normalization ceiling. 15+ double faults = 0 on the "Accuracy" axis. */
+/** Raw DF ceiling — 15+ DFs → 0 on the "DF Accuracy" axis. */
 const DF_MAX = 15;
 
-type RadarDatum = {
-  axis: string;
-  /** Translation key used to build the axis label at render time. */
-  axisKey: AxisKey;
-  P1: number;
-  P2: number;
-};
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+/** One player's raw stats across the 6 radar axes. */
+export interface RadarPlayerData {
+  /** First serve percentage (0–100). */
+  service: number;
+  /** First serve points won percentage (0–100). */
+  firstServeWon: number;
+  /** Return points won percentage (0–100). */
+  returnWon: number;
+  /** Total points won percentage (0–100). */
+  totalPointsWon: number;
+  /** Raw ace count (normalized 0–15 → 0–100). */
+  aces: number;
+  /** Raw double-fault count (inverted: 0–15 → 100–0). */
+  doubleFaults: number;
+}
+
+export interface StatsRadarChartProps {
+  /** Primary player data (required). */
+  dataA: RadarPlayerData;
+  /** Secondary player data for overlay comparison (optional). */
+  dataB?: RadarPlayerData;
+  /** Label for player A (defaults to "Player A"). */
+  playerAName?: string;
+  /** Label for player B (defaults to "Player B"). */
+  playerBName?: string;
+  /** Radar stroke/fill color for player A. */
+  colorA?: string;
+  /** Radar stroke/fill color for player B. */
+  colorB?: string;
+  className?: string;
+}
 
 type AxisKey =
   | "serviceAxis"
@@ -65,20 +90,17 @@ type AxisKey =
   | "acesAxis"
   | "dfAxis";
 
-export interface StatsRadarChartProps {
-  stats: ServiceStats;
-  player1Name: string;
-  player2Name: string;
-  /** Override the P1 radar color (defaults to Sofascore emerald). */
-  player1Color?: string;
-  /** Override the P2 radar color (defaults to Sofascore rose). */
-  player2Color?: string;
-  className?: string;
-}
+type RadarDatum = {
+  axis: string;
+  axisKey: AxisKey;
+  playerA: number;
+  playerB: number;
+};
 
-/**
- * Clamp a value into [0, 100]. Null/undefined → 0 (per spec: null → 0).
- */
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 function clamp100(v: number | null | undefined): number {
   if (v == null || Number.isNaN(v)) return 0;
   if (v < 0) return 0;
@@ -86,16 +108,12 @@ function clamp100(v: number | null | undefined): number {
   return v;
 }
 
-/**
- * Linear normalization from [0, max] → [0, 100]. Null/NaN → 0.
- * Values above `max` clamp at 100.
- */
 function normalizeTo100(v: number | null | undefined, max: number): number {
   if (v == null || Number.isNaN(v) || max <= 0) return 0;
   return clamp100((v / max) * 100);
 }
 
-/** Player initials for the compact legend, e.g. "Rafael Nadal" → "RN". */
+/** Player initials e.g. "Rafael Nadal" → "RN". */
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -103,70 +121,78 @@ function initials(name: string): string {
   return (parts[0]![0]! + parts[parts.length - 1]![0]!).toUpperCase();
 }
 
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function StatsRadarChart({
-  stats,
-  player1Name,
-  player2Name,
-  player1Color,
-  player2Color,
+  dataA,
+  dataB,
+  playerAName = "Player A",
+  playerBName = "Player B",
+  colorA,
+  colorB,
   className,
 }: StatsRadarChartProps) {
   const t = useTranslations("tennis");
 
-  const p1Color = player1Color ?? DEFAULT_P1_COLOR;
-  const p2Color = player2Color ?? DEFAULT_P2_COLOR;
+  const aColor = colorA ?? DEFAULT_COLOR_A;
+  const bColor = colorB ?? DEFAULT_COLOR_B;
+  const hasOverlay = dataB != null;
 
-  /**
-   * Build the 6-axis dataset, applying per-axis normalization. Memoized so
-   * identical `stats` references don't recompute on parent re-renders.
-   */
   const data = useMemo<RadarDatum[]>(() => {
-    // DF axis is inverted: fewer double faults = higher score.
-    // We normalize df to 0-100 (0 df → 0, DF_MAX df → 100), then invert.
-    const p1DfScore = 100 - normalizeTo100(stats.p1_df, DF_MAX);
-    const p2DfScore = 100 - normalizeTo100(stats.p2_df, DF_MAX);
+    const aDfScore = 100 - normalizeTo100(dataA.doubleFaults, DF_MAX);
+    const bDfScore = hasOverlay
+      ? 100 - normalizeTo100(dataB!.doubleFaults, DF_MAX)
+      : 0;
 
     return [
       {
         axis: t("serviceAxis"),
         axisKey: "serviceAxis",
-        P1: clamp100(stats.p1_first_pct),
-        P2: clamp100(stats.p2_first_pct),
+        playerA: clamp100(dataA.service),
+        playerB: hasOverlay ? clamp100(dataB!.service) : 0,
       },
       {
         axis: t("firstWonAxis"),
         axisKey: "firstWonAxis",
-        P1: clamp100(stats.p1_first_won),
-        P2: clamp100(stats.p2_first_won),
+        playerA: clamp100(dataA.firstServeWon),
+        playerB: hasOverlay ? clamp100(dataB!.firstServeWon) : 0,
       },
       {
         axis: t("returnAxis"),
         axisKey: "returnAxis",
-        P1: clamp100(stats.p1_ret_won),
-        P2: clamp100(stats.p2_ret_won),
+        playerA: clamp100(dataA.returnWon),
+        playerB: hasOverlay ? clamp100(dataB!.returnWon) : 0,
       },
       {
         axis: t("totalPtsAxis"),
         axisKey: "totalPtsAxis",
-        P1: clamp100(stats.p1_total_pts),
-        P2: clamp100(stats.p2_total_pts),
+        playerA: clamp100(dataA.totalPointsWon),
+        playerB: hasOverlay ? clamp100(dataB!.totalPointsWon) : 0,
       },
       {
         axis: t("acesAxis"),
         axisKey: "acesAxis",
-        P1: normalizeTo100(stats.p1_aces, ACES_MAX),
-        P2: normalizeTo100(stats.p2_aces, ACES_MAX),
+        playerA: normalizeTo100(dataA.aces, ACES_MAX),
+        playerB: hasOverlay ? normalizeTo100(dataB!.aces, ACES_MAX) : 0,
       },
       {
         axis: t("dfAxis"),
         axisKey: "dfAxis",
-        P1: p1DfScore,
-        P2: p2DfScore,
+        playerA: aDfScore,
+        playerB: bDfScore,
       },
     ];
-  }, [stats, t]);
+  }, [dataA, dataB, hasOverlay, t]);
 
-  const ariaLabel = t("radarAria", { p1: player1Name, p2: player2Name });
+  const nameA = playerAName || "Player A";
+  const nameB = playerBName || "Player B";
+
+  const ariaLabel = hasOverlay
+    ? t("radarAria", { p1: nameA, p2: nameB })
+    : `${nameA} stats radar`;
 
   return (
     <div
@@ -182,7 +208,6 @@ export function StatsRadarChart({
           outerRadius="72%"
           margin={{ top: 8, right: 24, bottom: 8, left: 24 }}
         >
-          {/* Discrete grid: faint concentric polygons, no spokes emphasis. */}
           <PolarGrid
             stroke="hsl(var(--border, 215 16% 80%))"
             strokeOpacity={0.5}
@@ -195,7 +220,6 @@ export function StatsRadarChart({
               fill: "hsl(var(--muted-foreground, 215 14% 50%))",
             }}
           />
-          {/* Implicit 0-100 scale, no visible radius ticks (per spec). */}
           <PolarRadiusAxis
             domain={[0, 100]}
             tick={false}
@@ -207,51 +231,59 @@ export function StatsRadarChart({
             cursor={{ stroke: "hsl(var(--border))", strokeOpacity: 0.4 }}
           />
           <Radar
-            name={player1Name}
-            dataKey="P1"
-            stroke={p1Color}
+            name={nameA}
+            dataKey="playerA"
+            stroke={aColor}
             strokeWidth={1.5}
-            fill={p1Color}
-            fillOpacity={0.2}
+            fill={aColor}
+            fillOpacity={0.15}
             isAnimationActive={false}
           />
-          <Radar
-            name={player2Name}
-            dataKey="P2"
-            stroke={p2Color}
-            strokeWidth={1.5}
-            fill={p2Color}
-            fillOpacity={0.2}
-            isAnimationActive={false}
-          />
+          {hasOverlay && (
+            <Radar
+              name={nameB}
+              dataKey="playerB"
+              stroke={bColor}
+              strokeWidth={1.5}
+              fill={bColor}
+              fillOpacity={0.15}
+              isAnimationActive={false}
+            />
+          )}
         </RadarChart>
       </ResponsiveContainer>
 
-      {/* Custom legend: direct labels with color swatches + initials.
-          Replaces the native <Legend /> (Tufte rule 2). */}
+      {/* Custom legend: direct labels with color swatches + initials. */}
       <div
         className="flex w-full items-center justify-center gap-4 text-xs"
         role="list"
       >
         <LegendItem
-          color={p1Color}
-          name={player1Name}
-          initials={initials(player1Name)}
+          color={aColor}
+          name={nameA}
+          initials={initials(nameA)}
         />
-        <LegendItem
-          color={p2Color}
-          name={player2Name}
-          initials={initials(player2Name)}
-        />
+        {hasOverlay && (
+          <LegendItem
+            color={bColor}
+            name={nameB}
+            initials={initials(nameB)}
+          />
+        )}
       </div>
     </div>
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
+
 function LegendItem({
   color,
   name,
-  initials,
+  initials: init,
 }: {
   color: string;
   name: string;
@@ -268,7 +300,7 @@ function LegendItem({
         className="font-mono text-[10px] font-semibold tabular-nums shrink-0"
         style={{ color }}
       >
-        {initials}
+        {init}
       </span>
       <span className="truncate text-muted-foreground">{name}</span>
     </div>
@@ -307,5 +339,3 @@ function RadarTooltip({
     </div>
   );
 }
-
-export default StatsRadarChart;

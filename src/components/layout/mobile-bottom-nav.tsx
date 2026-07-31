@@ -1,0 +1,92 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Home, Radio, Gem, Star, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+type TabDef = {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  accent: string;
+};
+
+const TABS: TabDef[] = [
+  { id: "accueil", label: "Accueil", icon: Home, accent: "bg-emerald-500" },
+  { id: "live", label: "Live", icon: Radio, accent: "bg-red-500" },
+  { id: "value", label: "Value", icon: Gem, accent: "bg-emerald-500" },
+  { id: "favoris", label: "Favoris", icon: Star, accent: "bg-amber-500" },
+  { id: "profil", label: "Profil", icon: User, accent: "bg-sky-500" },
+] as const;
+
+type MobileBottomNavProps = {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+};
+
+export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
+  const isMobile = useIsMobile();
+
+  if (!isMobile) return null;
+
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0e17]/90 backdrop-blur-md border-t border-white/10"
+      role="navigation"
+      aria-label="Navigation principale"
+    >
+      <div className="flex items-center justify-around h-16 px-2 safe-area-inset-bottom">
+        {TABS.map((tab) => {
+          const isActive = activeTab === tab.id;
+          const Icon = tab.icon;
+          const isLive = tab.id === "live";
+
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => onTabChange(tab.id)}
+              className={cn(
+                "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-colors duration-200",
+                isActive
+                  ? "text-white"
+                  : "text-zinc-500 hover:text-zinc-300"
+              )}
+            >
+              {/* Accent bar at top of tab */}
+              {isActive && (
+                <motion.div
+                  layoutId="bottom-nav-indicator"
+                  className={cn(
+                    "absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full",
+                    tab.accent
+                  )}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 35,
+                  }}
+                />
+              )}
+
+              {/* Icon with optional live pulse dot */}
+              <span className="relative inline-flex">
+                <Icon className="h-5 w-5" />
+                {isLive && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                )}
+              </span>
+
+              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}

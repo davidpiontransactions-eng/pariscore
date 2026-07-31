@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { Calendar, Scale } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ProbabilityRing } from "@/components/tennis/probability-ring";
+import { ConfidenceRing } from "@/components/shared/confidence-ring";
+import { FormTimeline } from "@/components/shared/form-timeline";
 import { cn } from "@/lib/utils";
 
 export type MmaFight = {
@@ -17,6 +19,14 @@ export type MmaFight = {
   event_name?: string;
   photo_a?: string;
   photo_b?: string;
+  /** Recent form for fighter A – ordered oldest → most recent. */
+  form_a?: ("W" | "L" | "D")[];
+  /** Recent form for fighter B – ordered oldest → most recent. */
+  form_b?: ("W" | "L" | "D")[];
+  /** Model confidence for fighter A (0–1). */
+  confidence_a?: number;
+  /** Model confidence for fighter B (0–1). */
+  confidence_b?: number;
 };
 
 type Props = {
@@ -97,6 +107,24 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             <span className="text-sm font-bold leading-tight tracking-tight">
               {fight.fighter_a}
             </span>
+
+            {/* Confidence ring + form timeline for fighter A */}
+            {fight.confidence_a != null && (
+              <ConfidenceRing
+                prob={probA}
+                confidence={fight.confidence_a}
+                color="#00E676"
+                size="sm"
+              />
+            )}
+            {fight.form_a && fight.form_a.length > 0 && (
+              <FormTimeline
+                form={fight.form_a}
+                color="#00E676"
+                size="sm"
+                ariaLabel={`Forme récente de ${fight.fighter_a}`}
+              />
+            )}
           </div>
 
           {/* VS divider */}
@@ -148,6 +176,24 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             <span className="text-sm font-bold leading-tight tracking-tight">
               {fight.fighter_b}
             </span>
+
+            {/* Confidence ring + form timeline for fighter B */}
+            {fight.confidence_b != null && (
+              <ConfidenceRing
+                prob={probB}
+                confidence={fight.confidence_b}
+                color="#FF6B6B"
+                size="sm"
+              />
+            )}
+            {fight.form_b && fight.form_b.length > 0 && (
+              <FormTimeline
+                form={fight.form_b}
+                color="#FF6B6B"
+                size="sm"
+                ariaLabel={`Forme récente de ${fight.fighter_b}`}
+              />
+            )}
           </div>
         </div>
 

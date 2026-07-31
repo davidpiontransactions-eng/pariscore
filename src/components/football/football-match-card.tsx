@@ -1,27 +1,10 @@
 "use client";
 
 import { Trophy, Clock, BarChart3 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { FootballMatch } from "@/lib/football-data";
+import type { FootballMatch, Prediction } from "@/lib/football-data";
 import { Skeleton } from "@/components/ui/skeleton";
-
-function FormDots({ form }: { form: ("W" | "D" | "L")[] }) {
-  return (
-    <div className="flex gap-0.5">
-      {form.map((r, i) => (
-        <span
-          key={i}
-          className={cn(
-            "inline-block h-1.5 w-1.5 rounded-full",
-            r === "W" && "bg-emerald-500",
-            r === "D" && "bg-amber-500",
-            r === "L" && "bg-rose-500",
-          )}
-        />
-      ))}
-    </div>
-  );
-}
+import { ConfidenceRing } from "@/components/shared/confidence-ring";
+import { FormTimeline } from "@/components/shared/form-timeline";
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso);
@@ -45,11 +28,6 @@ function getDay(iso: string): string {
   return dayCache.get(iso)!;
 }
 
-// Clamp probability to [5, 95] for the bar width to avoid 0-width or full-width bars
-function clampProb(p: number): number {
-  return Math.max(5, Math.min(95, p));
-}
-
 export function FootballMatchCard({
   match,
   onOpenDetail,
@@ -62,9 +40,9 @@ export function FootballMatchCard({
   priority?: boolean;
 }) {
   const p = match.prediction;
-  const homePct = clampProb(p.homeProb);
-  const drawPct = clampProb(p.drawProb);
-  const awayPct = clampProb(p.awayProb);
+  // Derive confidence from max probability if not explicitly provided (0.5–0.8 range)
+  const maxProb = Math.max(p.homeProb, p.drawProb, p.awayProb);
+  const confidence = (p as Prediction & { confidence?: number }).confidence ?? (0.5 + (maxProb / 100) * 0.3);
 
   return (
     <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
@@ -103,7 +81,7 @@ export function FootballMatchCard({
               )}
             </div>
             <span className="text-sm font-semibold leading-tight">{match.home.shortName}</span>
-            <FormDots form={match.home.form} />
+            <FormTimeline form={match.home.form} showIndex={false} size="sm" />
           </div>
 
           {/* Score / VS */}
@@ -147,29 +125,33 @@ export function FootballMatchCard({
               )}
             </div>
             <span className="text-sm font-semibold leading-tight">{match.away.shortName}</span>
-            <FormDots form={match.away.form} />
+            <FormTimeline form={match.away.form} showIndex={false} size="sm" />
           </div>
         </div>
 
-        {/* Prediction bar */}
-        <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-muted">
-          <div
-            className="bg-emerald-500 transition-all"
-            style={{ width: `${homePct}%` }}
+        {/* Prediction rings */}
+        <div className="mt-3 flex items-center justify-center gap-3">
+          <ConfidenceRing
+            prob={p.homeProb}
+            confidence={confidence}
+            color="#10b981"
+            size="sm"
+            label="1"
           />
-          <div
-            className="bg-amber-500 transition-all"
-            style={{ width: `${drawPct}%` }}
+          <ConfidenceRing
+            prob={p.drawProb}
+            confidence={confidence}
+            color="#f59e0b"
+            size="sm"
+            label="N"
           />
-          <div
-            className="bg-rose-500 transition-all"
-            style={{ width: `${awayPct}%` }}
+          <ConfidenceRing
+            prob={p.awayProb}
+            confidence={confidence}
+            color="#ef4444"
+            size="sm"
+            label="2"
           />
-        </div>
-        <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
-          <span>{p.homeProb}%</span>
-          <span>N {p.drawProb}%</span>
-          <span>{p.awayProb}%</span>
         </div>
 
         {/* Footer: markets + CTA */}
