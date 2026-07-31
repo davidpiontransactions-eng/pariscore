@@ -16,10 +16,13 @@ const fs = require('fs');
 const path = require('path');
 
 const CACHE_FILE = () => process.env.BETWATCH_CACHE || path.join(__dirname, 'data', 'betwatch_wom.json');
+const SMARKETS_CACHE = () => process.env.SMARKETS_CACHE || path.join(__dirname, 'data', 'smarkets_tennis_wom.json');
 const FRESH_MS = 6 * 3600 * 1000; // au-delà → considéré périmé (mais reste lisible)
 
 let _cache = null;        // { ts, byKey: Map }
 let _cacheMtime = 0;
+let _smarketsCache = null;
+let _smarketsMtime = 0;
 
 const norm = s => String(s || '').toLowerCase().normalize('NFD')
   .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
@@ -54,25 +57,49 @@ function status() {
   return { enabled: true, count: c.count, ts: c.ts, date: c.date, stale: (Date.now() - c.ts) > FRESH_MS };
 }
 
-// Cherche l'entrée WOM pour un match PariScore (match nom normalisé, 2 ordres).
-function _find(match) {
-  const c = _load();
+function _loadSmarkets() {
+  let st;
+  try { st = fs.statSync(SMARKETS_CACHE()); } catch { _smarketsCache = null; return null; }
+  if (_smarketsCache && st.mtimeMs === _smarketsMtime) return _smarketsCache;
+  let raw;
+  try { raw = JSON.parse(fs.readFileSync(SMARKETS_CACHE(), 'utf8')); } catch { _smarketsCache = null; return null; }
+  const byKey = new Map();
+  for (const m of (raw.matches || [])) {
+    if (!m || !m.home_team || !m.away_team) continue;
+    const k = norm(m.home_team) + '__' + norm(m.away_team);
+    const prev = byKey.get(k);
+    if (!prev || (m.totalMatched || 0) > (prev.totalMatched || 0)) byKey.set(k, m);
+  }
+  _smarketsCache = { ts: raw.ts || st.mtimeMs, date: raw.date, byKey, count: byKey.size };
+  _smarketsMtime = st.mtimeMs;
+  return _smarketsCache;
+}
+
+function _find(needle, cache) {
+  const c = cache;
   if (!c) return null;
-  const h = norm(match.home_team || match.player1 || match.p1);
-  const a = norm(match.away_team || match.player2 || match.p2);
+  const h = norm(needle.home_team || needle.player1 || needle.p1);
+  const a = norm(needle.away_team || needle.player2 || needle.p2);
   if (!h || !a) return null;
   let hit = c.byKey.get(h + '__' + a);
   if (hit) return hit;
-  // ordre inversé (au cas où la source liste away-home)
   hit = c.byKey.get(a + '__' + h);
   if (hit) return Object.assign({}, hit, { _reversed: true });
-  // fuzzy : includes sur l'une des deux clés
   for (const [k, v] of c.byKey) {
     const [kh, ka] = k.split('__');
     if ((kh.includes(h) || h.includes(kh)) && (ka.includes(a) || a.includes(ka))) return v;
     if ((kh.includes(a) || a.includes(kh)) && (ka.includes(h) || h.includes(ka))) return Object.assign({}, v, { _reversed: true });
   }
   return null;
+}
+
+// Cherche l'entrée WOM pour un match PariScore (betwatch + smarkets fallback).
+function _find(match) {
+  // 1. betwatch (football + tennis si login)
+  let hit = _find(match, _load());
+  if (hit) return hit;
+  // 2. smarkets (tennis uniquement — fallback gratuit)
+  return _find(match, _loadSmarkets());
 }
 
 // Retourne le WOM au format betfairService (réutilise le panneau UI déjà câblé).
@@ -118,26 +145,35 @@ function fetchMatchRows(match) {
 // bd ab6s. Retourne [] si cache absent.
 function topByMatched(sport, opts) {
   const c = _load();
-  if (!c) return [];
+  const sm = _loadSmarkets();
+  if (!c && !sm) return [];
   const o = opts || {};
   const sp = String(sport || '').toLowerCase();
   const wantLive = (o.live === true || o.live === false) ? o.live : null;
   const limit = Math.max(1, Math.min(50, parseInt(o.limit, 10) || 5));
   const out = [];
-  for (const m of c.byKey.values()) {
-    if (!m || (sp && String(m.sport || '').toLowerCase() !== sp)) continue;
-    if (wantLive === true && !m.live) continue;
-    if (wantLive === false && m.live) continue;
-    if (!(m.totalMatched > 0)) continue;
-    out.push({
-      player1: m.home_team, player2: m.away_team,
-      tournament: m.league || null, country: m.country || null,
-      totalMatched: m.totalMatched, totalEvent: m.totalEvent || null,
-      market: m.market || null, live: !!m.live, paywalled: !!m.paywalled,
-      start_time: m.ce || null, eventId: m.eventId || null,
-      wom: m.wom || null, money: m.money || null,
-    });
+  
+  function collect(cache) {
+    if (!cache) return;
+    for (const m of cache.byKey.values()) {
+      if (!m || (sp && String(m.sport || '').toLowerCase() !== sp)) continue;
+      if (wantLive === true && !m.live) continue;
+      if (wantLive === false && m.live) continue;
+      if (!(m.totalMatched > 0) && !m.wom) continue; // smarkets: no totalMatched, use wom presence
+      out.push({
+        player1: m.home_team, player2: m.away_team,
+        tournament: m.league || m.tournament || null, country: m.country || null,
+        totalMatched: m.totalMatched, totalEvent: m.totalEvent || null,
+        market: m.market || null, live: !!m.live, paywalled: !!m.paywalled,
+        start_time: m.start_time || m.ce || null, eventId: m.eventId || null,
+        wom: m.wom || null, money: m.money || null, sport: m.sport || sp,
+      });
+    }
   }
+  
+  collect(c);
+  collect(sm);
+  
   out.sort((a, b) => (b.totalMatched || 0) - (a.totalMatched || 0));
   return out.slice(0, limit);
 }
