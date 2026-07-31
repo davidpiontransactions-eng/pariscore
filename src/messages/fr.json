@@ -50,6 +50,60 @@
     "sortEloDesc": "Elo ↓"
   },
   "tennis": {
+    "statsLeaderboard": {
+      "title": "Statistiques joueurs",
+      "ariaLabel": "Classement statistiques des joueurs",
+      "methodologyAria": "Méthodologie du rating",
+      "tourAria": "Circuit (ATP ou WTA)",
+      "boards": {
+        "serve": "Service",
+        "return": "Retour",
+        "pressure": "Sous pression"
+      },
+      "filters": {
+        "vsRankAria": "Niveau d'adversaire",
+        "vsAll": "Tous les joueurs",
+        "periodAria": "Période",
+        "period52w": "52 semaines",
+        "periodYtd": "Saison",
+        "periodAll": "Tout",
+        "surfaceAria": "Surface",
+        "surfaceAll": "Toutes surfaces",
+        "hard": "Dur",
+        "clay": "Terre battue",
+        "grass": "Gazon"
+      },
+      "columns": {
+        "player": "Joueur",
+        "matches": "Matchs",
+        "serveRating": "Serve Rating",
+        "firstServe": "% 1er service",
+        "firstServeWon": "% pts 1er",
+        "secondServeWon": "% pts 2e",
+        "serviceGamesWon": "% jeux service",
+        "acesPerMatch": "Aces/match",
+        "dfsPerMatch": "DF/match",
+        "returnRating": "Return Rating",
+        "returnFirstWon": "% ret. 1er",
+        "returnSecondWon": "% ret. 2e",
+        "returnGamesWon": "% jeux retour",
+        "bpConverted": "% BP conv.",
+        "pressureRating": "Under Pressure",
+        "bpSaved": "% BP sauvées",
+        "tiebreaksWon": "% TB gagnés",
+        "decidingSetsWon": "% sets décisifs"
+      },
+      "methodology": {
+        "serve": "Serve Rating = % 1er service + % pts 1er + % pts 2e + % jeux service gagnés + aces/match − DF/match (formule ATP).",
+        "return": "Return Rating = % pts retour 1er + % pts retour 2e + % jeux retour gagnés + % balles de break converties.",
+        "pressure": "Under Pressure Rating = % BP sauvées + % BP converties + % tie-breaks gagnés + % sets décisifs gagnés."
+      },
+      "refreshAria": "Rafraîchir les données",
+      "emptyUnavailable": "Base de statistiques indisponible — les données de production ne sont pas présentes dans cet environnement.",
+      "emptyNoPlayers": "Aucun joueur ne remplit les critères (≥ {min} matchs sur le périmètre).",
+      "sampleNote": "Minimum {min} matchs sur le périmètre · abandons exclus",
+      "generatedAt": "Calculé le {date}"
+    },
     "syntheticBadge": "Données live limitées — pas de modèle prédictif",
     "spsExperimentalBadge": "beta",
     "spsExperimentalTooltip": "Modèle expérimental — calibration en cours",

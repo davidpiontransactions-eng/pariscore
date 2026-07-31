@@ -1,0 +1,110 @@
+// GET /api/tennis/stats-leaderboard
+//
+// Leaderboard statistiques joueurs (type ATP Stats Leaderboard) calculé en
+// direct depuis `tennis_matches_internal` via src/lib/tennis-stats/leaderboard.
+//
+// Query params (tous optionnels) :
+//   board=serve      — serve | return | pressure
+//   tour=atp         — atp | wta
+//   surface=all      — all | hard | clay | grass
+//   period=52w       — 52w | ytd | all
+//   vsRank=all       — all | top5 | top10 | top20 | top50 | top100
+//   minMatches=5     — seuil de matchs (1-50)
+//
+// Réponse : LeaderboardResult { rows, meta }.
+// Conception défensive (alignée sur /api/tennis/player-stats) : cette route
+// ne lève JAMAIS de 500 — base absente ou requête KO → 200 avec rows: [] et
+// meta.dataUnavailable=true, l'UI affiche l'état vide.
+
+import { NextResponse } from "next/server";
+import { apiErrorHandler } from "@/lib/api-error-handler";
+import { ValidationError } from "@/lib/api-error";
+import {
+  getStatsLeaderboard,
+  BOARD_TYPES,
+  TOUR_FILTERS,
+  SURFACE_FILTERS,
+  PERIOD_FILTERS,
+  VS_RANK_FILTERS,
+  DEFAULT_MIN_MATCHES,
+  type BoardType,
+  type TourFilter,
+  type SurfaceFilter,
+  type PeriodFilter,
+  type VsRankFilter,
+  type LeaderboardParams,
+  type LeaderboardResult,
+} from "@/lib/tennis-stats/leaderboard";
+
+const CACHE_TTL_MS = 5 * 60_000; // 5 min — les stats changent lentement
+const CACHE_MAX_ENTRIES = 24; // combos de filtres récents (purge FIFO)
+
+const cache = new Map<string, { at: number; payload: LeaderboardResult }>();
+
+function pick<T extends string>(
+  raw: string | null,
+  allowed: readonly T[],
+  fallback: T,
+  field: string
+): T {
+  if (raw == null || raw === "") return fallback;
+  const v = raw.toLowerCase();
+  if ((allowed as readonly string[]).includes(v)) return v as T;
+  throw new ValidationError(
+    `Invalid '${field}' param — valeurs: ${allowed.join(", ")}`
+  );
+}
+
+function parseParams(searchParams: URLSearchParams): LeaderboardParams {
+  const board = pick(searchParams.get("board"), BOARD_TYPES, "serve" as BoardType, "board");
+  const tour = pick(searchParams.get("tour"), TOUR_FILTERS, "atp" as TourFilter, "tour");
+  const surface = pick(
+    searchParams.get("surface"),
+    SURFACE_FILTERS,
+    "all" as SurfaceFilter,
+    "surface"
+  );
+  const period = pick(searchParams.get("period"), PERIOD_FILTERS, "52w" as PeriodFilter, "period");
+  const vsRank = pick(searchParams.get("vsRank"), VS_RANK_FILTERS, "all" as VsRankFilter, "vsRank");
+
+  let minMatches = DEFAULT_MIN_MATCHES;
+  const rawMin = searchParams.get("minMatches");
+  if (rawMin != null && rawMin !== "") {
+    const n = Number(rawMin);
+    if (!Number.isInteger(n) || n < 1 || n > 50) {
+      throw new ValidationError("Invalid 'minMatches' param — entier 1-50");
+    }
+    minMatches = n;
+  }
+  return { board, tour, surface, period, vsRank, minMatches };
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const params = parseParams(searchParams);
+
+    const cacheKey = JSON.stringify(params);
+    const now = Date.now();
+    const hit = cache.get(cacheKey);
+    if (hit && now - hit.at < CACHE_TTL_MS) {
+      return NextResponse.json(hit.payload);
+    }
+
+    const payload = getStatsLeaderboard(params);
+
+    // Purge FIFO simple si trop d'entrées.
+    if (cache.size >= CACHE_MAX_ENTRIES) {
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) cache.delete(oldest);
+    }
+    cache.set(cacheKey, { at: now, payload });
+
+    return NextResponse.json(payload);
+  } catch (err) {
+    // Dégradation gracieuse — on ne casse jamais la page stats.
+    return apiErrorHandler(err, "tennis/stats-leaderboard", () =>
+      NextResponse.json({ rows: [], meta: { dataUnavailable: true } }, { status: 200 })
+    );
+  }
+}

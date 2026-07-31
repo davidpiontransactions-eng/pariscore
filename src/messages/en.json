@@ -50,6 +50,60 @@
     "sortEloDesc": "Elo ↓"
   },
   "tennis": {
+    "statsLeaderboard": {
+      "title": "Player Statistics",
+      "ariaLabel": "Player statistics leaderboard",
+      "methodologyAria": "Rating methodology",
+      "tourAria": "Tour (ATP or WTA)",
+      "boards": {
+        "serve": "Serve",
+        "return": "Return",
+        "pressure": "Under Pressure"
+      },
+      "filters": {
+        "vsRankAria": "Opponent rank",
+        "vsAll": "Versus All Players",
+        "periodAria": "Time frame",
+        "period52w": "52 Weeks",
+        "periodYtd": "Season",
+        "periodAll": "All",
+        "surfaceAria": "Surface",
+        "surfaceAll": "All surfaces",
+        "hard": "Hard",
+        "clay": "Clay",
+        "grass": "Grass"
+      },
+      "columns": {
+        "player": "Player",
+        "matches": "Matches",
+        "serveRating": "Serve Rating",
+        "firstServe": "% 1st Serve",
+        "firstServeWon": "% 1st Won",
+        "secondServeWon": "% 2nd Won",
+        "serviceGamesWon": "% Service Games Won",
+        "acesPerMatch": "Avg Aces/Match",
+        "dfsPerMatch": "Avg DF/Match",
+        "returnRating": "Return Rating",
+        "returnFirstWon": "% 1st Return Won",
+        "returnSecondWon": "% 2nd Return Won",
+        "returnGamesWon": "% Return Games Won",
+        "bpConverted": "% BP Converted",
+        "pressureRating": "Under Pressure",
+        "bpSaved": "% BP Saved",
+        "tiebreaksWon": "% Tie-breaks Won",
+        "decidingSetsWon": "% Deciding Sets Won"
+      },
+      "methodology": {
+        "serve": "Serve Rating = % 1st serve + % 1st serve points won + % 2nd serve points won + % service games won + aces/match − double faults/match (ATP formula).",
+        "return": "Return Rating = % 1st return points won + % 2nd return points won + % return games won + % break points converted.",
+        "pressure": "Under Pressure Rating = % break points saved + % break points converted + % tie-breaks won + % deciding sets won."
+      },
+      "refreshAria": "Refresh data",
+      "emptyUnavailable": "Statistics database unavailable — production data is not present in this environment.",
+      "emptyNoPlayers": "No player meets the criteria (≥ {min} matches in scope).",
+      "sampleNote": "Minimum {min} matches in scope · retirements excluded",
+      "generatedAt": "Computed on {date}"
+    },
     "syntheticBadge": "Limited live data — no predictive model",
     "spsExperimentalBadge": "beta",
     "spsExperimentalTooltip": "Experimental model — calibration in progress",

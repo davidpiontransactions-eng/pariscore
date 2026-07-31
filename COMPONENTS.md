@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 47 components
+## Tennis (`src/components/tennis/`) — 48 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -71,6 +71,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | sparkline | sparkline.tsx | Sparkline SVG minimal pour progression Elo |
 | stat-chip | stat-chip.tsx | Chip de stat compact |
 | stats-indicators-grid | stats-indicators-grid.tsx | Grille hiérarchique des indicateurs match |
+| stats-leaderboard | stats-leaderboard.tsx | Leaderboard stats joueurs type ATP (page `/tennis/stats`) |
 | stats-radar-chart | stats-radar-chart.tsx | Radar chart des stats (6 axes) |
 | surface-badge | surface-badge.tsx | Badge surface (Dur/Terre battue/Gazon) |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, lazy, Suspense, Component, type ReactNode } from "react";
-import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2 } from "lucide-react";
+import Link from "next/link";
+import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
@@ -115,6 +116,7 @@ export function TennisTabContent() {
   const tComparator = useTranslations("comparator");
   const tTerminal = useTranslations("terminal");
   const tTennis = useTranslations("tennis");
+  const tStatsLb = useTranslations("tennis.statsLeaderboard");
 
   const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
   const { liveStates, liveMatchList, connectionStatus, latency } = useLiveMatches();
@@ -421,6 +423,10 @@ export function TennisTabContent() {
                   <Scale className="h-3.5 w-3.5" />
                   {tComparator("trigger")}
                 </button>
+                <Link href="/tennis/stats" title={tStatsLb("title")} className="inline-flex items-center gap-1 rounded text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  {tStatsLb("title")}
+                </Link>
                 {pip.supported && (
                   <button
                     type="button"
