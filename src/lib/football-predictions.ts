@@ -199,6 +199,67 @@ export function computeTeamComparisons(
   });
 }
 
+/**
+ * Calcule les moyennes par match et rangs championnat Home/Away pour chaque
+ * métrique des comparatifs. Dérive les valeurs des stats live BSD (quand
+ * disponibles) ou utilise des moyennes de ligue estimées.
+ *
+ * Rang simulé : plus la valeur est élevée (ex: corners), meilleur est le rang.
+ * Pour les métriques défensives (cartons, fautes), c'est l'inverse.
+ */
+export function computeTeamSeasonStats(
+  comparisons: { label: string; homeProb: number; awayProb: number }[],
+  homeLiveStats?: LiveStatsTeam | null,
+  awayLiveStats?: LiveStatsTeam | null,
+): { label: string; homeAvg: number; homeRank: number; homeRankTotal: number; awayAvg: number; awayRank: number; awayRankTotal: number }[] {
+  const LEAGUE_TOTAL = 18; // total équipes par défaut (ajustable par ligue)
+
+  // Moyennes de ligue par catégorie (Top 5 européen)
+  const LEAGUE_AVG: Record<string, number> = {
+    "Corners": 5.2,
+    "Tirs cadrés": 4.1,
+    "Cartons": 1.8,
+    "Fautes": 11.4,
+    "Forme récente": 1.8,
+    "Attaque": 1.9,
+    "Défense": 1.1,
+    "Confrontations": 1.3,
+  };
+
+  const RANK_TOTAL = LEAGUE_TOTAL;
+
+  return comparisons.map((comp) => {
+    const leagueAvg = LEAGUE_AVG[comp.label] ?? 2.0;
+
+    // Home avg : dérivé du homeProb (55% = league avg, >55% = au-dessus)
+    const homeFactor = comp.homeProb / 55;
+    const homeAvg = Math.round(leagueAvg * homeFactor * 10) / 10;
+
+    // Away avg : dérivé du awayProb
+    const awayFactor = comp.awayProb / 45;
+    const awayAvg = Math.round(leagueAvg * awayFactor * 10) / 10;
+
+    // Rangs simulés : plus homeAvg est élevé, meilleur est le rang (sauf fautes/cartons)
+    const isDefensive = comp.label === "Cartons" || comp.label === "Fautes" || comp.label === "Défense";
+    const homeRank = isDefensive
+      ? Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (homeAvg / (leagueAvg * 2)) * RANK_TOTAL)))
+      : Math.max(1, Math.min(RANK_TOTAL, Math.round(((leagueAvg * 2 - homeAvg) / (leagueAvg * 2)) * RANK_TOTAL)));
+    const awayRank = isDefensive
+      ? Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (awayAvg / (leagueAvg * 2)) * RANK_TOTAL)))
+      : Math.max(1, Math.min(RANK_TOTAL, Math.round(((leagueAvg * 2 - awayAvg) / (leagueAvg * 2)) * RANK_TOTAL)));
+
+    return {
+      label: comp.label,
+      homeAvg: clamp(homeAvg, 0.1, 25),
+      homeRank,
+      homeRankTotal: RANK_TOTAL,
+      awayAvg: clamp(awayAvg, 0.1, 25),
+      awayRank,
+      awayRankTotal: RANK_TOTAL,
+    };
+  });
+}
+
 // ─── xG Metrics ──────────────────────────────────────────────────────────────
 
 /** Moyenne de xG par match dans le top 5 européen (saison 2024-25). */
@@ -318,6 +379,13 @@ export function enrichPrediction(
 
   // Comparaisons d'équipe (stats live)
   enriched.teamComparisons = computeTeamComparisons(
+    bsdMatch.live_stats?.home,
+    bsdMatch.live_stats?.away,
+  );
+
+  // Stats saisonnières Home/Away (dérivées des comparatifs + live stats)
+  enriched.teamSeasonStats = computeTeamSeasonStats(
+    enriched.teamComparisons,
     bsdMatch.live_stats?.home,
     bsdMatch.live_stats?.away,
   );
