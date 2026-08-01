@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 135 components total.
+> extract pass. 142 components total (football: 8, leagues: 4, tennis: 48, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -82,15 +82,27 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
-## Football (`src/components/football/`) — 5 components
+## Football (`src/components/football/`) — 8 components
 
 | Component | File | Role |
 |-----------|------|------|
-| football-filters | football-filters.tsx | Filtres football |
+| football-filters | football-filters.tsx | Filtres football (league bar + lien stats) |
 | football-live-card | football-live-card.tsx | Carte match live football |
 | football-match-card | football-match-card.tsx | Carte de match football |
+| football-match-detail-dialog | football-match-detail-dialog.tsx | Dialogue analyse détaillée d'un match foot |
 | football-tab-content | football-tab-content.tsx | Contenu de l'onglet football |
+| flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
+| momentum-chart | momentum-chart.tsx | Graphique momentum football |
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
+
+## Leagues (`src/components/leagues/`) — 4 components
+
+| Component | File | Role |
+|-----------|------|------|
+| league-stats-table | league-stats-table.tsx | Tableau classement ligue (triable, métriques avancées) |
+| league-location-tabs | league-location-tabs.tsx | Toggle Global / Domicile / Extérieur |
+| league-market-tops | league-market-tops.tsx | Grille widgets « Tops Équipes par Marché » |
+| league-market-widget | league-market-widget.tsx | Widget unitaire top 5 d'un marché (PPG, Over, BTTS…) |
 
 ## F1 (`src/components/f1/`) — 2 components
 
