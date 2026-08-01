@@ -18,7 +18,7 @@ const FootballMatchDetailDialog = lazy(() =>
   import("./football-match-detail-dialog").then((m) => ({ default: m.FootballMatchDetailDialog })),
 );
 
-type FootFilter = "all" | "value" | "today";
+type FootFilter = "all" | "value" | "today" | "topConf" | "corners" | "btts";
 
 export function FootballTabContent() {
   const t = useTranslations("common");
@@ -57,13 +57,34 @@ export function FootballTabContent() {
         return diff > 5;
       });
     }
+    if (filter === "topConf") {
+      list = list.filter((m) => {
+        const p = m.prediction;
+        return (
+          (p.doubleChance && p.doubleChance.prob >= 75) ||
+          (p.over15Prob !== undefined && p.over15Prob >= 75) ||
+          (p.under35Prob !== undefined && p.under35Prob >= 75) ||
+          (p.bttsProb >= 75) ||
+          (p.bestCornerOver && p.bestCornerOver.overProb >= 75)
+        );
+      });
+    }
+    if (filter === "corners") {
+      list = list.filter((m) => m.prediction.bestCornerOver && m.prediction.bestCornerOver.overProb >= 60);
+    }
+    if (filter === "btts") {
+      list = list.filter((m) => m.prediction.bttsProb >= 55);
+    }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }, [matches, selectedLeague, filter]);
 
-  const FILTERS: { key: FootFilter; label: string }[] = [
+  const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
     { key: "all", label: "Tous" },
     { key: "today", label: "Aujourd'hui" },
     { key: "value", label: "Value Bets" },
+    { key: "topConf", label: "🔥 Fortes Confiances", icon: "🔥" },
+    { key: "corners", label: "⛳ Spe Corners", icon: "⛳" },
+    { key: "btts", label: "⚽ BTTS", icon: "⚽" },
   ];
 
   return (

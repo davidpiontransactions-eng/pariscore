@@ -1,6 +1,8 @@
 "use client";
 
-import { Trophy, Clock, BarChart3, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Trophy, Clock, BarChart3, TrendingUp, Star, ChevronDown, ChevronUp } from "lucide-react";
 import type { FootballMatch, Prediction } from "@/lib/football-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
@@ -48,45 +50,82 @@ export function FootballMatchCard({
   const confidence = (p as Prediction & { confidence?: number }).confidence ?? (0.5 + (maxProb / 100) * 0.3);
 
   // Collect prediction badges for the "Prédictions Clés" section
-  const predictionBadges: { key: string; label: string; prob: number }[] = [];
+  const predictionBadges: { key: string; label: string; prob: number; isTop: boolean }[] = [];
   if (p.doubleChance) {
+    const isTop = p.doubleChance.prob >= 75;
     predictionBadges.push({
       key: "dc",
       label: `DC ${p.doubleChance.selection} (${p.doubleChance.prob}%)`,
       prob: p.doubleChance.prob,
+      isTop,
     });
   }
   if (p.over15Prob !== undefined) {
+    const isTop = p.over15Prob >= 75;
     predictionBadges.push({
       key: "o15",
       label: `O1.5 (${p.over15Prob}%)`,
       prob: p.over15Prob,
+      isTop,
     });
   }
   if (p.under35Prob !== undefined) {
+    const isTop = p.under35Prob >= 75;
     predictionBadges.push({
       key: "u35",
       label: `U3.5 (${p.under35Prob}%)`,
       prob: p.under35Prob,
+      isTop,
     });
   }
   if (p.bttsProb > 0) {
+    const isTop = p.bttsProb >= 75;
     predictionBadges.push({
       key: "btts",
       label: `BTTS (${p.bttsProb}%)`,
       prob: p.bttsProb,
+      isTop,
     });
   }
   if (p.bestCornerOver) {
+    const isTop = p.bestCornerOver.overProb >= 75;
     predictionBadges.push({
       key: "corners",
       label: `Corn. O${p.bestCornerOver.line} (${p.bestCornerOver.overProb}%)`,
       prob: p.bestCornerOver.overProb,
+      isTop,
     });
   }
   const maxBadgeProb = predictionBadges.length > 0
     ? Math.max(...predictionBadges.map((b) => b.prob))
     : 0;
+
+  // Radar accordion state
+  const [radarOpen, setRadarOpen] = useState(false);
+
+  // Build radar items from prediction + live data
+  const radarItems: { label: string; homeVal: number; awayVal: number; icon: string; maxVal: number }[] = [];
+  if (p.teamComparisons && p.teamComparisons.length > 0) {
+    radarItems.push(
+      ...p.teamComparisons.map((c) => ({
+        label: c.label,
+        homeVal: c.homeProb,
+        awayVal: c.awayProb,
+        icon: c.label.includes("Attaque") ? "⚽" : c.label.includes("Défense") ? "🛡️" : c.label.includes("Forme") ? "📈" : "📊",
+        maxVal: 100,
+      })),
+    );
+  }
+  // Add possession from live if available
+  if (match.live && match.live.homePossession > 0) {
+    radarItems.push({
+      label: "Possession",
+      homeVal: match.live.homePossession,
+      awayVal: 100 - match.live.homePossession,
+      icon: "🎯",
+      maxVal: 100,
+    });
+  }
 
   return (
     <div className="group relative max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
@@ -207,74 +246,140 @@ export function FootballMatchCard({
 
         {/* Prédictions Clés */}
         {predictionBadges.length > 0 && (
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            {predictionBadges.map((badge) => {
-              const isBest = badge.prob >= maxBadgeProb;
-              return (
-                <span
-                  key={badge.key}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-semibold transition-transform hover:scale-[1.02] ${
-                    isBest
-                      ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
-                      : "border-border/60 bg-muted/50 text-muted-foreground hover:border-border/80 hover:bg-muted"
-                  }`}
-                >
-                  {isBest && <TrendingUp className="h-3 w-3 shrink-0" />}
-                  <span className="tabular-nums">{badge.label}</span>
-                </span>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Comparatifs */}
-        {p.teamComparisons && p.teamComparisons.length > 0 && (
-          <div className="mt-3 border-t border-border/40 pt-3">
-            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              📊 Comparatifs
+          <div className="mt-3 overflow-x-auto scrollbar-none -mx-1 px-1">
+            <div className="flex flex-nowrap items-center gap-1.5 sm:flex-wrap min-w-max sm:min-w-0">
+              {predictionBadges.map((badge) => {
+                const isBest = badge.prob >= maxBadgeProb;
+                return (
+                  <motion.span
+                    key={badge.key}
+                    initial={badge.isTop ? { scale: 0.9, opacity: 0 } : false}
+                    animate={badge.isTop ? { scale: [1, 1.05, 1], opacity: 1 } : { opacity: 1 }}
+                    transition={badge.isTop ? { scale: { repeat: Infinity, repeatDelay: 3, duration: 0.8 }, opacity: { duration: 0.4 } } : undefined}
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-semibold transition-transform hover:scale-[1.02] ${
+                      badge.isTop
+                        ? "border-amber-500/50 bg-amber-500/15 text-amber-400 shadow-sm shadow-amber-500/10"
+                        : isBest
+                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
+                          : "border-border/60 bg-muted/50 text-muted-foreground hover:border-border/80 hover:bg-muted"
+                    }`}
+                  >
+                    {badge.isTop && <Star className="h-3 w-3 shrink-0 text-amber-400" />}
+                    {!badge.isTop && isBest && <TrendingUp className="h-3 w-3 shrink-0" />}
+                    <span className="tabular-nums">{badge.label}</span>
+                  </motion.span>
+                );
+              })}
             </div>
-            {p.teamComparisons.map((comp, i) => {
-              const total = comp.homeProb + comp.awayProb;
-              const homePct = total > 0 ? Math.round((comp.homeProb / total) * 100) : 50;
-              const awayPct = 100 - homePct;
-              return (
-                <div key={i} className="mb-1 flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-right text-[10px] text-muted-foreground">
-                    {comp.label}
-                  </span>
-                  <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted/50">
-                    <div
-                      className="h-full bg-emerald-600 transition-all duration-300"
-                      style={{ width: `${homePct}%` }}
-                    />
-                    <div
-                      className="h-full bg-slate-600 transition-all duration-300"
-                      style={{ width: `${awayPct}%` }}
-                    />
-                  </div>
-                  <span className="w-16 shrink-0 text-left text-[10px] tabular-nums text-muted-foreground">
-                    {homePct}% — {awayPct}%
-                  </span>
-                </div>
-              );
-            })}
           </div>
         )}
 
-        {/* Footer: markets + CTA */}
-        <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/40 pt-3">
-          <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
-            {p.bttsProb > 0 && (
-              <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium tabular-nums">
-                BTTS {p.bttsProb}%
-              </span>
+        {/* Comparatifs + Radar accordéon */}
+        {(p.teamComparisons && p.teamComparisons.length > 0) || radarItems.length > 0 ? (
+          <div className="mt-3 border-t border-border/40 pt-3">
+            {/* Comparatifs inline (toujours visibles) */}
+            {p.teamComparisons && p.teamComparisons.length > 0 && (
+              <div className="mb-2">
+                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  📊 Comparatifs
+                </div>
+                {p.teamComparisons.map((comp) => {
+                  const total = comp.homeProb + comp.awayProb;
+                  const homePct = total > 0 ? Math.round((comp.homeProb / total) * 100) : 50;
+                  const awayPct = 100 - homePct;
+                  return (
+                    <div key={comp.label} className="mb-1 flex items-center gap-2">
+                      <span className="w-20 shrink-0 text-right text-[10px] text-muted-foreground">
+                        {comp.label}
+                      </span>
+                      <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted/50">
+                        <div
+                          className="h-full bg-emerald-600 transition-all duration-300"
+                          style={{ width: `${homePct}%` }}
+                        />
+                        <div
+                          className="h-full bg-slate-600 transition-all duration-300"
+                          style={{ width: `${awayPct}%` }}
+                        />
+                      </div>
+                      <span className="w-16 shrink-0 text-left text-[10px] tabular-nums text-muted-foreground">
+                        {homePct}% — {awayPct}%
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-            {p.over25Prob > 0 && (
-              <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium tabular-nums">
-                O2.5 {p.over25Prob}%
-              </span>
+
+            {/* Radar Micro-Analysis (accordéon) */}
+            {radarItems.length > 0 && (
+              <div>
+                <button
+                  onClick={() => setRadarOpen(!radarOpen)}
+                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+                >
+                  <span>🔬 Micro-Analysis Radar</span>
+                  {radarOpen ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                </button>
+                <AnimatePresence>
+                  {radarOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-2 pb-1 pt-2">
+                        {radarItems.map((item) => {
+                          const homePct = Math.round((item.homeVal / item.maxVal) * 100);
+                          const awayPct = Math.round((item.awayVal / item.maxVal) * 100);
+                          const homeDom = homePct > awayPct;
+                          return (
+                            <div key={item.label} className="flex items-center gap-2">
+                              <span className="w-5 text-center text-[11px]">{item.icon}</span>
+                              <span className="w-20 shrink-0 text-right text-[10px] text-muted-foreground">
+                                {item.label}
+                              </span>
+                              <div className="flex h-3 flex-1 overflow-hidden rounded-full bg-muted/30">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${homePct}%` }}
+                                  transition={{ duration: 0.6, ease: "easeOut" }}
+                                  className={`h-full ${homeDom ? "bg-emerald-500" : "bg-slate-500"} relative`}
+                                >
+                                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/90 tabular-nums">
+                                    {homePct > 25 ? `${homePct}%` : ""}
+                                  </span>
+                                </motion.div>
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${awayPct}%` }}
+                                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                                  className={`h-full ${!homeDom ? "bg-rose-500" : "bg-slate-600"} relative`}
+                                >
+                                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/90 tabular-nums">
+                                    {awayPct > 25 ? `${awayPct}%` : ""}
+                                  </span>
+                                </motion.div>
+                              </div>
+                              <span className="w-8 shrink-0 text-left text-[10px] tabular-nums text-muted-foreground">
+                                {homeDom ? "🏠" : "✈️"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
           </div>
+        ) : null}
+
+        {/* Footer: CTA */}
+        <div className="mt-3 flex items-center justify-end gap-2 border-t border-border/40 pt-3">
           <div className="flex items-center gap-1">
             <button
               onClick={onOpenDetail}

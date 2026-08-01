@@ -326,7 +326,7 @@ describe("enrichPrediction", () => {
     expect(enriched.over15Prob).toBe(65); // base 50 + 15
 
     expect(enriched.under35Prob).toBeDefined();
-    expect(enriched.under35Prob).toBe(0); // no odds, no model value
+    expect(enriched.under35Prob).toBe(62); // model fallback: 100 - over25Prob(50) + 12 = 62, capped to 98
 
     expect(enriched.bestCornerOver).toBeDefined();
     expect(enriched.bestCornerOver!.overProb).toBeGreaterThanOrEqual(0);

@@ -63,9 +63,10 @@ export function computeDoubleChance(
   const px2 = drawProb + awayProb;
   const p12 = homeProb + awayProb;
 
-  if (p1x >= px2 && p1x >= p12) return { selection: "1X", prob: Math.round(p1x * 100) / 100 };
-  if (px2 >= p12) return { selection: "X2", prob: Math.round(px2 * 100) / 100 };
-  return { selection: "12", prob: Math.round(p12 * 100) / 100 };
+  const clampProb = (v: number) => Math.min(100, Math.max(0, Math.round(v * 100) / 100));
+  if (p1x >= px2 && p1x >= p12) return { selection: "1X", prob: clampProb(p1x) };
+  if (px2 >= p12) return { selection: "X2", prob: clampProb(px2) };
+  return { selection: "12", prob: clampProb(p12) };
 }
 
 /**
@@ -230,10 +231,11 @@ export function enrichPrediction(
     prediction.over25Prob,
   );
 
-  // Under 3.5
+  // Under 3.5 — utilise over25Prob inversé comme fallback modèle
+  // (si P(over 2.5)=70%, alors P(under 3.5) ≈ 100-70+12 = 42% comme proxy conservateur)
   enriched.under35Prob = computeUnder35(
     bsdMatch.odds_under_25,
-    undefined,
+    prediction.over25Prob != null ? Math.max(0, 100 - prediction.over25Prob + 12) : undefined,
   );
 
   // Corner over — utilise les corners live comme proxy si disponible,
