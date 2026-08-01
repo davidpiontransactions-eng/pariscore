@@ -36,6 +36,7 @@ import { ProbabilityBar } from "./probability-bar";
 import { PredictiveBets } from "./predictive-bets";
 import { MostAcesCompare } from "./most-aces-compare";
 import { MomentumDR } from "./momentum-dr";
+import { MomentumScoreDuo } from "./momentum-score";
 import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
 import { LiveStatsPanel } from "./live-stats-panel";
@@ -388,6 +389,17 @@ export function MatchCardBroadcast({
             tTennis={tTennis}
           />
         </div>
+
+        {/* Momentum Score — gauge dual sous le bloc joueurs */}
+        {!isSynthetic && (playerA.momentumScore != null || playerB.momentumScore != null) && (
+          <div className="relative flex justify-center mt-2 px-4 sm:px-6">
+            <MomentumScoreDuo
+              scoreA={playerA.momentumScore}
+              scoreB={playerB.momentumScore}
+              size={48}
+            />
+          </div>
+        )}
 
         {/* Badge synthétique (si match live sans prematch) */}
         {isSynthetic && (

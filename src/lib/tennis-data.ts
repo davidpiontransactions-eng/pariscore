@@ -30,6 +30,8 @@ export type Player = {
   spsRank?: number | null;
   /** Confiance du SPS (1 = sample suffisant). */
   spsConfidence?: number | null;
+  /** Momentum Score [0-100] — agrégat EWM 5 signaux. Absent si données insuffisantes. */
+  momentumScore?: number | null;
 };
 
 export type H2HMatch = {
@@ -127,6 +129,11 @@ export type TennisMatch = {
       threshold?: number;
     };
     source: "stats" | "surface-fallback";
+  };
+  /** Signaux bruts du Momentum Score (debug / transparence). */
+  momentumSignals?: {
+    source: string;
+    weights: { dr: number; aces: number; servePts: number; form: number; momentum: number };
   };
 };
 

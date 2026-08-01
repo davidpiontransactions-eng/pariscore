@@ -52,6 +52,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | match-detail-dialog | match-detail-dialog.tsx | Dialogue d'analyse détaillée d'un match |
 | match-pip-widget | match-pip-widget.tsx | Conteneur du widget Document PiP (multi-matchs favoris live) |
 | momentum-dr | momentum-dr.tsx | Momentum (dynamic, best-of-5 aware) |
+| momentum-score | momentum-score.tsx | Score 0-100 EWM (DR/aces/serve/form/momentum) |
 | odds-comparator | odds-comparator.tsx | Comparateur de cotes |
 | pip-bet-panel | pip-bet-panel.tsx | Panneau 5 bets prédictifs (vainqueur match/set, Over games) |
 | pip-match-row | pip-match-row.tsx | Ligne compacte d'un match dans le widget PiP (score + DR + feu tricolore) |

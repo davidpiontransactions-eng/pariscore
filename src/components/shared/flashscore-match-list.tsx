@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, type ReactNode } from "react";
+import { useState, useMemo, useRef, type ReactNode } from "react";
 import { ChevronDown, ChevronRight, Star, BarChart2, Search } from "lucide-react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
 import { CountryFlag } from "@/components/tennis/country-flag";
 import { Badge } from "@/components/ui/badge";
@@ -312,6 +313,37 @@ export function FlashscoreMatchList({
 
   const totalMatches = filteredLeagues.reduce((s, lg) => s + lg.matches.length, 0);
 
+  // Flatten leagues into a single array for virtual scrolling.
+  // Each item is either a league header or a match row.
+  type FlatRow =
+    | { type: "header"; leagueId: string; league: FlashscoreLeague; matchCount: number }
+    | { type: "match"; matchId: string; match: FlashscoreMatchRow; leagueId: string };
+
+  const flatRows = useMemo<FlatRow[]>(() => {
+    const rows: FlatRow[] = [];
+    for (const { league, matches } of filteredLeagues) {
+      rows.push({ type: "header", leagueId: league.id, league, matchCount: matches.length });
+      const collapsed = collapsedLeagues.has(league.id);
+      if (!collapsed) {
+        for (const m of matches) {
+          rows.push({ type: "match", matchId: m.id, match: m, leagueId: league.id });
+        }
+      }
+    }
+    return rows;
+  }, [filteredLeagues, collapsedLeagues]);
+
+  // Virtualizer — estimate 40px for headers, 48px for match rows
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualizer = useVirtualizer({
+    count: flatRows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: (i) => (flatRows[i].type === "header" ? 40 : 48),
+    overscan: 8,
+  });
+
+  const isLeagueFav = (leagueId: string) => favoriteLeagueIds?.has(leagueId) ?? false;
+
   return (
     <div className={cn("space-y-4", className)}>
       <FilterBar
@@ -346,26 +378,51 @@ export function FlashscoreMatchList({
               <p className="text-xs text-muted-foreground">Essayez un autre filtre ou revenez plus tard.</p>
             </div>
           ) : (
-            filteredLeagues.map(({ league, matches }) => {
-              const isCollapsed = collapsedLeagues.has(league.id);
-              const isLeagueFav = favoriteLeagueIds?.has(league.id) ?? false;
-              return (
-                <div key={league.id}>
-                  <LeagueHeader
-                    league={league} matchCount={matches.length}
-                    isCollapsed={isCollapsed} onToggleCollapse={() => toggleLeague(league.id)}
-                    isFavorite={isLeagueFav}
-                    onToggleFavorite={onToggleLeagueFavorite ? () => onToggleLeagueFavorite(league.id) : undefined}
-                  />
-                  {!isCollapsed && matches.map((match) => (
-                    <MatchRow key={match.id} match={match}
-                      isFavorite={favoriteIds?.has(match.id) ?? false}
-                      onToggleFavorite={onToggleFavorite} onOpenDetail={onOpenDetail}
-                    />
-                  ))}
-                </div>
-              );
-            })
+            <div ref={scrollRef} className="max-h-[calc(100vh-280px)] overflow-y-auto">
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                {virtualizer.getVirtualItems().map((vi) => {
+                  const row = flatRows[vi.index];
+                  return (
+                    <div
+                      key={vi.key}
+                      data-index={vi.index}
+                      ref={virtualizer.measureElement}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${vi.start}px)`,
+                      }}
+                    >
+                      {row.type === "header" ? (
+                        <LeagueHeader
+                          league={row.league}
+                          matchCount={row.matchCount}
+                          isCollapsed={collapsedLeagues.has(row.leagueId)}
+                          onToggleCollapse={() => toggleLeague(row.leagueId)}
+                          isFavorite={isLeagueFav(row.leagueId)}
+                          onToggleFavorite={onToggleLeagueFavorite ? () => onToggleLeagueFavorite(row.leagueId) : undefined}
+                        />
+                      ) : (
+                        <MatchRow
+                          match={row.match}
+                          isFavorite={favoriteIds?.has(row.matchId) ?? false}
+                          onToggleFavorite={onToggleFavorite}
+                          onOpenDetail={onOpenDetail}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       )}

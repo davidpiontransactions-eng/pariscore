@@ -189,7 +189,11 @@
     "searchPlayersTitle": "Joueurs",
     "searchTournamentsTitle": "Tournois",
     "searchNoResults": "Aucun résultat",
-    "searchLoading": "Recherche…"
+    "searchLoading": "Recherche…",
+    "momentumScore": {
+      "title": "Momentum Score: {score}/100",
+      "label": "Jauge Momentum Score: {score} sur 100"
+    }
   },
   "match": {
     "win": "WIN",
@@ -221,7 +225,6 @@
     "offline": "Hors ligne",
     "featuredTitle": "À la une — Tournois de la semaine",
     "weekLabel": "Semaine {n}",
-    "offline": "Hors ligne",
     "seeStats": "Voir les stats détaillées",
     "hideStats": "Masquer les stats",
     "deepAnalysis": "Analyse approfondie",

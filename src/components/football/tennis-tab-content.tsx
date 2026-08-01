@@ -602,7 +602,7 @@ export function TennisTabContent() {
       </div>
 
       {/* Match list / Tournaments list / Flashscore list */}
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+      <main className="w-full flex-1 px-4 py-6 sm:px-6">
       {subTab === "tournaments" ? (
         <TournamentsList />
       ) : subTab === "list" ? (

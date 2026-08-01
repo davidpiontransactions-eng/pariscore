@@ -74,7 +74,7 @@ function blendedElo(player: PlayerInputs): number {
  * W=1, L=0, with exponential decay (most recent weighs most).
  * Returns 0-1.
  */
-function formScore(form: MatchOutcome[]): number {
+export function formScore(form: MatchOutcome[]): number {
   const recent = form.slice(-FORM_WINDOW);
   if (recent.length === 0) return 0.5; // no data → neutral
   let weighted = 0;

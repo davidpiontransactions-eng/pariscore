@@ -189,7 +189,11 @@
     "searchPlayersTitle": "Players",
     "searchTournamentsTitle": "Tournaments",
     "searchNoResults": "No results",
-    "searchLoading": "Searching…"
+    "searchLoading": "Searching…",
+    "momentumScore": {
+      "title": "Momentum Score: {score}/100",
+      "label": "Momentum Score gauge: {score} out of 100"
+    }
   },
   "match": {
     "win": "WIN",
@@ -221,7 +225,6 @@
     "offline": "Offline",
     "featuredTitle": "Featured — Tournaments of the week",
     "weekLabel": "Week {n}",
-    "offline": "Offline",
     "seeStats": "See detailed stats",
     "hideStats": "Hide stats",
     "deepAnalysis": "Deep analysis",

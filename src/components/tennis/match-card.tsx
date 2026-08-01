@@ -14,6 +14,7 @@ import { QuickAddRing } from "./quick-add-ring";
 import { BestOddBadge } from "./best-odd-badge";
 import { LiveStatsPanel } from "./live-stats-panel";
 import { MomentumDR } from "./momentum-dr";
+import { MomentumScoreDuo } from "./momentum-score";
 import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
@@ -372,6 +373,17 @@ export function MatchCard({
               {t("vs")}
             </div>
           </div>
+
+          {/* Momentum Score — gauge dual sous le bloc VS */}
+          {!isSynthetic && (playerA.momentumScore != null || playerB.momentumScore != null) && (
+            <div className="col-span-3 flex justify-center mt-2">
+              <MomentumScoreDuo
+                scoreA={playerA.momentumScore}
+                scoreB={playerB.momentumScore}
+                size={48}
+              />
+            </div>
+          )}
 
           <div className="min-w-0 pr-2 sm:pr-4">
           <PlayerBlock

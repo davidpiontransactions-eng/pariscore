@@ -8,7 +8,7 @@
 import type { TennisMatch, BookmakerOdd, Player, Surface, MatchStats } from "@/lib/tennis-data";
 import type { BSDMatch, BSDLiveMatch } from "@/lib/bsd-tennis-service";
 import { fetchMatches, fetchLiveMatches, getPlayerPhotoUrl } from "@/lib/bsd-tennis-service";
-import { predict, type PlayerInputs, type MatchOutcome } from "@/lib/prediction/engine";
+import { predict, formScore, type PlayerInputs, type MatchOutcome } from "@/lib/prediction/engine";
 import { predictTotalGames, type PredictionSurface } from "@/lib/prediction/total-games";
 import { predictMostAces, type AcesStats } from "@/lib/prediction/most-aces";
 import { findPlayerElo } from "@/lib/player-matcher";
@@ -17,6 +17,7 @@ import { lookupServeStats } from "@/lib/tennis-dr/lookup";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
 import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
+import { computeMomentumScore } from "@/lib/momentum-score";
 
 /** Mappe la surface UI (français) → surface du modèle total-games (anglais DB). */
 function toModelSurface(s: Surface): PredictionSurface {
@@ -175,6 +176,14 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     form: playerBInputs.form,
   };
 
+  // Momentum Score (EWM 5 signaux)
+  const momentum = computeMomentumScore(
+    nameA, nameB, surface,
+    formScore(playerAInputs.form), formScore(playerBInputs.form),
+  );
+  const playerAFinal: Player = { ...playerA, momentumScore: momentum.scoreA };
+  const playerBFinal: Player = { ...playerB, momentumScore: momentum.scoreB };
+
   const stats: MatchStats = {
     form: `${playerAInputs.form.filter((f) => f === "W").length}V-${playerAInputs.form.filter((f) => f === "L").length}D`,
     eloGap: pred.eloGap,
@@ -192,8 +201,8 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     round: b.round_name ?? "Prematch",
     // BSD V2 renvoie match_date (pas start_time/commence_time).
     scheduledAt: b.match_date ?? "",
-    playerA,
-    playerB,
+    playerA: playerAFinal,
+    playerB: playerBFinal,
     probA: pred.probA,
     probB: pred.probB,
     stats,
@@ -224,6 +233,10 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
       over15_5: maPred.over15_5,
       recommendedBet: maPred.recommendedBet,
       source: maPred.source,
+    },
+    momentumSignals: {
+      source: momentum.source,
+      weights: momentum.weights,
     },
   };
 }
