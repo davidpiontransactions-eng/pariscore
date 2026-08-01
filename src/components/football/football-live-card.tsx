@@ -1,6 +1,8 @@
 "use client";
 
-import { Trophy, Clock, Activity } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FootballMatch } from "@/lib/football-data";
 
@@ -70,7 +72,27 @@ function StatRow({
 
 export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch; onOpenDetail?: () => void }) {
   const live = match.live;
+  const p = match.prediction;
   if (!live) return null;
+
+  const [expanded, setExpanded] = useState(false);
+
+  // Prediction badges (compact, only top confidence)
+  const topBadges: { key: string; label: string; isTop: boolean }[] = [];
+  if (p.doubleChance && p.doubleChance.prob >= 70) {
+    topBadges.push({ key: "dc", label: `DC ${p.doubleChance.selection} ${p.doubleChance.prob}%`, isTop: p.doubleChance.prob >= 75 });
+  }
+  if (p.over15Prob !== undefined && p.over15Prob >= 70) {
+    topBadges.push({ key: "o15", label: `O1.5 ${p.over15Prob}%`, isTop: p.over15Prob >= 75 });
+  }
+  if (p.bestCornerOver && p.bestCornerOver.overProb >= 65) {
+    topBadges.push({ key: "cor", label: `Corn. O${p.bestCornerOver.line}`, isTop: p.bestCornerOver.overProb >= 75 });
+  }
+
+  // xG differential for badge
+  const xGdPct = p.xGd !== undefined ? Math.round(p.xGd * 100) : null;
+  const xGdHome = xGdPct !== null && xGdPct > 0;
+  const xGdAway = xGdPct !== null && xGdPct < 0;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-all hover:border-rose-500/50">
@@ -147,13 +169,137 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           </div>
         </div>
 
-        {/* Stats */}
-        {(live.homeShots > 0 || live.awayShots > 0) && (
+        {/* Stats + xG */}
+        {(live.homeShots > 0 || live.awayShots > 0 || p.xGa) && (
           <div className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
-            <StatRow label="Poss." home={live.homePossession} away={100 - live.homePossession} pct={live.homePossession / 1} />
-            <StatRow label="Tirs" home={live.homeShots} away={live.awayShots} />
-            <StatRow label="Cadrés" home={live.homeShotsOnTarget} away={live.awayShotsOnTarget} />
-            <StatRow label="Corners" home={live.homeCorners} away={live.awayCorners} />
+            {live.homeShots > 0 || live.awayShots > 0 ? (
+              <>
+                <StatRow label="Poss." home={live.homePossession} away={100 - live.homePossession} pct={live.homePossession / 1} />
+                <StatRow label="Tirs" home={live.homeShots} away={live.awayShots} />
+                <StatRow label="Cadrés" home={live.homeShotsOnTarget} away={live.awayShotsOnTarget} />
+                <StatRow label="Corners" home={live.homeCorners} away={live.awayCorners} />
+              </>
+            ) : null}
+            {p.xGa && p.xGa.total > 0 && (
+              <div className="flex items-center gap-2 text-[11px]">
+                <span className="w-6 text-right font-semibold tabular-nums text-sky-400">{p.xGa.home.toFixed(1)}</span>
+                <div className="flex flex-1 items-center gap-0.5">
+                  <div className="h-1 rounded-full bg-sky-500/60 transition-all"
+                    style={{ width: `${Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
+                  <span className="mx-1 w-8 text-center text-[9px] font-medium text-sky-400/80">xG</span>
+                  <div className="h-1 rounded-full bg-sky-500/40 transition-all"
+                    style={{ width: `${Math.round((p.xGa.away / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
+                </div>
+                <span className="w-6 font-semibold tabular-nums text-sky-400/70">{p.xGa.away.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* xGd badge + Top predictions */}
+        {(xGdPct !== null || topBadges.length > 0) && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-border/40 pt-3">
+            {xGdPct !== null && xGdPct !== 0 && (
+              <motion.span
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  xGdHome
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30",
+                )}
+              >
+                <TrendingUp className={cn("h-3 w-3", xGdAway && "rotate-180")} />
+                xGd {xGdPct > 0 ? "+" : ""}{xGdPct}%
+              </motion.span>
+            )}
+            {topBadges.map((b) => (
+              <span
+                key={b.key}
+                className={cn(
+                  "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                  b.isTop
+                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                    : "bg-muted/50 text-muted-foreground border border-border/60",
+                )}
+              >
+                {b.isTop && <span className="text-[9px]">⭐</span>}
+                {b.label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Expandable xG detail drawer */}
+        {p.xGa && p.xGa.total > 0 && (
+          <div className="mt-2">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted/30"
+            >
+              <span>📐 Détail xG</span>
+              {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </button>
+            <AnimatePresence>
+              {expanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="space-y-1.5 px-2 pb-1 pt-1.5">
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">xG {match.home.shortName}</span>
+                      <span className="font-semibold tabular-nums text-sky-400">{p.xGa.home.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">xG {match.away.shortName}</span>
+                      <span className="font-semibold tabular-nums text-sky-400/70">{p.xGa.away.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-[10px]">
+                      <span className="text-muted-foreground">Total xG</span>
+                      <span className="font-semibold tabular-nums">{p.xGa.total.toFixed(2)}</span>
+                    </div>
+                    {live.homeShotsOnTarget > 0 && (
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-muted-foreground">xG/Tir {match.home.shortName}</span>
+                        <span className="font-semibold tabular-nums text-muted-foreground">
+                          {(p.xGa.home / live.homeShotsOnTarget).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {live.awayShotsOnTarget > 0 && (
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-muted-foreground">xG/Tir {match.away.shortName}</span>
+                        <span className="font-semibold tabular-nums text-muted-foreground">
+                          {(p.xGa.away / live.awayShotsOnTarget).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    {live.homeScore + live.awayScore > 0 && (
+                      <div className="mt-1 border-t border-border/30 pt-1">
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">Buts réels</span>
+                          <span className="font-semibold tabular-nums">{live.homeScore + live.awayScore}</span>
+                        </div>
+                        <div className="flex justify-between text-[10px]">
+                          <span className="text-muted-foreground">
+                            {live.homeScore + live.awayScore > p.xGa.total ? "🔥 Overperformance" : "❄️ Underperformance"}
+                          </span>
+                          <span className="font-semibold tabular-nums">
+                            {(live.homeScore + live.awayScore - p.xGa.total) > 0 ? "+" : ""}
+                            {(live.homeScore + live.awayScore - p.xGa.total).toFixed(1)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
