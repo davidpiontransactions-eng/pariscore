@@ -59,7 +59,7 @@ type BSDLiveStats = {
   };
 };
 
-type BSDFootballMatch = {
+export type BSDFootballMatch = {
   id: number;
   league: BSDLeague;
   season?: { id: number; name: string; year: number };
