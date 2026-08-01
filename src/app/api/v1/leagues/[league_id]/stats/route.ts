@@ -39,9 +39,9 @@ function generateMockStandings(leagueName: string, location: string) {
     { id: "5", name: `${leagueName} Team E`, short: "TME", color: "#9333ea" },
     { id: "6", name: `${leagueName} Team F`, short: "TMF", color: "#0891b2" },
     { id: "7", name: `${leagueName} Team G`, short: "TMG", color: "#ea580c" },
-    { id: "8", name: `${leagueName} Team H", short: "TMH", color: "#4f46e5" },
-    { id: "9", name: `${leagueName} Team I", short: "TMI", color: "#be123c" },
-    { id: "10", name: `${leagueName} Team J", short: "TMJ", color: "#047857" },
+    { id: "8", name: `${leagueName} Team H`, short: "TMH", color: "#4f46e5" },
+    { id: "9", name: `${leagueName} Team I`, short: "TMI", color: "#be123c" },
+    { id: "10", name: `${leagueName} Team J`, short: "TMJ", color: "#047857" },
   ];
 
   const standings = teams.map((t, i) => {
