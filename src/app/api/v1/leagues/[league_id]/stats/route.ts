@@ -26,6 +26,8 @@ async function fetchBSDRaw<T>(endpoint: string): Promise<T> {
   });
   if (!res.ok) throw new Error(`BSD HTTP ${res.status}`);
   return (await res.json()) as T;
+}
+
 // ── Mock data generator (fallback quand BSD n'a pas de matchs pour cette ligue) ──
 
 function generateMockStandings(leagueName: string, location: string) {
