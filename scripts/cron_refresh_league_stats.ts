@@ -6,7 +6,7 @@
  *
  * Usage:
  *   bun run scripts/cron_refresh_league_stats.ts
- *   # ou via PM2 cron_restart: '0 */6 * * *' (toutes les 6h)
+ *   // PM2 cron_restart: '0 *&#47;6 * * *' (every 6h)
  *
  * Timeout: 10 min max (si BSD lent, on abandonne et on garde le cache existant).
  */
