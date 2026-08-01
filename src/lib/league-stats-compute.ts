@@ -6,6 +6,7 @@ import type {
   MarketTops,
   MarketTopEntry,
 } from "@/lib/league-stats";
+import { lookupClubLogo } from "@/lib/club-logos";
 
 // ── Helpers ──
 
@@ -151,7 +152,8 @@ export function computeStandings(
     if (location === "all" || location === "home") {
       let t = teamMap.get(hid);
       if (!t) {
-        t = { id: String(hid), name: m.home_team_obj?.name ?? m.home_team, shortName: m.home_team_obj?.short_name ?? m.home_team, logo: "", color: "#333", matches: [] };
+        const name = m.home_team_obj?.name ?? m.home_team;
+        t = { id: String(hid), name, shortName: m.home_team_obj?.short_name ?? m.home_team, logo: lookupClubLogo(name) ?? "", color: "#333", matches: [] };
         teamMap.set(hid, t);
       }
       t.matches.push({ date: m.event_date, goalsFor: m.home_score!, goalsAgainst: m.away_score!, xgFor: hxg, xgAgainst: axg, isWin: m.home_score! > m.away_score!, isDraw: m.home_score === m.away_score, isLoss: m.home_score! < m.away_score! });
@@ -160,7 +162,8 @@ export function computeStandings(
     if (location === "all" || location === "away") {
       let t = teamMap.get(aid);
       if (!t) {
-        t = { id: String(aid), name: m.away_team_obj?.name ?? m.away_team, shortName: m.away_team_obj?.short_name ?? m.away_team, logo: "", color: "#333", matches: [] };
+        const name = m.away_team_obj?.name ?? m.away_team;
+        t = { id: String(aid), name, shortName: m.away_team_obj?.short_name ?? m.away_team, logo: lookupClubLogo(name) ?? "", color: "#333", matches: [] };
         teamMap.set(aid, t);
       }
       t.matches.push({ date: m.event_date, goalsFor: m.away_score!, goalsAgainst: m.home_score!, xgFor: axg, xgAgainst: hxg, isWin: m.away_score! > m.home_score!, isDraw: m.away_score === m.home_score, isLoss: m.away_score! < m.home_score! });
