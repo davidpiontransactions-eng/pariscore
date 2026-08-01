@@ -250,12 +250,13 @@ export function computeXGa(
  *
  * xGd = (home_xg - away_xg) / (home_xg + away_xg), borné [-1, +1].
  * Un xGd > 0 indique un avantage domicile en xG.
- * Retourne 0 si les données sont insuffisantes.
+ * Retourne `null` si les données live sont insuffisantes (pas de calcul
+ * possible) — ce qui permet de distinguer « pas de data » du vrai zéro.
  */
 export function computeXGd(
   homeXgLive?: number | null,
   awayXgLive?: number | null,
-): number {
+): number | null {
   if (
     homeXgLive != null && awayXgLive != null &&
     Number.isFinite(homeXgLive) && Number.isFinite(awayXgLive) &&
@@ -265,7 +266,7 @@ export function computeXGd(
     return clamp(Math.round(raw * 1000) / 1000, -1, 1);
   }
 
-  return 0;
+  return null;
 }
 
 /** Constante de fallback : moyenne de corners par match dans les 5 grands championnats. */

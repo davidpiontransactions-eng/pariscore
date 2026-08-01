@@ -1,10 +1,87 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
+import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { FootballMatch } from "@/lib/football-data";
+
+// ─── Sparkline xG Live ───────────────────────────────────────────────────
+
+/** Point cumulé : minute + xG cumulé (home + away). */
+type CumulPoint = { minute: number; homeCumul: number; awayCumul: number };
+
+function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; homeName: string; awayName: string }) {
+  // Dimensions mini
+  const W = 300;
+  const H = 56;
+  const PAD_L = 4;
+  const PAD_R = 4;
+  const PAD_TOP = 8;
+  const PAD_BOT = 14;
+  const PLOT_W = W - PAD_L - PAD_R;
+  const PLOT_H = H - PAD_TOP - PAD_BOT;
+  const maxMin = Math.max(points.length > 0 ? points[points.length - 1].minute : 90, 90);
+
+  const maxY = useMemo(() => {
+    if (points.length === 0) return 1;
+    let m = 0;
+    for (const p of points) { m = Math.max(m, p.homeCumul, p.awayCumul); }
+    return m > 0 ? m : 1;
+  }, [points]);
+
+  function x(min: number) { return PAD_L + (Math.max(0, Math.min(maxMin, min)) / maxMin) * PLOT_W; }
+  function y(val: number) { return PAD_TOP + PLOT_H - (val / maxY) * PLOT_H; }
+
+  function buildPath(pts: CumulPoint[], key: "homeCumul" | "awayCumul"): string {
+    if (pts.length === 0) return "";
+    const d = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.minute).toFixed(1)} ${y(p[key]).toFixed(1)}`);
+    return d.join(" ");
+  }
+
+  const homePath = buildPath(points, "homeCumul");
+  const awayPath = buildPath(points, "awayCumul");
+
+  return (
+    <div className="mt-2 border-t border-border/30 pt-2">
+      <div className="mb-1 flex items-center justify-between text-[10px]">
+        <span className="font-semibold uppercase tracking-wider text-muted-foreground">📈 Évolution xG</span>
+        <span className="flex items-center gap-2 text-[9px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded-sm bg-emerald-500" /> {homeName}</span>
+          <span className="inline-flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded-sm bg-rose-500" /> {awayName}</span>
+        </span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" role="img" aria-label={`Évolution xG cumulé — ${homeName} vs ${awayName}`}>
+        {/* Grille horizontale légère */}
+        {[0.25, 0.5, 0.75, 1].map((frac) => (
+          <line key={`grid-${frac}`} x1={PAD_L} y1={y(maxY * frac)} x2={W - PAD_R} y2={y(maxY * frac)} stroke="currentColor" strokeOpacity={0.08} strokeWidth={1} className="text-muted-foreground" />
+        ))}
+        {/* Ligne de base */}
+        <line x1={PAD_L} y1={y(0)} x2={W - PAD_R} y2={y(0)} stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} className="text-muted-foreground" />
+        {/* Courbes */}
+        {awayPath && <path d={awayPath} fill="none" stroke="#f43f5e" strokeWidth={1.5} strokeOpacity={0.7} strokeLinecap="round" strokeLinejoin="round" />}
+        {homePath && <path d={homePath} fill="none" stroke="#10b981" strokeWidth={1.8} strokeOpacity={0.85} strokeLinecap="round" strokeLinejoin="round" />}
+        {/* Dernier point (valeur actuelle) */}
+        {points.length > 0 && (() => {
+          const last = points[points.length - 1];
+          return (
+            <>
+              <circle cx={x(last.minute)} cy={y(last.homeCumul)} r="3" fill="#10b981" stroke="#fff" strokeWidth="0.5" />
+              <circle cx={x(last.minute)} cy={y(last.awayCumul)} r="3" fill="#f43f5e" stroke="#fff" strokeWidth="0.5" />
+            </>
+          );
+        })()}
+      </svg>
+      {/* Axe minutes */}
+      <div className="mt-0.5 flex justify-between text-[8px] text-muted-foreground/60">
+        <span>0&apos;</span>
+        <span>{Math.round(maxMin / 2)}&apos;</span>
+        <span>{maxMin}&apos;</span>
+      </div>
+    </div>
+  );
+}
 
 function LiveBadge({ minute, status, period }: { minute: number; status: string; period?: string }) {
   const isHT = status === "HT";
@@ -89,8 +166,8 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
     topBadges.push({ key: "cor", label: `Corn. O${p.bestCornerOver.line}`, isTop: p.bestCornerOver.overProb >= 75 });
   }
 
-  // xG differential for badge
-  const xGdPct = p.xGd !== undefined ? Math.round(p.xGd * 100) : null;
+  // xG differential for badge (nullable — distinguishes "no data" from true zero)
+  const xGdPct = p.xGd != null ? Math.round(p.xGd * 100) : null;
   const xGdHome = xGdPct !== null && xGdPct > 0;
   const xGdAway = xGdPct !== null && xGdPct < 0;
 
@@ -257,8 +334,25 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           </div>
         )}
 
+        {/* Sparkline xG Live — Innovation 3 */}
+        {(() => {
+          const rawPts = live.xgPerMinute;
+          if (rawPts && rawPts.length > 0) {
+            // Calculer le xG cumulé à chaque minute
+            let homeSum = 0;
+            let awaySum = 0;
+            const cumul: CumulPoint[] = rawPts.map((pt) => {
+              homeSum += pt.home;
+              awaySum += pt.away;
+              return { minute: pt.minute, homeCumul: homeSum, awayCumul: awaySum };
+            });
+            return <XGSparkline points={cumul} homeName={match.home.shortName} awayName={match.away.shortName} />;
+          }
+          return null;
+        })()}
+
         {/* Expandable xG detail drawer */}
-        {p.xGa && p.xGa.total > 0 && (
+        {p.xGa && p.xGa.total > 0 ? (
           <div className="mt-2">
             <button
               onClick={() => setExpanded(!expanded)}
@@ -289,7 +383,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                       <span className="text-muted-foreground">Total xG</span>
                       <span className="font-semibold tabular-nums">{p.xGa.total.toFixed(2)}</span>
                     </div>
-                    {live.homeShotsOnTarget > 0 && (
+                    {live.homeShotsOnTarget > 0 && Number.isFinite(p.xGa.home) && (
                       <div className="flex justify-between text-[10px]">
                         <span className="text-muted-foreground">xG/Tir {match.home.shortName}</span>
                         <span className="font-semibold tabular-nums text-muted-foreground">
@@ -297,7 +391,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                         </span>
                       </div>
                     )}
-                    {live.awayShotsOnTarget > 0 && (
+                    {live.awayShotsOnTarget > 0 && Number.isFinite(p.xGa.away) && (
                       <div className="flex justify-between text-[10px]">
                         <span className="text-muted-foreground">xG/Tir {match.away.shortName}</span>
                         <span className="font-semibold tabular-nums text-muted-foreground">
@@ -327,6 +421,12 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               )}
             </AnimatePresence>
           </div>
+        ) : (
+          /* BF-02: xG live indisponible */
+          <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+            <AlertCircle className="h-3 w-3 shrink-0 text-amber-500" />
+            <span>xG live indisponible pour ce match</span>
+          </div>
         )}
 
         {/* Odds */}
@@ -355,6 +455,55 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             Momentum
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+export function FootballLiveCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <Skeleton className="h-4 w-16 rounded-full" />
+        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-4 w-16 rounded-full" />
+      </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="flex flex-col items-center gap-1.5">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-3 w-10" />
+        </div>
+        <div className="flex flex-col items-center gap-1.5">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+      </div>
+      <div className="mt-3 space-y-1.5">
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <Skeleton className="h-1.5 w-full rounded-full" />
+        <Skeleton className="h-1.5 w-full rounded-full" />
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <Skeleton className="h-4 w-20 rounded-md" />
+        <Skeleton className="h-4 w-16 rounded-md" />
+        <Skeleton className="h-4 w-24 rounded-md" />
+      </div>
+      <div className="mt-2 border-t border-border/30 pt-2">
+        <Skeleton className="mb-1 h-3 w-24" />
+        <Skeleton className="h-14 w-full rounded-md" />
+        <Skeleton className="mt-0.5 h-2 w-full" />
+      </div>
+      <div className="mt-2">
+        <Skeleton className="h-6 w-full rounded-lg" />
+      </div>
+      <div className="mt-3 flex justify-center gap-3 border-t border-border/40 pt-3">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-16" />
       </div>
     </div>
   );

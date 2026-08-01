@@ -141,8 +141,8 @@ export function FootballMatchCard({
       maxVal: Math.max(p.xGa.total, 4),
     });
   }
-  // xGd badge label
-  const xGdLabel = p.xGd !== undefined && p.xGd !== 0
+  // xGd badge label (nullable — only show when data available)
+  const xGdLabel = p.xGd != null && p.xGd !== 0
     ? `xGd ${p.xGd > 0 ? "+" : ""}${(p.xGd * 100).toFixed(0)}%`
     : null;
 
@@ -331,34 +331,107 @@ export function FootballMatchCard({
           </div>
         )}
 
-        {/* xG Summary — between badges and comparatifs */}
-        {xGSummary && (
-          <div className="mt-2 flex items-center gap-2 border-t border-border/30 pt-2">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">📐 xG</span>
-            <div className="flex flex-1 items-center gap-2">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted/40">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 to-slate-500 transition-all duration-500"
-                  style={{
-                    width: `${p.xGa ? Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 100) : 50}%`,
-                  }}
-                />
+        {/* Innovation 1: Key Players Matchup */}
+        {((match.home.topScorer && match.away.topDefender) || (match.away.topScorer && match.home.topDefender)) && (
+          <div className="mt-2 border-t border-border/30 pt-2">
+            <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+              <span>⚔️</span>
+              <span>Duel du match</span>
+            </div>
+            {match.home.topScorer && match.away.topDefender && (
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className="flex w-[45%] items-center gap-1 text-right">
+                  <span className="truncate text-emerald-400" title={`⚽ ${match.home.topScorer.name}`}>
+                    {match.home.topScorer.name}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">⚽{match.home.topScorer.goals}</span>
+                </span>
+                <span className="shrink-0 text-[9px] font-bold tracking-wider text-amber-500/70">VS</span>
+                <span className="flex w-[45%] items-center gap-1">
+                  <span className="shrink-0 tabular-nums text-muted-foreground">🛡️{match.away.topDefender.tackles}</span>
+                  <span className="truncate text-rose-400" title={`🛡️ ${match.away.topDefender.name}`}>
+                    {match.away.topDefender.name}
+                  </span>
+                </span>
               </div>
-              <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                {xGSummary}
-              </span>
-              {xGdLabel && (
-                <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
-                  (p.xGd ?? 0) > 0
+            )}
+            {match.away.topScorer && match.home.topDefender && (
+              <div className="mt-1 flex items-center gap-2 text-[10px]">
+                <span className="flex w-[45%] items-center gap-1 text-right">
+                  <span className="truncate text-emerald-400" title={`⚽ ${match.away.topScorer.name}`}>
+                    {match.away.topScorer.name}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-muted-foreground">⚽{match.away.topScorer.goals}</span>
+                </span>
+                <span className="shrink-0 text-[9px] font-bold tracking-wider text-amber-500/70">VS</span>
+                <span className="flex w-[45%] items-center gap-1">
+                  <span className="shrink-0 tabular-nums text-muted-foreground">🛡️{match.home.topDefender.tackles}</span>
+                  <span className="truncate text-rose-400" title={`🛡️ ${match.home.topDefender.name}`}>
+                    {match.home.topDefender.name}
+                  </span>
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Innovation 2: xG Differential Gauge */}
+        {xGSummary && p.xGa && p.xGa.total > 0 ? (
+          <div className="mt-2 border-t border-border/30 pt-2">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">📐 Efficience xG</span>
+              {p.xGd != null && (
+                <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                  p.xGd > 0.05
                     ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                    : p.xGd < -0.05
+                      ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                      : "bg-muted/40 text-muted-foreground border border-border/40"
                 }`}>
                   {xGdLabel}
                 </span>
               )}
             </div>
+            {/* Barre différentielle xG créés vs xG concédés */}
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted/40">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-600 via-slate-500 to-rose-600 transition-all duration-500"
+                style={{
+                  width: `${Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 100)}%`,
+                }}
+              />
+            </div>
+            <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/70">
+              <span>{match.home.shortName} {p.xGa.home.toFixed(2)}</span>
+              <span>∑{p.xGa.total.toFixed(2)}</span>
+              <span>{p.xGa.away.toFixed(2)} {match.away.shortName}</span>
+            </div>
+            {/* Label qualitatif */}
+            {p.xGd != null && (
+              <div className="mt-1 text-center">
+                <span className={`text-[10px] font-medium ${
+                  p.xGd > 0.05
+                    ? "text-emerald-500"
+                    : p.xGd < -0.05
+                      ? "text-rose-500"
+                      : "text-muted-foreground"
+                }`}>
+                  {p.xGd > 0.05
+                    ? `↗ Sur-performance offensive ${match.home.shortName}`
+                    : p.xGd < -0.05
+                      ? `↘ Fragilité défensive ${match.home.shortName}`
+                      : "↔ Équilibré"}
+                </span>
+              </div>
+            )}
           </div>
-        )}
+        ) : xGSummary ? (
+          /* Fallback quand xGa est absent */
+          <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+            <span>📐</span>
+            <span>{xGSummary}</span>
+          </div>
+        ) : null}
 
         {/* Comparatifs + Radar accordéon */}
         {(p.teamComparisons && p.teamComparisons.length > 0) || radarItems.length > 0 ? (
@@ -512,6 +585,29 @@ export function FootballMatchCardSkeleton() {
         <Skeleton className="h-5 w-20 rounded-lg" />
         <Skeleton className="h-5 w-20 rounded-lg" />
         <Skeleton className="h-5 w-16 rounded-lg" />
+      </div>
+      {/* Key Players Matchup skeleton */}
+      <div className="mt-2 border-t border-border/30 pt-2">
+        <Skeleton className="mb-1.5 h-3 w-24" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-3 w-6" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      </div>
+      {/* xG Differential skeleton */}
+      <div className="mt-2 border-t border-border/30 pt-2">
+        <div className="mb-1 flex items-center justify-between">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-4 w-12 rounded-md" />
+        </div>
+        <Skeleton className="h-2 w-full rounded-full" />
+        <div className="mt-1 flex justify-between">
+          <Skeleton className="h-2 w-16" />
+          <Skeleton className="h-2 w-10" />
+          <Skeleton className="h-2 w-16" />
+        </div>
+        <Skeleton className="mx-auto mt-1 h-3 w-40" />
       </div>
       {/* Comparatifs skeleton */}
       <div className="mt-3 border-t border-border/40 pt-3">

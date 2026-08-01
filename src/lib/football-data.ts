@@ -52,8 +52,10 @@ export type Prediction = {
   teamComparisons?: { label: string; homeProb: number; awayProb: number }[];
   /** xGa moyen (expected goals average) — estimé depuis les xG live ou le modèle. */
   xGa?: { home: number; away: number; total: number };
-  /** xGd (différentiel xG) — home_xg - away_xg normalisé [-1, +1]. */
-  xGd?: number;
+  /** xGd (différentiel xG) — home_xg - away_xg normalisé [-1, +1].
+   *  `null` = données xG live indisponibles (pas de calcul possible).
+   *  `0`   = différentiel parfaitement équilibré. */
+  xGd?: number | null;
 };
 
 export type FootballLiveState = {

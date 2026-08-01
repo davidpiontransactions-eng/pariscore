@@ -5,11 +5,12 @@ import { useTranslations } from "next-intl";
 import { Trophy, RefreshCw, AlertCircle, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFootballMatches } from "@/hooks/use-football-matches";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useFavorites } from "@/hooks/use-favorites";
 import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
 import { FootballMatchCard, FootballMatchCardSkeleton } from "./football-match-card";
-import { FootballLiveCard } from "./football-live-card";
+import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
 
 // Dialog de détail (momentum) — lazy : ne charge pas le code tant qu'aucun match
@@ -201,11 +202,25 @@ export function FootballTabContent() {
 
           {/* Match grid */}
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              {[0, 1, 2, 3].map((i) => (
-                <FootballMatchCardSkeleton key={i} />
-              ))}
-            </div>
+            <>
+              {/* Live skeletons */}
+              <section className="mb-8">
+                <div className="mb-3 flex items-center gap-2">
+                  <Skeleton className="h-2 w-2 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[0, 1].map((i) => (
+                    <FootballLiveCardSkeleton key={`live-sk-${i}`} />
+                  ))}
+                </div>
+              </section>
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <FootballMatchCardSkeleton key={i} />
+                ))}
+              </div>
+            </>
           ) : prematchMatches.length > 0 ? (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               {prematchMatches.map((m, idx) => (
