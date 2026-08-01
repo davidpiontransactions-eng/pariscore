@@ -44,6 +44,10 @@ export type Prediction = {
   bestCornerOver?: { line: number; overProb: number };
   /** Barres de comparaison d'équipe (max 4) avec probabilités domicile/extérieur. */
   teamComparisons?: { label: string; homeProb: number; awayProb: number }[];
+  /** xGa moyen (expected goals average) — estimé depuis les xG live ou le modèle. */
+  xGa?: { home: number; away: number; total: number };
+  /** xGd (différentiel xG) — home_xg - away_xg normalisé [-1, +1]. */
+  xGd?: number;
 };
 
 export type FootballLiveState = {
@@ -137,6 +141,8 @@ export const LIVE_MATCHES: FootballMatch[] = [
         { label: "Défense", homeProb: 55, awayProb: 35 },
         { label: "Confrontations", homeProb: 65, awayProb: 30 },
       ],
+      xGa: { home: 2.10, away: 0.85, total: 2.95 },
+      xGd: 0.42,
     },
     odds: { bookmaker: "Bet365", home: 1.55, draw: 4.20, away: 5.50 },
     allOdds: [
@@ -364,6 +370,8 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
         { label: "Défense", homeProb: 38, awayProb: 42 },
         { label: "Confrontations", homeProb: 35, awayProb: 55 },
       ],
+      xGa: { home: 1.72, away: 1.95, total: 3.67 },
+      xGd: -0.06,
     },
     odds: { bookmaker: "Bwin", home: 2.50, draw: 3.60, away: 2.70 },
   },

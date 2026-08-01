@@ -100,6 +100,11 @@ export function FootballMatchCard({
     ? Math.max(...predictionBadges.map((b) => b.prob))
     : 0;
 
+  // xG summary (expected goals — displayed between badges and comparatifs)
+  const xGSummary = p.xGa && p.xGa.total > 0
+    ? `xG: ${p.xGa.home.toFixed(2)} – ${p.xGa.away.toFixed(2)} (∑${p.xGa.total.toFixed(2)})`
+    : null;
+
   // Radar accordion state
   const [radarOpen, setRadarOpen] = useState(false);
 
@@ -126,6 +131,20 @@ export function FootballMatchCard({
       maxVal: 100,
     });
   }
+  // Add xG metrics to radar
+  if (p.xGa && p.xGa.total > 0) {
+    radarItems.push({
+      label: "xG attendu",
+      homeVal: p.xGa.home,
+      awayVal: p.xGa.away,
+      icon: "📐",
+      maxVal: Math.max(p.xGa.total, 4),
+    });
+  }
+  // xGd badge label
+  const xGdLabel = p.xGd !== undefined && p.xGd !== 0
+    ? `xGd ${p.xGd > 0 ? "+" : ""}${(p.xGd * 100).toFixed(0)}%`
+    : null;
 
   return (
     <div className="group relative max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
@@ -270,6 +289,35 @@ export function FootballMatchCard({
                   </motion.span>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* xG Summary — between badges and comparatifs */}
+        {xGSummary && (
+          <div className="mt-2 flex items-center gap-2 border-t border-border/30 pt-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">📐 xG</span>
+            <div className="flex flex-1 items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted/40">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 to-slate-500 transition-all duration-500"
+                  style={{
+                    width: `${p.xGa ? Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 100) : 50}%`,
+                  }}
+                />
+              </div>
+              <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                {xGSummary}
+              </span>
+              {xGdLabel && (
+                <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                  (p.xGd ?? 0) > 0
+                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                }`}>
+                  {xGdLabel}
+                </span>
+              )}
             </div>
           </div>
         )}

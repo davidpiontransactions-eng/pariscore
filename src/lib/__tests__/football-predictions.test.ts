@@ -5,6 +5,8 @@ import {
   computeUnder35,
   computeCornerOver,
   computeTeamComparisons,
+  computeXGa,
+  computeXGd,
   enrichPrediction,
 } from "../football-predictions";
 import type { Prediction } from "../football-data";
@@ -266,6 +268,78 @@ describe("computeTeamComparisons", () => {
   });
 });
 
+// ─── computeXGa ────────────────────────────────────────────────────────────
+
+describe("computeXGa", () => {
+  test("with live xG data (1.2 / 0.8) returns exact values", () => {
+    const result = computeXGa(1.2, 0.8, undefined);
+    expect(result.home).toBe(1.2);
+    expect(result.away).toBe(0.8);
+    expect(result.total).toBe(2.0);
+  });
+
+  test("clamps extreme xG values to [0.2, 4.0]", () => {
+    const result = computeXGa(6.0, 0.05, undefined);
+    expect(result.home).toBe(4.0);
+    expect(result.away).toBe(0.2);
+  });
+
+  test("with over25Prob=70 uses Poisson heuristic (~1.75 total λ)", () => {
+    const result = computeXGa(null, null, 70);
+    // λ = -ln(1-0.7) * 1.2 ≈ -ln(0.3) * 1.2 ≈ 1.204 * 1.2 ≈ 1.445
+    // home = 0.79, away = 0.65 → total ≈ 1.45
+    expect(result.total).toBeGreaterThan(1.0);
+    expect(result.total).toBeLessThan(2.5);
+    expect(result.home).toBeGreaterThan(result.away);
+  });
+
+  test("fallback to league average when no data available", () => {
+    const result = computeXGa(null, null, undefined);
+    expect(result.total).toBeCloseTo(1.45, 1);
+    expect(result.home).toBeGreaterThan(result.away);
+  });
+
+  test("handles zero xG gracefully (falls back to heuristic)", () => {
+    const result = computeXGa(0, 0, 65);
+    // Falls through to heuristic because home+away = 0
+    expect(result.total).toBeGreaterThan(0);
+  });
+});
+
+// ─── computeXGd ────────────────────────────────────────────────────────────
+
+describe("computeXGd", () => {
+  test("with home dominant (2.0 vs 0.5) returns positive", () => {
+    const result = computeXGd(2.0, 0.5);
+    // (2.0 - 0.5) / (2.0 + 0.5) = 1.5 / 2.5 = 0.6
+    expect(result).toBeCloseTo(0.6, 2);
+  });
+
+  test("with away dominant (0.3 vs 1.8) returns negative", () => {
+    const result = computeXGd(0.3, 1.8);
+    // (0.3 - 1.8) / (0.3 + 1.8) = -1.5 / 2.1 ≈ -0.714
+    expect(result).toBeLessThan(0);
+    expect(result).toBeGreaterThan(-1);
+  });
+
+  test("with equal xG returns 0", () => {
+    const result = computeXGd(1.0, 1.0);
+    expect(result).toBe(0);
+  });
+
+  test("with no data returns 0", () => {
+    expect(computeXGd(null, null)).toBe(0);
+    expect(computeXGd(undefined, undefined)).toBe(0);
+  });
+
+  test("clamped to [-1, 1]", () => {
+    // Extreme case: home=10, away=0.1 → (10-0.1)/(10+0.1) = 9.9/10.1 ≈ 0.98 → OK
+    const result = computeXGd(10, 0.1);
+    expect(result).toBeLessThanOrEqual(1);
+    expect(result).toBeGreaterThanOrEqual(-1);
+  });
+});
+
 // ─── enrichPrediction (integration) ───────────────────────────────────────
 
 describe("enrichPrediction", () => {
@@ -318,6 +392,11 @@ describe("enrichPrediction", () => {
     // Team comparisons
     expect(enriched.teamComparisons).toBeDefined();
     expect(enriched.teamComparisons!).toHaveLength(4);
+
+    // xG metrics
+    expect(enriched.xGa).toBeDefined();
+    expect(enriched.xGa!.total).toBeGreaterThan(0);
+    expect(enriched.xGd).toBeDefined();
 
     // Original fields preserved
     expect(enriched.homeProb).toBe(60);

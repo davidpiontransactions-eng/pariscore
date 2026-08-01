@@ -199,7 +199,74 @@ export function computeTeamComparisons(
   });
 }
 
-// ─── Point d'entrée principal ───────────────────────────────────────────────
+// ─── xG Metrics ──────────────────────────────────────────────────────────────
+
+/** Moyenne de xG par match dans le top 5 européen (saison 2024-25). */
+const LEAGUE_AVG_XG = 1.45;
+
+/**
+ * Calcule le xGa moyen (expected goals average) pour les deux équipes
+ * à partir des données xG live BSD. Si indisponible, fallback sur
+ * une heuristique basée sur over25Prob (P(over 2.5) → λ buts attendus).
+ *
+ * Retourne { home, away, total } avec xG ∈ [0.2, 4.0].
+ */
+export function computeXGa(
+  homeXgLive?: number | null,
+  awayXgLive?: number | null,
+  over25Prob?: number,
+): { home: number; away: number; total: number } {
+  // Priorité 1 : xG live BSD
+  if (
+    homeXgLive != null && awayXgLive != null &&
+    Number.isFinite(homeXgLive) && Number.isFinite(awayXgLive) &&
+    homeXgLive + awayXgLive > 0
+  ) {
+    const home = clamp(Math.round(homeXgLive * 100) / 100, 0.2, 4.0);
+    const away = clamp(Math.round(awayXgLive * 100) / 100, 0.2, 4.0);
+    return { home, away, total: Math.round((home + away) * 100) / 100 };
+  }
+
+  // Priorité 2 : heuristique over25Prob → λ attendu
+  // P(over 2.5) = p ⇒ λ ≈ -ln(1-p) ajusté pour 90 minutes
+  if (over25Prob != null && over25Prob > 0 && over25Prob < 100) {
+    const p = over25Prob / 100;
+    const lambda = -Math.log(Math.max(0.01, 1 - p)) * 1.2;
+    const home = clamp(Math.round((lambda * 0.55) * 100) / 100, 0.2, 4.0);
+    const away = clamp(Math.round((lambda * 0.45) * 100) / 100, 0.2, 4.0);
+    return { home, away, total: Math.round((home + away) * 100) / 100 };
+  }
+
+  // Priorité 3 : fallback ligue
+  return {
+    home: Math.round(LEAGUE_AVG_XG * 0.55 * 100) / 100,
+    away: Math.round(LEAGUE_AVG_XG * 0.45 * 100) / 100,
+    total: Math.round(LEAGUE_AVG_XG * 100) / 100,
+  };
+}
+
+/**
+ * Calcule le xGd (différentiel xG normalisé).
+ *
+ * xGd = (home_xg - away_xg) / (home_xg + away_xg), borné [-1, +1].
+ * Un xGd > 0 indique un avantage domicile en xG.
+ * Retourne 0 si les données sont insuffisantes.
+ */
+export function computeXGd(
+  homeXgLive?: number | null,
+  awayXgLive?: number | null,
+): number {
+  if (
+    homeXgLive != null && awayXgLive != null &&
+    Number.isFinite(homeXgLive) && Number.isFinite(awayXgLive) &&
+    homeXgLive + awayXgLive > 0
+  ) {
+    const raw = (homeXgLive - awayXgLive) / (homeXgLive + awayXgLive);
+    return clamp(Math.round(raw * 1000) / 1000, -1, 1);
+  }
+
+  return 0;
+}
 
 /** Constante de fallback : moyenne de corners par match dans les 5 grands championnats. */
 const LEAGUE_AVG_CORNERS = 10;
@@ -252,6 +319,17 @@ export function enrichPrediction(
   enriched.teamComparisons = computeTeamComparisons(
     bsdMatch.live_stats?.home,
     bsdMatch.live_stats?.away,
+  );
+
+  // xG metrics
+  enriched.xGa = computeXGa(
+    bsdMatch.home_xg_live,
+    bsdMatch.away_xg_live,
+    prediction.over25Prob,
+  );
+  enriched.xGd = computeXGd(
+    bsdMatch.home_xg_live,
+    bsdMatch.away_xg_live,
   );
 
   return enriched;
