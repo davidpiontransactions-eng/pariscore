@@ -70,11 +70,17 @@ export async function GET(
     );
     // BSD returns paginated { count, results } — extract results array
     const allMatches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
+    console.log(`[league-stats] BSD returned ${allMatches.length} finished matches`);
+    if (allMatches.length > 0) {
+      const leagueIds = [...new Set(allMatches.slice(0, 20).map((m: any) => m?.league?.id))];
+      console.log(`[league-stats] Sample league IDs:`, leagueIds, `| looking for bsdId=${bsdId}`);
+    }
     // Filter by league ID (BSD response: league.id matches bsdId)
     const matches = allMatches.filter((m: any) => m?.league?.id === bsdId);
+    console.log(`[league-stats] Filtered to ${matches.length} matches for ${league_id} (bsdId=${bsdId})`);
     if (matches.length === 0) {
       return NextResponse.json(
-        { error: "No finished matches found for this league/season" },
+        { error: `No finished matches found for this league (bsdId=${bsdId}, total finished=${allMatches.length})` },
         { status: 404 },
       );
     }
