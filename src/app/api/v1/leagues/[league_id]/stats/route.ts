@@ -47,13 +47,15 @@ function generateMockStandings(leagueName: string, location: string) {
   ];
 
   const standings = teams.map((t, i) => {
-    const basePts = 60 - i * 5 + Math.floor(Math.random() * 6);
     const played = 19 + Math.floor(Math.random() * 15);
-    const wins = Math.floor(basePts / 3);
-    const draws = basePts - wins * 3;
+    const pts = Math.max(15, 60 - i * 5 + Math.floor(Math.random() * 6));
+    const wins = Math.floor(pts / 3);
+    const draws = pts - wins * 3;
+    const losses = Math.max(0, played - wins - draws);
     const gf = 25 + Math.floor((10 - i) * 3 + Math.random() * 10);
     const ga = 10 + i * 2 + Math.floor(Math.random() * 8);
     const mod = isHome ? 1.2 : isAway ? 0.8 : 1;
+    const clamp = (v: number, lo = 0, hi = 100) => Math.min(hi, Math.max(lo, v));
     return {
       rank: i + 1,
       team: { id: t.id, name: t.name, shortName: t.short, logo: "", color: t.color },
@@ -61,24 +63,24 @@ function generateMockStandings(leagueName: string, location: string) {
         played: Math.round(played * mod),
         wins: Math.round(wins * mod),
         draws: Math.max(0, Math.round(draws * mod)),
-        losses: Math.max(0, Math.round((played - wins - draws) * mod)),
+        losses: Math.max(0, Math.round(losses * mod)),
         goalsFor: Math.round(gf * mod),
         goalsAgainst: Math.round(ga * mod),
         goalDiff: Math.round((gf - ga) * mod),
-        points: Math.round(basePts * mod),
-        pointsPerGame: Math.round((basePts / Math.max(1, played)) * mod * 100) / 100,
+        points: Math.round(pts * mod),
+        pointsPerGame: Math.round((pts / Math.max(1, played)) * mod * 100) / 100,
         xG: Math.round((1.5 - i * 0.12) * 100) / 100,
         xGA: Math.round((0.5 + i * 0.1) * 100) / 100,
         xGD: Math.round((1.0 - i * 0.22) * 100) / 100,
-        over15Pct: 80 - i * 4 + Math.floor(Math.random() * 10),
-        over15PctL5: 80 - i * 5 + Math.floor(Math.random() * 15),
-        over15PctL10: 78 - i * 4 + Math.floor(Math.random() * 10),
-        under35Pct: 50 + i * 4 + Math.floor(Math.random() * 10),
-        under35PctL5: 50 + i * 5 + Math.floor(Math.random() * 15),
-        under35PctL10: 52 + i * 4 + Math.floor(Math.random() * 10),
-        bttsYesPct: 60 - i * 3 + Math.floor(Math.random() * 15),
-        bttsYesPctL5: 55 - i * 4 + Math.floor(Math.random() * 20),
-        bttsYesPctL10: 58 - i * 3 + Math.floor(Math.random() * 15),
+        over15Pct: clamp(80 - i * 4 + Math.floor(Math.random() * 10)),
+        over15PctL5: clamp(80 - i * 5 + Math.floor(Math.random() * 15)),
+        over15PctL10: clamp(78 - i * 4 + Math.floor(Math.random() * 10)),
+        under35Pct: clamp(50 + i * 4 + Math.floor(Math.random() * 10)),
+        under35PctL5: clamp(50 + i * 5 + Math.floor(Math.random() * 15)),
+        under35PctL10: clamp(52 + i * 4 + Math.floor(Math.random() * 10)),
+        bttsYesPct: clamp(60 - i * 3 + Math.floor(Math.random() * 15)),
+        bttsYesPctL5: clamp(55 - i * 4 + Math.floor(Math.random() * 20)),
+        bttsYesPctL10: clamp(58 - i * 3 + Math.floor(Math.random() * 15)),
       },
     };
   });

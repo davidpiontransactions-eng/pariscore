@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import type { FootballMatch, League } from "@/lib/football-data";
 
 export function FootballLeagueBar({
@@ -40,17 +41,25 @@ export function FootballLeagueBar({
         Tous ({matches.length})
       </button>
       {leagues.map((l) => (
-        <button
-          key={l.id}
-          onClick={() => onSelectLeague(l.id)}
-          className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
-            selectedLeague === l.id
-              ? "border-foreground bg-foreground text-background"
-              : "border-border bg-background text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {l.logo} {l.name} ({l.count})
-        </button>
+        <span key={l.id} className="inline-flex items-center gap-0.5">
+          <button
+            onClick={() => onSelectLeague(l.id)}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+              selectedLeague === l.id
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {l.logo} {l.name} ({l.count})
+          </button>
+          <Link
+            href={`/league/${l.id}/stats`}
+            className="rounded-full border border-border bg-background px-1.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-colors"
+            title="Statistiques du championnat"
+          >
+            📊
+          </Link>
+        </span>
       ))}
     </div>
   );
