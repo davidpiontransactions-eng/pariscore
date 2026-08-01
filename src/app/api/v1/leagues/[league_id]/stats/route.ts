@@ -63,12 +63,15 @@ export async function GET(
   }
 
   try {
-    // Fetch all finished matches for this league/season
+    // Fetch finished matches — BSD n'a pas de filtre league_id fiable côté API,
+    // on fetch toutes les saisons récentes et on filtre par league.id dans la réponse.
     const raw = await fetchBSDRaw<any>(
-      `/matches/?league_id=${bsdId}&season=${season}&status=finished&limit=500`,
+      `/matches/?status=finished&limit=500`,
     );
     // BSD returns paginated { count, results } — extract results array
-    const matches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
+    const allMatches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
+    // Filter by league ID (BSD response: league.id matches bsdId)
+    const matches = allMatches.filter((m: any) => m?.league?.id === bsdId);
     if (matches.length === 0) {
       return NextResponse.json(
         { error: "No finished matches found for this league/season" },
