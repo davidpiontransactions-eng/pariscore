@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, Clock, BarChart3 } from "lucide-react";
+import { Trophy, Clock, BarChart3, TrendingUp } from "lucide-react";
 import type { FootballMatch, Prediction } from "@/lib/football-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
@@ -47,8 +47,49 @@ export function FootballMatchCard({
   const maxProb = Math.max(p.homeProb, p.drawProb, p.awayProb);
   const confidence = (p as Prediction & { confidence?: number }).confidence ?? (0.5 + (maxProb / 100) * 0.3);
 
+  // Collect prediction badges for the "Prédictions Clés" section
+  const predictionBadges: { key: string; label: string; prob: number }[] = [];
+  if (p.doubleChance) {
+    predictionBadges.push({
+      key: "dc",
+      label: `DC ${p.doubleChance.selection} (${p.doubleChance.prob}%)`,
+      prob: p.doubleChance.prob,
+    });
+  }
+  if (p.over15Prob !== undefined) {
+    predictionBadges.push({
+      key: "o15",
+      label: `O1.5 (${p.over15Prob}%)`,
+      prob: p.over15Prob,
+    });
+  }
+  if (p.under35Prob !== undefined) {
+    predictionBadges.push({
+      key: "u35",
+      label: `U3.5 (${p.under35Prob}%)`,
+      prob: p.under35Prob,
+    });
+  }
+  if (p.bttsProb > 0) {
+    predictionBadges.push({
+      key: "btts",
+      label: `BTTS (${p.bttsProb}%)`,
+      prob: p.bttsProb,
+    });
+  }
+  if (p.bestCornerOver) {
+    predictionBadges.push({
+      key: "corners",
+      label: `Corn. O${p.bestCornerOver.line} (${p.bestCornerOver.overProb}%)`,
+      prob: p.bestCornerOver.overProb,
+    });
+  }
+  const maxBadgeProb = predictionBadges.length > 0
+    ? Math.max(...predictionBadges.map((b) => b.prob))
+    : 0;
+
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
+    <div className="group relative max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
       {/* Bannière ligue en fond (overlay sombre) */}
       <div className="relative h-36 overflow-hidden sm:h-44">
         <SportImage
@@ -140,7 +181,7 @@ export function FootballMatchCard({
         </div>
 
         {/* Prediction rings */}
-        <div className="mt-3 flex items-center justify-center gap-3">
+        <div className="mt-3 flex items-center justify-center gap-2 sm:gap-3">
           <ConfidenceRing
             prob={p.homeProb}
             confidence={confidence}
@@ -164,22 +205,75 @@ export function FootballMatchCard({
           />
         </div>
 
+        {/* Prédictions Clés */}
+        {predictionBadges.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            {predictionBadges.map((badge) => {
+              const isBest = badge.prob >= maxBadgeProb;
+              return (
+                <span
+                  key={badge.key}
+                  className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-semibold transition-transform hover:scale-[1.02] ${
+                    isBest
+                      ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
+                      : "border-border/60 bg-muted/50 text-muted-foreground hover:border-border/80 hover:bg-muted"
+                  }`}
+                >
+                  {isBest && <TrendingUp className="h-3 w-3 shrink-0" />}
+                  <span className="tabular-nums">{badge.label}</span>
+                </span>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Comparatifs */}
+        {p.teamComparisons && p.teamComparisons.length > 0 && (
+          <div className="mt-3 border-t border-border/40 pt-3">
+            <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              📊 Comparatifs
+            </div>
+            {p.teamComparisons.map((comp, i) => {
+              const total = comp.homeProb + comp.awayProb;
+              const homePct = total > 0 ? Math.round((comp.homeProb / total) * 100) : 50;
+              const awayPct = 100 - homePct;
+              return (
+                <div key={i} className="mb-1 flex items-center gap-2">
+                  <span className="w-20 shrink-0 text-right text-[10px] text-muted-foreground">
+                    {comp.label}
+                  </span>
+                  <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted/50">
+                    <div
+                      className="h-full bg-emerald-600 transition-all duration-300"
+                      style={{ width: `${homePct}%` }}
+                    />
+                    <div
+                      className="h-full bg-slate-600 transition-all duration-300"
+                      style={{ width: `${awayPct}%` }}
+                    />
+                  </div>
+                  <span className="w-16 shrink-0 text-left text-[10px] tabular-nums text-muted-foreground">
+                    {homePct}% — {awayPct}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Footer: markets + CTA */}
         <div className="mt-3 flex items-center justify-between gap-2 border-t border-border/40 pt-3">
-          <div className="flex gap-2 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
             {p.bttsProb > 0 && (
-              <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium">
+              <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium tabular-nums">
                 BTTS {p.bttsProb}%
               </span>
             )}
             {p.over25Prob > 0 && (
-              <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium">
+              <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium tabular-nums">
                 O2.5 {p.over25Prob}%
               </span>
             )}
-            <span className="rounded-md border border-border/60 bg-muted/50 px-1.5 py-0.5 font-medium">
-              {p.model}
-            </span>
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -221,6 +315,37 @@ export function FootballMatchCardSkeleton() {
         </div>
       </div>
       <Skeleton className="mt-3 h-1.5 w-full" />
+      {/* Prédictions Clés skeleton */}
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <Skeleton className="h-5 w-20 rounded-lg" />
+        <Skeleton className="h-5 w-20 rounded-lg" />
+        <Skeleton className="h-5 w-20 rounded-lg" />
+        <Skeleton className="h-5 w-16 rounded-lg" />
+      </div>
+      {/* Comparatifs skeleton */}
+      <div className="mt-3 border-t border-border/40 pt-3">
+        <Skeleton className="mb-2 h-3 w-20" />
+        <div className="mb-1 flex items-center gap-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-2 flex-1 rounded-full" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <div className="mb-1 flex items-center gap-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-2 flex-1 rounded-full" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <div className="mb-1 flex items-center gap-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-2 flex-1 rounded-full" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-2 flex-1 rounded-full" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      </div>
       <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-3">
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-6 w-16 rounded-lg" />

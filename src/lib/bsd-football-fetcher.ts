@@ -1,5 +1,6 @@
 import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState } from "@/lib/football-data";
 import { lookupClubLogo } from "@/lib/club-logos";
+import { enrichPrediction } from "./football-predictions";
 
 // Hôte racine BSD (l'API sous /api, les images sous /img). Identique au legacy
 // server.js:3795 (BSD_ROOT_URL = BSD_BASE sans le suffixe /api).
@@ -296,7 +297,7 @@ function buildMatch(m: BSDFootballMatch): FootballMatch {
     scheduledAt: m.event_date,
     home,
     away,
-    prediction: mapPrediction(m),
+    prediction: enrichPrediction(mapPrediction(m), m),
     odds,
     allOdds,
     live: mapLiveState(m),

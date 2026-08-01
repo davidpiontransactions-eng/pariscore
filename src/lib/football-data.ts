@@ -34,6 +34,16 @@ export type Prediction = {
   bttsProb: number;
   over25Prob: number;
   model: string;
+  /** Meilleure option double chance (1X, X2, ou 12) et sa probabilité. */
+  doubleChance?: { selection: "1X" | "X2" | "12"; prob: number };
+  /** P(buts ≥ 2) — probabilité qu'il y ait au moins 2 buts dans le match. */
+  over15Prob?: number;
+  /** P(buts ≤ 3) — probabilité qu'il y ait 3 buts ou moins. */
+  under35Prob?: number;
+  /** Meilleure ligne de corners over avec probabilité ≥ 65%. */
+  bestCornerOver?: { line: number; overProb: number };
+  /** Barres de comparaison d'équipe (max 4) avec probabilités domicile/extérieur. */
+  teamComparisons?: { label: string; homeProb: number; awayProb: number }[];
 };
 
 export type FootballLiveState = {
@@ -115,7 +125,19 @@ export const LIVE_MATCHES: FootballMatch[] = [
       id: "marseille", name: "Olympique de Marseille", shortName: "OM", logo: TEAM_LOGOS.marseille, color: "#2FAEE0",
       form: ["W", "L", "W", "W", "D"], rank: 3,
     },
-    prediction: { homeProb: 65, drawProb: 20, awayProb: 15, bttsProb: 55, over25Prob: 68, model: "Elo+Poisson" },
+    prediction: {
+      homeProb: 65, drawProb: 20, awayProb: 15, bttsProb: 55, over25Prob: 68, model: "Elo+Poisson",
+      doubleChance: { selection: "1X", prob: 85 },
+      over15Prob: 88,
+      under35Prob: 62,
+      bestCornerOver: { line: 9.5, overProb: 68 },
+      teamComparisons: [
+        { label: "Forme récente", homeProb: 72, awayProb: 55 },
+        { label: "Attaque", homeProb: 68, awayProb: 48 },
+        { label: "Défense", homeProb: 55, awayProb: 35 },
+        { label: "Confrontations", homeProb: 65, awayProb: 30 },
+      ],
+    },
     odds: { bookmaker: "Bet365", home: 1.55, draw: 4.20, away: 5.50 },
     allOdds: [
       { bookmaker: "Bet365", home: 1.55, draw: 4.20, away: 5.50, impliedHome: 63, impliedDraw: 22, impliedAway: 15, margin: 0.028 },
@@ -154,7 +176,19 @@ export const LIVE_MATCHES: FootballMatch[] = [
       id: "barca", name: "FC Barcelona", shortName: "FCB", logo: TEAM_LOGOS.barca, color: "#A50044",
       form: ["W", "W", "W", "L", "W"], rank: 1,
     },
-    prediction: { homeProb: 50, drawProb: 25, awayProb: 25, bttsProb: 70, over25Prob: 72, model: "Elo+Poisson" },
+    prediction: {
+      homeProb: 50, drawProb: 25, awayProb: 25, bttsProb: 70, over25Prob: 72, model: "Elo+Poisson",
+      doubleChance: { selection: "12", prob: 75 },
+      over15Prob: 92,
+      under35Prob: 50,
+      bestCornerOver: { line: 10.5, overProb: 65 },
+      teamComparisons: [
+        { label: "Forme récente", homeProb: 70, awayProb: 68 },
+        { label: "Attaque", homeProb: 65, awayProb: 72 },
+        { label: "Défense", homeProb: 45, awayProb: 40 },
+        { label: "Confrontations", homeProb: 48, awayProb: 52 },
+      ],
+    },
     odds: { bookmaker: "Bet365", home: 2.10, draw: 3.60, away: 3.30 },
     live: { homeScore: 0, awayScore: 0, minute: 12, status: "LIVE", homePossession: 55, homeShots: 3, awayShots: 1, homeShotsOnTarget: 1, awayShotsOnTarget: 0, homeCorners: 2, awayCorners: 0 },
   },
@@ -174,7 +208,19 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       id: "lyon", name: "Olympique Lyonnais", shortName: "OL", logo: TEAM_LOGOS.lyon, color: "#1D2C6B",
       form: ["L", "W", "W", "D", "W"], rank: 6,
     },
-    prediction: { homeProb: 52, drawProb: 27, awayProb: 21, bttsProb: 62, over25Prob: 58, model: "Elo+Poisson" },
+    prediction: {
+      homeProb: 52, drawProb: 27, awayProb: 21, bttsProb: 62, over25Prob: 58, model: "Elo+Poisson",
+      doubleChance: { selection: "1X", prob: 79 },
+      over15Prob: 84,
+      under35Prob: 68,
+      bestCornerOver: { line: 8.5, overProb: 66 },
+      teamComparisons: [
+        { label: "Forme récente", homeProb: 58, awayProb: 52 },
+        { label: "Attaque", homeProb: 55, awayProb: 45 },
+        { label: "Défense", homeProb: 50, awayProb: 40 },
+        { label: "Confrontations", homeProb: 48, awayProb: 35 },
+      ],
+    },
     odds: { bookmaker: "Bet365", home: 1.95, draw: 3.60, away: 3.70 },
     allOdds: [
       { bookmaker: "Bet365", home: 1.95, draw: 3.60, away: 3.70, impliedHome: 50, impliedDraw: 26, impliedAway: 24, margin: 0.030 },
@@ -306,7 +352,19 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       id: "bayern", name: "Bayern Munich", shortName: "BAY", logo: TEAM_LOGOS.bayern, color: "#DC052D",
       form: ["W", "L", "W", "W", "D"], rank: 3,
     },
-    prediction: { homeProb: 40, drawProb: 25, awayProb: 35, bttsProb: 68, over25Prob: 72, model: "Elo+Poisson" },
+    prediction: {
+      homeProb: 40, drawProb: 25, awayProb: 35, bttsProb: 68, over25Prob: 72, model: "Elo+Poisson",
+      doubleChance: { selection: "X2", prob: 60 },
+      over15Prob: 90,
+      under35Prob: 52,
+      bestCornerOver: { line: 10.5, overProb: 67 },
+      teamComparisons: [
+        { label: "Forme récente", homeProb: 62, awayProb: 68 },
+        { label: "Attaque", homeProb: 58, awayProb: 65 },
+        { label: "Défense", homeProb: 38, awayProb: 42 },
+        { label: "Confrontations", homeProb: 35, awayProb: 55 },
+      ],
+    },
     odds: { bookmaker: "Bwin", home: 2.50, draw: 3.60, away: 2.70 },
   },
   {
