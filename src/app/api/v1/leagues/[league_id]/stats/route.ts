@@ -63,24 +63,29 @@ export async function GET(
   }
 
   try {
-    // Fetch finished matches — BSD n'a pas de filtre league_id fiable côté API,
-    // on fetch toutes les saisons récentes et on filtre par league.id dans la réponse.
+    // Fetch finished matches — try BSD, fallback to in-memory league filter
     const raw = await fetchBSDRaw<any>(
-      `/matches/?status=finished&limit=500`,
+      `/matches/?status=finished&limit=200`,
     );
-    // BSD returns paginated { count, results } — extract results array
     const allMatches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
-    console.log(`[league-stats] BSD returned ${allMatches.length} finished matches`);
+
+    // Log available league IDs for debugging
     if (allMatches.length > 0) {
-      const leagueIds = [...new Set(allMatches.slice(0, 20).map((m: any) => m?.league?.id))];
-      console.log(`[league-stats] Sample league IDs:`, leagueIds, `| looking for bsdId=${bsdId}`);
+      const sampleLeagues = allMatches.slice(0, 30).map((m: any) => ({
+        leagueId: m?.league?.id,
+        leagueName: m?.league?.name,
+      }));
+      console.log(`[league-stats] BSD returned ${allMatches.length} matches. Sample leagues:`, JSON.stringify(sampleLeagues.slice(0, 5)));
+    } else {
+      console.log(`[league-stats] BSD returned 0 finished matches — raw:`, typeof raw, Array.isArray(raw) ? 'array' : 'object');
     }
-    // Filter by league ID (BSD response: league.id matches bsdId)
+
+    // Filter by BSD league ID
     const matches = allMatches.filter((m: any) => m?.league?.id === bsdId);
-    console.log(`[league-stats] Filtered to ${matches.length} matches for ${league_id} (bsdId=${bsdId})`);
+
     if (matches.length === 0) {
       return NextResponse.json(
-        { error: `No finished matches found for this league (bsdId=${bsdId}, total finished=${allMatches.length})` },
+        { error: `No finished matches for ${league_id} (bsdId=${bsdId}, total=${allMatches.length}). Available league IDs: ${[...new Set(allMatches.slice(0,50).map((m:any)=>m?.league?.id))].join(',')}` },
         { status: 404 },
       );
     }
