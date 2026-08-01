@@ -14,12 +14,12 @@ export type Team = {
   color: string;
   form: ("W" | "D" | "L")[];
   rank: number;
-  /** Meilleur buteur de l'équipe (nom + buts marqués). */
-  topScorer?: { name: string; goals: number };
-  /** Meilleur passeur décisif (nom + passes). */
-  topAssister?: { name: string; assists: number };
-  /** Meilleur défenseur/intercepteur (nom + tacles). */
-  topDefender?: { name: string; tackles: number };
+  /** Meilleur buteur de l'équipe (nom + buts + photo). */
+  topScorer?: { name: string; goals: number; photoUrl?: string; xgPerMatch?: number };
+  /** Meilleur passeur décisif (nom + passes + photo). */
+  topAssister?: { name: string; assists: number; photoUrl?: string; keyPasses?: number };
+  /** Meilleur défenseur/intercepteur (nom + tacles + photo). */
+  topDefender?: { name: string; tackles: number; photoUrl?: string; duelsWonPct?: number };
 };
 
 export type FootballMatchOdds = {
@@ -50,12 +50,38 @@ export type Prediction = {
   bestCornerOver?: { line: number; overProb: number };
   /** Barres de comparaison d'équipe (max 4) avec probabilités domicile/extérieur. */
   teamComparisons?: { label: string; homeProb: number; awayProb: number }[];
+  /** Stats saisonnières par métrique avec moyennes Home/Away + rangs ligue. */
+  teamSeasonStats?: {
+    label: string;
+    homeAvg: number;
+    homeRank: number;
+    homeRankTotal: number;
+    awayAvg: number;
+    awayRank: number;
+    awayRankTotal: number;
+  }[];
   /** xGa moyen (expected goals average) — estimé depuis les xG live ou le modèle. */
   xGa?: { home: number; away: number; total: number };
   /** xGd (différentiel xG) — home_xg - away_xg normalisé [-1, +1].
    *  `null` = données xG live indisponibles (pas de calcul possible).
    *  `0`   = différentiel parfaitement équilibré. */
   xGd?: number | null;
+  /** Innovation 1: Indice xP (Expected Points difference).
+   *  xP_diff = points_réels - points_attendus_selon_xG.
+   *  > 0 = sur-performance, < 0 = sous-performance. */
+  xpDiff?: number;
+  /** Innovation 2: Risque cartons lié à l'arbitre.
+   *  score > 1.3 = risque élevé, < 0.7 = arbitre permissif. */
+  refereeCardRisk?: { score: number; label: "élevé" | "modéré" | "faible" };
+  /** Innovation 3: Tendance de forme récente (5 derniers matchs).
+   *  trend: up/down/stable + valeurs xG créé L5. */
+  formMomentum?: {
+    home: { trend: "up" | "down" | "stable"; values: number[] };
+    away: { trend: "up" | "down" | "stable"; values: number[] };
+  };
+  /** Innovation 4: Indice de vulnérabilité sur coups de pied arrêtés.
+   *  edge > 0.10 = avantage CPA domicile, < -0.10 = vulnérabilité. */
+  setPieceEdge?: number;
 };
 
 export type FootballLiveState = {
@@ -389,16 +415,16 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
     home: {
       id: "leverkusen", name: "Bayer Leverkusen", shortName: "LEV", logo: TEAM_LOGOS.leverkusen, color: "#E32221",
       form: ["W", "W", "D", "W", "L"], rank: 1,
-      topScorer: { name: "V. Boniface", goals: 7 },
-      topAssister: { name: "F. Wirtz", assists: 9 },
-      topDefender: { name: "J. Tah", tackles: 36 },
+      topScorer: { name: "V. Boniface", goals: 7, xgPerMatch: 0.63 },
+      topAssister: { name: "F. Wirtz", assists: 9, keyPasses: 2.4 },
+      topDefender: { name: "J. Tah", tackles: 36, duelsWonPct: 68 },
     },
     away: {
       id: "bayern", name: "Bayern Munich", shortName: "BAY", logo: TEAM_LOGOS.bayern, color: "#DC052D",
       form: ["W", "L", "W", "W", "D"], rank: 3,
-      topScorer: { name: "H. Kane", goals: 12 },
-      topAssister: { name: "J. Musiala", assists: 8 },
-      topDefender: { name: "M. de Ligt", tackles: 31 },
+      topScorer: { name: "H. Kane", goals: 12, xgPerMatch: 0.89 },
+      topAssister: { name: "J. Musiala", assists: 8, keyPasses: 2.9 },
+      topDefender: { name: "M. de Ligt", tackles: 31, duelsWonPct: 72 },
     },
     prediction: {
       homeProb: 40, drawProb: 25, awayProb: 35, bttsProb: 68, over25Prob: 72, model: "Elo+Poisson",
@@ -412,8 +438,21 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
         { label: "Défense", homeProb: 38, awayProb: 42 },
         { label: "Confrontations", homeProb: 35, awayProb: 55 },
       ],
+      teamSeasonStats: [
+        { label: "Forme récente", homeAvg: 2.1, homeRank: 3, homeRankTotal: 18, awayAvg: 1.8, awayRank: 5, awayRankTotal: 18 },
+        { label: "Attaque", homeAvg: 2.4, homeRank: 2, homeRankTotal: 18, awayAvg: 1.9, awayRank: 7, awayRankTotal: 18 },
+        { label: "Défense", homeAvg: 0.8, homeRank: 4, homeRankTotal: 18, awayAvg: 1.2, awayRank: 10, awayRankTotal: 18 },
+        { label: "Confrontations", homeAvg: 1.5, homeRank: 6, homeRankTotal: 18, awayAvg: 1.1, awayRank: 8, awayRankTotal: 18 },
+      ],
       xGa: { home: 1.72, away: 1.95, total: 3.67 },
       xGd: -0.06,
+      xpDiff: -0.42,
+      refereeCardRisk: { score: 1.45, label: "élevé" },
+      formMomentum: {
+        home: { trend: "up", values: [1.2, 1.8, 2.1, 2.4, 2.9] },
+        away: { trend: "down", values: [3.1, 2.8, 2.3, 2.0, 1.7] },
+      },
+      setPieceEdge: 0.12,
     },
     odds: { bookmaker: "Bwin", home: 2.50, draw: 3.60, away: 2.70 },
   },

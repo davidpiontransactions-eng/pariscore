@@ -333,5 +333,155 @@ export function enrichPrediction(
     bsdMatch.away_xg_live,
   );
 
+  // Innovation 1 — xP (Expected Points)
+  enriched.xpDiff = computeXPDiff(
+    prediction.homeProb,
+    prediction.drawProb,
+    prediction.awayProb,
+    bsdMatch.home_xg_live ?? bsdMatch.actual_home_xg,
+    bsdMatch.away_xg_live ?? bsdMatch.actual_away_xg,
+  ) ?? undefined;
+
+  // Innovation 2 — Referee xCards
+  enriched.refereeCardRisk = computeRefereeCardRisk(
+    bsdMatch.referee?.id != null ? 3.5 : null, // proxy : moyenne arbitre si ID présent
+    bsdMatch.live_stats?.home?.fouls,
+    bsdMatch.live_stats?.away?.fouls,
+  ) ?? undefined;
+
+  // Innovation 3 — Form Momentum (utilise les données live comme proxy L5)
+  if (bsdMatch.live_stats) {
+    const homeFormVals = [bsdMatch.live_stats.home?.total_shots ?? 0];
+    const awayFormVals = [bsdMatch.live_stats.away?.total_shots ?? 0];
+    enriched.formMomentum = {
+      home: computeFormTrend(homeFormVals),
+      away: computeFormTrend(awayFormVals),
+    };
+  }
+
+  // Innovation 4 — Set-Piece Edge
+  enriched.setPieceEdge = computeSetPieceEdge(
+    bsdMatch.live_stats?.home?.corner_kicks, // proxy CPA
+    bsdMatch.live_stats?.away?.corner_kicks,
+    bsdMatch.live_stats?.away?.corner_kicks,
+    bsdMatch.live_stats?.home?.corner_kicks,
+    bsdMatch.live_stats?.home?.total_shots,
+    bsdMatch.live_stats?.away?.total_shots,
+  ) ?? undefined;
+
   return enriched;
+}
+
+// ─── Innovations métriques (Phase 3) ────────────────────────────────────
+
+/**
+ * Innovation 1 — Indice xP (Expected Points).
+ * Calcule le delta entre les points réels (simulés via probabilités de victoire)
+ * et les points attendus selon xG/xGa.
+ * xP_diff > 0 = sur-performance, < 0 = sous-performance.
+ */
+export function computeXPDiff(
+  homeProb: number,
+  drawProb: number,
+  awayProb: number,
+  homeXg?: number | null,
+  awayXg?: number | null,
+): number | null {
+  if (homeXg == null || awayXg == null || !Number.isFinite(homeXg) || !Number.isFinite(awayXg)) return null;
+  if (homeXg + awayXg === 0) return null;
+
+  // Points réels estimés : 3*P(win) + 1*P(draw)
+  const realPtsHome = (homeProb / 100) * 3 + (drawProb / 100) * 1;
+  const realPtsAway = (awayProb / 100) * 3 + (drawProb / 100) * 1;
+
+  // Points attendus : si xG > adversaire → ~3 pts, si xG ≈ adversaire → ~1 pt
+  const xgTotal = homeXg + awayXg;
+  const xpHome = (homeXg / xgTotal) * 3 + (Math.min(homeXg, awayXg) / Math.max(homeXg, awayXg, 1)) * 1;
+  const xpAway = (awayXg / xgTotal) * 3 + (Math.min(homeXg, awayXg) / Math.max(homeXg, awayXg, 1)) * 1;
+
+  // xP_diff = points réels domicile - points xP domicile (signé)
+  const diff = realPtsHome - xpHome;
+  return clamp(Math.round(diff * 100) / 100, -5, 5);
+}
+
+/** Constante : moyenne de cartons par match dans les 5 grands championnats. */
+const LEAGUE_AVG_CARDS = 3.8;
+
+/**
+ * Innovation 2 — Referee xCards (Impact Arbitre).
+ * Croise la moyenne de cartons de l'arbitre avec le style agressif des équipes.
+ * Retourne un score normalisé et un label de risque.
+ */
+export function computeRefereeCardRisk(
+  refereeCardAvg?: number | null,
+  homeFouls?: number | null,
+  awayFouls?: number | null,
+): { score: number; label: "élevé" | "modéré" | "faible" } | null {
+  if (refereeCardAvg == null || !Number.isFinite(refereeCardAvg)) return null;
+  const avgFouls = ((homeFouls ?? 10) + (awayFouls ?? 10)) / 2;
+  const score = (refereeCardAvg * avgFouls) / (LEAGUE_AVG_CARDS * 10);
+  const clampedScore = clamp(Math.round(score * 100) / 100, 0.3, 3);
+
+  let label: "élevé" | "modéré" | "faible" = "modéré";
+  if (clampedScore > 1.3) label = "élevé";
+  else if (clampedScore < 0.7) label = "faible";
+
+  return { score: clampedScore, label };
+}
+
+/**
+ * Innovation 3 — Form Momentum (Tendance L5).
+ * Calcule la tendance (linéaire) d'une série de valeurs sur les 5 derniers matchs.
+ * Retourne "up" si coefficient > 0.05, "down" si < -0.05, "stable" sinon.
+ */
+export function computeFormTrend(values: number[]): { trend: "up" | "down" | "stable"; values: number[] } {
+  const safeValues = values.filter((v) => Number.isFinite(v));
+  if (safeValues.length < 3) return { trend: "stable", values: safeValues };
+
+  // Régression linéaire simple
+  const n = safeValues.length;
+  let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+  for (let i = 0; i < n; i++) {
+    sumX += i;
+    sumY += safeValues[i];
+    sumXY += i * safeValues[i];
+    sumX2 += i * i;
+  }
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+  const avgY = sumY / n;
+
+  // Normaliser la pente par rapport à la moyenne
+  const normalizedSlope = avgY > 0 ? slope / avgY : 0;
+
+  let trend: "up" | "down" | "stable" = "stable";
+  if (normalizedSlope > 0.05) trend = "up";
+  else if (normalizedSlope < -0.05) trend = "down";
+
+  return { trend, values: safeValues };
+}
+
+/**
+ * Innovation 4 — Set-Piece Edge (Vulnérabilité CPA).
+ * Calcule le différentiel de buts sur coups de pied arrêtés entre l'équipe A
+ * et l'équipe B. edge > 0.10 = avantage domicile, < -0.10 = vulnérabilité.
+ */
+export function computeSetPieceEdge(
+  homeSPGoalsFor?: number | null,
+  homeSPGoalsAgainst?: number | null,
+  awaySPGoalsFor?: number | null,
+  awaySPGoalsAgainst?: number | null,
+  homeTotalGoals?: number | null,
+  awayTotalGoals?: number | null,
+): number | null {
+  if (homeSPGoalsFor == null || awaySPGoalsAgainst == null) return null;
+  if (!Number.isFinite(homeSPGoalsFor) || !Number.isFinite(awaySPGoalsAgainst)) return null;
+
+  const homeTotal = homeTotalGoals ?? Math.max(homeSPGoalsFor + (homeSPGoalsAgainst ?? 0), 1);
+  const awayTotal = awayTotalGoals ?? Math.max(awaySPGoalsFor ?? 0 + awaySPGoalsAgainst, 1);
+
+  const homeRate = homeSPGoalsFor / Math.max(homeTotal, 1);
+  const awayRate = awaySPGoalsAgainst / Math.max(awayTotal, 1);
+
+  const edge = homeRate - awayRate;
+  return clamp(Math.round(edge * 1000) / 1000, -0.5, 0.5);
 }
