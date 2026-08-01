@@ -113,7 +113,7 @@ export function TennisSubTabs({
                   "ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[10px] font-bold tabular-nums",
                   isActive
                     ? `${tab.accent} text-white`
-                    : "bg-muted-foreground/20 text-muted-foreground",
+                    : "bg-muted-foreground/30 text-[#C0C0C0]",
                 )}
               >
                 {tab.count > 99 ? "99+" : tab.count}

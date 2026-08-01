@@ -58,7 +58,7 @@ export function MatchCardHeader({
       >
       {/* Colonne gauche : tournoi + ronde + date */}
       <div className="flex min-w-0 flex-col gap-0.5">
-        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#B0B0B0]">
           <Trophy className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{match.tournament}</span>
           <span className="text-border">·</span>
@@ -66,11 +66,11 @@ export function MatchCardHeader({
         </div>
 
         {/* Date + heure précise du match — TZ navigateur dynamique */}
-        <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground/70">
+        <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#A0A0A0]">
           <Calendar className="h-3 w-3 shrink-0" />
           <span className="whitespace-nowrap">{formattedDate}</span>
           <Clock className="h-3 w-3 shrink-0" />
-          <span className="whitespace-nowrap font-semibold text-foreground/60">{formattedTime}</span>
+          <span className="whitespace-nowrap font-semibold text-[#E0E0E0]">{formattedTime}</span>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export function MatchCardHeader({
           </span>
         )}
 
-        <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#B0B0B0]">
           <Clock className="h-3.5 w-3.5" />
           <span>{formatRelativeTime(match.scheduledAt, tTime)}</span>
         </div>
@@ -112,7 +112,7 @@ export function MatchCardHeader({
               "h-3.5 w-3.5 transition-colors",
               isFav
                 ? "fill-amber-400 text-amber-400"
-                : "text-muted-foreground hover:text-foreground",
+                : "text-[#A0A0A0] hover:text-[#E0E0E0]",
             )}
           />
         </button>

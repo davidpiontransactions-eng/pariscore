@@ -578,21 +578,21 @@ export function MatchCard({
 
         {/* Cotes bookmaker (si dispo) */}
         {match.odds && (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-[#B0B0B0]">
             <span className="font-semibold uppercase tracking-wider">
               {match.odds.bookmaker}
             </span>
             <span className="text-border">·</span>
             <span className="font-mono">
               {playerA.shortName}{" "}
-              <span className="font-semibold text-foreground">
+              <span className="font-semibold text-[#F0F0F0]">
                 {match.odds.decimalA.toFixed(2)}
               </span>
             </span>
             <span className="text-border">/</span>
             <span className="font-mono">
               {playerB.shortName}{" "}
-              <span className="font-semibold text-foreground">
+              <span className="font-semibold text-[#F0F0F0]">
                 {match.odds.decimalB.toFixed(2)}
               </span>
             </span>

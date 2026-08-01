@@ -537,7 +537,7 @@ export function TennisTabContent() {
                       "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                       filter === f.key
                         ? "border-foreground bg-foreground text-background"
-                        : "border-border bg-background hover:bg-muted"
+                        : "border-border bg-background text-[#C0C0C0] hover:bg-muted hover:text-white"
                     )}
                   >
                     {f.label}
@@ -546,7 +546,7 @@ export function TennisTabContent() {
               </div>
 
               {/* Sort controls */}
-              <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="mt-3 flex items-center gap-2 text-xs text-[#C0C0C0]">
                 <ArrowUpDown className="h-3.5 w-3.5" />
                 <span className="font-medium">{tFilters("sortBy")}:</span>
                 {([

@@ -55,7 +55,7 @@ export function PlayerBlock({
       >
         <h3
           className={cn(
-            "max-w-full truncate font-bold leading-tight tracking-tight",
+            "max-w-full truncate font-bold leading-tight tracking-tight text-white",
             terminalMode ? "text-sm sm:text-base" : "text-base sm:text-lg"
           )}
           title={player.name}

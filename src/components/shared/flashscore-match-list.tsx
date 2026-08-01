@@ -105,7 +105,7 @@ function FilterBar({
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               activeFilter === f.key
                 ? "border-foreground bg-foreground text-background"
-                : "border-border bg-background hover:bg-muted",
+                : "border-border bg-background text-[#D0D0D0] hover:bg-muted hover:text-white",
             )}
           >
             {f.icon && <span aria-hidden>{f.icon}</span>}
@@ -113,7 +113,7 @@ function FilterBar({
             {f.count > 0 && (
               <span className={cn(
                 "ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums",
-                activeFilter === f.key ? `${f.accent} text-white` : "bg-muted-foreground/20 text-muted-foreground",
+                activeFilter === f.key ? `${f.accent} text-white` : "bg-muted-foreground/30 text-[#D0D0D0]",
               )}>
                 {f.count > 99 ? "99+" : f.count}
               </span>
@@ -154,13 +154,13 @@ function LeagueHeader({
         : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
       {league.country && <CountryFlag countryCode={league.country} size="sm" />}
       {league.logo && !league.country && <span className="text-sm" aria-hidden>{league.logo}</span>}
-      <span className="flex-1 truncate text-sm font-bold tracking-tight">{league.name}</span>
-      <Badge variant="secondary" className="font-mono text-[10px] tabular-nums">{matchCount}</Badge>
+      <span className="flex-1 truncate text-sm font-bold tracking-tight text-[#F0F0F0]">{league.name}</span>
+      <Badge variant="secondary" className="font-mono text-[10px] tabular-nums text-white">{matchCount}</Badge>
       {onToggleFavorite && (
         <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
           className="rounded p-0.5 transition-colors hover:bg-muted-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
-          <Star className={cn("h-3.5 w-3.5", isFavorite ? "fill-amber-500 text-amber-500" : "text-muted-foreground/50")} />
+          <Star className={cn("h-3.5 w-3.5", isFavorite ? "fill-amber-400 text-amber-400" : "text-[#A0A0A0]")} />
         </button>
       )}
     </button>
@@ -182,30 +182,30 @@ function MatchRow({
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />LIVE
           </span>
         ) : (
-          <span className="font-mono font-semibold tabular-nums text-foreground">{match.timeDisplay}</span>
+          <span className="font-mono font-semibold tabular-nums text-[#E0E0E0]">{match.timeDisplay}</span>
         )}
         {match.statusDetail && <span className="text-[10px] text-muted-foreground">{match.statusDetail}</span>}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5 truncate">
-          <span className="truncate font-medium">{match.homeName}
-            {match.homeRank != null && match.homeRank > 0 && <span className="ml-1 text-[10px] text-muted-foreground">#{match.homeRank}</span>}
+          <span className="truncate font-medium text-[#F0F0F0]">{match.homeName}
+            {match.homeRank != null && match.homeRank > 0 && <span className="ml-1 text-[10px] text-[#B0B0B0]">#{match.homeRank}</span>}
           </span>
           {match.server === "home" && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" title="Au service" />}
         </div>
         <div className="flex items-center gap-1.5 truncate">
-          <span className="truncate text-muted-foreground">{match.awayName}
-            {match.awayRank != null && match.awayRank > 0 && <span className="ml-1 text-[10px] text-muted-foreground/70">#{match.awayRank}</span>}
+          <span className="truncate text-[#E0E0E0]">{match.awayName}
+            {match.awayRank != null && match.awayRank > 0 && <span className="ml-1 text-[10px] text-[#A0A0A0]">#{match.awayRank}</span>}
           </span>
           {match.server === "away" && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" title="Au service" />}
         </div>
       </div>
-      <div className="flex w-[88px] shrink-0 items-center justify-center font-mono text-sm font-bold tabular-nums tracking-tight">
+      <div className="flex w-[88px] shrink-0 items-center justify-center font-mono text-sm font-bold tabular-nums tracking-tight text-[#F0F0F0]">
         {match.scoreDisplay || "-"}
       </div>
       <div className="hidden w-[72px] shrink-0 text-center sm:block">
         {match.oddsDisplay ? (
-          <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{match.oddsDisplay}</span>
+          <span className="font-mono text-[11px] font-semibold tabular-nums text-[#F0F0F0]">{match.oddsDisplay}</span>
         ) : <span className="text-[10px] text-muted-foreground/40">—</span>}
       </div>
       <div className="flex shrink-0 items-center gap-1">
@@ -213,12 +213,12 @@ function MatchRow({
           <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(match.id); }}
             className="rounded p-1 transition-colors hover:bg-muted-foreground/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
-            <Star className={cn("h-3.5 w-3.5", isFavorite ? "fill-amber-500 text-amber-500" : "text-muted-foreground/40")} />
+            <Star className={cn("h-3.5 w-3.5", isFavorite ? "fill-amber-400 text-amber-400" : "text-[#B0B0B0]")} />
           </button>
         )}
         {onOpenDetail && (
           <button onClick={(e) => { e.stopPropagation(); onOpenDetail(match.id); }}
-            className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted-foreground/15 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded p-1 text-[#B0B0B0] transition-colors hover:bg-muted-foreground/15 hover:text-[#F0F0F0] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Voir les stats détaillées">
             <BarChart2 className="h-3.5 w-3.5" />
           </button>
