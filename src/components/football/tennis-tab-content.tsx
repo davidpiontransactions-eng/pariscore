@@ -32,6 +32,7 @@ import { useAnalytics } from "@/components/analytics-provider";
 import { useDocumentPip } from "@/hooks/use-document-pip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MatchPipWidget } from "@/components/tennis/match-pip-widget";
+import { FlashscoreTennisList } from "@/components/tennis/flashscore-tennis-list";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { MATCHES } from "@/lib/tennis-data";
@@ -120,7 +121,7 @@ export function TennisTabContent() {
 
   const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
   const { liveStates, liveMatchList, connectionStatus, latency } = useLiveMatches();
-  const { favorites, count: favCount } = useFavorites();
+  const { favorites, count: favCount, toggle: toggleFavorite } = useFavorites();
   const { terminalMode } = useTerminalMode();
   const { track, getVariant, reloadFlags, setPersonProperties } = useAnalytics();
   // Widget Document PiP — fenêtre always-on-top pour suivre les favoris live
@@ -600,10 +601,21 @@ export function TennisTabContent() {
         />
       </div>
 
-      {/* Match list / Tournaments list */}
+      {/* Match list / Tournaments list / Flashscore list */}
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
       {subTab === "tournaments" ? (
         <TournamentsList />
+      ) : subTab === "list" ? (
+        <FlashscoreTennisList
+          matches={filtered}
+          liveStates={liveStates}
+          favoriteIds={favorites}
+          onToggleFavorite={toggleFavorite}
+          onOpenDetail={openDetail}
+          isLoading={isLoading}
+          error={error?.message ?? null}
+          onRetry={() => mutate()}
+        />
       ) : (
         <>
         {error && (

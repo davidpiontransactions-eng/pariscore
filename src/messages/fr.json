@@ -178,6 +178,8 @@
     "subTabLiveAria": "Matchs en direct ({n})",
     "subTabTodayAria": "Tous les matchs du jour ({n})",
     "subTabTournamentsAria": "Tournois ATP/WTA/ITF",
+    "subTabList": "Liste",
+    "subTabListAria": "Liste Flashscore des matchs",
     "subTabsAriaLabel": "Sous-onglets tennis",
     "noLiveMatches": "Aucun match en direct",
     "noTournaments": "Aucun tournoi disponible",

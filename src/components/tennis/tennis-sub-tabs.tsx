@@ -1,10 +1,10 @@
 "use client";
 
-import { Radio, Calendar, Trophy } from "lucide-react";
+import { Radio, Calendar, Trophy, List } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-export type TennisSubTab = "live" | "today" | "tournaments";
+export type TennisSubTab = "live" | "today" | "tournaments" | "list";
 
 type Props = {
   activeSubTab: TennisSubTab;
@@ -66,6 +66,14 @@ export function TennisSubTabs({
       count: 0,
       accent: "bg-amber-500",
       ariaLabel: t("subTabTournamentsAria"),
+    },
+    {
+      id: "list",
+      label: t("subTabList"),
+      icon: List,
+      count: 0,
+      accent: "bg-violet-500",
+      ariaLabel: t("subTabListAria"),
     },
   ];
 

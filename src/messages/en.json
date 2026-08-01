@@ -178,6 +178,8 @@
     "subTabLiveAria": "Live matches ({n})",
     "subTabTodayAria": "All today matches ({n})",
     "subTabTournamentsAria": "ATP/WTA/ITF tournaments",
+    "subTabList": "List",
+    "subTabListAria": "Flashscore match list",
     "subTabsAriaLabel": "Tennis sub-tabs",
     "noLiveMatches": "No live matches",
     "noTournaments": "No tournaments available",
