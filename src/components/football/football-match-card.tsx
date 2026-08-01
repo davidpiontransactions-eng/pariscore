@@ -195,9 +195,23 @@ export function FootballMatchCard({
               sport="football"
             />
             <span className="text-sm font-semibold leading-tight">{match.home.shortName}</span>
-            {match.home.topScorer && (
-              <span className="text-[10px] tabular-nums text-amber-400/80" title={`Meilleur buteur: ${match.home.topScorer.name}`}>
-                ⚽ {match.home.topScorer.name.split(" ").pop()} {match.home.topScorer.goals}
+            {(match.home.topScorer || match.home.topAssister || match.home.topDefender) && (
+              <span className="flex flex-wrap items-center gap-x-1.5 text-[9px] leading-none text-muted-foreground">
+                {match.home.topScorer && (
+                  <span className="tabular-nums" title={`⚽ ${match.home.topScorer.name}`}>
+                    ⚽{match.home.topScorer.goals}
+                  </span>
+                )}
+                {match.home.topAssister && (
+                  <span className="tabular-nums" title={`🎯 ${match.home.topAssister.name}`}>
+                    🎯{match.home.topAssister.assists}
+                  </span>
+                )}
+                {match.home.topDefender && (
+                  <span className="tabular-nums" title={`🛡️ ${match.home.topDefender.name}`}>
+                    🛡️{match.home.topDefender.tackles}
+                  </span>
+                )}
               </span>
             )}
             <FormTimeline form={match.home.form} showIndex={false} size="sm" />
@@ -239,9 +253,23 @@ export function FootballMatchCard({
               sport="football"
             />
             <span className="text-sm font-semibold leading-tight">{match.away.shortName}</span>
-            {match.away.topScorer && (
-              <span className="text-[10px] tabular-nums text-amber-400/80" title={`Meilleur buteur: ${match.away.topScorer.name}`}>
-                ⚽ {match.away.topScorer.name.split(" ").pop()} {match.away.topScorer.goals}
+            {(match.away.topScorer || match.away.topAssister || match.away.topDefender) && (
+              <span className="flex flex-wrap items-center gap-x-1.5 text-[9px] leading-none text-muted-foreground">
+                {match.away.topScorer && (
+                  <span className="tabular-nums" title={`⚽ ${match.away.topScorer.name}`}>
+                    ⚽{match.away.topScorer.goals}
+                  </span>
+                )}
+                {match.away.topAssister && (
+                  <span className="tabular-nums" title={`🎯 ${match.away.topAssister.name}`}>
+                    🎯{match.away.topAssister.assists}
+                  </span>
+                )}
+                {match.away.topDefender && (
+                  <span className="tabular-nums" title={`🛡️ ${match.away.topDefender.name}`}>
+                    🛡️{match.away.topDefender.tackles}
+                  </span>
+                )}
               </span>
             )}
             <FormTimeline form={match.away.form} showIndex={false} size="sm" />

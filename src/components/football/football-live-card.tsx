@@ -142,9 +142,17 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               )}
             </div>
             <span className="text-xs font-semibold">{match.home.shortName}</span>
-            {match.home.topScorer && (
-              <span className="text-[9px] tabular-nums text-amber-400/70">
-                ⚽ {match.home.topScorer.name.split(" ").pop()} {match.home.topScorer.goals}
+            {(match.home.topScorer || match.home.topAssister || match.home.topDefender) && (
+              <span className="flex flex-wrap items-center gap-x-1 text-[8px] leading-none text-muted-foreground">
+                {match.home.topScorer && (
+                  <span className="tabular-nums" title={`⚽ ${match.home.topScorer.name}`}>⚽{match.home.topScorer.goals}</span>
+                )}
+                {match.home.topAssister && (
+                  <span className="tabular-nums" title={`🎯 ${match.home.topAssister.name}`}>🎯{match.home.topAssister.assists}</span>
+                )}
+                {match.home.topDefender && (
+                  <span className="tabular-nums" title={`🛡️ ${match.home.topDefender.name}`}>🛡️{match.home.topDefender.tackles}</span>
+                )}
               </span>
             )}
           </div>
@@ -171,9 +179,17 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               )}
             </div>
             <span className="text-xs font-semibold">{match.away.shortName}</span>
-            {match.away.topScorer && (
-              <span className="text-[9px] tabular-nums text-amber-400/70">
-                ⚽ {match.away.topScorer.name.split(" ").pop()} {match.away.topScorer.goals}
+            {(match.away.topScorer || match.away.topAssister || match.away.topDefender) && (
+              <span className="flex flex-wrap items-center gap-x-1 text-[8px] leading-none text-muted-foreground">
+                {match.away.topScorer && (
+                  <span className="tabular-nums" title={`⚽ ${match.away.topScorer.name}`}>⚽{match.away.topScorer.goals}</span>
+                )}
+                {match.away.topAssister && (
+                  <span className="tabular-nums" title={`🎯 ${match.away.topAssister.name}`}>🎯{match.away.topAssister.assists}</span>
+                )}
+                {match.away.topDefender && (
+                  <span className="tabular-nums" title={`🛡️ ${match.away.topDefender.name}`}>🛡️{match.away.topDefender.tackles}</span>
+                )}
               </span>
             )}
           </div>

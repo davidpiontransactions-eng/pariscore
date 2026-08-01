@@ -16,6 +16,10 @@ export type Team = {
   rank: number;
   /** Meilleur buteur de l'équipe (nom + buts marqués). */
   topScorer?: { name: string; goals: number };
+  /** Meilleur passeur décisif (nom + passes). */
+  topAssister?: { name: string; assists: number };
+  /** Meilleur défenseur/intercepteur (nom + tacles). */
+  topDefender?: { name: string; tackles: number };
 };
 
 export type FootballMatchOdds = {
@@ -127,6 +131,8 @@ export const LIVE_MATCHES: FootballMatch[] = [
       id: "psg", name: "Paris Saint-Germain", shortName: "PSG", logo: TEAM_LOGOS.psg, color: "#004170",
       form: ["W", "W", "W", "D", "W"], rank: 1,
       topScorer: { name: "K. Mbappé", goals: 8 },
+      topAssister: { name: "O. Dembélé", assists: 6 },
+      topDefender: { name: "Marquinhos", tackles: 28 },
     },
     away: {
       id: "marseille", name: "Olympique de Marseille", shortName: "OM", logo: TEAM_LOGOS.marseille, color: "#2FAEE0",
@@ -165,11 +171,15 @@ export const LIVE_MATCHES: FootballMatch[] = [
       id: "mancity", name: "Manchester City", shortName: "MCI", logo: TEAM_LOGOS.mancity, color: "#6CABDD",
       form: ["W", "W", "W", "W", "L"], rank: 1,
       topScorer: { name: "E. Haaland", goals: 10 },
+      topAssister: { name: "K. De Bruyne", assists: 8 },
+      topDefender: { name: "Rúben Dias", tackles: 35 },
     },
     away: {
       id: "arsenal", name: "Arsenal", shortName: "ARS", logo: TEAM_LOGOS.arsenal, color: "#EF0107",
       form: ["W", "W", "D", "W", "W"], rank: 2,
       topScorer: { name: "B. Saka", goals: 6 },
+      topAssister: { name: "M. Ødegaard", assists: 7 },
+      topDefender: { name: "W. Saliba", tackles: 40 },
     },
     prediction: { homeProb: 55, drawProb: 25, awayProb: 20, bttsProb: 60, over25Prob: 65, model: "Elo+Poisson" },
     odds: { bookmaker: "Bet365", home: 1.80, draw: 3.80, away: 4.00 },
@@ -184,11 +194,15 @@ export const LIVE_MATCHES: FootballMatch[] = [
       id: "real", name: "Real Madrid", shortName: "RMA", logo: TEAM_LOGOS.real, color: "#FEBE10",
       form: ["W", "W", "D", "W", "W"], rank: 2,
       topScorer: { name: "J. Bellingham", goals: 7 },
+      topAssister: { name: "Vini Jr.", assists: 6 },
+      topDefender: { name: "A. Rüdiger", tackles: 33 },
     },
     away: {
       id: "barca", name: "FC Barcelona", shortName: "FCB", logo: TEAM_LOGOS.barca, color: "#A50044",
       form: ["W", "W", "W", "L", "W"], rank: 1,
       topScorer: { name: "R. Lewandowski", goals: 9 },
+      topAssister: { name: "Pedri", assists: 7 },
+      topDefender: { name: "R. Araújo", tackles: 38 },
     },
     prediction: {
       homeProb: 50, drawProb: 25, awayProb: 25, bttsProb: 70, over25Prob: 72, model: "Elo+Poisson",
@@ -298,11 +312,15 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       id: "atletico", name: "Atlético Madrid", shortName: "ATL", logo: TEAM_LOGOS.atletico, color: "#CB3524",
       form: ["D", "W", "W", "W", "D"], rank: 4,
       topScorer: { name: "A. Griezmann", goals: 6 },
+      topAssister: { name: "N. Molina", assists: 5 },
+      topDefender: { name: "J. Giménez", tackles: 42 },
     },
     away: {
       id: "leverkusen", name: "Bayer Leverkusen", shortName: "LEV", logo: TEAM_LOGOS.leverkusen, color: "#E32221",
       form: ["W", "W", "D", "W", "L"], rank: 1,
       topScorer: { name: "V. Boniface", goals: 7 },
+      topAssister: { name: "F. Wirtz", assists: 9 },
+      topDefender: { name: "J. Tah", tackles: 36 },
     },
     prediction: { homeProb: 48, drawProb: 28, awayProb: 24, bttsProb: 55, over25Prob: 58, model: "Elo+Poisson" },
     odds: { bookmaker: "Bet365", home: 2.15, draw: 3.40, away: 3.50 },
@@ -316,11 +334,15 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       id: "marseille", name: "Olympique de Marseille", shortName: "OM", logo: TEAM_LOGOS.marseille, color: "#2FAEE0",
       form: ["W", "L", "W", "W", "D"], rank: 3,
       topScorer: { name: "P. Aubameyang", goals: 5 },
+      topAssister: { name: "A. Harit", assists: 4 },
+      topDefender: { name: "L. Balerdi", tackles: 32 },
     },
     away: {
       id: "monaco", name: "AS Monaco", shortName: "MON", logo: TEAM_LOGOS.monaco, color: "#E63E32",
       form: ["W", "D", "W", "L", "W"], rank: 5,
       topScorer: { name: "W. Ben Yedder", goals: 4 },
+      topAssister: { name: "A. Golovin", assists: 5 },
+      topDefender: { name: "G. Maripán", tackles: 30 },
     },
     prediction: { homeProb: 55, drawProb: 25, awayProb: 20, bttsProb: 60, over25Prob: 65, model: "Elo+Poisson" },
     odds: { bookmaker: "Bet365", home: 1.85, draw: 3.70, away: 3.90 },
@@ -366,11 +388,15 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       id: "leverkusen", name: "Bayer Leverkusen", shortName: "LEV", logo: TEAM_LOGOS.leverkusen, color: "#E32221",
       form: ["W", "W", "D", "W", "L"], rank: 1,
       topScorer: { name: "V. Boniface", goals: 7 },
+      topAssister: { name: "F. Wirtz", assists: 9 },
+      topDefender: { name: "J. Tah", tackles: 36 },
     },
     away: {
       id: "bayern", name: "Bayern Munich", shortName: "BAY", logo: TEAM_LOGOS.bayern, color: "#DC052D",
       form: ["W", "L", "W", "W", "D"], rank: 3,
       topScorer: { name: "H. Kane", goals: 12 },
+      topAssister: { name: "J. Musiala", assists: 8 },
+      topDefender: { name: "M. de Ligt", tackles: 31 },
     },
     prediction: {
       homeProb: 40, drawProb: 25, awayProb: 35, bttsProb: 68, over25Prob: 72, model: "Elo+Poisson",
