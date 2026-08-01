@@ -14,6 +14,8 @@ export type Team = {
   color: string;
   form: ("W" | "D" | "L")[];
   rank: number;
+  /** Meilleur buteur de l'équipe (nom + buts marqués). */
+  topScorer?: { name: string; goals: number };
 };
 
 export type FootballMatchOdds = {
@@ -124,10 +126,12 @@ export const LIVE_MATCHES: FootballMatch[] = [
     home: {
       id: "psg", name: "Paris Saint-Germain", shortName: "PSG", logo: TEAM_LOGOS.psg, color: "#004170",
       form: ["W", "W", "W", "D", "W"], rank: 1,
+      topScorer: { name: "K. Mbappé", goals: 8 },
     },
     away: {
       id: "marseille", name: "Olympique de Marseille", shortName: "OM", logo: TEAM_LOGOS.marseille, color: "#2FAEE0",
       form: ["W", "L", "W", "W", "D"], rank: 3,
+      topScorer: { name: "P. Aubameyang", goals: 5 },
     },
     prediction: {
       homeProb: 65, drawProb: 20, awayProb: 15, bttsProb: 55, over25Prob: 68, model: "Elo+Poisson",
@@ -160,10 +164,12 @@ export const LIVE_MATCHES: FootballMatch[] = [
     home: {
       id: "mancity", name: "Manchester City", shortName: "MCI", logo: TEAM_LOGOS.mancity, color: "#6CABDD",
       form: ["W", "W", "W", "W", "L"], rank: 1,
+      topScorer: { name: "E. Haaland", goals: 10 },
     },
     away: {
       id: "arsenal", name: "Arsenal", shortName: "ARS", logo: TEAM_LOGOS.arsenal, color: "#EF0107",
       form: ["W", "W", "D", "W", "W"], rank: 2,
+      topScorer: { name: "B. Saka", goals: 6 },
     },
     prediction: { homeProb: 55, drawProb: 25, awayProb: 20, bttsProb: 60, over25Prob: 65, model: "Elo+Poisson" },
     odds: { bookmaker: "Bet365", home: 1.80, draw: 3.80, away: 4.00 },
@@ -177,10 +183,12 @@ export const LIVE_MATCHES: FootballMatch[] = [
     home: {
       id: "real", name: "Real Madrid", shortName: "RMA", logo: TEAM_LOGOS.real, color: "#FEBE10",
       form: ["W", "W", "D", "W", "W"], rank: 2,
+      topScorer: { name: "J. Bellingham", goals: 7 },
     },
     away: {
       id: "barca", name: "FC Barcelona", shortName: "FCB", logo: TEAM_LOGOS.barca, color: "#A50044",
       form: ["W", "W", "W", "L", "W"], rank: 1,
+      topScorer: { name: "R. Lewandowski", goals: 9 },
     },
     prediction: {
       homeProb: 50, drawProb: 25, awayProb: 25, bttsProb: 70, over25Prob: 72, model: "Elo+Poisson",
@@ -289,10 +297,12 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
     home: {
       id: "atletico", name: "Atlético Madrid", shortName: "ATL", logo: TEAM_LOGOS.atletico, color: "#CB3524",
       form: ["D", "W", "W", "W", "D"], rank: 4,
+      topScorer: { name: "A. Griezmann", goals: 6 },
     },
     away: {
       id: "leverkusen", name: "Bayer Leverkusen", shortName: "LEV", logo: TEAM_LOGOS.leverkusen, color: "#E32221",
       form: ["W", "W", "D", "W", "L"], rank: 1,
+      topScorer: { name: "V. Boniface", goals: 7 },
     },
     prediction: { homeProb: 48, drawProb: 28, awayProb: 24, bttsProb: 55, over25Prob: 58, model: "Elo+Poisson" },
     odds: { bookmaker: "Bet365", home: 2.15, draw: 3.40, away: 3.50 },
@@ -305,10 +315,12 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
     home: {
       id: "marseille", name: "Olympique de Marseille", shortName: "OM", logo: TEAM_LOGOS.marseille, color: "#2FAEE0",
       form: ["W", "L", "W", "W", "D"], rank: 3,
+      topScorer: { name: "P. Aubameyang", goals: 5 },
     },
     away: {
       id: "monaco", name: "AS Monaco", shortName: "MON", logo: TEAM_LOGOS.monaco, color: "#E63E32",
       form: ["W", "D", "W", "L", "W"], rank: 5,
+      topScorer: { name: "W. Ben Yedder", goals: 4 },
     },
     prediction: { homeProb: 55, drawProb: 25, awayProb: 20, bttsProb: 60, over25Prob: 65, model: "Elo+Poisson" },
     odds: { bookmaker: "Bet365", home: 1.85, draw: 3.70, away: 3.90 },
@@ -353,10 +365,12 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
     home: {
       id: "leverkusen", name: "Bayer Leverkusen", shortName: "LEV", logo: TEAM_LOGOS.leverkusen, color: "#E32221",
       form: ["W", "W", "D", "W", "L"], rank: 1,
+      topScorer: { name: "V. Boniface", goals: 7 },
     },
     away: {
       id: "bayern", name: "Bayern Munich", shortName: "BAY", logo: TEAM_LOGOS.bayern, color: "#DC052D",
       form: ["W", "L", "W", "W", "D"], rank: 3,
+      topScorer: { name: "H. Kane", goals: 12 },
     },
     prediction: {
       homeProb: 40, drawProb: 25, awayProb: 35, bttsProb: 68, over25Prob: 72, model: "Elo+Poisson",

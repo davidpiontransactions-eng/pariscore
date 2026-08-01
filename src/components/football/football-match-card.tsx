@@ -195,6 +195,11 @@ export function FootballMatchCard({
               sport="football"
             />
             <span className="text-sm font-semibold leading-tight">{match.home.shortName}</span>
+            {match.home.topScorer && (
+              <span className="text-[10px] tabular-nums text-amber-400/80" title={`Meilleur buteur: ${match.home.topScorer.name}`}>
+                ⚽ {match.home.topScorer.name.split(" ").pop()} {match.home.topScorer.goals}
+              </span>
+            )}
             <FormTimeline form={match.home.form} showIndex={false} size="sm" />
           </div>
 
@@ -234,6 +239,11 @@ export function FootballMatchCard({
               sport="football"
             />
             <span className="text-sm font-semibold leading-tight">{match.away.shortName}</span>
+            {match.away.topScorer && (
+              <span className="text-[10px] tabular-nums text-amber-400/80" title={`Meilleur buteur: ${match.away.topScorer.name}`}>
+                ⚽ {match.away.topScorer.name.split(" ").pop()} {match.away.topScorer.goals}
+              </span>
+            )}
             <FormTimeline form={match.away.form} showIndex={false} size="sm" />
           </div>
         </div>

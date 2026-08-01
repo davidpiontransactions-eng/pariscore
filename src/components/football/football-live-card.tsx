@@ -142,6 +142,11 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               )}
             </div>
             <span className="text-xs font-semibold">{match.home.shortName}</span>
+            {match.home.topScorer && (
+              <span className="text-[9px] tabular-nums text-amber-400/70">
+                ⚽ {match.home.topScorer.name.split(" ").pop()} {match.home.topScorer.goals}
+              </span>
+            )}
           </div>
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-3">
@@ -166,6 +171,11 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               )}
             </div>
             <span className="text-xs font-semibold">{match.away.shortName}</span>
+            {match.away.topScorer && (
+              <span className="text-[9px] tabular-nums text-amber-400/70">
+                ⚽ {match.away.topScorer.name.split(" ").pop()} {match.away.topScorer.goals}
+              </span>
+            )}
           </div>
         </div>
 
