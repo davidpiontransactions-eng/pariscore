@@ -114,7 +114,14 @@ export function useLiveMatches(): UseLiveMatchesResult {
     // SSE dispo ? On l'active dès que la 1ère maj arrive (status connected).
     // Tant qu'aucune maj, on laisse le polling tourner pour ne pas rester à vide.
     if (stream.connectionStatus === "connected") {
-      setSseActive(true);
+      Promise.resolve().then(() => setSseActive(true));
+    }
+  }, [stream.connectionStatus]);
+
+  // C1 fix : reset sseActive on disconnect pour débloquer le polling fallback.
+  useEffect(() => {
+    if (stream.connectionStatus === "disconnected") {
+      Promise.resolve().then(() => setSseActive(false));
     }
   }, [stream.connectionStatus]);
 
@@ -151,7 +158,7 @@ export function useLiveMatches(): UseLiveMatchesResult {
           if (!m.isLive) continue;
 
           // FIX doublon score (2026-07-25) : cf. commentaire use-live-stream.ts.
-          const completedCount = Math.min(m.currentSet, m.setsDetail.length - 1);
+          const completedCount = Math.min(m.currentSet, (m.setsDetail?.length ?? 0) - 1);
           const setsA: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p1);
           const setsB: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p2);
 
@@ -175,7 +182,7 @@ export function useLiveMatches(): UseLiveMatchesResult {
       }
     };
 
-    setConnectionStatus("connecting");
+    Promise.resolve().then(() => setConnectionStatus("connecting"));
     poll();
 
     pollRef.current = setInterval(poll, POLL_INTERVAL_MS);

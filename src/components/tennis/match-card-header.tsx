@@ -66,7 +66,7 @@ export function MatchCardHeader({
         </div>
 
         {/* Date + heure précise du match — TZ navigateur dynamique */}
-        <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#A0A0A0]">
+        <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#B8B8B8]">
           <Calendar className="h-3 w-3 shrink-0" />
           <span className="whitespace-nowrap">{formattedDate}</span>
           <Clock className="h-3 w-3 shrink-0" />

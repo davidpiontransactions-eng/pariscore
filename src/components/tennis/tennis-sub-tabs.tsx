@@ -82,7 +82,7 @@ export function TennisSubTabs({
       role="tablist"
       aria-label={t("subTabsAriaLabel")}
       className={cn(
-        "flex w-full gap-1 rounded-lg border border-border/60 bg-muted/30 p-1",
+        "flex w-full gap-1 overflow-x-auto scroll-snap-x rounded-lg border border-border/60 bg-muted/30 p-1",
         className,
       )}
     >

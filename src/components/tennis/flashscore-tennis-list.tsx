@@ -20,6 +20,8 @@ type Props = {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  onRefresh?: () => void;
+  initialFilter?: import("@/components/shared/flashscore-match-list").FlashscoreFilter;
   className?: string;
 };
 
@@ -71,6 +73,7 @@ function formatTennisScore(
 /** Formatte les cotes courtes (12) pour le tennis. */
 function formatTennisOdds(match: TennisMatch): string | null {
   if (!match.odds) return null;
+  if (match.odds.decimalA == null || match.odds.decimalB == null) return null;
   return `${match.odds.decimalA.toFixed(2)} / ${match.odds.decimalB.toFixed(2)}`;
 }
 
@@ -83,6 +86,8 @@ export function FlashscoreTennisList({
   isLoading,
   error,
   onRetry,
+  onRefresh,
+  initialFilter,
   className,
 }: Props) {
   // Grouper par tournoi
@@ -110,6 +115,7 @@ export function FlashscoreTennisList({
       const row: FlashscoreMatchRow = {
         id: m.id,
         timeDisplay: isLive ? "" : formatTime(m.scheduledAt),
+        scheduledAt: m.scheduledAt,
         isLive,
         statusDetail: isLive
           ? (ls && ls.currentSet > 0 ? `Set ${ls.currentSet}` : "LIVE")
@@ -126,10 +132,16 @@ export function FlashscoreTennisList({
       map.get(tournamentId)!.matches.push(row);
     }
 
+    // Pré-calculer la map de priorité (évite O(n²) via .find() dans le comparateur)
+    const priorityMap = new Map<string, number>();
+    for (const m of matches) {
+      priorityMap.set(m.tournament.replace(/\s+/g, "_").toLowerCase(), m.tournamentPriority ?? 10);
+    }
+
     // Trier par priorité tournoi
     return [...map.values()].sort((a, b) => {
-      const pa = matches.find((m) => m.tournament.replace(/\s+/g, "_").toLowerCase() === a.league.id)?.tournamentPriority ?? 10;
-      const pb = matches.find((m) => m.tournament.replace(/\s+/g, "_").toLowerCase() === b.league.id)?.tournamentPriority ?? 10;
+      const pa = priorityMap.get(a.league.id) ?? 10;
+      const pb = priorityMap.get(b.league.id) ?? 10;
       return pa - pb;
     });
   }, [matches, liveStates]);
@@ -141,6 +153,15 @@ export function FlashscoreTennisList({
   );
   const favCount = favoriteIds ? matches.filter((m) => favoriteIds.has(m.id)).length : 0;
   const valueCount = matches.filter((m) => m.odds != null).length;
+  const upcomingCount = useMemo(() => {
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    return matches.filter((m) => {
+      if (!m.scheduledAt) return false;
+      const t = new Date(m.scheduledAt).getTime();
+      return t > now && t <= now + oneHour;
+    }).length;
+  }, [matches]);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -155,6 +176,7 @@ export function FlashscoreTennisList({
         liveCount={liveCount}
         favCount={favCount}
         valueCount={valueCount}
+        upcomingCount={upcomingCount}
         favoriteIds={favoriteIds}
         onToggleFavorite={onToggleFavorite}
         onOpenDetail={(id) => {
@@ -166,6 +188,8 @@ export function FlashscoreTennisList({
         isLoading={isLoading}
         error={error}
         onRetry={onRetry}
+        onRefresh={onRefresh}
+        initialFilter={initialFilter}
         sportLabel="Tennis"
       />
     </div>

@@ -52,7 +52,7 @@ function buildLiveStates(
     if (!m.isLive) continue;
 
     // FIX doublon score : cf. use-live-matches.ts:127-136 (même logique).
-    const completedCount = Math.min(m.currentSet, m.setsDetail.length - 1);
+    const completedCount = Math.min(m.currentSet, (m.setsDetail?.length ?? 0) - 1);
     const setsA = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p1);
     const setsB = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p2);
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef, type ReactNode } from "react";
-import { ChevronDown, ChevronRight, Star, BarChart2, Search } from "lucide-react";
+import { useState, useMemo, useRef, useCallback, type ReactNode } from "react";
+import { ChevronDown, ChevronRight, Star, BarChart2, Search, ArrowDown, RefreshCw } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
 import { CountryFlag } from "@/components/tennis/country-flag";
@@ -21,7 +21,7 @@ export type FlashscoreLeague = {
 };
 
 /** Filtres communs à tous les sports. */
-export type FlashscoreFilter = "all" | "live" | "favorites" | "value";
+export type FlashscoreFilter = "all" | "live" | "favorites" | "value" | "upcoming";
 
 /** Une ligne de match dans la liste Flashscore. */
 export type FlashscoreMatchRow = {
@@ -36,6 +36,8 @@ export type FlashscoreMatchRow = {
   server?: "home" | "away" | null;
   scoreDisplay: string;
   oddsDisplay?: string | null;
+  /** ISO timestamp for the match — used by "upcoming" filter. */
+  scheduledAt?: string;
   extras?: ReactNode;
 };
 
@@ -48,6 +50,8 @@ export type FlashscoreMatchListProps = {
   liveCount?: number;
   favCount?: number;
   valueCount?: number;
+  /** Matchs prévus dans < 60 min (pour badge filtre "Prochain"). */
+  upcomingCount?: number;
   favoriteIds?: Set<string>;
   favoriteLeagueIds?: Set<string>;
   onToggleFavorite?: (matchId: string) => void;
@@ -58,6 +62,10 @@ export type FlashscoreMatchListProps = {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  /** Callback pour le pull-to-refresh (mobile). */
+  onRefresh?: () => void;
+  /** Filtre initial (permet de persister le filtre via URL params). */
+  initialFilter?: FlashscoreFilter;
   sportLabel?: string;
   className?: string;
 };
@@ -74,6 +82,7 @@ function FilterBar({
   liveCount,
   favCount,
   valueCount,
+  upcomingCount,
   searchQuery,
   onSearchChange,
 }: {
@@ -82,6 +91,7 @@ function FilterBar({
   liveCount: number;
   favCount: number;
   valueCount: number;
+  upcomingCount: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }) {
@@ -90,6 +100,7 @@ function FilterBar({
   }> = [
     { key: "all", label: "Tous", icon: "", count: 0, accent: "" },
     { key: "live", label: "En direct", icon: "⚡", count: liveCount, accent: "bg-rose-500" },
+    { key: "upcoming", label: "Prochain", icon: "⏱️", count: upcomingCount, accent: "bg-sky-500" },
     { key: "favorites", label: "Favoris", icon: "⭐", count: favCount, accent: "bg-amber-500" },
     { key: "value", label: "Value Bets", icon: "💎", count: valueCount, accent: "bg-emerald-500" },
   ];
@@ -155,7 +166,7 @@ function LeagueHeader({
         : <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />}
       {league.country && <CountryFlag countryCode={league.country} size="sm" />}
       {league.logo && !league.country && <span className="text-sm" aria-hidden>{league.logo}</span>}
-      <span className="flex-1 truncate text-sm font-bold tracking-tight text-[#F0F0F0]">{league.name}</span>
+      <span className="flex-1 truncate text-sm font-bold tracking-tight text-[#F0F0F0]" title={league.name}>{league.name}</span>
       <Badge variant="secondary" className="font-mono text-[10px] tabular-nums text-white">{matchCount}</Badge>
       {onToggleFavorite && (
         <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
@@ -192,13 +203,13 @@ function MatchRow({
           <span className="truncate font-medium text-[#F0F0F0]">{match.homeName}
             {match.homeRank != null && match.homeRank > 0 && <span className="ml-1 text-[10px] text-[#B0B0B0]">#{match.homeRank}</span>}
           </span>
-          {match.server === "home" && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" title="Au service" />}
+          {match.server === "home" && <span className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-400" title="Au service" />}
         </div>
         <div className="flex items-center gap-1.5 truncate">
           <span className="truncate text-[#E0E0E0]">{match.awayName}
             {match.awayRank != null && match.awayRank > 0 && <span className="ml-1 text-[10px] text-[#A0A0A0]">#{match.awayRank}</span>}
           </span>
-          {match.server === "away" && <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" title="Au service" />}
+          {match.server === "away" && <span className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-400" title="Au service" />}
         </div>
       </div>
       <div className="flex w-[88px] shrink-0 items-center justify-center font-mono text-sm font-bold tabular-nums tracking-tight text-[#F0F0F0]">
@@ -212,14 +223,14 @@ function MatchRow({
       <div className="flex shrink-0 items-center gap-1">
         {onToggleFavorite && (
           <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(match.id); }}
-            className="rounded p-1 transition-colors hover:bg-muted-foreground/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded p-2 min-w-[44px] min-h-[44px] transition-colors hover:bg-muted-foreground/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}>
-            <Star className={cn("h-3.5 w-3.5", isFavorite ? "fill-amber-400 text-amber-400" : "text-[#B0B0B0]")} />
+            <Star className={cn("h-3.5 w-3.5", isFavorite ? "fill-amber-400 text-amber-400" : "text-[#C8C8C8]")} />
           </button>
         )}
         {onOpenDetail && (
           <button onClick={(e) => { e.stopPropagation(); onOpenDetail(match.id); }}
-            className="rounded p-1 text-[#B0B0B0] transition-colors hover:bg-muted-foreground/15 hover:text-[#F0F0F0] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded p-2 min-w-[44px] min-h-[44px] text-[#B0B0B0] transition-colors hover:bg-muted-foreground/15 hover:text-[#F0F0F0] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Voir les stats détaillées">
             <BarChart2 className="h-3.5 w-3.5" />
           </button>
@@ -267,14 +278,22 @@ export function FlashscoreSkeleton() {
  * ────────────────────────────────────────── */
 
 export function FlashscoreMatchList({
-  leagues, liveCount = 0, favCount = 0, valueCount = 0,
+  leagues, liveCount = 0, favCount = 0, valueCount = 0, upcomingCount = 0,
   favoriteIds, favoriteLeagueIds, onToggleFavorite,
   onToggleLeagueFavorite, onOpenDetail,
   searchQuery = "", onSearchChange, isLoading, error, onRetry,
+  onRefresh, initialFilter,
   sportLabel = "Matchs", className,
 }: FlashscoreMatchListProps) {
-  const [filter, setFilter] = useState<FlashscoreFilter>("all");
+  const [filter, setFilter] = useState<FlashscoreFilter>(initialFilter ?? "all");
   const [collapsedLeagues, setCollapsedLeagues] = useState<Set<string>>(new Set());
+  const [pullState, setPullState] = useState<"idle" | "pulling" | "ready">("idle");
+  const [pullDistance, setPullDistance] = useState(0);
+  const pullStartY = useRef(0);
+  const pullCurrentY = useRef(0);
+  const isPulling = useRef(false);
+  const noopRef = useRef<(_q: string) => void>(() => {});
+  const onSearchChangeStable = onSearchChange ?? noopRef.current;
 
   const toggleLeague = (id: string) => {
     setCollapsedLeagues((prev) => {
@@ -299,6 +318,17 @@ export function FlashscoreMatchList({
     if (filter === "value") {
       result = result.map((lg) => ({
         ...lg, matches: lg.matches.filter((m) => m.oddsDisplay != null),
+      })).filter((lg) => lg.matches.length > 0);
+    }
+    if (filter === "upcoming") {
+      const now = Date.now();
+      const oneHour = 60 * 60 * 1000;
+      result = result.map((lg) => ({
+        ...lg, matches: lg.matches.filter((m) => {
+          if (!m.scheduledAt) return false;
+          const t = new Date(m.scheduledAt).getTime();
+          return t > now && t <= now + oneHour;
+        }),
       })).filter((lg) => lg.matches.length > 0);
     }
     if (searchQuery.trim()) {
@@ -344,12 +374,42 @@ export function FlashscoreMatchList({
 
   const isLeagueFav = (leagueId: string) => favoriteLeagueIds?.has(leagueId) ?? false;
 
+  // ── Pull-to-refresh (mobile) ──
+  const PULL_THRESHOLD = 64;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const el = scrollRef.current;
+    if (!el || el.scrollTop > 0) return;
+    isPulling.current = true;
+    pullStartY.current = e.touches[0].clientY;
+    pullCurrentY.current = e.touches[0].clientY;
+    setPullState("pulling");
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isPulling.current) return;
+    pullCurrentY.current = e.touches[0].clientY;
+    const dist = Math.max(0, pullCurrentY.current - pullStartY.current);
+    setPullDistance(dist);
+    setPullState(dist >= PULL_THRESHOLD ? "ready" : "pulling");
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!isPulling.current) return;
+    isPulling.current = false;
+    if (pullDistance >= PULL_THRESHOLD && onRefresh) {
+      onRefresh();
+    }
+    setPullDistance(0);
+    setPullState("idle");
+  }, [pullDistance, onRefresh]);
+
   return (
     <div className={cn("space-y-4", className)}>
       <FilterBar
         activeFilter={filter} onFilterChange={setFilter}
-        liveCount={liveCount} favCount={favCount} valueCount={valueCount}
-        searchQuery={searchQuery} onSearchChange={onSearchChange ?? (() => {})}
+        liveCount={liveCount} favCount={favCount} valueCount={valueCount} upcomingCount={upcomingCount}
+        searchQuery={searchQuery} onSearchChange={onSearchChangeStable}
       />
 
       {error && (
@@ -378,7 +438,33 @@ export function FlashscoreMatchList({
               <p className="text-xs text-muted-foreground">Essayez un autre filtre ou revenez plus tard.</p>
             </div>
           ) : (
-            <div ref={scrollRef} className="max-h-[calc(100vh-280px)] overflow-y-auto">
+            <div className="relative">
+              {/* Pull-to-refresh indicator */}
+              {onRefresh && pullState !== "idle" && (
+                <div
+                  className="flex items-center justify-center gap-2 overflow-hidden border-b border-border/40 bg-muted/30 transition-all duration-200"
+                  style={{ height: `${Math.min(pullDistance, PULL_THRESHOLD + 32)}px` }}
+                >
+                  {pullState === "ready" ? (
+                    <>
+                      <ArrowDown className="h-4 w-4 animate-bounce text-emerald-400" />
+                      <span className="text-xs font-semibold text-emerald-400">Relâcher pour actualiser</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Tirer pour actualiser</span>
+                    </>
+                  )}
+                </div>
+              )}
+              <div
+                ref={scrollRef}
+                className="max-h-[calc(100vh-280px)] overflow-y-auto"
+                onTouchStart={onRefresh ? handleTouchStart : undefined}
+                onTouchMove={onRefresh ? handleTouchMove : undefined}
+                onTouchEnd={onRefresh ? handleTouchEnd : undefined}
+              >
               <div
                 style={{
                   height: `${virtualizer.getTotalSize()}px`,
@@ -422,6 +508,7 @@ export function FlashscoreMatchList({
                   );
                 })}
               </div>
+            </div>
             </div>
           )}
         </div>

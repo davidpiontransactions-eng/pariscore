@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, lazy, Suspense, Component, type ReactNode } from "react";
+import { useState, useMemo, useCallback, lazy, Suspense, Component, type ReactNode } from "react";
 import Link from "next/link";
 import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -107,6 +107,41 @@ class TennisErrorBoundary extends Component<
   }
 }
 
+
+/** Wrapper to stabilize callbacks for MatchCardBroadcast — prevents new refs each render in .map(). */
+function MatchCardBroadcastItem({
+  match,
+  chipsCollapsedByDefault,
+  liveState,
+  disconnected,
+  onOpenDetail,
+  onBetClick,
+  priority,
+}: {
+  match: TennisMatch;
+  chipsCollapsedByDefault: boolean;
+  liveState?: import("@/hooks/use-live-matches").LiveMatchState;
+  disconnected: boolean;
+  onOpenDetail: (m: TennisMatch) => void;
+  onBetClick: (m: TennisMatch) => void;
+  priority: boolean;
+}) {
+  const handleOpen = useCallback(() => onOpenDetail(match), [onOpenDetail, match]);
+  const handleBet = useCallback(() => onBetClick(match), [onBetClick, match]);
+  return (
+    <MatchCardBroadcast
+      match={match}
+      chipsCollapsedByDefault={chipsCollapsedByDefault}
+      liveState={liveState}
+      disconnected={disconnected}
+      onOpenDetail={handleOpen}
+      onBetClick={handleBet}
+      priority={priority}
+    />
+  );
+}
+
+
 export function TennisTabContent() {
   const t = useTranslations("common");
   const tFilters = useTranslations("filters");
@@ -145,7 +180,7 @@ export function TennisTabContent() {
     { key: "starred", label: `${tFilters("starred")} (${favCount})`, hint: tFilters("starredHint") },
   ];
 
-  const openDetail = (match: TennisMatch) => {
+  const openDetail = useCallback((match: TennisMatch) => {
     setDetailMatch(match);
     setDetailOpen(true);
     track("detail_dialog_open", {
@@ -153,12 +188,17 @@ export function TennisTabContent() {
       player_a: match.playerA.name,
       player_b: match.playerB.name,
     });
-  };
+  }, [track]);
 
-  const openBet = (match: TennisMatch) => {
+  const openBet = useCallback((match: TennisMatch) => {
     setBetMatch(match);
     setBetOpen(true);
-  };
+  }, []);
+
+  const betMatchForDialog = useMemo(() =>
+    betMatch ? { ...betMatch, surface: betMatch.stats.surface } : null,
+    [betMatch],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -261,8 +301,8 @@ export function TennisTabContent() {
       if (!lm.isLive) continue;
       if (prematchIds.has(lm.id)) continue; // already in prematch list, liveState will overlay
 
-      const nameA = lm.playerA.name;
-      const nameB = lm.playerB.name;
+      const nameA = lm.playerA?.name ?? "Joueur 1";
+      const nameB = lm.playerB?.name ?? "Joueur 2";
       const shortA = nameA.split(" ").slice(-1)[0].toUpperCase();
       const shortB = nameB.split(" ").slice(-1)[0].toUpperCase();
 
@@ -650,14 +690,14 @@ export function TennisTabContent() {
             )}
             <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
               {restForGrid.map((match, idx) => (
-                <MatchCardBroadcast
+                <MatchCardBroadcastItem
                   key={match.id}
                   match={match}
                   chipsCollapsedByDefault={variant === "chips_collapsed"}
                   liveState={liveStates[match.id]}
                   disconnected={connectionStatus === "disconnected"}
-                  onOpenDetail={() => openDetail(match)}
-                  onBetClick={() => openBet(match)}
+                  onOpenDetail={openDetail}
+                  onBetClick={openBet}
                   priority={idx < 2}
                 />
               ))}
@@ -683,7 +723,7 @@ export function TennisTabContent() {
       <Suspense fallback={null}>
         <MatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
       </Suspense>
-      <BetDialog match={betMatch ? { ...betMatch, surface: betMatch.stats.surface } : null} open={betOpen} onOpenChange={setBetOpen} />
+      <BetDialog match={betMatchForDialog} open={betOpen} onOpenChange={setBetOpen} />
     </TennisErrorBoundary>
   );
 }
