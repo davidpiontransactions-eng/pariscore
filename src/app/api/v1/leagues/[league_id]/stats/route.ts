@@ -108,8 +108,6 @@ function generateMockStandings(leagueName: string, location: string) {
   };
 }
 
-}
-
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ league_id: string }> },
