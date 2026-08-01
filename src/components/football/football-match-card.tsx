@@ -420,9 +420,9 @@ export function FootballMatchCardSkeleton() {
         </div>
       </div>
       <Skeleton className="mt-3 h-1.5 w-full" />
-      {/* Prédictions Clés skeleton */}
+      {/* Prédictions Clés skeleton — mix normal + 1 top confiance */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <Skeleton className="h-5 w-20 rounded-lg" />
+        <Skeleton className="h-5 w-16 rounded-lg bg-amber-500/20" />
         <Skeleton className="h-5 w-20 rounded-lg" />
         <Skeleton className="h-5 w-20 rounded-lg" />
         <Skeleton className="h-5 w-16 rounded-lg" />
@@ -451,9 +451,13 @@ export function FootballMatchCardSkeleton() {
           <Skeleton className="h-3 w-16" />
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-3">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-6 w-16 rounded-lg" />
+      {/* Radar accordéon skeleton */}
+      <div className="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5">
+        <Skeleton className="h-3 w-32" />
+      </div>
+      {/* Footer: CTA */}
+      <div className="mt-3 flex items-center justify-end border-t border-border/40 pt-3">
+        <Skeleton className="h-7 w-20 rounded-lg" />
       </div>
     </div>
   );

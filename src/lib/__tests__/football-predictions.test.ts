@@ -45,6 +45,27 @@ describe("computeDoubleChance", () => {
     expect(result.selection).toBe("1X");
     expect(result.prob).toBe(0);
   });
+
+  test("clamps to 100 when model probs exceed 100 (home=70, draw=40, away=5)", () => {
+    // p1x=110, should be clamped to 100
+    const result = computeDoubleChance(70, 40, 5);
+    expect(result.selection).toBe("1X");
+    expect(result.prob).toBe(100);
+  });
+
+  test("clamps to 100 with extreme values (home=80, draw=50, away=10)", () => {
+    // p1x=130, px2=60, p12=90 → 1X clamped to 100
+    const result = computeDoubleChance(80, 50, 10);
+    expect(result.selection).toBe("1X");
+    expect(result.prob).toBe(100);
+  });
+
+  test("clamps to 0 when negative values (shouldn't happen but defensive)", () => {
+    // p1x = -10+20 = 10, px2 = 20+30 = 50, p12 = -10+30 = 20 → X2=50
+    const result = computeDoubleChance(-10, 20, 30);
+    expect(result.selection).toBe("X2");
+    expect(result.prob).toBe(50);
+  });
 });
 
 // ─── computeOver15 ────────────────────────────────────────────────────────
