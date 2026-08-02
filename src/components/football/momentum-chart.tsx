@@ -19,6 +19,8 @@ const MAX_MIN = 90;
 
 type MomentumPoint = { minute: number; value: number };
 type Goal = { minute: number; home: boolean; type: string };
+type ShotEvent = { minute: number; home: boolean };
+type CornerEvent = { minute: number; home: boolean };
 
 function minuteToX(min: number): number {
   return PAD_L + (Math.max(0, Math.min(MAX_MIN, min)) / MAX_MIN) * PLOT_W;
@@ -53,12 +55,18 @@ function buildAreaPath(
 export function MomentumChart({
   momentum,
   goals = [],
+  shotsOnTarget = [],
+  corners = [],
+  pressure,
   homeName = "Domicile",
   awayName = "Extérieur",
   className,
 }: {
   momentum: MomentumPoint[];
   goals?: Goal[];
+  shotsOnTarget?: ShotEvent[];
+  corners?: CornerEvent[];
+  pressure?: { homePct: number; awayPct: number };
   homeName?: string;
   awayName?: string;
   className?: string;
@@ -85,9 +93,11 @@ export function MomentumChart({
         <span className="inline-flex items-center gap-1">
           <span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" />
           {homeName}
+          {pressure && <span className="ml-1 tabular-nums text-emerald-400/70">{pressure.homePct}%</span>}
         </span>
         <span className="uppercase tracking-wider">Momentum</span>
         <span className="inline-flex items-center gap-1">
+          {pressure && <span className="mr-1 tabular-nums text-blue-400/70">{pressure.awayPct}%</span>}
           {awayName}
           <span className="inline-block h-2 w-2 rounded-sm bg-blue-500" />
         </span>
@@ -139,6 +149,31 @@ export function MomentumChart({
               <text x={x} y={g.home ? 14 : H - 6} fontSize="9" fontWeight="bold" fill="#fff" textAnchor="middle">
                 {isOwn ? "⊘" : "⚽"}
               </text>
+            </g>
+          );
+        })}
+
+        {/* Marqueurs de tirs cadrés 🎯 */}
+        {shotsOnTarget.map((s, i) => {
+          const x = minuteToX(s.minute);
+          const color = s.home ? "#22c55e" : "#3b82f6";
+          return (
+            <g key={`sot-${i}`}>
+              <circle cx={x} cy={s.home ? 26 : H - 26} r="4" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="1" />
+              <circle cx={x} cy={s.home ? 26 : H - 26} r="1.5" fill={color} />
+            </g>
+          );
+        })}
+
+        {/* Marqueurs de corners 🏳️ */}
+        {corners.map((c, i) => {
+          const x = minuteToX(c.minute);
+          const color = c.home ? "#22c55e" : "#3b82f6";
+          return (
+            <g key={`corner-${i}`}>
+              <line x1={x} y1={MID_Y + (c.home ? -2 : 2)} x2={x} y2={c.home ? 40 : H - 40} stroke={color} strokeOpacity="0.25" strokeWidth="0.5" />
+              <rect x={x - 3} y={c.home ? 38 : H - 44} width="6" height="6" rx="1" fill={color} fillOpacity="0.35" stroke={color} strokeWidth="0.8" />
+              <text x={x} y={c.home ? 43 : H - 39} fontSize="5" fill={color} textAnchor="middle" fontWeight="bold">C</text>
             </g>
           );
         })}
