@@ -231,22 +231,29 @@ export function computeTeamSeasonStats(
   return comparisons.map((comp) => {
     const leagueAvg = LEAGUE_AVG[comp.label] ?? 2.0;
 
-    // Home avg : dérivé du homeProb (55% = league avg, >55% = au-dessus)
-    const homeFactor = comp.homeProb / 55;
-    const homeAvg = Math.round(leagueAvg * homeFactor * 10) / 10;
+    // Home avg : proportionnel à homeProb. 50 = split parfait 50/50.
+    // homeProb=60 → homeAvg = leagueAvg * 1.2 (au-dessus de la moyenne)
+    // homeProb=40 → homeAvg = leagueAvg * 0.8 (en-dessous)
+    const homeAvg = Math.round(leagueAvg * (comp.homeProb / 50) * 10) / 10;
 
-    // Away avg : dérivé du awayProb
-    const awayFactor = comp.awayProb / 45;
-    const awayAvg = Math.round(leagueAvg * awayFactor * 10) / 10;
+    // Away avg : proportionnel à awayProb
+    const awayAvg = Math.round(leagueAvg * (comp.awayProb / 50) * 10) / 10;
 
-    // Rangs simulés : plus homeAvg est élevé, meilleur est le rang (sauf fautes/cartons)
+    // Rangs simulés : meilleure valeur → meilleur rang (1 = meilleur, RANK_TOTAL = pire)
+    // Offensif : + de corners/tirs = mieux. Défensif : + de fautes/cartons = pire.
     const isDefensive = comp.label === "Cartons" || comp.label === "Fautes" || comp.label === "Défense";
-    const homeRank = isDefensive
-      ? Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (homeAvg / (leagueAvg * 2)) * RANK_TOTAL)))
-      : Math.max(1, Math.min(RANK_TOTAL, Math.round(((leagueAvg * 2 - homeAvg) / (leagueAvg * 2)) * RANK_TOTAL)));
-    const awayRank = isDefensive
-      ? Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (awayAvg / (leagueAvg * 2)) * RANK_TOTAL)))
-      : Math.max(1, Math.min(RANK_TOTAL, Math.round(((leagueAvg * 2 - awayAvg) / (leagueAvg * 2)) * RANK_TOTAL)));
+    const maxRange = leagueAvg * 2;
+    let homeRank: number;
+    let awayRank: number;
+    if (isDefensive) {
+      // Défensif : valeur basse = bon rang. Position dans [1, RANK_TOTAL]
+      homeRank = Math.max(1, Math.min(RANK_TOTAL, Math.round((homeAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1)) + 1));
+      awayRank = Math.max(1, Math.min(RANK_TOTAL, Math.round((awayAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1)) + 1));
+    } else {
+      // Offensif : valeur haute = bon rang. Plus homeAvg est élevé, plus rank est proche de 1
+      homeRank = Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (homeAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1))));
+      awayRank = Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (awayAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1))));
+    }
 
     return {
       label: comp.label,
