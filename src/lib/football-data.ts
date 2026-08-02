@@ -6,6 +6,128 @@ export type League = {
   tier: "T1" | "T2" | "CUP";
 };
 
+/**
+ * Bilan réel d'une équipe dans un contexte précis (Domicile pour l'équipe 1,
+ * Extérieur pour l'équipe 2) — dérivé du classement BSD (splits home/away).
+ * `rank` correspond au rang dans le classement PPG de ce contexte (dom vs ext),
+ * parmi `rankTotal` équipes de la ligue.
+ */
+export type TeamStandingStats = {
+  /** Matchs joués dans ce contexte (dom pour l'équipe 1, ext pour l'équipe 2). */
+  played: number;
+  /** Points cumulés dans ce contexte (Victoire=3, Nul=1). */
+  points: number;
+  /** Moyenne de points par match dans ce contexte (points / played). */
+  ppg: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  /** Différence de buts (marqués - encaissés) dans ce contexte. */
+  goalDiff: number;
+  /** Rang dans le classement PPG du contexte (1 = meilleur). */
+  rank: number;
+  /** Nombre total d'équipes du classement. */
+  rankTotal: number;
+  /** true = données partielles (championnat en cours, < 3 matchs joués). */
+  partial: boolean;
+};
+
+/**
+ * Valeur d'une métrique pour une équipe dans un contexte (Domicile pour l'équipe 1,
+ * Extérieur pour l'équipe 2), avec son rang dans le classement ligue de cette
+ * sous-catégorie. `value: null` / `rank: null` = donnée indisponible (aucune
+ * source réelle — jamais inventée).
+ */
+export type MetricValue = {
+  value: number | null;
+  rank: number | null;
+  rankTotal: number;
+};
+
+/** Catégorie tirs / attaques : généré (for), subi (against), total (match). */
+export type TeamMetricCategory = {
+  for: MetricValue;
+  against: MetricValue;
+  total: MetricValue;
+};
+
+/** Catégorie buts — seule catégorie 100% réelle (dérivée des scores BSD). */
+export type GoalMetrics = {
+  /** Moyenne de buts totaux dans les matchs de l'équipe (gf+ga)/played. */
+  avg: MetricValue;
+  /** Total de buts marqués. */
+  scored: MetricValue;
+  /** Moyenne de buts marqués par match. */
+  scoredPg: MetricValue;
+  /** Total de buts encaissés. */
+  conceded: MetricValue;
+  /** Moyenne de buts encaissés par match. */
+  concededPg: MetricValue;
+};
+
+/** Catégorie corners + seuils de franchissement (% Over). */
+export type CornerMetrics = {
+  /** Moyenne de corners par match. */
+  total: MetricValue;
+  over55: MetricValue;
+  over65: MetricValue;
+  over75: MetricValue;
+  over85: MetricValue;
+  over95: MetricValue;
+  over105: MetricValue;
+};
+
+/** Statistiques par catégorie d'une équipe dans un contexte donné. */
+export type TeamMetricStats = {
+  /** Tirs — indisponible dans la source BSD events actuelle (value: null). */
+  shots: TeamMetricCategory;
+  /** Tirs cadrés — indisponible (value: null). */
+  sot: TeamMetricCategory;
+  /** Attaques dangereuses — indisponible (value: null). */
+  attacks: TeamMetricCategory;
+  /** Buts — réels (dérivés des scores). */
+  goals: GoalMetrics;
+  /** Corners — indisponible (value: null). */
+  corners: CornerMetrics;
+};
+
+/** Métriques du match : équipe 1 à domicile (`home`) vs équipe 2 à l'extérieur (`away`). */
+export type MatchMetricStats = {
+  home: TeamMetricStats;
+  away: TeamMetricStats;
+  /** true = données partielles (championnat en cours, < 3 matchs joués). */
+  partial: boolean;
+};
+
+/** Ligne d'un leaderboard de championnat pour une métrique donnée. */
+export type MetricRankingRow = {
+  teamId: string;
+  name: string;
+  value: number | null;
+  rank: number;
+};
+
+/** Leaderboards du championnat par métrique réelle (PPG, buts…). Clé = metricKey. */
+export type MetricRankings = Record<string, MetricRankingRow[]>;
+
+/** Signature complète des détails métriques d'un match (comparatifs + rankings). */
+export type FootballMatchDetail = {
+  metrics: MatchMetricStats;
+  rankings: MetricRankings;
+};
+
+/**
+ * Contexte Domicile/Extérieur d'un match : l'équipe 1 joue à domicile
+ * (`home`), l'équipe 2 à l'extérieur (`away`).
+ */
+export type StandingContext = {
+  home: TeamStandingStats;
+  away: TeamStandingStats;
+};
+
+
 export type Team = {
   id: string;
   name: string;
@@ -60,6 +182,12 @@ export type Prediction = {
     awayRank: number;
     awayRankTotal: number;
   }[];
+  /** Bilan réel Domicile (équipe 1) vs Extérieur (équipe 2) — MJ, Pts, PPG+Rang, GD. */
+  standingStats?: StandingContext;
+  /** Métriques par catégorie Domicile/Extérieur (Buts réelles ; Tirs/Corners/Attaques indisponibles → value:null). */
+  metricStats?: MatchMetricStats;
+  /** Leaderboards du championnat par métrique réelle (PPG, buts…) pour le classement. */
+  metricRankings?: MetricRankings;
   /** xGa moyen (expected goals average) — estimé depuis les xG live ou le modèle. */
   xGa?: { home: number; away: number; total: number };
   /** xGd (différentiel xG) — home_xg - away_xg normalisé [-1, +1].
@@ -453,6 +581,16 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
         away: { trend: "down", values: [3.1, 2.8, 2.3, 2.0, 1.7] },
       },
       setPieceEdge: 0.12,
+      standingStats: {
+        home: {
+          played: 10, points: 24, ppg: 2.4, wins: 7, draws: 3, losses: 0,
+          goalsFor: 25, goalsAgainst: 11, goalDiff: 14, rank: 2, rankTotal: 18, partial: false,
+        },
+        away: {
+          played: 9, points: 11, ppg: 1.22, wins: 3, draws: 2, losses: 4,
+          goalsFor: 14, goalsAgainst: 17, goalDiff: -3, rank: 10, rankTotal: 18, partial: false,
+        },
+      },
     },
     odds: { bookmaker: "Bwin", home: 2.50, draw: 3.60, away: 2.70 },
   },

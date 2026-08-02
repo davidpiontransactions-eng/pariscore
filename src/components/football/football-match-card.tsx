@@ -7,7 +7,7 @@ import {
   Home, PlaneTakeoff, Target, Shield, Activity, Microscope, Zap, Users,
   CornerDownRight,
 } from "lucide-react";
-import type { FootballMatch, Prediction } from "@/lib/football-data";
+import type { FootballMatch, Prediction, TeamStandingStats } from "@/lib/football-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { FormTimeline } from "@/components/shared/form-timeline";
@@ -15,6 +15,9 @@ import { SportImage } from "@/components/ui/sport-image";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { getLeagueBanner } from "@/lib/sport-images";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
+
+import { MetricComparePanel } from "@/components/football/MetricComparePanel";
+import { MetricLeaderboardTable } from "@/components/football/MetricLeaderboardTable";
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso);
@@ -68,6 +71,35 @@ function FormMomentumSparkline({ values, trend }: { values: number[]; trend: "up
   );
 }
 
+// ─── Classement Domicile / Extérieur (helpers) ─────────────────────────────────
+
+function fmtSigned(n: number): string {
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
+/** Cellule valeur par défaut (aligne à gauche pour home, à droite pour away). */
+function StandingStatRow({ label, home, away }: { label: string; home: React.ReactNode; away: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 px-2 py-1">
+      <span className="text-left text-[10px] font-medium tabular-nums text-foreground">{home}</span>
+      <span className="text-[9px] text-muted-foreground/50">{label}</span>
+      <span className="text-right text-[10px] font-medium tabular-nums text-foreground">{away}</span>
+    </div>
+  );
+}
+
+/** PPG + badge de rang discret (#rank/rankTotal). */
+function PpgCell({ s }: { s: TeamStandingStats }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="tabular-nums">{s.ppg.toFixed(2)} PPG</span>
+      <span className="rounded bg-muted px-1 py-px text-[8px] font-medium text-muted-foreground tabular-nums">
+        #{s.rank}/{s.rankTotal}
+      </span>
+    </span>
+  );
+}
+
 // ─── Main Card ────────────────────────────────────────────────────────────
 
 export function FootballMatchCard({
@@ -82,9 +114,15 @@ export function FootballMatchCard({
   priority?: boolean;
 }) {
   const p = match.prediction;
+  // Bilan réel Domicile/Extérieur (MJ, Pts, PPG+Rang, GD) — cf. standingStats.
+  const standing = p.standingStats;
   // Derive confidence from max probability if not explicitly provided (0.5–0.8 range)
   const maxProb = Math.max(p.homeProb, p.drawProb, p.awayProb);
   const confidence = (p as Prediction & { confidence?: number }).confidence ?? (0.5 + (maxProb / 100) * 0.3);
+
+  // Métriques par catégorie (Général / Buts / Tirs / Attaques / Corners) — sub-tab panel.
+  const metrics = p.metricStats;
+  const [showRankings, setShowRankings] = useState(false);
 
   // Collect prediction badges for the "Prédictions Clés" section
   const predictionBadges = useMemo(() => {
@@ -185,7 +223,7 @@ export function FootballMatchCard({
       });
     }
     return items;
-  }, [p.teamComparisons, p.xGa, match.live?.homePossession]);
+  }, [p.teamComparisons, p.xGa, match.live]);
   // xGd badge label (nullable — only show when data available)
   const xGdLabel = p.xGd != null && p.xGd !== 0
     ? `xGd ${p.xGd > 0 ? "+" : ""}${(p.xGd * 100).toFixed(0)}%`
@@ -732,6 +770,65 @@ export function FootballMatchCard({
           </div>
         ) : null}
 
+        {/* Classement Domicile / Extérieur — bilan réel (MJ, Pts, PPG+Rang, GD) */}
+        {standing && (
+          <div className="mt-3 border-t border-border/40 pt-3">
+            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <BarChart3 className="mr-1 inline-block h-3 w-3 text-amber-400" />
+              Classement (Dom / Ext)
+            </div>
+            <div className="overflow-hidden rounded-lg border border-border/40">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/40 bg-muted/30 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <span className="flex items-center gap-1 truncate">
+                  <Home className="h-3 w-3 shrink-0 text-emerald-500" />
+                  <span className="truncate">{match.home.shortName || match.home.name}</span>
+                </span>
+                <span className="text-[8px] text-muted-foreground/40">vs</span>
+                <span className="flex items-center justify-end gap-1 truncate">
+                  <span className="truncate">{match.away.shortName || match.away.name}</span>
+                  <PlaneTakeoff className="h-3 w-3 shrink-0 text-rose-500" />
+                </span>
+              </div>
+              <div className="divide-y divide-border/30">
+                <StandingStatRow label="MJ (Dom/Ext)" home={`${standing.home.played} MJ`} away={`${standing.away.played} MJ`} />
+                <StandingStatRow label="Points" home={`${standing.home.points} pts`} away={`${standing.away.points} pts`} />
+                <StandingStatRow label="PPG + Rang" home={<PpgCell s={standing.home} />} away={<PpgCell s={standing.away} />} />
+                <StandingStatRow label="GD" home={fmtSigned(standing.home.goalDiff)} away={fmtSigned(standing.away.goalDiff)} />
+              </div>
+            </div>
+            {(standing.home.partial || standing.away.partial) && (
+              <div className="mt-1.5 flex items-center gap-1 text-[9px] text-muted-foreground">
+                <span aria-hidden="true">⚠️</span>
+                <span>Données partielles — championnat en début de saison (&lt; 3 matchs)</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Métriques par catégorie (Général / Buts / Tirs / Attaques / Corners / Classements) */}
+        {metrics && (
+          <>
+            <MetricComparePanel
+              home={metrics.home}
+              away={metrics.away}
+              partial={metrics.partial}
+              onRankingsTab={() => setShowRankings(true)}
+            />
+            {showRankings && p.metricRankings && (
+              <MetricLeaderboardTable
+                rankings={p.metricRankings}
+                homeTeamName={match.home.name}
+                awayTeamName={match.away.name}
+              />
+            )}
+            {showRankings && !p.metricRankings && (
+              <div className="mt-2 rounded-lg border border-border/40 p-2 text-center text-[9px] text-muted-foreground">
+                Classements indisponibles pour cette ligue.
+              </div>
+            )}
+          </>
+        )}
+
         {/* Footer: CTA */}
         <div className="mt-3 flex items-center justify-end gap-2 border-t border-border/40 pt-3">
           <div className="flex items-center gap-1">
@@ -857,6 +954,19 @@ export function FootballMatchCardSkeleton() {
           <Skeleton className="h-3 w-20" />
           <Skeleton className="h-2 flex-1 rounded-full" />
           <Skeleton className="h-3 w-16" />
+        </div>
+      </div>
+      {/* Classement Dom/Ext skeleton */}
+      <div className="mt-2 border-t border-border/40 pt-2">
+        <Skeleton className="mb-2 h-3 w-28" />
+        <div className="overflow-hidden rounded-lg border border-border/40">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 px-2 py-1.5">
+              <Skeleton className="h-2.5 w-14" />
+              <Skeleton className="h-2 w-16" />
+              <Skeleton className="h-2.5 w-14" />
+            </div>
+          ))}
         </div>
       </div>
       {/* Radar accordéon skeleton */}

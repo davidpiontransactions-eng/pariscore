@@ -1,4 +1,4 @@
-import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState } from "@/lib/football-data";
+import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState, StandingContext, TeamStandingStats, MatchMetricStats, TeamMetricStats, MetricValue, MetricRankings, MetricRankingRow, TeamMetricCategory, GoalMetrics, CornerMetrics } from "@/lib/football-data";
 import { lookupClubLogo } from "@/lib/club-logos";
 import { enrichPrediction } from "./football-predictions";
 
@@ -456,10 +456,287 @@ export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {
   const matches = await bsdFetch<BSDFootballMatch[]>("/matches/?status=notstarted&limit=100");
   const result = matches.map(buildMatch);
   console.log(`[bsd-foot] Fetched ${result.length} prematch matches`);
+
+  // Enrichissement Domicile/Extérieur réel (best-effort, jamais bloquant).
+  try {
+    const leagueIds = [...new Set(matches.map((m) => m.league?.id).filter((id): id is number => typeof id === "number"))];
+    await Promise.all(
+      leagueIds.map(async (lid) => {
+        const derived = await fetchBSDLeagueData(lid);
+        matches.forEach((m, i) => {
+          if (m.league?.id === lid) attachDerivedData(derived, result[i]);
+        });
+      })
+    );
+  } catch (e) {
+    console.warn("[bsd-foot] derived data enrichment failed:", (e as Error).message);
+  }
+
   return result;
 }
 
+// ── Bilan Domicile/Extérieur réel (dérivé des events BSD terminés) ─────────────
+// Miroir du legacy server.js fetchBSDStandingsFromEvents : on agrège les scores
+// des matchs finis d'une ligue pour reconstruire un classement réel avec les
+// splits home/away (played/wins/draws/losses/gf/ga). Aucun nouveau schéma réseau.
+type SideAgg = { played: number; wins: number; draws: number; losses: number; gf: number; ga: number };
+type StandingAgg = { name: string; totals: SideAgg; home: SideAgg; away: SideAgg };
+type StandingData = { home: TeamStandingStats; away: TeamStandingStats };
+
+/** One team's full derived metric/standing data (home + away contexts). */
+type TeamDerived = { stats: { home: TeamMetricStats; away: TeamMetricStats }; standing: StandingData };
+
+/** League-wide derived data: per-team map + real leaderboards + partial status. */
+type LeagueDerivedData = {
+  teams: Map<string, TeamDerived>;
+  rankings: MetricRankings;
+  partial: boolean;
+};
+
+function normTeamKey(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function emptySide(): SideAgg {
+  return { played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0 };
+}
+
+function sidePts(s: SideAgg): number {
+  return s.wins * 3 + s.draws;
+}
+
+function sidePpg(s: SideAgg): number {
+  return s.played > 0 ? sidePts(s) / s.played : 0;
+}
+
+function toStandingSide(side: SideAgg, rank: number, rankTotal: number): TeamStandingStats {
+  return {
+    played: side.played,
+    points: sidePts(side),
+    ppg: side.played > 0 ? Math.round((sidePts(side) / side.played) * 100) / 100 : 0,
+    wins: side.wins,
+    draws: side.draws,
+    losses: side.losses,
+    goalsFor: side.gf,
+    goalsAgainst: side.ga,
+    goalDiff: side.gf - side.ga,
+    rank,
+    rankTotal,
+    partial: side.played < 3,
+  };
+}
+
+// Cache par ligue (6h) pour ne pas rescaner tous les events à chaque call prematch.
+const standingsCache = new Map<number, { at: number; data: LeagueDerivedData | null }>();
+const STANDINGS_TTL = 6 * 60 * 60 * 1000;
+
+// ── Métriques par catégorie (Buts réelles ; Tirs/Corners/Attaques indisponibles) ──
+type GoalRankMaps = { avg: Map<string, number>; scored: Map<string, number>; scoredPg: Map<string, number>; conceded: Map<string, number>; concededPg: Map<string, number> };
+
+const avgGoalsOf = (s: SideAgg): number => (s.played > 0 ? (s.gf + s.ga) / s.played : 0);
+const scoredOf = (s: SideAgg): number => s.gf;
+const scoredPgOf = (s: SideAgg): number => (s.played > 0 ? s.gf / s.played : 0);
+const concededOf = (s: SideAgg): number => s.ga;
+const concededPgOf = (s: SideAgg): number => (s.played > 0 ? s.ga / s.played : 0);
+
+/** Rang (1 = meilleur) d'un côté (home ou away) selon une fonction de valeur (desc). */
+function buildRankMap(teams: StandingAgg[], pick: (t: StandingAgg) => SideAgg, valueFn: (s: SideAgg) => number): Map<string, number> {
+  const arr = teams.map((t) => ({ key: normTeamKey(t.name), v: valueFn(pick(t)) }));
+  arr.sort((a, b) => b.v - a.v);
+  const m = new Map<string, number>();
+  arr.forEach((r, i) => m.set(r.key, i + 1));
+  return m;
+}
+
+function buildGoalRankMaps(teams: StandingAgg[], pick: (t: StandingAgg) => SideAgg): GoalRankMaps {
+  return {
+    avg: buildRankMap(teams, pick, avgGoalsOf),
+    scored: buildRankMap(teams, pick, scoredOf),
+    scoredPg: buildRankMap(teams, pick, scoredPgOf),
+    conceded: buildRankMap(teams, pick, concededOf),
+    concededPg: buildRankMap(teams, pick, concededPgOf),
+  };
+}
+
+/** Métrique avec valeur indisponible (aucune source réelle) — rank & value null. */
+function unavailableMetric(rankTotal: number): MetricValue {
+  return { value: null, rank: null, rankTotal };
+}
+
+/** Métrique réelle (Buts) avec son rang ligue. */
+function realMetric(value: number | null, rank: number | null | undefined, rankTotal: number): MetricValue {
+  return { value: value == null ? null : Math.round(value * 100) / 100, rank: rank ?? null, rankTotal };
+}
+
+/** Construit les stats par catégorie d'une équipe dans un contexte (home ou away). */
+function buildTeamMetricStats(key: string, side: SideAgg, ranks: GoalRankMaps, rankTotal: number): TeamMetricStats {
+  const played = side.played;
+  const goals: GoalMetrics = {
+    avg: realMetric(avgGoalsOf(side), ranks.avg.get(key), rankTotal),
+    scored: realMetric(scoredOf(side), ranks.scored.get(key), rankTotal),
+    scoredPg: realMetric(scoredPgOf(side), ranks.scoredPg.get(key), rankTotal),
+    conceded: realMetric(concededOf(side), ranks.conceded.get(key), rankTotal),
+    concededPg: realMetric(concededPgOf(side), ranks.concededPg.get(key), rankTotal),
+  };
+  const unav = (): MetricValue => unavailableMetric(rankTotal);
+  const cat = (): TeamMetricCategory => ({ for: unav(), against: unav(), total: unav() });
+  const corners: CornerMetrics = {
+    total: unav(), over55: unav(), over65: unav(), over75: unav(), over85: unav(), over95: unav(), over105: unav(),
+  };
+  return { shots: cat(), sot: cat(), attacks: cat(), goals, corners };
+}
+
+/** Leaderboard d'une métrique : équipes triées desc + rang. */
+function buildLeaderboard(teams: StandingAgg[], pick: (t: StandingAgg) => SideAgg, valueFn: (s: SideAgg) => number): MetricRankingRow[] {
+  return teams
+    .map((t) => ({ teamId: t.name, name: t.name, value: Math.round(valueFn(pick(t)) * 100) / 100, rank: 0 }))
+    .sort((a, b) => (b.value - a.value))
+    .map((row, i) => ({ ...row, rank: i + 1 }));
+}
+
+async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData | null> {
+  const cached = standingsCache.get(leagueId);
+  if (cached && Date.now() - cached.at < STANDINGS_TTL) return cached.data;
+
+  const now = new Date();
+  const from = new Date(now.getTime() - 420 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const to = now.toISOString().split("T")[0];
+
+  const agg = new Map<string, StandingAgg>();
+  const ensure = (key: string, name: string): StandingAgg => {
+    let a = agg.get(key);
+    if (!a) {
+      a = { name, totals: emptySide(), home: emptySide(), away: emptySide() };
+      agg.set(key, a);
+    }
+    return a;
+  };
+
+
+  try {
+    for (let page = 1; page <= 20; page++) {
+      const res = await bsdFetch<BSDFootballMatch[] | { results: BSDFootballMatch[] }>(
+        `/events/?league=${leagueId}&date_from=${from}&date_to=${to}&status=finished&limit=50&page=${page}`
+      );
+      const rows = Array.isArray(res) ? res : (res.results ?? []);
+      if (!rows.length) break;
+      for (const e of rows) {
+        const homeName = (e.home_team || "").trim();
+        const awayName = (e.away_team || "").trim();
+        const hScore = Number(e.home_score);
+        const aScore = Number(e.away_score);
+        if (!homeName || !awayName || !Number.isFinite(hScore) || !Number.isFinite(aScore)) continue;
+        const hKey = normTeamKey(homeName);
+        const aKey = normTeamKey(awayName);
+        const h = ensure(hKey, homeName);
+        const a = ensure(aKey, awayName);
+
+        h.totals.played++; h.totals.gf += hScore; h.totals.ga += aScore;
+        h.home.played++; h.home.gf += hScore; h.home.ga += aScore;
+        a.totals.played++; a.totals.gf += aScore; a.totals.ga += hScore;
+        a.away.played++; a.away.gf += aScore; a.away.ga += hScore;
+
+        if (hScore > aScore) {
+          h.totals.wins++; h.home.wins++;
+          a.totals.losses++; a.away.losses++;
+        } else if (hScore < aScore) {
+          a.totals.wins++; a.away.wins++;
+          h.totals.losses++; h.home.losses++;
+        } else {
+          h.totals.draws++; h.home.draws++;
+          a.totals.draws++; a.away.draws++;
+        }
+      }
+      if (rows.length < 50) break;
+    }
+  } catch (e) {
+    console.warn(`[bsd-foot] standings league=${leagueId} failed:`, (e as Error).message);
+    standingsCache.set(leagueId, { at: Date.now(), data: null });
+    return null;
+  }
+
+  if (agg.size === 0) {
+    standingsCache.set(leagueId, { at: Date.now(), data: null });
+    return null;
+  }
+
+  const rankTotal = agg.size;
+  const teams = [...agg.values()];
+  const partial = teams.some((t) => t.home.played < 3 || t.away.played < 3);
+
+  // Rangs distincts : classement PPG Domicile (équipe 1) et PPG Extérieur (équipe 2).
+  const rankByPpg = (pick: (t: StandingAgg) => SideAgg): Map<string, number> => {
+    const sorted = [...teams].sort((x, y) => {
+      const ppgDiff = sidePpg(pick(y)) - sidePpg(pick(x));
+      if (ppgDiff !== 0) return ppgDiff;
+      const gdX = pick(x).gf - pick(x).ga;
+      const gdY = pick(y).gf - pick(y).ga;
+      if (gdY !== gdX) return gdY - gdX;
+      return pick(y).gf - pick(x).gf;
+    });
+    const map = new Map<string, number>();
+    sorted.forEach((t, i) => map.set(normTeamKey(t.name), i + 1));
+    return map;
+  };
+
+  const homeRank = rankByPpg((t) => t.home);
+  const awayRank = rankByPpg((t) => t.away);
+
+  // Rangs par métrique buts (Domicile / Extérieur).
+  const homeGoalRanks = buildGoalRankMaps(teams, (t) => t.home);
+  const awayGoalRanks = buildGoalRankMaps(teams, (t) => t.away);
+
+  const teamsOut = new Map<string, TeamDerived>();
+  for (const t of teams) {
+    const key = normTeamKey(t.name);
+    const standing: StandingData = {
+      home: toStandingSide(t.home, homeRank.get(key) ?? rankTotal, rankTotal),
+      away: toStandingSide(t.away, awayRank.get(key) ?? rankTotal, rankTotal),
+    };
+    teamsOut.set(key, {
+      standing,
+      stats: {
+        home: buildTeamMetricStats(key, t.home, homeGoalRanks, rankTotal),
+        away: buildTeamMetricStats(key, t.away, awayGoalRanks, rankTotal),
+      },
+    });
+  }
+
+  // Leaderboards du championnat (métriques réelles, Domicile & Extérieur).
+  const rankings: MetricRankings = {
+    "ppg-home": buildLeaderboard(teams, (t) => t.home, sidePpg),
+    "ppg-away": buildLeaderboard(teams, (t) => t.away, sidePpg),
+    "goals-scored-home": buildLeaderboard(teams, (t) => t.home, scoredOf),
+    "goals-scored-away": buildLeaderboard(teams, (t) => t.away, scoredOf),
+    "goals-conceded-home": buildLeaderboard(teams, (t) => t.home, concededOf),
+    "goals-conceded-away": buildLeaderboard(teams, (t) => t.away, concededOf),
+    "goals-avg-home": buildLeaderboard(teams, (t) => t.home, avgGoalsOf),
+    "goals-avg-away": buildLeaderboard(teams, (t) => t.away, avgGoalsOf),
+  };
+
+  const data: LeagueDerivedData = { teams: teamsOut, rankings, partial };
+  standingsCache.set(leagueId, { at: Date.now(), data });
+  return data;
+}
+
+/** Rattache bilan Domicile/Extérieur + métriques + leaderboards au match (best-effort). */
+function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): void {
+  if (!data) return;
+  const key = normTeamKey;
+  const home = data.teams.get(key(fm.home.name));
+  const away = data.teams.get(key(fm.away.name));
+  if (!home || !away) return;
+  fm.prediction = {
+    ...fm.prediction,
+    standingStats: { home: home.standing.home, away: away.standing.away },
+    metricStats: { home: home.stats.home, away: away.stats.away, partial: data.partial },
+    metricRankings: data.rankings,
+  };
+}
+
+
 export async function fetchBSDFootballLive(): Promise<FootballMatch[]> {
+
   const matches = await bsdFetch<BSDFootballMatch[]>("/live/?limit=50");
   const result = matches.map(buildMatch);
   console.log(`[bsd-foot] Fetched ${result.length} live matches`);

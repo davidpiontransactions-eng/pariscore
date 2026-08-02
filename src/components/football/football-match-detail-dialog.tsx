@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Loader2 } from "lucide-react";
+import { Trophy, AlertCircle } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import type { FootballMatchStats } from "@/lib/bsd-football-fetcher";
 import { MomentumChart } from "./momentum-chart";
@@ -65,7 +65,16 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-              <span>{match?.league.logo}</span>
+              {match?.league.logo && match.league.logo.startsWith("http") ? (
+                <img
+                  src={match.league.logo}
+                  alt=""
+                  className="h-4 w-4 shrink-0 object-contain brightness-125"
+                  onError={(e) => { e.currentTarget.style.display = "none"; }}
+                />
+              ) : (
+                <span aria-hidden="true">🏆</span>
+              )}
               <span className="truncate font-medium">{match?.league.name}</span>
             </div>
           </DialogTitle>
@@ -126,7 +135,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
           {!loading && error && (
             <div className="flex h-[110px] flex-col items-center justify-center gap-2 rounded-lg bg-muted/40 text-center text-xs text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <AlertCircle className="h-5 w-5 text-rose-400" />
               Momentum indisponible ({error})
             </div>
           )}
