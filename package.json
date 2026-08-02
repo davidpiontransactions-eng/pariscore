@@ -9,7 +9,7 @@
     "dev": "next dev -p 3000 > dev.log 2>&1",
     "build": "next build && cp -rf .next/static .next/standalone/.next/ && cp -rf public .next/standalone/ && mkdir -p .next/standalone/src/lib/tennis-elo/ && cp -f src/lib/tennis-elo/abstract-cache.json .next/standalone/src/lib/tennis-elo/ 2>/dev/null; mkdir -p .next/standalone/src/lib/tennis-dr/ && cp -f src/lib/tennis-dr/dr-cache.json .next/standalone/src/lib/tennis-dr/ 2>/dev/null || true",
     "start": "RUN_BUN_TIMEOUT_MS=0 NODE_ENV=production node scripts/run-bun.js .next/standalone/server.js 2>&1 | tee server.log",
-    "lint": "eslint .",
+    "lint": "eslint src scripts public packages",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/run-bun.js test",
     "qa:node": "node scripts/qa-node-check.js",

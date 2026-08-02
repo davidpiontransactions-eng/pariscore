@@ -598,10 +598,6 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
   const cached = standingsCache.get(leagueId);
   if (cached && Date.now() - cached.at < STANDINGS_TTL) return cached.data;
 
-  const now = new Date();
-  const from = new Date(now.getTime() - 420 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-  const to = now.toISOString().split("T")[0];
-
   const agg = new Map<string, StandingAgg>();
   const ensure = (key: string, name: string): StandingAgg => {
     let a = agg.get(key);
@@ -612,42 +608,84 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
     return a;
   };
 
+  type BSDSeason = { id: number; name?: string; year?: number; start_date?: string; end_date?: string };
+  type BSDStandingsRow = {
+    position?: number; team_id?: number; team_name?: string; played?: number;
+    won?: number; drawn?: number; lost?: number; gf?: number; ga?: number; gd?: number; pts?: number;
+  };
 
   try {
-    for (let page = 1; page <= 20; page++) {
-      const res = await bsdFetch<BSDFootballMatch[] | { results: BSDFootballMatch[] }>(
-        `/events/?league=${leagueId}&date_from=${from}&date_to=${to}&status=finished&limit=50&page=${page}`
-      );
-      const rows = Array.isArray(res) ? res : (res.results ?? []);
-      if (!rows.length) break;
-      for (const e of rows) {
-        const homeName = (e.home_team || "").trim();
-        const awayName = (e.away_team || "").trim();
-        const hScore = Number(e.home_score);
-        const aScore = Number(e.away_score);
-        if (!homeName || !awayName || !Number.isFinite(hScore) || !Number.isFinite(aScore)) continue;
-        const hKey = normTeamKey(homeName);
-        const aKey = normTeamKey(awayName);
-        const h = ensure(hKey, homeName);
-        const a = ensure(aKey, awayName);
+    // 1) Résolution de la saison courante (endpoint /v2/leagues/{id}/season/, cached 30 min côté BSD).
+    //    Le scan sur 420 jours x 20 pages causait des timeouts en prod ([live-broker] BSD_ERROR).
+    const seasonRes = await bsdFetchRaw<{ league_id: number; season: BSDSeason }>(
+      `/v2/leagues/${leagueId}/season/`
+    );
+    const seasonId: number | undefined = seasonRes?.season?.id;
 
-        h.totals.played++; h.totals.gf += hScore; h.totals.ga += aScore;
-        h.home.played++; h.home.gf += hScore; h.home.ga += aScore;
-        a.totals.played++; a.totals.gf += aScore; a.totals.ga += hScore;
-        a.away.played++; a.away.gf += aScore; a.away.ga += hScore;
-
-        if (hScore > aScore) {
-          h.totals.wins++; h.home.wins++;
-          a.totals.losses++; a.away.losses++;
-        } else if (hScore < aScore) {
-          a.totals.wins++; a.away.wins++;
-          h.totals.losses++; h.home.losses++;
-        } else {
-          h.totals.draws++; h.home.draws++;
-          a.totals.draws++; a.away.draws++;
+    // 2) Standings officiels de la saison (cache 10 min BSD, réponse non paginée).
+    //    On y injecte le classement TOTAL (pts) car /standings/ ne fournit pas le split home/away.
+    if (seasonId) {
+      try {
+        const official = await bsdFetchRaw<{
+          league_id: number; season: BSDSeason; grouped: boolean; standings: BSDStandingsRow[];
+        }>(`/v2/leagues/${leagueId}/standings/?season_id=${seasonId}`);
+        for (const row of (official?.standings ?? [])) {
+          const p = Number(row.position);
+          const name = (row.team_name || "").trim();
+          const pts = Number(row.pts);
+          const played = Number(row.played);
+          const gf = Number(row.gf);
+          const ga = Number(row.ga);
+          if (!name || !Number.isFinite(p) || !Number.isFinite(pts)) continue;
+          const a = ensure(normTeamKey(name), name);
+          // Le classement officiel est la meilleure source pour le total ; il remplace
+          // le total dérivé des seuls matchs terminés (ne rejette pas les splits home/away).
+          a.totals = {
+            played: Number.isFinite(played) ? played : a.totals.played,
+            wins: Number.isFinite(Number(row.won)) ? Number(row.won) : a.totals.wins,
+            draws: Number.isFinite(Number(row.drawn)) ? Number(row.drawn) : a.totals.draws,
+            losses: Number.isFinite(Number(row.lost)) ? Number(row.lost) : a.totals.losses,
+            gf: Number.isFinite(gf) ? gf : a.totals.gf,
+            ga: Number.isFinite(ga) ? ga : a.totals.ga,
+          };
         }
+      } catch (e) {
+        console.warn(`[bsd-foot] official standings league=${leagueId} skipped:`, (e as Error).message);
       }
-      if (rows.length < 50) break;
+
+      // 3) Events terminés de la saison courante (limit=200 → 2-3 pages max, offset pagination).
+      let offset = 0;
+      for (let page = 1; page <= 10; page++) {
+        const res = await bsdFetch<{ results: BSDFootballMatch[] }>(
+          `/events/?league_id=${leagueId}&season_id=${seasonId}&status=finished&limit=200&offset=${offset}`
+        );
+        const rows = Array.isArray(res) ? res : (res.results ?? []);
+        if (!rows.length) break;
+        for (const e of rows) {
+          const homeName = (e.home_team || "").trim();
+          const awayName = (e.away_team || "").trim();
+          const hScore = Number(e.home_score);
+          const aScore = Number(e.away_score);
+          if (!homeName || !awayName || !Number.isFinite(hScore) || !Number.isFinite(aScore)) continue;
+          const hKey = normTeamKey(homeName);
+          const aKey = normTeamKey(awayName);
+          const h = ensure(hKey, homeName);
+          const a = ensure(aKey, awayName);
+
+          h.home.played++; h.home.gf += hScore; h.home.ga += aScore;
+          a.away.played++; a.away.gf += aScore; a.away.ga += hScore;
+
+          if (hScore > aScore) {
+            h.home.wins++; a.away.losses++;
+          } else if (hScore < aScore) {
+            a.away.wins++; h.home.losses++;
+          } else {
+            h.home.draws++; a.away.draws++;
+          }
+        }
+        if (rows.length < 200) break;
+        offset += rows.length;
+      }
     }
   } catch (e) {
     console.warn(`[bsd-foot] standings league=${leagueId} failed:`, (e as Error).message);
