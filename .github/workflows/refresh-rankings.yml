@@ -1,0 +1,86 @@
+name: Refresh Rankings
+
+# Task: CRON-2
+# Daily auto-refresh of Home/Away team rankings from soccerstats.com.
+# Scrapes all configured leagues, generates /public/data/rankings/*.json,
+# and commits changes back to main.
+#
+# Triggers:
+#   - schedule: 04:00 UTC daily + 02:00 UTC Sat/Sun (before matches)
+#   - workflow_dispatch: manual trigger
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+    - cron: "0 2 * * 0,6"
+  workflow_dispatch:
+    inputs:
+      league:
+        description: "League slug (blank = all)"
+        type: string
+        required: false
+        default: ""
+
+concurrency:
+  group: refresh-rankings
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    name: Scrape rankings from soccerstats.com
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scripts/requirements-rankings.txt
+
+      - name: Scrape rankings
+        id: scrape
+        run: |
+          mkdir -p public/data/rankings
+          ARGS="--output-dir public/data/rankings"
+          if [ -n "${{ inputs.league }}" ]; then
+            ARGS="$ARGS --league ${{ inputs.league }}"
+          else
+            ARGS="$ARGS --all"
+          fi
+          python scripts/scrape_rankings.py $ARGS
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- public/data/rankings/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected ranking changes:"
+            git diff --stat -- public/data/rankings/
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/rankings/
+          git commit -m "chore(data): refresh rankings [skip ci]"
+          git push

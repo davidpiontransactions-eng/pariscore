@@ -1,0 +1,7 @@
+# requirements-rankings.txt — Dépendances pour le pipeline de scraping soccerstats.com
+# Installer: pip install -r scripts/requirements-rankings.txt
+
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+tenacity>=8.0.0

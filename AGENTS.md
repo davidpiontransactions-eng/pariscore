@@ -7,6 +7,20 @@ Do NOT narrate each step (*"Let me check…"*, *"Now I'll…"*, *"The X returned
 State intent in one short line, run your tool calls, then give a tight result summary.
 Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructions/communication.md).
 
+## Session: Rankings Home/Away Pipeline (2026-08-02)
+
+**Scope**: Pipeline 100% gratuit de scraping soccerstats.com → classement Home/Away → JSON statiques servis via CDN Vercel.
+
+**Fichiers clés** : `scripts/scrape_rankings.py` (production, 8 ligues), `scripts/team_name_mapping.py` (150+ overrides noms), `.github/workflows/refresh-rankings.yml` (CRON quotidien), `src/hooks/use-league-rankings.ts` (SWR CDN).
+
+**Contexte complet** : `.context/session-rankings-pipeline.md`
+
+**URL pattern** : `https://www.soccerstats.com/homeaway.asp?league={slug}` — 11 colonnes (rank,team,GP,W,D,L,GF,GA,GD,Pts,PPG), contexte "Home table" / "Away table".
+
+**Ajouter une ligue** : ajouter URL dans `LEAGUES` (scrape_rankings.py), noms dans `TEAM_NAME_OVERRIDES` (team_name_mapping.py), tester avec `--league {slug}`.
+
+**Métriques dispo** (8): PPG, Pts, GF, GA, GD, W, D, L. Shots/SOT/Attacks/Corners sur pages séparées.
+
 ## Session: XSS onclick template literals (2026-07-05)
 
 **Scope**: ParisScorebis-bhpw — 20 unescaped `${}` interpolations inside `onclick="..."` in template literals in `pariscore.js`. Single-quote injection could break JS context and redirect to phishing.
@@ -69,6 +83,14 @@ The `shell`/`oc_bash` tools run **CMD**, not Git Bash. Any command using Bash
 syntax (`$VAR`, `2>/dev/null`, `ls`, `cat`, `cp -r`) will **freeze or fail**.
 Always use CMD syntax. When in doubt, use `echo %CD%` to confirm CMD is active.
 
+> **Fix (2026-08-02, mis a jour le jour meme)**: `D:\Program Files\Git\bin` + `\usr\bin` ont ete
+> ajoutes au PATH utilisateur (Git Bash installe sur D:), et `.vscode/settings.json` definit le
+> profil terminal « Git Bash (D:) ». WSL2 Ubuntu est installee. ⚠️ **MAIS le PATH corrige
+> n'a PAS resolu le gel** : apres redemarrage, `where bash` resout `D:\Program Files\Git\usr\bin\bash.exe`
+> et le tool `bash` natif d'opencode **gele encore** (probe `echo ok; pwd; ls -1 | wc -l` → abort).
+> Cause reelle = couche PTY/spawn du tool (spawn node direct OK 6/6). Le tool `bash` est donc
+> **desactive** dans `.opencode/opencode.json` (`"tools": { "bash": false }`). Regle : **toujours
+> `oc_bash`, JAMAIS le tool `bash` natif**. Diagnostic complet : `docs/bash-tool-windows.md`.
 **Bash→CMD command translation table** (use the RIGHT column, ALWAYS):
 
 | Operation | ❌ Bash (FREEZES) | ✅ CMD (WORKS) |

@@ -1,0 +1,21 @@
+{
+  "league": "EPL",
+  "endpoints": {
+    "scoreboard": {
+      "ok": true,
+      "events": 1,
+      "sample_teams": [
+        "Coventry City at Arsenal"
+      ]
+    },
+    "standings": {
+      "ok": true,
+      "groups": 1,
+      "teams": 20
+    }
+  },
+  "_meta": {
+    "source": "site.api.espn.com",
+    "fetched_at": "2026-08-02T18:28:13.313499+00:00"
+  }
+}

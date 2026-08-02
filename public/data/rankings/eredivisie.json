@@ -1,0 +1,1852 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "eredivisie",
+    "leagueName": "Netherlands",
+    "season": "2026-27",
+    "lastUpdated": "2026-08-02T17:33:17.978427Z",
+    "source": "soccerstats.com",
+    "teamCount": 18,
+    "partial": false
+  },
+  "home": {
+    "ppg": [],
+    "pts": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "gf": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "ga": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "gd": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "w": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "d": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "l": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ]
+  },
+  "away": {
+    "ppg": [],
+    "pts": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "gf": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "ga": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "gd": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "w": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "d": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ],
+    "l": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ado Den Haag",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Ajax Amsterdam",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "AZ Alkmaar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Cambuur",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Excelsior",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fc Groningen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Twente",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Utrecht",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Feyenoord",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Fortuna Sittard",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Go Ahead Eagles",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Heerenveen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Nec Nijmegen",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Pec Zwolle",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "PSV",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sparta",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Telstar",
+        "value": 0.0,
+        "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Willem Ii",
+        "value": 0.0,
+        "played": 0
+      }
+    ]
+  },
+  "metricDefs": {
+    "ppg": {
+      "label": "PPG",
+      "higherIsBetter": true,
+      "unit": "pts"
+    },
+    "pts": {
+      "label": "Points",
+      "higherIsBetter": true,
+      "unit": "pts"
+    },
+    "gf": {
+      "label": "Buts Marques",
+      "higherIsBetter": true,
+      "unit": "buts"
+    },
+    "ga": {
+      "label": "Buts Encaisses",
+      "higherIsBetter": false,
+      "unit": "buts"
+    },
+    "gd": {
+      "label": "Diff. Buts",
+      "higherIsBetter": true,
+      "unit": "buts"
+    },
+    "w": {
+      "label": "Victoires",
+      "higherIsBetter": true,
+      "unit": "n"
+    },
+    "d": {
+      "label": "Nuls",
+      "higherIsBetter": true,
+      "unit": "n"
+    },
+    "l": {
+      "label": "Defaites",
+      "higherIsBetter": false,
+      "unit": "n"
+    }
+  }
+}

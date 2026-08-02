@@ -40,14 +40,48 @@
         "@upstash/context7-mcp@latest"
       ]
     },
-    "headroom": {
-      "command": "headroom",
+    "bzzoiro-sports": {
+      "type": "http",
+      "url": "https://sports.bzzoiro.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${BSD_API_KEY}"
+      }
+    },
+    "playwright": {
+      "command": "npx",
       "args": [
-        "mcp",
-        "serve"
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "scrapling": {
+      "command": "scrapling",
+      "args": [
+        "mcp"
       ],
       "env": {
-        "HEADROOM_PROXY_URL": "http://127.0.0.1:8787"
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "scrapy": {
+      "command": "python",
+      "args": [
+        "C:/Users/David/ZCodeProject/pariscore/scripts/scrapy-mcp-server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      }
+    },
+    "crawl4ai": {
+      "command": "python",
+      "args": [
+        "C:/Users/David/ZCodeProject/pariscore/scripts/crawl4ai-mcp-server.py"
+      ],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONDONTWRITEBYTECODE": "1"
       }
     }
   }

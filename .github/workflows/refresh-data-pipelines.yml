@@ -1,0 +1,103 @@
+name: refresh-data-pipelines
+
+on:
+  schedule:
+    # 04:00 UTC — avant l'ouverture des marchés EU (cotes clôture + xG du jour)
+    - cron: "0 4 * * *"
+    # 02:00 UTC dimanches + samedis — backfill week-end (understat + football-data)
+    - cron: "0 2 * * 0,6"
+  workflow_dispatch:
+    inputs:
+      leagues:
+        description: "Ligues football-data (E0,SP1,D1,I1,F1,N1...) — défaut: toutes"
+        required: false
+        default: "E0,SP1,D1,I1,F1,N1,P1"
+      understat_leagues:
+        description: "Ligues Understat (EPL, La Liga, Bundesliga, Serie A, Ligue 1)"
+        required: false
+        default: "EPL"
+      current_only:
+        description: "Seulement la saison courante (sinon full historique)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data-pipelines
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 lxml tenacity
+
+      # ── football-data.co.uk : CSV résultats + cotes (backtest) ──────────────
+      - name: Football-data.co.uk (CSV)
+        run: |
+          LEAGUES="${{ github.event.inputs.leagues || 'E0,SP1,D1,I1,F1,N1,P1' }}"
+          for l in $(echo "$LEAGUES" | tr ',' ' '); do
+            if [ "${{ github.event.inputs.current_only }}" = "true" ] || [ -z "${{ github.event.inputs.leagues }}" ]; then
+              python scripts/scrape_football_data.py --league "$l" --current-only --output-dir public/data/backtest
+            else
+              python scripts/scrape_football_data.py --league "$l" --all --output-dir public/data/backtest
+            fi
+          done
+
+      # ── Understat : xG/PPDA par match (mêmes ligues que BSD, aligné) ───────
+      - name: Understat xG/PPDA
+        run: |
+          ULEAGUES="${{ github.event.inputs.understat_leagues || 'EPL,La Liga,Bundesliga,Serie A,Ligue 1' }}"
+          IFS='|' read -ra arr <<< "$(echo "$ULEAGUES" | tr ',' '|')"
+          for u in "${arr[@]}"; do
+            python scripts/scrape_understat.py --league "$u" --current --output-dir public/data/xg
+          done
+
+      # ── Validation + commit auto ────────────────────────────────────────────
+      - name: Validate JSON
+        run: |
+          python - <<'EOF'
+          import json, pathlib
+          ok, bad = 0, 0
+          for p in pathlib.Path("public/data/backtest").rglob("*.json"):
+              try:
+                  d = json.loads(p.read_text(encoding="utf-8"))
+                  assert "_meta" in d and "matches" in d
+                  ok += 1
+              except Exception:
+                  bad += 1
+                  print("BAD:", p)
+          for p in pathlib.Path("public/data/xg").rglob("*.json"):
+              try:
+                  d = json.loads(p.read_text(encoding="utf-8"))
+                  assert "_meta" in d and "matches" in d and "teams" in d
+                  ok += 1
+              except Exception:
+                  bad += 1
+                  print("BAD:", p)
+          print(f"valid={ok} invalid={bad}")
+          exit(1 if bad else 0)
+          EOF
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/backtest public/data/xg
+          if git diff --cached --quiet; then
+            echo "No data changes"
+          else
+            git commit -m "chore(data): refresh football-data.co.uk + understat (auto)"
+            git push
+          fi
