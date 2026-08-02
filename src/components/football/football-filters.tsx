@@ -38,19 +38,33 @@ export function FootballLeagueBar({
             : "border-border bg-background text-muted-foreground hover:text-foreground"
         }`}
       >
+        <span className="mr-0.5" aria-hidden="true">⚽</span>
         Tous ({matches.length})
       </button>
       {leagues.map((l) => (
         <span key={l.id} className="inline-flex items-center gap-0.5">
           <button
             onClick={() => onSelectLeague(l.id)}
-            className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
               selectedLeague === l.id
                 ? "border-foreground bg-foreground text-background"
                 : "border-border bg-background text-muted-foreground hover:text-foreground"
             }`}
           >
-            {l.logo} {l.name} ({l.count})
+            {l.logo && l.logo.startsWith("http") ? (
+              <img
+                src={l.logo}
+                alt=""
+                className="h-4 w-4 shrink-0 object-contain"
+                onError={(e) => { e.currentTarget.style.display = "none"; }}
+              />
+            ) : (
+              <span aria-hidden="true">🏆</span>
+            )}
+            <span className="max-w-[10rem] truncate" title={l.name}>
+              {l.name}
+            </span>
+            <span className="text-muted-foreground/80">({l.count})</span>
           </button>
           <Link
             href={`/league/${l.id}/stats`}
