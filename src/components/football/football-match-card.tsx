@@ -14,6 +14,7 @@ import { FormTimeline } from "@/components/shared/form-timeline";
 import { SportImage } from "@/components/ui/sport-image";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { getLeagueBanner } from "@/lib/sport-images";
+import { countryFlag } from "@/lib/bsd-football-fetcher";
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso);
@@ -206,7 +207,14 @@ export function FootballMatchCard({
         {/* Texte ligue + round superposé */}
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-white/90">{match.league.logo}</span>
+            {match.league.logo && !match.league.logo.startsWith("http") ? (
+              <span className="text-xs font-bold text-white/90">{match.league.logo}</span>
+            ) : (
+              <span className="text-xs font-bold text-white/90">{countryFlag(match.league.country)}</span>
+            )}
+            {match.league.logo && match.league.logo.startsWith("http") && (
+              <img src={match.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain brightness-125" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            )}
             <span className="text-xs font-semibold text-white/80">{match.league.name}</span>
           </div>
           <div className="flex items-center gap-1 text-xs text-white/60">

@@ -6,6 +6,7 @@ import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircl
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FootballMatch } from "@/lib/football-data";
+import { countryFlag } from "@/lib/bsd-football-fetcher";
 
 // ─── Sparkline xG Live ───────────────────────────────────────────────────
 
@@ -189,7 +190,14 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
         {/* Live header */}
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="shrink-0">{match.league.logo}</span>
+            {match.league.logo && !match.league.logo.startsWith("http") ? (
+              <span className="shrink-0">{match.league.logo}</span>
+            ) : (
+              <span className="shrink-0">{countryFlag(match.league.country)}</span>
+            )}
+            {match.league.logo && match.league.logo.startsWith("http") && (
+              <img src={match.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+            )}
             <span className="truncate font-medium">{match.league.name}</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">

@@ -8,6 +8,93 @@ const BSD_IMAGE_ROOT = "https://sports.bzzoiro.com";
 
 const FLAG = (code: string) => String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
 
+/** Mapping pays (nom complet) → code ISO 2 lettres pour le drapeau. */
+const COUNTRY_TO_CODE: Record<string, string> = {
+  England: "GB",
+  France: "FR",
+  Spain: "ES",
+  Germany: "DE",
+  Italy: "IT",
+  Portugal: "PT",
+  Netherlands: "NL",
+  Belgium: "BE",
+  Scotland: "GB",
+  Mexico: "MX",
+  USA: "US",
+  Brazil: "BR",
+  Argentina: "AR",
+  Sweden: "SE",
+  Norway: "NO",
+  Denmark: "DK",
+  Poland: "PL",
+  Romania: "RO",
+  Bulgaria: "BG",
+  Greece: "GR",
+  Turkey: "TR",
+  Morocco: "MA",
+  Tunisia: "TN",
+  Nigeria: "NG",
+  "South Korea": "KR",
+  Japan: "JP",
+  China: "CN",
+  Australia: "AU",
+  Colombia: "CO",
+  "Saudi Arabia": "SA",
+  "United Arab Emirates": "AE",
+  UAE: "AE",
+  Croatia: "HR",
+  Switzerland: "CH",
+  Austria: "AT",
+  Czechia: "CZ",
+  "Czech Republic": "CZ",
+  Ukraine: "UA",
+  Russia: "RU",
+  Serbia: "RS",
+  Chile: "CL",
+  Uruguay: "UY",
+  Peru: "PE",
+  Ecuador: "EC",
+  Paraguay: "PY",
+  Bolivia: "BO",
+  Venezuela: "VE",
+  Egypt: "EG",
+  Algeria: "DZ",
+  "Ivory Coast": "CI",
+  Ghana: "GH",
+  Senegal: "SN",
+  Cameroon: "CM",
+  "South Africa": "ZA",
+  Canada: "CA",
+  India: "IN",
+  Indonesia: "ID",
+  Thailand: "TH",
+  Malaysia: "MY",
+  Vietnam: "VN",
+  Qatar: "QA",
+  Iran: "IR",
+  Israel: "IL",
+  Cyprus: "CY",
+  Finland: "FI",
+  Ireland: "IE",
+  Hungary: "HU",
+  Slovakia: "SK",
+  Slovenia: "SI",
+};
+
+/** Génère un drapeau émoji pour n'importe quel pays (nom complet ou code ISO). */
+export function countryFlag(country: string): string {
+  if (!country) return "\uD83C\uDF0D"; // 🌍 fallback
+  // Code ISO 2 lettres direct
+  if (country.length === 2 && /^[A-Z]{2}$/.test(country)) {
+    return FLAG(country);
+  }
+  // Mapping nom complet → code
+  const code = COUNTRY_TO_CODE[country];
+  if (code) return FLAG(code);
+  // Dernier recours : globe
+  return "\uD83C\uDF0D";
+}
+
 const BSD_BASE = "https://sports.bzzoiro.com/api";
 
 type BSDLeague = {
@@ -137,38 +224,6 @@ type BSDMatchStatsResponse = {
   shotmap?: BSDShot[];
 };
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  England: "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F",
-  France: FLAG("FR"),
-  Spain: FLAG("ES"),
-  Germany: FLAG("DE"),
-  Italy: FLAG("IT"),
-  Portugal: FLAG("PT"),
-  Netherlands: FLAG("NL"),
-  Belgium: FLAG("BE"),
-  Scotland: "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC73\uDB40\uDC63\uDB40\uDC74\uDB40\uDC7F",
-  Mexico: FLAG("MX"),
-  USA: FLAG("US"),
-  Brazil: FLAG("BR"),
-  Argentina: FLAG("AR"),
-  Sweden: FLAG("SE"),
-  Norway: FLAG("NO"),
-  Denmark: FLAG("DK"),
-  Poland: FLAG("PL"),
-  Romania: FLAG("RO"),
-  Bulgaria: FLAG("BG"),
-  Greece: FLAG("GR"),
-  Turkey: FLAG("TR"),
-  Morocco: FLAG("MA"),
-  Tunisia: FLAG("TN"),
-  Nigeria: FLAG("NG"),
-  "South Korea": FLAG("KR"),
-  Japan: FLAG("JP"),
-  China: FLAG("CN"),
-  Australia: FLAG("AU"),
-  International: "\uD83C\uDF0D",
-};
-
 const TIER_MAP: Record<number, "T1" | "T2" | "CUP"> = {
   1: "T1",
   3: "T1",
@@ -204,7 +259,7 @@ function mapLeague(l: BSDLeague): League {
     id: `bsd-${l.id}`,
     name: l.name,
     country: l.country ?? "",
-    logo: COUNTRY_FLAGS[l.country] ?? "",
+    logo: `${BSD_IMAGE_ROOT}/img/league/${l.id}/`,
     tier: leagueTier(l.id),
   };
 }
