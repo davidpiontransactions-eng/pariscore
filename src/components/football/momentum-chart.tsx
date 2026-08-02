@@ -78,7 +78,7 @@ export function MomentumChart({
   if (sorted.length === 0) {
     return (
       <div className={cn("flex h-[110px] items-center justify-center rounded-lg bg-muted/40 text-xs text-muted-foreground", className)}>
-        Momentum indisponible (match trop tôt ou données BSD absentes)
+        Momentum indisponible (match trop tôt)
       </div>
     );
   }

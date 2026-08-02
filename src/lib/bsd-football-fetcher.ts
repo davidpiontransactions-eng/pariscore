@@ -290,7 +290,7 @@ function mapOdds(m: BSDFootballMatch): { odds?: FootballMatch["odds"]; allOdds?:
   const invA = 1 / m.odds_away;
   const vig = invH + invD + invA;
   const matchOdds: FootballMatchOdds = {
-    bookmaker: "BSD Sports",
+    bookmaker: "PariScore",
     home: m.odds_home,
     draw: m.odds_draw,
     away: m.odds_away,
@@ -300,7 +300,7 @@ function mapOdds(m: BSDFootballMatch): { odds?: FootballMatch["odds"]; allOdds?:
     margin: Math.round((vig - 1) * 1000) / 1000,
   };
   return {
-    odds: { bookmaker: "BSD Sports", home: m.odds_home, draw: m.odds_draw, away: m.odds_away },
+    odds: { bookmaker: "PariScore", home: m.odds_home, draw: m.odds_draw, away: m.odds_away },
     allOdds: [matchOdds],
   };
 }
@@ -318,7 +318,7 @@ function mapPrediction(m: BSDFootballMatch): Prediction {
     drawProb = Math.round((invD / vig) * 100);
     awayProb = Math.round((invA / vig) * 100);
   }
-  return { homeProb, drawProb, awayProb, bttsProb, over25Prob, model: "BSD Odds" };
+  return { homeProb, drawProb, awayProb, bttsProb, over25Prob, model: "PariScore" };
 }
 
 function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
