@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readFile } from "fs/promises";
+import path from "path";
 import type { MetricRankings } from "@/lib/football-data";
+
+/** Structure du fichier statique public/data/rankings/{leagueId}.json */
+type RankingsFile = {
+  meta?: { league?: string; updatedAt?: string; season?: string };
+  home?: MetricRankings;
+  away?: MetricRankings;
+  metricDefs?: Record<string, unknown>;
+};
 
 /**
  * GET /api/football/rankings?leagueId=epl&side=home
  *
- * Proxy vers le fichier statique /public/data/rankings/{leagueId}.json.
- * Cache 1h côté serveur, stale-while-revalidate 24h côté CDN.
+ * Sert le fichier statique /public/data/rankings/{leagueId}.json
+ * via lecture filesystem — un fetch relatif échoue en Route Handler
+ * (pas de base URL) et en build standalone le répertoire public/ est
+ * copié dans .next/standalone/. Cache 1h serveur, SWR 24h CDN.
  */
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -27,19 +39,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const res = await fetch(
-      `/data/rankings/${encodeURIComponent(leagueId)}.json`,
-      { next: { revalidate: 3600 } }
+    const filePath = path.join(
+      process.cwd(),
+      "public",
+      "data",
+      "rankings",
+      `${leagueId}.json`
     );
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: `Rankings not found for league '${leagueId}'` },
-        { status: 404 }
-      );
-    }
-
-    const full = await res.json();
+    const raw = await readFile(filePath, "utf8");
+    const full: RankingsFile = JSON.parse(raw);
     const data: MetricRankings = full[side] ?? {};
 
     return NextResponse.json(data, {
