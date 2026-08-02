@@ -135,9 +135,13 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             <MomentumChart
               momentum={stats.momentum}
               goals={stats.goals}
-              shotsOnTarget={stats.shotsOnTarget}
-              corners={stats.corners}
               pressure={stats.pressure}
+              liveStats={match?.live ? {
+                homeSOT: match.live.homeShotsOnTarget,
+                awaySOT: match.live.awayShotsOnTarget,
+                homeCorners: match.live.homeCorners,
+                awayCorners: match.live.awayCorners,
+              } : undefined}
               homeName={match?.home.shortName ?? "Domicile"}
               awayName={match?.away.shortName ?? "Extérieur"}
             />

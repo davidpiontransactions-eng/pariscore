@@ -30,18 +30,8 @@ export async function GET(
   }
 
   try {
-    const { fetchBSDMatchStats, fetchBSDIncidents } = await import("@/lib/bsd-football-fetcher");
-    const [data, incidents] = await Promise.all([
-      fetchBSDMatchStats(matchId),
-      fetchBSDIncidents(matchId).catch(() => []),
-    ]);
-
-    // Merge corners from incidents
-    if (incidents.length > 0) {
-      data.corners = incidents
-        .filter((i) => i.type === "corner" || i.type === "Corner")
-        .map((i) => ({ minute: i.minute, home: i.home }));
-    }
+    const { fetchBSDMatchStats } = await import("@/lib/bsd-football-fetcher");
+    const data = await fetchBSDMatchStats(matchId);
 
     cache.set(matchId, { data, at: Date.now() });
     return NextResponse.json({ ...data, source: "bsd", updatedAt: new Date().toISOString() });

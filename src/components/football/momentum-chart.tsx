@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Target, CornerDownRight } from "lucide-react";
 
 /**
  * Graphe de momentum type FotMob — aire horizontale 0'→90'.
@@ -19,8 +20,6 @@ const MAX_MIN = 90;
 
 type MomentumPoint = { minute: number; value: number };
 type Goal = { minute: number; home: boolean; type: string };
-type ShotEvent = { minute: number; home: boolean };
-type CornerEvent = { minute: number; home: boolean };
 
 function minuteToX(min: number): number {
   return PAD_L + (Math.max(0, Math.min(MAX_MIN, min)) / MAX_MIN) * PLOT_W;
@@ -55,18 +54,16 @@ function buildAreaPath(
 export function MomentumChart({
   momentum,
   goals = [],
-  shotsOnTarget = [],
-  corners = [],
   pressure,
+  liveStats,
   homeName = "Domicile",
   awayName = "Extérieur",
   className,
 }: {
   momentum: MomentumPoint[];
   goals?: Goal[];
-  shotsOnTarget?: ShotEvent[];
-  corners?: CornerEvent[];
   pressure?: { homePct: number; awayPct: number };
+  liveStats?: { homeCorners: number; awayCorners: number; homeSOT: number; awaySOT: number };
   homeName?: string;
   awayName?: string;
   className?: string;
@@ -152,31 +149,6 @@ export function MomentumChart({
             </g>
           );
         })}
-
-        {/* Marqueurs de tirs cadrés 🎯 */}
-        {shotsOnTarget.map((s, i) => {
-          const x = minuteToX(s.minute);
-          const color = s.home ? "#22c55e" : "#3b82f6";
-          return (
-            <g key={`sot-${i}`}>
-              <circle cx={x} cy={s.home ? 26 : H - 26} r="4" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="1" />
-              <circle cx={x} cy={s.home ? 26 : H - 26} r="1.5" fill={color} />
-            </g>
-          );
-        })}
-
-        {/* Marqueurs de corners 🏳️ */}
-        {corners.map((c, i) => {
-          const x = minuteToX(c.minute);
-          const color = c.home ? "#22c55e" : "#3b82f6";
-          return (
-            <g key={`corner-${i}`}>
-              <line x1={x} y1={MID_Y + (c.home ? -2 : 2)} x2={x} y2={c.home ? 40 : H - 40} stroke={color} strokeOpacity="0.25" strokeWidth="0.5" />
-              <rect x={x - 3} y={c.home ? 38 : H - 44} width="6" height="6" rx="1" fill={color} fillOpacity="0.35" stroke={color} strokeWidth="0.8" />
-              <text x={x} y={c.home ? 43 : H - 39} fontSize="5" fill={color} textAnchor="middle" fontWeight="bold">C</text>
-            </g>
-          );
-        })}
       </svg>
 
       {/* Axe des minutes */}
@@ -185,6 +157,39 @@ export function MomentumChart({
         <span>45&apos; HT</span>
         <span>90&apos;</span>
       </div>
+
+      {/* Live stats summary — tirs cadrés + corners */}
+      {liveStats && (liveStats.homeSOT > 0 || liveStats.awaySOT > 0 || liveStats.homeCorners > 0 || liveStats.awayCorners > 0) && (
+        <div className="mt-2 flex items-center justify-center gap-6 border-t border-border/30 pt-2 text-[10px]">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1 text-emerald-400">
+              <Target className="h-3 w-3" />
+              <span className="tabular-nums font-semibold">{liveStats.homeSOT}</span>
+              <span className="text-muted-foreground/60">tirs cd.</span>
+            </span>
+            <span className="text-muted-foreground/30">—</span>
+            <span className="inline-flex items-center gap-1 text-blue-400">
+              <span className="tabular-nums font-semibold">{liveStats.awaySOT}</span>
+              <span className="text-muted-foreground/60">tirs cd.</span>
+              <Target className="h-3 w-3" />
+            </span>
+          </div>
+          <span className="text-muted-foreground/20">|</span>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-1 text-emerald-400">
+              <CornerDownRight className="h-3 w-3" />
+              <span className="tabular-nums font-semibold">{liveStats.homeCorners}</span>
+              <span className="text-muted-foreground/60">corn.</span>
+            </span>
+            <span className="text-muted-foreground/30">—</span>
+            <span className="inline-flex items-center gap-1 text-blue-400">
+              <span className="tabular-nums font-semibold">{liveStats.awayCorners}</span>
+              <span className="text-muted-foreground/60">corn.</span>
+              <CornerDownRight className="h-3 w-3" />
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

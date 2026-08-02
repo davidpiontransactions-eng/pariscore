@@ -405,13 +405,9 @@ async function bsdFetchRaw<T>(endpoint: string): Promise<T> {
 // ── Momentum / xG / buts d'un match live (endpoint /v2/events/{id}/stats/) ──
 // Normalisation défensive (optionals + ?? []) — cf. _bsdMergeShotmap legacy.
 export type FootballMatchStats = {
-  momentum: { minute: number; value: number }[]; // value ∈ [-100,+100]
+  momentum: { minute: number; value: number }[];
   xgPerMinute: { minute: number; home: number; away: number }[];
   goals: { minute: number; home: boolean; type: string }[];
-  /** Tirs cadrés (non-buts). */
-  shotsOnTarget: { minute: number; home: boolean }[];
-  /** Corners. */
-  corners: { minute: number; home: boolean }[];
   /** Pression : % du temps où chaque équipe domine. */
   pressure: { homePct: number; awayPct: number };
 };
@@ -440,53 +436,20 @@ export async function fetchBSDMatchStats(matchId: string): Promise<FootballMatch
       type: s.gtype || s.type || "regular",
     }));
 
-  // Tirs cadrés (non-buts) = shots avec gtype présent ET type !== 'goal'
-  const shotsOnTarget = (raw.shotmap ?? [])
-    .filter((s) => s && Number.isFinite(Number(s.min)) && s.gtype && s.type !== "goal")
-    .map((s) => ({ minute: Number(s.min), home: !!s.home }));
-
-  // Corners depuis l'endpoint incidents
-  // (rempli plus tard par fetchBSDIncidents — ici tableau vide par défaut)
-  const corners: { minute: number; home: boolean }[] = [];
-
   // Pression : % du temps avec momentum positif (domicile) vs négatif (extérieur)
   const totalMoments = momentum.length;
   const homeDominant = momentum.filter((m) => m.value > 5).length;
   const awayDominant = momentum.filter((m) => m.value < -5).length;
-  const neutral = totalMoments - homeDominant - awayDominant;
-  const denom = Math.max(homeDominant + awayDominant, 1);
-  const homePct = Math.round((homeDominant / denom) * 100);
-  const awayPct = 100 - homePct;
+  // Par défaut 50/50 si pas de données
+  const homePct = totalMoments > 0 ? Math.round((homeDominant / Math.max(totalMoments, 1)) * 100) : 50;
+  const awayPct = totalMoments > 0 ? 100 - homePct : 50;
 
   return {
     momentum,
     xgPerMinute,
     goals,
-    shotsOnTarget,
-    corners,
     pressure: { homePct, awayPct },
   };
-}
-
-// ── Incidents d'un match (corners, buts, cartons…) ──
-
-type BSDIncident = { minute: number; type: string; home: boolean };
-type BSDIncidentsResponse = { incidents?: BSDIncident[] };
-
-/** Récupère les incidents (corners, buts, cartons) depuis BSD /v2/events/{id}/incidents/ */
-export async function fetchBSDIncidents(matchId: string): Promise<BSDIncident[]> {
-  try {
-    const raw = await bsdFetchRaw<BSDIncidentsResponse>(`/v2/events/${matchId}/incidents/`);
-    return (raw.incidents ?? [])
-      .filter((i) => i && Number.isFinite(i.minute))
-      .map((i) => ({
-        minute: Number(i.minute),
-        type: i.type || "unknown",
-        home: !!i.home,
-      }));
-  } catch {
-    return [];
-  }
 }
 
 export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {
