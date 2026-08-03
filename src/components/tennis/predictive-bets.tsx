@@ -87,7 +87,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
   // absent, le guard d'affichage est en dessous.
   const predictions: Prediction | null = useMemo(() => {
     if (!prematch || !liveState) {
-      return prematch;
+      return prematch ?? null;
     }
     // Recalcul live avec contexte (games restants). Stats serve depuis les
     // props (résolues côté serveur via usePlayerStats) — pas d'import node:fs.

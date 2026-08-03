@@ -8,11 +8,17 @@
  */
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import {
+  geminiCacheKey,
+  geminiCacheGet,
+  geminiCacheSet,
+  geminiCachePrune,
+  type CachedGeminiInsight,
+} from "@/lib/gemini-cache";
 
 // ---------------------------------------------------------------------------
 // Cache config
 // ---------------------------------------------------------------------------
-const GEMINI_CACHE_TTL_MS = 12 * 60 * 60_000; // 12 heures
 const ALLOWED_SPORTS = ["tennis", "football"] as const;
 const MAX_MATCHDATA_BYTES = 10_000;
 
@@ -21,34 +27,10 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 10;
 const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
 
-type CachedInsight = {
-  analysis: string;
-  factors: { label: string; value: string }[];
-  edge: number;
-  confidence: number;
-};
-
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** Construit une clé de cache déterministe. */
-function cacheKey(sport: string, matchId: string): string {
-  const today = new Date().toISOString().slice(0, 10);
-  return `gemini-insight:${sport}:${matchId}:${today}`;
-}
-
-/** Nettoie les clés expirées du globalThis (garde les entrées < 12h). */
-function pruneExpiredCache(): void {
-  const g = globalThis as unknown as Record<string, { data: unknown; at: number }>;
-  const now = Date.now();
-  for (const key of Object.keys(g)) {
-    if (key.startsWith("gemini-insight:") && now - g[key].at > GEMINI_CACHE_TTL_MS) {
-      delete g[key];
-    }
-  }
-}
 
 /** Construit le prompt Gemini à partir des données du match. */
 function buildPrompt(sport: string, matchData: Record<string, unknown>): string {
@@ -67,7 +49,7 @@ Réponds UNIQUEMENT avec le JSON, pas de markdown, pas de texte autour.`;
 }
 
 /** Appelle l'API Gemini via fetch direct. */
-async function callGemini(prompt: string): Promise<CachedInsight> {
+async function callGemini(prompt: string): Promise<CachedGeminiInsight> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY non configurée");
@@ -105,7 +87,7 @@ async function callGemini(prompt: string): Promise<CachedInsight> {
     .replace(/\s*```$/, "")
     .trim();
 
-  const parsed = JSON.parse(cleaned) as CachedInsight;
+  const parsed = JSON.parse(cleaned) as CachedGeminiInsight;
 
   if (!parsed.analysis || !Array.isArray(parsed.factors)) {
     throw new Error("Réponse Gemini mal formée (JSON invalide)");
@@ -166,17 +148,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "matchId invalide" }, { status: 400 });
     }
 
-    pruneExpiredCache();
+    geminiCachePrune();
 
     // Vérification cache : clé spécifique au match demandé
-    const key = cacheKey(sport, matchId);
-    const g = globalThis as unknown as Record<string, { data: CachedInsight; at: number }>;
-    const specificEntry = g[key];
-    if (specificEntry && Date.now() - specificEntry.at < GEMINI_CACHE_TTL_MS) {
+    const key = geminiCacheKey(sport, matchId);
+    const cached = geminiCacheGet(key);
+    if (cached) {
       return NextResponse.json({
-        ...specificEntry.data,
+        ...cached,
         source: "cache",
-        cachedAt: new Date(specificEntry.at).toISOString(),
+        cachedAt: new Date().toISOString(),
       });
     }
 
@@ -185,7 +166,7 @@ export async function POST(request: Request) {
     const insight = await callGemini(prompt);
 
     // Stockage dans le cache
-    g[key] = { data: insight, at: Date.now() };
+    geminiCacheSet(key, insight);
 
     return NextResponse.json({
       ...insight,

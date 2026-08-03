@@ -773,6 +773,47 @@ function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): v
 }
 
 
+// ── Méta d'un événement BSD (noms, date, ligue) — pour résolution ESPN ─────
+export interface BSDFootballMatchMeta {
+  id: number;
+  homeTeam: string;
+  awayTeam: string;
+  leagueId: number | null;
+  leagueName: string;
+  date: string;
+  status: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  currentMinute?: number;
+  isLive: boolean;
+}
+
+/** Récupération défensive `/v2/events/{id}/` → meta légère (jamais de throw). */
+export async function fetchBSDFootballMatchMeta(matchId: string): Promise<BSDFootballMatchMeta | null> {
+  if (!/^\d+$/.test(String(matchId))) return null;
+  try {
+    const m = await bsdFetchRaw<BSDFootballMatch>(`/v2/events/${matchId}/`);
+    if (!m || !m.league) return null;
+    const status = String(m.status || "");
+    const isLive = !["finished", "notstarted", "canceled", "postponed", "suspended"].includes(status);
+    return {
+      id: m.id,
+      homeTeam: m.home_team ?? "",
+      awayTeam: m.away_team ?? "",
+      leagueId: typeof m.league?.id === "number" ? m.league.id : null,
+      leagueName: m.league?.name ?? "",
+      date: m.event_date ?? new Date().toISOString(),
+      status,
+      homeScore: m.home_score,
+      awayScore: m.away_score,
+      currentMinute: m.current_minute,
+      isLive,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchBSDFootballLive(): Promise<FootballMatch[]> {
 
   const matches = await bsdFetch<BSDFootballMatch[]>("/live/?limit=50");

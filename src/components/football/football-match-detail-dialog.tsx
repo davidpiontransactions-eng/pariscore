@@ -11,10 +11,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, AlertCircle } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
-import type { FootballMatchStats } from "@/lib/bsd-football-fetcher";
+import type { MatchTimelineData } from "@/lib/football-timeline";
 import { MomentumChart } from "./momentum-chart";
 
-type StatsResponse = FootballMatchStats & { source?: string; updatedAt?: string };
+type StatsResponse = MatchTimelineData & { updatedAt?: string };
 
 type Props = {
   match: FootballMatch | null;
@@ -143,7 +143,9 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
           {!loading && !error && stats && (
             <MomentumChart
               momentum={stats.momentum}
-              goals={stats.goals}
+              events={stats.events}
+              dangerous={stats.dangerous}
+              layers={stats.layers}
               pressure={stats.pressure}
               liveStats={match?.live ? {
                 homeSOT: match.live.homeShotsOnTarget,

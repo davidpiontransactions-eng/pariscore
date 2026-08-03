@@ -1,25 +1,34 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Target, CornerDownRight } from "lucide-react";
+import type { DangerousBucket, MatchEvent, MatchTimelineData } from "@/lib/football-timeline";
 
 /**
  * Graphe de momentum type FotMob — aire horizontale 0'→90'.
- * Vert (domicile) au-dessus de la médiane, bleu (extérieur) en dessous.
- * Marqueurs ⚽ positionnés à la minute de chaque but.
+ *
+ * Couches (toggles interactifs) :
+ *  - Momentum     : aire bicolore (vert > 0 domicile, bleu < 0 extérieur)
+ *  - Attaques     : mini-histogramme fond (barres home ↑ / away ↓)
+ *  - Buts & Buteurs : badges ⚽ + <title> (buteur, minute, score, xG)
+ *  - Corners      : triangles colorés par camp sur la ligne des minutes
  *
  * SVG inline pur (zéro dépendance). v ∈ [-100,+100] : + = domicile domine.
+ * Chaque couche est optionnelle — `layers` signale ce qui est réellement
+ * disponible (données par minute non garanties sur toutes les ligues).
  */
 const W = 940;
 const H = 110;
-const MID_Y = H / 2; // 55
+const MID_Y = H / 2;
 const PAD_L = 4;
 const PAD_R = 4;
 const PLOT_W = W - PAD_L - PAD_R;
 const MAX_MIN = 90;
+const BUCKET_W = PLOT_W / (MAX_MIN / 5);
 
 type MomentumPoint = { minute: number; value: number };
-type Goal = { minute: number; home: boolean; type: string };
+type LayersState = { momentum: boolean; corners: boolean; goals: boolean; dangerous: boolean };
 
 function minuteToX(min: number): number {
   return PAD_L + (Math.max(0, Math.min(MAX_MIN, min)) / MAX_MIN) * PLOT_W;
@@ -31,13 +40,8 @@ function valueToY(v: number): number {
 }
 
 /** Construit le path d'une aire (polygone fermé sur l'axe médian). */
-function buildAreaPath(
-  points: MomentumPoint[],
-  upper: boolean,
-): string {
+function buildAreaPath(points: MomentumPoint[], upper: boolean): string {
   if (points.length === 0) return "";
-  // On ne garde que les points du bon côté (positive=upper/home, negative=lower/away)
-  // + on force la valeur 0 aux points qui traversent (clamp sur la médiane).
   const seg = points
     .map((p) => ({ x: minuteToX(p.minute), y: valueToY(p.value), v: p.value }))
     .filter((p) => (upper ? p.v >= 0 : p.v <= 0));
@@ -51,28 +55,86 @@ function buildAreaPath(
   return d.join(" ");
 }
 
+function goalTitle(g: MatchEvent): string {
+  const parts: string[] = [];
+  if (g.scorer) parts.push(g.scorer);
+  parts.push(`${Math.round(g.minute)}'`);
+  if (g.goalType === "own") parts.push("csc");
+  if (g.goalType === "penalty") parts.push("pen.");
+  if (g.score) parts.push(`${g.score.home}-${g.score.away}`);
+  if (g.xg != null && Number.isFinite(g.xg)) parts.push(`xG ${Number(g.xg).toFixed(2)}`);
+  return parts.join(" · ");
+}
+
+function ToggleChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide transition-colors",
+        active
+          ? "border-border bg-muted text-foreground"
+          : "border-transparent text-muted-foreground/50 hover:text-muted-foreground",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 export function MomentumChart({
   momentum,
-  goals = [],
+  events = [],
+  dangerous = [],
   pressure,
   liveStats,
+  layers,
   homeName = "Domicile",
   awayName = "Extérieur",
   className,
 }: {
   momentum: MomentumPoint[];
-  goals?: Goal[];
+  events?: MatchEvent[];
+  dangerous?: DangerousBucket[];
   pressure?: { homePct: number; awayPct: number };
   liveStats?: { homeCorners: number; awayCorners: number; homeSOT: number; awaySOT: number };
+  layers?: MatchTimelineData["layers"];
   homeName?: string;
   awayName?: string;
   className?: string;
 }) {
-  const sorted = [...momentum].sort((a, b) => a.minute - b.minute);
-  const homePath = buildAreaPath(sorted, true);
-  const awayPath = buildAreaPath(sorted, false);
+  const [toggles, setToggles] = useState<LayersState>({
+    momentum: true,
+    corners: true,
+    goals: true,
+    dangerous: true,
+  });
 
-  // Ticks : 0', 45' (HT), 90'
+  const sorted = [...momentum].sort((a, b) => a.minute - b.minute);
+  const homePath = toggles.momentum ? buildAreaPath(sorted, true) : "";
+  const awayPath = toggles.momentum ? buildAreaPath(sorted, false) : "";
+  const goals = (events ?? []).filter((e) => e.kind === "goal" && Number.isFinite(e.minute));
+  const corners = (events ?? []).filter((e) => e.kind === "corner" && Number.isFinite(e.minute));
+  const maxDanger = dangerous.reduce((mx, b) => Math.max(mx, b.home, b.away), 0);
+
+  // Disponibilité réelle des couches (si le serveur signale les données).
+  const layerOn = (key: "goals" | "corners" | "dangerous") =>
+    (layers ? layers[key] : true) && toggles[key];
+
+  const canShowGoals = layerOn("goals") && goals.length > 0;
+  const canShowCorners = layerOn("corners") && corners.length > 0;
+  const canShowDangerous = layerOn("dangerous") && dangerous.length > 0;
+  const isEstimated = !layers?.perMinute;
   const ticks = [0, 15, 30, 45, 60, 75, 90];
 
   if (sorted.length === 0) {
@@ -98,6 +160,17 @@ export function MomentumChart({
           {awayName}
           <span className="inline-block h-2 w-2 rounded-sm bg-blue-500" />
         </span>
+      </div>
+
+      {/* Toggles de couches */}
+      <div className="mb-1 flex flex-wrap items-center gap-1" role="group" aria-label="Couches du graphe">
+        <ToggleChip label="Momentum" active={toggles.momentum} onClick={() => setToggles((t) => ({ ...t, momentum: !t.momentum }))} />
+        <ToggleChip label="Attaques" active={canShowDangerous} onClick={() => setToggles((t) => ({ ...t, dangerous: !t.dangerous }))} />
+        <ToggleChip label="Buts" active={canShowGoals} onClick={() => setToggles((t) => ({ ...t, goals: !t.goals }))} />
+        <ToggleChip label="Corners" active={canShowCorners} onClick={() => setToggles((t) => ({ ...t, corners: !t.corners }))} />
+        {isEstimated && (
+          <span className="ml-auto text-[9px] italic text-muted-foreground/50">courbe estimée (pas de données par minute)</span>
+        )}
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" role="img" aria-label="Momentum du match">
@@ -130,25 +203,67 @@ export function MomentumChart({
         {/* Ligne médiane */}
         <line x1={PAD_L} y1={MID_Y} x2={W - PAD_R} y2={MID_Y} stroke="currentColor" strokeOpacity="0.35" strokeWidth="1.5" className="text-muted-foreground" />
 
-        {/* Aires */}
+        {/* Couche Attaques dangereuses : mini-histogramme (fond) */}
+        {canShowDangerous &&
+          dangerous.map((b) => {
+            if (maxDanger <= 0) return null;
+            const x = minuteToX(b.start);
+            const hHome = Math.max(2, (b.home / maxDanger) * (MID_Y - 8));
+            const hAway = Math.max(2, (b.away / maxDanger) * (MID_Y - 8));
+            return (
+              <g key={`danger-${b.start}`}>
+                {b.home > 0 && (
+                  <rect x={x} y={MID_Y - hHome} width={BUCKET_W - 1.5} height={hHome} fill="#22c55e" fillOpacity="0.14" />
+                )}
+                {b.away > 0 && (
+                  <rect x={x} y={MID_Y} width={BUCKET_W - 1.5} height={hAway} fill="#3b82f6" fillOpacity="0.14" />
+                )}
+              </g>
+            );
+          })}
+
+        {/* Couche Momentum : aires */}
         {homePath && <path d={homePath} fill="url(#mom-home-grad)" stroke="#22c55e" strokeWidth="1.5" strokeOpacity="0.7" />}
         {awayPath && <path d={awayPath} fill="url(#mom-away-grad)" stroke="#3b82f6" strokeWidth="1.5" strokeOpacity="0.7" />}
 
-        {/* Marqueurs de buts ⚽ */}
-        {goals.map((g, i) => {
-          const x = minuteToX(g.minute);
-          const color = g.home ? "#22c55e" : "#3b82f6";
-          const isOwn = g.type === "own";
-          return (
-            <g key={`goal-${i}`}>
-              <line x1={x} y1={0} x2={x} y2={H} stroke={color} strokeOpacity="0.4" strokeWidth="1" strokeDasharray="2 3" />
-              <circle cx={x} cy={g.home ? 10 : H - 10} r="7" fill={color} />
-              <text x={x} y={g.home ? 14 : H - 6} fontSize="9" fontWeight="bold" fill="#fff" textAnchor="middle">
-                {isOwn ? "⊘" : "⚽"}
-              </text>
-            </g>
-          );
-        })}
+        {/* Couche Corners : drapeaux triangles sur la ligne des minutes */}
+        {canShowCorners &&
+          corners.map((c, i) => {
+            const x = minuteToX(c.minute);
+            const home = c.side === "home";
+            const color = home ? "#22c55e" : "#3b82f6";
+            const yBase = home ? H - 6 : 6;
+            return (
+              <g key={`corner-${i}`}>
+                <title>{`Corner ${home ? homeName : awayName} ${Math.round(c.minute)}'`}</title>
+                <polygon
+                  points={home
+                    ? `${x - 3.5},${yBase} ${x + 3.5},${yBase} ${x},${yBase - 6}`
+                    : `${x - 3.5},${yBase} ${x + 3.5},${yBase} ${x},${yBase + 6}`}
+                  fill={color}
+                  fillOpacity="0.85"
+                />
+              </g>
+            );
+          })}
+
+        {/* Couche Buts & Buteurs : badges ⚽ */}
+        {canShowGoals &&
+          goals.map((g, i) => {
+            const x = minuteToX(g.minute);
+            const home = g.side === "home";
+            const color = home ? "#22c55e" : "#3b82f6";
+            return (
+              <g key={`goal-${i}`}>
+                <title>{goalTitle(g)}</title>
+                <line x1={x} y1={0} x2={x} y2={H} stroke={color} strokeOpacity="0.4" strokeWidth="1" strokeDasharray="2 3" />
+                <circle cx={x} cy={home ? 10 : H - 10} r="7" fill={color} />
+                <text x={x} y={home ? 14 : H - 6} fontSize="9" fontWeight="bold" fill="#fff" textAnchor="middle">
+                  {g.goalType === "own" ? "⊘" : "⚽"}
+                </text>
+              </g>
+            );
+          })}
       </svg>
 
       {/* Axe des minutes */}
