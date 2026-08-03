@@ -32,8 +32,8 @@ import { NbaTabContent } from "@/components/nba/nba-tab-content";
 import { WnbaTabContent } from "@/components/wnba/wnba-tab-content";
 import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
-import { TopValueBetsList } from "@/components/dashboard/top-value-bets";
-import { LiveNowCrossSport } from "@/components/dashboard/live-now-cross-sport";
+import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
+import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useFootballMatches } from "@/hooks/use-football-matches";
@@ -194,15 +194,12 @@ export default function Home() {
             ))}
           </div>
 
-          {/* P4: Top Value Bets + Live Now (cross-sport) */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-            <TopValueBetsList />
-            <LiveNowCrossSport />
-          </div>
-
-          {/* P4: AI Insight Card */}
-          <div className="mt-4">
-            <AIInsightCard />
+          {/* Ancres de navigation rapide */}
+          <div className="mt-4 flex items-center gap-3 text-xs text-zinc-500 overflow-x-auto pb-1 scrollbar-none">
+            <span className="shrink-0 font-medium text-zinc-400">Aller à :</span>
+            <a href="#section-best-matches" className="shrink-0 rounded-full border border-border/50 px-3 py-1 hover:border-emerald-500/40 hover:text-emerald-400 transition-colors">⭐ Meilleurs matchs</a>
+            <a href="#section-upcoming" className="shrink-0 rounded-full border border-border/50 px-3 py-1 hover:border-sky-500/40 hover:text-sky-400 transition-colors">⏱️ Prochains matchs</a>
+            <a href="#section-gemini" className="shrink-0 rounded-full border border-border/50 px-3 py-1 hover:border-purple-500/40 hover:text-purple-400 transition-colors">🤖 Gemini AI</a>
           </div>
         </section>
 
@@ -218,6 +215,13 @@ export default function Home() {
         {activeTab === "wnba" && <WnbaTabContent />}
         {activeTab === "cycling" && <CyclingTabContent />}
         {activeTab === "f1" && <F1TabContent />}
+
+        {/* Sections déplacées : Meilleurs Matchs + Prochains Matchs + Gemini */}
+        <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-6">
+          <BestMatchesTabs id="section-best-matches" />
+          <UpcomingTenMatchesTable id="section-upcoming" />
+          <AIInsightCard id="section-gemini" />
+        </section>
 
         {/* Footer */}
         <footer className="hidden md:block mt-auto border-t border-white/10 bg-zinc-900/20">

@@ -1,7 +1,10 @@
 "use client";
 
-import { Star, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { useState, useCallback, useMemo } from "react";
+import { Star, Sparkles, TrendingUp, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePrematchMatches } from "@/hooks/use-prematch-matches";
+import { useFootballMatches } from "@/hooks/use-football-matches";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -13,30 +16,42 @@ type Factor = {
 };
 
 export type AIInsightCardProps = {
-  matchName?: string;
-  insight?: string;
-  factors?: Factor[];
-  edge?: number;
-  confidence?: number; // 1–5 scale
   className?: string;
+  id?: string;
+};
+
+type GeminiResponse = {
+  analysis: string;
+  factors: Factor[];
+  edge: number;
+  confidence: number;
+  source: "cache" | "gemini";
+  cachedAt?: string;
+};
+
+type MatchOption = {
+  id: string;
+  sport: "tennis" | "football";
+  label: string;
+  scheduledAt: string;
 };
 
 // ---------------------------------------------------------------------------
-// Demo data (French)
+// Demo data (French) — fallback quand aucun match sélectionné
 // ---------------------------------------------------------------------------
 
-const DEMO: Required<Omit<AIInsightCardProps, "className">> = {
-  matchName: "Sinner vs Alcaraz — Wimbledon Final",
-  insight:
-    "Le modèle détecte une value significative (+15%) sur Sinner. L'écart s'explique par la sous-estimation du marché de son jeu sur gazon (72% win rate surface vs 65% implied). L'IC 95% est étroit [62-74], ce qui renforce la fiabilité.",
+const DEMO: GeminiResponse = {
+  analysis:
+    "Sélectionnez un match dans la liste ci-dessous pour obtenir une analyse détaillée par Gemini AI. L'analyse couvre la value betting, les facteurs clés (H2H, surface/domicile, forme récente), et un niveau de confiance.",
   factors: [
-    { label: "Surface gazon", value: "+8% edge" },
-    { label: "Forme récente", value: "5-0 (W)" },
-    { label: "H2H vs Alcaraz", value: "3-2 favorable" },
-    { label: "Elo surface", value: "+45 vs Elo global" },
+    { label: "Comment ça marche", value: "Sélection → Analyse" },
+    { label: "Cache intelligent", value: "12h (cross-utilisateur)" },
+    { label: "Modèle", value: "Gemini 2.0 Flash" },
+    { label: "Sports couverts", value: "Tennis + Football" },
   ],
-  edge: 15,
-  confidence: 4,
+  edge: 0,
+  confidence: 3,
+  source: "gemini",
 };
 
 // ---------------------------------------------------------------------------
@@ -61,102 +76,98 @@ function renderStars(rating: number, max = 5): React.ReactNode {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AIInsightCard({
-  matchName,
-  insight,
-  factors,
-  edge,
-  confidence,
-  className,
-}: AIInsightCardProps) {
-  const m = matchName ?? DEMO.matchName;
-  const i = insight ?? DEMO.insight;
-  const f = factors ?? DEMO.factors;
-  const e = edge ?? DEMO.edge;
-  const c = confidence ?? DEMO.confidence;
+export function AIInsightCard({ className, id }: AIInsightCardProps) {
+  const { data: tennisData } = usePrematchMatches();
+  const { data: footData } = useFootballMatches();
 
-  const hasEdge = e > 0;
+  const [selectedMatchId, setSelectedMatchId] = useState<string>("");
+  const [insight, setInsight] = useState<GeminiResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Build match options list
+  const matchOptions = useMemo<MatchOption[]>(() => {
+    const opts: MatchOption[] = [];
+    for (const m of tennisData?.matches ?? []) {
+      opts.push({ id: m.id, sport: "tennis",
+        label: `🎾 ${m.playerA.shortName} vs ${m.playerB.shortName} (${m.tournament})`,
+        scheduledAt: m.scheduledAt });
+    }
+    for (const m of footData?.matches ?? []) {
+      opts.push({ id: m.id, sport: "football",
+        label: `⚽ ${m.home.shortName} vs ${m.away.shortName} (${m.league.name})`,
+        scheduledAt: m.scheduledAt });
+    }
+    return opts.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  }, [tennisData?.matches, footData?.matches]);
+
+  // Trigger Gemini
+  const handleSelect = useCallback(async (matchId: string) => {
+    if (!matchId) { setInsight(null); setError(null); return; }
+    setSelectedMatchId(matchId); setLoading(true); setError(null);
+    try {
+      const option = matchOptions.find((o) => o.id === matchId);
+      if (!option) throw new Error("Match introuvable");
+      let matchData: Record<string, unknown> = { sport: option.sport, matchId: option.id };
+      if (option.sport === "tennis") {
+        const m = tennisData?.matches?.find((x) => x.id === matchId);
+        if (m) matchData = { sport: "tennis", matchId: m.id,
+          playerA: { name: m.playerA.name, elo: m.playerA.elo, sps: m.playerA.sps },
+          playerB: { name: m.playerB.name, elo: m.playerB.elo, sps: m.playerB.sps },
+          eloGap: m.stats.eloGap, surface: m.stats.surface, confidence: m.stats.confidence,
+          tournament: m.tournament, probA: m.probA, probB: m.probB };
+      } else {
+        const m = footData?.matches?.find((x) => x.id === matchId);
+        if (m) matchData = { sport: "football", matchId: m.id,
+          home: { name: m.home.name, form: m.home.form, rank: m.home.rank },
+          away: { name: m.away.name, form: m.away.form, rank: m.away.rank },
+          prediction: m.prediction, league: m.league.name, round: m.round };
+      }
+      const res = await fetch("/api/ai/gemini-insight", { method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sport: option.sport, matchId: option.id, matchData }) });
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Erreur ${res.status}`); }
+      setInsight(await res.json());
+    } catch (err) { setError((err as Error).message); }
+    finally { setLoading(false); }
+  }, [matchOptions, tennisData?.matches, footData?.matches]);
+
+  const display = insight ?? DEMO;
+  const hasEdge = display.edge > 0;
+  const selectedOption = matchOptions.find((o) => o.id === selectedMatchId);
 
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-purple-500/20 bg-card p-4",
-        className
-      )}
-    >
-      {/* Ambient purple glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl"
-      />
-
-      {/* ── Header ── */}
-      <div className="mb-3 flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-400">
-          <Sparkles className="h-3 w-3" />
-          Gemini AI Insight
-        </span>
-      </div>
-
-      {/* ── Match name ── */}
-      <h3 className="mb-2 text-sm font-semibold tracking-tight">{m}</h3>
-
-      {/* ── Insight text ── */}
-      <p className="text-sm leading-relaxed text-muted-foreground">{i}</p>
-
-      {/* ── Factors grid ── */}
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {f.map((factor) => (
-          <div
-            key={factor.label}
-            className="flex flex-col rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5"
-          >
-            <span className="text-[11px] leading-tight text-muted-foreground">
-              {factor.label}
-            </span>
-            <span className="text-sm font-semibold text-emerald-400">
-              {factor.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Footer: edge badge + confidence stars ── */}
-      <div className="mt-3 flex items-center justify-between border-t border-purple-500/10 pt-3">
-        {/* Edge badge */}
-        <div className="flex items-center gap-1.5">
-          {hasEdge ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-400">
-              <TrendingUp className="h-3 w-3" />
-              Value détectée
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              <Zap className="h-3 w-3" />
-              Aucune value
-            </span>
-          )}
-          <span
-            className={cn(
-              "text-xs font-mono font-semibold",
-              hasEdge ? "text-emerald-400" : "text-muted-foreground"
-            )}
-          >
-            {hasEdge ? "+" : ""}
-            {e}% edge
-          </span>
+    <section id={id} className={cn("space-y-3", className)}>
+      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">🤖 GEMINI AI INSIGHT</h3>
+      <div className={cn("relative overflow-hidden rounded-2xl border border-purple-500/20 bg-card p-4")}>
+        <div aria-hidden className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl" />
+        {/* Header + Selector */}
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-400 shrink-0"><Sparkles className="h-3 w-3" /> Gemini AI Insight</span>
+          <select value={selectedMatchId} onChange={(e) => handleSelect(e.target.value)} className="w-full sm:w-auto rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500/50">
+            <option value="">— Sélectionner un match —</option>
+            {matchOptions.map((opt) => <option key={`${opt.sport}-${opt.id}`} value={opt.id}>{opt.label}</option>)}
+          </select>
         </div>
-
-        {/* Confidence stars */}
-        <div className="flex items-center gap-1">
-          <span className="mr-0.5 text-[11px] text-muted-foreground">
-            Confiance
-          </span>
-          <div className="flex items-center gap-0.5" aria-label={`${c}/5 confidence`}>
-            {renderStars(c)}
+        {selectedOption && <h3 className="mb-2 text-sm font-semibold tracking-tight">{selectedOption.label}</h3>}
+        {loading && <div className="flex items-center gap-2 py-4 text-sm text-purple-400"><Loader2 className="h-4 w-4 animate-spin" /> Analyse en cours...</div>}
+        {error && !loading && <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">{error}</div>}
+        {!loading && !error && <>
+          <p className="text-sm leading-relaxed text-muted-foreground">{display.analysis}</p>
+          {display.source && <span className="mt-1 inline-block text-[10px] text-muted-foreground/50">Source: {display.source}{display.cachedAt && ` · Cache: ${new Date(display.cachedAt).toLocaleTimeString("fr-FR")}`}</span>}
+        </>}
+        {!loading && !error && <div className="mt-3 grid grid-cols-2 gap-2">
+          {display.factors.map((factor) => <div key={factor.label} className="flex flex-col rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5"><span className="text-[11px] leading-tight text-muted-foreground">{factor.label}</span><span className="text-sm font-semibold text-emerald-400">{factor.value}</span></div>)}
+        </div>}
+        {!loading && !error && <div className="mt-3 flex items-center justify-between border-t border-purple-500/10 pt-3">
+          <div className="flex items-center gap-1.5">
+            {hasEdge ? <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-400"><TrendingUp className="h-3 w-3" /> Value détectée</span>
+              : <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"><Zap className="h-3 w-3" />{insight ? "Aucune value" : "En attente"}</span>}
+            <span className={cn("text-xs font-mono font-semibold", hasEdge ? "text-emerald-400" : "text-muted-foreground")}>{hasEdge ? "+" : ""}{display.edge}% edge</span>
           </div>
-        </div>
+          <div className="flex items-center gap-1"><span className="mr-0.5 text-[11px] text-muted-foreground">Confiance</span><div className="flex items-center gap-0.5" aria-label={`${display.confidence}/5 confidence`}>{renderStars(display.confidence)}</div></div>
+        </div>}
       </div>
-    </div>
+    </section>
   );
 }
