@@ -158,7 +158,6 @@ export function LiveScoreAnnouncer({
     });
 
     if (message) scheduleAnnounce(message);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveState, player1Name, player2Name]);
 
   // Clean up any pending throttle timer on unmount to avoid setting state

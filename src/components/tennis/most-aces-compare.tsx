@@ -51,10 +51,10 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
   const t = useTranslations("mostAces");
 
   const prematch = match.mostAcesPredictions;
-  if (match.synthetic || !prematch) return null;
-
-  const predictions: Prediction = useMemo(() => {
-    if (!liveState) return prematch;
+  // Hook appelé inconditionnellement (règles des hooks). Rend null si prematch
+  // absent — le guard d'affichage est en dessous.
+  const predictions: Prediction | null = useMemo(() => {
+    if (!prematch || !liveState) return prematch ?? null;
     const modelSurface = toModelSurface(match.stats.surface);
     const liveCtx = buildLiveContext(liveState);
     const result = predictMostAces(
@@ -86,6 +86,8 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
     serveStatsA,
     serveStatsB,
   ]);
+
+  if (match.synthetic || !prematch || !predictions) return null;
 
   const isLive = !!liveState;
   const isFallback = predictions.source !== "stats";

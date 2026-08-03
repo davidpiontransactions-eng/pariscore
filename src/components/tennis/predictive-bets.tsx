@@ -80,12 +80,13 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
 
   // Masqué si match synthétique (live-only sans prematch) ou si prematch absent.
   const prematch = match.totalGamesPredictions;
-  if (match.synthetic || !prematch) return null;
 
   // En live : recalcule à chaque poll (le parent re-render toutes les 8s).
   // useMemo pour éviter le recalcul entre re-rendus sans changement de liveState.
-  const predictions: Prediction = useMemo(() => {
-    if (!liveState) {
+  // Hook appelé inconditionnellement (règles des hooks) — rend null si prematch
+  // absent, le guard d'affichage est en dessous.
+  const predictions: Prediction | null = useMemo(() => {
+    if (!prematch || !liveState) {
       return prematch;
     }
     // Recalcul live avec contexte (games restants). Stats serve depuis les
@@ -118,6 +119,8 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
     serveStatsA,
     serveStatsB,
   ]);
+
+  if (match.synthetic || !prematch || !predictions) return null;
 
   const isLive = !!liveState;
   const thresholds: Array<{ threshold: Threshold; prob: number; label: string }> = [

@@ -151,9 +151,10 @@ function StatRow({
 export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch; onOpenDetail?: () => void }) {
   const live = match.live;
   const p = match.prediction;
-  if (!live) return null;
-
+  // Hook appelé inconditionnellement (règles des hooks) avant l'early return.
   const [expanded, setExpanded] = useState(false);
+
+  if (!live) return null;
 
   // Prediction badges (compact, only top confidence)
   const topBadges: { key: string; label: string; isTop: boolean }[] = [];

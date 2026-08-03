@@ -288,7 +288,7 @@ function connectSSE(url, onMatches, opts) {
   }
 
   connect();
-  return () => { try { es && es.close(); } catch (_) {} };
+  return () => { try { if (es) es.close(); } catch (_) {} };
 }
 
 // ─── Source alternative : scan direct de match_stats_history ───────────────────

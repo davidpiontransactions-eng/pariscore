@@ -149,7 +149,11 @@ function collectChatIds() {
   let ok = 0, fail = 0;
   for (const chatId of chatIds) {
     const success = await sendOne(chatId);
-    success ? ok++ : fail++;
+    if (success) {
+      ok++;
+    } else {
+      fail++;
+    }
     await sleep(100); // Telegram rate limit: max ~30 msg/s
   }
 

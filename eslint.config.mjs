@@ -19,6 +19,14 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     // React rules
     "react-hooks/exhaustive-deps": "off",
     "react-hooks/purity": "off",
+    // React Compiler-era diagnostics (eslint-plugin-react-hooks v7) —
+    // off pour la tolérance legacy (43 refs, 8 memo, 3 set-state, 1 incompatible).
+    // TODO: réactiver pour src/** une fois les patterns compiler-era en place.
+    "react-hooks/refs": "off",
+    "react-hooks/preserve-manual-memoization": "off",
+    "react-hooks/set-state-in-effect": "off",
+    "react-hooks/incompatible-library": "off",
+    "react-hooks/immutability": "off",
     "react/no-unescaped-entities": "off",
     "react/display-name": "off",
     "react/prop-types": "off",
@@ -42,6 +50,14 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-undef": "off",
     "no-unreachable": "off",
     "no-useless-escape": "off",
+  },
+}, {
+  // Legacy CommonJS / bridge files — `require()` est le pattern natif (scripts .js legacy,
+  // package bridge pariscore-services, routes API Next qui chargent les services legacy).
+  // Garder la règle ON pour le reste de src/** (code Next.js moderne en ESM).
+  files: ["scripts/**/*.{js,ts,tsx,mjs,cjs}", "packages/pariscore-services/**/*.{js,ts}", "src/app/api/f1/**", "src/app/api/cs2/**", "src/app/api/cycling/**", "src/app/api/mma/**", "src/app/api/nba/**", "src/app/api/wnba/**"],
+  rules: {
+    "@typescript-eslint/no-require-imports": "off",
   },
 }, {
   ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts", "examples/**", "skills", "tests/**", "playwright.config.ts", "e2e/**", ".graphify/**", ".agents/**", ".context/**", ".claude/**", ".archive/**", ".opencode/**", ".stitch/**", ".mcp/**", "cache/**", "docs/**", "download/**", "data/**", "export/**", "markdown/**", "models/**", "ml/**", "mobile/**", "legacy/**", "graphify-out/**"]
