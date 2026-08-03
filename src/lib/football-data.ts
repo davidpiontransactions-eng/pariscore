@@ -172,14 +172,15 @@ export type Prediction = {
   bestCornerOver?: { line: number; overProb: number };
   /** Barres de comparaison d'équipe (max 4) avec probabilités domicile/extérieur. */
   teamComparisons?: { label: string; homeProb: number; awayProb: number }[];
-  /** Stats saisonnières par métrique avec moyennes Home/Away + rangs ligue. */
+  /** Stats saisonnières par métrique avec moyennes Home/Away + rangs ligue (null = indisponible, jamais simulé). */
   teamSeasonStats?: {
     label: string;
     homeAvg: number;
-    homeRank: number;
+    /** Rang ligue réel (null = non calculé pour cette métrique — ne pas simuler). */
+    homeRank: number | null;
     homeRankTotal: number;
     awayAvg: number;
-    awayRank: number;
+    awayRank: number | null;
     awayRankTotal: number;
   }[];
   /** Bilan réel Domicile (équipe 1) vs Extérieur (équipe 2) — MJ, Pts, PPG+Rang, GD. */
@@ -567,10 +568,10 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
         { label: "Confrontations", homeProb: 35, awayProb: 55 },
       ],
       teamSeasonStats: [
-        { label: "Forme récente", homeAvg: 2.1, homeRank: 3, homeRankTotal: 18, awayAvg: 1.8, awayRank: 5, awayRankTotal: 18 },
-        { label: "Attaque", homeAvg: 2.4, homeRank: 2, homeRankTotal: 18, awayAvg: 1.9, awayRank: 7, awayRankTotal: 18 },
-        { label: "Défense", homeAvg: 0.8, homeRank: 4, homeRankTotal: 18, awayAvg: 1.2, awayRank: 10, awayRankTotal: 18 },
-        { label: "Confrontations", homeAvg: 1.5, homeRank: 6, homeRankTotal: 18, awayAvg: 1.1, awayRank: 8, awayRankTotal: 18 },
+        { label: "Forme récente", homeAvg: 2.1, homeRank: null, homeRankTotal: 0, awayAvg: 1.8, awayRank: null, awayRankTotal: 0 },
+        { label: "Attaque", homeAvg: 2.4, homeRank: null, homeRankTotal: 0, awayAvg: 1.9, awayRank: null, awayRankTotal: 0 },
+        { label: "Défense", homeAvg: 0.8, homeRank: null, homeRankTotal: 0, awayAvg: 1.2, awayRank: null, awayRankTotal: 0 },
+        { label: "Confrontations", homeAvg: 1.5, homeRank: null, homeRankTotal: 0, awayAvg: 1.1, awayRank: null, awayRankTotal: 0 },
       ],
       xGa: { home: 1.72, away: 1.95, total: 3.67 },
       xGd: -0.06,

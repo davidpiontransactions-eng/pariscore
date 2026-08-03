@@ -5,6 +5,7 @@ import {
   computeUnder35,
   computeCornerOver,
   computeTeamComparisons,
+  computeTeamSeasonStats,
   computeXGa,
   computeXGd,
   enrichPrediction,
@@ -268,6 +269,66 @@ describe("computeTeamComparisons", () => {
   });
 });
 
+// ─── computeTeamSeasonStats ────────────────────────────────────────────────
+
+describe("computeTeamSeasonStats", () => {
+  const comparisons = [
+    { label: "Corners", homeProb: 55, awayProb: 45 },
+    { label: "Tirs cadrés", homeProb: 55, awayProb: 45 },
+    { label: "Cartons", homeProb: 55, awayProb: 45 },
+    { label: "Fautes", homeProb: 55, awayProb: 45 },
+  ];
+
+  test("no simulated ranks ever (homeRank/awayRank null, rankTotal 0)", () => {
+    const result = computeTeamSeasonStats(comparisons, null, null);
+    for (const row of result) {
+      expect(row.homeRank).toBe(null);
+      expect(row.homeRankTotal).toBe(0);
+      expect(row.awayRank).toBe(null);
+      expect(row.awayRankTotal).toBe(0);
+    }
+  });
+
+  test("ranks stay null even with live_stats present (no real per-metric ranking source)", () => {
+    const homeStats = { corner_kicks: 8, shots_on_target: 6, yellow_cards: 2, fouls: 12 };
+    const awayStats = { corner_kicks: 2, shots_on_target: 4, yellow_cards: 1, fouls: 8 };
+    const result = computeTeamSeasonStats(comparisons, homeStats as never, awayStats as never);
+    for (const row of result) {
+      expect(row.homeRank).toBe(null);
+      expect(row.awayRank).toBe(null);
+    }
+  });
+
+  test("averages home/away clamped to [0.1, 25]", () => {
+    const result = computeTeamSeasonStats(comparisons, null, null);
+    for (const row of result) {
+      expect(row.homeAvg).toBeGreaterThanOrEqual(0.1);
+      expect(row.homeAvg).toBeLessThanOrEqual(25);
+      expect(row.awayAvg).toBeGreaterThanOrEqual(0.1);
+      expect(row.awayAvg).toBeLessThanOrEqual(25);
+    }
+  });
+
+  test("one entry per label, labels preserved", () => {
+    const result = computeTeamSeasonStats(comparisons, null, null);
+    expect(result).toHaveLength(4);
+    expect(result.map((r) => r.label)).toEqual(["Corners", "Tirs cadrés", "Cartons", "Fautes"]);
+  });
+
+  test("homeProb=70 domination -> homeAvg > awayAvg, no fabricated ranks", () => {
+    const dominated = [
+      { label: "Corners", homeProb: 70, awayProb: 30 },
+      { label: "Fautes", homeProb: 70, awayProb: 30 },
+    ];
+    const result = computeTeamSeasonStats(dominated, null, null);
+    for (const row of result) {
+      expect(row.homeAvg).toBeGreaterThan(row.awayAvg);
+      expect(row.homeRank).toBe(null);
+      expect(row.awayRank).toBe(null);
+    }
+  });
+});
+
 // ─── computeXGa ────────────────────────────────────────────────────────────
 
 describe("computeXGa", () => {
@@ -327,9 +388,9 @@ describe("computeXGd", () => {
     expect(result).toBe(0);
   });
 
-  test("with no data returns 0", () => {
-    expect(computeXGd(null, null)).toBe(0);
-    expect(computeXGd(undefined, undefined)).toBe(0);
+  test("with no data returns null (contrat: distinguer 'pas de data' du vrai zéro)", () => {
+    expect(computeXGd(null, null)).toBe(null);
+    expect(computeXGd(undefined, undefined)).toBe(null);
   });
 
   test("clamped to [-1, 1]", () => {

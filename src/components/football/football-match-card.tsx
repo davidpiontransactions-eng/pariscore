@@ -680,13 +680,18 @@ export function FootballMatchCard({
                           <span className="inline-flex items-center gap-0.5">
                             <Home className="h-2.5 w-2.5 text-emerald-500/60" />
                             <span className="tabular-nums">{seasonStat.homeAvg.toFixed(1)}/m</span>
-                            <span className="text-muted-foreground/40">(#{seasonStat.homeRank}/{seasonStat.homeRankTotal})</span>
+                            {/* Badge rang uniquement pour un rang réel (jamais simulé) — cf. computeTeamSeasonStats : null = indisponible */}
+                            {seasonStat.homeRank != null && seasonStat.homeRankTotal > 0 && (
+                              <span className="text-muted-foreground/40">(#{seasonStat.homeRank}/{seasonStat.homeRankTotal})</span>
+                            )}
                           </span>
                           <span className="text-muted-foreground/30">—</span>
                           <span className="inline-flex items-center gap-0.5">
                             <PlaneTakeoff className="h-2.5 w-2.5 text-rose-500/60" />
                             <span className="tabular-nums">{seasonStat.awayAvg.toFixed(1)}/m</span>
-                            <span className="text-muted-foreground/40">(#{seasonStat.awayRank}/{seasonStat.awayRankTotal})</span>
+                            {seasonStat.awayRank != null && seasonStat.awayRankTotal > 0 && (
+                              <span className="text-muted-foreground/40">(#{seasonStat.awayRank}/{seasonStat.awayRankTotal})</span>
+                            )}
                           </span>
                         </div>
                       )}

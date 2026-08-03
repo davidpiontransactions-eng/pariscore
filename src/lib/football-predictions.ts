@@ -211,10 +211,8 @@ export function computeTeamSeasonStats(
   comparisons: { label: string; homeProb: number; awayProb: number }[],
   homeLiveStats?: LiveStatsTeam | null,
   awayLiveStats?: LiveStatsTeam | null,
-): { label: string; homeAvg: number; homeRank: number; homeRankTotal: number; awayAvg: number; awayRank: number; awayRankTotal: number }[] {
-  const LEAGUE_TOTAL = 18; // total équipes par défaut (ajustable par ligue)
-
-  // Moyennes de ligue par catégorie (Top 5 européen)
+): { label: string; homeAvg: number; homeRank: number | null; homeRankTotal: number; awayAvg: number; awayRank: number | null; awayRankTotal: number }[] {
+  // Moyennes de ligue par catégorie (Top 5 européen) — utilisées comme estimation de base.
   const LEAGUE_AVG: Record<string, number> = {
     "Corners": 5.2,
     "Tirs cadrés": 4.1,
@@ -226,8 +224,11 @@ export function computeTeamSeasonStats(
     "Confrontations": 1.3,
   };
 
-  const RANK_TOTAL = LEAGUE_TOTAL;
-
+  // ⚠️ AUCUN rang simulé : le pipeline BSD ne fournit de classement réel par métrique
+  // (avec total d'équipes de la ligue) QUE pour PPG/buts (metricStats, standingStats,
+  // metricRankings). Corners/Tirs cadrés/Cartons/Fautes n'ont aucune source réelle de
+  // classement — un faux rang (#9/18) serait trompeur et identique sur tous les matchs.
+  // → rank = null : l'UI affiche la moyenne sans badge (N/A), conforme à la spec.
   return comparisons.map((comp) => {
     const leagueAvg = LEAGUE_AVG[comp.label] ?? 2.0;
 
@@ -235,34 +236,16 @@ export function computeTeamSeasonStats(
     // homeProb=60 → homeAvg = leagueAvg * 1.2 (au-dessus de la moyenne)
     // homeProb=40 → homeAvg = leagueAvg * 0.8 (en-dessous)
     const homeAvg = Math.round(leagueAvg * (comp.homeProb / 50) * 10) / 10;
-
-    // Away avg : proportionnel à awayProb
     const awayAvg = Math.round(leagueAvg * (comp.awayProb / 50) * 10) / 10;
-
-    // Rangs simulés : meilleure valeur → meilleur rang (1 = meilleur, RANK_TOTAL = pire)
-    // Offensif : + de corners/tirs = mieux. Défensif : + de fautes/cartons = pire.
-    const isDefensive = comp.label === "Cartons" || comp.label === "Fautes" || comp.label === "Défense";
-    const maxRange = leagueAvg * 2;
-    let homeRank: number;
-    let awayRank: number;
-    if (isDefensive) {
-      // Défensif : valeur basse = bon rang. Position dans [1, RANK_TOTAL]
-      homeRank = Math.max(1, Math.min(RANK_TOTAL, Math.round((homeAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1)) + 1));
-      awayRank = Math.max(1, Math.min(RANK_TOTAL, Math.round((awayAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1)) + 1));
-    } else {
-      // Offensif : valeur haute = bon rang. Plus homeAvg est élevé, plus rank est proche de 1
-      homeRank = Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (homeAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1))));
-      awayRank = Math.max(1, Math.min(RANK_TOTAL, Math.round(RANK_TOTAL - (awayAvg / Math.max(maxRange, 0.1)) * (RANK_TOTAL - 1))));
-    }
 
     return {
       label: comp.label,
       homeAvg: clamp(homeAvg, 0.1, 25),
-      homeRank,
-      homeRankTotal: RANK_TOTAL,
+      homeRank: null,
+      homeRankTotal: 0,
       awayAvg: clamp(awayAvg, 0.1, 25),
-      awayRank,
-      awayRankTotal: RANK_TOTAL,
+      awayRank: null,
+      awayRankTotal: 0,
     };
   });
 }
