@@ -8,12 +8,18 @@
  */
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
-import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 // ---------------------------------------------------------------------------
 // Cache config
 // ---------------------------------------------------------------------------
 const GEMINI_CACHE_TTL_MS = 12 * 60 * 60_000; // 12 heures
+const ALLOWED_SPORTS = ["tennis", "football"] as const;
+const MAX_MATCHDATA_BYTES = 10_000;
+
+// Rate limiting: max 10 req/5min per IP
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
 
 type CachedInsight = {
   analysis: string;
@@ -21,8 +27,6 @@ type CachedInsight = {
   edge: number;
   confidence: number;
 };
-
-const insightCache = createTtlCache<CachedInsight>("__geminiInsightCache");
 
 
 // ---------------------------------------------------------------------------
@@ -69,11 +73,14 @@ async function callGemini(prompt: string): Promise<CachedInsight> {
     throw new Error("GEMINI_API_KEY non configurée");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
+    },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
@@ -121,6 +128,19 @@ async function callGemini(prompt: string): Promise<CachedInsight> {
 
 export async function POST(request: Request) {
   try {
+    // Rate limiting
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const now = Date.now();
+    const rl = rateLimitMap.get(ip);
+    if (rl && now < rl.resetAt && rl.count >= RATE_LIMIT_MAX) {
+      return NextResponse.json({ error: "Trop de requêtes. Réessayez dans quelques minutes." }, { status: 429 });
+    }
+    if (!rl || now >= (rl?.resetAt ?? 0)) {
+      rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    } else {
+      rl.count++;
+    }
+
     const body = await request.json().catch(() => null);
     if (!body || !body.sport || !body.matchId || !body.matchData) {
       return NextResponse.json(
@@ -134,6 +154,17 @@ export async function POST(request: Request) {
       matchId: string;
       matchData: Record<string, unknown>;
     };
+
+    // Input validation
+    if (!ALLOWED_SPORTS.includes(sport as typeof ALLOWED_SPORTS[number])) {
+      return NextResponse.json({ error: `Sport non supporté: ${sport}` }, { status: 400 });
+    }
+    if (JSON.stringify(matchData).length > MAX_MATCHDATA_BYTES) {
+      return NextResponse.json({ error: "matchData trop volumineux (max 10KB)" }, { status: 400 });
+    }
+    if (typeof matchId !== "string" || matchId.length > 100) {
+      return NextResponse.json({ error: "matchId invalide" }, { status: 400 });
+    }
 
     pruneExpiredCache();
 

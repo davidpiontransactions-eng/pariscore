@@ -88,7 +88,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
       .slice(0, 10);
   }, [tennisData?.matches, footData?.matches]);
 
-  const isLoading = tennisLoading && footLoading;
+  const isLoading = tennisLoading || footLoading;
 
   return (
     <section id={id} className={cn("space-y-3", className)}>

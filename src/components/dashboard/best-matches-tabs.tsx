@@ -40,7 +40,14 @@ const SPORT_ICONS: Record<SportTab, string> = {
 function estimateFootballEloGap(match: FootballMatch): number {
   const { homeProb, awayProb } = match.prediction;
   const favProb = Math.max(homeProb, awayProb);
-  if (favProb <= 50 || favProb >= 100) return 0;
+  if (favProb <= 50) {
+    console.warn("[BestMatches] Football Elo estimation: équipes équilibrées", match.id);
+    return 0;
+  }
+  if (favProb >= 100) {
+    console.warn("[BestMatches] Football Elo estimation: probabilité invalide (>100)", match.id);
+    return 0;
+  }
   return Math.round(-400 * Math.log10(100 / favProb - 1));
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { Star, Sparkles, TrendingUp, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
@@ -84,6 +84,7 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
   const [insight, setInsight] = useState<GeminiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Build match options list
   const matchOptions = useMemo<MatchOption[]>(() => {
@@ -104,6 +105,10 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
   // Trigger Gemini
   const handleSelect = useCallback(async (matchId: string) => {
     if (!matchId) { setInsight(null); setError(null); return; }
+    // Cancel previous in-flight request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setSelectedMatchId(matchId); setLoading(true); setError(null);
     try {
       const option = matchOptions.find((o) => o.id === matchId);
@@ -125,10 +130,14 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
       }
       const res = await fetch("/api/ai/gemini-insight", { method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sport: option.sport, matchId: option.id, matchData }) });
+        body: JSON.stringify({ sport: option.sport, matchId: option.id, matchData }),
+        signal: controller.signal });
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Erreur ${res.status}`); }
       setInsight(await res.json());
-    } catch (err) { setError((err as Error).message); }
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      setError((err as Error).message);
+    }
     finally { setLoading(false); }
   }, [matchOptions, tennisData?.matches, footData?.matches]);
 
