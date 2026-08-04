@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+import { LayoutGrid, Table, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePrematchMatches } from "@/hooks/use-prematch-matches";
-import { useFootballMatches } from "@/hooks/use-football-matches";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { FootballMatch } from "@/lib/football-data";
+import { Slider } from "@/components/ui/slider";
+import { estimateFootballEloGap } from "@/lib/elo-utils";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,21 +37,6 @@ const SPORT_ICONS: Record<SportTab, string> = {
   darts: "🎯",
 };
 
-/** Estime l'écart Elo football depuis les probabilités (inversion Elo). */
-function estimateFootballEloGap(match: FootballMatch): number {
-  const { homeProb, awayProb } = match.prediction;
-  const favProb = Math.max(homeProb, awayProb);
-  if (favProb <= 50) {
-    console.warn("[BestMatches] Football Elo estimation: équipes équilibrées", match.id);
-    return 0;
-  }
-  if (favProb >= 100) {
-    console.warn("[BestMatches] Football Elo estimation: probabilité invalide (>100)", match.id);
-    return 0;
-  }
-  return Math.round(-400 * Math.log10(100 / favProb - 1));
-}
-
 // ---------------------------------------------------------------------------
 // Skeleton
 // ---------------------------------------------------------------------------
@@ -74,17 +60,22 @@ function MatchCardSkeleton() {
 
 export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
   const [activeTab, setActiveTab] = useState<SportTab>("tennis");
-  const { data: tennisData, isLoading: tennisLoading } = usePrematchMatches();
-  const { data: footData, isLoading: footLoading } = useFootballMatches();
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [showFilters, setShowFilters] = useState(false);
+  // Filtres avancés — seuils ajustables par l'utilisateur
+  const [minEloGap, setMinEloGap] = useState(150);
+  const [minSps, setMinSps] = useState(55);
+  const { tennisData, tennisLoading } = useDashboardData();
+  const { footData, footLoading } = useDashboardData();
 
-  // ── Tennis : ΔElo ≥ 150 OU SPS ≥ 55 ──
+  // ── Tennis : ΔElo ≥ minEloGap OU SPS ≥ minSps ──
   const tennisMatches = useMemo<MatchCard[]>(() => {
     const matches = tennisData?.matches ?? [];
     return matches
       .filter((m) => {
         const eloGap = Math.abs(m.playerA.elo - m.playerB.elo);
         const maxSps = Math.max(m.playerA.sps ?? 0, m.playerB.sps ?? 0);
-        return eloGap >= 150 || maxSps >= 55;
+        return eloGap >= minEloGap || maxSps >= minSps;
       })
       .map((m) => ({
         id: m.id,
@@ -95,15 +86,15 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         scheduledAt: m.scheduledAt,
       }))
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [tennisData?.matches]);
+  }, [tennisData?.matches, minEloGap, minSps]);
 
-  // ── Football : ΔElo ≥ 150 ──
+  // ── Football : ΔElo ≥ minEloGap ──
   const footballMatches = useMemo<MatchCard[]>(() => {
     const matches = footData?.matches ?? [];
     return matches
       .filter((m) => {
         const gap = estimateFootballEloGap(m);
-        return gap >= 150;
+        return gap >= minEloGap;
       })
       .map((m) => ({
         id: m.id,
@@ -114,26 +105,104 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         scheduledAt: m.scheduledAt,
       }))
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [footData?.matches]);
+  }, [footData?.matches, minEloGap]);
 
-  const tabs: { key: SportTab; label: string; matches: MatchCard[]; loading: boolean }[] = [
+  const allTabs: { key: SportTab; label: string; matches: MatchCard[]; loading: boolean }[] = [
     { key: "tennis", label: "🎾 Tennis", matches: tennisMatches, loading: tennisLoading },
     { key: "football", label: "⚽ Football", matches: footballMatches, loading: footLoading },
     { key: "basketball", label: "🏀 Basketball", matches: [], loading: false },
     { key: "cs2", label: "🔫 CS2", matches: [], loading: false },
     { key: "darts", label: "🎯 Darts", matches: [], loading: false },
   ];
+  // N'affiche que les sports avec des données ou en cours de chargement
+  const tabs = allTabs.filter((t) => t.matches.length > 0 || t.loading);
 
   const current = tabs.find((t) => t.key === activeTab) ?? tabs[0];
 
   return (
-    <section id={id} className={cn("space-y-3", className)}>
+    <section id={id} className={cn("scroll-mt-20 space-y-3", className)}>
       <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
         ⭐ MEILLEURS MATCHS DU JOUR
       </h3>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+      {/* Filter toggle + panel */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+            showFilters
+              ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+              : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          <SlidersHorizontal className="h-3 w-3" />
+          Filtres
+          {(minEloGap !== 150 || minSps !== 55) && (
+            <span className="inline-flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[9px] font-bold text-emerald-300">
+              !
+            </span>
+          )}
+        </button>
+        {(minEloGap !== 150 || minSps !== 55) && (
+          <button
+            type="button"
+            onClick={() => { setMinEloGap(150); setMinSps(55); }}
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-3 w-3" />
+            Réinitialiser
+          </button>
+        )}
+      </div>
+
+      {showFilters && (
+        <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-muted-foreground">ΔElo minimum</label>
+              <span className="text-[11px] font-mono font-semibold text-emerald-400 tabular-nums">{minEloGap}</span>
+            </div>
+            <Slider
+              value={[minEloGap]}
+              onValueChange={([v]) => setMinEloGap(v)}
+              min={0}
+              max={300}
+              step={10}
+              className="w-full"
+            />
+            <div className="flex justify-between text-[9px] text-muted-foreground/60">
+              <span>0 (tout)</span>
+              <span>150 (défaut)</span>
+              <span>300 (strict)</span>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-medium text-muted-foreground">SPS minimum</label>
+              <span className="text-[11px] font-mono font-semibold text-emerald-400 tabular-nums">{minSps}</span>
+            </div>
+            <Slider
+              value={[minSps]}
+              onValueChange={([v]) => setMinSps(v)}
+              min={0}
+              max={100}
+              step={5}
+              className="w-full"
+            />
+            <div className="flex justify-between text-[9px] text-muted-foreground/60">
+              <span>0 (tout)</span>
+              <span>55 (défaut)</span>
+              <span>100 (max)</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab bar + view toggle */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none flex-1">
         {tabs.map((tab) => (
           <button
             key={tab.key}
@@ -154,6 +223,37 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             )}
           </button>
         ))}
+        </div>
+
+        {/* View toggle */}
+        <div className="flex shrink-0 rounded-lg border border-border/60 bg-muted/30 p-0.5">
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            className={cn(
+              "rounded-md p-1.5 transition-colors",
+              viewMode === "grid"
+                ? "bg-white/10 text-emerald-400"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            title="Vue cartes"
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            className={cn(
+              "rounded-md p-1.5 transition-colors",
+              viewMode === "table"
+                ? "bg-white/10 text-emerald-400"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            title="Vue tableau"
+          >
+            <Table className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -169,7 +269,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             ? "Aucun match avec fort écart Elo aujourd'hui"
             : `Données ${current.label} bientôt disponibles`}
         </div>
-      ) : (
+      ) : viewMode === "grid" ? (
         <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
           {current.matches.map((match) => (
             <div
@@ -195,6 +295,46 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        /* Vue tableau */
+        <div className="overflow-x-auto rounded-xl border border-border/60">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/40 bg-muted/30 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+                <th className="px-3 py-2.5 font-medium">Heure</th>
+                <th className="px-3 py-2.5 font-medium">Sport</th>
+                <th className="px-3 py-2.5 font-medium">Rencontre</th>
+                <th className="px-3 py-2.5 font-medium">ΔElo / SPS</th>
+                <th className="px-3 py-2.5 font-medium text-right">Tournoi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30">
+              {current.matches.map((match) => (
+                <tr
+                  key={`${match.sport}-${match.id}`}
+                  className="transition-colors hover:bg-emerald-500/5"
+                >
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                    {new Date(match.scheduledAt).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+                  <td className="px-3 py-2.5 text-lg">{SPORT_ICONS[match.sport]}</td>
+                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                    {match.matchName}
+                  </td>
+                  <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                    {match.detail1}
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                    {match.detail2}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </section>

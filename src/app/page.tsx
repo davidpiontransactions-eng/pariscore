@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Component, type ReactNode, useCallback, useMemo } from "react";
+import { useState, Component, type ReactNode, useCallback, useMemo, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import {
   Trophy,
   Wallet,
@@ -35,8 +36,7 @@ import { F1TabContent } from "@/components/f1/f1-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
-import { usePrematchMatches } from "@/hooks/use-prematch-matches";
-import { useFootballMatches } from "@/hooks/use-football-matches";
+import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 
 type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1";
 
@@ -65,6 +65,14 @@ class PageErrorBoundary extends Component<
 }
 
 export default function Home() {
+  return (
+    <DashboardDataProvider>
+      <HomeInner />
+    </DashboardDataProvider>
+  );
+}
+
+function HomeInner() {
   const t = useTranslations("common");
   const tPrivacy = useTranslations("privacy");
   const tAbout = useTranslations("about");
@@ -74,9 +82,41 @@ export default function Home() {
 
   const [activeTab, setActiveTab] = useState<SportTab>("tennis");
 
+  // Pills navigation active state
+  const [activePill, setActivePill] = useState("best-matches");
+
+  // IntersectionObserver pour synchroniser le pill actif avec le scroll
+  useEffect(() => {
+    const sections = ["best-matches", "upcoming", "gemini"];
+    const els = sections.map((s) => document.getElementById(`section-${s}`)).filter(Boolean);
+    if (els.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+            const id = entry.target.id.replace("section-", "");
+            setActivePill(id);
+            break;
+          }
+        }
+      },
+      { threshold: [0, 0.3, 0.5, 1], rootMargin: "-80px 0px -40% 0px" },
+    );
+
+    els.forEach((el) => observer.observe(el!));
+    return () => observer.disconnect();
+  }, []);
+
+  /** Scroll + met à jour activePill */
+  const scrollToSection = (sectionId: string, pillId: string) => {
+    setActivePill(pillId);
+    const el = document.getElementById(sectionId);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
+  };
+
   // Real data hooks
-  const { data: tennisData } = usePrematchMatches();
-  const { data: footData } = useFootballMatches();
+  const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
 
   // Compute stats dynamically
   const stats = useMemo(() => {
@@ -197,9 +237,42 @@ export default function Home() {
           {/* Ancres de navigation rapide */}
           <div className="mt-4 flex items-center gap-3 text-xs text-zinc-500 overflow-x-auto pb-1 scrollbar-none">
             <span className="shrink-0 font-medium text-zinc-400">Aller à :</span>
-            <a href="#section-best-matches" className="shrink-0 rounded-full border border-border/50 px-3 py-1 hover:border-emerald-500/40 hover:text-emerald-400 transition-colors">⭐ Meilleurs matchs</a>
-            <a href="#section-upcoming" className="shrink-0 rounded-full border border-border/50 px-3 py-1 hover:border-sky-500/40 hover:text-sky-400 transition-colors">⏱️ Prochains matchs</a>
-            <a href="#section-gemini" className="shrink-0 rounded-full border border-border/50 px-3 py-1 hover:border-purple-500/40 hover:text-purple-400 transition-colors">🤖 Gemini AI</a>
+            <button
+              type="button"
+              onClick={() => scrollToSection("section-best-matches", "best-matches")}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 transition-colors",
+                activePill === "best-matches"
+                  ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 border-emerald-500/40"
+                  : "border-border/50 hover:border-emerald-500/40 hover:text-emerald-400",
+              )}
+            >
+              ⭐ Meilleurs matchs
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection("section-upcoming", "upcoming")}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 transition-colors",
+                activePill === "upcoming"
+                  ? "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30 border-sky-500/40"
+                  : "border-border/50 hover:border-sky-500/40 hover:text-sky-400",
+              )}
+            >
+              ⏱️ Prochains matchs
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection("section-gemini", "gemini")}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1 transition-colors",
+                activePill === "gemini"
+                  ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30 border-purple-500/40"
+                  : "border-border/50 hover:border-purple-500/40 hover:text-purple-400",
+              )}
+            >
+              🤖 Gemini AI
+            </button>
           </div>
         </section>
 
@@ -223,8 +296,8 @@ export default function Home() {
           <AIInsightCard id="section-gemini" />
         </section>
 
-        {/* Footer */}
-        <footer className="hidden md:block mt-auto border-t border-white/10 bg-zinc-900/20">
+        {/* Footer — toujours visible, padding bottom pour la bottom nav mobile */}
+        <footer className="block mt-auto border-t border-white/10 bg-zinc-900/20 pb-20 md:pb-6">
           <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
             <div className="flex flex-col items-start justify-between gap-3 text-xs text-zinc-500 sm:flex-row sm:items-center">
               <p>

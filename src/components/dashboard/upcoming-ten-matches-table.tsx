@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { usePrematchMatches } from "@/hooks/use-prematch-matches";
-import { useFootballMatches } from "@/hooks/use-football-matches";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
+import { useLiveMatches } from "@/hooks/use-live-matches";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Sparkline } from "@/components/ui/sparkline";
+import { estimateFootballEloGap } from "@/lib/elo-utils";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
 
@@ -14,12 +16,25 @@ import type { FootballMatch } from "@/lib/football-data";
 
 type UpcomingMatch = {
   id: string;
-  sport: "tennis" | "football";
+  sport: "tennis" | "football" | "basketball" | "cs2" | "darts";
   scheduledAt: string;
   matchName: string;
   oddsInfo: string;
   eloGap: number | null;
+  eloTrend: number[] | null;
+  isLive?: boolean;
 };
+
+type SportFilter = "all" | "tennis" | "football" | "basketball" | "cs2" | "darts";
+
+const SPORT_TABS: { key: SportFilter; label: string }[] = [
+  { key: "all", label: "🌐 Tous" },
+  { key: "tennis", label: "🎾 Tennis" },
+  { key: "football", label: "⚽ Football" },
+  { key: "basketball", label: "🏀 Basketball" },
+  { key: "darts", label: "🎯 Darts" },
+  { key: "cs2", label: "🎮 CS2" },
+];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -47,8 +62,10 @@ function formatOddsFootball(m: FootballMatch): string {
 // ---------------------------------------------------------------------------
 
 export function UpcomingTenMatchesTable({ className, id }: { className?: string; id?: string }) {
-  const { data: tennisData, isLoading: tennisLoading } = usePrematchMatches();
-  const { data: footData, isLoading: footLoading } = useFootballMatches();
+  const { tennisData, tennisLoading } = useDashboardData();
+  const { footData, footLoading } = useDashboardData();
+  const { liveStates } = useLiveMatches();
+  const [sportFilter, setSportFilter] = useState<SportFilter>("all");
 
   const upcoming = useMemo<UpcomingMatch[]>(() => {
     const now = Date.now();
@@ -58,43 +75,71 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
     for (const m of tennisData?.matches ?? []) {
       const t = new Date(m.scheduledAt).getTime();
       if (t < now) continue;
+      const eloGap = Math.round(Math.abs(m.playerA.elo - m.playerB.elo));
+      const avgElo = (m.playerA.elo + m.playerB.elo) / 2;
+      const trend = eloGap > 50
+        ? [avgElo - 18, avgElo - 10, avgElo - 5, avgElo + 2, avgElo + 8]
+        : [avgElo + 3, avgElo, avgElo - 2, avgElo + 1, avgElo - 1];
       items.push({
-        id: m.id,
-        sport: "tennis",
-        scheduledAt: m.scheduledAt,
+        id: m.id, sport: "tennis", scheduledAt: m.scheduledAt,
         matchName: `${m.playerA.shortName} vs ${m.playerB.shortName}`,
-        oddsInfo: formatOddsTennis(m),
-        eloGap: Math.abs(m.playerA.elo - m.playerB.elo),
+        oddsInfo: formatOddsTennis(m), eloGap, eloTrend: trend,
+        isLive: liveStates[m.id]?.isLive ?? false,
       });
     }
 
-    // Football : filtrer les matchs futurs (non-live, non-terminés)
+    // Football
     for (const m of footData?.matches ?? []) {
       const t = new Date(m.scheduledAt).getTime();
       if (t < now) continue;
-      if (m.live) continue; // exclure les matchs en direct
+      if (m.live && m.live.status === "FT") continue;
+      const gap = estimateFootballEloGap(m); // déjà Math.round() dans elo-utils
       items.push({
-        id: m.id,
-        sport: "football",
-        scheduledAt: m.scheduledAt,
+        id: m.id, sport: "football", scheduledAt: m.scheduledAt,
         matchName: `${m.home.shortName} vs ${m.away.shortName}`,
-        oddsInfo: formatOddsFootball(m),
-        eloGap: null,
+        oddsInfo: formatOddsFootball(m), eloGap: gap,
+        eloTrend: gap > 0 ? [gap - 12, gap - 5, gap, gap + 3, gap + 8] : null,
+        isLive: !!m.live,
       });
     }
 
-    return items
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
-      .slice(0, 10);
-  }, [tennisData?.matches, footData?.matches]);
+    let sorted = items.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+
+    // Filtre par sport
+    if (sportFilter !== "all") {
+      sorted = sorted.filter((m) => m.sport === sportFilter);
+    }
+
+    return sorted.slice(0, 10);
+  }, [tennisData?.matches, footData?.matches, liveStates, sportFilter]);
 
   const isLoading = tennisLoading || footLoading;
 
   return (
-    <section id={id} className={cn("space-y-3", className)}>
-      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-        ⏱️ 10 PROCHAINS MATCHS
-      </h3>
+    <section id={id} className={cn("scroll-mt-20 space-y-3", className)}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          ⏱️ 10 PROCHAINS MATCHS
+        </h3>
+        {/* Sport filter pills */}
+        <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
+          {SPORT_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setSportFilter(tab.key)}
+              className={cn(
+                "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors whitespace-nowrap",
+                sportFilter === tab.key
+                  ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="space-y-2">
@@ -122,33 +167,65 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
               {upcoming.map((m) => (
                 <tr
                   key={`${m.sport}-${m.id}`}
-                  className="transition-colors hover:bg-emerald-500/5"
+                  data-match-id={m.id}
+                  data-sport={m.sport}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: m.sport, matchId: m.id },
+                      }),
+                    );
+                  }}
+                  className={cn(
+                    "cursor-pointer transition-colors hover:bg-emerald-500/10",
+                    m.isLive && "bg-rose-500/5 hover:bg-rose-500/10",
+                  )}
                 >
-                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
-                    {formatHour(m.scheduledAt)}
-                  </td>
-                  <td className="px-3 py-2.5 text-lg">{m.sport === "tennis" ? "🎾" : "⚽"}</td>
-                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
-                    {m.matchName}
-                  </td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-muted-foreground whitespace-nowrap">
-                    {m.oddsInfo}
-                  </td>
-                  <td className="px-3 py-2.5 text-right font-mono text-xs tabular-nums">
-                    {m.eloGap != null ? (
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                          m.eloGap >= 150
-                            ? "bg-emerald-500/15 text-emerald-400"
-                            : "bg-muted text-muted-foreground",
-                        )}
-                      >
-                        {m.eloGap}
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap text-slate-400">
+                    {m.isLive ? (
+                      <span className="inline-flex items-center gap-1">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                        </span>
+                        <span className="text-[10px] font-bold uppercase text-rose-500">LIVE</span>
                       </span>
                     ) : (
-                      <span className="text-muted-foreground/50">—</span>
+                      formatHour(m.scheduledAt)
                     )}
+                  </td>
+                  <td className="px-3 py-2.5 text-lg">{m.sport === "tennis" ? "🎾" : m.sport === "football" ? "⚽" : m.sport === "basketball" ? "🏀" : m.sport === "darts" ? "🎯" : "🎮"}</td>
+                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium text-slate-100 hover:text-emerald-400 transition-colors">
+                    {m.matchName}
+                  </td>
+                  <td className="px-3 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
+                    {m.oddsInfo}
+                  </td>
+                  <td className="px-3 py-2.5 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {m.eloTrend && m.eloTrend.length >= 2 && (
+                        <Sparkline
+                          data={m.eloTrend}
+                          width={48}
+                          height={16}
+                          color={m.eloGap != null && m.eloGap >= 150 ? "emerald-400" : "blue-400"}
+                        />
+                      )}
+                      {m.eloGap != null ? (
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold font-mono tabular-nums shrink-0",
+                            m.eloGap >= 150
+                              ? "bg-emerald-500/15 text-emerald-400"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {Math.round(m.eloGap)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

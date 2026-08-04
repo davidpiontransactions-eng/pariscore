@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,20 +10,151 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth & Users ───────────────────────────────────────────────────────────
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
+  bets      UserBet[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+// ─── Sports Data ─────────────────────────────────────────────────────────────
+
+model League {
+  id      String  @id
+  name    String
+  country String
+  logo    String?
+  tier    String?
+  sport   String  @default("football")
+  teams   Team[]
+  matches Match[]
+}
+
+model Team {
+  id          String   @id
+  name        String
+  shortName   String
+  country     String?
+  logo        String?
+  color       String?
+  leagueId    String?
+  league      League?  @relation(fields: [leagueId], references: [id])
+  homeMatches Match[]  @relation("homeMatches")
+  awayMatches Match[]  @relation("awayMatches")
+  playerAMatches TennisMatch[] @relation("playerAMatches")
+  playerBMatches TennisMatch[] @relation("playerBMatches")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Match {
+  id          String   @id
+  sport       String   @default("football")
+  leagueId    String?
+  league      League?  @relation(fields: [leagueId], references: [id])
+  homeId      String
+  awayId      String
+  home        Team     @relation("homeMatches", fields: [homeId], references: [id])
+  away        Team     @relation("awayMatches", fields: [awayId], references: [id])
+  round       String?
+  scheduledAt DateTime
+  status      String   @default("scheduled")
+  liveMinute     Int?
+  liveHomeScore  Int?
+  liveAwayScore  Int?
+  liveStatus     String?
+  prediction     Prediction?
+  odds           Odds[]
+  bets           UserBet[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Prediction {
+  id         String @id @default(cuid())
+  matchId    String @unique
+  match      Match  @relation(fields: [matchId], references: [id])
+  homeProb   Float
+  drawProb   Float?
+  awayProb   Float
+  bttsProb   Float?
+  over25Prob Float?
+  over15Prob Float?
+  under35Prob Float?
+  model      String  @default("Elo+Poisson")
+  edge       Float   @default(0)
+  confidence Int     @default(3)
+
+  createdAt DateTime @default(now())
+}
+
+model Odds {
+  id         String @id @default(cuid())
+  matchId    String
+  match      Match  @relation(fields: [matchId], references: [id])
+  bookmaker  String // "Bet365", "Bwin", "Winamax"
+  home       Float
+  draw       Float?
+  away       Float
+  movement   String? // "SHORTENING" | "DRIFTING" | "STABLE"
+
+  createdAt DateTime @default(now())
+}
+
+model TennisMatch {
+  id          String   @id
+  playerAId   String
+  playerBId   String
+  playerA     Team     @relation("playerAMatches", fields: [playerAId], references: [id])
+  playerB     Team     @relation("playerBMatches", fields: [playerBId], references: [id])
+  tournament  String
+  surface     String?  // "hard", "clay", "grass"
+  scheduledAt DateTime
+  status      String   @default("scheduled")
+  round       String?
+
+  // Elo / Stats
+  eloA      Float?
+  eloB      Float?
+  spsA      Float?
+  spsB      Float?
+  probA     Float?
+  probB     Float?
+  eloGap    Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─── User Features ───────────────────────────────────────────────────────────
+
+model UserBet {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  matchId   String?
+  match     Match?   @relation(fields: [matchId], references: [id])
+  market    String   // "1X2", "BTTS", "Over/Under 2.5", etc.
+  pick      String
+  odds      Float
+  stake     Float?
+  status    String   @default("pending") // "pending" | "won" | "lost" | "void"
+  result    String?  // "W", "L", "V"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GeminiCache {
+  id        String   @id // key: "gemini-insight:{sport}:{matchId}:{date}"
+  data      String   // JSON serialized
+  createdAt DateTime @default(now())
+}
+
+model KvStore {
+  key   String @id
+  value String
 }

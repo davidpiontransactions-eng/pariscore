@@ -3,8 +3,7 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import { Star, Sparkles, TrendingUp, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePrematchMatches } from "@/hooks/use-prematch-matches";
-import { useFootballMatches } from "@/hooks/use-football-matches";
+import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,11 +76,16 @@ function renderStars(rating: number, max = 5): React.ReactNode {
 // ---------------------------------------------------------------------------
 
 export function AIInsightCard({ className, id }: AIInsightCardProps) {
-  const { data: tennisData } = usePrematchMatches();
-  const { data: footData } = useFootballMatches();
+  const { tennisData } = useDashboardData();
+  const { footData } = useDashboardData();
 
+  // Single match mode
   const [selectedMatchId, setSelectedMatchId] = useState<string>("");
+  // Compare mode — jusqu'à 2 matchs sélectionnés
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareMode, setCompareMode] = useState(false);
   const [insight, setInsight] = useState<GeminiResponse | null>(null);
+  const [insightB, setInsightB] = useState<GeminiResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -141,23 +145,138 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
     finally { setLoading(false); }
   }, [matchOptions, tennisData?.matches, footData?.matches]);
 
+  // Compare 2 matchs
+  const toggleCompare = useCallback((matchId: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(matchId)) return prev.filter((id) => id !== matchId);
+      if (prev.length >= 2) return [prev[1], matchId];
+      return [...prev, matchId];
+    });
+  }, []);
+
+  const handleCompare = useCallback(async () => {
+    if (compareIds.length !== 2) return;
+    setCompareMode(true);
+    setLoading(true); setError(null);
+    setInsight(null); setInsightB(null);
+    const [idA, idB] = compareIds;
+    const optA = matchOptions.find((o) => o.id === idA);
+    const optB = matchOptions.find((o) => o.id === idB);
+    if (!optA || !optB) { setError("Match introuvable"); setLoading(false); return; }
+    try {
+      // Fetch les deux analyses en parallèle
+      const buildData = (option: MatchOption) => {
+        if (option.sport === "tennis") {
+          const m = tennisData?.matches?.find((x) => x.id === option.id);
+          return m ? { sport: "tennis", matchId: m.id,
+            playerA: { name: m.playerA.name, elo: m.playerA.elo, sps: m.playerA.sps },
+            playerB: { name: m.playerB.name, elo: m.playerB.elo, sps: m.playerB.sps },
+            eloGap: m.stats.eloGap, surface: m.stats.surface, tournament: m.tournament } : {};
+        }
+        const m = footData?.matches?.find((x) => x.id === option.id);
+        return m ? { sport: "football", matchId: m.id,
+          home: { name: m.home.name, form: m.home.form },
+          away: { name: m.away.name, form: m.away.form },
+          prediction: m.prediction, league: m.league.name } : {};
+      };
+      const [resA, resB] = await Promise.all([
+        fetch("/api/ai/gemini-insight", { method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sport: optA.sport, matchId: optA.id, matchData: buildData(optA) }) }),
+        fetch("/api/ai/gemini-insight", { method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sport: optB.sport, matchId: optB.id, matchData: buildData(optB) }) }),
+      ]);
+      if (!resA.ok) throw new Error(`Match A: ${resA.status}`);
+      if (!resB.ok) throw new Error(`Match B: ${resB.status}`);
+      setInsight(await resA.json());
+      setInsightB(await resB.json());
+    } catch (err) { setError((err as Error).message); }
+    finally { setLoading(false); }
+  }, [compareIds, matchOptions, tennisData?.matches, footData?.matches]);
+
   const display = insight ?? DEMO;
   const hasEdge = display.edge > 0;
   const selectedOption = matchOptions.find((o) => o.id === selectedMatchId);
+  const optA = matchOptions.find((o) => o.id === compareIds[0]);
+  const optB = matchOptions.find((o) => o.id === compareIds[1]);
+
+  const exitCompare = () => { setCompareMode(false); setInsight(null); setInsightB(null); setCompareIds([]); };
 
   return (
-    <section id={id} className={cn("space-y-3", className)}>
+    <section id={id} className={cn("scroll-mt-20 space-y-3", className)}>
       <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">🤖 GEMINI AI INSIGHT</h3>
       <div className={cn("relative overflow-hidden rounded-2xl border border-purple-500/20 bg-card p-4")}>
         <div aria-hidden className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-purple-500/10 blur-2xl" />
-        {/* Header + Selector */}
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-400 shrink-0"><Sparkles className="h-3 w-3" /> Gemini AI Insight</span>
-          <select value={selectedMatchId} onChange={(e) => handleSelect(e.target.value)} className="w-full sm:w-auto rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500/50">
-            <option value="">— Sélectionner un match —</option>
-            {matchOptions.map((opt) => <option key={`${opt.sport}-${opt.id}`} value={opt.id}>{opt.label}</option>)}
-          </select>
-        </div>
+
+        {/* Compare mode: side-by-side */}
+        {compareMode && insight && insightB ? (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-purple-400">🔬 Comparaison</span>
+              <button onClick={exitCompare} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">✕ Quitter</button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
+                <p className="text-[11px] font-semibold truncate">{optA?.label}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{insight.analysis}</p>
+                <div className="flex items-center justify-between pt-1 border-t border-border/30">
+                  <span className={cn("text-[10px] font-mono font-bold", insight.edge > 0 ? "text-emerald-400" : "text-muted-foreground")}>{insight.edge > 0 ? "+" : ""}{insight.edge}% edge</span>
+                  <div className="flex items-center gap-0.5">{renderStars(insight.confidence)}</div>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
+                <p className="text-[11px] font-semibold truncate">{optB?.label}</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">{insightB.analysis}</p>
+                <div className="flex items-center justify-between pt-1 border-t border-border/30">
+                  <span className={cn("text-[10px] font-mono font-bold", insightB.edge > 0 ? "text-emerald-400" : "text-muted-foreground")}>{insightB.edge > 0 ? "+" : ""}{insightB.edge}% edge</span>
+                  <div className="flex items-center gap-0.5">{renderStars(insightB.confidence)}</div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {insight.factors.map((f, i) => (
+                <div key={f.label} className="flex justify-between rounded bg-muted/30 px-2 py-1 text-[10px]">
+                  <span className="text-muted-foreground">{f.label}</span>
+                  <span className="font-semibold text-emerald-400">{f.value}</span>
+                  {insightB.factors[i] && <span className="font-semibold text-blue-400 ml-2">{insightB.factors[i].value}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Header + Selector */}
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <span className="inline-flex items-center gap-1 rounded-full border border-purple-500/30 bg-purple-500/10 px-2.5 py-0.5 text-xs font-semibold text-purple-400 shrink-0"><Sparkles className="h-3 w-3" /> Gemini AI Insight</span>
+              <select value={selectedMatchId} onChange={(e) => handleSelect(e.target.value)} className="w-full sm:w-auto rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500/50">
+                <option value="">— Sélectionner un match —</option>
+                {matchOptions.map((opt) => <option key={`${opt.sport}-${opt.id}`} value={opt.id}>{opt.label}</option>)}
+              </select>
+            </div>
+
+            {/* Checkboxes compare */}
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground mr-1">Comparer (2 max):</span>
+              {matchOptions.slice(0, 8).map((opt) => (
+                <label key={`chk-${opt.sport}-${opt.id}`} className={cn(
+                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] cursor-pointer transition-colors",
+                  compareIds.includes(opt.id)
+                    ? "border-purple-500/50 bg-purple-500/10 text-purple-400"
+                    : "border-border/40 bg-muted/30 text-muted-foreground hover:border-purple-500/30",
+                )}>
+                  <input type="checkbox" checked={compareIds.includes(opt.id)} onChange={() => toggleCompare(opt.id)} className="sr-only" />
+                  {opt.sport === "tennis" ? "🎾" : "⚽"} {opt.label.split("(")[0].trim().slice(0, 20)}
+                </label>
+              ))}
+            </div>
+
+            {compareIds.length === 2 && (
+              <button onClick={handleCompare} disabled={loading}
+                className="mb-2 inline-flex items-center gap-1.5 rounded-lg bg-purple-500/20 px-3 py-1.5 text-xs font-semibold text-purple-400 hover:bg-purple-500/30 disabled:opacity-50 transition-colors">
+                <Zap className="h-3 w-3" /> Comparer les 2 matchs
+              </button>
+            )}
         {selectedOption && <h3 className="mb-2 text-sm font-semibold tracking-tight">{selectedOption.label}</h3>}
         {loading && <div className="flex items-center gap-2 py-4 text-sm text-purple-400"><Loader2 className="h-4 w-4 animate-spin" /> Analyse en cours...</div>}
         {error && !loading && <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">{error}</div>}
@@ -176,6 +295,8 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
           </div>
           <div className="flex items-center gap-1"><span className="mr-0.5 text-[11px] text-muted-foreground">Confiance</span><div className="flex items-center gap-0.5" aria-label={`${display.confidence}/5 confidence`}>{renderStars(display.confidence)}</div></div>
         </div>}
+          </>
+        )}
       </div>
     </section>
   );
