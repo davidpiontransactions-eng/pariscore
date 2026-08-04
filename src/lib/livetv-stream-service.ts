@@ -7,6 +7,7 @@
 
 import { AppError } from "./api-error";
 import { createTtlCache, isFresh, type TtlCacheEntry } from "./cached-route";
+import { isScraplingStealthEnabled, stealthFetchHtml } from "./scrapling-bridge";
 import { normalizeTeamName } from "./normalize-team-name";
 
 // ─── Config ──────────────────────────────────────────────────────────────
@@ -89,26 +90,47 @@ function cacheKey(sport: LiveTvSport, home: string, away: string): string {
 
 async function fetchHtml(baseUrl: string, path: string, signal?: AbortSignal): Promise<string> {
   const url = `${baseUrl}${path}`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
-      Accept: "text/html,application/xhtml+xml",
-      "Accept-Language": "en,en-US;q=0.9",
-    },
-    signal: signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    cache: "no-store",
-  });
-  if (!res.ok) throw new AppError("LIVETV_HTTP", `LiveTV HTTP ${res.status}`, res.status);
-  const text = await res.text();
-  // Détection d'une page challenge Cloudflare (pas de contenu utile).
-  if (
-    text.length < 500 ||
-    /cf-chl-|Just a moment|Enable JavaScript and cookies to continue/i.test(text)
-  ) {
-    throw new AppError("LIVETV_BLOCKED", "LiveTV page protégée (anti-bot)", 403);
+  let nativeError: AppError | null = null;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "en,en-US;q=0.9",
+      },
+      signal: signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new AppError("LIVETV_HTTP", `LiveTV HTTP ${res.status}`, res.status);
+    const text = await res.text();
+    // Détection d'une page challenge Cloudflare (pas de contenu utile).
+    if (
+      text.length < 500 ||
+      /cf-chl-|Just a moment|Enable JavaScript and cookies to continue/i.test(text)
+    ) {
+      throw new AppError("LIVETV_BLOCKED", "LiveTV page protégée (anti-bot)", 403);
+    }
+    return text;
+  } catch (err) {
+    nativeError = err as AppError;
   }
-  return text;
+
+  // Fallback Scrapling stealth (Camoufox + proxy résidentiel éventuel) quand
+  // LiveTV rejette l'IP datacenter (451/403/challenge). Uniquement si le flag
+  // SCRAPLING_ENABLED est actif. Si le stealth échoue aussi, on ré-émet
+  // l'erreur native pour conserver le fallback miroir / cache négatif.
+  const blockable =
+    nativeError &&
+    (nativeError.code === "LIVETV_HTTP" || nativeError.code === "LIVETV_BLOCKED");
+  if (isScraplingStealthEnabled() && blockable) {
+    try {
+      return await stealthFetchHtml(url);
+    } catch {
+      throw nativeError;
+    }
+  }
+  throw nativeError;
 }
 
 /** Découpe et supprime les balises du texte d'un lien (titres megasearch). */
