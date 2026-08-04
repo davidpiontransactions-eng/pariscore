@@ -154,12 +154,16 @@ export function useTennisLiveStats(
 
     attemptRef.current = 0;
 
+    // Fix 503 « The request queue is full » (Bun :3001) : websocket-only
+    // évite les requêtes HTTP polling qui saturaient la queue de Bun.
+    // Backoff borné (10 tentatives, max 30s) pour ne pas hammerer le
+    // serveur sous charge. Après 3 échecs on bascule déjà en fallback demo.
     const socket = io("/?XTransformPort=3001", {
-      transports: ["websocket", "polling"],
+      transports: ["websocket"],
       reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1_000,
-      reconnectionDelayMax: 10_000,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1_500,
+      reconnectionDelayMax: 30_000,
       timeout: 10_000,
     });
     socketRef.current = socket;
