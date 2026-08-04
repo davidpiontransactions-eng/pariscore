@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Component, type ReactNode, useCallback, useMemo, useEffect } from "react";
+import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import {
   Trophy,
@@ -37,6 +37,27 @@ import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
+import type { TennisMatch } from "@/lib/tennis-data";
+import type { FootballMatch } from "@/lib/football-data";
+
+// Dialogs de détail globaux — lazy : ne chargent le code que si un match est
+// réellement ouvert via le tableau "10 prochains matchs" (event open-match-detail).
+// Miroir du pattern lazy utilisé dans les onglets tennis/football.
+const TennisMatchDetailDialog = lazy(() =>
+  import("@/components/tennis/match-detail-dialog").then((m) => ({
+    default: m.MatchDetailDialog,
+  })),
+);
+const FootballMatchDetailDialog = lazy(() =>
+  import("@/components/football/football-match-detail-dialog").then((m) => ({
+    default: m.FootballMatchDetailDialog,
+  })),
+);
+
+/** Demande d'ouverture d'un dialog de détail — union discriminée par sport. */
+type DetailRequest =
+  | { sport: "tennis"; match: TennisMatch }
+  | { sport: "football"; match: FootballMatch };
 
 type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1";
 
@@ -117,6 +138,29 @@ function HomeInner() {
 
   // Real data hooks
   const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
+
+  // ── Dialog de détail global (I5) ──
+  // Le tableau "10 prochains matchs" émet window CustomEvent("open-match-detail")
+  // avec { sport, matchId }. On résout l'objet match complet depuis les données
+  // du provider, puis on rend le dialog correspondant (tennis | football).
+  const [detail, setDetail] = useState<DetailRequest | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const evt = e as CustomEvent<{ sport?: string; matchId?: string }>;
+      const { sport, matchId } = evt.detail ?? {};
+      if (!sport || !matchId) return;
+      if (sport === "tennis") {
+        const match = (tennisData?.matches ?? []).find((m) => m.id === matchId);
+        if (match) setDetail({ sport: "tennis", match });
+      } else if (sport === "football") {
+        const match = (footData?.matches ?? []).find((m) => m.id === matchId);
+        if (match) setDetail({ sport: "football", match });
+      }
+    };
+    window.addEventListener("open-match-detail", handler);
+    return () => window.removeEventListener("open-match-detail", handler);
+  }, [tennisData, footData]);
 
   // Compute stats dynamically
   const stats = useMemo(() => {
@@ -342,6 +386,31 @@ function HomeInner() {
 
         {/* Mobile bottom navigation */}
         <MobileBottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+
+        {/* Dialog de détail global — ouvert par CustomEvent("open-match-detail").
+            Rend le dialog du sport correspondant ; ESC / clic overlay → onOpenChange(false). */}
+        {detail?.sport === "tennis" && (
+          <Suspense fallback={null}>
+            <TennisMatchDetailDialog
+              match={detail.match}
+              open
+              onOpenChange={(open) => {
+                if (!open) setDetail(null);
+              }}
+            />
+          </Suspense>
+        )}
+        {detail?.sport === "football" && (
+          <Suspense fallback={null}>
+            <FootballMatchDetailDialog
+              match={detail.match}
+              open
+              onOpenChange={(open) => {
+                if (!open) setDetail(null);
+              }}
+            />
+          </Suspense>
+        )}
       </div>
     </PageErrorBoundary>
   );

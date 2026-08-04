@@ -4,6 +4,8 @@ import { useMemo, useState, useCallback } from "react";
 import { LayoutGrid, Table, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
+import { useBasketballMatches } from "@/hooks/use-basketball-matches";
+import { useCs2Matches } from "@/hooks/use-cs2-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { estimateFootballEloGap } from "@/lib/elo-utils";
@@ -65,8 +67,19 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
   // Filtres avancés — seuils ajustables par l'utilisateur
   const [minEloGap, setMinEloGap] = useState(150);
   const [minSps, setMinSps] = useState(55);
-  const { tennisData, tennisLoading } = useDashboardData();
-  const { footData, footLoading } = useDashboardData();
+  const { tennisData, tennisLoading, tennisError } = useDashboardData();
+  const { footData, footLoading, footError } = useDashboardData();
+  // Basket / CS2 — données réelles via les routes API v1 (SWR, poll 60s)
+  const {
+    matches: basketData,
+    isLoading: basketLoading,
+    error: basketError,
+  } = useBasketballMatches();
+  const {
+    matches: cs2Data,
+    isLoading: cs2Loading,
+    error: cs2Error,
+  } = useCs2Matches();
 
   // ── Tennis : ΔElo ≥ minEloGap OU SPS ≥ minSps ──
   const tennisMatches = useMemo<MatchCard[]>(() => {
@@ -107,17 +120,79 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }, [footData?.matches, minEloGap]);
 
-  const allTabs: { key: SportTab; label: string; matches: MatchCard[]; loading: boolean }[] = [
-    { key: "tennis", label: "🎾 Tennis", matches: tennisMatches, loading: tennisLoading },
-    { key: "football", label: "⚽ Football", matches: footballMatches, loading: footLoading },
-    { key: "basketball", label: "🏀 Basketball", matches: [], loading: false },
-    { key: "cs2", label: "🔫 CS2", matches: [], loading: false },
-    { key: "darts", label: "🎯 Darts", matches: [], loading: false },
+  // ── Basketball (NBA + WNBA) : modèle ESPN (blend) + écart Elo ──
+  const basketballMatches = useMemo<MatchCard[]>(() => {
+    return (basketData ?? []).map((m) => {
+      const parts: string[] = [];
+      if (m.edgeElo != null) parts.push(`ΔElo ${m.edgeElo}`);
+      if (m.pHome != null) parts.push(`${m.pHome}-${m.pAway}`);
+      return {
+        id: m.id,
+        sport: "basketball" as const,
+        matchName: `${m.home.abbr || m.home.name} vs ${m.away.abbr || m.away.name}`,
+        detail1: parts.join(" · ") || "—",
+        detail2: m.home.record ? `${m.league} · ${m.home.record}` : m.league,
+        scheduledAt: m.scheduledAt,
+      };
+    });
+  }, [basketData]);
+
+  // ── CS2 : classement HLTV + tournoi ──
+  const cs2Matches = useMemo<MatchCard[]>(() => {
+    return (cs2Data ?? []).map((m) => ({
+      id: m.id,
+      sport: "cs2" as const,
+      matchName: `${m.team1.name} vs ${m.team2.name}`,
+      detail1:
+        m.team1.rank != null || m.team2.rank != null
+          ? `HLTV #${m.team1.rank ?? "?"} · #${m.team2.rank ?? "?"}`
+          : `BO${m.bestOf ?? 3}${m.currentMap ? ` · ${m.currentMap}` : ""}`,
+      detail2: m.tournament,
+      scheduledAt: m.scheduledAt,
+    }));
+  }, [cs2Data]);
+
+  const allTabs: {
+    key: SportTab;
+    label: string;
+    matches: MatchCard[];
+    loading: boolean;
+    error?: string;
+  }[] = [
+    { key: "tennis", label: "🎾 Tennis", matches: tennisMatches, loading: tennisLoading, error: tennisError?.message },
+    { key: "football", label: "⚽ Football", matches: footballMatches, loading: footLoading, error: footError?.message },
+    {
+      key: "basketball",
+      label: "🏀 Basketball",
+      matches: basketballMatches,
+      loading: basketLoading,
+      error: basketError?.message,
+    },
+    {
+      key: "cs2",
+      label: "🔫 CS2",
+      matches: cs2Matches,
+      loading: cs2Loading,
+      error: cs2Error?.message,
+    },
   ];
-  // N'affiche que les sports avec des données ou en cours de chargement
-  const tabs = allTabs.filter((t) => t.matches.length > 0 || t.loading);
+  // Affiche un sport s'il a des données, charge, ou est en erreur (pour
+  // pouvoir montrer l'état d'erreur). Darts est un onglet désactivé séparé.
+  const tabs = allTabs.filter((t) => t.matches.length > 0 || t.loading || !!t.error);
 
   const current = tabs.find((t) => t.key === activeTab) ?? tabs[0];
+
+  // Tous les sports en erreur ou vide : etat vide au lieu d'un crash page blanche.
+  if (!current) {
+    return (
+      <section id={id} className={cn("scroll-mt-20 space-y-3", className)}>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          MEILLEURS MATCHS DU JOUR
+        </h3>
+        <p className="text-sm text-muted-foreground">Aucun match disponible pour le moment. Reessayez dans quelques instants.</p>
+      </section>
+    );
+  }
 
   return (
     <section id={id} className={cn("scroll-mt-20 space-y-3", className)}>
@@ -223,6 +298,20 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             )}
           </button>
         ))}
+          {/* Darts — aucune route API pour l'instant : onglet désactivé "Bientôt"
+              (présent mais non cliquable, pas de code mort) */}
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Bientôt disponible"
+            className="shrink-0 cursor-not-allowed rounded-full bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/60"
+          >
+            🎯 Darts
+            <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider">
+              Bientôt
+            </span>
+          </button>
         </div>
 
         {/* View toggle */}
@@ -265,9 +354,11 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         </div>
       ) : current.matches.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl border border-dashed border-border p-8 text-sm text-muted-foreground">
-          {current.key === "tennis" || current.key === "football"
-            ? "Aucun match avec fort écart Elo aujourd'hui"
-            : `Données ${current.label} bientôt disponibles`}
+          {current.error
+            ? `Impossible de charger les données ${current.label}`
+            : current.key === "tennis" || current.key === "football"
+              ? "Aucun match avec fort écart Elo aujourd'hui"
+              : `Données ${current.label} bientôt disponibles`}
         </div>
       ) : viewMode === "grid" ? (
         <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
