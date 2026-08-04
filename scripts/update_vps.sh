@@ -47,7 +47,13 @@ pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env || 
 echo "[7d] Cron match-stats (pariscore-cron-match-stats) — réenregistrement + persist..."
 pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env || echo "[7d] startOrRestart cron-match-stats échec (non bloquant)"
 
-pm2 save || echo "[7e] pm2 save échec (non bloquant)"
+# [7e] Cron Gemini pré-calcul — garantir l'enregistrement (cron_restart
+#      '0 6,8,10,12,14,16,18') après chaque deploy + reboot. Autoréstart:false
+#      (ecosystem) → "stopped" entre les ticks 2h = normal, pas une panne.
+echo "[7e] Cron Gemini (pariscore-cron-gemini) — réenregistrement + persist..."
+pm2 startOrRestart ecosystem.config.js --only pariscore-cron-gemini --update-env || echo "[7e] startOrRestart cron-gemini échec (non bloquant)"
+
+pm2 save || echo "[7f] pm2 save échec (non bloquant)"
 
 echo ""
 echo "--- VPS mis à jour avec succès ! ---"

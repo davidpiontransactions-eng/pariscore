@@ -19,7 +19,7 @@ import {
   type CachedGeminiInsight,
 } from "@/lib/gemini-cache";
 
-const CRON_SECRET = process.env.CRON_SECRET ?? "pariscore-cron-2026";
+const CRON_SECRET = process.env.CRON_SECRET;
 const ALLOWED_SPORTS = ["tennis", "football"] as const;
 const GEMINI_DELAY_MS = 2_000;
 
@@ -94,7 +94,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const token = searchParams.get("token");
 
-  if (token !== CRON_SECRET) {
+  if (!CRON_SECRET || token !== CRON_SECRET) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

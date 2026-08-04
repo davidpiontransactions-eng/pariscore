@@ -2,13 +2,16 @@
  * ══════════════════════════════════════════════════════════════════════════════
  *  PariScore — PM2 ecosystem config
  * ══════════════════════════════════════════════════════════════════════════════
- *  Six process gérés par PM2 :
+ *  Neuf process gérés par PM2 :
  *    1. `pariscore`                   : serveur HTTP principal (Node.js + SSE + cron internes)
  *    2. `pariscore-cron-rg`           : job découplé Roland Garros prefetch toutes les 2h
  *    3. `pariscore-cron-match-stats`  : rafraîchissement quotidien match_stats_history
  *    4. `pariscore-vault-daily`      : note quotidienne vault Obsidian (05:00 UTC)
  *    5. `pariscore-vault-weekly`     : revue hebdo modèles (lundi 08:00 UTC)
  *    6. `pariscore-cron-cycling`     : scraper cyclisme cyclingstage.com 3×/jour (Tour)
+ *    7. `pariscore-cron-sps`         : SPS tennis (Surface PowerScore) 2×/jour
+ *    8. `pariscore-cron-dr`          : scraper DR tennis TennisAbstract quotidien 04:00 UTC
+ *    9. `pariscore-cron-gemini`      : pré-calcul analyses Gemini matchs du jour (2h, 06:00-18:00 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -215,6 +218,36 @@ module.exports = {
       },
       error_file: 'logs/cron-dr.err.log',
       out_file: 'logs/cron-dr.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Gemini (pré-calcul analyses matchs du jour) ===
+      // Appelle la route Next.js GET /api/ai/gemini-cron (servie par
+      // `pariscore-next`, port 3005) qui pré-calcule les analyses Gemini
+      // des 5 premiers matchs tennis + 5 premiers foot du jour, stockées
+      // dans le cache mémoire gemini-cache.ts (TTL 12h). Sans ce cron,
+      // le service de bookings subit la latence de l'appel Gemini à la
+      // demande → attente utilisateur. Toutes les 2h entre 06:00 et
+      // 18:00 UTC : la dernière run (18:00) couvre les matchs du soir
+      // sans jamais dépasser le TTL de 12h au prochain tick.
+      // Le token CRON_SECRET est lu depuis .env par scripts/cron-gemini.sh
+      // (fallback pariscore-cron-2026, comme dans la route).
+      name: 'pariscore-cron-gemini',
+      script: 'scripts/cron-gemini.sh',
+      interpreter: 'bash',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 6,8,10,12,14,16,18 * * *', // toutes les 2h, 06:00-18:00 UTC
+      autorestart: false,                          // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+        GEMINI_CRON_URL: 'http://localhost:3005', // pariscore-next (Next.js standalone)
+      },
+      error_file: 'logs/cron-gemini.err.log',
+      out_file: 'logs/cron-gemini.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
