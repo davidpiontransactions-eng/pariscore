@@ -159,7 +159,9 @@ const FOOTBALL_DATA_API_KEY = (() => {
 // TheSportsDB key. Free demo key "3" returns ONLY Arsenal mock data (heavy restriction).
 // Set TSDB_API_KEY to a registered/Patreon key for full coverage (kits/stadiums/colors/desc).
 const TSDB_API_KEY = (() => {
-  const raw = process.env.TSDB_API_KEY || '';
+  // P3.11 (2026-08-04) — unification : THESPORTSDB_KEY est un alias accepté de
+  // TSDB_API_KEY (ancien doublon de la même clé). Priorité TSDB_API_KEY.
+  const raw = process.env.TSDB_API_KEY || process.env.THESPORTSDB_KEY || '';
   const cleaned = raw.split('#')[0].trim();
   return /^[A-Za-z0-9._-]+$/.test(cleaned) ? cleaned : '3';
 })();
@@ -1912,7 +1914,7 @@ const BSD_TENNIS_UPGRADE_URL = 'https://sports.bzzoiro.com/pricing/';
 
 const SPORTMONKS_API_KEY = process.env.SPORTMONKS_API_KEY || '';
 const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3/football';
-const THESPORTSDB_KEY = process.env.THESPORTSDB_KEY || '3'; // '3' = test key public free
+const THESPORTSDB_KEY = TSDB_API_KEY; // P3.11 — alias unifié (ancien doublon process.env.THESPORTSDB_KEY)
 
 // Sportmonks v3 — récupère TV stations d'un match via date + équipes.
 // Plan free : 3 ligues uniquement. Plan payant : couverture mondiale.
@@ -19707,14 +19709,21 @@ function checkApiRateLimit(ip) {
   _apiRateLimitMap.set(ip, e);
   return e.count <= API_RATE_LIMIT_MAX;
 }
-// Helper pour extraire l'IP client (gère proxy/nginx X-Forwarded-For)
+// Helper pour extraire l'IP client. SECU 3.1 (gantt Phase 3) : ne faire confiance à
+// X-Forwarded-For QUE si le peer direct est un proxy de confiance (loopback = Caddy/nginx).
+// En accès direct (pas de proxy), le header XFF peut être forgé par le client → on ignore.
+const _TRUSTED_PROXY_PEERS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
 function getClientIp(req) {
-  const xff = req.headers['x-forwarded-for'];
-  if (xff) {
-    const ips = String(xff).split(',');
-    return ips[0].trim();
+  const peer = req.socket?.remoteAddress || req.connection?.remoteAddress || '';
+  if (_TRUSTED_PROXY_PEERS.has(peer.replace(/^::ffff:/, ''))) {
+    const xff = req.headers['x-forwarded-for'];
+    if (xff) {
+      const ips = String(xff).split(',');
+      // IP la plus à droite = ajoutée par le proxy de confiance (la vraie IP client)
+      return ips[ips.length - 1].trim();
+    }
   }
-  return req.socket?.remoteAddress || req.connection?.remoteAddress || '';
+  return peer;
 }
 
 // ─── JWT (HMAC-SHA256, natif Node.js crypto) ─────────────────────────────────
@@ -42341,8 +42350,10 @@ if (pathname === '/api/v1/tennis/elo/stats' && req.method === 'GET') {
 // DEBUG-ONLY : simule un match scheduled qui passe live pour valider le recall
 // snapshot. Pick un match enrichi du cache vb, injecte dans _tennisLiveCache
 // avec is_live=true, invalide vb cache, rebuild → la réponse doit contenir le
-// match avec _rehydrated_source='server_snap'. Réservée admin, désactivable.
+// match avec _rehydrated_source='server_snap'. Réservée admin + gate env
+// DEBUG_ROUTES_ENABLED=1 (item 3.2 gantt Phase 3) — off par défaut en prod.
 if (pathname === '/api/v1/_debug/tennis-rehydrate-test' && req.method === 'POST') {
+  if (process.env.DEBUG_ROUTES_ENABLED !== '1') return jsonResponse(res, 404, { error: 'not_found' });
   const user = getAuthUser(req);
   if (!user || user.role !== 'admin') return jsonResponse(res, 403, { error: 'admin only' });
   try {
@@ -46467,8 +46478,7 @@ if (aiStreamMatch && req.method === 'GET') {
   }
 
   // ── IP abuse prevention ──
-  const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
-    || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req) || 'unknown';
   if (checkIpAbuse(clientIp)) {
     return jsonResponse(res, 429, { error: 'Too many requests — abus détecté' });
   }

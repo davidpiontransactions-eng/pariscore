@@ -17386,16 +17386,16 @@ window.tn2SetupH2H = function() {
         var pw = s.prob_win != null ? s.prob_win + '%' : '<span style="color:var(--text3,#5a6068);">--</span>';
         var cum = s.cumulative != null ? s.cumulative + '%' : '--';
         var cumCol = s.cumulative == null ? 'var(--text3,#5a6068)' : (s.cumulative >= 50 ? 'var(--green,#00e676)' : s.cumulative >= 20 ? 'var(--amber,#ffa726)' : 'var(--red,#ff1744)');
-        return '<tr><td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);">' + (s.round || '--') + '</td>'
-          + '<td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);">vs ' + (s.opponent || 'TBD') + '</td>'
+        return '<tr><td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);">' + escapeHtml(s.round || '--') + '</td>'
+          + '<td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);">vs ' + escapeHtml(s.opponent || 'TBD') + '</td>'
           + '<td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);text-align:center;font-family:DM Mono,monospace;">' + pw + '</td>'
           + '<td style="padding:7px 10px;border-top:1px solid var(--bg4,#1e2328);text-align:center;font-family:DM Mono,monospace;font-weight:700;color:' + cumCol + ';">' + cum + '</td></tr>';
       }).join('');
-      box.innerHTML = '<div style="font-size:13px;margin-bottom:8px;color:var(--text2,#8d9399);">' + (d.tournament ? d.tournament.name + ' (' + d.tournament.circuit + ', ' + d.tournament.surface + ')' : '') + ' -- ' + (d.player || name) + '</div>'
+      box.innerHTML = '<div style="font-size:13px;margin-bottom:8px;color:var(--text2,#8d9399);">' + (d.tournament ? escapeHtml(d.tournament.name + ' (' + d.tournament.circuit + ', ' + d.tournament.surface + ')') : '') + ' -- ' + escapeHtml(d.player || name) + '</div>'
         + '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="color:var(--text3,#5a6068);font-size:11px;text-transform:uppercase;"><th style="text-align:left;padding:6px 10px;">Tour</th><th style="text-align:left;padding:6px 10px;">Adversaire</th><th style="padding:6px 10px;">P(gagne)</th><th style="padding:6px 10px;">Cumule</th></tr></thead><tbody>' + rows + '</tbody></table>';
     } catch (e) {
       if (st) st.textContent = 'erreur';
-      box.innerHTML = '<span style="color:var(--red,#ff1744);">Erreur : ' + (e && e.message || e) + '</span>';
+      box.innerHTML = '<span style="color:var(--red,#ff1744);">Erreur : ' + escapeHtml(e && e.message || e) + '</span>';
     }
   }
   </script>

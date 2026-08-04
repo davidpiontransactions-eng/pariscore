@@ -82,6 +82,26 @@
   <div class="error-msg" id="login-error"></div>
 </div>
 
+<!-- P3.14 — FORCE CHANGE PASSWORD (premier login admin, ADMIN_PASSWORD absent au boot) -->
+<div id="force-change-form" style="display:none;max-width:400px;margin:80px auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:32px;">
+  <h2 style="font-family:var(--font-head);font-size:22px;font-weight:800;margin-bottom:6px;">Mot de passe requis</h2>
+  <p style="color:var(--text3);font-size:13px;margin-bottom:24px;">Première connexion : définissez un mot de passe administrateur avant de continuer.</p>
+  <div class="form-group">
+    <label class="form-label">Mot de passe actuel</label>
+    <input class="form-input" id="fc-current" type="password" placeholder="••••••••">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Nouveau mot de passe</label>
+    <input class="form-input" id="fc-new" type="password" placeholder="8 caractères min.">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Confirmer</label>
+    <input class="form-input" id="fc-new2" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')forceChangePassword()">
+  </div>
+  <button class="btn-green" onclick="forceChangePassword()">Enregistrer →</button>
+  <div class="error-msg" id="fc-error"></div>
+</div>
+
 <!-- DASHBOARD -->
 <div id="dashboard">
   <div class="main">
@@ -202,6 +222,17 @@ async function login() {
     localStorage.setItem('pariscore_admin_token', token);
     const ni = document.getElementById('nav-info');
     if (ni) ni.textContent = `${data.username} · rôle: ${data.role}`;
+    // P3.14 — force_change : premier login (ADMIN_PASSWORD absent au boot) →
+    // imposer le changement de mot de passe AVANT d'accéder au dashboard.
+    if (data.force_change) {
+      var lf = document.getElementById('login-form');
+      if (lf) lf.style.display = 'none';
+      var fc = document.getElementById('force-change-form');
+      if (fc) fc.style.display = 'block';
+      var fcErr = document.getElementById('fc-error');
+      if (fcErr) fcErr.textContent = '';
+      return;
+    }
     // Masquer le formulaire AVANT d'appeler showDashboard (sinon l'erreur laisse le form visible)
     var lf = document.getElementById('login-form');
     var db = document.getElementById('dashboard');
@@ -212,9 +243,36 @@ async function login() {
   } catch(e) { el.textContent = 'Connexion échouée : ' + (e.message || 'serveur injoignable'); }
 }
 
+// P3.14 — Soumission du changement de mot de passe forcé (premier login admin)
+async function forceChangePassword() {
+  const current = document.getElementById('fc-current').value;
+  const np = document.getElementById('fc-new').value;
+  const np2 = document.getElementById('fc-new2').value;
+  const el = document.getElementById('fc-error');
+  el.textContent = '';
+  if (!current || !np) { el.textContent = 'Mot de passe actuel et nouveau requis'; return; }
+  if (np.length < 8) { el.textContent = 'Minimum 8 caractères'; return; }
+  if (np !== np2) { el.textContent = 'Les deux mots de passe ne correspondent pas'; return; }
+  try {
+    const res = await fetch('/api/v1/admin/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ current, new: np })
+    });
+    const data = await res.json();
+    if (!res.ok) { el.textContent = data.error || 'Erreur changement'; return; }
+    var fc = document.getElementById('force-change-form');
+    if (fc) fc.style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    try { showDashboard(); } catch(e2) { console.error('showDashboard:', e2); }
+  } catch(e) { el.textContent = 'Échec : ' + (e.message || 'serveur injoignable'); }
+}
+
 function logout() {
   token = ''; localStorage.removeItem('pariscore_admin_token');
   document.getElementById('dashboard').style.display = 'none';
+  var fc = document.getElementById('force-change-form');
+  if (fc) fc.style.display = 'none';
   document.getElementById('login-form').style.display = 'block';
 }
 

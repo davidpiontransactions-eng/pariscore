@@ -129,7 +129,7 @@
 // v68 (2026-06-27) : FIX routing BSD — m.player1 est un objet {name:...} pas une string + fallback __tennisVBWarm() + clone 100% Top 10
 // v69 (2026-06-27) : Prematch = INLINE card (pas de modale) + clone structure Top 10 + toggle on/off
 // v70 (2026-06-27) : FIX CSS — 49 var() remplacés par hardcoded + !important sur backgrounds + hide empty insights
-const CACHE_VERSION = 'v77'; // feat(tennis): chart momentum par set (SVG) dans cartes Live — P1 haut/P2 bas
+const CACHE_VERSION = 'v78'; // P3 secu(2026-08-04): handler pushsubscriptionchange (re-subscribe VAPID rotation)
 const CACHE_SHELL = 'pariscore-shell-' + CACHE_VERSION;
 const CACHE_ASSETS = 'pariscore-assets-' + CACHE_VERSION;
 const CACHE_RUNTIME = 'pariscore-runtime-' + CACHE_VERSION;
@@ -308,6 +308,40 @@ self.addEventListener('push', (e) => {
       requireInteraction: !!payload.requireInteraction,
     })
   );
+});
+
+// P3 secu — pushsubscriptionchange : re-subscribe quand le serveur push change
+// (rotation VAPID / expiration) puis renvoie la nouvelle subscription au backend.
+self.addEventListener('pushsubscriptionchange', (e) => {
+  e.waitUntil((async () => {
+    try {
+      let vapidKey = null;
+      try {
+        const vkRes = await fetch('/api/v1/push/vapid-key');
+        if (vkRes.ok) {
+          const vk = await vkRes.json();
+          if (vk && vk.publicKey) {
+            const padding = '='.repeat((4 - vk.publicKey.length % 4) % 4);
+            const base64 = (vk.publicKey + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const raw = atob(base64);
+            vapidKey = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) vapidKey[i] = raw.charCodeAt(i);
+          }
+        }
+      } catch (_) { /* fallback subscribe sans key échouera → catch ci-dessous */ }
+      const sub = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidKey
+      });
+      await fetch('/api/v1/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub)
+      });
+    } catch (err) {
+      console.error('[PWA Push] pushsubscriptionchange failed:', err && err.message || err);
+    }
+  })());
 });
 
 // bd nwk6 — Clic sur notification → focus tab existant ou ouvre nouvelle

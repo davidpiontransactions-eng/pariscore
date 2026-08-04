@@ -105,6 +105,10 @@ gantt
 > Suite à l'audit `docs/audit-dashboard-refonte-2026-08-03.md` (commit `3ed80a3`).
 > 6 améliorations (A1–A6) + 8 innovations (I1–I8) à intégrer.
 
+> ✅ **STATUT : 14/14 LIVRÉS (2026-08-04)** — refonte complète + mission orchestrée.
+> Commits : `c79b4a8` (A1-A6 + I1/I2/I4/I6/I7 + A2 + C1-C3) · `d77e4dc` (I3 cron) ·
+> `e634eb8` (I8 compare) · `ad31116` (A1↹ tabs réels + I5 lien détail). Déployé VPS + smoke verts.
+
 ```mermaid
 gantt
     title Dashboard Refonte — Améliorations & Innovations (août→sept 2026)
@@ -112,27 +116,29 @@ gantt
     axisFormat %d/%m
 
     section 🛠️ Améliorations
-    A5: Dédoublonner 3 hooks (page.tsx)       :a5, 2026-08-04, 4d
-    A1: Tabs Basket/CS2/Darts (brancher API)   :a1, after a5, 5d
-    A2: ΔElo Football (UpcomingTable)           :a2, 2026-08-06, 5d
-    A4: Footer mobile (hidden→visible)          :a4, 2026-08-10, 2d
-    A6: pruneExpiredCache O(n)→filtré           :a6, 2026-08-12, 1d
-    A3: scroll-margin-top ancres AIInsightCard  :a3, 2026-08-13, 1d
+    A5: Dédoublonner 3 hooks (page.tsx)       :done, a5, 2026-08-04, 4d
+    A1: Tabs Basket/CS2/Darts (brancher API)   :done, a1, after a5, 5d
+    A2: ΔElo Football (UpcomingTable)           :done, a2, 2026-08-06, 5d
+    A4: Footer mobile (hidden→visible)          :done, a4, 2026-08-10, 2d
+    A6: pruneExpiredCache O(n)→filtré           :done, a6, 2026-08-12, 1d
+    A3: scroll-margin-top ancres AIInsightCard  :done, a3, 2026-08-13, 1d
 
     section 💡 Innovations haute priorité
-    I3: Cache Gemini cron (pré-calcul quotidien) :i3, 2026-08-11, 7d
-    I2: Filtres avancés BestMatches (sliders ΔElo/SPS) :i2, 2026-08-16, 8d
-    I1: IntersectionObserver section active      :i1, 2026-08-20, 6d
-    I8: Gemini compare 2 matchs (multi-select)   :i8, 2026-08-25, 7d
+    I3: Cache Gemini cron (pré-calcul quotidien) :done, i3, 2026-08-11, 7d
+    I2: Filtres avancés BestMatches (sliders ΔElo/SPS) :done, i2, 2026-08-16, 8d
+    I1: IntersectionObserver section active      :done, i1, 2026-08-20, 6d
+    I8: Gemini compare 2 matchs (multi-select)   :done, i8, 2026-08-25, 7d
 
     section 💡 Innovations priorité moyenne
-    I5: Lien direct → match detail (onClick)     :i5, 2026-08-28, 3d
-    I4: Sparkline Elo trend (UpcomingTable)      :i4, 2026-08-30, 5d
-    I7: Badge "Live" clignotant (UpcomingTable)  :i7, 2026-09-02, 3d
-    I6: Toggle grille/table (cartes↔compact)     :i6, 2026-09-04, 4d
+    I5: Lien direct → match detail (onClick)     :done, i5, 2026-08-28, 3d
+    I4: Sparkline Elo trend (UpcomingTable)      :done, i4, 2026-08-30, 5d
+    I7: Badge "Live" clignotant (UpcomingTable)  :done, i7, 2026-09-02, 3d
+    I6: Toggle grille/table (cartes↔compact)     :done, i6, 2026-09-04, 4d
 ```
 
 ### Détail des items
+
+> ✅ **14/14 livrés (2026-08-04)** — voir bandeau de statut ci-dessus.
 
 #### 🛠️ Améliorations (6 items, ~18j cumulés)
 
@@ -160,17 +166,17 @@ gantt
 
 ### Calendrier récapitulatif
 
-| Période | Items | Cumul jours |
-|---|---|---|
-| **Semaine 32** (4-10 août) | A5, A2 (début), A4 | ~11j |
-| **Semaine 33** (11-17 août) | A1, A2 (fin), A6, A3, I3 (début) | ~14j |
-| **Semaine 34** (18-24 août) | I3 (fin), I2 (début), I1 (début) | ~19j |
-| **Semaine 35** (25-31 août) | I2 (fin), I1 (fin), I8 (début), I5 | ~22j |
-| **Semaine 36** (1-7 sept) | I8 (fin), I4, I7, I6 | ~15j |
-| **Total** | 14 items | **~81j** |
+| Période | Items | Cumul jours | Statut |
+|---|---|---|---|
+| **Semaine 32** (4-10 août) | A5, A2 (début), A4 | ~11j | ✅ Livrés (regroupés en `c79b4a8` + mission 3 commits) |
+| **Semaine 33** (11-17 août) | A1, A2 (fin), A6, A3, I3 (début) | ~14j | ✅ Livrés |
+| **Semaine 34** (18-24 août) | I3 (fin), I2 (début), I1 (début) | ~19j | ✅ Livrés |
+| **Semaine 35** (25-31 août) | I2 (fin), I1 (fin), I8 (début), I5 | ~22j | ✅ Livrés |
+| **Semaine 36** (1-7 sept) | I8 (fin), I4, I7, I6 | ~15j | ✅ Livrés |
+| **Total** | 14 items | **~81j** | ✅ **100%** (exécutés en ~1j grâce aux agents parallèles) |
 
-> ⚠️ Les durées sont estimées pour un dev full-stack solo. Le parallélisme réel dépend de la dispo.
-> Les items A5+A1+A2 sont les plus bloquants car ils touchent les données partagées.
+> ⚠️ Les durées étaient estimées pour un dev full-stack solo. Le parallélisme réel dépend de la dispo.
+> Les items A5+A1+A2 étaient les plus bloquants car ils touchent les données partagées — traités en premier via le `DashboardDataProvider` (A5).
 
 ---
 

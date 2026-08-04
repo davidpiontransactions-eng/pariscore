@@ -489,18 +489,18 @@ Le projet suit une roadmap en **4 phases séquentielles** avec **parallélisatio
 | P2-B | 2.7 — Patch CORS centralisé (55→0 occurrences) | `general-purpose` agent #5 | ✅ | `phase2/patches/patch-005-006-cors-centralized.patch` + tests + `REPORT-cors.md` |
 | P2-C | 2.8 — Patch setInterval .unref() (59 timers) | `general-purpose` agent #6 | ✅ | `phase2/patches/patch-012-intervals-unref.patch` + `REPORT-intervals.md` |
 | P2-D | 2.9 — Audit tests E2E credentials | `general-purpose` agent #7 | ✅ | `phase2/tests/{audit-tests-credentials.md, patch-testss-credentials-env.patch, .env.test.template, REPORT.md}` |
-| P2-E | 2.10 — Patch XSS innerHTML (532 occ.) | `general-purpose` agent à lancer | ⏳ En attente | — |
-| P2-F | 2.11 — Migration tokens → cookie httpOnly | `general-purpose` agent à lancer | ⏳ En attente (dépend P2-E) | — |
+| P2-E | 2.10 — Patch XSS innerHTML (532 occ.) | `general-purpose` agent | ✅ (2026-08-04) | 4 XSS réels patchés (module RG-path tennis : `s.round`, `s.opponent`, `d.tournament.*`, `d.player`, `e.message` → `escapeHtml`) · reste : empty states statiques + var `html` échappées en amont (audit : 27 statiques, 10 vars, 8 constructeurs vérifiés `esc()`/`escapeHtml`) |
+| P2-F | 2.11 — Migration tokens → cookie httpOnly | — | ✅ (2026-08-04) | Audit : 0 `document.cookie` legacy, 0 token localStorage ; cookies Next.js = consent/locale/sidebar (non-sensibles) ; clés API = server-side uniquement (`Authorization: Token` dans `src/lib/bsd-*.ts`) → rien à migrer |
 
 ### 2.3 Phase 3 — Tracks planifiées
 
 | Track | Tâche | Agent à affecter | Période |
 |---|---|---|---|
-| P3-A | 3.1-3.4 — Patches backend isolation (4 bugs) | `general-purpose` | J+7 |
-| P3-B | 3.5-3.6 — Patches frontend sw.js + admin logout | `general-purpose` | J+7 |
-| P3-C | 3.7 — .env.standalone.example exhaustif | `general-purpose` | J+8 |
-| P3-D | 3.8-3.9 — Patches Ops deploy.sh + Caddy | `general-purpose` | J+8 |
-| P3-E | 3.10-3.14 — Patches backend suite | `general-purpose` | J+9 |
+| P3-A | 3.1-3.4 — Patches backend isolation (4 bugs) | `general-purpose` | ✅ 3.1 (2026-08-04) — XFF trust loopback-only + dernière IP (`getClientIp` + inline 46470) · ✅ 3.2 — route `_debug/tennis-rehydrate-test` gatee `DEBUG_ROUTES_ENABLED=1` (404 sinon) · ✅ 3.3 — `HISTORY_AUTH_REQUIRED` déjà implémenté (5 routes) · ✅ 3.4 — pas de fallback ADMIN hardcodé ; `forceChange` actif si `ADMIN_PASSWORD` absent |
+| P3-B | 3.5-3.6 — Patches frontend sw.js + admin logout | `general-purpose` | ✅ 3.5 (2026-08-04) — handler `pushsubscriptionchange` ajouté dans `sw.js` (re-subscribe VAPID rotation + renvoi à `/api/v1/push/subscribe`, anonyme accepté) + bump `CACHE_VERSION` v78 · ✅ 3.6 — logout admin déjà implémenté (`POST /api/v1/auth/logout` clear cookie httpOnly, ligne 35284) |
+| P3-C | 3.7 — .env.standalone.example exhaustif | `general-purpose` | ✅ 3.7 (2026-08-04) — inventaire automatique des 116 `process.env.*` de server.js → `.env.standalone.example` classé (serveur, sécurité/auth, rate-limit, sources API, IA, VAPID, SMTP, Stripe, Discord/Telegram, live, algos tennis, WOM, CatBoost, RG, ETL, cache, divers) |
+| P3-D | 3.8-3.9 — Patches Ops deploy.sh + Caddy | `general-purpose` | ✅ 3.8 (2026-08-04) — backup `deploy.sh` → `deploy.sh.bak-2026-08-04` · ✅ 3.9 — Caddyfile allowlist stricte : `XTransformPort=3001` (seul port légitime, mini-service tennis-live) au lieu de `=*` (open proxy SSRF vers ports internes bloqué) |
+| P3-E | 3.10-3.14 — Patches backend suite | `general-purpose` | ✅ 3.10 (2026-08-04) — audit query builder : déjà sain (IDs numériques internes, `encodeURIComponent` systématique, regex strictes `^[A-Z]{2}$`/`^[a-zA-Z0-9_-]{1,64}$`, builder `encodeURIComponent(k)=(v)` lignes 3007/19193) · ✅ 3.11 — unification `THESPORTSDB_KEY` → alias de `TSDB_API_KEY` (ancien doublon, ligne 1915) · ✅ 3.12 — postback `/cb/` déjà `timingSafeEqual` + 503 si token absent · ✅ 3.13 — audit setInterval : tous singletons ou nettoyés sur `close` (SSE heartbeats, `_mockInterval` re-guardé) · ✅ 3.14 — `admin.html` : formulaire force-change obligatoire quand `force_change:true` au login (premier login admin sans ADMIN_PASSWORD) |
 | P3-F | 3.15 — Audit OWASP ZAP + tests charge | `general-purpose` (QA) | J+10 |
 | P3-G | 3.16 — Go/No-Go définitif | **Chef de projet** (moi) | J+12 |
 
@@ -547,26 +547,26 @@ gantt
     2.7 Patch CORS centralisé        :done, p2-7, 2026-07-10, 1d
     2.8 Patch setInterval .unref()   :done, p2-8, 2026-07-10, 0.5d
     2.9 Audit tests E2E              :done, p2-9, 2026-07-10, 0.5d
-    2.10 Patch XSS innerHTML         :p2-10, 2026-07-11, 3d
-    2.11 Migration tokens cookie     :p2-11, after p2-10, 1.5d
+    2.10 Patch XSS innerHTML         :done, p2-10, 2026-07-11, 3d
+    2.11 Migration tokens cookie     :done, p2-11, after p2-10, 1.5d
     2.12 Tests régression P2         :p2-12, after p2-11, 1d
     2.13 Déploiement Phase 2         :p2-13, after p2-12, 0.5d
 
     section Phase 3 - Durcissement
-    3.1 X-Forwarded-For trust        :p3-1, 2026-07-16, 0.5d
-    3.2 Désactiver routes _debug     :p3-2, 2026-07-16, 0.25d
-    3.3 HISTORY_AUTH_REQUIRED        :p3-3, 2026-07-16, 0.5d
-    3.4 Supprimer fallback ADMIN     :p3-4, 2026-07-16, 0.15d
-    3.5 pushsubscriptionchange       :p3-5, 2026-07-17, 0.5d
-    3.6 Logout admin                 :p3-6, 2026-07-17, 0.25d
-    3.7 .env.standalone.example      :p3-7, 2026-07-17, 2d
-    3.8 Backup deploy.sh             :p3-8, 2026-07-18, 0.5d
-    3.9 Allowlist Caddy              :p3-9, 2026-07-18, 0.25d
-    3.10 Query builder complet       :p3-10, 2026-07-19, 2d
-    3.11 THESPORTSDB_KEY             :p3-11, 2026-07-19, 0.25d
-    3.12 GA_POSTBACK_TOKEN           :p3-12, 2026-07-19, 0.15d
-    3.13 setInterval guard           :p3-13, 2026-07-19, 0.25d
-    3.14 forceChange admin.html      :p3-14, 2026-07-20, 0.5d
+    3.1 X-Forwarded-For trust        :done, p3-1, 2026-07-16, 0.5d
+    3.2 Désactiver routes _debug     :done, p3-2, 2026-07-16, 0.25d
+    3.3 HISTORY_AUTH_REQUIRED        :done, p3-3, 2026-07-16, 0.5d
+    3.4 Supprimer fallback ADMIN     :done, p3-4, 2026-07-16, 0.15d
+    3.5 pushsubscriptionchange       :done, p3-5, 2026-07-17, 0.5d
+    3.6 Logout admin                 :done, p3-6, 2026-07-17, 0.25d
+    3.7 .env.standalone.example      :done, p3-7, 2026-07-17, 2d
+    3.8 Backup deploy.sh             :done, p3-8, 2026-07-18, 0.5d
+    3.9 Allowlist Caddy              :done, p3-9, 2026-07-18, 0.25d
+    3.10 Query builder complet       :done, p3-10, 2026-07-19, 2d
+    3.11 THESPORTSDB_KEY             :done, p3-11, 2026-07-19, 0.25d
+    3.12 GA_POSTBACK_TOKEN           :done, p3-12, 2026-07-19, 0.15d
+    3.13 setInterval guard           :done, p3-13, 2026-07-19, 0.25d
+    3.14 forceChange admin.html      :done, p3-14, 2026-07-20, 0.5d
     3.15 OWASP ZAP + tests charge    :p3-15, 2026-07-21, 2d
     3.16 Go/No-Go définitif          :crit, p3-16, after p3-15, 0.25d
 
