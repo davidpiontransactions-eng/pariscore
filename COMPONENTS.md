@@ -151,6 +151,13 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 |-----------|------|------|
 | sport-tabs | sport-tabs.tsx | Onglets de navigation entre sports |
 
+## AI (`src/components/ai/`) — 2 components
+
+| Component | File | Role |
+|-----------|------|------|
+| ai-compare-dialog | ai-compare-dialog.tsx | Dialogue de comparaison 2 matchs par Gemini (cote-à-cote, facteurs, recommandation) |
+| ai-insight-card | ai-insight-card.tsx | Carte d'analyse mono-match Gemini (sélecteur + mode compare) |
+
 ## UI primitives (`src/components/ui/`) — 50 components (shadcn/ui, New York)
 
 Standard shadcn/ui set, owned in-repo. Full list: `accordion`, `alert`,

@@ -15,7 +15,43 @@ export type CachedGeminiInsight = {
   confidence: number;
 };
 
-type CacheEntry = { data: CachedGeminiInsight; at: number };
+/**
+ * Analyse comparative Gemini (2 matchs) — structure dédiée afin de ne pas
+ * masquer la sémantique "coude à coude" dans un CachedGeminiInsight mono.
+ * matchA.matchId / matchB.matchId = identifiants bruts (≤ 100 chars, pas de
+ * concaténation ambiguë) pour affichage côté client.
+ */
+export type GeminiCompareInsight = {
+  summary: string;
+  matchA: {
+    matchId: string;
+    label: string;
+    analysis: string;
+    edge: number;
+    probability: number;
+  };
+  matchB: {
+    matchId: string;
+    label: string;
+    analysis: string;
+    edge: number;
+    probability: number;
+  };
+  /** Lignes comparatives "dimension → valeur A vs valeur B + avantage". */
+  factors: {
+    dimension: string;
+    matchA: string;
+    matchB: string;
+    advantage: "A" | "B" | "egal";
+  }[];
+  recommendation: {
+    side: "matchA" | "matchB" | "aucun";
+    reason: string;
+  };
+  confidence: number; // 1-5
+};
+
+type CacheEntry<T = unknown> = { data: T; at: number };
 
 export const GEMINI_CACHE_TTL_MS = 12 * 60 * 60_000; // 12 heures
 
@@ -28,9 +64,25 @@ export function geminiCacheKey(sport: string, matchId: string): string {
   return `gemini-insight:${sport}:${matchId}:${today}`;
 }
 
+/**
+ * Construit la clé de cache d'une comparaison (2 matchs, même sport + jour).
+ * Les idA/idB sont ordonnés lexicographiquement pour que A+B === B+A.
+ */
+export function geminiCompareCacheKey(
+  sport: string,
+  idA: string,
+  idB: string,
+): string {
+  const today = new Date().toISOString().slice(0, 10);
+  const [a, b] = [idA, idB].sort();
+  return `gemini-insight:compare:${sport}:${a}+${b}:${today}`;
+}
+
 /** Récupère une entrée du cache si elle existe et n'est pas expirée. */
-export function geminiCacheGet(key: string): CachedGeminiInsight | null {
-  const entry = geminiCache.get(key);
+export function geminiCacheGet<T = CachedGeminiInsight>(
+  key: string,
+): T | null {
+  const entry = geminiCache.get(key) as CacheEntry<T> | undefined;
   if (!entry) return null;
   if (Date.now() - entry.at > GEMINI_CACHE_TTL_MS) {
     geminiCache.delete(key);
@@ -40,7 +92,7 @@ export function geminiCacheGet(key: string): CachedGeminiInsight | null {
 }
 
 /** Stocke une entrée dans le cache avec le timestamp actuel. */
-export function geminiCacheSet(key: string, data: CachedGeminiInsight): void {
+export function geminiCacheSet<T>(key: string, data: T): void {
   geminiCache.set(key, { data, at: Date.now() });
 }
 
