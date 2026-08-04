@@ -13,6 +13,7 @@ import { Trophy, AlertCircle } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import type { MatchTimelineData } from "@/lib/football-timeline";
 import { MomentumChart } from "./momentum-chart";
+import { WatchButton } from "@/components/shared/watch-button";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
 
@@ -120,6 +121,19 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
               </div>
               <span className="text-center text-xs font-semibold leading-tight">{match.away.shortName}</span>
             </div>
+          </div>
+        )}
+
+        {/* Visionner (LiveTV) */}
+        {match && (
+          <div className="mt-3 flex justify-center">
+            <WatchButton
+              sport="football"
+              home={match.home.shortName || match.home.name}
+              away={match.away.shortName || match.away.name}
+              label="Visionner en direct"
+              variant="default"
+            />
           </div>
         )}
 

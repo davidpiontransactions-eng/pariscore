@@ -229,6 +229,7 @@
     "hideStats": "Masquer les stats",
     "deepAnalysis": "Analyse approfondie",
     "placeBet": "Parier",
+    "streamWatch": "Visionner",
     "form": "Forme",
     "eloGap": "Elo gap",
     "surface": "Surface",
@@ -268,6 +269,7 @@
   "detail": {
     "title": "Analyse complète",
     "subtitle": "{tournament} · {round} · Analyse complète",
+    "streamWatch": "Visionner en direct",
     "tabs": {
       "overview": "Vue d'ensemble",
       "h2h": "H2H",

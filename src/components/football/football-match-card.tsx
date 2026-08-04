@@ -18,6 +18,7 @@ import { countryFlag } from "@/lib/bsd-football-fetcher";
 
 import { MetricComparePanel } from "@/components/football/MetricComparePanel";
 import { MetricLeaderboardTable } from "@/components/football/MetricLeaderboardTable";
+import { WatchButton } from "@/components/shared/watch-button";
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso);
@@ -836,6 +837,13 @@ export function FootballMatchCard({
 
         {/* Footer: CTA */}
         <div className="mt-3 flex items-center justify-end gap-2 border-t border-border/40 pt-3">
+          <WatchButton
+            sport="football"
+            home={match.home.shortName || match.home.name}
+            away={match.away.shortName || match.away.name}
+            label="Visionner"
+            variant="subtle"
+          />
           <div className="flex items-center gap-1">
             <button
               onClick={onOpenDetail}

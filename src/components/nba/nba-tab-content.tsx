@@ -11,6 +11,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { WatchButton } from "@/components/shared/watch-button";
 
 // ── Types ──
 type NbaTeam = {
@@ -193,6 +194,17 @@ function NbaMatchCard({ match, index }: { match: NbaMatch; index: number }) {
           {match.venue}
         </p>
       )}
+
+      {/* Visionner (LiveTV) */}
+      <div className="mt-3 flex justify-center">
+        <WatchButton
+          sport="basketball"
+          home={match.home.name}
+          away={match.away.name}
+          label="Visionner"
+          variant="dark"
+        />
+      </div>
     </motion.div>
   );
 }

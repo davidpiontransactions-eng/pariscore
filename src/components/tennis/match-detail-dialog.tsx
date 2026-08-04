@@ -38,6 +38,7 @@ import { useEloHistory } from "@/hooks/use-elo-history";
 import { useBSDMatchDetail } from "@/hooks/use-bsd-match-detail";
 import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
+import { WatchButton } from "@/components/shared/watch-button";
 
 type Props = {
   match: TennisMatch | null;
@@ -96,6 +97,7 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
 
 export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("detail");
+  const streamWatchLabel = t("streamWatch");
   const locale = useLocale();
   const browserTz = useBrowserTimeZone();
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
@@ -219,6 +221,16 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
               <>Mis à jour : {formatInTimeZone(match.modelUpdatedAt, locale, "full", browserTz)}</>
             )}
           </DialogDescription>
+
+          <div className="mt-2 flex justify-center">
+            <WatchButton
+              sport="tennis"
+              home={playerA.name}
+              away={playerB.name}
+              label={streamWatchLabel}
+              variant="default"
+            />
+          </div>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-80px)]">

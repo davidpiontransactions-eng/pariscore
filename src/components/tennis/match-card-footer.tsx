@@ -6,6 +6,7 @@ import { formatRelativeTime, type TennisMatch } from "@/lib/tennis-data";
 import { fmtSPS, fmtSPSRank } from "@/lib/tennis-stats/sps-utils";
 import type { PlayerStats } from "@/lib/tennis-stats/types";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
+import { WatchButton } from "@/components/shared/watch-button";
 import {
   Tooltip,
   TooltipContent,
@@ -184,6 +185,15 @@ export function MatchCardFooter({
           {t("bet")}
           <ExternalLink className="h-3 w-3" />
         </button>
+
+        {/* Visionner (LiveTV) */}
+        <WatchButton
+          sport="tennis"
+          home={match.playerA.name}
+          away={match.playerB.name}
+          label={t("streamWatch")}
+          variant="subtle"
+        />
       </div>
     </footer>
   );

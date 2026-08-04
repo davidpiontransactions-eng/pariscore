@@ -9,6 +9,7 @@ import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { FormTimeline } from "@/components/shared/form-timeline";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { cn } from "@/lib/utils";
+import { WatchButton } from "@/components/shared/watch-button";
 
 export type MmaFight = {
   fighter_a: string;
@@ -207,6 +208,17 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
         <div className="mt-2 text-center text-[11px] font-medium text-white/40">
           <Calendar className="mr-1.5 inline-block h-3 w-3 align-text-top" />
           {formatCommenceTime(fight.commence_time)}
+        </div>
+
+        {/* Visionner (LiveTV) */}
+        <div className="mt-3 flex justify-center">
+          <WatchButton
+            sport="mma"
+            home={fight.fighter_a}
+            away={fight.fighter_b}
+            label="Visionner"
+            variant="dark"
+          />
         </div>
       </div>
     </motion.article>

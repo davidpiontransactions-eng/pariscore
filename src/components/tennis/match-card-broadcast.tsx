@@ -51,6 +51,7 @@ import { fmtSPS } from "@/lib/tennis-stats/sps-utils";
 import { resolveTournamentTheme } from "@/lib/tournament-theme";
 import { useFormattedMatchTime, formatPlayerName } from "@/lib/tennis-format";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
+import { WatchButton } from "@/components/shared/watch-button";
 import { cn } from "@/lib/utils";
 
 import { type TennisMatch, type Player } from "@/lib/tennis-data";
@@ -659,6 +660,13 @@ export function MatchCardBroadcast({
                 {t("deepAnalysis")}
               </button>
             )}
+            <WatchButton
+              sport="tennis"
+              home={playerA.name}
+              away={playerB.name}
+              label={t("streamWatch")}
+              variant="subtle"
+            />
           </div>
         </div>
       </div>

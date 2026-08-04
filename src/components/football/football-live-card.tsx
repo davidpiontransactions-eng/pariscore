@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FootballMatch } from "@/lib/football-data";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { WatchButton } from "@/components/shared/watch-button";
 
 // ─── Sparkline xG Live ───────────────────────────────────────────────────
 
@@ -463,6 +464,20 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             <Activity className="h-3 w-3" />
             Momentum
           </button>
+        )}
+
+        {/* Visionner (LiveTV) */}
+        {match.home.name && match.away.name && (
+          <div className="mt-2">
+            <WatchButton
+              sport="football"
+              home={match.home.shortName || match.home.name}
+              away={match.away.shortName || match.away.name}
+              label="Visionner"
+              variant="default"
+              className="w-full justify-center"
+            />
+          </div>
         )}
       </div>
     </div>
