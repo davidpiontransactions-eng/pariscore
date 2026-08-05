@@ -67,8 +67,9 @@ export function PlayerStatline({
   // on retombe sur le `player.rank`/`player.elo` de la chaîne prematch
   // (qui peut être 0 / 1500 pour un joueur inconnu — auquel cas on affiche —).
   const elo = stats?.elo ?? player.elo;
-  // Ranking : ATP si circuit ATP, WTA sinon. On prend le non-null.
-  const rank = stats?.atpRank ?? stats?.wtaRank ?? null;
+  // Ranking : ATP si circuit ATP, WTA sinon. On prend le non-null, avec
+  // repli sur le rang serveur (BSD current_ranking / fallback DB).
+  const rank = stats?.atpRank ?? stats?.wtaRank ?? (player.rank > 0 ? player.rank : null);
   const circuitLabel =
     stats?.atpRank != null ? "ATP" : stats?.wtaRank != null ? "WTA" : null;
 

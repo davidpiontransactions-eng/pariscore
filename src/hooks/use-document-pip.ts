@@ -61,10 +61,21 @@ const WIDGET_WIDTH = 440;
 const WIDGET_HEIGHT = 620;
 
 export function useDocumentPip(): UseDocumentPipResult {
-  const [pipSupported] = useState(
-    () =>
-      typeof window !== "undefined" && "documentPictureInPicture" in window,
-  );
+  // SSR-safe : en serveur `window` n'existe pas → pas de carte "pip" côté
+  // serveur. Le support réel DocPiP est détecté APRES hydration (useEffect)
+  // pour éviter un hydration mismatch sur `mode` (server=popup, client=pip).
+  const [pipSupported, setPipSupported] = useState(false);
+  // Ref miroir : `open()` peut être invoqué par un timer/effet auto-open qui a
+  // capturé le state SSR initial (false). On lit le ref au moment de l'appel
+  // pour toujours voir le support réel détecté post-hydration.
+  const pipSupportedRef = useRef(false);
+
+  useEffect(() => {
+    const canPip = typeof window !== "undefined" && "documentPictureInPicture" in window;
+    setPipSupported(canPip);
+    pipSupportedRef.current = canPip;
+  }, []);
+
   // Popup toujours dispo (window.open existe partout). Le hook est donc
   // "supported" même sur Brave/Firefox/Safari.
   const supported = true;
@@ -211,13 +222,15 @@ export function useDocumentPip(): UseDocumentPipResult {
         rootRef.current.render(content);
         return;
       }
-      if (pipSupported) {
+      // Détection au moment de l'appel (pas le state SSR capturé par un
+      // éventuel timer auto-open) — voir pipSupportedRef.
+      if (pipSupportedRef.current) {
         await openPip(content);
       } else {
         await openPopup(content);
       }
     },
-    [pipSupported, openPip, openPopup],
+    [openPip, openPopup],
   );
 
   // Cleanup au unmount du caller (ex: changement de page dans l'app principale).

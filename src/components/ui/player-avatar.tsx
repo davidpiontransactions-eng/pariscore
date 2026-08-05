@@ -107,8 +107,11 @@ export function PlayerAvatar({
             onError={() => setHasError(true)}
             unoptimized={
               // Pour les URLs CDN externes sans params Next
+              // (+ dicebear : renvoie du SVG, que l'optimiseur next/image
+              // rejette systématiquement sans dangerouslyAllowSVG)
               photoUrl.includes("chatglm.cn") ||
-              photoUrl.includes("api-sports.io")
+              photoUrl.includes("api-sports.io") ||
+              photoUrl.includes("dicebear.com")
             }
           />
         ) : (

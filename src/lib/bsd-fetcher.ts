@@ -15,6 +15,7 @@ import { findPlayerElo } from "@/lib/player-matcher";
 import { lookupAbstractElo } from "@/lib/tennis-elo/lookup";
 import { lookupServeStats } from "@/lib/tennis-dr/lookup";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
+import { resolvePlayerCountry } from "@/lib/tennis-player-country";
 import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
 import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
 import { computeMomentumScore } from "@/lib/momentum-score";
@@ -84,13 +85,45 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
   const eloMatchA = findPlayerElo(nameA);
   const eloMatchB = findPlayerElo(nameB);
 
-  const eloA = abstractA?.elo ?? dbA?.elo ?? eloMatchA?.elo ?? 1500;
-  const surfaceEloA = abstractA?.surfaceElo ?? dbA?.eloSurface ?? eloMatchA?.surfaceElo ?? eloA;
-  const formA: MatchOutcome[] = eloMatchA?.history ? extractForm(eloMatchA.history) : ["W", "L", "W", "L", "W", "L"];
+  // ─── Gating « Données insuffisantes » ───────────────────────────────
+  // un joueur est « connu » si au moins UNE source réelle fournit son Elo.
+  // Si l'un des deux est inconnu, aucune prédiction du modèle n'est fiable :
+  // on ne fabrique plus de faux 50/50 / Elo 1500 / forme & H2H aléatoires.
+  const eloKnownA = Boolean(abstractA?.elo ?? dbA?.elo ?? eloMatchA?.elo);
+  const eloKnownB = Boolean(abstractB?.elo ?? dbB?.elo ?? eloMatchB?.elo);
+  const insufficientData = !eloKnownA || !eloKnownB;
 
-  const eloB = abstractB?.elo ?? dbB?.elo ?? eloMatchB?.elo ?? 1500;
-  const surfaceEloB = abstractB?.surfaceElo ?? dbB?.eloSurface ?? eloMatchB?.surfaceElo ?? eloB;
-  const formB: MatchOutcome[] = eloMatchB?.history ? extractForm(eloMatchB.history) : ["L", "W", "L", "W", "L", "W"];
+  const eloA = eloKnownA
+    ? (abstractA?.elo ?? dbA?.elo ?? eloMatchA?.elo ?? 1500)
+    : 1500; // sentinelle — l'UI masque via eloKnown=false / insufficientData
+  const surfaceEloA = eloKnownA
+    ? (abstractA?.surfaceElo ?? dbA?.eloSurface ?? eloMatchA?.surfaceElo ?? eloA)
+    : eloA;
+  const formA: MatchOutcome[] = eloKnownA && eloMatchA?.history
+    ? extractForm(eloMatchA.history)
+    : [];
+
+  const eloB = eloKnownB
+    ? (abstractB?.elo ?? dbB?.elo ?? eloMatchB?.elo ?? 1500)
+    : 1500;
+  const surfaceEloB = eloKnownB
+    ? (abstractB?.surfaceElo ?? dbB?.eloSurface ?? eloMatchB?.surfaceElo ?? eloB)
+    : eloB;
+  const formB: MatchOutcome[] = eloKnownB && eloMatchB?.history
+    ? extractForm(eloMatchB.history)
+    : [];
+
+  // ─── Rang réel BSD (quand BSD le fournit) ───────────────────────────
+  const rankA = b.player1.current_ranking?.position ?? 0; // 0 = inconnu
+  const rankB = b.player2.current_ranking?.position ?? 0;
+  // Fallback : rang officiel ATP/WTA depuis pariscore.db (scraper hebdo
+  // tour-leaderboards) quand BSD ne l'expose pas encore.
+  const dbRankA = rankA > 0
+    ? rankA
+    : (dbA?.atpRank ?? dbA?.wtaRank ?? 0);
+  const dbRankB = rankB > 0
+    ? rankB
+    : (dbB?.atpRank ?? dbB?.wtaRank ?? 0);
 
   const playerAInputs: PlayerInputs = {
     id: String(b.player1.id ?? index),
@@ -98,7 +131,7 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     elo: eloA,
     surfaceElo: surfaceEloA,
     form: formA,
-    h2h: { won: 3, lost: 2 },
+    h2h: { won: eloKnownA ? Math.min(3, formA.filter((f) => f === "W").length) : 0, lost: 0 },
   };
   const playerBInputs: PlayerInputs = {
     id: String(b.player2.id ?? index),
@@ -106,10 +139,15 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     elo: eloB,
     surfaceElo: surfaceEloB,
     form: formB,
-    h2h: { won: 2, lost: 3 },
+    h2h: { won: 0, lost: eloKnownB ? Math.min(3, formB.filter((f) => f === "L").length) : 0 },
   };
 
-  const pred = predict(playerAInputs, playerBInputs);
+  // Prédiction du modèle uniquement si les DEUX joueurs sont connus.
+  // Sinon probA/probB proviennent du marché (cotes dé-margées) quand elles
+  // existent, et l'UI affiche « Données insuffisantes » sinon.
+  const pred = insufficientData
+    ? null
+    : predict(playerAInputs, playerBInputs);
 
   const tournamentName = b.tournament.name || "Tennis";
 
@@ -152,14 +190,16 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     id: playerAInputs.id,
     name: nameA,
     shortName: nameA.split(" ").slice(-1)[0].toUpperCase(),
-    rank: 0,
+    rank: dbRankA,
     elo: playerAInputs.elo,
+    eloKnown: eloKnownA,
     surfaceElo: playerAInputs.surfaceElo,
     photoUrl: b.player1.id
       ? getPlayerPhotoUrl(b.player1.id)
       : resolvePlayerPhoto(nameA),
     color: colorA,
     form: playerAInputs.form,
+    country: resolvePlayerCountry(nameA),
   };
 
   const playerB: Player = {
@@ -167,13 +207,16 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     id: playerBInputs.id,
     name: nameB,
     shortName: nameB.split(" ").slice(-1)[0].toUpperCase(),
+    rank: dbRankB,
     elo: playerBInputs.elo,
+    eloKnown: eloKnownB,
     surfaceElo: playerBInputs.surfaceElo,
     photoUrl: b.player2.id
       ? getPlayerPhotoUrl(b.player2.id)
       : resolvePlayerPhoto(nameB),
     color: colorB,
     form: playerBInputs.form,
+    country: resolvePlayerCountry(nameB),
   };
 
   // Momentum Score (EWM 5 signaux)
@@ -184,13 +227,23 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
   const playerAFinal: Player = { ...playerA, momentumScore: momentum.scoreA };
   const playerBFinal: Player = { ...playerB, momentumScore: momentum.scoreB };
 
+  // Probabilités : modèle si données suffisantes, sinon marché dé-margé
+  // (cotes consensus) quand dispo, sinon 50/50 (masqué par l'UI).
+  const marketProbs = allOdds[0]
+    ? { a: allOdds[0].impliedProbA, b: allOdds[0].impliedProbB }
+    : null;
+  const probA = pred ? pred.probA : (marketProbs?.a ?? 50);
+  const probB = pred ? pred.probB : (marketProbs?.b ?? 50);
+
   const stats: MatchStats = {
-    form: `${playerAInputs.form.filter((f) => f === "W").length}V-${playerAInputs.form.filter((f) => f === "L").length}D`,
-    eloGap: pred.eloGap,
+    form: pred
+      ? `${playerAInputs.form.filter((f) => f === "W").length}V-${playerAInputs.form.filter((f) => f === "L").length}D`
+      : "—",
+    eloGap: pred?.eloGap ?? 0,
     surface,
-    h2h: "3-2",
-    ic: pred.ic,
-    confidence: pred.confidence,
+    h2h: pred ? "—" : "—",
+    ic: pred?.ic ?? [0, 100],
+    confidence: pred?.confidence ?? 0,
   };
 
   return {
@@ -203,10 +256,11 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     scheduledAt: b.match_date ?? "",
     playerA: playerAFinal,
     playerB: playerBFinal,
-    probA: pred.probA,
-    probB: pred.probB,
+    insufficientData,
+    probA,
+    probB,
     stats,
-    model: pred.model,
+    model: pred?.model ?? "Données insuffisantes",
     modelUpdatedAt: new Date().toISOString(),
     allOdds,
     odds: allOdds[0]
@@ -356,7 +410,7 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
 }
 
 function extractForm(history: { elo: number; date: string }[]): ("W" | "L")[] {
-  if (history.length < 2) return ["W", "L", "W", "L", "W", "L"];
+  if (history.length < 2) return [];
   const recent = history.slice(-7);
   const form: ("W" | "L")[] = [];
   for (let i = 1; i < recent.length; i++) {

@@ -10,6 +10,12 @@ export type Player = {
   shortName: string;
   rank: number;
   elo: number;
+  /**
+   * true si `elo` provient d'une source réelle (abstract/db/eloMatch).
+   * false/faux = joueur inconnu, `elo` = sentinelle 1500 — l'UI doit
+   * afficher « Données insuffisantes » plutôt qu'une valeur trompeuse.
+   */
+  eloKnown?: boolean;
   surfaceElo?: number; // Elo restricted to upcoming surface (defaults to elo if absent)
   photoUrl: string;
   color: string; // hex, attached to the player
@@ -90,6 +96,11 @@ export type TennisMatch = {
   // placeholders. MatchCard renders a disclaimer badge and hides the fake
   // predictive components to avoid perceived deception.
   synthetic?: boolean;
+  /**
+   * true si au moins un joueur est inconnu sur la surface (≈1500) — aucune
+   * prédiction fiable possible. L'UI affiche « Données insuffisantes ».
+   */
+  insufficientData?: boolean;
   /**
    * Prédictions Over/Under Total Games (modèle Barnett-Clarke + Poisson,
    * src/lib/prediction/total-games.ts). 3 seuils : 18.5 / 19.5 / 21.5 games.

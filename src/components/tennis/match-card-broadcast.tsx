@@ -736,7 +736,9 @@ function BroadcastPlayerColumn({
 }) {
   // Résolution métriques (depuis player-statline.tsx, format vertical)
   const elo = Math.round(stats?.elo ?? player.elo);
-  const rank = stats?.atpRank ?? stats?.wtaRank ?? null;
+  // Rang : DB (stats enrichies) en priorité, repli sur le rang serveur
+  // (BSD current_ranking / fallback DB atpRank/wtaRank dans bsd-fetcher).
+  const rank = stats?.atpRank ?? stats?.wtaRank ?? (player.rank > 0 ? player.rank : null);
   const circuitLabel = stats?.atpRank != null ? "ATP" : stats?.wtaRank != null ? "WTA" : null;
   const sps = stats?.sps ?? null;
   const spsRank = stats?.spsRank ?? null;

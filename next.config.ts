@@ -41,6 +41,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "upload.wikimedia.org" },
       // Placeholder local (fallback ultime)
       { protocol: "https", hostname: "placehold.co" },
+      // DiceBear — avatars initiales (fallback photos joueurs tennis)
+      { protocol: "https", hostname: "api.dicebear.com" },
+      // Tennis Warehouse — headshots ~90 joueurs ATP/WTA (tennis-player-photos.json)
+      { protocol: "https", hostname: "img.tennis-warehouse.com" },
     ],
     // Formats modernes pour PWA légère
     formats: ["image/avif", "image/webp"],

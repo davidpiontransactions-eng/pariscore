@@ -30,6 +30,7 @@ import {
   type PlayerEloMatch,
 } from "@/lib/player-matcher";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
+import { resolvePlayerCountry } from "@/lib/tennis-player-country";
 import { resolveTournamentCategory, resolveTournamentPriority } from "@/lib/tournament-priority";
 
 const DEFAULT_ELO = 1500;
@@ -310,7 +311,7 @@ function buildPlayer(
     photoUrl,
     color,
     form: elo ? extractFormFromHistory(elo.history, 6) : [],
-    country: undefined,
+    country: resolvePlayerCountry(name),
   };
 }
 
