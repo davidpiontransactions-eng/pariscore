@@ -1,5 +1,22 @@
 # PariScore — Journal des modifications
-## [v12.92] — 2026-07-29 — P4 Tennis : évaluation make/buy + scaffold intégration (PROJET TERMINÉ)
+## [v12.93] — 2026-08-06 — Cotes live tennis 1xBet : best-effort + repli BSD
+
+### Ajouté
+- **Socle serveur 1xBet (`src/lib/onexbet-service.ts`)** — adaptateur 100% best-effort des endpoints internes `LineFeed/Get1x2_VZip` (liste live) & `LineFeed/GetGameZip` (cotes P1/P2 d'un événement) : timeout 4s, batch ≤ 30, matching tolérant NFD/casse des noms, ne lève jamais. Mémoire négative des probes : hosts répondent mais endpoints protégés (404/403/transport).
+- **Route batch `POST /api/v1/odds/live`** — cache TTL 10s multi-workers (`createTtlCache`/globalThis) ; réponse uniforme `{ ok, source: "onex"|"disabled"|"down", odds }`, toujours 200 (l'absence de cote n'est pas une erreur).
+- **Hook `useOnexLiveOdds`** — 1 POST batch/15s pour toute la grille live, identité-stable par slot (cartes memo inchangées ne se re-renderent pas), direction ▲/▼ comparée au batch précédent, repli BSD automatique via `liveStates`.
+- **`LiveOddsPanel`** — chips cotes P1/P2 (badge 1xBet emerald / BSD neutre + point LIVE) + flèches direction + **Kelly dynamique** (cap 0.25, affiché uniquement si Kelly > 0). Branché dans `MatchCardBroadcast` (zone LIVE ANALYTIQUE) + `TennisTabContent`.
+- **Env** : `ONEXBET_ENABLED=false` (feature flag) / `ONEXBET_API_BASE` optionnel, documentés dans `.env.example`.
+
+### Décision d'ingénierie
+- **Source non fiable = best-effort, jamais bloquante** : 1xBet n'expose pas d'API publique, endpoints internes instables → tout échec retombe silencieusement sur les cotes BSD déjà dans le pipeline (`oddsA/oddsB`). Désactivé par défaut (`ONEXBET_ENABLED`).
+- **Batch unique + identité stable** : pas de N requêtes par carte ; coût RSS maîtrisé ; seule la carte dont la cote bouge re-render.
+
+### Testé
+- `bun run typecheck` ✓ · `eslint` ✓ (7 fichiers touchés)
+
+### Limite
+- Fonctionnalité désactivée par défaut (flag) — pas encore de réseau d'autorité pour 1xBet (IP datacenter bloquée). À activer une fois un proxy/source d'autorité disponible, ou à nourrir par les en-têtes requêtes observées.
 
 ### Ajouté
 - **T4.1 + T4.2 + T4.3 — Évaluation Tennis-API.com & ShotQuality + décision make/buy** (`.context/P4-TENNIS-MAKE-BUY.md`) :

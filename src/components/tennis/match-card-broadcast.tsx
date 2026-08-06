@@ -45,6 +45,8 @@ import { MatchCardDetail } from "./match-card-detail";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
 import { LiveStatsTrigger, LiveTennisStatsDrawer } from "./live-tennis-stats-drawer";
 import { CountryFlag } from "./country-flag";
+import { LiveOddsPanel } from "./live-odds-panel";
+import type { LiveResolvedOdds } from "@/hooks/use-onex-live-odds";
 import { SportImage } from "@/components/ui/sport-image";
 import { getSportBg } from "@/lib/sport-images";
 import { fmtSPS } from "@/lib/tennis-stats/sps-utils";
@@ -82,6 +84,8 @@ type Props = {
   defaultOpen?: boolean;
   chipsCollapsedByDefault?: boolean;
   liveState?: LiveMatchState;
+  /** Cotes live résolues (1xBet → repli BSD) pour ce match. */
+  liveOdds?: LiveResolvedOdds | null;
   disconnected?: boolean;
   onOpenDetail?: () => void;
   onBetClick?: () => void;
@@ -97,6 +101,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
   defaultOpen = false,
   chipsCollapsedByDefault = false,
   liveState,
+  liveOdds = null,
   disconnected = false,
   onOpenDetail,
   onBetClick,
@@ -529,6 +534,24 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
               </>
             )}
           </div>
+        )}
+
+        {/* Cotes live P1/P2 — 1xBet avec repli BSD. Résolues par le hook
+            useOnexLiveOdds (batch 15s), champ cote + flash direction +
+            Kelly dynamique. */}
+        {isLive && (
+          <LiveOddsPanel
+            live={liveOdds}
+            nameA={playerA.name}
+            nameB={playerB.name}
+            shortNameA={playerA.shortName}
+            shortNameB={playerB.shortName}
+            colorA={playerA.color}
+            colorB={playerB.color}
+            probA={probA}
+            probB={probB}
+            className="mt-1"
+          />
         )}
 
         {/* Sections LIVE analytiques — MomentumDR + WinProbabilityChart +

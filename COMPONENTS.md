@@ -48,6 +48,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
 | match-card | match-card.tsx | Carte de match (principale) |
 | match-card-broadcast | match-card-broadcast.tsx | Carte style TV broadcast (R7) |
+| live-odds-panel | live-odds-panel.tsx | Cotes live P1/P2 (1xBet, repli BSD) : chips + flèches direction + Kelly |
 | match-card-detail | match-card-detail.tsx | Détail interne extrait de MatchCard |
 | match-card-footer | match-card-footer.tsx | Pied de carte de match |
 | match-card-header | match-card-header.tsx | En-tête de carte de match |

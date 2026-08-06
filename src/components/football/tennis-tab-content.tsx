@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useLiveMatches } from "@/hooks/use-live-matches";
+import { useOnexLiveOdds } from "@/hooks/use-onex-live-odds";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useMatchFilter, type FilterKey, type SortKey } from "@/hooks/use-match-filter";
@@ -118,6 +119,7 @@ function MatchCardBroadcastItem({
   match,
   chipsCollapsedByDefault,
   liveState,
+  liveOdds,
   disconnected,
   onOpenDetail,
   onBetClick,
@@ -126,6 +128,7 @@ function MatchCardBroadcastItem({
   match: TennisMatch;
   chipsCollapsedByDefault: boolean;
   liveState?: import("@/hooks/use-live-matches").LiveMatchState;
+  liveOdds?: import("@/hooks/use-onex-live-odds").LiveResolvedOdds | null;
   disconnected: boolean;
   onOpenDetail: (m: TennisMatch) => void;
   onBetClick: (m: TennisMatch) => void;
@@ -138,6 +141,7 @@ function MatchCardBroadcastItem({
       match={match}
       chipsCollapsedByDefault={chipsCollapsedByDefault}
       liveState={liveState}
+      liveOdds={liveOdds}
       disconnected={disconnected}
       onOpenDetail={handleOpen}
       onBetClick={handleBet}
@@ -433,6 +437,21 @@ return [...matches, ...synthetic];
     }
     return curation.rest;
   }, [subTab, curation.rest, liveStates]);
+
+  // Cotes live P1/P2 — 1xBet avec repli BSD. Un seul POST batch
+  // /api/v1/odds/live toutes les 15s sur la grille live ; chaque slot est
+  // identité-stable → seules les cartes dont la cote a bougé se re-renderent
+  // (la carte memo ne voit jamais un objet neuf si rien n'a changé).
+  const onexRequest = useMemo(
+    () =>
+      restForGrid.map((m) => ({
+        matchId: m.id,
+        nameA: m.playerA.name,
+        nameB: m.playerB.name,
+      })),
+    [restForGrid],
+  );
+  const onexLive = useOnexLiveOdds(onexRequest, liveStates);
 
   // Featured filtré par sous-onglet (en live, on ne montre en carrousel que
   // les featured live ; en "today", tous les featured).
@@ -751,6 +770,7 @@ return [...matches, ...synthetic];
                   match={match}
                   chipsCollapsedByDefault={variant === "chips_collapsed"}
                   liveState={liveStates[match.id]}
+                  liveOdds={onexLive.odds[match.id] ?? null}
                   disconnected={connectionStatus === "disconnected"}
                   onOpenDetail={openDetail}
                   onBetClick={openBet}
