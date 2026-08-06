@@ -5,6 +5,7 @@ import { BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTennisLiveStats, type TennisLiveStats, type TennisSetStats } from "@/hooks/use-tennis-live-stats";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { formatStatPercent } from "@/lib/tennis-format";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,7 +68,7 @@ function StatBar({ label, v1, v2, suffix = "", higherWins }: {
   const maxVal = Math.max(v1 ?? 0, v2 ?? 0, 1);
   const p1Pct = v1 !== null ? (v1 / maxVal) * 100 : 0;
   const p2Pct = v2 !== null ? (v2 / maxVal) * 100 : 0;
-  const fmt = (v: number | null) => v !== null ? `${v}${suffix}` : "—";
+  const fmt = (v: number | null) => v !== null ? (suffix ? formatStatPercent(v) : String(v)) : "—";
 
   return (
     <div className="space-y-1">

@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { formatStatPercent } from "@/lib/tennis-format";
 import { ServeStatsBars } from "./serve-stats-bars";
 import { BreakPointsGrid } from "./break-points-grid";
 import { SetBySetTable } from "./set-by-set-table";
@@ -145,7 +146,7 @@ export function LiveStatsPanel({
               const v2 = stats[row.p2Key] as number | null;
               if (v1 === null && v2 === null) return null;
               const display = (v: number | null) =>
-                v !== null ? `${v}${row.suffix ?? ""}` : "--";
+                v !== null ? (row.suffix ? formatStatPercent(v) : String(v)) : "--";
               const p1Wins =
                 v1 !== null && v2 !== null
                   ? row.higherWins

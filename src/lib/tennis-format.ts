@@ -9,6 +9,19 @@
 import { useEffect, useState } from "react";
 import { getDateLocaleTag } from "@/lib/i18n-locales";
 
+/**
+ * Formate une statistique de pourcentage en entier arrondi (ex: 58.8 → "59%").
+ *
+ * Garde-fou : NaN/null/undefined → "0%". Utilisé par tous les composants de
+ * stats live (LiveStatsPanel, LiveTennisStatsDrawer, ServeStatsBars) car le
+ * backend BSD renvoie des floats non arrondis (ex: 58.33333333333336) qui
+ * cassent le layout.
+ */
+export function formatStatPercent(val: number | null | undefined): string {
+  if (val === null || val === undefined || isNaN(val)) return "0%";
+  return `${Math.round(val)}%`;
+}
+
 /** Internal point index (0/1/2/3/4+) → tennis point notation. */
 const POINT_LABELS = ["0", "15", "30", "40"] as const;
 

@@ -26,6 +26,7 @@
  */
 
 import { useTranslations } from "next-intl";
+import { formatStatPercent } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -200,7 +201,7 @@ function PlayerBreakRow({
           {ratio} {savedLabel}
         </span>
         <span className={cn("text-sm font-bold", TONE_TEXT[tone])}>
-          {pct}%
+          {formatStatPercent(pct)}
         </span>
       </span>
     </div>

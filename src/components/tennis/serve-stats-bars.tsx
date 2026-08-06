@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { formatStatPercent } from "@/lib/tennis-format";
 import type { ServiceStats } from "@/hooks/use-tennis-live-stats";
 import { cn } from "@/lib/utils";
 
@@ -117,7 +118,7 @@ export function ServeStatsBars({
                     p1Wins ? "text-emerald-600 dark:text-emerald-400" : "text-foreground",
                   )}
                 >
-                  {v1 !== null ? t("statSuffix", { n: v1 }) : "--"}
+                  {v1 !== null ? formatStatPercent(v1) : "--"}
                 </span>
               </div>
               <div className={cn("w-full flex justify-end", BAR_TRACK_HEIGHT)}>
@@ -144,7 +145,7 @@ export function ServeStatsBars({
                     p2Wins ? "text-emerald-600 dark:text-emerald-400" : "text-foreground",
                   )}
                 >
-                  {v2 !== null ? t("statSuffix", { n: v2 }) : "--"}
+                  {v2 !== null ? formatStatPercent(v2) : "--"}
                 </span>
                 <span
                   className={cn(
@@ -196,8 +197,10 @@ function buildAriaLabel({
     return t("ariaNoData", { stat });
   }
   const leader = p1Wins ? p1Name : p2Wins ? p2Name : "";
+  const aRounded = Math.round(v1);
+  const bRounded = Math.round(v2);
   if (tied || !leader) {
-    return t("ariaTie", { a: v1, b: v2, stat });
+    return t("ariaTie", { a: aRounded, b: bRounded, stat });
   }
-  return t("ariaLead", { a: v1, b: v2, stat, leader });
+  return t("ariaLead", { a: aRounded, b: bRounded, stat, leader });
 }
