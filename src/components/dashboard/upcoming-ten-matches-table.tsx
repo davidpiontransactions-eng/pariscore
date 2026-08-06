@@ -7,6 +7,8 @@ import { useLiveMatches } from "@/hooks/use-live-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkline } from "@/components/ui/sparkline";
 import { estimateFootballEloGap } from "@/lib/elo-utils";
+import { computePredictiveBets } from "@/lib/prediction/predictive-bets-engine";
+import { useEditorialSummary } from "@/hooks/use-editorial-summaries";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
 
@@ -32,6 +34,8 @@ type UpcomingMatch = {
   spsKind: "diff" | "single" | null;
   /** 3 paris prédictifs les plus probables (badges compacts). */
   bets: PredictiveBet[];
+  /** Noms complets des 2 entités (A/B) pour le matching éditorial. */
+  playerNames?: [string, string] | null;
   isLive?: boolean;
 };
 
@@ -86,51 +90,43 @@ function tennisSpsDelta(
   return single != null && single > 0 ? { diff: single, kind: "single" } : null;
 }
 
-/** Top 3 paris prédictifs tennis (vainqueur, Over/Under jeux, value odds). */
-function buildTennisBets(m: TennisMatch): PredictiveBet[] {
+/**
+ * 3 paris prédictifs via le moteur engineering loop
+ * (src/lib/prediction/predictive-bets-engine.ts) : vainqueur, Over/Under
+ * (jeux/buts), handicap ou confiance. Garde-fou : pas de pronostics sur les
+ * matchs synthétiques live ni à données insuffisantes.
+ */
+function buildEngineBets(m: TennisMatch | FootballMatch): PredictiveBet[] {
+  if ("home" in m) return computePredictiveBets(m).bets;
   if (m.synthetic || m.insufficientData) return [];
-  const bets: PredictiveBet[] = [];
-  if (m.probA >= 52) {
-    bets.push({ icon: "🏆", label: `${m.playerA.shortName} · ${Math.round(m.probA)}%` });
-  }
-  const tg = m.totalGamesPredictions?.recommendedBet;
-  if (tg) {
-    bets.push({
-      icon: "🎾",
-      label: `${tg.direction === "over" ? "Over" : "Under"} ${tg.threshold} jeux`,
-    });
-  }
-  if (m.odds) {
-    const edge = Math.max(
-      m.probA / 100 - 1 / m.odds.decimalA,
-      m.probB / 100 - 1 / m.odds.decimalB,
-    );
-    if (edge >= 0.01) bets.push({ icon: "⚡", label: `Value +${Math.round(edge * 100)}%` });
-  }
-  return bets.slice(0, 3);
-}
-
-/** Top 3 paris prédictifs football (vainqueur, Over 2.5 buts, BTTS). */
-function buildFootballBets(m: FootballMatch): PredictiveBet[] {
-  const p = m.prediction;
-  const bets: PredictiveBet[] = [];
-  if (p.homeProb >= 52) {
-    bets.push({ icon: "🏆", label: `${m.home.shortName} · ${p.homeProb}%` });
-  } else if (p.awayProb >= 52) {
-    bets.push({ icon: "🏆", label: `${m.away.shortName} · ${p.awayProb}%` });
-  }
-  if (p.over25Prob > 50) {
-    bets.push({ icon: "⚽", label: `Over 2.5 buts · ${p.over25Prob}%` });
-  }
-  if (p.bttsProb > 50) {
-    bets.push({ icon: "🔄", label: `BTTS · ${p.bttsProb}%` });
-  }
-  return bets.slice(0, 3);
+  return computePredictiveBets(m).bets;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+/**
+ * Encart éditorial d'une ligne — résumé 2-3 phrases (cache serveur 24h),
+ * masqué silencieusement si aucun article n'est trouvé.
+ */
+function EditorialLine({ m }: { m: UpcomingMatch }) {
+  const { summary } = useEditorialSummary(
+    m.sport === "tennis" ? "tennis" : m.sport === "football" ? "football" : null,
+    m.id,
+    m.playerNames?.[0] ?? null,
+    m.playerNames?.[1] ?? null,
+  );
+  if (!summary) return null;
+  return (
+    <p
+      className="mt-1 line-clamp-1 text-[10px] italic leading-snug text-slate-500"
+      title={`${summary.text} — ${summary.source}`}
+    >
+      📰 {summary.text}
+    </p>
+  );
+}
 
 export function UpcomingTenMatchesTable({ className, id }: { className?: string; id?: string }) {
   const { tennisData, tennisLoading } = useDashboardData();
@@ -157,7 +153,8 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
         matchName: `${m.playerA.shortName} vs ${m.playerB.shortName}`,
         oddsInfo: formatOddsTennis(m), eloGap, eloTrend: trend,
         spsGap: sps?.diff ?? null, spsKind: sps?.kind ?? null,
-        bets: buildTennisBets(m),
+        bets: buildEngineBets(m),
+        playerNames: [m.playerA.name, m.playerB.name],
         isLive: liveStates[m.id]?.isLive ?? false,
       });
     }
@@ -174,7 +171,8 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
         oddsInfo: formatOddsFootball(m), eloGap: gap,
         eloTrend: gap > 0 ? [gap - 12, gap - 5, gap, gap + 3, gap + 8] : null,
         spsGap: null, spsKind: null,
-        bets: buildFootballBets(m),
+        bets: buildEngineBets(m),
+        playerNames: [m.home.name, m.away.name],
         isLive: !!m.live,
       });
     }
@@ -240,7 +238,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {upcoming.map((m) => (
+              {upcoming.map((m, i) => (
                 <tr
                   key={`${m.sport}-${m.id}`}
                   data-match-id={m.id}
@@ -287,6 +285,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                         ))}
                       </div>
                     )}
+                    {i < 3 && <EditorialLine m={m} />}
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
                     {m.oddsInfo}
