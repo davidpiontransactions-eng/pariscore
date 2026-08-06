@@ -316,6 +316,23 @@ export type LiveMatchItem = {
   tournamentName?: string;
   /** Round BSD (R7.3) — ex: "Round of 32", "Final". */
   roundName?: string;
+  /**
+   * Stats live cumulées BSD (shape use-tennis-live-stats) — propagées via le
+   * broker/SSE pour affichage < 1s, sans canal socket.io dédié.
+   * null si BSD n'expose aucune stat pour ce match.
+   */
+  live_stats: {
+    p1_aces: number | null;
+    p2_aces: number | null;
+    p1_df: number | null;
+    p2_df: number | null;
+    p1_first_pct: number | null;
+    p2_first_pct: number | null;
+    p1_first_won: number | null;
+    p2_first_won: number | null;
+    p1_bp_saved: number | null;
+    p2_bp_saved: number | null;
+  } | null;
 };
 
 /**
@@ -405,6 +422,28 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
       isLive,
       tournamentName: m.tournament?.name || undefined,
       roundName: m.round_name ?? undefined,
+      // Stats live cumulées (aces, DF, % 1er srv, % pts gagnés 1er srv, BP
+      // sauvées) — déjà fournies par BSD /live, auparavant jetées ici.
+      // Consommées par use-tennis-live-stats via le SSE (pas de 2e canal).
+      live_stats:
+        m.p1_aces != null || m.p2_aces != null || m.p1_double_faults != null ||
+        m.p2_double_faults != null || m.p1_first_serve_pct != null ||
+        m.p2_first_serve_pct != null || m.p1_first_serve_won_pct != null ||
+        m.p2_first_serve_won_pct != null || m.p1_break_points_saved_pct != null ||
+        m.p2_break_points_saved_pct != null
+          ? {
+              p1_aces: m.p1_aces ?? null,
+              p2_aces: m.p2_aces ?? null,
+              p1_df: m.p1_double_faults ?? null,
+              p2_df: m.p2_double_faults ?? null,
+              p1_first_pct: m.p1_first_serve_pct ?? null,
+              p2_first_pct: m.p2_first_serve_pct ?? null,
+              p1_first_won: m.p1_first_serve_won_pct ?? null,
+              p2_first_won: m.p2_first_serve_won_pct ?? null,
+              p1_bp_saved: m.p1_break_points_saved_pct ?? null,
+              p2_bp_saved: m.p2_break_points_saved_pct ?? null,
+            }
+          : null,
     };
   }).filter((m: LiveMatchItem | null): m is LiveMatchItem => m !== null);
 }

@@ -5,10 +5,12 @@ import { cn } from "@/lib/utils";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TennisMatch } from "@/lib/tennis-data";
+import { computeKellyStake, KELLY_FRACTION_CAP } from "@/lib/kelly";
 
 type ValueBetItem = {
   id: string; sport: string; match: string;
   edge: number; odds: number; bookmaker: string; playerName: string;
+  kelly: number; kellyCapped: boolean;
 };
 
 type TopValueBetsListProps = { className?: string };
@@ -21,18 +23,26 @@ function computeEdge(match: TennisMatch): ValueBetItem[] {
   for (const odd of match.allOdds) {
     const edgeA = match.probA - odd.impliedProbA;
     const edgeB = match.probB - odd.impliedProbB;
-    if (edgeA > 0) items.push({
-      id: `${match.id}-${odd.bookmaker}-A`, sport: "tennis",
-      match: `${match.playerA.shortName} vs ${match.playerB.shortName}`,
-      edge: Math.round(edgeA * 10) / 10, odds: odd.decimalA,
-      bookmaker: odd.bookmaker, playerName: match.playerA.shortName,
-    });
-    if (edgeB > 0) items.push({
-      id: `${match.id}-${odd.bookmaker}-B`, sport: "tennis",
-      match: `${match.playerA.shortName} vs ${match.playerB.shortName}`,
-      edge: Math.round(edgeB * 10) / 10, odds: odd.decimalB,
-      bookmaker: odd.bookmaker, playerName: match.playerB.shortName,
-    });
+    if (edgeA > 0) {
+      const kelly = computeKellyStake(match.probA, odd.decimalA);
+      items.push({
+        id: `${match.id}-${odd.bookmaker}-A`, sport: "tennis",
+        match: `${match.playerA.shortName} vs ${match.playerB.shortName}`,
+        edge: Math.round(edgeA * 10) / 10, odds: odd.decimalA,
+        bookmaker: odd.bookmaker, playerName: match.playerA.shortName,
+        kelly: kelly.pct, kellyCapped: kelly.capped,
+      });
+    }
+    if (edgeB > 0) {
+      const kelly = computeKellyStake(match.probB, odd.decimalB);
+      items.push({
+        id: `${match.id}-${odd.bookmaker}-B`, sport: "tennis",
+        match: `${match.playerA.shortName} vs ${match.playerB.shortName}`,
+        edge: Math.round(edgeB * 10) / 10, odds: odd.decimalB,
+        bookmaker: odd.bookmaker, playerName: match.playerB.shortName,
+        kelly: kelly.pct, kellyCapped: kelly.capped,
+      });
+    }
   }
   return items;
 }
@@ -114,6 +124,9 @@ export function TopValueBetsList({ className }: TopValueBetsListProps) {
             </div>
             <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums shrink-0">
               +{bet.edge}% edge
+            </span>
+            <span className="inline-flex items-center rounded-full bg-indigo-500/15 px-2 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums shrink-0" title={`Mise Kelly fractionnel (cap ${KELLY_FRACTION_CAP * 100}%)`}>
+              Kelly {bet.kellyCapped ? "≥" : ""}{bet.kelly.toFixed(1)}%
             </span>
             <span className="text-xs text-muted-foreground shrink-0">{bet.bookmaker}</span>
           </div>

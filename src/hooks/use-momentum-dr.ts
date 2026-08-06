@@ -333,6 +333,23 @@ export function useMomentumDR(
     }
   }
 
+  // R9 (latence live) : cache du résultat par identité de `liveState`. Les cartes
+  // étant mémosées + les `liveState` identity-stable (use-live-stream), un re-render
+  // interne (resolve usePlayerStats, toggle Collapsible…) avec le MÊME liveState ne
+  // re-exécute plus le calcul momentum — dont drHistory qui est O(WINDOW_SIZE²).
+  const cachedLiveRef = useRef<LiveMatchState | undefined>(undefined);
+  const cachedResultRef = useRef<MomentumDRResult | null>(null);
+
+  if (cachedLiveRef.current === liveState && cachedResultRef.current) {
+    return cachedResultRef.current;
+  }
+
+  const cacheAndReturn = (r: MomentumDRResult): MomentumDRResult => {
+    cachedLiveRef.current = liveState;
+    cachedResultRef.current = r;
+    return r;
+  };
+
   const buffer = bufferRef.current;
   const settled = settledRef.current;
   const server = liveState?.server ?? "A";
@@ -359,7 +376,7 @@ export function useMomentumDR(
 
   // Calculate EWWA-weighted momentum scores
   if (buffer.length === 0 || !settled) {
-    return {
+    return cacheAndReturn({
       momentumA: 50,
       momentumB: 50,
       dr: 0,
@@ -370,7 +387,7 @@ export function useMomentumDR(
       setWinners,
       server,
       settled: false,
-    };
+    });
   }
 
   // Apply exponential decay weights (recent points matter more)
@@ -414,7 +431,7 @@ export function useMomentumDR(
   }
 
   if (totalWeight === 0) {
-    return {
+    return cacheAndReturn({
       momentumA: 50,
       momentumB: 50,
       dr: 0,
@@ -425,7 +442,7 @@ export function useMomentumDR(
       setWinners,
       server,
       settled: true,
-    };
+    });
   }
 
   const rawA = weightedA / totalWeight; // 0–1
@@ -454,7 +471,7 @@ export function useMomentumDR(
     return Math.tanh((wA / tw - wB / tw) * 2.5);
   });
 
-  return {
+  return cacheAndReturn({
     momentumA,
     momentumB,
     dr: Math.round(dr * 1000) / 1000,
@@ -465,5 +482,5 @@ export function useMomentumDR(
     setWinners,
     server,
     settled: true,
-  };
+  });
 }

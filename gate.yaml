@@ -1,0 +1,14 @@
+version: 1
+denylist:
+  - "src/auth/**"
+  - "**/*.env"
+  - "**/.env*"
+  - "server.js"
+  - "pariscore.html"
+  - "prisma/**"
+  - "**/*.db"
+autoMergeAllowlist:
+  - "docs/**"
+  - "*.md"
+  - ".context/**"
+  - "tests/**"

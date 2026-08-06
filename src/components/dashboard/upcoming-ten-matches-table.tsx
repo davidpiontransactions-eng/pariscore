@@ -14,6 +14,11 @@ import type { FootballMatch } from "@/lib/football-data";
 // Types
 // ---------------------------------------------------------------------------
 
+type PredictiveBet = {
+  icon: string;
+  label: string;
+};
+
 type UpcomingMatch = {
   id: string;
   sport: "tennis" | "football" | "basketball" | "cs2" | "darts";
@@ -22,6 +27,11 @@ type UpcomingMatch = {
   oddsInfo: string;
   eloGap: number | null;
   eloTrend: number[] | null;
+  /** ΔSPS : |spsA - spsB| si les 2 existent (et diffèrent), sinon valeur unique si > 0. */
+  spsGap: number | null;
+  spsKind: "diff" | "single" | null;
+  /** 3 paris prédictifs les plus probables (badges compacts). */
+  bets: PredictiveBet[];
   isLive?: boolean;
 };
 
@@ -57,6 +67,67 @@ function formatOddsFootball(m: FootballMatch): string {
   return `${m.odds.home} / ${m.odds.draw} / ${m.odds.away}`;
 }
 
+/**
+ * ΔSPS dynamique — 2 valeurs distinctes → |sps1 − sps2| (badge ΔSPS),
+ * sinon une seule valeur dispo → badge SPS uniquement si > 0, sinon rien.
+ */
+function tennisSpsDelta(
+  m: TennisMatch,
+): { diff: number; kind: "diff" | "single" } | null {
+  const a = m.playerA.sps ?? null;
+  const b = m.playerB.sps ?? null;
+  if (a != null && b != null) {
+    const d = Math.abs(a - b);
+    if (d > 0) return { diff: d, kind: "diff" };
+    const single = Math.max(a, b);
+    return single > 0 ? { diff: single, kind: "single" } : null;
+  }
+  const single = a ?? b;
+  return single != null && single > 0 ? { diff: single, kind: "single" } : null;
+}
+
+/** Top 3 paris prédictifs tennis (vainqueur, Over/Under jeux, value odds). */
+function buildTennisBets(m: TennisMatch): PredictiveBet[] {
+  if (m.synthetic || m.insufficientData) return [];
+  const bets: PredictiveBet[] = [];
+  if (m.probA >= 52) {
+    bets.push({ icon: "🏆", label: `${m.playerA.shortName} · ${Math.round(m.probA)}%` });
+  }
+  const tg = m.totalGamesPredictions?.recommendedBet;
+  if (tg) {
+    bets.push({
+      icon: "🎾",
+      label: `${tg.direction === "over" ? "Over" : "Under"} ${tg.threshold} jeux`,
+    });
+  }
+  if (m.odds) {
+    const edge = Math.max(
+      m.probA / 100 - 1 / m.odds.decimalA,
+      m.probB / 100 - 1 / m.odds.decimalB,
+    );
+    if (edge >= 0.01) bets.push({ icon: "⚡", label: `Value +${Math.round(edge * 100)}%` });
+  }
+  return bets.slice(0, 3);
+}
+
+/** Top 3 paris prédictifs football (vainqueur, Over 2.5 buts, BTTS). */
+function buildFootballBets(m: FootballMatch): PredictiveBet[] {
+  const p = m.prediction;
+  const bets: PredictiveBet[] = [];
+  if (p.homeProb >= 52) {
+    bets.push({ icon: "🏆", label: `${m.home.shortName} · ${p.homeProb}%` });
+  } else if (p.awayProb >= 52) {
+    bets.push({ icon: "🏆", label: `${m.away.shortName} · ${p.awayProb}%` });
+  }
+  if (p.over25Prob > 50) {
+    bets.push({ icon: "⚽", label: `Over 2.5 buts · ${p.over25Prob}%` });
+  }
+  if (p.bttsProb > 50) {
+    bets.push({ icon: "🔄", label: `BTTS · ${p.bttsProb}%` });
+  }
+  return bets.slice(0, 3);
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -80,10 +151,13 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
       const trend = eloGap > 50
         ? [avgElo - 18, avgElo - 10, avgElo - 5, avgElo + 2, avgElo + 8]
         : [avgElo + 3, avgElo, avgElo - 2, avgElo + 1, avgElo - 1];
+      const sps = tennisSpsDelta(m);
       items.push({
         id: m.id, sport: "tennis", scheduledAt: m.scheduledAt,
         matchName: `${m.playerA.shortName} vs ${m.playerB.shortName}`,
         oddsInfo: formatOddsTennis(m), eloGap, eloTrend: trend,
+        spsGap: sps?.diff ?? null, spsKind: sps?.kind ?? null,
+        bets: buildTennisBets(m),
         isLive: liveStates[m.id]?.isLive ?? false,
       });
     }
@@ -99,6 +173,8 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
         matchName: `${m.home.shortName} vs ${m.away.shortName}`,
         oddsInfo: formatOddsFootball(m), eloGap: gap,
         eloTrend: gap > 0 ? [gap - 12, gap - 5, gap, gap + 3, gap + 8] : null,
+        spsGap: null, spsKind: null,
+        bets: buildFootballBets(m),
         isLive: !!m.live,
       });
     }
@@ -160,7 +236,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                 <th className="px-3 py-2.5 font-medium">Sport</th>
                 <th className="px-3 py-2.5 font-medium">Rencontre</th>
                 <th className="px-3 py-2.5 font-medium">Cotes</th>
-                <th className="px-3 py-2.5 font-medium text-right">ΔElo</th>
+                <th className="px-3 py-2.5 font-medium text-right">ΔElo / ΔSPS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
@@ -177,7 +253,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                     );
                   }}
                   className={cn(
-                    "cursor-pointer transition-colors hover:bg-emerald-500/10",
+                    "cursor-pointer transition-all hover:bg-slate-800/50",
                     m.isLive && "bg-rose-500/5 hover:bg-rose-500/10",
                   )}
                 >
@@ -195,8 +271,22 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                     )}
                   </td>
                   <td className="px-3 py-2.5 text-lg">{m.sport === "tennis" ? "🎾" : m.sport === "football" ? "⚽" : m.sport === "basketball" ? "🏀" : m.sport === "darts" ? "🎯" : "🎮"}</td>
-                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium text-slate-100 hover:text-emerald-400 transition-colors">
-                    {m.matchName}
+                  <td className="px-3 py-2.5 min-w-[180px]">
+                    <div className="font-medium text-slate-100 hover:text-emerald-400 transition-colors">
+                      {m.matchName}
+                    </div>
+                    {m.bets.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {m.bets.map((b, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300 ring-1 ring-emerald-500/20 whitespace-nowrap"
+                          >
+                            {b.icon} {b.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs text-zinc-400 whitespace-nowrap">
                     {m.oddsInfo}
@@ -224,6 +314,11 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                         </span>
                       ) : (
                         <span className="text-muted-foreground/50">—</span>
+                      )}
+                      {m.spsGap != null && (
+                        <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold font-mono tabular-nums shrink-0 text-sky-400 ring-1 ring-sky-500/20">
+                          {m.spsKind === "diff" ? "ΔSPS" : "SPS"} {Math.round(m.spsGap)}
+                        </span>
                       )}
                     </div>
                   </td>

@@ -90,14 +90,28 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         const maxSps = Math.max(m.playerA.sps ?? 0, m.playerB.sps ?? 0);
         return eloGap >= minEloGap || maxSps >= minSps;
       })
-      .map((m) => ({
-        id: m.id,
-        sport: "tennis" as const,
-        matchName: `${m.playerA.shortName} vs ${m.playerB.shortName}`,
-        detail1: `ΔElo ${Math.abs(m.playerA.elo - m.playerB.elo)} · SPS ${Math.max(m.playerA.sps ?? 0, m.playerB.sps ?? 0)}`,
-        detail2: m.tournament,
-        scheduledAt: m.scheduledAt,
-      }))
+      .map((m) => {
+        // ΔSPS dynamique : |sps1 − sps2| si les 2 existent (et diffèrent),
+        // sinon valeur unique si > 0, sinon rien (jamais "SPS 0").
+        const a = m.playerA.sps ?? null;
+        const b = m.playerB.sps ?? null;
+        const delta = a != null && b != null ? Math.abs(a - b) : 0;
+        let spsTxt = "";
+        if (delta > 0) {
+          spsTxt = `ΔSPS ${Math.round(delta)}`;
+        } else {
+          const single = Math.max(a ?? 0, b ?? 0);
+          if (single > 0) spsTxt = `SPS ${single}`;
+        }
+        return {
+          id: m.id,
+          sport: "tennis" as const,
+          matchName: `${m.playerA.shortName} vs ${m.playerB.shortName}`,
+          detail1: [`ΔElo ${Math.round(Math.abs(m.playerA.elo - m.playerB.elo))}`, spsTxt].filter(Boolean).join(" · "),
+          detail2: m.tournament,
+          scheduledAt: m.scheduledAt,
+        };
+      })
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }, [tennisData?.matches, minEloGap, minSps]);
 
@@ -365,9 +379,16 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           {current.matches.map((match) => (
             <div
               key={`${match.sport}-${match.id}`}
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent("open-match-detail", {
+                    detail: { sport: match.sport, matchId: match.id },
+                  }),
+                );
+              }}
               className={cn(
-                "flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3",
-                "hover:border-emerald-500/40 transition-colors",
+                "flex cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-card p-3",
+                "transition-all hover:border-emerald-500/40 hover:bg-slate-800/40",
               )}
             >
               <span className="text-xl shrink-0">{SPORT_ICONS[match.sport]}</span>
@@ -404,7 +425,14 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               {current.matches.map((match) => (
                 <tr
                   key={`${match.sport}-${match.id}`}
-                  className="transition-colors hover:bg-emerald-500/5"
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: match.sport, matchId: match.id },
+                      }),
+                    );
+                  }}
+                  className="cursor-pointer transition-all hover:bg-slate-800/40"
                 >
                   <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
                     {new Date(match.scheduledAt).toLocaleTimeString("fr-FR", {

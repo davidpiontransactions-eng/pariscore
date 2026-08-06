@@ -1,8 +1,22 @@
 "use client";
 
+// R9 (latence live) : les stats arrivent désormais par le MÊME flux SSE que le
+// score — `subscribeLiveStream` (EventSource unique partagé, live-stream-client.ts).
+// Avant : socket.io dédié vers Bun :3001 (mini-services/tennis-live) qui écoutait
+// `live_patch`… un événement que le mini-service n'émet jamais (il émet
+// `initial_state`/`match_update`, sans stats) → les stats n'arrivaient JAMAIS et
+// le hook retombait sur le fallback demo après 3 échecs (~5-10s de latence).
+//
+// Le broker (live-broker.ts) propage maintenant `live_stats` depuis BSD
+// (bsd-fetcher.ts ne les jette plus), avec hash incluant les stats → un point
+// qui change les stats repousse le snapshot < 1s sans modifier le score.
+
 import { useEffect, useRef, useState, useCallback } from "react";
-import { io, type Socket } from "socket.io-client";
 import { z } from "zod";
+import {
+  subscribeLiveStream,
+  type LiveStreamMatch,
+} from "@/lib/live-stream-client";
 
 export const TennisSetStatsSchema = z.object({
   p1_aces: z.number().nullable(),
@@ -147,26 +161,13 @@ export function useTennisLiveStats(
   const [isDemo, setIsDemo] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const attemptRef = useRef(0);
-  const socketRef = useRef<Socket | null>(null);
+  const hasDataRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     attemptRef.current = 0;
-
-    // Fix 503 « The request queue is full » (Bun :3001) : websocket-only
-    // évite les requêtes HTTP polling qui saturaient la queue de Bun.
-    // Backoff borné (10 tentatives, max 30s) pour ne pas hammerer le
-    // serveur sous charge. Après 3 échecs on bascule déjà en fallback demo.
-    const socket = io("/?XTransformPort=3001", {
-      transports: ["websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1_500,
-      reconnectionDelayMax: 30_000,
-      timeout: 10_000,
-    });
-    socketRef.current = socket;
+    hasDataRef.current = false;
 
     const fallbackToDemo = (errMsg?: string) => {
       setStats(DEMO_STATS);
@@ -175,30 +176,14 @@ export function useTennisLiveStats(
       if (errMsg) setError(errMsg);
     };
 
-    const handleConnect = () => {
-      setError(null);
-    };
-
-    const handleConnectError = (err: Error) => {
-      attemptRef.current += 1;
-      if (attemptRef.current >= 3) {
-        fallbackToDemo(err.message);
-      }
-    };
-
-    const handleLivePatch = (
-      data: Record<string, unknown>,
-    ) => {
-      const patches = data?.patches as Record<string, unknown>[] | undefined;
-      if (!patches?.length) return;
-
-      const patch = patches.find((p) => p.id === matchId);
-      if (!patch) return;
-
-      if (tnDataSentinel(patch)) {
-        const normalized = tnNormalizeTennisStats(patch);
+    const applyPatch = (patch: LiveStreamMatch | undefined) => {
+      if (patch && tnDataSentinel(patch as unknown as Record<string, unknown>)) {
+        const normalized = tnNormalizeTennisStats(
+          patch as unknown as Record<string, unknown>,
+        );
         const parsed = TennisLiveStatsSchema.safeParse(normalized);
         if (parsed.success) {
+          hasDataRef.current = true;
           setStats(parsed.data);
           setLoading(false);
           setError(null);
@@ -208,22 +193,47 @@ export function useTennisLiveStats(
         }
       }
 
-      attemptRef.current += 1;
-      if (attemptRef.current >= 3) {
-        fallbackToDemo();
+      // Match absent du flux live ou sans stats BSD : on laisse le flux tourner
+      // (un match peut apparaître au prochain point). Fallback demo après 3
+      // pushes sans données (~10-15s) — jamais avant, pour ne pas masquer une
+      // vraie donnée qui arrive en retard.
+      if (!hasDataRef.current) {
+        attemptRef.current += 1;
+        if (attemptRef.current >= 3) {
+          fallbackToDemo();
+        }
       }
     };
 
-    socket.on("connect", handleConnect);
-    socket.on("connect_error", handleConnectError);
-    socket.on("live_patch", handleLivePatch);
+    // Délai de secours : si le flux SSE ne se connecte pas du tout (EventSource
+    // indisponible / serveur HS), on bascule en demo après 6s au lieu de rester
+    // en loading infini.
+    const connectTimeout = setTimeout(() => {
+      if (!hasDataRef.current) {
+        fallbackToDemo();
+      }
+    }, 6_000);
+
+    const unsub = subscribeLiveStream(
+      (payload) => {
+        if (payload.kind === "snapshot") {
+          const patch = payload.matches.find((m) => m.id === matchId);
+          applyPatch(patch);
+        } else {
+          const patch = payload.matches.find((m) => m.id === matchId);
+          applyPatch(patch);
+        }
+      },
+      (status) => {
+        if (status === "connected") {
+          setError(null);
+        }
+      },
+    );
 
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("connect_error", handleConnectError);
-      socket.off("live_patch", handleLivePatch);
-      socket.disconnect();
-      socketRef.current = null;
+      clearTimeout(connectTimeout);
+      unsub();
     };
   }, [matchId, retryCount]);
 

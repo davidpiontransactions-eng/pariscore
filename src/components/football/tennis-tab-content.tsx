@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, lazy, Suspense, Component, type ReactNode } from "react";
+import { useState, useMemo, useCallback, memo, lazy, Suspense, Component, type ReactNode } from "react";
 import Link from "next/link";
 import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -141,6 +141,9 @@ function MatchCardBroadcastItem({
   );
 }
 
+// R9 (latence live) : wrapper memo — avec `liveState` identity-stable (use-live-stream),
+// les cartes inchangées ne se re-renderent plus à chaque push ~5s du broker.
+const MemoMatchCardBroadcastItem = memo(MatchCardBroadcastItem);
 
 export function TennisTabContent() {
   const t = useTranslations("common");
@@ -690,7 +693,7 @@ export function TennisTabContent() {
             )}
             <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
               {restForGrid.map((match, idx) => (
-                <MatchCardBroadcastItem
+                <MemoMatchCardBroadcastItem
                   key={match.id}
                   match={match}
                   chipsCollapsedByDefault={variant === "chips_collapsed"}

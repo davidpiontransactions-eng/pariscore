@@ -16,7 +16,7 @@
 // donnaient l'impression d'un doublon) en centralisant le score au milieu
 // du hero.
 
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
 import { Calendar, Clock, Star, Trophy, ChevronDown, AlertTriangle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
@@ -88,7 +88,11 @@ type Props = {
   priority?: boolean;
 };
 
-export function MatchCardBroadcast({
+// R9 (latence live) : wrapper `memo` — avec des `liveState` IDENTITY-STABLES
+// (use-live-stream réutilise l'objet quand le score n'a pas bougé), une carte
+// inchangée ne se re-render PLUS à chaque push ~5s du broker (avant : toute la
+// liste re-rendait, chaque carte re-computant MomentumDR y compris le O(N²) drHistory).
+export const MatchCardBroadcast = memo(function MatchCardBroadcast({
   match,
   defaultOpen = false,
   chipsCollapsedByDefault = false,
@@ -699,7 +703,7 @@ export function MatchCardBroadcast({
       )}
     </article>
   );
-}
+});
 
 // ════════════════════════════════════════════════════════════════════════
 // Sous-composant : colonne joueur (avatar + nom + métriques colonne 4 lignes)

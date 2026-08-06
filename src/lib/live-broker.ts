@@ -53,6 +53,19 @@ function getState(): BrokerState {
 }
 
 /**
+ * Signature compacte des stats live d'un match (pour le hash) : permet au
+ * poller de re-pousser quand SEULES les stats bougent (ace/DF/% qui évoluent
+ * entre 2 points sans changement de score).
+ */
+function statsSig(m: LiveMatchItem): string {
+  const s = m.live_stats;
+  if (!s) return "-";
+  return `S[${s.p1_aces ?? "-"}.${s.p2_aces ?? "-"}.${s.p1_df ?? "-"}.${s.p2_df ?? "-"}`
+    + `.${s.p1_first_pct ?? "-"}.${s.p2_first_pct ?? "-"}.${s.p1_first_won ?? "-"}`
+    + `.${s.p2_first_won ?? "-"}.${s.p1_bp_saved ?? "-"}.${s.p2_bp_saved ?? "-"}]`;
+}
+
+/**
  * Hash stable et léger d'un snapshot : concatène `id|gamesA-gamesB|sets|point|server`
  * pour chaque match. Suffisant pour détecter un changement de score (pas besoin
  * d'un hash cryptographique — on veut juste éviter de diffuser si rien n'a bougé).
@@ -63,7 +76,8 @@ function hashSnapshot(matches: LiveMatchItem[]): string {
       (m) =>
         `${m.id}|${m.currentGame.p1}-${m.currentGame.p2}|` +
         `${m.setsDetail.map((s) => `${s.p1}-${s.p2}`).join(",")}|` +
-        `${m.currentPoint.p1}-${m.currentPoint.p2}|${m.server}|${m.isLive ? 1 : 0}`,
+        `${m.currentPoint.p1}-${m.currentPoint.p2}|${m.server}|${m.isLive ? 1 : 0}|` +
+        statsSig(m),
     )
     .join(";");
 }

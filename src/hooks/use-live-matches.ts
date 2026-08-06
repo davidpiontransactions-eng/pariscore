@@ -2,28 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLiveStream } from "@/hooks/use-live-stream";
+import {
+  buildLiveStates,
+  emptyLiveStateCache,
+  type LiveMatchState,
+  type RawLiveMatch,
+} from "@/lib/live-state-builder";
 
-export type SideScore = {
-  sets: number[];
-  games: number;
-  points: number;
-};
-
-export type LiveMatchState = {
-  matchId: string;
-  isLive: boolean;
-  currentSet: number;
-  scoreA: SideScore;
-  scoreB: SideScore;
-  liveProbA: number;
-  liveProbB: number;
-  server: "A" | "B";
-  /** Cote décimale live du joueur A (depuis BSD odds_player1). null si absente. */
-  oddsA: number | null;
-  /** Cote décimale live du joueur B (depuis BSD odds_player2). null si absente. */
-  oddsB: number | null;
-  lastUpdate: string;
-};
+// v6ka : SideScore/LiveMatchState définis dans live-state-builder.ts (source de
+// vérité partagée SSE + polling). Ré-exportés ici pour compat des consommateurs.
+export type { LiveMatchState, SideScore } from "@/lib/live-state-builder";
 
 export type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
@@ -63,6 +51,9 @@ export type LiveMatchResponseItem = {
   tournamentName?: string;
   /** R7.3 : round BSD (remplace le fallback "En direct"). */
   roundName?: string;
+  /** Stats live cumulées BSD (R9) — null si absentes. Consommées par
+   *  use-tennis-live-stats (via le flux SSE partagé). */
+  live_stats?: Record<string, unknown> | null;
 };
 
 type TennisLiveResponse = {
@@ -103,6 +94,10 @@ export function useLiveMatches(): UseLiveMatchesResult {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("connecting");
   const [latency, setLatency] = useState(0);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // v6ka : cache identity-stable du polling (même mécanique que le SSE) —
+  // un poll sans changement de score réutilise les objets → pas de re-render
+  // de la grille memoïsée à chaque tick 8s (cf. live-state-builder.ts).
+  const prevCacheRef = useRef(emptyLiveStateCache());
 
   // Détection de la disponibilité du SSE (une seule fois, au mount).
   // On utilise un state séparé pour éviter de conditionner le rendu pendant
@@ -141,42 +136,16 @@ export function useLiveMatches(): UseLiveMatchesResult {
         }
         const data: TennisLiveResponse = await res.json();
         setLatency(Date.now() - t0);
-        setConnectionStatus(data.matches.length > 0 ? "connected" : "connected");
+        setConnectionStatus("connected");
 
-        const rawList = data.matches.map((m) => ({
-          id: m.id,
-          playerA: m.playerA,
-          playerB: m.playerB,
-          isLive: m.isLive,
-          tournamentName: m.tournamentName,
-          roundName: m.roundName,
-        }));
-        setLiveMatchList(rawList);
-
-        const map: Record<string, LiveMatchState> = {};
-        for (const m of data.matches) {
-          if (!m.isLive) continue;
-
-          // FIX doublon score (2026-07-25) : cf. commentaire use-live-stream.ts.
-          const completedCount = Math.min(m.currentSet, (m.setsDetail?.length ?? 0) - 1);
-          const setsA: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p1);
-          const setsB: number[] = m.setsDetail.slice(0, Math.max(0, completedCount)).map((s) => s.p2);
-
-          map[m.id] = {
-            matchId: m.id,
-            isLive: true,
-            currentSet: m.currentSet,
-            scoreA: { sets: setsA, games: m.currentGame.p1, points: m.currentPoint.p1 },
-            scoreB: { sets: setsB, games: m.currentGame.p2, points: m.currentPoint.p2 },
-            liveProbA: m.liveProbA,
-            liveProbB: m.liveProbB,
-            oddsA: m.oddsA ?? null,
-            oddsB: m.oddsB ?? null,
-            server: m.server,
-            lastUpdate: data.updatedAt,
-          };
-        }
-        setLiveStates(map);
+        // v6ka : construction identity-stable via le builder partagé (SSE + polling).
+        // Un poll sans changement de score réutilise les objets → pas de re-render
+        // de la grille memoïsée à chaque tick 8s (cf. live-state-builder.ts).
+        const raw: RawLiveMatch[] = data.matches;
+        const cache = buildLiveStates(raw, data.updatedAt, prevCacheRef.current);
+        prevCacheRef.current = cache;
+        setLiveMatchList(Array.from(cache.list.values()));
+        setLiveStates(cache.states);
       } catch {
         setConnectionStatus("disconnected");
       }
