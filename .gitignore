@@ -2,8 +2,6 @@
 
 # dependencies
 node_modules
-!node_modules/pariscore-services/
-!node_modules/pariscore-services/**
 /.pnp
 .pnp.*
 .yarn/*
@@ -74,7 +72,16 @@ database.db-*
 
 # Backups
 *.bak
+*.bak_*
 *.backup
+
+# ETL historiques racine generes au runtime (outputs seed_historique_*.js)
+# — pas commites : server.js les relit via __dirname au demarrage
+/historique_football.json
+/historique_openfootball.json
+/historique_tennis.json
+# Logs PM2 (ecosystem.config.js)
+/logs/
 
 # Logs d'erreur
 *.err
