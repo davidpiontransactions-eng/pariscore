@@ -18,6 +18,7 @@ import { MomentumScoreDuo } from "./momentum-score";
 import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
+import { LastMatchHighlight } from "./last-match-highlight";
 import { MatchCardHeader, LiveScoreSubHeader } from "./match-card-header";
 import { MatchCardFooter } from "./match-card-footer";
 import { MatchCardDetail } from "./match-card-detail";
@@ -33,6 +34,7 @@ import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
+import { useTennisHighlights } from "@/hooks/use-tennis-highlights";
 import { Badge } from "@/components/ui/badge";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
@@ -105,6 +107,14 @@ export function MatchCard({
   const bestOddA = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalA > max.decimalA ? o : max)) : null;
   const bestOddB = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalB > max.decimalB ? o : max)) : null;
   const { playerA, playerB, stats, modelUpdatedAt } = match;
+
+  // Highlights TennisTV — dernier match joué de chaque joueur (chip YouTube
+  // dans le PlayerBlock). Skip pour les cartes sans noms réels.
+  const {
+    highlightA,
+    highlightB,
+    isLoading: highlightsLoading,
+  } = useTennisHighlights(playerA.name || null, playerB.name || null);
 
   // Synthetic live-only cards (no prematch ID): all predictive values are
   // placeholders. We hide the fake predictive UI and show a disclaimer badge
@@ -339,6 +349,11 @@ export function MatchCard({
                 className="mt-2"
               />
             )}
+            <LastMatchHighlight
+              highlight={highlightA}
+              playerName={playerA.name}
+              isLoading={highlightsLoading}
+            />
             {isSynthetic && !isLive ? (
               <Badge
                 variant="outline"
@@ -416,6 +431,11 @@ export function MatchCard({
                 className="mt-2"
               />
             )}
+            <LastMatchHighlight
+              highlight={highlightB}
+              playerName={playerB.name}
+              isLoading={highlightsLoading}
+            />
             {isSynthetic && !isLive ? (
               <Badge
                 variant="outline"

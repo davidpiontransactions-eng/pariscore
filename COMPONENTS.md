@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 142 components total (football: 8, leagues: 4, tennis: 48, etc.).
+> extract pass. 143 components total (football: 8, leagues: 4, tennis: 49, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 48 components
+## Tennis (`src/components/tennis/`) — 49 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -41,6 +41,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | featured-matches-marquee | featured-matches-marquee.tsx | Bandeau défilant des matchs à la une |
 | form-dots | form-dots.tsx | Forme récente en points colorés (● W / ○ L) |
 | kpi-card | kpi-card.tsx | Carte KPI générique (3-zone) |
+| last-match-highlight | last-match-highlight.tsx | Chip « Dernier match » — lien YouTube vers le dernier highlight TennisTV du joueur |
 | last-matches-list | last-matches-list.tsx | Derniers matchs d'un joueur |
 | live-score-announcer | live-score-announcer.tsx | Annonce score pour lecteur d'écran (a11y) |
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
