@@ -12,9 +12,14 @@ import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-mar
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
 import { TennisSearchBar } from "@/components/tennis/tennis-search-bar";
+import { TournamentHeaderCard } from "@/components/tennis/tournament-header-card";
 const MatchDetailDialog = lazy(() =>
   import("@/components/tennis/match-detail-dialog").then((m) => ({ default: m.MatchDetailDialog }))
 );
+const PlayerProfileDialog = lazy(() =>
+  import("@/components/tennis/player-profile-dialog").then((m) => ({ default: m.PlayerProfileDialog }))
+);
+import type { PlayerResult, TournamentResult } from "@/lib/tennis-search-types";
 import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { openPaperTradingDialog } from "@/components/paper-trading-dialog";
 import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicator";
@@ -355,10 +360,41 @@ export function TennisTabContent() {
       });
     }
 
-    return [...matches, ...synthetic];
+return [...matches, ...synthetic];
   }, [matches, liveMatchList]);
 
-  const { filtered, valueBetCount } = useMatchFilter(matchesWithLive, filter, favorites, sortKey);
+  // --- Recherche (P8) : joueur sélectionné → profil in-page ; tournoi
+  // sélectionné → filtre de la liste des matchs + carte d'en-tête. ---
+  const [selectedPlayer, setSelectedPlayer] = useState<PlayerResult | null>(null);
+  const [selectedTournament, setSelectedTournament] = useState<TournamentResult | null>(null);
+
+  const onSelectPlayer = useCallback((player: PlayerResult) => {
+    setSelectedPlayer(player);
+  }, []);
+
+  const onSelectTournament = useCallback((tournament: TournamentResult) => {
+    setSelectedTournament(tournament);
+    // On bascule sur l'onglet "Aujourd'hui" pour que la carte + la grille
+    // filtrée soient visibles immédiatement.
+    setFilter("all");
+  }, []);
+
+  const clearTournament = useCallback(() => setSelectedTournament(null), []);
+
+  // Filtre tournoi : appliqué en amont du filtrage/curation pour que la
+  // grille et le carrousel reflètent le tournoi sélectionné. Sans sélection
+  // → liste complète (pas de changement de comportement).
+  const matchesWithScoped = useMemo(() => {
+    if (!selectedTournament) return matchesWithLive;
+    const target = selectedTournament.name.toLowerCase().trim();
+    return matchesWithLive.filter(
+      (m) =>
+        m.tournament.toLowerCase().trim() === target ||
+        m.tournament.toLowerCase().includes(target),
+    );
+  }, [matchesWithLive, selectedTournament]);
+
+  const { filtered, valueBetCount } = useMatchFilter(matchesWithScoped, filter, favorites, sortKey);
 
   // R8 curation : sépare les matchs phares de la semaine (featured) du reste.
   // La section "À la une" s'affiche en haut d'affiche, la grille principale
@@ -367,6 +403,9 @@ export function TennisTabContent() {
 
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
+
+  // Nombre de matchs pour la carte tournoi (sur la liste scoped).
+  const tournamentMatchCount = matchesWithScoped.length;
 
   // Compteurs dynamiques pour les badges des SubTabs
   const liveCount = useMemo(
@@ -505,8 +544,22 @@ export function TennisTabContent() {
 
           {/* Module de recherche joueurs + tournois — visible quel que soit le sous-onglet tennis */}
           <div className="mt-4">
-            <TennisSearchBar />
+            <TennisSearchBar
+              onSelectPlayer={onSelectPlayer}
+              onSelectTournament={onSelectTournament}
+            />
           </div>
+
+          {/* Carte tournoi sélectionné — filtre actif sur la grille */}
+          {selectedTournament && (
+            <div className="mt-4">
+              <TournamentHeaderCard
+                tournament={selectedTournament}
+                matchCount={tournamentMatchCount}
+                onClear={clearTournament}
+              />
+            </div>
+          )}
 
           {isMobile ? (
             <>
@@ -725,6 +778,14 @@ export function TennisTabContent() {
 
       <Suspense fallback={null}>
         <MatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <PlayerProfileDialog
+          player={selectedPlayer}
+          matches={matchesWithLive}
+          open={selectedPlayer !== null}
+          onOpenChange={(open) => { if (!open) setSelectedPlayer(null); }}
+        />
       </Suspense>
       <BetDialog match={betMatchForDialog} open={betOpen} onOpenChange={setBetOpen} />
     </TennisErrorBoundary>

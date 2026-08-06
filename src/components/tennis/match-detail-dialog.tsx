@@ -36,6 +36,8 @@ import { TournamentBadge } from "./tournament-badge";
 import { PlayerVsBlock } from "./player-vs-block";
 import { useEloHistory } from "@/hooks/use-elo-history";
 import { useBSDMatchDetail } from "@/hooks/use-bsd-match-detail";
+import { useLastMatchHighlights } from "@/hooks/use-last-match-highlights";
+import { LastMatchHighlightsWidget } from "@/components/tennis/last-match-highlights-widget";
 import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 import { WatchButton } from "@/components/shared/watch-button";
@@ -102,6 +104,11 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const browserTz = useBrowserTimeZone();
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
   const { match: bsdMatch, odds: bsdOdds, h2h: bsdH2h, isLoading: bsdLoading } = useBSDMatchDetail(match?.id ?? null);
+  const { data: lmHighlights, isLoading: lmHighlightsLoading } = useLastMatchHighlights(
+    match ? match.playerA.name : null,
+    match ? match.playerB.name : null,
+    match ? match.tournament : null,
+  );
 
   if (!match) return null;
 
@@ -334,6 +341,17 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     level: 95,
                   })}
                   variant="v2"
+                />
+
+                {/* Highlights du dernier match joué (H2H > joueurs > tournoi) */}
+                <LastMatchHighlightsWidget
+                  h2h={lmHighlights?.h2h ?? null}
+                  players={[
+                    { playerName: playerA.name, highlight: lmHighlights?.playerA ?? null },
+                    { playerName: playerB.name, highlight: lmHighlights?.playerB ?? null },
+                  ]}
+                  tournamentHighlight={lmHighlights?.tournament ?? null}
+                  isLoading={lmHighlightsLoading}
                 />
               </TabsContent>
 

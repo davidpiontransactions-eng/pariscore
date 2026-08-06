@@ -7,6 +7,7 @@
  * Slugs utilisés dans l'URL /tennis/tournament/[slug].
  */
 
+import { fuzzyScore, normalizeFuzzy } from "./fuzzy-search";
 import type { TournamentResult } from "./tennis-search-types";
 
 export const KNOWN_TOURNAMENTS: TournamentResult[] = [
@@ -581,23 +582,21 @@ export const KNOWN_TOURNAMENTS: TournamentResult[] = [
 
 /**
  * Recherche fuzzy sur les tournois (sur nom + ville + pays).
- * Insensible à la casse et aux accents.
+ * Insensible à la casse et aux accents. Trie par score de proximité.
  */
 export function searchTournaments(
   query: string,
   limit = 10,
 ): TournamentResult[] {
-  const q = query
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
+  const q = normalizeFuzzy(query);
   if (q.length < 2) return [];
-  return KNOWN_TOURNAMENTS.filter((t) => {
-    const name = (t.name + " " + (t.city ?? "") + " " + (t.country ?? ""))
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    return name.includes(q);
-  }).slice(0, limit);
+  return KNOWN_TOURNAMENTS
+    .map(t => ({
+      t,
+      score: fuzzyScore(q, normalizeFuzzy(`${t.name} ${t.city ?? ""} ${t.country ?? ""}`)),
+    }))
+    .filter(({ score }) => score >= 0.5)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ t }) => t);
 }

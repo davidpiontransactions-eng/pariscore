@@ -28,6 +28,16 @@ import type {
 
 type Props = {
   className?: string;
+  /**
+   * Callback joueur sélectionné (ex: ouverture d'une fiche joueur).
+   * Si absent → navigation vers /tennis/player/[slug] (comportement legacy).
+   */
+  onSelectPlayer?: (player: PlayerResult) => void;
+  /**
+   * Callback tournoi sélectionné. Si absent → navigation vers
+   * /tennis/tournament/[slug] (comportement legacy).
+   */
+  onSelectTournament?: (tournament: TournamentResult) => void;
 };
 
 /**
@@ -44,7 +54,7 @@ type Props = {
  * Source des données : fallback hardcodé (93 ATP/WTA + 62 tournois) côté
  * API /api/tennis/search (cache 60 s). Voir docs/P8-TASK-BRIEF.md.
  */
-export function TennisSearchBar({ className }: Props) {
+export function TennisSearchBar({ className, onSelectPlayer, onSelectTournament }: Props) {
   const t = useTranslations("tennis");
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -60,10 +70,21 @@ export function TennisSearchBar({ className }: Props) {
   const showEmpty =
     query.trim().length >= 2 && !isValidating && !hasResults;
 
-  /** Navigue vers la page joueur/tournoi puis ferme le combo. */
-  const go = (href: string) => {
+  /**
+   * Clôture du combo puis dispatch : callback personnalisé si fourni, sinon
+   * navigation legacy. Permet d'ouvrir une fiche joueur/tournoi in-page.
+   */
+  const select = <T,>(
+    item: T,
+    callback: ((value: T) => void) | undefined,
+    href: string,
+  ) => {
     setOpen(false);
     setQuery("");
+    if (callback) {
+      callback(item);
+      return;
+    }
     router.push(href);
   };
 
@@ -116,7 +137,9 @@ export function TennisSearchBar({ className }: Props) {
                     <PlayerItem
                       key={p.id}
                       player={p}
-                      onSelect={() => go(`/tennis/player/${p.slug}`)}
+                      onSelect={() =>
+                        select(p, onSelectPlayer, `/tennis/player/${p.slug}`)
+                      }
                     />
                   ))}
                 </CommandGroup>
@@ -132,7 +155,13 @@ export function TennisSearchBar({ className }: Props) {
                     <TournamentItem
                       key={tour.id}
                       tournament={tour}
-                      onSelect={() => go(`/tennis/tournament/${tour.slug}`)}
+                      onSelect={() =>
+                        select(
+                          tour,
+                          onSelectTournament,
+                          `/tennis/tournament/${tour.slug}`,
+                        )
+                      }
                     />
                   ))}
                 </CommandGroup>

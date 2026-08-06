@@ -54,7 +54,7 @@ const TTL_MS = 24 * 60 * 60 * 1000; // 24 h
 const MAX_VIDEOS = 40;
 const MAX_TITLE_CHARS = 90;
 
-const FETCH_HEADERS = {
+export const FETCH_HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
   "Accept-Language": "en-US,en;q=0.9",
@@ -209,7 +209,7 @@ function extractLockup(lockup: RawLockup): TennisHighlight | null {
   };
 }
 
-function parseVideosHtml(html: string): TennisHighlight[] {
+export function parseVideosHtml(html: string): TennisHighlight[] {
   // Nouvelle UI : lockupViewModel dans ytInitialData.
   const dataMatch = html.match(/var ytInitialData = ([\s\S]*?);<\/script>/);
   const lockups: RawLockup[] = [];

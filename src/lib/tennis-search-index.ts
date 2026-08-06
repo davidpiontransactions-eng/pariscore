@@ -6,6 +6,7 @@
  * Pays devinés depuis le nom de famille (à raffiner).
  */
 
+import { fuzzyScore, normalizeFuzzy } from "./fuzzy-search";
 import type { PlayerResult } from "./tennis-search-types";
 
 export const TOP_PLAYERS: PlayerResult[] = [
@@ -849,17 +850,16 @@ export const TOP_PLAYERS: PlayerResult[] = [
 ];
 
 /**
- * Recherche fuzzy sur les joueurs (prefix + contains).
- * Insensible à la casse et aux accents.
+ * Recherche fuzzy sur les joueurs (typo tolérante, accents ignorés).
+ * Trie par score de proximité puis par rang (tie-break).
  */
 export function searchPlayers(query: string, limit = 10): PlayerResult[] {
-  const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  const q = normalizeFuzzy(query);
   if (q.length < 2) return [];
   return TOP_PLAYERS
-    .filter(p => {
-      const n = p.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return n.includes(q);
-    })
-    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
-    .slice(0, limit);
+    .map(p => ({ p, score: fuzzyScore(q, normalizeFuzzy(p.name)) }))
+    .filter(({ score }) => score >= 0.5)
+    .sort((a, b) => b.score - a.score || (a.p.rank ?? 999) - (b.p.rank ?? 999))
+    .slice(0, limit)
+    .map(({ p }) => p);
 }

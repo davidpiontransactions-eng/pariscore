@@ -42,6 +42,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | form-dots | form-dots.tsx | Forme récente en points colorés (● W / ○ L) |
 | kpi-card | kpi-card.tsx | Carte KPI générique (3-zone) |
 | last-match-highlight | last-match-highlight.tsx | Chip « Dernier match » — lien YouTube vers le dernier highlight TennisTV du joueur |
+| last-match-highlights-widget | last-match-highlights-widget.tsx | Mini-lecteurs YouTube du dernier match joué (H2H > joueurs > tournoi) |
 | last-matches-list | last-matches-list.tsx | Derniers matchs d'un joueur |
 | live-score-announcer | live-score-announcer.tsx | Annonce score pour lecteur d'écran (a11y) |
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
@@ -59,6 +60,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | pip-match-row | pip-match-row.tsx | Ligne compacte d'un match dans le widget PiP (score + DR + feu tricolore) |
 | player-block | player-block.tsx | Bloc joueur (avatar + nom + stats) |
 | player-profile-header | player-profile-header.tsx | En-tête profil joueur ("A. Rublev") |
+| player-profile-dialog | player-profile-dialog.tsx | Fiche joueur in-page (rang ATP/WTA, Elo par surface, prochains matchs) |
 | player-profile-view | player-profile-view.tsx | Vue profil `/tennis/player/[slug]` |
 | player-statline | player-statline.tsx | Ligne de stats compacte sous le nom |
 | player-vs-block | player-vs-block.tsx | Layout duel VS avec avatars, drapeaux, barre prob |
@@ -77,6 +79,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | stats-radar-chart | stats-radar-chart.tsx | Radar chart des stats (6 axes) |
 | surface-badge | surface-badge.tsx | Badge surface (Dur/Terre battue/Gazon) |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |
+| tournament-header-card | tournament-header-card.tsx | Carte tournoi sélectionné (filtre de la liste + annulation) |
 | tennis-sub-tabs | tennis-sub-tabs.tsx | Sous-onglets tennis |
 | tournament-badge | tournament-badge.tsx | Badge catégorie tournoi (GS/M1000/500) |
 | tournament-view | tournament-view.tsx | Vue `/tennis/tournament/[slug]` |
