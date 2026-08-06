@@ -47,7 +47,13 @@ const MAX_TEXT_CHARS = 260;
 const MAX_SUMMARY_SENTENCES = 3;
 
 /** Domaines éditoriaux autorisés (whitelist anti-phishing / anti-spam SEO). */
-const ALLOWED_DOMAINS = ["lastwordonsports.com", "tennismajors.com"];
+const ALLOWED_DOMAINS = [
+  "lastwordonsports.com",
+  "tennismajors.com",
+  // Football — previews prédictives whitelistées.
+  "90min.com",
+  "footystats.org",
+];
 
 const FETCH_HEADERS = {
   "User-Agent":

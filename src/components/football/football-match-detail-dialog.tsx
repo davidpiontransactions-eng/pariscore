@@ -14,6 +14,7 @@ import type { FootballMatch } from "@/lib/football-data";
 import type { MatchTimelineData } from "@/lib/football-timeline";
 import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/prediction/predictive-bets-engine";
 import { MomentumChart } from "./momentum-chart";
+import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { WatchButton } from "@/components/shared/watch-button";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
@@ -193,6 +194,18 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             Détails et comparatif du match {view?.home.name} vs {view?.away.name}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Analyse éditoriale prédictive — cache 24h, masquée si absent */}
+        {view && (
+          <EditorialInsight
+            sport="football"
+            matchId={view.id}
+            playerA={view.home.name}
+            playerB={view.away.name}
+            variant="full"
+            className="mb-1"
+          />
+        )}
 
         {/* En-tête : logos + score + minute */}
         {view && (

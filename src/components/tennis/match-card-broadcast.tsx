@@ -46,6 +46,7 @@ import { LiveScoreAnnouncer } from "./live-score-announcer";
 import { LiveStatsTrigger, LiveTennisStatsDrawer } from "./live-tennis-stats-drawer";
 import { CountryFlag } from "./country-flag";
 import { LiveOddsPanel } from "./live-odds-panel";
+import { EditorialInsight } from "@/components/ai/editorial-insight";
 import type { LiveResolvedOdds } from "@/hooks/use-onex-live-odds";
 import { SportImage } from "@/components/ui/sport-image";
 import { getSportBg } from "@/lib/sport-images";
@@ -640,6 +641,15 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             </div>
           </CollapsibleContent>
         </Collapsible>
+
+        {/* Analyse éditoriale prédictive — cache 24h, encart masqué si absent */}
+        <EditorialInsight
+          sport="tennis"
+          matchId={match.id}
+          playerA={playerA.name}
+          playerB={playerB.name}
+          variant="compact"
+        />
 
         {/* Footer : modèle + CTAs + indicateur offline (date déjà dans l'overlay top) */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-[10px] text-muted-foreground sm:px-6">

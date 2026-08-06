@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { TennisMatch } from "@/lib/tennis-data";
+import { EditorialInsight } from "@/components/ai/editorial-insight";
 
 // Types internes — extraits de ce que MatchCard passait déjà au JSX.
 type PlayerInfo = {
@@ -97,6 +98,17 @@ export function MatchCardDetail({ match, stats, playerA, playerB }: Props) {
       <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300">
         <span className="font-semibold">{t("warning")} :</span>{" "}
         {t("warningText")}
+      </div>
+
+      {/* Analyse éditoriale prédictive — cache 24h, masquée si absent */}
+      <div className="mt-4">
+        <EditorialInsight
+          sport="tennis"
+          matchId={match.id}
+          playerA={playerA.name}
+          playerB={playerB.name}
+          variant="full"
+        />
       </div>
     </div>
   );

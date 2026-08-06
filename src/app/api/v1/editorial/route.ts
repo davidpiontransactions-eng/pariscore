@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getEditorialSummary, type EditorialSummary } from "@/lib/scraping/editorial-scraper-service";
+import {
+  getMatchEditorial,
+  type MatchEditorialResult,
+} from "@/lib/match-editorial-service";
 
 /**
- * GET /api/v1/editorial?sport=tennis&matchId=xyz&playerA=...&playerB=...
+ * GET /api/v1/editorial?sport=tennis&matchId=xyz&playerA=...&playerB=...&lang=fr
  *
- * Résumé éditorial (2-3 phrases) d'un duel — cache 24h côté service
- * (globalThis + fichier .cache/editorial/). Retourne 404 si aucun article
- * éditorial fiable n'est trouvé (pas une erreur).
+ * Analyse éditoriale prédictive d'un duel — pipeline 4 étapes (scraper editorial
+ * whitelist → traduction EN→FR si lang=fr → cache 24h mémoire+disque).
+ * Retourne `summary: null` si aucun article éditorial fiable n'est trouvé (200, pas une erreur).
+ *
+ * lang: "fr" (défaut) | "en" — toute autre locale est servie en anglais.
  */
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
@@ -15,6 +20,7 @@ export async function GET(req: NextRequest) {
   const playerA = url.searchParams.get("playerA");
   const playerB = url.searchParams.get("playerB");
   const tournament = url.searchParams.get("tournament") ?? undefined;
+  const rawLang = url.searchParams.get("lang") ?? "fr";
 
   if (sport !== "tennis" && sport !== "football") {
     return NextResponse.json(
@@ -33,21 +39,34 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "params too long" }, { status: 400 });
   }
 
-  const summary: EditorialSummary | null = await getEditorialSummary({
-    sport,
-    matchId,
-    playerAName: playerA,
-    playerBName: playerB,
-    tournamentName: tournament,
-  });
+  const lang = rawLang === "en" ? "en" : "fr";
 
-  if (!summary) {
+  const result: MatchEditorialResult = await getMatchEditorial(
+    {
+      sport,
+      matchId,
+      playerAName: playerA,
+      playerBName: playerB,
+      tournamentName: tournament,
+    },
+    lang,
+  );
+
+  if (result.status === "absent") {
     return NextResponse.json({ summary: null }, { status: 200 });
   }
 
   return NextResponse.json({
-    summary,
+    summary: {
+      text: result.text,
+      source: result.source,
+      url: result.url,
+      translated: result.translated,
+      fetchedAt: result.fetchedAt,
+    },
     meta: {
+      lang,
+      translated: result.translated,
       ttlSeconds: 24 * 60 * 60,
     },
   });

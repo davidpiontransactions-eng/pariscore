@@ -18,6 +18,7 @@ import { countryFlag } from "@/lib/bsd-football-fetcher";
 
 import { MetricComparePanel } from "@/components/football/MetricComparePanel";
 import { MetricLeaderboardTable } from "@/components/football/MetricLeaderboardTable";
+import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { WatchButton } from "@/components/shared/watch-button";
 
 function formatKickoff(iso: string): string {
@@ -447,6 +448,15 @@ export function FootballMatchCard({
             </div>
           </div>
         )}
+
+        {/* Analyse éditoriale prédictive — cache 24h, encart masqué si absent */}
+        <EditorialInsight
+          sport="football"
+          matchId={match.id}
+          playerA={match.home.name}
+          playerB={match.away.name}
+          variant="compact"
+        />
 
         {/* Innovation badges — Referee xCards + Set-Piece Edge */}
         {(p.refereeCardRisk || p.setPieceEdge != null) && (

@@ -162,6 +162,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 |-----------|------|------|
 | ai-compare-dialog | ai-compare-dialog.tsx | Dialogue de comparaison 2 matchs par Gemini (cote-à-cote, facteurs, recommandation) |
 | ai-insight-card | ai-insight-card.tsx | Carte d'analyse mono-match Gemini (sélecteur + mode compare) |
+| editorial-insight | editorial-insight.tsx | Analyse éditoriale prédictive (whitelist): compact carte / full modale, traduit fr/en selon locale |
 
 ## UI primitives (`src/components/ui/`) — 50 components (shadcn/ui, New York)
 

@@ -1,4 +1,22 @@
 # PariScore — Journal des modifications
+## [v12.94] — 2026-08-07 — Analyse éditoriale prédictive dans les cartes match (+ traduction fr)
+
+### Ajouté
+- **`match-editorial-service.ts`** — orchestration 4 étapes (Récupérer → Traduire → Enrichir → Vérifier) au-dessus du scraper éditorial existant : ne retourne jamais d'erreur, `{status:"absent"}` si aucun article fiable (l'UI masque l'encart).
+- **Traduction EN→FR via Gemini** (lang par défaut fr) : un seul appel LLM par contenu, cache 24h mémoire + fichier (`.cache/editorial/<sport>-<id>.fr.json`), fallback texte source si clé absente/erreur. `en` et autres locales → texte source.
+- **`GET /api/v1/editorial` (étendue)** — param `lang` (`fr`|`en`), réponse `{ text, source, url, translated, fetchedAt }` + `meta.lang`.
+- **`EditorialInsight`** — composant partagé 2 variantes : `compact` (carte, 1 ligne) et `full` (modale, paragraphe + lien source + badge « Traduit automatiquement »). Locale via `useLocale()`.
+- **Intégration 4 surfaces** : carte foot (`FootballMatchCard`) + modale foot (`FootballMatchDetailDialog`) + carte tennis broadcast (`MatchCardBroadcast`) + panneau détail tennis (`MatchCardDetail`).
+- **Whitelist éditoriale étendue au football** : `90min.com`, `footystats.org` (en plus de LastWordOnSports/TennisMajors).
+- **i18n** : namespace `editorial.*` (source / traduit / lire l'article) dans les 7 locales.
+
+### Décision d'ingénierie
+- **Défaut silencieux** : pas d'article ou traduction indisponible → l'encart disparaît, jamais d'erreur remontée (cache 24 h serveur + déduplication 10 min client).
+- **Traduction ciblée** : seul le français (locale par défaut) déclenche un appel LLM ; une seule traduction par contenu, persistée 24 h.
+
+### Testé
+- `bun run typecheck` ✓ · `eslint` ✓
+
 ## [v12.93] — 2026-08-06 — Cotes live tennis 1xBet : best-effort + repli BSD
 
 ### Ajouté
