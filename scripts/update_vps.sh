@@ -24,7 +24,17 @@ echo "[3/7] Pull..."
 git pull --rebase origin main
 
 echo "[4/7] npm rebuild native modules (node version guard)..."
-npm rebuild better-sqlite3
+# ⚠️ NON BLOQUANT : le rebuild better-sqlite3 peut échouer via node-gyp sur certains
+#    environnements (problème pré-existant sur le VPS, indépendant du deploy). Sous
+#    `set -e`, un échec ici abandonnait le script entier et forçait un contournement
+#    SSH manuel. On tente quand même le rebuild (utile si la version native diffère),
+#    mais on logge l'échec au lieu d'abandonner — l'étape [5/7] `npm install`
+#    déclenchera de toute façon le rebuild natif si nécessaire.
+if npm rebuild better-sqlite3 2>&1; then
+  echo "✅ npm rebuild better-sqlite3 OK"
+else
+  echo "⚠️ npm rebuild better-sqlite3 a échoué (non bloquant) — étape [5/7] npm install prendra le relais"
+fi
 
 echo "[5/7] npm install (with dev for Next.js build)..."
 npm install --legacy-peer-deps --silent
