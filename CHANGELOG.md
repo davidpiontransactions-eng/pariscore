@@ -1,4 +1,22 @@
 # PariScore — Journal des modifications
+## [v12.95] — 2026-08-07 — Highlights du tour précédent (détail match tennis)
+
+### Ajouté
+- **`previous-match-highlights-service.ts`** — résout le **dernier match réellement joué** de chaque joueur d'un duel tennis via BSD `fetchMatchH2H` → `player_last5` (filtre/sort par `match_date`, `status` terminé). Ne throw jamais : en failure contexte vide + `source:"fallback"`, vidéos `null`.
+- **Labels intelligents** : « Tour précédent » quand le dernier match partage le tournoi courant avec le joueur, sinon « Dernier match ». Contexte exposé : round, tournoi, surface, adversaire, victoire/défaite, score.
+- **Cascade de recherche YouTube** par joueur : adversaire → adversaire+surface → tournoi+année (via `searchYouTube` + `pickBest`, cascades existantes du service `last-match-highlights`). Cache mémoire 48 h (globalThis, mémoire par paires de joueurs + match).
+- **`GET /api/v1/previous-match-highlights`** — validation params (missing → 400, len > 120 → 400), réponse `{ players, source, meta.ttlSeconds }`. Modèle calqué sur `/api/v1/last-match-highlights`.
+- **`src/lib/bsd-id.ts`** — `parseBsdId("bsd-N")` strict (facteur commun pour ID base sportive tennis).
+- **`usePreviousRoundHighlights` (hook SWR)** — dédup client 10 min, pas de revalidation focus/reconnect, `errorRetryCount: 1` ; ne throw jamais (erreur → `data: null`).
+- **`PreviousRoundHighlightsWidget`** — 2 sous-cartes vidéo YouTube (16/9, iframe `youtube-nocookie`, allow restreint, `lazy`) ; se monte seulement si ≥ 1 vidéo ; étiquette « Tour précédent · Dernier match » + contexte adversaire/score.
+- **i18n `detail.highlightsPrevious.*`** (fr + en) : `tourPrevious`, `lastMatch`, `opponent`, `loading`, `openYoutube`.
+- **Intégration Overview** — `match-detail-dialog.tsx` : bloc juste après `LastMatchHighlightsWidget`, branché sur `t("highlightsPrevious.*")`.
+- **Tests** — 13 cas (`tests/previous-match-highlights.test.ts`) : helpers purs, `parseBsdId`, orchestration « ne throw jamais », endpoint (400 params, 400 long, 200).
+
+### Notes techniques
+- La surface courante est ré-utilisée en préférence de cascade (`mapSurfaceToken` traduit « Terre battue » → `clay` etc.).
+- `parseBsdId` extrait du parsing inline pour réutilisabilité (pattern partagé avec les routes BSD).
+
 ## [v12.94] — 2026-08-07 — Analyse éditoriale prédictive dans les cartes match (+ traduction fr)
 
 ### Ajouté

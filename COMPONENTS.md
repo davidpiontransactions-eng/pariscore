@@ -43,6 +43,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | kpi-card | kpi-card.tsx | Carte KPI générique (3-zone) |
 | last-match-highlight | last-match-highlight.tsx | Chip « Dernier match » — lien YouTube vers le dernier highlight TennisTV du joueur |
 | last-match-highlights-widget | last-match-highlights-widget.tsx | Mini-lecteurs YouTube du dernier match joué (H2H > joueurs > tournoi) |
+| previous-match-highlights-widget | previous-match-highlights-widget.tsx | Mini-lecteurs YouTube du tour précédent (dernier match réel BSD last5 > cascade) |
 | last-matches-list | last-matches-list.tsx | Derniers matchs d'un joueur |
 | live-score-announcer | live-score-announcer.tsx | Annonce score pour lecteur d'écran (a11y) |
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |

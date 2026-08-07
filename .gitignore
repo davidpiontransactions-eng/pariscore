@@ -228,3 +228,8 @@ scripts/plugins_v2/
 scripts/vps_scripts/
 *.war
 
+# =============================================================================
+# Runtime cache (editorial/highlights cached responses — machine-local)
+# =============================================================================
+.cache/
+

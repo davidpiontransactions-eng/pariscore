@@ -270,6 +270,13 @@
     "title": "Analyse complète",
     "subtitle": "{tournament} · {round} · Analyse complète",
     "streamWatch": "Visionner en direct",
+    "highlightsPrevious": {
+      "tourPrevious": "Tour précédent",
+      "lastMatch": "Dernier match",
+      "opponent": "vs {opp}",
+      "loading": "Recherche des highlights du tour précédent…",
+      "openYoutube": "Ouvrir sur YouTube"
+    },
     "tabs": {
       "overview": "Vue d'ensemble",
       "h2h": "H2H",

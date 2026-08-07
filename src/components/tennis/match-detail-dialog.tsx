@@ -38,6 +38,8 @@ import { useEloHistory } from "@/hooks/use-elo-history";
 import { useBSDMatchDetail } from "@/hooks/use-bsd-match-detail";
 import { useLastMatchHighlights } from "@/hooks/use-last-match-highlights";
 import { LastMatchHighlightsWidget } from "@/components/tennis/last-match-highlights-widget";
+import { usePreviousRoundHighlights } from "@/hooks/use-previous-round-highlights";
+import { PreviousRoundHighlightsWidget } from "@/components/tennis/previous-match-highlights-widget";
 import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 import { WatchButton } from "@/components/shared/watch-button";
@@ -108,6 +110,13 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     match ? match.playerA.name : null,
     match ? match.playerB.name : null,
     match ? match.tournament : null,
+  );
+  const { data: prevRound, isLoading: prevRoundLoading } = usePreviousRoundHighlights(
+    match?.id ?? null,
+    match ? { id: match.playerA.id, name: match.playerA.name } : null,
+    match ? { id: match.playerB.id, name: match.playerB.name } : null,
+    match?.tournament ?? null,
+    match?.stats.surface ?? null,
   );
 
   if (!match) return null;
@@ -352,6 +361,17 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   ]}
                   tournamentHighlight={lmHighlights?.tournament ?? null}
                   isLoading={lmHighlightsLoading}
+                />
+
+                {/* Highlights du tour précédent — dernier match réellement joué par chaque joueur */}
+                <PreviousRoundHighlightsWidget
+                  players={prevRound?.players ?? []}
+                  tourPreviousLabel={t("highlightsPrevious.tourPrevious")}
+                  lastMatchLabel={t("highlightsPrevious.lastMatch")}
+                  opponentTemplate={t("highlightsPrevious.opponent")}
+                  loadingLabel={t("highlightsPrevious.loading")}
+                  openYoutubeLabel={t("highlightsPrevious.openYoutube")}
+                  isLoading={prevRoundLoading}
                 />
               </TabsContent>
 

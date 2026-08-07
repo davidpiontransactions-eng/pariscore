@@ -90,7 +90,7 @@ async function writeFileCache(key: string, index: CachedSearch): Promise<void> {
 }
 
 /** Recherche YouTube par requête textuelle, cache 48 h. Jamais de throw. */
-async function searchYouTube(query: string): Promise<TennisHighlight[]> {
+export async function searchYouTube(query: string): Promise<TennisHighlight[]> {
   const key = query.toLowerCase().trim();
   if (!key) return [];
 
@@ -129,7 +129,7 @@ async function searchYouTube(query: string): Promise<TennisHighlight[]> {
 }
 
 /** Vidéo la plus récente d'un set, ou null. */
-function pickBest(videos: TennisHighlight[]): TennisHighlight | null {
+export function pickBest(videos: TennisHighlight[]): TennisHighlight | null {
   return videos[0] ?? null;
 }
 
