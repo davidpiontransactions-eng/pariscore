@@ -5,7 +5,9 @@
 > **Résultat final (run #3) : 18 PASS / 0 FAIL**
 > Suivi beads : `ParisScorebis-f5ps` (engineering loop, fermé) ·
 > `ParisScorebis-rxi1` (finding QA — re-diagnostiqué : reload SW première
-> visite ; fix `sw-register.tsx` appliqué, en attente de déploiement prod)
+> visite ; fix `sw-register.tsx` appliqué, **déployé en prod le 2026-08-08**
+> (commit `a76c38c` ; VPS git reset + build + pm2 restart confirmés, prod
+> HTTP 200)
 
 ## Tier 1 — Analyse statique des APK : **13/13 PASS**
 
@@ -64,8 +66,11 @@ scrollable.
 **Fix appliqué** : garde `hadController` dans `sw-register.tsx` — le reload ne
 se déclenche que si un SW contrôlait déjà la page (= vraie mise à jour à
 chaud). Test Playwright durci avec `evaluateStable()` (tolère le reload tant
-que le fix n'est pas déployé en prod). **Action restante : déployer**, puis
-re-valider avec `bun run mobile:qa`.
+que le fix n'est pas déployé en prod). **Déployé en prod le 2026-08-08**
+(commit `a76c38c`) : VPS `git reset --hard a76c38c` + build + `pm2 restart
+pariscore-next` → prod HOME HTTP 200, `/sw.js` HTTP 200. **Re-validation
+restante** : `bun run mobile:qa` (Tier 2 Playwright contre prod) + Tier 3 émulateur
+quand la RAM est libre.
 
 ## Tier 3 — Émulateur / device physique
 
