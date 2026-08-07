@@ -21,6 +21,24 @@ Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructio
 
 **Métriques dispo** (8): PPG, Pts, GF, GA, GD, W, D, L. Shots/SOT/Attacks/Corners sur pages séparées.
 
+## Session: Capacitor Android Engineering Loop (2026-08-07)
+
+**Scope**: Engineering loop complète APK Android (debug + release signée) via **Capacitor 8**, mode remote WebView → `https://pariscore.fr` (l'export statique est impossible aujourd'hui : 55 route handlers + Prisma/better-sqlite3 ; audit complet + graphe Graphify dans `docs/mobile/MOBILE_AUDIT_GRAPHIFY.md`).
+
+**Fichiers clés**: `capacitor.config.ts` (appId `fr.pariscore.app`), `scripts/mobile-build.ps1` (boucle 5 étapes assets→sync→debug→release→verify), `scripts/gen-mobile-assets.js` (icon 1024/splash 2732 depuis `public/icon-512.png`), `docs/mobile/` (audit + graphify-studio + SVG), `android/` = **jonction Windows → `E:\Android\Pariscore`** (C: saturé).
+
+**Toolchain**: JDK **21** `D:\Android\jdk\jdk-21.0.12+8` (**Capacitor 8 exige Java 21** — le JDK 17 aussi installé échoue avec `invalid source release: 21`), SDK `D:\Android\Sdk` (platforms 34+36, build-tools 34/35/36), Gradle home `E:\Android\gradle-home`, keystore `D:\Android\keystore\pariscore-release.keystore` (alias `pariscore`, RSA 2048, 10 000 jours ; secrets dans `android/keystore.properties` gitignoré, template `.example`).
+
+**Commandes**: `bun run mobile:apk` (boucle complète), `bun run mobile:debug|release|verify|sync|assets`. Surcharges env : `CAPACITOR_SERVER_URL` (émulateur : `http://10.0.2.2:3000`), `VERSION_CODE`/`VERSION_NAME`.
+
+**APKs**: `android/app/build/outputs/apk/debug/app-debug.apk` (4,6 Mo) et `.../release/app-release.apk` (3,5 Mo, signé — SHA-256 `9b38ad21…c416a`).
+
+**Pièges connus**: (1) scripts PowerShell **ASCII-only** — PS 5.1 lit l'UTF-8 sans BOM comme ANSI, les accents/`—` cassent le parsing ; (2) `tar` Git-MSYS interprète `D:` comme host distant → toujours `C:\Windows\System32\tar.exe` ; (3) sdkmanager : écrire les fichiers `D:\Android\Sdk\licenses\android-sdk-license` à la main plutôt que tuber des `y` ; (4) `apksigner verify` exige `JAVA_HOME` et le flag `-v` pour afficher "Verifies"/schemes ; (5) avdmanager exige que `ANDROID_AVD_HOME` existe déjà (mkdir avant `create avd`) ; (6) l'émulateur refuse de booter si le commit charge Windows < besoin (vérifier avant de lancer).
+
+**QA APK**: `bun run mobile:qa` (`scripts/mobile-qa.ps1`) — Tier 1 statique (apksigner `-v`, zipalign, aapt2 badging, manifest debuggable/permissions, DEX refs), Tier 2 WebView Playwright Pixel 7 (`tests/apk-webview.spec.ts`, cible `QA_BASE_URL` défaut `https://pariscore.fr` = URL exacte de l'APK), Tier 3 adb/émulateur (`-Install`). Run final du 2026-08-07 : **18 PASS / 0 FAIL**. Le FAIL initial (« débordement horizontal 412px ») était un faux positif : cause réelle = **reload SW à la première visite** (`public/sw.js` `clients.claim()` → `controllerchange` → `window.location.reload()` sans garde dans `sw-register.tsx`) — fix appliqué : garde `hadController` (bead `ParisScorebis-rxi1`, à re-valider après déploiement prod). Sondes : `scripts/qa-overflow-probe.js`, `qa-overflow-timeline.js`. AVD `pariscore-qa` opérationnel (`E:\Android\avd`, API 34 google_apis x86_64, WHPX OK) mais boot bloqué par RAM commit saturée (~1 Go restant sur 36). Rapport complet : `docs/mobile/QA_REPORT.md`.
+
+
+
 ## Session: XSS onclick template literals (2026-07-05)
 
 **Scope**: ParisScorebis-bhpw — 20 unescaped `${}` interpolations inside `onclick="..."` in template literals in `pariscore.js`. Single-quote injection could break JS context and redirect to phishing.

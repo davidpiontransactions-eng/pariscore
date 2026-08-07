@@ -233,3 +233,13 @@ scripts/vps_scripts/
 # =============================================================================
 .cache/
 
+
+# Capacitor / mobile (artefacts generes)
+dist/
+docs/mobile/graphify-studio/
+docs/mobile/graph-architecture.svg
+android/keystore.properties
+icons/
+test-results/
+
+

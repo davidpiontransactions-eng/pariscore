@@ -26,8 +26,20 @@ export function ServiceWorkerRegister() {
     if (process.env.NODE_ENV !== "production") return; // dev: skip SW
 
     let refreshing = false;
+    // Garde anti-reload au premier claim : sur une PREMIÈRE visite, le SW
+    // fraîchement activé appelle clients.claim() (public/sw.js) →
+    // 'controllerchange' se déclenche alors qu'aucun ancien SW ne contrôlait
+    // la page. Sans cette garde, chaque première visite rechargeait la page
+    // 1-3 s après le load (flash visible, double chargement — notamment dans
+    // la WebView APK juste après le splash). Le reload n'est légitime que
+    // lorsqu'un SW déjà actif est remplacé par une nouvelle version.
+    let hadController = !!navigator.serviceWorker.controller;
     const handleControllerChange = () => {
       if (refreshing) return;
+      if (!hadController) {
+        hadController = true; // premier claim : on prend note, pas de reload
+        return;
+      }
       refreshing = true;
       window.location.reload();
     };
