@@ -1,0 +1,31 @@
+name: Refresh Team Attack/Defense Stats
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # Daily 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - run: pip install requests beautifulsoup4 tenacity lxml
+      - name: Scrape team stats
+        run: python scripts/scrape_team_attack_defense.py --all --output-dir public/data/metrics
+      - name: Commit & push if changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/metrics/team_stats_*.json
+          if git diff --staged --quiet; then
+            echo "No changes to team stats"
+          else
+            git commit -m "chore(data): refresh team attack/defense stats [skip ci]"
+            git push
+          fi

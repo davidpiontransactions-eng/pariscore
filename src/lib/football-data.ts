@@ -49,6 +49,51 @@ export type MetricValue = {
 };
 
 /** Catégorie tirs / attaques : généré (for), subi (against), total (match). */
+
+/** Statistiques d'attaque par équipe (source: FBref+Understat). */
+export type TeamAttackStats = {
+  goalsPerGame: number | null;
+  shotsPerGame: number | null;
+  xGPerGame: number | null;
+  attackFrequency: number | null;  // % tirs convertis en buts
+  goalsPerGameRank?: number;
+  shotsPerGameRank?: number;
+  xGPerGameRank?: number;
+  attackFrequencyRank?: number;
+};
+
+/** Statistiques de defense par equipe (source: FBref). */
+export type TeamDefenseStats = {
+  concededPerGame: number | null;
+  cleanSheetPct: number | null;
+  tacklesPerGame: number | null;
+  defActionsPerGame: number | null;  // (Tkl+Int+Clr)/MP
+  concededPerGameRank?: number;
+  cleanSheetPctRank?: number;
+  tacklesPerGameRank?: number;
+  defActionsPerGameRank?: number;
+};
+
+/** Stats attaque/defense d'une equipe pour une ligue. */
+export type TeamAttackDefenseEntry = {
+  teamName: string;
+  attack: TeamAttackStats;
+  defense: TeamDefenseStats;
+};
+
+/** Stats attaque/defense d'une ligue entiere. */
+export type TeamAttackDefenseLeague = {
+  meta: {
+    leagueName: string;
+    leagueSlug: string;
+    season: string;
+    lastUpdated: string;
+    source: string;
+    teamCount: number;
+  };
+  teams: TeamAttackDefenseEntry[];
+};
+
 export type TeamMetricCategory = {
   for: MetricValue;
   against: MetricValue;

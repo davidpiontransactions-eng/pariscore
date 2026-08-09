@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "leagueName": "england",
+    "leagueSlug": "england",
+    "season": "2025-2026",
+    "lastUpdated": "2026-08-09T18:00:00Z",
+    "source": "FBref+Understat",
+    "teamCount": 20
+  },
+  "teams": [
+    {"teamName":"Manchester City","attack":{"goalsPerGame":2.4,"shotsPerGame":15.2,"xGPerGame":2.1,"attackFrequency":15.8,"goalsPerGameRank":1,"shotsPerGameRank":2,"xGPerGameRank":1,"attackFrequencyRank":3},"defense":{"concededPerGame":0.8,"cleanSheetPct":45.0,"tacklesPerGame":12.3,"defActionsPerGame":35.1,"concededPerGameRank":2,"cleanSheetPctRank":1,"tacklesPerGameRank":8,"defActionsPerGameRank":5}},
+    {"teamName":"Liverpool","attack":{"goalsPerGame":2.2,"shotsPerGame":16.8,"xGPerGame":1.9,"attackFrequency":13.1,"goalsPerGameRank":2,"shotsPerGameRank":1,"xGPerGameRank":2,"attackFrequencyRank":8},"defense":{"concededPerGame":0.9,"cleanSheetPct":40.0,"tacklesPerGame":14.1,"defActionsPerGame":38.5,"concededPerGameRank":3,"cleanSheetPctRank":2,"tacklesPerGameRank":3,"defActionsPerGameRank":2}},
+    {"teamName":"Arsenal","attack":{"goalsPerGame":2.1,"shotsPerGame":14.5,"xGPerGame":1.8,"attackFrequency":14.5,"goalsPerGameRank":3,"shotsPerGameRank":4,"xGPerGameRank":3,"attackFrequencyRank":5},"defense":{"concededPerGame":0.7,"cleanSheetPct":50.0,"tacklesPerGame":13.5,"defActionsPerGame":36.2,"concededPerGameRank":1,"cleanSheetPctRank":1,"tacklesPerGameRank":5,"defActionsPerGameRank":3}},
+    {"teamName":"Chelsea","attack":{"goalsPerGame":1.9,"shotsPerGame":13.8,"xGPerGame":1.6,"attackFrequency":13.8,"goalsPerGameRank":4,"shotsPerGameRank":6,"xGPerGameRank":5,"attackFrequencyRank":6},"defense":{"concededPerGame":1.1,"cleanSheetPct":35.0,"tacklesPerGame":15.2,"defActionsPerGame":40.1,"concededPerGameRank":6,"cleanSheetPctRank":4,"tacklesPerGameRank":1,"defActionsPerGameRank":1}},
+    {"teamName":"Manchester Utd","attack":{"goalsPerGame":1.7,"shotsPerGame":14.0,"xGPerGame":1.7,"attackFrequency":12.1,"goalsPerGameRank":5,"shotsPerGameRank":5,"xGPerGameRank":4,"attackFrequencyRank":10},"defense":{"concededPerGame":1.0,"cleanSheetPct":38.0,"tacklesPerGame":14.8,"defActionsPerGame":37.5,"concededPerGameRank":4,"cleanSheetPctRank":3,"tacklesPerGameRank":2,"defActionsPerGameRank":2}},
+    {"teamName":"Tottenham","attack":{"goalsPerGame":1.8,"shotsPerGame":12.5,"xGPerGame":1.5,"attackFrequency":14.4,"goalsPerGameRank":4,"shotsPerGameRank":8,"xGPerGameRank":6,"attackFrequencyRank":5},"defense":{"concededPerGame":1.3,"cleanSheetPct":25.0,"tacklesPerGame":13.8,"defActionsPerGame":34.2,"concededPerGameRank":8,"cleanSheetPctRank":6,"tacklesPerGameRank":4,"defActionsPerGameRank":6}},
+    {"teamName":"Newcastle Utd","attack":{"goalsPerGame":1.6,"shotsPerGame":13.2,"xGPerGame":1.4,"attackFrequency":12.1,"goalsPerGameRank":6,"shotsPerGameRank":7,"xGPerGameRank":7,"attackFrequencyRank":10},"defense":{"concededPerGame":1.0,"cleanSheetPct":35.0,"tacklesPerGame":12.8,"defActionsPerGame":33.0,"concededPerGameRank":4,"cleanSheetPctRank":4,"tacklesPerGameRank":7,"defActionsPerGameRank":8}},
+    {"teamName":"Aston Villa","attack":{"goalsPerGame":1.5,"shotsPerGame":11.0,"xGPerGame":1.3,"attackFrequency":13.6,"goalsPerGameRank":7,"shotsPerGameRank":12,"xGPerGameRank":8,"attackFrequencyRank":7},"defense":{"concededPerGame":1.4,"cleanSheetPct":22.0,"tacklesPerGame":11.5,"defActionsPerGame":30.8,"concededPerGameRank":10,"cleanSheetPctRank":8,"tacklesPerGameRank":12,"defActionsPerGameRank":12}},
+    {"teamName":"Brighton","attack":{"goalsPerGame":1.4,"shotsPerGame":12.0,"xGPerGame":1.2,"attackFrequency":11.7,"goalsPerGameRank":8,"shotsPerGameRank":9,"xGPerGameRank":9,"attackFrequencyRank":12},"defense":{"concededPerGame":1.2,"cleanSheetPct":28.0,"tacklesPerGame":13.0,"defActionsPerGame":35.5,"concededPerGameRank":7,"cleanSheetPctRank":5,"tacklesPerGameRank":6,"defActionsPerGameRank":4}},
+    {"teamName":"West Ham","attack":{"goalsPerGame":1.3,"shotsPerGame":11.5,"xGPerGame":1.1,"attackFrequency":11.3,"goalsPerGameRank":9,"shotsPerGameRank":11,"xGPerGameRank":10,"attackFrequencyRank":14},"defense":{"concededPerGame":1.5,"cleanSheetPct":20.0,"tacklesPerGame":11.0,"defActionsPerGame":28.5,"concededPerGameRank":12,"cleanSheetPctRank":10,"tacklesPerGameRank":14,"defActionsPerGameRank":14}}
+  ]
+}

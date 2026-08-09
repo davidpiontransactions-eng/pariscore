@@ -11,6 +11,7 @@ import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
 import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top-teams-presets-bar";
 import { useCornervalueStats } from "@/hooks/use-cornervalue-stats";
+import { useTeamAttackDefenseStats } from "@/hooks/use-team-attack-defense-stats";
 import { FootballMatchCard, FootballMatchCardSkeleton } from "./football-match-card";
 import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
@@ -36,6 +37,9 @@ export function FootballTabContent() {
   // Cornervalue data — charge selon la ligue selectionnee
   const { data: cvData } = useCornervalueStats(selectedLeague);
 
+  // Attaque/Defense stats — charge selon la ligue selectionnee
+  const { data: adData } = useTeamAttackDefenseStats(selectedLeague);
+
   // Détail match (dialog momentum) — state lifté, une seule instance rendue.
   const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -56,7 +60,7 @@ export function FootballTabContent() {
     if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
     // Appliquer le preset Top Teams AVANT les sous-filtres existants
     if (presetFilter) {
-      list = applyPresetFilter(list, presetFilter, cvData).filtered;
+      list = applyPresetFilter(list, presetFilter, cvData, adData).filtered;
     }
     if (filter === "today") {
       const today = new Date().toDateString();
@@ -198,6 +202,7 @@ export function FootballTabContent() {
               activePreset={presetFilter}
               onPresetChange={setPresetFilter}
               cvData={cvData}
+              adData={adData}
             />
           </div>
 

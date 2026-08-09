@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import type { CornervalueLeague, CornervalueTeam } from "@/hooks/use-cornervalue-stats";
+import type { TeamAttackDefenseLeague } from "@/lib/football-data";
+import { findTeamADStats } from "@/hooks/use-team-attack-defense-stats";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -73,11 +75,12 @@ function findCVTeam(teamName: string, cvData?: CornervalueLeague): CornervalueTe
   return cvData.teams.find((t) => fuzzyKey(t.teamName) === key);
 }
 
-/** Filtre les matchs selon le preset actif, avec donnees Cornervalue optionnelles. */
+/** Filtre les matchs selon le preset actif, avec donnees Cornervalue et Attaque/Defense optionnelles. */
 export function applyPresetFilter(
   matches: FootballMatch[],
   preset: TopTeamPreset | null,
   cvData?: CornervalueLeague,
+  adData?: TeamAttackDefenseLeague,
 ): { filtered: FootballMatch[]; count: number } {
   if (!preset) return { filtered: matches, count: matches.length };
 
@@ -115,6 +118,19 @@ export function applyPresetFilter(
         return (h !== null && h >= 5) || (a !== null && a >= 5);
       }
       case "topAttack":
+        // Stats reelles FBref: top 20% equipes sur goalsPerGame ou xG
+        if (adData?.teams?.length) {
+          const threshold = Math.max(1, Math.floor(adData.teams.length * 0.2));
+          const topTeams = new Set(
+            adData.teams
+              .filter((t) =>
+                (t.attack.goalsPerGameRank ?? 999) <= threshold ||
+                (t.attack.xGPerGameRank ?? 999) <= threshold)
+              .map((t) => fuzzyKey(t.teamName)),
+          );
+          return topTeams.has(fuzzyKey(m.home.name)) || topTeams.has(fuzzyKey(m.away.name));
+        }
+        // Fallback: standing stats
         if (st) {
           const hGpg = st.home.played > 0 ? st.home.goalsFor / st.home.played : 0;
           const aGpg = st.away.played > 0 ? st.away.goalsFor / st.away.played : 0;
@@ -122,6 +138,19 @@ export function applyPresetFilter(
         }
         return false;
       case "topDefense":
+        // Stats reelles FBref: top 20% equipes sur concededPerGame ou cleanSheetPct
+        if (adData?.teams?.length) {
+          const threshold = Math.max(1, Math.floor(adData.teams.length * 0.2));
+          const topTeams = new Set(
+            adData.teams
+              .filter((t) =>
+                (t.defense.concededPerGameRank ?? 999) <= threshold ||
+                (t.defense.cleanSheetPctRank ?? 999) <= threshold)
+              .map((t) => fuzzyKey(t.teamName)),
+          );
+          return topTeams.has(fuzzyKey(m.home.name)) || topTeams.has(fuzzyKey(m.away.name));
+        }
+        // Fallback: standing stats
         if (st) {
           const hGa = st.home.played > 0 ? st.home.goalsAgainst / st.home.played : 99;
           const aGa = st.away.played > 0 ? st.away.goalsAgainst / st.away.played : 99;
@@ -177,15 +206,17 @@ export function TopTeamsPresetsBar({
   activePreset,
   onPresetChange,
   cvData,
+  adData,
 }: {
   matches: FootballMatch[];
   activePreset: TopTeamPreset | null;
   onPresetChange: (preset: TopTeamPreset | null) => void;
   cvData?: CornervalueLeague;
+  adData?: TeamAttackDefenseLeague;
 }) {
   const result = useMemo(
-    () => applyPresetFilter(matches, activePreset, cvData),
-    [matches, activePreset, cvData],
+    () => applyPresetFilter(matches, activePreset, cvData, adData),
+    [matches, activePreset, cvData, adData],
   );
 
   return (
