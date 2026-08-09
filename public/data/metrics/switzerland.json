@@ -1,0 +1,1121 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "switzerland",
+    "leagueName": "Super League (SUI)",
+    "lastUpdated": "2026-08-09T14:57:12.839494Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 13,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Bsc Young Boys",
+      "rank": 1,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 4.26,
+        "bttsPct": 74.0,
+        "csPct": 5.0,
+        "over25Pct": 74.0,
+        "over15Pct": 95.0,
+        "over35Pct": 53.0
+      }
+    },
+    {
+      "teamName": "Failed To Score",
+      "rank": 2,
+      "rankTotal": 13,
+      "gp": null,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": null,
+        "bttsPct": null,
+        "csPct": null,
+        "over25Pct": 9.0,
+        "over15Pct": null,
+        "over35Pct": null
+      }
+    },
+    {
+      "teamName": "Fc Basel",
+      "rank": 3,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.32,
+        "bttsPct": 58.0,
+        "csPct": 21.0,
+        "over25Pct": 74.0,
+        "over15Pct": 89.0,
+        "over35Pct": 37.0
+      }
+    },
+    {
+      "teamName": "Fc Zurich",
+      "rank": 4,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.95,
+        "bttsPct": 63.0,
+        "csPct": 0.0,
+        "over25Pct": 74.0,
+        "over15Pct": 89.0,
+        "over35Pct": 21.0
+      }
+    },
+    {
+      "teamName": "Grasshopper",
+      "rank": 5,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.26,
+        "bttsPct": 53.0,
+        "csPct": 16.0,
+        "over25Pct": 53.0,
+        "over15Pct": 74.0,
+        "over35Pct": 37.0
+      }
+    },
+    {
+      "teamName": "Lausanne Sport",
+      "rank": 6,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.84,
+        "bttsPct": 63.0,
+        "csPct": 16.0,
+        "over25Pct": 68.0,
+        "over15Pct": 79.0,
+        "over35Pct": 32.0
+      }
+    },
+    {
+      "teamName": "Lugano",
+      "rank": 7,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.37,
+        "bttsPct": 53.0,
+        "csPct": 32.0,
+        "over25Pct": 32.0,
+        "over15Pct": 58.0,
+        "over35Pct": 26.0
+      }
+    },
+    {
+      "teamName": "Luzern",
+      "rank": 8,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.26,
+        "bttsPct": 63.0,
+        "csPct": 21.0,
+        "over25Pct": 74.0,
+        "over15Pct": 89.0,
+        "over35Pct": 47.0
+      }
+    },
+    {
+      "teamName": "Servette",
+      "rank": 9,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.58,
+        "bttsPct": 79.0,
+        "csPct": 21.0,
+        "over25Pct": 58.0,
+        "over15Pct": 95.0,
+        "over35Pct": 53.0
+      }
+    },
+    {
+      "teamName": "Sion",
+      "rank": 10,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.16,
+        "bttsPct": 63.0,
+        "csPct": 32.0,
+        "over25Pct": 63.0,
+        "over15Pct": 79.0,
+        "over35Pct": 42.0
+      }
+    },
+    {
+      "teamName": "St. Gallen",
+      "rank": 11,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.32,
+        "bttsPct": 89.0,
+        "csPct": 11.0,
+        "over25Pct": 74.0,
+        "over15Pct": 95.0,
+        "over35Pct": 47.0
+      }
+    },
+    {
+      "teamName": "Thun",
+      "rank": 12,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.05,
+        "bttsPct": 68.0,
+        "csPct": 21.0,
+        "over25Pct": 74.0,
+        "over15Pct": 84.0,
+        "over35Pct": 32.0
+      }
+    },
+    {
+      "teamName": "Winterthur",
+      "rank": 13,
+      "rankTotal": 13,
+      "gp": 19,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 4.11,
+        "bttsPct": 63.0,
+        "csPct": 0.0,
+        "over25Pct": 89.0,
+        "over15Pct": 100.0,
+        "over35Pct": 58.0
+      }
+    }
+  ]
+}

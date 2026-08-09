@@ -1,0 +1,1596 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "League Two",
+    "leagueSlug": "league-two",
+    "leagueAvgFT": 9.82,
+    "lastUpdated": "2026-08-09T15:14:01.327755Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "County",
+      "avgCornersFT": 9.26,
+      "avgCornersFor": 4.83,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 23,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 46,
+          "hit": 21,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 15,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 10.35,
+      "avgCornersFor": 4.39,
+      "avgCornersAgainst": 5.96,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 19,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 15,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Rovers",
+      "avgCornersFT": 10.2,
+      "avgCornersFor": 4.15,
+      "avgCornersAgainst": 6.04,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 37,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Bromley",
+      "avgCornersFT": 10.24,
+      "avgCornersFor": 5.28,
+      "avgCornersAgainst": 4.96,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 39,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 78,
+          "hit": 36,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Oldham",
+      "avgCornersFT": 10.09,
+      "avgCornersFor": 5.2,
+      "avgCornersAgainst": 4.89,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 28,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 21,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Barrow",
+      "avgCornersFT": 9.83,
+      "avgCornersFor": 4.2,
+      "avgCornersAgainst": 5.63,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 27,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 10.02,
+      "avgCornersFor": 4.8,
+      "avgCornersAgainst": 5.22,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 19,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 10.52,
+      "avgCornersFor": 6.09,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 21,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Alexandra",
+      "avgCornersFT": 9.28,
+      "avgCornersFor": 4.91,
+      "avgCornersAgainst": 4.37,
+      "hitRates": {
+        "over7_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 30,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 27,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 13,
+          "hit": 6,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 9.87,
+      "avgCornersFor": 5.63,
+      "avgCornersAgainst": 4.24,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 36,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 52,
+          "hit": 24,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 11.13,
+      "avgCornersFor": 5.28,
+      "avgCornersAgainst": 5.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 80,
+          "hit": 37,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 74,
+          "hit": 34,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 61,
+          "hit": 28,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 20,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Gillingham",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 5.07,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 20,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Chesterfield",
+      "avgCornersFT": 10.28,
+      "avgCornersFor": 5.46,
+      "avgCornersAgainst": 4.83,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 35,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 27,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 19,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 13,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Stanley",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.15,
+      "avgCornersAgainst": 5.35,
+      "hitRates": {
+        "over7_5": {
+          "pct": 74,
+          "hit": 34,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 48,
+          "hit": 22,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Barnet",
+      "avgCornersFT": 10.17,
+      "avgCornersFor": 6.89,
+      "avgCornersAgainst": 3.28,
+      "hitRates": {
+        "over7_5": {
+          "pct": 87,
+          "hit": 40,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 13,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Walsall",
+      "avgCornersFT": 9.96,
+      "avgCornersFor": 4.59,
+      "avgCornersAgainst": 5.37,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 35,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 30,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 9.04,
+      "avgCornersFor": 4.61,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 61,
+          "hit": 28,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 10,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 9.63,
+      "avgCornersFor": 4.2,
+      "avgCornersAgainst": 5.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "County",
+      "avgCornersFT": 9.43,
+      "avgCornersFor": 3.91,
+      "avgCornersAgainst": 5.52,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 35,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 28,
+          "hit": 13,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 17,
+          "hit": 8,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Dons",
+      "avgCornersFT": 8.76,
+      "avgCornersFor": 4.46,
+      "avgCornersAgainst": 4.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 23,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 9,
+          "hit": 4,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 8.22,
+      "avgCornersFor": 3.96,
+      "avgCornersAgainst": 4.26,
+      "hitRates": {
+        "over7_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 17,
+          "hit": 8,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 9,
+          "hit": 4,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 12.0,
+      "avgCornersFor": 5.48,
+      "avgCornersAgainst": 6.52,
+      "hitRates": {
+        "over7_5": {
+          "pct": 93,
+          "hit": 43,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 89,
+          "hit": 41,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 78,
+          "hit": 36,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 52,
+          "hit": 24,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Rovers",
+      "avgCornersFT": 9.35,
+      "avgCornersFor": 4.59,
+      "avgCornersAgainst": 4.76,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 9.15,
+      "avgCornersFor": 5.78,
+      "avgCornersAgainst": 3.37,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 23,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 9,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "County",
+      "avgCornersFT": 9.26,
+      "avgCornersFor": 4.83,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 23,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 46,
+          "hit": 21,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 15,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 10.35,
+      "avgCornersFor": 4.39,
+      "avgCornersAgainst": 5.96,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 19,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 15,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Rovers",
+      "avgCornersFT": 10.2,
+      "avgCornersFor": 4.15,
+      "avgCornersAgainst": 6.04,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 37,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Bromley",
+      "avgCornersFT": 10.24,
+      "avgCornersFor": 5.28,
+      "avgCornersAgainst": 4.96,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 39,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 78,
+          "hit": 36,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Oldham",
+      "avgCornersFT": 10.09,
+      "avgCornersFor": 5.2,
+      "avgCornersAgainst": 4.89,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 28,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 21,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Barrow",
+      "avgCornersFT": 9.83,
+      "avgCornersFor": 4.2,
+      "avgCornersAgainst": 5.63,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 27,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 10.02,
+      "avgCornersFor": 4.8,
+      "avgCornersAgainst": 5.22,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 29,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 19,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 10.52,
+      "avgCornersFor": 6.09,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 21,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Alexandra",
+      "avgCornersFT": 9.28,
+      "avgCornersFor": 4.91,
+      "avgCornersAgainst": 4.37,
+      "hitRates": {
+        "over7_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 30,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 27,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 13,
+          "hit": 6,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 9.87,
+      "avgCornersFor": 5.63,
+      "avgCornersAgainst": 4.24,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 36,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 52,
+          "hit": 24,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 11.13,
+      "avgCornersFor": 5.28,
+      "avgCornersAgainst": 5.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 38,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 80,
+          "hit": 37,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 74,
+          "hit": 34,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 61,
+          "hit": 28,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 20,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Gillingham",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 5.07,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 20,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Chesterfield",
+      "avgCornersFT": 10.28,
+      "avgCornersFor": 5.46,
+      "avgCornersAgainst": 4.83,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 35,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 27,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 19,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 13,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Stanley",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.15,
+      "avgCornersAgainst": 5.35,
+      "hitRates": {
+        "over7_5": {
+          "pct": 74,
+          "hit": 34,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 48,
+          "hit": 22,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Barnet",
+      "avgCornersFT": 10.17,
+      "avgCornersFor": 6.89,
+      "avgCornersAgainst": 3.28,
+      "hitRates": {
+        "over7_5": {
+          "pct": 87,
+          "hit": 40,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 13,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Walsall",
+      "avgCornersFT": 9.96,
+      "avgCornersFor": 4.59,
+      "avgCornersAgainst": 5.37,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 35,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 30,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 9.04,
+      "avgCornersFor": 4.61,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 61,
+          "hit": 28,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 10,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 9.63,
+      "avgCornersFor": 4.2,
+      "avgCornersAgainst": 5.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 12,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "County",
+      "avgCornersFT": 9.43,
+      "avgCornersFor": 3.91,
+      "avgCornersAgainst": 5.52,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 35,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 28,
+          "hit": 13,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 17,
+          "hit": 8,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Dons",
+      "avgCornersFT": 8.76,
+      "avgCornersFor": 4.46,
+      "avgCornersAgainst": 4.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 23,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 35,
+          "hit": 16,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 9,
+          "hit": 4,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 8.22,
+      "avgCornersFor": 3.96,
+      "avgCornersAgainst": 4.26,
+      "hitRates": {
+        "over7_5": {
+          "pct": 67,
+          "hit": 31,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 17,
+          "hit": 8,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 9,
+          "hit": 4,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Town",
+      "avgCornersFT": 12.0,
+      "avgCornersFor": 5.48,
+      "avgCornersAgainst": 6.52,
+      "hitRates": {
+        "over7_5": {
+          "pct": 93,
+          "hit": 43,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 89,
+          "hit": 41,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 78,
+          "hit": 36,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 52,
+          "hit": 24,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "Rovers",
+      "avgCornersFT": 9.35,
+      "avgCornersFor": 4.59,
+      "avgCornersAgainst": 4.76,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 32,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 25,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 39,
+          "hit": 18,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 30,
+          "hit": 14,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 11,
+          "total": 46
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 9.15,
+      "avgCornersFor": 5.78,
+      "avgCornersAgainst": 3.37,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 33,
+          "total": 46
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 26,
+          "total": 46
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 23,
+          "total": 46
+        },
+        "over10_5": {
+          "pct": 37,
+          "hit": 17,
+          "total": 46
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 9,
+          "total": 46
+        }
+      }
+    }
+  ]
+}

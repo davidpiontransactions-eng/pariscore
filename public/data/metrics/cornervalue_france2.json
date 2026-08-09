@@ -1,0 +1,1200 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Ligue 2",
+    "leagueSlug": "ligue-2",
+    "leagueAvgFT": 9.24,
+    "lastUpdated": "2026-08-09T15:14:11.806147Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Troyes",
+      "avgCornersFT": 8.35,
+      "avgCornersFor": 4.68,
+      "avgCornersAgainst": 3.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Star",
+      "avgCornersFT": 8.24,
+      "avgCornersFor": 4.59,
+      "avgCornersAgainst": 3.65,
+      "hitRates": {
+        "over7_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 9,
+          "hit": 3,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Etienne",
+      "avgCornersFT": 8.94,
+      "avgCornersFor": 5.03,
+      "avgCornersAgainst": 3.91,
+      "hitRates": {
+        "over7_5": {
+          "pct": 74,
+          "hit": 25,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 15,
+          "hit": 5,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Montpellier",
+      "avgCornersFT": 10.03,
+      "avgCornersFor": 5.38,
+      "avgCornersAgainst": 4.65,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Guingamp",
+      "avgCornersFT": 9.09,
+      "avgCornersFor": 5.24,
+      "avgCornersAgainst": 3.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Mans",
+      "avgCornersFT": 9.76,
+      "avgCornersFor": 5.38,
+      "avgCornersAgainst": 4.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Reims",
+      "avgCornersFT": 8.53,
+      "avgCornersFor": 5.29,
+      "avgCornersAgainst": 3.24,
+      "hitRates": {
+        "over7_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Dunkerque",
+      "avgCornersFT": 8.62,
+      "avgCornersFor": 4.32,
+      "avgCornersAgainst": 4.29,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Annecy",
+      "avgCornersFT": 8.59,
+      "avgCornersFor": 4.47,
+      "avgCornersAgainst": 4.12,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 15,
+          "hit": 5,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Foot",
+      "avgCornersFT": 9.59,
+      "avgCornersFor": 3.71,
+      "avgCornersAgainst": 5.88,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Grenoble",
+      "avgCornersFT": 9.41,
+      "avgCornersFor": 3.47,
+      "avgCornersAgainst": 5.94,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Rodez",
+      "avgCornersFT": 10.21,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 5.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 29,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Amiens",
+      "avgCornersFT": 10.53,
+      "avgCornersFor": 4.71,
+      "avgCornersAgainst": 5.82,
+      "hitRates": {
+        "over7_5": {
+          "pct": 88,
+          "hit": 30,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Nancy",
+      "avgCornersFT": 9.09,
+      "avgCornersFor": 4.41,
+      "avgCornersAgainst": 4.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Boulogne",
+      "avgCornersFT": 8.79,
+      "avgCornersFor": 3.94,
+      "avgCornersAgainst": 4.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 74,
+          "hit": 25,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Laval",
+      "avgCornersFT": 10.38,
+      "avgCornersFor": 4.76,
+      "avgCornersAgainst": 5.62,
+      "hitRates": {
+        "over7_5": {
+          "pct": 82,
+          "hit": 28,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Bastia",
+      "avgCornersFT": 8.74,
+      "avgCornersFor": 4.35,
+      "avgCornersAgainst": 4.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Pau",
+      "avgCornersFT": 9.41,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 4.53,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Troyes",
+      "avgCornersFT": 8.35,
+      "avgCornersFor": 4.68,
+      "avgCornersAgainst": 3.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Star",
+      "avgCornersFT": 8.24,
+      "avgCornersFor": 4.59,
+      "avgCornersAgainst": 3.65,
+      "hitRates": {
+        "over7_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 9,
+          "hit": 3,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Etienne",
+      "avgCornersFT": 8.94,
+      "avgCornersFor": 5.03,
+      "avgCornersAgainst": 3.91,
+      "hitRates": {
+        "over7_5": {
+          "pct": 74,
+          "hit": 25,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 15,
+          "hit": 5,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Montpellier",
+      "avgCornersFT": 10.03,
+      "avgCornersFor": 5.38,
+      "avgCornersAgainst": 4.65,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Guingamp",
+      "avgCornersFT": 9.09,
+      "avgCornersFor": 5.24,
+      "avgCornersAgainst": 3.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Mans",
+      "avgCornersFT": 9.76,
+      "avgCornersFor": 5.38,
+      "avgCornersAgainst": 4.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Reims",
+      "avgCornersFT": 8.53,
+      "avgCornersFor": 5.29,
+      "avgCornersAgainst": 3.24,
+      "hitRates": {
+        "over7_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Dunkerque",
+      "avgCornersFT": 8.62,
+      "avgCornersFor": 4.32,
+      "avgCornersAgainst": 4.29,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Annecy",
+      "avgCornersFT": 8.59,
+      "avgCornersFor": 4.47,
+      "avgCornersAgainst": 4.12,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 15,
+          "hit": 5,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Foot",
+      "avgCornersFT": 9.59,
+      "avgCornersFor": 3.71,
+      "avgCornersAgainst": 5.88,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Grenoble",
+      "avgCornersFT": 9.41,
+      "avgCornersFor": 3.47,
+      "avgCornersAgainst": 5.94,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Rodez",
+      "avgCornersFT": 10.21,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 5.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 29,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Amiens",
+      "avgCornersFT": 10.53,
+      "avgCornersFor": 4.71,
+      "avgCornersAgainst": 5.82,
+      "hitRates": {
+        "over7_5": {
+          "pct": 88,
+          "hit": 30,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Nancy",
+      "avgCornersFT": 9.09,
+      "avgCornersFor": 4.41,
+      "avgCornersAgainst": 4.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Boulogne",
+      "avgCornersFT": 8.79,
+      "avgCornersFor": 3.94,
+      "avgCornersAgainst": 4.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 74,
+          "hit": 25,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Laval",
+      "avgCornersFT": 10.38,
+      "avgCornersFor": 4.76,
+      "avgCornersAgainst": 5.62,
+      "hitRates": {
+        "over7_5": {
+          "pct": 82,
+          "hit": 28,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Bastia",
+      "avgCornersFT": 8.74,
+      "avgCornersFor": 4.35,
+      "avgCornersAgainst": 4.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Pau",
+      "avgCornersFT": 9.41,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 4.53,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        }
+      }
+    }
+  ]
+}

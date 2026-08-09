@@ -1,0 +1,1121 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "southkorea",
+    "leagueName": "K League 1 (KOR)",
+    "lastUpdated": "2026-08-09T14:57:11.621061Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 13,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Anyang",
+      "rank": 1,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.0,
+        "bttsPct": 27.0,
+        "csPct": 73.0,
+        "over25Pct": 9.0,
+        "over15Pct": 36.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Bucheon Fc",
+      "rank": 2,
+      "rankTotal": 13,
+      "gp": 8,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.75,
+        "bttsPct": 62.0,
+        "csPct": 38.0,
+        "over25Pct": 50.0,
+        "over15Pct": 88.0,
+        "over35Pct": 38.0
+      }
+    },
+    {
+      "teamName": "Daejeon Citizen",
+      "rank": 3,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.27,
+        "bttsPct": 18.0,
+        "csPct": 73.0,
+        "over25Pct": 18.0,
+        "over15Pct": 45.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Failed To Score",
+      "rank": 4,
+      "rankTotal": 13,
+      "gp": null,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": null,
+        "bttsPct": null,
+        "csPct": null,
+        "over25Pct": 10.0,
+        "over15Pct": null,
+        "over35Pct": null
+      }
+    },
+    {
+      "teamName": "Gangwon",
+      "rank": 5,
+      "rankTotal": 13,
+      "gp": 10,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.2,
+        "bttsPct": 10.0,
+        "csPct": 50.0,
+        "over25Pct": 0.0,
+        "over15Pct": 40.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Gimcheon Sangmu",
+      "rank": 6,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.09,
+        "bttsPct": 18.0,
+        "csPct": 55.0,
+        "over25Pct": 0.0,
+        "over15Pct": 36.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Gwangju",
+      "rank": 7,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.09,
+        "bttsPct": 27.0,
+        "csPct": 45.0,
+        "over25Pct": 9.0,
+        "over15Pct": 45.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Incheon Utd",
+      "rank": 8,
+      "rankTotal": 13,
+      "gp": 10,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.5,
+        "bttsPct": 40.0,
+        "csPct": 60.0,
+        "over25Pct": 10.0,
+        "over15Pct": 60.0,
+        "over35Pct": 10.0
+      }
+    },
+    {
+      "teamName": "Jeju Utd",
+      "rank": 9,
+      "rankTotal": 13,
+      "gp": 8,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.88,
+        "bttsPct": 88.0,
+        "csPct": 12.0,
+        "over25Pct": 62.0,
+        "over15Pct": 88.0,
+        "over35Pct": 25.0
+      }
+    },
+    {
+      "teamName": "Jeonbuk",
+      "rank": 10,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.18,
+        "bttsPct": 36.0,
+        "csPct": 45.0,
+        "over25Pct": 9.0,
+        "over15Pct": 36.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Pohang Steelers",
+      "rank": 11,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.73,
+        "bttsPct": 55.0,
+        "csPct": 36.0,
+        "over25Pct": 45.0,
+        "over15Pct": 82.0,
+        "over35Pct": 27.0
+      }
+    },
+    {
+      "teamName": "Seoul",
+      "rank": 12,
+      "rankTotal": 13,
+      "gp": 10,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.4,
+        "bttsPct": 30.0,
+        "csPct": 60.0,
+        "over25Pct": 50.0,
+        "over15Pct": 50.0,
+        "over35Pct": 40.0
+      }
+    },
+    {
+      "teamName": "Ulsan",
+      "rank": 13,
+      "rankTotal": 13,
+      "gp": 11,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 13
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.18,
+        "bttsPct": 18.0,
+        "csPct": 55.0,
+        "over25Pct": 9.0,
+        "over15Pct": 36.0,
+        "over35Pct": 0.0
+      }
+    }
+  ]
+}

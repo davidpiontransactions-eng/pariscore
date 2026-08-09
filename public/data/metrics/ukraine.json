@@ -1,0 +1,866 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "ukraine",
+    "leagueName": "Premier Liga (UKR)",
+    "lastUpdated": "2026-08-09T14:57:13.450715Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 10,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Bukovyna",
+      "rank": 1,
+      "rankTotal": 10,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 0.0,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 0.0,
+        "over15Pct": 0.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Chornomorets",
+      "rank": 2,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Episentr",
+      "rank": 3,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Karpaty Lviv",
+      "rank": 4,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Kolos Kovalivka",
+      "rank": 5,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 0.0,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 0.0,
+        "over15Pct": 0.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Kryvbas Kr",
+      "rank": 6,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.0,
+        "bttsPct": 0.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 0.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Kudrivka",
+      "rank": 7,
+      "rankTotal": 10,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.0,
+        "bttsPct": 50.0,
+        "csPct": 50.0,
+        "over25Pct": 0.0,
+        "over15Pct": 50.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Polessya",
+      "rank": 8,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Shakhtar",
+      "rank": 9,
+      "rankTotal": 10,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Zorya Luhansk",
+      "rank": 10,
+      "rankTotal": 10,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 10
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 0.5,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 0.0,
+        "over15Pct": 0.0,
+        "over35Pct": 0.0
+      }
+    }
+  ]
+}

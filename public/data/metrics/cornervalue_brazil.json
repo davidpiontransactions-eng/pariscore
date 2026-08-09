@@ -1,0 +1,1332 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Brazilian Serie A",
+    "leagueSlug": "brazilian-serie-a",
+    "leagueAvgFT": 10.02,
+    "lastUpdated": "2026-08-09T15:15:07.532887Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Flamengo",
+      "avgCornersFT": 9.41,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 4.88,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 13,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 11,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 7,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 5,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 3,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Paulo",
+      "avgCornersFT": 11.17,
+      "avgCornersFor": 6.61,
+      "avgCornersAgainst": 4.56,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Bahia",
+      "avgCornersFT": 11.29,
+      "avgCornersFor": 5.82,
+      "avgCornersAgainst": 5.47,
+      "hitRates": {
+        "over7_5": {
+          "pct": 88,
+          "hit": 15,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 76,
+          "hit": 13,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 71,
+          "hit": 12,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 8,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 47,
+          "hit": 8,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Remo",
+      "avgCornersFT": 11.06,
+      "avgCornersFor": 4.44,
+      "avgCornersAgainst": 6.61,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Mineiro",
+      "avgCornersFT": 9.89,
+      "avgCornersFor": 4.89,
+      "avgCornersAgainst": 5.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Cruzeiro",
+      "avgCornersFT": 9.33,
+      "avgCornersFor": 5.33,
+      "avgCornersAgainst": 4.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 11,
+          "hit": 2,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Santos",
+      "avgCornersFT": 10.06,
+      "avgCornersFor": 5.0,
+      "avgCornersAgainst": 5.06,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Mirassol",
+      "avgCornersFT": 10.47,
+      "avgCornersFor": 5.71,
+      "avgCornersAgainst": 4.76,
+      "hitRates": {
+        "over7_5": {
+          "pct": 88,
+          "hit": 15,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 82,
+          "hit": 14,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 9,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 6,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 5,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Paranaense",
+      "avgCornersFT": 9.67,
+      "avgCornersFor": 5.17,
+      "avgCornersAgainst": 4.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 4,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Coritiba",
+      "avgCornersFT": 9.72,
+      "avgCornersFor": 3.22,
+      "avgCornersAgainst": 6.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Vitoria",
+      "avgCornersFT": 8.94,
+      "avgCornersFor": 3.94,
+      "avgCornersAgainst": 5.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 12,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 11,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 7,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 18,
+          "hit": 3,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 2,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Palmeiras",
+      "avgCornersFT": 11.94,
+      "avgCornersFor": 6.0,
+      "avgCornersAgainst": 5.94,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Gama",
+      "avgCornersFT": 9.22,
+      "avgCornersFor": 5.33,
+      "avgCornersAgainst": 3.89,
+      "hitRates": {
+        "over7_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Botafogo",
+      "avgCornersFT": 8.94,
+      "avgCornersFor": 3.71,
+      "avgCornersAgainst": 5.24,
+      "hitRates": {
+        "over7_5": {
+          "pct": 59,
+          "hit": 10,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 8,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 7,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 24,
+          "hit": 4,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 3,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Gremio",
+      "avgCornersFT": 8.56,
+      "avgCornersFor": 3.89,
+      "avgCornersAgainst": 4.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 11,
+          "hit": 2,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Fluminense",
+      "avgCornersFT": 9.56,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 4.06,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Bragantino",
+      "avgCornersFT": 10.72,
+      "avgCornersFor": 5.56,
+      "avgCornersAgainst": 5.17,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Internacional",
+      "avgCornersFT": 11.06,
+      "avgCornersFor": 7.11,
+      "avgCornersAgainst": 3.94,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Chapecoense",
+      "avgCornersFT": 9.94,
+      "avgCornersFor": 3.59,
+      "avgCornersAgainst": 6.35,
+      "hitRates": {
+        "over7_5": {
+          "pct": 82,
+          "hit": 14,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 11,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 9,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 6,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 4,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Corinthians",
+      "avgCornersFT": 9.44,
+      "avgCornersFor": 4.72,
+      "avgCornersAgainst": 4.72,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Flamengo",
+      "avgCornersFT": 9.41,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 4.88,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 13,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 11,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 7,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 5,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 3,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Paulo",
+      "avgCornersFT": 11.17,
+      "avgCornersFor": 6.61,
+      "avgCornersAgainst": 4.56,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Bahia",
+      "avgCornersFT": 11.29,
+      "avgCornersFor": 5.82,
+      "avgCornersAgainst": 5.47,
+      "hitRates": {
+        "over7_5": {
+          "pct": 88,
+          "hit": 15,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 76,
+          "hit": 13,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 71,
+          "hit": 12,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 8,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 47,
+          "hit": 8,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Remo",
+      "avgCornersFT": 11.06,
+      "avgCornersFor": 4.44,
+      "avgCornersAgainst": 6.61,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Mineiro",
+      "avgCornersFT": 9.89,
+      "avgCornersFor": 4.89,
+      "avgCornersAgainst": 5.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Cruzeiro",
+      "avgCornersFT": 9.33,
+      "avgCornersFor": 5.33,
+      "avgCornersAgainst": 4.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 11,
+          "hit": 2,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Santos",
+      "avgCornersFT": 10.06,
+      "avgCornersFor": 5.0,
+      "avgCornersAgainst": 5.06,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Mirassol",
+      "avgCornersFT": 10.47,
+      "avgCornersFor": 5.71,
+      "avgCornersAgainst": 4.76,
+      "hitRates": {
+        "over7_5": {
+          "pct": 88,
+          "hit": 15,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 82,
+          "hit": 14,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 9,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 6,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 5,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Paranaense",
+      "avgCornersFT": 9.67,
+      "avgCornersFor": 5.17,
+      "avgCornersAgainst": 4.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 4,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Coritiba",
+      "avgCornersFT": 9.72,
+      "avgCornersFor": 3.22,
+      "avgCornersAgainst": 6.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Vitoria",
+      "avgCornersFT": 8.94,
+      "avgCornersFor": 3.94,
+      "avgCornersAgainst": 5.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 12,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 11,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 7,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 18,
+          "hit": 3,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 2,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Palmeiras",
+      "avgCornersFT": 11.94,
+      "avgCornersFor": 6.0,
+      "avgCornersAgainst": 5.94,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Gama",
+      "avgCornersFT": 9.22,
+      "avgCornersFor": 5.33,
+      "avgCornersAgainst": 3.89,
+      "hitRates": {
+        "over7_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 39,
+          "hit": 7,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Botafogo",
+      "avgCornersFT": 8.94,
+      "avgCornersFor": 3.71,
+      "avgCornersAgainst": 5.24,
+      "hitRates": {
+        "over7_5": {
+          "pct": 59,
+          "hit": 10,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 8,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 7,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 24,
+          "hit": 4,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 3,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Gremio",
+      "avgCornersFT": 8.56,
+      "avgCornersFor": 3.89,
+      "avgCornersAgainst": 4.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 11,
+          "hit": 2,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Fluminense",
+      "avgCornersFT": 9.56,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 4.06,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 15,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 12,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 17,
+          "hit": 3,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Bragantino",
+      "avgCornersFT": 10.72,
+      "avgCornersFor": 5.56,
+      "avgCornersAgainst": 5.17,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 44,
+          "hit": 8,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Internacional",
+      "avgCornersFT": 11.06,
+      "avgCornersFor": 7.11,
+      "avgCornersAgainst": 3.94,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 14,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 61,
+          "hit": 11,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        }
+      }
+    },
+    {
+      "teamName": "Chapecoense",
+      "avgCornersFT": 9.94,
+      "avgCornersFor": 3.59,
+      "avgCornersAgainst": 6.35,
+      "hitRates": {
+        "over7_5": {
+          "pct": 82,
+          "hit": 14,
+          "total": 17
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 11,
+          "total": 17
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 9,
+          "total": 17
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 6,
+          "total": 17
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 4,
+          "total": 17
+        }
+      }
+    },
+    {
+      "teamName": "Corinthians",
+      "avgCornersFT": 9.44,
+      "avgCornersFor": 4.72,
+      "avgCornersAgainst": 4.72,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 13,
+          "total": 18
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 10,
+          "total": 18
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 9,
+          "total": 18
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 6,
+          "total": 18
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 5,
+          "total": 18
+        }
+      }
+    }
+  ]
+}

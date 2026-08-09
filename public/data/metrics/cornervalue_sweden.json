@@ -1,0 +1,408 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Allsvenskan",
+    "leagueSlug": "allsvenskan",
+    "leagueAvgFT": 9.8,
+    "lastUpdated": "2026-08-09T15:15:12.177051Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Hacken",
+      "avgCornersFT": 10.8,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 5.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 90,
+          "hit": 9,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Goteborg",
+      "avgCornersFT": 10.0,
+      "avgCornersFor": 4.9,
+      "avgCornersAgainst": 5.1,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Brommapojkarna",
+      "avgCornersFT": 9.1,
+      "avgCornersFor": 4.5,
+      "avgCornersAgainst": 4.6,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 30,
+          "hit": 3,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Elfsborg",
+      "avgCornersFT": 8.82,
+      "avgCornersFor": 3.55,
+      "avgCornersAgainst": 5.27,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 36,
+          "hit": 4,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 3,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 2,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Sirius",
+      "avgCornersFT": 10.2,
+      "avgCornersFor": 4.9,
+      "avgCornersAgainst": 5.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 8,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 80,
+          "hit": 8,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Orgryte",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.2,
+      "avgCornersAgainst": 5.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Hacken",
+      "avgCornersFT": 10.8,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 5.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 90,
+          "hit": 9,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Goteborg",
+      "avgCornersFT": 10.0,
+      "avgCornersFor": 4.9,
+      "avgCornersAgainst": 5.1,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Brommapojkarna",
+      "avgCornersFT": 9.1,
+      "avgCornersFor": 4.5,
+      "avgCornersAgainst": 4.6,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 30,
+          "hit": 3,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Elfsborg",
+      "avgCornersFT": 8.82,
+      "avgCornersFor": 3.55,
+      "avgCornersAgainst": 5.27,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 36,
+          "hit": 4,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 3,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 2,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Sirius",
+      "avgCornersFT": 10.2,
+      "avgCornersFor": 4.9,
+      "avgCornersAgainst": 5.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 8,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 80,
+          "hit": 8,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Orgryte",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.2,
+      "avgCornersAgainst": 5.3,
+      "hitRates": {
+        "over7_5": {
+          "pct": 70,
+          "hit": 7,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 40,
+          "hit": 4,
+          "total": 10
+        }
+      }
+    }
+  ]
+}

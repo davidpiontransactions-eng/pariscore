@@ -1,0 +1,1002 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Liga Portugal 2",
+    "leagueSlug": "liga-portugal-2",
+    "leagueAvgFT": 9.47,
+    "lastUpdated": "2026-08-09T15:14:17.090824Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Penafiel",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.47,
+      "avgCornersAgainst": 5.03,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Leiria",
+      "avgCornersFT": 9.82,
+      "avgCornersFor": 4.85,
+      "avgCornersAgainst": 4.97,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Feirense",
+      "avgCornersFT": 10.35,
+      "avgCornersFor": 5.47,
+      "avgCornersAgainst": 4.88,
+      "hitRates": {
+        "over7_5": {
+          "pct": 82,
+          "hit": 28,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Vizela",
+      "avgCornersFT": 9.18,
+      "avgCornersFor": 4.79,
+      "avgCornersAgainst": 4.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Leixoes",
+      "avgCornersFT": 9.03,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 4.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Felgueiras",
+      "avgCornersFT": 9.62,
+      "avgCornersFor": 4.94,
+      "avgCornersAgainst": 4.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Ferreira",
+      "avgCornersFT": 10.65,
+      "avgCornersFor": 4.82,
+      "avgCornersAgainst": 5.82,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Torreense",
+      "avgCornersFT": 9.26,
+      "avgCornersFor": 4.41,
+      "avgCornersAgainst": 4.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Viseu",
+      "avgCornersFT": 8.76,
+      "avgCornersFor": 4.76,
+      "avgCornersAgainst": 4.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Chaves",
+      "avgCornersFT": 8.97,
+      "avgCornersFor": 4.71,
+      "avgCornersAgainst": 4.26,
+      "hitRates": {
+        "over7_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Oliveirense",
+      "avgCornersFT": 9.65,
+      "avgCornersFor": 3.97,
+      "avgCornersAgainst": 5.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Maritimo",
+      "avgCornersFT": 8.18,
+      "avgCornersFor": 4.62,
+      "avgCornersAgainst": 3.56,
+      "hitRates": {
+        "over7_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 15,
+          "hit": 5,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Portimonense",
+      "avgCornersFT": 10.26,
+      "avgCornersFor": 4.82,
+      "avgCornersAgainst": 5.44,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Lusitania",
+      "avgCornersFT": 9.79,
+      "avgCornersFor": 5.26,
+      "avgCornersAgainst": 4.53,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Farense",
+      "avgCornersFT": 9.56,
+      "avgCornersFor": 5.15,
+      "avgCornersAgainst": 4.41,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Penafiel",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.47,
+      "avgCornersAgainst": 5.03,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Leiria",
+      "avgCornersFT": 9.82,
+      "avgCornersFor": 4.85,
+      "avgCornersAgainst": 4.97,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Feirense",
+      "avgCornersFT": 10.35,
+      "avgCornersFor": 5.47,
+      "avgCornersAgainst": 4.88,
+      "hitRates": {
+        "over7_5": {
+          "pct": 82,
+          "hit": 28,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 65,
+          "hit": 22,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Vizela",
+      "avgCornersFT": 9.18,
+      "avgCornersFor": 4.79,
+      "avgCornersAgainst": 4.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Leixoes",
+      "avgCornersFT": 9.03,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 4.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Felgueiras",
+      "avgCornersFT": 9.62,
+      "avgCornersFor": 4.94,
+      "avgCornersAgainst": 4.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 24,
+          "hit": 8,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Ferreira",
+      "avgCornersFT": 10.65,
+      "avgCornersFor": 4.82,
+      "avgCornersAgainst": 5.82,
+      "hitRates": {
+        "over7_5": {
+          "pct": 76,
+          "hit": 26,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 20,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 18,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Torreense",
+      "avgCornersFT": 9.26,
+      "avgCornersFor": 4.41,
+      "avgCornersAgainst": 4.85,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 35,
+          "hit": 12,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Viseu",
+      "avgCornersFT": 8.76,
+      "avgCornersFor": 4.76,
+      "avgCornersAgainst": 4.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Chaves",
+      "avgCornersFT": 8.97,
+      "avgCornersFor": 4.71,
+      "avgCornersAgainst": 4.26,
+      "hitRates": {
+        "over7_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 6,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Oliveirense",
+      "avgCornersFT": 9.65,
+      "avgCornersFor": 3.97,
+      "avgCornersAgainst": 5.68,
+      "hitRates": {
+        "over7_5": {
+          "pct": 68,
+          "hit": 23,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 17,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Maritimo",
+      "avgCornersFT": 8.18,
+      "avgCornersFor": 4.62,
+      "avgCornersAgainst": 3.56,
+      "hitRates": {
+        "over7_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 41,
+          "hit": 14,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 26,
+          "hit": 9,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 15,
+          "hit": 5,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 12,
+          "hit": 4,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Portimonense",
+      "avgCornersFT": 10.26,
+      "avgCornersFor": 4.82,
+      "avgCornersAgainst": 5.44,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 27,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 13,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Lusitania",
+      "avgCornersFT": 9.79,
+      "avgCornersFor": 5.26,
+      "avgCornersAgainst": 4.53,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 62,
+          "hit": 21,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 15,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 32,
+          "hit": 11,
+          "total": 34
+        }
+      }
+    },
+    {
+      "teamName": "Farense",
+      "avgCornersFT": 9.56,
+      "avgCornersFor": 5.15,
+      "avgCornersAgainst": 4.41,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 24,
+          "total": 34
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 19,
+          "total": 34
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 16,
+          "total": 34
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 10,
+          "total": 34
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 7,
+          "total": 34
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "source": "footystats.org",
+    "type": "corners-o125",
+    "teamCount": 14,
+    "lastUpdated": "2026-08-09T14:58:01.096446Z"
+  },
+  "teams": [
+    {
+      "teamName": "Cashmere Technical",
+      "countryCode": "NZ",
+      "rank": 1,
+      "cornersOver12.5HitPct": 83.0,
+      "avgCornersPg": 14.67,
+      "odds": null
+    },
+    {
+      "teamName": "Grotta",
+      "countryCode": "IS",
+      "rank": 2,
+      "cornersOver12.5HitPct": 75.0,
+      "avgCornersPg": 13.88,
+      "odds": null
+    },
+    {
+      "teamName": "Grindavik",
+      "countryCode": "IS",
+      "rank": 3,
+      "cornersOver12.5HitPct": 69.0,
+      "avgCornersPg": 13.57,
+      "odds": null
+    },
+    {
+      "teamName": "Breidablik Women",
+      "countryCode": "IS",
+      "rank": 4,
+      "cornersOver12.5HitPct": 69.0,
+      "avgCornersPg": 13.16,
+      "odds": null
+    },
+    {
+      "teamName": "EB - Streymur",
+      "countryCode": "FO",
+      "rank": 5,
+      "cornersOver12.5HitPct": 67.0,
+      "avgCornersPg": 13.11,
+      "odds": null
+    },
+    {
+      "teamName": "Brusque",
+      "countryCode": "BR",
+      "rank": 6,
+      "cornersOver12.5HitPct": 67.0,
+      "avgCornersPg": 13.86,
+      "odds": null
+    },
+    {
+      "teamName": "KA Hafnarfjordur",
+      "countryCode": "IS",
+      "rank": 7,
+      "cornersOver12.5HitPct": 67.0,
+      "avgCornersPg": 13.67,
+      "odds": null
+    },
+    {
+      "teamName": "JFK Ventspils",
+      "countryCode": "LV",
+      "rank": 8,
+      "cornersOver12.5HitPct": 64.0,
+      "avgCornersPg": 14.35,
+      "odds": null
+    },
+    {
+      "teamName": "Gamla Upsala W",
+      "countryCode": "SE",
+      "rank": 9,
+      "cornersOver12.5HitPct": 64.0,
+      "avgCornersPg": 12.63,
+      "odds": null
+    },
+    {
+      "teamName": "Hamar",
+      "countryCode": "IS",
+      "rank": 10,
+      "cornersOver12.5HitPct": 63.0,
+      "avgCornersPg": 14.38,
+      "odds": null
+    },
+    {
+      "teamName": "Kultsu",
+      "countryCode": "FI",
+      "rank": 11,
+      "cornersOver12.5HitPct": 62.0,
+      "avgCornersPg": 13.47,
+      "odds": null
+    },
+    {
+      "teamName": "KF",
+      "countryCode": "IS",
+      "rank": 12,
+      "cornersOver12.5HitPct": 60.0,
+      "avgCornersPg": 13.9,
+      "odds": null
+    },
+    {
+      "teamName": "Ulfarnir",
+      "countryCode": "IS",
+      "rank": 13,
+      "cornersOver12.5HitPct": 60.0,
+      "avgCornersPg": 14.1,
+      "odds": null
+    },
+    {
+      "teamName": "Rigas FS II",
+      "countryCode": "LV",
+      "rank": 14,
+      "cornersOver12.5HitPct": 60.0,
+      "avgCornersPg": 13.4,
+      "odds": null
+    }
+  ]
+}

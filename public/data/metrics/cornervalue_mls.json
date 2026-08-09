@@ -1,0 +1,1596 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "MLS",
+    "leagueSlug": "mls",
+    "leagueAvgFT": 9.99,
+    "lastUpdated": "2026-08-09T15:15:08.592727Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Dallas",
+      "avgCornersFT": 10.2,
+      "avgCornersFor": 4.47,
+      "avgCornersAgainst": 5.73,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Dynamo",
+      "avgCornersFT": 9.57,
+      "avgCornersFor": 4.5,
+      "avgCornersAgainst": 5.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Galaxy",
+      "avgCornersFT": 8.33,
+      "avgCornersFor": 5.2,
+      "avgCornersAgainst": 3.13,
+      "hitRates": {
+        "over7_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 13,
+          "hit": 2,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Lake",
+      "avgCornersFT": 9.29,
+      "avgCornersFor": 4.21,
+      "avgCornersAgainst": 5.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 10,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 3,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Earthquakes",
+      "avgCornersFT": 12.2,
+      "avgCornersFor": 7.33,
+      "avgCornersAgainst": 4.87,
+      "hitRates": {
+        "over7_5": {
+          "pct": 87,
+          "hit": 13,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Rapids",
+      "avgCornersFT": 9.6,
+      "avgCornersFor": 4.87,
+      "avgCornersAgainst": 4.73,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 9.64,
+      "avgCornersFor": 3.64,
+      "avgCornersAgainst": 6.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Sounders",
+      "avgCornersFT": 12.0,
+      "avgCornersFor": 5.69,
+      "avgCornersAgainst": 6.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 92,
+          "hit": 12,
+          "total": 13
+        },
+        "over8_5": {
+          "pct": 92,
+          "hit": 12,
+          "total": 13
+        },
+        "over9_5": {
+          "pct": 85,
+          "hit": 11,
+          "total": 13
+        },
+        "over10_5": {
+          "pct": 77,
+          "hit": 10,
+          "total": 13
+        },
+        "over11_5": {
+          "pct": 62,
+          "hit": 8,
+          "total": 13
+        }
+      }
+    },
+    {
+      "teamName": "Timbers",
+      "avgCornersFT": 11.36,
+      "avgCornersFor": 4.29,
+      "avgCornersAgainst": 7.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 93,
+          "hit": 13,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 10,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Whitecaps",
+      "avgCornersFT": 9.0,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 3.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 3,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.67,
+      "avgCornersFor": 5.27,
+      "avgCornersAgainst": 5.4,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 10.29,
+      "avgCornersFor": 5.86,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Revolution",
+      "avgCornersFT": 9.21,
+      "avgCornersFor": 3.71,
+      "avgCornersAgainst": 5.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.33,
+      "avgCornersFor": 4.67,
+      "avgCornersAgainst": 5.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Bulls",
+      "avgCornersFT": 10.73,
+      "avgCornersFor": 6.07,
+      "avgCornersAgainst": 4.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 12,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Crew",
+      "avgCornersFT": 9.27,
+      "avgCornersFor": 5.4,
+      "avgCornersAgainst": 3.87,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Fire",
+      "avgCornersFT": 10.21,
+      "avgCornersFor": 4.5,
+      "avgCornersAgainst": 5.71,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Montreal",
+      "avgCornersFT": 10.0,
+      "avgCornersFor": 5.14,
+      "avgCornersAgainst": 4.86,
+      "hitRates": {
+        "over7_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Union",
+      "avgCornersFT": 8.87,
+      "avgCornersFor": 5.8,
+      "avgCornersAgainst": 3.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 11.6,
+      "avgCornersFor": 4.0,
+      "avgCornersAgainst": 7.6,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 12,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 80,
+          "hit": 12,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 8.8,
+      "avgCornersFor": 3.67,
+      "avgCornersAgainst": 5.13,
+      "hitRates": {
+        "over7_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Cincinnati",
+      "avgCornersFT": 9.87,
+      "avgCornersFor": 4.73,
+      "avgCornersAgainst": 5.13,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.21,
+      "avgCornersFor": 5.29,
+      "avgCornersAgainst": 4.93,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Miami",
+      "avgCornersFT": 9.33,
+      "avgCornersFor": 6.0,
+      "avgCornersAgainst": 3.33,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Dallas",
+      "avgCornersFT": 10.2,
+      "avgCornersFor": 4.47,
+      "avgCornersAgainst": 5.73,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Dynamo",
+      "avgCornersFT": 9.57,
+      "avgCornersFor": 4.5,
+      "avgCornersAgainst": 5.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Galaxy",
+      "avgCornersFT": 8.33,
+      "avgCornersFor": 5.2,
+      "avgCornersAgainst": 3.13,
+      "hitRates": {
+        "over7_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 13,
+          "hit": 2,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Lake",
+      "avgCornersFT": 9.29,
+      "avgCornersFor": 4.21,
+      "avgCornersAgainst": 5.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 71,
+          "hit": 10,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 3,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Earthquakes",
+      "avgCornersFT": 12.2,
+      "avgCornersFor": 7.33,
+      "avgCornersAgainst": 4.87,
+      "hitRates": {
+        "over7_5": {
+          "pct": 87,
+          "hit": 13,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Rapids",
+      "avgCornersFT": 9.6,
+      "avgCornersFor": 4.87,
+      "avgCornersAgainst": 4.73,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 9.64,
+      "avgCornersFor": 3.64,
+      "avgCornersAgainst": 6.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Sounders",
+      "avgCornersFT": 12.0,
+      "avgCornersFor": 5.69,
+      "avgCornersAgainst": 6.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 92,
+          "hit": 12,
+          "total": 13
+        },
+        "over8_5": {
+          "pct": 92,
+          "hit": 12,
+          "total": 13
+        },
+        "over9_5": {
+          "pct": 85,
+          "hit": 11,
+          "total": 13
+        },
+        "over10_5": {
+          "pct": 77,
+          "hit": 10,
+          "total": 13
+        },
+        "over11_5": {
+          "pct": 62,
+          "hit": 8,
+          "total": 13
+        }
+      }
+    },
+    {
+      "teamName": "Timbers",
+      "avgCornersFT": 11.36,
+      "avgCornersFor": 4.29,
+      "avgCornersAgainst": 7.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 93,
+          "hit": 13,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 71,
+          "hit": 10,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Whitecaps",
+      "avgCornersFT": 9.0,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 3.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 21,
+          "hit": 3,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.67,
+      "avgCornersFor": 5.27,
+      "avgCornersAgainst": 5.4,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 10.29,
+      "avgCornersFor": 5.86,
+      "avgCornersAgainst": 4.43,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Revolution",
+      "avgCornersFT": 9.21,
+      "avgCornersFor": 3.71,
+      "avgCornersAgainst": 5.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.33,
+      "avgCornersFor": 4.67,
+      "avgCornersAgainst": 5.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Bulls",
+      "avgCornersFT": 10.73,
+      "avgCornersFor": 6.07,
+      "avgCornersAgainst": 4.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 12,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Crew",
+      "avgCornersFT": 9.27,
+      "avgCornersFor": 5.4,
+      "avgCornersAgainst": 3.87,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Fire",
+      "avgCornersFT": 10.21,
+      "avgCornersFor": 4.5,
+      "avgCornersAgainst": 5.71,
+      "hitRates": {
+        "over7_5": {
+          "pct": 79,
+          "hit": 11,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 29,
+          "hit": 4,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Montreal",
+      "avgCornersFT": 10.0,
+      "avgCornersFor": 5.14,
+      "avgCornersAgainst": 4.86,
+      "hitRates": {
+        "over7_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 7,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 43,
+          "hit": 6,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Union",
+      "avgCornersFT": 8.87,
+      "avgCornersFor": 5.8,
+      "avgCornersAgainst": 3.07,
+      "hitRates": {
+        "over7_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 11.6,
+      "avgCornersFor": 4.0,
+      "avgCornersAgainst": 7.6,
+      "hitRates": {
+        "over7_5": {
+          "pct": 80,
+          "hit": 12,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 80,
+          "hit": 12,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 8.8,
+      "avgCornersFor": 3.67,
+      "avgCornersAgainst": 5.13,
+      "hitRates": {
+        "over7_5": {
+          "pct": 60,
+          "hit": 9,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 33,
+          "hit": 5,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "Cincinnati",
+      "avgCornersFT": 9.87,
+      "avgCornersFor": 4.73,
+      "avgCornersAgainst": 5.13,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 67,
+          "hit": 10,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 7,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 20,
+          "hit": 3,
+          "total": 15
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.21,
+      "avgCornersFor": 5.29,
+      "avgCornersAgainst": 4.93,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over8_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over9_5": {
+          "pct": 64,
+          "hit": 9,
+          "total": 14
+        },
+        "over10_5": {
+          "pct": 57,
+          "hit": 8,
+          "total": 14
+        },
+        "over11_5": {
+          "pct": 36,
+          "hit": 5,
+          "total": 14
+        }
+      }
+    },
+    {
+      "teamName": "Miami",
+      "avgCornersFT": 9.33,
+      "avgCornersFor": 6.0,
+      "avgCornersAgainst": 3.33,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 11,
+          "total": 15
+        },
+        "over8_5": {
+          "pct": 53,
+          "hit": 8,
+          "total": 15
+        },
+        "over9_5": {
+          "pct": 40,
+          "hit": 6,
+          "total": 15
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 4,
+          "total": 15
+        }
+      }
+    }
+  ]
+}

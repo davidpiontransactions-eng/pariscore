@@ -1,0 +1,781 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "denmark",
+    "leagueName": "Superliga (DEN)",
+    "lastUpdated": "2026-08-09T14:57:05.806715Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 9,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Ac Horsens",
+      "rank": 1,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 0.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Agf Aarhus",
+      "rank": 2,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 4.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 100.0
+      }
+    },
+    {
+      "teamName": "Fc Kobenhavn",
+      "rank": 3,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Fc Midtjylland",
+      "rank": 4,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 4.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 100.0
+      }
+    },
+    {
+      "teamName": "Lyngby",
+      "rank": 5,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Nordsjaelland",
+      "rank": 6,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Randers Fc",
+      "rank": 7,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Silkeborg",
+      "rank": 8,
+      "rankTotal": 9,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Sonderjyske",
+      "rank": 9,
+      "rankTotal": 9,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 9
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.5,
+        "bttsPct": 50.0,
+        "csPct": 50.0,
+        "over25Pct": 50.0,
+        "over15Pct": 50.0,
+        "over35Pct": 50.0
+      }
+    }
+  ]
+}

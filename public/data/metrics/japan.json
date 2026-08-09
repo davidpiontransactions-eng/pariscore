@@ -1,0 +1,951 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "japan",
+    "leagueName": "J1 League (JPN)",
+    "lastUpdated": "2026-08-09T14:57:08.878586Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 11,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Cerezo Osaka",
+      "rank": 1,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Fagiano Okayama",
+      "rank": 2,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Fc Tokyo",
+      "rank": 3,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Gamba Osaka",
+      "rank": 4,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Jef Utd Chiba",
+      "rank": 5,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 0.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Kashima Antlers",
+      "rank": 6,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Kashiwa Reysol",
+      "rank": 7,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Kyoto Sanga",
+      "rank": 8,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 0.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Machida Zelvia",
+      "rank": 9,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Urawa Rd",
+      "rank": 10,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Yokohama M.",
+      "rank": 11,
+      "rankTotal": 11,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 11
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    }
+  ]
+}

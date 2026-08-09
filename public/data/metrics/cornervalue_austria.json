@@ -1,0 +1,606 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Bundesliga Aus",
+    "leagueSlug": "bundesliga-aus",
+    "leagueAvgFT": 9.34,
+    "lastUpdated": "2026-08-09T15:15:39.124326Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Graz",
+      "avgCornersFT": 9.97,
+      "avgCornersFor": 5.56,
+      "avgCornersAgainst": 4.41,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 75,
+          "hit": 24,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 17,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 12,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 12,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Wien",
+      "avgCornersFT": 9.75,
+      "avgCornersFor": 5.53,
+      "avgCornersAgainst": 4.22,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 15,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Linz",
+      "avgCornersFT": 8.59,
+      "avgCornersFor": 4.41,
+      "avgCornersAgainst": 4.19,
+      "hitRates": {
+        "over7_5": {
+          "pct": 53,
+          "hit": 17,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Salzburg",
+      "avgCornersFT": 9.25,
+      "avgCornersFor": 5.28,
+      "avgCornersAgainst": 3.97,
+      "hitRates": {
+        "over7_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Hartberg",
+      "avgCornersFT": 9.38,
+      "avgCornersFor": 3.06,
+      "avgCornersAgainst": 6.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 19,
+          "hit": 6,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Wien",
+      "avgCornersFT": 9.66,
+      "avgCornersFor": 5.75,
+      "avgCornersAgainst": 3.91,
+      "hitRates": {
+        "over7_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 12,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Tirol",
+      "avgCornersFT": 9.78,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 5.25,
+      "hitRates": {
+        "over7_5": {
+          "pct": 81,
+          "hit": 26,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Altach",
+      "avgCornersFT": 8.34,
+      "avgCornersFor": 4.03,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 19,
+          "hit": 6,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 6,
+          "hit": 2,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Ried",
+      "avgCornersFT": 9.28,
+      "avgCornersFor": 4.31,
+      "avgCornersAgainst": 4.97,
+      "hitRates": {
+        "over7_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 19,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Graz",
+      "avgCornersFT": 9.97,
+      "avgCornersFor": 5.56,
+      "avgCornersAgainst": 4.41,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 75,
+          "hit": 24,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 17,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 12,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 12,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Wien",
+      "avgCornersFT": 9.75,
+      "avgCornersFor": 5.53,
+      "avgCornersAgainst": 4.22,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 47,
+          "hit": 15,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Linz",
+      "avgCornersFT": 8.59,
+      "avgCornersFor": 4.41,
+      "avgCornersAgainst": 4.19,
+      "hitRates": {
+        "over7_5": {
+          "pct": 53,
+          "hit": 17,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Salzburg",
+      "avgCornersFT": 9.25,
+      "avgCornersFor": 5.28,
+      "avgCornersAgainst": 3.97,
+      "hitRates": {
+        "over7_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Hartberg",
+      "avgCornersFT": 9.38,
+      "avgCornersFor": 3.06,
+      "avgCornersAgainst": 6.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 19,
+          "hit": 6,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Wien",
+      "avgCornersFT": 9.66,
+      "avgCornersFor": 5.75,
+      "avgCornersAgainst": 3.91,
+      "hitRates": {
+        "over7_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 12,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Tirol",
+      "avgCornersFT": 9.78,
+      "avgCornersFor": 4.53,
+      "avgCornersAgainst": 5.25,
+      "hitRates": {
+        "over7_5": {
+          "pct": 81,
+          "hit": 26,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Altach",
+      "avgCornersFT": 8.34,
+      "avgCornersFor": 4.03,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 19,
+          "hit": 6,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 6,
+          "hit": 2,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Ried",
+      "avgCornersFT": 9.28,
+      "avgCornersFor": 4.31,
+      "avgCornersAgainst": 4.97,
+      "hitRates": {
+        "over7_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 59,
+          "hit": 19,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    }
+  ]
+}

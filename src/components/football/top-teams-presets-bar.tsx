@@ -15,6 +15,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
+import type { CornervalueLeague, CornervalueTeam } from "@/hooks/use-cornervalue-stats";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,10 +62,22 @@ const PRESETS: PresetDef[] = [
 // Logique de filtrage par preset
 // ---------------------------------------------------------------------------
 
-/** Filtre les matchs selon le preset actif. */
+function fuzzyKey(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Trouve les stats Cornervalue pour une équipe (fuzzy match). */
+function findCVTeam(teamName: string, cvData?: CornervalueLeague): CornervalueTeam | undefined {
+  if (!cvData?.teams) return undefined;
+  const key = fuzzyKey(teamName);
+  return cvData.teams.find((t) => fuzzyKey(t.teamName) === key);
+}
+
+/** Filtre les matchs selon le preset actif, avec donnees Cornervalue optionnelles. */
 export function applyPresetFilter(
   matches: FootballMatch[],
   preset: TopTeamPreset | null,
+  cvData?: CornervalueLeague,
 ): { filtered: FootballMatch[]; count: number } {
   if (!preset) return { filtered: matches, count: matches.length };
 
@@ -115,10 +128,38 @@ export function applyPresetFilter(
           return hGa <= 0.8 || aGa <= 0.8;
         }
         return false;
-      case "topCorners":
+      case "topCorners": {
+        // Priorite: donnees reelles Cornervalue > prediction modele
+        if (cvData) {
+          const homeCv = findCVTeam(m.home.name, cvData);
+          const awayCv = findCVTeam(m.away.name, cvData);
+          const homeAvg = homeCv?.avgCornersFT ?? homeCv?.avgCornersFor;
+          const awayAvg = awayCv?.avgCornersFT ?? awayCv?.avgCornersFor;
+          if (homeAvg !== null && homeAvg !== undefined && awayAvg !== null && awayAvg !== undefined) {
+            return (homeAvg + awayAvg) / 2 >= 10; // Moyenne >= 10 corners FT
+          }
+          // Fallback: over 7.5 hit rate >= 65%
+          const homeO75 = homeCv?.hitRates?.["over7_5"];
+          const awayO75 = awayCv?.hitRates?.["over7_5"];
+          if (homeO75 || awayO75) {
+            const maxPct = Math.max(homeO75?.pct ?? 0, awayO75?.pct ?? 0);
+            return maxPct >= 65;
+          }
+        }
         return (m.prediction.bestCornerOver?.overProb ?? 0) >= 65;
-      case "lowCorners":
+      }
+      case "lowCorners": {
+        if (cvData) {
+          const homeCv = findCVTeam(m.home.name, cvData);
+          const awayCv = findCVTeam(m.away.name, cvData);
+          const homeAvg = homeCv?.avgCornersFT;
+          const awayAvg = awayCv?.avgCornersFT;
+          if (homeAvg !== null && homeAvg !== undefined && awayAvg !== null && awayAvg !== undefined) {
+            return (homeAvg + awayAvg) / 2 <= 8; // Moyenne <= 8 corners FT
+          }
+        }
         return (m.prediction.bestCornerOver?.overProb ?? 100) <= 35;
+      }
       default:
         return true;
     }
@@ -135,14 +176,16 @@ export function TopTeamsPresetsBar({
   matches,
   activePreset,
   onPresetChange,
+  cvData,
 }: {
   matches: FootballMatch[];
   activePreset: TopTeamPreset | null;
   onPresetChange: (preset: TopTeamPreset | null) => void;
+  cvData?: CornervalueLeague;
 }) {
   const result = useMemo(
-    () => applyPresetFilter(matches, activePreset),
-    [matches, activePreset],
+    () => applyPresetFilter(matches, activePreset, cvData),
+    [matches, activePreset, cvData],
   );
 
   return (

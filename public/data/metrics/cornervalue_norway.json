@@ -1,0 +1,540 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Eliteserien",
+    "leagueSlug": "eliteserien",
+    "leagueAvgFT": 10.58,
+    "lastUpdated": "2026-08-09T15:15:33.585923Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Brann",
+      "avgCornersFT": 11.75,
+      "avgCornersFor": 6.75,
+      "avgCornersAgainst": 5.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 10,
+          "total": 12
+        },
+        "over8_5": {
+          "pct": 75,
+          "hit": 9,
+          "total": 12
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 8,
+          "total": 12
+        },
+        "over10_5": {
+          "pct": 67,
+          "hit": 8,
+          "total": 12
+        },
+        "over11_5": {
+          "pct": 58,
+          "hit": 7,
+          "total": 12
+        }
+      }
+    },
+    {
+      "teamName": "Glimt",
+      "avgCornersFT": 9.27,
+      "avgCornersFor": 7.18,
+      "avgCornersAgainst": 2.09,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 45,
+          "hit": 5,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 3,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 3,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Sandefjord",
+      "avgCornersFT": 13.27,
+      "avgCornersFor": 6.27,
+      "avgCornersAgainst": 7.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 100,
+          "hit": 11,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 100,
+          "hit": 11,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 91,
+          "hit": 10,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Valerenga",
+      "avgCornersFT": 12.45,
+      "avgCornersFor": 7.18,
+      "avgCornersAgainst": 5.27,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Kam",
+      "avgCornersFT": 9.8,
+      "avgCornersFor": 4.3,
+      "avgCornersAgainst": 5.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Oslo",
+      "avgCornersFT": 8.73,
+      "avgCornersFor": 4.0,
+      "avgCornersAgainst": 4.73,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 4,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 2,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Aalesund",
+      "avgCornersFT": 11.91,
+      "avgCornersFor": 4.55,
+      "avgCornersAgainst": 7.36,
+      "hitRates": {
+        "over7_5": {
+          "pct": 100,
+          "hit": 11,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 91,
+          "hit": 10,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 91,
+          "hit": 10,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 45,
+          "hit": 5,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Start",
+      "avgCornersFT": 8.92,
+      "avgCornersFor": 3.25,
+      "avgCornersAgainst": 5.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 58,
+          "hit": 7,
+          "total": 12
+        },
+        "over8_5": {
+          "pct": 42,
+          "hit": 5,
+          "total": 12
+        },
+        "over9_5": {
+          "pct": 33,
+          "hit": 4,
+          "total": 12
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 4,
+          "total": 12
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 4,
+          "total": 12
+        }
+      }
+    },
+    {
+      "teamName": "Brann",
+      "avgCornersFT": 11.75,
+      "avgCornersFor": 6.75,
+      "avgCornersAgainst": 5.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 83,
+          "hit": 10,
+          "total": 12
+        },
+        "over8_5": {
+          "pct": 75,
+          "hit": 9,
+          "total": 12
+        },
+        "over9_5": {
+          "pct": 67,
+          "hit": 8,
+          "total": 12
+        },
+        "over10_5": {
+          "pct": 67,
+          "hit": 8,
+          "total": 12
+        },
+        "over11_5": {
+          "pct": 58,
+          "hit": 7,
+          "total": 12
+        }
+      }
+    },
+    {
+      "teamName": "Glimt",
+      "avgCornersFT": 9.27,
+      "avgCornersFor": 7.18,
+      "avgCornersAgainst": 2.09,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 45,
+          "hit": 5,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 27,
+          "hit": 3,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 3,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Sandefjord",
+      "avgCornersFT": 13.27,
+      "avgCornersFor": 6.27,
+      "avgCornersAgainst": 7.0,
+      "hitRates": {
+        "over7_5": {
+          "pct": 100,
+          "hit": 11,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 100,
+          "hit": 11,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 91,
+          "hit": 10,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Valerenga",
+      "avgCornersFT": 12.45,
+      "avgCornersFor": 7.18,
+      "avgCornersAgainst": 5.27,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Kam",
+      "avgCornersFT": 9.8,
+      "avgCornersFor": 4.3,
+      "avgCornersAgainst": 5.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 60,
+          "hit": 6,
+          "total": 10
+        },
+        "over8_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 5,
+          "total": 10
+        }
+      }
+    },
+    {
+      "teamName": "Oslo",
+      "avgCornersFT": 8.73,
+      "avgCornersFor": 4.0,
+      "avgCornersAgainst": 4.73,
+      "hitRates": {
+        "over7_5": {
+          "pct": 64,
+          "hit": 7,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 55,
+          "hit": 6,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 36,
+          "hit": 4,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 18,
+          "hit": 2,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Aalesund",
+      "avgCornersFT": 11.91,
+      "avgCornersFor": 4.55,
+      "avgCornersAgainst": 7.36,
+      "hitRates": {
+        "over7_5": {
+          "pct": 100,
+          "hit": 11,
+          "total": 11
+        },
+        "over8_5": {
+          "pct": 91,
+          "hit": 10,
+          "total": 11
+        },
+        "over9_5": {
+          "pct": 91,
+          "hit": 10,
+          "total": 11
+        },
+        "over10_5": {
+          "pct": 73,
+          "hit": 8,
+          "total": 11
+        },
+        "over11_5": {
+          "pct": 45,
+          "hit": 5,
+          "total": 11
+        }
+      }
+    },
+    {
+      "teamName": "Start",
+      "avgCornersFT": 8.92,
+      "avgCornersFor": 3.25,
+      "avgCornersAgainst": 5.67,
+      "hitRates": {
+        "over7_5": {
+          "pct": 58,
+          "hit": 7,
+          "total": 12
+        },
+        "over8_5": {
+          "pct": 42,
+          "hit": 5,
+          "total": 12
+        },
+        "over9_5": {
+          "pct": 33,
+          "hit": 4,
+          "total": 12
+        },
+        "over10_5": {
+          "pct": 33,
+          "hit": 4,
+          "total": 12
+        },
+        "over11_5": {
+          "pct": 33,
+          "hit": 4,
+          "total": 12
+        }
+      }
+    }
+  ]
+}

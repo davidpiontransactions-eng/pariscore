@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "source": "footystats.org",
+    "type": "corners-o95",
+    "teamCount": 25,
+    "lastUpdated": "2026-08-09T14:57:59.088942Z"
+  },
+  "teams": [
+    {
+      "teamName": "Brusque",
+      "countryCode": "BR",
+      "rank": 1,
+      "cornersOver9.5HitPct": 93.0,
+      "avgCornersPg": 13.86,
+      "odds": 1.83
+    },
+    {
+      "teamName": "Universitario de Vinto",
+      "countryCode": "BO",
+      "rank": 2,
+      "cornersOver9.5HitPct": 92.0,
+      "avgCornersPg": 11.15,
+      "odds": 1.62
+    },
+    {
+      "teamName": "FH",
+      "countryCode": "IS",
+      "rank": 3,
+      "cornersOver9.5HitPct": 88.0,
+      "avgCornersPg": 13.41,
+      "odds": 1.33
+    },
+    {
+      "teamName": "IA",
+      "countryCode": "IS",
+      "rank": 4,
+      "cornersOver9.5HitPct": 88.0,
+      "avgCornersPg": 12.47,
+      "odds": 1.27
+    },
+    {
+      "teamName": "Aalesund",
+      "countryCode": "NO",
+      "rank": 5,
+      "cornersOver9.5HitPct": 87.0,
+      "avgCornersPg": 12.13,
+      "odds": 1.52
+    },
+    {
+      "teamName": "Paysandu",
+      "countryCode": "BR",
+      "rank": 6,
+      "cornersOver9.5HitPct": 87.0,
+      "avgCornersPg": 12.2,
+      "odds": 1.6
+    },
+    {
+      "teamName": "Tallinna FC Flora",
+      "countryCode": "EE",
+      "rank": 7,
+      "cornersOver9.5HitPct": 85.0,
+      "avgCornersPg": 11.75,
+      "odds": 2.02
+    },
+    {
+      "teamName": "Londrina",
+      "countryCode": "BR",
+      "rank": 8,
+      "cornersOver9.5HitPct": 85.0,
+      "avgCornersPg": 12.35,
+      "odds": 1.47
+    },
+    {
+      "teamName": "Vag",
+      "countryCode": "NO",
+      "rank": 9,
+      "cornersOver9.5HitPct": 82.0,
+      "avgCornersPg": 12.19,
+      "odds": 1.74
+    },
+    {
+      "teamName": "KR",
+      "countryCode": "IS",
+      "rank": 10,
+      "cornersOver9.5HitPct": 82.0,
+      "avgCornersPg": 13.12,
+      "odds": 1.34
+    },
+    {
+      "teamName": "Keflavik",
+      "countryCode": "IS",
+      "rank": 11,
+      "cornersOver9.5HitPct": 82.0,
+      "avgCornersPg": 11.65,
+      "odds": 1.23
+    },
+    {
+      "teamName": "Fram",
+      "countryCode": "IS",
+      "rank": 12,
+      "cornersOver9.5HitPct": 82.0,
+      "avgCornersPg": 11.88,
+      "odds": 1.34
+    },
+    {
+      "teamName": "Stjarnan",
+      "countryCode": "IS",
+      "rank": 13,
+      "cornersOver9.5HitPct": 82.0,
+      "avgCornersPg": 12.17,
+      "odds": 1.23
+    },
+    {
+      "teamName": "Moss",
+      "countryCode": "NO",
+      "rank": 14,
+      "cornersOver9.5HitPct": 81.0,
+      "avgCornersPg": 12.56,
+      "odds": 1.42
+    },
+    {
+      "teamName": "Stromsgodset",
+      "countryCode": "NO",
+      "rank": 15,
+      "cornersOver9.5HitPct": 81.0,
+      "avgCornersPg": 12.69,
+      "odds": 1.46
+    },
+    {
+      "teamName": "Raufoss",
+      "countryCode": "NO",
+      "rank": 16,
+      "cornersOver9.5HitPct": 81.0,
+      "avgCornersPg": 12.32,
+      "odds": 1.33
+    },
+    {
+      "teamName": "HK",
+      "countryCode": "IS",
+      "rank": 17,
+      "cornersOver9.5HitPct": 81.0,
+      "avgCornersPg": 12.19,
+      "odds": 1.3
+    },
+    {
+      "teamName": "Guarani",
+      "countryCode": "BR",
+      "rank": 18,
+      "cornersOver9.5HitPct": 80.0,
+      "avgCornersPg": 11.93,
+      "odds": 1.62
+    },
+    {
+      "teamName": "Confianca",
+      "countryCode": "BR",
+      "rank": 19,
+      "cornersOver9.5HitPct": 80.0,
+      "avgCornersPg": 11.46,
+      "odds": 1.6
+    },
+    {
+      "teamName": "Club Always Ready",
+      "countryCode": "BO",
+      "rank": 20,
+      "cornersOver9.5HitPct": 77.0,
+      "avgCornersPg": 11.46,
+      "odds": 2.38
+    },
+    {
+      "teamName": "Stabaek II",
+      "countryCode": "NO",
+      "rank": 21,
+      "cornersOver9.5HitPct": 77.0,
+      "avgCornersPg": 11.07,
+      "odds": 1.74
+    },
+    {
+      "teamName": "Breidablik",
+      "countryCode": "IS",
+      "rank": 22,
+      "cornersOver9.5HitPct": 76.0,
+      "avgCornersPg": 12.06,
+      "odds": 1.34
+    },
+    {
+      "teamName": "Valur",
+      "countryCode": "IS",
+      "rank": 23,
+      "cornersOver9.5HitPct": 76.0,
+      "avgCornersPg": 12.41,
+      "odds": 1.34
+    },
+    {
+      "teamName": "Vikingur Reykjavik",
+      "countryCode": "IS",
+      "rank": 24,
+      "cornersOver9.5HitPct": 76.0,
+      "avgCornersPg": 11.29,
+      "odds": 1.38
+    },
+    {
+      "teamName": "KA",
+      "countryCode": "IS",
+      "rank": 25,
+      "cornersOver9.5HitPct": 76.0,
+      "avgCornersPg": 11.88,
+      "odds": 1.33
+    }
+  ]
+}

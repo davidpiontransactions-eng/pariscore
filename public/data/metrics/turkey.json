@@ -1,0 +1,1631 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "turkey",
+    "leagueName": "Super Lig (TUR)",
+    "lastUpdated": "2026-08-09T14:57:13.144011Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 19,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Alanyaspor",
+      "rank": 1,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.47,
+        "bttsPct": 76.0,
+        "csPct": 12.0,
+        "over25Pct": 47.0,
+        "over15Pct": 82.0,
+        "over35Pct": 29.0
+      }
+    },
+    {
+      "teamName": "Antalyaspor",
+      "rank": 2,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.94,
+        "bttsPct": 29.0,
+        "csPct": 35.0,
+        "over25Pct": 29.0,
+        "over15Pct": 41.0,
+        "over35Pct": 18.0
+      }
+    },
+    {
+      "teamName": "Basaksehir",
+      "rank": 3,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.53,
+        "bttsPct": 53.0,
+        "csPct": 35.0,
+        "over25Pct": 65.0,
+        "over15Pct": 82.0,
+        "over35Pct": 18.0
+      }
+    },
+    {
+      "teamName": "Besiktas",
+      "rank": 4,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.88,
+        "bttsPct": 47.0,
+        "csPct": 35.0,
+        "over25Pct": 47.0,
+        "over15Pct": 88.0,
+        "over35Pct": 35.0
+      }
+    },
+    {
+      "teamName": "Eyupspor",
+      "rank": 5,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.41,
+        "bttsPct": 47.0,
+        "csPct": 12.0,
+        "over25Pct": 47.0,
+        "over15Pct": 65.0,
+        "over35Pct": 18.0
+      }
+    },
+    {
+      "teamName": "F. Karagumruk",
+      "rank": 6,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.59,
+        "bttsPct": 53.0,
+        "csPct": 12.0,
+        "over25Pct": 59.0,
+        "over15Pct": 76.0,
+        "over35Pct": 18.0
+      }
+    },
+    {
+      "teamName": "Failed To Score",
+      "rank": 7,
+      "rankTotal": 19,
+      "gp": null,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": null,
+        "bttsPct": null,
+        "csPct": null,
+        "over25Pct": null,
+        "over15Pct": 15.0,
+        "over35Pct": null
+      }
+    },
+    {
+      "teamName": "Fenerbahce",
+      "rank": 8,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.24,
+        "bttsPct": 47.0,
+        "csPct": 41.0,
+        "over25Pct": 65.0,
+        "over15Pct": 88.0,
+        "over35Pct": 47.0
+      }
+    },
+    {
+      "teamName": "Galatasaray",
+      "rank": 9,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.76,
+        "bttsPct": 47.0,
+        "csPct": 35.0,
+        "over25Pct": 59.0,
+        "over15Pct": 76.0,
+        "over35Pct": 29.0
+      }
+    },
+    {
+      "teamName": "Gaziantep",
+      "rank": 10,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.06,
+        "bttsPct": 59.0,
+        "csPct": 24.0,
+        "over25Pct": 71.0,
+        "over15Pct": 88.0,
+        "over35Pct": 29.0
+      }
+    },
+    {
+      "teamName": "Genclerbirligi",
+      "rank": 11,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.06,
+        "bttsPct": 41.0,
+        "csPct": 18.0,
+        "over25Pct": 47.0,
+        "over15Pct": 53.0,
+        "over35Pct": 12.0
+      }
+    },
+    {
+      "teamName": "Goztepe",
+      "rank": 12,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.12,
+        "bttsPct": 41.0,
+        "csPct": 41.0,
+        "over25Pct": 35.0,
+        "over15Pct": 76.0,
+        "over35Pct": 12.0
+      }
+    },
+    {
+      "teamName": "Kasimpasa",
+      "rank": 13,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.82,
+        "bttsPct": 65.0,
+        "csPct": 18.0,
+        "over25Pct": 65.0,
+        "over15Pct": 82.0,
+        "over35Pct": 24.0
+      }
+    },
+    {
+      "teamName": "Kayserispor",
+      "rank": 14,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.47,
+        "bttsPct": 53.0,
+        "csPct": 18.0,
+        "over25Pct": 41.0,
+        "over15Pct": 76.0,
+        "over35Pct": 29.0
+      }
+    },
+    {
+      "teamName": "Kocaelispor",
+      "rank": 15,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.12,
+        "bttsPct": 41.0,
+        "csPct": 18.0,
+        "over25Pct": 29.0,
+        "over15Pct": 59.0,
+        "over35Pct": 24.0
+      }
+    },
+    {
+      "teamName": "Konyaspor",
+      "rank": 16,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.12,
+        "bttsPct": 76.0,
+        "csPct": 6.0,
+        "over25Pct": 65.0,
+        "over15Pct": 100.0,
+        "over35Pct": 35.0
+      }
+    },
+    {
+      "teamName": "Rizespor",
+      "rank": 17,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 65.0,
+        "csPct": 12.0,
+        "over25Pct": 59.0,
+        "over15Pct": 82.0,
+        "over35Pct": 47.0
+      }
+    },
+    {
+      "teamName": "Samsunspor",
+      "rank": 18,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.06,
+        "bttsPct": 71.0,
+        "csPct": 18.0,
+        "over25Pct": 59.0,
+        "over15Pct": 82.0,
+        "over35Pct": 47.0
+      }
+    },
+    {
+      "teamName": "Trabzonspor",
+      "rank": 19,
+      "rankTotal": 19,
+      "gp": 17,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 19
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.12,
+        "bttsPct": 71.0,
+        "csPct": 24.0,
+        "over25Pct": 65.0,
+        "over15Pct": 76.0,
+        "over35Pct": 24.0
+      }
+    }
+  ]
+}

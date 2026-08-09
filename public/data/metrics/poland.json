@@ -1,0 +1,1036 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueId": "poland",
+    "leagueName": "Ekstraklasa (POL)",
+    "lastUpdated": "2026-08-09T14:57:10.097066Z",
+    "sources": [
+      "footystats.org",
+      "soccerstats.com"
+    ],
+    "teamCount": 12,
+    "partial": false
+  },
+  "teams": [
+    {
+      "teamName": "Gornik Zabrze",
+      "rank": 1,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Katowice",
+      "rank": 2,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 4.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 100.0
+      }
+    },
+    {
+      "teamName": "Lech Poznan",
+      "rank": 3,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 0.0,
+        "csPct": 100.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Legia Warsaw",
+      "rank": 4,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Motor Lublin",
+      "rank": 5,
+      "rankTotal": 12,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.5,
+        "bttsPct": 50.0,
+        "csPct": 0.0,
+        "over25Pct": 50.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Piast Gliwice",
+      "rank": 6,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Radomiak Radom",
+      "rank": 7,
+      "rankTotal": 12,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 1.5,
+        "bttsPct": 0.0,
+        "csPct": 50.0,
+        "over25Pct": 0.0,
+        "over15Pct": 50.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Widzew Lodz",
+      "rank": 8,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Wieczysta K.",
+      "rank": 9,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 0.0,
+        "csPct": 0.0,
+        "over25Pct": 0.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Wisla Krakow",
+      "rank": 10,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 3.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Wisla Plock",
+      "rank": 11,
+      "rankTotal": 12,
+      "gp": 2,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 2.0,
+        "bttsPct": 50.0,
+        "csPct": 50.0,
+        "over25Pct": 50.0,
+        "over15Pct": 50.0,
+        "over35Pct": 0.0
+      }
+    },
+    {
+      "teamName": "Zaglebie Lubin",
+      "rank": 12,
+      "rankTotal": 12,
+      "gp": 1,
+      "shots": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "sot": {
+        "for": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "against": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "corners": {
+        "total": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over55": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over65": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over75": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over85": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over95": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        },
+        "over105": {
+          "value": null,
+          "rank": null,
+          "rankTotal": 12
+        }
+      },
+      "goals": {
+        "avgGoalsPg": 4.0,
+        "bttsPct": 100.0,
+        "csPct": 0.0,
+        "over25Pct": 100.0,
+        "over15Pct": 100.0,
+        "over35Pct": 100.0
+      }
+    }
+  ]
+}

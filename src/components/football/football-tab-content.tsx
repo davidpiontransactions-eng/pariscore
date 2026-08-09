@@ -10,6 +10,7 @@ import { useFavorites } from "@/hooks/use-favorites";
 import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
 import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top-teams-presets-bar";
+import { useCornervalueStats } from "@/hooks/use-cornervalue-stats";
 import { FootballMatchCard, FootballMatchCardSkeleton } from "./football-match-card";
 import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
@@ -32,6 +33,9 @@ export function FootballTabContent() {
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [presetFilter, setPresetFilter] = useState<TopTeamPreset | null>(null);
 
+  // Cornervalue data — charge selon la ligue selectionnee
+  const { data: cvData } = useCornervalueStats(selectedLeague);
+
   // Détail match (dialog momentum) — state lifté, une seule instance rendue.
   const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -52,7 +56,7 @@ export function FootballTabContent() {
     if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
     // Appliquer le preset Top Teams AVANT les sous-filtres existants
     if (presetFilter) {
-      list = applyPresetFilter(list, presetFilter).filtered;
+      list = applyPresetFilter(list, presetFilter, cvData).filtered;
     }
     if (filter === "today") {
       const today = new Date().toDateString();
@@ -83,7 +87,7 @@ export function FootballTabContent() {
       list = list.filter((m) => m.prediction.bttsProb >= 55);
     }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, presetFilter, filter]);
+  }, [matches, selectedLeague, presetFilter, cvData, filter]);
 
   const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
     { key: "all", label: "Tous" },
@@ -193,6 +197,7 @@ export function FootballTabContent() {
               matches={prematchMatches}
               activePreset={presetFilter}
               onPresetChange={setPresetFilter}
+              cvData={cvData}
             />
           </div>
 

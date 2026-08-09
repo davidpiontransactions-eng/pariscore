@@ -1,0 +1,540 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "Superliga",
+    "leagueSlug": "superliga",
+    "leagueAvgFT": 9.72,
+    "lastUpdated": "2026-08-09T15:15:11.372894Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Boldklub",
+      "avgCornersFT": 9.56,
+      "avgCornersFor": 4.06,
+      "avgCornersAgainst": 5.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 75,
+          "hit": 24,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 15,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 7,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Midtjylland",
+      "avgCornersFT": 9.78,
+      "avgCornersFor": 5.47,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Viborg",
+      "avgCornersFT": 9.09,
+      "avgCornersFor": 4.78,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 13,
+          "hit": 4,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Copenhagen",
+      "avgCornersFT": 10.06,
+      "avgCornersFor": 5.66,
+      "avgCornersAgainst": 4.41,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Aarhus",
+      "avgCornersFT": 9.28,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 3.78,
+      "hitRates": {
+        "over7_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Silkeborg",
+      "avgCornersFT": 9.69,
+      "avgCornersFor": 4.31,
+      "avgCornersAgainst": 5.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 17,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 7,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Nordsjaelland",
+      "avgCornersFT": 8.31,
+      "avgCornersFor": 4.84,
+      "avgCornersAgainst": 3.47,
+      "hitRates": {
+        "over7_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 22,
+          "hit": 7,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 6,
+          "hit": 2,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Fredericia",
+      "avgCornersFT": 11.56,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 6.69,
+      "hitRates": {
+        "over7_5": {
+          "pct": 91,
+          "hit": 29,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 88,
+          "hit": 28,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Boldklub",
+      "avgCornersFT": 9.56,
+      "avgCornersFor": 4.06,
+      "avgCornersAgainst": 5.5,
+      "hitRates": {
+        "over7_5": {
+          "pct": 75,
+          "hit": 24,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 47,
+          "hit": 15,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 7,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Midtjylland",
+      "avgCornersFT": 9.78,
+      "avgCornersFor": 5.47,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Viborg",
+      "avgCornersFT": 9.09,
+      "avgCornersFor": 4.78,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 13,
+          "hit": 4,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Copenhagen",
+      "avgCornersFT": 10.06,
+      "avgCornersFor": 5.66,
+      "avgCornersAgainst": 4.41,
+      "hitRates": {
+        "over7_5": {
+          "pct": 78,
+          "hit": 25,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 28,
+          "hit": 9,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Aarhus",
+      "avgCornersFT": 9.28,
+      "avgCornersFor": 5.5,
+      "avgCornersAgainst": 3.78,
+      "hitRates": {
+        "over7_5": {
+          "pct": 66,
+          "hit": 21,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 56,
+          "hit": 18,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 25,
+          "hit": 8,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Silkeborg",
+      "avgCornersFT": 9.69,
+      "avgCornersFor": 4.31,
+      "avgCornersAgainst": 5.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 22,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 53,
+          "hit": 17,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 41,
+          "hit": 13,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 22,
+          "hit": 7,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Nordsjaelland",
+      "avgCornersFT": 8.31,
+      "avgCornersFor": 4.84,
+      "avgCornersAgainst": 3.47,
+      "hitRates": {
+        "over7_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 44,
+          "hit": 14,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 34,
+          "hit": 11,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 22,
+          "hit": 7,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 6,
+          "hit": 2,
+          "total": 32
+        }
+      }
+    },
+    {
+      "teamName": "Fredericia",
+      "avgCornersFT": 11.56,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 6.69,
+      "hitRates": {
+        "over7_5": {
+          "pct": 91,
+          "hit": 29,
+          "total": 32
+        },
+        "over8_5": {
+          "pct": 88,
+          "hit": 28,
+          "total": 32
+        },
+        "over9_5": {
+          "pct": 72,
+          "hit": 23,
+          "total": 32
+        },
+        "over10_5": {
+          "pct": 63,
+          "hit": 20,
+          "total": 32
+        },
+        "over11_5": {
+          "pct": 50,
+          "hit": 16,
+          "total": 32
+        }
+      }
+    }
+  ]
+}

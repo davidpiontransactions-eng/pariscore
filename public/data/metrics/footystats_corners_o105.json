@@ -1,0 +1,211 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "source": "footystats.org",
+    "type": "corners-o105",
+    "teamCount": 25,
+    "lastUpdated": "2026-08-09T14:57:59.812862Z"
+  },
+  "teams": [
+    {
+      "teamName": "Brusque",
+      "countryCode": "BR",
+      "rank": 1,
+      "cornersOver10.5HitPct": 93.0,
+      "avgCornersPg": 13.86,
+      "odds": 2.2
+    },
+    {
+      "teamName": "FH",
+      "countryCode": "IS",
+      "rank": 2,
+      "cornersOver10.5HitPct": 82.0,
+      "avgCornersPg": 13.41,
+      "odds": 1.59
+    },
+    {
+      "teamName": "Tallinna FC Flora",
+      "countryCode": "EE",
+      "rank": 3,
+      "cornersOver10.5HitPct": 80.0,
+      "avgCornersPg": 11.75,
+      "odds": 2.58
+    },
+    {
+      "teamName": "KR",
+      "countryCode": "IS",
+      "rank": 4,
+      "cornersOver10.5HitPct": 76.0,
+      "avgCornersPg": 13.12,
+      "odds": 1.45
+    },
+    {
+      "teamName": "Fram",
+      "countryCode": "IS",
+      "rank": 5,
+      "cornersOver10.5HitPct": 76.0,
+      "avgCornersPg": 11.88,
+      "odds": 1.45
+    },
+    {
+      "teamName": "Londrina",
+      "countryCode": "BR",
+      "rank": 6,
+      "cornersOver10.5HitPct": 75.0,
+      "avgCornersPg": 12.35,
+      "odds": 1.8
+    },
+    {
+      "teamName": "Raufoss",
+      "countryCode": "NO",
+      "rank": 7,
+      "cornersOver10.5HitPct": 75.0,
+      "avgCornersPg": 12.32,
+      "odds": 1.52
+    },
+    {
+      "teamName": "Aalesund",
+      "countryCode": "NO",
+      "rank": 8,
+      "cornersOver10.5HitPct": 73.0,
+      "avgCornersPg": 12.13,
+      "odds": 1.77
+    },
+    {
+      "teamName": "Vag",
+      "countryCode": "NO",
+      "rank": 9,
+      "cornersOver10.5HitPct": 73.0,
+      "avgCornersPg": 12.19,
+      "odds": 1.95
+    },
+    {
+      "teamName": "Breidablik",
+      "countryCode": "IS",
+      "rank": 10,
+      "cornersOver10.5HitPct": 71.0,
+      "avgCornersPg": 12.06,
+      "odds": 1.52
+    },
+    {
+      "teamName": "IA",
+      "countryCode": "IS",
+      "rank": 11,
+      "cornersOver10.5HitPct": 71.0,
+      "avgCornersPg": 12.47,
+      "odds": 1.52
+    },
+    {
+      "teamName": "Valur",
+      "countryCode": "IS",
+      "rank": 12,
+      "cornersOver10.5HitPct": 71.0,
+      "avgCornersPg": 12.41,
+      "odds": 1.52
+    },
+    {
+      "teamName": "Keflavik",
+      "countryCode": "IS",
+      "rank": 13,
+      "cornersOver10.5HitPct": 71.0,
+      "avgCornersPg": 11.65,
+      "odds": 1.42
+    },
+    {
+      "teamName": "Thor",
+      "countryCode": "IS",
+      "rank": 14,
+      "cornersOver10.5HitPct": 71.0,
+      "avgCornersPg": 11.88,
+      "odds": 1.52
+    },
+    {
+      "teamName": "HK",
+      "countryCode": "IS",
+      "rank": 15,
+      "cornersOver10.5HitPct": 69.0,
+      "avgCornersPg": 12.19,
+      "odds": 1.56
+    },
+    {
+      "teamName": "Moss",
+      "countryCode": "NO",
+      "rank": 16,
+      "cornersOver10.5HitPct": 69.0,
+      "avgCornersPg": 12.56,
+      "odds": 1.81
+    },
+    {
+      "teamName": "Stromsgodset",
+      "countryCode": "NO",
+      "rank": 17,
+      "cornersOver10.5HitPct": 69.0,
+      "avgCornersPg": 12.69,
+      "odds": 1.64
+    },
+    {
+      "teamName": "Palmeiras",
+      "countryCode": "BR",
+      "rank": 18,
+      "cornersOver10.5HitPct": 67.0,
+      "avgCornersPg": 11.86,
+      "odds": 1.88
+    },
+    {
+      "teamName": "Vikingur",
+      "countryCode": "FO",
+      "rank": 19,
+      "cornersOver10.5HitPct": 65.0,
+      "avgCornersPg": 11.18,
+      "odds": 1.59
+    },
+    {
+      "teamName": "Vikingur Reykjavik",
+      "countryCode": "IS",
+      "rank": 20,
+      "cornersOver10.5HitPct": 65.0,
+      "avgCornersPg": 11.29,
+      "odds": 1.56
+    },
+    {
+      "teamName": "KA",
+      "countryCode": "IS",
+      "rank": 21,
+      "cornersOver10.5HitPct": 65.0,
+      "avgCornersPg": 11.88,
+      "odds": 1.59
+    },
+    {
+      "teamName": "Djurgarden",
+      "countryCode": "SE",
+      "rank": 22,
+      "cornersOver10.5HitPct": 64.0,
+      "avgCornersPg": 11.57,
+      "odds": 1.94
+    },
+    {
+      "teamName": "Brann",
+      "countryCode": "NO",
+      "rank": 23,
+      "cornersOver10.5HitPct": 63.0,
+      "avgCornersPg": 11.94,
+      "odds": 1.82
+    },
+    {
+      "teamName": "Volsungur",
+      "countryCode": "IS",
+      "rank": 24,
+      "cornersOver10.5HitPct": 63.0,
+      "avgCornersPg": 11.62,
+      "odds": 1.56
+    },
+    {
+      "teamName": "Sogndal",
+      "countryCode": "NO",
+      "rank": 25,
+      "cornersOver10.5HitPct": 63.0,
+      "avgCornersPg": 12.69,
+      "odds": 1.79
+    }
+  ]
+}

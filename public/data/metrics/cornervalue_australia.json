@@ -1,0 +1,606 @@
+{
+  "meta": {
+    "schemaVersion": 1,
+    "leagueName": "A-League",
+    "leagueSlug": "a-league",
+    "leagueAvgFT": 10.16,
+    "lastUpdated": "2026-08-09T15:15:41.538046Z",
+    "source": "cornervalue.com"
+  },
+  "teams": [
+    {
+      "teamName": "Victory",
+      "avgCornersFT": 10.88,
+      "avgCornersFor": 6.19,
+      "avgCornersAgainst": 4.69,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 19,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 18,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Jets",
+      "avgCornersFT": 10.65,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 5.77,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 22,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 42,
+          "hit": 11,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 9,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 10.23,
+      "avgCornersFor": 5.65,
+      "avgCornersAgainst": 4.58,
+      "hitRates": {
+        "over7_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 19,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 7,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Mariners",
+      "avgCornersFT": 10.08,
+      "avgCornersFor": 3.65,
+      "avgCornersAgainst": 6.42,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 22,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 18,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 14,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 7,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Phoenix",
+      "avgCornersFT": 10.54,
+      "avgCornersFor": 5.58,
+      "avgCornersAgainst": 4.96,
+      "hitRates": {
+        "over7_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 19,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 42,
+          "hit": 11,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.08,
+      "avgCornersFor": 5.77,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 58,
+          "hit": 15,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 58,
+          "hit": 15,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Wanderers",
+      "avgCornersFT": 10.31,
+      "avgCornersFor": 5.23,
+      "avgCornersAgainst": 5.08,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 22,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 69,
+          "hit": 18,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 7,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Roar",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 4.62,
+      "hitRates": {
+        "over7_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 14,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 23,
+          "hit": 6,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Glory",
+      "avgCornersFT": 8.96,
+      "avgCornersFor": 3.58,
+      "avgCornersAgainst": 5.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 17,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 14,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 19,
+          "hit": 5,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Victory",
+      "avgCornersFT": 10.88,
+      "avgCornersFor": 6.19,
+      "avgCornersAgainst": 4.69,
+      "hitRates": {
+        "over7_5": {
+          "pct": 73,
+          "hit": 19,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 18,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Jets",
+      "avgCornersFT": 10.65,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 5.77,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 22,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 42,
+          "hit": 11,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 35,
+          "hit": 9,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "City",
+      "avgCornersFT": 10.23,
+      "avgCornersFor": 5.65,
+      "avgCornersAgainst": 4.58,
+      "hitRates": {
+        "over7_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 19,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 7,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Mariners",
+      "avgCornersFT": 10.08,
+      "avgCornersFor": 3.65,
+      "avgCornersAgainst": 6.42,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 22,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 69,
+          "hit": 18,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 54,
+          "hit": 14,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 7,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Phoenix",
+      "avgCornersFT": 10.54,
+      "avgCornersFor": 5.58,
+      "avgCornersAgainst": 4.96,
+      "hitRates": {
+        "over7_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 73,
+          "hit": 19,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 42,
+          "hit": 11,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "United",
+      "avgCornersFT": 10.08,
+      "avgCornersFor": 5.77,
+      "avgCornersAgainst": 4.31,
+      "hitRates": {
+        "over7_5": {
+          "pct": 62,
+          "hit": 16,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 58,
+          "hit": 15,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 58,
+          "hit": 15,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Wanderers",
+      "avgCornersFT": 10.31,
+      "avgCornersFor": 5.23,
+      "avgCornersAgainst": 5.08,
+      "hitRates": {
+        "over7_5": {
+          "pct": 85,
+          "hit": 22,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 69,
+          "hit": 18,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 46,
+          "hit": 12,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 27,
+          "hit": 7,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Roar",
+      "avgCornersFT": 9.5,
+      "avgCornersFor": 4.88,
+      "avgCornersAgainst": 4.62,
+      "hitRates": {
+        "over7_5": {
+          "pct": 77,
+          "hit": 20,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 14,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 23,
+          "hit": 6,
+          "total": 26
+        }
+      }
+    },
+    {
+      "teamName": "Glory",
+      "avgCornersFT": 8.96,
+      "avgCornersFor": 3.58,
+      "avgCornersAgainst": 5.38,
+      "hitRates": {
+        "over7_5": {
+          "pct": 65,
+          "hit": 17,
+          "total": 26
+        },
+        "over8_5": {
+          "pct": 54,
+          "hit": 14,
+          "total": 26
+        },
+        "over9_5": {
+          "pct": 50,
+          "hit": 13,
+          "total": 26
+        },
+        "over10_5": {
+          "pct": 38,
+          "hit": 10,
+          "total": 26
+        },
+        "over11_5": {
+          "pct": 19,
+          "hit": 5,
+          "total": 26
+        }
+      }
+    }
+  ]
+}
