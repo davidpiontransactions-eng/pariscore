@@ -46,13 +46,36 @@ const TTL_MS = 24 * 60 * 60 * 1000; // 24 h
 const MAX_TEXT_CHARS = 260;
 const MAX_SUMMARY_SENTENCES = 3;
 
-/** Domaines éditoriaux autorisés (whitelist anti-phishing / anti-spam SEO). */
+/** Domaines éditoriaux autorisés (whitelist anti-phishing / anti-spam SEO).
+ *
+ * Inclut les outlets de previews/predictions fiables réellement présents dans
+ * Google News (VSiN, Action Network, RotoWire, …) — le check se fait sur le
+ * domaine RÉEL de l'éditeur (tagué `<source>` dans le RSS), pas sur l'URL
+ * de redirection news.google.com.
+ */
 const ALLOWED_DOMAINS = [
+  // Tennis — previews dédiées.
   "lastwordonsports.com",
   "tennismajors.com",
+  "tennis.com",
+  "atptour.com",
+  "tennisworldusa.org",
   // Football — previews prédictives whitelistées.
   "90min.com",
   "footystats.org",
+  "sportsmole.co.uk",
+  // Outlets sportifs majeurs (predictions/previews fiables, anti-spam SEO).
+  "vsin.com",
+  "actionnetwork.com",
+  "rotowire.com",
+  "sports.yahoo.com",
+  "dknetwork.draftkings.com",
+  "cbssports.com",
+  "sportingnews.com",
+  "espn.com",
+  "skysports.com",
+  "theguardian.com",
+  "independent.co.uk",
 ];
 
 const FETCH_HEADERS = {
@@ -132,51 +155,95 @@ function splitSentences(text: string): string[] {
 // Découverte de l'article
 // ---------------------------------------------------------------------------
 
-type DiscoveredArticle = { url: string; source: string };
+type DiscoveredArticle = { url: string };
+
+/** Extrait un host sans www depuis une URL (+ "" si invalide). */
+function hostOf(raw: string): string {
+  try {
+    return new URL(raw).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
 
 /**
- * Résout l'URL d'un article de preview pour un duel.
- * Priorité : whitelist d'URLs connues → RSS Google News (q "A vs B predictions",
- * filtre whitelist domains). Retourne null si rien de fiable.
+ * Sources de découverte : DuckDuckGo HTML (primaire) puis Bing News RSS
+ * (fallback). Les deux exposent l'URL RÉELLE de l'éditeur (param `uddg=`
+ * encodé pour DDG, param `url=` du lien `apiclick.aspx` pour Bing) — le RSS
+ * Google News est inutilisable car tous ses liens sont des redirections
+ * news.google.com sans domaine éditeur exposé. La whitelist est validée sur
+ * le host réel AVANT fetch (et revalidée après fetch, en profondeur).
  */
-async function discoverArticle(query: EditorialQuery): Promise<DiscoveredArticle | null> {
-  const a = surname(query.playerAName);
-  const b = surname(query.playerBName);
+async function discoverArticles(
+  query: EditorialQuery,
+  limit = 5,
+): Promise<DiscoveredArticle[]> {
+  const [ddg, bing] = await Promise.all([
+    ddgHtmlSearch(query),
+    bingNewsRssSearch(query),
+  ]);
+  for (const urls of [ddg, bing]) {
+    const ok = urls.filter((u) => ALLOWED_DOMAINS.includes(hostOf(u)));
+    if (ok.length > 0) return ok.slice(0, limit).map((url) => ({ url }));
+  }
+  return [];
+}
 
-  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(
-    `"${query.playerAName}" "${query.playerBName}" predictions preview`,
-  )}&hl=en-US&gl=US&ceid=US:en`;
-
-  let xml: string;
+/** DuckDuckGo HTML — hrefs `//duckduckgo.com/l/?uddg=<url>` encodent l'URL cible.
+ * Nécessite un UA navigateur (le UA bot est bloqué par le filtre anti-bot). */
+async function ddgHtmlSearch(query: EditorialQuery): Promise<string[]> {
+  const q = `"${query.playerAName}" "${query.playerBName}" predictions preview`;
   try {
-    const res = await fetch(rssUrl, {
-      headers: FETCH_HEADERS,
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!res.ok) return null;
-    xml = await res.text();
-  } catch {
-    return null;
-  }
-
-  // Parse très léger du RSS : items <item><title>..</title><link>..</link></item>.
-  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => m[1]);
-  for (const item of items) {
-    const linkMatch = item.match(/<link>([^<]+)<\/link>/);
-    const title = item.match(/<title>([^<]+)<\/title>/)?.[1] ?? "";
-    if (!linkMatch) continue;
-    const url = linkMatch[1].trim();
-    try {
-      const host = new URL(url).hostname.replace(/^www\./, "");
-      if (!ALLOWED_DOMAINS.includes(host)) continue;
-    } catch {
-      continue;
+    const res = await fetch(
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(q)}`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+        signal: AbortSignal.timeout(12000),
+      },
+    );
+    if (!res.ok) return [];
+    const html = await res.text();
+    const out: string[] = [];
+    for (const m of html.matchAll(/uddg=([^&"]+)/g)) {
+      try {
+        out.push(decodeURIComponent(m[1]));
+      } catch {
+        // entrée illisible → ignorée
+      }
     }
-    const titleLower = title.toLowerCase();
-    if (!titleLower.includes(a) && !titleLower.includes(b)) continue;
-    return { url, source: new URL(url).hostname.replace(/^www\./, "") };
+    return out;
+  } catch {
+    return [];
   }
-  return null;
+}
+
+/** Bing News RSS — les liens `apiclick.aspx` portent l'URL du site dans `url=`. */
+async function bingNewsRssSearch(query: EditorialQuery): Promise<string[]> {
+  const qUrl = `"${query.playerAName}" "${query.playerBName}" predictions preview`;
+  try {
+    const res = await fetch(
+      `https://www.bing.com/news/search?q=${encodeURIComponent(qUrl)}&format=rss`,
+      { headers: FETCH_HEADERS, signal: AbortSignal.timeout(12000) },
+    );
+    if (!res.ok) return [];
+    const xml = await res.text();
+    const out: string[] = [];
+    for (const m of xml.matchAll(/apiclick\.aspx\?[^"<]*url=([^&"<]+)/g)) {
+      try {
+        out.push(decodeURIComponent(m[1]));
+      } catch {
+        // illisible → ignoré
+      }
+    }
+    return out;
+  } catch {
+    return [];
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -197,10 +264,15 @@ function extractDuelSummary(text: string, query: EditorialQuery): string | null 
     .map((p) => p.trim())
     .filter((p) => p.length > 60);
 
-  // 1. Paragraphe contenant les DEUX noms.
-  let target = paragraphs.find(
-    (p) => p.toLowerCase().includes(a) && p.toLowerCase().includes(b),
-  );
+  // 1. Paragraphe contenant les DEUX noms, hors titres (lignes à pipe "|"),
+  //    puis sans contrainte de titre.
+  let target =
+    paragraphs.find(
+      (p) => !p.includes("|") && p.toLowerCase().includes(a) && p.toLowerCase().includes(b),
+    ) ??
+    paragraphs.find(
+      (p) => p.toLowerCase().includes(a) && p.toLowerCase().includes(b),
+    );
   // 2. Sinon paragraphe contenant au moins un nom.
   if (!target) {
     target = paragraphs.find(
@@ -226,16 +298,27 @@ function extractDuelSummary(text: string, query: EditorialQuery): string | null 
 // Fetch + nettoyage de l'article
 // ---------------------------------------------------------------------------
 
-async function fetchArticle(url: string): Promise<string | null> {
+type FetchedArticle = { text: string; host: string };
+
+/**
+ * Fetch l'article (suit les redirections Google News) et valide le domaine
+ * éditeur FINAL contre la whitelist. Retourne null si l'URL d'arrivée n'est
+ * pas un domaine autorisé (anti-phishing / anti-spam SEO), si la réponse
+ * échoue ou si le contenu est vide.
+ */
+async function fetchArticle(url: string): Promise<FetchedArticle | null> {
   try {
     const res = await fetch(url, {
       headers: FETCH_HEADERS,
+      redirect: "follow",
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return null;
+    const host = new URL(res.url).hostname.replace(/^www\./, "");
+    if (!ALLOWED_DOMAINS.includes(host)) return null;
     const html = await res.text();
     if (html.length < 500) return null;
-    return stripHtml(html);
+    return { text: stripHtml(html), host };
   } catch {
     return null;
   }
@@ -292,20 +375,22 @@ export async function getEditorialSummary(
     return file;
   }
 
-  const article = await discoverArticle(query);
-  const summary: EditorialSummary | null = await (async (): Promise<EditorialSummary | null> => {
-    if (!article) return null;
-    const text = await fetchArticle(article.url);
-    if (!text) return null;
-    const snippet = extractDuelSummary(text, query);
-    if (!snippet) return null;
-    return {
+  // 3. Scrape : boucle sur les candidats (whitelist validée à la découverte
+  //    puis revalidée après fetch — urls directes éditeur, sans redirect).
+  let summary: EditorialSummary | null = null;
+  for (const article of await discoverArticles(query)) {
+    const fetched = await fetchArticle(article.url);
+    if (!fetched) continue;
+    const snippet = extractDuelSummary(fetched.text, query);
+    if (!snippet) continue;
+    summary = {
       text: snippet,
-      source: article.source,
+      source: fetched.host,
       url: article.url,
       fetchedAt: new Date().toISOString(),
     };
-  })();
+    break;
+  }
 
   memoSet(query, summary);
   await writeCached(query, summary);

@@ -45,7 +45,7 @@ export function useEditorialSummary(
   matchId: string | null,
   playerAName: string | null,
   playerBName: string | null,
-  lang: EditorialLang = "fr",
+  lang: EditorialLang = "en",
 ): EditorialHookResult {
   const qs =
     sport && matchId && playerAName && playerBName

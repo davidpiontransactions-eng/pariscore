@@ -724,5 +724,10 @@
     "fallbackAces": "≈ estimated",
     "acesPerMatch": "aces/match",
     "lambdaTotal": "λ total: {n}"
+  },
+  "editorial": {
+    "source": "Source",
+    "translated": "translated",
+    "readMore": "Read article"
   }
 }

@@ -1,8 +1,7 @@
 "use client";
 
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useEditorialSummary, type EditorialSummary } from "@/hooks/use-editorial-summaries";
-import type { EditorialLang } from "@/lib/match-editorial-service";
 import { cn } from "@/lib/utils";
 
 /**
@@ -29,11 +28,11 @@ export function EditorialInsight({
   variant?: "compact" | "full";
   className?: string;
 }) {
-  const locale = useLocale();
   const t = useTranslations("editorial");
-  const lang: EditorialLang = locale === "fr" ? "fr" : "en";
 
-  const { summary } = useEditorialSummary(sport, matchId, playerA, playerB, lang);
+  // Langue servie : EN pour l'instant (pas de clé Gemini valide → pas de
+  // traduction FR ; le texte source est anglophone).
+  const { summary } = useEditorialSummary(sport, matchId, playerA, playerB, "en");
   if (!summary) return null;
 
   if (variant === "compact") {
