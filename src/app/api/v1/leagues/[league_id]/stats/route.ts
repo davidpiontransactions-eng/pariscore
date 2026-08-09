@@ -128,7 +128,7 @@ export async function GET(
 
   const leagueInfo = LEAGUE_INFO[league_id];
   const bsdId = BSD_LEAGUE_IDS[league_id];
-  if (!leagueInfo || !bsdId) {
+  if (!leagueInfo || (!bsdId && !BSD_UNCOVERED_LEAGUES.has(league_id))) {
     return NextResponse.json(
       { error: `League not found: '${league_id}'` },
       { status: 404 },
