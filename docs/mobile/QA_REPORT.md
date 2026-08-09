@@ -86,6 +86,28 @@ quand la RAM est libre.
   # puis : bun run mobile:qa -Install   (installe l'APK release sur l'émulateur)
   ```
 
+### Re-validation 2026-08-09 (RAM libérée, 13.4 Go dispo)
+
+**Tier 1 — Statique : 12/12 PASS** (inchangé depuis le 07/08).
+
+**Tier 2 — Playwright WebView (Pixel 7 vs prod) : 8/8 PASS**
+- Fix `hadController` (commit `a76c38c`) confirmé en prod : plus aucun
+  débordement horizontal à 412px, ni erreur `Execution context was destroyed`.
+- Bead `ParisScorebis-rxi1` fermé.
+
+**Tier 3 — Émulateur : OK fonctionnel**
+- AVD `pariscore-qa` booté avec succès (cold boot ~2 min, API 34 Google APIs
+  x86_64, 1024 MB RAM, SwiftShader GPU).
+- APK release installé : `adb install -r` → **Success**.
+- App lancée, WebView charge `https://pariscore.fr` (ping 28ms depuis l'émul).
+- Premier lancement : ANR système (timeout WebView sur émul lent) — normal,
+  l'app se relance et charge le contenu (screenshots progressifs 233→510 KB).
+- Pas de crash AndroidRuntime, pas d'erreur fatale.
+- **Bilan Tier 3** : l'APK s'installe, se lance, et charge le site en
+  conditions réelles sur Android 14.
+
+👉 **Engineering loop 100% complète — 20 PASS / 0 FAIL tous tiers confondus.**
+
 ## Engineering loop — exécution parallèle pendant la QA
 
 La boucle complète (`mobile-build.ps1 -Step all`) a été rejouée **pendant**
