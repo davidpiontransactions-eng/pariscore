@@ -17,7 +17,7 @@ const POLL_INTERVAL_MS = 60_000;
 function transformV2(m: any): FootballMatch {
   return {
     id: m.id,
-    league: m.league ?? { id: "?", name: "?", country: "?", logo: "🌐", tier: "T2" },
+    league: m.league ?? { id: "?", name: "?", country: "?", countryCode: "??", logo: "🌐", tier: "T2" },
     round: m.round ?? "?",
     scheduledAt: m.scheduledAt,
     home: { id: m.home.id, name: m.home.name, shortName: m.home.shortName, logo: m.home.logo ?? "", color: m.home.color ?? "#666", form: [], rank: 99 },

@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 143 components total (football: 8, leagues: 4, tennis: 49, etc.).
+> extract pass. 144 components total (football: 9, leagues: 4, tennis: 49, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -88,11 +88,11 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
-## Football (`src/components/football/`) — 8 components
+## Football (`src/components/football/`) — 9 components
 
 | Component | File | Role |
 |-----------|------|------|
-| football-filters | football-filters.tsx | Filtres football (league bar + lien stats) |
+| football-filters | football-filters.tsx | Filtres football (league bar + drapeaux CDN + lien stats) |
 | football-live-card | football-live-card.tsx | Carte match live football |
 | football-match-card | football-match-card.tsx | Carte de match football |
 | football-match-detail-dialog | football-match-detail-dialog.tsx | Dialogue analyse détaillée d'un match foot |
@@ -100,6 +100,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | momentum-chart | momentum-chart.tsx | Graphique momentum football |
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
+| top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 
 ## Leagues (`src/components/leagues/`) — 4 components
 

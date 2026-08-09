@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { LeagueStatsResponse, LocationFilter } from "@/lib/league-stats";
-import { BSD_LEAGUE_IDS, LEAGUE_INFO } from "@/lib/league-mapping";
+import { BSD_LEAGUE_IDS, BSD_UNCOVERED_LEAGUES, LEAGUE_INFO } from "@/lib/league-mapping";
 import { computeStandings } from "@/lib/league-stats-compute";
 // fetchBSDRaw inline (bsd-football-fetcher n'exporte pas sa fonction interne)
 
@@ -145,31 +145,88 @@ export async function GET(
   }
 
   try {
-    let standings: any[];
-    let marketTops: any;
-    let source: "bsd" | "mock" = "bsd";
+    let standings: any[] = [];
+    let marketTops: any = {};
+    let source: "bsd" | "openligadb" | "mock" = "bsd";
 
-    // Try BSD — fetch finished matches, filter by league
-    try {
-      const raw = await fetchBSDRaw<any>(`/matches/?status=finished&limit=200`);
-      const allMatches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
-      const leagueMatches = allMatches.filter((m: any) => m?.league?.id === bsdId);
-
-      if (leagueMatches.length >= 5) {
-        const result = computeStandings(leagueMatches, location);
-        standings = result.standings;
-        marketTops = result.marketTops;
-        console.log(`[league-stats] ${league_id}: ${leagueMatches.length} BSD matches → ${standings.length} teams`);
-      } else {
-        throw new Error(`Only ${leagueMatches.length} matches found`);
+    // Ligues non couvertes BSD (ex. 2. Bundesliga) → source alternative / mock explicite.
+    if (!bsdId || BSD_UNCOVERED_LEAGUES.has(league_id)) {
+      if (league_id === "bundesliga2") {
+        try {
+          const { fetchOpenLigaDBStandings } = await import("@/lib/openligadb-fetcher");
+          const table = await fetchOpenLigaDBStandings();
+          standings = table.map((r) => ({
+            rank: r.rank,
+            team: { id: r.teamId, name: r.name, shortName: r.shortName, logo: r.logo, color: r.color },
+            stats: {
+              played: r.stats.played,
+              wins: r.stats.wins,
+              draws: r.stats.draws,
+              losses: r.stats.losses,
+              goalsFor: r.stats.goalsFor,
+              goalsAgainst: r.stats.goalsAgainst,
+              goalDiff: r.stats.goalDiff,
+              points: r.stats.points,
+              pointsPerGame: r.stats.pointsPerGame,
+              xG: 0,
+              xGA: 0,
+              xGD: 0,
+              over15Pct: 0,
+              over15PctL5: 0,
+              over15PctL10: 0,
+              under35Pct: 0,
+              under35PctL5: 0,
+              under35PctL10: 0,
+              bttsYesPct: 0,
+              bttsYesPctL5: 0,
+              bttsYesPctL10: 0,
+            },
+          }));
+          marketTops = {
+            pointsPerGame: table.map((r) => ({ teamId: r.teamId, teamName: r.name, shortName: r.shortName, logo: r.logo, value: r.stats.pointsPerGame })),
+            over15Pct: [],
+            under35Pct: [],
+            bttsYesPct: [],
+            xG: [],
+            xGA: [],
+          };
+          source = "openligadb";
+          console.log(`[league-stats] ${league_id}: OpenLigaDB standings → ${standings.length} teams`);
+        } catch (olbErr) {
+          console.log(`[league-stats] ${league_id}: OpenLigaDB unavailable — mock (${(olbErr as Error).message})`);
+        }
       }
-    } catch (bsdErr) {
-      // Fallback: générer des données mock pour la démo
-      console.log(`[league-stats] ${league_id}: BSD fallback — using mock data (${(bsdErr as Error).message})`);
-      source = "mock";
-      const mock = generateMockStandings(leagueInfo.name, location);
-      standings = mock.standings;
-      marketTops = mock.marketTops;
+      if (source === "bsd") {
+        // Fallback mock explicite : ligue connue mais aucune source réelle branchée.
+        console.log(`[league-stats] ${league_id}: no BSD source — using mock data`);
+        source = "mock";
+        const mock = generateMockStandings(leagueInfo.name, location);
+        standings = mock.standings;
+        marketTops = mock.marketTops;
+      }
+    } else {
+      // BSD — fetch finished matches, filter by real BSD league id
+      try {
+        const raw = await fetchBSDRaw<any>(`/matches/?status=finished&limit=200`);
+        const allMatches: any[] = Array.isArray(raw) ? raw : raw?.results ?? [];
+        const leagueMatches = allMatches.filter((m: any) => m?.league?.id === bsdId);
+
+        if (leagueMatches.length >= 5) {
+          const result = computeStandings(leagueMatches, location);
+          standings = result.standings;
+          marketTops = result.marketTops;
+          console.log(`[league-stats] ${league_id}: ${leagueMatches.length} BSD matches → ${standings.length} teams`);
+        } else {
+          throw new Error(`Only ${leagueMatches.length} matches found`);
+        }
+      } catch (bsdErr) {
+        // Fallback mock
+        console.log(`[league-stats] ${league_id}: BSD fallback — using mock data (${(bsdErr as Error).message})`);
+        source = "mock";
+        const mock = generateMockStandings(leagueInfo.name, location);
+        standings = mock.standings;
+        marketTops = mock.marketTops;
+      }
     }
 
     const data: LeagueStatsResponse = {

@@ -52,7 +52,7 @@ Tous routés via `bsdFetch(endpoint)` + `_bsdEnrichFetch(kind, eventId)` + cache
 | `/v2/bookmakers/` | 24h | 15 books (1xbet, 888sport, bet365, betano, betsson, betway, bwin, etc) |
 | `/v2/referees/?limit=` | — | Registry 1344 referees (id, name, country, YC/RC stats per match) |
 | `/v2/venues/?limit=` | — | Registry 1311 venues (id, name, capacity, lat/lng, pitch dims) |
-| `/v2/leagues/?limit=` | — | 52 leagues (id, name, country, current_season) |
+| `/v2/leagues/?limit=` | — | 79 leagues (id, name, country, current_season) — vérifié 2026-08-09 |
 | `/v2/referees/{id}/` | 6h | Detail arbitre (avg_yellow_per_match, matches, etc) |
 | `/v2/venues/{id}/` | 12h | Detail stade (coords, capacity) |
 | `/v2/leagues/{id}/` | 24h | Detail ligue (current_season) |
@@ -109,7 +109,8 @@ Cache backend: `apiCacheGet/Set` SQLite `api_cache` table avec `source='bsd_<kin
 - Rate limit exact non documenté — observer 429 patterns prod
 - Addon renew 2026-06-16 — automatiser reminder?
 - WebSocket schema live: validation VPS pending (bd 5iw)
-- Coverage par ligue: maintenir liste `bsd_fr_leagues.json` à jour
+- **Coverage par ligue**: maintenir liste `bsd_fr_leagues.json` à jour
+- **2. Bundesliga absente de BSD** (79 ligues, vérifié 2026-08-09) → intégrée via OpenLigaDB (gratuit, premiatch + classement) + soccerstats (rankings Home/Away) ; achat BSD $29 optionnel pour parité enrichie. Voir `.context/docs/league-coverage-bsd-vs-internal.md`
 
 ## Related
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 scrape_rankings.py — Pipeline production Home/Away depuis soccerstats.com.
-Scrape homeaway.asp?league={slug} pour 8+ ligues, normalise noms via
+Scrape homeaway.asp?league={slug} pour 12+ ligues, normalise noms via
 team_name_mapping.py, calcule rangs, genere /public/data/rankings/{id}.json.
 
 USAGE:
@@ -33,9 +33,13 @@ LEAGUES = {
     "england":     ("https://www.soccerstats.com/homeaway.asp?league=england",     "epl"),
     "england2":    ("https://www.soccerstats.com/homeaway.asp?league=england2",    "championship"),
     "france":      ("https://www.soccerstats.com/homeaway.asp?league=france",      "ligue1"),
+    "france2":     ("https://www.soccerstats.com/homeaway.asp?league=france2",     "ligue2"),
     "spain":       ("https://www.soccerstats.com/homeaway.asp?league=spain",       "laliga"),
+    "spain2":      ("https://www.soccerstats.com/homeaway.asp?league=spain2",      "laliga2"),
     "germany":     ("https://www.soccerstats.com/homeaway.asp?league=germany",     "bundesliga"),
+    "germany2":    ("https://www.soccerstats.com/homeaway.asp?league=germany2",    "bundesliga2"),
     "italy":       ("https://www.soccerstats.com/homeaway.asp?league=italy",       "seriea"),
+    "italy2":      ("https://www.soccerstats.com/homeaway.asp?league=italy2",      "serieb"),
     "netherlands": ("https://www.soccerstats.com/homeaway.asp?league=netherlands", "eredivisie"),
     "portugal":    ("https://www.soccerstats.com/homeaway.asp?league=portugal",    "primeira_liga"),
 }

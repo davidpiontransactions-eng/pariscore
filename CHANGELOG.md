@@ -1,4 +1,37 @@
 # PariScore — Journal des modifications
+## [v12.97] — 2026-08-09 — DB gratuite 2. Bundesliga (historique + cotes)
+
+### Ajouté
+- **DB historique 2. Bundesliga (2 sources gratuites, sans clé)** :
+  - **football-data.co.uk** (`D2`) : 3 saisons complètes (2023-24 → 2025-26) = **918 matchs** avec stats (tirs, cadrés, corners, cartons, fautes) + **cotes** (Bet365, Pinnacle, moyenne/max clôture, O/U 2.5, AH) — via `seed_historique_footballdata.js`.
+  - **openfootball/football.json** (`de.2`, ODbL) : 6 saisons (2020-21 → 2025-26) = **1836 matchs** scores FT+HT — via `seed_historique_openfootball.js`. Total unifié : **6 saisons / 1836 matchs** (dont 918 avec stats+cotes).
+- **Route `GET /api/v1/leagues/bundesliga2/history`** : vue des saisons fusionnées (dédup `YYYY-YYYY` normalisé, football-data prioritaire sur openfootball), payload `?season=X` (matchs avec score/stats/cotes) + `?limit=`. Cache 60 min serveur, CDN 10 min.
+- **`seed_historique_footballdata.js`** : mode **fusion** pour `--div` (n'écrase plus les 21 autres divisions) + `meta.slug: "bundesliga2"` pour D2 + fix parsing args `--season`/`--seasons` (regex exacte — le préfixe collisionnait).
+
+### Testé
+- ETL exécutés : `D2 → 918 matchs (918 avec stats, 918 avec cotes)`, `de.2 → 1836 matchs` ✓ · `tsc --noEmit` ✓ · `eslint` route ✓ · smoke fusion saisons (6 rangées, dédup OK) ✓
+
+### Note
+- Saison 2026/27 : CSV football-data pas encore publié (404) — le CRON re-pull quand le dossier `2627` sortira ; OpenLigaDB couvre déjà le live. La DB historique alimente `server.js` (computeH2H / form) via les JSON enracinés + la nouvelle route Next.
+
+## [v12.96] — 2026-08-09 — Détection ligues BSD + intégration 2. Bundesliga
+
+### Ajouté
+- **Gap analysis ligues BSD vs internes** (`.context/docs/league-coverage-bsd-vs-internal.md`) : BSD couvre **79 ligues** (vérifié live), l'Allemagne n'a que Bundesliga + DFB Pokal → **2. Bundesliga absente de BSD**, 13 slugs internes sans source BSD, 4 2nd divisions absentes du pipeline rankings.
+- **`src/lib/openligadb-fetcher.ts`** *(nouveau)* — source gratuite sans clé (`api.openligadb.de`, slug `bl2`) : résolution saison active, premiatch fenêtre 7 jours (cap 40), classement 18 équipes. Branchée sur `/api/football/matches` (source `bsd+openligadb`) → la 2. Bundesliga apparaît dans l'onglet Football.
+- **Route stats** (`/api/v1/leagues/{id}/stats`) : ligues non couvertes BSD → OpenLigaDB (réel, `source:"openligadb"`) pour `bundesliga2`, mock explicite sinon (plus jamais de filtre sur un id BSD erroné).
+- **Pipeline rankings** (`scrape_rankings.py`) : +4 ligues `germany2→bundesliga2`, `france2→ligue2`, `italy2→serieb`, `spain2→laliga2` + overrides 2. Bundesliga (`team_name_mapping.py`) → `public/data/rankings/{bundesliga2,ligue2,serieb,laliga2}.json` générés (18 équipes, saison 2026-27).
+- **`bsd_config.json`** : mappings config↔BSD vérifiés manquants (Ligue 2 62→89, Superliga DK 119→84, Primera A CO 239→80, Liga Prof. AR 128→85).
+
+### Corrigé
+- **`src/lib/league-mapping.ts`** — `BSD_LEAGUE_IDS` stockait les ids `leagues_config.json` (alignés API-Football, ex. 2. Bundesliga=79) comme s'ils étaient des ids BSD (BSD 79 = "Club Friendlies"). Remplacé par les **vrais ids BSD** (vérifiés) ; ids legacy isolés dans `CONFIG_LEAGUE_IDS` ; `BSD_UNCOVERED_LEAGUES` explicite.
+
+### Testé
+- `tsc --noEmit` (scope modifié) ✓ · `eslint` (5 fichiers TS) ✓ · fetcher Bun : 12 matchs/7j + classement 18 équipes ✓ · scraper : 4 JSON générés « 1 OK, 0 failed » ✓
+
+### Note
+- **API-Football retiré** (kill-switch v10.77) : la 2. Bundesliga est intégrée via OpenLigaDB (gratuit). Parité BSD enrichie (odds, xG, lineups) = achat $29 one-time à Bzzoiro (décision produit, non effectué).
+
 ## [v12.95] — 2026-08-07 — Highlights du tour précédent (détail match tennis)
 
 ### Ajouté

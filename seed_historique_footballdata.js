@@ -47,7 +47,7 @@ const DIVISIONS = [
   { div: 'SC2', name: 'Scottish League One',   country: 'Scotland',    bsd: null },
   { div: 'SC3', name: 'Scottish League Two',   country: 'Scotland',    bsd: null },
   { div: 'D1',  name: 'Bundesliga',            country: 'Germany',     bsd: '5'  },
-  { div: 'D2',  name: '2. Bundesliga',         country: 'Germany',     bsd: null },
+  { div: 'D2',  name: '2. Bundesliga',         country: 'Germany',     bsd: null,  slug: 'bundesliga2' },
   { div: 'I1',  name: 'Serie A',               country: 'Italy',       bsd: '4'  },
   { div: 'I2',  name: 'Serie B',               country: 'Italy',       bsd: null },
   { div: 'SP1', name: 'La Liga',               country: 'Spain',       bsd: '3'  },
@@ -332,9 +332,12 @@ function backfillCorners(allLeagues, isDry) {
 async function main() {
   const args = process.argv.slice(2);
   const getArg = (name) => {
-    const a = args.find(x => x.startsWith(`--${name}`));
+    // ⚠️ regex exacte : '--seasons' ne doit PAS matcher '--season' (et inversement).
+    const re = new RegExp(`^--${name}(=|$)`);
+    const a = args.find(x => re.test(x));
     if (!a) return null;
-    return a.includes('=') ? a.split('=')[1] : args[args.indexOf(a) + 1];
+    const eq = a.indexOf('=');
+    return eq >= 0 ? a.slice(eq + 1) : args[args.indexOf(a) + 1];
   };
   const isDry = args.includes('--dry');
   const doCorners = args.includes('--corners') || args.includes('--corners-only');
@@ -355,6 +358,18 @@ async function main() {
     license: 'Free — attribution football-data.co.uk',
     leagues: {},
   };
+  // Mode division ciblée (--div D2) : FUSIONNER avec le fichier existant pour ne
+  // pas écraser les autres ligues (safe pour un refresh 2. Bundesliga isolé).
+  if (divFilter && fs.existsSync(OUTPUT_FILE)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf8'));
+      out.leagues = (existing && existing.leagues) || {};
+      if (existing && existing.license) out.license = existing.license;
+      console.log(`[ETL footballdata] Merge mode — ${Object.keys(out.leagues).length} clefs existantes conservees`);
+    } catch {
+      console.warn('[ETL footballdata] Merge mode — fichier illisible, demarrage vierge');
+    }
+  }
   let totalMatches = 0, totalWithStats = 0, errors = 0;
 
   for (const code of codes) {
@@ -374,7 +389,7 @@ async function main() {
           meta: {
             div: d.div, name: d.name, country: d.country,
             season: seasonLabel(code), season_code: code,
-            bsd_league_id: d.bsd, source_url: url,
+            bsd_league_id: d.bsd, slug: d.slug || null, source_url: url,
             last_update: new Date().toISOString(),
           },
           matches,

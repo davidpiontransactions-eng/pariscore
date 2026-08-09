@@ -22,15 +22,19 @@ export async function GET() {
 
   try {
     const { fetchBSDFootballPrematch, fetchBSDFootballLive } = await import("@/lib/bsd-football-fetcher");
-    const [prematch, live] = await Promise.all([
+    const { fetchOpenLigaDB2Bundesliga } = await import("@/lib/openligadb-fetcher");
+    const [prematch, live, olb] = await Promise.all([
       fetchBSDFootballPrematch().catch(() => [] as never[]),
       fetchBSDFootballLive().catch(() => [] as never[]),
+      // 2. Bundesliga — ligue absente de BSD, source gratuite OpenLigaDB.
+      fetchOpenLigaDB2Bundesliga().catch(() => [] as never[]),
     ]);
-    const matches = [...live, ...prematch];
+    const matches = [...live, ...prematch, ...olb];
+    const hasOlb = olb.length > 0;
     cache.set({ matches });
     return NextResponse.json({
       matches,
-      source: "bsd",
+      source: hasOlb ? "bsd+openligadb" : "bsd",
       updatedAt: new Date(now).toISOString(),
     });
   } catch (err) {

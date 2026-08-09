@@ -259,9 +259,28 @@ function mapLeague(l: BSDLeague): League {
     id: `bsd-${l.id}`,
     name: l.name,
     country: l.country ?? "",
+    countryCode: countryNameToCode(l.country ?? ""),
     logo: `${BSD_IMAGE_ROOT}/img/league/${l.id}/`,
     tier: leagueTier(l.id),
   };
+}
+
+/** Mapping nom de pays → code ISO 2 lettres pour le CDN drapeau. */
+function countryNameToCode(name: string): string {
+  const MAP: Record<string, string> = {
+    france: "FR", england: "GB-ENG", spain: "ES", germany: "DE",
+    italy: "IT", portugal: "PT", netherlands: "NL", belgium: "BE",
+    brazil: "BR", argentina: "AR", mexico: "MX", scotland: "GB-SCT",
+    turkey: "TR", greece: "GR", russia: "RU", austria: "AT",
+    switzerland: "CH", denmark: "DK", sweden: "SE", norway: "NO",
+    poland: "PL", "czech republic": "CZ", croatia: "HR", serbia: "RS",
+    ukraine: "UA", romania: "RO", bulgaria: "BG", hungary: "HU",
+    usa: "US", japan: "JP", "south korea": "KR", china: "CN",
+    australia: "AU", egypt: "EG", morocco: "MA", tunisia: "TN",
+    algeria: "DZ", "saudi arabia": "SA", qatar: "QA",
+    "united arab emirates": "AE", wales: "GB-WLS", "northern ireland": "GB-NIR",
+  };
+  return MAP[name.toLowerCase().trim()] ?? "INTL";
 }
 
 function mapTeam(name: string, obj?: BSDTeamObj, jerseys?: BSDJerseys, side?: "home" | "away"): Team {

@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFavorites } from "@/hooks/use-favorites";
 import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
+import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top-teams-presets-bar";
 import { FootballMatchCard, FootballMatchCardSkeleton } from "./football-match-card";
 import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
@@ -29,6 +30,7 @@ export function FootballTabContent() {
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [filter, setFilter] = useState<FootFilter>("all");
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
+  const [presetFilter, setPresetFilter] = useState<TopTeamPreset | null>(null);
 
   // Détail match (dialog momentum) — state lifté, une seule instance rendue.
   const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
@@ -48,6 +50,10 @@ export function FootballTabContent() {
   const prematchMatches = useMemo(() => {
     let list = matches.filter((m) => !m.live || m.live.status === "FT" || m.live.status === "PEN");
     if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
+    // Appliquer le preset Top Teams AVANT les sous-filtres existants
+    if (presetFilter) {
+      list = applyPresetFilter(list, presetFilter).filtered;
+    }
     if (filter === "today") {
       const today = new Date().toDateString();
       list = list.filter((m) => new Date(m.scheduledAt).toDateString() === today);
@@ -77,7 +83,7 @@ export function FootballTabContent() {
       list = list.filter((m) => m.prediction.bttsProb >= 55);
     }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, filter]);
+  }, [matches, selectedLeague, presetFilter, filter]);
 
   const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
     { key: "all", label: "Tous" },
@@ -180,6 +186,15 @@ export function FootballTabContent() {
               />
             </div>
           )}
+
+          {/* Top Teams presets */}
+          <div className="mb-4">
+            <TopTeamsPresetsBar
+              matches={prematchMatches}
+              activePreset={presetFilter}
+              onPresetChange={setPresetFilter}
+            />
+          </div>
 
           {/* Sub-filters */}
           <div className="mb-4 flex flex-wrap gap-2">

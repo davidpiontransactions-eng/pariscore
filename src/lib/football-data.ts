@@ -2,6 +2,8 @@ export type League = {
   id: string;
   name: string;
   country: string;
+  /** Code pays ISO 3166-1 alpha-2 (ex: "FR", "GB-ENG", "EU" pour compétitions continentales). */
+  countryCode: string;
   logo: string;
   tier: "T1" | "T2" | "CUP";
 };
@@ -251,11 +253,11 @@ export type FootballMatch = {
 };
 
 const LEAGUES: Record<string, League> = {
-  ligue1: { id: "ligue1", name: "Ligue 1", country: "France", logo: "🇫🇷", tier: "T1" },
-  epl: { id: "epl", name: "Premier League", country: "England", logo: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", tier: "T1" },
-  laliga: { id: "laliga", name: "La Liga", country: "Spain", logo: "🇪🇸", tier: "T1" },
-  bundesliga: { id: "bundesliga", name: "Bundesliga", country: "Germany", logo: "🇩🇪", tier: "T1" },
-  seriea: { id: "seriea", name: "Serie A", country: "Italy", logo: "🇮🇹", tier: "T1" },
+  ligue1: { id: "ligue1", name: "Ligue 1", country: "France", countryCode: "FR", logo: "🇫🇷", tier: "T1" },
+  epl: { id: "epl", name: "Premier League", country: "England", countryCode: "GB-ENG", logo: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", tier: "T1" },
+  laliga: { id: "laliga", name: "La Liga", country: "Spain", countryCode: "ES", logo: "🇪🇸", tier: "T1" },
+  bundesliga: { id: "bundesliga", name: "Bundesliga", country: "Germany", countryCode: "DE", logo: "🇩🇪", tier: "T1" },
+  seriea: { id: "seriea", name: "Serie A", country: "Italy", countryCode: "IT", logo: "🇮🇹", tier: "T1" },
 };
 
 const TEAM_LOGOS: Record<string, string> = {

@@ -64,6 +64,24 @@ TEAM_NAME_OVERRIDES = {
     "1. fc union berlin": "Union Berlin", "1. fsv mainz 05": "Mainz",
     "fc augsburg": "Augsburg", "werder bremen": "Werder Bremen",
 
+    # ── 2. Bundesliga ──
+    "hamburger sv": "Hamburger SV", "hamburg": "Hamburger SV",
+    "1. fc koln": "FC Koln", "1. fc koeln": "FC Koln", "fc koln": "FC Koln",
+    "hertha bsc": "Hertha BSC", "fc schalke 04": "Schalke 04", "schalke 04": "Schalke 04",
+    "1. fc kaiserslautern": "Kaiserslautern", "hannover 96": "Hannover 96",
+    "fortuna dusseldorf": "Fortuna Dusseldorf", "fortuna duesseldorf": "Fortuna Dusseldorf",
+    "karlsruher sc": "Karlsruher SC", "1. fc magdeburg": "Magdeburg",
+    "spvgg greuther furth": "Greuther Furth", "greuther furth": "Greuther Furth",
+    "sv 07 elversberg": "Elversberg", "elversberg": "Elversberg",
+    "sc paderborn 07": "Paderborn", "1. fc nurnberg": "Nurnberg", "nurnberg": "Nurnberg",
+    "sv darmstadt 98": "Darmstadt 98", "eintracht braunschweig": "Eintracht Braunschweig",
+    "preussen munster": "Preussen Munster", "sc preussen munster": "Preussen Munster",
+    "ssv ulm 1846": "Ulm 1846", "ssv jahn regensburg": "Jahn Regensburg", "jahn regensburg": "Jahn Regensburg",
+    "holstein kiel": "Holstein Kiel", "dynamo dresden": "Dynamo Dresden",
+    "energie cottbus": "Energie Cottbus", "vfl bochum": "VfL Bochum",
+    "fc st. pauli": "FC St. Pauli", "st. pauli": "FC St. Pauli",
+    "1. fc koln 2": "FC Koln II", "fortuna dusseldorf 2": "Fortuna Dusseldorf II",
+
     # ── Serie A ──
     "inter": "Inter Milan", "ac milan": "AC Milan",
     "juventus": "Juventus", "napoli": "Napoli", "atalanta": "Atalanta",

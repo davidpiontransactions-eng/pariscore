@@ -17,7 +17,7 @@ type ApiV2Match = {
   liveStatus: string | null;
   home: { id: string; name: string; shortName: string; logo: string | null; color: string | null };
   away: { id: string; name: string; shortName: string; logo: string | null; color: string | null };
-  league: { id: string; name: string; country: string; logo: string | null } | null;
+  league: { id: string; name: string; country: string; countryCode: string | null; logo: string | null } | null;
   prediction: {
     homeProb: number; drawProb: number | null; awayProb: number;
     bttsProb: number | null; over25Prob: number | null;
@@ -36,7 +36,7 @@ const fetcher = (url: string): Promise<ApiV2Response> =>
 
 // ─── Transform Prisma → FootballMatch ───────────────────────────────────────
 
-const DEFAULT_LEAGUE: League = { id: "unknown", name: "Inconnu", country: "??", logo: "🌐", tier: "T2" };
+const DEFAULT_LEAGUE: League = { id: "unknown", name: "Inconnu", country: "??", countryCode: "??", logo: "🌐", tier: "T2" };
 const DEFAULT_TEAM = (id: string, name: string, shortName: string): Team => ({
   id, name, shortName,
   logo: "", color: "#666",
@@ -45,7 +45,7 @@ const DEFAULT_TEAM = (id: string, name: string, shortName: string): Team => ({
 
 function transformMatch(m: ApiV2Match): FootballMatch {
   const league: League = m.league
-    ? { id: m.league.id, name: m.league.name, country: m.league.country, logo: m.league.logo ?? "🌐", tier: "T1" }
+    ? { id: m.league.id, name: m.league.name, country: m.league.country, countryCode: m.league.countryCode ?? m.league.country ?? "??", logo: m.league.logo ?? "🌐", tier: "T1" }
     : DEFAULT_LEAGUE;
 
   const home: Team = {

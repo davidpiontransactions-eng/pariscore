@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import type { FootballMatch, League } from "@/lib/football-data";
+import { getFlagUrl, getFlagEmoji } from "@/lib/flag-utils";
 
 export function FootballLeagueBar({
   matches,
@@ -29,20 +30,20 @@ export function FootballLeagueBar({
   if (leagues.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-nowrap gap-1.5 overflow-x-auto scrollbar-none pb-1">
       <button
         onClick={() => onSelectLeague(null)}
-        className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+        className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
           selectedLeague === null
             ? "border-foreground bg-foreground text-background"
             : "border-border bg-background text-muted-foreground hover:text-foreground"
         }`}
       >
-        <span className="mr-0.5" aria-hidden="true">⚽</span>
+        <span className="text-sm" aria-hidden="true">🌍</span>
         Tous ({matches.length})
       </button>
       {leagues.map((l) => (
-        <span key={l.id} className="inline-flex items-center gap-0.5">
+        <span key={l.id} className="inline-flex shrink-0 items-center gap-0.5">
           <button
             onClick={() => onSelectLeague(l.id)}
             className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
@@ -51,16 +52,22 @@ export function FootballLeagueBar({
                 : "border-border bg-background text-muted-foreground hover:text-foreground"
             }`}
           >
-            {l.logo && l.logo.startsWith("http") ? (
-              <img
-                src={l.logo}
-                alt=""
-                className="h-4 w-4 shrink-0 object-contain"
-                onError={(e) => { e.currentTarget.style.display = "none"; }}
-              />
-            ) : (
-              <span aria-hidden="true">🏆</span>
-            )}
+            <img
+              src={getFlagUrl(l.countryCode, 24, 18)}
+              alt={l.country}
+              className="h-[13px] w-[18px] shrink-0 rounded-sm object-cover"
+              loading="lazy"
+              onError={(e) => {
+                // Fallback emoji natif si CDN down
+                e.currentTarget.replaceWith(
+                  Object.assign(document.createElement("span"), {
+                    textContent: getFlagEmoji(l.countryCode),
+                    className: "text-sm leading-none",
+                    ariaHidden: "true",
+                  }),
+                );
+              }}
+            />
             <span className="max-w-[10rem] truncate" title={l.name}>
               {l.name}
             </span>
