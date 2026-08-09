@@ -357,28 +357,35 @@ export function enrichPrediction(
     prediction.over25Prob != null ? Math.max(0, 100 - prediction.over25Prob + 12) : undefined,
   );
 
-  // Corner over — utilise les corners live comme proxy si disponible,
-  // sinon fallback sur la moyenne de ligue avec avantage domicile 55/45.
-  const homeCorners = bsdMatch.live_stats?.home?.corner_kicks;
-  const awayCorners = bsdMatch.live_stats?.away?.corner_kicks;
-  enriched.bestCornerOver = computeCornerOver(
-    homeCorners ?? 0,
-    awayCorners ?? 0,
-    LEAGUE_AVG_CORNERS,
-  );
+  // ── Métriques dérivées des stats live uniquement ──
+  // Pour les matchs pre-match (live_stats absent), NE PAS générer de comparatifs/season stats
+  // ni de corner over — les valeurs fallback (55/45, moyennes de ligue fixes) sont identiques
+  // pour TOUS les matchs et produisent une duplication trompeuse des métriques.
+  if (bsdMatch.live_stats) {
+    // Corner over — utilise les corners live comme proxy si disponible
+    const homeCorners = bsdMatch.live_stats.home?.corner_kicks;
+    const awayCorners = bsdMatch.live_stats.away?.corner_kicks;
+    enriched.bestCornerOver = computeCornerOver(
+      homeCorners ?? 0,
+      awayCorners ?? 0,
+      LEAGUE_AVG_CORNERS,
+    );
 
-  // Comparaisons d'équipe (stats live)
-  enriched.teamComparisons = computeTeamComparisons(
-    bsdMatch.live_stats?.home,
-    bsdMatch.live_stats?.away,
-  );
+    // Comparaisons d'équipe (stats live)
+    enriched.teamComparisons = computeTeamComparisons(
+      bsdMatch.live_stats.home,
+      bsdMatch.live_stats.away,
+    );
 
-  // Stats saisonnières Home/Away (dérivées des comparatifs + live stats)
-  enriched.teamSeasonStats = computeTeamSeasonStats(
-    enriched.teamComparisons,
-    bsdMatch.live_stats?.home,
-    bsdMatch.live_stats?.away,
-  );
+    // Stats saisonnières Home/Away (dérivées des comparatifs + live stats)
+    enriched.teamSeasonStats = computeTeamSeasonStats(
+      enriched.teamComparisons,
+      bsdMatch.live_stats.home,
+      bsdMatch.live_stats.away,
+    );
+  }
+  // else: teamComparisons/teamSeasonStats/bestCornerOver restent undefined —
+  // l'UI masque le bloc « Comparatifs » via {p.teamComparisons && ...}
 
   // xG metrics
   enriched.xGa = computeXGa(
