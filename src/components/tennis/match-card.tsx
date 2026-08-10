@@ -19,6 +19,8 @@ import { WinProbabilityChart } from "./win-probability-chart";
 import { PointTimeline } from "./point-timeline";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
 import { LastMatchHighlight } from "./last-match-highlight";
+import { LiveDecisionBadges } from "./live-decision-badges";
+import { LiveDecisionsTrigger, LiveDecisionsDrawer } from "./live-decisions-drawer";
 import { MatchCardHeader, LiveScoreSubHeader } from "./match-card-header";
 import { MatchCardFooter } from "./match-card-footer";
 import { MatchCardDetail } from "./match-card-detail";
@@ -87,6 +89,7 @@ export function MatchCard({
   const tTennis = useTranslations("tennis");
   const { terminalMode } = useTerminalMode();
   const [open, setOpen] = useState(defaultOpen);
+  const [decisionsOpen, setDecisionsOpen] = useState(false);
   // Terminal mode forces the stats chips to be always expanded — power
   // users want all the data visible without an extra click, so we OR the
   // user-driven flag with the terminal flag.
@@ -299,6 +302,13 @@ export function MatchCard({
           + favori ne tenait pas dans la colonne droite). */}
       {isLive && liveState && (
         <LiveScoreSubHeader match={match} liveState={liveState} />
+      )}
+
+      {/* R10 : Badges d'alerte décisionnelle (DR, 2nd sv, fatigue) */}
+      {isLive && liveState?.calculated && (
+        <div className="px-4 py-1.5 sm:px-6 bg-muted/30 border-b border-border/40">
+          <LiveDecisionBadges metrics={liveState.calculated} />
+        </div>
       )}
 
       {/* Corps : carte duelle A + VS + B
@@ -677,6 +687,13 @@ export function MatchCard({
         </div>
       )}
 
+      {/* R10 : Trigger Décisions Live */}
+      {isLive && liveState?.calculated && (
+        <div className="flex justify-center border-t border-border/40 bg-muted/10 px-4 py-2 sm:px-6">
+          <LiveDecisionsTrigger onClick={() => setDecisionsOpen(true)} />
+        </div>
+      )}
+
       <MatchCardFooter
         match={match}
         statsA={statsA}
@@ -709,6 +726,18 @@ export function MatchCard({
           liveState={liveState}
           player1Name={playerA.name}
           player2Name={playerB.name}
+        />
+      )}
+
+      {/* R10 : Drawer Décisions Live */}
+      {isLive && liveState?.calculated && (
+        <LiveDecisionsDrawer
+          open={decisionsOpen}
+          onOpenChange={setDecisionsOpen}
+          playerAName={playerA.name}
+          playerBName={playerB.name}
+          metrics={liveState.calculated}
+          liveState={liveState}
         />
       )}
     </article>

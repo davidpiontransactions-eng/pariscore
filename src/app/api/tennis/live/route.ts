@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import type { LiveMatchItem } from "@/lib/bsd-fetcher";
+import { computeLiveMetrics, type LiveStatsSnapshot } from "@/lib/tennis-live-metrics";
 
 // R6 hotfix (2026-07-21) : réduit de 30s à 8s pour permettre au MomentumDR
 // de capter des points entre polls. Combiné au POLL_INTERVAL_MS client (8s),
@@ -13,6 +14,19 @@ const CACHE_TTL_MS = 8_000;
 type CachedPayload = { matches: LiveMatchItem[] };
 const cache = createTtlCache<CachedPayload>("__tennisLiveCache");
 
+/** Enrichit un match live avec les métriques calculées (DR, alertes, etc.). */
+function enrichWithCalculatedMetrics(match: LiveMatchItem): LiveMatchItem & {
+  calculated: ReturnType<typeof computeLiveMetrics>;
+} {
+  const stats = match.live_stats as LiveStatsSnapshot | null;
+  const gameScore = `${match.currentPoint.p1}-${match.currentPoint.p2}`;
+  const calculated = computeLiveMetrics(stats, {
+    gameScore,
+    server: match.server,
+  });
+  return { ...match, calculated };
+}
+
 export async function GET() {
   try {
     const now = Date.now();
@@ -21,8 +35,9 @@ export async function GET() {
 
     const cached = cache.getEntry();
     if (cached && isFresh(cached, CACHE_TTL_MS)) {
+      const enriched = cached.data.matches.map(enrichWithCalculatedMetrics);
       return NextResponse.json({
-        matches: cached.data.matches,
+        matches: enriched,
         source: "cache",
         updatedAt: new Date(cached.at).toISOString(),
       });
@@ -33,8 +48,9 @@ export async function GET() {
         const { fetchBSDLiveMatches } = await import("@/lib/bsd-fetcher");
         const matches = await fetchBSDLiveMatches();
         cache.set({ matches });
+        const enriched = matches.map(enrichWithCalculatedMetrics);
         return NextResponse.json({
-          matches,
+          matches: enriched,
           source: "bsd",
           updatedAt: new Date(now).toISOString(),
         });

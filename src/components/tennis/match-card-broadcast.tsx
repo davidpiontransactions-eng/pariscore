@@ -44,7 +44,9 @@ import { StatsIndicatorsGrid } from "./stats-indicators-grid";
 import { MatchCardDetail } from "./match-card-detail";
 import { LiveScoreAnnouncer } from "./live-score-announcer";
 import { LiveStatsTrigger, LiveTennisStatsDrawer } from "./live-tennis-stats-drawer";
+import { LiveDecisionsTrigger, LiveDecisionsDrawer } from "./live-decisions-drawer";
 import { CountryFlag } from "./country-flag";
+import { LiveDecisionBadges } from "./live-decision-badges";
 import { LiveOddsPanel } from "./live-odds-panel";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 import type { LiveResolvedOdds } from "@/hooks/use-onex-live-odds";
@@ -114,6 +116,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
   const { terminalMode } = useTerminalMode();
   const [open, setOpen] = useState(defaultOpen || terminalMode);
   const [statsDrawerOpen, setStatsDrawerOpen] = useState(false);
+  const [decisionsDrawerOpen, setDecisionsDrawerOpen] = useState(false);
   const [chipsExpanded, setChipsExpanded] = useState(!chipsCollapsedByDefault || terminalMode);
   const { track } = useAnalytics();
   const { isFavorite, toggle } = useFavorites();
@@ -401,6 +404,13 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
           />
         </div>
 
+        {/* R10 : Badges d'alerte décisionnelle (DR, 2nd sv, fatigue) */}
+        {isLive && liveState?.calculated && (
+          <div className="flex justify-center px-4 pb-2 sm:px-6">
+            <LiveDecisionBadges metrics={liveState.calculated} />
+          </div>
+        )}
+
         {/* Momentum Score — gauge dual sous le bloc joueurs */}
         {!isSynthetic && (playerA.momentumScore != null || playerB.momentumScore != null) && (
           <div className="relative flex justify-center mt-2 px-4 sm:px-6">
@@ -686,7 +696,12 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
               </button>
             )}
             {isLive && (
-              <LiveStatsTrigger onClick={() => setStatsDrawerOpen(true)} />
+              <>
+                <LiveStatsTrigger onClick={() => setStatsDrawerOpen(true)} />
+                {liveState?.calculated && (
+                  <LiveDecisionsTrigger onClick={() => setDecisionsDrawerOpen(true)} />
+                )}
+              </>
             )}
             {onOpenDetail && (
               <button
@@ -723,6 +738,18 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
           playerACountry={playerA.country}
           playerBCountry={playerB.country}
           liveState={liveState ?? null}
+        />
+      )}
+
+      {/* Live decisions drawer */}
+      {isLive && liveState?.calculated && (
+        <LiveDecisionsDrawer
+          open={decisionsDrawerOpen}
+          onOpenChange={setDecisionsDrawerOpen}
+          playerAName={playerA.name}
+          playerBName={playerB.name}
+          metrics={liveState.calculated}
+          liveState={liveState}
         />
       )}
 

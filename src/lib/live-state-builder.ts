@@ -40,6 +40,11 @@ export type LiveMatchState = {
   /** Cote décimale live du joueur B (depuis BSD odds_player2). null si absente. */
   oddsB: number | null;
   lastUpdate: string;
+  /**
+   * Métriques décisionnelles calculées (DR classique, alertes, hold prob).
+   * Champ additionnel rétrocompatible — absent pour les anciens polls sans enrichissement.
+   */
+  calculated?: import("./tennis-live-metrics").CalculatedLiveMetrics;
 };
 
 /** Shape minimale commune aux matchs live des 2 sources (SSE + REST). */
@@ -59,6 +64,8 @@ export type RawLiveMatch = {
   oddsB?: number | null;
   tournamentName?: string;
   roundName?: string;
+  /** Métriques live calculées (DR, alertes) — du proxy /api/tennis/live. */
+  calculated?: import("./tennis-live-metrics").CalculatedLiveMetrics;
 };
 
 export type LiveListItem = {
@@ -68,6 +75,7 @@ export type LiveListItem = {
   isLive: boolean;
   tournamentName?: string;
   roundName?: string;
+  calculated?: import("./tennis-live-metrics").CalculatedLiveMetrics;
 };
 
 export type LiveStateCache = {
@@ -112,6 +120,7 @@ export function toLiveState(m: RawLiveMatch, updatedAt: string): LiveMatchState 
     oddsB: m.oddsB ?? null,
     server: m.server,
     lastUpdate: updatedAt,
+    calculated: m.calculated,
   };
 }
 
@@ -123,6 +132,7 @@ function toListItem(m: RawLiveMatch): LiveListItem {
     isLive: m.isLive,
     tournamentName: m.tournamentName,
     roundName: m.roundName,
+    calculated: m.calculated,
   };
 }
 

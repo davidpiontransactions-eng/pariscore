@@ -29,6 +29,7 @@ import { getDrDecision, type DrDecisionLevel } from "@/lib/dr-decision";
 import { computeDrMatch, formatDr, drColorClass } from "@/lib/dr-match";
 import { evaluateValueAlert, formatValueAlertLabel } from "@/lib/value-alert";
 import { computeSetOdds } from "@/lib/set-odds";
+import type { CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
 import type { ServeStats } from "@/lib/prediction/total-games";
 import { cn } from "@/lib/utils";
 
@@ -425,6 +426,33 @@ function PipMatchRowImpl({
                     </span>
                   ) : null,
                 )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* R10 : Métriques calculées compactes (DR + 2nd sv + alerte) */}
+        {isLive && liveState?.calculated && (
+          <div className="flex items-center gap-1.5 mt-1 text-[8px] font-mono tabular-nums">
+            {liveState.calculated.dr.levelA !== "neutral" && (
+              <span className={cn("font-semibold", liveState.calculated.dr.drA > 1.15 ? "text-emerald-300" : "text-amber-300")}>
+                DR {liveState.calculated.dr.drA.toFixed(2)}
+              </span>
+            )}
+            {liveState.calculated.secondServeAlert.level !== "ok" && liveState.calculated.secondServeAlert.player && (
+              <>
+                {liveState.calculated.dr.levelA !== "neutral" && <span className="text-muted-foreground/40">·</span>}
+                <span className="text-red-300/80">
+                  2nd {liveState.calculated.secondServeAlert.pct}%
+                </span>
+              </>
+            )}
+            {liveState.calculated.fatigueAlert.level !== "none" && (
+              <>
+                <span className="text-muted-foreground/40">·</span>
+                <span className="text-orange-300 font-semibold">
+                  {liveState.calculated.fatigueAlert.level === "break_imminent" ? "⚠ Break" : "⚠ Pression"}
+                </span>
               </>
             )}
           </div>

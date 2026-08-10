@@ -429,7 +429,8 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
         m.p1_aces != null || m.p2_aces != null || m.p1_double_faults != null ||
         m.p2_double_faults != null || m.p1_first_serve_pct != null ||
         m.p2_first_serve_pct != null || m.p1_first_serve_won_pct != null ||
-        m.p2_first_serve_won_pct != null || m.p1_break_points_saved_pct != null ||
+        m.p2_first_serve_won_pct != null || m.p1_second_serve_won_pct != null ||
+        m.p2_second_serve_won_pct != null || m.p1_break_points_saved_pct != null ||
         m.p2_break_points_saved_pct != null
           ? {
               p1_aces: m.p1_aces ?? null,
@@ -440,6 +441,8 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
               p2_first_pct: m.p2_first_serve_pct ?? null,
               p1_first_won: m.p1_first_serve_won_pct ?? null,
               p2_first_won: m.p2_first_serve_won_pct ?? null,
+              p1_second_won: m.p1_second_serve_won_pct ?? null,
+              p2_second_won: m.p2_second_serve_won_pct ?? null,
               p1_bp_saved: m.p1_break_points_saved_pct ?? null,
               p2_bp_saved: m.p2_break_points_saved_pct ?? null,
             }

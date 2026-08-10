@@ -8,6 +8,7 @@ import {
   type LiveMatchState,
   type RawLiveMatch,
 } from "@/lib/live-state-builder";
+import type { CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
 
 // v6ka : SideScore/LiveMatchState définis dans live-state-builder.ts (source de
 // vérité partagée SSE + polling). Ré-exportés ici pour compat des consommateurs.
@@ -19,7 +20,8 @@ export type UseLiveMatchesResult = {
   liveStates: Record<string, LiveMatchState>;
   /** Basic info for each live match (id + player names). Used by TennisTabContent
    *  to create synthetic cards for matches not present in prematch data.
-   *  R7.3 : inclut tournamentName + roundName depuis BSD live. */
+   *  R7.3 : inclut tournamentName + roundName depuis BSD live.
+   *  R10 : inclut calculated metrics (DR, alertes) pour les badges de décision. */
   liveMatchList: Array<{
     id: string;
     playerA: { name: string };
@@ -27,6 +29,7 @@ export type UseLiveMatchesResult = {
     isLive: boolean;
     tournamentName?: string;
     roundName?: string;
+    calculated?: CalculatedLiveMetrics;
   }>;
   connectionStatus: ConnectionStatus;
   latency: number;
@@ -54,6 +57,8 @@ export type LiveMatchResponseItem = {
   /** Stats live cumulées BSD (R9) — null si absentes. Consommées par
    *  use-tennis-live-stats (via le flux SSE partagé). */
   live_stats?: Record<string, unknown> | null;
+  /** Métriques calculées (DR, alertes, hold prob) — ajoutées par /api/tennis/live. */
+  calculated?: CalculatedLiveMetrics;
 };
 
 type TennisLiveResponse = {

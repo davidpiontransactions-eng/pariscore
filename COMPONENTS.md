@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 144 components total (football: 9, leagues: 4, tennis: 49, etc.).
+> extract pass. 146 components total (football: 9, leagues: 4, tennis: 51, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 49 components
+## Tennis (`src/components/tennis/`) — 51 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -49,6 +49,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
 | match-card | match-card.tsx | Carte de match (principale) |
 | match-card-broadcast | match-card-broadcast.tsx | Carte style TV broadcast (R7) |
+| live-decision-badges | live-decision-badges.tsx | Badges d'alerte live : DR, 2nd sv, fatigue, BP (R10) |
+| live-decisions-drawer | live-decisions-drawer.tsx | Drawer « Décisions Live » — DR, DPI, signaux, alertes (R10) |
 | live-odds-panel | live-odds-panel.tsx | Cotes live P1/P2 (1xBet, repli BSD) : chips + flèches direction + Kelly |
 | match-card-detail | match-card-detail.tsx | Détail interne extrait de MatchCard |
 | match-card-footer | match-card-footer.tsx | Pied de carte de match |
