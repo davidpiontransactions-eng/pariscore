@@ -24,7 +24,7 @@ import {
   Legend,
   ReferenceLine,
 } from "recharts";
-import { Calendar, Trophy, Scale, Activity, Target, Check, X, Zap, Swords, Loader2 } from "lucide-react";
+import { Calendar, Trophy, Scale, Activity, Target, Check, X, Zap, Swords, Loader2, AlertTriangle } from "lucide-react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { OddsComparator } from "./odds-comparator";
 import { LastMatchesList } from "./last-matches-list";
@@ -43,6 +43,8 @@ import { PreviousRoundHighlightsWidget } from "@/components/tennis/previous-matc
 import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 import { WatchButton } from "@/components/shared/watch-button";
+import { PressReviewPanel } from "@/components/tennis/press-review-panel";
+import { EditorialInsight } from "@/components/ai/editorial-insight";
 
 type Props = {
   match: TennisMatch | null;
@@ -226,9 +228,15 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
               <span>{match.round}</span>
             </div>
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span>#{playerA.rank} Elo {playerA.elo.toFixed(0)}</span>
-              <span className="text-muted-foreground/50">/</span>
-              <span>#{playerB.rank} Elo {playerB.elo.toFixed(0)}</span>
+              {match.synthetic || match.insufficientData ? (
+                <span className="italic">Données ELO indisponibles</span>
+              ) : (
+                <>
+                  <span>#{playerA.rank} Elo {playerA.elo.toFixed(0)}</span>
+                  <span className="text-muted-foreground/50">/</span>
+                  <span>#{playerB.rank} Elo {playerB.elo.toFixed(0)}</span>
+                </>
+              )}
             </div>
           </div>
 
@@ -262,40 +270,51 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
 
               <TabsContent value="overview" className="mt-4 space-y-4">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
-                  <KpiCard
-                    icon={<Activity className="h-4 w-4" />}
-                    label={t("centralProb")}
-                    value={
-                      <div className="flex items-baseline gap-2">
-                        <span style={{ color: playerA.color }}>{probA.toFixed(2)}%</span>
-                        <span className="text-sm font-semibold text-muted-foreground">/</span>
-                        <span style={{ color: playerB.color }}>{probB.toFixed(2)}%</span>
-                      </div>
-                    }
-                    description={
-                      <span>
-                        {t("centralProbHint", { a: playerA.shortName, b: playerB.shortName })}
-                      </span>
-                    }
-                    trend={probA > probB ? "up" : "down"}
-                  />
-                  <KpiCard
-                    icon={<Scale className="h-4 w-4" />}
-                    label={t("eloGap")}
-                    value={
-                      <span className={stats.eloGap >= 0 ? "text-emerald-600" : "text-rose-600"}>
-                        {stats.eloGap > 0 ? "+" : ""}{stats.eloGap.toFixed(2)}
-                      </span>
-                    }
-                    description={t("eloGapHint", { surface: stats.surface })}
-                  />
-                  <KpiCard
-                    icon={<Target className="h-4 w-4" />}
-                    label={t("confidence")}
-                    value={`${(stats.confidence * 100).toFixed(2)}%`}
-                    description={t("confidenceHint", { lo: stats.ic[0].toFixed(2), hi: stats.ic[1].toFixed(2) })}
-                    badge={`IC 95%`}
-                  />
+                  {match.synthetic || match.insufficientData ? (
+                    <KpiCard
+                      icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
+                      label={t("centralProb")}
+                      value={<span className="text-sm text-amber-600 dark:text-amber-400 font-medium">Indisponible</span>}
+                      description={<span>Données prédictives non disponibles pour ce match en direct</span>}
+                    />
+                  ) : (
+                    <>
+                      <KpiCard
+                        icon={<Activity className="h-4 w-4" />}
+                        label={t("centralProb")}
+                        value={
+                          <div className="flex items-baseline gap-2">
+                            <span style={{ color: playerA.color }}>{probA.toFixed(2)}%</span>
+                            <span className="text-sm font-semibold text-muted-foreground">/</span>
+                            <span style={{ color: playerB.color }}>{probB.toFixed(2)}%</span>
+                          </div>
+                        }
+                        description={
+                          <span>
+                            {t("centralProbHint", { a: playerA.shortName, b: playerB.shortName })}
+                          </span>
+                        }
+                        trend={probA > probB ? "up" : "down"}
+                      />
+                      <KpiCard
+                        icon={<Scale className="h-4 w-4" />}
+                        label={t("eloGap")}
+                        value={
+                          <span className={stats.eloGap >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                            {stats.eloGap > 0 ? "+" : ""}{stats.eloGap.toFixed(2)}
+                          </span>
+                        }
+                        description={t("eloGapHint", { surface: stats.surface })}
+                      />
+                      <KpiCard
+                        icon={<Target className="h-4 w-4" />}
+                        label={t("confidence")}
+                        value={`${(stats.confidence * 100).toFixed(2)}%`}
+                        description={t("confidenceHint", { lo: stats.ic[0].toFixed(2), hi: stats.ic[1].toFixed(2) })}
+                        badge={`IC 95%`}
+                      />
+                    </>
+                  )}
                 </div>
 
                 <PlayerVsBlock
@@ -321,7 +340,10 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   probB={probB}
                   playerSlot={(p) => (
                     <span className="text-[10px] text-muted-foreground">
-                      #{p.rank} · Elo {p.elo?.toFixed(0) ?? "N/A"}
+                      {match.synthetic || match.insufficientData
+                        ? "Données indisponibles"
+                        : `#${p.rank} · Elo ${p.elo?.toFixed(0) ?? "N/A"}`
+                      }
                     </span>
                   )}
                 />
@@ -350,6 +372,37 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     level: 95,
                   })}
                   variant="v2"
+                />
+
+                {/* Avertissement données insuffisantes (cartes synthétiques live) */}
+                {(match.synthetic || match.insufficientData) && (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="text-xs text-amber-700 dark:text-amber-300">
+                      <p className="font-semibold">{t("insufficientDataTitle") ?? "Données insuffisantes"}</p>
+                      <p className="mt-0.5 text-amber-600/80 dark:text-amber-400/80">
+                        {t("insufficientDataHint") ?? "Ce match est en direct et ne dispose pas encore des données prédictives complètes (ELO, probabilités, intervalles de confiance). Les valeurs affichées sont des placeholders."}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Revue de presse — 3+ prédictions de la presse spécialisée */}
+                <PressReviewPanel
+                  matchId={match.id}
+                  playerA={playerA.name}
+                  playerB={playerB.name}
+                  tournament={match.tournament}
+                  surface={stats.surface}
+                />
+
+                {/* Analyse éditoriale — résumé expert d'un média de référence */}
+                <EditorialInsight
+                  sport="tennis"
+                  matchId={match.id}
+                  playerA={playerA.name}
+                  playerB={playerB.name}
+                  variant="full"
                 />
 
                 {/* Highlights du dernier match joué (H2H > joueurs > tournoi) */}

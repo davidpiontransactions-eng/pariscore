@@ -76,7 +76,7 @@ const NAME_TO_PHOTO: Map<string, string> = (() => {
  */
 function diceBearInitials(name: string): string {
   const seed = encodeURIComponent(name.trim() || "Tennis Player");
-  return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundType=gradientLinear&fontWeight=600`;
+  return `https://api.dicebear.com/9.x/initials/svg?seed=${seed}&backgroundType=gradientLinear&fontWeight=600`;
 }
 
 /**
