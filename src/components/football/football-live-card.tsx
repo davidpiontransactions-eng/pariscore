@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FootballMatch } from "@/lib/football-data";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { CORNER_OVER_MIN_PROB } from "@/lib/football-predictions";
 import { WatchButton } from "@/components/shared/watch-button";
 
 // ─── Sparkline xG Live ───────────────────────────────────────────────────
@@ -165,8 +166,8 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
   if (p.over15Prob !== undefined && p.over15Prob >= 70) {
     topBadges.push({ key: "o15", label: `O1.5 ${p.over15Prob}%`, isTop: p.over15Prob >= 75 });
   }
-  if (p.bestCornerOver && p.bestCornerOver.overProb >= 65) {
-    topBadges.push({ key: "cor", label: `Corn. O${p.bestCornerOver.line}`, isTop: p.bestCornerOver.overProb >= 75 });
+  if (p.bestCornerOver && p.bestCornerOver.over65Prob >= CORNER_OVER_MIN_PROB) {
+    topBadges.push({ key: "cor", label: `Corn. O6.5 ${p.bestCornerOver.over65Prob}%`, isTop: p.bestCornerOver.over65Prob >= 75 });
   }
 
   // xG differential for badge (nullable — distinguishes "no data" from true zero)

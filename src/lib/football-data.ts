@@ -216,7 +216,7 @@ export type Prediction = {
   /** P(buts ≤ 3) — probabilité qu'il y ait 3 buts ou moins. */
   under35Prob?: number;
   /** Meilleure ligne de corners over avec probabilité ≥ 65%. */
-  bestCornerOver?: { line: number; overProb: number };
+  bestCornerOver?: { line: number; overProb: number; over65Prob: number };
   /** Barres de comparaison d'équipe (max 4) avec probabilités domicile/extérieur. */
   teamComparisons?: { label: string; homeProb: number; awayProb: number }[];
   /** Stats saisonnières par métrique avec moyennes Home/Away + rangs ligue (null = indisponible, jamais simulé). */
@@ -348,7 +348,7 @@ export const LIVE_MATCHES: FootballMatch[] = [
       doubleChance: { selection: "1X", prob: 85 },
       over15Prob: 88,
       under35Prob: 62,
-      bestCornerOver: { line: 9.5, overProb: 68 },
+      bestCornerOver: { line: 9.5, overProb: 68, over65Prob: 88 },
       teamComparisons: [
         { label: "Forme récente", homeProb: 72, awayProb: 55 },
         { label: "Attaque", homeProb: 68, awayProb: 48 },
@@ -413,7 +413,7 @@ export const LIVE_MATCHES: FootballMatch[] = [
       doubleChance: { selection: "12", prob: 75 },
       over15Prob: 92,
       under35Prob: 50,
-      bestCornerOver: { line: 10.5, overProb: 65 },
+      bestCornerOver: { line: 10.5, overProb: 65, over65Prob: 89 },
       teamComparisons: [
         { label: "Forme récente", homeProb: 70, awayProb: 68 },
         { label: "Attaque", homeProb: 65, awayProb: 72 },
@@ -445,7 +445,7 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       doubleChance: { selection: "1X", prob: 79 },
       over15Prob: 84,
       under35Prob: 68,
-      bestCornerOver: { line: 8.5, overProb: 66 },
+      bestCornerOver: { line: 8.5, overProb: 66, over65Prob: 85 },
       teamComparisons: [
         { label: "Forme récente", homeProb: 58, awayProb: 52 },
         { label: "Attaque", homeProb: 55, awayProb: 45 },
@@ -607,7 +607,7 @@ export const PREMATCH_MATCHES: FootballMatch[] = [
       doubleChance: { selection: "X2", prob: 60 },
       over15Prob: 90,
       under35Prob: 52,
-      bestCornerOver: { line: 10.5, overProb: 67 },
+      bestCornerOver: { line: 10.5, overProb: 67, over65Prob: 88 },
       teamComparisons: [
         { label: "Forme récente", homeProb: 62, awayProb: 68 },
         { label: "Attaque", homeProb: 58, awayProb: 65 },

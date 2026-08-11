@@ -117,24 +117,42 @@ export function computeUnder35(
 
   return 0;
 }
-
 /**
- * Calcule la meilleure ligne de corners over avec une probabilité ≥ 65%.
+ * Calcule la meilleure ligne de corners over avec une probabilité ≥ CORNER_OVER_MIN_PROB%.
  *
  * Pour chaque ligne candidate (7.5 → 11.5), estime le total de corners attendu
  * via une approximation de Poisson et retient la ligne dont P(over) est
- * la plus proche de 65% sans passer en dessous. Si aucune ligne n'atteint 65%,
+ * la plus proche de 55% sans passer en dessous. Si aucune ligne n'atteint 55%,
  * retourne celle avec la probabilité la plus élevée.
+ *
+ * Retourne aussi `over65Prob` : P(over 6.5) — le marché fixe affiché sur les
+ * cards football (méthode « Corneriste » du legacy).
+ *
+ * λ = somme des moyennes réelles (fallback 55/45 de la moyenne de ligue).
+ * Sans AUCUNE donnée réelle de corners, utilise `estimatedLambda` (estimation
+ * match-spécifique depuis les xG / over25Prob) si fourni — sinon moyenne de ligue.
  */
 export function computeCornerOver(
   homeCornersAvg: number,
   awayCornersAvg: number,
   leagueAvgCorners: number,
-): { line: number; overProb: number } {
-  const totalCorners = (homeCornersAvg || leagueAvgCorners * 0.55) +
-    (awayCornersAvg || leagueAvgCorners * 0.45);
+  estimatedLambda?: number,
+): { line: number; overProb: number; over65Prob: number } {
+  const hasRealData = homeCornersAvg > 0 || awayCornersAvg > 0;
 
-  const lambda = totalCorners > 0 ? totalCorners : 10;
+  let lambda: number;
+  if (hasRealData) {
+    lambda = (homeCornersAvg || leagueAvgCorners * 0.55) +
+      (awayCornersAvg || leagueAvgCorners * 0.45);
+  } else if (estimatedLambda != null && Number.isFinite(estimatedLambda) && estimatedLambda > 0) {
+    lambda = estimatedLambda;
+  } else {
+    lambda = leagueAvgCorners;
+  }
+  if (!(lambda > 0) || !Number.isFinite(lambda)) lambda = 10;
+
+  // P(over 6.5) — seuil fixe, pourcent entier
+  const over65Prob = Math.round(poissonOver(6, lambda));
 
   const lines = [7.5, 8.5, 9.5, 10.5, 11.5];
   const candidates: { line: number; overProb: number }[] = lines.map((line) => {
@@ -143,19 +161,19 @@ export function computeCornerOver(
     return { line, overProb };
   });
 
-  // Chercher la ligne ≥ 65% la plus proche de 65%
+  // Chercher la ligne ≥ CORNER_OVER_MIN_PROB% la plus proche du seuil
   let bestAbove: { line: number; overProb: number } | null = null;
   for (const c of candidates) {
-    if (c.overProb >= 65) {
+    if (c.overProb >= CORNER_OVER_MIN_PROB) {
       if (!bestAbove || c.overProb < bestAbove.overProb) {
         bestAbove = c;
       }
     }
   }
 
-  if (bestAbove) return bestAbove;
+  if (bestAbove) return { ...bestAbove, over65Prob };
 
-  return candidates.reduce((best, c) => (c.overProb > best.overProb ? c : best));
+  return { ...candidates.reduce((best, c) => (c.overProb > best.overProb ? c : best)), over65Prob };
 }
 
 type LiveStatsTeam = NonNullable<BSDFootballMatch["live_stats"]>["home"];
@@ -323,6 +341,9 @@ export function computeXGd(
 /** Constante de fallback : moyenne de corners par match dans les 5 grands championnats. */
 const LEAGUE_AVG_CORNERS = 10;
 
+/** Seuil minimal de P(over) pour retenir une ligne de corners (abaissé de 65% à 55%). */
+export const CORNER_OVER_MIN_PROB = 55;
+
 /**
  * Enrichit une prédiction existante avec les métriques calculées à partir
  * des données brutes BSD.
@@ -357,20 +378,24 @@ export function enrichPrediction(
     prediction.over25Prob != null ? Math.max(0, 100 - prediction.over25Prob + 12) : undefined,
   );
 
-  // ── Métriques dérivées des stats live uniquement ──
-  // Pour les matchs pre-match (live_stats absent), NE PAS générer de comparatifs/season stats
-  // ni de corner over — les valeurs fallback (55/45, moyennes de ligue fixes) sont identiques
-  // pour TOUS les matchs et produisent une duplication trompeuse des métriques.
-  if (bsdMatch.live_stats) {
-    // Corner over — utilise les corners live comme proxy si disponible
-    const homeCorners = bsdMatch.live_stats.home?.corner_kicks;
-    const awayCorners = bsdMatch.live_stats.away?.corner_kicks;
-    enriched.bestCornerOver = computeCornerOver(
-      homeCorners ?? 0,
-      awayCorners ?? 0,
-      LEAGUE_AVG_CORNERS,
-    );
+  // ── Corner over — TOUJOURS calculé ──
+  // Avec corners live : moyennes réelles des équipes. Sans (pre-match) : λ estimé
+  // depuis over25Prob (proxy xG, méthode « Corneriste » du legacy) — variable par
+  // match, contrairement à une constante de ligue identique pour tous les matchs.
+  const homeCorners = bsdMatch.live_stats?.home?.corner_kicks;
+  const awayCorners = bsdMatch.live_stats?.away?.corner_kicks;
+  enriched.bestCornerOver = computeCornerOver(
+    homeCorners ?? 0,
+    awayCorners ?? 0,
+    LEAGUE_AVG_CORNERS,
+    prediction.over25Prob != null ? clamp(4 + prediction.over25Prob * 0.1, 7, 14) : undefined,
+  );
 
+  // ── Métriques dérivées des stats live uniquement ──
+  // Pour les matchs pre-match (live_stats absent), NE PAS générer de comparatifs
+  // ni de season stats — les valeurs fallback (55/45) sont identiques pour TOUS les
+  // matchs et produisent une duplication trompeuse des métriques.
+  if (bsdMatch.live_stats) {
     // Comparaisons d'équipe (stats live)
     enriched.teamComparisons = computeTeamComparisons(
       bsdMatch.live_stats.home,
@@ -384,8 +409,8 @@ export function enrichPrediction(
       bsdMatch.live_stats.away,
     );
   }
-  // else: teamComparisons/teamSeasonStats/bestCornerOver restent undefined —
-  // l'UI masque le bloc « Comparatifs » via {p.teamComparisons && ...}
+  // else: teamComparisons/teamSeasonStats restent undefined — l'UI masque le bloc
+  // « Comparatifs » via {p.teamComparisons && ...} (bestCornerOver, lui, est toujours calculé)
 
   // xG metrics
   enriched.xGa = computeXGa(

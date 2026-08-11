@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { FootballMatch } from "@/lib/football-data";
 import { ALL_FOOTBALL_MATCHES } from "@/lib/football-data";
+import { COUNTRY_TO_CODE } from "@/lib/bsd-football-fetcher";
 
 type FootballResponse = {
   matches: FootballMatch[];
@@ -17,7 +18,9 @@ const POLL_INTERVAL_MS = 60_000;
 function transformV2(m: any): FootballMatch {
   return {
     id: m.id,
-    league: m.league ?? { id: "?", name: "?", country: "?", countryCode: "??", logo: "🌐", tier: "T2" },
+    league: m.league
+      ? { ...m.league, countryCode: m.league.countryCode ?? COUNTRY_TO_CODE[m.league.country] ?? "EU" }
+      : { id: "?", name: "?", country: "?", countryCode: "??", logo: "🌐", tier: "T2" },
     round: m.round ?? "?",
     scheduledAt: m.scheduledAt,
     home: { id: m.home.id, name: m.home.name, shortName: m.home.shortName, logo: m.home.logo ?? "", color: m.home.color ?? "#666", form: [], rank: 99 },

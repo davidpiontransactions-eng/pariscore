@@ -166,19 +166,22 @@ describe("computeCornerOver", () => {
   test("with high corner teams (total avg 12) returns high line (10.5 or 11.5)", () => {
     const result = computeCornerOver(6, 6, 10);
     // lambda = 12, lines prob: 7.5≈91%, 8.5≈84%, 9.5≈76%, 10.5≈67%, 11.5≈56%
-    // best above 65% and closest to 65% = 10.5
+    // best above 55% and closest to 55% = 10.5
     expect(result.line).toBe(10.5);
-    expect(result.overProb).toBeGreaterThanOrEqual(65);
+    expect(result.overProb).toBeGreaterThanOrEqual(55);
     expect(result.overProb).toBeLessThanOrEqual(70);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(90);
   });
 
   test("with low corner teams (total avg 7) returns low line (7.5 or 8.5)", () => {
     const result = computeCornerOver(3.5, 3.5, 10);
     // lambda = 7, lines prob: 7.5≈42%, 8.5≈28%, etc.
-    // none above 65%, so returns max prob line = 7.5
+    // none above 55%, so returns max prob line = 7.5
     expect([7.5, 8.5]).toContain(result.line);
     expect(result.overProb).toBeGreaterThanOrEqual(0);
-    expect(result.overProb).toBeLessThan(65);
+    expect(result.overProb).toBeLessThan(55);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(50);
+    expect(result.over65Prob).toBeLessThanOrEqual(60);
   });
 
   test("uses home advantage fallback (55/45) when team averages are zero", () => {
@@ -190,13 +193,24 @@ describe("computeCornerOver", () => {
     expect(result.overProb).toBeGreaterThanOrEqual(0);
     expect(Number.isNaN(result.overProb)).toBe(false);
     expect(Number.isFinite(result.overProb)).toBe(true);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(80);
+  });
+
+  test("with elevated corners (total avg 13) returns line 11.5 at ~64% (seuil abaissé à 55)", () => {
+    const result = computeCornerOver(6.5, 6.5, 10);
+    // lambda = 13 : 10.5≈74%, 11.5≈64% — l'ancien seuil 65% aurait pris 10.5,
+    // le seuil 55% prend 11.5 (64% > 55, plus proche du seuil)
+    expect(result.line).toBe(11.5);
+    expect(result.overProb).toBeGreaterThanOrEqual(55);
+    expect(result.overProb).toBeLessThan(65);
   });
 
   test("with very high corners (total avg 20) returns highest line (11.5)", () => {
     const result = computeCornerOver(10, 10, 10);
-    // lambda = 20, all lines should have prob above 65%
+    // lambda = 20, all lines should have prob above 55%
     expect(result.line).toBe(11.5);
-    expect(result.overProb).toBeGreaterThanOrEqual(65);
+    expect(result.overProb).toBeGreaterThanOrEqual(55);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(99);
   });
 
   test("returned probability is never NaN (edge case: all zeros with zero league avg)", () => {
@@ -207,6 +221,30 @@ describe("computeCornerOver", () => {
     expect(Number.isFinite(result.overProb)).toBe(true);
     expect(result.overProb).toBeGreaterThanOrEqual(0);
     expect(result.line).toBeGreaterThanOrEqual(7.5);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(80);
+  });
+
+  test("uses match-specific estimated lambda when no real corner data", () => {
+    // home=0, away=0, estimatedLambda=12 → λ=12 (identique au cas 6+6 réels)
+    const result = computeCornerOver(0, 0, 10, 12);
+    expect(result.line).toBe(10.5);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(90);
+    expect(result.over65Prob).toBeLessThanOrEqual(100);
+  });
+
+  test("real corner data wins over estimated lambda", () => {
+    // home=6, away=6 réels → λ=12 ; l'estimation 5 doit être ignorée
+    const result = computeCornerOver(6, 6, 10, 5);
+    expect(result.line).toBe(10.5);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(90);
+  });
+
+  test("invalid estimated lambda falls back to league average", () => {
+    // NaN → λ = leagueAvg = 10 → meilleure ligne = 8.5 (67%), over65 ≈ 87
+    const result = computeCornerOver(0, 0, 10, NaN);
+    expect(result.line).toBe(8.5);
+    expect(result.over65Prob).toBeGreaterThanOrEqual(80);
+    expect(Number.isNaN(result.over65Prob)).toBe(false);
   });
 });
 
@@ -449,6 +487,7 @@ describe("enrichPrediction", () => {
     expect(enriched.bestCornerOver).toBeDefined();
     expect(enriched.bestCornerOver!.line).toBeGreaterThanOrEqual(7.5);
     expect(enriched.bestCornerOver!.overProb).toBeGreaterThanOrEqual(0);
+    expect(enriched.bestCornerOver!.over65Prob).toBeGreaterThanOrEqual(0);
 
     // Team comparisons
     expect(enriched.teamComparisons).toBeDefined();
@@ -491,13 +530,12 @@ describe("enrichPrediction", () => {
 
     expect(enriched.bestCornerOver).toBeDefined();
     expect(enriched.bestCornerOver!.overProb).toBeGreaterThanOrEqual(0);
+    expect(enriched.bestCornerOver!.over65Prob).toBeGreaterThanOrEqual(0);
 
-    expect(enriched.teamComparisons).toBeDefined();
-    expect(enriched.teamComparisons!).toHaveLength(4);
-    for (const item of enriched.teamComparisons!) {
-      expect(item.homeProb).toBe(55);
-      expect(item.awayProb).toBe(45);
-    }
+    // Sans live_stats, pas de comparatifs/season stats (fallback 55/45 identique
+    // pour tous les matchs → duplication trompeuse, décision documentée dans enrichPrediction)
+    expect(enriched.teamComparisons).toBeUndefined();
+    expect(enriched.teamSeasonStats).toBeUndefined();
 
     // Original fields preserved
     expect(enriched.homeProb).toBe(50);

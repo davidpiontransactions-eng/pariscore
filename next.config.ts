@@ -37,6 +37,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "betwatch.fr" },
       // BSD — logos / photos si exposés
       { protocol: "https", hostname: "sports.bzzoiro.com" },
+      // Imgur — certains logos équipes fournis par BSD (ex: Bundesliga 2)
+      { protocol: "https", hostname: "i.imgur.com" },
       // Wikipedia / Commons — fallback logos ligues (CC)
       { protocol: "https", hostname: "upload.wikimedia.org" },
       // Placeholder local (fallback ultime)

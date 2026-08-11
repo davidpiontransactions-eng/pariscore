@@ -9,7 +9,7 @@ const BSD_IMAGE_ROOT = "https://sports.bzzoiro.com";
 const FLAG = (code: string) => String.fromCodePoint(0x1F1E6 + code.charCodeAt(0) - 65, 0x1F1E6 + code.charCodeAt(1) - 65);
 
 /** Mapping pays (nom complet) → code ISO 2 lettres pour le drapeau. */
-const COUNTRY_TO_CODE: Record<string, string> = {
+export const COUNTRY_TO_CODE: Record<string, string> = {
   England: "GB",
   France: "FR",
   Spain: "ES",

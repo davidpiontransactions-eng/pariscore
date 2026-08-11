@@ -164,9 +164,9 @@ export function FootballMatchCard({
     if (p.bestCornerOver) {
       badges.push({
         key: "corners",
-        label: `Corn. O${p.bestCornerOver.line} (${p.bestCornerOver.overProb}%)`,
-        prob: p.bestCornerOver.overProb,
-        isTop: p.bestCornerOver.overProb >= 75,
+        label: `Corn. O6.5 (${p.bestCornerOver.over65Prob}%)`,
+        prob: p.bestCornerOver.over65Prob,
+        isTop: p.bestCornerOver.over65Prob >= 75,
       });
     }
     return badges;
