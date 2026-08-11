@@ -47065,7 +47065,7 @@ if (pathname.startsWith('/api/v1/deep-analysis-stream/') && req.method === 'GET'
   // v12.67 (bd c0qo) — Function Calling enrichment en parallele (opt-in env)
   const [bsdEnrichRes, pressCtxRes, fcEnrichRes] = await Promise.allSettled([
     enrichGeminiContextWithBSD(matchId, match, forceRefresh),
-    fetchPressContext(match.home_team, match.away_team),
+    fetchPressContext(match.home_team, match.away_team, match.sport || 'football'),
     enrichGeminiContextWithFunctionCalling(matchId, match, forceRefresh),
   ]);
   const bsdEnrichBlock = bsdEnrichRes.status === 'fulfilled' ? (bsdEnrichRes.value || '') : '';

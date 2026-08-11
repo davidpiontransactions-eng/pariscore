@@ -91,7 +91,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
-## Football (`src/components/football/`) — 11 components
+## Football (`src/components/football/`) — 12 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -99,6 +99,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-live-card | football-live-card.tsx | Carte match live football |
 | football-match-card | football-match-card.tsx | Carte de match football |
 | football-match-detail-dialog | football-match-detail-dialog.tsx | Dialogue analyse détaillée d'un match foot |
+| FootballPressReviewWidget | FootballPressReviewWidget.tsx | Widget « Revue de Presse & Pronostics Médias » (3+ sources, consensus 1X2/Over/BTTS) |
 | football-tab-content | football-tab-content.tsx | Contenu de l'onglet football |
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | LiveDecisionMomentumWidget | LiveDecisionMomentumWidget.tsx | Widget live : indice de pression [-100,+100], alerte but imminent, marchés live |
