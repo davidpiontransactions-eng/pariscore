@@ -182,7 +182,7 @@ export function ApiDocsDialog() {
     return ordered;
   }, [spec]);
 
-  const baseUrl = spec?.servers?.[0]?.url ?? "https://setpoint.example";
+  const baseUrl = spec?.servers?.[0]?.url ?? "https://pariscore.fr";
   const endpointCount = spec ? Object.keys(spec.paths).length : 0;
 
   return (

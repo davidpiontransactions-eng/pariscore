@@ -71,7 +71,7 @@ class TennisErrorBoundary extends Component<
     return { error };
   }
   componentDidCatch(error: Error, info: { componentStack?: string }) {
-    console.error("[SetPoint CRASH]", error.message, error.stack);
+    console.error("[PariScore CRASH]", error.message, error.stack);
     if (typeof window !== "undefined") {
       (window as any).__SETPOINT_CRASH = {
         error: error.message,
@@ -495,7 +495,7 @@ return [...matches, ...synthetic];
               location: { "@type": "Place", name: match.tournament },
               homeTeam: { "@type": "SportsTeam", name: match.playerA.name, athlete: { "@type": "Person", name: match.playerA.name } },
               awayTeam: { "@type": "SportsTeam", name: match.playerB.name, athlete: { "@type": "Person", name: match.playerB.name } },
-              url: `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://setpoint.example"}/`,
+              url: `${process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://pariscore.fr"}/`,
             }),
           }}
         />

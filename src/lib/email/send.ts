@@ -72,7 +72,7 @@ export type SendResult =
  */
 export async function sendEmail(msg: EmailMessage): Promise<SendResult> {
   const transporter = await getTransporter();
-  const from = process.env.SMTP_FROM ?? "noreply@setpoint.example";
+  const from = process.env.SMTP_FROM ?? "noreply@pariscore.fr";
 
   if (!transporter) {
     // Graceful degradation: log to console so the demo works without SMTP.
@@ -119,14 +119,14 @@ export function buildValueBetEmail(params: {
   const edge = Math.round(probA - impliedProbA);
   const subject = `🎾 Value bet détecté — ${playerA} vs ${playerB}`;
   const text = [
-    `Value bet détecté par SetPoint`,
+    `Value bet détecté par PariScore`,
     ``,
     `Match : ${playerA} vs ${playerB}`,
-    `Modèle SetPoint : ${playerA} à ${probA}%`,
+    `Modèle PariScore : ${playerA} à ${probA}%`,
     `Bookmaker ${bookmaker} : cote ${decimalA.toFixed(2)} (probabilité implicite ${impliedProbA}%)`,
     `Edge estimé : +${edge} points`,
     ``,
-    `Cette alerte vous est envoyée parce que vous avez activé les alertes email SetPoint.`,
+    `Cette alerte vous est envoyée parce que vous avez activé les alertes email PariScore.`,
     `Vous pouvez vous désabonner à tout moment depuis l'application.`,
   ].join("\n");
   const html = `
@@ -136,12 +136,12 @@ export function buildValueBetEmail(params: {
         <strong>${playerA}</strong> vs <strong>${playerB}</strong>
       </p>
       <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 16px 0;">
-        <tr><td style="padding: 8px 0; color: #6b7280;">Modèle SetPoint (${playerA})</td><td style="padding: 8px 0; text-align: right; font-weight: 600;">${probA}%</td></tr>
+        <tr><td style="padding: 8px 0; color: #6b7280;">Modèle PariScore (${playerA})</td><td style="padding: 8px 0; text-align: right; font-weight: 600;">${probA}%</td></tr>
         <tr><td style="padding: 8px 0; color: #6b7280;">${bookmaker} (cote ${decimalA.toFixed(2)})</td><td style="padding: 8px 0; text-align: right; font-weight: 600;">${impliedProbA}%</td></tr>
         <tr style="border-top: 1px solid #e5e7eb;"><td style="padding: 12px 0; color: #059669; font-weight: 600;">Edge estimé</td><td style="padding: 12px 0; text-align: right; font-weight: 700; color: #059669;">+${edge} pts</td></tr>
       </table>
       <p style="font-size: 12px; color: #9ca3af; margin: 24px 0 0;">
-        Alerte envoyée par SetPoint. Vous pouvez vous désabonner à tout moment depuis l'application.
+        Alerte envoyée par PariScore. Vous pouvez vous désabonner à tout moment depuis l'application.
       </p>
     </div>
   `;

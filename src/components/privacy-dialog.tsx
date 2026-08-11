@@ -164,7 +164,7 @@ export function PrivacyDialog() {
                 {tPrivacy("contact.body")}
               </p>
               <p className="mt-1.5 font-mono text-xs text-emerald-600 dark:text-emerald-400">
-                dpo@setpoint.example
+                dpo@pariscore.fr
               </p>
             </section>
 

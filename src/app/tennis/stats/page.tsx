@@ -19,7 +19,7 @@ export default function TennisStatsPage() {
 
 export function generateMetadata() {
   return {
-    title: "Statistiques joueurs — Leaderboard ATP/WTA | SetPoint",
+    title: "Statistiques joueurs — Leaderboard ATP/WTA | PariScore",
     description:
       "Classements statistiques tennis type ATP : Serve Rating, Return Rating, " +
       "Under Pressure Rating, par surface et par période.",

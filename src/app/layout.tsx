@@ -26,7 +26,7 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
  */
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-  "https://setpoint.example";
+  "https://pariscore.fr";
 
 /** Map next-intl locales (`fr`, `en`) to OpenGraph locale tags (`fr_FR`, `en_US`). */
 const OG_LOCALE: Record<string, string> = {
@@ -42,7 +42,7 @@ const OG_LOCALE: Record<string, string> = {
 const webAppJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "SetPoint — Tennis Prematch",
+  name: "PariScore — Tennis Prematch",
   description:
     "Probabilités de victoire tennis avec modèle Elo+Forme+Surface+H2H",
   url: SITE_URL,

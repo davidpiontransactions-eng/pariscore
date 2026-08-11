@@ -70,13 +70,13 @@ function buildDigestEmail(bets: DigestBet[]): {
 } {
   const count = bets.length;
   const top5 = bets.slice(0, 5);
-  const subject = `🎾 SetPoint — ${count} value bet${
+  const subject = `🎾 PariScore — ${count} value bet${
     count > 1 ? "s" : ""
   } aujourd'hui`;
 
   // Plain-text fallback
   const textLines: string[] = [
-    `SetPoint Daily Digest — ${count} value bet${
+    `PariScore Daily Digest — ${count} value bet${
       count > 1 ? "s" : ""
     } aujourd'hui`,
     "",
@@ -97,7 +97,7 @@ function buildDigestEmail(bets: DigestBet[]): {
   }
   textLines.push("");
   textLines.push(
-    "Ce digest vous est envoyé parce que vous avez activé le digest quotidien SetPoint."
+    "Ce digest vous est envoyé parce que vous avez activé le digest quotidien PariScore."
   );
   textLines.push(
     "Vous pouvez vous désabonner à tout moment depuis l'application."
@@ -142,7 +142,7 @@ function buildDigestEmail(bets: DigestBet[]): {
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #059669; margin: 0 0 16px;">🎾 SetPoint Daily Digest</h2>
+      <h2 style="color: #059669; margin: 0 0 16px;">🎾 PariScore Daily Digest</h2>
       <p style="font-size: 15px; color: #374151; margin: 0 0 12px;">
         <strong>${count}</strong> value bet${
     count > 1 ? "s" : ""
@@ -150,7 +150,7 @@ function buildDigestEmail(bets: DigestBet[]): {
       </p>
       ${tableHtml}
       <p style="font-size: 12px; color: #9ca3af; margin: 24px 0 0;">
-        Digest envoyé par SetPoint. Vous pouvez vous désabonner à tout moment depuis l'application.
+        Digest envoyé par PariScore. Vous pouvez vous désabonner à tout moment depuis l'application.
       </p>
     </div>
   `;

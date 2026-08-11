@@ -57,7 +57,7 @@ function isDigestPayload(v: unknown): v is DigestPayload {
 }
 
 function buildDigestTitle(count: number): string {
-  return `SetPoint — ${count} value bet${count > 1 ? "s" : ""} aujourd'hui`;
+  return `PariScore — ${count} value bet${count > 1 ? "s" : ""} aujourd'hui`;
 }
 
 function buildDigestBody(bets: DigestBet[]): string {

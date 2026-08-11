@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(" ");
   return {
-    title: `${displayName} — Profil ATP/WTA | SetPoint`,
+    title: `${displayName} — Profil ATP/WTA | PariScore`,
     description: `Statistiques, forme récente, Elo surface et SPS de ${displayName}.`,
     robots: { index: true, follow: true },
   };

@@ -1,6 +1,6 @@
 {
-  "name": "SetPoint — Tennis Prematch",
-  "short_name": "SetPoint",
+  "name": "PariScore — Tennis Prematch",
+  "short_name": "PariScore",
   "description": "Probabilités de victoire tennis, modèle Elo+Forme+Surface+H2H",
   "start_url": "/",
   "display": "standalone",

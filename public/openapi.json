@@ -1,21 +1,21 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "SetPoint — Tennis Prematch API",
+    "title": "PariScore — Tennis Prematch API",
     "version": "1.0.0",
-    "description": "Public REST API for SetPoint, a tennis prematch prediction app. Returns matches with Elo+Forme+Surface+H2H probabilities, multi-bookmaker odds (vig-removed), H2H history, Elo progression, and push/email value-bet alert subscriptions.\n\nBase URL: `https://setpoint.example`. All endpoints are JSON in / JSON out.",
+    "description": "Public REST API for PariScore, a tennis prematch prediction app. Returns matches with Elo+Forme+Surface+H2H probabilities, multi-bookmaker odds (vig-removed), H2H history, Elo progression, and push/email value-bet alert subscriptions.\n\nBase URL: `https://pariscore.fr`. All endpoints are JSON in / JSON out.",
     "contact": {
-      "name": "SetPoint",
-      "email": "contact@setpoint.example"
+      "name": "PariScore",
+      "email": "contact@pariscore.fr"
     },
     "license": {
       "name": "Proprietary",
-      "url": "https://setpoint.example/license"
+      "url": "https://pariscore.fr/license"
     }
   },
   "servers": [
     {
-      "url": "https://setpoint.example",
+      "url": "https://pariscore.fr",
       "description": "Production"
     },
     {
@@ -478,7 +478,7 @@
             "type": "string",
             "format": "email",
             "description": "Email address to subscribe / unsubscribe",
-            "example": "fan@setpoint.example"
+            "example": "fan@pariscore.fr"
           }
         }
       },
@@ -852,7 +852,7 @@
               "schema": { "$ref": "#/components/schemas/EmailSubscription" },
               "examples": {
                 "default": {
-                  "value": { "email": "fan@setpoint.example" }
+                  "value": { "email": "fan@pariscore.fr" }
                 }
               }
             }
@@ -914,7 +914,7 @@
               "schema": { "$ref": "#/components/schemas/EmailSubscription" },
               "examples": {
                 "default": {
-                  "value": { "email": "fan@setpoint.example" }
+                  "value": { "email": "fan@pariscore.fr" }
                 }
               }
             }

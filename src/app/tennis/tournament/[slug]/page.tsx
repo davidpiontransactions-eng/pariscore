@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join(" ");
   return {
-    title: `${displayName} — Tableau & matchs | SetPoint`,
+    title: `${displayName} — Tableau & matchs | PariScore`,
     description: `Matchs en direct, résultats et à venir pour ${displayName}.`,
     robots: { index: true, follow: true },
   };
