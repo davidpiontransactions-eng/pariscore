@@ -69,6 +69,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | player-statline | player-statline.tsx | Ligne de stats compacte sous le nom |
 | player-vs-block | player-vs-block.tsx | Layout duel VS avec avatars, drapeaux, barre prob |
 | point-timeline | point-timeline.tsx | Timeline horizontale des points joués |
+| press-review-panel | press-review-panel.tsx | Revue de presse tennis (3+ sources, consensus, LLM fallback) |
 | probability-bar | probability-bar.tsx | Barre de probabilité (décomposition) |
 | probability-ring | probability-ring.tsx | Anneau de probabilité (SVG) |
 | quick-add-ring | quick-add-ring.tsx | Anneau d'ajout rapide au bet-slip |
