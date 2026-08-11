@@ -98,6 +98,8 @@ function ConsensusBar({
       </div>
     </div>
   );
+}
+
 /** Carte d'une source media. */
 function SourceCard({
   source, homeTeam, awayTeam,
@@ -181,6 +183,4 @@ function PressReviewSkeleton({ className }: { className?: string }) {
 function shortName(n: string): string {
   const parts = n.trim().split(/\s+/);
   return parts.length > 1 ? parts[parts.length - 1] : n;
-}
-
 }

@@ -256,6 +256,8 @@ function extractSummary(text: string, home: string, away: string): string {
     return l.includes(hShort) || l.includes(aShort);
   });
   const chosen = (rel.length >= 2 ? rel : sentences).slice(0, 3);
+  if (chosen.length === 0) return `Analyse tactique du match ${home} vs ${away}.`;
+  return chosen.map(function(s) { return s.trim(); }).join(". ") + ".";
 }
 
 // ---- Consensus ----
