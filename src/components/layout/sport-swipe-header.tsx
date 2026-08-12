@@ -14,6 +14,7 @@ const TAB_ORDER = [
   "wnba",
   "cycling",
   "f1",
+  "baseball",
 ] as const;
 
 type SportSwipeHeaderProps = {

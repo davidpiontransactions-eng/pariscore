@@ -10,6 +10,7 @@ import {
   Crosshair,
   Target,
   Trophy,
+  Disc3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSportBg, type SportId } from "@/lib/sport-images";
@@ -31,6 +32,7 @@ const TABS: TabDef[] = [
   { id: "wnba", label: "WNBA", icon: Trophy, accent: "bg-purple-500" },
   { id: "cycling", label: "Cycling", icon: Bike, accent: "bg-amber-500" },
   { id: "f1", label: "F1", icon: Gauge, accent: "bg-red-600" },
+  { id: "baseball", label: "Baseball", icon: Disc3, accent: "bg-amber-500" },
 ] as const;
 
 type SportTabsProps = {

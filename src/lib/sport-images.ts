@@ -7,7 +7,16 @@
 
 const UNSPLASH_BASE = "https://images.unsplash.com";
 
-export type SportId = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1";
+export type SportId =
+  | "tennis"
+  | "football"
+  | "cs2"
+  | "mma"
+  | "nba"
+  | "wnba"
+  | "cycling"
+  | "f1"
+  | "baseball";
 
 // Visuels par sport — sélectionnés pour palette sombre compatible dark mode.
 const SPORT_HERO: Record<SportId, string> = {
@@ -19,6 +28,11 @@ const SPORT_HERO: Record<SportId, string> = {
   wnba: `${UNSPLASH_BASE}/photo-1546519638-68e109498f28?auto=format&fit=crop&w=1200&q=80`,
   cycling: `${UNSPLASH_BASE}/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=1200&q=80`,
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1200&q=80`,
+  // Baseball : pas d'image identifiée Unsplash aujourd'hui — on réutilise
+  // le hero football pour ne pas générer une URL devinée (règle anti-guess URL).
+  // Mémo loop 7 : remplacer par un vrai ID Unsplash baseball à la prochaine
+  // passe design.
+  baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
 };
 
 // Version basse résolution pour thumbnails / arrière-plans floutés.
@@ -31,6 +45,7 @@ const SPORT_BG: Record<SportId, string> = {
   wnba: `${UNSPLASH_BASE}/photo-1546519638-68e109498f28?auto=format&fit=crop&w=800&q=60&blur=20`,
   cycling: `${UNSPLASH_BASE}/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=800&q=60&blur=20`,
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=60&blur=20`,
+  baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
 };
 
 // Accents de couleur par sport (pour fallbacks et overlays).
@@ -43,6 +58,7 @@ const SPORT_ACCENT: Record<SportId, string> = {
   wnba: "#a855f7",
   cycling: "#f59e0b",
   f1: "#dc2626",
+  baseball: "#f59e0b",
 };
 
 /** URL hero haute résolution pour un sport donné. */

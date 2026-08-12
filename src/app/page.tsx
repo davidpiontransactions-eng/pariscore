@@ -33,6 +33,7 @@ import { NbaTabContent } from "@/components/nba/nba-tab-content";
 import { WnbaTabContent } from "@/components/wnba/wnba-tab-content";
 import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
+import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
@@ -59,7 +60,7 @@ type DetailRequest =
   | { sport: "tennis"; match: TennisMatch }
   | { sport: "football"; match: FootballMatch };
 
-type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1";
+type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1" | "baseball";
 
 class PageErrorBoundary extends Component<
   { children: ReactNode },
@@ -332,6 +333,7 @@ function HomeInner() {
         {activeTab === "wnba" && <WnbaTabContent />}
         {activeTab === "cycling" && <CyclingTabContent />}
         {activeTab === "f1" && <F1TabContent />}
+        {activeTab === "baseball" && <BaseballTabContent />}
 
         {/* Sections déplacées : Meilleurs Matchs + Prochains Matchs + Gemini */}
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-6">
