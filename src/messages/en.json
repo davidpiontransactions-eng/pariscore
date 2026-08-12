@@ -270,6 +270,11 @@
     "title": "Full analysis",
     "subtitle": "{tournament} · {round} · Full analysis",
     "streamWatch": "Watch live",
+    "streamOnFrance": "Broadcast in France on {channel}",
+    "statsTournamentTitle": "Tournament averages · {tournament}",
+    "statsTournamentSource": "Tournament average",
+    "statsSeasonHardSource": "Hard-court average {year}",
+    "statsMatches": "{n} matches",
     "highlightsPrevious": {
       "tourPrevious": "Previous round",
       "lastMatch": "Last match",

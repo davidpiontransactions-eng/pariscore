@@ -2,14 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { BSDMatch, BSDOdds, BSDH2H } from "@/lib/bsd-tennis-service";
-
-/**
- * Extrait l'ID BSD numérique depuis un match.id formaté "bsd-33405".
- */
-function parseBsdId(matchId: string): number | null {
-  const num = parseInt(matchId.replace(/^bsd-/, ""), 10);
-  return Number.isFinite(num) ? num : null;
-}
+import { parseBsdId } from "@/lib/bsd-id";
 
 export type BSDMatchDetail = {
   match: BSDMatch | null;

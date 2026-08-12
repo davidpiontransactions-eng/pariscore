@@ -270,6 +270,11 @@
     "title": "Analyse complète",
     "subtitle": "{tournament} · {round} · Analyse complète",
     "streamWatch": "Visionner en direct",
+    "streamOnFrance": "Diffusé en France sur {channel}",
+    "statsTournamentTitle": "Stats moyennes du tournoi · {tournament}",
+    "statsTournamentSource": "Moyenne du tournoi",
+    "statsSeasonHardSource": "Moyenne Surface Dur {year}",
+    "statsMatches": "{n} matchs",
     "highlightsPrevious": {
       "tourPrevious": "Tour précédent",
       "lastMatch": "Dernier match",

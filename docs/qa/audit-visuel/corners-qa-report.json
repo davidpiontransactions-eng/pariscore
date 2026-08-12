@@ -1,0 +1,36 @@
+[
+  {
+    "view": "desktop",
+    "hasCorn": false,
+    "cornerBadges": [],
+    "cornerCardCount": 0,
+    "kairat": false,
+    "liveHeader": true,
+    "o15Present": false,
+    "loadingElems": 0,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "%o\n\n%s Error: Invalid src prop (https://i.imgur.com/5jy3Gfr.png) on `next/image`, hostname \"i.imgur.com\" is not configured under images in your `next.",
+      "[PariScore CRASH] Invalid src prop (https://i.imgur.com/5jy3Gfr.png) on `next/image`, hostname \"i.imgur.com\" is not configured under images in your `n"
+    ],
+    "pageErrors": []
+  },
+  {
+    "view": "mobile",
+    "hasCorn": false,
+    "cornerBadges": [],
+    "cornerCardCount": 0,
+    "kairat": false,
+    "liveHeader": true,
+    "o15Present": false,
+    "loadingElems": 0,
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+      "%o\n\n%s Error: Invalid src prop (https://i.imgur.com/5jy3Gfr.png) on `next/image`, hostname \"i.imgur.com\" is not configured under images in your `next.",
+      "[PariScore CRASH] Invalid src prop (https://i.imgur.com/5jy3Gfr.png) on `next/image`, hostname \"i.imgur.com\" is not configured under images in your `n"
+    ],
+    "pageErrors": []
+  }
+]

@@ -238,10 +238,40 @@ scripts/vps_scripts/
 dist/
 docs/mobile/graphify-studio/
 docs/mobile/graph-architecture.svg
-android/keystore.properties
+android/
+
+# =============================================================================
+# QA debug artifacts (sessions de QA/verif — jamais de production)
+# =============================================================================
+playwright-report/
+playwright.qa.config.ts
+qa-diag*.ps1
+qa-upstream.ps1
+qa-*.json
+pw-*.txt
+list-err.txt
+list-out.txt
+tests-list.txt
+scripts/tmp-rss-*.ts
+scripts/verify-seo-fix.shkeystore.properties
 icons/
 test-results/
 
 
 android/
+
+# =============================================================================
+# QA debug artifacts (sessions de QA/verif — jamais de production)
+# =============================================================================
+playwright-report/
+playwright.qa.config.ts
+qa-diag*.ps1
+qa-upstream.ps1
+qa-*.json
+pw-*.txt
+list-err.txt
+list-out.txt
+tests-list.txt
+scripts/tmp-rss-*.ts
+scripts/verify-seo-fix.sh
 

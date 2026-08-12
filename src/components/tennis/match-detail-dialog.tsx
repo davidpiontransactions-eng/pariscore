@@ -26,6 +26,7 @@ import {
 } from "recharts";
 import { Calendar, Trophy, Scale, Activity, Target, Check, X, Zap, Swords, Loader2, AlertTriangle } from "lucide-react";
 import type { TennisMatch } from "@/lib/tennis-data";
+import type { PlayerTournamentStats } from "@/lib/tournament-stats-engine";
 import { OddsComparator } from "./odds-comparator";
 import { LastMatchesList } from "./last-matches-list";
 import { KpiCard } from "./kpi-card";
@@ -42,7 +43,8 @@ import { usePreviousRoundHighlights } from "@/hooks/use-previous-round-highlight
 import { PreviousRoundHighlightsWidget } from "@/components/tennis/previous-match-highlights-widget";
 import { useBrowserTimeZone, formatInTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
-import { WatchButton } from "@/components/shared/watch-button";
+import { FrenchBroadcasterBadge } from "@/components/tennis/french-broadcaster-badge";
+import { useTournamentStats } from "@/hooks/use-tournament-stats";
 import { PressReviewPanel } from "@/components/tennis/press-review-panel";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 
@@ -74,9 +76,11 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
   unit?: string;
   higherIsBetter?: boolean;
 }) {
-  const va = valueA ?? 0;
-  const vb = valueB ?? 0;
-  const pct = va + vb > 0 ? (va / (va + vb)) * 100 : 50;
+  const hasA = valueA !== null && valueA !== undefined;
+  const hasB = valueB !== null && valueB !== undefined;
+  const va = hasA ? (valueA as number) : 0;
+  const vb = hasB ? (valueB as number) : 0;
+  const pct = hasA || hasB ? (va + vb > 0 ? (va / (va + vb)) * 100 : 50) : 0;
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/15 p-3">
@@ -85,7 +89,7 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
       </div>
       <div className="flex items-center justify-between gap-2">
         <span className="text-base font-bold" style={{ color: pct >= 50 ? undefined : undefined }}>
-          {va}{unit ?? ""}
+          {hasA ? va : "—"}{hasA ? unit ?? "" : ""}
         </span>
         <div className="flex h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
           <div
@@ -94,7 +98,7 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
           />
         </div>
         <span className="text-base font-bold">
-          {vb}{unit ?? ""}
+          {hasB ? vb : "—"}{hasB ? unit ?? "" : ""}
         </span>
       </div>
     </div>
@@ -103,11 +107,11 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
 
 export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const t = useTranslations("detail");
-  const streamWatchLabel = t("streamWatch");
   const locale = useLocale();
   const browserTz = useBrowserTimeZone();
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
   const { match: bsdMatch, odds: bsdOdds, h2h: bsdH2h, isLoading: bsdLoading } = useBSDMatchDetail(match?.id ?? null);
+  const { data: tournamentStats, isLoading: tournamentStatsLoading } = useTournamentStats(match?.id ?? null);
   const { data: lmHighlights, isLoading: lmHighlightsLoading } = useLastMatchHighlights(
     match ? match.playerA.name : null,
     match ? match.playerB.name : null,
@@ -196,6 +200,64 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     { label: "Break pts sauvés %", valueA: b.p1_break_points_saved_pct, valueB: b.p2_break_points_saved_pct, unit: "%" },
   ] : [];
 
+  // Stats moyennes PAR TOURNOI (édition en cours + fallback saison sur dur)
+  const aNumericId = parseInt(playerA.id.replace(/^bsd-/, ""), 10);
+  const bNumericId = parseInt(playerB.id.replace(/^bsd-/, ""), 10);
+  const tsPlayers = tournamentStats?.players ?? [];
+  const tsA = tsPlayers.find((p) => p.playerId === aNumericId) ?? tsPlayers[0] ?? null;
+  const tsB = tsPlayers.find((p) => p.playerId === bNumericId) ?? tsPlayers[1] ?? null;
+  const hasTournamentStats = !!tournamentStats && !!tsA && !!tsB &&
+    (tsA.matchesPlayed > 0 || tsB.matchesPlayed > 0);
+  // Stats du match en cours — affichées uniquement si au moins une valeur réelle
+  // (évite l'écran de zéros bouchonnés pour les matchs à venir).
+  const liveMatchHasStats = serveStats.some((s) => s.valueA !== null || s.valueB !== null);
+  const nameColorOf = (ts: PlayerTournamentStats): { name: string; color: string } => {
+    if (ts.playerId === aNumericId) return { name: playerA.shortName, color: playerA.color };
+    if (ts.playerId === bNumericId) return { name: playerB.shortName, color: playerB.color };
+    return tsPlayers.indexOf(ts) === 0
+      ? { name: playerA.shortName, color: playerA.color }
+      : { name: playerB.shortName, color: playerB.color };
+  };
+
+  const tournamentServeRows = hasTournamentStats && tsA && tsB
+    ? [
+        { label: "Aces", valueA: tsA.acesPerMatch, valueB: tsB.acesPerMatch },
+        { label: "Doubles fautes", valueA: tsA.doubleFaultsPerMatch, valueB: tsB.doubleFaultsPerMatch, higherIsBetter: false },
+        { label: "1er service %", valueA: tsA.firstServePct, valueB: tsB.firstServePct, unit: "%" },
+        { label: "1er service gagné %", valueA: tsA.firstServeWonPct, valueB: tsB.firstServeWonPct, unit: "%" },
+        { label: "2e service gagné %", valueA: tsA.secondServeWonPct, valueB: tsB.secondServeWonPct, unit: "%" },
+        { label: "Break pts sauvés %", valueA: tsA.breakPointsSavedPct, valueB: tsB.breakPointsSavedPct, unit: "%" },
+      ]
+    : [];
+
+  const matchStatsSection = liveMatchHasStats ? (
+    <>
+      <div className="mb-3 flex items-center gap-2">
+        <Zap className="h-4 w-4 text-emerald-500" />
+        <span className="text-xs font-semibold text-muted-foreground">
+          Statistiques de service · ce match
+        </span>
+        {b?.sets_detail && b.sets_detail.length > 0 && (
+          <span className="ml-auto text-[10px] text-muted-foreground">
+            Sets : {b.sets_detail.map((s) => `${s.p1}-${s.p2}`).join(", ")}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {serveStats.map((s) => (
+          <StatCell
+            key={s.label}
+            label={s.label}
+            valueA={s.valueA}
+            valueB={s.valueB}
+            unit={s.unit}
+            higherIsBetter={s.higherIsBetter}
+          />
+        ))}
+      </div>
+    </>
+  ) : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] w-[95vw] max-w-[min(90vw,56rem)] overflow-hidden p-0">
@@ -247,13 +309,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
           </DialogDescription>
 
           <div className="mt-2 flex justify-center">
-            <WatchButton
-              sport="tennis"
-              home={playerA.name}
-              away={playerB.name}
-              label={streamWatchLabel}
-              variant="default"
-            />
+            <FrenchBroadcasterBadge tournament={match.tournament} />
           </div>
         </DialogHeader>
 
@@ -428,39 +484,94 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                 />
               </TabsContent>
 
-              {/* Onglet Stats — données détaillées BSD V2 */}
+              {/* Onglet Stats — moyennes par tournoi (éditions en cours + fallback saison) */}
               <TabsContent value="stats" className="mt-4 space-y-3">
-                {bsdLoading ? (
+                {tournamentStatsLoading || bsdLoading ? (
                   <div className="flex items-center justify-center py-12 text-muted-foreground">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     <span className="text-sm">Chargement des stats…</span>
                   </div>
-                ) : serveStats.length > 0 ? (
+                ) : hasTournamentStats ? (
                   <>
-                    <div className="mb-3 flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-emerald-500" />
-                      <span className="text-xs font-semibold text-muted-foreground">
-                        Statistiques de service
-                      </span>
-                      {b?.sets_detail && b.sets_detail.length > 0 && (
-                        <span className="ml-auto text-[10px] text-muted-foreground">
-                          Sets : {b.sets_detail.map((s) => `${s.p1}-${s.p2}`).join(", ")}
+                    <div className="rounded-lg border border-border/60 bg-muted/10 p-3">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-emerald-500" />
+                        <span className="text-xs font-semibold text-muted-foreground">
+                          {t("statsTournamentTitle", {
+                            tournament: tournamentStats?.tournamentName ?? match.tournament,
+                          })}
                         </span>
-                      )}
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {tsA && (
+                          <div className="rounded-lg border border-border/50 bg-muted/15 p-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold" style={{ color: nameColorOf(tsA).color }}>
+                                {nameColorOf(tsA).name}
+                              </span>
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-[9px] font-semibold",
+                                  tsA.source === "tournament"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                                )}
+                              >
+                                {tsA.source === "tournament"
+                                  ? t("statsTournamentSource")
+                                  : t("statsSeasonHardSource", { year: tournamentStats?.season ?? new Date().getFullYear() })}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[10px] text-muted-foreground">
+                              {t("statsMatches", { n: tsA.matchesPlayed })}
+                            </div>
+                          </div>
+                        )}
+                        {tsB && (
+                          <div className="rounded-lg border border-border/50 bg-muted/15 p-2.5">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold" style={{ color: nameColorOf(tsB).color }}>
+                                {nameColorOf(tsB).name}
+                              </span>
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-[9px] font-semibold",
+                                  tsB.source === "tournament"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                                )}
+                              >
+                                {tsB.source === "tournament"
+                                  ? t("statsTournamentSource")
+                                  : t("statsSeasonHardSource", { year: tournamentStats?.season ?? new Date().getFullYear() })}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-[10px] text-muted-foreground">
+                              {t("statsMatches", { n: tsB.matchesPlayed })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {tournamentServeRows.map((s) => (
+                          <StatCell
+                            key={s.label}
+                            label={s.label}
+                            valueA={s.valueA}
+                            valueB={s.valueB}
+                            unit={s.unit}
+                            higherIsBetter={s.higherIsBetter}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {serveStats.map((s) => (
-                        <StatCell
-                          key={s.label}
-                          label={s.label}
-                          valueA={s.valueA}
-                          valueB={s.valueB}
-                          unit={s.unit}
-                          higherIsBetter={s.higherIsBetter}
-                        />
-                      ))}
-                    </div>
+
+                    {matchStatsSection}
                   </>
+                ) : matchStatsSection ? (
+                  matchStatsSection
                 ) : (
                   <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
                     <Swords className="mr-2 h-4 w-4" />

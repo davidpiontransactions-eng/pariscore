@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 51 components
+## Tennis (`src/components/tennis/`) — 52 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -40,6 +40,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | current-game-score | current-game-score.tsx | Score du jeu en cours (0/15/30/40/Av.) |
 | featured-matches-marquee | featured-matches-marquee.tsx | Bandeau défilant des matchs à la une |
 | form-dots | form-dots.tsx | Forme récente en points colorés (● W / ○ L) |
+| french-broadcaster-badge | french-broadcaster-badge.tsx | Badge « Diffusé en France sur … » — remplace Watch live (mapping tournoi → chaîne) |
 | kpi-card | kpi-card.tsx | Carte KPI générique (3-zone) |
 | last-match-highlight | last-match-highlight.tsx | Chip « Dernier match » — lien YouTube vers le dernier highlight TennisTV du joueur |
 | last-match-highlights-widget | last-match-highlights-widget.tsx | Mini-lecteurs YouTube du dernier match joué (H2H > joueurs > tournoi) |

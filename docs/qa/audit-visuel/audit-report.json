@@ -1,0 +1,143 @@
+[
+  {
+    "page": "home",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 ()",
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "pageErrors": [],
+    "overflow": 0,
+    "articles": 37,
+    "brokenImgs": 96,
+    "buttons": 516,
+    "headings": [
+      "H1:Bonjour",
+      "H1:Tennis · Prematch",
+      "H3:N. OSAKA",
+      "H3:E. RYBAKINA",
+      "H3:B. BENCIC",
+      "H3:C. GAUFF",
+      "H3:J. MENŠIK",
+      "H3:B. SHELTON",
+      "H3:D. MERIDA",
+      "H3:L. TIEN",
+      "H3:S. SIERRA",
+      "H3:A. ITO",
+      "H3:E. LYS",
+      "H3:K. KAWA",
+      "H3:X. WANG",
+      "H3:B. ANDREESCU",
+      "H3:M. GIRON",
+      "H3:H. ROCHA",
+      "H3:E. ARANGO",
+      "H3:A. SASNOVICH",
+      "H3:M. JR",
+      "H3:S. SAKELLARIDIS",
+      "H3:N. MEJIA",
+      "H3:J. FEARNLEY",
+      "H3:D. SALKOVA",
+      "H3:A. BLINKOVA",
+      "H3:C. LEE",
+      "H3:P. KUDERMETOVA",
+      "H3:N. PODOROSKA",
+      "H3:E. SEIDEL",
+      "H3:S. SHIMABUKURO",
+      "H3:H. DELLIEN",
+      "H3:A. VUKIĆ",
+      "H3:D. BLANCH",
+      "H3:H. DART",
+      "H3:M. UCHIJIMA",
+      "H3:M. LAJAL",
+      "H3:D. SVRČINA",
+      "H3:E. ALEXANDROVA",
+      "H3:E. SVITOLINA",
+      "H3:R16P9",
+      "H3:S. PANKIN",
+      "H3:M. CECCHINATO",
+      "H3:R16P6",
+      "H3:R. BRANCACCIO",
+      "H3:M. MÖLLER",
+      "H3:C. CANIATO",
+      "H3:F. PASSARO",
+      "H3:R16P3",
+      "H3:V. SACHKO",
+      "H3:D. GALAN",
+      "H3:R16P12",
+      "H3:J. SCHWAERZLER",
+      "H3:A. ANDRADE",
+      "H3:R16P9",
+      "H3:M. MRVA",
+      "H3:F. ROMANO",
+      "H3:R16P8",
+      "H3:R16P11",
+      "H3:H. MATSUOKA",
+      "H3:L. RATTI",
+      "H3:K. SULTANOV",
+      "H3:N. MCDONALD",
+      "H3:E. RIBEIRO",
+      "H3:U. BLANCHET",
+      "H3:R. SAKAMOTO",
+      "H3:D. SANCHIS",
+      "H3:J. JONES",
+      "H3:F. BALSHAW",
+      "H3:D. MILAVSKY",
+      "H3:K. KAWADA",
+      "H3:H. KAWANAK",
+      "H3:K. HASHIMOTO",
+      "H3:J. HAHN",
+      "H3:Y. MOTOKURA",
+      "H3:K. MILBURN",
+      "H3:⭐ MEILLEURS MATCHS DU JOUR",
+      "H3:⏱️ 10 PROCHAINS MATCHS",
+      "H3:🤖 GEMINI AI INSIGHT",
+      "H2:Nous respectons votre vie privée"
+    ]
+  },
+  {
+    "page": "home-mobile",
+    "fatal": "TimeoutError: page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://pariscore.fr/\", waiting until \"networkidle\"\u001b[22m\n"
+  },
+  {
+    "page": "football",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "pageErrors": [],
+    "overflow": 0,
+    "articles": 0,
+    "brokenImgs": 0,
+    "buttons": 6,
+    "headings": [
+      "H1:404",
+      "H2:Nous respectons votre vie privée"
+    ]
+  },
+  {
+    "page": "football-mobile",
+    "consoleErrors": [
+      "Failed to load resource: the server responded with a status of 404 ()"
+    ],
+    "pageErrors": [],
+    "overflow": 0,
+    "articles": 0,
+    "brokenImgs": 0,
+    "buttons": 6,
+    "headings": [
+      "H1:404",
+      "H2:Nous respectons votre vie privée"
+    ]
+  },
+  {
+    "page": "tennis-stats",
+    "consoleErrors": [],
+    "pageErrors": [],
+    "overflow": 0,
+    "articles": 0,
+    "brokenImgs": 28,
+    "buttons": 23,
+    "headings": [
+      "H1:Statistiques joueurs",
+      "H2:Nous respectons votre vie privée"
+    ]
+  }
+]

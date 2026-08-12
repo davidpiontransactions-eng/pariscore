@@ -10,8 +10,9 @@
  *    5. `pariscore-vault-weekly`     : revue hebdo modèles (lundi 08:00 UTC)
  *    6. `pariscore-cron-cycling`     : scraper cyclisme cyclingstage.com 3×/jour (Tour)
  *    7. `pariscore-cron-sps`         : SPS tennis (Surface PowerScore) 2×/jour
- *    8. `pariscore-cron-dr`          : scraper DR tennis TennisAbstract quotidien 04:00 UTC
+*    8. `pariscore-cron-dr`          : scraper DR tennis TennisAbstract quotidien 04:00 UTC
  *    9. `pariscore-cron-gemini`      : pré-calcul analyses Gemini matchs du jour (2h, 06:00-18:00 UTC)
+ *   10. `pariscore-cron-press-review`: pré-chauffe cache revue de presse (quotidien 07:00 UTC, Zero-LLM)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -248,6 +249,32 @@ module.exports = {
       },
       error_file: 'logs/cron-gemini.err.log',
       out_file: 'logs/cron-gemini.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Revue de Presse (pré-chauffe cache 24h, Zero-LLM) ===
+      // Appelle la route Next.js GET /api/ai/press-review-cron (servie par
+      // `pariscore-next`, port 3005) qui pré-remplit .cache/press-review/
+      // pour les matchs du jour (tennis + football). Pipeline 100 % gratuit :
+      // RSS Google News + connecteurs ciblés + synthèse déterministe, aucun
+      // appel Gemini/LLM (fallback LLM supprimé).
+      // Le token CRON_SECRET est lu depuis .env par scripts/cron-press-review.sh.
+      name: 'pariscore-cron-press-review',
+      script: 'scripts/cron-press-review.sh',
+      interpreter: 'bash',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 7 * * *', // quotidien à 07:00 UTC (cache chaud pour la journée)
+      autorestart: false,        // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '256M',
+      env: {
+        NODE_ENV: 'production',
+        PRESS_CRON_URL: 'http://localhost:3005', // pariscore-next (Next.js standalone)
+      },
+      error_file: 'logs/cron-press-review.err.log',
+      out_file: 'logs/cron-press-review.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
