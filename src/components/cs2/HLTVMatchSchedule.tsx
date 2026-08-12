@@ -4,8 +4,9 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Map as MapIcon, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { hltvStars, teamInitials, type Cs2Match } from "@/lib/cs2/types";
-import { getFlagUrl } from "@/lib/flag-utils";
+import { hltvStars, type Cs2Match } from "@/lib/cs2/types";
+import { displayTeamName } from "@/lib/cs2/format";
+import { TeamLogo } from "./TeamLogo";
 
 type Props = {
   matches: Cs2Match[];
@@ -53,30 +54,11 @@ function StarRating({ count }: { count: number }) {
   );
 }
 
-function TeamLogo({ name, logo, country }: { name: string; logo?: string | null; country?: string | null }) {
-  return (
-    <div className="relative shrink-0">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10">
-        {logo ? (
-          <img src={logo} alt={name} className="h-7 w-7 object-contain" />
-        ) : (
-          <span className="text-xs font-bold text-zinc-400">{teamInitials(name)}</span>
-        )}
-      </div>
-      {country && (
-        <img
-          src={getFlagUrl(country, 16, 12)}
-          alt={country}
-          className="absolute -bottom-1 -right-1 h-3 w-4 rounded-sm object-cover ring-1 ring-black"
-        />
-      )}
-    </div>
-  );
-}
-
 function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; onSelect: () => void }) {
   const isLive = match.is_live || match.status === "live";
   const stars = matchStars(match);
+  const t1Name = displayTeamName(match.team1.name);
+  const t2Name = displayTeamName(match.team2.name);
 
   return (
     <motion.button
@@ -132,7 +114,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
       {/* Équipe 1 */}
       <div className="flex flex-1 items-center justify-end gap-2">
         <div className="min-w-0 text-right">
-          <p className="truncate text-sm font-semibold text-white">{match.team1.name}</p>
+          <p className="truncate text-sm font-semibold text-white">{t1Name}</p>
           {match.team1.hltv_rank ? (
             <p className="text-[10px] text-zinc-600">#{match.team1.hltv_rank}</p>
           ) : null}
@@ -155,7 +137,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
       <div className="flex flex-1 items-center gap-2">
         <TeamLogo name={match.team2.name} logo={match.team2.logo} country={match.team2.country} />
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-white">{match.team2.name}</p>
+          <p className="truncate text-sm font-semibold text-white">{t2Name}</p>
           {match.team2.hltv_rank ? (
             <p className="text-[10px] text-zinc-600">#{match.team2.hltv_rank}</p>
           ) : null}

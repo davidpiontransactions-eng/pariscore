@@ -532,7 +532,7 @@ function binomial(n: number, k: number): number {
 export function predictMatch(input: PredictionInput): MatchPrediction {
   const pool = input.mapPool ?? [...ACTIVE_MAP_POOL];
   const bestOf = input.bestOf;
-  const nSims = input.simulations ?? 10_000;
+  const nSims = Math.max(1, input.simulations ?? 10_000);
   const seed = input.seed ?? 42;
 
   // 1. Inférence du veto → cartes probables dans l'ordre

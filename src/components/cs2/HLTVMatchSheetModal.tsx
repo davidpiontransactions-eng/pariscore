@@ -11,8 +11,9 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, Map as MapIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { hltvStars, teamInitials, canonMapName, type Cs2Match } from "@/lib/cs2/types";
-import { getFlagUrl } from "@/lib/flag-utils";
+import { hltvStars, canonMapName, type Cs2Match } from "@/lib/cs2/types";
+import { displayTeamName } from "@/lib/cs2/format";
+import { TeamLogo } from "./TeamLogo";
 import { useCs2Enrichment } from "@/hooks/use-cs2-enrichment";
 import { buildCs2Prediction, buildCs2TeamModels } from "@/lib/cs2/predict-adapter";
 import {
@@ -30,7 +31,7 @@ type Props = {
 };
 
 function pct(x: number | null | undefined): string {
-  if (x == null) return "—";
+  if (x == null || !Number.isFinite(x)) return "—";
   return `${Math.round(x * 100)}%`;
 }
 
@@ -44,27 +45,6 @@ function roleFromRating(r: number | null | undefined): string {
   if (r >= 1.15) return "Star";
   if (r >= 1.0) return "Rifler";
   return "Support";
-}
-
-function TeamCrest({ name, logo, country }: { name: string; logo?: string | null; country?: string | null }) {
-  return (
-    <div className="relative shrink-0">
-      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
-        {logo ? (
-          <img src={logo} alt={name} className="h-10 w-10 object-contain" />
-        ) : (
-          <span className="text-sm font-bold text-zinc-400">{teamInitials(name)}</span>
-        )}
-      </div>
-      {country && (
-        <img
-          src={getFlagUrl(country, 20, 15)}
-          alt={country}
-          className="absolute -bottom-1 -right-1 h-3.5 w-5 rounded-sm object-cover ring-1 ring-black"
-        />
-      )}
-    </div>
-  );
 }
 
 // ─── Veto ────────────────────────────────────────────────────────────────────
@@ -108,24 +88,36 @@ function VetoList({ order, t1Name, t2Name }: { order: VetoStep[]; t1Name: string
   return (
     <div className="space-y-1">
       {order.map((s) => {
-        const actor = s.actor === "team1" ? t1Name : t2Name;
-        const isPick = s.action === "pick";
         const isDecider = s.action === "decider";
+        const isPick = s.action === "pick";
+
+        if (isDecider) {
+          // La 7e map est la carte restante — pas "choisie" par une équipe.
+          return (
+            <div
+              key={s.step}
+              className="flex items-center gap-2 rounded-md bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300"
+            >
+              <span className="w-5 shrink-0 font-mono text-zinc-500">{s.step}.</span>
+              <span className="text-zinc-400">Map décisive :</span>
+              <span className="font-bold">{s.map}</span>
+            </div>
+          );
+        }
+
+        const actor = s.actor === "team1" ? t1Name : t2Name;
         return (
           <div
             key={s.step}
             className={cn(
               "flex items-center gap-2 rounded-md px-3 py-1.5 text-xs",
-              isPick && "bg-[#00E676]/10 text-[#00E676]",
-              !isPick && !isDecider && "bg-red-500/5 text-red-300/80",
-              isDecider && "bg-amber-500/10 text-amber-300",
+              isPick ? "bg-[#00E676]/10 text-[#00E676]" : "bg-red-500/5 text-red-300/80",
             )}
           >
             <span className="w-5 shrink-0 font-mono text-zinc-500">{s.step}.</span>
             <span className="font-semibold">{actor}</span>
             <span className="text-zinc-400">{vetoActionLabel(s.action)}</span>
             <span className="font-bold">{s.map}</span>
-            {isDecider && <span className="text-zinc-500">(decider)</span>}
           </div>
         );
       })}
@@ -207,6 +199,8 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
     ? Math.max(hltvStars(match.team1.hltv_rank), hltvStars(match.team2.hltv_rank))
     : 0;
   const isLive = Boolean(match?.is_live || match?.status === "live");
+  const dT1 = displayTeamName(match?.team1.name);
+  const dT2 = displayTeamName(match?.team2.name);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -240,12 +234,12 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex flex-1 items-center justify-end gap-3">
                   <div className="text-right">
-                    <p className="text-base font-bold text-white">{match.team1.name}</p>
+                    <p className="text-base font-bold text-white">{dT1}</p>
                     {match.team1.hltv_rank ? (
                       <p className="text-[11px] text-zinc-500">HLTV #{match.team1.hltv_rank}</p>
                     ) : null}
                   </div>
-                  <TeamCrest name={match.team1.name} logo={match.team1.logo} country={match.team1.country} />
+                  <TeamLogo name={dT1} logo={match.team1.logo} country={match.team1.country} size="lg" />
                 </div>
 
                 <div className="shrink-0 text-center">
@@ -264,9 +258,9 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                 </div>
 
                 <div className="flex flex-1 items-center gap-3">
-                  <TeamCrest name={match.team2.name} logo={match.team2.logo} country={match.team2.country} />
+                  <TeamLogo name={dT2} logo={match.team2.logo} country={match.team2.country} size="lg" />
                   <div>
-                    <p className="text-base font-bold text-white">{match.team2.name}</p>
+                    <p className="text-base font-bold text-white">{dT2}</p>
                     {match.team2.hltv_rank ? (
                       <p className="text-[11px] text-zinc-500">HLTV #{match.team2.hltv_rank}</p>
                     ) : null}
@@ -296,7 +290,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                 <h3 className="mb-2 text-sm font-semibold text-white">Veto — pick &amp; ban</h3>
                 {vetoSteps.length > 0 ? (
                   <>
-                    <VetoList order={vetoSteps} t1Name={match!.team1.name} t2Name={match!.team2.name} />
+                    <VetoList order={vetoSteps} t1Name={dT1} t2Name={dT2} />
                     <p className="mt-1.5 text-[10px] text-zinc-600">
                       {isRealVeto
                         ? "Séquence veto réelle (BSD map_picks)."
@@ -329,10 +323,10 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                       </div>
                       <div className="mt-1.5 flex justify-between text-xs">
                         <span className="text-orange-400">
-                          {match!.team1.name} <b>{pct(prediction.winProb1)}</b>
+                          {dT1} <b>{pct(prediction.winProb1)}</b>
                         </span>
                         <span className="text-blue-400">
-                          <b>{pct(prediction.winProb2)}</b> {match!.team2.name}
+                          <b>{pct(prediction.winProb2)}</b> {dT2}
                         </span>
                       </div>
                     </div>
@@ -385,7 +379,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                           Handicap rounds {prediction.predictedMaps[0].map} :{" "}
                         </span>
                         <span className="font-semibold text-zinc-300">
-                          {match!.team1.name}{" "}
+                          {dT1}{" "}
                           {prediction.predictedMaps[0].handicapRounds >= 0 ? "+" : ""}
                           {prediction.predictedMaps[0].handicapRounds.toFixed(1)}
                         </span>
@@ -399,7 +393,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                         {prediction.handicapMaps.map((h, i) => (
                           <div key={i} className="flex-1 rounded-md bg-white/[0.02] px-3 py-1.5 text-xs">
                             <span className="font-semibold text-zinc-300">
-                              {h.side === "team1" ? match!.team1.name : match!.team2.name} {h.line}
+                              {h.side === "team1" ? dT1 : dT2} {h.line}
                             </span>
                             <span className="ml-2 text-zinc-500">{pct(h.prob)}</span>
                           </div>
@@ -438,8 +432,8 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                   <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
                     <Mr12Row
                       winners={mr12Projection.winners}
-                      t1Name={match!.team1.name}
-                      t2Name={match!.team2.name}
+                      t1Name={dT1}
+                      t2Name={dT2}
                     />
                     <p className="mt-2 text-center font-mono text-sm tabular-nums text-zinc-300">
                       {mr12Projection.score1} – {mr12Projection.score2}
@@ -462,7 +456,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                     <section key={side}>
                       <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
                         <span className={cn("h-2.5 w-2.5 rounded-full", side === "t1" ? "bg-orange-500" : "bg-blue-500")} />
-                        {team.name}
+                        {displayTeamName(team.name)}
                         {team.roster_strength != null && (
                           <span className="text-[11px] font-normal text-zinc-500">
                             force {team.roster_strength}/100
