@@ -5,6 +5,8 @@ export type Cs2Team = {
   id?: number | null;
   name: string;
   logo?: string | null;
+  /** URL locale servie par le cache disque VPS (/cache/cs2-teams/…) — prioritaire sur logo. */
+  logo_local?: string | null;
   country?: string | null;
   hltv_rank?: number | null;
   elo_rating?: number | null;

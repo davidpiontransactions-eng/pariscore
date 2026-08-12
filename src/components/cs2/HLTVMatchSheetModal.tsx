@@ -13,7 +13,7 @@ import { Loader2, Map as MapIcon, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hltvStars, canonMapName, type Cs2Match } from "@/lib/cs2/types";
 import { displayTeamName } from "@/lib/cs2/format";
-import { TeamLogo } from "./TeamLogo";
+import { TeamLogoImage } from "./TeamLogoImage";
 import { useCs2Enrichment } from "@/hooks/use-cs2-enrichment";
 import { buildCs2Prediction, buildCs2TeamModels } from "@/lib/cs2/predict-adapter";
 import {
@@ -239,7 +239,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                       <p className="text-[11px] text-zinc-500">HLTV #{match.team1.hltv_rank}</p>
                     ) : null}
                   </div>
-                  <TeamLogo name={dT1} logo={match.team1.logo} country={match.team1.country} size="lg" />
+                  <TeamLogoImage name={dT1} logo={match.team1.logo} logo_local={match.team1.logo_local} country={match.team1.country} size="lg" />
                 </div>
 
                 <div className="shrink-0 text-center">
@@ -258,7 +258,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                 </div>
 
                 <div className="flex flex-1 items-center gap-3">
-                  <TeamLogo name={dT2} logo={match.team2.logo} country={match.team2.country} size="lg" />
+                  <TeamLogoImage name={dT2} logo={match.team2.logo} logo_local={match.team2.logo_local} country={match.team2.country} size="lg" />
                   <div>
                     <p className="text-base font-bold text-white">{dT2}</p>
                     {match.team2.hltv_rank ? (

@@ -2,11 +2,11 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Map as MapIcon, Star } from "lucide-react";
+import { Clock, Map as MapIcon, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { hltvStars, type Cs2Match } from "@/lib/cs2/types";
 import { displayTeamName } from "@/lib/cs2/format";
-import { TeamLogo } from "./TeamLogo";
+import { TeamLogoImage } from "./TeamLogoImage";
 
 type Props = {
   matches: Cs2Match[];
@@ -85,17 +85,8 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         <StarRating count={stars} />
       </div>
 
-      {/* Format */}
-      <div className="hidden w-14 shrink-0 sm:block">
-        {match.best_of ? (
-          <span className="inline-flex rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">
-            BO{match.best_of}
-          </span>
-        ) : null}
-      </div>
-
-      {/* Horaires / statut */}
-      <div className="w-20 shrink-0">
+      {/* Horaire + format (pastille 24h à gauche du badge BO, visible mobile) */}
+      <div className="w-24 shrink-0">
         {isLive ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E676]/10 px-2 py-0.5 text-[10px] font-bold text-[#00E676]">
             <span className="relative flex h-1.5 w-1.5">
@@ -105,9 +96,17 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
             LIVE
           </span>
         ) : (
-          <span className="text-xs font-medium tabular-nums text-zinc-400">
-            {match.scheduled ? TIME_FMT.format(new Date(match.scheduled)) : "—"}
-          </span>
+          <div className="flex flex-col items-start gap-0.5">
+            <span className="flex items-center gap-1 text-xs font-medium tabular-nums text-zinc-300">
+              <Clock className="h-3 w-3 text-zinc-500" />
+              {match.scheduled ? TIME_FMT.format(new Date(match.scheduled)) : "—"}
+            </span>
+            {match.best_of ? (
+              <span className="inline-flex rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">
+                BO{match.best_of}
+              </span>
+            ) : null}
+          </div>
         )}
       </div>
 
@@ -119,7 +118,12 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
             <p className="text-[10px] text-zinc-600">#{match.team1.hltv_rank}</p>
           ) : null}
         </div>
-        <TeamLogo name={match.team1.name} logo={match.team1.logo} country={match.team1.country} />
+        <TeamLogoImage
+          name={match.team1.name}
+          logo={match.team1.logo}
+          logo_local={match.team1.logo_local}
+          country={match.team1.country}
+        />
       </div>
 
       {/* Score / VS */}
@@ -135,7 +139,12 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
 
       {/* Équipe 2 */}
       <div className="flex flex-1 items-center gap-2">
-        <TeamLogo name={match.team2.name} logo={match.team2.logo} country={match.team2.country} />
+        <TeamLogoImage
+          name={match.team2.name}
+          logo={match.team2.logo}
+          logo_local={match.team2.logo_local}
+          country={match.team2.country}
+        />
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-white">{t2Name}</p>
           {match.team2.hltv_rank ? (

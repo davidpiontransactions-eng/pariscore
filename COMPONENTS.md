@@ -141,11 +141,12 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | cycling-stage-card | cycling-stage-card.tsx | Carte d'étape cyclisme |
 | cycling-tab-content | cycling-tab-content.tsx | Contenu de l'onglet cyclisme |
 
-## CS2 (`src/components/cs2/`) — 1 component
+## CS2 (`src/components/cs2/`) — 2 components
 
 | Component | File | Role |
 |-----------|------|------|
 | cs2-tab-content | cs2-tab-content.tsx | Contenu de l'onglet CS2 |
+| team-logo-image | TeamLogoImage.tsx | Logo équipe local-first (cache VPS) avec fallback initiales |
 
 ## NBA (`src/components/nba/`) — 1 component
 
