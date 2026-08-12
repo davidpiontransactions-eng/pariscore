@@ -12,29 +12,34 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ── Types ──
+// ── Types (match BSD cs2Service.getCs2Matches output) ──
 type Cs2Team = {
+  id?: number | null;
   name: string;
-  logo?: string;
-  rank?: number;
-};
-
-type Cs2MapOdds = {
-  map: string;
-  prob_team1: number;
-  prob_team2: number;
+  logo?: string | null;
+  country?: string | null;
+  hltv_rank?: number | null;
+  elo_rating?: number | null;
 };
 
 type Cs2Match = {
   id: string;
+  sport?: string;
   team1: Cs2Team;
   team2: Cs2Team;
-  event?: string;
-  format?: string;
-  commence_time?: string;
-  maps?: Cs2MapOdds[];
-  bsd_team1_id?: string;
-  bsd_team2_id?: string;
+  tournament?: string | null;
+  tournament_id?: number | null;
+  tournament_logo?: string | null;
+  best_of?: number | null;
+  scheduled?: string | null;
+  status?: string;
+  is_live?: boolean;
+  current_map?: string | null;
+  map_number?: number | null;
+  maps_score?: { team1: number | null; team2: number | null };
+  round_score?: { team1: number | null; team2: number | null };
+  odds?: { team1: number | null; team2: number | null };
+  is_lan?: boolean;
 };
 
 type ApiResponse = {
@@ -113,12 +118,16 @@ function Cs2CardSkeleton() {
 
 // ── CS2 Match Card ──
 function Cs2MatchCard({ match, index }: { match: Cs2Match; index: number }) {
-  const prob1 = match.maps?.[0]?.prob_team1 ?? 50;
-  const prob2 = match.maps?.[0]?.prob_team2 ?? 50;
-  const fav = prob1 >= prob2 ? match.team1 : match.team2;
-  const dog = prob1 >= prob2 ? match.team2 : match.team1;
-  const favProb = Math.round(Math.max(prob1, prob2) * 100);
-  const dogProb = 100 - favProb;
+  const liveScore =
+    match.is_live && match.maps_score?.team1 != null && match.maps_score?.team2 != null
+      ? `${match.maps_score.team1} – ${match.maps_score.team2}`
+      : null;
+  const statusLabel =
+    match.status === "live"
+      ? "LIVE"
+      : match.status === "finished"
+        ? "Terminé"
+        : null;
 
   return (
     <motion.div
@@ -141,20 +150,32 @@ function Cs2MatchCard({ match, index }: { match: Cs2Match; index: number }) {
             <p className="truncate text-sm font-semibold text-white">
               {match.team1.name}
             </p>
-            {match.team1.rank && (
-              <p className="text-[11px] text-zinc-500">#{match.team1.rank}</p>
+            {match.team1.hltv_rank && (
+              <p className="text-[11px] text-zinc-500">#{match.team1.hltv_rank}</p>
             )}
           </div>
         </div>
 
-        {/* VS + Prob */}
+        {/* VS / Live score */}
         <div className="flex shrink-0 flex-col items-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">VS</span>
-          <span className="mt-1 font-mono text-lg font-bold tabular-nums text-[#00E676]">
-            {favProb}%
-          </span>
-          {match.format && (
-            <span className="mt-0.5 text-[10px] text-zinc-600">{match.format}</span>
+          {statusLabel ? (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+              {statusLabel}
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">VS</span>
+          )}
+          {liveScore ? (
+            <span className="mt-1 font-mono text-lg font-bold tabular-nums text-[#00E676]">
+              {liveScore}
+            </span>
+          ) : match.odds?.team1 != null ? (
+            <span className="mt-1 font-mono text-sm font-semibold tabular-nums text-[#00E676]">
+              {match.odds.team1} / {match.odds.team2}
+            </span>
+          ) : null}
+          {match.best_of && (
+            <span className="mt-0.5 text-[10px] text-zinc-600">BO{match.best_of}</span>
           )}
         </div>
 
@@ -164,8 +185,8 @@ function Cs2MatchCard({ match, index }: { match: Cs2Match; index: number }) {
             <p className="truncate text-sm font-semibold text-white">
               {match.team2.name}
             </p>
-            {match.team2.rank && (
-              <p className="text-[11px] text-zinc-500">#{match.team2.rank}</p>
+            {match.team2.hltv_rank && (
+              <p className="text-[11px] text-zinc-500">#{match.team2.hltv_rank}</p>
             )}
           </div>
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/10 text-sm font-bold text-blue-400 ring-1 ring-white/10">
@@ -178,34 +199,21 @@ function Cs2MatchCard({ match, index }: { match: Cs2Match; index: number }) {
         </div>
       </div>
 
-      {/* Maps row */}
-      {match.maps && match.maps.length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-white/5 pt-3">
-          {match.maps.slice(0, 3).map((m, i) => {
-            const mp = Math.round(m.prob_team1 * 100);
-            return (
-              <span
-                key={m.map}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tabular-nums",
-                  i === 0
-                    ? "bg-[#00E676]/10 text-[#00E676]"
-                    : "bg-white/5 text-zinc-400"
-                )}
-              >
-                <Map className="h-2.5 w-2.5" />
-                {m.map} {mp}%–{100 - mp}%
-              </span>
-            );
-          })}
+      {/* Current map */}
+      {match.is_live && match.current_map && (
+        <div className="mt-4 flex items-center gap-2 border-t border-white/5 pt-3">
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-400">
+            <Map className="h-2.5 w-2.5" />
+            {match.current_map}
+          </span>
         </div>
       )}
 
-      {/* Event name */}
-      {match.event && (
+      {/* Tournament name */}
+      {match.tournament && (
         <p className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-600">
           <Swords className="h-3 w-3" />
-          {match.event}
+          {match.tournament}
         </p>
       )}
     </motion.div>
