@@ -47,6 +47,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "api.dicebear.com" },
       // Tennis Warehouse — headshots ~90 joueurs ATP/WTA (tennis-player-photos.json)
       { protocol: "https", hostname: "img.tennis-warehouse.com" },
+      // MLB — logos équipes + photos lanceurs (CDN public gratuit sans clé)
+      { protocol: "https", hostname: "www.mlbstatic.com" },
+      { protocol: "https", hostname: "midfield.mlbstatic.com" },
     ],
     // Formats modernes pour PWA légère
     formats: ["image/avif", "image/webp"],

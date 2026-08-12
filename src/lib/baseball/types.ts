@@ -48,6 +48,8 @@ export interface PitcherRecord {
   starterIpAvg: number;
   source: DataSource;
   season: number;
+  /** URL photo portrait officielle MLB (gratuite, sans clé). KBO = "". */
+  photoUrl?: string;
 }
 
 export interface BaseballGameRecord {

@@ -17,7 +17,7 @@ interface TeamLogoProps {
 export function TeamLogo({ team, size = 34, className }: TeamLogoProps) {
   const [failed, setFailed] = useState(false);
 
-  if (failed) {
+  if (failed || !team.logoPath) {
     return (
       <span
         aria-label={team.name}

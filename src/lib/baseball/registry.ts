@@ -201,6 +201,16 @@ export function computeXEra(opsAgainst: number): number {
 }
 
 export function teamSeedToRecord(seed: TeamSeed): TeamRecord {
+  // MLB : CDN officiel mlbstatic.com (SVG vectoriel publique, géo-distribué,
+  // 50 ms). Plus rapide + plus fiable que le cache VPS local — et plus de 404
+  // sur le build standalone (qui ne copie pas /public/cache).
+  // KBO : aucun CDN officiel public — on retourne une chaîne vide et le composant
+  // <TeamLogo> dégradera proprement vers le monogramme bicolore (fallback
+  // onError) sans aucune image cassée (règle QA "zéro donnée factice").
+  const logoPath =
+    seed.league === "MLB"
+      ? `https://www.mlbstatic.com/team-logos/${seed.mlbId}.svg`
+      : "";
   return {
     id: `${seed.league}:${seed.code}`,
     league: seed.league,
@@ -209,7 +219,7 @@ export function teamSeedToRecord(seed: TeamSeed): TeamRecord {
     city: seed.city,
     primaryColor: seed.primary,
     secondaryColor: seed.secondary,
-    logoPath: `/cache/baseball-teams/${seed.league}_${seed.code}.svg`,
+    logoPath,
     woba: wobaFromWrcPlus(seed.wrcPlus),
     wrcPlus: seed.wrcPlus,
     opsVsLhp: seed.opsVsLhp,

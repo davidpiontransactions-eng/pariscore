@@ -208,5 +208,8 @@ export function buildLiveMlbPitcher(
     starterIpAvg: round2(Math.min(6.5, Math.max(4.5, inningsPitched / Math.max(1, gamesStarted)))),
     source: stats ? "mlb-statsapi-live" : "curated",
     season: SEASON,
+    // Photo portrait officielle MLB (midfield CDN public gratuit).
+    // Pour KBO : pas de CDN public — photoUrl absente, fallback initiales.
+    photoUrl: `https://midfield.mlbstatic.com/v1/people/${mlbId}/portrait/270x270`,
   };
 }

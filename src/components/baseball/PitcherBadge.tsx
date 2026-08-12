@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { PitcherRecord } from "@/lib/baseball/types";
 import { fmtNum, fmtWinLoss } from "@/lib/baseball/format";
 
@@ -14,11 +15,55 @@ const HAND_COLORS: Record<PitcherRecord["throws"], string> = {
   RHP: "text-rose-300 border-rose-500/40 bg-rose-500/10",
 };
 
+interface AvatarProps {
+  pitcher: PitcherRecord;
+  side: "home" | "away";
+  initials: string;
+  size: number;
+  failed: boolean;
+  onError: () => void;
+}
+
+function PitcherAvatar({ pitcher, side, initials, size, failed, onError }: AvatarProps) {
+  const hasPhoto = !!pitcher.photoUrl && !failed;
+  const gradient =
+    side === "home"
+      ? "linear-gradient(135deg,#0ea5e9,#1d4ed8)"
+      : "linear-gradient(135deg,#f43f5e,#9f1239)";
+
+  if (hasPhoto) {
+    return (
+      <span
+        className="flex shrink-0 items-center justify-center overflow-hidden rounded-md ring-1 ring-white/10"
+        style={{ width: size, height: size }}
+      >
+        <img
+          src={pitcher.photoUrl}
+          alt={pitcher.name}
+          loading="lazy"
+          onError={onError}
+          className="h-full w-full object-cover"
+        />
+      </span>
+    );
+  }
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center rounded-md font-bold text-white"
+      style={{ width: size, height: size, background: gradient, fontSize: size * 0.34 }}
+    >
+      {initials || "SP"}
+    </span>
+  );
+}
+
 /**
- * Badge lanceur partant : monogramme (pas de photos API → avatar généré,
- * jamais d'image vide), nom, main de lancer et fiche ERA / W-L / WHIP.
+ * Badge lanceur partant : photo portrait officielle MLB si disponible
+ * (photoUrl), sinon avatar initiales coloré. Rien ne casse jamais — règle
+ * QA "zéro donnée factice" / onError → fallback initiales.
  */
 export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgeProps) {
+  const [photoFailed, setPhotoFailed] = useState(false);
   const initials = pitcher.name
     .split(/\s+/)
     .map((part) => part[0])
@@ -30,17 +75,14 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
   if (compact) {
     return (
       <div className="flex min-w-0 items-center gap-2">
-        <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-bold text-white"
-          style={{
-            background:
-              side === "home"
-                ? "linear-gradient(135deg,#0ea5e9,#1d4ed8)"
-                : "linear-gradient(135deg,#f43f5e,#9f1239)",
-          }}
-        >
-          {initials || "SP"}
-        </span>
+        <PitcherAvatar
+          pitcher={pitcher}
+          side={side}
+          initials={initials}
+          size={26}
+          failed={photoFailed}
+          onError={() => setPhotoFailed(true)}
+        />
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="truncate text-[12px] font-semibold text-slate-100">
@@ -63,17 +105,14 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
 
   return (
     <div className="flex items-center gap-3">
-      <span
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-lg"
-        style={{
-          background:
-            side === "home"
-              ? "linear-gradient(135deg,#0ea5e9,#1d4ed8)"
-              : "linear-gradient(135deg,#f43f5e,#9f1239)",
-        }}
-      >
-        {initials || "SP"}
-      </span>
+      <PitcherAvatar
+        pitcher={pitcher}
+        side={side}
+        initials={initials}
+        size={44}
+        failed={photoFailed}
+        onError={() => setPhotoFailed(true)}
+      />
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="truncate text-sm font-semibold text-slate-100">{pitcher.name}</span>
