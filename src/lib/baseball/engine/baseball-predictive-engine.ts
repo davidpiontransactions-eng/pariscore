@@ -74,6 +74,73 @@ const LEAGUE_PARAMS: Record<League, LeagueParams> = {
     bullpenEra: 4.2,
     bullpenIp3d: 12.0,
   },
+  // NPB (Japon, Central+Pacific, 12 équipes) — run environment plus serré que
+  // MLB : frappes de puissance moins nombreuses (HR/9 ≈ 0,65), K tenant mais
+  // walks disciplinées. Bullpen généralement le plus solide des ligues asiatiques.
+  NPB: {
+    ops: 0.665,
+    k9: 7.4,
+    bb9: 2.8,
+    hr9: 0.65,
+    h9: 8.0,
+    paPerInning: 4.3,
+    runsPerInning: 0.388,
+    bullpenEra: 3.2,
+    bullpenIp3d: 12.0,
+  },
+  // CPBL (Taïwan, 6 équipes) — ligue favorable aux frappeurs : OPS élevé,
+  // strikeout modeste, bullpens plus permissifs (ERA ~ 4,5).
+  CPBL: {
+    ops: 0.72,
+    k9: 6.5,
+    bb9: 3.4,
+    hr9: 0.7,
+    h9: 9.5,
+    paPerInning: 4.5,
+    runsPerInning: 0.55,
+    bullpenEra: 4.5,
+    bullpenIp3d: 12.0,
+  },
+  // LMB (Mexique, 18 équipes) — environnement hitter-friendly à haute altitude
+  // (Mexico City, Monterrey), HR plus présents, walks élevés ; bullpens
+  // perméables (ERA ≈ 4,6).
+  LMB: {
+    ops: 0.735,
+    k9: 7.0,
+    bb9: 3.5,
+    hr9: 1.0,
+    h9: 9.7,
+    paPerInning: 4.4,
+    runsPerInning: 0.5,
+    bullpenEra: 4.6,
+    bullpenIp3d: 12.0,
+  },
+  // LIDOM (République dominicaine, hiver, 6 équipes) — ligue d'hiver équilibrée :
+  // run environment modéré, bullpens solides (beaucoup de prospects MLB).
+  LIDOM: {
+    ops: 0.68,
+    k9: 7.5,
+    bb9: 3.4,
+    hr9: 0.75,
+    h9: 8.6,
+    paPerInning: 4.3,
+    runsPerInning: 0.45,
+    bullpenEra: 3.7,
+    bullpenIp3d: 11.5,
+  },
+  // LVBP (Venezuela, hiver, 8 équipes) — carnavelière offense, contact penalties
+  // faibles, bullpens moyens.
+  LVBP: {
+    ops: 0.685,
+    k9: 6.8,
+    bb9: 3.6,
+    hr9: 0.7,
+    h9: 9.0,
+    paPerInning: 4.4,
+    runsPerInning: 0.48,
+    bullpenEra: 4.0,
+    bullpenIp3d: 11.5,
+  },
 };
 
 /** Multiplicateur de fatigue bullpen : manches sur 3 jours + qualité ERA. */

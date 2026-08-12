@@ -9,11 +9,11 @@
  *   attendant une éventuelle persistance Prisma).
  */
 
-import { buildKboSlate } from "./kbo-provider";
+import { buildCuratedSlate, isCuratedLeague } from "./curated-provider";
 import { buildLiveMlbPitcher, fetchMlbPitcherStats, fetchMlbSlate } from "./mlb-statsapi";
 import {
   ALL_TEAM_RECORDS,
-  KBO_PITCHER_SEEDS,
+  CURATED_PITCHER_SEEDS,
   MLB_ID_TO_CODE,
   pitcherSeedToRecord,
 } from "@/lib/baseball/registry";
@@ -69,12 +69,13 @@ const pitcherStore: Map<string, PitcherRecord> =
   globalForPipeline.__pitcherStore ?? new Map();
 if (!globalForPipeline.__pitcherStore) globalForPipeline.__pitcherStore = pitcherStore;
 
-/** Seed idempotent des lanceurs KBO curés dans le store mémoire. */
+/** Seed idempotent des lanceurs curés (KBO + NPB + CPBL + LMB + LIDOM + LVBP)
+ * dans le store mémoire. MLB est servi par StatsAPI live (pas besoin de seed). */
 function ensureSeeded(): void {
   if (globalForPipeline.__baseballSeeded) return;
-  for (const seed of KBO_PITCHER_SEEDS) {
-    if (!pitcherStore.has(seed.id)) {
-      pitcherStore.set(seed.id, pitcherSeedToRecord(seed, "curated"));
+  for (const seed of CURATED_PITCHER_SEEDS) {
+    if (!pitcherStore.has(`${seed.league}:${seed.id}`)) {
+      pitcherStore.set(`${seed.league}:${seed.id}`, pitcherSeedToRecord(seed, "curated"));
     }
   }
   globalForPipeline.__baseballSeeded = true;
@@ -223,12 +224,15 @@ export async function getSchedulePayload(
     matches = matches.concat(mlb.matches);
     degraded = degraded || mlb.degraded;
   }
-  if (league === "ALL" || league === "KBO") {
-    const kbo = buildKboSlate(date);
-    for (const m of kbo) {
-      upsertGame(m.game);
-    }
-    matches = matches.concat(kbo);
+  // Ligues curées (KBO, NPB, CPBL, LMB, LIDOM, LVBP) — dispatch générique
+  // par buildCuratedSlate(league, date). En mode ALL, on boucle sur les 6.
+  const curatedLeagues: League[] = league === "ALL"
+    ? ["KBO", "NPB", "CPBL", "LMB", "LIDOM", "LVBP"]
+    : isCuratedLeague(league) ? [league] : [];
+  for (const lg of curatedLeagues) {
+    const slate = buildCuratedSlate(lg, date);
+    for (const m of slate) upsertGame(m.game);
+    matches = matches.concat(slate);
   }
 
   matches.sort(

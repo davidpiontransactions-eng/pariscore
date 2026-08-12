@@ -44,8 +44,8 @@ export function BaseballMatchSchedule({
         </p>
         <p className="max-w-md text-xs text-slate-500">
           {degraded
-            ? "La MLB StatsAPI est momentanément injoignable — le mode dégradé affiche uniquement la KBO (données curées)."
-            : "Journée sans rencontre MLB ni KBO (hors saison ou journée de repos). Naviguez avec les flèches pour explorer la semaine."}
+            ? "La MLB StatsAPI est momentanément injoignable — le mode dégradé affiche les ligues curées (KBO, NPB, CPBL, LMB, LIDOM, LVBP)."
+            : "Aucune rencontre ce jour pour cette ligue (hors-saison, journée de repos ou reset du calendrier). Naviguez avec les flèches pour explorer la semaine, ou passez à une autre ligue."}
         </p>
       </div>
     );

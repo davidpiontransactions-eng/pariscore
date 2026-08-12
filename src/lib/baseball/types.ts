@@ -3,7 +3,22 @@
  * Source de vérité unique : zéro `any`, zéro faux bouchon.
  */
 
-export type League = "MLB" | "KBO";
+/**
+ * Ligues supportées par PariScore Baseball.
+ * - MLB : StatsAPI live (statistiques lanceurs réelles, mises à jour en direct).
+ * - KBO/NPB/CPBL/LMB/LIDOM/LVBP : registre curé déterministe (aucun endpoint
+ *   public officiel stable). Données labellisées "curated" dans l'UI —
+ *   équipes, couleurs officielles, parcs, ratings saison et rotations de
+ *   partants génériques ("SP1/SP2 <Team>") pré-calibrés par ligue.
+ */
+export type League =
+  | "MLB"
+  | "KBO"
+  | "NPB"
+  | "CPBL"
+  | "LMB"
+  | "LIDOM"
+  | "LVBP";
 export type LeagueFilter = "ALL" | League;
 export type Handedness = "LHP" | "RHP";
 export type GameStatus = "scheduled" | "live" | "final";

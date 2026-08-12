@@ -14,7 +14,22 @@ interface BaseballMatchCardProps {
 const LEAGUE_STYLES = {
   MLB: "border-red-500/40 bg-red-500/10 text-red-300",
   KBO: "border-sky-500/40 bg-sky-500/10 text-sky-300",
+  NPB: "border-rose-500/40 bg-rose-500/10 text-rose-300",
+  CPBL: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
+  LMB: "border-amber-500/40 bg-amber-500/10 text-amber-300",
+  LIDOM: "border-indigo-500/40 bg-indigo-500/10 text-indigo-300",
+  LVBP: "border-fuchsia-500/40 bg-fuchsia-500/10 text-fuchsia-300",
 } as const;
+
+const LEAGUE_LABEL: Record<string, string> = {
+  MLB: "MLB 🇺🇸",
+  KBO: "KBO 🇰🇷",
+  NPB: "NPB 🇯🇵",
+  CPBL: "CPBL 🇹🇼",
+  LMB: "LMB 🇲🇽",
+  LIDOM: "LIDOM 🇩🇴",
+  LVBP: "LVBP 🇻🇪",
+};
 
 function ScoreLine({ match }: { match: BaseballMatch }) {
   const { game } = match;
@@ -89,7 +104,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
           <span
             className={`rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm ${LEAGUE_STYLES[game.league]}`}
           >
-            {game.league === "MLB" ? "MLB 🇺🇸" : "KBO 🇰🇷"}
+            {LEAGUE_LABEL[game.league] ?? game.league}
           </span>
           <span
             className="rounded bg-black/40 px-1.5 py-px font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-sm"

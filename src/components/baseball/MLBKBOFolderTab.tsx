@@ -11,6 +11,11 @@ const LEAGUE_TABS: { id: LeagueFilter; label: string }[] = [
   { id: "ALL", label: "Tous" },
   { id: "MLB", label: "MLB 🇺🇸" },
   { id: "KBO", label: "KBO 🇰🇷" },
+  { id: "NPB", label: "NPB 🇯🇵" },
+  { id: "CPBL", label: "CPBL 🇹🇼" },
+  { id: "LMB", label: "LMB 🇲🇽" },
+  { id: "LIDOM", label: "LIDOM 🇩🇴" },
+  { id: "LVBP", label: "LVBP 🇻🇪" },
 ];
 
 const WEEK_OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
