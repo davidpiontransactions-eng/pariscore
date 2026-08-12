@@ -5,11 +5,20 @@ import type { LeagueFilter } from "@/lib/baseball/types";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const VALID_LEAGUES: readonly LeagueFilter[] = ["ALL", "MLB", "KBO"];
+const VALID_LEAGUES: readonly LeagueFilter[] = [
+  "ALL",
+  "MLB",
+  "KBO",
+  "NPB",
+  "CPBL",
+  "LMB",
+  "LIDOM",
+  "LVBP",
+];
 
 /**
- * GET /api/baseball/schedule?date=YYYY-MM-DD&league=ALL|MLB|KBO
- * Slate + prédictions rapides (2 500 itérations, cache PostgreSQL).
+ * GET /api/baseball/schedule?date=YYYY-MM-DD&league=ALL|MLB|KBO|NPB|CPBL|LMB|LIDOM|LVBP
+ * Slate + prédictions rapides (2 500 itérations, cache mémoire par inputHash).
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
