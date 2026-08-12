@@ -1,0 +1,210 @@
+"use client";
+
+import { useMemo } from "react";
+import { motion } from "framer-motion";
+import { Map as MapIcon, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { hltvStars, teamInitials, type Cs2Match } from "@/lib/cs2/types";
+import { getFlagUrl } from "@/lib/flag-utils";
+
+type Props = {
+  matches: Cs2Match[];
+  onSelectMatch: (match: Cs2Match) => void;
+};
+
+const DAY_FMT = new Intl.DateTimeFormat("fr-FR", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+const TIME_FMT = new Intl.DateTimeFormat("fr-FR", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function dateHeaderLabel(iso: string): string {
+  return capitalize(DAY_FMT.format(new Date(iso)));
+}
+
+/** Importance du match (1-5) = prestige max des deux structures. */
+function matchStars(match: Cs2Match): number {
+  return Math.max(hltvStars(match.team1.hltv_rank), hltvStars(match.team2.hltv_rank));
+}
+
+function StarRating({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="inline-flex items-center gap-0.5" title={`Importance ${count}/5`}>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star
+          key={i}
+          className={cn(
+            "h-3 w-3",
+            i <= count ? "fill-amber-400 text-amber-400" : "text-zinc-700",
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+function TeamLogo({ name, logo, country }: { name: string; logo?: string | null; country?: string | null }) {
+  return (
+    <div className="relative shrink-0">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10">
+        {logo ? (
+          <img src={logo} alt={name} className="h-7 w-7 object-contain" />
+        ) : (
+          <span className="text-xs font-bold text-zinc-400">{teamInitials(name)}</span>
+        )}
+      </div>
+      {country && (
+        <img
+          src={getFlagUrl(country, 16, 12)}
+          alt={country}
+          className="absolute -bottom-1 -right-1 h-3 w-4 rounded-sm object-cover ring-1 ring-black"
+        />
+      )}
+    </div>
+  );
+}
+
+function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; onSelect: () => void }) {
+  const isLive = match.is_live || match.status === "live";
+  const stars = matchStars(match);
+
+  return (
+    <motion.button
+      type="button"
+      onClick={onSelect}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.04 }}
+      className="group flex w-full items-center gap-3 rounded-xl border border-white/10 bg-[#1A1A2E]/60 px-4 py-3 text-left transition-all hover:border-[#00E676]/30 hover:bg-[#1A1A2E]"
+    >
+      {/* Événement / tournoi */}
+      <div className="hidden w-40 shrink-0 items-center gap-2 sm:flex">
+        {match.tournament_logo ? (
+          <img src={match.tournament_logo} alt="" className="h-5 w-5 object-contain" />
+        ) : null}
+        <div className="min-w-0">
+          <p className="truncate text-xs font-medium text-zinc-300">{match.tournament ?? "CS2"}</p>
+          {match.is_lan && <p className="text-[10px] uppercase tracking-wide text-zinc-600">LAN</p>}
+        </div>
+      </div>
+
+      {/* Importance (star rating) */}
+      <div className="hidden w-24 shrink-0 justify-start md:flex">
+        <StarRating count={stars} />
+      </div>
+
+      {/* Format */}
+      <div className="hidden w-14 shrink-0 sm:block">
+        {match.best_of ? (
+          <span className="inline-flex rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">
+            BO{match.best_of}
+          </span>
+        ) : null}
+      </div>
+
+      {/* Horaires / statut */}
+      <div className="w-20 shrink-0">
+        {isLive ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E676]/10 px-2 py-0.5 text-[10px] font-bold text-[#00E676]">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00E676] opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00E676]" />
+            </span>
+            LIVE
+          </span>
+        ) : (
+          <span className="text-xs font-medium tabular-nums text-zinc-400">
+            {match.scheduled ? TIME_FMT.format(new Date(match.scheduled)) : "—"}
+          </span>
+        )}
+      </div>
+
+      {/* Équipe 1 */}
+      <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="min-w-0 text-right">
+          <p className="truncate text-sm font-semibold text-white">{match.team1.name}</p>
+          {match.team1.hltv_rank ? (
+            <p className="text-[10px] text-zinc-600">#{match.team1.hltv_rank}</p>
+          ) : null}
+        </div>
+        <TeamLogo name={match.team1.name} logo={match.team1.logo} country={match.team1.country} />
+      </div>
+
+      {/* Score / VS */}
+      <div className="w-16 shrink-0 text-center">
+        {isLive && match.maps_score ? (
+          <span className="font-mono text-base font-bold tabular-nums text-[#00E676]">
+            {match.maps_score.team1 ?? 0}–{match.maps_score.team2 ?? 0}
+          </span>
+        ) : (
+          <span className="text-xs font-bold text-zinc-600">VS</span>
+        )}
+      </div>
+
+      {/* Équipe 2 */}
+      <div className="flex flex-1 items-center gap-2">
+        <TeamLogo name={match.team2.name} logo={match.team2.logo} country={match.team2.country} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-white">{match.team2.name}</p>
+          {match.team2.hltv_rank ? (
+            <p className="text-[10px] text-zinc-600">#{match.team2.hltv_rank}</p>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Carte courante (live) */}
+      {isLive && match.current_map && (
+        <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-400 lg:inline-flex">
+          <MapIcon className="h-2.5 w-2.5" />
+          {match.current_map}
+        </span>
+      )}
+    </motion.button>
+  );
+}
+
+export function HLTVMatchSchedule({ matches, onSelectMatch }: Props) {
+  const groups = useMemo(() => {
+    const byDate = new Map<string, Cs2Match[]>();
+    for (const m of matches) {
+      const key = m.scheduled ? new Date(m.scheduled).toDateString() : "date-inconnue";
+      const arr = byDate.get(key) ?? [];
+      arr.push(m);
+      byDate.set(key, arr);
+    }
+    return [...byDate.entries()].sort(([a], [b]) => {
+      const ta = a === "date-inconnue" ? Infinity : new Date(a).getTime();
+      const tb = b === "date-inconnue" ? Infinity : new Date(b).getTime();
+      return ta - tb;
+    });
+  }, [matches]);
+
+  if (matches.length === 0) return null;
+
+  return (
+    <div className="space-y-6">
+      {groups.map(([dateKey, list]) => (
+        <section key={dateKey}>
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            {dateKey === "date-inconnue" ? "Matchs du Jour" : dateHeaderLabel(dateKey)}
+          </h2>
+          <div className="space-y-1.5">
+            {list.map((m, i) => (
+              <MatchRow key={m.id} match={m} index={i} onSelect={() => onSelectMatch(m)} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}

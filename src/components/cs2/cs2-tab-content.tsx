@@ -1,46 +1,15 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
   Crosshair,
   RefreshCw,
   AlertCircle,
-  Swords,
-  Map,
   Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-// ── Types (match BSD cs2Service.getCs2Matches output) ──
-type Cs2Team = {
-  id?: number | null;
-  name: string;
-  logo?: string | null;
-  country?: string | null;
-  hltv_rank?: number | null;
-  elo_rating?: number | null;
-};
-
-type Cs2Match = {
-  id: string;
-  sport?: string;
-  team1: Cs2Team;
-  team2: Cs2Team;
-  tournament?: string | null;
-  tournament_id?: number | null;
-  tournament_logo?: string | null;
-  best_of?: number | null;
-  scheduled?: string | null;
-  status?: string;
-  is_live?: boolean;
-  current_map?: string | null;
-  map_number?: number | null;
-  maps_score?: { team1: number | null; team2: number | null };
-  round_score?: { team1: number | null; team2: number | null };
-  odds?: { team1: number | null; team2: number | null };
-  is_lan?: boolean;
-};
+import type { Cs2Match } from "@/lib/cs2/types";
+import { HLTVMatchSchedule } from "./HLTVMatchSchedule";
+import { HLTVMatchSheetModal } from "./HLTVMatchSheetModal";
 
 type ApiResponse = {
   matches: Cs2Match[];
@@ -78,16 +47,6 @@ function useCs2Data() {
   return { data, loading, error, mutate: fetchData };
 }
 
-// ── Helpers ──
-function getTeamInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w.charAt(0).toUpperCase())
-    .join("");
-}
-
 // ── Skeleton ──
 function Cs2CardSkeleton() {
   return (
@@ -116,117 +75,13 @@ function Cs2CardSkeleton() {
   );
 }
 
-// ── CS2 Match Card ──
-function Cs2MatchCard({ match, index }: { match: Cs2Match; index: number }) {
-  const liveScore =
-    match.is_live && match.maps_score?.team1 != null && match.maps_score?.team2 != null
-      ? `${match.maps_score.team1} – ${match.maps_score.team2}`
-      : null;
-  const statusLabel =
-    match.status === "live"
-      ? "LIVE"
-      : match.status === "finished"
-        ? "Terminé"
-        : null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="group rounded-2xl border border-white/10 bg-[#1A1A2E]/60 p-5 transition-all hover:border-[#00E676]/30 hover:shadow-lg hover:shadow-[#00E676]/5"
-    >
-      <div className="flex items-center justify-between gap-4">
-        {/* Team 1 */}
-        <div className="flex flex-1 items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/10 text-sm font-bold text-orange-400 ring-1 ring-white/10">
-            {match.team1.logo ? (
-              <img src={match.team1.logo} alt={match.team1.name} className="h-8 w-8 rounded-full object-cover" />
-            ) : (
-              getTeamInitials(match.team1.name)
-            )}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-white">
-              {match.team1.name}
-            </p>
-            {match.team1.hltv_rank && (
-              <p className="text-[11px] text-zinc-500">#{match.team1.hltv_rank}</p>
-            )}
-          </div>
-        </div>
-
-        {/* VS / Live score */}
-        <div className="flex shrink-0 flex-col items-center">
-          {statusLabel ? (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-red-400">
-              {statusLabel}
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">VS</span>
-          )}
-          {liveScore ? (
-            <span className="mt-1 font-mono text-lg font-bold tabular-nums text-[#00E676]">
-              {liveScore}
-            </span>
-          ) : match.odds?.team1 != null ? (
-            <span className="mt-1 font-mono text-sm font-semibold tabular-nums text-[#00E676]">
-              {match.odds.team1} / {match.odds.team2}
-            </span>
-          ) : null}
-          {match.best_of && (
-            <span className="mt-0.5 text-[10px] text-zinc-600">BO{match.best_of}</span>
-          )}
-        </div>
-
-        {/* Team 2 */}
-        <div className="flex flex-1 items-center justify-end gap-3">
-          <div className="min-w-0 text-right">
-            <p className="truncate text-sm font-semibold text-white">
-              {match.team2.name}
-            </p>
-            {match.team2.hltv_rank && (
-              <p className="text-[11px] text-zinc-500">#{match.team2.hltv_rank}</p>
-            )}
-          </div>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/10 text-sm font-bold text-blue-400 ring-1 ring-white/10">
-            {match.team2.logo ? (
-              <img src={match.team2.logo} alt={match.team2.name} className="h-8 w-8 rounded-full object-cover" />
-            ) : (
-              getTeamInitials(match.team2.name)
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Current map */}
-      {match.is_live && match.current_map && (
-        <div className="mt-4 flex items-center gap-2 border-t border-white/5 pt-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-400">
-            <Map className="h-2.5 w-2.5" />
-            {match.current_map}
-          </span>
-        </div>
-      )}
-
-      {/* Tournament name */}
-      {match.tournament && (
-        <p className="mt-3 flex items-center gap-1.5 text-[11px] text-zinc-600">
-          <Swords className="h-3 w-3" />
-          {match.tournament}
-        </p>
-      )}
-    </motion.div>
-  );
-}
-
 // ── Error State ──
 function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <AlertCircle className="mb-4 h-12 w-12 text-red-400" />
       <p className="mb-1 text-lg font-semibold text-white">Données CS2 indisponibles</p>
-      <p className="mb-6 text-sm text-zinc-400">L'API des matchs CS2 ne répond pas pour le moment.</p>
+      <p className="mb-6 text-sm text-zinc-400">L&apos;API des matchs CS2 ne répond pas pour le moment.</p>
       <button
         onClick={onRetry}
         className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/20"
@@ -251,12 +106,16 @@ function EmptyState() {
 // ── Main Component ──
 export function Cs2TabContent() {
   const { data, loading, error, mutate } = useCs2Data();
+  const [selected, setSelected] = useState<Cs2Match | null>(null);
+  const [open, setOpen] = useState(false);
   const matches = data?.matches ?? [];
 
   if (loading && !data) {
     return (
       <div className="mx-auto w-full max-w-6xl space-y-3 p-4">
-        {[1, 2, 3].map((i) => <Cs2CardSkeleton key={i} />)}
+        {[1, 2, 3].map((i) => (
+          <Cs2CardSkeleton key={i} />
+        ))}
       </div>
     );
   }
@@ -291,7 +150,11 @@ export function Cs2TabContent() {
           disabled={loading}
           className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-400 transition-colors hover:bg-white/5 hover:text-white disabled:opacity-50"
         >
-          <RefreshCw className={cn("h-3 w-3", loading && "animate-spin")} />
+          {loading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3 w-3" />
+          )}
           Actualiser
         </button>
       </div>
@@ -300,12 +163,17 @@ export function Cs2TabContent() {
       {matches.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="space-y-3">
-          {matches.map((m, i) => (
-            <Cs2MatchCard key={m.id} match={m} index={i} />
-          ))}
-        </div>
+        <HLTVMatchSchedule
+          matches={matches}
+          onSelectMatch={(m) => {
+            setSelected(m);
+            setOpen(true);
+          }}
+        />
       )}
+
+      {/* Fiche de match */}
+      <HLTVMatchSheetModal match={selected} open={open} onOpenChange={setOpen} />
 
       {/* Source */}
       {data?.source && (
