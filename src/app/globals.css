@@ -26,6 +26,7 @@
   --color-sport-cs2: var(--sport-cs2);
   --color-sport-nba: var(--sport-nba);
   --color-sport-wnba: var(--sport-wnba);
+  --color-sport-rugby: var(--sport-rugby);
   --color-bg-deep: var(--bg-deep);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -83,6 +84,7 @@
   --sport-cs2: #F97316;
   --sport-nba: #0EA5E9;
   --sport-wnba: #A855F7;
+  --sport-rugby: #14B8A6;
   --bg-deep: #0a0e17;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -135,6 +137,7 @@
   --sport-cs2: #F97316;
   --sport-nba: #0EA5E9;
   --sport-wnba: #A855F7;
+  --sport-rugby: #14B8A6;
   --bg-deep: #0a0e17;
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);

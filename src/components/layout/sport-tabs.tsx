@@ -11,6 +11,7 @@ import {
   Target,
   Trophy,
   Disc3,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSportBg, type SportId } from "@/lib/sport-images";
@@ -33,6 +34,7 @@ const TABS: TabDef[] = [
   { id: "cycling", label: "Cycling", icon: Bike, accent: "bg-amber-500" },
   { id: "f1", label: "F1", icon: Gauge, accent: "bg-red-600" },
   { id: "baseball", label: "Baseball", icon: Disc3, accent: "bg-amber-500" },
+  { id: "rugby", label: "Rugby", icon: Shield, accent: "bg-teal-500" },
 ] as const;
 
 type SportTabsProps = {

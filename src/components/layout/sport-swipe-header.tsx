@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { SportTabs } from "@/components/layout/sport-tabs";
 
 // Matches the tab order defined in SportTabs:
-// tennis → football → cs2 → mma → nba → wnba → cycling → f1
+// tennis → football → cs2 → mma → nba → wnba → cycling → f1 → baseball → rugby
 const TAB_ORDER = [
   "tennis",
   "football",
@@ -15,6 +15,7 @@ const TAB_ORDER = [
   "cycling",
   "f1",
   "baseball",
+  "rugby",
 ] as const;
 
 type SportSwipeHeaderProps = {

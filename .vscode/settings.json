@@ -5,5 +5,8 @@
       "icon": "terminal-bash"
     }
   },
-  "terminal.integrated.defaultProfile.windows": "Git Bash (D:)"
+  "terminal.integrated.defaultProfile.windows": "Git Bash (D:)",
+  "QoderCN.DisplayLanguage": "English",
+  "QoderCN.PreferredLanguage for AI Chat": "English",
+  "QoderCN.PreferredLanguage forCommitMessage": "English"
 }

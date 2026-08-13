@@ -34,6 +34,7 @@ import { WnbaTabContent } from "@/components/wnba/wnba-tab-content";
 import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
 import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
+import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
@@ -60,7 +61,7 @@ type DetailRequest =
   | { sport: "tennis"; match: TennisMatch }
   | { sport: "football"; match: FootballMatch };
 
-type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1" | "baseball";
+type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1" | "baseball" | "rugby";
 
 class PageErrorBoundary extends Component<
   { children: ReactNode },
@@ -196,6 +197,7 @@ function HomeInner() {
     { id: "football" as const, label: "Football", emoji: "⚽", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
     { id: "mma" as const, label: "MMA", emoji: "🥊", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
     { id: "cycling" as const, label: "Cycling", emoji: "🚴", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
+    { id: "rugby" as const, label: "Rugby", emoji: "🏉", matchCount: 0, valueCount: 0, accent: "border-teal-500/30 hover:border-teal-500/60", accentBg: "bg-teal-500/10", accentText: "text-teal-400" },
   ];
 
   return (
@@ -334,6 +336,7 @@ function HomeInner() {
         {activeTab === "cycling" && <CyclingTabContent />}
         {activeTab === "f1" && <F1TabContent />}
         {activeTab === "baseball" && <BaseballTabContent />}
+        {activeTab === "rugby" && <RugbyTabContent />}
 
         {/* Sections déplacées : Meilleurs Matchs + Prochains Matchs + Gemini */}
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-6">

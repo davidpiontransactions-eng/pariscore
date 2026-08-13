@@ -16,7 +16,8 @@ export type SportId =
   | "wnba"
   | "cycling"
   | "f1"
-  | "baseball";
+  | "baseball"
+  | "rugby";
 
 // Visuels par sport — sélectionnés pour palette sombre compatible dark mode.
 const SPORT_HERO: Record<SportId, string> = {
@@ -33,6 +34,10 @@ const SPORT_HERO: Record<SportId, string> = {
   // Mémo loop 7 : remplacer par un vrai ID Unsplash baseball à la prochaine
   // passe design.
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
+  // Rugby : même approche anti-guess — hero football réutilisé en attendant un
+  // ID Unsplash rugby vérifié. Le thème visuel est porté par le token teal
+  // --sport-rugby (#14B8A6) plutôt que par la photo.
+  rugby: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
 };
 
 // Version basse résolution pour thumbnails / arrière-plans floutés.
@@ -46,6 +51,7 @@ const SPORT_BG: Record<SportId, string> = {
   cycling: `${UNSPLASH_BASE}/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=800&q=60&blur=20`,
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=60&blur=20`,
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
+  rugby: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
 };
 
 // Accents de couleur par sport (pour fallbacks et overlays).
@@ -59,6 +65,7 @@ const SPORT_ACCENT: Record<SportId, string> = {
   cycling: "#f59e0b",
   f1: "#dc2626",
   baseball: "#f59e0b",
+  rugby: "#14b8a6",
 };
 
 /** URL hero haute résolution pour un sport donné. */
