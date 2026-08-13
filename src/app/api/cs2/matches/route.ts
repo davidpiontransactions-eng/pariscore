@@ -7,13 +7,19 @@ import {
 } from "@/lib/cs2/cs2-team-logo-engine";
 
 const CACHE_TTL = 5 * 60_000;
+const CACHE_TTL_LIVE = 30_000; // match en cours → rafraîchi vite (score/maps)
 // createTtlCache already wraps in { data, at }, so we store only the payload.
 const cache = createTtlCache<unknown>("__cs2Cache");
 
 export async function GET() {
   const now = Date.now();
   const cached = cache.getEntry();
-  if (cached && isFresh(cached, CACHE_TTL)) {
+  // TTL dynamique : si le payload en cache contient un match live, on le
+  // considère périmé au bout de 30 s (le service BSD a lui-même un TTL 30 s).
+  const cachedMatches = (cached?.data as { matches?: { is_live?: boolean }[] } | undefined)?.matches;
+  const hasLive = (cachedMatches ?? []).some((m) => m.is_live);
+  const ttl = hasLive ? CACHE_TTL_LIVE : CACHE_TTL;
+  if (cached && isFresh(cached, ttl)) {
     return NextResponse.json(cached.data);
   }
 

@@ -40,9 +40,11 @@ function useCs2Data() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 120_000);
+    // Polling adaptatif : 15 s si un match est en cours (score/maps live),
+    // 120 s sinon. Le service BSD expose un TTL serveur de 30 s.
+    const interval = setInterval(fetchData, data?.matches?.some((m) => m.is_live) ? 15_000 : 120_000);
     return () => clearInterval(interval);
-  }, [fetchData]);
+  }, [fetchData, data]);
 
   return { data, loading, error, mutate: fetchData };
 }

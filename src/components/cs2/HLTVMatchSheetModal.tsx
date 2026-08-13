@@ -179,6 +179,9 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
     if (!match) return [];
     const real = normalizeRealVeto(veto, match.team1.name, match.team2.name);
     if (real.length > 0) return real;
+    // Match en cours : le veto est déjà passé — une simulation n'a aucun sens,
+    // on affiche "indisponible" au lieu d'une séquence inventée.
+    if (match.is_live || match.status === "live") return [];
     const models = enrichment ? buildCs2TeamModels(enrichment) : null;
     if (!models) return [];
     return simulateVeto(models.team1, models.team2, [...ACTIVE_MAP_POOL], (match.best_of as 1 | 3 | 5) ?? 3).order;
@@ -243,9 +246,11 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                 </div>
 
                 <div className="shrink-0 text-center">
-                  {isLive && match.maps_score ? (
+                  {isLive &&
+                  match.maps_score &&
+                  (match.maps_score.team1 != null || match.maps_score.team2 != null) ? (
                     <span className="font-mono text-2xl font-bold tabular-nums text-[#00E676]">
-                      {match.maps_score.team1 ?? 0}–{match.maps_score.team2 ?? 0}
+                      {match.maps_score.team1 ?? "–"}–{match.maps_score.team2 ?? "–"}
                     </span>
                   ) : (
                     <span className="text-sm font-bold text-zinc-600">VS</span>
@@ -405,17 +410,19 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
               )}
 
               {/* MR12 */}
-              {isLive && match?.round_score ? (
+              {isLive &&
+              match?.round_score &&
+              (match.round_score.team1 != null || match.round_score.team2 != null) ? (
                 <section>
                   <h3 className="mb-2 text-sm font-semibold text-white">MR12 — score round</h3>
                   <div className="flex items-center justify-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] p-3">
                     <span className="rounded bg-sky-500/20 px-2 py-1 text-[10px] font-bold text-sky-400">CT</span>
                     <span className="font-mono text-2xl font-bold tabular-nums text-orange-400">
-                      {match.round_score.team1 ?? 0}
+                      {match.round_score.team1 ?? "–"}
                     </span>
                     <span className="text-zinc-600">:</span>
                     <span className="font-mono text-2xl font-bold tabular-nums text-blue-400">
-                      {match.round_score.team2 ?? 0}
+                      {match.round_score.team2 ?? "–"}
                     </span>
                     <span className="rounded bg-amber-500/20 px-2 py-1 text-[10px] font-bold text-amber-400">T</span>
                   </div>

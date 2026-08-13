@@ -208,7 +208,23 @@ async function fetchMatchVeto(matchId, apiKey) {
   try {
     const res = await _bsdCs2(`/api/v2/matches/${_key}/`, _key2, 1);
     if (!res || res.status !== 200 || !res.data) return null;
-    const veto = res.data.map_picks || res.data.veto || res.data.map_veto || null;
+    // BSD n'expose PAS de champ map_picks/veto/map_veto (vérifié 2026-08-13) :
+    // le match detail ne contient que home_team/away_team/home_score/away_score/
+    // best_of/status + maps[] (vide aujourd'hui). On parse maps[] s'il est un
+    // jour rempli (ordre de jeu = ordre des maps), sinon null honnête.
+    let veto = res.data.map_picks || res.data.veto || res.data.map_veto || null;
+    if (!veto && Array.isArray(res.data.maps) && res.data.maps.length > 0) {
+      const mapList = res.data.maps.map(m => m.map || m.name || m.map_name).filter(Boolean);
+      if (mapList.length > 0) {
+        veto = mapList.map((map, i) => ({
+          step: i + 1,
+          map,
+          team: null,
+          action: i >= 2 ? 'pick' : 'ban', // inconnu côté BSD — ordre de jeu seulement
+          source: 'bsd-maps-order'
+        }));
+      }
+    }
     _vetoCache.set(_key, { ts: Date.now(), data: veto });
     return veto;
   } catch (e) { return null; }
@@ -277,15 +293,32 @@ function _normalizeMatch(raw, predictions, mapStats) {
   const lookup = mapStats || {};
 
   // Scores: maps_score is series score, score is current map round score
-  const maps1   = raw.team1_maps_won ?? raw.map_score_team1 ?? null;
-  const maps2   = raw.team2_maps_won ?? raw.map_score_team2 ?? null;
-  const rounds1 = raw.team1_score   ?? raw.score1 ?? null;
-  const rounds2 = raw.team2_score   ?? raw.score2 ?? null;
+  // ⚠️ BSD CS2 schema réel (vérifié 2026-08-13) : home_score/away_score = maps
+  // won de la série. Les champs team1_maps_won/map_score_team1 n'existent pas.
+  const maps1   = raw.home_score      ?? raw.team1_maps_won ?? raw.map_score_team1 ?? null;
+  const maps2   = raw.away_score      ?? raw.team2_maps_won ?? raw.map_score_team2 ?? null;
+  const rounds1 = raw.team1_score     ?? raw.score1 ?? raw.home_round_score ?? null;
+  const rounds2 = raw.team2_score     ?? raw.score2 ?? raw.away_round_score ?? null;
 
-  // Map info
+  // Map info — BSD n'expose ni current_map ni maps détaillées sur /matches/ ;
+  // le champ maps[] est vide. On ne fabrique pas de valeur : null est honnête.
   const currentMap = raw.current_map || raw.map_name || null;
   const mapNumber  = raw.map_number  || null;
-  const bestOf     = raw.best_of     || raw.format || 3;
+
+  // best_of : le champ BSD est TOUJOURS 1 (même pour les BO3 EWC — vérifié).
+  // On déduit le vrai format du score maps de la série :
+  //   - total >= 4 maps jouées → BO5
+  //   - total >= 2 maps jouées → BO3
+  //   - total == 1 ET match inprogress → BO3 (un BO1 à 1 map jouée serait
+  //     déjà "finished" — un live à 1-0 est donc forcément un BO3+)
+  // Si impossible (match à venir), on garde la valeur source.
+  let bestOf = raw.best_of || raw.format || 3;
+  const bestOfNum = parseInt(String(bestOf), 10);
+  if (bestOfNum === 1 && maps1 != null && maps2 != null) {
+    const total = maps1 + maps2;
+    if (total >= 4) bestOf = 5;
+    else if (total >= 2 || (total === 1 && isLive)) bestOf = 3;
+  }
 
   // BSD CS2 logo: prefer image_url field, fallback to id-based URL
   const logo1 = raw.team1_logo || raw.team1?.image_url || _teamLogo(t1.id);

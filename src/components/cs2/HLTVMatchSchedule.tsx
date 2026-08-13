@@ -128,9 +128,11 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
 
       {/* Score / VS */}
       <div className="w-16 shrink-0 text-center">
-        {isLive && match.maps_score ? (
+        {isLive &&
+        match.maps_score &&
+        (match.maps_score.team1 != null || match.maps_score.team2 != null) ? (
           <span className="font-mono text-base font-bold tabular-nums text-[#00E676]">
-            {match.maps_score.team1 ?? 0}–{match.maps_score.team2 ?? 0}
+            {match.maps_score.team1 ?? "–"}–{match.maps_score.team2 ?? "–"}
           </span>
         ) : (
           <span className="text-xs font-bold text-zinc-600">VS</span>
