@@ -24,6 +24,13 @@ interface MlbTeamRef {
   score?: number;
 }
 
+interface MlbPersonRaw {
+  people: {
+    id: number;
+    pitchHand?: { code?: "L" | "R" };
+  }[];
+}
+
 interface MlbGameRaw {
   gamePk: number;
   gameDate: string;
@@ -174,38 +181,67 @@ export async function fetchMlbPitcherStats(
   }
 }
 
-/** Construit le PitcherRecord depuis les stats LIVE (FIP/xERA recalculés). */
+/** Main de lancer réelle d'un joueur, depuis /people (pitchHand). */
+export async function fetchMlbPitcherHand(personId: number): Promise<"LHP" | "RHP" | null> {
+  try {
+    const url = `${MLB_BASE}/api/v1/people/${personId}?hydrate=pitchHand`;
+    const data = await fetchJson<MlbPersonRaw>(url);
+    const code = data.people?.[0]?.pitchHand?.code;
+    if (code === "L") return "LHP";
+    if (code === "R") return "RHP";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Construit le PitcherRecord depuis les stats LIVE (FIP/xERA recalculés).
+ * Aucune valeur n'est inventée : si les stats de saison sont absentes
+ * (rookie, aucun split renvoyé), les champs restent null et
+ * `statsAvailable=false` — l'UI affiche alors des "—" et le moteur ne
+ * prédit pas sur ce lanceur. */
 export function buildLiveMlbPitcher(
   teamCode: string,
   mlbId: number,
   name: string,
+  hand: "LHP" | "RHP" | null,
   stats: MlbPitcherStatsRaw | null,
 ): PitcherRecord {
-  const era = stats?.era ?? 4.0;
-  const kPer9 = stats?.kPer9 ?? 8.6;
-  const bbPer9 = stats?.bbPer9 ?? 3.1;
-  const hrPer9 = stats?.hrPer9 ?? 1.14;
-  const opsAgainst = stats?.opsAgainst ?? 0.706;
-  const gamesStarted = stats?.gamesStarted ?? 20;
-  const inningsPitched = stats?.inningsPitched ?? 100;
+  const era = stats?.era ?? null;
+  const kPer9 = stats?.kPer9 ?? null;
+  const bbPer9 = stats?.bbPer9 ?? null;
+  const hrPer9 = stats?.hrPer9 ?? null;
+  const opsAgainst = stats?.opsAgainst ?? null;
+  const inningsPitched = stats?.inningsPitched ?? null;
+  const gamesStarted = stats?.gamesStarted ?? null;
+  const wins = stats?.wins ?? null;
+  const losses = stats?.losses ?? null;
+  const whip = stats?.whip ?? null;
   return {
     id: `MLB:${mlbId}`,
     league: "MLB",
     teamId: `MLB:${teamCode}`,
     name,
-    throws: "RHP", // affiné par /people si disponible (défaut documenté)
-    era: round2(era),
-    whip: round2(stats?.whip ?? 1.3),
-    fip: computeFip(hrPer9, bbPer9, kPer9),
-    xEra: computeXEra(opsAgainst),
-    kPer9: round2(kPer9),
-    bbPer9: round2(bbPer9),
-    hrPer9: round2(hrPer9),
-    wins: stats?.wins ?? 0,
-    losses: stats?.losses ?? 0,
-    inningsPitched: round2(inningsPitched),
-    opsAgainst: round2(opsAgainst),
-    starterIpAvg: round2(Math.min(6.5, Math.max(4.5, inningsPitched / Math.max(1, gamesStarted)))),
+    throws: hand ?? null,
+    era: era === null ? null : round2(era),
+    whip: whip === null ? null : round2(whip),
+    fip:
+      kPer9 === null || bbPer9 === null || hrPer9 === null
+        ? null
+        : computeFip(hrPer9, bbPer9, kPer9),
+    xEra: opsAgainst === null ? null : computeXEra(opsAgainst),
+    kPer9: kPer9 === null ? null : round2(kPer9),
+    bbPer9: bbPer9 === null ? null : round2(bbPer9),
+    hrPer9: hrPer9 === null ? null : round2(hrPer9),
+    wins,
+    losses,
+    inningsPitched: inningsPitched === null ? null : round2(inningsPitched),
+    opsAgainst: opsAgainst === null ? null : round2(opsAgainst),
+    starterIpAvg:
+      inningsPitched === null || gamesStarted === null || gamesStarted <= 0
+        ? null
+        : round2(Math.min(6.5, Math.max(4.5, inningsPitched / gamesStarted))),
+    statsAvailable: stats !== null && era !== null && whip !== null,
     source: stats ? "mlb-statsapi-live" : "curated",
     season: SEASON,
     // Photo portrait officielle MLB (midfield CDN public gratuit).

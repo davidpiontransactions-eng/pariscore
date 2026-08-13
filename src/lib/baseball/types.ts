@@ -48,19 +48,27 @@ export interface PitcherRecord {
   league: League;
   teamId: string;
   name: string;
-  throws: Handedness;
-  era: number;
-  whip: number;
-  fip: number;
-  xEra: number;
-  kPer9: number;
-  bbPer9: number;
-  hrPer9: number;
-  wins: number;
-  losses: number;
-  inningsPitched: number;
-  opsAgainst: number;
-  starterIpAvg: number;
+  /** Main de lancer réelle (LHP/RHP). null si inconnue — badge "—" dans l'UI,
+   * jamais falsifiée. */
+  throws: Handedness | null;
+  /** Stats de saison réelles. null si indisponibles (rookie, aucun split
+   * renvoyé) — l'UI affiche "—" au lieu de valeurs inventées. */
+  era: number | null;
+  whip: number | null;
+  fip: number | null;
+  xEra: number | null;
+  kPer9: number | null;
+  bbPer9: number | null;
+  hrPer9: number | null;
+  wins: number | null;
+  losses: number | null;
+  inningsPitched: number | null;
+  opsAgainst: number | null;
+  starterIpAvg: number | null;
+  /** true si les stats de saison sont réellement disponibles (Live ou curé).
+   * false = partant sans données — le moteur ne prédit pas dessus et l'UI
+   * affiche des "—" au lieu de métriques fabriquées. */
+  statsAvailable: boolean;
   source: DataSource;
   season: number;
   /** URL photo portrait officielle MLB (gratuite, sans clé). KBO = "". */

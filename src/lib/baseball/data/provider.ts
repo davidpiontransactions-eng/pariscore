@@ -10,7 +10,7 @@
  */
 
 import { buildCuratedSlate, isCuratedLeague } from "./curated-provider";
-import { buildLiveMlbPitcher, fetchMlbPitcherStats, fetchMlbSlate } from "./mlb-statsapi";
+import { buildLiveMlbPitcher, fetchMlbPitcherHand, fetchMlbPitcherStats, fetchMlbSlate } from "./mlb-statsapi";
 import {
   ALL_TEAM_RECORDS,
   CURATED_PITCHER_SEEDS,
@@ -117,7 +117,12 @@ function toQuick(prediction: BaseballPrediction): QuickPrediction {
 
 function computeQuickForMatch(match: BaseballMatch): BaseballMatch {
   const { homePitcher, awayPitcher, homeTeam, awayTeam } = match;
+  // Ne jamais prédire si un partant n'a pas de stats de saison : le moteur
+  // Monte Carlo exige des entrées numériques réelles, pas des placeholders.
   if (!homePitcher || !awayPitcher) return match;
+  if (!homePitcher.statsAvailable || !awayPitcher.statsAvailable) {
+    return { ...match, quick: null };
+  }
   const input = {
     gameId: match.game.id,
     league: match.game.league,
@@ -148,11 +153,14 @@ async function fetchMlbMatches(date: string): Promise<{
   }
   const statsEntries = await Promise.all(
     [...pitcherIds.entries()].map(async ([id]) => {
-      const stats = await fetchMlbPitcherStats(id);
-      return [id, stats] as const;
+      const [stats, hand] = await Promise.all([
+        fetchMlbPitcherStats(id),
+        fetchMlbPitcherHand(id),
+      ]);
+      return [id, { stats, hand }] as const;
     }),
   );
-  const statsById = new Map(statsEntries);
+  const byId = new Map(statsEntries);
 
   const matches: BaseballMatch[] = [];
   for (const g of games) {
@@ -163,12 +171,16 @@ async function fetchMlbMatches(date: string): Promise<{
     const awayTeam = ALL_TEAM_RECORDS.find((t) => t.id === `MLB:${awayCode}`);
     if (!homeTeam || !awayTeam) continue;
 
+    const homeEntry = byId.get(g.homePitcher?.id ?? -1);
+    const awayEntry = byId.get(g.awayPitcher?.id ?? -1);
+
     const homePitcher = g.homePitcher
       ? buildLiveMlbPitcher(
           homeCode,
           g.homePitcher.id,
           g.homePitcher.fullName,
-          statsById.get(g.homePitcher.id) ?? null,
+          homeEntry?.hand ?? null,
+          homeEntry?.stats ?? null,
         )
       : null;
     const awayPitcher = g.awayPitcher
@@ -176,7 +188,8 @@ async function fetchMlbMatches(date: string): Promise<{
           awayCode,
           g.awayPitcher.id,
           g.awayPitcher.fullName,
-          statsById.get(g.awayPitcher.id) ?? null,
+          awayEntry?.hand ?? null,
+          awayEntry?.stats ?? null,
         )
       : null;
 
@@ -319,17 +332,23 @@ export async function getMatchDetailPayload(id: string): Promise<BaseballMatchDe
   let predictionBlockedReason: string | null = null;
 
   if (homePitcher && awayPitcher && game.status !== "final") {
-    const input = {
-      gameId: game.id,
-      league: game.league,
-      homeTeam,
-      awayTeam,
-      homePitcher,
-      awayPitcher,
-      iterations: FULL_ITERATIONS,
-    };
-    const hash = predictionInputHash(input);
-    prediction = cachedPrediction(game.id, hash, () => buildPrediction(input));
+    if (!homePitcher.statsAvailable || !awayPitcher.statsAvailable) {
+      prediction = null;
+      predictionBlockedReason =
+        "Stats saison d'un lanceur partant indisponibles — le moteur ne prédit que sur des données réelles.";
+    } else {
+      const input = {
+        gameId: game.id,
+        league: game.league,
+        homeTeam,
+        awayTeam,
+        homePitcher,
+        awayPitcher,
+        iterations: FULL_ITERATIONS,
+      };
+      const hash = predictionInputHash(input);
+      prediction = cachedPrediction(game.id, hash, () => buildPrediction(input));
+    }
   } else if (game.status === "final") {
     predictionBlockedReason =
       "Match terminé — le moteur ne prédit que les matchs à venir.";

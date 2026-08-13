@@ -495,6 +495,7 @@ export function pitcherSeedToRecord(
     inningsPitched: seed.inningsPitched,
     opsAgainst: seed.opsAgainst,
     starterIpAvg: seed.starterIpAvg,
+    statsAvailable: true,
     source,
     season: 2026,
   };

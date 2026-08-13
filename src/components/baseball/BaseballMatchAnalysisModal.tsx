@@ -270,6 +270,7 @@ function ContextSection({
   homeTeam,
   awayTeam,
   awayPitcherHand,
+  homePitcherHand,
   homeParkFactor,
   homeParkLabel,
   homeBullpen,
@@ -278,6 +279,7 @@ function ContextSection({
   homeTeam: TeamRecord;
   awayTeam: TeamRecord;
   awayPitcherHand: "LHP" | "RHP" | null;
+  homePitcherHand: "LHP" | "RHP" | null;
   homeParkFactor: number;
   homeParkLabel: string;
   homeBullpen: { era: number; ipLast3: number; fatigueIndex: number };
@@ -306,7 +308,9 @@ function ContextSection({
             </thead>
             <tbody className="font-mono tabular-nums">
               {rows.map(({ team }) => {
-                const starterHand = team.id === homeTeam.id ? awayPitcherHand : awayPitcherHand === null ? null : awayPitcherHand;
+                // Chaque frappeur est évalué face à la main du PARTANT ADVERSE.
+                const starterHand =
+                  team.id === homeTeam.id ? awayPitcherHand : homePitcherHand;
                 return (
                   <tr key={team.id} className="border-t border-slate-800">
                     <td className="py-2 font-sans font-semibold text-slate-200">
@@ -558,7 +562,12 @@ export function BaseballMatchAnalysisModal({
                 <ContextSection
                   homeTeam={detail.homeTeam}
                   awayTeam={detail.awayTeam}
-                  awayPitcherHand={detail.awayPitcher?.throws ?? null}
+                  awayPitcherHand={
+                    detail.awayPitcher ? (detail.awayPitcher.throws ?? null) : null
+                  }
+                  homePitcherHand={
+                    detail.homePitcher ? (detail.homePitcher.throws ?? null) : null
+                  }
                   homeParkFactor={detail.homeTeam.parkFactor}
                   homeParkLabel={detail.matchupContext.homeParkLabel}
                   homeBullpen={detail.matchupContext.homeBullpen}

@@ -164,6 +164,7 @@ export function bullpenFatigue(
 export function buildBatterProfile(
   league: League,
   teamWrcPlus: number,
+  platoonOps: number,
   pitcher: Pick<
     PitcherRecord,
     "kPer9" | "bbPer9" | "hrPer9" | "opsAgainst"
@@ -172,8 +173,9 @@ export function buildBatterProfile(
   fatigue: number,
 ): BatterProfile {
   const p = LEAGUE_PARAMS[league];
-  const teamOps = p.ops * (teamWrcPlus / 100);
-  const combinedOps = 0.62 * teamOps + 0.38 * pitcher.opsAgainst;
+  // L'ops projeté s'appuie sur le split platoon réel de l'équipe face à la
+  // main du lanceur adverse (méthode des systèmes de projection ZiPS/FanGraphs).
+  const combinedOps = 0.62 * (platoonOps ?? p.ops) + 0.38 * (pitcher.opsAgainst ?? p.ops);
 
   // Modèle de confrontation : les trois "true outcomes" (K, BB, HR) sont
   // pilotés à 50 % par le lanceur et à 50 % par la tendance du frappeur,
@@ -183,9 +185,9 @@ export function buildBatterProfile(
   const teamHR9 = p.hr9 * (teamWrcPlus / 100) ** 0.8;
   const teamK9 = p.k9 * (100 / teamWrcPlus) ** 0.35;
 
-  const confrontK9 = 0.5 * pitcher.kPer9 + 0.5 * teamK9;
-  const confrontBB9 = 0.5 * pitcher.bbPer9 + 0.5 * teamBB9;
-  const confrontHR9 = 0.5 * pitcher.hrPer9 + 0.5 * teamHR9;
+  const confrontK9 = 0.5 * (pitcher.kPer9 ?? p.k9) + 0.5 * teamK9;
+  const confrontBB9 = 0.5 * (pitcher.bbPer9 ?? p.bb9) + 0.5 * teamBB9;
+  const confrontHR9 = 0.5 * (pitcher.hrPer9 ?? p.hr9) + 0.5 * teamHR9;
 
   const effK9 = (1 - SHRINKAGE) * confrontK9 + SHRINKAGE * p.k9;
   const effBB9 = (1 - SHRINKAGE) * confrontBB9 + SHRINKAGE * p.bb9;
@@ -300,21 +302,27 @@ export function predictionInputHash(input: PredictionInput): string {
     homeTeam.parkFactor,
     homeTeam.bullpenEra,
     homeTeam.bullpenIpLast3,
+    homeTeam.opsVsLhp,
+    homeTeam.opsVsRhp,
     awayTeam.wrcPlus,
     awayTeam.bullpenEra,
     awayTeam.bullpenIpLast3,
+    awayTeam.opsVsLhp,
+    awayTeam.opsVsRhp,
     homePitcher.id,
-    homePitcher.kPer9,
-    homePitcher.bbPer9,
-    homePitcher.hrPer9,
-    homePitcher.opsAgainst,
-    homePitcher.starterIpAvg,
+    homePitcher.throws,
+    homePitcher.kPer9 ?? "n/a",
+    homePitcher.bbPer9 ?? "n/a",
+    homePitcher.hrPer9 ?? "n/a",
+    homePitcher.opsAgainst ?? "n/a",
+    homePitcher.starterIpAvg ?? "n/a",
     awayPitcher.id,
-    awayPitcher.kPer9,
-    awayPitcher.bbPer9,
-    awayPitcher.hrPer9,
-    awayPitcher.opsAgainst,
-    awayPitcher.starterIpAvg,
+    awayPitcher.throws,
+    awayPitcher.kPer9 ?? "n/a",
+    awayPitcher.bbPer9 ?? "n/a",
+    awayPitcher.hrPer9 ?? "n/a",
+    awayPitcher.opsAgainst ?? "n/a",
+    awayPitcher.starterIpAvg ?? "n/a",
     MODEL_VERSION,
     input.iterations ?? FULL_ITERATIONS,
   ];
@@ -332,37 +340,51 @@ export function buildPrediction(input: PredictionInput): BaseballPrediction {
   const homeFatigue = bullpenFatigue(league, homeTeam.bullpenEra, homeTeam.bullpenIpLast3);
   const awayFatigue = bullpenFatigue(league, awayTeam.bullpenEra, awayTeam.bullpenIpLast3);
 
+  // Historique de terrain : les DEUX équipes frappent dans le parc du home
+  // (l'équipe away n'est pas "neutre" — elle est confrontée au même park).
+  const park = homeTeam.parkFactor;
+  // Split platoon : chaque équipe voit la main du partant adverse.
+  const homeOpsVsStarter = awayPitcher.throws === "LHP" ? homeTeam.opsVsLhp : homeTeam.opsVsRhp;
+  const awayOpsVsStarter = homePitcher.throws === "LHP" ? awayTeam.opsVsLhp : awayTeam.opsVsRhp;
+  // Bullpen adverse : groupe mixte → moyenne des deux splits.
+  const homeOpsVsBullpen = (homeTeam.opsVsLhp + homeTeam.opsVsRhp) / 2;
+  const awayOpsVsBullpen = (awayTeam.opsVsLhp + awayTeam.opsVsRhp) / 2;
+
   const setup = {
     homeVsAwayStarter: buildBatterProfile(
       league,
       homeTeam.wrcPlus,
+      homeOpsVsStarter,
       awayPitcher,
-      homeTeam.parkFactor,
+      park,
       1,
     ),
     awayVsHomeStarter: buildBatterProfile(
       league,
       awayTeam.wrcPlus,
+      awayOpsVsStarter,
       homePitcher,
-      100,
+      park,
       1,
     ),
     homeVsAwayBullpen: buildBatterProfile(
       league,
       homeTeam.wrcPlus,
+      homeOpsVsBullpen,
       awayPitcher,
-      homeTeam.parkFactor,
+      park,
       awayFatigue,
     ),
     awayVsHomeBullpen: buildBatterProfile(
       league,
       awayTeam.wrcPlus,
+      awayOpsVsBullpen,
       homePitcher,
-      100,
+      park,
       homeFatigue,
     ),
-    homeStarterInnings: clamp(homePitcher.starterIpAvg, 4.5, 6.5),
-    awayStarterInnings: clamp(awayPitcher.starterIpAvg, 4.5, 6.5),
+    homeStarterInnings: clamp(homePitcher.starterIpAvg ?? 5.5, 4.5, 6.5),
+    awayStarterInnings: clamp(awayPitcher.starterIpAvg ?? 5.5, 4.5, 6.5),
   };
 
   const seed = hashString(input.gameId);

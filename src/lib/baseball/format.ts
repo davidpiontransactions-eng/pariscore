@@ -28,7 +28,10 @@ export function fmtNum(n: number | null | undefined): string {
   return `${round1(n).toFixed(1).replace(".", ",")}`;
 }
 
-/** 7 → "7-3" pour un W-L. */
-export function fmtWinLoss(wins: number, losses: number): string {
+/** 7 → "7-3" pour un W-L ; null/donnée manquante → "—". */
+export function fmtWinLoss(wins: number | null, losses: number | null): string {
+  if (wins === null || losses === null || !Number.isFinite(wins) || !Number.isFinite(losses)) {
+    return "—";
+  }
   return `${wins}-${losses}`;
 }

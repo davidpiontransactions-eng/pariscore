@@ -33,7 +33,7 @@ export const PYTHAGOREAN_EXPONENT = 1.83;
 export const CONFIDENCE_THRESHOLD = 0.65;
 
 /** Version du modèle — incrémentée à chaque changement de formule. */
-export const MODEL_VERSION = "sabermetric-2.1";
+export const MODEL_VERSION = "sabermetric-2.2-platoon";
 
 /** Événements d'un passage au bâton simulé. */
 export type PaKind =
