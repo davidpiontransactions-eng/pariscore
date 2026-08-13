@@ -81,10 +81,24 @@ async function fetchJson<T>(url: string, timeoutMs = 9000): Promise<T> {
       headers: { Accept: "application/json" },
       cache: "no-store",
     });
-    if (!res.ok) {
-      throw new Error(`MLB StatsAPI HTTP ${res.status}`);
+    if (res.ok) {
+      return (await res.json()) as T;
     }
-    return (await res.json()) as T;
+    // Certaines IP de datacenter (VPS) se voient renvoyer un 406 sur HTTPS
+    // pour /people et /stats, alors que la même ressource répond en HTTP.
+    // On retombe sur le miroir HTTP avant d'abandonner — jamais de donnée
+    // inventée en cas d'échec : le caller propage null et l'UI affiche "—".
+    if (url.startsWith("https://statsapi.mlb.com")) {
+      const httpUrl = url.replace("https://statsapi.mlb.com", "http://statsapi.mlb.com");
+      const retryRes = await fetch(httpUrl, {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (retryRes.ok) {
+        return (await retryRes.json()) as T;
+      }
+    }
+    throw new Error(`MLB StatsAPI HTTP ${res.status}`);
   } finally {
     clearTimeout(timer);
   }
