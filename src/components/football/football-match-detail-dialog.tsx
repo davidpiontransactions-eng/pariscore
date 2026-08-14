@@ -16,6 +16,7 @@ import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/predicti
 import { MomentumChart } from "./momentum-chart";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { FootballPressReviewWidget } from "@/components/football/FootballPressReviewWidget";
+import { AIMatchReport } from "./AIMatchReport";
 import { WatchButton } from "@/components/shared/watch-button";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
@@ -217,6 +218,11 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             leagueName={view.league.name}
             className="mt-3"
           />
+        )}
+
+        {/* Rapport de match IA (Phase 2) — synthèse + faits + combiné suggéré */}
+        {view && !view.live && (
+          <AIMatchReport match={view} enabled={open} className="mt-3" />
         )}
 
         {/* En-tête : logos + score + minute */}

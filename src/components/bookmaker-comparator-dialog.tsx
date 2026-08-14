@@ -10,9 +10,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Scale, ArrowUpDown, Award, TrendingUp } from "lucide-react";
+import { Scale, ArrowUpDown, Award, TrendingUp, ExternalLink } from "lucide-react";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { cn } from "@/lib/utils";
+import { getBookmakers, buildDeepLink } from "@/lib/bookmaker-deeplinks";
 
 let openFn: ((open: boolean) => void) | null = null;
 export function openBookmakerComparatorDialog() {
@@ -340,6 +341,7 @@ export function BookmakerComparatorDialog() {
                         <div className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           +{vb.edge}pp
                         </div>
+                        <BookmakerDeepLink bookmakerName={vb.bookmaker} matchLabel={vb.matchLabel} />
                       </div>
                     </div>
                   ))}
@@ -350,6 +352,30 @@ export function BookmakerComparatorDialog() {
         </ScrollArea>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Lien direct (non affilié) vers la recherche du match chez le bookmaker. */
+function BookmakerDeepLink({ bookmakerName, matchLabel }: { bookmakerName: string; matchLabel: string }) {
+  const bm = getBookmakers().find(
+    (b) => b.name.toLowerCase() === bookmakerName.trim().toLowerCase(),
+  );
+  if (!bm) return null;
+  const [teamA, teamB] = matchLabel.split(" vs ");
+  if (!teamA || !teamB) return null;
+  const url = buildDeepLink(bm.key, teamA.trim(), teamB.trim());
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-flex items-center gap-1 text-[9px] font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-emerald-500"
+      title={`Voir ${matchLabel} chez ${bm.name} (lien direct, sans affiliation)`}
+    >
+      <ExternalLink className="h-2.5 w-2.5" aria-hidden />
+      {bm.name}
+    </a>
   );
 }
 
@@ -365,8 +391,7 @@ function Th({
   active: boolean;
   dir: "asc" | "desc";
   align?: "left" | "right";
-}) {
-  return (
+}) {  return (
     <th
       className={cn(
         "px-3 py-2 font-semibold cursor-pointer select-none hover:bg-muted/60 transition-colors",

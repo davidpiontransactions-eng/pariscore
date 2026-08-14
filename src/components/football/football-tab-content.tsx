@@ -2,7 +2,18 @@
 
 import { useState, useMemo, lazy, Suspense } from "react";
 import { useTranslations } from "next-intl";
-import { Trophy, RefreshCw, AlertCircle, LayoutGrid, List } from "lucide-react";
+import {
+  Trophy,
+  RefreshCw,
+  AlertCircle,
+  LayoutGrid,
+  List,
+  Sparkles,
+  TicketPercent,
+  Gauge,
+  TrendingUp,
+  X,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,9 +23,19 @@ import { FootballLeagueBar } from "./football-filters";
 import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top-teams-presets-bar";
 import { useCornervalueStats } from "@/hooks/use-cornervalue-stats";
 import { useTeamAttackDefenseStats } from "@/hooks/use-team-attack-defense-stats";
-import { FootballMatchCard, FootballMatchCardSkeleton } from "./football-match-card";
+import { FootballMatchCardSkeleton } from "./football-match-card";
 import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
+import { FootballBankerWidget } from "./football-banker";
+import { FootballRoundGroups } from "./football-round-groups";
+import { AIFilterBuilderDialog } from "./AIFilterBuilderDialog";
+import { BetSlipGeneratorDialog } from "./BetSlipGeneratorDialog";
+import { ReliabilityScore } from "./ReliabilityScore";
+import { StrategyImprovementPanel } from "./StrategyImprovementPanel";
+import { useFootballAIFilters } from "@/hooks/use-football-ai-filters";
+import { useFootballBacktest } from "@/hooks/use-football-backtest";
+import { applyCompiledRules, type AIFilterPreset } from "@/lib/football-nl-filter";
+import { bestMatchEdge } from "@/lib/football-correct-score";
 
 // Dialog de détail (momentum) — lazy : ne charge pas le code tant qu'aucun match
 // n'est ouvert. Miroir du pattern tennis (tennis-tab-content.tsx).
@@ -34,6 +55,15 @@ export function FootballTabContent() {
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [presetFilter, setPresetFilter] = useState<TopTeamPreset | null>(null);
 
+  // Suite AI Pricing — filtres NL, combiné, backtest/fiabilité.
+  const { presets: aiPresets, addPreset: addAIPreset, removePreset: removeAIPreset } = useFootballAIFilters();
+  const [aiFilterDialogOpen, setAIFilterDialogOpen] = useState(false);
+  const [betSlipOpen, setBetSlipOpen] = useState(false);
+  const [activeAIFilterId, setActiveAIFilterId] = useState<string | null>(null);
+  const [sortByEdge, setSortByEdge] = useState(false);
+  const [showBacktest, setShowBacktest] = useState(false);
+  const activeAIFilter = aiPresets.find((p) => p.id === activeAIFilterId) ?? null;
+
   // Cornervalue data — charge selon la ligue selectionnee
   const { data: cvData } = useCornervalueStats(selectedLeague);
 
@@ -49,6 +79,7 @@ export function FootballTabContent() {
   };
 
   const matches: FootballMatch[] = data?.matches ?? [];
+  const backtestState = useFootballBacktest(matches);
 
   const liveMatches = useMemo(
     () => matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT")),
@@ -90,8 +121,16 @@ export function FootballTabContent() {
     if (filter === "btts") {
       list = list.filter((m) => m.prediction.bttsProb >= 55);
     }
+    // Filtre IA compilé (langage naturel) — appliqué après les sous-filtres.
+    if (activeAIFilter) {
+      list = applyCompiledRules(list, activeAIFilter.rules);
+    }
+    // Tri : par edge/value (décroissant) ou par date (croissant).
+    if (sortByEdge) {
+      return [...list].sort((a, b) => (bestMatchEdge(b) ?? -Infinity) - (bestMatchEdge(a) ?? -Infinity));
+    }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, presetFilter, cvData, filter]);
+  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge]);
 
   const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
     { key: "all", label: "Tous" },
@@ -144,6 +183,95 @@ export function FootballTabContent() {
         </button>
       </div>
 
+      {/* Barre d'outils AI Pricing — filtres NL, tri edge, combiné, fiabilité */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setAIFilterDialogOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-violet-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden />
+          Filtre IA
+        </button>
+
+        {aiPresets.map((p) => (
+          <span key={p.id} className="inline-flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => setActiveAIFilterId(activeAIFilterId === p.id ? null : p.id)}
+              title={p.description}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                activeAIFilterId === p.id
+                  ? "border-violet-500 bg-violet-500/15 text-violet-300"
+                  : "border-border bg-background text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {p.label}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                removeAIPreset(p.id);
+                if (activeAIFilterId === p.id) setActiveAIFilterId(null);
+              }}
+              className="rounded-full p-0.5 text-muted-foreground hover:text-rose-400"
+              aria-label={`Supprimer le filtre ${p.label}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+
+        <button
+          type="button"
+          onClick={() => setSortByEdge((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            sortByEdge
+              ? "border-emerald-500 bg-emerald-500/15 text-emerald-400"
+              : "border-border bg-background text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <TrendingUp className="h-3.5 w-3.5" aria-hidden />
+          Trier par Edge
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setBetSlipOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <TicketPercent className="h-3.5 w-3.5" aria-hidden />
+          Combiné
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowBacktest((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            showBacktest
+              ? "border-emerald-500 bg-emerald-500/15 text-emerald-400"
+              : "border-border bg-background text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <Gauge className="h-3.5 w-3.5" aria-hidden />
+          Fiabilité
+        </button>
+      </div>
+
+      {/* Panneaux AI Pricing (conditionnels) */}
+      {showBacktest && <ReliabilityScore state={backtestState} className="mb-6" />}
+      {activeAIFilter && (
+        <StrategyImprovementPanel
+          matches={prematchMatches}
+          preset={activeAIFilter}
+          onSaveVariation={(p) => addAIPreset(p)}
+          className="mb-6"
+        />
+      )}
+
       {viewMode === "list" ? (
         <FlashscoreFootballList
           matches={matches}
@@ -156,6 +284,11 @@ export function FootballTabContent() {
         />
       ) : (
         <>
+          {/* Banker du week-end — pick éditorial + top 3 (respecte la ligue/no filtres) */}
+          {!isLoading && prematchMatches.length > 0 && (
+            <FootballBankerWidget matches={prematchMatches} onOpenDetail={openDetail} />
+          )}
+
           {/* Live Section */}
           {liveMatches.length > 0 && (
             <section className="mb-8">
@@ -247,11 +380,7 @@ export function FootballTabContent() {
               </div>
             </>
           ) : prematchMatches.length > 0 ? (
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              {prematchMatches.map((m, idx) => (
-                <FootballMatchCard key={m.id} match={m} priority={idx < 2} onOpenDetail={() => openDetail(m)} />
-              ))}
-            </div>
+            <FootballRoundGroups matches={prematchMatches} onOpenDetail={openDetail} />
           ) : (
             <div className="mt-16 flex flex-col items-center justify-center gap-3 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -272,6 +401,17 @@ export function FootballTabContent() {
       <Suspense fallback={null}>
         <FootballMatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
       </Suspense>
+
+      {/* Dialogs suite AI Pricing */}
+      <AIFilterBuilderDialog
+        open={aiFilterDialogOpen}
+        onOpenChange={setAIFilterDialogOpen}
+        onSave={(preset: AIFilterPreset) => {
+          addAIPreset(preset);
+          setActiveAIFilterId(preset.id);
+        }}
+      />
+      <BetSlipGeneratorDialog open={betSlipOpen} onOpenChange={setBetSlipOpen} matches={prematchMatches} />
     </div>
   );
 }

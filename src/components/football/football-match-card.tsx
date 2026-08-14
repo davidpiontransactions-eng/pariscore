@@ -20,6 +20,7 @@ import { MetricComparePanel } from "@/components/football/MetricComparePanel";
 import { MetricLeaderboardTable } from "@/components/football/MetricLeaderboardTable";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { WatchButton } from "@/components/shared/watch-button";
+import { mostLikelyScore, bestEdgeMarket } from "@/lib/football-correct-score";
 
 function formatKickoff(iso: string): string {
   const d = new Date(iso);
@@ -174,6 +175,11 @@ export function FootballMatchCard({
   const maxBadgeProb = predictionBadges.length > 0
     ? Math.max(...predictionBadges.map((b) => b.prob))
     : 0;
+
+  // Correct Score (Phase 3) — score exact le plus probable depuis les xG.
+  const correctScore = useMemo(() => mostLikelyScore(match), [match]);
+  // Meilleur marché "value" (edge positif) pour badge éventuel.
+  const edgeMarket = useMemo(() => bestEdgeMarket(match), [match]);
 
   // xG summary (expected goals — displayed between badges and comparatifs)
   const xGSummary = useMemo(() => (
@@ -420,9 +426,33 @@ export function FootballMatchCard({
         </div>
 
         {/* Prédictions Clés */}
-        {predictionBadges.length > 0 && (
+        {(predictionBadges.length > 0 || correctScore) && (
           <div className="mt-3 overflow-x-auto scrollbar-none -mx-1 px-1">
             <div className="flex flex-nowrap items-center gap-1.5 sm:flex-wrap min-w-max sm:min-w-0">
+              {/* Correct Score (Phase 3) — score exact le plus probable */}
+              {correctScore && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-sky-500/40 bg-sky-500/15 px-2 py-0.5 text-[11px] font-semibold text-sky-400"
+                  title={`Score exact le plus probable : ${correctScore.home}-${correctScore.away} (${correctScore.prob.toFixed(1)}%)`}
+                >
+                  <Target className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="tabular-nums">
+                    Score {correctScore.home}-{correctScore.away} ({correctScore.prob.toFixed(0)}%)
+                  </span>
+                </span>
+              )}
+              {/* Edge / Value (Phase 3) — meilleur écart modèle vs cote */}
+              {edgeMarket && edgeMarket.edge != null && edgeMarket.edge > 0 && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-400"
+                  title={`Edge sur le marché « ${edgeMarket.market} » : modèle ${edgeMarket.modelProb.toFixed(0)}% vs implicite ${edgeMarket.impliedProb?.toFixed(0)}%`}
+                >
+                  <TrendingUp className="h-3 w-3 shrink-0" aria-hidden />
+                  <span className="tabular-nums">
+                    Edge {edgeMarket.market} +{edgeMarket.edge.toFixed(0)}
+                  </span>
+                </span>
+              )}
               {predictionBadges.map((badge) => {
                 const isBest = badge.prob >= maxBadgeProb;
                 return (
