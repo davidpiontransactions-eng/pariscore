@@ -50,7 +50,7 @@ const MAX_TRANSLATION_CHARS = 600;
 // ---------------------------------------------------------------------------
 
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 const GEMINI_TIMEOUT_MS = 20_000;
 
 // ---------------------------------------------------------------------------

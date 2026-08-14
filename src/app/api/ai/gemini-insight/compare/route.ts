@@ -97,7 +97,7 @@ class GeminiUpstreamError extends AppError {
   }
 }
 
-/** Appelle l'API Gemini (gemini-2.0-flash) via JSON direct. */
+/** Appelle l'API Gemini (gemini-2.5-flash) via JSON direct. */
 async function callGeminiCompare(prompt: string): Promise<GeminiCompareInsight> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -105,7 +105,7 @@ async function callGeminiCompare(prompt: string): Promise<GeminiCompareInsight> 
   }
 
   const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
   const res = await fetch(url, {
     method: "POST",
