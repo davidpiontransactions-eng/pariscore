@@ -13,9 +13,8 @@ echo.
 set "MSG=%~1"
 if "%MSG%"=="" set "MSG=fix: deploiement automatique %DATE%"
 
-:: Delegue a scripts/deploy-vps.bat
-call scripts\deploy-vps.bat "%MSG%"
+:: Delegue a scripts/deploy.bat (entree unique optimisee)
+call scripts\deploy.bat "%MSG%"
 
 echo.
 echo === Done ===
-pause

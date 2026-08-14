@@ -273,6 +273,7 @@ le projet courant avec un glob **relatif** (ex. `src/**/*tennis*`), puis demande
 ### Deployment
 VPS (ubuntu@51.75.21.239) with Bun + pm2. Legacy also on Render.com via `render.yaml`.
 Health check: `/api/v1/status`.
+**Deploy** : `deploy.bat "msg"` (racine) ou `scripts/deploy.bat "msg"` — point d'entrée unique. Stream `scripts/update_vps.sh` vers le VPS (toujours la dernière logique). Le runner est **smart** : skip `next build` si seuls des fichiers legacy ont changé (`pariscore.{html,app.js,js}`, `services/*.js`, `data/*.json`) → ~15-30s vs ~3min. Build complet uniquement si `src/`/`app/`/`next.config`/`package.json` changent. QA post-deploy optionnelle : `bash scripts/post-deploy-qa.sh`.
 
 ### Secrets
 - `.env` contains live API keys — **NEVER commit**
