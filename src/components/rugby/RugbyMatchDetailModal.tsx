@@ -184,15 +184,26 @@ function MarketsSection({ prediction }: { prediction: RugbyPrediction }) {
             <span className="text-teal-300">{pct(prediction.handicap.homeCoverProb)}</span> / <span className="text-sky-300">{pct(prediction.handicap.awayCoverProb)}</span>
           </span>
         </div>
-        <div className="mt-3 space-y-1.5">
-          {prediction.marginBands.map((b) => (
-            <div key={b.label} className="flex items-center justify-between text-xs tabular-nums">
-              <span className="font-semibold text-slate-300">Gagne de {b.label}</span>
-              <span className="text-slate-400">
-                <span className="text-teal-300">{pct(b.homeProb)}</span> / <span className="text-sky-300">{pct(b.awayProb)}</span>
-              </span>
-            </div>
-          ))}
+        {/* Histogramme des bandes de marge (probabilité cumulée de gagner de X+) */}
+        <div className="mt-3 space-y-2" role="img" aria-label="Distribution des marges par bande">
+          {prediction.marginBands.map((b) => {
+            const h = Math.round(b.homeProb * 100);
+            const a = Math.round(b.awayProb * 100);
+            return (
+              <div key={b.label}>
+                <div className="mb-1 flex items-center justify-between text-[10px] tabular-nums">
+                  <span className="font-semibold text-slate-400">Gagne de {b.label}</span>
+                  <span className="text-slate-500">
+                    <span className="text-teal-300">{h}%</span> / <span className="text-sky-300">{a}%</span>
+                  </span>
+                </div>
+                <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div className="bg-teal-400" style={{ width: `${h}%` }} />
+                  <div className="bg-sky-400" style={{ width: `${a}%` }} />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </Card>
     </div>
@@ -265,20 +276,31 @@ function TryScorersSection({ scorers }: { scorers: { playerName: string; teamNam
     <Card className="p-4">
       <h4 className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Marqueurs d&apos;essai probables</h4>
       <div className="space-y-1.5">
-        {top.map((s) => (
+        {top.map((s, i) => (
           <div key={`${s.playerName}-${s.teamName}`} className="flex items-center justify-between gap-2 text-xs">
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-slate-100">{s.playerName}</p>
+              <p className="flex items-center gap-1.5 truncate font-semibold text-slate-100">
+                {s.playerName}
+                {i < 3 && (
+                  <span className="shrink-0 rounded-full bg-teal-500/15 px-1.5 py-px text-[9px] font-black text-teal-300 ring-1 ring-teal-500/40">
+                    Top {i + 1}
+                  </span>
+                )}
+              </p>
               <p className="text-[10px] text-slate-500">{s.teamName} · {s.position}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3 tabular-nums">
               <span className="text-[10px] text-slate-500">{s.expectedTries.toFixed(2)} ess.</span>
               <span className="w-14 text-right font-bold text-teal-300">{pct(s.anytimeProb)}</span>
+              <span className="w-14 text-right text-[10px] text-slate-500">1er {pct(s.firstTryProb)}</span>
             </div>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[10px] text-slate-500">Probabilité &quot;anytime&quot; de marquer au moins un essai.</p>
+      <p className="mt-3 text-[10px] text-slate-500">
+        Probabilité &quot;anytime&quot; de marquer au moins un essai, et probabilité d&apos;ouvrir le score (1er essai).
+        Le top 3 est la sélection à valeur du modèle.
+      </p>
     </Card>
   );
 }

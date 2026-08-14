@@ -135,6 +135,8 @@ data/scrapy-tests/
 data/scrapling-tests/
 data/betwatch_wom.json
 data/smarkets_tennis_wom.json
+# Rugby backtest store (runtime, machine-local — regenere par le moteur)
+data/rugby-backtest.json
 
 # =============================================================================
 # Langflow artifacts (intégration 2026-07-13)

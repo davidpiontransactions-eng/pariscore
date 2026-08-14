@@ -12,9 +12,11 @@
 
 import { RUGBY_COMPETITIONS, COMPETITION_BY_SLUG } from "./competitions";
 import { buildWindows, fetchScoreboard } from "./espn";
+import { recordBacktests } from "./backtest";
 import {
   DEFAULT_CONFIG,
   computeFactors,
+  computePowerScore,
   computeVerdict,
   modelMatch,
   predictTryScorers,
@@ -203,6 +205,8 @@ async function syncCompetition(slug: string): Promise<void> {
   computeRatings(cs);
   generatePredictions(cs, def);
   computeStandings(cs, def);
+  // Snapshot du spread + settlement des matchs terminés (best-effort, async).
+  recordBacktests(slug, cs.matches, cs.predictions);
   cs.lastSyncAt = Date.now();
 }
 
@@ -427,6 +431,10 @@ function generatePredictions(cs: CompetitionState, def: CompetitionDef): void {
       lambdaAway: result.lambdaAway,
       homeElo: home.elo,
       awayElo: away.elo,
+      powerScore: {
+        home: computePowerScore(home),
+        away: computePowerScore(away),
+      },
       verdict: verdict.label,
       verdictTeamId: verdict.teamId,
       confidence: verdict.confidence,
@@ -544,6 +552,7 @@ function computeStandings(cs: CompetitionState, def: CompetitionDef): void {
       pointsAgainst: r.pointsAgainst,
       form: r.form,
       points: cur.points,
+      powerScore: computePowerScore(r),
       titleChance: titleChance.get(r.teamId) ?? null,
     };
   });

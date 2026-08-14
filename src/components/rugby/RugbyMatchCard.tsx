@@ -166,6 +166,11 @@ export function RugbyMatchCard({
             />
             <MarketChip label="Score probable" value={prediction.mostLikelyScore} />
             <MarketChip
+              label="PowerScore"
+              value={`${prediction.powerScore.home} · ${prediction.powerScore.away}`}
+              title="PowerScore 0-100 : synthèse Elo + attaque/défense (domicile · extérieur)"
+            />
+            <MarketChip
               label="Confiance"
               value={pct(prediction.confidence)}
               highlight={prediction.confidence >= 0.62}
@@ -181,13 +186,16 @@ function MarketChip({
   label,
   value,
   highlight = false,
+  title,
 }: {
   label: string;
   value: string;
   highlight?: boolean;
+  title?: string;
 }) {
   return (
     <span
+      title={title}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-semibold ring-1",
         highlight

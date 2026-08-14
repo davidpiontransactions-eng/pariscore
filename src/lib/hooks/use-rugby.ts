@@ -2,8 +2,10 @@
 
 import useSWR, { type SWRConfiguration } from "swr";
 import type {
+  BacktestStatsPayload,
   CompetitionsPayload,
   MatchDetailPayload,
+  PowerPayload,
   PredictionsPayload,
   StandingsPayload,
 } from "@/lib/rugby/types";
@@ -14,6 +16,8 @@ import type {
  *   rugby:predictions:{slug}
  *   rugby:standings:{slug}
  *   rugby:match:{slug}:{id}
+ *   rugby:power:{slug}
+ *   rugby:backtest:{slug}
  * Pas de re-fetch au focus (économie VPS) — rafraîchissement manuel ou
  * intervalle dédié uniquement.
  */
@@ -75,5 +79,23 @@ export function useRugbyMatchDetail(slug: string | null, id: string | null) {
       revalidateOnReconnect: false,
       dedupingInterval: 10_000,
     }
+  );
+}
+
+export function useRugbyPower(slug: string | null) {
+  const key = slug ? `rugby:power:${slug}` : null;
+  return useSWR<PowerPayload>(
+    key,
+    () => fetcher<PowerPayload>(`/api/rugby/power?slug=${encodeURIComponent(slug ?? "")}`),
+    { ...LIST_CONFIG, refreshInterval: 120_000 }
+  );
+}
+
+export function useRugbyBacktest(slug: string | null) {
+  const key = slug ? `rugby:backtest:${slug}` : null;
+  return useSWR<BacktestStatsPayload>(
+    key,
+    () => fetcher<BacktestStatsPayload>(`/api/rugby/backtest?slug=${encodeURIComponent(slug ?? "")}`),
+    { ...LIST_CONFIG, refreshInterval: 300_000 }
   );
 }

@@ -16,13 +16,14 @@ import {
   useRugbyStandings,
 } from "@/lib/hooks/use-rugby";
 import type { Competition, PredictedMatch } from "@/lib/rugby/types";
+import { RugbyMarketsView } from "./RugbyMarketsView";
 import { RugbyMatchCard } from "./RugbyMatchCard";
 import { RugbyMatchDetailModal } from "./RugbyMatchDetailModal";
 import { RugbyMethodology } from "./RugbyMethodology";
 import { RugbyStandingsTable } from "./RugbyStandingsTable";
 import { Card, SectionHeading, fmtDateLong } from "./rugby-ui";
 
-type View = "predictions" | "standings";
+type View = "predictions" | "standings" | "markets";
 
 export function RugbyTabContent() {
   const { data: compsData, isLoading: compsLoading } = useRugbyCompetitions();
@@ -64,6 +65,8 @@ export function RugbyTabContent() {
         {activeSlug ? (
           view === "predictions" ? (
             <PredictionsView slug={activeSlug} onOpenMatch={setDetailMatchId} />
+          ) : view === "markets" ? (
+            <RugbyMarketsView slug={activeSlug} />
           ) : (
             <StandingsView slug={activeSlug} />
           )
@@ -148,6 +151,7 @@ function CompetitionSelector({
 function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => void }) {
   const opts: { id: View; label: string }[] = [
     { id: "predictions", label: "Prédictions" },
+    { id: "markets", label: "Marchés" },
     { id: "standings", label: "Classement & titres" },
   ];
   return (

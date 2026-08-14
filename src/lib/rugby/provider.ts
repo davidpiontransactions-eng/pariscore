@@ -7,6 +7,8 @@
  */
 
 import { COMPETITION_BY_SLUG, RUGBY_COMPETITIONS } from "./competitions";
+import { getBacktestStats } from "./backtest";
+import { computePowerScore } from "./models";
 import {
   ensureSynced,
   isCompStale,
@@ -18,9 +20,12 @@ import {
   syncAll,
 } from "./engine";
 import type {
+  BacktestStatsPayload,
   Competition,
   CompetitionsPayload,
   MatchDetailPayload,
+  PowerPayload,
+  PowerRow,
   PredictionsPayload,
   StandingsPayload,
   SyncResult,
@@ -124,6 +129,42 @@ export async function getStandingsPayload(slug: string): Promise<StandingsPayloa
     simulatedRuns: cs.simulatedRuns,
     fetchedAt: nowIso(),
     degraded: isDegraded(slug),
+  };
+}
+
+/** Top 10 PowerScore d'une compétition. */
+export async function getPowerPayload(slug: string): Promise<PowerPayload | null> {
+  const def = COMPETITION_BY_SLUG.get(slug);
+  if (!def) return null;
+  await ensureSynced(slug);
+  const cs = readCompState(slug);
+  const teams: PowerRow[] = [...cs.ratings.values()]
+    .map((r) => ({
+      teamId: r.teamId,
+      name: r.name,
+      abbreviation: r.abbreviation,
+      logo: r.logo,
+      color: r.color,
+      powerScore: computePowerScore(r),
+      elo: Math.round(r.elo),
+      attack: Math.round(r.attack * 1000) / 1000,
+      defence: Math.round(r.defence * 1000) / 1000,
+      gamesPlayed: r.gamesPlayed,
+      form: r.form,
+    }))
+    .sort((a, b) => b.powerScore - a.powerScore)
+    .slice(0, 10);
+  return { competition: def, teams, fetchedAt: nowIso(), degraded: isDegraded(slug) };
+}
+
+/** Stats de couverture du spread (backtest), une compétition ou toutes. */
+export async function getBacktestStatsPayload(
+  slug: string | null
+): Promise<BacktestStatsPayload> {
+  return {
+    stats: getBacktestStats(slug),
+    fetchedAt: nowIso(),
+    degraded: slug ? isDegraded(slug) : false,
   };
 }
 

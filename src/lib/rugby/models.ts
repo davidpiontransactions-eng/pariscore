@@ -172,6 +172,39 @@ export function computeFactors(
 }
 
 /* ------------------------------------------------------------------ */
+/* PowerScore — score 0-100 par équipe (inspiré du PowerScore football) */
+/* ------------------------------------------------------------------ */
+
+export interface PowerScoreInput {
+  elo: number;
+  attack: number;
+  defence: number;
+  gamesPlayed: number;
+  minGames?: number;
+}
+
+/**
+ * Synthétise Elo + facteurs attaque/défense en un score 0-100 centré sur 50
+ * (50 = niveau moyen de la compétition). Les équipes avec peu de matchs
+ * sont régressées vers 50 (pas de score "héroïque" sur un échantillon nul).
+ *
+ *   eloScore    = 50 + (elo - 1500) / 12   → ±25 pts sur ±300 Elo
+ *   factorScore = 50 + (eff - 1) * 40      → ±40 pts sur les extrêmes
+ *                 avec eff = (attack + (2 - defence)) / 2 (1 = neutre)
+ *   powerScore  = 0.45 * eloScore + 0.55 * factorScore, clampé 5..95
+ */
+export function computePowerScore(input: PowerScoreInput): number {
+  const minGames = input.minGames ?? DEFAULT_CONFIG.minGames;
+  const eloScore = 50 + (input.elo - 1500) / 12;
+  const eff = (input.attack + (2 - input.defence)) / 2;
+  const factorScore = 50 + (eff - 1) * 40;
+  let ps = 0.45 * clamp(eloScore, 5, 95) + 0.55 * clamp(factorScore, 5, 95);
+  const g = Math.min(1, input.gamesPlayed / minGames);
+  ps = 50 + (ps - 50) * g;
+  return Math.round(clamp(ps, 5, 95));
+}
+
+/* ------------------------------------------------------------------ */
 /* Fraîcheur (rest days) — AMÉLIORATION PariScore                       */
 /* ------------------------------------------------------------------ */
 

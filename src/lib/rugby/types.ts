@@ -132,6 +132,8 @@ export interface RugbyPrediction {
   lambdaAway: number;
   homeElo: number;
   awayElo: number;
+  /** PowerScore 0-100 des deux équipes (synthèse Elo + attaque/défense). */
+  powerScore: { home: number; away: number };
   verdict: VerdictLabel;
   verdictTeamId: string | null;
   confidence: number;
@@ -183,6 +185,8 @@ export interface StandingRow {
   pointsAgainst: number;
   form: string;
   points: number;
+  /** PowerScore 0-100 (synthèse Elo + attaque/défense). */
+  powerScore: number;
   /** Probabilité simulée de finir 1er (0..1). null si pas de simulation. */
   titleChance: number | null;
 }
@@ -237,4 +241,72 @@ export interface SyncResult {
   predictions: number;
   durationMs: number;
   message: string;
+}
+
+/* ------------------------------------------------------------------ */
+/* PowerScore & backtest spread                                         */
+/* ------------------------------------------------------------------ */
+
+/** Ligne du classement PowerScore d'une compétition. */
+export interface PowerRow {
+  teamId: string;
+  name: string;
+  abbreviation: string;
+  logo: string;
+  color: string;
+  powerScore: number;
+  elo: number;
+  attack: number;
+  defence: number;
+  gamesPlayed: number;
+  form: string;
+}
+
+/** Payload GET /api/rugby/power (top 10 par compétition). */
+export interface PowerPayload {
+  competition: CompetitionDef;
+  teams: PowerRow[];
+  fetchedAt: string;
+  degraded: boolean;
+}
+
+/** Entrée du store de backtest spread (persistée dans data/rugby-backtest.json). */
+export interface BacktestEntry {
+  matchId: string;
+  slug: string;
+  date: string;
+  /** Ligne du spread au moment de la prédiction (côté domicile). */
+  handicapLine: number;
+  expectedHomeScore: number;
+  expectedAwayScore: number;
+  homeWinProb: number;
+  awayWinProb: number;
+  /** Résultat réel, null tant que le match n'est pas terminé. */
+  actualHomeScore: number | null;
+  actualAwayScore: number | null;
+  settledAt: string | null;
+}
+
+/** Couverture du spread par bande de probabilité domicile. */
+export interface BacktestBand {
+  label: string;
+  n: number;
+  /** Taux de couverture par le domicile (0..1), null si n === 0. */
+  homeCoverRate: number | null;
+  /** Taux de couverture par l'extérieur (0..1), null si n === 0. */
+  awayCoverRate: number | null;
+}
+
+/** Stats agrégées du backtest spread d'une compétition (ou toutes). */
+export interface BacktestStats {
+  slug: string | null;
+  bands: BacktestBand[];
+  total: { n: number; homeCoverRate: number | null; awayCoverRate: number | null };
+}
+
+/** Payload GET /api/rugby/backtest. */
+export interface BacktestStatsPayload {
+  stats: BacktestStats;
+  fetchedAt: string;
+  degraded: boolean;
 }
