@@ -59,7 +59,7 @@ if !N! gtr %POLL_MAX% (
   echo   ssh %VPS_HOST% "tail -30 /tmp/update_vps.log"
   exit /b 1
 )
-for /f "tokens=* delims=" %%L in ('ssh %SSH_OPTS% %VPS_HOST% "grep -q 'VPS DEPLOY OK' /tmp/update_vps.log 2>/dev/null && echo __DONE__ || tail -n 1 /tmp/update_vps.log" 2^>nul') do set "LINE=%%L"
+for /f "tokens=* delims=" %%L in ('ssh %SSH_OPTS% %VPS_HOST% "grep -q VPS_DEPLOY_OK /tmp/update_vps.log 2>/dev/null && echo __DONE__ || tail -n 1 /tmp/update_vps.log" 2^>nul') do set "LINE=%%L"
 if "!LINE!"=="__DONE__" goto :finished
 echo   [!N!/%POLL_MAX%] !LINE!
 %SystemRoot%\System32\ping.exe -n %POLL_SLEEP% 127.0.0.1 >nul

@@ -25,7 +25,7 @@ CURR="$(git rev-parse HEAD)"
 # Nothing to deploy? Exit fast (idempotent re-run).
 if [ -n "$PREV" ] && [ "$PREV" = "$CURR" ]; then
   echo "Already up to date ($CURR). Nothing to deploy."
-  echo "--- VPS DEPLOY OK ---"
+  echo "--- VPS_DEPLOY_OK ---"
   echo "build_ran: 0"
   pm2 jlist 2>/dev/null >/dev/null && echo "pm2: unchanged" || true
   exit 0
@@ -108,7 +108,7 @@ done
 [ "$HEALTH_OK" = "1" ] || echo "  warn: health check échec — vérifier pm2 logs"
 
 echo ""
-echo "--- VPS DEPLOY OK ---"
+echo "--- VPS_DEPLOY_OK ---"
 echo "commit: $(git log --oneline -1)"
 echo "build_ran: $BUILD_RAN"
 
