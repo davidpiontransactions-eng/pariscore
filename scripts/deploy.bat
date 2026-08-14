@@ -17,7 +17,7 @@ setlocal enabledelayedexpansion
 set "VPS_HOST=ubuntu@51.75.21.239"
 set "SSH_OPTS=-o BatchMode=yes -o ConnectTimeout=15"
 set /a POLL_MAX=60
-set /a POLL_SLEEP=5
+set /a POLL_SLEEP=6
 
 set "ARG1=%~1"
 set "NO_COMMIT=0"
@@ -62,7 +62,7 @@ if !N! gtr %POLL_MAX% (
 for /f "tokens=* delims=" %%L in ('ssh %SSH_OPTS% %VPS_HOST% "grep -q 'VPS DEPLOY OK' /tmp/update_vps.log 2>/dev/null && echo __DONE__ || tail -n 1 /tmp/update_vps.log" 2^>nul') do set "LINE=%%L"
 if "!LINE!"=="__DONE__" goto :finished
 echo   [!N!/%POLL_MAX%] !LINE!
-timeout /t %POLL_SLEEP% /nobreak >nul
+%SystemRoot%\System32\ping.exe -n %POLL_SLEEP% 127.0.0.1 >nul
 goto :poll
 
 :finished
