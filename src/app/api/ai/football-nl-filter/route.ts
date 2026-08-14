@@ -52,6 +52,14 @@ FORMAT DE SORTIE (JSON strict, sans markdown, sans texte autour) :
 Requête utilisateur : ${text}`;
 }
 
+/** Extrait le premier objet JSON d'un texte (robuste aux fences/markdown). */
+function extractJson(raw: string): string {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start >= 0 && end > start) return raw.slice(start, end + 1);
+  return raw.trim();
+}
+
 async function callGemini(prompt: string): Promise<Record<string, unknown>> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY non configurée");
@@ -63,7 +71,11 @@ async function callGemini(prompt: string): Promise<Record<string, unknown>> {
     headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 2048,
+        responseMimeType: "application/json",
+      },
     }),
   });
 
@@ -76,10 +88,7 @@ async function callGemini(prompt: string): Promise<Record<string, unknown>> {
   const rawText: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
   if (!rawText) throw new Error("Gemini a retourné une réponse vide");
 
-  const cleaned = rawText
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
+  const cleaned = extractJson(rawText);
   return JSON.parse(cleaned) as Record<string, unknown>;
 }
 
