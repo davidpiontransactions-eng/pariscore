@@ -30282,7 +30282,7 @@ function renderComparateur(d) {
       if (team.logo) {
         return '<div class="cs2-team-logo-wrap">' +
           '<img class="cs2-team-logo" src="' + _esc(team.logo) +
-          '" alt="' + _esc(team.name) + '" onerror="this.style.display=\'none\'" loading="lazy"/>' +
+          '" alt="' + _esc(team.name) + '" onerror="this.onerror=null;var w=this.parentNode;w.innerHTML=\'\';var s=document.createElement(\'span\');s.style.cssText=\'font-size:18px;display:flex;align-items:center;justify-content:center;width:100%;height:100%\';s.textContent=\'🏢\';w.appendChild(s)" loading="lazy"/>' +
           '</div>';
       }
       return '<div class="cs2-team-logo-wrap"><span style="font-size:18px;">🏢</span></div>';
@@ -31201,6 +31201,8 @@ function renderComparateur(d) {
     var t2meta = e.team2 && e.team2.map_stats_meta;
     var t1ranking = (e.team1 && e.team1.map_world_ranking) || {};
     var t2ranking = (e.team2 && e.team2.map_world_ranking) || {};
+    var t1avgR = (e.team1 && e.team1.avg_rounds) || null;
+    var t2avgR = (e.team2 && e.team2.avg_rounds) || null;
     var hasWorldRank = Object.keys(t1ranking).length > 0 || Object.keys(t2ranking).length > 0;
 
     var html = '<div style="margin-bottom:10px;">' +
@@ -31237,6 +31239,25 @@ function renderComparateur(d) {
       // Value badge
       var valueBadge = isVal ? ' <span style="font-size:7px;color:#00e676;font-weight:700;letter-spacing:.04em;">EDGE</span>' : '';
 
+      var ar1 = (t1avgR && t1avgR['de_' + mk]) || null;
+      var ar2 = (t2avgR && t2avgR['de_' + mk]) || null;
+      var r1w = ar1 ? (ar1.w180 || ar1.w90 || ar1.w365) : null;
+      var r2w = ar2 ? (ar2.w180 || ar2.w90 || ar2.w365) : null;
+      var a1 = r1w ? r1w.avg : null, n1 = r1w ? r1w.n : null;
+      var a2 = r2w ? r2w.avg : null, n2 = r2w ? r2w.n : null;
+      var expR = (a1 != null && a2 != null) ? (a1 + a2) / 2 : (a1 != null ? a1 : (a2 != null ? a2 : null));
+      var ouRow = '';
+      if (expR != null) {
+        var ouLine = expR >= 23.5 ? 23.5 : expR >= 22.5 ? 22.5 : expR >= 21.5 ? 21.5 : 20.5;
+        var ouDir = expR > ouLine ? 'OVER' : 'UNDER';
+        var ouColor = expR >= 22.5 ? '#00e676' : '#ffa726';
+        ouRow = '<div style="display:flex;justify-content:space-between;align-items:center;padding-left:56px;margin-top:2px;font-family:\'DM Mono\',monospace;font-size:8px;color:var(--text3);">' +
+          '<span>' + (a1 != null ? _esc(t1) + ' ' + a1.toFixed(1) + ' <span style="opacity:.6">(' + n1 + ')</span>' : '—') + '</span>' +
+          '<span style="font-weight:700;color:' + ouColor + ';">\u2248' + expR.toFixed(1) + ' \u00b7 ' + ouDir + ' ' + ouLine + '</span>' +
+          '<span>' + (a2 != null ? a2.toFixed(1) + ' <span style="opacity:.6">(' + n2 + ')</span> ' + _esc(t2) : '—') + '</span>' +
+        '</div>';
+      }
+
       html += '<div class="cs2-scout-map-row' + (isCur ? ' scout-map-current' : '') + '" style="flex-direction:column;' + rowBorder + '">' +
         '<div style="display:flex;align-items:center;gap:4px;">' +
           '<span class="cs2-scout-map-name" style="flex:0 0 52px;">' + (isCur ? '▶ ' : '') + ml + valueBadge + '</span>' +
@@ -31254,7 +31275,7 @@ function renderComparateur(d) {
         // Rank advantage signal row
         (rankAdv && rank1 && rank2 ? '<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:' + (rankAdv==='t1'?'#FF6B00':'#3b82f6') + ';padding-left:56px;margin-top:2px;">' +
           (rankAdv==='t1'?_esc(t1):_esc(t2)) + ' meilleure équipe mondiale sur ' + ml + ' (#' + Math.min(rank1,rank2) + ' vs #' + Math.max(rank1,rank2) + ')' +
-        '</div>' : '') +
+        '</div>' : '') + ouRow +
       '</div>';
     }
     if (t1meta || t2meta) {

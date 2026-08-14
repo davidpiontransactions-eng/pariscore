@@ -1258,6 +1258,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       map_pool_entropy : computeMapPoolEntropy(t1mapsClean),
       map_trends       : computeAllMapTrends(t1name),
       map_world_ranking: await getTeamMapRankings(t1name),
+      avg_rounds        : getTeamAvgRounds(t1name),
       all_maps         : Object.keys(t1mapsClean).length > 0 ? t1mapsClean : null,
       map_stats_meta : bsdMaps1 ? {
         map_winrate: bsdMaps1._map_winrate, round_winrate_ct: bsdMaps1._round_winrate_ct,
@@ -1278,6 +1279,7 @@ async function buildMatchEnrichment(t1name, t2name, mapName, apiKey) {
       map_pool_entropy : computeMapPoolEntropy(t2mapsClean),
       map_trends       : computeAllMapTrends(t2name),
       map_world_ranking: await getTeamMapRankings(t2name),
+      avg_rounds        : getTeamAvgRounds(t2name),
       all_maps         : Object.keys(t2mapsClean).length > 0 ? t2mapsClean : null,
       map_stats_meta : bsdMaps2 ? {
         map_winrate: bsdMaps2._map_winrate, round_winrate_ct: bsdMaps2._round_winrate_ct,
@@ -1359,6 +1361,24 @@ function _findBo3Team(data, name) {
   return data.teams.find(t => (t.name || '').toLowerCase() === n)
       || data.teams.find(t => { const tn = (t.name || '').toLowerCase(); return tn && (tn.includes(n) || n.includes(tn)); });
 }
+// Avg total rounds per map per team (bo3.gg). Exposed via /api/v1/cs2/enrich
+// for the scout MAPS tab + Over/Under edge badge. NON calibré (backtest Brier requis).
+function getTeamAvgRounds(teamName) {
+  const data = _loadBo3Rounds();
+  if (!data) return null;
+  const t = _findBo3Team(data, teamName);
+  if (!t || !t.maps) return null;
+  const out = {};
+  for (const [mapKey, windows] of Object.entries(t.maps)) {
+    out[mapKey] = {
+      w90 : windows.w90  ? { avg: windows.w90.avg,  n: windows.w90.n  } : null,
+      w180: windows.w180 ? { avg: windows.w180.avg, n: windows.w180.n } : null,
+      w365: windows.w365 ? { avg: windows.w365.avg, n: windows.w365.n } : null,
+    };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 function computeMapPlayLikelihood(t1name, t2name, windowDays = 180) {
   const data = _loadBo3Rounds();
   if (!data) return { ok: false, error: 'bo3_map_rounds dataset absent (run tools/refresh_bo3_map_rounds.js)', maps: [] };
@@ -1404,6 +1424,7 @@ function computeMapPlayLikelihood(t1name, t2name, windowDays = 180) {
 module.exports = {
   ACTIVE_MAPS,
   computeMapPlayLikelihood,
+  getTeamAvgRounds,
   computeMapAdvantage,
   fetchHighlights,
   fetchTeamStickers,
