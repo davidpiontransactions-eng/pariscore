@@ -30,6 +30,12 @@
     "mobile:verify": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mobile-build.ps1 -Step verify",
     "mobile:qa": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mobile-qa.ps1",
     "mobile:apk": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/mobile-build.ps1 -Step all",
+    "pm:init": "node scripts/pm-loop.js init",
+    "pm:gantt": "node scripts/pm-loop.js gantt",
+    "pm:status": "node scripts/pm-loop.js status",
+    "pm:complete": "node scripts/pm-loop.js complete",
+    "pm:graphify": "node scripts/pm-loop.js graphify",
+    "scrape:on": "python scripts/scrape-ondemand.py",
     "postinstall": "node -e \"try{require('child_process').execSync('npm rebuild better-sqlite3 sharp',{stdio:'pipe',timeout:120000})}catch(e){process.exit(0)}\""
   },
   "dependencies": {

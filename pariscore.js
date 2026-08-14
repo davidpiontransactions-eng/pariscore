@@ -12954,28 +12954,195 @@ function openTeamDetail(teamNameOrId) {
   trapFocus(modal);
   const _tdContent = document.getElementById('team-detail-content');
   _tdContent.style.background = 'var(--bg2)';
-  _tdContent.style.padding = '30px';
+  _tdContent.style.padding = '26px 30px 30px';
+  _tdContent.style.maxWidth = '800px';
+  const esc = _escapeHtmlSafe;
+
+  const _teamRef = String(teamNameOrId || '').trim();
+  const _seasonCache = {};   // key 'latest' | year → payload
+
   _tdContent.innerHTML = '<div style="padding:40px;text-align:center;">' + I18N.t('status.loading') + '</div>';
-  fetch('/api/v1/team?name=' + encodeURIComponent(teamNameOrId))
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">'+data.error+'</div>'; return; }
-      const t = data;
-      _tdContent.innerHTML = `
-        <div style="max-width:600px;margin:0 auto;">
-          ${t.logo ? `<img src="${t.logo}" style="width:60px;height:60px;object-fit:contain;margin-bottom:10px;">` : ''}
-          <h2 style="margin:0 0 10px">${t.name||teamNameOrId}</h2>
-          <div style="color:var(--text3);margin-bottom:15px;">${t.league||''} · ${t.country||''} ${t.stadium ? '· ' + t.stadium : ''}</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0;">
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:18px;font-weight:700;color:var(--text)">${t.founded||'—'}</div><div style="font-size:10px;color:var(--text3)">Fondation</div></div>
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:18px;font-weight:700;color:var(--text)">${t.stadium_capacity||'—'}</div><div style="font-size:10px;color:var(--text3)">Capacite</div></div>
-          </div>
-          ${t.manager ? `<div style="font-size:12px;color:var(--text2);margin:10px 0;">Entraineur: <strong>${t.manager}</strong></div>` : ''}
-          ${t.recentMatches && t.recentMatches.length ? `<div style="margin-top:15px;"><h4 style="font-size:12px;color:var(--text3);margin-bottom:8px;">5 derniers matchs</h4>` + t.recentMatches.slice(0,5).map(m => `<div style="font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);">${m.home_team} ${m.score||'-'} ${m.away_team}</div>`).join('') + '</div>' : ''}
-          <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
-        </div>`;
-    })
-    .catch(() => { _tdContent.innerHTML = `<div style="padding:40px;color:var(--red);">${I18N.t('status.error_load')} équipe</div>`; });
+
+  function _seasonBody(html) {
+    const holder = document.getElementById('tss-body');
+    if (!holder) return;
+    holder.innerHTML = html;
+  }
+  function _markSeasonLoading() {
+    _seasonBody('<div style="padding:34px;text-align:center;color:var(--text3);">' + I18N.t('status.loading') + '</div>');
+  }
+  function _r(val, dec) { const n = Number(val); return (val != null && val !== '' && !isNaN(n)) ? n.toFixed(dec == null ? 0 : dec) : '—'; }
+
+  // Header : nom + logo (logo résolu en asynchrone via /api/v1/team-logo).
+  function renderHeader() {
+    const h = '<div style="max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;">'
+      + '<span id="tss-logo"></span>'
+      + `<h2 style="margin:0 0 4px;font-family:'DM Mono',monospace;letter-spacing:0.02em;">${esc(_teamRef)}</h2>`
+      + '</div>';
+    const holder = document.getElementById('tss-header');
+    if (holder) holder.innerHTML = h;
+    try {
+      fetch('/api/v1/team-logo?name=' + encodeURIComponent(_teamRef))
+        .then(r => r.json())
+        .then(d => {
+          const box = document.getElementById('tss-logo');
+          if (box && d && d.url) { box.innerHTML = `<img src="${esc(d.url)}" style="width:44px;height:44px;object-fit:contain;">`; }
+        })
+        .catch(function () {});
+    } catch (e) { /* logo optionnel */ }
+  }
+
+  function loadSeason(year) {
+    if (!_teamRef) { _seasonBody('<div style="padding:30px;color:var(--text3);text-align:center;">Aucune donnée de saison précédente.</div>'); return; }
+    const key = year || 'latest';
+    if (_seasonCache[key]) { renderSeason(_seasonCache[key]); return; }
+    _markSeasonLoading();
+    const q = year ? '?season=' + encodeURIComponent(year) : '';
+    fetch('/api/v1/team/' + encodeURIComponent(_teamRef) + '/season-stats' + q)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { _seasonBody('<div style="padding:30px;color:var(--text3);text-align:center;">' + esc(d.error) + '</div>'); return; }
+        _seasonCache[key] = d;
+        renderSeason(d);
+      })
+      .catch(() => { _seasonBody('<div style="padding:30px;color:var(--text3);text-align:center;">Source indisponible (contenu de base conservé).</div>'); });
+  }
+
+  function renderSeason(d) {
+    const hasData = d && d.competitions && d.competitions.length && d.general && d.general.all && d.general.all.played;
+    const years = (d && d.availableYears && d.availableYears.length) ? d.availableYears : (d && d.season ? [{ year: d.season.year, label: d.season.label }] : []);
+    const curYear = d && d.season ? d.season.year : null;
+    const comps = (d && d.competitions) || [];
+
+    const kindSelect = `<span style="display:inline-flex;gap:6px;margin-left:14px;">
+        <button class="tss-toggle" data-k="all" onclick="_setTssKind(this)" style="color:var(--text);">All</button>
+        <button class="tss-toggle" data-k="home" onclick="_setTssKind(this)">Home</button>
+        <button class="tss-toggle" data-k="away" onclick="_setTssKind(this)">Away</button></span>`;
+
+    const seasonChips = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px;">'
+      + years.map(y => `<button class="tss-season" data-y="${y.year}" style="background:${y.year === curYear ? 'var(--accent,#00e676)' : 'var(--bg4)'};color:${y.year === curYear ? '#062' : 'var(--text2)'};border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;">${esc(y.label)}</button>`).join('')
+      + '</div>';
+
+    const compChips = comps.length > 1
+      ? '<div style="margin:2px 0 10px;font-size:11px;color:var(--text3);">' + comps.map(c => `<span style="display:inline-block;background:var(--bg4);border-radius:5px;padding:3px 8px;margin-right:6px;margin-bottom:4px;">${esc(c.name)} · ${esc(c.type)}</span>`).join('') + '</div>'
+      : (comps.length ? `<div style="margin:2px 0 10px;font-size:11px;color:var(--text3);">${comps.map(c => esc(c.name + (c.type ? ' · ' + c.type : ''))).join(', ')}</div>` : '');
+
+    if (!hasData) {
+      _seasonBody('<div style="padding:26px 4px;color:var(--text3);text-align:center;">Aucune donnée de saison précédente disponible pour cette équipe.</div>' + compChips);
+      return;
+    }
+
+    const sel = document.getElementById('tss-kind-select');
+    if (sel) sel.innerHTML = '';
+
+    let html = '';
+
+    // Nombre d'équipes au classement pour le rang adverse
+    const stRows = (d.comparativeTable && d.comparativeTable.rows) || [];
+    const ourRow = stRows.find(r => r.team && d.team && r.team.id === d.team.id) || null;
+
+    // 1) Statistiques générales (grille All/Home/Away commutables)
+    const kpiGrid = (gg) => [
+      ['Position', _r(d.position)], ['Matchs', _r(gg.played)], ['Pts', _r(gg.points)], ['Pts/match', gg.ppg],
+      ['V', _r(gg.wins) + ' (' + _r(gg.winPct) + '%)'], ['N', _r(gg.draws) + ' (' + _r(gg.drawPct) + '%)'], ['L', _r(gg.losses) + ' (' + _r(gg.lossPct) + '%)'],
+      ['Buts pour', _r(gg.gf)], ['Buts contre', _r(gg.ga)], ['GF/match', gg.gfPer],
+      ['Over 2.5', _r(gg.over25)], ['Under 2.5', _r(gg.under25)], ['Clean sheet', _r(gg.cleanSheet)], ['Failed to score', _r(gg.failedToScore)], ['BTTS', _r(gg.btts)]
+    ].map(([k, v]) => `<div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;">${esc(String(v))}</div><div style="font-size:9px;color:var(--text3);height:12px;line-height:12px;margin-top:3px;">${esc(k)}</div></div>`).join('');
+    html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">STATISTIQUES GÉNÉRALES' + kindSelect + '</div>'
+      + '<div class="tss-kpis" data-kpis="all">' + kpiGrid(d.general.all) + '</div>'
+      + '<div class="tss-kpis" data-kpis="home" style="display:none;">' + kpiGrid(d.general.home) + '</div>'
+      + '<div class="tss-kpis" data-kpis="away" style="display:none;">' + kpiGrid(d.general.away) + '</div></div>';
+
+    // 2) Classement comparatif
+    if (stRows.length) {
+      const tbody = stRows.map(r => {
+        const hl = r.team && r.team.id === d.team.id ? ' style="background:var(--accent);color:#062;font-weight:700;"' : '';
+        return '<tr' + hl + '>'
+          + `<td style="padding:5px 8px;font-family:'DM Mono',monospace;">${esc(_r(r.position))}</td>`
+          + `<td style="padding:5px 8px;text-align:left;">${esc(r.team.name)}</td>`
+          + `<td>${esc(_r(r.played))}</td>`
+          + `<td>${esc(_r(r.win))}:${esc(_r(r.draw))}:${esc(_r(r.loss))}</td>`
+          + `<td>${esc(_r(r.gf))}</td>`
+          + `<td>${esc(_r(r.ga))}</td>`
+          + `<td>${esc(_r(r.points))}</td></tr>`;
+      }).join('');
+      html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">CLASSEMENT' + (ourRow ? ' <span style="color:var(--accent,#00e676);">· ' + esc(ourRow.position) + 'e</span>' : '') + '</div>'
+        + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;color:var(--text2);text-align:center;"><thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">'
+        + '<th style="padding:5px 8px;">P</th><th style="text-align:left;">Équipe</th><th>M</th><th>V:N:D</th><th>BP</th><th>BC</th><th>Pts</th></tr></thead><tbody>' + tbody + '</tbody></table></div></div>';
+    }
+
+    // 3) Séquences & Streaks (13 colonnes)
+    const streakKeys = [['W','Victoires cons. (nW)'],['D','Nuls cons.'],['L','Défaites cons.'],['nW','Sans victoire'],['nD','Sans nul'],['nL','Sans défaite'],['G+','Marque cons.'],['G-','Encaissé cons.'],['nG+','Sans marquer'],['nG-','Sans encaisser'],['+2.5','Over 2.5 cons.'],['-2.5','Under 2.5 cons.'],['BTTS','BTTS cons.']];
+    const st = d.streaks;
+    const stHead = streakKeys.map(k => `<th style="padding:4px 6px;">${k[0]}</th>`).join('');
+    const stRowAll = streakKeys.map(k => `<td>${esc(_r(st.all[k[0]]))}</td>`).join('');
+    const stRowHome = streakKeys.map(k => `<td>${esc(_r(st.home[k[0]]))}</td>`).join('');
+    const stRowAway = streakKeys.map(k => `<td>${esc(_r(st.away[k[0]]))}</td>`).join('');
+    html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">SÉQUENCES &amp; STREAKS</div>'
+      + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;color:var(--text2);text-align:center;font-family:\'DM Mono\',monospace;"><thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">—</th>' + stHead + '</tr></thead><tbody>'
+      + '<tr><td style="text-align:left;color:var(--text3);">All</td>' + stRowAll + '</tr>'
+      + '<tr><td style="text-align:left;color:var(--text3);">Home</td>' + stRowHome + '</tr>'
+      + '<tr><td style="text-align:left;color:var(--text3);">Away</td>' + stRowAway + '</tr>'
+      + '</tbody></table></div>'
+      + '<div style="font-size:9px;color:var(--text3);margin-top:6px;">' + streakKeys.map(k => `${k[0]} = ${k[1]}`).join(' · ') + '</div></div>';
+
+    // 4) Matchs récents (10) avec badge V/N/D + rang adverse
+    const rm = (d.recentMatches || []).slice(0, 10);
+    if (rm.length) {
+      const badge = r => r === 'W' ? 'background:var(--accent,#00e676);color:#062;' : r === 'D' ? 'background:var(--bg4);color:var(--text3);' : 'background:var(--red);color:#fff;';
+      const rows = rm.map(m =>
+        `<tr style="border-bottom:1px solid var(--border);">`
+        + `<td style="padding:6px 6px;color:var(--text3);font-size:10px;white-space:nowrap;">${esc(m.date || '')}</td>`
+        + `<td style="padding:6px 6px;color:var(--text3);font-size:9px;white-space:nowrap;">${esc(m.competition || '')}</td>`
+        + `<td style="padding:6px 6px;text-align:left;font-size:11px;">${esc(m.home)}${m.homeRank != null ? ' <span style="color:var(--text3);font-size:9px;">(' + esc(m.homeRank) + ')</span>' : ''}</td>`
+        + `<td style="padding:6px 6px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;">${esc(String(m.score))}</td>`
+        + `<td style="padding:6px 6px;text-align:right;font-size:11px;">${esc(m.away)}${m.awayRank != null ? ' <span style="color:var(--text3);font-size:9px;">(' + esc(m.awayRank) + ')</span>' : ''}</td>`
+        + `<td style="padding:6px 6px;"><span style="display:inline-block;width:22px;text-align:center;border-radius:4px;padding:2px 4px;font-weight:700;font-size:11px;${badge(m.result)}">${m.result}</span></td>`
+        + '</tr>').join('');
+      html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">MATCHS RÉCENTS (10)</div>'
+        + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;color:var(--text2);text-align:center;">' + rows + '</table></div></div>';
+    }
+
+    // 5) Records (All/Home/Away)
+    const rec = d.records;
+    const recBlock = (label, rr) => [
+      ['Plus large victoire', rr.biggestWin ? rr.biggestWin.gf + '-' + rr.biggestWin.ga + ' (' + rr.biggestWin.date + ')' : '—'],
+      ['Plus large défaite', rr.biggestLoss ? rr.biggestLoss.ga + '-' + rr.biggestLoss.gf + ' (' + rr.biggestLoss.date + ')' : '—'],
+      ['Max buts marqués', _r(rr.mostScored)],
+      ['Max buts encaissés', _r(rr.mostConceded)]
+    ];
+    const recCard = (cards) => cards.map(([k, v]) => `<div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:15px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;">${esc(String(v))}</div><div style="font-size:9px;color:var(--text3);height:12px;line-height:12px;margin-top:3px;">${esc(k)}</div></div>`).join('');
+    html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">RECORDS</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">All</div><div class="tss-kpis">' + recCard(recBlock('all', rec.all)) + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin:12px 0 8px;">Home</div><div class="tss-kpis">' + recCard(recBlock('home', rec.home)) + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin:12px 0 8px;">Away</div><div class="tss-kpis">' + recCard(recBlock('away', rec.away)) + '</div></div>';
+
+    _seasonBody(seasonChips + compChips + html);
+    // câbler le sélecteur de saison
+    document.querySelectorAll('.tss-season').forEach(btn => {
+      btn.onclick = function () { loadSeason(btn.getAttribute('data-y')); };
+    });
+    document.querySelectorAll('.tss-toggle').forEach(btn => {
+      btn.onclick = function () { _setTssKind(btn); };
+    });
+  }
+
+  _tdContent.innerHTML = `<div style="max-width:760px;margin:0 auto;">
+      <div id="tss-header"></div>
+      <div id="tss-body"><div style="padding:34px;text-align:center;color:var(--text3);">${I18N.t('status.loading')}</div></div>
+      <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
+    </div>`;
+  renderHeader();
+  loadSeason(null);
+}
+
+// Bascule All/Home/Away des KPI stats générales dans le modal équipe.
+function _setTssKind(btn) {
+  if (!btn) return;
+  const k = btn.getAttribute('data-k') || 'all';
+  document.querySelectorAll('.tss-toggle').forEach(b => { if (b !== btn) b.style.color = 'var(--text3)'; });
+  btn.style.color = 'var(--text)';
+  document.querySelectorAll('.tss-kpis[data-kpis]').forEach(grid => { grid.style.display = (grid.getAttribute('data-kpis') === k) ? '' : 'none'; });
 }
 
 function openPlayerDetail(playerName, teamCtx, leagueId) {

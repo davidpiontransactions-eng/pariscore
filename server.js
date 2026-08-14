@@ -48,6 +48,7 @@ const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, m
 const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
 const cyclingService    = require('./services/cyclingService');    // Cyclisme vertical (TDF 2026, Plackett-Luce mock) Sprint 2
 const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
+let highlightlyService = null; try { highlightlyService = require('./services/highlightlyService'); } catch (_) {} // Highlightly Basketball API (H2H croisé WNBA/NBA — inerte sans clé)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
 let MetricsCache = null; try { MetricsCache = require('./metrics-cache'); } catch (_) {}
 let tnnsLiveScraper = null; try { tnnsLiveScraper = require('./services/tnnsLiveScraper'); } catch (_) { /* TNNS scraper optionnel */ }
@@ -34023,6 +34024,577 @@ if (pathname === '/api/v1/player') {
 }
 
 // -------------------------------------------------
+//  Team Season Stats (fcstats-style) — bd session-team-season-stats
+//  Cascade de sources : API-Football est RETIRÉ (AF_REMOVED=true) → la cascade
+//  repose sur Sofascore public (sofaGet, aucun quota) + BSD pour l'identité.
+//  Saison dérivée de la compétition courante (season.year), pas de l'année
+//  civile. Tous les calculs (V/N/D, over/under 2.5, BTTS, streaks, records)
+//  sont faits en LOCAL sur les matchs terminés de la saison.
+// -------------------------------------------------
+function _ssNorm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim(); }
+function _ssSeasonLabel(year) { const y = parseInt(year, 10); return isNaN(y) ? String(year) : `${y}/${String(y + 1).slice(2)}`; }
+function _ssCompType(tournament) {
+  if (!tournament) return 'domestic';
+  const cat = tournament.category || {};
+  const ctype = cat.categoryType || '';
+  const name = String(tournament.name || '').toLowerCase();
+  if (ctype === 'continent') return 'intl';
+  if (name.indexOf('champions') >= 0 || name.indexOf('europa') >= 0 || name.indexOf('uefa') >= 0 || name.indexOf('cup') >= 0 || name.indexOf('coupe') >= 0) return 'cup';
+  return 'domestic';
+}
+
+// Résout l'équipe → { sofaId, name } à partir de l'id (BSD ou cru) passé en URL.
+// Ordre : team_logos.bsd_id → bsdGetTeamDetail → searchSofascoreTeam(nom brut/implicite).
+async function resolveSofascoreTeamForSeasonStats(idRaw) {
+  const idStr = String(idRaw || '').trim();
+  if (!idStr) return null;
+  if (/^\d+$/.test(idStr)) {
+    // 1. Index local team_logos (bsd_id) → nom → Sofascore
+    try {
+      if (sqldb) {
+        const row = sqldb.prepare('SELECT name FROM team_logos WHERE bsd_id = ? LIMIT 1').get(Number(idStr));
+        if (row && row.name) {
+          const found = await searchSofascoreTeam(row.name);
+          if (found && found.id) return { sofaId: found.id, name: found.name || row.name };
+        }
+      }
+    } catch (e) { /* cache-miss fail-soft */ }
+    // 2. BSD team detail → nom → Sofascore
+    try {
+      const t = await bsdGetTeamDetail(Number(idStr));
+      if (t && t.name) {
+        const found = await searchSofascoreTeam(t.name);
+        if (found && found.id) return { sofaId: found.id, name: t.name };
+      }
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+  // Nom brut
+  const found = await searchSofascoreTeam(idStr);
+  if (found && found.id) return { sofaId: found.id, name: found.name };
+  return null;
+}
+
+// Récupère les matchs terminés récents d'une équipe Sofascore (caps 6 pages).
+async function fetchSofaTeamFinishedEvents(sofaId) {
+  const out = [];
+  try {
+    for (let page = 0; page < 6; page++) {
+      const res = await sofaGet(`/team/${sofaId}/events/last/${page}`, 1);
+      if (res && res.status === 200 && res.data && Array.isArray(res.data.events)) {
+        out.push(...res.data.events);
+        if (!res.data.hasNextPage) break;
+      } else break;
+    }
+  } catch (e) { /* ignore, retourne ce qu'on a */ }
+  return out.filter(e => e && e.status && e.status.type === 'finished' && e.homeScore && e.homeScore.current != null);
+}
+
+function _ssIsHome(e, sofaId) { return !!(e.homeTeam && e.homeTeam.id === sofaId); }
+
+// Agrége un tableau de matchs (perspective équipe 'sofaId'), côté home/away/all.
+// matches en ordre « plus récent en premier » (order from API, filtered preserves it).
+function _ssAggregate(matches, sofaId) {
+  const out = { played: 0, wins: 0, draws: 0, losses: 0, points: 0, ppg: 0, gf: 0, ga: 0, gfPer: 0, gaPer: 0, over25: 0, under25: 0, cleanSheet: 0, failedToScore: 0, btts: 0, winPct: 0, drawPct: 0, lossPct: 0 };
+  for (let i = 0; i < matches.length; i++) {
+    const e = matches[i];
+    const isHome = _ssIsHome(e, sofaId);
+    const myG = isHome ? e.homeScore.current : e.awayScore.current;
+    const opG = isHome ? e.awayScore.current : e.homeScore.current;
+    if (myG == null || opG == null) continue;
+    out.played++;
+    if (myG > opG) out.wins++; else if (myG === opG) out.draws++; else out.losses++;
+    out.points += myG > opG ? 3 : myG === opG ? 1 : 0;
+    out.gf += myG; out.ga += opG;
+    const tot = myG + opG;
+    if (tot > 2) out.over25++; else out.under25++;
+    if (opG === 0) out.cleanSheet++;
+    if (myG === 0) out.failedToScore++;
+    if (myG > 0 && opG > 0) out.btts++;
+  }
+  if (out.played) {
+    out.ppg = +(out.points / out.played).toFixed(2);
+    out.gfPer = +(out.gf / out.played).toFixed(2);
+    out.gaPer = +(out.ga / out.played).toFixed(2);
+    out.winPct = Math.round((out.wins / out.played) * 100);
+    out.drawPct = Math.round((out.draws / out.played) * 100);
+    out.lossPct = Math.round((out.losses / out.played) * 100);
+  }
+  return out;
+}
+
+// Streaks « trailing » (les plus récents d'abord). Retourne les 13 colonnes fcstats.
+function _ssStreaks(matches, sofaId) {
+  const s = { W: 0, D: 0, L: 0, nW: 0, nD: 0, nL: 0, Gp: 0, Gm: 0, nGp: 0, nGm: 0, over25: 0, under25: 0, btts: 0 };
+  const trail = (cond) => { let n = 0; for (let i = 0; i < matches.length; i++) { if (cond(matches[i])) n++; else break; } return n; };
+  const res = (e) => { const h = _ssIsHome(e, sofaId); const m = h ? e.homeScore.current : e.awayScore.current; const o = h ? e.awayScore.current : e.homeScore.current; return m > o ? 'W' : m === o ? 'D' : 'L'; };
+  s.W = trail(e => res(e) === 'W');
+  s.D = trail(e => res(e) === 'D');
+  s.L = trail(e => res(e) === 'L');
+  s.nW = trail(e => res(e) !== 'W');
+  s.nD = trail(e => res(e) !== 'D');
+  s.nL = trail(e => res(e) !== 'L');
+  s.Gp = trail(e => { const h = _ssIsHome(e, sofaId); return (h ? e.homeScore.current : e.awayScore.current) > 0; });
+  s.Gm = trail(e => { const h = _ssIsHome(e, sofaId); return (h ? e.awayScore.current : e.homeScore.current) > 0; });
+  s.nGp = trail(e => { const h = _ssIsHome(e, sofaId); return (h ? e.homeScore.current : e.awayScore.current) === 0; });
+  s.nGm = trail(e => { const h = _ssIsHome(e, sofaId); return (h ? e.awayScore.current : e.homeScore.current) === 0; });
+  s.over25 = trail(e => { const t = e.homeScore.current + e.awayScore.current; return t > 2; });
+  s.under25 = trail(e => { const t = e.homeScore.current + e.awayScore.current; return t <= 2; });
+  s.btts = trail(e => e.homeScore.current > 0 && e.awayScore.current > 0);
+  return s;
+}
+
+// Records : plus large victoire/défaite, plus de buts marqués/encaissés.
+function _ssRecords(matches, sofaId) {
+  const r = { biggestWin: null, biggestLoss: null, mostScored: null, mostConceded: null };
+  for (let i = 0; i < matches.length; i++) {
+    const e = matches[i];
+    const h = _ssIsHome(e, sofaId);
+    const m = h ? e.homeScore.current : e.awayScore.current;
+    const o = h ? e.awayScore.current : e.homeScore.current;
+    const margin = m - o;
+    if (margin > 0 && (!r.biggestWin || margin > r.biggestWin.margin)) r.biggestWin = { margin, gf: m, ga: o, date: e.startTimestamp ? new Date(e.startTimestamp * 1000).toISOString().slice(0, 10) : null };
+    if ((!r.biggestLoss || (o - m) > r.biggestLoss.margin) && o > m) r.biggestLoss = { margin: o - m, gf: m, ga: o, date: e.startTimestamp ? new Date(e.startTimestamp * 1000).toISOString().slice(0, 10) : null };
+    if (!r.mostScored || m > r.mostScored) r.mostScored = m;
+    if (!r.mostConceded || o > r.mostConceded) r.mostConceded = o;
+  }
+  return r;
+}
+
+// Classement complet (comparative table) + positions + splits home/away.
+async function fetchSofaStandings(tid, sid) {
+  try {
+    const res = await sofaGet(`/unique-tournament/${tid}/season/${sid}/standings/total`, 1);
+    if (!res || res.status !== 200 || !res.data) return { rows: [], groups: [], position: null };
+    const groups = (res.data.standings || []).filter(g => Array.isArray(g.rows));
+    const rows = [];
+    groups.forEach(g => {
+      (g.rows || []).forEach(r => {
+        const team = r.team || {};
+        const home = r.home || {}; const away = r.away || {};
+        rows.push({
+          position: r.position != null ? r.position : r.promotion != null ? r.promotion : null,
+          team: { id: team.id, name: team.name },
+          played: r.played != null ? r.played : (r.matches != null ? r.matches : null),
+          win: r.wins != null ? r.wins : (r.win != null ? r.win : null),
+          draw: r.draws != null ? r.draws : (r.draw != null ? r.draw : null),
+          loss: r.losses != null ? r.losses : (r.lost != null ? r.lost : null),
+          gf: r.goalsFor != null ? r.goalsFor : (r.scoresFor != null ? r.scoresFor : null),
+          ga: r.goalsAgainst != null ? r.goalsAgainst : (r.goalsConceded != null ? r.goalsConceded : null),
+          gd: r.goalDiff != null ? r.goalDiff : (r.points != null && r.played != null ? null : null),
+          points: r.points,
+          home: { played: home.played != null ? home.played : (home.matches != null ? home.matches : null), win: home.wins != null ? home.wins : (home.win != null ? home.win : null), draw: home.draws != null ? home.draws : (home.draw != null ? home.draw : null), loss: home.losses != null ? home.losses : (home.lost != null ? home.lost : null), gf: home.goalsFor != null ? home.goalsFor : null, ga: home.goalsAgainst != null ? home.goalsAgainst : null, points: home.points },
+          away: { played: away.played != null ? away.played : (away.matches != null ? away.matches : null), win: away.wins != null ? away.wins : (away.win != null ? away.win : null), draw: away.draws != null ? away.draws : (away.draw != null ? away.draw : null), loss: away.losses != null ? away.losses : (away.lost != null ? away.lost : null), gf: away.goalsFor != null ? away.goalsFor : null, ga: away.goalsAgainst != null ? away.goalsAgainst : null, points: away.points }
+        });
+      });
+    });
+    return { rows, groups, position: null };
+  } catch (e) {
+    return { rows: [], groups: [], position: null };
+  }
+}
+
+// Point d'entrée principal : stats de saison d'une équipe.
+async function fetchTeamSeasonStats(sofaId, name, year) {
+  const events = await fetchSofaTeamFinishedEvents(sofaId);
+  if (!events.length) return null;
+
+  // Bucket par saison (season.year)
+  const bySeason = {};
+  events.forEach(e => {
+    const se = e.season || {};
+    const y = se.year != null ? String(se.year) : null;
+    if (!y) return;
+    (bySeason[y] = bySeason[y] || []).push(e);
+  });
+  const years = Object.keys(bySeason).sort((a, b) => b - a); // plus récente d'abord
+  const targetYear = year ? String(year) : (years[0] || null);
+  if (targetYear == null || !bySeason[targetYear]) return null;
+  const seasonEvents = bySeason[targetYear];
+
+  // Compétitions de la saison (tournaments)
+  const compMap = {};
+  seasonEvents.forEach(e => {
+    const t = e.tournament || {};
+    const ut = e.uniqueTournament || t;
+    const id = ut.id != null ? ut.id : (t.name || 'unknown');
+    const key = String(id);
+    if (!compMap[key]) compMap[key] = { id: id, name: ut.name || t.name || 'Compétition', type: _ssCompType(ut) };
+  });
+  const competitions = Object.values(compMap);
+
+  // Compétition primaire = celle avec le + de matchs terminés (la ligue domestique).
+  let primary = null; let primaryCount = -1;
+  const countByComp = {};
+  seasonEvents.forEach(e => {
+    const ut = e.uniqueTournament || (e.tournament || {});
+    const key = String(ut.id != null ? ut.id : (ut.name || 'unknown'));
+    countByComp[key] = (countByComp[key] || 0) + 1;
+  });
+  competitions.forEach(c => { const n = countByComp[String(c.id)] || 0; if (n > primaryCount) { primaryCount = n; primary = c; } });
+  const primaryTid = primary ? primary.id : null;
+
+  // Tid/sid sofascore pour le classement
+  const tids = {}; const sids = {};
+  seasonEvents.forEach(e => {
+    const ut = e.uniqueTournament || (e.tournament || {});
+    const tid = ut.id; const sid = (e.season || {}).id;
+    if (tid != null && sid != null) { tids[String(tid)] = tid; sids[String(tid)] = sid; }
+  });
+
+  const standings = primaryTid != null && tids[String(primaryTid)] != null ? await fetchSofaStandings(tids[String(primaryTid)], sids[String(primaryTid)]) : { rows: [], groups: [], position: null };
+  // position dans le classement
+  let position = null;
+  (standings.rows || []).forEach(r => { if (r.team && r.team.id === sofaId && r.position != null) { position = r.position; } });
+
+  // Rang adverse pour les matchs récents (map teamId → position)
+  const rankMap = {};
+  (standings.rows || []).forEach(r => { if (r.team && r.team.id != null && r.position != null) rankMap[String(r.team.id)] = r.position; });
+
+  const allM = seasonEvents; // plus récent d'abord
+  const homeM = allM.filter(e => _ssIsHome(e, sofaId));
+  const awayM = allM.filter(e => !_ssIsHome(e, sofaId));
+  const mk = (list) => ({ aggregate: _ssAggregate(list, sofaId), streaks: _ssStreaks(list, sofaId), records: _ssRecords(list, sofaId) });
+  const all = mk(allM), home = mk(homeM), away = mk(awayM);
+
+  // Matchs récents : 10 derniers de la saison (toutes compétitions) avec badge V/N/D + rank adverse.
+  const recentMatches = allM.slice(0, 10).map(e => {
+    const isHome = _ssIsHome(e, sofaId);
+    const m = isHome ? e.homeScore.current : e.awayScore.current;
+    const o = isHome ? e.awayScore.current : e.homeScore.current;
+    const ut = e.uniqueTournament || (e.tournament || {});
+    const comp = ut.name || (e.tournament || {}).name || '';
+    const homeId = e.homeTeam ? e.homeTeam.id : null;
+    const awayId = e.awayTeam ? e.awayTeam.id : null;
+    return {
+      date: e.startTimestamp ? new Date(e.startTimestamp * 1000).toISOString().slice(0, 10) : null,
+      competition: comp,
+      home: e.homeTeam ? e.homeTeam.name : '',
+      away: e.awayTeam ? e.awayTeam.name : '',
+      score: `${m}-${o}`,
+      homeGoals: m, awayGoals: o,
+      isHome: isHome,
+      homeRank: homeId != null ? (rankMap[String(homeId)] || null) : null,
+      awayRank: awayId != null ? (rankMap[String(awayId)] || null) : null,
+      result: m > o ? 'W' : m === o ? 'D' : 'L'
+    };
+  });
+
+  return {
+    team: { id: sofaId, name: name },
+    availableYears: years.map(y => ({ year: Number(y), label: _ssSeasonLabel(y) })),
+    season: { year: Number(targetYear), label: _ssSeasonLabel(targetYear) },
+    competitions: competitions,
+    primaryCompetitionId: primaryTid,
+    position: position,
+    general: { all: all.aggregate, home: home.aggregate, away: away.aggregate },
+    comparativeTable: standings,
+    streaks: { all: all.streaks, home: home.streaks, away: away.streaks },
+    records: { all: all.records, home: home.records, away: away.records },
+    recentMatches: recentMatches
+  };
+}
+
+// -------------------------------------------------
+//  ── Réseau Season Stats : chemin BSD-first (fiable 100%, source primaire
+//  du projet, joignable) — Sofascore public en fallback (bloqué sur certains
+//  réseaux : 403 API Forbidden). Tous les matchs sont normalisés puis les
+//  métriques (V/N/D, over/under, BTTS, streaks, records) calculées en local.
+// -------------------------------------------------
+// Normalise UN évènement (Sofascore OU BSD) → { isHome, myGoals, opGoals, ... }
+function _ssNL(ev, teamKey) {
+  if (!ev) return null;
+  const isSofa = ev.homeTeam && ev.homeTeam.id != null;
+  let isHome, myGoals, opGoals, dateISO, homeId, awayId, homeName, awayName, comp, seasonId, leagueId;
+  if (isSofa) {
+    homeId = ev.homeTeam.id;
+    isHome = homeId === teamKey;
+    homeName = ev.homeTeam.name || '';
+    awayId = ev.awayTeam ? ev.awayTeam.id : null;
+    awayName = ev.awayTeam ? (ev.awayTeam.name || '') : '';
+    myGoals = ev.homeScore.current; opGoals = ev.awayScore.current;
+    if (!isHome) { myGoals = ev.awayScore.current; opGoals = ev.homeScore.current; }
+    dateISO = ev.startTimestamp ? new Date(ev.startTimestamp * 1000).toISOString() : null;
+    comp = (ev.uniqueTournament && ev.uniqueTournament.name) || (ev.tournament && ev.tournament.name) || '';
+    seasonId = ev.season ? ev.season.id : null;
+  } else {
+    homeId = ev.home_bsd_id;
+    isHome = homeId === teamKey;
+    homeName = (ev.home_team && ev.home_team.name) || '';
+    awayId = ev.away_bsd_id;
+    awayName = (ev.away_team && ev.away_team.name) || '';
+    myGoals = ev.home_score ? ev.home_score.current : null;
+    opGoals = ev.away_score ? ev.away_score.current : null;
+    if (!isHome) { myGoals = ev.away_score ? ev.away_score.current : null; opGoals = ev.home_score ? ev.home_score.current : null; }
+    dateISO = ev.start_time ? new Date(ev.start_time).toISOString() : null;
+    comp = (ev.league && ev.league.name) || '';
+    seasonId = ev.season ? ev.season.id : null;
+    leagueId = ev.league ? ev.league.id : null;
+  }
+  if (myGoals == null || opGoals == null) return null;
+  return { isHome, myGoals, opGoals, dateISO, homeId, awayId, homeName, awayName, comp, seasonId, leagueId };
+}
+function _ssAggNorm(nl) {
+  const out = { played: 0, wins: 0, draws: 0, losses: 0, points: 0, ppg: 0, gf: 0, ga: 0, gfPer: 0, gaPer: 0, over25: 0, under25: 0, cleanSheet: 0, failedToScore: 0, btts: 0, winPct: 0, drawPct: 0, lossPct: 0 };
+  for (const m of nl) {
+    out.played++;
+    if (m.myGoals > m.opGoals) out.wins++; else if (m.myGoals === m.opGoals) out.draws++; else out.losses++;
+    out.points += m.myGoals > m.opGoals ? 3 : m.myGoals === m.opGoals ? 1 : 0;
+    out.gf += m.myGoals; out.ga += m.opGoals;
+    const tot = m.myGoals + m.opGoals;
+    if (tot > 2) out.over25++; else out.under25++;
+    if (m.opGoals === 0) out.cleanSheet++;
+    if (m.myGoals === 0) out.failedToScore++;
+    if (m.myGoals > 0 && m.opGoals > 0) out.btts++;
+  }
+  if (out.played) { out.ppg = +(out.points / out.played).toFixed(2); out.gfPer = +(out.gf / out.played).toFixed(2); out.gaPer = +(out.ga / out.played).toFixed(2); out.winPct = Math.round(out.wins / out.played * 100); out.drawPct = Math.round(out.draws / out.played * 100); out.lossPct = Math.round(out.losses / out.played * 100); }
+  return out;
+}
+function _ssStreaksNorm(nl) {
+  const s = { W: 0, D: 0, L: 0, nW: 0, nD: 0, nL: 0, Gp: 0, Gm: 0, nGp: 0, nGm: 0, over25: 0, under25: 0, btts: 0 };
+  const trail = (cond) => { let n = 0; for (let i = 0; i < nl.length; i++) { if (cond(nl[i])) n++; else break; } return n; };
+  const res = (m) => m.myGoals > m.opGoals ? 'W' : m.myGoals === m.opGoals ? 'D' : 'L';
+  s.W = trail(m => res(m) === 'W'); s.D = trail(m => res(m) === 'D'); s.L = trail(m => res(m) === 'L');
+  s.nW = trail(m => res(m) !== 'W'); s.nD = trail(m => res(m) !== 'D'); s.nL = trail(m => res(m) !== 'L');
+  s.Gp = trail(m => m.myGoals > 0); s.Gm = trail(m => m.opGoals > 0); s.nGp = trail(m => m.myGoals === 0); s.nGm = trail(m => m.opGoals === 0);
+  s.over25 = trail(m => m.myGoals + m.opGoals > 2); s.under25 = trail(m => m.myGoals + m.opGoals <= 2);
+  s.btts = trail(m => m.myGoals > 0 && m.opGoals > 0);
+  return s;
+}
+function _ssRecordsNorm(nl) {
+  const r = { biggestWin: null, biggestLoss: null, mostScored: null, mostConceded: null };
+  for (const m of nl) {
+    const margin = m.myGoals - m.opGoals;
+    if (margin > 0 && (!r.biggestWin || margin > r.biggestWin.margin)) r.biggestWin = { margin, gf: m.myGoals, ga: m.opGoals, date: m.dateISO ? m.dateISO.slice(0, 10) : null };
+    const lmargin = m.opGoals - m.myGoals;
+    if (lmargin > 0 && (!r.biggestLoss || lmargin > r.biggestLoss.margin)) r.biggestLoss = { margin: lmargin, gf: m.myGoals, ga: m.opGoals, date: m.dateISO ? m.dateISO.slice(0, 10) : null };
+    if (!r.mostScored || m.myGoals > r.mostScored) r.mostScored = m.myGoals;
+    if (!r.mostConceded || m.opGoals > r.mostConceded) r.mostConceded = m.opGoals;
+  }
+  return r;
+}
+// Résout l'identité BSD d'une équipe (id numérique = bsd_id via /teams/, nom = index team_logos).
+async function resolveBSDTeamSeasonIdentity(idRaw) {
+  const idStr = String(idRaw || '').trim();
+  if (!idStr) return null;
+  if (/^\d+$/.test(idStr)) {
+    const num = Number(idStr);
+    try {
+      const res = await bsdFetch(`/teams/${num}/`);
+      if (res && res.status === 200 && res.data) {
+        const t = res.data;
+        return { bsdId: t.id != null ? t.id : num, name: t.name, leagueId: t.league ? t.league.id : null, leagueName: t.league ? t.league.name : '', country: t.country ? t.country.name : '' };
+      }
+    } catch (e) { /* ignore */ }
+    return null;
+  }
+  // Nom → bsd_id via index team_logos (construit au démarrage)
+  try {
+    if (sqldb) {
+      const norm = _ssNorm(idStr);
+      let row = sqldb.prepare('SELECT bsd_id, name FROM team_logos WHERE name_norm = ? LIMIT 1').get(norm);
+      if (!row) row = sqldb.prepare('SELECT bsd_id, name FROM team_logos WHERE name_norm LIKE ? OR name_norm LIKE ? LIMIT 1').get(norm + '%', '%' + norm + '%');
+      if (row && row.bsd_id != null) {
+        let name = row.name, leagueId = null, leagueName = '', country = '';
+        try {
+          const det = await bsdFetch(`/teams/${row.bsd_id}/`);
+          if (det && det.status === 200 && det.data) {
+            if (det.data.name) name = det.data.name;
+            if (det.data.league) { leagueId = det.data.league.id; leagueName = det.data.league.name; }
+            if (det.data.country) country = det.data.country.name;
+          }
+        } catch (e2) { /* identité partielle suffit */ }
+        return { bsdId: row.bsd_id, name, leagueId, leagueName, country };
+      }
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
+// Enveloppe cache des saisons BSD d'une ligue (avec start/end pour bucketing par date).
+async function bsdLeagueSeasons(leagueId) {
+  if (!leagueId) return [];
+  const cacheKey = `bsd_seasons_l${leagueId}`;
+  let list = apiCacheGet(cacheKey);
+  if (!list) {
+    const res = await bsdFetch(`/seasons/?league=${leagueId}`);
+    if (res && res.status === 200 && res.data && Array.isArray(res.data.results) && res.data.results.length) list = res.data.results;
+    else return [];
+    apiCacheSet(cacheKey, list, 'bsd_seasons', 6 * 3600 * 1000);
+  }
+  return list.slice();
+}
+// Renvoie la saison BSD d'une ligue (par année si précisée, sinon la plus récente).
+async function bsdSeasonForYear(leagueId, year) {
+  const list = await bsdLeagueSeasons(leagueId);
+  if (!list.length) return null;
+  if (year) {
+    const t = list.find(s => (s.year != null && String(s.year) === String(year)) || String(s.name || '').indexOf(String(year)) >= 0);
+    if (t) return t;
+  }
+  return list.slice().sort((a, b) => (b.year || 0) - (a.year || 0))[0] || null;
+}
+// Assigne une date (événement slim) à une saison BSD via la fenêtre start_date/end_date.
+function _bsdSeasonForDate(dateISO, seasons) {
+  const d = String(dateISO || '').slice(0, 10);
+  if (!seasons || !seasons.length || !d) return null;
+  for (const s of seasons) {
+    const s0 = String(s.start_date || '').slice(0, 10), s1 = String(s.end_date || '').slice(0, 10);
+    if (s0 && s1 && s0.length === 10 && s1.length === 10 && d >= s0 && d <= s1) return s;
+  }
+  const y = parseInt(d.slice(0, 4), 10);
+  return seasons.find(s => Number(s.year) === y) || null;
+}
+// Classement BSD d'une ligue/saison → { rows, position }. Gère shape BSD {won,drawn,lost,gf,ga,gd,pts,team_id}.
+async function bsdLeagueStandings(leagueId, seasonId, teamBsdId) {
+  if (!leagueId) return { rows: [], position: null };
+  const url = seasonId ? `/leagues/${leagueId}/standings/?season=${seasonId}` : `/leagues/${leagueId}/standings/`;
+  let raw = [];
+  try {
+    const res = await bsdFetch(url);
+    if (res && res.status === 200 && res.data) {
+      if (Array.isArray(res.data.standings)) raw = res.data.standings;
+      else if (res.data.standings && Array.isArray(res.data.standings.entries)) raw = res.data.standings.entries;
+      else if (Array.isArray(res.data.results)) raw = res.data.results;
+      else if (Array.isArray(res.data)) raw = res.data;
+    }
+  } catch (e) { /* ignore */ }
+  const rows = [];
+  for (const r of raw) {
+    const tot = r.total || {};
+    const team = r.team ? { id: r.team.id, name: r.team.name } : { id: r.team_id != null ? r.team_id : null, name: r.team || r.team_name || '' };
+    rows.push({
+      position: r.position != null ? r.position : (r.rank != null ? r.rank : null),
+      team,
+      played: r.played != null ? r.played : (r.matches != null ? r.matches : tot.played),
+      win: r.win != null ? r.win : (r.won != null ? r.won : (r.wins != null ? r.wins : tot.win)),
+      draw: r.draw != null ? r.draw : (r.drawn != null ? r.drawn : (r.draws != null ? r.draws : tot.draw)),
+      loss: r.loss != null ? r.loss : (r.lost != null ? r.lost : tot.loss),
+      gf: r.gf != null ? r.gf : (r.goals_for != null ? r.goals_for : tot.goals_for),
+      ga: r.ga != null ? r.ga : (r.goals_against != null ? r.goals_against : tot.goals_against),
+      gd: r.gd != null ? r.gd : (r.diff != null ? r.diff : null),
+      points: r.pts != null ? r.pts : (r.points != null ? r.points : tot.points),
+      home: {}, away: {}
+    });
+  }
+  const position = rows.find(x => x.team && x.team.id === teamBsdId && x.position != null) ? rows.find(x => x.team && x.team.id === teamBsdId).position : null;
+  return { rows, position };
+}
+// Pipeline BSD : stats de saison via la ligue (fetchBSDLeagueFinishedTail → forme slim :
+// home_team/away_team en STRING, home_score/away_score en NUMBER, PAS de champ season).
+async function fetchBSDTeamSeasonStats(idRaw, year) {
+  const ident = await resolveBSDTeamSeasonIdentity(idRaw);
+  if (process.env.TSS_DEBUG) console.error('[TSS] ident=', JSON.stringify(ident));
+  if (!ident || !ident.bsdId) return { empty: true };
+  const seasons = await bsdLeagueSeasons(ident.leagueId);
+  const targetSeason = await bsdSeasonForYear(ident.leagueId, year || null);
+  const leagueEvents = await fetchBSDLeagueFinishedTail(ident.leagueId);
+  if (process.env.TSS_DEBUG) console.error('[TSS] events=', Array.isArray(leagueEvents) ? leagueEvents.length : 'null', '| tNorm=', _ssNorm(ident.name));
+  const tNorm = _ssNorm(ident.name);
+  const seen = new Set();
+  const matches = [];
+  for (const e of leagueEvents) {
+    const h = _ssNorm(e.home_team || ''), a = _ssNorm(e.away_team || '');
+    const isHome = (h && h === tNorm);
+    const isAway = (a && a === tNorm);
+    if (!isHome && !isAway) continue;
+    const myGoals = isHome ? e.home_score : e.away_score;
+    const opGoals = isHome ? e.away_score : e.home_score;
+    if (myGoals == null || opGoals == null) continue;
+    const key = String(e.id != null ? e.id : (e.event_date + '|' + e.home_team + '|' + e.away_team));
+    if (seen.has(key)) continue; seen.add(key);
+    const sd = _bsdSeasonForDate(e.event_date, seasons);
+    matches.push({ isHome, myGoals, opGoals, dateISO: e.event_date ? new Date(e.event_date).toISOString() : null, homeId: null, awayId: null, homeName: e.home_team || '', awayName: e.away_team || '', comp: e.league_name || '', seasonId: sd ? sd.id : null, seasonYear: sd ? sd.year : null });
+  }
+  if (!matches.length) return { empty: true, team: { id: ident.bsdId, name: ident.name, country: ident.country }, leagueId: ident.leagueId };
+  const bySid = {};
+  matches.forEach(m => { const k = m.seasonId != null ? m.seasonId : 'none'; (bySid[k] = bySid[k] || []).push(m); });
+  let selKey = null;
+  if (targetSeason && bySid[targetSeason.id]) selKey = String(targetSeason.id);
+  if (selKey == null) {
+    const realKeys = Object.keys(bySid).filter(k => k !== 'none').sort((a, b) => bySid[b].length - bySid[a].length);
+    selKey = realKeys.length ? realKeys[0] : 'none';
+  }
+  if (bySid[selKey] == null) selKey = Object.keys(bySid)[0];
+  const nl = bySid[selKey] || [];
+  const all = nl.slice(); const home = nl.filter(m => m.isHome); const away = nl.filter(m => !m.isHome);
+  const compMap = {}; nl.forEach(m => { const k = m.comp || 'Ligue'; compMap[k] = compMap[k] || { name: k, type: 'domestic', id: null }; });
+  const competitions = Object.values(compMap);
+  const seasonObj = (selKey && selKey !== 'none') ? (seasons.find(s => String(s.id) === selKey) || null) : null;
+  const seasonId = seasonObj ? seasonObj.id : null;
+  const standings = seasonId ? await bsdLeagueStandings(ident.leagueId, seasonId, ident.bsdId) : { rows: [], position: null };
+  const rankByName = {};
+  standings.rows.forEach(r => { if (r.team && r.team.name && r.position != null) rankByName[_ssNorm(r.team.name)] = r.position; });
+  const recentMatches = all.slice(0, 10).map(m => ({ date: m.dateISO ? m.dateISO.slice(0, 10) : null, competition: m.comp, home: m.homeName, away: m.awayName, score: `${m.myGoals}-${m.opGoals}`, homeGoals: m.myGoals, awayGoals: m.opGoals, isHome: m.isHome, homeRank: rankByName[_ssNorm(m.homeName)] != null ? rankByName[_ssNorm(m.homeName)] : null, awayRank: rankByName[_ssNorm(m.awayName)] != null ? rankByName[_ssNorm(m.awayName)] : null, result: m.myGoals > m.opGoals ? 'W' : m.myGoals === m.opGoals ? 'D' : 'L' }));
+  const mk = l => ({ aggregate: _ssAggNorm(l), streaks: _ssStreaksNorm(l), records: _ssRecordsNorm(l) });
+  const yYears = Object.keys(bySid).map(k => { const sObj = k !== 'none' ? (seasons.find(s => String(s.id) === k) || null) : null; const sy = sObj ? sObj.year : null; return { year: Number(sy != null ? sy : 0), label: _ssSeasonLabel(sy != null ? sy : 0) }; }).filter(y => y.year > 0).sort((a, b) => b.year - a.year);
+  const sy = seasonObj ? seasonObj.year : (year ? Number(year) : 0);
+  return {
+    _source: 'bsd', resolvedBy: 'bsd', team: { id: ident.bsdId, name: ident.name, country: ident.country },
+    availableYears: yYears,
+    season: { year: Number(sy || 0), label: seasonObj ? (seasonObj.name || _ssSeasonLabel(sy)) : _ssSeasonLabel(sy) },
+    competitions, primaryCompetitionId: ident.leagueId, position: standings.position,
+    general: { all: mk(all).aggregate, home: mk(home).aggregate, away: mk(away).aggregate },
+    comparativeTable: standings,
+    streaks: { all: mk(all).streaks, home: mk(home).streaks, away: mk(away).streaks },
+    records: { all: mk(all).records, home: mk(home).records, away: mk(away).records },
+    recentMatches
+  };
+}
+
+// -------------------------------------------------
+//  GET /api/v1/team/:id/season-stats?season=2025 — Stats de saison par équipe
+//  Chemin BSD-first (fiable) puis Sofascore en fallback. Cache 7j.
+// -------------------------------------------------
+if (pathname.startsWith('/api/v1/team/') && pathname.endsWith('/season-stats')) {
+    const seg = pathname.split('/'); // ['', 'api', 'v1', 'team', '<id>', 'season-stats']
+    const teamId = seg[seg.length - 2] || '';
+    const seasonReq = parsedUrl.searchParams.get('season') || parsedUrl.searchParams.get('seasonYear') || '';
+
+    (async () => {
+        try {
+            // 1) Chemin BSD (fiable 100%, source primaire) — résout par id numérique OU nom (via team_logos)
+            const bsdSummary = await fetchBSDTeamSeasonStats(teamId, seasonReq || null);
+            if (bsdSummary && !bsdSummary.empty && bsdSummary.team && bsdSummary.team.name) {
+                const cacheKeyBSD = `team_season_bsd_${String(bsdSummary.team.id)}_${seasonReq || 'latest'}`;
+                const cachedBSD = apiCacheGet(cacheKeyBSD, 'bsd_team_season');
+                if (cachedBSD) {
+                    return jsonResponse(res, 200, cachedBSD);
+                }
+                const ttlBSD = (bsdSummary.competitions && bsdSummary.competitions.length) ? 7 * 24 * 3600 * 1000 : 2 * 3600 * 1000;
+                apiCacheSet(cacheKeyBSD, bsdSummary, 'bsd_team_season', ttlBSD);
+                return jsonResponse(res, 200, bsdSummary);
+            }
+
+            // 2) Fallback Sofascore (si BSD n'a rien / résolution nom échouée)
+            const resolved = await resolveSofascoreTeamForSeasonStats(teamId);
+            if (!resolved) {
+                return jsonResponse(res, 200, { empty: true, team: null, availableYears: [], competitions: [], general: null, streak: null, recentMatches: [], records: null });
+            }
+            const cacheKey = `team_season_${resolved.sofaId}_${seasonReq || 'latest'}_${resolved.name.replace(/\s+/g, '_').toLowerCase()}`;
+            const cached = apiCacheGet(cacheKey, 'sofa_team_season');
+            if (cached) {
+                return jsonResponse(res, 200, cached);
+            }
+            const data = await fetchTeamSeasonStats(resolved.sofaId, resolved.name, seasonReq || null);
+            const payload = {
+                ...data,
+                season: data && data.season ? data.season : { year: seasonReq ? Number(seasonReq) : null, label: seasonReq ? _ssSeasonLabel(seasonReq) : '' }
+            };
+            if (data && data.competitions && data.competitions.length) {
+                apiCacheSet(cacheKey, payload, 'sofa_team_season', 7 * 24 * 3600 * 1000);
+            } else {
+                apiCacheSet(cacheKey, payload, 'sofa_team_season', 2 * 3600 * 1000);
+            }
+            return jsonResponse(res, 200, payload);
+        } catch (e) {
+            console.error('[Team Season Stats API] erreur:', e.message);
+            return jsonResponse(res, 500, { error: e.message });
+        }
+    })();
+    return;
+}
+
+// -------------------------------------------------
 //  GET /api/v1/team/:id — Fiche détaillée équipe via BSD
 // -------------------------------------------------
 if (pathname.startsWith('/api/v1/team/')) {
@@ -34201,6 +34773,7 @@ if (pathname === '/api/v1/status') {
     discordWebhook: !!DISCORD_WEBHOOK_URL,
     tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
     tennisGlicko2Players: tennisGlicko2 ? tennisGlicko2.serveCalc.getStats().totalPlayers : 0,
+    highlightly: highlightlyService ? highlightlyService.status() : { name: 'highlightly', enabled: false },
   });
 }
 

@@ -66,8 +66,8 @@ export interface PitcherRecord {
   opsAgainst: number | null;
   starterIpAvg: number | null;
   /** true si les stats de saison sont réellement disponibles (Live ou curé).
-   * false = partant sans données — le moteur ne prédit pas dessus et l'UI
-   * affiche des "—" au lieu de métriques fabriquées. */
+   * false = partant sans données — le moteur retombe sur les moyennes de
+   * ligue (repli bayésien, aucun NaN) et l'UI affiche des "—". */
   statsAvailable: boolean;
   source: DataSource;
   season: number;

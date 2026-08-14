@@ -22014,7 +22014,15 @@ window.tn2SetupH2H = function() {
 <!-- bd rcmw V12 Mobile Premium B · C6 Pan & Zoom + C7 Haptics + Spring -->
 
 <div id="team-detail-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:1050;will-change:transform,opacity;" onclick="if(event.target===this)_closeModalAnim(this)">
-  <div id="team-detail-content" style="background:var(--bg2);border-radius:12px;padding:30px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;box-sizing:border-box;"></div>
+  <div id="team-detail-content" style="background:var(--bg2);border-radius:12px;padding:30px;max-width:800px;width:90%;max-height:82vh;overflow-y:auto;box-sizing:border-box;"></div>
+<style>
+  .tss-section { margin: 18px 0; }
+  .tss-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+  @media (max-width: 480px) { .tss-kpis { grid-template-columns: repeat(2, 1fr); } }
+  .tss-toggle { background: transparent; border: none; border-radius: 6px; padding: 3px 8px; font-size: 10px; font-weight: 700; cursor: pointer; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .tss-toggle:first-child { color: var(--text); }
+  #team-detail-content table th, #team-detail-content table td { white-space: nowrap; }
+</style>
 </div>
 <div id="odds-graph-tooltip"></div>
 

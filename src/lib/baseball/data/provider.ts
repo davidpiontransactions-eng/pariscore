@@ -117,12 +117,7 @@ function toQuick(prediction: BaseballPrediction): QuickPrediction {
 
 function computeQuickForMatch(match: BaseballMatch): BaseballMatch {
   const { homePitcher, awayPitcher, homeTeam, awayTeam } = match;
-  // Ne jamais prédire si un partant n'a pas de stats de saison : le moteur
-  // Monte Carlo exige des entrées numériques réelles, pas des placeholders.
   if (!homePitcher || !awayPitcher) return match;
-  if (!homePitcher.statsAvailable || !awayPitcher.statsAvailable) {
-    return { ...match, quick: null };
-  }
   const input = {
     gameId: match.game.id,
     league: match.game.league,
@@ -332,23 +327,17 @@ export async function getMatchDetailPayload(id: string): Promise<BaseballMatchDe
   let predictionBlockedReason: string | null = null;
 
   if (homePitcher && awayPitcher && game.status !== "final") {
-    if (!homePitcher.statsAvailable || !awayPitcher.statsAvailable) {
-      prediction = null;
-      predictionBlockedReason =
-        "Stats saison d'un lanceur partant indisponibles — le moteur ne prédit que sur des données réelles.";
-    } else {
-      const input = {
-        gameId: game.id,
-        league: game.league,
-        homeTeam,
-        awayTeam,
-        homePitcher,
-        awayPitcher,
-        iterations: FULL_ITERATIONS,
-      };
-      const hash = predictionInputHash(input);
-      prediction = cachedPrediction(game.id, hash, () => buildPrediction(input));
-    }
+    const input = {
+      gameId: game.id,
+      league: game.league,
+      homeTeam,
+      awayTeam,
+      homePitcher,
+      awayPitcher,
+      iterations: FULL_ITERATIONS,
+    };
+    const hash = predictionInputHash(input);
+    prediction = cachedPrediction(game.id, hash, () => buildPrediction(input));
   } else if (game.status === "final") {
     predictionBlockedReason =
       "Match terminé — le moteur ne prédit que les matchs à venir.";

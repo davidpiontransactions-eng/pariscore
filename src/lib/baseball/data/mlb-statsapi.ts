@@ -212,8 +212,8 @@ export async function fetchMlbPitcherHand(personId: number): Promise<"LHP" | "RH
 /** Construit le PitcherRecord depuis les stats LIVE (FIP/xERA recalculés).
  * Aucune valeur n'est inventée : si les stats de saison sont absentes
  * (rookie, aucun split renvoyé), les champs restent null et
- * `statsAvailable=false` — l'UI affiche alors des "—" et le moteur ne
- * prédit pas sur ce lanceur. */
+ * `statsAvailable=false` — l'UI affiche des "—" et le moteur retombe sur
+ * les moyennes de ligue (repli bayésien, aucun NaN). */
 export function buildLiveMlbPitcher(
   teamCode: string,
   mlbId: number,
