@@ -1,4 +1,18 @@
 # PariScore — Journal des modifications
+## [v12.99] — 2026-08-15 — Football live : meilleurs patterns d'OddAlerts (pression LIVE/AVG, seuils funnel, ticker)
+
+Implémentation du rapport `.context/pm/oddalerts-live-stats-analysis.md` (recommandations §6.1, §6.4, §6.5, §6.6, §6.7) dans le dialog de détail match football.
+
+### Ajouté
+- **Duo pression LIVE vs ATTENDU** (`src/components/football/pressure-duo-donuts.tsx`) : deux donuts SVG — pression live du match (Pressure Index) vs pression attendue pré-match (baseline dérivée des probabilités 1X2 : `P(victoire) + ½·P(nul)`, rôle du `*_pressure_avg` d'OddAlerts). Détection d'anomalie : `underdog_surge` (outsider attendu < 45% qui domine +8 pts) et `favorite_domination` (favori ≥ 70% de pression) avec bandeau signal (`expectedPressureBaseline`, `detectPressureAnomaly` — `src/lib/football-live-thresholds.ts`).
+- **LiveStatsBreakdown** (`src/components/football/live-stats-breakdown.tsx`) : jauges bilatérales Possession / Attaques / Attaques dangereuses + table de métriques (xG, tirs, cadrés, corners, fautes, cartons) avec barres de ratio, et **surbrillance automatique des seuils du funnel In-Play** (OddAlerts : pression > 65%, écart ≥ 20, possession ext. < 35%, SoT total > 8, tirs dom. > 12, corners ≥ 6, jaunes ≤ 2, att. dangereuses > 15, att. dom. ≥ 25, xG > 1.5) + compteur « signaux funnel ».
+- **Probabilités live projetées dans la vue stats** (`projectLiveMarkets`) : Poisson sur le temps restant, λ dérivé du **xG live** (taux observé projeté) ou des probas pré-match en fallback, convolution avec le score courant → 1X2, O1.5, O2.5, BTTS (source affichée : « basées xG live » / « estimées pré-match »).
+- **Ticker d'événements agrégés** dans le momentum chart : « Corner × 4 (6', 6', 9', 11') » avec bouton Next + rotation auto — les corners ESPN sont désormais émis en événements minute-par-minute (avant : uniquement agrégés en buckets, les marqueurs corners du graphe ne s'affichaient jamais).
+- **Stats live étendues** (`FootballLiveState` + mapping BSD) : attaques, attaques dangereuses (`live_stats` + fallback `sr_stats`), fautes, cartons jaunes/rouges, xG live (`home_xg_live`/`actual_home_xg`) — tous optionnels/null-safe.
+
+### Testé
+- 25 nouveaux tests bun (`football-live-thresholds.test.ts` : funnel, baseline, anomalies, projection Poisson) + test corner-passthrough dans `football-pressure-index.test.ts` — 78/78 PASS foot · `tsc` : 0 erreur sur les fichiers modifiés · `eslint` : 0 erreur.
+
 ## [v12.98] — 2026-08-15 — Alertes tennis temps réel (son + visuel) & deploy fiabilisé
 
 ### Ajouté

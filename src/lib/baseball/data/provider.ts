@@ -28,6 +28,7 @@ import type {
   BaseballMatch,
   BaseballMatchDetail,
   BaseballPrediction,
+  CalibrationResult,
   League,
   LeagueFilter,
   MatchupContext,
@@ -261,6 +262,35 @@ export async function getSchedulePayload(
   return payload;
 }
 
+/** Calibration : prédiction cached vs résultat réel (matchs terminés uniquement). */
+function buildCalibration(game: BaseballGameRecord): CalibrationResult | null {
+  if (game.status !== "final") return null;
+  const cached = predictionCache.get(game.id);
+  if (!cached) return null;
+  const pred = cached.payload;
+  const actualTotal = (game.homeRuns ?? 0) + (game.awayRuns ?? 0);
+  const homeWin = (game.homeRuns ?? 0) > (game.awayRuns ?? 0);
+  const overHit = actualTotal > pred.total.line ? pred.total.recommendation === "over"
+    : actualTotal < pred.total.line ? pred.total.recommendation === "under"
+    : null;
+  const favoriteWon = pred.moneyline.homeProb >= 0.5 ? homeWin : !homeWin;
+  return {
+    predictedTotalLine: pred.total.line,
+    predictedOverProb: pred.total.overProb,
+    predictedUnderProb: pred.total.underProb,
+    predictedRecommendation: pred.total.recommendation,
+    predictedHomeWinProb: pred.moneyline.homeProb,
+    actualTotalRuns: actualTotal,
+    actualHomeRuns: game.homeRuns ?? 0,
+    actualAwayRuns: game.awayRuns ?? 0,
+    overUnderHit,
+    moneylineWinner: homeWin ? "home" : "away",
+    moneylineFavoriteWon: pred.moneyline.homeProb >= 0.51 || pred.moneyline.homeProb <= 0.49
+      ? favoriteWon
+      : null,
+  };
+}
+
 function parkLabel(parkFactor: number): MatchupContext["homeParkLabel"] {
   if (parkFactor >= 104) return "favorable over";
   if (parkFactor <= 96) return "favorable under";
@@ -364,6 +394,7 @@ export async function getMatchDetailPayload(id: string): Promise<BaseballMatchDe
     matchupContext,
     prediction,
     predictionBlockedReason,
+    calibration: buildCalibration(game),
     dataSources,
     cachedAt: new Date().toISOString(),
   };

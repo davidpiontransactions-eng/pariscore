@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useId, useMemo } from "react";
 import {
   Crosshair,
   RefreshCw,
@@ -10,6 +10,11 @@ import {
 import type { Cs2Match } from "@/lib/cs2/types";
 import { HLTVMatchSchedule } from "./HLTVMatchSchedule";
 import { HLTVMatchSheetModal } from "./HLTVMatchSheetModal";
+import { MatchViewTabs } from "@/components/shared/match-view-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { MatchEmptyState } from "@/components/shared/match-empty-state";
+import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 type ApiResponse = {
   matches: Cs2Match[];
@@ -94,23 +99,46 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-// ── Empty State ──
-function EmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <Crosshair className="mb-4 h-12 w-12 text-zinc-600" />
-      <p className="text-lg font-semibold text-white">Aucun match CS2 à venir</p>
-      <p className="text-sm text-zinc-400">Revenez plus tard pour les prochains événements.</p>
-    </div>
-  );
-}
-
 // ── Main Component ──
 export function Cs2TabContent() {
   const { data, loading, error, mutate } = useCs2Data();
   const [selected, setSelected] = useState<Cs2Match | null>(null);
   const [open, setOpen] = useState(false);
   const matches = data?.matches ?? [];
+  const tabsId = useId();
+
+  // Live / Pre-match : is_live fourni par le serveur BSD. Pre-match exclut
+  // les matchs terminés, filtrable par heure de début (scheduled).
+  // Mode Live/Pre-match : store sidebar (source de vérité unique).
+  const mode = useSportsSidebarStore((s) => s.modes.cs2 ?? "live");
+  const setMode = useCallback(
+    (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("cs2", m),
+    [],
+  );
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+
+  const { live, prematch } = useMemo(
+    () => splitLivePrematch(matches, (m) => m.is_live === true),
+    [matches],
+  );
+
+  const prematchUpcoming = useMemo(
+    () => prematch.filter((m) => (m.status ?? "scheduled") !== "finished"),
+    [prematch],
+  );
+
+  const visiblePrematch = useMemo(() => {
+    const scoped = timeToday ? filterByToday(prematchUpcoming, (m) => m.scheduled) : prematchUpcoming;
+    const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.scheduled);
+    return [...inWindow].sort(
+      (a, b) => new Date(a.scheduled ?? 0).getTime() - new Date(b.scheduled ?? 0).getTime(),
+    );
+  }, [prematchUpcoming, timeRange, timeToday]);
+
+  // La liste rendue dépend de l'onglet actif.
+  const visibleMatches = mode === "live" ? live : visiblePrematch;
 
   if (loading && !data) {
     return (
@@ -161,23 +189,48 @@ export function Cs2TabContent() {
         </button>
       </div>
 
-      {/* Matches */}
-      {matches.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <HLTVMatchSchedule
-          matches={matches}
-          onSelectMatch={(m) => {
-            setSelected(m);
-            setOpen(true);
-          }}
-        />
+      {/* Sous-onglets Live | Pre-match */}
+      <MatchViewTabs
+        idBase={tabsId}
+        active={mode}
+        onChange={setMode}
+        liveCount={live.length}
+        prematchCount={prematchUpcoming.length}
+        className="mb-4"
+      />
+
+      {/* Filtre par heure de début — uniquement sur le pre-match */}
+      {mode === "prematch" && (
+        <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mb-4" />
       )}
 
-      {/* Fiche de match */}
-      <HLTVMatchSheetModal match={selected} open={open} onOpenChange={setOpen} />
+      {/* Matches */}
+      {visibleMatches.length === 0 ? (
+        <div
+          role="tabpanel"
+          id={`${tabsId}-panel-${mode}`}
+          aria-labelledby={`${tabsId}-${mode}`}
+        >
+          <MatchEmptyState mode={mode} />
+        </div>
+      ) : (
+        <div
+          role="tabpanel"
+          id={`${tabsId}-panel-${mode}`}
+          aria-labelledby={`${tabsId}-${mode}`}
+        >
+          <HLTVMatchSchedule
+            matches={visibleMatches}
+            onSelectMatch={(m) => {
+              setSelected(m);
+              setOpen(true);
+            }}
+          />
 
-      {/* Source */}
+          {/* Fiche de match */}
+          <HLTVMatchSheetModal match={selected} open={open} onOpenChange={setOpen} />
+        </div>
+      )}
       {data?.source && (
         <p className="mt-4 text-center text-xs text-zinc-600">
           Source: {data.source} · Cache: {data.cache ?? "unknown"}

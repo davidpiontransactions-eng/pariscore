@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useId, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   RefreshCw,
@@ -10,6 +10,11 @@ import {
   Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MatchViewTabs } from "@/components/shared/match-view-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { MatchEmptyState } from "@/components/shared/match-empty-state";
+import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 // ── Types ──
 type WnbaTeam = {
@@ -242,6 +247,29 @@ function EmptyState() {
 export function WnbaTabContent() {
   const { data, loading, error, mutate } = useWnbaData();
   const matches = data?.matches ?? [];
+  const tabsId = useId();
+
+  // Live / Pre-match : l'API WNBA n'expose pas de statut live — onglet Live
+  // visible à 0 (état vide dédié), liste côté Pre-match filtrable par heure.
+  // Mode Live/Pre-match : store sidebar (source de vérité unique).
+  const mode = useSportsSidebarStore((s) => s.modes.wnba ?? "prematch");
+  const setMode = useCallback(
+    (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("wnba", m),
+    [],
+  );
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+
+  const { prematch } = useMemo(() => splitLivePrematch(matches, () => false), [matches]);
+
+  const visiblePrematch = useMemo(() => {
+    const scoped = timeToday ? filterByToday(prematch, (m) => m.commence_time) : prematch;
+    const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.commence_time);
+    return [...inWindow].sort(
+      (a, b) => new Date(a.commence_time ?? 0).getTime() - new Date(b.commence_time ?? 0).getTime(),
+    );
+  }, [prematch, timeRange, timeToday]);
 
   if (loading && !data) {
     return (
@@ -286,14 +314,39 @@ export function WnbaTabContent() {
         </button>
       </div>
 
+      {/* Sous-onglets Live | Pre-match */}
+      <MatchViewTabs
+        idBase={tabsId}
+        active={mode}
+        onChange={setMode}
+        liveCount={0}
+        prematchCount={prematch.length}
+        className="mb-4"
+      />
+
       {/* Matches */}
-      {matches.length === 0 ? (
-        <EmptyState />
+      {mode === "live" ? (
+        <div role="tabpanel" id={`${tabsId}-panel-live`} aria-labelledby={`${tabsId}-live`}>
+          <MatchEmptyState mode="live" />
+        </div>
       ) : (
-        <div className="space-y-3">
-          {matches.map((m, i) => (
-            <WnbaMatchCard key={m.id} match={m} index={i} />
-          ))}
+        <div role="tabpanel" id={`${tabsId}-panel-prematch`} aria-labelledby={`${tabsId}-prematch`}>
+          {/* Filtre par heure de début (fenêtre glissante 1h → 24h) */}
+          <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mb-4" />
+
+          {visiblePrematch.length === 0 ? (
+            timeRange === null && !timeToday ? (
+              <EmptyState />
+            ) : (
+              <MatchEmptyState mode="prematch" />
+            )
+          ) : (
+            <div className="space-y-3">
+              {visiblePrematch.map((m, i) => (
+                <WnbaMatchCard key={m.id} match={m} index={i} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

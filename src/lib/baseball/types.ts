@@ -200,12 +200,28 @@ export interface BaseballMatchDetail {
   matchupContext: MatchupContext;
   prediction: BaseballPrediction | null;
   predictionBlockedReason: string | null;
+  calibration: CalibrationResult | null;
   dataSources: {
     schedule: DataSource;
     pitchers: DataSource;
     teams: "curated";
   };
   cachedAt: string;
+}
+
+/** Calibration : prédiction du modèle vs résultat réel (matchs terminés). */
+export interface CalibrationResult {
+  predictedTotalLine: number;
+  predictedOverProb: number;
+  predictedUnderProb: number;
+  predictedRecommendation: OverUnderSide | null;
+  predictedHomeWinProb: number;
+  actualTotalRuns: number;
+  actualHomeRuns: number;
+  actualAwayRuns: number;
+  overUnderHit: boolean | null;
+  moneylineWinner: "home" | "away" | null;
+  moneylineFavoriteWon: boolean | null;
 }
 
 /** Réponse de l'API détail. */

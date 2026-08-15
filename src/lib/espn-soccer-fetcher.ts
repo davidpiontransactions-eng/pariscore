@@ -292,6 +292,15 @@ export async function fetchESPNTimeline(event: ESPNResolvedEvent): Promise<ESPNT
       const winnerSide = winnerInText ? sideOf(homeName, awayName, winnerInText) : null;
       const cornerSide = winnerSide ?? other(side);
       ensureBucket(Math.floor(minute / BUCKET_MIN) * BUCKET_MIN).corners[cornerSide] += 1;
+      events.push({
+        minute,
+        kind: "corner",
+        side: cornerSide,
+        scorer: null,
+        teamName: null,
+        xg: null,
+        score: null,
+      });
       continue;
     }
 

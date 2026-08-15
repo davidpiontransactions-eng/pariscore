@@ -15,7 +15,7 @@ const MOCK_DELAY_MS = 300;
 const POLL_INTERVAL_MS = 60_000;
 
 // Transform API v2 (Prisma) → FootballMatch
-function transformV2(m: any): FootballMatch {
+export function transformV2(m: any): FootballMatch {
   return {
     id: m.id,
     league: m.league
@@ -42,7 +42,22 @@ export function useFootballMatches() {
     setIsValidating(true);
     setError(null);
     try {
-      // Primaire: API v2 Prisma
+      // Primaire: feed BSD réel (live + prématch avec stats/xG complètes).
+      // Anciennement la v2 Prisma passait en premier et servait les matchs mock
+      // seedés (mock_fl2…) → le dialog momentum appelait /stats sur un id mock
+      // → 503 → les features live (donuts, ticker, probas) ne s'affichaient pas.
+      // On privilégie désormais le vrai BSD ; la v2/mock reste en secours.
+      const legacyRes = await fetch("/api/football/matches");
+      if (legacyRes.ok) {
+        const json: FootballResponse = await legacyRes.json();
+        if ((json.matches ?? []).length > 0) {
+          setData(json);
+          setIsLoading(false);
+          setIsValidating(false);
+          return;
+        }
+      }
+      // Fallback: API v2 Prisma
       const res = await fetch("/api/v2/matches?sport=football&limit=100");
       if (res.ok) {
         const json = await res.json();
@@ -54,16 +69,7 @@ export function useFootballMatches() {
           return;
         }
       }
-      // Fallback: API legacy v1
-      const legacyRes = await fetch("/api/football/matches");
-      if (legacyRes.ok) {
-        const json: FootballResponse = await legacyRes.json();
-        setData(json);
-        setIsLoading(false);
-        setIsValidating(false);
-        return;
-      }
-      throw new Error("API v2 et legacy indisponibles");
+      throw new Error("API BSD et v2 indisponibles");
     } catch {
       // Mock fallback
       await new Promise((r) => setTimeout(r, MOCK_DELAY_MS));

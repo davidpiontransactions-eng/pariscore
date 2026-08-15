@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, lazy, Suspense } from "react";
+import { useState, useMemo, useId, useCallback, lazy, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import {
   Trophy,
@@ -36,6 +36,11 @@ import { useFootballAIFilters } from "@/hooks/use-football-ai-filters";
 import { useFootballBacktest } from "@/hooks/use-football-backtest";
 import { applyCompiledRules, type AIFilterPreset } from "@/lib/football-nl-filter";
 import { bestMatchEdge } from "@/lib/football-correct-score";
+import { MatchViewTabs } from "@/components/shared/match-view-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { MatchEmptyState } from "@/components/shared/match-empty-state";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 
 // Dialog de détail (momentum) — lazy : ne charge pas le code tant qu'aucun match
 // n'est ouvert. Miroir du pattern tennis (tennis-tab-content.tsx).
@@ -50,10 +55,39 @@ export function FootballTabContent() {
   const { data, error, isLoading, isValidating, mutate } = useFootballMatches();
   const { favorites, toggle: toggleFavorite } = useFavorites();
 
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  // Ligue / fenêtre horaire / mode Live-Pre-match : source de vérité unique =
+  // store sidebar (filtre latéral multi-sports, modèle 1xBet). La grille se
+  // met à jour en temps réel sur clic dans la sidebar ou ici (mêmes contrôleurs).
+  // Les ids ligue du store sont préfixés « football: » (portée multi-sports) :
+  // on ne garde que la part football ; une sélection d'un autre sport → null.
+  const selectedLeagueId = useSportsSidebarStore((s) => s.selectedLeagueId);
+  const selectedLeague = useMemo(() => {
+    if (selectedLeagueId && selectedLeagueId.startsWith("football:")) {
+      return selectedLeagueId.slice("football:".length);
+    }
+    return null;
+  }, [selectedLeagueId]);
+  const setSelectedLeague = useCallback(
+    (id: string | null) =>
+      useSportsSidebarStore
+        .getState()
+        .selectLeague(id === null ? null : `football:${id}`, "football"),
+    [],
+  );
   const [filter, setFilter] = useState<FootFilter>("all");
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [presetFilter, setPresetFilter] = useState<TopTeamPreset | null>(null);
+  const tabsId = useId();
+
+  // Live / Pre-match (modèle 1xbet) + filtre par heure de début.
+  const mode = useSportsSidebarStore((s) => s.modes.football ?? "live");
+  const setMode = useCallback(
+    (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("football", m),
+    [],
+  );
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
 
   // Suite AI Pricing — filtres NL, combiné, backtest/fiabilité.
   const { presets: aiPresets, addPreset: addAIPreset, removePreset: removeAIPreset } = useFootballAIFilters();
@@ -125,12 +159,18 @@ export function FootballTabContent() {
     if (activeAIFilter) {
       list = applyCompiledRules(list, activeAIFilter.rules);
     }
+    // Filtre par heure de début (fenêtre glissante 1h → 24h ou jour calendaire).
+    if (timeRange !== null) {
+      list = filterByStartWindow(list, timeRange, (m) => m.scheduledAt);
+    } else if (timeToday) {
+      list = filterByToday(list, (m) => m.scheduledAt);
+    }
     // Tri : par edge/value (décroissant) ou par date (croissant).
     if (sortByEdge) {
       return [...list].sort((a, b) => (bestMatchEdge(b) ?? -Infinity) - (bestMatchEdge(a) ?? -Infinity));
     }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge]);
+  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday]);
 
   const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
     { key: "all", label: "Tous" },
@@ -272,41 +312,34 @@ export function FootballTabContent() {
         />
       )}
 
+      {/* Sous-onglets Live | Pre-match (modèle 1xbet) */}
+      <MatchViewTabs
+        idBase={tabsId}
+        active={mode}
+        onChange={setMode}
+        liveCount={liveMatches.length}
+        prematchCount={prematchMatches.length}
+        className="mb-4"
+      />
+
       {viewMode === "list" ? (
-        <FlashscoreFootballList
-          matches={matches}
-          favoriteIds={favorites}
-          onToggleFavorite={toggleFavorite}
-          onOpenDetail={openDetail}
-          isLoading={isLoading}
-          error={error?.message ?? null}
-          onRetry={() => mutate()}
-        />
+        <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
+          {mode === "prematch" && (
+            <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mb-4" />
+          )}
+          <FlashscoreFootballList
+            matches={mode === "live" ? liveMatches : prematchMatches}
+            favoriteIds={favorites}
+            onToggleFavorite={toggleFavorite}
+            onOpenDetail={openDetail}
+            isLoading={isLoading}
+            error={error?.message ?? null}
+            onRetry={() => mutate()}
+          />
+        </div>
       ) : (
         <>
-          {/* Banker du week-end — pick éditorial + top 3 (respecte la ligue/no filtres) */}
-          {!isLoading && prematchMatches.length > 0 && (
-            <FootballBankerWidget matches={prematchMatches} onOpenDetail={openDetail} />
-          )}
-
-          {/* Live Section */}
-          {liveMatches.length > 0 && (
-            <section className="mb-8">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500" />
-                <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                  EN DIRECT ({liveMatches.length})
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {liveMatches.map((m) => (
-                  <FootballLiveCard key={m.id} match={m} onOpenDetail={() => openDetail(m)} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Error */}
+          {/* Error (global — visible sur les deux sous-onglets) */}
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-lg border border-rose-500/40 bg-rose-500/5 p-4 text-sm text-rose-700 dark:text-rose-300">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -317,16 +350,66 @@ export function FootballTabContent() {
             </div>
           )}
 
-          {/* League filters */}
-          {!isLoading && prematchMatches.length > 0 && (
-            <div className="mb-4">
-              <FootballLeagueBar
-                matches={prematchMatches}
-                selectedLeague={selectedLeague}
-                onSelectLeague={setSelectedLeague}
-              />
-            </div>
-          )}
+          {mode === "live" ? (
+            /* ── Sous-onglet Live ─────────────────────────────────────── */
+            <section
+              className="mb-8"
+              role="tabpanel"
+              id={`${tabsId}-panel-live`}
+              aria-labelledby={`${tabsId}-live`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="mb-3 flex items-center gap-2">
+                    <Skeleton className="h-2 w-2 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[0, 1].map((i) => (
+                      <FootballLiveCardSkeleton key={`live-sk-${i}`} />
+                    ))}
+                  </div>
+                </>
+              ) : liveMatches.length > 0 ? (
+                <>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-rose-500" />
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                      EN DIRECT ({liveMatches.length})
+                    </h2>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {liveMatches.map((m) => (
+                      <FootballLiveCard key={m.id} match={m} onOpenDetail={() => openDetail(m)} />
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <MatchEmptyState mode="live" />
+              )}
+            </section>
+          ) : (
+            /* ── Sous-onglet Pre-match ────────────────────────────────── */
+            <div
+              role="tabpanel"
+              id={`${tabsId}-panel-prematch`}
+              aria-labelledby={`${tabsId}-prematch`}
+            >
+              {/* Banker du week-end — pick éditorial + top 3 (respecte la ligue/no filtres) */}
+              {!isLoading && prematchMatches.length > 0 && (
+                <FootballBankerWidget matches={prematchMatches} onOpenDetail={openDetail} />
+              )}
+
+              {/* League filters */}
+              {!isLoading && prematchMatches.length > 0 && (
+                <div className="mb-4">
+                  <FootballLeagueBar
+                    matches={prematchMatches}
+                    selectedLeague={selectedLeague}
+                    onSelectLeague={setSelectedLeague}
+                  />
+                </div>
+              )}
 
           {/* Top Teams presets */}
           <div className="mb-4">
@@ -358,27 +441,16 @@ export function FootballTabContent() {
             ))}
           </div>
 
-          {/* Match grid */}
+          {/* Filtre par heure de début (fenêtre glissante 1h → 24h / aujourd'hui) */}
+          <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mb-4" />
+
+          {/* Match grid (pre-match uniquement) */}
           {isLoading ? (
-            <>
-              {/* Live skeletons */}
-              <section className="mb-8">
-                <div className="mb-3 flex items-center gap-2">
-                  <Skeleton className="h-2 w-2 rounded-full" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[0, 1].map((i) => (
-                    <FootballLiveCardSkeleton key={`live-sk-${i}`} />
-                  ))}
-                </div>
-              </section>
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                {[0, 1, 2, 3].map((i) => (
-                  <FootballMatchCardSkeleton key={i} />
-                ))}
-              </div>
-            </>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              {[0, 1, 2, 3].map((i) => (
+                <FootballMatchCardSkeleton key={i} />
+              ))}
+            </div>
           ) : prematchMatches.length > 0 ? (
             <FootballRoundGroups matches={prematchMatches} onOpenDetail={openDetail} />
           ) : (
@@ -390,8 +462,12 @@ export function FootballTabContent() {
               <p className="text-xs text-muted-foreground">
                 {filter === "today"
                   ? "Aucun match programmé aujourd'hui pour cette ligue"
-                  : "Aucun match ne correspond aux filtres sélectionnés"}
+                  : timeRange !== null
+                    ? "Aucun match ne commence dans cette fenêtre horaire"
+                    : "Aucun match ne correspond aux filtres sélectionnés"}
               </p>
+            </div>
+          )}
             </div>
           )}
         </>

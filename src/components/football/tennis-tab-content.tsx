@@ -10,6 +10,9 @@ import { MatchCard } from "@/components/tennis/match-card";
 import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { filterByStartWindow, filterByToday, parseTimeFilter } from "@/lib/match-view";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
 import { TennisSearchBar } from "@/components/tennis/tennis-search-bar";
 import { TournamentHeaderCard } from "@/components/tennis/tournament-header-card";
@@ -408,6 +411,26 @@ return [...matches, ...synthetic];
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
 
+  // Filtre par heure de début (fenêtre glissante 1h → 24h / jour calendaire) —
+  // partagé avec la sidebar (store unique, modèle 1xBet). S'applique aux vues
+  // pre-match ("today" / "list") : exclut les matchs déjà en live et ceux dont
+  // le coup d'envoi sort de la fenêtre.
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+  /** Applique la fenêtre horaire (ou « aujourd'hui ») en excluant le live. */
+  const scopeByTime = useCallback(
+    <T extends { id: string; scheduledAt: string }>(list: T[]): T[] => {
+      if (timeRange === null && !timeToday) return list;
+      const prematchOnly = list.filter((m) => !liveStates[m.id]?.isLive);
+      if (timeRange !== null) {
+        return filterByStartWindow(prematchOnly, timeRange, (m) => m.scheduledAt);
+      }
+      return filterByToday(prematchOnly, (m) => m.scheduledAt);
+    },
+    [liveStates, timeRange, timeToday],
+  );
+
   // Nombre de matchs pour la carte tournoi (sur la liste scoped).
   const tournamentMatchCount = matchesWithScoped.length;
 
@@ -424,8 +447,8 @@ return [...matches, ...synthetic];
     if (subTab === "live") {
       return filtered.filter((m) => liveStates[m.id]?.isLive);
     }
-    return filtered; // "today" = tout
-  }, [subTab, filtered, liveStates]);
+    return scopeByTime(filtered); // "today" = tout (hors filtre horaire)
+  }, [subTab, filtered, liveStates, scopeByTime]);
 
   // Version "rest" filtrée par sous-onglet (pour la grille principale).
   // En live, on garde featured + rest (sinon les matchs phares live
@@ -435,8 +458,8 @@ return [...matches, ...synthetic];
     if (subTab === "live") {
       return curation.rest.filter((m) => liveStates[m.id]?.isLive);
     }
-    return curation.rest;
-  }, [subTab, curation.rest, liveStates]);
+    return scopeByTime(curation.rest);
+  }, [subTab, curation.rest, liveStates, scopeByTime]);
 
   // Cotes live P1/P2 — 1xBet avec repli BSD. Un seul POST batch
   // /api/v1/odds/live toutes les 15s sur la grille live ; chaque slot est
@@ -459,8 +482,8 @@ return [...matches, ...synthetic];
     if (subTab === "live") {
       return curation.featured.filter((m) => liveStates[m.id]?.isLive);
     }
-    return curation.featured;
-  }, [subTab, curation.featured, liveStates]);
+    return scopeByTime(curation.featured);
+  }, [subTab, curation.featured, liveStates, scopeByTime]);
 
   const handleSubTabChange = (tab: TennisSubTab) => {
     setSubTab(tab);
@@ -714,6 +737,13 @@ return [...matches, ...synthetic];
           liveCount={liveCount}
           todayCount={todayCount}
         />
+
+        {/* Filtre par heure de début — vues pre-match uniquement */}
+        {subTab !== "live" && subTab !== "tournaments" && (
+          <div className="mt-3">
+            <TimeRangeFilter value={timeKey} onChange={setTimeKey} />
+          </div>
+        )}
       </div>
 
       {/* Match list / Tournaments list / Flashscore list */}
@@ -722,7 +752,7 @@ return [...matches, ...synthetic];
         <TournamentsList />
       ) : subTab === "list" ? (
         <FlashscoreTennisList
-          matches={filtered}
+          matches={subFiltered}
           liveStates={liveStates}
           favoriteIds={favorites}
           onToggleFavorite={toggleFavorite}

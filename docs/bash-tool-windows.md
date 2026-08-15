@@ -1,5 +1,40 @@
 # Diagnostic — L'outil `bash` d'opencode bloque (Windows, PariScore)
 
+**Date** : 2026-08-02 (creation) · 2026-08-15 (revision cause racine)
+**Statut** : CAUSE RACINE REVISEE — init tree-sitter WASM (pas la couche PTY/spawn).
+Correctif : tool `bash` desactive dans `.opencode/opencode.json` (`"tools": { "bash": false }`).
+
+## Revision du diagnostic (2026-08-15)
+
+Le diagnostic initial (2026-08-02) attribuait le gel a la couche PTY/spawn —
+**ce diagnostic est infirme**. La vraie cause racine a ete identifiee le 2026-08-15
+par analyse exhaustive du binaire opencode v1.18.4 et tests de reproduction :
+
+**Le blocage se produit dans `ShellTool.parse` — AVANT tout spawn — lors de
+l'initialisation du parser tree-sitter WASM embarque dans le single-file executable Bun.**
+
+Preuves :
+1. Test du marqueur : `opencode run --auto` avec ecriture de fichier — le fichier
+   n'est **jamais cree** — le spawn n'est jamais atteint.
+2. Tous les primitifs de spawn testes fonctionnent (node child_process overlapped,
+   Bun.spawn, ConPTY, powershell, bash, cmd — 6/6 OK).
+3. L'analyse du code ShellTool dans le binaire montre que `parse()` est appele
+   **avant** `ss()` (le spawn) : `is(l.command,N)` — `ns()` — `import("B:/~BUN/root/chunk-*.js")` + `Parser.init({locateFile})` — **HANG**.
+4. `oc_bash` et `shell` (outils differents, sans parse tree-sitter) fonctionnent.
+
+Mecanisme : le binaire opencode v1.18.4 est un single-file executable Bun (174 MB).
+Les chunks WASM tree-sitter sont embarques dans le filesystem virtuel `B:/~BUN/root/`.
+`ns()` tente de charger les WASM via `import("...", {with:{type:"wasm"}})` puis
+`Parser.init({locateFile})` — le locateFile resout un chemin `B:/~BUN/root/chunk-*.wasm`
+via `fileURLToPath`, qui ne correspond a aucun fichier physique sur disque. Sous
+Bun, la resolution du WASM echoue ou bloque indefiniment.
+
+**Les sections ci-dessous restent valides pour le contexte historique mais la
+cause racine a ete corrigee.**
+
+---
+# Diagnostic — L'outil `bash` d'opencode bloque (Windows, PariScore)
+
 **Date** : 2026-08-02 · **Statut** : CAUSE RACINE identifiée = couche PTY/spawn du
 tool `bash` d'opencode (PATH corrigé et actif, gel persiste). Correctif appliqué :
 tool `bash` désactivé dans `.opencode/opencode.json` (`"tools": { "bash": false }`).

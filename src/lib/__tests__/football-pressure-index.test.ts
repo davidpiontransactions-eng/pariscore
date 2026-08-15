@@ -149,4 +149,20 @@ describe("buildPressureTimeline", () => {
     expect(data.pressure.homePct + data.pressure.awayPct).toBe(100);
     expect(data.pressure.homePct).toBeGreaterThan(0);
   });
+
+  test("corners → événements conservés + layer corners (ticker)", () => {
+    const data = buildPressureTimeline({
+      buckets: [],
+      events: [
+        { minute: 6, kind: "corner", side: "home", scorer: null, teamName: null, xg: null, score: null },
+        { minute: 9, kind: "corner", side: "home", scorer: null, teamName: null, xg: null, score: null },
+        { minute: 11, kind: "corner", side: "away", scorer: null, teamName: null, xg: null, score: null },
+      ],
+      bsdMomentum: [{ minute: 1, value: 0 }],
+      source: "espn",
+    });
+    expect(data.layers.corners).toBe(true);
+    expect(data.layers.goals).toBe(false);
+    expect(data.events.filter((e) => e.kind === "corner")).toHaveLength(3);
+  });
 });

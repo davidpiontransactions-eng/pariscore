@@ -195,6 +195,51 @@
       "label": "Momentum Score gauge: {score} out of 100"
     }
   },
+  "matchTabs": {
+    "live": "Live",
+    "prematch": "Pre-match",
+    "liveAria": "{n} live matches",
+    "prematchAria": "{n} upcoming matches",
+    "tabsAriaLabel": "Filter by match status",
+    "emptyLive": "No live matches right now",
+    "emptyLiveHint": "Live matches appear here as soon as they kick off",
+    "emptyPrematch": "No match in this window",
+    "emptyPrematchHint": "Widen the time window or come back later",
+    "timeFilterLabel": "Start time",
+    "timeAll": "All",
+    "timeHour": "{hours}h",
+    "timeToday": "Today"
+  },
+  "sportsSidebar": {
+    "title": "Sports filters",
+    "searchPlaceholder": "Team or championship…",
+    "searchClear": "Clear search",
+    "live": "Live",
+    "prematch": "Pre-match",
+    "modeAria": "Toggle between live and pre-match",
+    "timeAria": "Filter by start time",
+    "timeAll": "All",
+    "timeHour": "{hours}h",
+    "timeToday": "Today",
+    "favorites": "Favorites & top leagues",
+    "toggleFavorite": "Add or remove from favorites",
+    "emptyTree": "No results",
+    "emptyTreeHint": "Adjust your search or the time window",
+    "openDrawer": "Sports filters",
+    "level4Open": "Open",
+    "sport": {
+      "tennis": "Tennis",
+      "football": "Football",
+      "cs2": "CS2",
+      "mma": "MMA",
+      "nba": "NBA",
+      "wnba": "WNBA",
+      "cycling": "Cycling",
+      "f1": "Formula 1",
+      "baseball": "Baseball",
+      "rugby": "Rugby"
+    }
+  },
   "match": {
     "win": "WIN",
     "vs": "VS",

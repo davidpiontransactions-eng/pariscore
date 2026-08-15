@@ -25,6 +25,13 @@ import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { AutoHideHeader } from "@/components/layout/auto-hide-header";
 import { SportSwipeHeader } from "@/components/layout/sport-swipe-header";
+import {
+  SportsSidebar,
+  SportsSidebarDrawer,
+  SportsSidebarUrlSync,
+} from "@/components/layout/sports-sidebar";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import type { SportTabId } from "@/types/sports-sidebar";
 import { TennisTabContent } from "@/components/football/tennis-tab-content";
 import { FootballTabContent } from "@/components/football/football-tab-content";
 import { Cs2TabContent } from "@/components/cs2/cs2-tab-content";
@@ -190,7 +197,18 @@ function HomeInner() {
 
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab as SportTab);
+    useSportsSidebarStore.getState().syncSportFromTab(tab);
   }, []);
+
+  // Sidebar (store) → onglet central : un clic sport/ligue dans le filtre
+  // latéral bascule la grille. Le store reste source de vérité URL-partageable.
+  const storeSportId = useSportsSidebarStore((s) => s.selectedSportId);
+  useEffect(() => {
+    if (storeSportId && storeSportId !== activeTab) {
+      setActiveTab(storeSportId as SportTab);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeSportId]);
 
   const SPORT_CARDS = [
     { id: "tennis" as const, label: "Tennis", emoji: "🎾", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
@@ -216,6 +234,7 @@ function HomeInner() {
             </div>
 
             <div className="flex items-center gap-2">
+              <SportsSidebarDrawer activeSport={activeTab} onSportChange={handleTabChange} />
               <LanguageToggle />
               <PushToggle />
               <EmailToggle />
@@ -244,6 +263,12 @@ function HomeInner() {
             </div>
           </div>
         </AutoHideHeader>
+
+        {/* Filtre latéral multi-sports (1xBet) : sync URL + aside desktop */}
+        <SportsSidebarUrlSync />
+        <div className="flex w-full flex-1 items-start">
+          <SportsSidebar activeSport={activeTab} onSportChange={handleTabChange} />
+          <div className="flex min-w-0 flex-1 flex-col">
 
         {/* Hero Dashboard Section */}
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6">
@@ -344,6 +369,8 @@ function HomeInner() {
           <UpcomingTenMatchesTable id="section-upcoming" />
           <AIInsightCard id="section-gemini" />
         </section>
+          </div>
+        </div>
 
         {/* Footer — toujours visible, padding bottom pour la bottom nav mobile */}
         <footer className="block mt-auto border-t border-white/10 bg-zinc-900/20 pb-20 md:pb-6">

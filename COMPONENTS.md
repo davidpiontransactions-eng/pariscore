@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 146 components total (football: 9, leagues: 4, tennis: 51, etc.).
+> extract pass. 148 components total (football: 11, leagues: 4, tennis: 51, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -92,7 +92,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
-## Football (`src/components/football/`) — 12 components
+## Football (`src/components/football/`) — 14 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -104,8 +104,10 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-tab-content | football-tab-content.tsx | Contenu de l'onglet football |
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | LiveDecisionMomentumWidget | LiveDecisionMomentumWidget.tsx | Widget live : indice de pression [-100,+100], alerte but imminent, marchés live |
+| live-stats-breakdown | live-stats-breakdown.tsx | Stats live bilatérales (jauges possession/attaques/att. dangereuses) + surbrillance seuils funnel In-Play + probabilités live projetées |
 | MatchPredictiveCard | MatchPredictiveCard.tsx | Carte analyse prédictive ML (badge tendance, résumé, 3 paris, zéro lien externe) |
-| momentum-chart | momentum-chart.tsx | Graphique momentum football |
+| momentum-chart | momentum-chart.tsx | Graphique momentum football (ticker d'événements agrégés inclus) |
+| pressure-duo-donuts | pressure-duo-donuts.tsx | Donuts pression LIVE vs ATTENDUE (baseline pré-match) + détection d'anomalie (outsider/favori) |
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 
@@ -160,11 +162,16 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 |-----------|------|------|
 | wnba-tab-content | wnba-tab-content.tsx | Contenu de l'onglet WNBA |
 
-## Layout (`src/components/layout/`) — 1 component
+## Layout (`src/components/layout/`) — 6 components
 
 | Component | File | Role |
 |-----------|------|------|
+| auto-hide-header | auto-hide-header.tsx | Header qui se masque au scroll descendant |
+| drawer-detail | drawer-detail.tsx | Drawer générique de détail |
+| mobile-bottom-nav | mobile-bottom-nav.tsx | Navigation basse mobile |
+| sport-swipe-header | sport-swipe-header.tsx | En-tête onglets sport avec swipe tactile |
 | sport-tabs | sport-tabs.tsx | Onglets de navigation entre sports |
+| sports-sidebar | sports-sidebar.tsx | Filtre latéral multi-sports (1xBet) : recherche, pills horaires, favoris, arborescence Sport→Pays→Ligue→Matchs, toggle Live/Line ; aside sticky desktop + Sheet drawer mobile + sync URL |
 
 ## AI (`src/components/ai/`) — 2 components
 

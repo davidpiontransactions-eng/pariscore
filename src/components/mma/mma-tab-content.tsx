@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useId, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronDown,
@@ -13,6 +13,11 @@ import {
 import { cn } from "@/lib/utils";
 import { MmaFilters } from "./mma-filters";
 import { MmaFightCard, type MmaFight } from "./mma-fight-card";
+import { MatchViewTabs } from "@/components/shared/match-view-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { MatchEmptyState } from "@/components/shared/match-empty-state";
+import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 type MmaEvent = {
   event_date: string;
@@ -135,6 +140,19 @@ export function MmaTabContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [weightClass, setWeightClass] = useState("All");
+  const tabsId = useId();
+
+  // Live / Pre-match : l'API MMA n'expose pas de statut live — onglet Live
+  // visible à 0 (état vide dédié), combats côté Pre-match filtrables par heure.
+  // Mode Live/Pre-match : store sidebar (source de vérité unique).
+  const mode = useSportsSidebarStore((s) => s.modes.mma ?? "prematch");
+  const setMode = useCallback(
+    (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("mma", m),
+    [],
+  );
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -155,19 +173,45 @@ export function MmaTabContent() {
     fetchData();
   }, [fetchData]);
 
-  const filtered = data?.fights
-    ?.map((ev) => ({
-      ...ev,
-      fights:
-        weightClass === "All"
-          ? ev.fights
-          : ev.fights.filter(
-              (f) =>
-                f.weight_class?.toLowerCase().replace(/\s+/g, "_") ===
-                weightClass.toLowerCase().replace(/\s+/g, "_")
-            ),
-    }))
-    .filter((ev) => ev.fights.length > 0);
+  // Aplatit les événements en combats datés (commence_time), tri par heure.
+  const battles = useMemo(() => {
+    const out: Array<{ fight: MmaFight; event: MmaEvent }> = [];
+    for (const ev of data?.fights ?? []) {
+      for (const fight of ev.fights) out.push({ fight, event: ev });
+    }
+    out.sort(
+      (a, b) =>
+        new Date(a.fight.commence_time).getTime() - new Date(b.fight.commence_time).getTime(),
+    );
+    return out;
+  }, [data]);
+
+  const { prematch } = useMemo(() => splitLivePrematch(battles, () => false), [battles]);
+
+  // Filtres cumulés : catégorie de poids + fenêtre horaire de début.
+  const visibleBattles = useMemo(() => {
+    let list = prematch;
+    if (weightClass !== "All") {
+      const norm = weightClass.toLowerCase().replace(/\s+/g, "_");
+      list = list.filter(
+        (b) => b.fight.weight_class?.toLowerCase().replace(/\s+/g, "_") === norm,
+      );
+    }
+    const scoped = timeToday ? filterByToday(list, (b) => b.fight.commence_time) : list;
+    return filterByStartWindow(scoped, timeRange, (b) => b.fight.commence_time);
+  }, [prematch, weightClass, timeRange, timeToday]);
+
+  // Regroupe par événement (ordre de rencontre conservé).
+  const filtered = useMemo(() => {
+    const map = new Map<string, MmaEvent>();
+    for (const b of visibleBattles) {
+      if (!map.has(b.event.event_name)) {
+        map.set(b.event.event_name, { ...b.event, fights: [] });
+      }
+      map.get(b.event.event_name)!.fights.push(b.fight);
+    }
+    return [...map.values()];
+  }, [visibleBattles]);
 
   if (loading && !data) {
     return (
@@ -189,20 +233,44 @@ export function MmaTabContent() {
 
   return (
     <div className="space-y-4 p-4">
-      <MmaFilters weightClass={weightClass} onWeightClassChange={setWeightClass} />
+      {/* Sous-onglets Live | Pre-match */}
+      <MatchViewTabs
+        idBase={tabsId}
+        active={mode}
+        onChange={setMode}
+        liveCount={0}
+        prematchCount={prematch.length}
+      />
 
-      {!filtered || filtered.length === 0 ? (
-        <EmptyState />
+      {mode === "live" ? (
+        <div role="tabpanel" id={`${tabsId}-panel-live`} aria-labelledby={`${tabsId}-live`}>
+          <MatchEmptyState mode="live" />
+        </div>
       ) : (
-        <AnimatePresence mode="popLayout">
-          {filtered.map((ev) => (
-            <EventSection
-              key={ev.event_name}
-              event={ev}
-              defaultOpen={filtered.length === 1}
-            />
-          ))}
-        </AnimatePresence>
+        <div role="tabpanel" id={`${tabsId}-panel-prematch`} aria-labelledby={`${tabsId}-prematch`}>
+          <MmaFilters weightClass={weightClass} onWeightClassChange={setWeightClass} />
+
+          {/* Filtre par heure de début (fenêtre glissante 1h → 24h) */}
+          <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mt-3" />
+
+          {filtered.length === 0 ? (
+            timeRange === null && !timeToday ? (
+              <EmptyState />
+            ) : (
+              <MatchEmptyState mode="prematch" />
+            )
+          ) : (
+            <AnimatePresence mode="popLayout">
+              {filtered.map((ev) => (
+                <EventSection
+                  key={ev.event_name}
+                  event={ev}
+                  defaultOpen={filtered.length === 1}
+                />
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
       )}
 
       {data?.source && (

@@ -179,20 +179,48 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
         <div className="flex flex-wrap items-center gap-2">
           {quick ? (
             <>
-              <span className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200">
+              <span
+                className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200"
+                aria-label={`Ligne Over/Under ${quick.totalLine.toFixed(1)}, Over à ${fmtPct(quick.overProb)}, Under à ${fmtPct(quick.underProb)}`}
+              >
                 O/U <span className="font-bold text-amber-300">{quick.totalLine.toFixed(1)}</span>
                 <span className="mx-1 text-slate-500">·</span>
                 Over <span className="font-bold text-emerald-400">{fmtPct(quick.overProb)}</span>
+                <span className="mx-1 text-slate-500">·</span>
+                Under <span className="font-bold text-rose-400">{fmtPct(quick.underProb)}</span>
               </span>
-              <span className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200">
+              <span
+                className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200"
+                aria-label={`Total attendu ${fmtNum(quick.expectedTotal)} runs`}
+              >
                 Total {fmtNum(quick.expectedTotal)} <span className="text-slate-500">attendu</span>
               </span>
+              {quick.homeWinProb >= 0.51 || quick.homeWinProb <= 0.49 ? (
+                <span
+                  className="rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200"
+                  aria-label={`Favori ${quick.homeWinProb > 0.5 ? homeTeam.city : awayTeam.city} à ${fmtPct(quick.homeWinProb > 0.5 ? quick.homeWinProb : 1 - quick.homeWinProb)}`}
+                >
+                  Winner{" "}
+                  <span className="font-bold text-sky-300">
+                    {quick.homeWinProb > 0.5 ? homeTeam.city : awayTeam.city}
+                  </span>
+                  <span className="mx-1 text-slate-500">·</span>
+                  {fmtPct(quick.homeWinProb > 0.5 ? quick.homeWinProb : 1 - quick.homeWinProb)}
+                </span>
+              ) : null}
               {quick.recommendation ? (
-                <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300">
+                <span
+                  className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300"
+                  role="status"
+                  aria-label={`Recommandation : ${quick.recommendation === "over" ? "Over" : "Under"} avec confiance ${fmtPct(quick.confidence)}`}
+                >
                   ✓ {quick.recommendation === "over" ? "Over" : "Under"} · conf {fmtPct(quick.confidence)}
                 </span>
               ) : (
-                <span className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                <span
+                  className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
+                  aria-label="Confiance insuffisante, sous le seuil de 65 %"
+                >
                   Sous seuil 65 %
                 </span>
               )}

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Target, CornerDownRight } from "lucide-react";
+import { Target, CornerDownRight, ChevronRight } from "lucide-react";
 import type { DangerousBucket, MatchEvent, MatchTimelineData } from "@/lib/football-timeline";
 
 /**
@@ -64,6 +64,74 @@ function goalTitle(g: MatchEvent): string {
   if (g.score) parts.push(`${g.score.home}-${g.score.away}`);
   if (g.xg != null && Number.isFinite(g.xg)) parts.push(`xG ${Number(g.xg).toFixed(2)}`);
   return parts.join(" · ");
+}
+
+// ─── Ticker d'événements agrégés (OddAlerts-style) ─────────────────────────
+// « Corner × 4 (6', 6', 9', 11') » — contexte immédiat sans cliquer. On agrège
+// les événements par (type × camp) et on liste les minutes cumulées.
+
+const KIND_LABEL: Record<MatchEvent["kind"], string> = {
+  goal: "But",
+  corner: "Corner",
+  shot: "Tir",
+};
+
+interface TickerLine {
+  key: string;
+  side: "home" | "away";
+  label: string;
+  minutes: number[];
+}
+
+/** Agrège les événements par type+camp → lignes du ticker (triées par fréquence). */
+export function aggregateEventTicker(events: MatchEvent[]): TickerLine[] {
+  const byKey = new Map<string, TickerLine>();
+  for (const e of events ?? []) {
+    if (!e || !Number.isFinite(e.minute)) continue;
+    const key = `${e.kind}:${e.side}`;
+    const line = byKey.get(key) ?? { key, side: e.side, label: KIND_LABEL[e.kind] ?? e.kind, minutes: [] };
+    line.minutes.push(Math.round(e.minute));
+    byKey.set(key, line);
+  }
+  return [...byKey.values()]
+    .map((l) => ({ ...l, minutes: [...l.minutes].sort((a, b) => a - b) }))
+    .sort((a, b) => b.minutes.length - a.minutes.length);
+}
+
+function TickerRow({ events, homeName, awayName }: { events: MatchEvent[]; homeName: string; awayName: string }) {
+  const lines = useMemo(() => aggregateEventTicker(events), [events]);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (lines.length <= 1) return;
+    const id = setInterval(() => setIdx((i) => (i + 1) % lines.length), 4000);
+    return () => clearInterval(id);
+  }, [lines.length]);
+  if (!lines.length) return null;
+  const active = lines[Math.min(idx, lines.length - 1)];
+  const sideName = active.side === "home" ? homeName : awayName;
+  const sideColor = active.side === "home" ? "text-emerald-400" : "text-sky-400";
+  const minutesTxt = active.minutes.map((m) => `${m}'`).join(", ");
+  const isMulti = active.minutes.length > 1;
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-muted/40 px-2 py-1 text-[10px]">
+      <span className={cn("font-semibold truncate", sideColor)}>{sideName}</span>
+      <span className="text-muted-foreground/80 whitespace-nowrap">
+        {active.label}
+        {isMulti ? ` × ${active.minutes.length}` : ""}
+      </span>
+      <span className="truncate tabular-nums text-muted-foreground/60">({minutesTxt})</span>
+      {lines.length > 1 && (
+        <button
+          type="button"
+          aria-label="Événement suivant"
+          onClick={() => setIdx((i) => (i + 1) % lines.length)}
+          className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+        >
+          <ChevronRight className="h-3 w-3" />
+        </button>
+      )}
+    </div>
+  );
 }
 
 function ToggleChip({
@@ -272,6 +340,9 @@ export function MomentumChart({
         <span>45&apos; HT</span>
         <span>90&apos;</span>
       </div>
+
+      {/* Ticker d'événements agrégés (Corner × 4 (6', 6', 9', 11')…) */}
+      {events.length > 0 && <TickerRow events={events} homeName={homeName} awayName={awayName} />}
 
       {/* Live stats summary — tirs cadrés + corners */}
       {liveStats && (liveStats.homeSOT > 0 || liveStats.awaySOT > 0 || liveStats.homeCorners > 0 || liveStats.awayCorners > 0) && (

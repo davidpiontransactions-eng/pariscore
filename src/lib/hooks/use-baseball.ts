@@ -27,7 +27,7 @@ const SCHEDULE_CONFIG: SWRConfiguration<SchedulePayload> = {
   revalidateOnFocus: false,
   revalidateOnReconnect: false,
   keepPreviousData: true,
-  refreshInterval: 60_000, // live scores : 1 min
+  refreshInterval: 30_000, // matchs live : refetch accéléré 30s
   dedupingInterval: 10_000,
 };
 

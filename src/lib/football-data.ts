@@ -274,6 +274,21 @@ export type FootballLiveState = {
   awayShotsOnTarget: number;
   homeCorners: number;
   awayCorners: number;
+  /** Attaques totales (BSD live_stats / sr_stats). Absent si la source ne fournit pas. */
+  homeAttacks?: number | null;
+  awayAttacks?: number | null;
+  /** Attaques dangereuses — métrique distincte des attaques (signal live clé). */
+  homeDangerousAttacks?: number | null;
+  awayDangerousAttacks?: number | null;
+  homeFouls?: number | null;
+  awayFouls?: number | null;
+  homeYellowCards?: number | null;
+  awayYellowCards?: number | null;
+  homeRedCards?: number | null;
+  awayRedCards?: number | null;
+  /** xG cumulé live (BSD actual_*_xg / *_xg_live). */
+  homeXg?: number | null;
+  awayXg?: number | null;
   /** Timeline momentum BSD [-100,+100] (signé, + = domicile domine). Lazy : absent du list live. */
   momentum?: { minute: number; value: number }[];
   /** xG incrémental par minute. Lazy : absent du list live. */

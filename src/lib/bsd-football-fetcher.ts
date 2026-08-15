@@ -134,6 +134,8 @@ type BSDLiveStats = {
     fouls?: number;
     yellow_cards?: number;
     red_cards?: number;
+    attacks?: number;
+    dangerous_attacks?: number;
   };
   away?: {
     ball_possession?: number;
@@ -144,6 +146,8 @@ type BSDLiveStats = {
     fouls?: number;
     yellow_cards?: number;
     red_cards?: number;
+    attacks?: number;
+    dangerous_attacks?: number;
   };
 };
 
@@ -344,6 +348,8 @@ function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
   const isLive = !["finished", "notstarted", "canceled", "postponed", "suspended"].includes(m.status);
   if (!isLive) return null;
   const ls = m.live_stats;
+  const num = (v: number | null | undefined): number | null =>
+    v != null && Number.isFinite(v) ? v : null;
   return {
     homeScore: m.home_score ?? 0,
     awayScore: m.away_score ?? 0,
@@ -357,6 +363,18 @@ function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
     awayShotsOnTarget: ls?.away?.shots_on_target ?? 0,
     homeCorners: ls?.home?.corner_kicks ?? 0,
     awayCorners: ls?.away?.corner_kicks ?? 0,
+    homeAttacks: num(ls?.home?.attacks ?? m.sr_stats?.attack?.home),
+    awayAttacks: num(ls?.away?.attacks ?? m.sr_stats?.attack?.away),
+    homeDangerousAttacks: num(ls?.home?.dangerous_attacks ?? m.sr_stats?.dangerous_attack?.home),
+    awayDangerousAttacks: num(ls?.away?.dangerous_attacks ?? m.sr_stats?.dangerous_attack?.away),
+    homeFouls: num(ls?.home?.fouls),
+    awayFouls: num(ls?.away?.fouls),
+    homeYellowCards: num(ls?.home?.yellow_cards),
+    awayYellowCards: num(ls?.away?.yellow_cards),
+    homeRedCards: num(ls?.home?.red_cards),
+    awayRedCards: num(ls?.away?.red_cards),
+    homeXg: num(m.home_xg_live ?? m.actual_home_xg),
+    awayXg: num(m.away_xg_live ?? m.actual_away_xg),
   };
 }
 

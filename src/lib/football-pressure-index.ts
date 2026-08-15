@@ -192,7 +192,9 @@ export function buildPressureTimeline(input: PressureTimelineInput): MatchTimeli
     (b): b is PressureBucketInput => !!b && Number.isFinite(b.start),
   );
   const events = withLiveScore(
-    toArr<MatchEvent>(input.events).filter((e): e is MatchEvent => !!e && e.kind === "goal" && Number.isFinite(e.minute)),
+    toArr<MatchEvent>(input.events).filter(
+      (e): e is MatchEvent => !!e && (e.kind === "goal" || e.kind === "corner") && Number.isFinite(e.minute),
+    ),
   );
   const bsd = toArr<{ minute: number; value: number }>(input.bsdMomentum).filter(
     (p): p is { minute: number; value: number } => !!p && Number.isFinite(p.minute) && Number.isFinite(p.value),
@@ -278,8 +280,8 @@ export function buildPressureTimeline(input: PressureTimelineInput): MatchTimeli
     dangerous: dangerBars(buckets),
     pressure: { homePct, awayPct },
     layers: {
-      goals: events.length > 0,
-      corners: buckets.some((b) => howValue(b.corners?.home) + howValue(b.corners?.away) > 0),
+      goals: events.some((e) => e.kind === "goal"),
+      corners: events.some((e) => e.kind === "corner") || buckets.some((b) => howValue(b.corners?.home) + howValue(b.corners?.away) > 0),
       dangerous: buckets.some((b) => howValue(b.danger?.home) + howValue(b.danger?.away) > 0),
       perMinute,
     },

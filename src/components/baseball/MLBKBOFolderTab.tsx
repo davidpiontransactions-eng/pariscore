@@ -1,11 +1,16 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import type { LeagueFilter } from "@/lib/baseball/types";
 import { useBaseballSchedule } from "@/lib/hooks/use-baseball";
 import { dayLabel, shiftIsoDate, todayParisIso } from "@/lib/baseball/timezone";
 import { BaseballMatchSchedule } from "./BaseballMatchSchedule";
 import { BaseballMatchAnalysisModal } from "./BaseballMatchAnalysisModal";
+import { MatchViewTabs } from "@/components/shared/match-view-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { MatchEmptyState } from "@/components/shared/match-empty-state";
+import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 const LEAGUE_TABS: { id: LeagueFilter; label: string }[] = [
   { id: "ALL", label: "Tous" },
@@ -24,8 +29,38 @@ export function MLBKBOFolderTab() {
   const [league, setLeague] = useState<LeagueFilter>("ALL");
   const [date, setDate] = useState<string>(() => todayParisIso());
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const tabsId = useId();
 
   const { data, error, isLoading, mutate } = useBaseballSchedule(date, league);
+
+  // Live / Pre-match : status MLB StatsAPI "live" vs "scheduled" (les matchs
+  // "final" sont exclus). Filtre horaire de début sur le pre-match.
+  // Mode Live/Pre-match : store sidebar (source de vérité unique).
+  const mode = useSportsSidebarStore((s) => s.modes.baseball ?? "live");
+  const setMode = useCallback(
+    (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("baseball", m),
+    [],
+  );
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+
+  const matchList = useMemo(() => (data?.matches ?? []).filter((m) => m.game.status !== "final"), [data]);
+
+  const { live, prematch } = useMemo(
+    () => splitLivePrematch(matchList, (m) => m.game.status === "live"),
+    [matchList],
+  );
+
+  const visiblePrematch = useMemo(() => {
+    const scoped = timeToday ? filterByToday(prematch, (m) => m.game.gameDateIso) : prematch;
+    const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.game.gameDateIso);
+    return [...inWindow].sort(
+      (a, b) => new Date(a.game.gameDateIso).getTime() - new Date(b.game.gameDateIso).getTime(),
+    );
+  }, [prematch, timeRange, timeToday]);
+
+  const visibleMatches = mode === "live" ? live : visiblePrematch;
 
   const refresh = useCallback(() => {
     void mutate();
@@ -149,15 +184,47 @@ export function MLBKBOFolderTab() {
         )}
       </div>
 
+      {/* Sous-onglets Live | Pre-match (modèle 1xbet, sur le jour sélectionné) */}
+      <div className="mt-3">
+        <MatchViewTabs
+          idBase={tabsId}
+          active={mode}
+          onChange={setMode}
+          liveCount={live.length}
+          prematchCount={prematch.length}
+        />
+      </div>
+
+      {/* Filtre par heure de début — uniquement sur le pre-match */}
+      {mode === "prematch" && (
+        <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mt-3" />
+      )}
+
       {/* Grille de matchs */}
       <div className="mt-3">
-        <BaseballMatchSchedule
-          date={date}
-          matches={data?.matches ?? []}
-          isLoading={isLoading}
-          degraded={data?.degraded ?? false}
-          onOpenMatch={setSelectedMatchId}
-        />
+        {!isLoading && visibleMatches.length === 0 && mode === "live" ? (
+          <div role="tabpanel" id={`${tabsId}-panel-live`} aria-labelledby={`${tabsId}-live`}>
+            <MatchEmptyState mode="live" />
+          </div>
+        ) : !isLoading && visibleMatches.length === 0 && (timeRange !== null || timeToday) ? (
+          <div role="tabpanel" id={`${tabsId}-panel-prematch`} aria-labelledby={`${tabsId}-prematch`}>
+            <MatchEmptyState mode="prematch" />
+          </div>
+        ) : (
+          <div
+            role="tabpanel"
+            id={`${tabsId}-panel-${mode}`}
+            aria-labelledby={`${tabsId}-${mode}`}
+          >
+            <BaseballMatchSchedule
+              date={date}
+              matches={visibleMatches}
+              isLoading={isLoading}
+              degraded={data?.degraded ?? false}
+              onOpenMatch={setSelectedMatchId}
+            />
+          </div>
+        )}
       </div>
 
       {selectedMatchId && (

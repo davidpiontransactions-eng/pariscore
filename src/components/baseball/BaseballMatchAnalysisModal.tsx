@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { BaseballPrediction, PitcherRecord, TeamRecord } from "@/lib/baseball/types";
+import type { BaseballPrediction, CalibrationResult, PitcherRecord, TeamRecord } from "@/lib/baseball/types";
 import { useBaseballMatchDetail } from "@/lib/hooks/use-baseball";
 import { formatParisTimeWithZone } from "@/lib/baseball/timezone";
 import { fmtNum, fmtPct, fmtWinLoss } from "@/lib/baseball/format";
@@ -415,6 +415,70 @@ function ContextSection({
   );
 }
 
+function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
+  return (
+    <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
+      <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        Calibration — prédiction vs résultat
+      </h4>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+            Over / Under {cal.predictedTotalLine.toFixed(1)}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="font-mono text-sm tabular-nums text-slate-300">
+              Total réel : <b className="text-white">{cal.actualTotalRuns}</b>
+            </span>
+            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+              cal.overUnderHit === true
+                ? "bg-emerald-500/20 text-emerald-300"
+                : cal.overUnderHit === false
+                  ? "bg-rose-500/20 text-rose-300"
+                  : "bg-slate-700/60 text-slate-400"
+            }`}>
+              {cal.overUnderHit === true ? "✓ Gagné" : cal.overUnderHit === false ? "✗ Perdu" : "Push"}
+            </span>
+          </div>
+          <div className="mt-1 font-mono text-[10px] text-slate-500">
+            Prédiction : Over {fmtPct(cal.predictedOverProb)} · Under {fmtPct(cal.predictedUnderProb)}
+            {cal.predictedRecommendation && (
+              <span className="ml-1 text-amber-300">
+                → {cal.predictedRecommendation === "over" ? "Over" : "Under"}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+            Moneyline
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="font-mono text-sm tabular-nums text-slate-300">
+              Score : <b className="text-white">{cal.actualAwayRuns} - {cal.actualHomeRuns}</b>
+              <span className="ml-1 text-[10px] text-slate-500">
+                ({cal.moneylineWinner === "home" ? "Domicile" : "Extérieur"} gagne)
+              </span>
+            </span>
+            {cal.moneylineFavoriteWon !== null && (
+              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                cal.moneylineFavoriteWon
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "bg-rose-500/20 text-rose-300"
+              }`}>
+                {cal.moneylineFavoriteWon ? "✓ Favori OK" : "✗ Upset"}
+              </span>
+            )}
+          </div>
+          <div className="mt-1 font-mono text-[10px] text-slate-500">
+            P(domicile) prédite : {fmtPct(cal.predictedHomeWinProb)}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function BaseballMatchAnalysisModal({
   matchId,
   onClose,
@@ -521,14 +585,18 @@ export function BaseballMatchAnalysisModal({
                 </div>
               )}
 
-              {tab === "verdict" &&
-                (detail.prediction ? (
-                  <VerdictSection prediction={detail.prediction} />
-                ) : (
-                  !detail.predictionBlockedReason && (
-                    <div className="text-center text-sm text-slate-400">Moteur non disponible.</div>
-                  )
-                ))}
+              {tab === "verdict" && (
+                <>
+                  {detail.prediction ? (
+                    <VerdictSection prediction={detail.prediction} />
+                  ) : (
+                    !detail.predictionBlockedReason && (
+                      <div className="text-center text-sm text-slate-400">Moteur non disponible.</div>
+                    )
+                  )}
+                  {detail.calibration && <div className="mt-4"><CalibrationBlock cal={detail.calibration} /></div>}
+                </>
+              )}
 
               {tab === "moteur" &&
                 (detail.prediction ? (

@@ -195,6 +195,51 @@
       "label": "Jauge Momentum Score: {score} sur 100"
     }
   },
+  "matchTabs": {
+    "live": "Live",
+    "prematch": "Pre-match",
+    "liveAria": "{n} matchs en direct",
+    "prematchAria": "{n} matchs à venir",
+    "tabsAriaLabel": "Filtrer par statut de match",
+    "emptyLive": "Aucun match en direct pour le moment",
+    "emptyLiveHint": "Les matchs en direct apparaissent ici dès leur coup d'envoi",
+    "emptyPrematch": "Aucun match dans cette fenêtre",
+    "emptyPrematchHint": "Élargissez la fenêtre horaire ou revenez plus tard",
+    "timeFilterLabel": "Heure de début",
+    "timeAll": "Toutes",
+    "timeHour": "{hours}h",
+    "timeToday": "Aujourd'hui"
+  },
+  "sportsSidebar": {
+    "title": "Filtres sports",
+    "searchPlaceholder": "Équipe ou championnat…",
+    "searchClear": "Effacer la recherche",
+    "live": "Live",
+    "prematch": "Avant-match",
+    "modeAria": "Basculer entre matchs en direct et avant-match",
+    "timeAria": "Filtrer par heure de début",
+    "timeAll": "Tout",
+    "timeHour": "{hours}h",
+    "timeToday": "Aujourd'hui",
+    "favorites": "Favoris & top championnats",
+    "toggleFavorite": "Ajouter ou retirer des favoris",
+    "emptyTree": "Aucun résultat",
+    "emptyTreeHint": "Modifiez la recherche ou la fenêtre horaire",
+    "openDrawer": "Filtres sports",
+    "level4Open": "Ouvrir",
+    "sport": {
+      "tennis": "Tennis",
+      "football": "Football",
+      "cs2": "CS2",
+      "mma": "MMA",
+      "nba": "NBA",
+      "wnba": "WNBA",
+      "cycling": "Cyclisme",
+      "f1": "Formule 1",
+      "baseball": "Baseball",
+      "rugby": "Rugby"
+    }
+  },
   "match": {
     "win": "WIN",
     "vs": "VS",

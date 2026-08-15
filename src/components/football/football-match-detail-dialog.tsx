@@ -13,7 +13,10 @@ import { Trophy, AlertCircle, TrendingUp, Activity } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import type { MatchTimelineData } from "@/lib/football-timeline";
 import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/prediction/predictive-bets-engine";
+import { expectedPressureBaseline } from "@/lib/football-live-thresholds";
 import { MomentumChart } from "./momentum-chart";
+import { PressureDuoDonuts } from "./pressure-duo-donuts";
+import { LiveStatsBreakdown } from "./live-stats-breakdown";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { FootballPressReviewWidget } from "@/components/football/FootballPressReviewWidget";
 import { AIMatchReport } from "./AIMatchReport";
@@ -449,6 +452,27 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 awayName={view?.away.shortName ?? "Extérieur"}
               />
             )}
+          </div>
+        )}
+
+        {/* ---------- Corps : pression LIVE vs ATTENDU + stats live ---------- */}
+        {view && view.live && (
+          <div className="mt-3 space-y-3">
+            {!loading && !error && stats && (
+              <PressureDuoDonuts
+                live={stats.pressure}
+                avg={expectedPressureBaseline(view.prediction.homeProb, view.prediction.drawProb)}
+                homeName={view.home.shortName ?? "Domicile"}
+                awayName={view.away.shortName ?? "Extérieur"}
+              />
+            )}
+            <LiveStatsBreakdown
+              live={view.live}
+              homeName={view.home.shortName ?? "Domicile"}
+              awayName={view.away.shortName ?? "Extérieur"}
+              prematch={{ homeProb: view.prediction.homeProb, drawProb: view.prediction.drawProb }}
+              homePressurePct={!loading && !error && stats ? stats.pressure.homePct : null}
+            />
           </div>
         )}
       </DialogContent>

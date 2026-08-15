@@ -8,7 +8,7 @@
  * Données : API publique ESPN, moteur Elo + Poisson + marqueurs d'essai.
  */
 
-import { useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   useRugbyCompetitions,
@@ -22,6 +22,11 @@ import { RugbyMatchDetailModal } from "./RugbyMatchDetailModal";
 import { RugbyMethodology } from "./RugbyMethodology";
 import { RugbyStandingsTable } from "./RugbyStandingsTable";
 import { Card, SectionHeading, fmtDateLong } from "./rugby-ui";
+import { MatchViewTabs } from "@/components/shared/match-view-tabs";
+import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { MatchEmptyState } from "@/components/shared/match-empty-state";
+import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 type View = "predictions" | "standings" | "markets";
 
@@ -180,13 +185,42 @@ function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => voi
 
 function PredictionsView({ slug, onOpenMatch }: { slug: string; onOpenMatch: (id: string) => void }) {
   const { data, isLoading } = useRugbyPredictions(slug);
+  const tabsId = useId();
   // keepPreviousData peut renvoyer les matchs de la compétition précédente
   // pendant le re-fetch : on n'affiche que les données de la compétition active.
   const matches = data?.competition?.slug === slug ? data.matches : [];
 
+  // Live / Pre-match : statut ESPN "inprogress" vs "scheduled" (+ fenêtre
+  // horaire de début sur le pre-match).
+  // Mode Live/Pre-match : store sidebar (source de vérité unique).
+  const mode = useSportsSidebarStore((s) => s.modes.rugby ?? "live");
+  const setMode = useCallback(
+    (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("rugby", m),
+    [],
+  );
+  // Fenêtre horaire : partagée avec la sidebar (store unique, modèle 1xBet).
+  const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
+  const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
+  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+
+  const { live, prematch } = useMemo(
+    () => splitLivePrematch(matches, (m) => m.match.status === "inprogress"),
+    [matches],
+  );
+
+  const visiblePrematch = useMemo(() => {
+    const scoped = timeToday ? filterByToday(prematch, (m) => m.match.date) : prematch;
+    const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.match.date);
+    return [...inWindow].sort(
+      (a, b) => new Date(a.match.date).getTime() - new Date(b.match.date).getTime(),
+    );
+  }, [prematch, timeRange, timeToday]);
+
+  const displayMatches = mode === "live" ? live : visiblePrematch;
+
   const groups = useMemo(() => {
     const map = new Map<string, PredictedMatch[]>();
-    for (const m of matches) {
+    for (const m of displayMatches) {
       // Regroupement par journée dans le fuseau de l'utilisateur (Paris),
       // cohérent avec fmtDateLong — pas en UTC.
       const key = new Date(m.match.date).toLocaleDateString("fr-CA", {
@@ -197,7 +231,7 @@ function PredictionsView({ slug, onOpenMatch }: { slug: string; onOpenMatch: (id
       map.set(key, arr);
     }
     return [...map.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
-  }, [matches]);
+  }, [displayMatches]);
 
   if (isLoading && !matches.length) {
     return (
@@ -228,19 +262,42 @@ function PredictionsView({ slug, onOpenMatch }: { slug: string; onOpenMatch: (id
           Données partielles : la source ESPN n&apos;a pas répondu entièrement. Les prédictions affichées proviennent du dernier cache valide.
         </p>
       )}
-      {groups.map(([day, rows]) => (
-        <section key={day}>
-          <h3 className="mb-3 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
-            <span className="h-px w-6 bg-teal-500/60" aria-hidden />
-            {fmtDateLong(rows[0].match.date)}
-          </h3>
-          <div className="grid gap-3 lg:grid-cols-2">
-            {rows.map((r) => (
-              <RugbyMatchCard key={r.match.id} row={r} onOpen={onOpenMatch} />
-            ))}
-          </div>
-        </section>
-      ))}
+
+      {/* Sous-onglets Live | Pre-match (modèle 1xbet) */}
+      <MatchViewTabs
+        idBase={tabsId}
+        active={mode}
+        onChange={setMode}
+        liveCount={live.length}
+        prematchCount={prematch.length}
+      />
+
+      {/* Filtre par heure de début — uniquement sur le pre-match */}
+      {mode === "prematch" && (
+        <TimeRangeFilter value={timeKey} onChange={setTimeKey} className="mt-4" />
+      )}
+
+      {groups.length === 0 ? (
+        <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
+          <MatchEmptyState mode={mode} />
+        </div>
+      ) : (
+        <div role="tabpanel" id={`${tabsId}-panel-${mode}`} aria-labelledby={`${tabsId}-${mode}`}>
+          {groups.map(([day, rows]) => (
+            <section key={day} className="first:mt-4">
+              <h3 className="mb-3 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+                <span className="h-px w-6 bg-teal-500/60" aria-hidden />
+                {fmtDateLong(rows[0].match.date)}
+              </h3>
+              <div className="grid gap-3 lg:grid-cols-2">
+                {rows.map((r) => (
+                  <RugbyMatchCard key={r.match.id} row={r} onOpen={onOpenMatch} />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

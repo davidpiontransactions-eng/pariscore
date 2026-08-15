@@ -101,9 +101,17 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
               <span className={UNKNOWN_HAND_BADGE}>—</span>
             )}
           </div>
-          <div className="font-mono text-[10px] text-slate-400">
-            ERA {fmtNum(pitcher.era)} · {fmtWinLoss(pitcher.wins, pitcher.losses)} · WHIP{" "}
-            {fmtNum(pitcher.whip)}
+          <div className="flex items-center gap-1 font-mono text-[10px] text-slate-400">
+            <span>ERA {fmtNum(pitcher.era)} · {fmtWinLoss(pitcher.wins, pitcher.losses)} · WHIP{" "}
+            {fmtNum(pitcher.whip)}</span>
+            {!pitcher.statsAvailable && (
+              <span
+                className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[8px] font-bold uppercase tracking-wider text-amber-300"
+                title="Stats saison absentes — moyennes de ligue utilisées (repli bayésien)"
+              >
+                repli ligue
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -133,8 +141,16 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
             <span className={UNKNOWN_HAND_BADGE_LG}>—</span>
           )}
         </div>
-        <div className="mt-0.5 font-mono text-xs text-slate-400">
-          ERA {fmtNum(pitcher.era)} · WHIP {fmtNum(pitcher.whip)} · {fmtWinLoss(pitcher.wins, pitcher.losses)}
+        <div className="mt-0.5 flex items-center gap-1.5 font-mono text-xs text-slate-400">
+          <span>ERA {fmtNum(pitcher.era)} · WHIP {fmtNum(pitcher.whip)} · {fmtWinLoss(pitcher.wins, pitcher.losses)}</span>
+          {!pitcher.statsAvailable && (
+            <span
+              className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[8px] font-bold uppercase tracking-wider text-amber-300"
+              title="Stats saison absentes — moyennes de ligue utilisées (repli bayésien)"
+            >
+              repli ligue
+            </span>
+          )}
         </div>
       </div>
     </div>
