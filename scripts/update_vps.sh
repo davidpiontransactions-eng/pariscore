@@ -57,11 +57,13 @@ if [ -n "$CHANGED" ]; then printf '    %s\n' $CHANGED; else echo "    (no diff /
 echo "  decision: install=$NEED_INSTALL build=$NEED_BUILD"
 
 echo "[2/6] Syntax check (changed legacy JS)..."
-node --check pariscore.js || { echo "ERR: pariscore.js syntaxe"; exit 1; }
-node --check pariscore.app.js || { echo "ERR: pariscore.app.js syntaxe"; exit 1; }
+SYNTAX_FAIL=0
+node --check pariscore.js 2>/dev/null || { echo "ERR: pariscore.js syntaxe"; SYNTAX_FAIL=1; }
+node --check pariscore.app.js 2>/dev/null || { echo "ERR: pariscore.app.js syntaxe"; SYNTAX_FAIL=1; }
+[ "$SYNTAX_FAIL" = "1" ] && exit 1
 if [ -n "$CHANGED" ]; then
   for f in $(printf '%s\n' "$CHANGED" | grep -E '^services/.*\.js$' || true); do
-    [ -f "$f" ] && { node --check "$f" || { echo "ERR: $f syntaxe"; exit 1; }; }
+    [ -f "$f" ] && { node --check "$f" 2>/dev/null || { echo "ERR: $f syntaxe"; exit 1; }; }
   done
 fi
 
@@ -88,22 +90,26 @@ pm2 restart "$PM2_LEGACY" --update-env 2>&1 || echo "  warn: pm2 restart $PM2_LE
 # Next.js only if a build ran.
 if [ "$BUILD_RAN" = "1" ]; then
   pm2 restart "$PM2_NEXT" --update-env 2>&1 || echo "  warn: pm2 restart $PM2_NEXT échec"
+  # Cron re-registration (only after full build — crons depend on Next.js code).
+  pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env 2>/dev/null || true
+  pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env 2>/dev/null || true
+  pm2 startOrRestart ecosystem.config.js --only pariscore-cron-gemini --update-env 2>/dev/null || true
 else
   echo "  $PM2_NEXT NOT restarted (no build)"
+  echo "  cron jobs NOT restarted (legacy-only deploy)"
 fi
-# Cron re-registration (preserve existing behavior).
-pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env 2>/dev/null || true
-pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env 2>/dev/null || true
-pm2 startOrRestart ecosystem.config.js --only pariscore-cron-gemini --update-env 2>/dev/null || true
 pm2 save 2>/dev/null || true
 
 echo "[6/6] Health check..."
 HEALTH_OK=0
-for i in 1 2 3 4 5 6 7 8; do
+# Legacy-only = 4 checks (fast restart), Full build = 8 checks (slower boot)
+MAX_CHECKS=8
+[ "$BUILD_RAN" = "0" ] && MAX_CHECKS=4
+for i in $(seq 1 $MAX_CHECKS); do
   if curl -s -m 5 http://localhost:3000/api/v1/status 2>/dev/null | grep -q '"status":"ok"'; then
     echo "  health: OK"; HEALTH_OK=1; break
   fi
-  echo "  health: waiting ($i)..."; sleep 2
+  echo "  health: waiting ($i/$MAX_CHECKS)..."; sleep 2
 done
 [ "$HEALTH_OK" = "1" ] || echo "  warn: health check échec — vérifier pm2 logs"
 

@@ -770,6 +770,8 @@ let globalAccuracy = null; // stocke meta.accuracy pour colonne 2
 let activeTopN    = 0;        // Top N meilleurs paris (0 = tous)
 let activeTopMarket = '';    // legacy (marché unique) — conservé pour compat
 let activeStrategies = [];   // multi-sélection clés STRATEGIES_UI (Top stratégies)
+let activeTemporalWindow = 0; // 0 = tous, >0 = heures (ex: 6 = prochaines 6h)
+let activeConfCriteria = { confidence: 0, edge: 0, consensus: false, histLeague: false };
 let pinnedMatchIds = new Set(); // lignes épinglées en haut du tableau
 let activeTopValue = 0;      // 1 = value bets only (edge ≥ 3%)
 let topRankMap = {};         // { matchId: rank } pour les badges de rang
@@ -10630,6 +10632,8 @@ function mlSyncUI() {
       L.classList.toggle('sel', ls); L.setAttribute('aria-selected', ls);
     });
   });
+  mlBuildSmartRecos();
+  mlBuildCommunityTrends();
 }
 function mlPosition() {
   var wrap = document.getElementById('ml-league');
@@ -10664,6 +10668,14 @@ function mlClose() {
   if (wrap) wrap.classList.remove('open');
   var t = document.getElementById('ml-trigger');
   if (t) t.setAttribute('aria-expanded', 'false');
+}
+function mlAccToggle(e) {
+  if (e) e.stopPropagation();
+  var wrap = document.getElementById('ml-league');
+  if (!wrap) return;
+  var collapsed = wrap.classList.toggle('collapsed');
+  var header = wrap.querySelector('.mls-acc-header');
+  if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
 function mlExpand(btn) {
   var grp = btn.closest('.mls-grp');
@@ -10718,8 +10730,10 @@ function mlToggleCountry(country) {
   }
   activeCountry = activeCountries.length === 1 ? activeCountries[0] : 'all';
   activeLeague = 'all';
+  _mlTrackPick('country', country);
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
+  mlBuildSmartRecos();
   renderMatchesDebounced(allMatches, 'ml-country');
 }
 // Multi-sélection ligues : toggle. Sélectionner une ligue précise ÉCRASE le
@@ -10741,8 +10755,10 @@ function mlToggleLeague(sport) {
     activeLeagues.splice(i, 1);
   }
   activeLeague = 'all';
+  _mlTrackPick('league', sport);
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
+  mlBuildSmartRecos();
   renderMatchesDebounced(allMatches, 'ml-league');
 }
 // ── Sidebar Sport : sélecteur ligues/tournois ─────────────────────────────
@@ -11281,17 +11297,25 @@ function buildTSList() {
   if (!list) return;
   var html = tsList().map(function(s) {
     var sel = activeStrategies.indexOf(s.key) !== -1;
+    var perfBadge = _stratPerfBadge(s.key);
+    var tooltipText = s.label + ' — ' + (s.tipster || '');
+    if (perfBadge) {
+      var p = _loadStratPerf()[s.key];
+      if (p) tooltipText += ' · ' + Math.round((p.w/(p.w+p.l))*100) + '% réussite';
+    }
     return '<div class="mls-row' + (sel ? ' sel' : '') + '" role="option" aria-selected="' + sel +
-      '" data-key="' + _mlEsc(s.key) + '" data-q="' + _mlEsc(((s.label||'')+' '+(s.tipster||'')).toLowerCase()) + '">' +
+      '" data-key="' + _mlEsc(s.key) + '" data-q="' + _mlEsc(((s.label||'')+' '+(s.tipster||'')).toLowerCase()) + '"' +
+      ' data-ps-tooltip="' + _mlEsc(tooltipText) + '">' +
       '<button type="button" class="mls-rowmain" onclick="tsToggleStrat(this.parentElement.dataset.key)">' +
         '<span class="mls-check"></span>' +
         '<span class="mls-name">' + _mlEsc(s.label) + '</span>' +
-        '<span class="mls-cnt">' + _mlEsc(s.tipster) + '</span>' +
+        (perfBadge ? perfBadge : '<span class="mls-cnt">' + _mlEsc(s.tipster) + '</span>') +
       '</button>' +
     '</div>';
   }).join('');
   list.innerHTML = html || '<div class="mls-empty">Aucune stratégie</div>';
   tsSyncUI();
+  tsBuildSmartRecos();
 }
 function tsSyncUI() {
   var lbl = document.getElementById('ts-label');
@@ -11344,6 +11368,220 @@ function tsClose() {
   var t = document.getElementById('ts-trigger');
   if (t) t.setAttribute('aria-expanded', 'false');
 }
+function tsAccToggle(e) {
+  if (e) e.stopPropagation();
+  var wrap = document.getElementById('ts-select');
+  if (!wrap) return;
+  if (!document.querySelector('#ts-list .mls-row')) buildTSList();
+  var collapsed = wrap.classList.toggle('collapsed');
+  var header = wrap.querySelector('.mls-acc-header');
+  if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+}
+
+// ── 3.4 MODE COMPACT — toggle vue liste/chips ──
+function mlSetView(mode) {
+  var wrap = document.getElementById('ml-league');
+  if (!wrap) return;
+  wrap.classList.toggle('compact', mode === 'compact');
+  document.querySelectorAll('#ml-league .view-toggle-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === mode);
+  });
+  try { localStorage.setItem('ps-ml-view', mode); } catch(e) {}
+}
+(function _mlRestoreView() {
+  try {
+    var v = localStorage.getItem('ps-ml-view');
+    if (v === 'compact') {
+      var w = document.getElementById('ml-league');
+      if (w) { w.classList.add('compact'); }
+      var btns = document.querySelectorAll('#ml-league .view-toggle-btn');
+      btns.forEach(function(b) { b.classList.toggle('active', b.dataset.view === 'compact'); });
+    }
+  } catch(e) {}
+})();
+
+// ── 2.3 FILTRES TEMPORELS — slider fenêtre temporelle ──
+function mlTemporalFilter(hours) {
+  hours = parseInt(hours) || 0;
+  var valEl = document.getElementById('ml-temporal-value');
+  if (!valEl) return;
+  if (hours >= 72) {
+    valEl.textContent = 'Tous les matchs';
+    activeTemporalWindow = 0;
+  } else if (hours === 0) {
+    valEl.innerHTML = '<span class="temporal-urgent">⚡ Maintenant</span>';
+    activeTemporalWindow = 0.5;
+  } else {
+    valEl.textContent = 'Prochaines ' + hours + 'h';
+    activeTemporalWindow = hours;
+  }
+  renderMatchesDebounced(allMatches, 'temporal');
+}
+
+// ── 2.4 CONFIANCE DYNAMIQUE — multi-critères ──
+function tsUpdateConfCriteria() {
+  var confSlider = document.getElementById('ts-conf-slider');
+  var edgeSlider = document.getElementById('ts-edge-slider');
+  var consensusCb = document.getElementById('ts-consensus-cb');
+  var histCb = document.getElementById('ts-hist-cb');
+  var confVal = document.getElementById('ts-conf-val');
+  var edgeVal = document.getElementById('ts-edge-val');
+  if (confSlider && confVal) confVal.textContent = confSlider.value + '%';
+  if (edgeSlider && edgeVal) edgeVal.textContent = edgeSlider.value + '%';
+  activeConfCriteria = {
+    confidence: parseInt(confSlider ? confSlider.value : 0),
+    edge: parseFloat(edgeSlider ? edgeSlider.value : 0),
+    consensus: consensusCb ? consensusCb.checked : false,
+    histLeague: histCb ? histCb.checked : false
+  };
+  renderMatchesDebounced(allMatches, 'conf-criteria');
+}
+
+// ── 2.1 PERFORMANCE TRACKING — localStorage + badges ──
+var _stratPerf = null;
+function _loadStratPerf() {
+  if (_stratPerf) return _stratPerf;
+  try {
+    var raw = localStorage.getItem('ps-strat-perf');
+    _stratPerf = raw ? JSON.parse(raw) : {};
+  } catch(e) { _stratPerf = {}; }
+  return _stratPerf;
+}
+function _saveStratPerf() {
+  try { localStorage.setItem('ps-strat-perf', JSON.stringify(_stratPerf)); } catch(e) {}
+}
+function _trackStratResult(key, won) {
+  var perf = _loadStratPerf();
+  if (!perf[key]) perf[key] = { w: 0, l: 0, roi: 0 };
+  if (won) { perf[key].w++; perf[key].roi += 0.8; }
+  else { perf[key].l++; perf[key].roi -= 1; }
+  _saveStratPerf();
+}
+function _stratPerfBadge(key) {
+  var perf = _loadStratPerf();
+  var p = perf[key];
+  if (!p || (p.w + p.l) < 3) return '';
+  var total = p.w + p.l;
+  var rate = Math.round((p.w / total) * 100);
+  var roi = p.roi.toFixed(1);
+  var cls = rate >= 65 ? 'good' : rate >= 50 ? 'mid' : 'bad';
+  var roiCls = p.roi >= 0 ? 'pos' : 'neg';
+  return '<span class="perf-badge ' + cls + '" data-ps-tooltip="' + p.w + 'W/' + p.l + 'L">' +
+    rate + '% <span class="perf-roi ' + roiCls + '">' + (p.roi >= 0 ? '+' : '') + roi + '%</span></span>';
+}
+
+// ── 2.2 SMART FILTERS — recommandations contextuelles ──
+function _mlLoadHistory() {
+  try {
+    var raw = localStorage.getItem('ps-ml-history');
+    return raw ? JSON.parse(raw) : { countries: {}, leagues: {} };
+  } catch(e) { return { countries: {}, leagues: {} }; }
+}
+function _mlSaveHistory(h) {
+  try { localStorage.setItem('ps-ml-history', JSON.stringify(h)); } catch(e) {}
+}
+function _mlTrackPick(type, key) {
+  var h = _mlLoadHistory();
+  var bucket = type === 'country' ? h.countries : h.leagues;
+  if (!bucket[key]) bucket[key] = 0;
+  bucket[key]++;
+  _mlSaveHistory(h);
+}
+function mlBuildSmartRecos() {
+  var container = document.getElementById('ml-smart-recos');
+  var list = document.getElementById('ml-smart-recos-list');
+  if (!container || !list) return;
+  var h = _mlLoadHistory();
+  var topCountries = Object.keys(h.countries).sort(function(a,b) { return h.countries[b] - h.countries[a]; }).slice(0, 3);
+  var topLeagues = Object.keys(h.leagues).sort(function(a,b) { return h.leagues[b] - h.leagues[a]; }).slice(0, 3);
+  var recos = [];
+  topCountries.forEach(function(c) {
+    var cnt = mlMatchCount(c);
+    if (cnt > 0) recos.push({ type: 'country', key: c, label: frCountry(c), meta: cnt + ' matchs', emoji: '🏆' });
+  });
+  if (recos.length === 0 && typeof allMatches !== 'undefined' && allMatches) {
+    var leagueCounts = {};
+    allMatches.forEach(function(m) {
+      if (m.sport && !m.live_score) leagueCounts[m.sport] = (leagueCounts[m.sport] || 0) + 1;
+    });
+    var topByCount = Object.keys(leagueCounts).sort(function(a,b) { return leagueCounts[b] - leagueCounts[a]; }).slice(0, 3);
+    topByCount.forEach(function(k) {
+      var nm = '';
+      Object.keys(leaguesByCountry || {}).some(function(c) {
+        return (leaguesByCountry[c] || []).some(function(l) { if (l.odds_key === k) { nm = l.name; return true; } });
+      });
+      if (nm) recos.push({ type: 'league', key: k, label: nm, meta: leagueCounts[k] + ' matchs', emoji: '⚽' });
+    });
+  }
+  if (recos.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  list.innerHTML = recos.map(function(r) {
+    return '<button type="button" class="smart-reco-pill" onclick="' +
+      (r.type === 'country' ? 'mlToggleCountry(\'' + _mlEsc(r.key).replace(/'/g,"\\'") + '\')' : 'mlToggleLeague(\'' + _mlEsc(r.key).replace(/'/g,"\\'") + '\')') +
+      '" data-ps-tooltip="' + r.meta + '">' +
+      '<span class="reco-emoji">' + r.emoji + '</span>' + _mlEsc(r.label) +
+      ' <span class="reco-meta">' + r.meta + '</span></button>';
+  }).join('');
+}
+function tsBuildSmartRecos() {
+  var container = document.getElementById('ts-smart-recos');
+  var list = document.getElementById('ts-smart-recos-list');
+  if (!container || !list) return;
+  var perf = _loadStratPerf();
+  var strats = typeof STRATEGIES_UI !== 'undefined' ? STRATEGIES_UI : [];
+  var rated = strats.filter(function(s) { return perf[s.key] && (perf[s.key].w + perf[s.key].l) >= 3; })
+    .sort(function(a,b) {
+      var pa = perf[a.key], pb = perf[b.key];
+      var ra = pa.w / (pa.w + pa.l), rb = pb.w / (pb.w + pb.l);
+      return rb - ra;
+    }).slice(0, 4);
+  if (rated.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  list.innerHTML = rated.map(function(s) {
+    var p = perf[s.key];
+    var rate = Math.round((p.w / (p.w + p.l)) * 100);
+    return '<button type="button" class="smart-reco-pill" onclick="tsToggleStrat(\'' + _mlEsc(s.key) + '\')" data-ps-tooltip="' + rate + '% réussite">' +
+      '<span class="reco-emoji">🎯</span>' + _mlEsc(s.label) +
+      ' <span class="reco-meta">' + rate + '%</span></button>';
+  }).join('');
+}
+
+// ── 2.5 SOCIAL FILTERS — tendances communauté (placeholder) ──
+function mlBuildCommunityTrends() {
+  var container = document.getElementById('ml-community-trends');
+  var list = document.getElementById('ml-trends-list');
+  if (!container || !list) return;
+  var trends = [
+    { rank: 1, label: 'Premier League', meta: '234 utilisateurs', hot: true },
+    { rank: 2, label: 'BTTS Oui', meta: '68% réussite', hot: true },
+    { rank: 3, label: 'Ligue 1', meta: '189 utilisateurs', hot: false },
+    { rank: 4, label: '+2.5 buts', meta: '71% réussite', hot: false }
+  ];
+  container.style.display = '';
+  list.innerHTML = trends.map(function(t) {
+    return '<div class="trend-item">' +
+      '<span class="trend-rank' + (t.hot ? ' hot' : '') + '">' + t.rank + '</span>' +
+      '<span>' + t.label + '</span>' +
+      '<span class="trend-meta">' + t.meta + '</span></div>';
+  }).join('');
+}
+
+// ── 3.5 DARK MODE ADAPTATIF — détection theme ──
+function psDetectTheme() {
+  var hour = new Date().getHours();
+  var root = document.documentElement;
+  root.classList.remove('ps-theme-light', 'ps-theme-live', 'ps-theme-finished');
+  if (hour >= 7 && hour < 19) {
+    // Jour — garder le thème sombre par défaut (le site est dark-only)
+    // Pour activer le mode clair: root.classList.add('ps-theme-light');
+  }
+}
+psDetectTheme();
+
+// ── Intégration smart recos + community trends au build ──
+var _origBuildLeagueMS = typeof buildLeagueMS === 'function' ? buildLeagueMS : null;
+var _origBuildTSList = typeof buildTSList === 'function' ? buildTSList : null;
+
 function tsFilter(q) {
   q = (q || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
   document.querySelectorAll('#ts-list .mls-row').forEach(function(r) {

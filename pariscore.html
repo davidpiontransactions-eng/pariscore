@@ -7214,9 +7214,347 @@
   .mls-league.sel .mls-lcheck::after { content: ''; width: 3.5px; height: 7px;
     border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg) translateY(-1px); }
   .mls-empty { padding: 14px 10px; text-align: center; color: #7a818b; font: 500 11px/1 var(--font-head); }
+
+  /* ─── MODE ACCORDÉON (panneau inline, collapse/expand) ─── */
+  .mls-accordion {
+    position: relative; display: block; width: 100%; max-width: none;
+    border: 1px solid rgba(255,255,255,0.10); border-radius: var(--radius-lg);
+    background: linear-gradient(180deg,#1e2228 0%,#14171b 100%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+    margin-top: 4px;
+  }
+  .mls-accordion .mls-trigger { display: none !important; }
+  .mls-acc-header {
+    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    cursor: pointer; user-select: none;
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    transition: background .15s, border-color .15s;
+  }
+  .mls-accordion.collapsed .mls-acc-header {
+    border-bottom-color: transparent;
+    border-radius: var(--radius-lg);
+  }
+  .mls-acc-header:hover {
+    background: linear-gradient(180deg, rgba(237,28,36,0.06) 0%, rgba(237,28,36,0.02) 100%);
+    border-bottom-color: rgba(237,28,36,0.20);
+  }
+  .mls-acc-header:active { background: rgba(237,28,36,0.08); }
+  .mls-acc-icon {
+    flex: 0 0 auto; width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #ed1c24, #b81419);
+    border-radius: 6px; box-shadow: 0 2px 4px rgba(237,28,36,0.3);
+  }
+  .mls-acc-icon svg { width: 12px; height: 12px; }
+  .mls-acc-icon path { stroke: #fff; stroke-width: 2; fill: none; stroke-linecap: round; }
+  .mls-acc-title {
+    flex: 1; font: 700 13px/1 var(--font-head); color: #f1f5f9;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .mls-acc-count {
+    font: 600 11px/1 var(--fc-font-num); color: #94a3b8;
+    padding: 4px 10px; border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: all .15s;
+  }
+  .mls-accordion.on .mls-acc-count {
+    color: #ff6168; background: rgba(237,28,36,0.15);
+    border-color: rgba(237,28,36,0.30);
+    box-shadow: 0 0 8px rgba(237,28,36,0.20);
+  }
+  .mls-acc-caret {
+    flex: 0 0 auto; width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .mls-acc-caret svg { width: 10px; height: 6px; }
+  .mls-acc-caret path { stroke: #ff3b3b; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .mls-accordion.collapsed .mls-acc-caret { transform: rotate(-90deg); }
+  .mls-accordion.collapsed .mls-acc-caret path { stroke: #7a818b; }
+  .mls-acc-body {
+    max-height: 320px; overflow-y: auto; padding: 10px;
+    transition: max-height .3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity .2s ease, padding .3s;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+  }
+  .mls-acc-body::-webkit-scrollbar { width: 6px; }
+  .mls-acc-body::-webkit-scrollbar-track { background: transparent; }
+  .mls-acc-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  .mls-acc-body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+  .mls-accordion.collapsed .mls-acc-body {
+    max-height: 0; overflow: hidden; padding: 0 10px; opacity: 0;
+  }
+  .mls-accordion .mls-search { margin-bottom: 8px; }
+  .mls-accordion .mls-opt { margin-bottom: 6px; }
+  .mls-accordion .mls-grp { margin-bottom: 3px; }
+
   @media (max-width: 768px) {
     .mls, .mls-trigger { width: 100%; max-width: none; }
     .mls-panel { width: 100%; }
+    .mls-accordion { width: 100%; }
+    .mls-accordion .mls-acc-body { max-height: 260px; }
+    .mls-acc-header { padding: 10px 12px; }
+    .mls-acc-title { font-size: 12px; }
+  }
+
+  /* ─── 3.1 HIÉRARCHIE VISUELLE — accordéons primary/secondary/tertiary ─── */
+  .mls-acc-header.primary { background: linear-gradient(180deg, rgba(237,28,36,0.06) 0%, rgba(237,28,36,0.02) 100%); }
+  .mls-acc-header.primary:hover { background: linear-gradient(180deg, rgba(237,28,36,0.10) 0%, rgba(237,28,36,0.04) 100%); }
+  .mls-acc-header.primary .mls-acc-icon { background: linear-gradient(135deg, #ed1c24, #b81419); }
+  .mls-acc-header.secondary { background: linear-gradient(180deg, rgba(245,158,11,0.06) 0%, rgba(245,158,11,0.02) 100%); }
+  .mls-acc-header.secondary:hover { background: linear-gradient(180deg, rgba(245,158,11,0.10) 0%, rgba(245,158,11,0.04) 100%); }
+  .mls-acc-header.secondary .mls-acc-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .mls-acc-header.secondary .mls-acc-title { color: #fbbf24; }
+  .mls-acc-header.secondary + .mls-acc-body { border-top-color: rgba(245,158,11,0.15); }
+  .mls-acc-header.tertiary { background: linear-gradient(180deg, rgba(148,163,184,0.04) 0%, rgba(148,163,184,0.01) 100%); }
+  .mls-acc-header.tertiary:hover { background: linear-gradient(180deg, rgba(148,163,184,0.08) 0%, rgba(148,163,184,0.03) 100%); }
+  .mls-acc-header.tertiary .mls-acc-icon { background: linear-gradient(135deg, #64748b, #475569); }
+  .mls-acc-header.tertiary .mls-acc-title { color: #94a3b8; font-size: 12px; }
+
+  /* ─── 3.3 MICRO-INTERACTIONS — tooltips, animations, hover ─── */
+  .mls-row { position: relative; transition: transform .12s, background .15s; }
+  .mls-row:hover { transform: translateX(2px); }
+  .mls-row:active { transform: scale(0.99); }
+  .mls-league { position: relative; transition: transform .1s, background .15s; }
+  .mls-league:hover { transform: translateX(4px); }
+  .mls-league:active { transform: scale(0.98); }
+  @keyframes psCheckPop {
+    0% { transform: scale(0) rotate(45deg) translateY(-1px); }
+    60% { transform: scale(1.2) rotate(45deg) translateY(-1px); }
+    100% { transform: scale(1) rotate(45deg) translateY(-1px); }
+  }
+  .mls-row.sel .mls-check::after,
+  .mls-league.sel .mls-lcheck::after { animation: psCheckPop .25s ease-out; }
+  @keyframes psFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .mls-acc-body { animation: psFadeIn .2s ease-out; }
+  [data-ps-tooltip] { position: relative; }
+  [data-ps-tooltip]::after {
+    content: attr(data-ps-tooltip);
+    position: absolute; left: 50%; bottom: calc(100% + 6px);
+    transform: translateX(-50%) scale(0.9); transform-origin: bottom center;
+    padding: 5px 10px; border-radius: 6px;
+    font: 600 10px/1.3 var(--fc-font-num); color: #f1f5f9;
+    background: rgba(15,17,20,0.95); border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity .15s, transform .15s;
+    z-index: 9400;
+  }
+  [data-ps-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) scale(1); }
+  .mls-acc-count { transition: all .2s cubic-bezier(0.4, 0, 0.2, 1); }
+  .mls-accordion.on .mls-acc-count { animation: psPulseGlow 1.5s ease-in-out; }
+  @keyframes psPulseGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(237,28,36,0.20); }
+    50% { box-shadow: 0 0 16px rgba(237,28,36,0.40); }
+  }
+
+  /* ─── 2.1 PERFORMANCE TRACKING — badges taux réussite / ROI ─── */
+  .perf-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 600 10px/1 var(--fc-font-num);
+    padding: 3px 7px; border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all .15s;
+  }
+  .perf-badge.good { color: #22c55e; background: rgba(34,197,94,0.10); border-color: rgba(34,197,94,0.20); }
+  .perf-badge.mid { color: #f59e0b; background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.20); }
+  .perf-badge.bad { color: #ef4444; background: rgba(239,68,68,0.10); border-color: rgba(239,68,68,0.20); }
+  .perf-badge .perf-roi.pos { color: #22c55e; }
+  .perf-badge .perf-roi.neg { color: #ef4444; }
+
+  /* ─── 2.2 SMART FILTERS — recommandations contextuelles ─── */
+  .smart-recos {
+    padding: 8px 10px; margin-bottom: 8px;
+    background: linear-gradient(135deg, rgba(237,28,36,0.06), rgba(245,158,11,0.04));
+    border: 1px solid rgba(237,28,36,0.12); border-radius: var(--radius);
+  }
+  .smart-recos-title {
+    font: 700 10px/1 var(--font-head); color: #ff6168;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+  }
+  .smart-recos-title svg { width: 12px; height: 12px; }
+  .smart-reco-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font: 600 11px/1 var(--fc-font-num); color: #e8eaed;
+    padding: 5px 10px; border-radius: 14px; margin: 2px 3px 2px 0;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer; transition: all .15s;
+  }
+  .smart-reco-pill:hover { background: rgba(237,28,36,0.12); border-color: rgba(237,28,36,0.25); color: #ff6168; transform: translateY(-1px); }
+  .smart-reco-pill .reco-emoji { font-size: 12px; }
+  .smart-reco-pill .reco-meta { font-size: 9px; color: #7a818b; }
+
+  /* ─── 2.3 FILTRES TEMPORELS — slider temporel ─── */
+  .temporal-slider-wrap {
+    padding: 8px 10px; margin-bottom: 8px;
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius);
+  }
+  .temporal-slider-label {
+    font: 600 10px/1 var(--font-head); color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .temporal-slider {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    background: linear-gradient(90deg, rgba(237,28,36,0.3), rgba(245,158,11,0.3));
+    outline: none; cursor: pointer;
+  }
+  .temporal-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #ed1c24, #ff6168);
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 2px 6px rgba(237,28,36,0.4);
+    cursor: pointer; transition: transform .15s;
+  }
+  .temporal-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  .temporal-slider::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: linear-gradient(135deg, #ed1c24, #ff6168);
+    border: 2px solid rgba(255,255,255,0.2); cursor: pointer;
+  }
+  .temporal-ticks {
+    display: flex; justify-content: space-between;
+    font: 500 9px/1 var(--fc-font-num); color: #6a7077;
+    margin-top: 4px; padding: 0 2px;
+  }
+  .temporal-value {
+    font: 700 11px/1 var(--fc-font-num); color: #ff6168;
+    text-align: center; margin-top: 4px;
+  }
+  .temporal-urgent {
+    display: inline-flex; align-items: center; gap: 4px;
+    font: 700 10px/1 var(--fc-font-num); color: #ef4444;
+    padding: 2px 6px; border-radius: 6px;
+    background: rgba(239,68,68,0.10);
+    animation: psBlinkUrgent 1s ease-in-out infinite;
+  }
+  @keyframes psBlinkUrgent {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ─── 2.4 CONFIANCE DYNAMIQUE — multi-critères ─── */
+  .confidence-criteria {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 8px 10px; margin-bottom: 8px;
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: var(--radius);
+  }
+  .conf-criterion {
+    display: flex; align-items: center; gap: 8px;
+    font: 500 11px/1 var(--fc-font-num); color: #cfd4db;
+  }
+  .conf-criterion label { flex: 0 0 auto; min-width: 80px; font-weight: 600; }
+  .conf-criterion input[type="range"] { flex: 1; height: 4px; }
+  .conf-criterion .conf-val { font: 700 11px/1 var(--fc-font-num); color: #ff6168; min-width: 32px; text-align: right; }
+  .conf-criterion input[type="checkbox"] { accent-color: #ed1c24; }
+
+  /* ─── 3.4 MODE COMPACT — toggle chips vs list ─── */
+  .view-toggle {
+    display: inline-flex; gap: 2px; padding: 2px;
+    background: rgba(255,255,255,0.04); border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .view-toggle-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 22px; border-radius: 6px;
+    background: transparent; border: none; color: #7a818b;
+    cursor: pointer; transition: all .15s;
+  }
+  .view-toggle-btn:hover { color: #cfd4db; background: rgba(255,255,255,0.04); }
+  .view-toggle-btn.active { color: #ff6168; background: rgba(237,28,36,0.12); }
+  .view-toggle-btn svg { width: 14px; height: 14px; }
+  .mls-accordion.compact .mls-acc-body { padding: 6px 8px; }
+  .mls-accordion.compact .mls-grp {
+    display: inline-flex; flex-wrap: wrap; gap: 3px;
+    margin-bottom: 4px; padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .mls-accordion.compact .mls-row { display: none; }
+  .mls-accordion.compact .mls-grp .mls-league {
+    display: inline-flex; width: auto; padding: 4px 8px;
+    border-radius: 12px; font-size: 10px; gap: 4px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .mls-accordion.compact .mls-grp .mls-league .mls-lname { white-space: nowrap; }
+  .mls-accordion.compact .mls-grp .mls-league .mls-ltag { display: none; }
+  .mls-accordion.compact .mls-grp .mls-league.sel {
+    background: rgba(237,28,36,0.15); border-color: rgba(237,28,36,0.30);
+  }
+  .mls-accordion.compact .mls-search { display: none; }
+  .mls-accordion.compact .mls-opt { display: none; }
+  .mls-accordion.compact .country-flag { width: 14px; height: 10px; }
+
+  /* ─── 3.2 FILTRES VISUELS — logos compétitions ─── */
+  .league-logo {
+    width: 18px; height: 18px; border-radius: 4px;
+    object-fit: contain; flex: 0 0 auto;
+    background: rgba(255,255,255,0.05); padding: 1px;
+  }
+  .mls-league .league-logo { width: 16px; height: 16px; }
+
+  /* ─── 2.5 SOCIAL FILTERS — tendances communauté ─── */
+  .community-trends {
+    padding: 8px 10px; margin-bottom: 8px;
+    background: linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.04));
+    border: 1px solid rgba(59,130,246,0.12); border-radius: var(--radius);
+  }
+  .community-trends-title {
+    font: 700 10px/1 var(--font-head); color: #60a5fa;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+  }
+  .trend-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font: 500 11px/1 var(--fc-font-num); color: #cfd4db;
+  }
+  .trend-item:last-child { border-bottom: none; }
+  .trend-rank {
+    flex: 0 0 auto; width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; font: 700 10px/1 var(--fc-font-num);
+    background: rgba(59,130,246,0.15); color: #60a5fa;
+  }
+  .trend-rank.hot { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .trend-meta { font: 500 9px/1 var(--fc-font-num); color: #7a818b; margin-left: auto; }
+
+  /* ─── 3.5 DARK MODE ADAPTATIF — thèmes contextuels ─── */
+  :root {
+    --ps-theme-bg: #0f1114;
+    --ps-theme-surface: #181b20;
+    --ps-theme-text: #e8eaed;
+    --ps-theme-accent: #ed1c24;
+  }
+  .ps-theme-light {
+    --ps-theme-bg: #f8f9fa;
+    --ps-theme-surface: #ffffff;
+    --ps-theme-text: #1a1a2e;
+    --ps-theme-accent: #dc2626;
+  }
+  .ps-theme-live {
+    --ps-theme-bg: #1a0a0a;
+    --ps-theme-surface: #2d1010;
+    --ps-theme-text: #fca5a5;
+    --ps-theme-accent: #ef4444;
+  }
+  .ps-theme-finished {
+    --ps-theme-bg: #111318;
+    --ps-theme-surface: #1a1d22;
+    --ps-theme-text: #94a3b8;
+    --ps-theme-accent: #64748b;
   }
 
   .preset-pill {
@@ -14256,12 +14594,32 @@ function psSetLang(v) {
 
   <!-- LEAGUE MULTI-SELECT · mobile: relocalisé dans #mfs-body via _mfsRelocate -->
   <div class="filter-row" id="league-select-row" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;padding:10px 16px;align-items:center;">
-    <div id="ml-league" class="mls" style="width:100%;">
-      <button type="button" class="mls-trigger" id="ml-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="mlToggle(event)" aria-label="Filtrer par ligue">
-        <span class="mls-label" id="ml-label">Toutes les ligues</span>
-        <svg class="fc-ic mls-caret" viewBox="0 0 10 6" aria-hidden="true" style="margin:0 0 0 8px;flex-shrink:0;"><path d="M1 1l4 4 4-4" stroke="#ff3b3b" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
-      </button>
-      <div class="mls-panel" id="ml-panel" role="listbox" aria-multiselectable="true">
+    <div id="ml-league" class="mls mls-accordion" style="width:100%;">
+      <div class="mls-acc-header primary" onclick="mlAccToggle(event)" aria-expanded="true" aria-controls="ml-panel" aria-label="Déplier Championnats">
+        <span class="mls-acc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span>
+        <span class="mls-acc-title">Championnats</span>
+        <span class="mls-acc-count" id="ml-label">Toutes les ligues</span>
+        <div class="view-toggle" onclick="event.stopPropagation()">
+          <button type="button" class="view-toggle-btn active" data-view="list" onclick="mlSetView('list')" title="Vue détaillée"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+          <button type="button" class="view-toggle-btn" data-view="compact" onclick="mlSetView('compact')" title="Vue compacte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></button>
+        </div>
+        <span class="mls-acc-caret" aria-hidden="true"><svg viewBox="0 0 10 6"><path d="M1 1l4 4 4-4"/></svg></span>
+      </div>
+      <div class="mls-acc-body" id="ml-panel" role="listbox" aria-multiselectable="true">
+        <div class="smart-recos" id="ml-smart-recos" style="display:none">
+          <div class="smart-recos-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Recommandé pour vous</div>
+          <div id="ml-smart-recos-list"></div>
+        </div>
+        <div class="temporal-slider-wrap" id="ml-temporal-wrap">
+          <div class="temporal-slider-label">Fenêtre temporelle</div>
+          <input type="range" class="temporal-slider" id="ml-temporal-slider" min="0" max="72" step="1" value="72" oninput="mlTemporalFilter(this.value)">
+          <div class="temporal-ticks"><span>Maint.</span><span>6h</span><span>12h</span><span>24h</span><span>48h</span><span>72h</span></div>
+          <div class="temporal-value" id="ml-temporal-value">Tous les matchs</div>
+        </div>
+        <div class="community-trends" id="ml-community-trends" style="display:none">
+          <div class="community-trends-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Tendances communauté</div>
+          <div id="ml-trends-list"></div>
+        </div>
         <input type="search" class="mls-search" id="ml-search" placeholder="Rechercher une ligue…" oninput="mlFilter(this.value)" aria-label="Rechercher une ligue">
         <button type="button" class="mls-opt mls-all" id="ml-opt-all" onclick="mlPickAll()">Toutes les ligues</button>
         <div class="mls-list" id="ml-list"></div>
@@ -14275,13 +14633,41 @@ function psSetLang(v) {
     <button class="filter-chip topn-chip" data-topn="10">10</button>
     <button class="filter-chip topn-chip" data-topn="5">5</button>
     <span style="font-size:10px;font-family:var(--fc-font-ui);font-weight:600;color:var(--text3);margin:0 4px 0 6px;">Top stratégies :</span>
-    <div id="ts-select" class="mls">
-      <button type="button" class="mls-trigger" id="ts-trigger" aria-haspopup="listbox" aria-expanded="false" onclick="tsToggle(event)">
-        <span class="mls-label" id="ts-label">Toutes stratégies</span>
-        <svg class="fc-ic mls-caret" viewBox="0 0 10 6" aria-hidden="true" style="margin:0 0 0 8px;"><path d="M1 1l4 4 4-4" stroke="#ff3b3b" stroke-width="1.9" fill="none" stroke-linecap="round"/></svg>
-      </button>
-      <div class="mls-panel" id="ts-panel" role="listbox" aria-multiselectable="true">
-        <input type="search" class="mls-search" id="ts-search" placeholder="Rechercher une stratégieé" oninput="tsFilter(this.value)" aria-label="Rechercher une stratégie">
+    <div id="ts-select" class="mls mls-accordion">
+      <div class="mls-acc-header secondary" onclick="tsAccToggle(event)" aria-expanded="true" aria-controls="ts-panel" aria-label="Déplier Stratégies">
+        <span class="mls-acc-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
+        <span class="mls-acc-title">Stratégies</span>
+        <span class="mls-acc-count" id="ts-label">Toutes stratégies</span>
+        <span class="mls-acc-caret" aria-hidden="true"><svg viewBox="0 0 10 6"><path d="M1 1l4 4 4-4"/></svg></span>
+      </div>
+      <div class="mls-acc-body" id="ts-panel" role="listbox" aria-multiselectable="true">
+        <div class="confidence-criteria" id="ts-confidence-criteria">
+          <div class="conf-criterion">
+            <label>Confiance min</label>
+            <input type="range" min="0" max="100" step="5" value="0" id="ts-conf-slider" oninput="tsUpdateConfCriteria()">
+            <span class="conf-val" id="ts-conf-val">0%</span>
+          </div>
+          <div class="conf-criterion">
+            <label>Edge min</label>
+            <input type="range" min="0" max="15" step="0.5" value="0" id="ts-edge-slider" oninput="tsUpdateConfCriteria()">
+            <span class="conf-val" id="ts-edge-val">0%</span>
+          </div>
+          <div class="conf-criterion">
+            <label for="ts-consensus-cb">Consensus</label>
+            <input type="checkbox" id="ts-consensus-cb" onchange="tsUpdateConfCriteria()">
+            <span style="font-size:10px;color:#7a818b;">Accord 3+ bookmakers</span>
+          </div>
+          <div class="conf-criterion">
+            <label for="ts-hist-cb">Historique</label>
+            <input type="checkbox" id="ts-hist-cb" onchange="tsUpdateConfCriteria()">
+            <span style="font-size:10px;color:#7a818b;">60%+ réussite ligue</span>
+          </div>
+        </div>
+        <div class="smart-recos" id="ts-smart-recos" style="display:none">
+          <div class="smart-recos-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Top stratégies du moment</div>
+          <div id="ts-smart-recos-list"></div>
+        </div>
+        <input type="search" class="mls-search" id="ts-search" placeholder="Rechercher une stratégie…" oninput="tsFilter(this.value)" aria-label="Rechercher une stratégie">
         <button type="button" class="mls-opt mls-all" id="ts-opt-all" onclick="tsPickAll()">Toutes stratégies</button>
         <div class="mls-list" id="ts-list"></div>
       </div>

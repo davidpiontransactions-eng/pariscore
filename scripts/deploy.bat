@@ -18,9 +18,9 @@ setlocal enabledelayedexpansion
 
 set "VPS_HOST=ubuntu@51.75.21.239"
 set "SSH_OPTS=-o BatchMode=yes -o ConnectTimeout=15"
-:: Remote wait config: WAIT_ITERS x WAIT_STEP_S = hard cap (~7 min).
+:: Remote wait config: WAIT_ITERS x WAIT_STEP_S = hard cap (~3.5 min for legacy, ~7 min for full build).
 set /a WAIT_ITERS=210
-set /a WAIT_STEP_S=2
+set /a WAIT_STEP_S=1
 
 set "ARG1=%~1"
 set "NO_COMMIT=0"

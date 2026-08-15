@@ -1,0 +1,139 @@
+{
+  "title": "Filtres Ascenseur — Championnats & Stratégies (Football)",
+  "timeline": {
+    "labels": ["2026-08-15", "2026-08-16", "2026-08-17", "2026-08-18"]
+  },
+  "tracks": [
+    {
+      "name": "Recherche & spec",
+      "items": [
+        {
+          "label": "Exploration codebase (.mls, renderMatches, _mfsRelocate)",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        },
+        {
+          "label": "Décision architecture (réutiliser .mls vs nouveau composant)",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        }
+      ]
+    },
+    {
+      "name": "Composant accordéon championnats",
+      "items": [
+        {
+          "label": "CSS .mls-accordion (panneau inline, collapse/expand)",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        },
+        {
+          "label": "HTML #ml-league → accordéon (header + body)",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        },
+        {
+          "label": "JS mlAccToggle() + sync UI",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        }
+      ]
+    },
+    {
+      "name": "Composant accordéon stratégies",
+      "items": [
+        {
+          "label": "HTML #ts-select → accordéon",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        },
+        {
+          "label": "JS tsAccToggle() + sync UI",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        }
+      ]
+    },
+    {
+      "name": "Application live + prematch",
+      "items": [
+        {
+          "label": "Vérification état partagé (activeLeagues[], activeStrategies[])",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        },
+        {
+          "label": "Vérification renderMatches() (filtres uniformes onglets)",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        }
+      ]
+    },
+    {
+      "name": "Mobile (#mfs-body)",
+      "items": [
+        {
+          "label": "Vérification _mfsRelocate() + scroll interne accordéons",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        }
+      ]
+    },
+    {
+      "name": "QA & validation",
+      "items": [
+        {
+          "label": "node --check pariscore.js",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        },
+        {
+          "label": "Test manuel multi-choix championnats",
+          "start": "2026-08-15",
+          "end": "2026-08-16",
+          "class": "item-critical"
+        },
+        {
+          "label": "Test manuel multi-choix stratégies + confiance",
+          "start": "2026-08-15",
+          "end": "2026-08-16",
+          "class": "item-critical"
+        },
+        {
+          "label": "Test persistance filtres entre onglets (All/Live/Prematch)",
+          "start": "2026-08-16",
+          "end": "2026-08-16",
+          "class": "item-critical"
+        },
+        {
+          "label": "Test mobile viewport < 768px",
+          "start": "2026-08-16",
+          "end": "2026-08-17",
+          "class": "item-critical"
+        }
+      ]
+    },
+    {
+      "name": "Gantt & pilotage",
+      "items": [
+        {
+          "label": "Création gantt-filters-ascenseur.json + .svg",
+          "start": "2026-08-15",
+          "end": "2026-08-15",
+          "class": "item-done"
+        }
+      ]
+    }
+  ]
+}
