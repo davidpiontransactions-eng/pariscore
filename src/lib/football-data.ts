@@ -268,12 +268,13 @@ export type FootballLiveState = {
   /** Période brute BSD (ex: "1H", "2H", "HT"). Permet de distinguer les mi-temps. */
   period?: string;
   homePossession: number;
-  homeShots: number;
-  awayShots: number;
-  homeShotsOnTarget: number;
-  awayShotsOnTarget: number;
-  homeCorners: number;
-  awayCorners: number;
+  /** null si la source ne fournit pas la statistique (≠ 0 absent). */
+  homeShots: number | null;
+  awayShots: number | null;
+  homeShotsOnTarget: number | null;
+  awayShotsOnTarget: number | null;
+  homeCorners: number | null;
+  awayCorners: number | null;
   /** Attaques totales (BSD live_stats / sr_stats). Absent si la source ne fournit pas. */
   homeAttacks?: number | null;
   awayAttacks?: number | null;
