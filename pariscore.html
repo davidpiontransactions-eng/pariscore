@@ -7046,9 +7046,7 @@
   }
   .topn-rank-badge.smart { background: rgba(99,102,241,0.20); color: #a5b4fc; }
   .topn-rank-badge.gold { background: rgba(255,215,0,0.20); color: #ffd700; }
-  @media (max-width: 768px) {
-    #topn-filter-row { display: none; }
-  }
+  /* @media (max-width: 768px) { #topn-filter-row { display: none; } } — retiré : #topn-filter-row contient désormais l'accordéon Stratégies (#ts-select) relocalisé dans le bottom-sheet mobile via _mfsRelocate. Cette règle ancienne (époque dropdown #strat-mob) masquait l'accordéon en mobile. */
 
   /* -- Country Filter Chips + Dropdown -- */
   .country-chip-wrap {
