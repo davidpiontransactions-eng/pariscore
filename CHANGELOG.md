@@ -1,4 +1,32 @@
 # PariScore — Journal des modifications
+## [v12.98] — 2026-08-15 — Alertes tennis temps réel (son + visuel) & deploy fiabilisé
+
+### Ajouté
+- **Alertes tennis live côté client** (aucun son ni alerte visuelle n'existait) : le serveur évalue 6 métriques par match live à chaque poll (30 s) et pousse `broadcastSSE('tennis_alert', {id, metric, level, match, value, msg})` :
+  | Métrique | Source | ⚠️ jaune | 🔴 rouge |
+  |---|---|---|---|
+  | Écart DR | `dr_exact.dr` | \|DR−1\| ≥ 0.20 | ≥ 0.35 (critique) |
+  | Variance DR/set | historique sets | ≥ 0.08 | ≥ 0.15 (re-fire à chaque set) |
+  | Spike BPPI | `bppi` Δ2 polls | ≥ 15 pts | ≥ 25 pts (critique) |
+  | Serve momentum gap | `momentum_series` | ≥ 25 pts | ≥ 40 pts |
+  | Bascule proba live | `liveProbability` Δ2 polls | ≥ 0.10 | ≥ 0.20 |
+  | Set Overs | `set_ou.o85` | ≥ 0.70 | ≥ 0.85 |
+  Cooldown 5 min par (match × métrique) via `_tnAlertOnCooldown`/`_tnAlertMark` — seuils surchargeables par env `TENNIS_*` (`server.js::_evalTennisUIAlerts`).
+- **Client** (`pariscore.app.js`/`pariscore.js`) : listener SSE `tennis_alert` → **highlight carte** (bordure jaune/rouge/critical pulsante + badge métrique, survit au re-rendu via Map TTL 5 min), **toast haut de page** (pile max 5, bouton « Voir le match » → `openTennisDetail`, textContent = XSS-safe), **notification desktop** optionnelle (permission déjà accordée uniquement).
+- **Son « rebond de balle »** synthétisé Web Audio (oscillateur triangle + lowpass ~120 ms, zéro asset) : 1 poc modéré (jaune) / 2 pocs fort (rouge) / 3 pocs tempo rapide (critique). **Toggle global défaut OFF** (`localStorage tn_sound_enabled`, bouton dans l'onglet Alertes, badge « son coupé » dans la nav).
+- **QA automatisée** : `tools/test_tennis_ui_alerts.js` (évaluateur en sandbox vm — 27 assert) et `tools/qa_tennis_alerts_browser.js` (Playwright headless sur le module client réel — 25 assert).
+
+### Corrigé
+- **Deploy : CRLF tuait le runner bash VPS** — `update_vps.sh` streamé en CRLF mourait dès la ligne 10 (`$'\r': command not found`), le marqueur `VPS_DEPLOY_OK` n'arrivait jamais et le client pollait jusqu'au timeout (~6 min perdues). Fixes : `.gitattributes` `*.sh text eol=lf` + strip `\r` côté VPS avant exécution (garde-fou permanent) + détection fail-fast des erreurs runner.
+- **`deploy.bat` optimisé** : l'attente du marqueur passe de **jusqu'à 60 allers-retours SSH client (pas de 6 s)** à **1 seule connexion SSH avec boucle d'attente côté VPS (pas de 2 s)** + fail-fast immédiat sur `ERR:`/`syntax error`. Gain : ~1 min de polling éliminée par deploy, échecs visibles en secondes au lieu de 6 min.
+- Cache-buster `pariscore.app.js?v=260815-01` bumpé (le bundle est en cache long).
+
+### Testé
+- `node --check` server.js + pariscore.js + pariscore.app.js ✓ · évaluateur 27/27 PASS ✓ · smoke navigateur 25/25 PASS (dont payload XSS piégé) ✓ · deploy `VPS_DEPLOY_OK` commit `68512228`, health check VPS OK ✓
+
+### Note
+- Le domaine public `pariscore.fr` route `/` et `/api/v1/*` vers **Next.js (port 3005)** depuis une modif nginx du 14/08 ; le serveur legacy (port 3000, qui sert `pariscore.html` + ces alertes) tourne et est validé en local VPS mais n'est plus exposé publiquement par nginx. À arbitrer : ré-exposer le legacy ou migrer les alertes dans le front Next.
+
 ## [v12.97] — 2026-08-09 — DB gratuite 2. Bundesliga (historique + cotes)
 
 ### Ajouté
