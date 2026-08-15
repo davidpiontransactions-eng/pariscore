@@ -50,11 +50,14 @@ if "%NO_COMMIT%"=="0" (
 )
 
 echo [2/3] stream scripts\update_vps.sh to VPS + async launch...
-ssh %SSH_OPTS% %VPS_HOST% "cat > /tmp/update_vps.sh && chmod +x /tmp/update_vps.sh && rm -f /tmp/update_vps.log && { nohup bash /tmp/update_vps.sh >/tmp/update_vps.log 2>&1 </dev/null & } && echo LAUNCHED" < scripts\update_vps.sh
+:: Garde-fou CRLF : le checkout Windows peut livrer le .sh en CRLF, ce qui tue
+:: l'interpretation bash sur le VPS ("$'\r': command not found" + aucun marqueur
+:: = attente inutile de tout le timeout). Strip \r sur le VPS avant execution.
+ssh %SSH_OPTS% %VPS_HOST% "cat > /tmp/update_vps.raw && tr -d '\r' < /tmp/update_vps.raw > /tmp/update_vps.sh && chmod +x /tmp/update_vps.sh && rm -f /tmp/update_vps.log && { nohup bash /tmp/update_vps.sh >/tmp/update_vps.log 2>&1 </dev/null & } && echo LAUNCHED" < scripts\update_vps.sh
 if !ERRORLEVEL! neq 0 ( echo [FAIL] SSH launch - host unreachable or key refused & exit /b 1 )
 
 echo [3/3] waiting VPS_DEPLOY_OK on the VPS itself - 1 ssh connection, !WAIT_STEP_S!s steps, max !WAIT_ITERS! steps, fail-fast on ERR:...
-ssh %SSH_OPTS% %VPS_HOST% "i=0; while [ $i -lt !WAIT_ITERS! ]; do if grep -q VPS_DEPLOY_OK /tmp/update_vps.log 2>/dev/null; then exit 0; fi; if grep -q 'ERR:' /tmp/update_vps.log 2>/dev/null; then exit 2; fi; i=$((i+1)); sleep !WAIT_STEP_S!; done; exit 3"
+ssh %SSH_OPTS% %VPS_HOST% "i=0; while [ $i -lt !WAIT_ITERS! ]; do if grep -q VPS_DEPLOY_OK /tmp/update_vps.log 2>/dev/null; then exit 0; fi; if grep -qE 'ERR:|syntax error' /tmp/update_vps.log 2>/dev/null; then exit 2; fi; i=$((i+1)); sleep !WAIT_STEP_S!; done; exit 3"
 set /a WAIT_RC=!ERRORLEVEL!
 if !WAIT_RC! equ 0 goto :finished
 if !WAIT_RC! equ 2 (
