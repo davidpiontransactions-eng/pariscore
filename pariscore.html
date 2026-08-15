@@ -10410,6 +10410,16 @@
     scrollbar-color: rgba(255,255,255,.12) transparent;
   }
   html.ps-mobile-v2 .ps-sidebar { display: none; }
+  /* --- Filtres multi-choix desktop (relocalisés dans la sidebar) --- */
+  html.ps-desktop-v1 #ps-sb-mls { padding: 0 12px 6px; }
+  html.ps-desktop-v1 #ps-sb-mls .sidebar-block-title { margin-bottom: 8px; }
+  html.ps-desktop-v1 #ps-sb-mls .filter-row { background: transparent !important; border: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 0 8px 0 !important; box-shadow: none !important; }
+  html.ps-desktop-v1 #ps-sb-mls .mls-accordion { margin-top: 0; }
+  html.ps-desktop-v1 #ps-sb-mls .mls-acc-body { max-height: 300px; }
+  html.ps-desktop-v1 #ps-sb-mls .mls-acc-header { padding: 10px 12px; }
+  html.ps-desktop-v1 #ps-sb-mls .topn-chip { font-size: 11px; padding: 4px 8px; }
+  html.ps-desktop-v1 #ps-sb-mls .filter-dd, html.ps-desktop-v1 #ps-sb-mls .filter-chip, html.ps-desktop-v1 #ps-sb-mls .topn-chip { font-size: 11px; }
+
   /* --- Toggle sidebar tennis live --- */
 
   /* OLD_TENNIS_DEPRECATED 2026-06: replaced by tn2-* system */
@@ -14489,6 +14499,9 @@ function psSetLang(v) {
 <!-- MATCHS -->
 <!-- --- SIDEBAR LIGUES FOOT --- -->
 <div class="ps-sidebar" id="ps-foot-sidebar">
+  <div class="sidebar-nav-block" id="ps-sb-mls">
+    <div class="sidebar-block-title">Filtres multi-choix</div>
+  </div>
   <div class="sidebar-nav-block">
     <div class="sidebar-block-title">Ligues en vedette</div>
     <div id="ps-featured-foot-list">
@@ -25898,7 +25911,7 @@ a:focus-visible,
      ============================================================ -->
 
 <div id="alert-toast"><span class="toast-icon" id="toast-icon"></span><span class="toast-msg" id="toast-msg"></span></div>
-<script src="/pariscore.app.js?v=260815-02"></script>
+<script src="/pariscore.app.js?v=260815-03"></script>
 <script>
 (function(){
 var b=document.createElement('div');

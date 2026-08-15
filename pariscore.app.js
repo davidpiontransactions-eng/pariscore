@@ -29396,7 +29396,18 @@ function renderComparateur(d) {
       if (el) body.appendChild(el); // déplace (handlers délégués → intacts)
     });
     _mfsMoved = true;
+  }  var _psSbMlsMoved = false;
+  function _psSbRelocateMls() {
+    if (_psSbMlsMoved) return;
+    var host = document.getElementById('ps-sb-mls');
+    if (!host) return;
+    ['league-select-row', 'topn-filter-row'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) host.appendChild(el);
+    });
+    _psSbMlsMoved = true;
   }
+
   window.openMobFilters = function () {
     _mfsRelocate();
     var o = document.getElementById('mob-filter-overlay');
@@ -29430,6 +29441,7 @@ function renderComparateur(d) {
     if (c && src) c.textContent = src.textContent || '—';
   };
   // Relocalise dès le chargement en mobile (rows hors-flux tant que sheet fermée)
+  if (!isMobile()) { try { _psSbRelocateMls(); } catch (e) {} }
   if (isMobile()) { try { _mfsRelocate(); } catch (e) {} }
 
   /* — Live badge sur bottom-nav (sync depuis le badge table existant) — */
