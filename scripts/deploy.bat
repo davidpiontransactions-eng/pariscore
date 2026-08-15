@@ -12,12 +12,15 @@ setlocal enabledelayedexpansion
 ::   - streams scripts/update_vps.sh to VPS (always latest logic, no skew)
 ::   - VPS runner skips 'next build' if legacy-only (~15-30s vs ~3min)
 ::   - default ssh agent key (no dead -i flag), BatchMode=yes (fail not hang)
-::   - marker-based polling (fast detection, no accent-broken grep)
+::   - marker-based REMOTE wait: 1 ssh connection, 2s granularity (old: up to
+::     60 client-side ssh round-trips at 6s = ~8min worst case, ~1min typical
+::     wasted in polling alone) + fast-fail on 'ERR:' marker in VPS log.
 
 set "VPS_HOST=ubuntu@51.75.21.239"
 set "SSH_OPTS=-o BatchMode=yes -o ConnectTimeout=15"
-set /a POLL_MAX=60
-set /a POLL_SLEEP=6
+:: Remote wait config: WAIT_ITERS x WAIT_STEP_S = hard cap (~7 min).
+set /a WAIT_ITERS=210
+set /a WAIT_STEP_S=2
 
 set "ARG1=%~1"
 set "NO_COMMIT=0"
@@ -50,20 +53,24 @@ echo [2/3] stream scripts\update_vps.sh to VPS + async launch...
 ssh %SSH_OPTS% %VPS_HOST% "cat > /tmp/update_vps.sh && chmod +x /tmp/update_vps.sh && rm -f /tmp/update_vps.log && { nohup bash /tmp/update_vps.sh >/tmp/update_vps.log 2>&1 </dev/null & } && echo LAUNCHED" < scripts\update_vps.sh
 if !ERRORLEVEL! neq 0 ( echo [FAIL] SSH launch - host unreachable or key refused & exit /b 1 )
 
-echo [3/3] polling log (marker VPS DEPLOY OK, every %POLL_SLEEP%s, max %POLL_MAX% turns)...
-set /a N=0
-:poll
-set /a N+=1
-if !N! gtr %POLL_MAX% (
-  echo [TIMEOUT] deploy over %POLL_MAX% turns. Check:
-  echo   ssh %VPS_HOST% "tail -30 /tmp/update_vps.log"
+echo [3/3] waiting VPS_DEPLOY_OK on the VPS itself - 1 ssh connection, !WAIT_STEP_S!s steps, max !WAIT_ITERS! steps, fail-fast on ERR:...
+ssh %SSH_OPTS% %VPS_HOST% "i=0; while [ $i -lt !WAIT_ITERS! ]; do if grep -q VPS_DEPLOY_OK /tmp/update_vps.log 2>/dev/null; then exit 0; fi; if grep -q 'ERR:' /tmp/update_vps.log 2>/dev/null; then exit 2; fi; i=$((i+1)); sleep !WAIT_STEP_S!; done; exit 3"
+set /a WAIT_RC=!ERRORLEVEL!
+if !WAIT_RC! equ 0 goto :finished
+if !WAIT_RC! equ 2 (
+  echo [FAIL] VPS deploy failed - ERR: marker found in log. Last 20 lines:
+  ssh %SSH_OPTS% %VPS_HOST% "tail -n 20 /tmp/update_vps.log"
   exit /b 1
 )
-echo   [!N!/%POLL_MAX%]
-ssh %SSH_OPTS% %VPS_HOST% "grep -q VPS_DEPLOY_OK /tmp/update_vps.log && exit 0 || { tail -n 1 /tmp/update_vps.log; exit 1; }" 2>nul
-if !ERRORLEVEL! equ 0 goto :finished
-%SystemRoot%\System32\ping.exe -n %POLL_SLEEP% 127.0.0.1 >nul
-goto :poll
+if !WAIT_RC! equ 3 (
+  echo [TIMEOUT] no VPS_DEPLOY_OK after ~7 min. Check:
+  echo   ssh %VPS_HOST% "tail -30 /tmp/update_vps.log"
+  ssh %SSH_OPTS% %VPS_HOST% "tail -n 15 /tmp/update_vps.log"
+  exit /b 1
+)
+echo [FAIL] SSH wait connection lost - rc !WAIT_RC!. Deploy may still be running; check:
+echo   ssh %VPS_HOST% "tail -30 /tmp/update_vps.log"
+exit /b 1
 
 :finished
 echo.
