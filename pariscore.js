@@ -2340,9 +2340,9 @@ function renderTennisLive(matches) {
       ? 'Voir détail LiveScore (sets et jeux par set)'
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
     const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
-    return `<div class="tn-live-row tennis-row-clickable${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${onclickId}')" title="${rowTitle}">
+    return `<div class="tn-live-row tennis-row-clickable${_tnAlertRowCls(safeId)}${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${onclickId}')" title="${rowTitle}">
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
-<span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}</span>
+<span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}${_tnAlertBadgeHtml(safeId)}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
 <span class="tn-live-cell${p1Cls ? ' ' + p1Cls : ''}" role="cell">${p1Flag}${_escTennis(m.player1?.name)}${p1Ball}${m._bsd_odds?.best_p1 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p1.toFixed(2) + '</span>' : (m.odds_player1 ? ' <span class="tn-live-odds">' + m.odds_player1 + '</span>' : '')}${m._bsd_odds?.movement_p1 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p1 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 1)}${_tnMomentumBadge(m)}${_tnIntegrityBadge(m)}</span>
 <span class="tn-live-cell${p2Cls ? ' ' + p2Cls : ''}" role="cell">${p2Flag}${_escTennis(m.player2?.name)}${p2Ball}${m._bsd_odds?.best_p2 ? ' <span class="tn-live-odds">' + m._bsd_odds.best_p2.toFixed(2) + '</span>' : (m.odds_player2 ? ' <span class="tn-live-odds">' + m.odds_player2 + '</span>' : '')}${m._bsd_odds?.movement_p2 === 'SHORTENING' ? '<span style="color:#00e676;font-size:9px;" title="Shortening">↓</span>' : m._bsd_odds?.movement_p2 === 'DRIFTING' ? '<span style="color:#ff4d4d;font-size:9px;" title="Drifting">↑</span>' : ''}${_tnGlickoBadge(m, 2)}</span>
@@ -2361,6 +2361,208 @@ ${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" on
 <div class="tn-live-stats-panel" id="tnlsp-${safeId}" hidden></div>`;
   }).join('');
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ALERTES TENNIS TEMPS RÉEL — SSE 'tennis_alert' : son (rebond balle) + visuel
+//  Sprint alertes-tennis : 6 métriques live (écart DR, variance DR/set, spike BPPI,
+//  momentum gap, bascule proba, set overs) évaluées côté serveur (server.js) puis
+//  poussées ici via SSE. Comportements :
+//   1. Highlight carte : bordure jaune/rouge + badge métrique (survit au re-rendu)
+//   2. Toast haut de page avec bouton « Voir le match »
+//   3. Son synthétisé Web Audio « poc » balle de tennis (~120ms, sans asset) :
+//      ⚠️ jaune = 1 poc (modéré) · 🔴 rouge = 2 pocs (fort) · critique = 3 pocs (rapide)
+//      Toggle global Sons ON/OFF persistant localStorage 'tn_sound_enabled', défaut OFF.
+//   4. Notification desktop optionnelle (uniquement si permission déjà accordée).
+// ═══════════════════════════════════════════════════════════════════════════════
+window._tnAlertUI = window._tnAlertUI || {
+  active: new Map(),      // matchId → { metric, level, value, ts } (survit au re-rendu)
+  TTL: 5 * 60 * 1000,     // durée highlight = cooldown serveur (5 min)
+  soundEnabled: localStorage.getItem('tn_sound_enabled') === '1', // défaut OFF
+  audioCtx: null,
+};
+const _TN_ALERT_LABELS = {
+  dr_diff: 'Écart DR',
+  dr_var: 'Variance DR',
+  bppi_spike: 'Pression break',
+  momentum: 'Momentum',
+  prob_shift: 'Proba live',
+  set_overs: 'Set Overs',
+};
+
+function _tnAlertPurgeStale() {
+  const now = Date.now();
+  for (const [k, v] of window._tnAlertUI.active) {
+    if (!v || now - v.ts > window._tnAlertUI.TTL) window._tnAlertUI.active.delete(k);
+  }
+}
+
+// Classe de surlignage de la ligne — appelée par renderTennisLive à chaque rendu.
+function _tnAlertRowCls(id) {
+  _tnAlertPurgeStale();
+  const st = window._tnAlertUI.active.get(String(id));
+  if (!st) return '';
+  return ' tn-alert-' + (st.level === 'critical' ? 'critical' : (st.level === 'red' ? 'red' : 'yellow'));
+}
+
+// Badge métrique sur la carte — appelé par renderTennisLive à chaque rendu.
+function _tnAlertBadgeHtml(id) {
+  const st = window._tnAlertUI.active.get(String(id));
+  if (!st) return '';
+  const lbl = _TN_ALERT_LABELS[st.metric] || st.metric;
+  return ' <span class="tn-alert-badge">' + _escTennis(lbl) + (st.level === 'yellow' ? ' ⚠️' : ' 🔴') + '</span>';
+}
+
+// Applique immédiatement highlight + badge sur la ligne déjà rendue (sans re-rendu).
+function _tnAlertHighlightCard(idRaw, d) {
+  const id = String(idRaw).replace(/[^a-zA-Z0-9_:-]/g, ''); // sanitize défense en profondeur
+  if (!id) return;
+  const row = document.querySelector('.tn-live-row[data-tennis-id="' + id + '"]');
+  if (!row) return;
+  row.classList.remove('tn-alert-yellow', 'tn-alert-red', 'tn-alert-critical');
+  const lvl = d.level === 'critical' ? 'critical' : (d.level === 'red' ? 'red' : 'yellow');
+  row.classList.add('tn-alert-' + lvl);
+  let badge = row.querySelector('.tn-alert-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'tn-alert-badge';
+    (row.children[1] || row).appendChild(badge); // cellule tournoi
+  }
+  badge.textContent = (_TN_ALERT_LABELS[d.metric] || d.metric) + (lvl === 'yellow' ? ' ⚠️' : ' 🔴');
+}
+
+// Toast haut de page : pile (max 5), bouton « Voir le match », auto-dismiss 9s.
+function _tnAlertShowToast(d) {
+  let stack = document.getElementById('tn-alert-toast-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'tn-alert-toast-stack';
+    stack.className = 'tn-alert-toast-stack';
+    document.body.appendChild(stack);
+  }
+  const lvl = (d.level === 'red' || d.level === 'critical') ? 'red' : 'yellow';
+  const t = document.createElement('div');
+  t.className = 'tn-alert-toast tn-alert-toast-' + lvl;
+  const head = document.createElement('div');
+  head.className = 'tn-alert-toast-head';
+  const names = d.match ? ((d.match.player1 || '?') + ' vs ' + (d.match.player2 || '?')) : '';
+  head.textContent = '🎾 ' + names + ' — ' + (d.msg || '') + (lvl === 'yellow' ? ' ⚠️' : ' 🔴');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'tn-alert-toast-btn';
+  btn.textContent = 'Voir le match';
+  btn.onclick = function () { try { openTennisDetail(d.id); } catch (_) {} try { t.remove(); } catch (_) {} };
+  const close = document.createElement('span');
+  close.className = 'tn-alert-toast-close';
+  close.textContent = '✕';
+  close.setAttribute('role', 'button');
+  close.onclick = function () { try { t.remove(); } catch (_) {} };
+  t.appendChild(head);
+  t.appendChild(btn);
+  t.appendChild(close);
+  stack.appendChild(t);
+  while (stack.children.length > 5) stack.removeChild(stack.firstChild);
+  setTimeout(function () { t.style.opacity = '0'; setTimeout(function () { if (t.parentNode) t.remove(); }, 300); }, 9000);
+}
+
+// Son : synthèse Web Audio « poc » rebond de balle de tennis — oscillateur court +
+// filtre passe-bas, ~120ms, aucun asset externe. Autoplay-safe (resume() promisifié).
+function _tnAudioCtx() {
+  if (window._tnAlertUI.audioCtx) return window._tnAlertUI.audioCtx;
+  try {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    window._tnAlertUI.audioCtx = new Ctor();
+    return window._tnAlertUI.audioCtx;
+  } catch (_) { return null; }
+}
+function _tnAudioPoc(ctx, start, vol) {
+  const t0 = ctx.currentTime + start;
+  const osc = ctx.createOscillator();
+  const filt = ctx.createBiquadFilter();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(420, t0);
+  osc.frequency.exponentialRampToValueAtTime(150, t0 + 0.12); // chute de pitch = « poc »
+  filt.type = 'lowpass';
+  filt.frequency.value = 1100;
+  filt.Q.value = 0.7;
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+  osc.connect(filt); filt.connect(gain); gain.connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + 0.14);
+}
+function _tnAlertPlaySound(level) {
+  if (!window._tnAlertUI.soundEnabled) return;
+  const ctx = _tnAudioCtx();
+  if (!ctx) return;
+  const fire = function () {
+    try {
+      if (level === 'yellow') {
+        _tnAudioPoc(ctx, 0, 0.18); // ⚠️ 1 poc volume modéré
+      } else if (level === 'red') {
+        _tnAudioPoc(ctx, 0, 0.34); _tnAudioPoc(ctx, 0.24, 0.34); // 🔴 2 pocs volume fort
+      } else {
+        _tnAudioPoc(ctx, 0, 0.38); _tnAudioPoc(ctx, 0.16, 0.38); _tnAudioPoc(ctx, 0.32, 0.38); // 🔴 critique 3 pocs tempo rapide
+      }
+    } catch (e) { console.warn('[TennisAudio]', e.message); }
+  };
+  const p = ctx.resume && ctx.resume();
+  if (p && typeof p.then === 'function') p.then(fire).catch(function () {}); else fire();
+}
+
+// Notification desktop — optionnelle : uniquement si permission déjà accordée
+// (l'utilisateur l'accorde via window.cfEnablePushNotifications). Jamais de demande auto.
+function _tnAlertDesktopNotify(d) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  try {
+    const names = d.match ? ((d.match.player1 || '?') + ' vs ' + (d.match.player2 || '?')) : 'Alerte tennis';
+    new Notification('🎾 Alerte tennis — ' + names, { body: d.msg || '', tag: 'tn-alert-' + d.id });
+  } catch (_) {}
+}
+
+// Handler principal : état highlight → highlight immédiat → toast → son → notif.
+function _tnAlertHandle(d) {
+  if (!d || d.id == null) return;
+  const lvl = (d.level === 'red' || d.level === 'critical') ? d.level : 'yellow';
+  try {
+    window._tnAlertUI.active.set(String(d.id), { metric: d.metric, level: lvl, value: d.value, ts: d.ts || Date.now() });
+    _tnAlertHighlightCard(d.id, d);
+  } catch (_) {}
+  try { _tnAlertShowToast(d); } catch (_) {}
+  try { _tnAlertPlaySound(lvl); } catch (_) {}
+  try { _tnAlertDesktopNotify(d); } catch (_) {}
+}
+
+// Toggle global Sons ON/OFF (localStorage 'tn_sound_enabled', défaut OFF)
+window.psToggleTennisSound = function () {
+  window._tnAlertUI.soundEnabled = !window._tnAlertUI.soundEnabled;
+  localStorage.setItem('tn_sound_enabled', window._tnAlertUI.soundEnabled ? '1' : '0');
+  if (window._tnAlertUI.soundEnabled) {
+    const ctx = _tnAudioCtx(); // débloque l'AudioContext dans le geste utilisateur
+    if (ctx) { try { _tnAudioPoc(ctx, 0, 0.2); } catch (_) {} }
+  }
+  _tnAlertSyncSoundUI();
+  if (typeof showToast === 'function') showToast(window._tnAlertUI.soundEnabled ? '🔊 Sons tennis activés' : '🔇 Sons tennis coupés', 'success');
+  return window._tnAlertUI.soundEnabled;
+};
+// Synchronise tous les toggles + badge « son coupé » de l'onglet Alertes.
+function _tnAlertSyncSoundUI() {
+  const on = window._tnAlertUI.soundEnabled;
+  document.querySelectorAll('[data-tn-sound-toggle]').forEach(function (b) {
+    b.textContent = on ? '🔊 Sons tennis : ON' : '🔇 Sons tennis : OFF';
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  const off = document.getElementById('tn-sound-off-badge');
+  if (off) off.style.display = on ? 'none' : '';
+  const state = document.getElementById('tn-sound-state');
+  if (state) state.textContent = on
+    ? 'Activé — 1 poc (jaune), 2 pocs (rouge), 3 pocs (critique).'
+    : 'Désactivé par défaut — aucun son sans votre accord.';
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _tnAlertSyncSoundUI);
+else _tnAlertSyncSoundUI();
 
 async function tickTennisLive() {
   // BUG-LIVE-1 fix — l'HTML utilise id="tn2-live-status", l'ancien code cherchait "tennis-live-status" (toujours null).
@@ -12617,6 +12819,16 @@ function initSSE() {
   sseConnection.addEventListener('integrity_alert', function(e) {
     try { var d = JSON.parse(e.data); if (d) _showAlertToast(d); }
     catch (err) { console.warn('[SSE] integrity_alert error', err); }
+  });
+
+  // Sprint alertes-tennis — alertes live temps réel : son rebond balle + highlight
+  // carte + toast + notification desktop (6 métriques, cooldown serveur 5 min).
+  sseConnection.addEventListener('tennis_alert', e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (!d || d.id == null) return;
+      _tnAlertHandle(d);
+    } catch (err) { console.warn('[SSE] tennis_alert error', err); }
   });
 
   sseConnection.onopen = () => {

@@ -25099,6 +25099,195 @@ async function _fetchMSChallengerMatches() {
 
 let _tennisEloFinishedIds = new Set();
 
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ALERTES TENNIS UI TEMPS RÉEL — SSE 'tennis_alert' → son + visuel côté client
+//  6 métriques évaluées à chaque poll (30s) après calculs DR/BPPI/momentum/proba :
+//   1. Écart DR (domination)            |DR−1| ≥ 0.20 ⚠️ / ≥ 0.35 🔴 (critique)
+//   2. Variance DR inter-sets            ≥ 0.08 ⚠️ / ≥ 0.15 🔴 (re-fire à chaque set)
+//   3. Spike BPPI (pression break)       Δ ≥ 15 ⚠️ / Δ ≥ 25 🔴 (critique)
+//   4. Serve momentum gap                ≥ 25 ⚠️ / ≥ 40 🔴
+//   5. Bascule proba live (Δ 2 polls)    ≥ 0.10 ⚠️ / ≥ 0.20 🔴
+//   6. Set Overs (o85)                   ≥ 0.70 ⚠️ / ≥ 0.85 🔴
+//  Cooldown 5 min par (match × métrique) via _tnAlertOnCooldown/_tnAlertMark.
+//  Seuils surchargeables par env TENNIS_* (défauts = bornes validées ci-dessus).
+// ═══════════════════════════════════════════════════════════════════════════════
+const _TN_UI_ALERT = {
+  cooldown: 5 * 60 * 1000,
+  dr_y:   parseFloat(process.env.TENNIS_DR_DIFF_THRESHOLD    || '0.20'),
+  dr_r:   parseFloat(process.env.TENNIS_DR_DIFF_RED          || '0.35'),
+  var_y:  parseFloat(process.env.TENNIS_DR_VAR_THRESHOLD     || '0.08'),
+  var_r:  parseFloat(process.env.TENNIS_DR_VAR_RED           || '0.15'),
+  bppi_y: parseFloat(process.env.TENNIS_BPPI_DELTA_YELLOW    || '15'),
+  bppi_r: parseFloat(process.env.TENNIS_BPPI_DELTA_RED       || '25'),
+  mom_y:  parseFloat(process.env.TENNIS_MOMENTUM_GAP_YELLOW  || '25'),
+  mom_r:  parseFloat(process.env.TENNIS_MOMENTUM_GAP_RED     || '40'),
+  prob_y: parseFloat(process.env.TENNIS_PROB_DELTA_YELLOW    || '0.10'),
+  prob_r: parseFloat(process.env.TENNIS_PROB_DELTA_RED       || '0.20'),
+  ou_y:   parseFloat(process.env.TENNIS_SETOU_O85_YELLOW     || '0.70'),
+  ou_r:   parseFloat(process.env.TENNIS_SETOU_O85_RED        || '0.85'),
+};
+const _tnUIAlertProbPrev = new Map(); // matchId → liveProbability du poll précédent
+const _tnUIAlertBppiPrev = new Map(); // matchId → { p1, p2 } du poll précédent
+
+// Émet un événement SSE 'tennis_alert' vers tous les clients connectés.
+// level : 'yellow' | 'red' | 'critical' (critical = rouge sur métrique 1 ou 3).
+function _tnUIAlertEmit(m, metric, level, value, msg) {
+  try {
+    const sets = Array.isArray(m.sets) ? m.sets : [];
+    const lastSet = sets.length ? sets[sets.length - 1] : null;
+    broadcastSSE('tennis_alert', {
+      id: m.id,
+      metric,
+      level,
+      match: {
+        player1: (m.player1 && m.player1.name) || 'J1',
+        player2: (m.player2 && m.player2.name) || 'J2',
+        tournament: m.tournament || '',
+        sets: (m.player1_sets || 0) + '-' + (m.player2_sets || 0),
+        games: lastSet ? (lastSet.p1 + '-' + lastSet.p2) : '',
+      },
+      value,
+      msg,
+      ts: Date.now(),
+    });
+    console.log(`  [Tennis UIAlert] ${m.id} ${metric}=${value} (${level})`);
+  } catch (_) { /* SSE non bloquant */ }
+}
+
+// Évalue les 6 métriques pour chaque match live. Appelé en fin de pollTennisLive
+// (après enrichissements dr_exact / bppi / momentum_series / liveProbability / set_ou).
+function _evalTennisUIAlerts(data) {
+  const C = _TN_UI_ALERT;
+  const liveIds = new Set();
+  for (const m of data) {
+    if (!m || !m.id || !m.is_live) continue;
+    liveIds.add(m.id);
+    const p1n = (m.player1 && m.player1.name) || 'J1';
+    const p2n = (m.player2 && m.player2.name) || 'J2';
+
+    // ── Métrique 1 : Écart DR (domination) ── source dr_exact.dr
+    try {
+      let drVal = (m.dr_exact && Number.isFinite(m.dr_exact.dr)) ? m.dr_exact.dr : null;
+      if (drVal == null) {
+        const raw = computeTennisDRFromMatch(m);
+        if (raw && Number.isFinite(raw.dr)) drVal = raw.dr;
+      }
+      if (drVal != null) {
+        const gap = Math.abs(drVal - 1);
+        const key = 'tnui_dr:' + m.id;
+        if (gap >= C.dr_y && !_tnAlertOnCooldown(key, C.cooldown)) {
+          _tnAlertMark(key);
+          const red = gap >= C.dr_r;
+          const dominant = drVal >= 1 ? p1n : p2n;
+          _tnUIAlertEmit(m, 'dr_diff', red ? 'critical' : 'yellow', Number(gap.toFixed(2)),
+            'Écart DR ' + gap.toFixed(2) + ' → ' + dominant + ' domine, parier sur le dominant');
+        }
+      }
+    } catch (_) {}
+
+    // ── Métrique 2 : Variance DR inter-sets (re-fire à chaque nouveau set complet) ──
+    try {
+      const setHist = _tennisDRSetHist.get(m.id);
+      if (setHist) {
+        const entries = Object.keys(setHist)
+          .map(k => ({ set: parseInt(k, 10), dr: setHist[k] && setHist[k].dr }))
+          .filter(e => Number.isFinite(e.set) && Number.isFinite(e.dr))
+          .sort((a, b) => a.set - b.set);
+        if (entries.length >= 2) {
+          const vals = entries.map(e => e.dr);
+          const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+          const variance = vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vals.length;
+          // Clé inclut le nb de sets → re-fire automatique quand un set se complète
+          const key = 'tnui_var:' + m.id + ':' + entries.length;
+          if (variance >= C.var_y && !_tnAlertOnCooldown(key, C.cooldown)) {
+            _tnAlertMark(key);
+            const red = variance >= C.var_r;
+            _tnUIAlertEmit(m, 'dr_var', red ? 'red' : 'yellow', Number(variance.toFixed(3)),
+              'Variance DR/set ' + variance.toFixed(3) + ' sur ' + entries.length + ' sets → match instable, prudence sur le vainqueur');
+          }
+        }
+      }
+    } catch (_) {}
+
+    // ── Métrique 3 : Spike BPPI (pression break) ── Δ entre deux polls consécutifs
+    try {
+      const bppi = m.bppi;
+      const prevB = _tnUIAlertBppiPrev.get(m.id);
+      if (bppi && bppi.missing !== true && bppi.p1 != null && bppi.p2 != null) {
+        if (prevB) {
+          const d1 = Math.abs(bppi.p1 - prevB.p1);
+          const d2 = Math.abs(bppi.p2 - prevB.p2);
+          const delta = Math.max(d1, d2);
+          const key = 'tnui_bppi:' + m.id;
+          if (delta >= C.bppi_y && !_tnAlertOnCooldown(key, C.cooldown)) {
+            _tnAlertMark(key);
+            const red = delta >= C.bppi_r;
+            const side = d1 >= d2 ? p1n : p2n;
+            _tnUIAlertEmit(m, 'bppi_spike', red ? 'critical' : 'yellow', Math.round(delta),
+              'Spike pression break +' + Math.round(delta) + ' pts → ' + side + ' met la pression, surveiller le break');
+          }
+        }
+        _tnUIAlertBppiPrev.set(m.id, { p1: bppi.p1, p2: bppi.p2 });
+      } else {
+        _tnUIAlertBppiPrev.delete(m.id);
+      }
+    } catch (_) {}
+
+    // ── Métrique 4 : Serve momentum gap ── écart des forces momentum p1 vs p2
+    try {
+      const ms = m.momentum_series;
+      if (ms && Array.isArray(ms.p1_series) && ms.p1_series.length && Array.isArray(ms.p2_series) && ms.p2_series.length) {
+        const last1 = ms.p1_series[ms.p1_series.length - 1];
+        const last2 = ms.p2_series[ms.p2_series.length - 1];
+        const gapM = Math.abs(last1 - last2);
+        const key = 'tnui_mom:' + m.id;
+        if (gapM >= C.mom_y && !_tnAlertOnCooldown(key, C.cooldown)) {
+          _tnAlertMark(key);
+          const red = gapM >= C.mom_r;
+          const leader = last1 >= last2 ? p1n : p2n;
+          _tnUIAlertEmit(m, 'momentum', red ? 'red' : 'yellow', Math.round(gapM),
+            'Serve momentum écart ' + Math.round(gapM) + ' pts → ' + leader + ' contrôle le jeu');
+        }
+      }
+    } catch (_) {}
+
+    // ── Métrique 5 : Bascule proba live ── Δ entre deux polls consécutifs
+    try {
+      if (Number.isFinite(m.liveProbability)) {
+        const prevP = _tnUIAlertProbPrev.get(m.id);
+        if (prevP != null) {
+          const dP = Math.abs(m.liveProbability - prevP);
+          const key = 'tnui_prob:' + m.id;
+          if (dP >= C.prob_y && !_tnAlertOnCooldown(key, C.cooldown)) {
+            _tnAlertMark(key);
+            const red = dP >= C.prob_r;
+            const fav = m.liveProbability >= 0.5 ? p1n : p2n;
+            _tnUIAlertEmit(m, 'prob_shift', red ? 'red' : 'yellow', Number(dP.toFixed(2)),
+              'Bascule proba live Δ' + Math.round(dP * 100) + ' pts → ' + fav + ' désormais à ' + Math.round(m.liveProbability * 100) + '%');
+          }
+        }
+        _tnUIAlertProbPrev.set(m.id, m.liveProbability);
+      } else {
+        _tnUIAlertProbPrev.delete(m.id);
+      }
+    } catch (_) {}
+
+    // ── Métrique 6 : Set Overs ── proba Over 8.5 jeux du set courant
+    try {
+      const o85 = (m.set_ou && Number.isFinite(m.set_ou.o85)) ? m.set_ou.o85 : null;
+      if (o85 != null && o85 >= C.ou_y && !_tnAlertOnCooldown('tnui_ou:' + m.id, C.cooldown)) {
+        _tnAlertMark('tnui_ou:' + m.id);
+        const red = o85 >= C.ou_r;
+        _tnUIAlertEmit(m, 'set_overs', red ? 'red' : 'yellow', Number(o85.toFixed(2)),
+          'Set Over 8.5 jeux à ' + Math.round(o85 * 100) + '% → set long probable, viser Over games');
+      }
+    } catch (_) {}
+  }
+  // Purge des états prev pour les matchs disparus (fin de match / déconnectés)
+  for (const k of _tnUIAlertProbPrev.keys()) if (!liveIds.has(k)) _tnUIAlertProbPrev.delete(k);
+  for (const k of _tnUIAlertBppiPrev.keys()) if (!liveIds.has(k)) _tnUIAlertBppiPrev.delete(k);
+}
+
 async function pollTennisLive() {
   if (_isFetchingTennis) return;
   _isFetchingTennis = true;
@@ -25820,6 +26009,10 @@ DR = **${_d2S}**${_p2Dom ? ' ✅ >=1.50' : ''}`, inline: true },
         } catch (_) { /* non bloquant */ }
       }
     } catch (_) { /* non bloquant */ }
+    // Sprint alertes-tennis — évaluateur d'alertes UI temps réel (SSE 'tennis_alert')
+    // Positionné après tous les enrichissements : dr_exact, bppi, momentum_series,
+    // liveProbability, set_ou. Non bloquant : jamais d'échec du poll pour une alerte.
+    try { _evalTennisUIAlerts(data); } catch (e) { console.warn('  [Tennis UIAlert]', e.message); }
     _tennisLiveCache = { ts: Date.now(), data };
     try { verifyPendingTennisAlerts(data); } catch (e) { console.warn('  [TennisAlerts] verifyPending:', e.message); }
     try { verifyPendingFootAlerts(); } catch (e) { console.warn('  [FootAlerts] verifyPending:', e.message); }

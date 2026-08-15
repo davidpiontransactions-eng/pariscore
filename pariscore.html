@@ -7949,6 +7949,35 @@
   .paris-tab { background: transparent; border: none; padding: 8px 14px; font-size: 11px; font-family: var(--font-mono); color: var(--text2); cursor: pointer; text-transform: uppercase; letter-spacing: .5px; border-bottom: 2px solid transparent; }
   .paris-tab.active { color: var(--green); border-bottom-color: var(--green); }
 
+  /* ── Alertes tennis temps réel (SSE tennis_alert) — son + visuel ── */
+  .tn-alert-toast-stack { position: fixed; top: 18px; left: 50%; transform: translateX(-50%); z-index: 9200; display: flex; flex-direction: column; gap: 8px; max-width: 560px; width: calc(100% - 32px); pointer-events: none; }
+  .tn-alert-toast {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    font-size: 12.5px; line-height: 1.4; font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0,0,0,.42);
+    animation: tnAlertIn .25s ease;
+    backdrop-filter: var(--cf-blur-light);
+  }
+  .tn-alert-toast-yellow { background: rgba(58,48,0,.96); border: 1px solid #ffc107; color: #ffe9a8; }
+  .tn-alert-toast-red { background: rgba(58,10,10,.96); border: 1px solid #ff4d4d; color: #ffd7d7; }
+  .tn-alert-toast-head { flex: 1; min-width: 0; }
+  .tn-alert-toast-btn { background: var(--accent,#00e676); color: #00140a; border: none; border-radius: 6px; padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .tn-alert-toast-btn:hover { filter: brightness(1.1); }
+  .tn-alert-toast-close { cursor: pointer; opacity: .6; padding: 0 2px; font-size: 13px; }
+  .tn-alert-toast-close:hover { opacity: 1; }
+  @keyframes tnAlertIn { from { transform: translateY(-14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  /* Highlight carte match tennis live (outline = pas de shift layout) */
+  .tn-live-row.tn-alert-yellow { outline: 2px solid #ffc107; outline-offset: -1px; box-shadow: 0 0 10px rgba(255,193,7,.30); }
+  .tn-live-row.tn-alert-red { outline: 2px solid #ff4d4d; outline-offset: -1px; box-shadow: 0 0 12px rgba(255,77,77,.42); }
+  .tn-live-row.tn-alert-critical { outline: 2px solid #ff4d4d; outline-offset: -1px; animation: tnAlertPulse 1.2s ease-in-out infinite; }
+  @keyframes tnAlertPulse { 0%,100% { box-shadow: 0 0 8px rgba(255,77,77,.35); } 50% { box-shadow: 0 0 18px rgba(255,77,77,.75); } }
+  .tn-alert-badge { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 9px; font-weight: 800; background: rgba(74,56,0,.9); color: #ffd54f; border: 1px solid #ffc107; vertical-align: middle; }
+  .tn-live-row.tn-alert-red .tn-alert-badge, .tn-live-row.tn-alert-critical .tn-alert-badge { background: rgba(74,16,16,.9); color: #ff8a80; border-color: #ff4d4d; }
+  /* Badge « son coupé » sur l'onglet Alertes de la nav */
+  #tn-sound-off-badge { display: inline-block; margin-left: 5px; padding: 1px 5px; border-radius: 6px; font-size: 8px; font-weight: 700; letter-spacing: .3px; background: rgba(58,10,10,.85); color: #ff8a80; border: 1px solid #ff4d4d; vertical-align: middle; }
+
   /* bd vl02 · Alertes SSE live edge math (favorite_trap + goal_flood) */
   .alert-toast-stack { position: fixed; top: 18px; right: 18px; z-index: 9100; display: flex; flex-direction: column; gap: 8px; pointer-events: none; max-width: 360px; }
   .alert-toast {
@@ -12587,7 +12616,7 @@ function psSetLang(v) {
     <a href="javascript:void(0)" onclick="showPage('comparateur',this);return false;" data-page="comparateur" aria-label="Comparateur" data-i18n="nav.comparateur">Comparateur</a>
     <a href="javascript:void(0)" onclick="showPage('predictions',this);return false;" data-page="predictions" aria-label="Prédictions IA" data-i18n="nav.predictions">Prédictions IA</a>
     <a href="javascript:void(0)" onclick="showPage('tendances',this);return false;" data-page="tendances" aria-label="Tendances" data-i18n="nav.tendances">Tendances</a>
-    <a href="javascript:void(0)" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes" data-i18n="nav.alertes">Alertes</a>
+    <a href="javascript:void(0)" onclick="showPage('alertes',this);return false;" data-page="alertes" aria-label="Alertes"><span data-i18n="nav.alertes">Alertes</span><span id="tn-sound-off-badge" title="Sons des alertes tennis désactivés — onglet Alertes pour activer">son coupé</span></a>
     <a href="javascript:void(0)" onclick="showPage('tennis-alerts',this);return false;" data-page="tennis-alerts" aria-label="Alertes Tennis" data-i18n="nav.tennis_alerts">Alertes Tennis</a>
     <a href="javascript:void(0)" onclick="showPage('historique',this);return false;" data-page="historique" aria-label="Historique" data-i18n="nav.historique">Historique</a>
     <a href="javascript:void(0)" onclick="showPage('accueil',this);return false;" data-page="accueil" aria-label="Accueil" data-i18n="nav.accueil">Accueil</a>
@@ -15377,6 +15406,16 @@ function psSetLang(v) {
   <div class="section-label" data-i18n="alerts.label">Mes Alertes</div>
   <div class="section-title" data-i18n="alerts.title">Alertes<br>Personnalisées.</div>
   <div class="section-sub" data-i18n="alerts.subtitle">Configurez vos critères une fois. Recevez une alerte Telegram instantanée dés qu'une opportunité correspond · votre profil.</div>
+
+  <!-- Sprint alertes-tennis · Sons des alertes tennis (toggle global, défaut OFF) -->
+  <div class="alert-cfg-card" id="tn-sound-card">
+    <div class="alert-cfg-title">🎾 Sons des alertes tennis</div>
+    <div class="alert-cfg-sub">Quand une métrique live franchit une borne (écart DR, variance DR, pression break, momentum, proba, set overs), un « poc » de balle de tennis est joué : 1 poc = jaune ⚠️, 2 pocs = rouge 🔴, 3 pocs = critique. La carte du match est aussi surlignée avec un toast explicatif.</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap;">
+      <button type="button" data-tn-sound-toggle onclick="psToggleTennisSound()" aria-pressed="false" style="padding:8px 14px;background:var(--bg4);border:1px solid var(--text3);color:var(--text);border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:700;">🔇 Sons tennis : OFF</button>
+      <span id="tn-sound-state" style="font-size:12px;color:var(--text2);">Désactivé par défaut — aucun son sans votre accord.</span>
+    </div>
+  </div>
 
   <!-- Gate : non connecté -->
   <div id="al-login-gate" class="al-login-gate" style="display:none;">
