@@ -56,7 +56,11 @@ async function loadTennis(): Promise<SportNode> {
     const json = await getJson("/api/tennis/prematch");
     return groupRawMatches("tennis", tennisToRaw(json?.matches ?? []));
   } catch {
-    return emptySportNode("tennis");
+    // /api/tennis/prematch en erreur (503 : BSD+odds-api indisponibles, cache
+    // périmé) → nœud marqué `degraded` plutôt qu'un « Tennis | 0 » trompeur.
+    // Les matchs réels restent lisibles via l'onglet tennis (usePrematchMatches
+    // gère son propre état de charge) — on ne prétend pas ici qu'il n'y a rien.
+    return { ...emptySportNode("tennis"), degraded: true };
   }
 }
 

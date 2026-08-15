@@ -3,6 +3,13 @@ import type { MatchViewMode, TimeFilterKey } from "@/lib/match-view";
 /** Fenêtre temporelle de filtrage des coups d'envoi (pills horaires). */
 export type TimeFilterHours = TimeFilterKey;
 
+/** Cotes décimales 1X2 / probabilités de modèle d'un match (signaux P0-1/P0-2). */
+export interface TreeMarketRef {
+  home: number;
+  draw: number;
+  away: number;
+}
+
 /** Résumé léger d'un match pour le niveau 4 de l'arborescence. */
 export interface TreeMatchSummary {
   id: string;
@@ -14,6 +21,18 @@ export interface TreeMatchSummary {
   scheduledAt: string;
   /** Match en direct (affiche un point rouge à la place de l'heure). */
   isLive?: boolean;
+  /**
+   * Cotes décimales 1X2 si disponibles (signal P0-1 : mini-boutons cliquables).
+   * Absent quand la source ne fournit pas de cotes (dégradé → pas de bouton).
+   */
+  odds?: TreeMarketRef;
+  /** Probabilités de modèle 1X2 en % (repli d'affichage quand pas de cote). */
+  prob?: TreeMarketRef;
+  /**
+   * Edge de valeur 1X2 (max sur 1/X/2 de `modelProb − (1/odds)*100`), en points
+   * de % — permet le badge « +2,1 » par match/ligue (signal P0-2). null → non calculé.
+   */
+  edgePct?: number | null;
 }
 
 /** Niveau 3 — Championnat / ligue / compétition. */
@@ -26,6 +45,11 @@ export interface LeagueNode {
   sportId: string;
   /** Prochaines rencontres (niveau 4, optionnel). */
   matches?: TreeMatchSummary[];
+  /**
+   * Valeur moyenne d'edge 1X2 (en points de %) sur les matchs de la ligue
+   * avec cotes+modèle (signal P0-2). `undefined` = pas de signal calculable.
+   */
+  edgePct?: number;
 }
 
 /** Niveau 2 — Pays / région (ou catégorie de circuit au tennis). */
@@ -46,6 +70,13 @@ export interface SportNode {
   /** Nombre de matchs en direct (badge rouge). */
   liveMatches: number;
   countries: CountryNode[];
+  /**
+   * Vrai quand l'endpoint du sport a échoué (ex. /api/tennis/prematch → 503)
+   * et que le nœud est vide par indisponibilité, PAS parce qu'aucun match
+   * n'existe. Permet à l'UI d'afficher « données indisponibles » au lieu
+   * d'un compteur 0 trompeur.
+   */
+  degraded?: boolean;
 }
 
 export type SidebarMode = MatchViewMode;

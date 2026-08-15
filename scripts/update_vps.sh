@@ -79,6 +79,13 @@ BUILD_RAN=0
 if [ "$NEED_BUILD" = "1" ]; then
   echo "[4/6] Next.js build..."
   npm run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
+  # Garde-fou (BUG-1) : un build Next ok ne garantit pas l'export standalone.
+  # Si server.js est absent, pm2 crash en boucle (502) ; on STOPE le deploy
+  # plutot que de conclure VPS_DEPLOY_OK / health OK en trompe-l'oeil.
+  if [ ! -f .next/standalone/server.js ]; then
+    echo "ERR: .next/standalone/server.js absent apres next build - deploy aborted"
+    exit 1
+  fi
   BUILD_RAN=1
 else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"

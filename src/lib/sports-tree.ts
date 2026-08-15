@@ -36,6 +36,35 @@ export const SPORT_META: Record<SportTabId, { name: string; icon: string }> = {
   rugby: { name: "Rugby", icon: "Shield" },
 };
 
+// ---------------------------------------------------------------------------
+// Catalogue statique « Favoris & top championnats » (bloc 3 de la sidebar)
+// ---------------------------------------------------------------------------
+
+/**
+ * Favoris par défaut épinglés dans le bloc 3, DÉTACHÉS de la disponibilité
+ * des données de match (corrige BUG-2 : le bloc disparaissait quand les
+ * endpoints tennis/NBA étaient en erreur). Ids au format `sport:slug-ligue`,
+ * le même que celui des nœuds de l'arbre ; une ligue donnée peut ne pas
+ * exister dans l'arbre chargé — l'UI affiche alors un nœud synthétique à
+ * compteur 0 plutôt que de masquer le bloc.
+ */
+export const DEFAULT_FAVORITE_LEAGUES: ReadonlyArray<{
+  id: string;
+  sportId: SportTabId;
+  name: string;
+}> = [
+  { id: "football:champions-league", sportId: "football", name: "Champions League" },
+  { id: "football:premier-league", sportId: "football", name: "Premier League" },
+  { id: "football:ligue-1", sportId: "football", name: "Ligue 1" },
+  { id: "tennis:grand-slam", sportId: "tennis", name: "Grand Slam" },
+  { id: "nba:nba", sportId: "nba", name: "NBA" },
+];
+
+/** Vrai si l'id de ligue correspond à un favori par défaut du catalogue. */
+export function isDefaultFavoriteLeague(id: string): boolean {
+  return DEFAULT_FAVORITE_LEAGUES.some((d) => d.id === id);
+}
+
 /** Forme intermédiaire normalisée d'un match, tous sports confondus. */
 export interface RawTreeMatch {
   id: string;
@@ -48,6 +77,40 @@ export interface RawTreeMatch {
   countryName: string;
   /** ISO 3166-1 alpha-2 ; « INT » lorsque non applicable. */
   countryCode: string;
+  /** Cotes décimales 1X2 (P0-1). Optionnelles — dégradé si absentes. */
+  oddsH?: number;
+  oddsD?: number;
+  oddsA?: number;
+  /** Probabilités de modèle 1X2 en % (P0-2). Optionnelles. */
+  probH?: number;
+  probD?: number;
+  probA?: number;
+}
+
+/**
+ * Edge de valeur 1X2 : max sur les issues {1, X, 2} de `modelProb − (1/odds)*100`
+ * (probabilité implicite de-vig). Ne renvoie un nombre que si cotes (toutes)
+ * ET probabilités (toutes) sont présentes et saines ; sinon `null`.
+ */
+export function best1x2Edge(
+  probH?: number,
+  probD?: number,
+  probA?: number,
+  oddsH?: number,
+  oddsD?: number,
+  oddsA?: number,
+): number | null {
+  if (
+    !Number.isFinite(probH) || !Number.isFinite(probD) || !Number.isFinite(probA) ||
+    !Number.isFinite(oddsH) || !Number.isFinite(oddsD) || !Number.isFinite(oddsA) ||
+    oddsH! <= 1 || oddsD! <= 1 || oddsA! <= 1
+  ) return null;
+  const edges = [
+    probH! - (1 / oddsH!) * 100,
+    probD! - (1 / oddsD!) * 100,
+    probA! - (1 / oddsA!) * 100,
+  ];
+  return Math.max(...edges);
 }
 
 const INT = "INT";
@@ -98,13 +161,20 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
       country.leagues.push(league);
     }
     league.matchCount++;
-    league.matches!.push({
+    const edge = best1x2Edge(raw.probH, raw.probD, raw.probA, raw.oddsH, raw.oddsD, raw.oddsA);
+    const hasOdds = Number.isFinite(raw.oddsH) && Number.isFinite(raw.oddsD) && Number.isFinite(raw.oddsA);
+    const hasProb = Number.isFinite(raw.probH) && Number.isFinite(raw.probD) && Number.isFinite(raw.probA);
+    const summary: TreeMatchSummary = {
       id: raw.id,
       homeName: raw.homeName,
       awayName: raw.awayName,
       scheduledAt: raw.scheduledAt ?? "",
       isLive: raw.isLive,
-    });
+      edgePct: edge,
+    };
+    if (hasOdds) summary.odds = { home: raw.oddsH!, draw: raw.oddsD!, away: raw.oddsA! };
+    if (hasProb) summary.prob = { home: raw.probH!, draw: raw.probD!, away: raw.probA! };
+    league.matches!.push(summary);
   }
 
   const countries = Array.from(countryMap.values());
@@ -112,6 +182,14 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
     country.leagues.sort((a, b) => b.matchCount - a.matchCount || a.name.localeCompare(b.name));
     for (const league of country.leagues) {
       league.matches = pickLevel4(league.matches ?? []);
+      // Edge moyen de la ligue (P0-2) : moyenne des edges 1X2 calculables.
+      const edges = (league.matches as TreeMatchSummary[])
+        .map((m) => m.edgePct)
+        .filter((e): e is number => Number.isFinite(e));
+      if (edges.length > 0) {
+        const avg = edges.reduce((s, e) => s + e, 0) / edges.length;
+        if (Number.isFinite(avg)) league.edgePct = Math.round(avg * 10) / 10;
+      }
     }
   }
   countries.sort((a, b) => {
@@ -159,6 +237,12 @@ type MinimalFootballMatch = {
   home?: { name?: string | null } | null;
   away?: { name?: string | null } | null;
   live?: { status?: string | null } | null;
+  prediction?: {
+    homeProb?: number | null;
+    drawProb?: number | null;
+    awayProb?: number | null;
+  } | null;
+  odds?: { home?: number | null; draw?: number | null; away?: number | null } | null;
 };
 
 export function footballToRaw(matches: MinimalFootballMatch[] | undefined | null): RawTreeMatch[] {
@@ -168,17 +252,32 @@ export function footballToRaw(matches: MinimalFootballMatch[] | undefined | null
     .map((m) => {
       const isLive = !!m.live && (m.live.status === "LIVE" || m.live.status === "HT");
       const country = m.league?.country?.trim() || "International";
-      return {
+      const pred = m.prediction;
+      const raw: RawTreeMatch = {
         id: String(m.id),
+        isLive,
         homeName: m.home!.name!,
         awayName: m.away!.name!,
         scheduledAt: isValidDate(m.scheduledAt) ? m.scheduledAt! : null,
-        isLive,
         leagueId: String(m.league?.id ?? slug(m.league?.name ?? "autre")),
         leagueName: m.league?.name?.trim() || "Autre compétition",
         countryName: country,
         countryCode: m.league?.countryCode?.trim() || INT,
       };
+      const probOk = pred && Number.isFinite(pred.homeProb) && Number.isFinite(pred.drawProb) && Number.isFinite(pred.awayProb);
+      if (probOk) {
+        raw.probH = pred!.homeProb!;
+        raw.probD = pred!.drawProb!;
+        raw.probA = pred!.awayProb!;
+      }
+      const odds = m.odds;
+      const oddsOk = odds && Number.isFinite(odds.home) && Number.isFinite(odds.draw) && Number.isFinite(odds.away);
+      if (oddsOk) {
+        raw.oddsH = odds!.home!;
+        raw.oddsD = odds!.draw!;
+        raw.oddsA = odds!.away!;
+      }
+      return raw;
     });
 }
 
@@ -403,7 +502,17 @@ type MinimalRugbyCompetition = {
   upcomingCount?: number | null;
 };
 
-/** Rugby : pas de matchs individuels agrégés — counts depuis `upcomingCount`. */
+/**
+ * Rugby : pas de matchs individuels agrégés — counts depuis `upcomingCount`.
+ *
+ * ⚠️ Sémantique du badge (BUG-4) : `upcomingCount` = « prochains matchs
+ * programmés » sur une fenêtre future large (plusieurs semaines), tandis que
+ * les autres sports comptent les matchs de la fenêtre temporelle affichée
+ * (jour / N heures). Un badge rugby est donc naturellement **plus grand** que
+ * football/baseball à sémantique comparable. On DOCUMENTE la différence ici
+ * (et dans le tooltip) au lieu de la masquer. `applyTimeFilter` ne filtre pas
+ * ces ligues (pas de détail de matchs) → leur count reste « à venir ».
+ */
 export function rugbyLeagues(competitions: MinimalRugbyCompetition[] | undefined | null): LeagueNode[] {
   const list = Array.isArray(competitions) ? competitions : [];
   return list

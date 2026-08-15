@@ -24,7 +24,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { TIME_RANGE_OPTIONS, type MatchViewMode } from "@/lib/match-view";
-import { applyTimeFilter, filterTreeByQuery } from "@/lib/sports-tree";
+import {
+  applyTimeFilter,
+  DEFAULT_FAVORITE_LEAGUES,
+  filterTreeByQuery,
+  isDefaultFavoriteLeague,
+} from "@/lib/sports-tree";
 import type {
   CountryNode,
   LeagueNode,
@@ -52,19 +57,6 @@ const SPORT_ICONS: Record<string, LucideIcon> = {
 };
 
 /** Favoris par défaut tant que l'utilisateur n'a pas personnalisé. */
-const DEFAULT_FAVORITE_PATTERNS = [
-  "champions league",
-  "premier league",
-  "ligue 1",
-  "grand slam",
-];
-
-function isDefaultFavorite(league: LeagueNode): boolean {
-  if (league.id === "nba:nba") return true;
-  const name = league.name.toLowerCase();
-  return DEFAULT_FAVORITE_PATTERNS.some((p) => name.includes(p));
-}
-
 function formatKickoff(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -228,12 +220,30 @@ function CountBadge({ n, live }: { n: number; live?: boolean }) {
   );
 }
 
+/**
+ * Badge d'edge de valeur 1X2 moyen d'une ligue (P0-2) : « +2,1 » si le modèle
+ * surpasse les cotes (value), « −1,3 » sinon. Vert quand value positive.
+ */
+function EdgeBadge({ value }: { value: number }) {
+  const positive = Number.isFinite(value) && value > 0;
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded px-1 py-0.5 font-mono text-[10px] leading-none tabular-nums",
+        positive ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/10 text-red-300/80",
+      )}
+    >
+      {value > 0 ? `+ ${value.toFixed(1)}` : value.toFixed(1)}
+    </span>
+  );
+}
+
 function FavoriteStar({ league }: { league: LeagueNode }) {
   const t = useTranslations("sportsSidebar");
   const favoriteIds = useSportsSidebarStore((s) => s.favoriteLeagueIds);
   const customized = useSportsSidebarStore((s) => s.favoritesCustomized);
   const toggleFavorite = useSportsSidebarStore((s) => s.toggleFavoriteLeague);
-  const isFav = customized ? favoriteIds.includes(league.id) : isDefaultFavorite(league);
+  const isFav = customized ? favoriteIds.includes(league.id) : isDefaultFavoriteLeague(league.id);
 
   return (
     <button
@@ -280,12 +290,11 @@ function CountryFlag({ code, name }: { code: string; name: string }) {
       loading="lazy"
       className="h-[11px] w-4 shrink-0 rounded-[2px] object-cover"
       onError={(e) => {
-        e.currentTarget.replaceWith(
-          Object.assign(document.createElement("span"), {
-            textContent: getFlagEmoji(code),
-            className: "text-[13px] leading-none",
-          }),
-        );
+        const span = document.createElement("span");
+        span.setAttribute("aria-hidden", "true");
+        span.textContent = getFlagEmoji(code);
+        span.className = "text-[13px] leading-none";
+        e.currentTarget.replaceWith(span);
       }}
     />
   );
@@ -306,12 +315,12 @@ function MatchRow({
 }) {
   const t = useTranslations("sportsSidebar");
 
-  const handleClick = () => {
+  const openDetail = (pick?: string) => {
     const sport = league.sportId;
     if (sport === "football" || sport === "tennis") {
       window.dispatchEvent(
         new CustomEvent("open-match-detail", {
-          detail: { sport, matchId: match.id },
+          detail: { sport, matchId: match.id, market: pick ?? "1X2" },
         }),
       );
     } else {
@@ -319,30 +328,72 @@ function MatchRow({
     }
   };
 
+  // Cotes 1X2 (P0-1) avec repli sur les probabilités de modèle (P0-2).
+  const hasOdds = !!match.odds;
+  const cells: Array<{ label: string; value: string }> = hasOdds
+    ? [
+        { label: "1", value: match.odds!.home.toFixed(2) },
+        { label: "X", value: match.odds!.draw.toFixed(2) },
+        { label: "2", value: match.odds!.away.toFixed(2) },
+      ]
+    : match.prob
+      ? [
+          { label: "1", value: `${Math.round(match.prob.home)}%` },
+          { label: "X", value: `${Math.round(match.prob.draw)}%` },
+          { label: "2", value: `${Math.round(match.prob.away)}%` },
+        ]
+      : [];
+
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      title={t("level4Open")}
-      className={cn(
-        "flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] text-slate-400",
-        "transition-colors hover:bg-slate-800/80 hover:text-slate-200",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-      )}
-    >
+    <div className="flex w-full items-center gap-1.5 rounded px-1 py-1 pl-0 text-[11px] text-slate-400 hover:bg-slate-800/80">
       {match.isLive ? (
-        <span aria-hidden className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" />
+        <span aria-hidden className="ml-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" />
       ) : (
-        <span className="w-8 shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
+        <span className="ml-1 w-8 shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
           {formatKickoff(match.scheduledAt)}
         </span>
       )}
-      <span className="truncate">
+      <button
+        type="button"
+        onClick={() => openDetail()}
+        title={t("level4Open")}
+        className="min-w-0 flex-1 truncate rounded px-1 text-left transition-colors hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         {match.homeName}
         {match.awayName ? ` – ${match.awayName}` : ""}
-      </span>
-    </button>
+      </button>
+      {cells.length ? (
+        <span className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+          {cells.map((c, i) => (
+            <button
+              key={c.label}
+              type="button"
+              aria-label={`${c.label} ${c.value}`}
+              onClick={() => openDetail(c.label)}
+              className={cn(
+                "rounded bg-slate-800/80 px-1 py-0.5 font-mono text-[10px] tabular-nums transition-colors",
+                "hover:bg-emerald-600/25 hover:text-emerald-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                i === bestCellIndex(cells) && hasOdds
+                  ? "text-emerald-300"
+                  : "text-slate-400",
+              )}
+            >
+              {c.value}
+            </button>
+          ))}
+        </span>
+      ) : (
+        <span />
+      )}
+    </div>
   );
+}
+
+/** Index de la « meilleure » cote (la plus basse = favori) pour la surbrillance. */
+function bestCellIndex(cells: Array<{ label: string; value: string }>): number {
+  const nums = cells.map((c) => parseFloat(c.value));
+  if (nums.some((n) => !Number.isFinite(n))) return -1;
+  return nums.indexOf(Math.min(...nums));
 }
 
 function LeagueRow({
@@ -396,6 +447,9 @@ function LeagueRow({
         >
           {league.name}
         </button>
+        {league.edgePct != null && Number.isFinite(league.edgePct) ? (
+          <EdgeBadge value={league.edgePct} />
+        ) : null}
         <CountBadge n={league.matchCount} />
         <FavoriteStar league={league} />
       </div>
@@ -501,7 +555,16 @@ function SportBlock({
           {sportLabel}
         </span>
         {sport.liveMatches > 0 ? <CountBadge n={sport.liveMatches} live /> : null}
-        <CountBadge n={sport.totalMatches} />
+        {sport.degraded && sport.totalMatches === 0 ? (
+          <span
+            title="Données indisponibles (API sport en erreur)"
+            className="rounded-full border border-dashed border-amber-500/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-400/80"
+          >
+            indispo
+          </span>
+        ) : (
+          <CountBadge n={sport.totalMatches} />
+        )}
         <ChevronRight
           aria-hidden
           className={cn("h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform", expanded && "rotate-90")}
@@ -539,22 +602,52 @@ function FavoritesBlock({
   const favoriteIds = useSportsSidebarStore((s) => s.favoriteLeagueIds);
   const customized = useSportsSidebarStore((s) => s.favoritesCustomized);
 
+  // Bloc TOUJOURS visible (spec §2.1). Les favoris par défaut viennent du
+  // catalogue statique détaché des données de match (BUG-2) : une ligue
+  // manquante dans l'arbre (tennis 503 / NBA down) est affichée en nœud
+  // synthétique à compteur 0, jamais masquée.
   const favorites = useMemo(() => {
-    const found: LeagueNode[] = [];
+    const byId = new Map<string, LeagueNode>();
+    const byName = new Map<string, LeagueNode>();
     for (const sport of tree) {
       for (const country of sport.countries) {
         for (const league of country.leagues) {
-          const isFav = customized
-            ? favoriteIds.includes(league.id)
-            : isDefaultFavorite(league);
-          if (isFav) found.push(league);
+          byId.set(league.id, league);
+          byName.set(`${league.sportId}|${league.name.toLowerCase()}`, league);
         }
       }
     }
+
+    // Les ids des nœuds réels de l'arbre (ex. football:42) diffèrent des ids
+    // du catalogue statique (ex. football:champions-league) : on préfère
+    // retrouver la ligue par nom pour conserver son vrai compteur de matchs.
+    const resolve = (id: string): LeagueNode | null => {
+      const exact = byId.get(id);
+      if (exact) return exact;
+      const def = DEFAULT_FAVORITE_LEAGUES.find((d) => d.id === id);
+      if (!def) return null;
+      const byNameHit = byName.get(`${def.sportId}|${def.name.toLowerCase()}`);
+      return byNameHit ?? { id: def.id, name: def.name, matchCount: 0, sportId: def.sportId };
+    };
+
+    const ids = customized ? favoriteIds : DEFAULT_FAVORITE_LEAGUES.map((d) => d.id);
+    const found: LeagueNode[] = [];
+    for (const id of ids) {
+      const node = resolve(id);
+      if (node && !found.some((o) => o.id === node.id)) found.push(node);
+    }
+    // Favoris vides (utilisateur a tout retiré) : on retombe sur le catalogue
+    // par défaut pour que le bloc reste visible sans trouer la sidebar.
+    if (found.length === 0) {
+      return DEFAULT_FAVORITE_LEAGUES.map((d) => ({
+        id: d.id,
+        name: d.name,
+        matchCount: 0,
+        sportId: d.sportId,
+      }));
+    }
     return found.slice(0, 10);
   }, [tree, favoriteIds, customized]);
-
-  if (favorites.length === 0) return null;
 
   return (
     <section aria-label={t("favorites")} className="border-b border-slate-800/80 pb-2">
