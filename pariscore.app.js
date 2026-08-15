@@ -770,6 +770,8 @@ let globalAccuracy = null; // stocke meta.accuracy pour colonne 2
 let activeTopN    = 0;        // Top N meilleurs paris (0 = tous)
 let activeTopMarket = '';    // legacy (marché unique) — conservé pour compat
 let activeStrategies = [];   // multi-sélection clés STRATEGIES_UI (Top stratégies)
+let activeTemporalWindow = 0; // 0 = tous, >0 = heures (ex: 6 = prochaines 6h)
+let activeConfCriteria = { confidence: 0, edge: 0, consensus: false, histLeague: false };
 let pinnedMatchIds = new Set(); // lignes épinglées en haut du tableau
 let activeTopValue = 0;      // 1 = value bets only (edge ≥ 3%)
 let topRankMap = {};         // { matchId: rank } pour les badges de rang
@@ -1134,85 +1136,34 @@ function _renderF1Grid(drivers) {
 }
 
 // ─── Cyclisme vertical (TDF 2026, Plackett-Luce mock — Sprint 2) bd ParisScorebis-ttcp ───
-// FIX 2026-07-13 : backoff d'erreur appliqué pour de vrai (setInterval codé dur ne
-// l'appliquait jamais → l'UI spammeait l'API toutes les 5 min même en cas d'échec
-// continu). Remplacé par setTimeout récursif qui reprogramme réellement avec
-// _cycErrBackoff. Ajout d'un fetch parallèle de /_health pour afficher l'âge des
-// données (stale/degraded/critical) à l'utilisateur.
 var _cycPoll = null, _cycErrBackoff = 300000;
-var _cycFavPoll = null, _cycFavErrBackoff = 600000;
-var _CYC_BASE_MS = 300000;   // 5 min — intervalle nominal (modèle)
-var _CYC_FAV_MS = 600000;    // 10 min — intervalle nominal (favoris)
-var _CYC_MAX_MS = 3600000;   // 1 h — plafond backoff
+var _cycFavPoll = null;
 function _cycEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]; }); }
 window.initCyclingPage = function () {
-  _cycErrBackoff = _CYC_BASE_MS;
-  _cycFavErrBackoff = _CYC_FAV_MS;
+  _cycErrBackoff = 300000;
   _fetchAndRenderCycling();
   _fetchAndRenderCyclingFavourites();
-  // Polling récursif via setTimeout (pas setInterval) pour que _cycErrBackoff
-  // soit réellement appliqué : succès → reset à l'intervalle nominal, erreur →
-  // double jusqu'à 1h.
-  if (_cycPoll) clearTimeout(_cycPoll);
-  (function _schedCyc() {
-    _cycPoll = setTimeout(function () {
-      if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling();
-      if (document.body.dataset.page === 'cycling') _schedCyc(); // reprogramme quoiqu'il arrive
-      else _schedCyc(); // reste programmé même si page cachée (le fetch est gardé)
-    }, _cycErrBackoff);
-  })();
-  if (_cycFavPoll) clearTimeout(_cycFavPoll);
-  (function _schedCycFav() {
-    _cycFavPoll = setTimeout(function () {
-      if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites();
-      _schedCycFav();
-    }, _cycFavErrBackoff);
-  })();
+  if (_cycPoll) clearInterval(_cycPoll);
+  _cycPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCycling(); }, 300000);
+  if (_cycFavPoll) clearInterval(_cycFavPoll);
+  _cycFavPoll = setInterval(function () { if (document.body.dataset.page === 'cycling') _fetchAndRenderCyclingFavourites(); }, 600000);
 };
-if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearTimeout(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearTimeout(_cycFavPoll); _cycFavPoll = null; } };
-// Fetch parallèle de /_health pour signaler l'âge des données scraping.
-// Non bloquant : si /_health échoue, on ne casse pas le rendu principal.
-function _fetchCyclingHealth() {
-  return fetch('/api/v1/cycling/_health', { cache: 'no-store' })
-    .then(function (r) { return r.json(); })
-    .then(function (h) {
-      // Badge à injecter dans cyc-status (appelant décide du rendu)
-      if (!h || h.ok === false) return null;
-      return h;
-    })
-    .catch(function () { return null; });
-}
-// Construit le suffixe de statut basé sur la santé du pipeline scraping.
-function _cycHealthSuffix(h) {
-  if (!h) return '';
-  if (h.status === 'healthy') return '';
-  if (h.status === 'degraded') {
-    var missing = (h.missing_stages && h.missing_stages.length) ? ' · ' + h.missing_stages.length + ' étape(s) manquante(s)' : '';
-    return ' · ⚠️ données partielles' + missing;
-  }
-  // stale | critical : données vieillissantes
-  var age = (h.last_update_age_hours != null) ? h.last_update_age_hours : '?';
-  return ' · ⏳ données de il y a ' + age + 'h (pipeline en cours de refresh)';
-}
+if (typeof window.stopCyclingPage !== 'function') window.stopCyclingPage = function () { if (_cycPoll) { clearInterval(_cycPoll); _cycPoll = null; } if (_cycFavPoll) { clearInterval(_cycFavPoll); _cycFavPoll = null; } };
 function _fetchAndRenderCycling() {
-  // Lancement parallèle : données + santé du pipeline
-  Promise.all([
-    fetch('/api/v1/cycling', { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return null; }),
-    _fetchCyclingHealth()
-  ])
-    .then(function (results) {
-      var j = results[0], h = results[1];
+  fetch('/api/v1/cycling', { cache: 'no-store' })
+    .then(function(r) { return r.json(); })
+    .then(function(j) {
       var st = document.getElementById('cyc-status'), rb = document.getElementById('cyc-race-badge'), nt = document.getElementById('cyc-note'), cb = document.getElementById('cyc-bets'), cg = document.getElementById('cyc-grid');
       if (!j || j.ok === false) {
-        if (st) st.textContent = 'Données cyclisme indisponibles' + _cycHealthSuffix(h);
+        if (st) st.textContent = 'Données cyclisme indisponibles';
         if (cb) cb.innerHTML = '';
         if (cg) cg.innerHTML = '';
-        _cycErrBackoff = Math.min(_cycErrBackoff * 2, _CYC_MAX_MS);
+        _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
         return;
       }
-      _cycErrBackoff = _CYC_BASE_MS; // reset backoff sur succès
+      _cycErrBackoff = 300000;
       if (rb && j.race) rb.textContent = j.race;
-      if (st) st.textContent = 'Étape ' + (j.stage || '') + ' · ' + (j.route || '') + ' (' + (j.type || '') + ') · ' + (j.date || '') + ' · ' + Number(j.sims || 0).toLocaleString('fr') + ' sims' + (j.calibrated ? '' : ' · non calibré') + _cycHealthSuffix(h);
+      if (st) st.textContent = 'Étape ' + (j.stage || '') + ' · ' + (j.route || '') + ' (' + (j.type || '') + ') · ' + (j.date || '') + ' · ' + Number(j.sims || 0).toLocaleString('fr') + ' sims' + (j.calibrated ? '' : ' · non calibré');
       _renderCyclingBets(j.bets || []);
       _renderCyclingGrid(j.riders || []);
       if (nt) nt.textContent = j.note || '';
@@ -1220,7 +1171,7 @@ function _fetchAndRenderCycling() {
     .catch(function () {
       var st = document.getElementById('cyc-status');
       if (st) st.textContent = 'Erreur de chargement cyclisme (prochain essai dans ' + Math.round(_cycErrBackoff / 1000) + 's)';
-      _cycErrBackoff = Math.min(_cycErrBackoff * 2, _CYC_MAX_MS);
+      _cycErrBackoff = Math.min(_cycErrBackoff * 2, 3600000);
     });
 }
 // Fetch les favoris de l'étape courante depuis cyclingstage.com (via backend)
@@ -2240,9 +2191,9 @@ function _tnRenderBSDOddsSection(m) {
   const o = m._bsd_odds;
   const bsdId = m._bsd_match_id || (String(m.id || '').replace(/^bsd_t_/, '') || null);
   if (!o && (!bsdId || !/^\d+$/.test(String(bsdId)))) return '';
-  const safeId = _escTennis(String(m.id || ''));
+  const onclickId = _jsStr(String(m.id || ''));
   if (!o) {
-    return `<button onclick="event.stopPropagation();_tnLoadBSDOdds('${safeId}')" style="font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);color:var(--text2,#8d9399);cursor:pointer;font-family:'DM Mono',monospace;">📊 Charger cotes live</button>`;
+    return `<button onclick="event.stopPropagation();_tnLoadBSDOdds('${onclickId}')" style="font-size:10px;padding:3px 10px;border-radius:5px;border:1px solid var(--bg4,#1e2328);background:var(--bg3,#181c20);color:var(--text2,#8d9399);cursor:pointer;font-family:'DM Mono',monospace;">📊 Charger cotes live</button>`;
   }
   const mv = (dir) => dir === 'SHORTENING'
     ? '<span style="color:#00e676;font-weight:700;" title="Shortening — argent sharp">↓</span>'
@@ -2289,9 +2240,9 @@ function _tnRenderDrawerContent(m) {
   const elo = m.predictions?.elo;
   const odds = m.odds;
   const bestEv = m.best_ev_model;
-  const matchId = _escTennis(String(m.id || ''));
+  const onclickId = _jsStr(String(m.id || ''));
   const aiBtn = matchId
-    ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
+    ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${onclickId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
     : '';
   const p1Name = m.player1?.name || '—';
   const p2Name = m.player2?.name || '—';
@@ -2322,120 +2273,10 @@ function _tnRenderDrawerContent(m) {
 <div class="tn-drawer-section"><h4>Marché + Conf.</h4>${_tvbMarketCell(odds, bestEv)}${_tvbConfEdge(m.conf_edge)}${_tvbConfCell(elo, m.log_diff)}</div>
 <div class="tn-drawer-section"><h4>📊 Cotes BSD · ${m._bsd_odds ? (m._bsd_odds.books_count + ' books') : '…'}</h4><div class="tn-bsd-odds-wrap">${_tnRenderBSDOddsSection(m)}</div></div>
 <div class="tn-drawer-section"><h4>Alerte IA</h4>${aiBtn}</div>
-${(m.is_live && m.live_stats != null) ? `<div class="tn-drawer-section" style="grid-column:1/-1"><h4>📊 Stats Live</h4>${_tnRenderLiveStatsTable(m)}</div>` : ''}
-${ytSection}
+
 </div>`;
 }
 
-// ── Tennis Stats Live Panel ─────────────────────────────────────────────────
-function _tnToggleLiveStats(matchId) {
-  const panel = document.getElementById('tnlsp-' + matchId);
-  if (!panel) return;
-  const safeIdQ = String(matchId).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
-  const btn = document.querySelector(`.tn-live-row[data-tennis-id="${safeIdQ}"] .tn-stats-btn`);
-  if (!panel.hidden) {
-    panel.hidden = true;
-    if (btn) btn.classList.remove('active');
-    return;
-  }
-  if (panel.dataset.rendered !== String(matchId)) {
-    const m = (window._tennisLastFetch || []).find(x => String(x.id) === String(matchId));
-    if (!m) return; // match not in cache yet — don't mark rendered, retry on next click
-    panel.innerHTML = _tnRenderLiveStatsTable(m);
-    panel.dataset.rendered = String(matchId);
-  }
-  panel.hidden = false;
-  if (btn) btn.classList.add('active');
-}
-
-// T4 — per-set aces/DF breakdown for desktop stats panel
-function _tnRenderPerSetStats(m) {
-  if (!m || !Array.isArray(m.sets) || !m.sets.length) return '';
-  const hasData = m.sets.some(s => s.p1_aces != null || s.p2_aces != null || s.p1_df != null || s.p2_df != null);
-  if (!hasData) return '';
-  const p1S = m.player1 ? String(m.player1.name || 'J1').split(' ').pop() : 'J1';
-  const p2S = m.player2 ? String(m.player2.name || 'J2').split(' ').pop() : 'J2';
-  const dataRows = m.sets.map((s, i) => {
-    if (s.p1_aces == null && s.p2_aces == null && s.p1_df == null && s.p2_df == null) return '';
-    return `<tr style="font-size:10px;text-align:center;color:var(--text,#e8eaed);">
-      <td style="color:var(--text3,#5a6068)">S${i+1}</td>
-      <td style="color:#00e676">${s.p1_aces??'—'}</td><td style="color:#ff4d4d">${s.p1_df??'—'}</td>
-      <td style="color:#00e676">${s.p2_aces??'—'}</td><td style="color:#ff4d4d">${s.p2_df??'—'}</td>
-    </tr>`;
-  }).join('');
-  if (!dataRows.trim()) return '';
-  return `<div style="margin-top:10px;">
-<div style="font-size:9px;color:var(--text3);text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">Aces / DF par set</div>
-<table class="tn-live-stats-table"><thead><tr style="font-size:9px;color:var(--text3);">
-<th></th><th>A</th><th>DF</th><th>A</th><th>DF</th>
-</tr><tr style="font-size:9px;color:var(--text3);"><th></th><th colspan="2" style="text-align:center;">${_escTennis(p1S)}</th><th colspan="2" style="text-align:center;">${_escTennis(p2S)}</th></tr></thead>
-<tbody>${dataRows}</tbody></table></div>`;
-}
-
-function _tnRenderLiveStatsTable(m) {
-  const p1 = m && m.player1 ? (m.player1.name || 'J1') : 'J1';
-  const p2 = m && m.player2 ? (m.player2.name || 'J2') : 'J2';
-  const raw = m && m.live_stats ? m.live_stats : null;
-  const hasBSD = raw && (raw.p1_aces != null || raw.p1_first_pct != null);
-  const s = hasBSD ? raw : {
-    p1_aces:5, p2_aces:2, p1_df:1, p2_df:4,
-    p1_first_pct:65, p2_first_pct:64,
-    p1_first_won:72, p2_first_won:77,
-    p1_bp_saved:5, p2_bp_saved:1,
-    p1_ret_won:37, p2_ret_won:39,
-    p1_total_pts:50, p2_total_pts:50,
-    _mock:true
-  };
-  const mockBadge = s._mock ? ' <span style="font-size:9px;color:var(--amber,#ffa726);">[DEMO]</span>' : '';
-  const _lastName = (n) => { const t = String(n||'').trim().split(' '); return t[t.length-1] || t[0] || '—'; };
-  const p1S = _lastName(p1);
-  const p2S = _lastName(p2);
-  const row = (label, v1, v2, hib, sfx) => {
-    if (v1 == null && v2 == null) return '';
-    const n1 = Number(v1)||0, n2 = Number(v2)||0, tie = n1===n2;
-    const p1w = tie ? false : (hib ? n1>n2 : n1<n2);
-    const p2w = tie ? false : !p1w;
-    const c1 = tie?'':(p1w?'tn-sv':'tn-sv-lo'), c2 = tie?'':(p2w?'tn-sv':'tn-sv-lo');
-    const d1 = v1!=null?_escTennis(String(v1)+(sfx||'')):'—';
-    const d2 = v2!=null?_escTennis(String(v2)+(sfx||'')):'—';
-    return `<tr><td class="${c1}">${d1}</td><td class="slbl">${_escTennis(label)}</td><td class="${c2}">${d2}</td></tr>`;
-  };
-  const rows = [
-    row('Aces', s.p1_aces, s.p2_aces, true),
-    row('Doubles fautes', s.p1_df, s.p2_df, false),
-    row('% 1er service', s.p1_first_pct, s.p2_first_pct, true, '%'),
-    row('% pts gagnés 1er srv', s.p1_first_won, s.p2_first_won, true, '%'),
-    row('Balles de break sauvées', s.p1_bp_saved, s.p2_bp_saved, true),
-    row('% pts gagnés au retour', s.p1_ret_won, s.p2_ret_won, true, '%'),
-    row('% points gagnés', s.p1_total_pts, s.p2_total_pts, true, '%'),
-  ].filter(Boolean).join('');
-  return `<div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-align:center;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase;">📊 Statistiques Live${mockBadge}</div>
-<table class="tn-live-stats-table"><thead><tr>
-<th style="width:90px;text-align:center;">${_escTennis(p1S)}</th><th></th><th style="width:90px;text-align:center;">${_escTennis(p2S)}</th>
-</tr></thead><tbody>${rows}</tbody></table>${_tnRenderServiceCircles(s,p1,p2)}${_tnRenderPerSetStats(m)}`;
-}
-
-function _tnRenderServiceCircles(s, p1, p2) {
-  if (!s) return '';
-  const sP1=Number(s.p1_first_pct)||0, sP2=Number(s.p2_first_pct)||0;
-  const rP1=Number(s.p1_ret_won)||0, rP2=Number(s.p2_ret_won)||0;
-  if (!sP1 && !sP2) return '';
-  const p1S = p1 ? (p1.split(' ').pop()||p1) : 'J1';
-  const p2S = p2 ? (p2.split(' ').pop()||p2) : 'J2';
-  const circ = (pct, clr) => {
-    const r=20,cx=26,cy=26,C=+(2*Math.PI*r).toFixed(2),off=+(C-(pct/100)*C).toFixed(2);
-    return `<div class="tn-stats-circ"><svg width="52" height="52" viewBox="0 0 52 52"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${clr}" stroke-width="5" stroke-dasharray="${C}" stroke-dashoffset="${off}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/></svg><div class="tn-stats-circ-lbl">${pct}%</div></div>`;
-  };
-  const items = [];
-  if (sP1) items.push(`<div class="tn-stats-circ-item"><span>Service ${_escTennis(p1S)}</span>${circ(sP1,'#00e676')}</div>`);
-  if (sP2) items.push(`<div class="tn-stats-circ-item"><span>Service ${_escTennis(p2S)}</span>${circ(sP2,'#29b6f6')}</div>`);
-  if (rP1) items.push(`<div class="tn-stats-circ-item"><span>Retour ${_escTennis(p1S)}</span>${circ(rP1,'#ffa726')}</div>`);
-  if (rP2) items.push(`<div class="tn-stats-circ-item"><span>Retour ${_escTennis(p2S)}</span>${circ(rP2,'#ff4d4d')}</div>`);
-  return items.length ? `<div class="tn-stats-circs">${items.join('')}</div>` : '';
-}
-
-// @deprecated — TennisScope remplace ce rendu legacy. Éléments DOM (tennis-live-tbody) supprimés.
-// Conservé comme stub pour les callers existants (patchTennisLive, refresh général).
 function renderTennisLive(matches) {
   const tbody = document.getElementById('tennis-live-tbody');
   if (!tbody) return;
@@ -2496,11 +2337,12 @@ function renderTennisLive(matches) {
     const tourCls = tour === 'WTA' ? 'tennis-tour-wta' : (tour === 'MIXED' ? 'tennis-tour-mixed' : 'tennis-tour-atp');
     const discipline = m.discipline ? `<span class="tennis-discipline">${_escTennis(m.discipline)}</span>` : '';
     const safeId = _escTennis(String(m.id ?? ''));
+    const onclickId = _jsStr(String(m.id ?? '')); // XSS-safe dans onclick='...'
     const rowTitle = m._src === 'livescore'
       ? 'Voir détail LiveScore (sets et jeux par set)'
       : 'Voir détail BSD (point-par-point, serve stats, ML pred)';
     const _srcBadge = _tnRenderSourceBadge(m); // bd dt9/i5r — badge source dans col Tournoi
-    return `<div class="tn-live-row tennis-row-clickable${_tnAlertRowCls(safeId)}${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${safeId}')" title="${rowTitle}">
+    return `<div class="tn-live-row tennis-row-clickable${_tnAlertRowCls(safeId)}${(typeof favoriteMatchIds !== 'undefined' && favoriteMatchIds.has(String(m.id))) ? ' tn-pinned-fav' : ''}" role="row" data-tennis-id="${safeId}" data-tn-source="${_tnResolveSource(m)}" onclick="openTennisDetail('${onclickId}')" title="${rowTitle}">
 <span class="tn-live-cell tn-cell-fav" role="cell" onclick="event.stopPropagation();">${_tnFavBtn(m.id)}</span>
 <span class="tn-live-cell" role="cell">${_escTennis(m.tournament)}${m.court ? ' · ' + _escTennis(m.court) : ''}${_srcBadge}${_tnAlertBadgeHtml(safeId)}</span>
 <span class="tn-live-cell" role="cell"><span class="tennis-tour ${tourCls}">${_escTennis(tour || '—')}</span>${discipline}</span>
@@ -2514,8 +2356,7 @@ function renderTennisLive(matches) {
 <span class="tn-live-cell ${_tennisStatusClass(m)}" role="cell" style="justify-content:center;flex-direction:column;gap:3px;">
 ${_escTennis(m.status)}
 <div style="display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:2px;">
-${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${safeId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
-${m.is_live && m.live_stats != null && safeId ? `<button class="tn-stats-btn" onclick="event.stopPropagation();_tnToggleLiveStats('${safeId}')" title="Statistiques live détaillées">📊 STATS</button>` : ''}
+${safeId ? `<button class="ai-gen-btn" style="font-size:9px;padding:2px 5px;" onclick="event.stopPropagation();analyzeTennisMatch('${onclickId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>` : ''}
 </div>
 </span>
 </div>
@@ -3258,7 +3099,7 @@ function _tvbGamesOUStack(ouc, matchId) {
     if (!s || !s.best) continue;
     const cls = s.best.tier === 'strong' ? 'tgou-strong' : s.best.tier === 'mid' ? 'tgou-mid' : 'tgou-low';
     const lbl = 'S' + k.slice(-1);
-    rows.push(`<button type="button" class="tgou-srow ${cls}" onclick="event.stopPropagation();openTennisGamesPopup('${_escTennis(String(matchId || ''))}','${k}')" title="Détail Over/Under jeux — ${lbl}">`
+    rows.push(`<button type="button" class="tgou-srow ${cls}" onclick="event.stopPropagation();openTennisGamesPopup('${_jsStr(String(matchId || ''))}','${k}')" title="Détail Over/Under jeux — ${lbl}">`
       + `<span class="tgou-stag">${lbl}</span>`
       + `<span class="tgou-sbest">${s.best.label} ${s.best.prob}%</span></button>`);
   }
@@ -3484,8 +3325,11 @@ function _tvbPlayerAlerts(sm, side) {
 // Marché replié : cote J1·J2 + best EV+ ; sinon état « indispo » (quota Odds).
 function _tvbMarketCell(odds, bestEv) {
   if (odds && odds.p1 && odds.p2 && odds.p1.odds != null && odds.p2.odds != null) {
+    const tvbKelly = bestEv?.kelly
+      ? ` | Kelly: ${(bestEv.kelly.half * 100).toFixed(1)}% (½) / ${(bestEv.kelly.full * 100).toFixed(1)}% (full)`
+      : '';
     const best = bestEv
-      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="Meilleure value modèle${tvbKelly}">${bestEv.side === 'p1' ? 'J1' : 'J2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '';
     return `<span class="tvb-odds">${safeFixed(odds.p1.odds, 2)} · ${safeFixed(odds.p2.odds, 2)}</span>${best ? '<span class="tvb-book">' + best + '</span>' : ''}`;
   }
@@ -4594,18 +4438,22 @@ function renderTennisValueBets(rawMatches) {
       ? `<span class="${_tvbEdgeCls(Math.max(evModel.p1, evModel.p2))}">${_tvbFmtEv(Math.max(evModel.p1, evModel.p2))}</span>`
       : '<span class="tvb-edge tvb-edge-neg">—</span>';
 
+    const kellyInfo = bestEv?.kelly
+      ? ` | Kelly: ${(bestEv.kelly.half * 100).toFixed(1)}% (½) / ${(bestEv.kelly.full * 100).toFixed(1)}% (full)`
+      : '';
     const bestCell = bestEv
-      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
+      ? `<span class="tvb-best-badge ${bestEv.ev > 0 ? '' : 'tvb-best-neg'}" title="P${bestEv.side === 'p1' ? '1' : '2'} @ ${bestEv.book || '—'}${kellyInfo}">${bestEv.side === 'p1' ? 'P1' : 'P2'} ${_tvbFmtEv(bestEv.ev)}</span>`
       : '<span class="tvb-best-badge tvb-best-neg">—</span>';
 
     const matchId = _escTennis(m.id || '');
+    const onclickMatchId = _jsStr(m.id || '');
     // Ligne appariée à un évènement LiveScore live (m._live, id "ls:<eid>") →
     // ouvrir le détail LiveScore (résolvable) plutôt que le détail BSD avec un
     // id scheduled/ESPN non résolvable (sinon 404 "flux BSD indisponible").
-    const _tnDetailId = (m._live && m._live.id) ? _escTennis(String(m._live.id)) : matchId;
+    const _tnDetailId = (m._live && m._live.id) ? _jsStr(String(m._live.id)) : matchId;
     const onclick = _tnDetailId ? `onclick="openTennisDetail('${_tnDetailId}')"` : '';
     const aiBtn = matchId
-      ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${matchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
+      ? `<button class="ai-gen-btn" onclick="event.stopPropagation();analyzeTennisMatch('${onclickMatchId}')" title="Analyse Deep Data IA — Telegram-ready">AI-AL</button>`
       : '<span style="color:var(--text3,#5a6068);">—</span>';
 
     const sm = m.set_model;
@@ -4960,6 +4808,7 @@ function _tnTop10Card(m, rank) {
     + (d.movement != null ? `\nMouvement: ${d.movement}` : '');
 
   const safeId = _tnEsc(String(m.matchId || m.fixtureId || m.id || m.match_id || ''));
+  const onclickId = _jsStr(String(m.matchId || m.fixtureId || m.id || m.match_id || ''));
 
   // Player photo avatars — BSD tennis route + initials fallback (48px XL)
   // [FIX 2026-06-20] Fallback ui-avatars quand player_id manquant → cascade fixBrokenPlayerPhoto
@@ -5075,7 +4924,7 @@ function _tnTop10Card(m, rank) {
 
     metricsHtml = '<div class="ps-metrics-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">'
       // SERVICE — Insight
-      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Service" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'srv\')}">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Service" onclick="event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'srv\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'srv\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-service)">🟦 SERVICE</span><span class="ps-metric-xxl-badge service">Noyau</span></div>'
         + '<div class="insight-metric-body">'
           + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestServer)+'</span> meilleure serveuse <span class="percent-neon">'+bestSrvPct+'%</span></p>'
@@ -5084,7 +4933,7 @@ function _tnTop10Card(m, rank) {
         + '</div>'
       + '</div>'
       // RETOUR — Insight
-      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Retour" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'ret\')}">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique Retour" onclick="event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'ret\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'ret\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-return)">🟩 RETOUR</span><span class="ps-metric-xxl-badge return">Noyau</span></div>'
         + '<div class="insight-metric-body">'
           + '<p class="insight-highlight-text"><span class="player-highlight">'+_tnEsc(bestReturner)+'</span> meilleure receveuse <span class="percent-neon">'+bestRetPct+'%</span></p>'
@@ -5093,7 +4942,7 @@ function _tnTop10Card(m, rank) {
         + '</div>'
       + '</div>'
       // H2H SURFACE — inchangé
-      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique H2H Surface" onclick="event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+safeId+'\',\'h2h\')}">'
+      + '<div class="ps-metric-xxl" tabindex="0" role="button" aria-label="Détail métrique H2H Surface" onclick="event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'h2h\')" onkeydown="if(event.key==='+'\'Enter\''+'){event.preventDefault();event.stopPropagation();showMetricDetail(\''+onclickId+'\',\'h2h\')}">'
         + '<div class="ps-metric-xxl-header"><span class="ps-metric-xxl-name" style="color:var(--ps-cat-global)">⬜ H2H SURFACE</span><span class="ps-metric-xxl-badge global">Noyau</span></div>'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline">'
           + '<span class="ps-metric-xxl-value">'+h2hStr+'</span>'
@@ -5116,7 +4965,7 @@ function _tnTop10Card(m, rank) {
   // crash visuel complet (cartes illisibles, données écrasées).
   // Maintenant : flex column sur .tn-t10-card, avec .tn-t10-card-body en grid 2 col
   // (players | odds) pour isoler le layout des cotes à droite.
-  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" tabindex="0" role="button" aria-label="Match ${_tnEsc(m.player1||'J1')} vs ${_tnEsc(m.player2||'J2')}, score ${m.score_top10!=null?m.score_top10.toFixed(1):'—'}/100, ${reasonLabel}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${safeId}')}">
+  return `<div class="tn-t10-card" data-reason="${_tnEsc(reasonRaw)}" title="${_tnEsc(tooltipText)}" tabindex="0" role="button" aria-label="Match ${_tnEsc(m.player1||'J1')} vs ${_tnEsc(m.player2||'J2')}, score ${m.score_top10!=null?m.score_top10.toFixed(1):'—'}/100, ${reasonLabel}" onclick="if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${onclickId}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();if(typeof openTennisAnalysisModal==='function')openTennisAnalysisModal('${onclickId}')}">
   <div class="tn-t10-card-header">
     <div class="tn-t10-card-top">
       <span class="tn-t10-rank">#${rank}</span>
@@ -10783,6 +10632,8 @@ function mlSyncUI() {
       L.classList.toggle('sel', ls); L.setAttribute('aria-selected', ls);
     });
   });
+  mlBuildSmartRecos();
+  mlBuildCommunityTrends();
 }
 function mlPosition() {
   var wrap = document.getElementById('ml-league');
@@ -10817,6 +10668,14 @@ function mlClose() {
   if (wrap) wrap.classList.remove('open');
   var t = document.getElementById('ml-trigger');
   if (t) t.setAttribute('aria-expanded', 'false');
+}
+function mlAccToggle(e) {
+  if (e) e.stopPropagation();
+  var wrap = document.getElementById('ml-league');
+  if (!wrap) return;
+  var collapsed = wrap.classList.toggle('collapsed');
+  var header = wrap.querySelector('.mls-acc-header');
+  if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 }
 function mlExpand(btn) {
   var grp = btn.closest('.mls-grp');
@@ -10871,8 +10730,10 @@ function mlToggleCountry(country) {
   }
   activeCountry = activeCountries.length === 1 ? activeCountries[0] : 'all';
   activeLeague = 'all';
+  _mlTrackPick('country', country);
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
+  mlBuildSmartRecos();
   renderMatchesDebounced(allMatches, 'ml-country');
 }
 // Multi-sélection ligues : toggle. Sélectionner une ligue précise ÉCRASE le
@@ -10894,8 +10755,10 @@ function mlToggleLeague(sport) {
     activeLeagues.splice(i, 1);
   }
   activeLeague = 'all';
+  _mlTrackPick('league', sport);
   if (typeof syncCountryChipUI === 'function') syncCountryChipUI();
   mlSyncUI();
+  mlBuildSmartRecos();
   renderMatchesDebounced(allMatches, 'ml-league');
 }
 // ── Sidebar Sport : sélecteur ligues/tournois ─────────────────────────────
@@ -11434,17 +11297,25 @@ function buildTSList() {
   if (!list) return;
   var html = tsList().map(function(s) {
     var sel = activeStrategies.indexOf(s.key) !== -1;
+    var perfBadge = _stratPerfBadge(s.key);
+    var tooltipText = s.label + ' — ' + (s.tipster || '');
+    if (perfBadge) {
+      var p = _loadStratPerf()[s.key];
+      if (p) tooltipText += ' · ' + Math.round((p.w/(p.w+p.l))*100) + '% réussite';
+    }
     return '<div class="mls-row' + (sel ? ' sel' : '') + '" role="option" aria-selected="' + sel +
-      '" data-key="' + _mlEsc(s.key) + '" data-q="' + _mlEsc(((s.label||'')+' '+(s.tipster||'')).toLowerCase()) + '">' +
+      '" data-key="' + _mlEsc(s.key) + '" data-q="' + _mlEsc(((s.label||'')+' '+(s.tipster||'')).toLowerCase()) + '"' +
+      ' data-ps-tooltip="' + _mlEsc(tooltipText) + '">' +
       '<button type="button" class="mls-rowmain" onclick="tsToggleStrat(this.parentElement.dataset.key)">' +
         '<span class="mls-check"></span>' +
         '<span class="mls-name">' + _mlEsc(s.label) + '</span>' +
-        '<span class="mls-cnt">' + _mlEsc(s.tipster) + '</span>' +
+        (perfBadge ? perfBadge : '<span class="mls-cnt">' + _mlEsc(s.tipster) + '</span>') +
       '</button>' +
     '</div>';
   }).join('');
   list.innerHTML = html || '<div class="mls-empty">Aucune stratégie</div>';
   tsSyncUI();
+  tsBuildSmartRecos();
 }
 function tsSyncUI() {
   var lbl = document.getElementById('ts-label');
@@ -11497,6 +11368,220 @@ function tsClose() {
   var t = document.getElementById('ts-trigger');
   if (t) t.setAttribute('aria-expanded', 'false');
 }
+function tsAccToggle(e) {
+  if (e) e.stopPropagation();
+  var wrap = document.getElementById('ts-select');
+  if (!wrap) return;
+  if (!document.querySelector('#ts-list .mls-row')) buildTSList();
+  var collapsed = wrap.classList.toggle('collapsed');
+  var header = wrap.querySelector('.mls-acc-header');
+  if (header) header.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+}
+
+// ── 3.4 MODE COMPACT — toggle vue liste/chips ──
+function mlSetView(mode) {
+  var wrap = document.getElementById('ml-league');
+  if (!wrap) return;
+  wrap.classList.toggle('compact', mode === 'compact');
+  document.querySelectorAll('#ml-league .view-toggle-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === mode);
+  });
+  try { localStorage.setItem('ps-ml-view', mode); } catch(e) {}
+}
+(function _mlRestoreView() {
+  try {
+    var v = localStorage.getItem('ps-ml-view');
+    if (v === 'compact') {
+      var w = document.getElementById('ml-league');
+      if (w) { w.classList.add('compact'); }
+      var btns = document.querySelectorAll('#ml-league .view-toggle-btn');
+      btns.forEach(function(b) { b.classList.toggle('active', b.dataset.view === 'compact'); });
+    }
+  } catch(e) {}
+})();
+
+// ── 2.3 FILTRES TEMPORELS — slider fenêtre temporelle ──
+function mlTemporalFilter(hours) {
+  hours = parseInt(hours) || 0;
+  var valEl = document.getElementById('ml-temporal-value');
+  if (!valEl) return;
+  if (hours >= 72) {
+    valEl.textContent = 'Tous les matchs';
+    activeTemporalWindow = 0;
+  } else if (hours === 0) {
+    valEl.innerHTML = '<span class="temporal-urgent">⚡ Maintenant</span>';
+    activeTemporalWindow = 0.5;
+  } else {
+    valEl.textContent = 'Prochaines ' + hours + 'h';
+    activeTemporalWindow = hours;
+  }
+  renderMatchesDebounced(allMatches, 'temporal');
+}
+
+// ── 2.4 CONFIANCE DYNAMIQUE — multi-critères ──
+function tsUpdateConfCriteria() {
+  var confSlider = document.getElementById('ts-conf-slider');
+  var edgeSlider = document.getElementById('ts-edge-slider');
+  var consensusCb = document.getElementById('ts-consensus-cb');
+  var histCb = document.getElementById('ts-hist-cb');
+  var confVal = document.getElementById('ts-conf-val');
+  var edgeVal = document.getElementById('ts-edge-val');
+  if (confSlider && confVal) confVal.textContent = confSlider.value + '%';
+  if (edgeSlider && edgeVal) edgeVal.textContent = edgeSlider.value + '%';
+  activeConfCriteria = {
+    confidence: parseInt(confSlider ? confSlider.value : 0),
+    edge: parseFloat(edgeSlider ? edgeSlider.value : 0),
+    consensus: consensusCb ? consensusCb.checked : false,
+    histLeague: histCb ? histCb.checked : false
+  };
+  renderMatchesDebounced(allMatches, 'conf-criteria');
+}
+
+// ── 2.1 PERFORMANCE TRACKING — localStorage + badges ──
+var _stratPerf = null;
+function _loadStratPerf() {
+  if (_stratPerf) return _stratPerf;
+  try {
+    var raw = localStorage.getItem('ps-strat-perf');
+    _stratPerf = raw ? JSON.parse(raw) : {};
+  } catch(e) { _stratPerf = {}; }
+  return _stratPerf;
+}
+function _saveStratPerf() {
+  try { localStorage.setItem('ps-strat-perf', JSON.stringify(_stratPerf)); } catch(e) {}
+}
+function _trackStratResult(key, won) {
+  var perf = _loadStratPerf();
+  if (!perf[key]) perf[key] = { w: 0, l: 0, roi: 0 };
+  if (won) { perf[key].w++; perf[key].roi += 0.8; }
+  else { perf[key].l++; perf[key].roi -= 1; }
+  _saveStratPerf();
+}
+function _stratPerfBadge(key) {
+  var perf = _loadStratPerf();
+  var p = perf[key];
+  if (!p || (p.w + p.l) < 3) return '';
+  var total = p.w + p.l;
+  var rate = Math.round((p.w / total) * 100);
+  var roi = p.roi.toFixed(1);
+  var cls = rate >= 65 ? 'good' : rate >= 50 ? 'mid' : 'bad';
+  var roiCls = p.roi >= 0 ? 'pos' : 'neg';
+  return '<span class="perf-badge ' + cls + '" data-ps-tooltip="' + p.w + 'W/' + p.l + 'L">' +
+    rate + '% <span class="perf-roi ' + roiCls + '">' + (p.roi >= 0 ? '+' : '') + roi + '%</span></span>';
+}
+
+// ── 2.2 SMART FILTERS — recommandations contextuelles ──
+function _mlLoadHistory() {
+  try {
+    var raw = localStorage.getItem('ps-ml-history');
+    return raw ? JSON.parse(raw) : { countries: {}, leagues: {} };
+  } catch(e) { return { countries: {}, leagues: {} }; }
+}
+function _mlSaveHistory(h) {
+  try { localStorage.setItem('ps-ml-history', JSON.stringify(h)); } catch(e) {}
+}
+function _mlTrackPick(type, key) {
+  var h = _mlLoadHistory();
+  var bucket = type === 'country' ? h.countries : h.leagues;
+  if (!bucket[key]) bucket[key] = 0;
+  bucket[key]++;
+  _mlSaveHistory(h);
+}
+function mlBuildSmartRecos() {
+  var container = document.getElementById('ml-smart-recos');
+  var list = document.getElementById('ml-smart-recos-list');
+  if (!container || !list) return;
+  var h = _mlLoadHistory();
+  var topCountries = Object.keys(h.countries).sort(function(a,b) { return h.countries[b] - h.countries[a]; }).slice(0, 3);
+  var topLeagues = Object.keys(h.leagues).sort(function(a,b) { return h.leagues[b] - h.leagues[a]; }).slice(0, 3);
+  var recos = [];
+  topCountries.forEach(function(c) {
+    var cnt = mlMatchCount(c);
+    if (cnt > 0) recos.push({ type: 'country', key: c, label: frCountry(c), meta: cnt + ' matchs', emoji: '🏆' });
+  });
+  if (recos.length === 0 && typeof allMatches !== 'undefined' && allMatches) {
+    var leagueCounts = {};
+    allMatches.forEach(function(m) {
+      if (m.sport && !m.live_score) leagueCounts[m.sport] = (leagueCounts[m.sport] || 0) + 1;
+    });
+    var topByCount = Object.keys(leagueCounts).sort(function(a,b) { return leagueCounts[b] - leagueCounts[a]; }).slice(0, 3);
+    topByCount.forEach(function(k) {
+      var nm = '';
+      Object.keys(leaguesByCountry || {}).some(function(c) {
+        return (leaguesByCountry[c] || []).some(function(l) { if (l.odds_key === k) { nm = l.name; return true; } });
+      });
+      if (nm) recos.push({ type: 'league', key: k, label: nm, meta: leagueCounts[k] + ' matchs', emoji: '⚽' });
+    });
+  }
+  if (recos.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  list.innerHTML = recos.map(function(r) {
+    return '<button type="button" class="smart-reco-pill" onclick="' +
+      (r.type === 'country' ? 'mlToggleCountry(\'' + _mlEsc(r.key).replace(/'/g,"\\'") + '\')' : 'mlToggleLeague(\'' + _mlEsc(r.key).replace(/'/g,"\\'") + '\')') +
+      '" data-ps-tooltip="' + r.meta + '">' +
+      '<span class="reco-emoji">' + r.emoji + '</span>' + _mlEsc(r.label) +
+      ' <span class="reco-meta">' + r.meta + '</span></button>';
+  }).join('');
+}
+function tsBuildSmartRecos() {
+  var container = document.getElementById('ts-smart-recos');
+  var list = document.getElementById('ts-smart-recos-list');
+  if (!container || !list) return;
+  var perf = _loadStratPerf();
+  var strats = typeof STRATEGIES_UI !== 'undefined' ? STRATEGIES_UI : [];
+  var rated = strats.filter(function(s) { return perf[s.key] && (perf[s.key].w + perf[s.key].l) >= 3; })
+    .sort(function(a,b) {
+      var pa = perf[a.key], pb = perf[b.key];
+      var ra = pa.w / (pa.w + pa.l), rb = pb.w / (pb.w + pb.l);
+      return rb - ra;
+    }).slice(0, 4);
+  if (rated.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = '';
+  list.innerHTML = rated.map(function(s) {
+    var p = perf[s.key];
+    var rate = Math.round((p.w / (p.w + p.l)) * 100);
+    return '<button type="button" class="smart-reco-pill" onclick="tsToggleStrat(\'' + _mlEsc(s.key) + '\')" data-ps-tooltip="' + rate + '% réussite">' +
+      '<span class="reco-emoji">🎯</span>' + _mlEsc(s.label) +
+      ' <span class="reco-meta">' + rate + '%</span></button>';
+  }).join('');
+}
+
+// ── 2.5 SOCIAL FILTERS — tendances communauté (placeholder) ──
+function mlBuildCommunityTrends() {
+  var container = document.getElementById('ml-community-trends');
+  var list = document.getElementById('ml-trends-list');
+  if (!container || !list) return;
+  var trends = [
+    { rank: 1, label: 'Premier League', meta: '234 utilisateurs', hot: true },
+    { rank: 2, label: 'BTTS Oui', meta: '68% réussite', hot: true },
+    { rank: 3, label: 'Ligue 1', meta: '189 utilisateurs', hot: false },
+    { rank: 4, label: '+2.5 buts', meta: '71% réussite', hot: false }
+  ];
+  container.style.display = '';
+  list.innerHTML = trends.map(function(t) {
+    return '<div class="trend-item">' +
+      '<span class="trend-rank' + (t.hot ? ' hot' : '') + '">' + t.rank + '</span>' +
+      '<span>' + t.label + '</span>' +
+      '<span class="trend-meta">' + t.meta + '</span></div>';
+  }).join('');
+}
+
+// ── 3.5 DARK MODE ADAPTATIF — détection theme ──
+function psDetectTheme() {
+  var hour = new Date().getHours();
+  var root = document.documentElement;
+  root.classList.remove('ps-theme-light', 'ps-theme-live', 'ps-theme-finished');
+  if (hour >= 7 && hour < 19) {
+    // Jour — garder le thème sombre par défaut (le site est dark-only)
+    // Pour activer le mode clair: root.classList.add('ps-theme-light');
+  }
+}
+psDetectTheme();
+
+// ── Intégration smart recos + community trends au build ──
+var _origBuildLeagueMS = typeof buildLeagueMS === 'function' ? buildLeagueMS : null;
+var _origBuildTSList = typeof buildTSList === 'function' ? buildTSList : null;
+
 function tsFilter(q) {
   q = (q || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
   document.querySelectorAll('#ts-list .mls-row').forEach(function(r) {
@@ -12678,6 +12763,18 @@ function initSSE() {
         if (Array.isArray(p.live_momentum)) m.live_momentum = p.live_momentum;
         if (p.live_momentum_pct     !== undefined) m.live_momentum_pct     = p.live_momentum_pct;
         if (p.live_stats            !== undefined) m.live_stats            = p.live_stats;
+        // v10.77 — _bsd_stats bridge pour tennis live_stats (p1_aces, p1_first_pct...)
+        if (p._bsd_stats            !== undefined) m._bsd_stats            = p._bsd_stats;
+        // v10.77 — Si live_stats reçu mais tennis fields manquants, copie depuis _bsd_stats
+        if (m.live_stats && m._bsd_stats && m.live_stats.p1_aces === undefined) {
+          var _b = m._bsd_stats, _l = m.live_stats;
+          if (_b.p1_aces != null) _l.p1_aces = _b.p1_aces;
+          if (_b.p2_aces != null) _l.p2_aces = _b.p2_aces;
+          if (_b.p1_df != null) _l.p1_df = _b.p1_df;
+          if (_b.p2_df != null) _l.p2_df = _b.p2_df;
+          if (_b.p1_first_pct != null) _l.p1_first_pct = _b.p1_first_pct;
+          if (_b.p2_first_pct != null) _l.p2_first_pct = _b.p2_first_pct;
+        }
       });
       // [FIX live] live_patch ne re-rendait jamais le tableau → un match qui
       // passe LIVE en cours de session n'avait ni bouton LIVE ni Bets Live
@@ -12707,6 +12804,14 @@ function initSSE() {
           refreshLiveDetailModal(_liveDetailMatchId, { force: true }).catch(() => {});
         }
       }
+      // v10.77 — Si un panel stats tennis est ouvert et que le match a reçu _bsd_stats, invalide le cache
+      data.patches.forEach(function(p) {
+        if (!p._bsd_stats) return;
+        var panel = document.getElementById('tnlsp-' + p.id);
+        if (panel && panel.dataset.rendered === String(p.id)) {
+          delete panel.dataset.rendered;
+        }
+      });
     } catch(err) { console.warn('[SSE] live_patch error', err); }
   });
 
@@ -13299,28 +13404,195 @@ function openTeamDetail(teamNameOrId) {
   trapFocus(modal);
   const _tdContent = document.getElementById('team-detail-content');
   _tdContent.style.background = 'var(--bg2)';
-  _tdContent.style.padding = '30px';
+  _tdContent.style.padding = '26px 30px 30px';
+  _tdContent.style.maxWidth = '800px';
+  const esc = _escapeHtmlSafe;
+
+  const _teamRef = String(teamNameOrId || '').trim();
+  const _seasonCache = {};   // key 'latest' | year → payload
+
   _tdContent.innerHTML = '<div style="padding:40px;text-align:center;">' + I18N.t('status.loading') + '</div>';
-  fetch('/api/v1/team?name=' + encodeURIComponent(teamNameOrId))
-    .then(r => r.json())
-    .then(data => {
-      if (data.error) { _tdContent.innerHTML = '<div style="padding:40px;color:var(--red);">'+data.error+'</div>'; return; }
-      const t = data;
-      _tdContent.innerHTML = `
-        <div style="max-width:600px;margin:0 auto;">
-          ${t.logo ? `<img src="${t.logo}" style="width:60px;height:60px;object-fit:contain;margin-bottom:10px;">` : ''}
-          <h2 style="margin:0 0 10px">${t.name||teamNameOrId}</h2>
-          <div style="color:var(--text3);margin-bottom:15px;">${t.league||''} · ${t.country||''} ${t.stadium ? '· ' + t.stadium : ''}</div>
-          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0;">
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:18px;font-weight:700;color:var(--text)">${t.founded||'—'}</div><div style="font-size:10px;color:var(--text3)">Fondation</div></div>
-            <div style="background:var(--bg4);padding:12px;border-radius:8px;text-align:center;"><div style="font-size:18px;font-weight:700;color:var(--text)">${t.stadium_capacity||'—'}</div><div style="font-size:10px;color:var(--text3)">Capacite</div></div>
-          </div>
-          ${t.manager ? `<div style="font-size:12px;color:var(--text2);margin:10px 0;">Entraineur: <strong>${t.manager}</strong></div>` : ''}
-          ${t.recentMatches && t.recentMatches.length ? `<div style="margin-top:15px;"><h4 style="font-size:12px;color:var(--text3);margin-bottom:8px;">5 derniers matchs</h4>` + t.recentMatches.slice(0,5).map(m => `<div style="font-size:11px;color:var(--text2);padding:3px 0;border-bottom:1px solid var(--border);">${m.home_team} ${m.score||'-'} ${m.away_team}</div>`).join('') + '</div>' : ''}
-          <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
-        </div>`;
-    })
-    .catch(() => { _tdContent.innerHTML = `<div style="padding:40px;color:var(--red);">${I18N.t('status.error_load')} équipe</div>`; });
+
+  function _seasonBody(html) {
+    const holder = document.getElementById('tss-body');
+    if (!holder) return;
+    holder.innerHTML = html;
+  }
+  function _markSeasonLoading() {
+    _seasonBody('<div style="padding:34px;text-align:center;color:var(--text3);">' + I18N.t('status.loading') + '</div>');
+  }
+  function _r(val, dec) { const n = Number(val); return (val != null && val !== '' && !isNaN(n)) ? n.toFixed(dec == null ? 0 : dec) : '—'; }
+
+  // Header : nom + logo (logo résolu en asynchrone via /api/v1/team-logo).
+  function renderHeader() {
+    const h = '<div style="max-width:760px;margin:0 auto;display:flex;align-items:center;gap:12px;">'
+      + '<span id="tss-logo"></span>'
+      + `<h2 style="margin:0 0 4px;font-family:'DM Mono',monospace;letter-spacing:0.02em;">${esc(_teamRef)}</h2>`
+      + '</div>';
+    const holder = document.getElementById('tss-header');
+    if (holder) holder.innerHTML = h;
+    try {
+      fetch('/api/v1/team-logo?name=' + encodeURIComponent(_teamRef))
+        .then(r => r.json())
+        .then(d => {
+          const box = document.getElementById('tss-logo');
+          if (box && d && d.url) { box.innerHTML = `<img src="${esc(d.url)}" style="width:44px;height:44px;object-fit:contain;">`; }
+        })
+        .catch(function () {});
+    } catch (e) { /* logo optionnel */ }
+  }
+
+  function loadSeason(year) {
+    if (!_teamRef) { _seasonBody('<div style="padding:30px;color:var(--text3);text-align:center;">Aucune donnée de saison précédente.</div>'); return; }
+    const key = year || 'latest';
+    if (_seasonCache[key]) { renderSeason(_seasonCache[key]); return; }
+    _markSeasonLoading();
+    const q = year ? '?season=' + encodeURIComponent(year) : '';
+    fetch('/api/v1/team/' + encodeURIComponent(_teamRef) + '/season-stats' + q)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { _seasonBody('<div style="padding:30px;color:var(--text3);text-align:center;">' + esc(d.error) + '</div>'); return; }
+        _seasonCache[key] = d;
+        renderSeason(d);
+      })
+      .catch(() => { _seasonBody('<div style="padding:30px;color:var(--text3);text-align:center;">Source indisponible (contenu de base conservé).</div>'); });
+  }
+
+  function renderSeason(d) {
+    const hasData = d && d.competitions && d.competitions.length && d.general && d.general.all && d.general.all.played;
+    const years = (d && d.availableYears && d.availableYears.length) ? d.availableYears : (d && d.season ? [{ year: d.season.year, label: d.season.label }] : []);
+    const curYear = d && d.season ? d.season.year : null;
+    const comps = (d && d.competitions) || [];
+
+    const kindSelect = `<span style="display:inline-flex;gap:6px;margin-left:14px;">
+        <button class="tss-toggle" data-k="all" onclick="_setTssKind(this)" style="color:var(--text);">All</button>
+        <button class="tss-toggle" data-k="home" onclick="_setTssKind(this)">Home</button>
+        <button class="tss-toggle" data-k="away" onclick="_setTssKind(this)">Away</button></span>`;
+
+    const seasonChips = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px;">'
+      + years.map(y => `<button class="tss-season" data-y="${y.year}" style="background:${y.year === curYear ? 'var(--accent,#00e676)' : 'var(--bg4)'};color:${y.year === curYear ? '#062' : 'var(--text2)'};border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Mono',monospace;">${esc(y.label)}</button>`).join('')
+      + '</div>';
+
+    const compChips = comps.length > 1
+      ? '<div style="margin:2px 0 10px;font-size:11px;color:var(--text3);">' + comps.map(c => `<span style="display:inline-block;background:var(--bg4);border-radius:5px;padding:3px 8px;margin-right:6px;margin-bottom:4px;">${esc(c.name)} · ${esc(c.type)}</span>`).join('') + '</div>'
+      : (comps.length ? `<div style="margin:2px 0 10px;font-size:11px;color:var(--text3);">${comps.map(c => esc(c.name + (c.type ? ' · ' + c.type : ''))).join(', ')}</div>` : '');
+
+    if (!hasData) {
+      _seasonBody('<div style="padding:26px 4px;color:var(--text3);text-align:center;">Aucune donnée de saison précédente disponible pour cette équipe.</div>' + compChips);
+      return;
+    }
+
+    const sel = document.getElementById('tss-kind-select');
+    if (sel) sel.innerHTML = '';
+
+    let html = '';
+
+    // Nombre d'équipes au classement pour le rang adverse
+    const stRows = (d.comparativeTable && d.comparativeTable.rows) || [];
+    const ourRow = stRows.find(r => r.team && d.team && r.team.id === d.team.id) || null;
+
+    // 1) Statistiques générales (grille All/Home/Away commutables)
+    const kpiGrid = (gg) => [
+      ['Position', _r(d.position)], ['Matchs', _r(gg.played)], ['Pts', _r(gg.points)], ['Pts/match', gg.ppg],
+      ['V', _r(gg.wins) + ' (' + _r(gg.winPct) + '%)'], ['N', _r(gg.draws) + ' (' + _r(gg.drawPct) + '%)'], ['L', _r(gg.losses) + ' (' + _r(gg.lossPct) + '%)'],
+      ['Buts pour', _r(gg.gf)], ['Buts contre', _r(gg.ga)], ['GF/match', gg.gfPer],
+      ['Over 2.5', _r(gg.over25)], ['Under 2.5', _r(gg.under25)], ['Clean sheet', _r(gg.cleanSheet)], ['Failed to score', _r(gg.failedToScore)], ['BTTS', _r(gg.btts)]
+    ].map(([k, v]) => `<div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;">${esc(String(v))}</div><div style="font-size:9px;color:var(--text3);height:12px;line-height:12px;margin-top:3px;">${esc(k)}</div></div>`).join('');
+    html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">STATISTIQUES GÉNÉRALES' + kindSelect + '</div>'
+      + '<div class="tss-kpis" data-kpis="all">' + kpiGrid(d.general.all) + '</div>'
+      + '<div class="tss-kpis" data-kpis="home" style="display:none;">' + kpiGrid(d.general.home) + '</div>'
+      + '<div class="tss-kpis" data-kpis="away" style="display:none;">' + kpiGrid(d.general.away) + '</div></div>';
+
+    // 2) Classement comparatif
+    if (stRows.length) {
+      const tbody = stRows.map(r => {
+        const hl = r.team && r.team.id === d.team.id ? ' style="background:var(--accent);color:#062;font-weight:700;"' : '';
+        return '<tr' + hl + '>'
+          + `<td style="padding:5px 8px;font-family:'DM Mono',monospace;">${esc(_r(r.position))}</td>`
+          + `<td style="padding:5px 8px;text-align:left;">${esc(r.team.name)}</td>`
+          + `<td>${esc(_r(r.played))}</td>`
+          + `<td>${esc(_r(r.win))}:${esc(_r(r.draw))}:${esc(_r(r.loss))}</td>`
+          + `<td>${esc(_r(r.gf))}</td>`
+          + `<td>${esc(_r(r.ga))}</td>`
+          + `<td>${esc(_r(r.points))}</td></tr>`;
+      }).join('');
+      html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">CLASSEMENT' + (ourRow ? ' <span style="color:var(--accent,#00e676);">· ' + esc(ourRow.position) + 'e</span>' : '') + '</div>'
+        + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;color:var(--text2);text-align:center;"><thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);">'
+        + '<th style="padding:5px 8px;">P</th><th style="text-align:left;">Équipe</th><th>M</th><th>V:N:D</th><th>BP</th><th>BC</th><th>Pts</th></tr></thead><tbody>' + tbody + '</tbody></table></div></div>';
+    }
+
+    // 3) Séquences & Streaks (13 colonnes)
+    const streakKeys = [['W','Victoires cons. (nW)'],['D','Nuls cons.'],['L','Défaites cons.'],['nW','Sans victoire'],['nD','Sans nul'],['nL','Sans défaite'],['G+','Marque cons.'],['G-','Encaissé cons.'],['nG+','Sans marquer'],['nG-','Sans encaisser'],['+2.5','Over 2.5 cons.'],['-2.5','Under 2.5 cons.'],['BTTS','BTTS cons.']];
+    const st = d.streaks;
+    const stHead = streakKeys.map(k => `<th style="padding:4px 6px;">${k[0]}</th>`).join('');
+    const stRowAll = streakKeys.map(k => `<td>${esc(_r(st.all[k[0]]))}</td>`).join('');
+    const stRowHome = streakKeys.map(k => `<td>${esc(_r(st.home[k[0]]))}</td>`).join('');
+    const stRowAway = streakKeys.map(k => `<td>${esc(_r(st.away[k[0]]))}</td>`).join('');
+    html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">SÉQUENCES &amp; STREAKS</div>'
+      + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:10px;color:var(--text2);text-align:center;font-family:\'DM Mono\',monospace;"><thead><tr style="color:var(--text3);border-bottom:1px solid var(--border);"><th style="padding:4px 6px;text-align:left;">—</th>' + stHead + '</tr></thead><tbody>'
+      + '<tr><td style="text-align:left;color:var(--text3);">All</td>' + stRowAll + '</tr>'
+      + '<tr><td style="text-align:left;color:var(--text3);">Home</td>' + stRowHome + '</tr>'
+      + '<tr><td style="text-align:left;color:var(--text3);">Away</td>' + stRowAway + '</tr>'
+      + '</tbody></table></div>'
+      + '<div style="font-size:9px;color:var(--text3);margin-top:6px;">' + streakKeys.map(k => `${k[0]} = ${k[1]}`).join(' · ') + '</div></div>';
+
+    // 4) Matchs récents (10) avec badge V/N/D + rang adverse
+    const rm = (d.recentMatches || []).slice(0, 10);
+    if (rm.length) {
+      const badge = r => r === 'W' ? 'background:var(--accent,#00e676);color:#062;' : r === 'D' ? 'background:var(--bg4);color:var(--text3);' : 'background:var(--red);color:#fff;';
+      const rows = rm.map(m =>
+        `<tr style="border-bottom:1px solid var(--border);">`
+        + `<td style="padding:6px 6px;color:var(--text3);font-size:10px;white-space:nowrap;">${esc(m.date || '')}</td>`
+        + `<td style="padding:6px 6px;color:var(--text3);font-size:9px;white-space:nowrap;">${esc(m.competition || '')}</td>`
+        + `<td style="padding:6px 6px;text-align:left;font-size:11px;">${esc(m.home)}${m.homeRank != null ? ' <span style="color:var(--text3);font-size:9px;">(' + esc(m.homeRank) + ')</span>' : ''}</td>`
+        + `<td style="padding:6px 6px;font-family:'DM Mono',monospace;color:var(--text);white-space:nowrap;">${esc(String(m.score))}</td>`
+        + `<td style="padding:6px 6px;text-align:right;font-size:11px;">${esc(m.away)}${m.awayRank != null ? ' <span style="color:var(--text3);font-size:9px;">(' + esc(m.awayRank) + ')</span>' : ''}</td>`
+        + `<td style="padding:6px 6px;"><span style="display:inline-block;width:22px;text-align:center;border-radius:4px;padding:2px 4px;font-weight:700;font-size:11px;${badge(m.result)}">${m.result}</span></td>`
+        + '</tr>').join('');
+      html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">MATCHS RÉCENTS (10)</div>'
+        + '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;color:var(--text2);text-align:center;">' + rows + '</table></div></div>';
+    }
+
+    // 5) Records (All/Home/Away)
+    const rec = d.records;
+    const recBlock = (label, rr) => [
+      ['Plus large victoire', rr.biggestWin ? rr.biggestWin.gf + '-' + rr.biggestWin.ga + ' (' + rr.biggestWin.date + ')' : '—'],
+      ['Plus large défaite', rr.biggestLoss ? rr.biggestLoss.ga + '-' + rr.biggestLoss.gf + ' (' + rr.biggestLoss.date + ')' : '—'],
+      ['Max buts marqués', _r(rr.mostScored)],
+      ['Max buts encaissés', _r(rr.mostConceded)]
+    ];
+    const recCard = (cards) => cards.map(([k, v]) => `<div style="background:var(--bg4);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:15px;font-weight:700;color:var(--text);font-family:'DM Mono',monospace;">${esc(String(v))}</div><div style="font-size:9px;color:var(--text3);height:12px;line-height:12px;margin-top:3px;">${esc(k)}</div></div>`).join('');
+    html += '<div class="tss-section"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;letter-spacing:0.03em;">RECORDS</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">All</div><div class="tss-kpis">' + recCard(recBlock('all', rec.all)) + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin:12px 0 8px;">Home</div><div class="tss-kpis">' + recCard(recBlock('home', rec.home)) + '</div>'
+      + '<div style="font-size:11px;color:var(--text3);margin:12px 0 8px;">Away</div><div class="tss-kpis">' + recCard(recBlock('away', rec.away)) + '</div></div>';
+
+    _seasonBody(seasonChips + compChips + html);
+    // câbler le sélecteur de saison
+    document.querySelectorAll('.tss-season').forEach(btn => {
+      btn.onclick = function () { loadSeason(btn.getAttribute('data-y')); };
+    });
+    document.querySelectorAll('.tss-toggle').forEach(btn => {
+      btn.onclick = function () { _setTssKind(btn); };
+    });
+  }
+
+  _tdContent.innerHTML = `<div style="max-width:760px;margin:0 auto;">
+      <div id="tss-header"></div>
+      <div id="tss-body"><div style="padding:34px;text-align:center;color:var(--text3);">${I18N.t('status.loading')}</div></div>
+      <button onclick="document.getElementById('team-detail-modal').style.display='none'" style="margin-top:20px;padding:10px 20px;background:var(--blue);color:#fff;border:none;border-radius:6px;cursor:pointer;">Fermer</button>
+    </div>`;
+  renderHeader();
+  loadSeason(null);
+}
+
+// Bascule All/Home/Away des KPI stats générales dans le modal équipe.
+function _setTssKind(btn) {
+  if (!btn) return;
+  const k = btn.getAttribute('data-k') || 'all';
+  document.querySelectorAll('.tss-toggle').forEach(b => { if (b !== btn) b.style.color = 'var(--text3)'; });
+  btn.style.color = 'var(--text)';
+  document.querySelectorAll('.tss-kpis[data-kpis]').forEach(grid => { grid.style.display = (grid.getAttribute('data-kpis') === k) ? '' : 'none'; });
 }
 
 function openPlayerDetail(playerName, teamCtx, leagueId) {
@@ -22336,7 +22608,7 @@ async function loadHeroAccuracy() {
 //  ESCAPE HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 // Helper: escape string for JS string literal inside HTML onclick attribute
-function _jsStr(s) { return String(s).replace(/'/g, "\\'"); }
+function _jsStr(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"'); }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  AFFILIATION GA — helper buildAffiliateUrl (1st-party redirect /r/ anti-AdBlock)
@@ -27622,7 +27894,7 @@ function renderDeepAnalysis(text) {
     console.log('[AI-AL] Section "REVUE DE PRESSE" détectée dans le texte brut ✓');
   }
   // Chirurgical emoji strip — remove any emoji the AI slipped through
-  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FEFF}\u{20D0}-\u{20FF}]/gu, '').trim();
+  text = text.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FEFF}\u{20D0}-\u{20FF}\u{200D}\u{25AA}-\u{25FE}\u{2702}-\u{27B0}\u{24C2}\u{2934}-\u{2935}\u{2B05}-\u{2B55}\u{3030}\u{303D}\u{3297}-\u{3299}\u{E0020}-\u{E007F}]/gu, '').trim();
   text = text.replace(/##[^\n]*SCRIPT TELEGRAM[\s\S]*?(?=\n##|\n\[DIRECTIVES|$)/i, '').trim();
 
   // ── Split code blocks out first ──────────────────────────────────────────
@@ -27670,10 +27942,10 @@ function renderDeepAnalysis(text) {
       if (!line) { flushPara(); continue; }
 
       // ── Press item DETECTION PRIORITAIRE (section 5) — avant section header
-      // Tolère "1. **Média** : "Citation"", "1. *Média*: Citation", "1. **Média** — citation", quotes droites/courbes
+      // Tolère "1. **Média** : \"Citation\"", "1. *Média*: Citation", "1. **Média** — citation", "1. **Media** : Citation.", quotes droites/courbes, guillemets, point avant/après fermeture
       if (currentSection === 5) {
         const pressStripped = line.replace(/^[-•\*]\s*/, '');
-        const pressM = pressStripped.match(/^\d+\s*[\.\)]\s*[\*_]{0,2}\s*([^*_\n:—–-]{2,80}?)\s*[\*_]{0,2}\s*[:：—–-]\s*[«"'""''`]?\s*(.+?)\s*[»"'""''`]?\.?\s*$/);
+        const pressM = pressStripped.match(/^\d+\s*[\.\)]\s*(?:\*{1,2})?\s*(.{2,50}?)\s*(?:\*{1,2})?\s*[:：—–-]+\s*(?:[«"'""''`])?\s*(.+?)\s*(?:[»"'""''`]|\.(?:\s|$))?\s*$/);
         if (pressM) {
           flushPara();
           const media = pressM[1].trim().replace(/^[\*_]+|[\*_]+$/g, '');
@@ -27711,7 +27983,7 @@ function renderDeepAnalysis(text) {
           // Section 5 = REVUE DE PRESSE — header customisé avec icône presse
           html += `<div class="dp-section-hdr">
             <span class="dp-section-num">${num}</span>
-            <span class="dp-section-title">📰 Revue de presse — Avis médias</span>
+            <span class="dp-section-title">Revue de presse — Avis médias</span>
           </div>`;
         } else {
           html += `<div class="dp-section-hdr">
@@ -27785,6 +28057,16 @@ function renderDeepAnalysis(text) {
           } else {
             html += `<div class="dp-bet-card"><div class="dp-bet-body">${dpBold(dpEsc(stripped))}</div></div>`;
           }
+          continue;
+        }
+
+        // ── Mise Kelly line in section 4 (render as monospace badge) ──────
+        const kellyM = line.match(/^Mise\s+Kelly\s*:\s*(.+)/i);
+        if (kellyM) {
+          flushPara();
+          const kellyVal = kellyM[1].trim();
+          const isNoValue = /pas\s+de\s+valeur/i.test(kellyVal);
+          html += `<div class="dp-kelly-row"><span class="dp-kelly-label">Kelly</span><span class="dp-kelly-val ${isNoValue ? 'no-value' : ''}">${dpEsc(kellyVal)}</span></div>`;
           continue;
         }
       }
@@ -27875,6 +28157,10 @@ document.addEventListener('keydown', function(e) {
   if (d.getElementById('plan-modal')?.classList.contains('open')) { closePlanModal(); return; }
   if (d.getElementById('import-modal')?.classList.contains('open')) { closeImportModal(); return; }
   if (d.getElementById('modal')?.classList.contains('open')) { closeModal(); return; }
+  // Popup DR evolution (Tennis Live) — utilise display:flex, pas .open.
+  // Ajouté 2026-07-17 (recommandation rapport DR popup bug #6) :
+  // Escape fermait tous les modals sauf celui-ci.
+  if ((el = d.getElementById('dr-popup-modal')) && el.style.display === 'flex') { closeDRPopup(); return; }
   // Bottom-sheets mobiles
   if ((el = d.getElementById('bn-more-sheet')) && el.classList.contains('open')) { bnCloseMore(); return; }
   if ((el = d.getElementById('mob-filter-sheet')) && el.classList.contains('open')) { closeMobFilters(); return; }
