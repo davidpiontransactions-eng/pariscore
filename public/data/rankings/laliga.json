@@ -4,149 +4,164 @@
     "leagueId": "laliga",
     "leagueName": "Spain",
     "season": "2026-27",
-    "lastUpdated": "2026-08-15T02:59:06.473059Z",
+    "lastUpdated": "2026-08-16T03:08:12.544213Z",
     "source": "soccerstats.com",
     "teamCount": 20,
     "partial": false
   },
   "home": {
-    "ppg": [],
+    "ppg": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Alaves",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 3.0,
+        "played": 1
+      }
+    ],
     "pts": [
       {
         "rank": 1,
         "teamId": "",
         "teamName": "Alaves",
-        "value": 0.0,
-        "played": 0
+        "value": 3.0,
+        "played": 1
       },
       {
         "rank": 1,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Athletic Bilbao",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Atletico Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Celta Vigo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Deportivo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Elche",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Espanyol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Fc Barcelona",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Getafe",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Malaga",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Osasuna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Racing",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Betis",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Sociedad",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Valencia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Villarreal",
         "value": 0.0,
@@ -158,137 +173,137 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Alaves",
-        "value": 0.0,
-        "played": 0
+        "value": 3.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Athletic Bilbao",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Atletico Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Celta Vigo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Deportivo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Elche",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Espanyol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Fc Barcelona",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Getafe",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Malaga",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Osasuna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Racing",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Betis",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Sociedad",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Valencia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Villarreal",
         "value": 0.0,
@@ -301,7 +316,7 @@
         "teamId": "",
         "teamName": "Alaves",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
         "rank": 1,
@@ -412,13 +427,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Real Sociedad",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
         "value": 0.0,
         "played": 0
       },
@@ -435,6 +443,13 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 1.0,
+        "played": 1
       }
     ],
     "gd": [
@@ -442,137 +457,137 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Alaves",
-        "value": 0.0,
-        "played": 0
+        "value": 3.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Athletic Bilbao",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Atletico Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Celta Vigo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Deportivo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Elche",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Espanyol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Fc Barcelona",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Getafe",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Malaga",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Osasuna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Racing",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Betis",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Sociedad",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Valencia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Villarreal",
         "value": 0.0,
@@ -584,137 +599,137 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Alaves",
-        "value": 0.0,
-        "played": 0
+        "value": 1.0,
+        "played": 1
       },
       {
         "rank": 1,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Athletic Bilbao",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Atletico Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Celta Vigo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Deportivo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Elche",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Espanyol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Fc Barcelona",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Getafe",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Malaga",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Osasuna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Racing",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Betis",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Sociedad",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Valencia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 3,
         "teamId": "",
         "teamName": "Villarreal",
         "value": 0.0,
@@ -727,7 +742,14 @@
         "teamId": "",
         "teamName": "Alaves",
         "value": 0.0,
-        "played": 0
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 0.0,
+        "played": 1
       },
       {
         "rank": 1,
@@ -838,13 +860,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Real Sociedad",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
         "value": 0.0,
         "played": 0
       },
@@ -869,7 +884,14 @@
         "teamId": "",
         "teamName": "Alaves",
         "value": 0.0,
-        "played": 0
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Sevilla Fc",
+        "value": 0.0,
+        "played": 1
       },
       {
         "rank": 1,
@@ -980,13 +1002,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Real Sociedad",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sevilla Fc",
         "value": 0.0,
         "played": 0
       },
@@ -1007,7 +1022,22 @@
     ]
   },
   "away": {
-    "ppg": [],
+    "ppg": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 0.0,
+        "played": 1
+      }
+    ],
     "pts": [
       {
         "rank": 1,
@@ -1068,13 +1098,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
@@ -1097,13 +1120,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Racing",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
@@ -1148,148 +1164,162 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "gf": [
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Alaves",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Athletic Bilbao",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Atletico Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Celta Vigo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Deportivo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Elche",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Espanyol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Fc Barcelona",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Malaga",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Osasuna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Racing",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Real Betis",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Real Madrid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Real Sociedad",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sevilla Fc",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Valencia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "ga": [
@@ -1352,13 +1382,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
@@ -1381,13 +1404,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Racing",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
@@ -1432,6 +1448,20 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 19,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 3.0,
+        "played": 1
       }
     ],
     "gd": [
@@ -1494,13 +1524,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
@@ -1523,13 +1546,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Racing",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
@@ -1574,6 +1590,20 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 19,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": -1.0,
+        "played": 1
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": -3.0,
+        "played": 1
       }
     ],
     "w": [
@@ -1636,13 +1666,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
@@ -1665,13 +1688,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Racing",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
@@ -1716,6 +1732,20 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "d": [
@@ -1778,13 +1808,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
@@ -1807,13 +1830,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Racing",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
@@ -1858,6 +1874,20 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "l": [
@@ -1920,13 +1950,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Getafe",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Levante",
         "value": 0.0,
         "played": 0
@@ -1949,13 +1972,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Racing",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Rayo Vallecano",
         "value": 0.0,
         "played": 0
       },
@@ -2000,6 +2016,20 @@
         "teamName": "Villarreal",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 19,
+        "teamId": "",
+        "teamName": "Rayo Vallecano",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 19,
+        "teamId": "",
+        "teamName": "Getafe",
+        "value": 1.0,
+        "played": 1
       }
     ]
   },
