@@ -26,8 +26,10 @@ import { Button } from "@/components/ui/button";
 import { TIME_RANGE_OPTIONS, type MatchViewMode } from "@/lib/match-view";
 import {
   applyTimeFilter,
+  collectQuickLinks,
   DEFAULT_FAVORITE_LEAGUES,
   filterTreeByQuery,
+  findLeaguePath,
   isDefaultFavoriteLeague,
 } from "@/lib/sports-tree";
 import type {
@@ -429,7 +431,7 @@ function LeagueRow({
             type="button"
             onClick={onToggle}
             aria-expanded={expanded}
-            aria-label={league.name}
+            aria-label={t(expanded ? "collapseAria" : "expandAria", { name: league.name })}
             className="-ml-1 rounded p-0.5 text-slate-500 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronRight
@@ -469,14 +471,18 @@ function LeagueRow({
 function CountryBlock({
   country,
   selectedLeagueId,
+  active,
   onLeagueSelect,
   onSportSelect,
 }: {
   country: CountryNode;
   selectedLeagueId: string | null;
+  /** Ancêtre direct de la ligue sélectionnée (chemin actif sport→pays→ligue). */
+  active?: boolean;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
 }) {
+  const t = useTranslations("sportsSidebar");
   const expanded = useSportsSidebarStore((s) => !!s.expandedCountries[country.id]);
   const expandedLeagues = useSportsSidebarStore((s) => s.expandedLeagues);
   const toggleCountry = useSportsSidebarStore((s) => s.toggleCountry);
@@ -488,6 +494,7 @@ function CountryBlock({
         type="button"
         onClick={() => toggleCountry(country.id)}
         aria-expanded={expanded}
+        aria-label={t(expanded ? "collapseAria" : "expandAria", { name: country.name })}
         className={cn(
           "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 pl-5 text-left",
           "text-slate-300 transition-colors hover:bg-slate-800/80",
@@ -499,7 +506,14 @@ function CountryBlock({
           className={cn("h-3 w-3 shrink-0 text-slate-500 transition-transform", expanded && "rotate-90")}
         />
         <CountryFlag code={country.countryCode} name={country.name} />
-        <span className="min-w-0 flex-1 truncate text-xs font-medium">{country.name}</span>
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-xs font-medium",
+            active ? "font-semibold text-emerald-300" : "text-slate-300",
+          )}
+        >
+          {country.name}
+        </span>
         <CountBadge n={country.leagues.reduce((n, l) => n + l.matchCount, 0)} />
       </button>
       {expanded ? (
@@ -524,11 +538,14 @@ function CountryBlock({
 function SportBlock({
   sport,
   selectedLeagueId,
+  activePath,
   onLeagueSelect,
   onSportSelect,
 }: {
   sport: SportNode;
   selectedLeagueId: string | null;
+  /** Chemin actif sport→pays→ligue (P0-9) : marque le sport et le pays ancêtres. */
+  activePath?: { sportId: string; countryId: string } | null;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
 }) {
@@ -537,6 +554,7 @@ function SportBlock({
   const toggleSport = useSportsSidebarStore((s) => s.toggleSport);
   const Icon = SPORT_ICONS[sport.icon] ?? Trophy;
   const sportLabel = t(`sport.${sport.id}`) || sport.name;
+  const active = activePath?.sportId === sport.id;
 
   return (
     <li>
@@ -544,6 +562,7 @@ function SportBlock({
         type="button"
         onClick={() => toggleSport(sport.id)}
         aria-expanded={expanded}
+        aria-label={t(expanded ? "collapseAria" : "expandAria", { name: sportLabel })}
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left",
           "transition-colors hover:bg-slate-800/80",
@@ -551,7 +570,12 @@ function SportBlock({
         )}
       >
         <Icon aria-hidden className="h-4 w-4 shrink-0 text-emerald-400" />
-        <span className="min-w-0 flex-1 truncate text-xs font-semibold text-slate-200">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-xs font-semibold",
+            active ? "text-emerald-300" : "text-slate-200",
+          )}
+        >
           {sportLabel}
         </span>
         {sport.liveMatches > 0 ? <CountBadge n={sport.liveMatches} live /> : null}
@@ -577,6 +601,7 @@ function SportBlock({
               key={country.id}
               country={country}
               selectedLeagueId={selectedLeagueId}
+              active={activePath?.countryId === country.id}
               onLeagueSelect={onLeagueSelect}
               onSportSelect={onSportSelect}
             />
@@ -584,6 +609,68 @@ function SportBlock({
         </ul>
       ) : null}
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bloc 3bis — Quick-links « Prédictions » (P0-3, profondeur 4→1)
+// ---------------------------------------------------------------------------
+
+function QuickLinksBlock({
+  tree,
+  onFallbackSport,
+}: {
+  tree: SportNode[];
+  onFallbackSport: (sportId: SportTabId) => void;
+}) {
+  const t = useTranslations("sportsSidebar");
+  const quick = useMemo(() => collectQuickLinks(tree), [tree]);
+
+  const rows: Array<{
+    key: "live" | "value" | "today";
+    label: string;
+    items: Array<{ match: TreeMatchSummary; league: LeagueNode }>;
+  }> = [
+    { key: "live", label: t("quickLive"), items: quick.live },
+    { key: "value", label: t("quickValue"), items: quick.value },
+    { key: "today", label: t("quickToday"), items: quick.today },
+  ];
+
+  // Bloc masqué entièrement si aucune ligne n'a de match (arbre vide/dégradé).
+  const visible = rows.filter((r) => r.items.length > 0);
+  if (visible.length === 0) return null;
+
+  return (
+    <section aria-label={t("quickLinks")} className="border-b border-slate-800/80 pb-2">
+      <h2 className="px-2.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        {t("quickLinks")}
+      </h2>
+      <div className="space-y-1">
+        {visible.map((row) => (
+          <div key={row.key}>
+            <p className="flex items-center gap-1 px-2.5 pb-0.5 text-[10px] font-semibold text-emerald-400/90">
+              {row.key === "live" ? (
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-red-500" />
+              ) : (
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500/60" />
+              )}
+              {row.label}
+            </p>
+            <ul className="space-y-0.5">
+              {row.items.map(({ match, league }) => (
+                <li key={match.id}>
+                  <MatchRow
+                    match={match}
+                    league={league}
+                    onFallbackSport={() => onFallbackSport(league.sportId as SportTabId)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -705,6 +792,9 @@ export function SportsSidebarContent({
     return filterTreeByQuery(applyTimeFilter(base, timeFilter), searchQuery);
   }, [treeData, timeFilter, searchQuery]);
 
+  // Chemin actif sport→pays→ligue (P0-9) : la ligue sélectionnée marque ses ancêtres.
+  const activePath = useMemo(() => findLeaguePath(tree, selectedLeagueId), [tree, selectedLeagueId]);
+
   const handleLeagueSelect = (league: LeagueNode) => {
     const sportId = league.sportId as SportTabId;
     selectLeague(league.id, sportId);
@@ -729,6 +819,7 @@ export function SportsSidebarContent({
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-1 p-1.5">
+          <QuickLinksBlock tree={tree} onFallbackSport={handleSportSelect} />
           <FavoritesBlock tree={tree} onLeagueSelect={handleLeagueSelect} />
           {tree.length === 0 || !hasAnyMatch ? (
             <div className="px-2.5 py-6 text-center">
@@ -742,6 +833,7 @@ export function SportsSidebarContent({
                   key={sport.id}
                   sport={sport}
                   selectedLeagueId={selectedLeagueId}
+                  activePath={activePath}
                   onLeagueSelect={handleLeagueSelect}
                   onSportSelect={handleSportSelect}
                 />

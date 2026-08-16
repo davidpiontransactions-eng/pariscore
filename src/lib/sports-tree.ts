@@ -113,6 +113,100 @@ export function best1x2Edge(
   return Math.max(...edges);
 }
 
+// ---------------------------------------------------------------------------
+// Quick-links « Prédictions » (P0-3) : lignes plates pré-médiées, profondeur 4→1
+// ---------------------------------------------------------------------------
+
+/** Nombre max de matchs par ligne de quick-links (Live / Value / Aujourd'hui). */
+export const MAX_QUICK_LINKS = 6;
+
+/** Entrée plate d'une ligne de quick-links : le match + sa ligue d'origine. */
+export interface QuickLinkMatch {
+  match: TreeMatchSummary;
+  league: LeagueNode;
+}
+
+/** Les 3 lignes pré-médiées du bloc quick-links. */
+export interface QuickLinks {
+  live: QuickLinkMatch[];
+  value: QuickLinkMatch[];
+  today: QuickLinkMatch[];
+}
+
+/**
+ * Collecte les lignes plates depuis l'arbre (P0-3) :
+ * - `live` : matchs en direct (les plus proches d'abord).
+ * - `value` : edge 1X2 strictement positif, trié décroissant (value bets).
+ * - `today` : coups d'envoi du jour calendaire, non-live, les plus proches d'abord.
+ *
+ * Déduplique par id de match, borne chaque ligne à `MAX_QUICK_LINKS`.
+ */
+export function collectQuickLinks(tree: SportNode[], now: Date = new Date()): QuickLinks {
+  const live: QuickLinkMatch[] = [];
+  const value: QuickLinkMatch[] = [];
+  const today: QuickLinkMatch[] = [];
+  const seenLive = new Set<string>();
+  const seenValue = new Set<string>();
+  const seenToday = new Set<string>();
+
+  for (const sport of tree) {
+    for (const country of sport.countries) {
+      for (const league of country.leagues) {
+        for (const m of league.matches ?? []) {
+          const row = { match: m, league };
+          if (m.isLive && !seenLive.has(m.id)) {
+            seenLive.add(m.id);
+            live.push(row);
+          }
+          const edge = m.edgePct;
+          if (edge != null && Number.isFinite(edge) && edge > 0 && !seenValue.has(m.id)) {
+            seenValue.add(m.id);
+            value.push(row);
+          }
+          if (!m.isLive && isValidDate(m.scheduledAt)) {
+            const isToday = filterByToday([m], (x) => x.scheduledAt, now).length > 0;
+            if (isToday && !seenToday.has(m.id)) {
+              seenToday.add(m.id);
+              today.push(row);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const byStart = (a: QuickLinkMatch, b: QuickLinkMatch) => {
+    const ta = isValidDate(a.match.scheduledAt) ? new Date(a.match.scheduledAt).getTime() : Infinity;
+    const tb = isValidDate(b.match.scheduledAt) ? new Date(b.match.scheduledAt).getTime() : Infinity;
+    return ta - tb;
+  };
+  live.sort(byStart);
+  today.sort(byStart);
+  value.sort((a, b) => (b.match.edgePct ?? 0) - (a.match.edgePct ?? 0));
+
+  return {
+    live: live.slice(0, MAX_QUICK_LINKS),
+    value: value.slice(0, MAX_QUICK_LINKS),
+    today: today.slice(0, MAX_QUICK_LINKS),
+  };
+}
+
+/** Chemin d'ancêtres d'une ligue sélectionnée (a11y P0-9 : surlignage sport→pays→ligue). */
+export function findLeaguePath(
+  tree: SportNode[],
+  leagueId: string | null,
+): { sportId: string; countryId: string } | null {
+  if (!leagueId) return null;
+  for (const sport of tree) {
+    for (const country of sport.countries) {
+      if (country.leagues.some((l) => l.id === leagueId)) {
+        return { sportId: sport.id, countryId: country.id };
+      }
+    }
+  }
+  return null;
+}
+
 const INT = "INT";
 
 function slug(name: string): string {
