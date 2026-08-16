@@ -413,6 +413,7 @@ function LeagueRow({
   onSelect: () => void;
   onFallbackSport: () => void;
 }) {
+  const t = useTranslations("sportsSidebar");
   const hasMatches = (league.matches?.length ?? 0) > 0;
 
   return (
@@ -472,6 +473,7 @@ function CountryBlock({
   country,
   selectedLeagueId,
   active,
+  forceExpanded,
   onLeagueSelect,
   onSportSelect,
 }: {
@@ -479,11 +481,14 @@ function CountryBlock({
   selectedLeagueId: string | null;
   /** Ancêtre direct de la ligue sélectionnée (chemin actif sport→pays→ligue). */
   active?: boolean;
+  /** Recherche active : force l'affichage des ligues quel que soit le store. */
+  forceExpanded?: boolean;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
 }) {
   const t = useTranslations("sportsSidebar");
-  const expanded = useSportsSidebarStore((s) => !!s.expandedCountries[country.id]);
+  const storeExpanded = useSportsSidebarStore((s) => !!s.expandedCountries[country.id]);
+  const expanded = forceExpanded || storeExpanded;
   const expandedLeagues = useSportsSidebarStore((s) => s.expandedLeagues);
   const toggleCountry = useSportsSidebarStore((s) => s.toggleCountry);
   const toggleLeague = useSportsSidebarStore((s) => s.toggleLeague);
@@ -522,7 +527,7 @@ function CountryBlock({
             <LeagueRow
               key={league.id}
               league={league}
-              expanded={!!expandedLeagues[league.id]}
+              expanded={forceExpanded || !!expandedLeagues[league.id]}
               onToggle={() => toggleLeague(league.id)}
               selected={selectedLeagueId === league.id}
               onSelect={() => onLeagueSelect(league)}
@@ -539,6 +544,7 @@ function SportBlock({
   sport,
   selectedLeagueId,
   activePath,
+  forceExpanded,
   onLeagueSelect,
   onSportSelect,
 }: {
@@ -546,11 +552,14 @@ function SportBlock({
   selectedLeagueId: string | null;
   /** Chemin actif sport→pays→ligue (P0-9) : marque le sport et le pays ancêtres. */
   activePath?: { sportId: string; countryId: string } | null;
+  /** Recherche active : force l'affichage des pays/ligues quel que soit le store. */
+  forceExpanded?: boolean;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
 }) {
   const t = useTranslations("sportsSidebar");
-  const expanded = useSportsSidebarStore((s) => !!s.expandedSports[sport.id]);
+  const storeExpanded = useSportsSidebarStore((s) => !!s.expandedSports[sport.id]);
+  const expanded = forceExpanded || storeExpanded;
   const toggleSport = useSportsSidebarStore((s) => s.toggleSport);
   const Icon = SPORT_ICONS[sport.icon] ?? Trophy;
   const sportLabel = t(`sport.${sport.id}`) || sport.name;
@@ -602,6 +611,7 @@ function SportBlock({
               country={country}
               selectedLeagueId={selectedLeagueId}
               active={activePath?.countryId === country.id}
+              forceExpanded={forceExpanded}
               onLeagueSelect={onLeagueSelect}
               onSportSelect={onSportSelect}
             />
@@ -792,6 +802,10 @@ export function SportsSidebarContent({
     return filterTreeByQuery(applyTimeFilter(base, timeFilter), searchQuery);
   }, [treeData, timeFilter, searchQuery]);
 
+  // Recherche active (>= 2 lettres, seuil de filterTreeByQuery) : les branches
+  // matchées sont affichées dépliées pour rendre les résultats visibles (P0-9).
+  const searchActive = searchQuery.trim().length >= 2;
+
   // Chemin actif sport→pays→ligue (P0-9) : la ligue sélectionnée marque ses ancêtres.
   const activePath = useMemo(() => findLeaguePath(tree, selectedLeagueId), [tree, selectedLeagueId]);
 
@@ -834,6 +848,7 @@ export function SportsSidebarContent({
                   sport={sport}
                   selectedLeagueId={selectedLeagueId}
                   activePath={activePath}
+                  forceExpanded={searchActive}
                   onLeagueSelect={handleLeagueSelect}
                   onSportSelect={handleSportSelect}
                 />
