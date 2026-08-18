@@ -17,9 +17,14 @@
 | **B4** | 🟡 MOYEN | Pas de retry sur les erreurs transitoires (429/5xx) — un rate-limit faisait tomber toute la chaîne | `bsdFetch` jetait immédiatement | ✅ **Résolu** — `fetchWithTransientRetry` : 1 retry (300 ms) sur `BSD_RATE_LIMIT` / 5xx avant fallback |
 | **B5** | 🟡 MOYEN | Drift de shape non protégé (bug A9 récurrent : `matches` = objet au lieu de tableau → crash `matches is not iterable`) | Pas de validation du payload côté hook | ✅ **Résolu** — Validation `Array.isArray(matches)` dans le fetcher → `INVALID_PAYLOAD` typé |
 | **B6** | 🟡 MOYEN | Skeleton dupliqué localement (2 copies) — aucun composant réutilisable pendant le chargement | `MatchCardSkeleton` défini 2× inline (`tennis-tab-content.tsx`, `best-matches-tabs.tsx`) | ✅ **Résolu** — Composant dédié `src/components/tennis/match-card-skeleton.tsx` (COMPONENTS.md mis à jour) |
-| **B7** | 🔴 CRITIQUE | **`ODDS_API_KEY` vide dans `.env`** — le fallback de secours historique est mort depuis longtemps | Configuration | ⚠️ **Partiel** — La chaîne de résilience ne dépend plus de cette clé ; à réactiver côté compte The Odds API (free tier 500 req/mois). **Diagnostic prod 2026-08-18** : les tokens BSD sont **liés à l'IP d'enregistrement** — la clé locale (Sports Addon actif, sha `bf2100…`) sert 30 matchs depuis le poste (IP résidentielle) mais **HTTP 401** depuis le VPS ; la clé historique du VPS (sha `0c455c…`) s'authentifie depuis le VPS mais renvoie **HTTP 402 addon_required**. Données réelles en prod ⇒ activer le Sports Addon ($5/mo) sur le compte BSD lié à la clé VPS (bzzoiro.com/addons/), ou demander au support BSD de délier la clé locale de son IP |
+| **B7** | 🔴 CRITIQUE | **`ODDS_API_KEY` vide dans `.env`** — le fallback de secours historique est mort depuis longtemps | Configuration | ⚠️ **Partiel** — La chaîne de résilience ne dépend plus de cette clé ; à réactiver côté compte The Odds API (free tier 500 req/mois). **Diagnostic prod 2026-08-18 (corrigé)** : les clés historiques des `.env` étaient des tokens régénérés au comportement erratique (200 depuis le poste / 401 depuis le VPS / 402 selon les tokens) — **pas** un binding IP permanent. Fix appliqué : token **courant** du compte principal (dashboard BSD, `9f51f498…`, Sports Pack déjà actif) déployé dans `.env` local + VPS (`.env` + `.next/standalone/.env`, backups `.bak-bsd-20260818-1930`) → **HTTP 200 source `bsd`, 30 matchs réels depuis le VPS, badge « Direct » en prod, mode dégradé levé, $0 dépensé** |
 
 **🔧 Action manuelle recommandée** : renouveler la clé BSD ou le sub Sports Addon chez `sports.bzzoiro.com` pour repasser en données réelles. D'ici là, le site affiche le cache puis le mock — jamais d'erreur bloquante.
+
+> **✅ Résolu le 2026-08-18 (19:30 UTC)** : aucune action nécessaire — le compte principal BSD
+> (`david.piontransactions@gmail.com`) avait déjà le **Sports Pack actif**. Le token courant du
+> dashboard (affiché dans « Your API token ») a été déployé dans les deux `.env` (local + VPS
+> standalone) → données réelles BSD servies en prod (`source: bsd`, 30 matchs, badge « Direct »).
 
 ---
 
@@ -88,5 +93,4 @@
   corrigé (29 erreurs console → 0). État prod constaté : BSD `BSD_PAYMENT` (abonnement bloqué depuis IP
   datacenter — fonctionne depuis IP résidentielle locale) + Odds API 404 (clé sans couverture tennis) → le
   mode dégradé est le comportement nominal attendu tant que les abonnements ne sont pas rétablis.
-- **Prochaines étapes** : activation Sports Addon sur le compte BSD lié à la clé VPS (données réelles en prod) ·
-  implémentation spec innovations (`docs/TENNIS_INNOVATIONS_SPEC.md`) · QA Playwright mobile (U4).
+- **Prochaines étapes** : implémentation spec innovations (`docs/TENNIS_INNOVATIONS_SPEC.md`) · QA Playwright mobile (U4).
