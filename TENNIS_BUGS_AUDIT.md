@@ -82,5 +82,10 @@
   1 important (winRate/ROI dilués par les void).
 - **Validation runtime** : test direct serveur dev → `HTTP 200` + `source: "bsd"` + 30 matchs réels (2026-08-19),
   cache TTL confirmé (2e appel sans re-fetch), chaîne de repli validée par construction.
+- **QA post-deploy prod (Playwright, pariscore.fr, 2026-08-18)** : bandeau « Mode dégradé » affiché ✓, matchs mock
+  visibles (Sabalenka/Osaka) ✓, « Unable to fetch matches » disparu ✓, `MISSING_MESSAGE: match.otherBookmakers`
+  corrigé (29 erreurs console → 0). État prod constaté : BSD `BSD_PAYMENT` (abonnement bloqué depuis IP
+  datacenter — fonctionne depuis IP résidentielle locale) + Odds API 404 (clé sans couverture tennis) → le
+  mode dégradé est le comportement nominal attendu tant que les abonnements ne sont pas rétablis.
 - **Prochaines étapes** : renouvellement clé BSD (données réelles) · implémentation spec innovations
   (`docs/TENNIS_INNOVATIONS_SPEC.md`) · QA Playwright mobile (U4).
