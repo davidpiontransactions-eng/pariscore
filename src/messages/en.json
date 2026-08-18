@@ -320,7 +320,9 @@
       "label": "Model accuracy",
       "tooltip": "Model accuracy over {n} similar matches ({surface}, Elo gap {bucket})",
       "noData": "Insufficient data"
-    }
+    },
+    "otherBookmarks": "other bookmarks",
+    "otherBookmakers": "other bookmakers"
   },
   "detail": {
     "title": "Full analysis",

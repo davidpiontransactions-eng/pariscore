@@ -320,7 +320,9 @@
       "label": "Précision modèle",
       "tooltip": "Précision du modèle sur {n} matchs similaires ({surface}, écart Elo {bucket})",
       "noData": "Données insuffisantes"
-    }
+    },
+    "otherBookmarks": "autres bookmakers",
+    "otherBookmakers": "autres bookmakers"
   },
   "detail": {
     "title": "Analyse complète",
