@@ -47,6 +47,14 @@ const basketballService = require('./services/basketballService'); // NBA vertic
 const wnbaService = require('./services/wnbaService'); // WNBA vertical (ESPN, miroir NBA)
 const f1Service         = require('./services/f1Service');         // F1 vertical (Jolpica-Ergast + ESPN, Plackett-Luce + Monte-Carlo) bd ParisScorebis-ttcp
 const cyclingService    = require('./services/cyclingService');    // Cyclisme vertical (TDF 2026, Plackett-Luce mock) Sprint 2
+const footballDataService = require('./services/footballDataService'); // football-data.org free-tier REST (bd ParisScorebis-jtsp) — cross-val API-FOOTBALL
+const sportScoreService = require('./services/sportScoreService'); // SportScore multi-sport live (bd ParisScorebis-43g0) — tennis/NBA/cricket
+const playerEloService = require('./services/playerEloService'); // PlayerElo player-level Elo 176 ligues (bd ParisScorebis-5xth) — branche dans modules Elo
+const propLineService = require('./services/propLineService'); // PropLine player-props 13 books (bd ParisScorebis-grwl) — verticale player-props
+const theRundownService = require('./services/theRundownService'); // TheRundown aggregator odds+scores (bd ParisScorebis-3lr3) — multi-books
+const dinoMarketsService = require('./services/dinoMarketsService'); // Dino.markets Kalshi+Polymarket (bd ParisScorebis-c8rj) — prediction-market
+const sportmonksService = require('./services/sportmonksService'); // Sportmonks Football backtesting (bd ParisScorebis-d8md) — historique + standings
+const eloBridge = require('./services/eloBridge'); // PlayerElo ↔ computeEloProbs cross-validation (bd ParisScorebis-q57t)
 const betexplorerService = require('./services/betexplorerService'); // BetExplorer dropping odds tennis (JS-natif, zero-dep)
 let highlightlyService = null; try { highlightlyService = require('./services/highlightlyService'); } catch (_) {} // Highlightly Basketball API (H2H croisé WNBA/NBA — inerte sans clé)
 let rotowireService = null; try { rotowireService = require('./services/rotowireService'); } catch (_) {} // Rotowire scaffold (injuries/lineups/projections — clé DG payante) — WIP/untracked; defensive require so a missing module never crashes boot
@@ -22559,6 +22567,741 @@ async function handleAPI(req, res, pathname, query) {
     const tracked = liquipediaService.getTrackedTournaments();
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     return res.end(JSON.stringify({ ok: true, tournaments: tracked }));
+  }
+
+  // ── Football-Data.org routes (bd ParisScorebis-jtsp) ─────────────────────
+  // GET /api/v1/football-data/matches?date=YYYY-MM-DD[&status=SCHEDULED|LIVE|FINISHED]
+  if (pathname === '/api/v1/football-data/matches' && req.method === 'GET') {
+    if (!footballDataService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'FOOTBALL_DATA_KEY manquante dans .env' }));
+    }
+    const date = (query.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    try {
+      const raw = await footballDataService.fetchMatchesByDate(date);
+      const matches = (raw || []).map(footballDataService.toPariScoreFormat).filter(Boolean);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
+      return res.end(JSON.stringify({ ok: true, date, count: matches.length, matches }));
+    } catch (e) {
+      console.error('[football-data matches]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
+    }
+  }
+
+  // GET /api/v1/football-data/competition/:code/matches?season=YYYY&matchday=N&status=
+  if (pathname.startsWith('/api/v1/football-data/competition/') && pathname.endsWith('/matches') && req.method === 'GET') {
+    if (!footballDataService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'FOOTBALL_DATA_KEY manquante dans .env' }));
+    }
+    const code = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const opts = {
+        season: query.season || '',
+        matchday: query.matchday || '',
+        status: query.status || '',
+      };
+      const raw = await footballDataService.fetchCompetitionMatches(code, opts);
+      const matches = (raw || []).map(footballDataService.toPariScoreFormat).filter(Boolean);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
+      return res.end(JSON.stringify({ ok: true, competition: code, count: matches.length, matches }));
+    } catch (e) {
+      console.error('[football-data competition matches]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, matches: [] }));
+    }
+  }
+
+  // GET /api/v1/football-data/competition/:code/standings
+  if (pathname.startsWith('/api/v1/football-data/competition/') && pathname.endsWith('/standings') && req.method === 'GET') {
+    if (!footballDataService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'FOOTBALL_DATA_KEY manquante dans .env' }));
+    }
+    const code = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const standings = await footballDataService.fetchStandings(code);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, competition: code, standings: standings || [] }));
+    } catch (e) {
+      console.error('[football-data standings]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, standings: [] }));
+    }
+  }
+
+  // GET /api/v1/football-data/team/:id
+  if (pathname.startsWith('/api/v1/football-data/team/') && req.method === 'GET') {
+    if (!footballDataService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'FOOTBALL_DATA_KEY manquante dans .env' }));
+    }
+    const teamId = decodeURIComponent(pathname.split('/')[5] || '');
+    try {
+      const team = await footballDataService.fetchTeam(teamId);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+      return res.end(JSON.stringify({ ok: true, team: team || null }));
+    } catch (e) {
+      console.error('[football-data team]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/football-data/competitions
+  if (pathname === '/api/v1/football-data/competitions' && req.method === 'GET') {
+    if (!footballDataService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'FOOTBALL_DATA_KEY manquante dans .env' }));
+    }
+    try {
+      const competitions = await footballDataService.fetchCompetitions();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+      return res.end(JSON.stringify({ ok: true, count: (competitions || []).length, competitions: competitions || [] }));
+    } catch (e) {
+      console.error('[football-data competitions]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, competitions: [] }));
+    }
+  }
+
+  // GET /api/v1/football-data/status — diagnostic (no key required)
+  if (pathname === '/api/v1/football-data/status' && req.method === 'GET') {
+    const status = footballDataService._getCacheStatus();
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...status }));
+  }
+
+  // ── SportScore routes (bd ParisScorebis-43g0) — multi-sport live no-auth ───
+  // GET /api/v1/sportscore/feeds
+  if (pathname === '/api/v1/sportscore/feeds' && req.method === 'GET') {
+    try {
+      const feeds = await sportScoreService.fetchFeeds();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, count: feeds.length, feeds }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, feeds: [] }));
+    }
+  }
+
+  // GET /api/v1/sportscore/events?sport=tennis|basketball|cricket|football[&date=YYYY-MM-DD]
+  if (pathname === '/api/v1/sportscore/events' && req.method === 'GET') {
+    try {
+      const events = await sportScoreService.fetchEvents(query.sport, { date: query.date });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=120' });
+      return res.end(JSON.stringify({ ok: true, sport: query.sport || null, count: events.length, events }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, events: [] }));
+    }
+  }
+
+  // GET /api/v1/sportscore/event/:id
+  if (pathname.startsWith('/api/v1/sportscore/event/') && req.method === 'GET') {
+    const eventId = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const event = await sportScoreService.fetchEvent(eventId);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=60' });
+      return res.end(JSON.stringify({ ok: true, event: event || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/sportscore/status
+  if (pathname === '/api/v1/sportscore/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...sportScoreService._getCacheStatus() }));
+  }
+
+  // ── PlayerElo routes (bd ParisScorebis-5xth) ──────────────────────────────
+  // GET /api/v1/player-elo/players?limit=50&offset=0
+  if (pathname === '/api/v1/player-elo/players' && req.method === 'GET') {
+    if (!playerEloService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PLAYERELO_API_KEY manquante dans .env' }));
+    }
+    try {
+      const limit = Math.min(parseInt(query.limit || '50', 10) || 50, 100);
+      const offset = parseInt(query.offset || '0', 10) || 0;
+      const data = await playerEloService.fetchTopPlayers({ limit, offset });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, players: data || [] }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/player-elo/player/:id
+  if (pathname.startsWith('/api/v1/player-elo/player/') && req.method === 'GET') {
+    if (!playerEloService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PLAYERELO_API_KEY manquante dans .env' }));
+    }
+    const id = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const data = await playerEloService.fetchPlayer(id);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=21600' });
+      return res.end(JSON.stringify({ ok: true, player: data || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/player-elo/predictions
+  if (pathname === '/api/v1/player-elo/predictions' && req.method === 'GET') {
+    if (!playerEloService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PLAYERELO_API_KEY manquante dans .env' }));
+    }
+    try {
+      const raw = await playerEloService.fetchPredictions();
+      const predictions = (Array.isArray(raw) ? raw : []).map(playerEloService.toValueBetShape).filter(Boolean);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, count: predictions.length, predictions }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/player-elo/value-bets
+  if (pathname === '/api/v1/player-elo/value-bets' && req.method === 'GET') {
+    if (!playerEloService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PLAYERELO_API_KEY manquante dans .env' }));
+    }
+    try {
+      const data = await playerEloService.fetchValueBets();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, bets: data || [] }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/player-elo/leagues
+  if (pathname === '/api/v1/player-elo/leagues' && req.method === 'GET') {
+    if (!playerEloService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PLAYERELO_API_KEY manquante dans .env' }));
+    }
+    try {
+      const data = await playerEloService.fetchLeagues();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=21600' });
+      return res.end(JSON.stringify({ ok: true, leagues: data || [] }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/player-elo/usage — quota check (ne consomme pas le quota)
+  if (pathname === '/api/v1/player-elo/usage' && req.method === 'GET') {
+    if (!playerEloService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PLAYERELO_API_KEY manquante dans .env' }));
+    }
+    try {
+      const data = await playerEloService.fetchUsage();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+      return res.end(JSON.stringify({ ok: true, usage: data || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/player-elo/status
+  if (pathname === '/api/v1/player-elo/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...playerEloService._getCacheStatus() }));
+  }
+
+  // ── PropLine routes (bd ParisScorebis-grwl) — player-props multi-books ────
+  // GET /api/v1/propline/sports
+  if (pathname === '/api/v1/propline/sports' && req.method === 'GET') {
+    if (!propLineService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PROPLINE_API_KEY manquante dans .env' }));
+    }
+    try {
+      const sports = await propLineService.fetchSports();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, sports }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, sports: [] }));
+    }
+  }
+
+  // GET /api/v1/propline/sports/:sport/events
+  if (pathname.startsWith('/api/v1/propline/sports/') && pathname.endsWith('/events') && req.method === 'GET') {
+    if (!propLineService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PROPLINE_API_KEY manquante dans .env' }));
+    }
+    const sport = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const events = await propLineService.fetchEventsBySport(sport);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=60' });
+      return res.end(JSON.stringify({ ok: true, sport, count: events.length, events }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, events: [] }));
+    }
+  }
+
+  // GET /api/v1/propline/sports/:sport/events/:eventId/odds?markets=...
+  if (pathname.match(/^\/api\/v1\/propline\/sports\/[^/]+\/events\/[^/]+\/odds$/) && req.method === 'GET') {
+    if (!propLineService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PROPLINE_API_KEY manquante dans .env' }));
+    }
+    const parts = pathname.split('/');
+    const sport = decodeURIComponent(parts[4] || '');
+    const eventId = decodeURIComponent(parts[6] || '');
+    try {
+      const opts = {
+        markets: query.markets ? query.markets.split(',') : undefined,
+        period: query.period,
+        bookmakers: query.bookmakers,
+      };
+      const odds = await propLineService.fetchEventOdds(sport, eventId, opts);
+      const bookmakers = propLineService.toBookmakerShape(odds);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=60' });
+      return res.end(JSON.stringify({ ok: true, sport, event_id: eventId, odds, bookmakers }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/propline/status
+  if (pathname === '/api/v1/propline/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...propLineService._getCacheStatus() }));
+  }
+
+  // GET /api/v1/propline/edge?sport=basketball_nba&eventId=129643&home=Detroit Pistons&away=Boston Celtics
+  // Branche PropLine comme source odds dans le pipeline PariScore via computeEdge().
+  // Retourne l'edge value-bet calculé sur 19 books PropLine. Use case :
+  //   - PariScore n'a PAS de cotes NBA/NFL/MLB en non-pro : PropLine ajoute cette verticale
+  //   - Comparaison A/B : edge PariScore (The Odds API) vs edge PropLine (autre set de books)
+  if (pathname === '/api/v1/propline/edge' && req.method === 'GET') {
+    if (!propLineService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'PROPLINE_API_KEY manquante dans .env' }));
+    }
+    const sport = (query.sport || '').trim();
+    const eventId = (query.eventId || '').trim();
+    const home = (query.home || '').trim();
+    const away = (query.away || '').trim();
+    if (!sport || !eventId || !home || !away) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'sport, eventId, home, away requis' }));
+    }
+    try {
+      const raw = await propLineService.fetchEventOdds(sport, eventId, { markets: 'h2h' });
+      if (!raw || !Array.isArray(raw.bookmakers) || raw.bookmakers.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Aucun bookmaker h2h retourné par PropLine' }));
+      }
+      const shaped = propLineService.toBookmakerShape(raw);
+      if (shaped.length === 0) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Aucune cote h2h exploitable après conversion US→decimal' }));
+      }
+      // Inject dans un match synthétique + run pipeline PariScore computeEdge()
+      const synthMatch = { home_team: home, away_team: away, bookmakers: shaped };
+      const edge = computeEdge(synthMatch);
+      if (!edge) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'computeEdge n\'a pas pu calculer (home/away pas matchés dans outcomes)', home, away, sample_bookmaker: shaped[0] && shaped[0].title }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=60' });
+      return res.end(JSON.stringify({
+        ok: true,
+        source: 'propline',
+        sport, event_id: eventId, home_team: home, away_team: away,
+        bookmakers_count: shaped.length,
+        edge,
+      }));
+    } catch (e) {
+      console.error('[propline edge]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // ── TheRundown routes (bd ParisScorebis-3lr3) — aggregator multi-books ────
+  // GET /api/v1/therundown/sports
+  if (pathname === '/api/v1/therundown/sports' && req.method === 'GET') {
+    if (!theRundownService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'THERUNDOWN_API_KEY manquante dans .env' }));
+    }
+    try {
+      const sports = await theRundownService.fetchSports();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, sports }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, sports: [] }));
+    }
+  }
+
+  // GET /api/v1/therundown/sports/:sport/events?date=YYYY-MM-DD
+  if (pathname.startsWith('/api/v1/therundown/sports/') && pathname.endsWith('/events') && req.method === 'GET') {
+    if (!theRundownService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'THERUNDOWN_API_KEY manquante dans .env' }));
+    }
+    const sport = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const events = await theRundownService.fetchEvents(sport, { date: query.date });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, sport, count: events.length, events }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, events: [] }));
+    }
+  }
+
+  // GET /api/v1/therundown/status
+  if (pathname === '/api/v1/therundown/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...theRundownService._getCacheStatus() }));
+  }
+
+  // GET /api/v1/therundown/affiliates — bookmakers list (seul endpoint data dispo free)
+  if (pathname === '/api/v1/therundown/affiliates' && req.method === 'GET') {
+    if (!theRundownService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'THERUNDOWN_API_KEY manquante dans .env' }));
+    }
+    try {
+      const affiliates = await theRundownService.fetchAffiliates();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, count: affiliates.length, affiliates }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, affiliates: [] }));
+    }
+  }
+
+  // ── Dino.markets routes (bd ParisScorebis-c8r3) — Kalshi+Polymarket ───────
+  // GET /api/v1/dino/markets?sport=&league=&status=&signal=&limit=
+  if (pathname === '/api/v1/dino/markets' && req.method === 'GET') {
+    if (!dinoMarketsService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'DINO_MARKETS_API_KEY manquante dans .env' }));
+    }
+    try {
+      const data = await dinoMarketsService.fetchMarkets({
+        sport: query.sport, league: query.league, status: query.status,
+        signal: query.signal, sort: query.sort, include: query.include,
+        market_type: query.market_type, game_id: query.game_id,
+        limit: query.limit ? parseInt(query.limit, 10) : undefined,
+      });
+      const markets = Array.isArray(data && data.markets) ? data.markets : (Array.isArray(data) ? data : []);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=120' });
+      return res.end(JSON.stringify({ ok: true, count: markets.length, markets }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, markets: [] }));
+    }
+  }
+
+  // GET /api/v1/dino/arbitrage?sport=&limit= ⭐ KILLER FEATURE
+  if (pathname === '/api/v1/dino/arbitrage' && req.method === 'GET') {
+    if (!dinoMarketsService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'DINO_MARKETS_API_KEY manquante dans .env' }));
+    }
+    try {
+      const data = await dinoMarketsService.fetchArbitrage({
+        sport: query.sport, limit: query.limit ? parseInt(query.limit, 10) : undefined,
+      });
+      const opps = Array.isArray(data && data.opportunities) ? data.opportunities : [];
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=60' });
+      return res.end(JSON.stringify({ ok: true, count: opps.length, opportunities: opps }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, opportunities: [] }));
+    }
+  }
+
+  // GET /api/v1/dino/leagues
+  if (pathname === '/api/v1/dino/leagues' && req.method === 'GET') {
+    if (!dinoMarketsService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'DINO_MARKETS_API_KEY manquante dans .env' }));
+    }
+    try {
+      const leagues = await dinoMarketsService.fetchLeagues();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, leagues: leagues || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/dino/pair/:id — détail d'une paire (market_id)
+  if (pathname.startsWith('/api/v1/dino/pair/') && req.method === 'GET') {
+    if (!dinoMarketsService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'DINO_MARKETS_API_KEY manquante dans .env' }));
+    }
+    const id = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const market = await dinoMarketsService.fetchMarket(id);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=120' });
+      return res.end(JSON.stringify({ ok: true, market: market || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/dino/pair/:id/history — historique prix
+  if (pathname.match(/^\/api\/v1\/dino\/pair\/[^/]+\/history$/) && req.method === 'GET') {
+    if (!dinoMarketsService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'DINO_MARKETS_API_KEY manquante dans .env' }));
+    }
+    const id = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const history = await dinoMarketsService.fetchMarketHistory(id);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=600' });
+      return res.end(JSON.stringify({ ok: true, history: history || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/dino/status
+  if (pathname === '/api/v1/dino/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...dinoMarketsService._getCacheStatus() }));
+  }
+
+  // ── Sportmonks routes (bd ParisScorebis-d8md) — Football backtesting ─────
+  // GET /api/v1/sportmonks/fixtures?date=YYYY-MM-DD
+  if (pathname === '/api/v1/sportmonks/fixtures' && req.method === 'GET') {
+    if (!sportmonksService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'SPORTMONKS_API_KEY manquante dans .env' }));
+    }
+    const date = (query.date || new Date().toISOString().slice(0, 10)).slice(0, 10);
+    try {
+      const raw = await sportmonksService.fetchFixturesByDate(date);
+      const fixtures = raw.map(sportmonksService.toPariScoreFormat).filter(Boolean);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
+      return res.end(JSON.stringify({ ok: true, date, count: fixtures.length, fixtures }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, fixtures: [] }));
+    }
+  }
+
+  // GET /api/v1/sportmonks/fixture/:id?include=statistics
+  if (pathname.startsWith('/api/v1/sportmonks/fixture/') && req.method === 'GET') {
+    if (!sportmonksService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'SPORTMONKS_API_KEY manquante dans .env' }));
+    }
+    const id = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const fixture = await sportmonksService.fetchFixture(id, { include: query.include || 'statistics;participants;league' });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=1800' });
+      return res.end(JSON.stringify({ ok: true, fixture: fixture || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/sportmonks/standings/:leagueId
+  if (pathname.startsWith('/api/v1/sportmonks/standings/') && req.method === 'GET') {
+    if (!sportmonksService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'SPORTMONKS_API_KEY manquante dans .env' }));
+    }
+    const leagueId = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const standings = await sportmonksService.fetchStandings(leagueId);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=3600' });
+      return res.end(JSON.stringify({ ok: true, league_id: leagueId, standings }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, standings: [] }));
+    }
+  }
+
+  // GET /api/v1/sportmonks/team/:id
+  if (pathname.startsWith('/api/v1/sportmonks/team/') && req.method === 'GET') {
+    if (!sportmonksService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'SPORTMONKS_API_KEY manquante dans .env' }));
+    }
+    const id = decodeURIComponent(pathname.split('/')[4] || '');
+    try {
+      const team = await sportmonksService.fetchTeam(id);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+      return res.end(JSON.stringify({ ok: true, team: team || null }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/sportmonks/leagues
+  if (pathname === '/api/v1/sportmonks/leagues' && req.method === 'GET') {
+    if (!sportmonksService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'SPORTMONKS_API_KEY manquante dans .env' }));
+    }
+    try {
+      const leagues = await sportmonksService.fetchLeagues({ page: parseInt(query.page || '1', 10) || 1 });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=86400' });
+      return res.end(JSON.stringify({ ok: true, count: leagues.length, leagues }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, leagues: [] }));
+    }
+  }
+
+  // GET /api/v1/sportmonks/live — live scores (60s TTL)
+  if (pathname === '/api/v1/sportmonks/live' && req.method === 'GET') {
+    if (!sportmonksService.enabled()) {
+      res.writeHead(503, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'SPORTMONKS_API_KEY manquante dans .env' }));
+    }
+    try {
+      const live = await sportmonksService.fetchLiveScores();
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=60' });
+      return res.end(JSON.stringify({ ok: true, count: live.length, live }));
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message, live: [] }));
+    }
+  }
+
+  // GET /api/v1/sportmonks/status
+  if (pathname === '/api/v1/sportmonks/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...sportmonksService._getCacheStatus() }));
+  }
+
+  // ── Elo Bridge (bd ParisScorebis-q57t) — PlayerElo ↔ computeEloProbs ──────
+  // GET /api/v1/elo/cross-validate?home=PSG&away=OM[&commence=2026-01-15T20:00:00Z]
+  if (pathname === '/api/v1/elo/cross-validate' && req.method === 'GET') {
+    const home = (query.home || '').trim();
+    const away = (query.away || '').trim();
+    if (!home || !away) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: 'home et away requis (query params)' }));
+    }
+    try {
+      const fakeMatch = {
+        home_team: home,
+        away_team: away,
+        commence_time: query.commence || new Date().toISOString(),
+      };
+      const result = await eloBridge.crossValidate(fakeMatch, computeEloProbs);
+      if (!result) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ ok: false, error: 'Aucune prédiction dispo (computeEloProbs a besoin de stats BSD + PlayerElo a besoin de clé + match dans /v1/predictions)' }));
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'max-age=300' });
+      return res.end(JSON.stringify({ ok: true, ...result }));
+    } catch (e) {
+      console.error('[elo bridge]', e.message);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
+  }
+
+  // GET /api/v1/elo/bridge-status
+  if (pathname === '/api/v1/elo/bridge-status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({ ok: true, ...eloBridge.getBridgeStatus() }));
+  }
+
+  // ── Unified integrations status (tous services 2026-08-18) ────────────────
+  // GET /api/v1/integrations/status — vue ops dashboard
+  if (pathname === '/api/v1/integrations/status' && req.method === 'GET') {
+    const missingEnvKeys = [];
+    const integrations = {
+      'football-data': {
+        enabled: footballDataService.enabled(),
+        cache: footballDataService._getCacheStatus(),
+        required_env: 'FOOTBALL_DATA_KEY',
+        docs: 'https://www.football-data.org',
+      },
+      sportscore: {
+        enabled: sportScoreService.enabled(),
+        cache: sportScoreService._getCacheStatus(),
+        required_env: null,  // pas de clé
+        docs: 'https://sportscore.com/developers/',
+      },
+      'player-elo': {
+        enabled: playerEloService.enabled(),
+        cache: playerEloService._getCacheStatus(),
+        required_env: 'PLAYERELO_API_KEY',
+        docs: 'https://playerelo.football/api-access',
+        bridge: eloBridge.getBridgeStatus(),
+      },
+      propline: {
+        enabled: propLineService.enabled(),
+        cache: propLineService._getCacheStatus(),
+        required_env: 'PROPLINE_API_KEY',
+        docs: 'https://prop-line.com',
+      },
+      therundown: {
+        enabled: theRundownService.enabled(),
+        cache: theRundownService._getCacheStatus(),
+        required_env: 'THERUNDOWN_API_KEY',
+        docs: 'https://therundown.io',
+      },
+      dino: {
+        enabled: dinoMarketsService.enabled(),
+        cache: dinoMarketsService._getCacheStatus(),
+        required_env: 'DINO_MARKETS_API_KEY',
+        docs: 'https://dino.markets',
+      },
+      sportmonks: {
+        enabled: sportmonksService.enabled(),
+        cache: sportmonksService._getCacheStatus(),
+        required_env: 'SPORTMONKS_API_KEY',
+        docs: 'https://docs.sportmonks.com/football/',
+      },
+    };
+    for (const [name, info] of Object.entries(integrations)) {
+      if (info.required_env && !info.enabled) missingEnvKeys.push(info.required_env);
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
+    return res.end(JSON.stringify({
+      ok: true,
+      ts: Date.now(),
+      integrations,
+      missing_env_keys: missingEnvKeys,
+      summary: {
+        total: Object.keys(integrations).length,
+        enabled: Object.values(integrations).filter(i => i.enabled).length,
+        needs_env: missingEnvKeys.length,
+      },
+    }));
   }
 
   // ── MMA / UFC routes (bd 8gz3) ────────────────────────────────────────────

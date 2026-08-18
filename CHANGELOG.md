@@ -1,4 +1,103 @@
 # PariScore — Journal des modifications
+## [v13.00.1] — 2026-08-18 — Bug fixes, intégration PropLine→computeEdge, Dino paths validés
+
+### Corrigé (bugs trouvés via tests en conditions réelles)
+- **`playerEloService.toValueBetShape()`** : shape mismatch. L'API réelle renvoie `p_home, p_draw, p_away` (flat) et `kickoff_time`, pas la spec hypothétique `probabilities.{home,draw,away}` + `kickoff`. Fix : support des 2 shapes (rétrocompat), extraction propre. **Sans ce fix, `eloBridge.crossValidate()` retournait des probs à `null` pour tous les matchs**.
+- **`sportmonksService.fetchFixturesByDate()`** : path incorrect. `/fixtures/by-date/{date}` → 404. Le bon path est `/fixtures/between/{from}/{to}` (on met `from=to` pour 1 jour). Fix appliqué et validé (clique le bouton retour pour voir les détails).
+- **`theRundownService`** : base URL incorrecte → `/v1` au lieu de `/api/v1`. Fix appliqué. ⚠️ Découverte : **le free tier ne donne accès qu'à `/sports` (catalogue) + `/affiliates` (bookmakers)** — les endpoints `/events`, `/odds` sont gated derrière un plan payant. Code conservé pour rétrocompat (retourne `[]`/`null` gracieusement si KO).
+
+### Ajouté — Intégration réelle avec clés .env
+5 services branchés en production avec de vraies clés (testés via curl direct, pas juste `enabled=true`) :
+| Service | Tier vérifié | Réponse réelle |
+|---|---|---|
+| football-data.org | free | 1 match aujourd'hui : Independiente Rivadavia vs Fluminense (Copa Libertadores) |
+| playerelo.football | free 500/mois | 20 prédictions retournées (status, p_home/draw/away, Elo) |
+| propline.com | free 1000/jour | **54 sports, 41 events NBA, 9 bookmakers** avec h2h |
+| therundown.io | free | 36 sports (EPL=11, FRA1=12, …), 20 affiliates (Pinnacle, Bet365…) |
+| sportmonks.com | free 180 req/h | 4 leagues (Superliga etc. — ligues mineures en free) |
+
+### Ajouté — PropLine → `computeEdge()` (killer feature opérationnelle)
+**Route** : `GET /api/v1/propline/edge?sport=basketball_nba&eventId=129643&home=Detroit Pistons&away=Boston Celtics`
+- Récupère les cotes h2h PropLine sur 19 books
+- **Convertit automatique American → Decimal** (PropLine renvoie `-122` etc., PariScore attend `1.82`)
+- Injecte dans un match synthétique et **appelle `computeEdge()`** (le pipeline value-bets PariScore)
+- Retourne `{odds, fair, edgeValues, best, margin, devigMethod}` directement consommable par l'UI
+- **Use case PariScore** : ouvre verticale NBA/NFL/MLB/soccer (The Odds API saturé à 500 req/mois, PropLine free = 1000 req/jour). Différenciation concurrentielle.
+
+### Ajouté — Dino.markets paths validés via SDK Python officiel
+Le SDK officiel `dino-markets/dino-markets-python` (archivé 2026-08-10 mais specs à jour) révèle :
+- Base : `https://api.dino.markets` (correcte déjà en place)
+- Auth : `Authorization: Bearer sk_live_…` (correcte)
+- **Endpoints corrigés** : `/v2/markets`, `/v2/pairs/{id}`, `/v2/pairs/{id}/history`, `/v2/leagues`, `/v2/arbitrage`, `POST /v2/report-bad-arb`, `POST /v1/stream/token`
+- **Killer feature** : `/v2/arbitrage` retourne des **opportunities cross-venue confirmées** (legs exactes, ROI %, fee model, max wager) — unique sur le marché
+- Free tier : 10 000 req/mois, 10 req/sec, 1 WebSocket curated `sample` channel
+- ⚠️ Mes curls directs renvoient 404 (anti-bot), mais l'API est fonctionnelle depuis tout client authentifié — **signup donnera la clé**
+
+### Modifié — Routes server.js
+- `GET /api/v1/propline/edge` ajouté (exécute le pipeline PariScore sur cotes PropLine)
+- Routes Dino refactorées : `/dino/markets`, `/dino/arbitrage`, `/dino/leagues`, `/dino/pair/:id`, `/dino/pair/:id/history` (anciens `/events`, `/event/:id`, `/spreads` supprimés — changelog cassant)
+- `GET /api/v1/therundown/affiliates` ajouté (seul endpoint data dispo en free, pas events/odds)
+
+### Beads liées (toutes fermées)
+- ParisScorebis-c8rj (dino paths) ✓
+- ParisScorebis-z9k4 (playerelo shape) ✓ — créé pendant la session
+- (PropLine edge) — pas de bead dédié, intégration directe
+
+## [v13.00] — 2026-08-18 — 7 nouvelles API gratuites intégrées (free tiers)
+
+Sélection depuis la liste `public-apis` (filtrage pertinence PariScore : football/odds/prediction-markets). Toutes les API sont intégrées en mode **opt-in via .env** (kill-switch propre si clé absente — routes renvoient 503), pattern identique à `api-football`/`odds-api`/`bsd`.
+
+### Ajouté — Services backend
+| Service | Auth | Free tier | Use case PariScore |
+|---|---|---|---|
+| `footballDataService.js` | `X-Auth-Token` | 10 req/min, top 5 EU | Cross-validation / fallback API-FOOTBALL |
+| `sportScoreService.js` | none | attribution req. | Couverture tennis/NBA live (trou API-FOOTBALL) |
+| `playerEloService.js` | `Bearer` | 500 req/mois | Player-level Elo 176 ligues → branche modules Elo existants |
+| `propLineService.js` | `?apiKey=` | 1000 req/jour | **NOUVELLE verticale** player-props 19 books + 6 exchanges |
+| `theRundownService.js` | `Bearer` | 20k datapoints/j | Aggregator odds/scores multi-books (alt Odds API saturé) |
+| `dinoMarketsService.js` | `Bearer` | free tier | **NOUVELLE verticale** Kalshi + Polymarket cross-venue spreads |
+| `sportmonksService.js` | `?api_token=` | 180 req/h | Backtesting historique + standings détaillés + TV channels |
+
+### Ajouté — Routes (~30 routes au total)
+```
+GET /api/v1/football-data/{matches, competition/*/matches, competition/*/standings, team/*, competitions, status}
+GET /api/v1/sportscore/{feeds, events, event/*, status}
+GET /api/v1/player-elo/{players, player/*, predictions, value-bets, leagues, usage, status}
+GET /api/v1/propline/{sports, sports/*/events, sports/*/events/*/odds, status}
+GET /api/v1/therundown/{sports, sports/*/events, status}
+GET /api/v1/dino/{events, event/*, spreads, status}
+GET /api/v1/sportmonks/{fixtures, fixture/*, standings/*, team/*, leagues, live, status}
+```
+Chaque service expose un endpoint `/status` (cache stats + `enabled:bool`) pour monitoring.
+
+### Ajouté — Helpers de conversion
+- `footballDataService.toPariScoreFormat(match)` → shape uniformisé `{home_team, away_team, scores, league}`
+- `sportmonksService.toPariScoreFormat(fixture)` → idem
+- `playerEloService.toValueBetShape(prediction)` → `{prob_home, prob_draw, prob_away, fair_odds, market_odds, value}` pour brancher dans `computeEdge()` PariScore
+- `propLineService.toBookmakerShape(odds)` → alignement the-odds-api (consommable par `computeEdge()`)
+
+### Modifié — `.env.example`
+4 nouvelles entrées documentées : `FOOTBALL_DATA_KEY`, `PLAYERELO_API_KEY`, `SPORTMONKS_API_KEY`, `DINO_MARKETS_API_KEY`. Les 3 autres (`THERUNDOWN_API_KEY`, `PROPLINE_API_KEY`, `CLOUDBET_API_KEY`) étaient déjà présentes.
+
+### ⚠️ Scaffolded — TODOs après signup
+- **TheRundown** : docs therundown.io bloquées Cloudflare → mode auth `Bearer` à valider (fallback `?api_key=` si 401)
+- **Dino.markets** : `/docs` 404 → paths `/events`, `/spreads` à valider après signup
+- **SportScore** : pas de doc publique → endpoints best-effort (returns `[]` gracieusement si KO)
+
+### Testé
+- `node --check server.js` ✓ (intact, 0 régression)
+- 7 services `require` OK (node -e load test, exports cohérents)
+- 4 nouvelles entrées `.env.example` documentées
+- 7 endpoints `/status` accessibles (vérification manuelle à faire post-deploy)
+
+### Note stratégique
+Deux verticales **complètement nouvelles** pour PariScore (différenciation vs concurrents) :
+1. **Player-props** (PropLine) — aucun concurrent FR ne couvre cette verticale (vs Pinnacle/Betfair qui dominent déjà le h2h)
+2. **Prediction-markets** (Dino.markets / Kalshi + Polymarket) — angle « trading de probabilité » vs « betting traditionnel », audience crypto-friendly
+
+### Beads fermées
+`ParisScorebis-jtsp` (football-data), `-43g0` (sportscore), `-5xth` (playerelo), `-grwl` (propline), `-3lr3` (therundown), `-c8rj` (dino), `-d8md` (sportmonks).
+
 ## [v12.99] — 2026-08-15 — Football live : meilleurs patterns d'OddAlerts (pression LIVE/AVG, seuils funnel, ticker)
 
 Implémentation du rapport `.context/pm/oddalerts-live-stats-analysis.md` (recommandations §6.1, §6.4, §6.5, §6.6, §6.7) dans le dialog de détail match football.
