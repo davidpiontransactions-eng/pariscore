@@ -1,0 +1,560 @@
+[
+ {
+  "model": "qwen3-14b",
+  "kind": "BAD_REQUEST",
+  "ms": 12881,
+  "detail": "parameter.enable_thinking must be set to false for non-streaming calls"
+ },
+ {
+  "model": "qwen3-livetranslate-flash",
+  "kind": "BAD_REQUEST",
+  "ms": 8314,
+  "detail": "Range of max_tokens should be [10, 16384]"
+ },
+ {
+  "model": "qwen3-livetranslate-flash-2025-12-01",
+  "kind": "BAD_REQUEST",
+  "ms": 10469,
+  "detail": "Range of max_tokens should be [10, 16384]"
+ },
+ {
+  "model": "qwen3.5-omni-plus",
+  "kind": "BAD_REQUEST",
+  "ms": 2842,
+  "detail": "Range of max_tokens should be [10, 65536]"
+ },
+ {
+  "model": "qwen3.5-omni-plus-2026-03-15",
+  "kind": "BAD_REQUEST",
+  "ms": 7299,
+  "detail": "Range of max_tokens should be [10, 65536]"
+ },
+ {
+  "model": "qwq-plus-2025-03-05",
+  "kind": "BAD_REQUEST",
+  "ms": 3657,
+  "detail": "This model only support stream mode, please enable the stream parameter to access the model. "
+ },
+ {
+  "model": "qwen-plus-2025-07-14",
+  "kind": "CHAT_EMPTY",
+  "ms": 3813,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3-32b",
+  "kind": "CHAT_EMPTY",
+  "ms": 10120,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3-livetranslate-flash-realtime",
+  "kind": "CHAT_EMPTY",
+  "ms": 3073,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3.5-livetranslate-flash-realtime",
+  "kind": "CHAT_EMPTY",
+  "ms": 11184,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3.5-livetranslate-flash-realtime-2026-05-19",
+  "kind": "CHAT_EMPTY",
+  "ms": 13502,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-flash-realtime",
+  "kind": "CHAT_EMPTY",
+  "ms": 2610,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-flash-realtime-2026-03-15",
+  "kind": "CHAT_EMPTY",
+  "ms": 2402,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-plus-realtime",
+  "kind": "CHAT_EMPTY",
+  "ms": 14003,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-plus-realtime-2026-03-15",
+  "kind": "CHAT_EMPTY",
+  "ms": 14759,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "qwq-plus",
+  "kind": "CHAT_EMPTY",
+  "ms": 14575,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "ccai-pro",
+  "kind": "CHAT_OK",
+  "ms": 3870,
+  "detail": "content=\"What would you like me to assist you\""
+ },
+ {
+  "model": "deepseek-v3.2",
+  "kind": "CHAT_OK",
+  "ms": 12260,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "glm-5.1",
+  "kind": "CHAT_OK",
+  "ms": 13475,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "kimi-k2.7-code",
+  "kind": "CHAT_OK",
+  "ms": 2380,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-coder-plus",
+  "kind": "CHAT_OK",
+  "ms": 3413,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-flash",
+  "kind": "CHAT_OK",
+  "ms": 10940,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-flash-character",
+  "kind": "CHAT_OK",
+  "ms": 11261,
+  "detail": "content=\"Merci ! Tout est prêt pour comm\""
+ },
+ {
+  "model": "qwen-max",
+  "kind": "CHAT_OK",
+  "ms": 5126,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-plus",
+  "kind": "CHAT_OK",
+  "ms": 5258,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-plus-2025-01-25",
+  "kind": "CHAT_OK",
+  "ms": 3338,
+  "detail": "content=\"OK! 😊 How can I assist\""
+ },
+ {
+  "model": "qwen-plus-2025-04-28",
+  "kind": "CHAT_OK",
+  "ms": 14871,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-plus-2025-09-11",
+  "kind": "CHAT_OK",
+  "ms": 9501,
+  "detail": "content=\"OK 😊\""
+ },
+ {
+  "model": "qwen-plus-2025-12-01",
+  "kind": "CHAT_OK",
+  "ms": 5797,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-plus-character",
+  "kind": "CHAT_OK",
+  "ms": 11487,
+  "detail": "content=\"Parfait ! Je suis là si vous\""
+ },
+ {
+  "model": "qwen-plus-latest",
+  "kind": "CHAT_OK",
+  "ms": 3070,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-turbo",
+  "kind": "CHAT_OK",
+  "ms": 4974,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-vl-max",
+  "kind": "CHAT_OK",
+  "ms": 9690,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen-vl-plus",
+  "kind": "CHAT_OK",
+  "ms": 9641,
+  "detail": "content=\"OK ! 😊 Comment puis-je\""
+ },
+ {
+  "model": "qwen3-235b-a22b-instruct-2507",
+  "kind": "CHAT_OK",
+  "ms": 3785,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-235b-a22b-thinking-2507",
+  "kind": "CHAT_OK",
+  "ms": 9455,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-30b-a3b-instruct-2507",
+  "kind": "CHAT_OK",
+  "ms": 13379,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-30b-a3b-thinking-2507",
+  "kind": "CHAT_OK",
+  "ms": 13471,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-coder-480b-a35b-instruct",
+  "kind": "CHAT_OK",
+  "ms": 3901,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-coder-flash",
+  "kind": "CHAT_OK",
+  "ms": 9774,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-coder-next",
+  "kind": "CHAT_OK",
+  "ms": 11108,
+  "detail": "content=\"OK ! 😊  \\nN’hés\""
+ },
+ {
+  "model": "qwen3-coder-plus-2025-07-22",
+  "kind": "CHAT_OK",
+  "ms": 4641,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-coder-plus-2025-09-23",
+  "kind": "CHAT_OK",
+  "ms": 9990,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-max",
+  "kind": "CHAT_OK",
+  "ms": 10075,
+  "detail": "content=\"OK ! 😊\""
+ },
+ {
+  "model": "qwen3-max-2025-09-23",
+  "kind": "CHAT_OK",
+  "ms": 10773,
+  "detail": "content=\"OK ! 😊\""
+ },
+ {
+  "model": "qwen3-max-2026-01-23",
+  "kind": "CHAT_OK",
+  "ms": 11221,
+  "detail": "content=\"OK ! 😊\""
+ },
+ {
+  "model": "qwen3-max-preview",
+  "kind": "CHAT_OK",
+  "ms": 7606,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3-next-80b-a3b-instruct",
+  "kind": "CHAT_OK",
+  "ms": 6978,
+  "detail": "content=\"OK 😊\""
+ },
+ {
+  "model": "qwen3-next-80b-a3b-thinking",
+  "kind": "CHAT_OK",
+  "ms": 9855,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.5-397b-a17b",
+  "kind": "CHAT_OK",
+  "ms": 8656,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.5-flash-2026-02-23",
+  "kind": "CHAT_OK",
+  "ms": 13631,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.5-omni-flash",
+  "kind": "CHAT_OK",
+  "ms": 3496,
+  "detail": "content=\"OK ! Comment puis-je vous aider\""
+ },
+ {
+  "model": "qwen3.5-omni-flash-2026-03-15",
+  "kind": "CHAT_OK",
+  "ms": 3086,
+  "detail": "content=\"C'est noté ! Comment puis-\""
+ },
+ {
+  "model": "qwen3.5-plus",
+  "kind": "CHAT_OK",
+  "ms": 11881,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.5-plus-2026-02-15",
+  "kind": "CHAT_OK",
+  "ms": 11263,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.6-27b",
+  "kind": "CHAT_OK",
+  "ms": 10438,
+  "detail": "content=\"Got it! How can I assist\""
+ },
+ {
+  "model": "qwen3.6-plus",
+  "kind": "CHAT_OK",
+  "ms": 12136,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.6-plus-2026-04-02",
+  "kind": "CHAT_OK",
+  "ms": 7715,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.7-flash",
+  "kind": "CHAT_OK",
+  "ms": 3015,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.7-flash-2026-07-15",
+  "kind": "CHAT_OK",
+  "ms": 2174,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.7-max-2026-05-17",
+  "kind": "CHAT_OK",
+  "ms": 14709,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.7-max-2026-06-08",
+  "kind": "CHAT_OK",
+  "ms": 3137,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.7-plus",
+  "kind": "CHAT_OK",
+  "ms": 10420,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.7-plus-2026-05-26",
+  "kind": "CHAT_OK",
+  "ms": 5169,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.8-2.4t-a95b",
+  "kind": "CHAT_OK",
+  "ms": 3057,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qwen3.8-max",
+  "kind": "CHAT_OK",
+  "ms": 2315,
+  "detail": "content=\"OK\""
+ },
+ {
+  "model": "qvq-max",
+  "kind": "ERR",
+  "ms": 15010,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen-omni-turbo",
+  "kind": "ERR",
+  "ms": 15003,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3-235b-a22b",
+  "kind": "ERR",
+  "ms": 15001,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3-30b-a3b",
+  "kind": "ERR",
+  "ms": 15009,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3-8b",
+  "kind": "ERR",
+  "ms": 15003,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3-coder-plus",
+  "kind": "ERR",
+  "ms": 15002,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.5-122b-a10b",
+  "kind": "ERR",
+  "ms": 15015,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.5-27b",
+  "kind": "ERR",
+  "ms": 15014,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.5-35b-a3b",
+  "kind": "ERR",
+  "ms": 15009,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.5-flash",
+  "kind": "ERR",
+  "ms": 15010,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.5-plus-2026-04-20",
+  "kind": "ERR",
+  "ms": 15013,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.6-35b-a3b",
+  "kind": "ERR",
+  "ms": 15003,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.6-flash",
+  "kind": "ERR",
+  "ms": 15008,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.6-flash-2026-04-16",
+  "kind": "ERR",
+  "ms": 15002,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.6-max-preview",
+  "kind": "ERR",
+  "ms": 15003,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.7-max",
+  "kind": "ERR",
+  "ms": 15012,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.7-max-2026-05-20",
+  "kind": "ERR",
+  "ms": 15017,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3.7-max-preview",
+  "kind": "ERR",
+  "ms": 15018,
+  "detail": "AbortError: This operation was aborted"
+ },
+ {
+  "model": "qwen3-livetranslate-flash-realtime-2025-09-22",
+  "kind": "HTTP_403",
+  "ms": 2804,
+  "detail": "{\"error\":{\"message\":\"Access denied\",\"id\":\"71d632a2-a0b9-961b-a54f-1bfcfc533f3d\","
+ },
+ {
+  "model": "qwen3-s2s-flash-realtime",
+  "kind": "HTTP_500",
+  "ms": 3202,
+  "detail": "{\"error\":{\"message\":\"There are no suitable clusters.\",\"type\":\"BalanceError\",\"par"
+ },
+ {
+  "model": "qwen2-7b-instruct",
+  "kind": "NOT_CHAT",
+  "ms": 7273,
+  "detail": "Model not exist."
+ },
+ {
+  "model": "deepseek-v4-flash",
+  "kind": "REASONING_OK",
+  "ms": 6563,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "deepseek-v4-flash-0731",
+  "kind": "REASONING_OK",
+  "ms": 2150,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "deepseek-v4-pro",
+  "kind": "REASONING_OK",
+  "ms": 4659,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "deepseek-v4-pro-0813",
+  "kind": "REASONING_OK",
+  "ms": 1721,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "glm-5.2",
+  "kind": "REASONING_OK",
+  "ms": 582,
+  "detail": "content=\"\""
+ },
+ {
+  "model": "glm-5.2-fast-preview",
+  "kind": "REASONING_OK",
+  "ms": 1516,
+  "detail": "content=\"\""
+ }
+]

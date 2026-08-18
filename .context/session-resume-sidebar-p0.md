@@ -6,7 +6,9 @@ Date rédaction : 2026-08-15 · Mise à jour : 2026-08-16 (session P0-3/P0-9) ·
 
 Implémentation (Phase A + a11y) des recommandations P0 du rapport PM pour la sidebar multi-sports : `.context/pm/sidebar-ameliorations-pm-report.md`.
 
-**Le code P0 est complet et vérifié** (tsc 0 erreur scoped, lint clean, tests 28/28, build Next ✓ 61/61 pages, QA Playwright 8/8 + QA visuelle 9/10 avec 1 FAIL artefact données). **Non déployé.** Le dernier commit `d16293a0` contient P0-1/P0-2 ; les changements P0-3/P0-9 ci-dessous sont **en working tree**.
+**Le code P0 est complet, vérifié et DÉPLOYÉ** (tsc 0 erreur scoped, lint clean, tests 28/28, build ✓, QA Playwright + prod). Dernier commit `e2476af0` (fix recherche + crash, 2026-08-16) ; avant : `e015e053` (P0-3/P0-9) puis `d16293a0` (P0-1/P0-2).
+
+> **Fix post-deploy e2476af0** : (1) la recherche ne forçait pas l'expansion des branches matchées → La Liga invisible même avec données présentes (défaut : sports/pays repliés, filterTreeByQuery ne déplie pas) ; corrigé par prop forceExpanded propagée SportBlock → CountryBlock → LeagueRow quand searchActive (query ≥ 2). (2) **Crash au dépliage d'un pays** : LeagueRow utilisait t(...) sans useTranslations (bug introduit en P0-9, déjà en prod e015e053) → ReferenceError → React démontait la sidebar entière. Corrigé + vérifié en prod : recherche « liga » → Spain → La Liga visibles, dépliage manuel sans page error.
 
 ## État par tâche P0
 

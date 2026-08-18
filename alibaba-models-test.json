@@ -1,0 +1,84 @@
+{
+  "results": [
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "qwen3.8-max",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 2535,
+      "detail": "content=\"OK\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "qwen3.7-max",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 2732,
+      "detail": "content=\"OK\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "qwen3.7-plus",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 3143,
+      "detail": "content=\"OK\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "qwen3.6-flash",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 2690,
+      "detail": "content=\"OK\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "glm-5.2",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 605,
+      "detail": "content=\"\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "deepseek-v4-pro",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 1328,
+      "detail": "content=\"\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "deepseek-v4-pro-0813",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 1129,
+      "detail": "content=\"\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "deepseek-v4-flash-0731",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 946,
+      "detail": "content=\"OK\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "qwen3-max",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 1034,
+      "detail": "content=\"OK\""
+    },
+    {
+      "endpoint": "workspace-ap-southeast-1",
+      "model": "qwen-max",
+      "keyFile": "--key",
+      "ok": true,
+      "ms": 436,
+      "detail": "content=\"OK\""
+    }
+  ]
+}

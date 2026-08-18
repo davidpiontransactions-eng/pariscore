@@ -9,7 +9,7 @@ import { BaseballMatchAnalysisModal } from "./BaseballMatchAnalysisModal";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
-import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { splitLivePrematch, filterByStartWindow, filterByToday, filterBySelection, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 const LEAGUE_TABS: { id: LeagueFilter; label: string }[] = [
@@ -52,15 +52,18 @@ export function MLBKBOFolderTab() {
     [matchList],
   );
 
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
+
   const visiblePrematch = useMemo(() => {
     const scoped = timeToday ? filterByToday(prematch, (m) => m.game.gameDateIso) : prematch;
     const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.game.gameDateIso);
-    return [...inWindow].sort(
+    const selected = filterBySelection(inWindow, selectedMatchIds, (m) => m.game.id);
+    return [...selected].sort(
       (a, b) => new Date(a.game.gameDateIso).getTime() - new Date(b.game.gameDateIso).getTime(),
     );
-  }, [prematch, timeRange, timeToday]);
+  }, [prematch, timeRange, timeToday, selectedMatchIds]);
 
-  const visibleMatches = mode === "live" ? live : visiblePrematch;
+  const visibleMatches = mode === "live" ? filterBySelection(live, selectedMatchIds, (m) => m.game.id) : visiblePrematch;
 
   const refresh = useCallback(() => {
     void mutate();

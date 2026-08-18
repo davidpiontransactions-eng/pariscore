@@ -12,6 +12,7 @@ import { Calendar, Clock, TrendingUp } from "lucide-react";
 import type { PlayerResult } from "@/lib/tennis-search-types";
 import type { TennisMatch } from "@/lib/tennis-data";
 import { usePlayerStats } from "@/hooks/use-player-stats";
+import { useBrowserTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -44,6 +45,7 @@ function fmtNumber(v: number | null | undefined, suffix = ""): string {
  */
 export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Props) {
   const playerName = player?.name ?? "";
+  const browserTimeZone = useBrowserTimeZone();
 
   // 3 appels SWR (un par surface) : l'API prend UNE surface par requête.
   // Clés distinctes → 3 fetchs parallèles, dégradation gracieuse côté API.
@@ -192,7 +194,7 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
                         </span>
                         <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
                           <Clock className="h-3 w-3" aria-hidden />
-                          {formatTime(m.scheduledAt)}
+                          {formatTime(m.scheduledAt, browserTimeZone)}
                         </span>
                       </li>
                     );
@@ -218,9 +220,13 @@ function normalizeName(name: string): string {
     .toLowerCase();
 }
 
-function formatTime(iso: string): string {
+function formatTime(iso: string, timeZone: string): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  return new Intl.DateTimeFormat("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone,
+  }).format(d);
 }

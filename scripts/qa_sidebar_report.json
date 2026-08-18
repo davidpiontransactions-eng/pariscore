@@ -1,0 +1,59 @@
+{
+  "results": [
+    {
+      "check": "aside desktop visible (1440px)",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "check": "bloc 1: champ recherche",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 1: placeholder",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 1: recherche 'liga' -> La Liga",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "check": "bloc 1: recherche vide -> empty-state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 2: pills horaires",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 2: pill 'aujourd'hui'",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 3: section favoris",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 5: toggle live/prematch",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 4: accordeon sport deroulable",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "exceptions": [
+    "mobile:TimeoutError('Page.goto: Timeout 45000ms exceeded.\\nCall log:\\n  - navigating to \"http://localhost:3000/\", waiting until \"networkidle\"\\n')"
+  ],
+  "console_errors": [],
+  "url": "http://localhost:3000"
+}

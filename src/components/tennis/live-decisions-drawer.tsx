@@ -6,7 +6,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Progress } from "@/components/ui/progress";
-import type { CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
+import type { CalculatedLiveMetrics, DrResult } from "@/lib/tennis-live-metrics";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 
 type Props = {
@@ -20,8 +20,8 @@ type Props = {
 
 // ─── DR Bar ──────────────────────────────────────────────────────────────
 
-function DrBar({ dr, labelA, labelB, levelA }: CalculatedLiveMetrics["dr"]) {
-  const pct = Math.round((dr.drA / (dr.drA + dr.drB)) * 100);
+function DrBar({ drA, drB, labelA, labelB, levelA }: DrResult) {
+  const pct = Math.round((drA / (drA + drB)) * 100);
   const drc = (lvl: string) =>
     lvl === "dominant" ? "bg-emerald-500" : lvl === "favorable" ? "bg-emerald-400" :
     lvl === "unfavorable" ? "bg-amber-400" : lvl === "dominated" ? "bg-red-500" : "bg-muted-foreground/30";
@@ -29,7 +29,7 @@ function DrBar({ dr, labelA, labelB, levelA }: CalculatedLiveMetrics["dr"]) {
     <div className="space-y-2">
       <div className="flex items-center justify-between text-xs">
         <span className="font-semibold text-emerald-400">{labelA}</span>
-        <span className="font-mono tabular-nums text-muted-foreground">DR {dr.drA.toFixed(2)} — {dr.drB.toFixed(2)}</span>
+        <span className="font-mono tabular-nums text-muted-foreground">DR {drA.toFixed(2)} — {drB.toFixed(2)}</span>
         <span className="font-semibold text-amber-400">{labelB}</span>
       </div>
       <div className="h-2 w-full rounded-full bg-muted overflow-hidden">

@@ -25,6 +25,8 @@
     "footerWarning": "Les prédictions sont fournies à titre indicatif et ne garantissent aucun résultat. Le pari peut comporter des risques · Joueurs majeurs uniquement · 18+",
     "errorTitle": "Erreur de chargement",
     "errorBody": "Impossible de récupérer les matchs.",
+    "degradedTitle": "Mode dégradé",
+    "degradedBody": "Données indisponibles — affichage des données statiques ou en cache.",
     "retry": "Réessayer",
     "liveModel": "Modèle Elo+Forme+Surface",
     "heroTitle": "Tennis · Prematch",
@@ -244,7 +246,10 @@
       "f1": "Formule 1",
       "baseball": "Baseball",
       "rugby": "Rugby"
-    }
+    },
+    "selectionAdd": "Ajouter le match à la sélection",
+    "selectionRemove": "Retirer le match de la sélection",
+    "selectionClear": "Effacer"
   },
   "match": {
     "win": "WIN",
@@ -526,11 +531,13 @@
     "status": {
       "pending": "En cours",
       "won": "Gagné",
-      "lost": "Perdu"
+      "lost": "Perdu",
+      "void": "Remboursé (RET/WO)"
     },
     "actions": {
       "markWon": "Marquer comme gagné",
       "markLost": "Marquer comme perdu",
+      "markVoid": "Rembourser (abandon RET/WO)",
       "delete": "Supprimer",
       "clearAll": "Tout effacer"
     },
@@ -595,11 +602,13 @@
     "status": {
       "pending": "En cours",
       "won": "Gagné",
-      "lost": "Perdu"
+      "lost": "Perdu",
+      "void": "Remboursé (RET/WO)"
     },
     "actions": {
       "markWon": "Marquer comme gagné",
       "markLost": "Marquer comme perdu",
+      "markVoid": "Rembourser (abandon RET/WO)",
       "delete": "Supprimer",
       "clearAll": "Tout effacer"
     },

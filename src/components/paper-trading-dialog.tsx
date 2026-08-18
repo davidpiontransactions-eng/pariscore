@@ -20,6 +20,7 @@ import {
   Trash2,
   Check,
   X,
+  Ban,
   Target,
   Percent,
   Trophy,
@@ -160,6 +161,7 @@ export function PaperTradingDialog() {
                               "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
                               bet.status === "won" && "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
                               bet.status === "lost" && "bg-rose-500/15 text-rose-600 dark:text-rose-400",
+                              bet.status === "void" && "bg-slate-500/15 text-slate-600 dark:text-slate-400",
                               bet.status === "pending" && "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                             )}
                           >
@@ -194,6 +196,15 @@ export function PaperTradingDialog() {
                             title={t("actions.markLost")}
                           >
                             <X className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-amber-600 hover:bg-amber-500/10"
+                            onClick={() => settleBet(bet.id, "void")}
+                            title={t("actions.markVoid")}
+                          >
+                            <Ban className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       )}

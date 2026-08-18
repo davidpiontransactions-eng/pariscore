@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="328" height="472" viewBox="0 0 328 472" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .weekend { fill: #161b29; }
+  .title { fill: #e6edf3; font-size: 18px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 11px; }
+  .track-name { fill: #c9d1d9; font-size: 12px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item { fill: #00e676; }
+  .item-critical { fill: #ff6b6b; }
+  .item-premium { fill: #0077ff; }
+  .item-setup { fill: #a371f7; }
+  .item-done { fill: #2ea043; }
+  .item-label { fill: #e6edf3; font-size: 11px; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+</style>
+<rect class="bg" width="328" height="472"/>
+<text class="title" x="20" y="32">Fix cotes rapides Baseball — suppression verrou statsAvailable</text>
+<text class="subtitle" x="20" y="50">1 jours · 5 tracks · 7 tâches · généré 2026-08-14</text>
+<rect class="grid-bg" x="220" y="60" width="84" height="30"/>
+<line class="grid-line" x1="220" y1="60" x2="220" y2="462"/>
+<text class="header-date" x="262" y="79">14/08</text>
+<line class="grid-line" x1="304" y1="60" x2="304" y2="462"/>
+<rect class="track-bg" x="0" y="92" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="110">Analyse &amp; spec</text>
+<rect class="item item" x="224" y="94" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="110">Analyse pipeline + diff 6b34c5e1 vs 9…</text>
+<rect class="track-bg" x="0" y="138" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="156">Provider (suppression ver…</text>
+<rect class="item item" x="224" y="140" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="156">computeQuickForMatch : retirer early-…</text>
+<rect class="track-bg" x="0" y="170" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="188">Provider (suppression ver…</text>
+<rect class="item item" x="224" y="172" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="188">Constructeur détails : retirer branch…</text>
+<rect class="track-bg" x="0" y="216" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="234">UI vérification</text>
+<rect class="item item" x="224" y="218" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="234">Grep message supprimé + vérif quick:n…</text>
+<rect class="track-bg" x="0" y="262" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="280">QA &amp; validation</text>
+<rect class="item item" x="224" y="264" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="280">typecheck + lint + test moteur</text>
+<rect class="track-bg" x="0" y="294" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="312">QA &amp; validation</text>
+<rect class="item item" x="224" y="296" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="312">Revue sub-agent + verification moteur…</text>
+<rect class="track-bg" x="0" y="340" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="358">Gantt &amp; pilotage</text>
+<rect class="item item" x="224" y="342" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="358">Gantt JSON + SVG + issues bd + rapport</text>
+<line class="sep" x1="0" y1="60" x2="328" y2="60"/>
+</svg>

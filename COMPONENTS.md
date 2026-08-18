@@ -50,6 +50,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | live-stats-panel | live-stats-panel.tsx | Panneau des stats live |
 | match-card | match-card.tsx | Carte de match (principale) |
 | match-card-broadcast | match-card-broadcast.tsx | Carte style TV broadcast (R7) |
+| match-card-skeleton | match-card-skeleton.tsx | Skeleton de carte de match (chargement grille) |
 | live-decision-badges | live-decision-badges.tsx | Badges d'alerte live : DR, 2nd sv, fatigue, BP (R10) |
 | live-decisions-drawer | live-decisions-drawer.tsx | Drawer « Décisions Live » — DR, DPI, signaux, alertes (R10) |
 | live-odds-panel | live-odds-panel.tsx | Cotes live P1/P2 (1xBet, repli BSD) : chips + flèches direction + Kelly |

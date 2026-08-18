@@ -40,7 +40,14 @@ import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
-import { filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import {
+  filterByStartWindow,
+  filterByToday,
+  filterBySelection,
+  filterLiveByWindow,
+  parseTimeFilter,
+  type MatchViewMode,
+} from "@/lib/match-view";
 
 // Dialog de détail (momentum) — lazy : ne charge pas le code tant qu'aucun match
 // n'est ouvert. Miroir du pattern tennis (tennis-tab-content.tsx).
@@ -115,10 +122,14 @@ export function FootballTabContent() {
   const matches: FootballMatch[] = data?.matches ?? [];
   const backtestState = useFootballBacktest(matches);
 
-  const liveMatches = useMemo(
-    () => matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT")),
-    [matches],
-  );
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
+
+  const liveMatches = useMemo(() => {
+    let list = matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT"));
+    if (timeRange !== null) list = filterLiveByWindow(list, timeRange, (m) => m.scheduledAt);
+    else if (timeToday) list = filterByToday(list, (m) => m.scheduledAt);
+    return filterBySelection(list, selectedMatchIds, (m) => m.id);
+  }, [matches, timeRange, timeToday, selectedMatchIds]);
 
   const prematchMatches = useMemo(() => {
     let list = matches.filter((m) => !m.live || m.live.status === "FT" || m.live.status === "PEN");
@@ -165,12 +176,14 @@ export function FootballTabContent() {
     } else if (timeToday) {
       list = filterByToday(list, (m) => m.scheduledAt);
     }
+    // Sélection sidebar : ne montrer que les matchs choisis. Vide = pas de filtre.
+    list = filterBySelection(list, selectedMatchIds, (m) => m.id);
     // Tri : par edge/value (décroissant) ou par date (croissant).
     if (sortByEdge) {
       return [...list].sort((a, b) => (bestMatchEdge(b) ?? -Infinity) - (bestMatchEdge(a) ?? -Infinity));
     }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday]);
+  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday, selectedMatchIds]);
 
   const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
     { key: "all", label: "Tous" },

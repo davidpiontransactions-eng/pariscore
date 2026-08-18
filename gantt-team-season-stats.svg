@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="412" height="632" viewBox="0 0 412 632" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+<style>
+  .bg { fill: #0b0e17; }
+  .grid-bg { fill: #131722; }
+  .grid-line { stroke: #1f2533; stroke-width: 1; }
+  .weekend { fill: #161b29; }
+  .title { fill: #e6edf3; font-size: 18px; font-weight: 700; }
+  .subtitle { fill: #8b949e; font-size: 11px; }
+  .track-name { fill: #c9d1d9; font-size: 12px; font-weight: 600; }
+  .track-bg { fill: #0f141e; }
+  .header-date { fill: #8b949e; font-size: 10px; text-anchor: middle; }
+  .item { fill: #00e676; }
+  .item-critical { fill: #ff6b6b; }
+  .item-premium { fill: #0077ff; }
+  .item-setup { fill: #a371f7; }
+  .item-done { fill: #2ea043; }
+  .item-label { fill: #e6edf3; font-size: 11px; }
+  .sep { stroke: #1f2533; stroke-width: 1; }
+</style>
+<rect class="bg" width="412" height="632"/>
+<text class="title" x="20" y="32">Gantt — Stats de saison par équipe (fcstats-style)</text>
+<text class="subtitle" x="20" y="50">2 jours · 7 tracks · 10 tâches · généré 2026-08-14</text>
+<rect class="grid-bg" x="220" y="60" width="168" height="30"/>
+<line class="grid-line" x1="220" y1="60" x2="220" y2="622"/>
+<text class="header-date" x="262" y="79">14/08</text>
+<rect class="weekend" x="304" y="60" width="84" height="572"/>
+<line class="grid-line" x1="304" y1="60" x2="304" y2="622"/>
+<text class="header-date" x="346" y="79">15/08</text>
+<line class="grid-line" x1="388" y1="60" x2="388" y2="622"/>
+<rect class="track-bg" x="0" y="92" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="110">Recherche &amp; spec</text>
+<rect class="item item" x="224" y="94" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="110">Spec + sources (Sofascore cascade, AF…</text>
+<rect class="track-bg" x="0" y="138" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="156">API serveur</text>
+<rect class="item item-done" x="224" y="140" width="76" height="24" rx="4"/>
+<text class="item-label" x="230" y="156">✅ Résolution équipe → sofaId</text>
+<rect class="track-bg" x="0" y="170" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="188">API serveur</text>
+<rect class="item item-done" x="224" y="172" width="160" height="24" rx="4"/>
+<text class="item-label" x="230" y="188">✅ Route /api/v1/team/:id/season-stats…</text>
+<rect class="track-bg" x="0" y="216" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="234">Calculs stats</text>
+<rect class="item item-done" x="224" y="218" width="160" height="24" rx="4"/>
+<text class="item-label" x="230" y="234">✅ General all/home/away (V/N/D, GF/GA…</text>
+<rect class="track-bg" x="0" y="248" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="266">Calculs stats</text>
+<rect class="item item-done" x="308" y="250" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="266">✅ Streaks/records (13 cols) + matchs …</text>
+<rect class="track-bg" x="0" y="294" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="312">UI modal</text>
+<rect class="item item-done" x="308" y="296" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="312">✅ Modal élargi + sélecteur saison/com…</text>
+<rect class="track-bg" x="0" y="326" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="344">UI modal</text>
+<rect class="item item-done" x="308" y="328" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="344">✅ Sections générales/classement/séque…</text>
+<rect class="track-bg" x="0" y="372" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="390">Cache &amp; pré-chauffage</text>
+<rect class="item item-done" x="308" y="374" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="390">✅ Cache 7j + état vide propre (promot…</text>
+<rect class="track-bg" x="0" y="418" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="436">QA &amp; validation</text>
+<rect class="item item-critical" x="308" y="420" width="76" height="24" rx="4"/>
+<text class="item-label" x="314" y="436">🔴 BSD-first + fallback · route OK · …</text>
+<rect class="track-bg" x="0" y="464" width="216" height="28" rx="3"/>
+<text class="track-name" x="10" y="482">Gantt &amp; pilotage</text>
+<rect class="item item" x="224" y="466" width="160" height="24" rx="4"/>
+<text class="item-label" x="230" y="482">gantt-team-season-stats.json + .svg +…</text>
+<line class="sep" x1="0" y1="60" x2="412" y2="60"/>
+</svg>

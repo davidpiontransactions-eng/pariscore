@@ -64,6 +64,8 @@ const DEMO_STATS: TennisLiveStats = {
   p2_first_pct: 64,
   p1_first_won: 72,
   p2_first_won: 77,
+  p1_second_won: 55,
+  p2_second_won: 53,
   p1_bp_saved: 5,
   p2_bp_saved: 1,
   p1_ret_won: 37,

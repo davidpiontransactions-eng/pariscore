@@ -1,0 +1,206 @@
+[
+ {
+  "model": "qwen3-livetranslate-flash",
+  "kind": "HTTP_400",
+  "ms": 932,
+  "detail": "The input translation_options is not supported."
+ },
+ {
+  "model": "qwen3-14b",
+  "kind": "HTTP_400",
+  "ms": 1516,
+  "detail": "parameter.enable_thinking must be set to false for non-streaming calls"
+ },
+ {
+  "model": "qwen3-livetranslate-flash-2025-12-01",
+  "kind": "HTTP_400",
+  "ms": 625,
+  "detail": "The input translation_options is not supported."
+ },
+ {
+  "model": "qwen3.5-omni-plus",
+  "kind": "CHAT_OK",
+  "ms": 918,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.5-omni-plus-2026-03-15",
+  "kind": "CHAT_OK",
+  "ms": 1411,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwq-plus-2025-03-05",
+  "kind": "HTTP_400",
+  "ms": 1366,
+  "detail": "This model only support stream mode, please enable the stream parameter to access the mode"
+ },
+ {
+  "model": "qwen-plus-2025-07-14",
+  "kind": "EMPTY",
+  "ms": 1090,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3-32b",
+  "kind": "EMPTY",
+  "ms": 3061,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3-livetranslate-flash-realtime",
+  "kind": "EMPTY",
+  "ms": 3023,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3.5-livetranslate-flash-realtime",
+  "kind": "EMPTY",
+  "ms": 461,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3.5-livetranslate-flash-realtime-2026-05-19",
+  "kind": "EMPTY",
+  "ms": 425,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-flash-realtime",
+  "kind": "EMPTY",
+  "ms": 428,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-flash-realtime-2026-03-15",
+  "kind": "EMPTY",
+  "ms": 416,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-plus-realtime",
+  "kind": "EMPTY",
+  "ms": 632,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwen3.5-omni-plus-realtime-2026-03-15",
+  "kind": "EMPTY",
+  "ms": 833,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qwq-plus",
+  "kind": "EMPTY",
+  "ms": 3984,
+  "detail": "c=\"\""
+ },
+ {
+  "model": "qvq-max",
+  "kind": "HTTP_400",
+  "ms": 4264,
+  "detail": "current user api does not support http call"
+ },
+ {
+  "model": "qwen-omni-turbo",
+  "kind": "CHAT_OK",
+  "ms": 1007,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3-235b-a22b",
+  "kind": "CHAT_OK",
+  "ms": 2676,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3-30b-a3b",
+  "kind": "CHAT_OK",
+  "ms": 3403,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3-8b",
+  "kind": "CHAT_OK",
+  "ms": 2963,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3-coder-plus",
+  "kind": "CHAT_OK",
+  "ms": 2681,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.5-122b-a10b",
+  "kind": "CHAT_OK",
+  "ms": 2427,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.5-27b",
+  "kind": "CHAT_OK",
+  "ms": 3653,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.5-35b-a3b",
+  "kind": "CHAT_OK",
+  "ms": 3704,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.5-flash",
+  "kind": "CHAT_OK",
+  "ms": 2933,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.5-plus-2026-04-20",
+  "kind": "CHAT_OK",
+  "ms": 6557,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.6-35b-a3b",
+  "kind": "CHAT_OK",
+  "ms": 7619,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.6-flash",
+  "kind": "CHAT_OK",
+  "ms": 3737,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.6-flash-2026-04-16",
+  "kind": "CHAT_OK",
+  "ms": 3454,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.6-max-preview",
+  "kind": "CHAT_OK",
+  "ms": 6472,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.7-max",
+  "kind": "CHAT_OK",
+  "ms": 6621,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.7-max-2026-05-20",
+  "kind": "CHAT_OK",
+  "ms": 6760,
+  "detail": "c=\"OK\""
+ },
+ {
+  "model": "qwen3.7-max-preview",
+  "kind": "CHAT_OK",
+  "ms": 6712,
+  "detail": "c=\"OK\""
+ }
+]

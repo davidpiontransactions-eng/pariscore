@@ -1,0 +1,47 @@
+{
+  "results": [
+    {
+      "check": "P0-3: section Predictions visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "P0-3: sous-ligne Live",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "P0-3: sous-ligne Value bets",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "P0-3: sous-ligne Aujourd'hui",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "P0-1: boutons cotes 1/X/2 presents",
+      "ok": true,
+      "detail": "count=3"
+    },
+    {
+      "check": "P0-9: boutons aria-expanded",
+      "ok": true,
+      "detail": "count=10"
+    },
+    {
+      "check": "P0-9: labels Élargir/Réduire",
+      "ok": true,
+      "detail": "count=10"
+    },
+    {
+      "check": "P0-1: clic cote -> open-match-detail",
+      "ok": true,
+      "detail": "[{'sport': 'football', 'matchId': 'bsd-215502', 'market': '1'}]"
+    }
+  ],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}

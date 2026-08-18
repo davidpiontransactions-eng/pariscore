@@ -48,3 +48,6 @@ Ready: 18 issues with no active blockers
 
 Status: â—‹ open  â— in_progress  â— blocked  âœ“ closed  â„ deferred
 
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.

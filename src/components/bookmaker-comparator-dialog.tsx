@@ -68,7 +68,9 @@ export function BookmakerComparatorDialog() {
 
   // Defensive normalization — protects against API shape drift (bug A9:
   // matches could be returned as { data, source, at } object instead of array).
-  const rawMatches = data?.matches;
+  // Mode dégradé (mock/cache) : pas de cotes réelles → comparateur vide.
+  const rawMatches =
+    data?.source === "mock" || data?.source === "cache-stale" ? [] : data?.matches;
   const matches = Array.isArray(rawMatches)
     ? rawMatches
     : Array.isArray((rawMatches as any)?.data)

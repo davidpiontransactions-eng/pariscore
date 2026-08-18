@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
-import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { splitLivePrematch, filterByStartWindow, filterByToday, filterBySelection, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 // ── Types ──
@@ -262,14 +262,16 @@ export function WnbaTabContent() {
   const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
 
   const { prematch } = useMemo(() => splitLivePrematch(matches, () => false), [matches]);
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
 
   const visiblePrematch = useMemo(() => {
     const scoped = timeToday ? filterByToday(prematch, (m) => m.commence_time) : prematch;
     const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.commence_time);
-    return [...inWindow].sort(
+    const selected = filterBySelection(inWindow, selectedMatchIds, (m) => m.id);
+    return [...selected].sort(
       (a, b) => new Date(a.commence_time ?? 0).getTime() - new Date(b.commence_time ?? 0).getTime(),
     );
-  }, [prematch, timeRange, timeToday]);
+  }, [prematch, timeRange, timeToday, selectedMatchIds]);
 
   if (loading && !data) {
     return (

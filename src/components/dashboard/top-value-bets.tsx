@@ -66,6 +66,9 @@ export function TopValueBetsList({ className }: TopValueBetsListProps) {
   const { data, isLoading, error } = usePrematchMatches();
 
   const valueBets = useMemo(() => {
+    // Mode dégradé (mock local / cache périmé) : les cotes ne sont pas
+    // réelles — ne JAMAIS présenter d'edges comme des value bets.
+    if (data?.source === "mock" || data?.source === "cache-stale") return [];
     if (!data?.matches) return [];
     const all: ValueBetItem[] = [];
     for (const match of data.matches) all.push(...computeEdge(match));

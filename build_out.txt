@@ -1,0 +1,743 @@
+$ next build && cp -rf .next/static .next/standalone/.next/ && cp -rf public .next/standalone/ && mkdir -p .next/standalone/src/lib/tennis-elo/ && cp -f src/lib/tennis-elo/abstract-cache.json .next/standalone/src/lib/tennis-elo/ 2>/dev/null; mkdir -p .next/standalone/src/lib/tennis-dr/ && cp -f src/lib/tennis-dr/dr-cache.json .next/standalone/src/lib/tennis-dr/ 2>/dev/null || true
+▲ Next.js 16.1.3 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+(node:9372) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Turbopack build encountered 27 warnings:
+./services/cyclingService.js:796:10
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 26232 files in [project]/
+[0m [90m 794 |[39m   [36mif[39m ([33m![39mentry [33m||[39m [33m![39mentry[33m.[39mlocal_path) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 795 |[39m   [36mvar[39m path [33m=[39m require([32m'path'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 796 |[39m   [36mreturn[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m entry[33m.[39mlocal_path)[33m;[39m
+ [90m     |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 797 |[39m }
+ [90m 798 |[39m
+ [90m 799 |[39m [90m// ── Classifications + Leader board ───────────────────────────────────────────[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:993:12
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 26232 files in [project]/
+[0m [90m 991 |[39m     [36mif[39m ([33m![39mentry[33m.[39mlocal_path) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 992 |[39m     [36mvar[39m path [33m=[39m require([32m'path'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 993 |[39m     [36mreturn[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m entry[33m.[39mlocal_path)[33m;[39m
+ [90m     |[39m            [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 994 |[39m   }[33m,[39m
+ [90m 995 |[39m   _getTeamLogoPath[33m:[39m [36mfunction[39m (slug) {
+ [90m 996 |[39m     [36mvar[39m photos [33m=[39m _loadPhotosIndex()[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:1001:12
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 26232 files in [project]/
+[0m [90m  999 |[39m     [36mif[39m ([33m![39mentry[33m.[39mlocal_path) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m 1000 |[39m     [36mvar[39m path [33m=[39m require([32m'path'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 1001 |[39m     [36mreturn[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m entry[33m.[39mlocal_path)[33m;[39m
+ [90m      |[39m            [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 1002 |[39m   }[33m,[39m
+ [90m 1003 |[39m   _getStageProfilePath[33m:[39m _getStageProfilePath[33m,[39m
+ [90m 1004 |[39m   _getRiderPhotoUrl[33m:[39m _getRiderPhotoUrl[33m,[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./src/app/api/v1/leagues/bundesliga2/history/route.ts:54:34
+The file pattern ('/ROOT/' <dynamic> | '/ROOT' <dynamic>) matches 26232 files in [project]/
+[0m [90m 52 |[39m   [36masync[39m [36mfunction[39m readJson[33m<[39m[33mT[39m[33m>[39m(file[33m:[39m string)[33m:[39m [33mPromise[39m[33m<[39m[33mT[39m [33m|[39m [36mnull[39m[33m>[39m {
+ [90m 53 |[39m     [36mtry[39m {
+[31m[1m>[22m[39m[90m 54 |[39m       [36mconst[39m raw [33m=[39m [36mawait[39m readFile(path[33m.[39mjoin(process[33m.[39mcwd()[33m,[39m file)[33m,[39m [32m"utf8"[39m)[33m;[39m
+ [90m    |[39m                                  [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 55 |[39m       [36mreturn[39m [33mJSON[39m[33m.[39mparse(raw) [36mas[39m [33mT[39m[33m;[39m
+ [90m 56 |[39m     } [36mcatch[39m {
+ [90m 57 |[39m       [36mreturn[39m [36mnull[39m[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import trace:
+  App Route:
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+
+./services/cyclingService.js:455:10
+The file pattern ('/ROOT/data/cycling/images/index.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 453 |[39m     [36mvar[39m fs [33m=[39m require([32m'fs'[39m)[33m;[39m
+ [90m 454 |[39m     [36mvar[39m photosPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'images'[39m[33m,[39m [32m'index.json'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 455 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(photosPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m     |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 456 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(photosPath)[33m;[39m
+ [90m 457 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 458 |[39m     [36mif[39m (_photosIndexCache [33m&&[39m mtime [33m===[39m _photosIndexMtime) {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:456:16
+The file pattern ('/ROOT/data/cycling/images/index.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 454 |[39m     [36mvar[39m photosPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'images'[39m[33m,[39m [32m'index.json'[39m)[33m;[39m
+ [90m 455 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(photosPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 456 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(photosPath)[33m;[39m
+ [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 457 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 458 |[39m     [36mif[39m (_photosIndexCache [33m&&[39m mtime [33m===[39m _photosIndexMtime) {
+ [90m 459 |[39m       [36mreturn[39m _photosIndexCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:461:15
+The file pattern ('/ROOT/data/cycling/images/index.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 459 |[39m       [36mreturn[39m _photosIndexCache[33m;[39m
+ [90m 460 |[39m     }
+[31m[1m>[22m[39m[90m 461 |[39m     [36mvar[39m raw [33m=[39m fs[33m.[39mreadFileSync(photosPath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 462 |[39m     _photosIndexCache [33m=[39m [33mJSON[39m[33m.[39mparse(raw)[33m;[39m
+ [90m 463 |[39m     _photosIndexMtime [33m=[39m mtime[33m;[39m
+ [90m 464 |[39m     [36mreturn[39m _photosIndexCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:765:10
+The file pattern ('/ROOT/data/cycling/images/profiles/index.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 763 |[39m     [36mvar[39m fs [33m=[39m require([32m'fs'[39m)[33m;[39m
+ [90m 764 |[39m     [36mvar[39m pPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'images'[39m[33m,[39m [32m'profiles'[39m[33m,[39m [32m'index.json'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 765 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(pPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m     |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 766 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(pPath)[33m;[39m
+ [90m 767 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 768 |[39m     [36mif[39m (_profilesIndexCache [33m&&[39m mtime [33m===[39m _profilesIndexMtime) {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:766:16
+The file pattern ('/ROOT/data/cycling/images/profiles/index.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 764 |[39m     [36mvar[39m pPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'images'[39m[33m,[39m [32m'profiles'[39m[33m,[39m [32m'index.json'[39m)[33m;[39m
+ [90m 765 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(pPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 766 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(pPath)[33m;[39m
+ [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 767 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 768 |[39m     [36mif[39m (_profilesIndexCache [33m&&[39m mtime [33m===[39m _profilesIndexMtime) {
+ [90m 769 |[39m       [36mreturn[39m _profilesIndexCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:771:15
+The file pattern ('/ROOT/data/cycling/images/profiles/index.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 769 |[39m       [36mreturn[39m _profilesIndexCache[33m;[39m
+ [90m 770 |[39m     }
+[31m[1m>[22m[39m[90m 771 |[39m     [36mvar[39m raw [33m=[39m fs[33m.[39mreadFileSync(pPath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 772 |[39m     _profilesIndexCache [33m=[39m [33mJSON[39m[33m.[39mparse(raw)[33m;[39m
+ [90m 773 |[39m     _profilesIndexMtime [33m=[39m mtime[33m;[39m
+ [90m 774 |[39m     [36mreturn[39m _profilesIndexCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:435:10
+The file pattern ('/ROOT/data/cycling/stage-favourites-i18n.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 433 |[39m     [36mvar[39m fs [33m=[39m require([32m'fs'[39m)[33m;[39m
+ [90m 434 |[39m     [36mvar[39m i18nPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stage-favourites-i18n.json'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 435 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(i18nPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m     |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 436 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(i18nPath)[33m;[39m
+ [90m 437 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 438 |[39m     [36mif[39m (_stageFavouritesI18nCache [33m&&[39m mtime [33m===[39m _stageFavouritesI18nMtime) {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:436:16
+The file pattern ('/ROOT/data/cycling/stage-favourites-i18n.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 434 |[39m     [36mvar[39m i18nPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stage-favourites-i18n.json'[39m)[33m;[39m
+ [90m 435 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(i18nPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 436 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(i18nPath)[33m;[39m
+ [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 437 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 438 |[39m     [36mif[39m (_stageFavouritesI18nCache [33m&&[39m mtime [33m===[39m _stageFavouritesI18nMtime) {
+ [90m 439 |[39m       [36mreturn[39m _stageFavouritesI18nCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:441:15
+The file pattern ('/ROOT/data/cycling/stage-favourites-i18n.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 439 |[39m       [36mreturn[39m _stageFavouritesI18nCache[33m;[39m
+ [90m 440 |[39m     }
+[31m[1m>[22m[39m[90m 441 |[39m     [36mvar[39m raw [33m=[39m fs[33m.[39mreadFileSync(i18nPath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 442 |[39m     _stageFavouritesI18nCache [33m=[39m [33mJSON[39m[33m.[39mparse(raw)[33m;[39m
+ [90m 443 |[39m     _stageFavouritesI18nMtime [33m=[39m mtime[33m;[39m
+ [90m 444 |[39m     [36mreturn[39m _stageFavouritesI18nCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:413:10
+The file pattern ('/ROOT/data/cycling/stage-favourites.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 411 |[39m     [36mvar[39m fs [33m=[39m require([32m'fs'[39m)[33m;[39m
+ [90m 412 |[39m     [36mvar[39m favPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stage-favourites.json'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 413 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(favPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+ [90m     |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 414 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(favPath)[33m;[39m
+ [90m 415 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 416 |[39m     [90m// Recharge si le fichier a changé (ou pas encore en cache)[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:414:16
+The file pattern ('/ROOT/data/cycling/stage-favourites.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 412 |[39m     [36mvar[39m favPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stage-favourites.json'[39m)[33m;[39m
+ [90m 413 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(favPath)) [36mreturn[39m [36mnull[39m[33m;[39m
+[31m[1m>[22m[39m[90m 414 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(favPath)[33m;[39m
+ [90m     |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 415 |[39m     [36mvar[39m mtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m
+ [90m 416 |[39m     [90m// Recharge si le fichier a changé (ou pas encore en cache)[39m
+ [90m 417 |[39m     [36mif[39m (_stageFavouritesCache [33m&&[39m mtime [33m===[39m _stageFavouritesMtime) {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:420:15
+The file pattern ('/ROOT/data/cycling/stage-favourites.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 418 |[39m       [36mreturn[39m _stageFavouritesCache[33m;[39m
+ [90m 419 |[39m     }
+[31m[1m>[22m[39m[90m 420 |[39m     [36mvar[39m raw [33m=[39m fs[33m.[39mreadFileSync(favPath[33m,[39m [32m'utf8'[39m)[33m;[39m
+ [90m     |[39m               [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 421 |[39m     _stageFavouritesCache [33m=[39m [33mJSON[39m[33m.[39mparse(raw)[33m;[39m
+ [90m 422 |[39m     _stageFavouritesMtime [33m=[39m mtime[33m;[39m
+ [90m 423 |[39m     [36mreturn[39m _stageFavouritesCache[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:65:10
+The file pattern ('/ROOT/data/cycling/stages-calendar.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 63 |[39m     [36mvar[39m fs [33m=[39m require([32m'fs'[39m)[33m;[39m
+ [90m 64 |[39m     [36mvar[39m calPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stages-calendar.json'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 65 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(calPath)) [36mreturn[39m[33m;[39m [90m// fallback reste actif[39m
+ [90m    |[39m          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 66 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(calPath)[33m;[39m
+ [90m 67 |[39m     [36mif[39m (stat[33m.[39mmtimeMs [33m===[39m _stagesCalendarMtime) [36mreturn[39m[33m;[39m [90m// inchangé[39m
+ [90m 68 |[39m     [36mvar[39m raw [33m=[39m [33mJSON[39m[33m.[39mparse(fs[33m.[39mreadFileSync(calPath[33m,[39m [32m'utf8'[39m))[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:66:16
+The file pattern ('/ROOT/data/cycling/stages-calendar.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 64 |[39m     [36mvar[39m calPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stages-calendar.json'[39m)[33m;[39m
+ [90m 65 |[39m     [36mif[39m ([33m![39mfs[33m.[39mexistsSync(calPath)) [36mreturn[39m[33m;[39m [90m// fallback reste actif[39m
+[31m[1m>[22m[39m[90m 66 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(calPath)[33m;[39m
+ [90m    |[39m                [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 67 |[39m     [36mif[39m (stat[33m.[39mmtimeMs [33m===[39m _stagesCalendarMtime) [36mreturn[39m[33m;[39m [90m// inchangé[39m
+ [90m 68 |[39m     [36mvar[39m raw [33m=[39m [33mJSON[39m[33m.[39mparse(fs[33m.[39mreadFileSync(calPath[33m,[39m [32m'utf8'[39m))[33m;[39m
+ [90m 69 |[39m     [36mif[39m (raw [33m&&[39m [33mArray[39m[33m.[39misArray(raw[33m.[39mstages) [33m&&[39m raw[33m.[39mstages[33m.[39mlength [33m===[39m [35m21[39m) {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:68:26
+The file pattern ('/ROOT/data/cycling/stages-calendar.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 66 |[39m     [36mvar[39m stat [33m=[39m fs[33m.[39mstatSync(calPath)[33m;[39m
+ [90m 67 |[39m     [36mif[39m (stat[33m.[39mmtimeMs [33m===[39m _stagesCalendarMtime) [36mreturn[39m[33m;[39m [90m// inchangé[39m
+[31m[1m>[22m[39m[90m 68 |[39m     [36mvar[39m raw [33m=[39m [33mJSON[39m[33m.[39mparse(fs[33m.[39mreadFileSync(calPath[33m,[39m [32m'utf8'[39m))[33m;[39m
+ [90m    |[39m                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 69 |[39m     [36mif[39m (raw [33m&&[39m [33mArray[39m[33m.[39misArray(raw[33m.[39mstages) [33m&&[39m raw[33m.[39mstages[33m.[39mlength [33m===[39m [35m21[39m) {
+ [90m 70 |[39m       [33mSTAGES[39m [33m=[39m raw[33m.[39mstages[33m;[39m
+ [90m 71 |[39m       _stagesCalendarMtime [33m=[39m stat[33m.[39mmtimeMs[33m;[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./services/cyclingService.js:966:26
+The file pattern ('/ROOT/data/cycling/stages-calendar.json' | <dynamic> | 'undefined') matches 13117 files in [project]/
+[0m [90m 964 |[39m     [36mvar[39m fs [33m=[39m require([32m'fs'[39m)[33m;[39m
+ [90m 965 |[39m     [36mvar[39m calPath [33m=[39m path[33m.[39mjoin(__dirname[33m,[39m [32m'..'[39m[33m,[39m [32m'data'[39m[33m,[39m [32m'cycling'[39m[33m,[39m [32m'stages-calendar.json'[39m)[33m;[39m
+[31m[1m>[22m[39m[90m 966 |[39m     [36mvar[39m raw [33m=[39m [33mJSON[39m[33m.[39mparse(fs[33m.[39mreadFileSync(calPath[33m,[39m [32m'utf8'[39m))[33m;[39m
+ [90m     |[39m                          [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 967 |[39m     result[33m.[39mcalendar_version [33m=[39m raw[33m.[39mversion [33m||[39m [36mnull[39m[33m;[39m
+ [90m 968 |[39m   } [36mcatch[39m (e) { [90m/* ignore */[39m }
+ [90m 969 |[39m[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./services/cyclingService.js
+    ./src/app/api/cycling/route.ts
+
+
+./src/lib/tennis-dr/lookup.ts:51:9
+The file pattern ('/ROOT/src/lib/tennis-dr/dr-cache.json' | '/ROOT/.next/standalone/src/lib/tennis-dr/dr-cache.json' | '/ROOT/.dr-cache.json' | <dynamic>) matches 13117 files in [project]/
+[0m [90m 49 |[39m
+ [90m 50 |[39m   [36mfor[39m ([36mconst[39m p [36mof[39m candidates) {
+[31m[1m>[22m[39m[90m 51 |[39m     [36mif[39m (existsSync(p)) [36mreturn[39m p[33m;[39m
+ [90m    |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 52 |[39m   }
+ [90m 53 |[39m   [36mreturn[39m candidates[[35m0[39m][33m;[39m [90m// fallback dev (sera vide → lookup retourne null)[39m
+ [90m 54 |[39m }[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/tennis-dr/lookup.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/tennis-dr/lookup.ts
+    ./src/lib/tennis-stats/db.ts
+    ./src/app/api/tennis/player-stats/route.ts
+
+
+./src/lib/momentum-score.ts:76:11
+The file pattern ('/ROOT/src/lib/tennis-dr/ewm-weights.json' | '/ROOT/.next/standalone/src/lib/tennis-dr/ewm-weights.json' | <dynamic>) matches 13116 files in [project]/
+[0m [90m 74 |[39m     ][33m;[39m
+ [90m 75 |[39m     [36mfor[39m ([36mconst[39m p [36mof[39m candidates) {
+[31m[1m>[22m[39m[90m 76 |[39m       [36mif[39m (existsSync(p)) {
+ [90m    |[39m           [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 77 |[39m         [36mconst[39m data [33m=[39m [33mJSON[39m[33m.[39mparse(readFileSync(p[33m,[39m [32m"utf8"[39m))[33m;[39m
+ [90m 78 |[39m         [36mif[39m (data[33m.[39mweights) { _cachedWeights [33m=[39m data[33m.[39mweights [36mas[39m [33mEwmWeights[39m[33m;[39m _cachedSource [33m=[39m data[33m.[39msource[33m;[39m [36mreturn[39m { weights[33m:[39m data[33m.[39mweights [36mas[39m [33mEwmWeights[39m[33m,[39m source[33m:[39m _cachedSource }[33m;[39m }
+ [90m 79 |[39m       }[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/momentum-score.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/momentum-score.ts
+    ./src/lib/bsd-fetcher.ts
+    ./src/app/api/tennis/live/route.ts
+
+
+./src/lib/momentum-score.ts:77:33
+The file pattern ('/ROOT/src/lib/tennis-dr/ewm-weights.json' | '/ROOT/.next/standalone/src/lib/tennis-dr/ewm-weights.json' | <dynamic>) matches 13116 files in [project]/
+[0m [90m 75 |[39m     [36mfor[39m ([36mconst[39m p [36mof[39m candidates) {
+ [90m 76 |[39m       [36mif[39m (existsSync(p)) {
+[31m[1m>[22m[39m[90m 77 |[39m         [36mconst[39m data [33m=[39m [33mJSON[39m[33m.[39mparse(readFileSync(p[33m,[39m [32m"utf8"[39m))[33m;[39m
+ [90m    |[39m                                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 78 |[39m         [36mif[39m (data[33m.[39mweights) { _cachedWeights [33m=[39m data[33m.[39mweights [36mas[39m [33mEwmWeights[39m[33m;[39m _cachedSource [33m=[39m data[33m.[39msource[33m;[39m [36mreturn[39m { weights[33m:[39m data[33m.[39mweights [36mas[39m [33mEwmWeights[39m[33m,[39m source[33m:[39m _cachedSource }[33m;[39m }
+ [90m 79 |[39m       }
+ [90m 80 |[39m     }[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/momentum-score.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/momentum-score.ts
+    ./src/lib/bsd-fetcher.ts
+    ./src/app/api/tennis/live/route.ts
+
+
+./src/lib/tennis-elo/lookup.ts:32:9
+The file pattern ('/ROOT/src/lib/tennis-elo/abstract-cache.json' | '/ROOT/.next/standalone/src/lib/tennis-elo/abstract-cache.json' | '/ROOT/.elo-cache.json' | <dynamic>) matches 13117 files in [project]/
+[0m [90m 30 |[39m
+ [90m 31 |[39m   [36mfor[39m ([36mconst[39m p [36mof[39m candidates) {
+[31m[1m>[22m[39m[90m 32 |[39m     [36mif[39m (existsSync(p)) [36mreturn[39m p[33m;[39m
+ [90m    |[39m         [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 33 |[39m   }
+ [90m 34 |[39m   [36mreturn[39m candidates[[35m0[39m][33m;[39m [90m// fallback to dev path (will be empty)[39m
+ [90m 35 |[39m }[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/tennis-elo/lookup.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/tennis-elo/lookup.ts
+    ./src/lib/bsd-fetcher.ts
+    ./src/app/api/tennis/live/route.ts
+
+
+./src/lib/tennis-dr/lookup.ts:66:17
+The file pattern (<dynamic> | '/ROOT/src/lib/tennis-dr/dr-cache.json' | '/ROOT/.next/standalone/src/lib/tennis-dr/dr-cache.json' | '/ROOT/.dr-cache.json') matches 13117 files in [project]/
+[0m [90m 64 |[39m   [36mif[39m (_cache [33m&&[39m now [33m-[39m _lastLoaded [33m<[39m [33mRELOAD_INTERVAL_MS[39m) [36mreturn[39m _cache[33m;[39m
+ [90m 65 |[39m   [36mtry[39m {
+[31m[1m>[22m[39m[90m 66 |[39m     [36mconst[39m raw [33m=[39m readFileSync([33mCACHE_PATH[39m[33m,[39m [32m"utf8"[39m)[33m;[39m
+ [90m    |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 67 |[39m     _cache [33m=[39m [33mJSON[39m[33m.[39mparse(raw) [36mas[39m [33mDrCache[39m[33m;[39m
+ [90m 68 |[39m     _lastLoaded [33m=[39m now[33m;[39m
+ [90m 69 |[39m   } [36mcatch[39m {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/tennis-dr/lookup.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/tennis-dr/lookup.ts
+    ./src/lib/tennis-stats/db.ts
+    ./src/app/api/tennis/player-stats/route.ts
+
+
+./src/lib/tennis-elo/lookup.ts:47:17
+The file pattern (<dynamic> | '/ROOT/src/lib/tennis-elo/abstract-cache.json' | '/ROOT/.next/standalone/src/lib/tennis-elo/abstract-cache.json' | '/ROOT/.elo-cache.json') matches 13117 files in [project]/
+[0m [90m 45 |[39m   [36mif[39m (_cache [33m&&[39m now [33m-[39m _lastLoaded [33m<[39m [33mRELOAD_INTERVAL_MS[39m) [36mreturn[39m _cache[33m;[39m
+ [90m 46 |[39m   [36mtry[39m {
+[31m[1m>[22m[39m[90m 47 |[39m     [36mconst[39m raw [33m=[39m readFileSync([33mCACHE_PATH[39m[33m,[39m [32m"utf8"[39m)[33m;[39m
+ [90m    |[39m                 [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 48 |[39m     _cache [33m=[39m [33mJSON[39m[33m.[39mparse(raw) [36mas[39m [33mAbstractCache[39m[33m;[39m
+ [90m 49 |[39m     _lastLoaded [33m=[39m now[33m;[39m
+ [90m 50 |[39m   } [36mcatch[39m {[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/tennis-elo/lookup.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/tennis-elo/lookup.ts
+    ./src/lib/bsd-fetcher.ts
+    ./src/app/api/tennis/live/route.ts
+
+
+./src/lib/scrapling-bridge.ts:39:5
+The file pattern (<dynamic> | 'python') matches 13116 files in [project]/
+[0m [90m 37 |[39m
+ [90m 38 |[39m   [36mconst[39m stdout [33m=[39m [36mawait[39m [36mnew[39m [33mPromise[39m[33m<[39m[33mstring[39m[33m>[39m((resolve[33m,[39m reject) [33m=>[39m {
+[31m[1m>[22m[39m[90m 39 |[39m     execFile(
+ [90m    |[39m     [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 40 |[39m       resolvePython()[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 41 |[39m       argv[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 42 |[39m       { timeout[33m:[39m [33mSTEALTH_TIMEOUT_MS[39m [33m+[39m [35m20[39m_000[33m,[39m maxBuffer[33m:[39m [35m512[39m [33m*[39m [35m1024[39m }[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 43 |[39m       (error[33m,[39m out) [33m=>[39m {
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 44 |[39m         [36mif[39m (error) {
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 45 |[39m           reject(
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 46 |[39m             [36mnew[39m [33mAppError[39m([32m"LIVETV_STEALTH_FAIL"[39m[33m,[39m [32m`scrapling: ${error.message}`[39m[33m,[39m [35m502[39m)[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 47 |[39m           )[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 48 |[39m           [36mreturn[39m[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 49 |[39m         }
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 50 |[39m         resolve(out)[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 51 |[39m       }[33m,[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+[31m[1m>[22m[39m[90m 52 |[39m     )[33m;[39m
+ [90m    |[39m [31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m[31m[1m^[22m[39m
+ [90m 53 |[39m   })[33m;[39m
+ [90m 54 |[39m
+ [90m 55 |[39m   [36mconst[39m line [33m=[39m stdout[0m
+
+Overly broad patterns can lead to build performance issues and over bundling.
+
+Import traces:
+  #1 [App Route]:
+    ./src/lib/scrapling-bridge.ts
+    ./src/app/api/v1/leagues/bundesliga2/history/route.ts
+
+  #2 [App Route]:
+    ./src/lib/scrapling-bridge.ts
+    ./src/lib/livetv-stream-service.ts
+    ./src/app/api/stream/resolve/route.ts
+
+
+✓ Compiled successfully in 105s
+  Skipping validation of types
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/61) ...
+  Generating static pages using 11 workers (15/61) 
+  Generating static pages using 11 workers (30/61) 
+  Generating static pages using 11 workers (45/61) 
+(node:9380) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ Generating static pages using 11 workers (61/61) in 1017.7ms
+  Finalizing page optimization ...
+⚠ Failed to copy traced files for C:\Users\David\ZCodeProject\pariscore\.next\server\app\_not-found\page.js Error: EINVAL: invalid argument, copyfile 'C:\Users\David\ZCodeProject\pariscore\.next\server\chunks\ssr\[externals]_node:inspector_7a4283c6._.js' -> 'C:\Users\David\ZCodeProject\pariscore\.next\standalone\.next\server\chunks\ssr\[externals]_node:inspector_7a4283c6._.js'
+    at ignore-listed frames {
+  errno: -4071,
+  code: 'EINVAL',
+  syscall: 'copyfile',
+  path: 'C:\\Users\\David\\ZCodeProject\\pariscore\\.next\\server\\chunks\\ssr\\[externals]_node:inspector_7a4283c6._.js',
+  dest: 'C:\\Users\\David\\ZCodeProject\\pariscore\\.next\\standalone\\.next\\server\\chunks\\ssr\\[externals]_node:inspector_7a4283c6._.js'
+}
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api
+├ ƒ /api/ai/football-match-report
+├ ƒ /api/ai/football-nl-filter
+├ ƒ /api/ai/gemini-cron
+├ ƒ /api/ai/gemini-insight
+├ ƒ /api/ai/gemini-insight/compare
+├ ƒ /api/ai/press-review-cron
+├ ƒ /api/baseball/logos/sync
+├ ƒ /api/baseball/match/[id]
+├ ƒ /api/baseball/schedule
+├ ƒ /api/cs2/enrich
+├ ƒ /api/cs2/matches
+├ ƒ /api/cs2/veto/[id]
+├ ƒ /api/cycling
+├ ƒ /api/email/digest
+├ ƒ /api/email/subscribe
+├ ƒ /api/email/test
+├ ƒ /api/email/unsubscribe
+├ ƒ /api/f1
+├ ƒ /api/football/live
+├ ƒ /api/football/matches
+├ ƒ /api/football/matches/[id]/stats
+├ ƒ /api/football/prematch
+├ ƒ /api/football/rankings
+├ ƒ /api/mma/fights
+├ ƒ /api/nba/matches
+├ ƒ /api/push/digest
+├ ƒ /api/push/subscribe
+├ ƒ /api/push/test
+├ ƒ /api/rugby/backtest
+├ ƒ /api/rugby/competitions
+├ ƒ /api/rugby/match
+├ ƒ /api/rugby/power
+├ ƒ /api/rugby/predictions
+├ ƒ /api/rugby/standings
+├ ƒ /api/rugby/sync
+├ ƒ /api/stream/resolve
+├ ƒ /api/tennis/backtest
+├ ƒ /api/tennis/bsd/matches
+├ ƒ /api/tennis/bsd/matches/[id]
+├ ƒ /api/tennis/bsd/matches/[id]/h2h
+├ ƒ /api/tennis/bsd/matches/[id]/odds
+├ ƒ /api/tennis/bsd/matches/[id]/point-by-point
+├ ƒ /api/tennis/bsd/players
+├ ƒ /api/tennis/bsd/players/[id]
+├ ƒ /api/tennis/bsd/predictions
+├ ƒ /api/tennis/bsd/predictions/[id]
+├ ƒ /api/tennis/bsd/rankings
+├ ƒ /api/tennis/bsd/tournaments
+├ ƒ /api/tennis/bsd/tournaments/[id]
+├ ƒ /api/tennis/elo-history
+├ ƒ /api/tennis/live
+├ ƒ /api/tennis/live-stream
+├ ƒ /api/tennis/player-stats
+├ ƒ /api/tennis/prematch
+├ ƒ /api/tennis/search
+├ ƒ /api/tennis/stats-leaderboard
+├ ƒ /api/tennis/tournament-stats
+├ ƒ /api/tennis/tournaments
+├ ƒ /api/v1/basketball/h2h
+├ ƒ /api/v1/basketball/h2h/players
+├ ƒ /api/v1/basketball/h2h/teams
+├ ƒ /api/v1/editorial
+├ ƒ /api/v1/football/press-review
+├ ƒ /api/v1/last-match-highlights
+├ ƒ /api/v1/leagues/[league_id]/stats
+├ ƒ /api/v1/leagues/bundesliga2/history
+├ ƒ /api/v1/odds/live
+├ ƒ /api/v1/previous-match-highlights
+├ ƒ /api/v1/tennis/press-review
+├ ƒ /api/v1/tennistv-highlights
+├ ƒ /api/v2/matches
+├ ƒ /api/v2/matches/live
+├ ƒ /api/v2/predictions
+├ ƒ /api/wnba/matches
+├ ƒ /cache/cs2-teams/[file]
+├ ƒ /league/[league_id]/stats
+├ ƒ /rugby
+├ ƒ /setpoint
+├ ○ /sitemap.xml
+├ ƒ /tennis/player/[slug]
+├ ƒ /tennis/stats
+└ ƒ /tennis/tournament/[slug]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+cp: illegal option -- rf

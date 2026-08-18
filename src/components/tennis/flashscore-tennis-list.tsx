@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
+import { useBrowserTimeZone } from "@/lib/tennis-format";
 import {
   FlashscoreMatchList,
   FlashscoreSkeleton,
@@ -25,12 +26,17 @@ type Props = {
   className?: string;
 };
 
-/** Formatte l'heure locale à partir d'un ISO timestamp. */
-function formatTime(iso: string): string {
+/** Formatte l'heure dans la timezone passée (bug B7 : sans timeZone, le
+ * rendu serveur tombait en UTC et affichait une heure fausse). */
+function formatTime(iso: string, timeZone: string): string {
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return "??:??";
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    return new Intl.DateTimeFormat("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone,
+    }).format(d);
   } catch {
     return "??:??";
   }
@@ -90,8 +96,11 @@ export function FlashscoreTennisList({
   initialFilter,
   className,
 }: Props) {
+  const browserTimeZone = useBrowserTimeZone();
+
   // Grouper par tournoi
   const leagues = useMemo(() => {
+    const timeZone = browserTimeZone;
     const map = new Map<string, { league: FlashscoreLeague; matches: FlashscoreMatchRow[] }>();
 
     for (const m of matches) {
@@ -114,7 +123,7 @@ export function FlashscoreTennisList({
 
       const row: FlashscoreMatchRow = {
         id: m.id,
-        timeDisplay: isLive ? "" : formatTime(m.scheduledAt),
+        timeDisplay: isLive ? "" : formatTime(m.scheduledAt, timeZone),
         scheduledAt: m.scheduledAt,
         isLive,
         statusDetail: isLive
@@ -144,7 +153,7 @@ export function FlashscoreTennisList({
       const pb = priorityMap.get(b.league.id) ?? 10;
       return pa - pb;
     });
-  }, [matches, liveStates]);
+  }, [matches, liveStates, browserTimeZone]);
 
   // Compteurs
   const liveCount = useMemo(

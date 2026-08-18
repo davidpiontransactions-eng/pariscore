@@ -1,0 +1,51 @@
+{
+  "title": "Gantt — Stats de saison par équipe (fcstats-style)",
+  "timeline": { "labels": ["2026-08-14", "2026-08-15"] },
+  "tracks": [
+    {
+      "name": "Recherche & spec",
+      "items": [
+        { "label": "Spec + sources (Sofascore cascade, AF retiré)", "start": "2026-08-14", "end": "2026-08-14" }
+      ]
+    },
+    {
+      "name": "API serveur",
+      "items": [
+        { "label": "✅ Résolution équipe → sofaId", "start": "2026-08-14", "end": "2026-08-14" },
+        { "label": "✅ Route /api/v1/team/:id/season-stats + cache 7j", "start": "2026-08-14", "end": "2026-08-15" }
+      ]
+    },
+    {
+      "name": "Calculs stats",
+      "items": [
+        { "label": "✅ General all/home/away (V/N/D, GF/GA, O2.5, BTTS)", "start": "2026-08-14", "end": "2026-08-15" },
+        { "label": "✅ Streaks/records (13 cols) + matchs récents + classement", "start": "2026-08-15", "end": "2026-08-15" }
+      ]
+    },
+    {
+      "name": "UI modal",
+      "items": [
+        { "label": "✅ Modal élargi + sélecteur saison/compétition", "start": "2026-08-15", "end": "2026-08-15" },
+        { "label": "✅ Sections générales/classement/séquences/récents/records + XSS", "start": "2026-08-15", "end": "2026-08-15" }
+      ]
+    },
+    {
+      "name": "Cache & pré-chauffage",
+      "items": [
+        { "label": "✅ Cache 7j + état vide propre (promotion)", "start": "2026-08-15", "end": "2026-08-15" }
+      ]
+    },
+    {
+      "name": "QA & validation",
+      "items": [
+        { "label": "🔴 BSD-first + fallback · route OK · upstream bloqués ici (Sofa403/BSD401)", "start": "2026-08-15", "end": "2026-08-15" }
+      ]
+    },
+    {
+      "name": "Gantt & pilotage",
+      "items": [
+        { "label": "gantt-team-season-stats.json + .svg + issues bd", "start": "2026-08-14", "end": "2026-08-15" }
+      ]
+    }
+  ]
+}

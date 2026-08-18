@@ -1,0 +1,40 @@
+{
+  "title": "Fix cotes rapides Baseball — suppression verrou statsAvailable",
+  "timeline": {
+    "labels": ["2026-08-14"]
+  },
+  "tracks": [
+    {
+      "name": "Analyse & spec",
+      "items": [
+        { "label": "Analyse pipeline + diff 6b34c5e1 vs 9208bf93", "start": "2026-08-14", "end": "2026-08-14", "done": true }
+      ]
+    },
+    {
+      "name": "Provider (suppression verrous)",
+      "items": [
+        { "label": "computeQuickForMatch : retirer early-return stats-unavailable", "start": "2026-08-14", "end": "2026-08-14", "done": true },
+        { "label": "Constructeur détails : retirer branche stats-unavailable", "start": "2026-08-14", "end": "2026-08-14", "done": true }
+      ]
+    },
+    {
+      "name": "UI vérification",
+      "items": [
+        { "label": "Grep message supprimé + vérif quick:null légitime (curated)", "start": "2026-08-14", "end": "2026-08-14", "done": true }
+      ]
+    },
+    {
+      "name": "QA & validation",
+      "items": [
+        { "label": "typecheck + lint + test moteur", "start": "2026-08-14", "end": "2026-08-14", "done": true },
+        { "label": "Revue sub-agent + verification moteur (stats null, no NaN)", "start": "2026-08-14", "end": "2026-08-14", "done": true }
+      ]
+    },
+    {
+      "name": "Gantt & pilotage",
+      "items": [
+        { "label": "Gantt JSON + SVG + issues bd + rapport", "start": "2026-08-14", "end": "2026-08-14", "done": true }
+      ]
+    }
+  ]
+}

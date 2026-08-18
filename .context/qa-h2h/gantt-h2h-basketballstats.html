@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H2H Basketball — Gantt d'implémentation</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e17; --bg2:#0e121e; --bg3:#131722;
+    --text:#ffffff; --text2:#e8eaed; --text3:#94a3b8;
+    --border:rgba(255,255,255,0.08);
+    --green:#00e676; --amber:#fbbf24; --blue:#29b6f6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text2);font-family:'Inter',sans-serif;
+       display:flex;justify-content:center;padding:48px 24px}
+  .sheet{width:1020px;max-width:100%}
+  header{margin-bottom:28px}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;
+           text-transform:uppercase;color:var(--text3);margin-bottom:10px}
+  h1{font-family:'Poppins',sans-serif;font-size:28px;font-weight:700;color:var(--text);line-height:1.2}
+  .sub{font-size:13px;color:var(--text3);margin-top:8px}
+  .sub b{color:var(--text2);font-weight:500}
+  .legend{display:flex;gap:20px;margin-top:14px;font-family:'DM Mono',monospace;
+          font-size:10px;color:var(--text3);align-items:center}
+  .legend .k{display:inline-flex;align-items:center;gap:6px}
+  .swatch{display:inline-block;width:18px;height:10px;border-radius:2px}
+  .sw-focal{background:rgba(0,230,118,.15);border:1px solid var(--green)}
+  .sw-task{background:rgba(148,163,184,.15);border:1px solid #94a3b8}
+  .sw-ms{width:9px;height:9px;background:var(--amber);transform:rotate(45deg);border-radius:1px}
+  svg{display:block;width:100%;height:auto}
+  footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--border);
+         font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);
+         display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  footer .beads span{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <div class="eyebrow">PariScore · Engineering loop · 2026-08-14</div>
+    <h1>H2H Basketball — plan d'implémentation</h1>
+    <p class="sub">Onglets <b>NBA &amp; WNBA</b> · stats H2H + Over/Under recalculées depuis <b>ESPN</b> (référence : basketballstats.net) · <b>15 équipes/ligue</b>, validation paire Connecticut Sun / Atlanta Dream</p>
+    <div class="legend">
+      <span class="k"><span class="swatch sw-task"></span>Tâche</span>
+      <span class="k"><span class="swatch sw-focal"></span>Chemin critique (pipeline données)</span>
+      <span class="k"><span class="swatch sw-ms"></span>Jalon</span>
+      <span class="k">Unité : heure de session · axe 09:00 → 17:30</span>
+    </div>
+  </header>
+
+  <svg viewBox="0 0 980 712" xmlns="http://www.w3.org/2000/svg" font-family="'Inter',sans-serif">
+    <rect width="980" height="712" fill="#0b0e17"/>
+
+    <!-- Axe temporel -->
+    <g font-family="'DM Mono',monospace" font-size="9" fill="#94a3b8">
+      <text x="200" y="52">09:00</text><text x="289" y="52">10:00</text>
+      <text x="379" y="52">11:00</text><text x="468" y="52">12:00</text>
+      <text x="558" y="52">13:00</text><text x="647" y="52">14:00</text>
+      <text x="737" y="52">15:00</text><text x="826" y="52">16:00</text>
+      <text x="915" y="52">17:00</text>
+    </g>
+    <!-- Grille verticale heures -->
+    <g stroke="rgba(255,255,255,0.05)" stroke-width="1">
+      <line x1="289.4" y1="64" x2="289.4" y2="690"/><line x1="378.8" y1="64" x2="378.8" y2="690"/>
+      <line x1="468.3" y1="64" x2="468.3" y2="690"/><line x1="557.7" y1="64" x2="557.7" y2="690"/>
+      <line x1="647.1" y1="64" x2="647.1" y2="690"/><line x1="736.5" y1="64" x2="736.5" y2="690"/>
+      <line x1="825.9" y1="64" x2="825.9" y2="690"/><line x1="915.4" y1="64" x2="915.4" y2="690"/>
+    </g>
+    <line x1="200" y1="64" x2="960" y2="64" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+
+    <!-- ══ P0 PILOTAGE ══ -->
+    <rect x="20" y="74" width="940" height="66" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" rx="4"/>
+    <text x="28" y="92" font-family="'DM Mono',monospace" font-size="8" letter-spacing="2" fill="#94a3b8">P0 · PILOTAGE</text>
+    <text x="24" y="125" font-size="11" font-weight="600" fill="#ffffff">Exploration + plan + Gantt</text>
+    <rect x="200" y="108" width="44.7" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="206" y="124" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">30m</text>
+
+    <!-- ══ P1 BACKEND ══ -->
+    <rect x="20" y="146" width="940" height="230" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" rx="4"/>
+    <text x="28" y="164" font-family="'DM Mono',monospace" font-size="8" letter-spacing="2" fill="#94a3b8">P1 · BACKEND — basketballH2HService.js · bead q5vr</text>
+    <!-- T2 -->
+    <text x="24" y="197" font-size="11" font-weight="600" fill="#ffffff">Types TypeScript partagés</text>
+    <rect x="244.7" y="180" width="44.7" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="250.7" y="196" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">30m</text>
+    <!-- T3 FOCAL -->
+    <text x="24" y="237" font-size="11" font-weight="600" fill="#00e676">Pipeline ESPN saison + cache disque 6h</text>
+    <rect x="289.4" y="220" width="134.1" height="24" rx="4" fill="rgba(0,230,118,0.12)" stroke="#00e676" stroke-width="1"/>
+    <text x="296" y="236" font-family="'DM Mono',monospace" font-size="9" fill="#00e676">1h30</text>
+    <!-- T4 -->
+    <text x="24" y="277" font-size="11" font-weight="600" fill="#ffffff">Calculs H2H : split + dataPoints + saison</text>
+    <rect x="378.8" y="260" width="104.3" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="384.8" y="276" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">1h10</text>
+    <!-- T5 -->
+    <text x="24" y="317" font-size="11" font-weight="600" fill="#ffffff">Over/Under + Spread + BTTS</text>
+    <rect x="453.3" y="300" width="74.5" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="459.3" y="316" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">50m</text>
+    <!-- T6 -->
+    <text x="24" y="357" font-size="11" font-weight="600" fill="#ffffff">Stats joueurs + standings</text>
+    <rect x="498" y="340" width="67.1" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="504" y="356" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">45m</text>
+
+    <!-- ══ P2 API ══ -->
+    <rect x="20" y="382" width="940" height="66" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" rx="4"/>
+    <text x="28" y="400" font-family="'DM Mono',monospace" font-size="8" letter-spacing="2" fill="#94a3b8">P2 · API — /api/v1/basketball/h2h · bead gkiq</text>
+    <text x="24" y="433" font-size="11" font-weight="600" fill="#ffffff">3 routes GET + smoke test</text>
+    <rect x="535.3" y="416" width="96.9" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="541.3" y="432" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">1h05</text>
+
+    <!-- ══ P3 FRONTEND ══ -->
+    <rect x="20" y="454" width="940" height="206" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" rx="4"/>
+    <text x="28" y="472" font-family="'DM Mono',monospace" font-size="8" letter-spacing="2" fill="#94a3b8">P3 · FRONTEND — React 19 + shadcn · bead cpet</text>
+    <!-- T8 -->
+    <text x="24" y="505" font-size="11" font-weight="600" fill="#ffffff">Hook SWR use-basketball-h2h</text>
+    <rect x="594.9" y="488" width="59.6" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="600.9" y="504" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">40m</text>
+    <!-- T9 -->
+    <text x="24" y="545" font-size="11" font-weight="600" fill="#ffffff">Hero : selector + header + split + forme</text>
+    <rect x="647.1" y="528" width="104.3" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="653.1" y="544" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">1h10</text>
+    <!-- T10 -->
+    <text x="24" y="585" font-size="11" font-weight="600" fill="#ffffff">OverUnderTable + tables data/players</text>
+    <rect x="721.6" y="568" width="119.2" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="727.6" y="584" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">1h15</text>
+    <!-- T11 -->
+    <text x="24" y="625" font-size="11" font-weight="600" fill="#ffffff">Intégration sous-navigation NBA/WNBA</text>
+    <rect x="825.7" y="608" width="59.6" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="831.7" y="624" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">40m</text>
+
+    <!-- ══ P4/P5 QA + DOCS ══ -->
+    <rect x="20" y="666" width="940" height="42" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.10)" rx="4"/>
+    <text x="28" y="684" font-family="'DM Mono',monospace" font-size="8" letter-spacing="2" fill="#94a3b8">P4·P5 — QA + DOCS · beads pl7q zouo</text>
+    <text x="24" y="700" font-size="11" font-weight="600" fill="#ffffff" transform="translate(0,0)">validate-h2h · lint · tsc · build · screenshots · docs</text>
+    <rect x="878" y="674" width="82" height="24" rx="4" fill="rgba(148,163,184,0.15)" stroke="#94a3b8" stroke-width="1"/>
+    <text x="884" y="690" font-family="'DM Mono',monospace" font-size="9" fill="#e8eaed">55m</text>
+
+    <!-- Jalons -->
+    <g>
+      <rect x="628.2" y="422" width="9" height="9" transform="rotate(45 632.7 426.5)" fill="#fbbf24"/>
+      <text x="632.7" y="412" font-family="'DM Mono',monospace" font-size="8" fill="#fbbf24" text-anchor="middle">API live</text>
+      <rect x="955.5" y="680" width="9" height="9" transform="rotate(45 960 684.5)" fill="#fbbf24"/>
+      <text x="952" y="672" font-family="'DM Mono',monospace" font-size="8" fill="#fbbf24" text-anchor="end">Repro rapport PASS</text>
+    </g>
+  </svg>
+
+  <footer>
+    <div class="beads">Issues : <span>q5vr</span> backend · <span>gkiq</span> api · <span>cpet</span> frontend · <span>pl7q</span> qa · <span>zouo</span> docs</div>
+    <div>Source : .context/prompt-h2h-basketballstats.md · Rapport : .context/report-h2h-basketballstats.md</div>
+  </footer>
+</div>
+</body>
+</html>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "setpoint-bankroll";
 
-export type BetStatus = "pending" | "won" | "lost";
+export type BetStatus = "pending" | "won" | "lost" | "void";
 
 export type Bet = {
   id: string;
@@ -137,10 +137,16 @@ export function useBankroll() {
     []
   );
 
-  const settleBet = useCallback((betId: string, status: "won" | "lost") => {
+  /**
+   * Règle RET/WO (tennis) : un pari sur un match qui se termine par abandon,
+   * walkover ou défaut est REMBOURSÉ (void) — mise restituée, ni won ni lost.
+   * `settleBet(betId, "void")` applique cette règle : payout = stake, profit 0.
+   */
+  const settleBet = useCallback((betId: string, status: "won" | "lost" | "void") => {
     const bets = cachedState.bets.map((b) => {
       if (b.id !== betId) return b;
-      const payout = status === "won" ? b.stake * b.odd : 0;
+      const payout =
+        status === "won" ? b.stake * b.odd : status === "void" ? b.stake : 0;
       return {
         ...b,
         status,
@@ -159,16 +165,23 @@ export function useBankroll() {
     setState({ ...cachedState, bets: [] });
   }, []);
 
-  // Computed stats
+  // Computed stats — les void (RET/WO remboursés) sont exclus des mises
+  // risquées et du taux de réussite : une mise restituée n'est ni gagnée,
+  // ni perdue, ni risquée.
   const settledBets = state.bets.filter((b) => b.status !== "pending");
   const pendingBets = state.bets.filter((b) => b.status === "pending");
   const wonBets = state.bets.filter((b) => b.status === "won");
   const lostBets = state.bets.filter((b) => b.status === "lost");
-  const totalStaked = settledBets.reduce((s, b) => s + b.stake, 0);
-  const totalReturned = settledBets.reduce((s, b) => s + (b.payout ?? 0), 0);
+  const decidedCount = wonBets.length + lostBets.length;
+  const totalStaked = settledBets
+    .filter((b) => b.status !== "void")
+    .reduce((s, b) => s + b.stake, 0);
+  const totalReturned = settledBets
+    .filter((b) => b.status !== "void")
+    .reduce((s, b) => s + (b.payout ?? 0), 0);
   const profit = totalReturned - totalStaked;
   const roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
-  const winRate = settledBets.length > 0 ? (wonBets.length / settledBets.length) * 100 : 0;
+  const winRate = decidedCount > 0 ? (wonBets.length / decidedCount) * 100 : 0;
   const currentBankroll = state.initial + profit;
 
   // Advanced stats — breakdowns by bookmaker / player / month.
@@ -255,6 +268,9 @@ function computeGroupStats(
     g.bets += 1;
     if (bet.status === "pending") {
       g.pending += 1;
+    } else if (bet.status === "void") {
+      // RET/WO : remboursé, ni gagné ni perdu, mise non risquée → hors ROI.
+      g.settled += 1;
     } else {
       g.settled += 1;
       g.staked += bet.stake;
@@ -267,7 +283,8 @@ function computeGroupStats(
   const groups = Array.from(map.values());
   for (const g of groups) {
     g.roi = g.staked > 0 ? (g.profit / g.staked) * 100 : 0;
-    g.winRate = g.settled > 0 ? (g.won / g.settled) * 100 : 0;
+    const decided = g.won + g.lost;
+    g.winRate = decided > 0 ? (g.won / decided) * 100 : 0;
   }
   // Sort by profit descending (most profitable first), stable on ties via key.
   groups.sort((a, b) => b.profit - a.profit || a.key.localeCompare(b.key));

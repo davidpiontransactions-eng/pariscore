@@ -13,7 +13,7 @@ import { HLTVMatchSheetModal } from "./HLTVMatchSheetModal";
 import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
-import { splitLivePrematch, filterByStartWindow, filterByToday, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
+import { splitLivePrematch, filterByStartWindow, filterByToday, filterBySelection, parseTimeFilter, type MatchViewMode } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 type ApiResponse = {
@@ -119,6 +119,7 @@ export function Cs2TabContent() {
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
   const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
 
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const { live, prematch } = useMemo(
     () => splitLivePrematch(matches, (m) => m.is_live === true),
     [matches],
@@ -132,13 +133,14 @@ export function Cs2TabContent() {
   const visiblePrematch = useMemo(() => {
     const scoped = timeToday ? filterByToday(prematchUpcoming, (m) => m.scheduled) : prematchUpcoming;
     const inWindow = filterByStartWindow(scoped, timeRange, (m) => m.scheduled);
-    return [...inWindow].sort(
+    const selected = filterBySelection(inWindow, selectedMatchIds, (m) => m.id);
+    return [...selected].sort(
       (a, b) => new Date(a.scheduled ?? 0).getTime() - new Date(b.scheduled ?? 0).getTime(),
     );
-  }, [prematchUpcoming, timeRange, timeToday]);
+  }, [prematchUpcoming, timeRange, timeToday, selectedMatchIds]);
 
-  // La liste rendue dépend de l'onglet actif.
-  const visibleMatches = mode === "live" ? live : visiblePrematch;
+  // La liste rendue dépend de l'onglet actif (live aussi filtré par sélection).
+  const visibleMatches = mode === "live" ? filterBySelection(live, selectedMatchIds, (m) => m.id) : visiblePrematch;
 
   if (loading && !data) {
     return (

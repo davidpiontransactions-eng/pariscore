@@ -1,0 +1,76 @@
+{
+  "results": [
+    {
+      "check": "aside desktop visible (1440px)",
+      "ok": true,
+      "detail": "count=1"
+    },
+    {
+      "check": "bloc 1: champ recherche",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 1: placeholder",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 1: recherche 'liga' -> La Liga",
+      "ok": false,
+      "detail": ""
+    },
+    {
+      "check": "bloc 1: recherche vide -> empty-state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 2: pills horaires",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 2: pill 'aujourd'hui'",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 3: section favoris",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 5: toggle live/prematch",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "bloc 4: accordeon sport deroulable",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "mobile <lg: aside masque (drawer)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "mobile: bouton drawer present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "check": "mobile: drawer s'ouvre",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "exceptions": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 503 ()",
+    "Failed to load resource: the server responded with a status of 503 ()",
+    "Failed to load resource: the server responded with a status of 503 ()"
+  ],
+  "url": "https://pariscore.fr"
+}

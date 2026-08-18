@@ -25,6 +25,8 @@
     "footerWarning": "Predictions are provided for informational purposes only and do not guarantee any result. Betting may involve risks · Major players only · 18+",
     "errorTitle": "Loading error",
     "errorBody": "Unable to fetch matches.",
+    "degradedTitle": "Degraded mode",
+    "degradedBody": "Live data unavailable — showing cached/static data.",
     "retry": "Retry",
     "liveModel": "Elo+Form+Surface model",
     "heroTitle": "Tennis · Prematch",
@@ -36,7 +38,7 @@
   "filters": {
     "all": "All",
     "allHint": "All matches",
-    "favorites": "Clear favorites",
+    "favorites": "Strong favourites",
     "favoritesHint": "Prob ≥ 70%",
     "balanced": "Balanced matches",
     "balancedHint": "Prob < 60%",
@@ -244,7 +246,10 @@
       "f1": "Formula 1",
       "baseball": "Baseball",
       "rugby": "Rugby"
-    }
+    },
+    "selectionAdd": "Add match to selection",
+    "selectionRemove": "Remove match from selection",
+    "selectionClear": "Clear"
   },
   "match": {
     "win": "WIN",
@@ -526,11 +531,13 @@
     "status": {
       "pending": "Pending",
       "won": "Won",
-      "lost": "Lost"
+      "lost": "Lost",
+      "void": "Refunded (RET/WO)"
     },
     "actions": {
       "markWon": "Mark as won",
       "markLost": "Mark as lost",
+      "markVoid": "Refund (retirement RET/WO)",
       "delete": "Delete",
       "clearAll": "Clear all"
     },
@@ -595,11 +602,13 @@
     "status": {
       "pending": "Pending",
       "won": "Won",
-      "lost": "Lost"
+      "lost": "Lost",
+      "void": "Refunded (RET/WO)"
     },
     "actions": {
       "markWon": "Mark as won",
       "markLost": "Mark as lost",
+      "markVoid": "Refund (retirement RET/WO)",
       "delete": "Delete",
       "clearAll": "Clear all"
     },

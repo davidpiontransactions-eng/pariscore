@@ -101,3 +101,39 @@ export function filterByStartWindow<T>(
     return Number.isFinite(ts) && ts >= startMs && ts <= endMs;
   });
 }
+
+/**
+ * Fenêtre glissante pour les matchs EN DIRECT : un live a déjà commencé, le
+ * coup d'envoi est dans le passé — la fenêtre pertinente est
+ * [now − hours, now] (« matchs dont le coup d'envoi a eu lieu dans les N
+ * dernières heures »). `hours === null` → aucun filtre.
+ */
+export function filterLiveByWindow<T>(
+  items: T[],
+  hours: number | null,
+  getScheduledAt: (match: T) => string | null | undefined,
+  now: Date = new Date(),
+): T[] {
+  if (hours === null) return items;
+  const startMs = now.getTime() - hours * 3_600_000;
+  return items.filter((match) => {
+    const raw = getScheduledAt(match);
+    if (!raw) return false;
+    const ts = new Date(raw).getTime();
+    return Number.isFinite(ts) && ts >= startMs && ts <= now.getTime();
+  });
+}
+
+/**
+ * Ne garde que les matchs dont l'id est dans `ids` (sélection sidebar).
+ * `ids` vide → liste inchangée (pas de filtre).
+ */
+export function filterBySelection<T>(
+  items: T[],
+  ids: string[],
+  getId: (match: T) => string | number,
+): T[] {
+  if (ids.length === 0) return items;
+  const set = new Set(ids);
+  return items.filter((match) => set.has(String(getId(match))));
+}

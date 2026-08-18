@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "setpoint-paper-trading";
 
-export type PaperBetStatus = "pending" | "won" | "lost";
+export type PaperBetStatus = "pending" | "won" | "lost" | "void";
 
 export type PaperBet = {
   id: string;
@@ -113,10 +113,15 @@ export function usePaperTrading() {
     []
   );
 
-  const settleBet = useCallback((betId: string, status: "won" | "lost") => {
+  /**
+   * Règle RET/WO (tennis) : pari sur match abandonné/walkover → remboursé
+   * (void) : mise restituée, ni gagné ni perdu.
+   */
+  const settleBet = useCallback((betId: string, status: "won" | "lost" | "void") => {
     const bets = cachedState.bets.map((b) => {
       if (b.id !== betId) return b;
-      const payout = status === "won" ? b.stake * b.odd : 0;
+      const payout =
+        status === "won" ? b.stake * b.odd : status === "void" ? b.stake : 0;
       return { ...b, status, settledAt: new Date().toISOString(), payout };
     });
     setState({ ...cachedState, bets });
@@ -130,16 +135,23 @@ export function usePaperTrading() {
     setState({ ...cachedState, bets: [] });
   }, []);
 
-  // Computed stats
+  // Computed stats — les void (RET/WO remboursés) sont exclus des mises
+  // risquées et du taux de réussite : une mise restituée n'est ni gagnée,
+  // ni perdue, ni risquée.
   const settledBets = state.bets.filter((b) => b.status !== "pending");
   const pendingBets = state.bets.filter((b) => b.status === "pending");
   const wonBets = state.bets.filter((b) => b.status === "won");
   const lostBets = state.bets.filter((b) => b.status === "lost");
-  const totalStaked = settledBets.reduce((s, b) => s + b.stake, 0);
-  const totalReturned = settledBets.reduce((s, b) => s + (b.payout ?? 0), 0);
+  const decidedCount = wonBets.length + lostBets.length;
+  const totalStaked = settledBets
+    .filter((b) => b.status !== "void")
+    .reduce((s, b) => s + b.stake, 0);
+  const totalReturned = settledBets
+    .filter((b) => b.status !== "void")
+    .reduce((s, b) => s + (b.payout ?? 0), 0);
   const profit = totalReturned - totalStaked;
   const roi = totalStaked > 0 ? (profit / totalStaked) * 100 : 0;
-  const winRate = settledBets.length > 0 ? (wonBets.length / settledBets.length) * 100 : 0;
+  const winRate = decidedCount > 0 ? (wonBets.length / decidedCount) * 100 : 0;
   const currentBankroll = state.initial + profit;
 
   return {

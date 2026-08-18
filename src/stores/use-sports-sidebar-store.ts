@@ -31,6 +31,11 @@ interface SportsSidebarState {
   selectedSportId: string | null;
   modes: Record<string, MatchViewMode>;
   drawerOpen: boolean;
+  /**
+   * Sélection multi-matchs (clic sur un match dans la sidebar) : la grille
+   * centrale n'affiche que ces matchs (ids compatibles arbre ↔ payload).
+   */
+  selectedMatchIds: string[];
 
   setSearchQuery: (query: string) => void;
   setTimeFilter: (filter: TimeFilterKey) => void;
@@ -46,6 +51,10 @@ interface SportsSidebarState {
   setMode: (sportId: string, mode: MatchViewMode) => void;
   setDrawerOpen: (open: boolean) => void;
   clearFilters: () => void;
+  /** Ajoute/retire un match de la sélection (multi-sélection sidebar). */
+  toggleMatchSelection: (matchId: string) => void;
+  /** Vide la sélection de matchs. */
+  clearMatchSelection: () => void;
 }
 
 const DEFAULTS = {
@@ -54,6 +63,7 @@ const DEFAULTS = {
   selectedLeagueId: null as string | null,
   selectedSportId: null as string | null,
   drawerOpen: false,
+  selectedMatchIds: [] as string[],
 };
 
 export const useSportsSidebarStore = create<SportsSidebarState>()(
@@ -126,6 +136,15 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
       setDrawerOpen: (drawerOpen) => set({ drawerOpen }),
 
       clearFilters: () => set({ ...DEFAULTS }),
+
+      toggleMatchSelection: (matchId) =>
+        set((s) => ({
+          selectedMatchIds: s.selectedMatchIds.includes(matchId)
+            ? s.selectedMatchIds.filter((id) => id !== matchId)
+            : [...s.selectedMatchIds, matchId],
+        })),
+
+      clearMatchSelection: () => set({ selectedMatchIds: [] }),
     }),
     {
       name: "pariscore.sportsSidebar",

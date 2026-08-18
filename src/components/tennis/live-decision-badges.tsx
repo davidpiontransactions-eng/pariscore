@@ -55,12 +55,14 @@ export function LiveDecisionBadges({ metrics, className }: Props) {
     : null;
   if (bpShow) {
     const bpVal = bpShow === "A" ? metrics.bpExposure.p1SavePct : metrics.bpExposure.p2SavePct;
-    badges.push({
-      key: "bp",
-      icon: <Shield className="h-3 w-3" />,
-      label: `BP ${Math.round(bpVal)}% sauvées`,
-      level: "critical",
-    });
+    if (bpVal != null) {
+      badges.push({
+        key: "bp",
+        icon: <Shield className="h-3 w-3" />,
+        label: `BP ${Math.round(bpVal)}% sauvées`,
+        level: "critical",
+      });
+    }
   }
 
   // Alerte fatigue / break imminent

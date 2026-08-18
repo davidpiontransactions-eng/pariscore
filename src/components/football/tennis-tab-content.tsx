@@ -11,7 +11,13 @@ import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
-import { filterByStartWindow, filterByToday, parseTimeFilter } from "@/lib/match-view";
+import {
+  filterByStartWindow,
+  filterByToday,
+  filterBySelection,
+  filterLiveByWindow,
+  parseTimeFilter,
+} from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
 import { TennisSearchBar } from "@/components/tennis/tennis-search-bar";
@@ -29,7 +35,6 @@ import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicat
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useOnexLiveOdds } from "@/hooks/use-onex-live-odds";
@@ -41,6 +46,7 @@ import { useAnalytics } from "@/components/analytics-provider";
 import { useDocumentPip } from "@/hooks/use-document-pip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MatchPipWidget } from "@/components/tennis/match-pip-widget";
+import { MatchCardSkeleton } from "@/components/tennis/match-card-skeleton";
 import { FlashscoreTennisList } from "@/components/tennis/flashscore-tennis-list";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
@@ -170,6 +176,13 @@ export function TennisTabContent() {
   const tStatsLb = useTranslations("tennis.statsLeaderboard");
 
   const { data, error, isLoading, isValidating, mutate } = usePrematchMatches();
+  // Mode dégradé : la route sert du mock local ou du cache périmé, ou la
+  // route elle-même est injoignable → bandeau ambre non-bloquant au lieu de
+  // l'erreur pleine page. Rose uniquement si AUCUNE donnée à afficher.
+  const degraded =
+    error != null ||
+    data?.source === "mock" ||
+    data?.source === "cache-stale";
   const { liveStates, liveMatchList, connectionStatus, latency } = useLiveMatches();
   const { favorites, count: favCount, toggle: toggleFavorite } = useFavorites();
   const { terminalMode } = useTerminalMode();
@@ -391,15 +404,21 @@ return [...matches, ...synthetic];
   // Filtre tournoi : appliqué en amont du filtrage/curation pour que la
   // grille et le carrousel reflètent le tournoi sélectionné. Sans sélection
   // → liste complète (pas de changement de comportement).
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
+
   const matchesWithScoped = useMemo(() => {
-    if (!selectedTournament) return matchesWithLive;
-    const target = selectedTournament.name.toLowerCase().trim();
-    return matchesWithLive.filter(
-      (m) =>
-        m.tournament.toLowerCase().trim() === target ||
-        m.tournament.toLowerCase().includes(target),
-    );
-  }, [matchesWithLive, selectedTournament]);
+    let list = matchesWithLive;
+    if (selectedTournament) {
+      const target = selectedTournament.name.toLowerCase().trim();
+      list = list.filter(
+        (m) =>
+          m.tournament.toLowerCase().trim() === target ||
+          m.tournament.toLowerCase().includes(target),
+      );
+    }
+    // Sélection sidebar : ne montrer que les matchs choisis. Vide = pas de filtre.
+    return filterBySelection(list, selectedMatchIds, (m) => m.id);
+  }, [matchesWithLive, selectedTournament, selectedMatchIds]);
 
   const { filtered, valueBetCount } = useMatchFilter(matchesWithScoped, filter, favorites, sortKey);
 
@@ -445,10 +464,13 @@ return [...matches, ...synthetic];
   // pour les compteurs), mais la grille principale n'affiche que `rest`.
   const subFiltered = useMemo(() => {
     if (subTab === "live") {
-      return filtered.filter((m) => liveStates[m.id]?.isLive);
+      const liveOnly = filtered.filter((m) => liveStates[m.id]?.isLive);
+      if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
+      if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
+      return liveOnly;
     }
     return scopeByTime(filtered); // "today" = tout (hors filtre horaire)
-  }, [subTab, filtered, liveStates, scopeByTime]);
+  }, [subTab, filtered, liveStates, scopeByTime, timeRange, timeToday]);
 
   // Version "rest" filtrée par sous-onglet (pour la grille principale).
   // En live, on garde featured + rest (sinon les matchs phares live
@@ -456,10 +478,13 @@ return [...matches, ...synthetic];
   // que `rest` car featured est déjà dans le carrousel.
   const restForGrid = useMemo(() => {
     if (subTab === "live") {
-      return curation.rest.filter((m) => liveStates[m.id]?.isLive);
+      const liveOnly = curation.rest.filter((m) => liveStates[m.id]?.isLive);
+      if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
+      if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
+      return liveOnly;
     }
     return scopeByTime(curation.rest);
-  }, [subTab, curation.rest, liveStates, scopeByTime]);
+  }, [subTab, curation.rest, liveStates, scopeByTime, timeRange, timeToday]);
 
   // Cotes live P1/P2 — 1xBet avec repli BSD. Un seul POST batch
   // /api/v1/odds/live toutes les 15s sur la grille live ; chaque slot est
@@ -480,10 +505,13 @@ return [...matches, ...synthetic];
   // les featured live ; en "today", tous les featured).
   const featuredForMarquee = useMemo(() => {
     if (subTab === "live") {
-      return curation.featured.filter((m) => liveStates[m.id]?.isLive);
+      const liveOnly = curation.featured.filter((m) => liveStates[m.id]?.isLive);
+      if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
+      if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
+      return liveOnly;
     }
     return scopeByTime(curation.featured);
-  }, [subTab, curation.featured, liveStates, scopeByTime]);
+  }, [subTab, curation.featured, liveStates, scopeByTime, timeRange, timeToday]);
 
   const handleSubTabChange = (tab: TennisSubTab) => {
     setSubTab(tab);
@@ -763,13 +791,22 @@ return [...matches, ...synthetic];
         />
       ) : (
         <>
-        {error && (
-          <div className="mb-6 flex items-start gap-3 rounded-lg border border-rose-500/40 bg-rose-500/5 p-4 text-sm text-rose-700 dark:text-rose-300">
+        {degraded && (
+          <div
+            className={cn(
+              "mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm",
+              !data
+                ? "border-rose-500/40 bg-rose-500/5 text-rose-700 dark:text-rose-300"
+                : "border-amber-500/40 bg-amber-500/5 text-amber-800 dark:text-amber-300",
+            )}
+          >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              <p className="font-semibold">{t("errorTitle")}</p>
+              <p className="font-semibold">
+                {data ? t("degradedTitle") : t("errorTitle")}
+              </p>
               <p className="mt-0.5 text-xs">
-                {t("errorBody")}{" "}
+                {data ? t("degradedBody") : t("errorBody")}{" "}
                 <button onClick={() => mutate()} className="underline underline-offset-2 font-semibold">
                   {t("retry")}
                 </button>
@@ -839,31 +876,5 @@ return [...matches, ...synthetic];
       </Suspense>
       <BetDialog match={betMatchForDialog} open={betOpen} onOpenChange={setBetOpen} />
     </TennisErrorBoundary>
-  );
-}
-
-function MatchCardSkeleton() {
-  return (
-    <div className="rounded-2xl border border-border/70 bg-card p-6">
-      <div className="flex items-center justify-between border-b border-border/60 pb-2">
-        <Skeleton className="h-3 w-32" /><Skeleton className="h-3 w-16" />
-      </div>
-      <div className="grid grid-cols-3 items-center gap-2 py-8">
-        <div className="flex flex-col items-center gap-2">
-          <Skeleton className="h-[72px] w-[72px] rounded-full" />
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-[92px] w-[92px] rounded-full" />
-        </div>
-        <div className="flex justify-center"><Skeleton className="h-11 w-11 rounded-full" /></div>
-        <div className="flex flex-col items-center gap-2">
-          <Skeleton className="h-[72px] w-[72px] rounded-full" />
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-[92px] w-[92px] rounded-full" />
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-2 pt-4 lg:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12" />)}
-      </div>
-    </div>
   );
 }
