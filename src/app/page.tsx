@@ -223,7 +223,7 @@ function HomeInner() {
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
         {/* Header */}
         <AutoHideHeader className="bg-bg-deep/80 backdrop-blur-md">
-          <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-1 px-4 py-1.5 sm:px-6">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
                 <Trophy className="h-4 w-4" />
@@ -233,7 +233,7 @@ function HomeInner() {
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <SportsSidebarDrawer activeSport={activeTab} onSportChange={handleTabChange} />
               <LanguageToggle />
               <PushToggle />

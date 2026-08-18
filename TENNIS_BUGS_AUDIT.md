@@ -17,7 +17,7 @@
 | **B4** | 🟡 MOYEN | Pas de retry sur les erreurs transitoires (429/5xx) — un rate-limit faisait tomber toute la chaîne | `bsdFetch` jetait immédiatement | ✅ **Résolu** — `fetchWithTransientRetry` : 1 retry (300 ms) sur `BSD_RATE_LIMIT` / 5xx avant fallback |
 | **B5** | 🟡 MOYEN | Drift de shape non protégé (bug A9 récurrent : `matches` = objet au lieu de tableau → crash `matches is not iterable`) | Pas de validation du payload côté hook | ✅ **Résolu** — Validation `Array.isArray(matches)` dans le fetcher → `INVALID_PAYLOAD` typé |
 | **B6** | 🟡 MOYEN | Skeleton dupliqué localement (2 copies) — aucun composant réutilisable pendant le chargement | `MatchCardSkeleton` défini 2× inline (`tennis-tab-content.tsx`, `best-matches-tabs.tsx`) | ✅ **Résolu** — Composant dédié `src/components/tennis/match-card-skeleton.tsx` (COMPONENTS.md mis à jour) |
-| **B7** | 🔴 CRITIQUE | **`ODDS_API_KEY` vide dans `.env`** — le fallback de secours historique est mort depuis longtemps | Configuration | ⚠️ **Partiel** — La chaîne de résilience ne dépend plus de cette clé ; à réactiver côté compte The Odds API (free tier 500 req/mois) |
+| **B7** | 🔴 CRITIQUE | **`ODDS_API_KEY` vide dans `.env`** — le fallback de secours historique est mort depuis longtemps | Configuration | ⚠️ **Partiel** — La chaîne de résilience ne dépend plus de cette clé ; à réactiver côté compte The Odds API (free tier 500 req/mois). **Diagnostic prod 2026-08-18** : les tokens BSD sont **liés à l'IP d'enregistrement** — la clé locale (Sports Addon actif, sha `bf2100…`) sert 30 matchs depuis le poste (IP résidentielle) mais **HTTP 401** depuis le VPS ; la clé historique du VPS (sha `0c455c…`) s'authentifie depuis le VPS mais renvoie **HTTP 402 addon_required**. Données réelles en prod ⇒ activer le Sports Addon ($5/mo) sur le compte BSD lié à la clé VPS (bzzoiro.com/addons/), ou demander au support BSD de délier la clé locale de son IP |
 
 **🔧 Action manuelle recommandée** : renouveler la clé BSD ou le sub Sports Addon chez `sports.bzzoiro.com` pour repasser en données réelles. D'ici là, le site affiche le cache puis le mock — jamais d'erreur bloquante.
 
@@ -42,8 +42,8 @@
 | **U1** | 🟠 ÉLEVÉ | **Mismatch de timezone** : `flashscore-tennis-list.tsx:33` et `player-profile-dialog.tsx:225` utilisent `toLocaleTimeString()` sans `timeZone` → rendu serveur en UTC (−2h en été) | Pas de `timeZone` forcée | ✅ **Résolu** — `Intl.DateTimeFormat` avec `useBrowserTimeZone()` (UTC au SSR, TZ navigateur après mount) |
 | **U2** | 🟡 MOYEN | **Libellé EN trompeur** : « Clear favorites » est un filtre (probA ≥ 70%) qui ressemble à une action « effacer mes favoris » | Traduction `en.json:39` | ✅ **Résolu** — Renommé « Strong favourites » (+ hint `Prob ≥ 70%`). Filtre fonctionnel (all/favorites/balanced/starred + 5 tris) |
 | **U3** | 🟡 MOYEN | Bandeau d'erreur rouge bloquant même quand des données de repli sont affichées | Condition `error &&` sans distinction de source | ✅ **Résolu** — Bandeau **ambre** « Mode dégradé » (données statiques/cache) vs **rouge** (panne totale) + bouton Réessayer conservé |
-| **U4** | 🟢 FAIBLE | Mobile : grille responsive OK (1 col → 2/3 col `lg:`) mais pas de test d'écran < 360px documenté | — | ⚠️ **Partiel** — À couvrir dans la prochaine passe Playwright mobile (spec §QA) |
-| **U5** | 🟢 FAIBLE | Pas d'indicateur visuel de la source des données (BSD / cache / mock) | — | ⚠️ **Partiel** — Bandeau dégradé couvre cache/mock ; badge source permanent proposé en spec (§UI) |
+| **U4** | 🟢 FAIBLE | Mobile : grille responsive OK (1 col → 2/3 col `lg:`) mais pas de test d'écran < 360px documenté | — | ✅ **Résolu** — Nouveau test `tests/tennis-mobile.spec.ts` (2 cas, viewport 320 px, débordement ≤ 2 px, absence d'erreur bloquante, bandeau dégradé non-cassant). **Bug réel découvert et corrigé** : header top-nav débordait de **242 px** à 320 px (8 contrôles sans wrap) → `flex-wrap` + `min-h-14` dans `src/app/page.tsx` → **0 px**. 15/15 specs UI existantes vertes (smoke, rgpd, sidebar, mobile, theme) |
+| **U5** | 🟢 FAIBLE | Pas d'indicateur visuel de la source des données (BSD / cache / mock) | — | ✅ **Résolu** — Badge source permanent dans le hero de l'onglet tennis : pastille verte **« Direct »** (bsd/odds-api), ambre **« Cache »** (cache-stale), orange **« Démo »** (mock), avec tooltip source + heure de mise à jour (i18n fr/en) |
 
 ---
 
@@ -63,9 +63,9 @@
 |-----------|-------|--------|---------|------------|
 | API & Fetching | 7 | 6 | 1 | 0 |
 | Modèle Elo/Surface | 5 | 2 | 3 | 0 |
-| UI/UX | 5 | 3 | 2 | 0 |
+| UI/UX | 5 | 5 | 0 | 0 |
 | Abandons RET/WO | 3 | 2 | 1 | 0 |
-| **Total** | **20** | **13** | **7** | **0** |
+| **Total** | **20** | **15** | **5** | **0** |
 
 - **Fichiers modifiés** : `src/app/api/tennis/prematch/route.ts` · `src/hooks/use-prematch-matches.ts` ·
   `src/components/football/tennis-tab-content.tsx` · `src/components/tennis/match-card-skeleton.tsx` (nouveau) ·
@@ -74,7 +74,8 @@
   `src/components/paper-trading-dialog.tsx` · `src/components/dashboard/top-value-bets.tsx` ·
   `src/components/bookmaker-comparator-dialog.tsx` · `src/messages/{fr,en}.json` ·
   `src/hooks/use-tennis-live-stats.ts` · `src/components/tennis/live-decision-badges.tsx` ·
-  `src/components/tennis/live-decisions-drawer.tsx` · `COMPONENTS.md`
+  `src/components/tennis/live-decisions-drawer.tsx` · `src/app/page.tsx` (header mobile) ·
+  `tests/tennis-mobile.spec.ts` (nouveau) · `COMPONENTS.md`
 - **Validation** : `npx tsc --noEmit` → **0 erreur dans le périmètre modifié** (les erreurs restantes sont
   préexistantes — hors scope tennis, ignorées par `typescript.ignoreBuildErrors`).
 - **Code review** : passe complète par le module code-reviewer → 4 bloquants corrigés (retry 5xx via `statusCode`
@@ -87,5 +88,5 @@
   corrigé (29 erreurs console → 0). État prod constaté : BSD `BSD_PAYMENT` (abonnement bloqué depuis IP
   datacenter — fonctionne depuis IP résidentielle locale) + Odds API 404 (clé sans couverture tennis) → le
   mode dégradé est le comportement nominal attendu tant que les abonnements ne sont pas rétablis.
-- **Prochaines étapes** : renouvellement clé BSD (données réelles) · implémentation spec innovations
-  (`docs/TENNIS_INNOVATIONS_SPEC.md`) · QA Playwright mobile (U4).
+- **Prochaines étapes** : activation Sports Addon sur le compte BSD lié à la clé VPS (données réelles en prod) ·
+  implémentation spec innovations (`docs/TENNIS_INNOVATIONS_SPEC.md`) · QA Playwright mobile (U4).

@@ -33,7 +33,11 @@
     "heroDesc": "Win probabilities updated continuously. Click on “Model detail” to see the breakdown, confidence interval and recent form.",
     "languageLabel": "Switch language",
     "languageToggle": "Switch to {locale}",
-    "backToTennis": "Back to tennis"
+    "backToTennis": "Back to tennis",
+    "sourceLive": "Live",
+    "sourceCache": "Cache",
+    "sourceDemo": "Demo",
+    "sourceTitle": "Source: {source} (updated {updatedAt})"
   },
   "filters": {
     "all": "All",

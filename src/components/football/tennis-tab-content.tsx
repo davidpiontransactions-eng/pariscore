@@ -609,6 +609,38 @@ return [...matches, ...synthetic];
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Info className="h-3.5 w-3.5" />
               <span>{t("today", { n: matchesWithLive.length })}</span>
+              {data && (
+                <span
+                  title={t("sourceTitle", {
+                    source: data.source,
+                    updatedAt: new Date(data.updatedAt).toLocaleTimeString(),
+                  })}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                    data.source === "bsd" || data.source === "odds-api"
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : data.source === "cache-stale"
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                        : "border-orange-500/40 bg-orange-500/10 text-orange-700 dark:text-orange-400",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "h-1.5 w-1.5 rounded-full",
+                      data.source === "bsd" || data.source === "odds-api"
+                        ? "bg-emerald-500"
+                        : data.source === "cache-stale"
+                          ? "bg-amber-500"
+                          : "bg-orange-500",
+                    )}
+                  />
+                  {data.source === "bsd" || data.source === "odds-api"
+                    ? t("sourceLive")
+                    : data.source === "cache-stale"
+                      ? t("sourceCache")
+                      : t("sourceDemo")}
+                </span>
+              )}
             </div>
           </div>
 
