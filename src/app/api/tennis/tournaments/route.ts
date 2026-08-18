@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { KNOWN_TOURNAMENTS } from "@/lib/tennis-tournaments-index";
+import { fetchTournaments as fetchBsdTournaments } from "@/lib/bsd-tennis-service";
 import type { TournamentsResponse, TournamentResult } from "@/lib/tennis-search-types";
 
 /**
@@ -24,6 +25,70 @@ const cache = createTtlCache<CachedPayload>("__tennisTournamentsCache");
 /** Valide le format YYYY-MM-DD. */
 function isValidDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+}
+
+/** Slug lisible depuis un nom BSD (même convention que l'index local). */
+function slugify(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+/** Surface BSD → surface affichable (convention TournamentResult). */
+function surfaceLabel(s: string): string | undefined {
+  switch (s) {
+    case "hard":
+      return "Dur";
+    case "clay":
+      return "Terre";
+    case "grass":
+      return "Gazon";
+    case "carpet":
+      return "Moquette";
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Enrichissement BSD en second : la liste hardcodée (62 tournois principaux)
+ * ne couvre pas la WTA ni les tournois mineurs/challengers — on complète avec
+ * les tournois BSD (dédoublonnage par slug, seuls les actifs sont gardés).
+ */
+async function enrichWithBsd(
+  known: TournamentResult[]
+): Promise<{ tournaments: TournamentResult[]; used: boolean }> {
+  try {
+    const res = await fetchBsdTournaments({ limit: 200, include_inactive: false });
+    const results = res.results ?? [];
+    const seen = new Set(known.map((t) => t.slug));
+    let used = false;
+    const extra: TournamentResult[] = [];
+    for (const t of results) {
+      const slug = slugify(t.name);
+      if (seen.has(slug)) continue;
+      seen.add(slug);
+      extra.push({
+        id: slug,
+        name: t.name,
+        slug,
+        surface: surfaceLabel(t.surface),
+        country: t.country ?? undefined,
+        category: t.category,
+        city: t.location || undefined,
+        startDate: t.start_date || undefined,
+        endDate: t.end_date || undefined,
+      });
+      used = true;
+    }
+    return { tournaments: [...known, ...extra], used };
+  } catch {
+    // BSD KO → on garde la liste hardcodée, pas de blocage.
+    return { tournaments: known, used: false };
+  }
 }
 
 export async function GET(request: Request) {
@@ -51,16 +116,16 @@ export async function GET(request: Request) {
 
     // Pour l'instant on retourne tous les tournois connus (pas de filtrage
     // par date — les tournois ATP tournent toute l'année et la liste hardcodée
-    // est déjà restreinte aux principaux).
+    // est déjà restreinte aux principaux). Complété par BSD quand dispo.
     // TODO Phase 8+: filtrer par date quand on aura les dates réelles par tournoi.
-    const tournaments: TournamentResult[] = KNOWN_TOURNAMENTS;
+    const enriched = await enrichWithBsd(KNOWN_TOURNAMENTS);
 
-    const payload: CachedPayload = { tournaments, date: cacheKey };
+    const payload: CachedPayload = { tournaments: enriched.tournaments, date: cacheKey };
     cache.set(payload);
 
     return NextResponse.json<TournamentsResponse>({
-      tournaments,
-      source: "hardcoded",
+      tournaments: enriched.tournaments,
+      source: enriched.used ? "bsd" : "hardcoded",
       date,
       updatedAt: new Date().toISOString(),
     });

@@ -157,13 +157,13 @@ export type BSDH2H = {
 
 export type BSDPrediction = {
   id: number;
-  match: number;
-  match_date: string;
-  player1_name: string;
-  player2_name: string;
+  /** Id du match BSD (l'API renvoie aussi un objet imbriqué `match`). */
+  match: number | { id: number };
+  /** Probabilités en POURCENTAGE (27.1 = 27.1 %), pas en ratio 0-1. */
   prob_player1_wins: number;
   prob_player2_wins: number;
   predicted_winner: 1 | 2;
+  /** Confidence en POURCENTAGE (72.9 = 72.9 %). */
   confidence: number;
   expected_total_sets: number;
   prob_over_2_5_sets: number;
@@ -283,6 +283,7 @@ export async function fetchMatchH2H(id: number): Promise<BSDH2H> {
 /** Prédictions ML — paginées, upcoming par défaut */
 export async function fetchPredictions(params?: {
   upcoming?: boolean;
+  match?: number;
   date_from?: string;
   date_to?: string;
   limit?: number;
@@ -290,6 +291,7 @@ export async function fetchPredictions(params?: {
 }): Promise<PaginatedResponse<BSDPrediction>> {
   const q = new URLSearchParams();
   if (params?.upcoming !== undefined) q.set("upcoming", String(params.upcoming));
+  if (params?.match !== undefined) q.set("match", String(params.match));
   if (params?.date_from) q.set("date_from", params.date_from);
   if (params?.date_to) q.set("date_to", params.date_to);
   if (params?.limit) q.set("limit", String(params.limit));

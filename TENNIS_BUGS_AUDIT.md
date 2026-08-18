@@ -25,6 +25,9 @@
 > (`david.piontransactions@gmail.com`) avait déjà le **Sports Pack actif**. Le token courant du
 > dashboard (affiché dans « Your API token ») a été déployé dans les deux `.env` (local + VPS
 > standalone) → données réelles BSD servies en prod (`source: bsd`, 30 matchs, badge « Direct »).
+>
+> **➡️ Suite (2026-08-18, 23h)** : branchement complet des endpoints BSD morts + BSD en seconde
+> source — voir §8 « Branchage BSD ».
 
 ---
 
@@ -94,3 +97,46 @@
   datacenter — fonctionne depuis IP résidentielle locale) + Odds API 404 (clé sans couverture tennis) → le
   mode dégradé est le comportement nominal attendu tant que les abonnements ne sont pas rétablis.
 - **Prochaines étapes** : implémentation spec innovations (`docs/TENNIS_INNOVATIONS_SPEC.md`) · QA Playwright mobile (U4).
+
+---
+
+## 8. Branchage BSD (2026-08-18)
+
+**Objectif** : activer les 4 endpoints BSD morts (point-by-point, odds/{id}, predictions, rankings) + mettre
+BSD en **seconde source** sur les routes déjà routées sans BSD.
+
+| Endpoint BSD | Avant | Après | Fichiers |
+|--------------|-------|-------|----------|
+| `rankings/` | Proxy existant, jamais appelé | **3e repli** du classement (`stats-leaderboard` : DB → caches officiels scrapés → BSD). `LeaderboardSource` étendu `"bsd-atp"`/`"bsd-wta"`, conversion BSD→`LeaderboardRow` (rank, ioc via `iocToIso2`, rating=points) | `route.ts` stats-leaderboard, `leaderboard.ts` |
+| `players/` (search) | Proxy existant, jamais appelé | **2e source** de `/api/tennis/search` : joueurs BSD (WTA + hors top 100) + tournois BSD filtrés par nom (l'endpoint tournois n'a pas de param search), dédoublonnés par slug | `search/route.ts` |
+| `tournaments/` | Proxy existant, jamais appelé | **Enrichissement** de `/api/tennis/tournaments` : 62 hardcodés → **242 tournois** (WTA, challengers…), `source: "bsd"` | `tournaments/route.ts` |
+| `players/` (repli rank) | — | `/api/tennis/player-stats` : joueurs absents de la DB → rang officiel courant BSD (cap 5 recherches/requête, matcher tolerant partiel) | `player-stats/route.ts` |
+| `predictions/` | Proxy existant, jamais appelé | `?match=` ajouté (service + proxy + cacheKey), consommé par le hook | `bsd-tennis-service.ts`, `bsd/predictions/route.ts` |
+| `point-by-point/` | Proxy existant, jamais appelé | Consommé par le hook | `use-bsd-match-detail.ts` |
+| — | — | **UI dialog** : bloc « Modèle BSD » (prob % vs modèle maison, badge « Divergence » si écart ≥ 5 pts, confiance) + bloc « Détail des points (BSD) » (sets → jeux → points, breaks, serveur) pour matchs terminés/en cours | `match-detail-dialog.tsx` |
+
+**Pièges corrigés en cours de route** :
+1. **`predictions` = pourcentages, pas des ratios** (27.1 = 27.1 %) — le `*100` initial aurait affiché 2710 %.
+   Type documenté dans `bsd-tennis-service.ts`.
+2. **`p.match` est un objet** `{id, tournament…}` dans la vraie réponse (le type disait `number`) — find tolerant.
+3. **L'API ignore `match` quand `upcoming=true`** (renvoie la liste complète) → fallback `list[0]` supprimé :
+   sans prédiction pour LE match demandé, pas de bloc (pas de faux signal).
+4. **308 redirect sur `/predictions/?match=`** (trailing slash) → retiré dans le hook.
+
+**Validation** :
+- `tsc --noEmit` : **0 erreur** périmètre modifié (seule erreur restante : `football-match-detail-dialog.tsx:445`,
+  préexistante) · ESLint : 0.
+- Runtime (dev 3011) : `search?q=tauson` → `source: "bsd"` (WTA) · `tournaments` → **242**, `source: "bsd"` ·
+  `player-stats?names=Tauson` → `{"Tauson":{"wtaRank":42}}` (repli BSD) · `leaderboard` → 85 rows
+  `official-atp` (repli BSD en place si le scrapé tombe) · `predictions?match=46690` → 200 (prédiction réelle,
+  épuisée en fin de journée : `count=0` après 22h — comportement nominal) · `matches/46690/point-by-point` →
+  200 avec sets/games/points.
+- Playwright probe : bloc « Modèle BSD » rendu avec des **prédictions distinctes par match** (56.1/43.9,
+  19.7/80.3, 90.5/9.4…) + badge « Divergence » ; bloc points disponible dès qu'un match terminé est affiché.
+- `tests/tennis-mobile.spec.ts` : **2/2 verts**.
+- ⚠️ `smoke.spec.ts` (5) + `refonte-v1.spec.ts` (2) échouent — **specs périmés par le rebranding
+  SetPoint → PariScore** (titre, header, footer, h1), préexistant, hors périmètre. Les `.test.ts` unitaires
+  mélangés dans `testDir` plantent le run global Playwright (problème préexistant) — lancer les specs ciblés.
+
+**Non fait** : WebSocket BSD (option payante séparée $7/mo, non retenue) · odds/{id} déjà consommé
+(`useBSDMatchDetail`) · prédictions historiques (`actual_winner`) à afficher dans le bloc (spec innovations).

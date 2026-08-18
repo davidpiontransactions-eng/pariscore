@@ -39,6 +39,8 @@ import {
   type LeaderboardResult,
 } from "@/lib/tennis-stats/leaderboard";
 import { getOfficialLeaderboard } from "@/lib/tennis-stats/official-leaderboard";
+import { fetchRankings } from "@/lib/bsd-tennis-service";
+import { iocToIso2 } from "@/lib/tennis-stats/leaderboard";
 
 const CACHE_TTL_MS = 5 * 60_000; // 5 min — les stats changent lentement
 const CACHE_MAX_ENTRIES = 24; // combos de filtres récents (purge FIFO)
@@ -113,6 +115,51 @@ export async function GET(request: Request) {
             coverage: official.coverage,
           },
         };
+      }
+    }
+
+    // Dernier repli : ranking officiel BSD (points ATP/WTA) quand les caches
+    // scrapés sont absents eux aussi — le classement reste toujours frais.
+    if (payload.rows.length === 0) {
+      try {
+        const type = params.tour === "wta" ? "WTA" : "ATP";
+        const ranking = await fetchRankings({ type, limit: 200 });
+        const rows = (ranking.results ?? ranking).map((r) => ({
+          rank: r.position,
+          player: r.player.name,
+          playerId: null,
+          ioc: iocToIso2(r.player.country) ?? r.player.country?.toLowerCase() ?? null,
+          matches: null,
+          rating: r.points,
+          firstServePct: null,
+          firstServeWonPct: null,
+          secondServeWonPct: null,
+          serviceGamesWonPct: null,
+          acesPerMatch: null,
+          dfsPerMatch: null,
+          returnFirstWonPct: null,
+          returnSecondWonPct: null,
+          returnGamesWonPct: null,
+          bpConvertedPct: null,
+          bpSavedPct: null,
+          tiebreaksWonPct: null,
+          decidingSetsWonPct: null,
+        }));
+        if (rows.length > 0) {
+          payload = {
+            rows,
+            meta: {
+              ...params,
+              players: rows.length,
+              generatedAt: ranking.results?.[0]?.date ?? new Date().toISOString(),
+              dataUnavailable: false,
+              source: type === "WTA" ? "bsd-wta" : "bsd-atp",
+              coverage: { period: "current", surface: "all", vsRank: "all" },
+            },
+          };
+        }
+      } catch {
+        // BSD KO → on garde l'état vide, l'UI affiche l'état vide sans casser.
       }
     }
 

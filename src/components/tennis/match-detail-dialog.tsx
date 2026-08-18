@@ -110,7 +110,14 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
   const locale = useLocale();
   const browserTz = useBrowserTimeZone();
   const { data: eloHistoryData, isLoading: eloLoading } = useEloHistory(match?.id ?? null);
-  const { match: bsdMatch, odds: bsdOdds, h2h: bsdH2h, isLoading: bsdLoading } = useBSDMatchDetail(match?.id ?? null);
+  const {
+    match: bsdMatch,
+    odds: bsdOdds,
+    h2h: bsdH2h,
+    prediction: bsdPrediction,
+    pointByPoint: bsdPointByPoint,
+    isLoading: bsdLoading,
+  } = useBSDMatchDetail(match?.id ?? null);
   const { data: tournamentStats, isLoading: tournamentStatsLoading } = useTournamentStats(match?.id ?? null);
   const { data: lmHighlights, isLoading: lmHighlightsLoading } = useLastMatchHighlights(
     match ? match.playerA.name : null,
@@ -373,6 +380,35 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   )}
                 </div>
 
+                {/* Signal externe : prédiction du modèle BSD (probabilités en %),
+                    comparée au modèle maison (probA/probB) — divergence = opportunité. */}
+                {bsdPrediction && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
+                    <Target className="h-4 w-4 text-emerald-500" />
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Modèle BSD
+                    </span>
+                    <span className="text-sm font-bold" style={{ color: playerA.color }}>
+                      {bsdPrediction.prob_player1_wins.toFixed(1)}%
+                    </span>
+                    <span className="text-xs text-muted-foreground">/</span>
+                    <span className="text-sm font-bold" style={{ color: playerB.color }}>
+                      {bsdPrediction.prob_player2_wins.toFixed(1)}%
+                    </span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                      conf. {bsdPrediction.confidence.toFixed(0)}%
+                    </span>
+                    {Math.abs(probA - bsdPrediction.prob_player1_wins) >= 5 && (
+                      <span
+                        className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                        title="Écart ≥ 5 pts entre le modèle maison et le modèle BSD"
+                      >
+                        Divergence
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 <PlayerVsBlock
                   playerA={{
                     name: playerA.name,
@@ -576,6 +612,71 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
                     <Swords className="mr-2 h-4 w-4" />
                     Stats non disponibles (match à venir)
+                  </div>
+                )}
+
+                {/* Détail des points BSD (matchs terminés/en cours) */}
+                {bsdPointByPoint && bsdPointByPoint.sets.length > 0 && (
+                  <div className="mt-4 rounded-lg border border-border/60 bg-muted/20 p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Activity className="h-4 w-4 text-emerald-500" />
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Détail des points (BSD)
+                      </span>
+                      {bsdPointByPoint.sets[0].duration_seconds > 0 && (
+                        <span className="ml-auto text-[10px] text-muted-foreground">
+                          {Math.round(bsdPointByPoint.sets[0].duration_seconds / 60)} min au 1er set
+                        </span>
+                      )}
+                    </div>
+                    {bsdPointByPoint.sets.map((set) => (
+                      <div key={set.set} className="mb-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          Set {set.set}
+                          {set.duration_seconds > 0
+                            ? ` · ${Math.round(set.duration_seconds / 60)} min`
+                            : ""}
+                        </div>
+                        <div className="mt-1 grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                          {set.games.map((g, i) => (
+                            <div
+                              key={i}
+                              className="rounded border border-border/40 bg-background/40 px-2 py-1"
+                            >
+                              <div className="flex items-center gap-1 text-[10px]">
+                                <span className="font-semibold">Jeu {g.game}</span>
+                                <span className="text-muted-foreground">
+                                  · {g.server === "player1" ? playerA.shortName : playerB.shortName}
+                                </span>
+                                {g.break && (
+                                  <span className="rounded-full bg-rose-500/15 px-1.5 text-[9px] font-semibold text-rose-500">
+                                    Break
+                                  </span>
+                                )}
+                                <span className="ml-auto font-semibold">
+                                  {g.player1_games}-{g.player2_games}
+                                </span>
+                              </div>
+                              <div className="mt-0.5 flex flex-wrap gap-0.5">
+                                {g.points.map((p, j) => (
+                                  <span
+                                    key={j}
+                                    className="rounded bg-muted px-1 text-[9px] text-muted-foreground"
+                                  >
+                                    {p.player1_score}-{p.player2_score}
+                                    {p.winner === "player1"
+                                      ? " ·A"
+                                      : p.winner === "player2"
+                                        ? " ·B"
+                                        : ""}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </TabsContent>

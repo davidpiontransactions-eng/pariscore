@@ -90,7 +90,12 @@ export interface LeaderboardRow {
 }
 
 /** Provenance des données servies (défaut : agrégation interne temps réel). */
-export type LeaderboardSource = "internal" | "official-atp" | "official-wta";
+export type LeaderboardSource =
+  | "internal"
+  | "official-atp"
+  | "official-wta"
+  | "bsd-atp"
+  | "bsd-wta";
 
 export interface LeaderboardResult {
   rows: LeaderboardRow[];
