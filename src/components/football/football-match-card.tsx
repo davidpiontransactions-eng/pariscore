@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Trophy, Clock, BarChart3, TrendingUp, Star, ChevronDown, ChevronUp,
   Home, PlaneTakeoff, Target, Shield, Activity, Microscope, Zap, Users,
-  CornerDownRight,
+  CornerDownRight, Goal, Crosshair,
 } from "lucide-react";
 import type { FootballMatch, Prediction, TeamStandingStats } from "@/lib/football-data";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,15 +60,15 @@ function FormMomentumSparkline({ values, trend }: { values: number[]; trend: "up
   }));
 
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  const trendColor = trend === "up" ? "#10b981" : trend === "down" ? "#ef4444" : "#6b7280";
+  const trendClass = trend === "up" ? "text-emerald-500" : trend === "down" ? "text-rose-500" : "text-muted-foreground";
 
   return (
-    <svg width={W} height={H} className="shrink-0" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Tendance: ${trend}`}>
+    <svg width={W} height={H} className={"shrink-0 " + trendClass} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Tendance: ${trend}`}>
       {pathD && (
-        <path d={pathD} fill="none" stroke={trendColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" />
+        <path d={pathD} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" />
       )}
       {points.length > 0 && (
-        <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="1.5" fill={trendColor} />
+        <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="1.5" fill="currentColor" />
       )}
     </svg>
   );
@@ -85,7 +85,7 @@ function StandingStatRow({ label, home, away }: { label: string; home: React.Rea
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 px-2 py-1">
       <span className="text-left text-[10px] font-medium tabular-nums text-foreground">{home}</span>
-      <span className="text-[9px] text-muted-foreground/50">{label}</span>
+      <span className="text-[10px] text-muted-foreground/50">{label}</span>
       <span className="text-right text-[10px] font-medium tabular-nums text-foreground">{away}</span>
     </div>
   );
@@ -96,7 +96,7 @@ function PpgCell({ s }: { s: TeamStandingStats }) {
   return (
     <span className="inline-flex items-center gap-1">
       <span className="tabular-nums">{s.ppg.toFixed(2)} PPG</span>
-      <span className="rounded bg-muted px-1 py-px text-[8px] font-medium text-muted-foreground tabular-nums">
+      <span className="rounded bg-muted px-1 py-px text-[9px] font-medium text-muted-foreground tabular-nums">
         #{s.rank}/{s.rankTotal}
       </span>
     </span>
@@ -112,7 +112,7 @@ export function FootballMatchCard({
   priority,
 }: {
   match: FootballMatch;
-  onOpenDetail?: () => void;
+  onOpenDetail?: (m: FootballMatch) => void;
   onBetClick?: () => void;
   priority?: boolean;
 }) {
@@ -308,18 +308,21 @@ export function FootballMatchCard({
             {(match.home.topScorer || match.home.topAssister || match.home.topDefender) && (
               <span className="flex flex-wrap items-center gap-x-1.5 text-[9px] leading-none text-muted-foreground">
                 {match.home.topScorer && (
-                  <span className="tabular-nums" title={`⚽ ${match.home.topScorer.name}`}>
-                    ⚽{match.home.topScorer.goals}
+                  <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.home.topScorer.name} — buts`}>
+                    <Goal className="h-2.5 w-2.5" aria-hidden />
+                    {match.home.topScorer.goals}
                   </span>
                 )}
                 {match.home.topAssister && (
-                  <span className="tabular-nums" title={`🎯 ${match.home.topAssister.name}`}>
-                    🎯{match.home.topAssister.assists}
+                  <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.home.topAssister.name} — passes décisives`}>
+                    <Crosshair className="h-2.5 w-2.5" aria-hidden />
+                    {match.home.topAssister.assists}
                   </span>
                 )}
                 {match.home.topDefender && (
-                  <span className="tabular-nums" title={`🛡️ ${match.home.topDefender.name}`}>
-                    🛡️{match.home.topDefender.tackles}
+                  <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.home.topDefender.name} — tacles`}>
+                    <Shield className="h-2.5 w-2.5" aria-hidden />
+                    {match.home.topDefender.tackles}
                   </span>
                 )}
               </span>
@@ -373,18 +376,21 @@ export function FootballMatchCard({
             {(match.away.topScorer || match.away.topAssister || match.away.topDefender) && (
               <span className="flex flex-wrap items-center gap-x-1.5 text-[9px] leading-none text-muted-foreground">
                 {match.away.topScorer && (
-                  <span className="tabular-nums" title={`⚽ ${match.away.topScorer.name}`}>
-                    ⚽{match.away.topScorer.goals}
+                  <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.away.topScorer.name} — buts`}>
+                    <Goal className="h-2.5 w-2.5" aria-hidden />
+                    {match.away.topScorer.goals}
                   </span>
                 )}
                 {match.away.topAssister && (
-                  <span className="tabular-nums" title={`🎯 ${match.away.topAssister.name}`}>
-                    🎯{match.away.topAssister.assists}
+                  <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.away.topAssister.name} — passes décisives`}>
+                    <Crosshair className="h-2.5 w-2.5" aria-hidden />
+                    {match.away.topAssister.assists}
                   </span>
                 )}
                 {match.away.topDefender && (
-                  <span className="tabular-nums" title={`🛡️ ${match.away.topDefender.name}`}>
-                    🛡️{match.away.topDefender.tackles}
+                  <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.away.topDefender.name} — tacles`}>
+                    <Shield className="h-2.5 w-2.5" aria-hidden />
+                    {match.away.topDefender.tackles}
                   </span>
                 )}
               </span>
@@ -886,8 +892,8 @@ export function FootballMatchCard({
           />
           <div className="flex items-center gap-1">
             <button
-              onClick={onOpenDetail}
-              className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              onClick={() => onOpenDetail?.(match)}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Voir l'analyse détaillée"
             >
               <BarChart3 className="h-3 w-3" />

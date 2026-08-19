@@ -94,7 +94,7 @@ function BetTile({ bet }: { bet: PredictiveBetsResult["bets"][number] }) {
         {bet.icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[11px] font-semibold text-slate-100">
+        <p className="truncate text-[11px] font-semibold text-foreground">
           {bet.label}
         </p>
         <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
@@ -289,14 +289,14 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
         {view && !view.live && (
           <div className="mt-4 space-y-4">
             {/* Panneau comparatif Équipe 1 (dom) vs Équipe 2 (ext) */}
-            <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5">
+            <section className="rounded-2xl border border-border/60 bg-card p-3.5">
               <header className="mb-3 flex items-center justify-between gap-2">
-                <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   <Activity className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
                   Comparatif pre-match
                 </h3>
                 {view.prediction.model && (
-                  <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
                     {view.prediction.model}
                   </span>
                 )}
@@ -324,7 +324,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     )}
                   </Column>
                 </div>
-                <div className="h-px bg-slate-800" />
+                <div className="h-px bg-muted" />
 
                 {/* Bilan général : rang, MJ, Pts, PPG */}
                 {view.prediction.standingStats ? (
@@ -351,7 +351,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     Classement indisponible
                   </div>
                 )}
-                <div className="h-px bg-slate-800" />
+                <div className="h-px bg-muted" />
 
                 {/* Attaque & défense : buts marqués/encaissés, xG, corners/SOT si dispo */}
                 <CompareRow
@@ -397,9 +397,9 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
             {/* 3 paris prédictifs */}
             {betsResult && betsResult.bets.length > 0 && (
-              <section className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5">
+              <section className="rounded-2xl border border-border/60 bg-card p-3.5">
                 <header className="mb-2.5 flex items-center justify-between gap-2">
-                  <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                  <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                     <TrendingUp className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
                     3 paris prédictifs
                   </h3>
@@ -545,7 +545,7 @@ function StandingCell({
   away: string;
 }) {
   return (
-    <div className="rounded-lg border border-slate-800/80 bg-slate-900/40 px-1.5 py-1.5">
+    <div className="rounded-lg border border-border/60 bg-muted/30 px-1.5 py-1.5">
       <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
         {label}
       </p>

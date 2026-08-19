@@ -185,13 +185,13 @@ export function FootballTabContent() {
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
   }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday, selectedMatchIds]);
 
-  const FILTERS: { key: FootFilter; label: string; icon?: string }[] = [
+  const FILTERS: { key: FootFilter; label: string }[] = [
     { key: "all", label: "Tous" },
     { key: "today", label: "Aujourd'hui" },
     { key: "value", label: "Value Bets" },
-    { key: "topConf", label: "🔥 Fortes Confiances", icon: "🔥" },
-    { key: "corners", label: "⛳ Spe Corners", icon: "⛳" },
-    { key: "btts", label: "⚽ BTTS", icon: "⚽" },
+    { key: "topConf", label: "Fortes Confiances" },
+    { key: "corners", label: "Spe Corners" },
+    { key: "btts", label: "BTTS" },
   ];
 
   return (
@@ -393,7 +393,7 @@ export function FootballTabContent() {
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {liveMatches.map((m) => (
-                      <FootballLiveCard key={m.id} match={m} onOpenDetail={() => openDetail(m)} />
+                      <FootballLiveCard key={m.id} match={m} onOpenDetail={openDetail} />
                     ))}
                   </div>
                 </>

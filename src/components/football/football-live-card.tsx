@@ -45,23 +45,45 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
 
   const homePath = buildPath(points, "homeCumul");
   const awayPath = buildPath(points, "awayCumul");
+  // Aires cumulatives (xG 2.0) : remplissage dégradé sous chaque courbe —
+  // la domination se lit en surface, pas seulement en ligne.
+  const baseY = y(0).toFixed(1);
+  const homeArea = homePath && points.length > 0
+    ? `${homePath} L ${x(points[points.length - 1].minute).toFixed(1)} ${baseY} L ${x(points[0].minute).toFixed(1)} ${baseY} Z`
+    : "";
+  const awayArea = awayPath && points.length > 0
+    ? `${awayPath} L ${x(points[points.length - 1].minute).toFixed(1)} ${baseY} L ${x(points[0].minute).toFixed(1)} ${baseY} Z`
+    : "";
 
   return (
     <div className="mt-2 border-t border-border/30 pt-2">
-      <div className="mb-1 flex items-center justify-between text-[10px]">
-        <span className="font-semibold uppercase tracking-wider text-muted-foreground">📈 Évolution xG</span>
+      <div className="mb-1 flex items-center justify-between text-[11px]">
+        <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-muted-foreground"><TrendingUp className="h-3 w-3" aria-hidden="true" /> Évolution xG</span>
         <span className="flex items-center gap-2 text-[9px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded-sm bg-emerald-500" /> {homeName}</span>
           <span className="inline-flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded-sm bg-rose-500" /> {awayName}</span>
         </span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none" role="img" aria-label={`Évolution xG cumulé — ${homeName} vs ${awayName}`}>
+        <defs>
+          <linearGradient id="xgGradHome" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#10b981" stopOpacity={0.22} />
+            <stop offset="100%" stopColor="#10b981" stopOpacity={0.02} />
+          </linearGradient>
+          <linearGradient id="xgGradAway" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.18} />
+            <stop offset="100%" stopColor="#f43f5e" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
         {/* Grille horizontale légère */}
         {[0.25, 0.5, 0.75, 1].map((frac) => (
           <line key={`grid-${frac}`} x1={PAD_L} y1={y(maxY * frac)} x2={W - PAD_R} y2={y(maxY * frac)} stroke="currentColor" strokeOpacity={0.08} strokeWidth={1} className="text-muted-foreground" />
         ))}
         {/* Ligne de base */}
         <line x1={PAD_L} y1={y(0)} x2={W - PAD_R} y2={y(0)} stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} className="text-muted-foreground" />
+        {/* Aires cumulatives (domination en surface) */}
+        {awayArea && <path d={awayArea} fill="url(#xgGradAway)" />}
+        {homeArea && <path d={homeArea} fill="url(#xgGradHome)" />}
         {/* Courbes */}
         {awayPath && <path d={awayPath} fill="none" stroke="#f43f5e" strokeWidth={1.5} strokeOpacity={0.7} strokeLinecap="round" strokeLinejoin="round" />}
         {homePath && <path d={homePath} fill="none" stroke="#10b981" strokeWidth={1.8} strokeOpacity={0.85} strokeLinecap="round" strokeLinejoin="round" />}
@@ -70,7 +92,9 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
           const last = points[points.length - 1];
           return (
             <>
+              <circle cx={x(last.minute)} cy={y(last.homeCumul)} r="6" fill="#10b981" opacity={0.15} className="animate-pulse-soft" />
               <circle cx={x(last.minute)} cy={y(last.homeCumul)} r="3" fill="#10b981" stroke="#fff" strokeWidth="0.5" />
+              <circle cx={x(last.minute)} cy={y(last.awayCumul)} r="6" fill="#f43f5e" opacity={0.15} className="animate-pulse-soft" />
               <circle cx={x(last.minute)} cy={y(last.awayCumul)} r="3" fill="#f43f5e" stroke="#fff" strokeWidth="0.5" />
             </>
           );
@@ -150,7 +174,7 @@ function StatRow({
   );
 }
 
-export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch; onOpenDetail?: () => void }) {
+export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch; onOpenDetail?: (m: FootballMatch) => void }) {
   const live = match.live;
   const p = match.prediction;
   // Hook appelé inconditionnellement (règles des hooks) avant l'early return.
@@ -458,8 +482,8 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
         {/* CTA Momentum (graphe au clic) */}
         {onOpenDetail && (
           <button
-            onClick={onOpenDetail}
-            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            onClick={() => onOpenDetail(match)}
+            className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Voir le momentum du match"
           >
             <Activity className="h-3 w-3" />
