@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Archivo } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
@@ -64,6 +64,16 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Font display scoreboard — Archivo variable (axe wdth 62-125). Utilisee
+// UNIQUEMENT pour les scores et grands numeraux : etiree (wdth ~118), elle
+// donne une voix broadcast au chiffre le plus important de l app. Le corps
+// reste Geist/Geist Mono (DESIGN.md).
+const archivoDisplay = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  axes: ["wdth"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -153,7 +163,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${archivoDisplay.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider
           attribute="class"

@@ -85,7 +85,7 @@ export function MatchCardHeader({
             aria-label={t("liveAria")}
           >
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
+              <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-rose-500 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-600" />
             </span>
             {t("live")}

@@ -15,7 +15,7 @@ const SPORT_EMOJI: Record<string, string> = {
 function LiveDot() {
   return (
     <span className="relative flex h-2 w-2">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
+      <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-rose-500 opacity-75" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
     </span>
   );

@@ -525,7 +525,7 @@ export function MomentumDR({
                       top: tooltip.y - 8,
                     }}
                   >
-                    <div className="rounded-md border border-border/60 bg-popover px-2 py-1 text-[10px] shadow-lg">
+                    <div className="rounded-md border border-border/60 bg-popover px-2 py-1 text-[11px] shadow-lg">
                       <div className="flex items-center gap-2 font-mono tabular-nums">
                         <span style={{ color: tooltip.dr >= 0 ? player1Color : player2Color }}>
                           DR {(tooltip.dr * 100).toFixed(0)}

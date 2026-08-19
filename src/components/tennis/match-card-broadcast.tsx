@@ -297,7 +297,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             {isLive ? (
               <span className="flex items-center gap-1 rounded-full bg-rose-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                  <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-white opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
                 </span>
                 {t("live")}
@@ -359,12 +359,12 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
                 <SetScoreline
                   scoreA={liveState.scoreA}
                   scoreB={liveState.scoreB}
-                  className="text-lg font-bold text-white sm:text-2xl"
+                  className="score-display text-lg font-bold text-white sm:text-2xl"
                 />
                 <CurrentGameScore
                   pointsA={liveState.scoreA.points}
                   pointsB={liveState.scoreB.points}
-                  className="text-sm font-semibold text-white/90"
+                  className="score-display text-sm font-semibold text-white/90"
                 />
                 <ServerIndicator
                   server={liveState.server}

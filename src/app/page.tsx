@@ -8,6 +8,14 @@ import {
   Code,
   FlaskConical,
   HelpCircle,
+  Activity,
+  CircleDot,
+  Swords,
+  Bike,
+  Shield,
+  Star,
+  Timer,
+  Sparkles,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
@@ -33,6 +41,7 @@ import {
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import type { SportTabId } from "@/types/sports-sidebar";
 import { TennisTabContent } from "@/components/football/tennis-tab-content";
+import { motion, useReducedMotion } from "framer-motion";
 import { FootballTabContent } from "@/components/football/football-tab-content";
 import { Cs2TabContent } from "@/components/cs2/cs2-tab-content";
 import { MmaTabContent } from "@/components/mma/mma-tab-content";
@@ -111,6 +120,7 @@ function HomeInner() {
   const tPaper = useTranslations("paperTrading");
 
   const [activeTab, setActiveTab] = useState<SportTab>("tennis");
+  const reduceMotion = useReducedMotion();
 
   // Pills navigation active state
   const [activePill, setActivePill] = useState("best-matches");
@@ -211,11 +221,11 @@ function HomeInner() {
   }, [storeSportId]);
 
   const SPORT_CARDS = [
-    { id: "tennis" as const, label: "Tennis", emoji: "🎾", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
-    { id: "football" as const, label: "Football", emoji: "⚽", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
-    { id: "mma" as const, label: "MMA", emoji: "🥊", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
-    { id: "cycling" as const, label: "Cycling", emoji: "🚴", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
-    { id: "rugby" as const, label: "Rugby", emoji: "🏉", matchCount: 0, valueCount: 0, accent: "border-teal-500/30 hover:border-teal-500/60", accentBg: "bg-teal-500/10", accentText: "text-teal-400" },
+    { id: "tennis" as const, label: "Tennis", icon: Activity, accentIcon: "text-emerald-400 bg-emerald-500/15", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
+    { id: "football" as const, label: "Football", icon: CircleDot, accentIcon: "text-sky-400 bg-sky-500/15", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
+    { id: "mma" as const, label: "MMA", icon: Swords, accentIcon: "text-red-400 bg-red-500/15", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
+    { id: "cycling" as const, label: "Cycling", icon: Bike, accentIcon: "text-amber-400 bg-amber-500/15", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
+    { id: "rugby" as const, label: "Rugby", icon: Shield, accentIcon: "text-teal-400 bg-teal-500/15", matchCount: 0, valueCount: 0, accent: "border-teal-500/30 hover:border-teal-500/60", accentBg: "bg-teal-500/10", accentText: "text-teal-400" },
   ];
 
   return (
@@ -271,8 +281,14 @@ function HomeInner() {
           <div className="flex min-w-0 flex-1 flex-col">
 
         {/* Hero Dashboard Section */}
-        <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6">
-          <h1 className="text-2xl font-bold text-white">Bonjour</h1>
+        <section className="sport-ambient max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
+          <div className="flex items-center gap-3">
+          <h1 className="score-display text-2xl font-bold tracking-tight text-white">Bonjour</h1>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
+            {stats.totalValueBets > 0 ? `${stats.totalValueBets} value` : "scan"}
+          </span>
+        </div>
           <p className="text-sm text-zinc-400 mt-1">
             {stats.totalValueBets > 0
               ? `${stats.totalValueBets} value bets détectés aujourd'hui`
@@ -286,10 +302,10 @@ function HomeInner() {
                 key={sport.id}
                 type="button"
                 onClick={() => handleTabChange(sport.id)}
-                className={`flex flex-col items-start gap-1.5 rounded-xl border bg-zinc-900/60 p-4 text-left transition-all duration-200 hover:bg-zinc-800/60 hover:scale-[1.02] ${sport.accent} ${activeTab === sport.id ? "ring-1 ring-white/20" : ""}`}
+                className={`flex flex-col items-start gap-1.5 rounded-xl border bg-zinc-900/60 p-4 text-left transition-all duration-200 hover:bg-zinc-800/60 hover:scale-[1.02] ${sport.accent} ${activeTab === sport.id ? "ring-1 ring-white/20" : ""} ${sport.id === "tennis" ? "md:col-span-2" : ""}`}
               >
-                <div className="flex items-center gap-2 w-full">
-                  <span className="text-xl">{sport.emoji}</span>
+                <div className="flex items-center gap-2.5 w-full">
+                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", sport.accentIcon)}><sport.icon className="h-4 w-4" /></span>
                   <span className="text-sm font-semibold text-white">{sport.label}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
@@ -313,37 +329,37 @@ function HomeInner() {
               type="button"
               onClick={() => scrollToSection("section-best-matches", "best-matches")}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1 transition-colors",
+                "shrink-0 rounded-full border px-3 py-1 transition-colors inline-flex items-center gap-1.5",
                 activePill === "best-matches"
                   ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30 border-emerald-500/40"
                   : "border-border/50 hover:border-emerald-500/40 hover:text-emerald-400",
               )}
             >
-              ⭐ Meilleurs matchs
+              <Star className="h-3 w-3" /> Meilleurs matchs
             </button>
             <button
               type="button"
               onClick={() => scrollToSection("section-upcoming", "upcoming")}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1 transition-colors",
+                "shrink-0 rounded-full border px-3 py-1 transition-colors inline-flex items-center gap-1.5",
                 activePill === "upcoming"
                   ? "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30 border-sky-500/40"
                   : "border-border/50 hover:border-sky-500/40 hover:text-sky-400",
               )}
             >
-              ⏱️ Prochains matchs
+              <Timer className="h-3 w-3" /> Prochains matchs
             </button>
             <button
               type="button"
               onClick={() => scrollToSection("section-gemini", "gemini")}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1 transition-colors",
+                "shrink-0 rounded-full border px-3 py-1 transition-colors inline-flex items-center gap-1.5",
                 activePill === "gemini"
                   ? "bg-purple-500/20 text-purple-400 ring-1 ring-purple-500/30 border-purple-500/40"
                   : "border-border/50 hover:border-purple-500/40 hover:text-purple-400",
               )}
             >
-              🤖 Gemini AI
+              <Sparkles className="h-3 w-3" /> Gemini AI
             </button>
           </div>
         </section>
@@ -351,7 +367,13 @@ function HomeInner() {
         {/* Sport tabs */}
         <SportSwipeHeader activeTab={activeTab} onTabChange={handleTabChange} />
 
-        {/* Content */}
+        {/* Content — entrée douce au changement de sport */}
+        <motion.div
+          key={activeTab}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+        >
         {activeTab === "tennis" && <TennisTabContent />}
         {activeTab === "football" && <FootballTabContent />}
         {activeTab === "cs2" && <Cs2TabContent />}
@@ -362,6 +384,7 @@ function HomeInner() {
         {activeTab === "f1" && <F1TabContent />}
         {activeTab === "baseball" && <BaseballTabContent />}
         {activeTab === "rugby" && <RugbyTabContent />}
+        </motion.div>
 
         {/* Sections déplacées : Meilleurs Matchs + Prochains Matchs + Gemini */}
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-6">

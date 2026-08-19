@@ -122,7 +122,7 @@ export function useLiveFootball() {
   const { data, error, isLoading, isValidating, mutate } = useSWR<ApiV2Response>(
     "/api/v2/matches/live",
     fetcher,
-    { refreshInterval: 30_000, dedupingInterval: 15_000, revalidateOnFocus: true },
+    { refreshInterval: 15_000, dedupingInterval: 8_000, revalidateOnFocus: true },
   );
 
   const matches: FootballMatch[] = data?.matches?.map(transformMatch) ?? [];

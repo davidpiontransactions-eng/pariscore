@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { ScoreFlash } from "./score-flash";
 import { formatPoints } from "@/lib/tennis-format";
 
 type Props = {
@@ -34,7 +35,7 @@ export function CurrentGameScore({ pointsA, pointsB, className }: Props) {
       : "gameScoreAria";
 
   return (
-    <span
+    <ScoreFlash scoreKey={points}
       className={cn(
         "inline-flex items-center rounded bg-emerald-500/10 px-2 py-0.5",
         "font-mono text-xs font-semibold tabular-nums",
@@ -45,6 +46,6 @@ export function CurrentGameScore({ pointsA, pointsB, className }: Props) {
       role="img"
     >
       {points}
-    </span>
+    </ScoreFlash>
   );
 }

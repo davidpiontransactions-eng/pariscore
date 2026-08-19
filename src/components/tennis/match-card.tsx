@@ -392,6 +392,7 @@ export function MatchCard({
                 "flex items-center justify-center rounded-full",
                 "border border-border/60 bg-muted/40 backdrop-blur-sm",
                 "text-xs font-bold tracking-wider text-muted-foreground",
+                "shadow-[inset_0_0_12px_rgba(255,255,255,0.04)]",
                 terminalMode ? "h-8 w-8 shrink-0" : "h-11 w-11 shrink-0"
               )}
             >

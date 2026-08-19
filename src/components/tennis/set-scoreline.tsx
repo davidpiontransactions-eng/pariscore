@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { SideScore } from "@/hooks/use-live-matches";
 import { cn } from "@/lib/utils";
+import { ScoreFlash } from "./score-flash";
 
 type Props = {
   /** Score for side A — `sets[]` holds past sets, `games` is the current set. */
@@ -80,9 +81,12 @@ export function SetScoreline({ scoreA, scoreB, className }: Props) {
       ))}
 
       {hasCurrentGames && (
-        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+        <ScoreFlash
+          scoreKey={`${scoreA.games}-${scoreB.games}`}
+          className="font-bold text-emerald-600 dark:text-emerald-400"
+        >
           {scoreA.games}-{scoreB.games}
-        </span>
+        </ScoreFlash>
       )}
 
       {/* Edge case: no sets played and current games still 0-0 (e.g. pre-match

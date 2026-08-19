@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 148 components total (football: 11, leagues: 4, tennis: 51, etc.).
+> extract pass. 149 components total (football: 11, leagues: 4, tennis: 52, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 52 components
+## Tennis (`src/components/tennis/`) — 53 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -78,7 +78,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | serve-stats-bars | serve-stats-bars.tsx | Barres divergentes comparant les stats service |
 | server-indicator | server-indicator.tsx | Indicateur "X sert" (balle pulsée) |
 | set-by-set-table | set-by-set-table.tsx | Tableau set par set |
-| set-scoreline | set-scoreline.tsx | Scoreline set par set (notation tennis) |
+| set-scoreline | set-scoreline.tsx | Scoreline set par set (notation tennis, flash score live via ScoreFlash) |
+| score-flash | score-flash.tsx | Flash d'animation sur changement de score (scale+fade 450ms, reduced-motion aware) |
 | sparkline | sparkline.tsx | Sparkline SVG minimal pour progression Elo |
 | stat-chip | stat-chip.tsx | Chip de stat compact |
 | stats-indicators-grid | stats-indicators-grid.tsx | Grille hiérarchique des indicateurs match |

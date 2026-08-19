@@ -101,7 +101,7 @@ export function LiveOddsPanel({
       >
         {isOnex ? "1xBet" : "BSD"}
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60" />
+          <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-current opacity-60" />
           <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-current" />
         </span>
         LIVE

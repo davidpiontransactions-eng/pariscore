@@ -216,7 +216,7 @@ export function StatsRadarChart({
           <PolarAngleAxis
             dataKey="axis"
             tick={{
-              fontSize: 10,
+              fontSize: 11,
               fill: "hsl(var(--muted-foreground, 215 14% 50%))",
             }}
           />

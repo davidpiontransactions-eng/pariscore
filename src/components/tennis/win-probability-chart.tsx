@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { ScoreFlash } from "./score-flash";
 
 /**
  * WinProbabilityChart — Live win-probability curve over the course of a match.
@@ -122,6 +123,21 @@ export function WinProbabilityChart({
     [],
   );
 
+  // Dot custom : le dernier point porte un halo pulsant discret (pulse-soft 3s,
+  // CSS — zéro re-animation recharts, zéro jank). Les points passés restent nus.
+  const renderDot = (props: { cx?: number; cy?: number; index?: number }) => {
+    const { cx = 0, cy = 0, index = -1 } = props;
+    if (index === data.length - 1) {
+      return (
+        <g key={`last-${data[data.length - 1]?.tick ?? index}`}>
+          <circle cx={cx} cy={cy} r={6} fill={player1Color} opacity={0.18} className="animate-pulse-soft" />
+          <circle cx={cx} cy={cy} r={2.5} fill={player1Color} />
+        </g>
+      );
+    }
+    return <circle key={`d-${index}`} cx={cx} cy={cy} r={0} fill="none" />;
+  };
+
   return (
     <section
       className={cn("w-full", className)}
@@ -193,7 +209,7 @@ export function WinProbabilityChart({
                 strokeWidth={2}
                 fill={`url(#${gradientId})`}
                 isAnimationActive={false}
-                dot={false}
+                dot={renderDot}
               />
             </AreaChart>
           </ResponsiveContainer>

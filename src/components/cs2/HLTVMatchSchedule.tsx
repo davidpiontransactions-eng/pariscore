@@ -90,7 +90,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         {isLive ? (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E676]/10 px-2 py-0.5 text-[10px] font-bold text-[#00E676]">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00E676] opacity-75" />
+              <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-[#00E676] opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00E676]" />
             </span>
             LIVE

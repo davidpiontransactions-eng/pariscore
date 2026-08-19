@@ -151,7 +151,7 @@ function EventPills({
 function LiveDot() {
   return (
     <span className="relative ml-2 inline-flex h-2 w-2">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#10B981] opacity-60" />
+      <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-[#10B981] opacity-60" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-[#10B981]" />
     </span>
   );
