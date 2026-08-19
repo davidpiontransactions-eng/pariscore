@@ -134,12 +134,12 @@ function ConsentCategory({
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold">{title}</span>
           {alwaysOn && (
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">
               obligatoire
             </span>
           )}
           {recommended && (
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
               recommandé
             </span>
           )}

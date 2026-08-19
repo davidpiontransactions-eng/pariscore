@@ -36,7 +36,7 @@ function ProbBar({ prob, color }: { prob: number; color: string }) {
 function StatCell({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-2">
-      <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</div>
       <div className={`font-mono text-sm font-bold tabular-nums ${accent ? "text-amber-300" : "text-slate-100"}`}>
         {value}
       </div>
@@ -50,7 +50,7 @@ function PitcherFullPanel({ pitcher, side }: { pitcher: PitcherRecord; side: "ho
       <div className="flex items-center justify-between gap-2">
         <PitcherBadge pitcher={pitcher} side={side} />
         <span
-          className={`rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider ${
+          className={`rounded border px-1.5 py-px text-[11px] font-bold uppercase tracking-wider ${
             pitcher.source === "mlb-statsapi-live"
               ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
               : "border-slate-600 bg-slate-800 text-slate-400"
@@ -129,7 +129,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
         </div>
         <div className="mt-3 flex items-center gap-4">
           <div className="rounded-lg bg-slate-900 px-4 py-2.5 text-center">
-            <div className="text-[9px] font-bold uppercase text-slate-500">Ligne</div>
+            <div className="text-[11px] font-bold uppercase text-slate-500">Ligne</div>
             <div className="font-mono text-2xl font-bold tabular-nums text-amber-300">
               {total.line.toFixed(1)}
             </div>
@@ -173,7 +173,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
         </h4>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5">
-            <div className="text-[9px] font-bold uppercase text-slate-500">F5 Vainqueur</div>
+            <div className="text-[11px] font-bold uppercase text-slate-500">F5 Vainqueur</div>
             <div className="mt-1 font-mono text-sm tabular-nums">
               <span className="font-bold text-sky-300">{fmtPct(firstFive.homeWinProb)}</span>
               <span className="mx-1.5 text-slate-500">/</span>
@@ -181,7 +181,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
             </div>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5">
-            <div className="text-[9px] font-bold uppercase text-slate-500">F5 Ligne O/U</div>
+            <div className="text-[11px] font-bold uppercase text-slate-500">F5 Ligne O/U</div>
             <div className="mt-1 font-mono text-sm tabular-nums">
               <b className="text-amber-300">{firstFive.totalLine.toFixed(1)}</b>
               <span className="ml-2 text-slate-400">
@@ -191,7 +191,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
             </div>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5">
-            <div className="text-[9px] font-bold uppercase text-slate-500">F5 Total attendu</div>
+            <div className="text-[11px] font-bold uppercase text-slate-500">F5 Total attendu</div>
             <div className="mt-1 font-mono text-sm font-bold tabular-nums text-white">
               {fmtNum(firstFive.expectedTotal)} runs
             </div>
@@ -322,11 +322,11 @@ function ContextSection({
                     </td>
                     <td className={`py-2 ${starterHand === "LHP" ? "font-bold text-amber-300" : "text-slate-300"}`}>
                       {fmtNum(team.opsVsLhp)}
-                      {starterHand === "LHP" && <span className="ml-1 text-[9px]">◀ SP</span>}
+                      {starterHand === "LHP" && <span className="ml-1 text-[11px]">◀ SP</span>}
                     </td>
                     <td className={`py-2 ${starterHand === "RHP" ? "font-bold text-amber-300" : "text-slate-300"}`}>
                       {fmtNum(team.opsVsRhp)}
-                      {starterHand === "RHP" && <span className="ml-1 text-[9px]">◀ SP</span>}
+                      {starterHand === "RHP" && <span className="ml-1 text-[11px]">◀ SP</span>}
                     </td>
                   </tr>
                 );
@@ -355,7 +355,7 @@ function ContextSection({
                   style={{ left: `${Math.min(100, Math.max(0, ((homeParkFactor - 85) / 35) * 100))}%` }}
                 />
               </div>
-              <div className="mt-1 flex justify-between text-[9px] text-slate-500">
+              <div className="mt-1 flex justify-between text-[11px] text-slate-500">
                 <span>85 (Under)</span>
                 <span>100</span>
                 <span>120 (Over)</span>
@@ -423,7 +423,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
       </h4>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Over / Under {cal.predictedTotalLine.toFixed(1)}
           </div>
           <div className="mt-2 flex items-center gap-2">
@@ -450,7 +450,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
           </div>
         </div>
         <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Moneyline
           </div>
           <div className="mt-2 flex items-center gap-2">

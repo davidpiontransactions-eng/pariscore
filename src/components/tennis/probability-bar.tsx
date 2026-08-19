@@ -84,7 +84,7 @@ export function ProbabilityBar({
 
       {/* IC labels */}
       {ic && ic[0] !== undefined && ic[1] !== undefined && (
-        <div className="flex justify-between text-[9px] font-mono text-muted-foreground">
+        <div className="flex justify-between text-[11px] font-mono text-muted-foreground">
           <span>IC {ic[0]}%</span>
           <span className="text-muted-foreground/60">← 95% →</span>
           <span>{ic[1]}%</span>

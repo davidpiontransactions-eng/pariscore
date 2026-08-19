@@ -548,7 +548,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                               </span>
                               <span
                                 className={cn(
-                                  "rounded-full px-2 py-0.5 text-[9px] font-semibold",
+                                  "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                                   tsA.source === "tournament"
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                     : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
@@ -572,7 +572,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                               </span>
                               <span
                                 className={cn(
-                                  "rounded-full px-2 py-0.5 text-[9px] font-semibold",
+                                  "rounded-full px-2 py-0.5 text-[11px] font-semibold",
                                   tsB.source === "tournament"
                                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                     : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
@@ -649,7 +649,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                                   · {g.server === "player1" ? playerA.shortName : playerB.shortName}
                                 </span>
                                 {g.break && (
-                                  <span className="rounded-full bg-rose-500/15 px-1.5 text-[9px] font-semibold text-rose-500">
+                                  <span className="rounded-full bg-rose-500/15 px-1.5 text-[11px] font-semibold text-rose-500">
                                     Break
                                   </span>
                                 )}
@@ -661,7 +661,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                                 {g.points.map((p, j) => (
                                   <span
                                     key={j}
-                                    className="rounded bg-muted px-1 text-[9px] text-muted-foreground"
+                                    className="rounded bg-muted px-1 text-[11px] text-muted-foreground"
                                   >
                                     {p.player1_score}-{p.player2_score}
                                     {p.winner === "player1"

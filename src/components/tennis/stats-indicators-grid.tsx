@@ -218,7 +218,7 @@ function SecondaryChip({
         className,
       )}
     >
-      <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/70">
         {label}
       </span>
       <span

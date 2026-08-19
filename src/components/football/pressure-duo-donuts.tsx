@@ -29,7 +29,7 @@ function Donut({
   const homeLen = Math.max(0, Math.min(100, homePct)) / 100 * CIRC;
   return (
     <figure className="flex flex-col items-center gap-1" role="img" aria-label={`${title} : ${homeName} ${homePct}%, ${awayName} ${awayPct}%`}>
-      <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">{title}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{title}</span>
       <svg viewBox="0 0 110 110" className="h-24 w-24">
         <circle cx="55" cy="55" r={R} fill="none" stroke="#3b82f6" strokeOpacity="0.75" strokeWidth="11" />
         <circle
@@ -50,7 +50,7 @@ function Donut({
           {awayPct}
         </text>
       </svg>
-      <figcaption className="flex gap-2 text-[9px] text-muted-foreground">
+      <figcaption className="flex gap-2 text-[11px] text-muted-foreground">
         <span className="text-emerald-400">{homePct} {homeName}</span>
         <span className="text-muted-foreground/30">|</span>
         <span className="text-sky-400">{awayPct} {awayName}</span>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PariScore Logo Concept C - Shield + score + lightning prediction -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="70%">
+      <stop offset="0%" stop-color="#0d1320"/>
+      <stop offset="100%" stop-color="#06080e"/>
+    </radialGradient>
+    <linearGradient id="shieldG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#141d2e"/>
+      <stop offset="100%" stop-color="#0b111d"/>
+    </linearGradient>
+    <linearGradient id="boltG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00e676"/>
+      <stop offset="100%" stop-color="#00c853"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#00e676" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#00e676" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="440" r="340" fill="url(#halo)"/>
+
+  <g transform="translate(512 430)">
+    <path d="M 0 -280 L 200 -200 L 200 60 C 200 190, 110 270, 0 320 C -110 270, -200 190, -200 60 L -200 -200 Z"
+          fill="url(#shieldG)" stroke="#00e676" stroke-width="7" filter="url(#glow)" opacity="0.85"/>
+    <path d="M 0 -280 L 200 -200 L 200 60 C 200 190, 110 270, 0 320 C -110 270, -200 190, -200 60 L -200 -200 Z"
+          fill="url(#shieldG)" stroke="#00e676" stroke-width="5"/>
+
+    <path d="M 8 -185 L -88 25 L -4 25 L -24 185 L 96 -35 L 12 -35 Z" fill="url(#boltG)" stroke="#00e676" stroke-width="3" filter="url(#glow)" opacity="0.9"/>
+    <path d="M 8 -185 L -88 25 L -4 25 L -24 185 L 96 -35 L 12 -35 Z" fill="url(#boltG)"/>
+  </g>
+
+  <text x="512" y="852" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="110" letter-spacing="1" fill="#f4f7fb">PARI<tspan fill="#00e676">SCORE</tspan></text>
+  <text x="512" y="908" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="30" letter-spacing="10" fill="#5b6b82">PARIS SPORTIFS - SCORES - PREDICTIONS</text>
+  <text x="512" y="952" text-anchor="middle" font-family="Arial, sans-serif" font-weight="500" font-size="20" letter-spacing="6" fill="#39465c">PREDICTION EN 1 CLIC</text>
+</svg>

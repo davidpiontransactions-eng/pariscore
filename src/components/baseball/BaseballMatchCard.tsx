@@ -102,7 +102,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
         {/* Ligue + heure overlay top */}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between px-2 py-1.5">
           <span
-            className={`rounded border px-1.5 py-px text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm ${LEAGUE_STYLES[game.league]}`}
+            className={`rounded border px-1.5 py-px text-[11px] font-bold uppercase tracking-wider backdrop-blur-sm ${LEAGUE_STYLES[game.league]}`}
           >
             {LEAGUE_LABEL[game.league] ?? game.league}
           </span>
@@ -154,7 +154,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
         {/* Duel de lanceurs */}
         <div className="grid gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/50 p-2.5 sm:grid-cols-2 sm:gap-3">
           <div className="flex items-center justify-between gap-2">
-            <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               SP Ext
             </span>
             {awayPitcher ? (
@@ -164,7 +164,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
             )}
           </div>
           <div className="flex items-center justify-between gap-2 border-slate-800 sm:justify-end sm:border-l sm:pl-3">
-            <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               SP Dom
             </span>
             {homePitcher ? (

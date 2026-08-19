@@ -144,7 +144,7 @@ export function PlayerStatline({
             )}
             <Badge
               variant="outline"
-              className="ml-0.5 h-3 px-1 text-[9px] font-medium leading-none text-muted-foreground"
+              className="ml-0.5 h-3 px-1 text-[11px] font-medium leading-none text-muted-foreground"
             >
               {tTennis("spsExperimentalBadge")}
             </Badge>

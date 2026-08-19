@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PariScore Logo Concept A - Arrow Score (prediction curve + balls + score badge) -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+      <stop offset="0%" stop-color="#0d1320"/>
+      <stop offset="100%" stop-color="#06080e"/>
+    </radialGradient>
+    <linearGradient id="trend" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00e676"/>
+      <stop offset="55%" stop-color="#00c853"/>
+      <stop offset="100%" stop-color="#29b6f6"/>
+    </linearGradient>
+    <linearGradient id="badgeFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#101725"/>
+      <stop offset="100%" stop-color="#0a101b"/>
+    </linearGradient>
+    <linearGradient id="tennisG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7ec49"/>
+      <stop offset="100%" stop-color="#d9c31c"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00e676" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#00e676" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="20" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="470" r="375" fill="url(#halo)"/>
+  <circle cx="512" cy="470" r="355" fill="none" stroke="#1b2436" stroke-width="3"/>
+  <circle cx="512" cy="470" r="332" fill="none" stroke="#121a29" stroke-width="1"/>
+
+  <path d="M 218 640 C 330 612, 372 540, 452 516 C 528 494, 560 430, 648 396 C 716 370, 760 336, 824 268"
+        fill="none" stroke="url(#trend)" stroke-width="22" stroke-linecap="round" filter="url(#glow)" opacity="0.5"/>
+  <path d="M 218 640 C 330 612, 372 540, 452 516 C 528 494, 560 430, 648 396 C 716 370, 760 336, 824 268"
+        fill="none" stroke="url(#trend)" stroke-width="13" stroke-linecap="round"/>
+
+  <g transform="translate(226 650)">
+    <circle r="34" fill="#f2f5fa" stroke="#cdd6e4" stroke-width="2"/>
+    <path d="M 0 -34 L 12 -9 L 0 0 L -12 -9 Z" fill="#16202f"/>
+    <path d="M 0 0 L 28 19 M 0 0 L -28 19 M 12 -9 L 34 10 M -12 -9 L -34 10" stroke="#16202f" stroke-width="3.5" fill="none"/>
+  </g>
+
+  <g transform="translate(470 522)">
+    <circle r="28" fill="url(#tennisG)" stroke="#c9b318" stroke-width="2"/>
+    <path d="M -25 -13 A 28 28 0 0 1 25 13 M -25 13 A 28 28 0 0 0 25 -13" stroke="#c9b318" stroke-width="5" fill="none" opacity="0.8"/>
+  </g>
+
+  <g transform="translate(660 392)">
+    <circle r="26" fill="#e8761f" stroke="#c25e12" stroke-width="2"/>
+    <path d="M 0 -26 L 0 26 M -26 0 L 26 0" stroke="#8a3f08" stroke-width="2.5" fill="none"/>
+    <path d="M -13 -23 A 26 26 0 0 0 -13 23 M 13 -23 A 26 26 0 0 1 13 23" stroke="#8a3f08" stroke-width="2.5" fill="none"/>
+  </g>
+
+  <path d="M 824 268 L 786 312 L 806 322 Z" fill="#00e676" filter="url(#glow)"/>
+  <path d="M 824 268 L 786 312 L 806 322 Z" fill="#00e676"/>
+
+  <g transform="translate(285 238)">
+    <rect width="220" height="110" rx="22" fill="url(#badgeFill)" stroke="#00e676" stroke-width="4" filter="url(#glow)"/>
+    <rect width="220" height="110" rx="22" fill="url(#badgeFill)" stroke="#00e676" stroke-width="3"/>
+    <text x="110" y="57" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="58" fill="#ffffff">2<tspan fill="#00e676">-</tspan><tspan fill="#29b6f6">1</tspan></text>
+  </g>
+
+  <text x="512" y="900" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" font-size="84" letter-spacing="2" fill="#f4f7fb">PARI<tspan fill="#00e676">SCORE</tspan></text>
+  <text x="512" y="948" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="26" letter-spacing="9" fill="#5b6b82">PREDICTIONS SPORTIVES</text>
+</svg>

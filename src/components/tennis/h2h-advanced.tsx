@@ -308,7 +308,7 @@ export function H2HAdvanced({
               {playerA.elo}
             </span>
           </span>
-          <span className="text-[9px]">ELO</span>
+          <span className="text-[11px]">ELO</span>
           <span>
             {playerB.shortName}{" "}
             <span className="font-mono tabular-nums text-foreground">

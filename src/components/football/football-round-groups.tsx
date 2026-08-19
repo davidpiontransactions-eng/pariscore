@@ -121,7 +121,7 @@ export function FootballRoundGroups({
               {g.matches.map((m, idx) =>
                 idx === featuredIdx && showFeatured ? (
                   <div key={m.id} className="relative rounded-2xl ring-2 ring-emerald-500/60 ring-offset-2 ring-offset-background">
-                    <span className="absolute -top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm dark:bg-emerald-500">
+                    <span className="absolute -top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm dark:bg-emerald-500">
                       <Sparkles className="h-2.5 w-2.5" aria-hidden />
                       Match du jour
                     </span>

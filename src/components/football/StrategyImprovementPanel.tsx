@@ -125,7 +125,7 @@ export function StrategyImprovementPanel({
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate font-mono text-[11px] text-foreground">{v.label}</p>
-                <p className="text-[9px] text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   {v.matchCount} match{v.matchCount > 1 ? "s" : ""} · conf. {v.avgConfidence.toFixed(0)}%
                 </p>
               </div>

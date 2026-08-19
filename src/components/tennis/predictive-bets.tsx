@@ -150,7 +150,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
           )}
         </span>
         {predictions.source !== "stats" && (
-          <span className="text-[9px] text-muted-foreground/60" title={t("fallbackHint")}>
+          <span className="text-[11px] text-muted-foreground/60" title={t("fallbackHint")}>
             ~
           </span>
         )}

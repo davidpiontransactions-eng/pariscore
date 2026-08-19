@@ -88,7 +88,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
                 </span>
                 {reliability.overall}
               </span>
-              <span className="text-[9px] uppercase tracking-wider text-muted-foreground">/ 100</span>
+              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">/ 100</span>
             </div>
             <div className="grid flex-1 grid-cols-3 gap-2 text-center">
               <div>
@@ -96,17 +96,17 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
                   {backtest.unitsProfit >= 0 ? "+" : ""}
                   {backtest.unitsProfit.toFixed(1)}u
                 </p>
-                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Profit</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Profit</p>
               </div>
               <div>
                 <p className="text-sm font-bold tabular-nums text-foreground">{backtest.roi.toFixed(1)}%</p>
-                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">ROI</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">ROI</p>
               </div>
               <div>
                 <p className="text-sm font-bold tabular-nums text-foreground">
                   {backtest.wins}/{backtest.totalBets}
                 </p>
-                <p className="text-[9px] uppercase tracking-wider text-muted-foreground">Gagnés</p>
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Gagnés</p>
               </div>
             </div>
           </div>

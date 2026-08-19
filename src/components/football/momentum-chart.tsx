@@ -149,7 +149,7 @@ function ToggleChip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide transition-colors",
+        "rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide transition-colors",
         active
           ? "border-border bg-muted text-foreground"
           : "border-transparent text-muted-foreground/50 hover:text-muted-foreground",
@@ -237,7 +237,7 @@ export function MomentumChart({
         <ToggleChip label="Buts" active={canShowGoals} onClick={() => setToggles((t) => ({ ...t, goals: !t.goals }))} />
         <ToggleChip label="Corners" active={canShowCorners} onClick={() => setToggles((t) => ({ ...t, corners: !t.corners }))} />
         {isEstimated && (
-          <span className="ml-auto text-[9px] italic text-muted-foreground/50">courbe estimée (pas de données par minute)</span>
+          <span className="ml-auto text-[11px] italic text-muted-foreground/50">courbe estimée (pas de données par minute)</span>
         )}
       </div>
 
@@ -335,7 +335,7 @@ export function MomentumChart({
       </svg>
 
       {/* Axe des minutes */}
-      <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/70">
+      <div className="mt-1 flex justify-between text-[11px] text-muted-foreground/70">
         <span>1&apos;</span>
         <span>45&apos; HT</span>
         <span>90&apos;</span>

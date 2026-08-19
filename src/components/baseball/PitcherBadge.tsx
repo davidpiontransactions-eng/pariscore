@@ -15,7 +15,7 @@ const HAND_COLORS: Record<NonNullable<PitcherRecord["throws"]>, string> = {
   RHP: "text-rose-300 border-rose-500/40 bg-rose-500/10",
 };
 
-const UNKNOWN_HAND_BADGE = "rounded border px-1 py-px text-[9px] font-bold leading-3 text-slate-400 border-slate-600/60 bg-slate-700/30";
+const UNKNOWN_HAND_BADGE = "rounded border px-1 py-px text-[11px] font-bold leading-3 text-slate-400 border-slate-600/60 bg-slate-700/30";
 const UNKNOWN_HAND_BADGE_LG = "rounded border px-1.5 py-px text-[11px] font-bold leading-3.5 text-slate-400 border-slate-600/60 bg-slate-700/30";
 
 interface AvatarProps {
@@ -93,7 +93,7 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
             </span>
             {pitcher.throws ? (
               <span
-                className={`rounded border px-1 py-px text-[9px] font-bold leading-3 ${HAND_COLORS[pitcher.throws]}`}
+                className={`rounded border px-1 py-px text-[11px] font-bold leading-3 ${HAND_COLORS[pitcher.throws]}`}
               >
                 {pitcher.throws}
               </span>

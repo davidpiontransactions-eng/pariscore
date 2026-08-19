@@ -276,7 +276,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                         {m.bets.map((b, i) => (
                           <span
                             key={i}
-                            className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-300 ring-1 ring-emerald-500/20 whitespace-nowrap"
+                            className="inline-flex items-center rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/20 whitespace-nowrap"
                           >
                             {b.icon} {b.label}
                           </span>

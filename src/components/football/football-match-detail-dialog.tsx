@@ -57,7 +57,7 @@ function FormBadge({ r }: { r: "W" | "D" | "L" }) {
         : "bg-rose-500/15 text-rose-400 ring-rose-500/30";
   return (
     <span
-      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ring-1 ${cls}`}
+      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ring-1 ${cls}`}
     >
       {r}
     </span>
@@ -108,7 +108,7 @@ function BetTile({ bet }: { bet: PredictiveBetsResult["bets"][number] }) {
           <span className="text-[11px] text-emerald-300 tabular-nums">
             {Math.round(bet.prob)}%
           </span>
-          <span className="text-[9px] uppercase tracking-wider text-muted-foreground">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground">
             {bet.source}
           </span>
         </div>
@@ -297,7 +297,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                   Comparatif pre-match
                 </h3>
                 {view.prediction.model && (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] uppercase tracking-wider text-muted-foreground">
                     {view.prediction.model}
                   </span>
                 )}
@@ -404,7 +404,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     <TrendingUp className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
                     3 paris prédictifs
                   </h3>
-                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-300 ring-1 ring-emerald-500/20">
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300 ring-1 ring-emerald-500/20">
                     Confiance {betsResult.confidence}%
                   </span>
                 </header>
@@ -522,7 +522,7 @@ function Column({
       }`}
     >
       <span
-        className={`truncate text-[9px] font-bold uppercase tracking-wider ${
+        className={`truncate text-[11px] font-bold uppercase tracking-wider ${
           variant === "home" ? "text-emerald-400" : "text-sky-400"
         }`}
       >
@@ -547,12 +547,12 @@ function StandingCell({
 }) {
   return (
     <div className="rounded-lg border border-border/60 bg-muted/30 px-1.5 py-1.5">
-      <p className="text-[9px] uppercase tracking-wider text-muted-foreground">
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[11px] font-bold tabular-nums">
         <span className="text-emerald-400">{home}</span>
-        <span className="text-[9px] text-muted-foreground">·</span>
+        <span className="text-[11px] text-muted-foreground">·</span>
         <span className="text-sky-400">{away}</span>
       </div>
     </div>

@@ -134,7 +134,7 @@ export function AbTestDebugBadge() {
           A/B: {variant ?? "…"}
         </span>
         {overridden && (
-          <span className="ml-0.5 rounded-full bg-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+          <span className="ml-0.5 rounded-full bg-amber-500/30 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider">
             override
           </span>
         )}
@@ -187,7 +187,7 @@ export function AbTestDebugBadge() {
                     </span>
                   </span>
                   {isActive && (
-                    <span className="rounded-full bg-amber-500/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                    <span className="rounded-full bg-amber-500/30 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
                       active
                     </span>
                   )}
@@ -212,7 +212,7 @@ export function AbTestDebugBadge() {
             </button>
           </div>
 
-          <p className="border-t border-border/60 bg-muted/20 px-3 py-1.5 text-[9px] leading-relaxed text-muted-foreground">
+          <p className="border-t border-border/60 bg-muted/20 px-3 py-1.5 text-[11px] leading-relaxed text-muted-foreground">
             Override is stored in localStorage and only affects this browser.
             It is ignored in production.
           </p>

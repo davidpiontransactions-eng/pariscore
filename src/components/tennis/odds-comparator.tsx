@@ -157,7 +157,7 @@ export function OddsComparator({
                     {o.decimalA.toFixed(2)}
                   </span>
                   {o.decimalA === bestA && (
-                    <span className="ml-1 text-[9px] uppercase text-emerald-600 dark:text-emerald-400">
+                    <span className="ml-1 text-[11px] uppercase text-emerald-600 dark:text-emerald-400">
                       {t("best")}
                     </span>
                   )}
@@ -171,7 +171,7 @@ export function OddsComparator({
                     {o.decimalB.toFixed(2)}
                   </span>
                   {o.decimalB === bestB && (
-                    <span className="ml-1 text-[9px] uppercase text-emerald-600 dark:text-emerald-400">
+                    <span className="ml-1 text-[11px] uppercase text-emerald-600 dark:text-emerald-400">
                       {t("best")}
                     </span>
                   )}

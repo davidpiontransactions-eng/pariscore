@@ -86,7 +86,7 @@ function ConsensusBar({
           <div className="bg-slate-600 transition-all" style={{ width: `${consensus.drawPct}%` }} />
           <div className="bg-rose-500 transition-all" style={{ width: `${consensus.awayWinPct}%` }} />
         </div>
-        <div className="flex justify-between text-[9px] tabular-nums text-slate-500">
+        <div className="flex justify-between text-[11px] tabular-nums text-slate-500">
           <span>{consensus.homeWinPct}%</span>
           <span>{consensus.drawPct}%</span>
           <span>{consensus.awayWinPct}%</span>
@@ -119,7 +119,7 @@ function SourceCard({
         <span className="text-[11px] font-semibold text-slate-200">{source.name}</span>
         {p.confidence > 0 && (
           <Badge variant="secondary" className={cn(
-            "ml-auto text-[9px]",
+            "ml-auto text-[11px]",
             p.confidence >= 70 ? "bg-emerald-500/10 text-emerald-400"
             : p.confidence >= 55 ? "bg-amber-500/10 text-amber-400"
             : "bg-slate-800 text-slate-400",

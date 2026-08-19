@@ -50,7 +50,7 @@ export function QuickAddRing({
         >
           {prob}%
         </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
           {winLabel}
         </span>
       </ProbabilityRing>

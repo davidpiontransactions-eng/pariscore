@@ -280,7 +280,7 @@ export function BookmakerComparatorDialog() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{m.matchLabel}</span>
                             {m.hasValueBet && (
-                              <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                              <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                                 {t("valueBetBadge")}
                               </span>
                             )}
@@ -372,7 +372,7 @@ function BookmakerDeepLink({ bookmakerName, matchLabel }: { bookmakerName: strin
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-1 inline-flex items-center gap-1 text-[9px] font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-emerald-500"
+      className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-emerald-500"
       title={`Voir ${matchLabel} chez ${bm.name} (lien direct, sans affiliation)`}
     >
       <ExternalLink className="h-2.5 w-2.5" aria-hidden />

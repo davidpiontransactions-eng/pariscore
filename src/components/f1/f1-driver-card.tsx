@@ -186,7 +186,7 @@ function StatBar({ label, value, color }: { label: string; value: number; color:
 
 function StrengthBadge({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-zinc-400">
+    <span className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
       {label}: {value}
     </span>
   );

@@ -277,7 +277,7 @@ function CategoryRow({
           <span className="text-xs font-semibold">{title}</span>
           <span
             className={cn(
-              "rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider",
+              "rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider",
               alwaysOn
                 ? "bg-muted text-muted-foreground"
                 : enabled

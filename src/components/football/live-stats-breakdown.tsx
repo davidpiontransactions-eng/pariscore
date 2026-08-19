@@ -36,7 +36,7 @@ function BilateralGauge({
   const homeW = total > 0 ? (home / total) * 100 : 50;
   return (
     <div className={cn("rounded-xl border border-slate-800/80 bg-slate-900/50 px-2.5 py-2", hot && "border-emerald-500/40 bg-emerald-500/5")}>
-      <div className="mb-1 flex items-center justify-between text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+      <div className="mb-1 flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           {hot && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" aria-hidden="true" />}
           {label}
@@ -79,7 +79,7 @@ function StatRow({
     <div className={cn("grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 rounded-lg px-2 py-1", hot && "bg-emerald-500/5 ring-1 ring-emerald-500/30")}>
       <span className="text-right text-[11px] font-semibold tabular-nums text-emerald-400">{fmt(h)}</span>
       <div className="min-w-0">
-        <p className="mb-0.5 flex items-center justify-center gap-1 text-center text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="mb-0.5 flex items-center justify-center gap-1 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {hot && <Zap className="h-2.5 w-2.5 text-emerald-400" aria-hidden="true" />}
           <span className="truncate">{label}</span>
         </p>
@@ -166,7 +166,7 @@ export function LiveStatsBreakdown({
           Stats live — {Math.round(live.minute)}&apos;
         </h3>
         {signalCount > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 ring-1 ring-emerald-500/30">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-300 ring-1 ring-emerald-500/30">
             <Zap className="h-2.5 w-2.5" aria-hidden="true" />
             {signalCount} signal{signalCount > 1 ? "s" : ""} funnel
           </span>
@@ -200,7 +200,7 @@ export function LiveStatsBreakdown({
       {/* Probabilités live — le signal converti en marchés (OddAlerts §6.7) */}
       <div className="mt-2 border-t border-slate-800/70 pt-2">
         <div className="mb-1 flex items-center justify-between">
-          <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             <TrendingUp className="h-3 w-3 text-emerald-400" aria-hidden="true" />
             Probabilités live projetées
           </span>

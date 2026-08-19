@@ -82,7 +82,7 @@ function PpgCell({ s }: { s: TeamStandingStats }) {
   return (
     <span className="inline-flex items-center gap-1">
       <span className="tabular-nums">{s.ppg.toFixed(2)} PPG</span>
-      <span className="rounded bg-muted px-1 py-px text-[9px] font-medium text-muted-foreground tabular-nums">
+      <span className="rounded bg-muted px-1 py-px text-[11px] font-medium text-muted-foreground tabular-nums">
         #{s.rank}/{s.rankTotal}
       </span>
     </span>
@@ -267,7 +267,7 @@ export function FootballMatchCard({
           </span>
           {/* Innovation 1 — xP badge */}
           {p.xpDiff != null && (
-            <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${
+            <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
               p.xpDiff > 0
                 ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                 : p.xpDiff < 0
@@ -292,7 +292,7 @@ export function FootballMatchCard({
             />
             <span className="text-sm font-semibold leading-tight">{match.home.shortName}</span>
             {(match.home.topScorer || match.home.topAssister || match.home.topDefender) && (
-              <span className="flex flex-wrap items-center gap-x-1.5 text-[9px] leading-none text-muted-foreground">
+              <span className="flex flex-wrap items-center gap-x-1.5 text-[11px] leading-none text-muted-foreground">
                 {match.home.topScorer && (
                   <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.home.topScorer.name} — buts`}>
                     <Goal className="h-2.5 w-2.5" aria-hidden />
@@ -360,7 +360,7 @@ export function FootballMatchCard({
             />
             <span className="text-sm font-semibold leading-tight">{match.away.shortName}</span>
             {(match.away.topScorer || match.away.topAssister || match.away.topDefender) && (
-              <span className="flex flex-wrap items-center gap-x-1.5 text-[9px] leading-none text-muted-foreground">
+              <span className="flex flex-wrap items-center gap-x-1.5 text-[11px] leading-none text-muted-foreground">
                 {match.away.topScorer && (
                   <span className="inline-flex items-center gap-0.5 tabular-nums" title={`${match.away.topScorer.name} — buts`}>
                     <Goal className="h-2.5 w-2.5" aria-hidden />
@@ -484,7 +484,7 @@ export function FootballMatchCard({
         {(p.refereeCardRisk || p.setPieceEdge != null) && (
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {p.refereeCardRisk && (
-              <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-medium border ${
+              <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium border ${
                 p.refereeCardRisk.label === "élevé"
                   ? "border-red-500/40 bg-red-500/10 text-red-400"
                   : p.refereeCardRisk.label === "faible"
@@ -496,7 +496,7 @@ export function FootballMatchCard({
               </span>
             )}
             {p.setPieceEdge != null && (
-              <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[9px] font-medium border ${
+              <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium border ${
                 p.setPieceEdge > 0.05
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
                   : p.setPieceEdge < -0.05
@@ -640,7 +640,7 @@ export function FootballMatchCard({
                 }}
               />
             </div>
-            <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/70">
+            <div className="mt-1 flex justify-between text-[11px] text-muted-foreground/70">
               <span>{match.home.shortName} {p.xGa.home.toFixed(2)}</span>
               <span>∑{p.xGa.total.toFixed(2)}</span>
               <span>{p.xGa.away.toFixed(2)} {match.away.shortName}</span>
@@ -816,7 +816,7 @@ export function FootballMatchCard({
               Classement (Dom / Ext)
             </div>
             <div className="overflow-hidden rounded-lg border border-border/40">
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/40 bg-muted/30 px-2 py-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/40 bg-muted/30 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span className="flex items-center gap-1 truncate">
                   <Home className="h-3 w-3 shrink-0 text-emerald-500" />
                   <span className="truncate">{match.home.shortName || match.home.name}</span>
@@ -835,7 +835,7 @@ export function FootballMatchCard({
               </div>
             </div>
             {(standing.home.partial || standing.away.partial) && (
-              <div className="mt-1.5 flex items-center gap-1 text-[9px] text-muted-foreground">
+              <div className="mt-1.5 flex items-center gap-1 text-[11px] text-muted-foreground">
                 <span aria-hidden="true">⚠️</span>
                 <span>Données partielles — championnat en début de saison (&lt; 3 matchs)</span>
               </div>
@@ -860,7 +860,7 @@ export function FootballMatchCard({
               />
             )}
             {showRankings && !p.metricRankings && (
-              <div className="mt-2 rounded-lg border border-border/40 p-2 text-center text-[9px] text-muted-foreground">
+              <div className="mt-2 rounded-lg border border-border/40 p-2 text-center text-[11px] text-muted-foreground">
                 Classements indisponibles pour cette ligue.
               </div>
             )}

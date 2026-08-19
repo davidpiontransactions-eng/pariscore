@@ -169,7 +169,7 @@ export function MetricComparePanel({ home, away, partial, onRankingsTab }: Props
             key={c.key}
             onClick={() => setCat(c.key)}
             className={cn(
-              "rounded px-2 py-0.5 text-[9px] font-medium transition-colors",
+              "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
               cat === c.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >

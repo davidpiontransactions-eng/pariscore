@@ -45,7 +45,7 @@ export function LastMatchHighlight({
       <Play className="h-2.5 w-2.5 shrink-0 fill-current" aria-hidden />
       <span className="truncate">{highlight.title}</span>
       {highlight.lengthText && (
-        <span className="shrink-0 font-mono text-[9px] text-muted-foreground/70">
+        <span className="shrink-0 font-mono text-[11px] text-muted-foreground/70">
           {highlight.lengthText}
         </span>
       )}

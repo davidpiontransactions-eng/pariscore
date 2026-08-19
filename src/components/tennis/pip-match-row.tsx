@@ -290,7 +290,7 @@ function PipMatchRowImpl({
         {/* Badge 🔥 value alert : palier pair jeux joués set + DR P1/P2 ≥ 1.2 */}
         {valueAlert.active && (
           <span
-            className="absolute -top-1.5 -right-1.5 z-20 flex items-center gap-0.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-lg ring-2 ring-card animate-pulse"
+            className="absolute -top-1.5 -right-1.5 z-20 flex items-center gap-0.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[11px] font-bold text-white shadow-lg ring-2 ring-card animate-pulse"
             title={`🔥 Value bet — ${valueAlert.totalGamesInSet} jeux joués dans le set (${valueAlert.setScore?.gamesA}-${valueAlert.setScore?.gamesB}) · ${valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name)} dominant (DR match ${valueAlert.drLeader?.toFixed(2)} ≥ 1.2)`}
           >
             🔥 value
@@ -306,7 +306,7 @@ function PipMatchRowImpl({
           </span>
           {/* Cote décimale live A (badge discret) */}
           {isLive && liveState!.oddsA != null && (
-            <span className="rounded bg-amber-500/15 px-1 text-[9px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerA.name)} : ${liveState!.oddsA.toFixed(2)}`}>
+            <span className="rounded bg-amber-500/15 px-1 text-[11px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerA.name)} : ${liveState!.oddsA.toFixed(2)}`}>
               {liveState!.oddsA.toFixed(2)}
             </span>
           )}
@@ -339,7 +339,7 @@ function PipMatchRowImpl({
           </span>
           {/* Cote décimale live B (badge discret) */}
           {isLive && liveState!.oddsB != null && (
-            <span className="rounded bg-amber-500/15 px-1 text-[9px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerB.name)} : ${liveState!.oddsB.toFixed(2)}`}>
+            <span className="rounded bg-amber-500/15 px-1 text-[11px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerB.name)} : ${liveState!.oddsB.toFixed(2)}`}>
               {liveState!.oddsB.toFixed(2)}
             </span>
           )}
@@ -364,7 +364,7 @@ function PipMatchRowImpl({
 
         {/* Cotes vainqueur du set en cours (sous le score, dérivées Markov) */}
         {isLive && setOdds && (
-          <div className="flex items-center gap-1.5 mt-1 text-[9px] font-mono tabular-nums text-muted-foreground/80">
+          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono tabular-nums text-muted-foreground/80">
             <span className="text-muted-foreground/50">Cotes set {setOdds.currentSetNumber}</span>
             <span className="rounded bg-amber-500/15 px-1 text-amber-300 font-semibold" title={`Cote vainqueur set ${setOdds.currentSetNumber} — ${shortName(playerA.name)} : ${setOdds.oddsA.toFixed(2)}`}>
               {shortName(playerA.name).substring(0, 4)} {setOdds.oddsA.toFixed(2)}

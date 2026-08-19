@@ -230,7 +230,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           <SlidersHorizontal className="h-3 w-3" />
           Filtres
           {(minEloGap !== 150 || minSps !== 55) && (
-            <span className="inline-flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[9px] font-bold text-emerald-300">
+            <span className="inline-flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[11px] font-bold text-emerald-300">
               !
             </span>
           )}
@@ -262,7 +262,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               step={10}
               className="w-full"
             />
-            <div className="flex justify-between text-[9px] text-muted-foreground/60">
+            <div className="flex justify-between text-[11px] text-muted-foreground/60">
               <span>0 (tout)</span>
               <span>150 (défaut)</span>
               <span>300 (strict)</span>
@@ -281,7 +281,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               step={5}
               className="w-full"
             />
-            <div className="flex justify-between text-[9px] text-muted-foreground/60">
+            <div className="flex justify-between text-[11px] text-muted-foreground/60">
               <span>0 (tout)</span>
               <span>55 (défaut)</span>
               <span>100 (max)</span>
@@ -323,7 +323,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             className="shrink-0 cursor-not-allowed rounded-full bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/60"
           >
             🎯 Darts
-            <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider">
+            <span className="ml-1.5 text-[11px] font-bold uppercase tracking-wider">
               Bientôt
             </span>
           </button>

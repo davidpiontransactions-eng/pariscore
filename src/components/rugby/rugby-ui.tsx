@@ -186,7 +186,7 @@ export function FormBadges({ form, className }: { form: string; className?: stri
         <span
           key={i}
           className={cn(
-            "inline-flex h-4 w-4 items-center justify-center rounded text-[9px] font-black ring-1",
+            "inline-flex h-4 w-4 items-center justify-center rounded text-[11px] font-black ring-1",
             FORM_META[c] ?? FORM_META.D
           )}
         >

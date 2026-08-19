@@ -150,7 +150,7 @@ export function MLBKBOFolderTab() {
                 }`}
               >
                 <div
-                  className={`text-[9px] font-bold uppercase tracking-wide ${
+                  className={`text-[11px] font-bold uppercase tracking-wide ${
                     active ? "text-amber-300" : "text-slate-500"
                   }`}
                 >

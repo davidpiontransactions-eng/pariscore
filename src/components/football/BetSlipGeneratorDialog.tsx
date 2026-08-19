@@ -212,7 +212,7 @@ export function BetSlipGeneratorDialog({
               </span>
             </div>
           )}
-          <p className="text-[9px] text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             Cotes modèle (100 / proba) — indicatives, hors cotes bookmaker.
           </p>
         </div>

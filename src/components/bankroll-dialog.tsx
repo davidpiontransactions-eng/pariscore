@@ -244,7 +244,7 @@ export function BankrollDialog() {
                             </span>
                             <span
                               className={cn(
-                                "rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+                                "rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wider",
                                 bet.status === "won" && "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
                                 bet.status === "lost" && "bg-rose-500/15 text-rose-600 dark:text-rose-400",
                                 bet.status === "void" && "bg-slate-500/15 text-slate-600 dark:text-slate-400",

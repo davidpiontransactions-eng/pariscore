@@ -80,7 +80,7 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
     <div className="mt-2 border-t border-border/30 pt-2">
       <div className="mb-1 flex items-center justify-between text-[11px]">
         <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-muted-foreground"><TrendingUp className="h-3 w-3" aria-hidden="true" /> Évolution xG</span>
-        <span className="flex items-center gap-2 text-[9px] text-muted-foreground">
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded-sm bg-emerald-500" /> {homeName}</span>
           <span className="inline-flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded-sm bg-rose-500" /> {awayName}</span>
         </span>
@@ -211,7 +211,7 @@ function StatRow({
           className="h-1 rounded-full bg-emerald-500/60 transition-[width]"
           style={{ width: `${homePct}%` }}
         />
-        <span className="mx-1 w-8 text-center text-[9px] text-muted-foreground">{label}</span>
+        <span className="mx-1 w-8 text-center text-[11px] text-muted-foreground">{label}</span>
         <div
           className="h-1 rounded-full bg-rose-500/60 transition-[width]"
           style={{ width: `${awayPct}%` }}
@@ -390,7 +390,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                 <div className="flex flex-1 items-center gap-0.5">
                   <div className="h-1 rounded-full bg-sky-500/60 transition-[width]"
                     style={{ width: `${Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
-                  <span className="mx-1 w-8 text-center text-[9px] font-medium text-sky-400/80">xG</span>
+                  <span className="mx-1 w-8 text-center text-[11px] font-medium text-sky-400/80">xG</span>
                   <div className="h-1 rounded-full bg-sky-500/40 transition-[width]"
                     style={{ width: `${Math.round((p.xGa.away / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
                 </div>
@@ -428,7 +428,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                     : "bg-muted/50 text-muted-foreground border border-border/60",
                 )}
               >
-                {b.isTop && <span className="text-[9px]">⭐</span>}
+                {b.isTop && <span className="text-[11px]">⭐</span>}
                 {b.label}
               </span>
             ))}

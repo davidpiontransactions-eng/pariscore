@@ -327,7 +327,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
       </div>
 
       <div className="border-t border-border/30 mt-2 pt-1.5">
-        <p className="text-[9px] text-muted-foreground/60 italic">
+        <p className="text-[11px] text-muted-foreground/60 italic">
           ✅ value = proba ∈ [60%, 70%] · heuristique, pas un calcul d&apos;EV réel
         </p>
       </div>

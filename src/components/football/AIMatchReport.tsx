@@ -38,7 +38,7 @@ export function AIMatchReport({
           Rapport de match IA
         </h3>
         {report && (
-          <span className="rounded-full bg-ai-insight/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-ai-insight">
+          <span className="rounded-full bg-ai-insight/15 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-ai-insight">
             Confiance {report.confidence}/5
           </span>
         )}

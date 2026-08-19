@@ -594,7 +594,7 @@ return [...matches, ...synthetic];
                     <PictureInPicture2 className="h-3.5 w-3.5" />
                     Widget live
                     {pip.mode === "popup" && (
-                      <span className="text-[9px] text-muted-foreground/60 ml-0.5">(popup)</span>
+                      <span className="text-[11px] text-muted-foreground/60 ml-0.5">(popup)</span>
                     )}
                   </button>
                 )}

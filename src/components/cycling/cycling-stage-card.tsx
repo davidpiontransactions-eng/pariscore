@@ -136,7 +136,7 @@ export function CyclingStageCard({
                 <div key={rider.name} className="flex items-center gap-2.5">
                   <span
                     className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold",
+                      "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
                       RANK_BG[i],
                       RANK_COLORS[i],
                     )}

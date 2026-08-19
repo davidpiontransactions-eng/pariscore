@@ -155,7 +155,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
             style={{ width: `${probBMoreAces}%`, background: match.playerB.color }}
           />
         </div>
-        <div className="flex justify-between text-[9px] font-mono tabular-nums">
+        <div className="flex justify-between text-[11px] font-mono tabular-nums">
           <div className="flex flex-col items-start leading-tight">
             <span>{match.playerA.shortName} {probAMoreAces}%</span>
             <span className="text-muted-foreground/50 text-[8px]">

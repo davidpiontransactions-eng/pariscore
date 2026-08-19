@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PariScore — Concepts Logo</title>
+<style>
+  :root { --navy:#0a0e17; --neon:#00e676; --cyan:#29b6f6; --amber:#f59e0b; --text:#e8eaed; --muted:#94a3b8; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--navy); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; padding:40px 24px; }
+  h1 { text-align:center; font-size:28px; letter-spacing:1px; margin-bottom:6px; }
+  h1 span { color:var(--neon); }
+  .sub { text-align:center; color:var(--muted); margin-bottom:36px; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:28px; max-width:1200px; margin:0 auto; }
+  .card { background:#0e1420; border:1px solid #1c2434; border-radius:16px; overflow:hidden; transition:transform .2s, border-color .2s; }
+  .card:hover { transform:translateY(-4px); border-color:var(--neon); }
+  .card img { width:100%; display:block; aspect-ratio:1/1; object-fit:cover; background:#06080e; }
+  .card-body { padding:16px 18px 20px; }
+  .card-body h2 { font-size:16px; margin-bottom:4px; color:var(--neon); }
+  .card-body p { font-size:13px; color:var(--muted); line-height:1.5; }
+  .tag { display:inline-block; margin-top:10px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; letter-spacing:.5px; }
+  .tag.a { background:rgba(0,230,118,.12); color:var(--neon); border:1px solid rgba(0,230,118,.3); }
+  .tag.b { background:rgba(41,182,246,.12); color:var(--cyan); border:1px solid rgba(41,182,246,.3); }
+  .tag.c { background:rgba(245,158,11,.12); color:var(--amber); border:1px solid rgba(245,158,11,.3); }
+  footer { text-align:center; margin-top:40px; color:#5b6b82; font-size:12px; }
+</style>
+</head>
+<body>
+  <h1>Pari<span>Score</span> — Concepts de Logo</h1>
+  <p class="sub">3 directions graphiques · charte dark navy + vert néon #00e676 · vectoriel SVG</p>
+
+  <div class="grid">
+    <div class="card">
+      <img src="concept-a-arrow-score.png" alt="Concept A — Arrow Score">
+      <div class="card-body">
+        <h2>Concept A — Arrow Score</h2>
+        <p>Courbe de prédiction ascendante avec balles sportives (football, tennis, basket) posées sur les points de données, badge score « 2-1 » à la pointe. Représente : prédictions + multi-sports + scores.</p>
+        <span class="tag a">Le plus complet</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <img src="concept-b-monogram-ps.png" alt="Concept B — Monogramme PS">
+      <div class="card-body">
+        <h2>Concept B — Monogramme PS</h2>
+        <p>Hexagone vert néon façon bouclier, monogramme « PS » géométrique, ligne de tendance montante avec points de données colorés. Minimaliste, lisible en favicon, identité moderne.</p>
+        <span class="tag b">Le plus minimal</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <img src="concept-c-shield-bolt.png" alt="Concept C — Bouclier Éclair">
+      <div class="card-body">
+        <h2>Concept C — Bouclier Éclair</h2>
+        <p>Écu protecteur + éclair vert néon (prédiction instantanée), sous-titre « Paris sportifs — Scores — Predictions ». Forte identité, énergie de la marque, très mémorable.</p>
+        <span class="tag c">Le plus percutant</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>Généré en SVG vectoriel (charte DESIGN_CHARTER.md) · rendu 1024×1024 via Playwright</footer>
+</body>
+</html>

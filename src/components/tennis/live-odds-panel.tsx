@@ -61,7 +61,7 @@ function OddChip({ label, odd, dir, prob, className }: OddChipProps) {
         <TrendingDown className="h-3 w-3 text-rose-500" aria-hidden />
       )}
       {kelly && kelly.pct > 0 && (
-        <span className="rounded bg-emerald-500/10 px-1 text-[9px] font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+        <span className="rounded bg-emerald-500/10 px-1 text-[11px] font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
           K {kelly.pct.toFixed(1)}%
         </span>
       )}

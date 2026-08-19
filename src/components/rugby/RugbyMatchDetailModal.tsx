@@ -282,7 +282,7 @@ function TryScorersSection({ scorers }: { scorers: { playerName: string; teamNam
               <p className="flex items-center gap-1.5 truncate font-semibold text-slate-100">
                 {s.playerName}
                 {i < 3 && (
-                  <span className="shrink-0 rounded-full bg-teal-500/15 px-1.5 py-px text-[9px] font-black text-teal-300 ring-1 ring-teal-500/40">
+                  <span className="shrink-0 rounded-full bg-teal-500/15 px-1.5 py-px text-[11px] font-black text-teal-300 ring-1 ring-teal-500/40">
                     Top {i + 1}
                   </span>
                 )}

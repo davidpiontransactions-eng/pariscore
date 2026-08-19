@@ -270,7 +270,7 @@ export function MatchPipWidget() {
       {/* Légende footer */}
       {liveFavoriteMatches.length > 0 && (
         <div className="mt-3 pt-2 border-t border-border/30">
-          <p className="text-[9px] text-muted-foreground/60 leading-relaxed">
+          <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
             Clic sur un match → 5 bets prédictifs. <br />
             Feu tricolore : ✅ parier · ⚠️ attendre · ❌ éviter. <br />
             Décision finale = toi (le widget est une aide, pas une garantie).
