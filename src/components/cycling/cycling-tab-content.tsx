@@ -206,7 +206,7 @@ export function CyclingTabContent() {
                 </div>
                 {/* Favourites sidebar */}
                 <div className="rounded-2xl border border-border/60 bg-[#1A1A2E] p-4 sm:p-5">
-                  <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">
+                  <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-gray-500">
                     Top 10 Favoris
                   </h3>
                   <div className="space-y-2">
@@ -217,7 +217,7 @@ export function CyclingTabContent() {
                       >
                         <span className={cn(
                           "flex h-4 w-4 shrink-0 items-center justify-center rounded text-[8px] font-bold",
-                          i < 3 ? "bg-amber-500/20 text-amber-400" : "bg-gray-700/40 text-gray-500",
+                          i < 3 ? "bg-amber-500/20 text-amber-400" : "bg-slate-800 text-slate-400",
                         )}>
                           {i + 1}
                         </span>
@@ -229,7 +229,7 @@ export function CyclingTabContent() {
                               style={{ width: r.prob + "%" }}
                             />
                           </div>
-                          <span className="w-8 text-right font-mono text-[10px] font-bold tabular-nums text-amber-400">
+                          <span className="w-8 text-right font-mono text-[11px] font-bold tabular-nums text-amber-400">
                             {r.prob}%
                           </span>
                         </div>

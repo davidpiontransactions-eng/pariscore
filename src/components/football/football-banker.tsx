@@ -74,7 +74,7 @@ export function FootballBankerWidget({
         <h2 className="text-sm font-bold uppercase tracking-wider text-foreground">
           Le pronostic du weekend
         </h2>
-        <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-400 ring-1 ring-inset ring-emerald-500/40">
+        <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-400 ring-1 ring-inset ring-emerald-500/40">
           Banker
         </span>
       </div>
@@ -97,18 +97,18 @@ export function FootballBankerWidget({
               />
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{b.m.home.shortName}</p>
-                <p className="text-[10px] font-medium text-muted-foreground">{b.m.round}</p>
-                <p className="text-[10px] text-muted-foreground">domicile · {parisKickoff(b.m.scheduledAt)}</p>
+                <p className="text-[11px] font-medium text-muted-foreground">{b.m.round}</p>
+                <p className="text-[11px] text-muted-foreground">domicile · {parisKickoff(b.m.scheduledAt)}</p>
               </div>
             </div>
             <div className="flex flex-col items-center px-2 text-center">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">vs</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">vs</span>
             </div>
             <div className="flex min-w-0 items-center gap-3">
               <div className="min-w-0 text-right">
                 <p className="truncate text-sm font-bold">{b.m.away.shortName}</p>
-                <p className="text-[10px] font-medium text-muted-foreground">{b.m.league.name}</p>
-                <p className="text-[10px] text-muted-foreground">extérieur</p>
+                <p className="text-[11px] font-medium text-muted-foreground">{b.m.league.name}</p>
+                <p className="text-[11px] text-muted-foreground">extérieur</p>
               </div>
               <PlayerAvatar
                 name={b.m.away.name}
@@ -130,13 +130,13 @@ export function FootballBankerWidget({
               label="Confiance"
             />
             <div className="text-center sm:text-left">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Pick fort</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pick fort</p>
               <p className="text-base font-black text-emerald-400">{b.pick?.leg}</p>
               <p className="text-xs font-semibold tabular-nums text-foreground">
                 {b.pick?.prob}%
               </p>
               {b.m.odds && (
-                <p className="text-[10px] tabular-nums text-muted-foreground">
+                <p className="text-[11px] tabular-nums text-muted-foreground">
                   cote {b.m.odds.home.toFixed(2)}/{b.m.odds.draw.toFixed(2)}/{b.m.odds.away.toFixed(2)}
                 </p>
               )}
@@ -189,9 +189,9 @@ export function FootballBankerWidget({
                 <p className="truncate text-xs font-semibold">
                   {m.home.shortName} – {m.away.shortName}
                 </p>
-                <p className="truncate text-[10px] text-muted-foreground">{pick?.leg}</p>
+                <p className="truncate text-[11px] text-muted-foreground">{pick?.leg}</p>
               </div>
-              <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-emerald-400">
+              <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-emerald-400">
                 {score}%
               </span>
             </button>

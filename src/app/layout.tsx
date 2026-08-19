@@ -17,6 +17,7 @@ import { BetSlip } from "@/components/bet-slip";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AbTestDebugBadge } from "@/components/ab-test-debug";
+import { AppMotionConfig } from "@/components/motion-config";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
@@ -165,6 +166,12 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${archivoDisplay.variable} antialiased bg-background text-foreground`}
       >
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+        >
+          Aller au contenu principal
+        </a>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -175,24 +182,28 @@ export default async function RootLayout({
             <ConsentProvider>
               <PHProvider>
                 <SentryErrorBoundary>
-                  {children}
-                  <ConsentBanner />
-                  <PrivacyDialog />
-                  <BankrollDialog />
-                  <PaperTradingDialog />
-                  <BookmakerComparatorDialog />
-                  <AboutDialog />
-                  <ApiDocsDialog />
-                  <FeedbackWidget />
-                  {/* Floating bet slip — DraftKings-style sticky panel
-                      (bottom-right, above the feedback widget). Renders
-                      nothing while empty; auto-expands on first selection. */}
-                  <BetSlip />
-                  <Toaster />
-                  <ServiceWorkerRegister />
-                  {/* Dev-only floating A/B test badge — returns null in
-                      production builds (see AbTestDebugBadge). */}
-                  <AbTestDebugBadge />
+                  <AppMotionConfig>
+                    <main id="main">
+                      {children}
+                    </main>
+                    <ConsentBanner />
+                    <PrivacyDialog />
+                    <BankrollDialog />
+                    <PaperTradingDialog />
+                    <BookmakerComparatorDialog />
+                    <AboutDialog />
+                    <ApiDocsDialog />
+                    <FeedbackWidget />
+                    {/* Floating bet slip — DraftKings-style sticky panel
+                        (bottom-right, above the feedback widget). Renders
+                        nothing while empty; auto-expands on first selection. */}
+                    <BetSlip />
+                    <Toaster />
+                    <ServiceWorkerRegister />
+                    {/* Dev-only floating A/B test badge — returns null in
+                        production builds (see AbTestDebugBadge). */}
+                    <AbTestDebugBadge />
+                  </AppMotionConfig>
                 </SentryErrorBoundary>
               </PHProvider>
             </ConsentProvider>

@@ -34,7 +34,7 @@ const SIZE_BOX: Record<Size, string> = {
   lg: "h-14 w-14 rounded-xl",
 };
 const SIZE_IMG: Record<Size, string> = { sm: "h-5 w-5", md: "h-7 w-7", lg: "h-10 w-10" };
-const SIZE_TEXT: Record<Size, string> = { sm: "text-[10px]", md: "text-xs", lg: "text-sm" };
+const SIZE_TEXT: Record<Size, string> = { sm: "text-[11px]", md: "text-xs", lg: "text-sm" };
 const SIZE_FLAG: Record<Size, string> = {
   sm: "h-2.5 w-4",
   md: "h-3 w-4",

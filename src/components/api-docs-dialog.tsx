@@ -307,7 +307,7 @@ function EndpointCard({ method, path, op, baseUrl, t }: EndpointCardProps) {
       <div className="flex items-start gap-2 border-b border-border/40 bg-muted/20 px-3 py-2.5">
         <span
           className={cn(
-            "shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-bold",
+            "shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-bold",
             methodColor,
           )}
         >
@@ -330,7 +330,7 @@ function EndpointCard({ method, path, op, baseUrl, t }: EndpointCardProps) {
         {/* Parameters table */}
         {op.parameters && op.parameters.length > 0 && (
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t("parameters")}
             </p>
             <div className="overflow-hidden rounded border border-border/40">
@@ -365,10 +365,10 @@ function EndpointCard({ method, path, op, baseUrl, t }: EndpointCardProps) {
         {/* Request body example */}
         {reqBodyStr && (
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t("example")} · request
             </p>
-            <pre className="max-h-40 overflow-auto rounded bg-muted/40 p-2 font-mono text-[10px]">
+            <pre className="max-h-40 overflow-auto rounded bg-muted/40 p-2 font-mono text-[11px]">
               <code>{reqBodyStr}</code>
             </pre>
           </div>
@@ -377,12 +377,12 @@ function EndpointCard({ method, path, op, baseUrl, t }: EndpointCardProps) {
         {/* Curl example */}
         <div>
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t("example")} · curl
             </p>
             <CopyButton text={curl} t={t} />
           </div>
-          <pre className="max-h-40 overflow-auto rounded bg-muted/40 p-2 font-mono text-[10px]">
+          <pre className="max-h-40 overflow-auto rounded bg-muted/40 p-2 font-mono text-[11px]">
             <code>{curl}</code>
           </pre>
         </div>
@@ -390,10 +390,10 @@ function EndpointCard({ method, path, op, baseUrl, t }: EndpointCardProps) {
         {/* Response example */}
         {exampleStr && (
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t("response")} · {okStatus}
             </p>
-            <pre className="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono text-[10px]">
+            <pre className="max-h-48 overflow-auto rounded bg-muted/40 p-2 font-mono text-[11px]">
               <code>{exampleStr}</code>
             </pre>
           </div>
@@ -429,7 +429,7 @@ function CopyButton({
     <Button
       variant="ghost"
       size="sm"
-      className="h-6 gap-1 text-[10px]"
+      className="h-6 gap-1 text-[11px]"
       onClick={handle}
       type="button"
     >

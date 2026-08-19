@@ -168,7 +168,7 @@ function ViewToggle({ view, onChange }: { view: View; onChange: (v: View) => voi
           onClick={() => onChange(o.id)}
           className={cn(
             "rounded-lg px-4 py-1.5 text-xs font-bold transition-colors",
-            view === o.id ? "bg-teal-500 text-slate-950" : "text-slate-300 hover:bg-white/5"
+            view === o.id ? "bg-teal-500 text-teal-950" : "text-slate-300 hover:bg-white/5"
           )}
           aria-pressed={view === o.id}
         >

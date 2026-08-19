@@ -262,7 +262,7 @@ export function BankrollDialog() {
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-muted-foreground/70">
+                          <div className="text-[11px] text-muted-foreground/70">
                             {new Date(bet.placedAt).toLocaleString()}
                           </div>
                         </div>
@@ -386,7 +386,7 @@ function StatCard({
 }) {
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}
       </div>
@@ -471,19 +471,19 @@ function StatsSection({
         <Table>
           <TableHeader className="sticky top-0 z-10 bg-background">
             <TableRow className="border-border/60 hover:bg-transparent">
-              <TableHead className="h-8 pl-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <TableHead className="h-8 pl-3 text-[11px] uppercase tracking-wider text-muted-foreground">
                 {t(nameKey)}
               </TableHead>
-              <TableHead className="h-8 text-right text-[10px] uppercase tracking-wider text-muted-foreground">
+              <TableHead className="h-8 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                 {t("bets")}
               </TableHead>
-              <TableHead className="h-8 text-right text-[10px] uppercase tracking-wider text-muted-foreground">
+              <TableHead className="h-8 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                 {t("winRate")}
               </TableHead>
-              <TableHead className="h-8 text-right text-[10px] uppercase tracking-wider text-muted-foreground">
+              <TableHead className="h-8 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                 {t("profit")}
               </TableHead>
-              <TableHead className="h-8 pr-3 text-right text-[10px] uppercase tracking-wider text-muted-foreground">
+              <TableHead className="h-8 pr-3 text-right text-[11px] uppercase tracking-wider text-muted-foreground">
                 {t("roi")}
               </TableHead>
             </TableRow>

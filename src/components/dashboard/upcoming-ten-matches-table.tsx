@@ -118,7 +118,7 @@ function EditorialLine({ m }: { m: UpcomingMatch }) {
   if (!summary) return null;
   return (
     <p
-      className="mt-1 line-clamp-1 text-[10px] italic leading-snug text-slate-500"
+      className="mt-1 line-clamp-1 text-[11px] italic leading-snug text-slate-500"
       title={`${summary.text} — ${summary.source}`}
     >
       📰 {summary.text}
@@ -260,7 +260,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                           <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-rose-500 opacity-75" />
                           <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
                         </span>
-                        <span className="text-[10px] font-bold uppercase text-rose-500">LIVE</span>
+                        <span className="text-[11px] font-bold uppercase text-rose-500">LIVE</span>
                       </span>
                     ) : (
                       formatHour(m.scheduledAt)
@@ -301,7 +301,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                       {m.eloGap != null ? (
                         <span
                           className={cn(
-                            "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold font-mono tabular-nums shrink-0",
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold font-mono tabular-nums shrink-0",
                             m.eloGap >= 150
                               ? "bg-emerald-500/15 text-emerald-400"
                               : "bg-muted text-muted-foreground",
@@ -313,7 +313,7 @@ export function UpcomingTenMatchesTable({ className, id }: { className?: string;
                         <span className="text-muted-foreground/50">—</span>
                       )}
                       {m.spsGap != null && (
-                        <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold font-mono tabular-nums shrink-0 text-sky-400 ring-1 ring-sky-500/20">
+                        <span className="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-semibold font-mono tabular-nums shrink-0 text-sky-400 ring-1 ring-sky-500/20">
                           {m.spsKind === "diff" ? "ΔSPS" : "SPS"} {Math.round(m.spsGap)}
                         </span>
                       )}

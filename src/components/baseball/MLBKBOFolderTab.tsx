@@ -84,7 +84,7 @@ export function MLBKBOFolderTab() {
                 onClick={() => setLeague(t.id)}
                 className={`rounded-md px-3.5 py-1.5 text-xs font-bold transition-colors ${
                   league === t.id
-                    ? "bg-amber-400 text-slate-950"
+                    ? "bg-amber-400 text-amber-950"
                     : "text-slate-300 hover:bg-slate-800"
                 }`}
               >

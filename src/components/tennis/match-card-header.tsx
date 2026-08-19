@@ -66,7 +66,7 @@ export function MatchCardHeader({
         </div>
 
         {/* Date + heure précise du match — TZ navigateur dynamique */}
-        <div className="flex items-center gap-1.5 text-[10px] font-medium text-[#B8B8B8]">
+        <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#B8B8B8]">
           <Calendar className="h-3 w-3 shrink-0" />
           <span className="whitespace-nowrap">{formattedDate}</span>
           <Clock className="h-3 w-3 shrink-0" />
@@ -80,7 +80,7 @@ export function MatchCardHeader({
           <span
             className={cn(
               "flex items-center gap-1 rounded-full bg-rose-600/10 px-2 py-0.5",
-              "text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400",
+              "text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400",
             )}
             aria-label={t("liveAria")}
           >

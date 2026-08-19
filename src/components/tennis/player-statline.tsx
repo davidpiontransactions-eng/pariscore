@@ -250,7 +250,7 @@ function SurfaceMetric({
       <span className="flex items-center gap-1.5 tabular-nums">
         <span className="font-medium">{value}</span>
         {rank && (
-          <span className="rounded bg-muted px-1 text-[10px] text-muted-foreground">
+          <span className="rounded bg-muted px-1 text-[11px] text-muted-foreground">
             {rank}
           </span>
         )}

@@ -35,7 +35,7 @@ export function ProbabilityBar({
   return (
     <div className="space-y-1.5">
       {/* Labels above */}
-      <div className="flex justify-between text-[10px] font-semibold tabular-nums">
+      <div className="flex justify-between text-[11px] font-semibold tabular-nums">
         <span style={{ color: colorA }}>
           {shortNameA} {probA}%
         </span>

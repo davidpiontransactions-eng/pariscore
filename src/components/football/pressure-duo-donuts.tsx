@@ -91,7 +91,7 @@ export function PressureDuoDonuts({
         />
         {avg && (
           <>
-            <div className="flex flex-col items-center gap-1 text-[10px] text-muted-foreground">
+            <div className="flex flex-col items-center gap-1 text-[11px] text-muted-foreground">
               <span>vs</span>
               {anomaly && (
                 <span

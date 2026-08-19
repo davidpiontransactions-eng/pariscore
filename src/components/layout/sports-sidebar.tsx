@@ -213,8 +213,8 @@ function CountBadge({ n, live }: { n: number; live?: boolean }) {
   return (
     <span
       className={cn(
-        "rounded-full px-1.5 py-0.5 font-mono text-[10px] leading-none tabular-nums",
-        live ? "bg-red-500/15 text-red-400" : "bg-slate-800 text-slate-400",
+        "rounded-full px-1.5 py-0.5 font-mono text-[11px] leading-none tabular-nums",
+        live ? "bg-red-500/15 text-red-300" : "bg-slate-800 text-slate-400",
       )}
     >
       {n}
@@ -231,7 +231,7 @@ function EdgeBadge({ value }: { value: number }) {
   return (
     <span
       className={cn(
-        "shrink-0 rounded px-1 py-0.5 font-mono text-[10px] leading-none tabular-nums",
+        "shrink-0 rounded px-1 py-0.5 font-mono text-[11px] leading-none tabular-nums",
         positive ? "bg-emerald-500/15 text-emerald-300" : "bg-red-500/10 text-red-300/80",
       )}
     >
@@ -360,7 +360,7 @@ function MatchRow({
       {match.isLive ? (
         <span aria-hidden className="ml-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" />
       ) : (
-        <span className="ml-1 w-8 shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
+        <span className="ml-1 w-8 shrink-0 font-mono text-[11px] tabular-nums text-slate-500">
           {formatKickoff(match.scheduledAt)}
         </span>
       )}
@@ -384,7 +384,7 @@ function MatchRow({
               aria-label={`${c.label} ${c.value}`}
               onClick={() => openDetail(c.label)}
               className={cn(
-                "rounded bg-slate-800/80 px-1 py-0.5 font-mono text-[10px] tabular-nums transition-colors",
+                "rounded bg-slate-800/80 px-1 py-0.5 font-mono text-[11px] tabular-nums transition-colors",
                 "hover:bg-emerald-600/25 hover:text-emerald-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 i === bestCellIndex(cells) && hasOdds
                   ? "text-emerald-300"
@@ -602,7 +602,7 @@ function SportBlock({
         {sport.degraded && sport.totalMatches === 0 ? (
           <span
             title="Données indisponibles (API sport en erreur)"
-            className="rounded-full border border-dashed border-amber-500/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-400/80"
+            className="rounded-full border border-dashed border-amber-500/40 px-1.5 py-0.5 text-[11px] font-medium text-amber-400/80"
           >
             indispo
           </span>
@@ -663,13 +663,13 @@ function QuickLinksBlock({
 
   return (
     <section aria-label={t("quickLinks")} className="border-b border-slate-800/80 pb-2">
-      <h2 className="px-2.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
         {t("quickLinks")}
       </h2>
       <div className="space-y-1">
         {visible.map((row) => (
           <div key={row.key}>
-            <p className="flex items-center gap-1 px-2.5 pb-0.5 text-[10px] font-semibold text-emerald-400/90">
+            <p className="flex items-center gap-1 px-2.5 pb-0.5 text-[11px] font-semibold text-emerald-400/90">
               {row.key === "live" ? (
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-red-500" />
               ) : (
@@ -759,7 +759,7 @@ function FavoritesBlock({
 
   return (
     <section aria-label={t("favorites")} className="border-b border-slate-800/80 pb-2">
-      <h2 className="px-2.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
         {t("favorites")}
       </h2>
       <ul className="space-y-0.5">
@@ -852,7 +852,7 @@ export function SportsSidebarContent({
           <button
             type="button"
             onClick={clearMatchSelection}
-            className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t("selectionClear")}
           </button>

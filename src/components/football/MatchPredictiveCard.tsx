@@ -85,7 +85,7 @@ export function MatchPredictiveCard({ prediction, className }: MatchPredictiveCa
         <div className="flex items-center gap-3 pt-1 border-t border-border/50">
           <span className="text-[11px] text-muted-foreground">Sources :</span>
           {(["rf", "xgboost", "dixonColes"] as const).map(k => (
-            <span key={k} className="font-mono text-[10px] uppercase tracking-wider bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+            <span key={k} className="font-mono text-[11px] uppercase tracking-wider bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
               {k === "rf" ? "RF" : k === "xgboost" ? "XGB" : "DC"} {Math.round(sources[k].home * 100)}%
             </span>
           ))}

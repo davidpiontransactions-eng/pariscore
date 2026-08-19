@@ -214,14 +214,14 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-purple-400">🔬 Comparaison</span>
-              <button onClick={exitCompare} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">✕ Quitter</button>
+              <button onClick={exitCompare} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">✕ Quitter</button>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-border/60 bg-muted/20 p-3 space-y-2">
                 <p className="text-[11px] font-semibold truncate">{optA?.label}</p>
                 <p className="text-xs leading-relaxed text-muted-foreground">{insight.analysis}</p>
                 <div className="flex items-center justify-between pt-1 border-t border-border/30">
-                  <span className={cn("text-[10px] font-mono font-bold", insight.edge > 0 ? "text-emerald-400" : "text-muted-foreground")}>{insight.edge > 0 ? "+" : ""}{insight.edge}% edge</span>
+                  <span className={cn("text-[11px] font-mono font-bold", insight.edge > 0 ? "text-emerald-400" : "text-muted-foreground")}>{insight.edge > 0 ? "+" : ""}{insight.edge}% edge</span>
                   <div className="flex items-center gap-0.5">{renderStars(insight.confidence)}</div>
                 </div>
               </div>
@@ -229,14 +229,14 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
                 <p className="text-[11px] font-semibold truncate">{optB?.label}</p>
                 <p className="text-xs leading-relaxed text-muted-foreground">{insightB.analysis}</p>
                 <div className="flex items-center justify-between pt-1 border-t border-border/30">
-                  <span className={cn("text-[10px] font-mono font-bold", insightB.edge > 0 ? "text-emerald-400" : "text-muted-foreground")}>{insightB.edge > 0 ? "+" : ""}{insightB.edge}% edge</span>
+                  <span className={cn("text-[11px] font-mono font-bold", insightB.edge > 0 ? "text-emerald-400" : "text-muted-foreground")}>{insightB.edge > 0 ? "+" : ""}{insightB.edge}% edge</span>
                   <div className="flex items-center gap-0.5">{renderStars(insightB.confidence)}</div>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-1.5">
               {insight.factors.map((f, i) => (
-                <div key={f.label} className="flex justify-between rounded bg-muted/30 px-2 py-1 text-[10px]">
+                <div key={f.label} className="flex justify-between rounded bg-muted/30 px-2 py-1 text-[11px]">
                   <span className="text-muted-foreground">{f.label}</span>
                   <span className="font-semibold text-emerald-400">{f.value}</span>
                   {insightB.factors[i] && <span className="font-semibold text-blue-400 ml-2">{insightB.factors[i].value}</span>}
@@ -257,10 +257,10 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
 
             {/* Checkboxes compare */}
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] text-muted-foreground mr-1">Comparer (2 max):</span>
+              <span className="text-[11px] text-muted-foreground mr-1">Comparer (2 max):</span>
               {matchOptions.slice(0, 8).map((opt) => (
                 <label key={`chk-${opt.sport}-${opt.id}`} className={cn(
-                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] cursor-pointer transition-colors",
+                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] cursor-pointer transition-colors",
                   compareIds.includes(opt.id)
                     ? "border-purple-500/50 bg-purple-500/10 text-purple-400"
                     : "border-border/40 bg-muted/30 text-muted-foreground hover:border-purple-500/30",
@@ -282,7 +282,7 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
         {error && !loading && <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">{error}</div>}
         {!loading && !error && <>
           <p className="text-sm leading-relaxed text-muted-foreground">{display.analysis}</p>
-          {display.source && <span className="mt-1 inline-block text-[10px] text-muted-foreground/50">Source: {display.source}{display.cachedAt && ` · Cache: ${new Date(display.cachedAt).toLocaleTimeString("fr-FR")}`}</span>}
+          {display.source && <span className="mt-1 inline-block text-[11px] text-muted-foreground/50">Source: {display.source}{display.cachedAt && ` · Cache: ${new Date(display.cachedAt).toLocaleTimeString("fr-FR")}`}</span>}
         </>}
         {!loading && !error && <div className="mt-3 grid grid-cols-2 gap-2">
           {display.factors.map((factor) => <div key={factor.label} className="flex flex-col rounded-lg border border-border/60 bg-muted/40 px-2.5 py-1.5"><span className="text-[11px] leading-tight text-muted-foreground">{factor.label}</span><span className="text-sm font-semibold text-emerald-400">{factor.value}</span></div>)}

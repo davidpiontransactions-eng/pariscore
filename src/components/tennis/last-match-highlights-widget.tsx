@@ -93,7 +93,7 @@ export function LastMatchHighlightsWidget({
               />
             </div>
             <figcaption className="flex items-center justify-between gap-2 px-2.5 py-1.5">
-              <span className="truncate text-[10px] font-medium text-foreground/80">
+              <span className="truncate text-[11px] font-medium text-foreground/80">
                 {v.playerName === "Face-à-face" || v.playerName === "Tournoi"
                   ? v.highlight.title
                   : `${v.playerName} — ${v.highlight.title}`}

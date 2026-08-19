@@ -146,7 +146,7 @@ function StatsContent({
                 Jeu {liveState.scoreA.games}-{liveState.scoreB.games}
               </span>
             )}
-            {isDemo && <Badge variant="outline" className="mt-1 text-[10px] border-amber-500/50 text-amber-500">Démo</Badge>}
+            {isDemo && <Badge variant="outline" className="mt-1 text-[11px] border-amber-500/50 text-amber-500">Démo</Badge>}
           </div>
           <div className="flex flex-col items-center gap-1 min-w-0">
             <PlayerAvatar name={playerBName} photoUrl={playerBPhoto} color={playerBColor} size="md" countryCode={playerBCountry} />

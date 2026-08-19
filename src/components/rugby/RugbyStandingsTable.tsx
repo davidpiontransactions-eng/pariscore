@@ -60,7 +60,7 @@ export function RugbyStandingsTable({
                       <RugbyTeamLogo src={row.logo} name={row.name} size={26} />
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-100">{row.name}</p>
-                        <p className="text-[10px] text-slate-500">
+                        <p className="text-[11px] text-slate-500">
                           Att {row.attack.toFixed(2)} · Déf {row.defence.toFixed(2)}
                         </p>
                       </div>

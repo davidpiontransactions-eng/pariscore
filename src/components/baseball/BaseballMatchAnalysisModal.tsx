@@ -79,7 +79,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
     <div className="grid gap-3 lg:grid-cols-2">
       {/* Moneyline */}
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Vainqueur du match (Moneyline 1-2)
         </h4>
         <div className="mt-3 space-y-3">
@@ -114,15 +114,15 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
       {/* Total */}
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Over / Under Total Runs
           </h4>
           {total.recommendation ? (
-            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+            <span className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold uppercase text-emerald-300">
               Seuil ≥ 65 % ✓
             </span>
           ) : (
-            <span className="rounded-md border border-slate-600 bg-slate-800 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-400">
+            <span className="rounded-md border border-slate-600 bg-slate-800 px-2 py-0.5 text-[11px] font-bold uppercase text-slate-400">
               Sous seuil
             </span>
           )}
@@ -168,7 +168,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
 
       {/* First 5 */}
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4 lg:col-span-2">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           First 5 Innings (100 % duel des partants)
         </h4>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -207,7 +207,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
   return (
     <div className="space-y-3">
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Loi Pythagoricienne de Bill James
         </h4>
         <p className="mt-2 font-mono text-xs text-slate-400">
@@ -221,7 +221,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Simulation Monte Carlo — matrice d&apos;espérance de points
         </h4>
         <p className="mt-2 text-xs leading-relaxed text-slate-400">
@@ -239,7 +239,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Fusion du modèle
         </h4>
         <ul className="mt-2 list-inside list-disc space-y-1 text-xs leading-relaxed text-slate-400">
@@ -256,7 +256,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
             F5 : simulation isolée des 5 premières manches — confrontation directe des deux
             partants.
           </li>
-          <li className="font-mono text-[10px] text-slate-500">
+          <li className="font-mono text-[11px] text-slate-500">
             seed={prediction.seed} · model={prediction.modelVersion} · itérations=
             {monteCarlo.iterations}
           </li>
@@ -292,13 +292,13 @@ function ContextSection({
   return (
     <div className="space-y-3">
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Attaque & Platoon Splits (OPS vs main de lancer)
         </h4>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-xs">
             <thead>
-              <tr className="text-[10px] uppercase tracking-wider text-slate-500">
+              <tr className="text-[11px] uppercase tracking-wider text-slate-500">
                 <th className="pb-2 font-bold">Équipe</th>
                 <th className="pb-2 font-bold">wOBA</th>
                 <th className="pb-2 font-bold">wRC+</th>
@@ -334,14 +334,14 @@ function ContextSection({
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-[10px] text-slate-500">
+        <p className="mt-2 text-[11px] text-slate-500">
           ◀ SP = main de lancer du partant adverse — alignement évalué en platoon split.
         </p>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Park Factor ({homeTeam.name})
           </h4>
           <div className="mt-3 flex items-center gap-3">
@@ -378,7 +378,7 @@ function ContextSection({
         </div>
 
         <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-          <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Fatigue Bullpen (IP 3 derniers jours)
           </h4>
           <div className="mt-3 space-y-3">
@@ -405,7 +405,7 @@ function ContextSection({
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
             Indice = IP 3j / moyenne ligue (12,0) + ajustement ERA. Un bullpen surchargé dégrade
             les taux K/9 et majore les hits attendus dans la phase 2 du Monte Carlo.
           </p>
@@ -418,7 +418,7 @@ function ContextSection({
 function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
   return (
     <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-      <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+      <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
         Calibration — prédiction vs résultat
       </h4>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -430,7 +430,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
             <span className="font-mono text-sm tabular-nums text-slate-300">
               Total réel : <b className="text-white">{cal.actualTotalRuns}</b>
             </span>
-            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+            <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold uppercase ${
               cal.overUnderHit === true
                 ? "bg-emerald-500/20 text-emerald-300"
                 : cal.overUnderHit === false
@@ -440,7 +440,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
               {cal.overUnderHit === true ? "✓ Gagné" : cal.overUnderHit === false ? "✗ Perdu" : "Push"}
             </span>
           </div>
-          <div className="mt-1 font-mono text-[10px] text-slate-500">
+          <div className="mt-1 font-mono text-[11px] text-slate-500">
             Prédiction : Over {fmtPct(cal.predictedOverProb)} · Under {fmtPct(cal.predictedUnderProb)}
             {cal.predictedRecommendation && (
               <span className="ml-1 text-amber-300">
@@ -456,12 +456,12 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
           <div className="mt-2 flex items-center gap-2">
             <span className="font-mono text-sm tabular-nums text-slate-300">
               Score : <b className="text-white">{cal.actualAwayRuns} - {cal.actualHomeRuns}</b>
-              <span className="ml-1 text-[10px] text-slate-500">
+              <span className="ml-1 text-[11px] text-slate-500">
                 ({cal.moneylineWinner === "home" ? "Domicile" : "Extérieur"} gagne)
               </span>
             </span>
             {cal.moneylineFavoriteWon !== null && (
-              <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+              <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold uppercase ${
                 cal.moneylineFavoriteWon
                   ? "bg-emerald-500/20 text-emerald-300"
                   : "bg-rose-500/20 text-rose-300"
@@ -470,7 +470,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
               </span>
             )}
           </div>
-          <div className="mt-1 font-mono text-[10px] text-slate-500">
+          <div className="mt-1 font-mono text-[11px] text-slate-500">
             P(domicile) prédite : {fmtPct(cal.predictedHomeWinProb)}
           </div>
         </div>
@@ -643,7 +643,7 @@ export function BaseballMatchAnalysisModal({
                 />
               )}
 
-              <p className="mt-5 border-t border-slate-800 pt-3 text-[10px] leading-relaxed text-slate-600">
+              <p className="mt-5 border-t border-slate-800 pt-3 text-[11px] leading-relaxed text-slate-600">
                 Sources : calendrier {detail.dataSources.schedule === "mlb-statsapi-live" ? "MLB StatsAPI (live)" : "registre KBO curé"} · stats lanceurs{" "}
                 {detail.dataSources.pitchers === "mlb-statsapi-live" ? "MLB StatsAPI (live)" : "registre curé"} · ratings équipes & Park Factors : registre
                 sabermétrique curé. Modèle analytique à visée informationnelle — aucune garantie de gain.

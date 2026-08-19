@@ -120,7 +120,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
       )}
     >
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           <Zap className="h-3 w-3" />
           {t("title")}
           {isLive && (
@@ -192,7 +192,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
               )}
               title={t("overTooltip", { threshold: label, prob })}
             >
-              <span className="w-10 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+              <span className="w-10 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                 O {label}
               </span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
@@ -201,7 +201,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
                   style={{ width: `${prob}%` }}
                 />
               </span>
-              <span className="w-8 shrink-0 text-right font-mono text-[10px] font-semibold tabular-nums">
+              <span className="w-8 shrink-0 text-right font-mono text-[11px] font-semibold tabular-nums">
                 {prob}%
               </span>
             </button>
@@ -210,7 +210,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
       </div>
 
       {/* Reco */}
-      <div className="mt-1.5 flex items-center gap-1 border-t border-border/40 pt-1 text-[10px]">
+      <div className="mt-1.5 flex items-center gap-1 border-t border-border/40 pt-1 text-[11px]">
         <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
         <span className="text-muted-foreground">{t("reco")} :</span>
         <span className="font-semibold">{recLabel}</span>

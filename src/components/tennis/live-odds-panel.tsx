@@ -48,7 +48,7 @@ function OddChip({ label, odd, dir, prob, className }: OddChipProps) {
       )}
       title={`${label} — cote ${odd ?? "—"}${kelly && kelly.pct > 0 ? ` · Kelly ${kelly.pct.toFixed(1)}%` : ""}`}
     >
-      <span className="max-w-[64px] truncate text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+      <span className="max-w-[64px] truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <span className="font-mono text-[13px] font-semibold tabular-nums text-foreground">
@@ -93,7 +93,7 @@ export function LiveOddsPanel({
     >
       <span
         className={cn(
-          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
           isOnex
             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
             : "bg-muted/40 text-muted-foreground",

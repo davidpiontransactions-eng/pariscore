@@ -60,7 +60,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-xs">
               <thead>
-                <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-500">
                   <th className="px-4 py-2.5">Date</th>
                   <th className="px-3 py-2.5">Match</th>
                   <th className="px-3 py-2.5">Spread</th>
@@ -87,7 +87,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                     >
                       <td className="whitespace-nowrap px-4 py-3 text-slate-400">
                         <span className="block font-semibold text-slate-300">{fmtDate(match.date)}</span>
-                        <span className="text-[10px] text-slate-500">{fmtTime(match.date)}</span>
+                        <span className="text-[11px] text-slate-500">{fmtTime(match.date)}</span>
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                         <span className="inline-flex rounded-lg bg-[#0b0e14] px-2 py-1 font-bold tabular-nums text-slate-200 ring-1 ring-white/8">
                           Domicile {fmtHandicap(p.handicap.line)}
                         </span>
-                        <span className="mt-1.5 block text-[10px] font-semibold tabular-nums text-slate-500">
+                        <span className="mt-1.5 block text-[11px] font-semibold tabular-nums text-slate-500">
                           Domicile {homePct}% · Extérieur {awayPct}%
                         </span>
                       </td>
@@ -115,7 +115,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                         <span className="inline-flex rounded-lg bg-[#0b0e14] px-2 py-1 font-bold tabular-nums text-slate-200 ring-1 ring-white/8">
                           {ou ? ou.line.toFixed(1) : "—"}
                         </span>
-                        <span className="mt-1.5 block text-[10px] font-semibold tabular-nums text-slate-500">
+                        <span className="mt-1.5 block text-[11px] font-semibold tabular-nums text-slate-500">
                           {ou ? `O ${pct(ou.over)} / U ${pct(ou.under)}` : "—"}
                         </span>
                       </td>
@@ -125,7 +125,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                       <td className="px-4 py-3 text-right">
                         <span
                           className={cn(
-                            "inline-flex rounded-full px-2 py-0.5 text-[10px] font-black tabular-nums ring-1",
+                            "inline-flex rounded-full px-2 py-0.5 text-[11px] font-black tabular-nums ring-1",
                             p.confidence >= 0.62
                               ? "bg-teal-500/10 text-teal-300 ring-teal-500/30"
                               : "bg-slate-500/10 text-slate-400 ring-white/8"
@@ -179,7 +179,7 @@ function BacktestPanel({ bt }: { bt: ReturnType<typeof useRugbyBacktest>["data"]
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-left text-xs">
             <thead>
-              <tr className="border-b border-white/5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-2.5">Probabilité domicile</th>
                 <th className="px-3 py-2.5 text-right">Matchs réglés</th>
                 <th className="px-3 py-2.5 text-right">Couverture domicile</th>
@@ -215,7 +215,7 @@ function BacktestPanel({ bt }: { bt: ReturnType<typeof useRugbyBacktest>["data"]
           </table>
         </div>
       )}
-      <p className="border-t border-white/5 px-4 py-2.5 text-[10px] leading-relaxed text-slate-600">
+      <p className="border-t border-white/5 px-4 py-2.5 text-[11px] leading-relaxed text-slate-600">
         Une couverture &gt; 52 % sur une bande suggère un spread à valeur (le marché paie ~50 %).
         {bt?.stats.slug
           ? " Statistiques limitées à la compétition sélectionnée."

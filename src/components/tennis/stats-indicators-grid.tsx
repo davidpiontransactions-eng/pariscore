@@ -178,7 +178,7 @@ function PrimaryChip({
         compact ? "px-2 py-1.5" : "px-3 py-2",
       )}
     >
-      <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {icon && <span aria-hidden>{icon}</span>}
         {label}
       </span>

@@ -616,7 +616,7 @@ return [...matches, ...synthetic];
                     updatedAt: new Date(data.updatedAt).toLocaleTimeString(),
                   })}
                   className={cn(
-                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
                     data.source === "bsd" || data.source === "odds-api"
                       ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                       : data.source === "cache-stale"

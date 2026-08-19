@@ -204,7 +204,7 @@ function PlayerItem({
       {player.circuit && (
         <span
           className={cn(
-            "rounded px-1.5 py-0.5 text-[10px] font-semibold",
+            "rounded px-1.5 py-0.5 text-[11px] font-semibold",
             player.circuit === "WTA"
               ? "bg-rose-500/10 text-rose-600 dark:text-rose-300"
               : "bg-sky-500/10 text-sky-600 dark:text-sky-300",
@@ -263,7 +263,7 @@ function TournamentItem({
         />
       )}
       {tournament.category && (
-        <span className="hidden text-[10px] text-muted-foreground sm:inline">
+        <span className="hidden text-[11px] text-muted-foreground sm:inline">
           {tournament.category}
         </span>
       )}

@@ -47,14 +47,14 @@ function MetricBar({
   return (
     <div className="mb-px">
       <div className="flex items-center gap-1 px-2 py-1.5">
-        <span className="w-[38%] text-right text-[10px] font-medium tabular-nums text-foreground">
+        <span className="w-[38%] text-right text-[11px] font-medium tabular-nums text-foreground">
           {fmtVal(hv)}{fmtRank(homeValue.rank)}
         </span>
         <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted">
           <div className="h-full bg-emerald-500/70 transition-all" style={{ width: `${hp}%` }} />
           <div className="h-full bg-rose-500/70 transition-all" style={{ width: `${ap}%` }} />
         </div>
-        <span className="w-[38%] text-[10px] font-medium tabular-nums text-foreground">
+        <span className="w-[38%] text-[11px] font-medium tabular-nums text-foreground">
           {fmtVal(av)}{fmtRank(awayValue.rank)}
         </span>
       </div>

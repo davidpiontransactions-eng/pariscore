@@ -44,7 +44,7 @@ export function BacktestBadge({ surface, eloGap, className }: Props) {
         <TooltipTrigger asChild>
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground",
+              "inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground",
               className
             )}
           >
@@ -75,7 +75,7 @@ export function BacktestBadge({ surface, eloGap, className }: Props) {
       <TooltipTrigger asChild>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+            "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
             tone,
             className
           )}

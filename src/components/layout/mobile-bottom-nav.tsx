@@ -32,11 +32,11 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0e17]/90 backdrop-blur-md border-t border-white/10"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0e17]/90 backdrop-blur-md border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
       role="navigation"
       aria-label="Navigation principale"
     >
-      <div className="flex items-center justify-around h-16 px-2 safe-area-inset-bottom">
+      <div className="flex items-center justify-around h-16 px-2">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
@@ -45,8 +45,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
           return (
             <button
               key={tab.id}
-              role="tab"
-              aria-selected={isActive}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => onTabChange(tab.id)}
               className={cn(
                 "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-colors duration-200",
@@ -82,7 +81,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
                 )}
               </span>
 
-              <span className="text-[10px] font-medium leading-none">{tab.label}</span>
+              <span className="text-[11px] font-medium leading-none">{tab.label}</span>
             </button>
           );
         })}

@@ -140,7 +140,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
       )}
     >
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           <Target className="h-3 w-3" />
           {t("title")}
           {isLive && (
@@ -177,7 +177,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
               )}
               title={t("overTooltip", { threshold: label, prob })}
             >
-              <span className="w-10 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+              <span className="w-10 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                 O {label}
               </span>
               <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
@@ -186,7 +186,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
                   style={{ width: `${prob}%` }}
                 />
               </span>
-              <span className="w-8 shrink-0 text-right font-mono text-[10px] font-semibold tabular-nums">
+              <span className="w-8 shrink-0 text-right font-mono text-[11px] font-semibold tabular-nums">
                 {prob}%
               </span>
             </button>
@@ -195,7 +195,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
       </div>
 
       {/* Reco : le seuil le plus proche de 60% (value sweet spot). */}
-      <div className="mt-1.5 flex items-center gap-1 border-t border-border/40 pt-1 text-[10px]">
+      <div className="mt-1.5 flex items-center gap-1 border-t border-border/40 pt-1 text-[11px]">
         {recDirection === "over" ? (
           <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
         ) : (

@@ -142,7 +142,7 @@ export function FeedbackWidget() {
                   maxLength={500}
                   className="resize-none"
                 />
-                <p className="text-right text-[10px] text-muted-foreground">
+                <p className="text-right text-[11px] text-muted-foreground">
                   {description.length}/500
                 </p>
               </div>

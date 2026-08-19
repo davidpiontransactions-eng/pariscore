@@ -36,7 +36,7 @@ export function MetricLeaderboardTable({ rankings, homeTeamName, awayTeamName }:
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
-          className="flex-1 bg-transparent text-[10px] font-medium text-foreground outline-none"
+          className="flex-1 bg-transparent text-[11px] font-medium text-foreground outline-none"
         >
           {METRIC_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>
@@ -47,7 +47,7 @@ export function MetricLeaderboardTable({ rankings, homeTeamName, awayTeamName }:
         <span className="text-[8px] text-muted-foreground/50">Saison complète</span>
       </div>
       <div className="max-h-64 overflow-y-auto">
-        <table className="w-full text-[10px]">
+        <table className="w-full text-[11px]">
           <thead className="border-b border-border/30 text-[8px] uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="w-8 px-1.5 py-1 text-right">#</th>

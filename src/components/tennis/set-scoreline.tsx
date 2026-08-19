@@ -1,7 +1,7 @@
 import { useTranslations } from "next-intl";
 import type { SideScore } from "@/hooks/use-live-matches";
 import { cn } from "@/lib/utils";
-import { ScoreFlash } from "./score-flash";
+import { ScoreFlash } from "@/components/shared/score-flash";
 
 type Props = {
   /** Score for side A — `sets[]` holds past sets, `games` is the current set. */

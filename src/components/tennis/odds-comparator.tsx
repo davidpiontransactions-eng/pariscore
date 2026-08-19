@@ -90,7 +90,7 @@ export function OddsComparator({
       {/* Best odds summary */}
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg border border-border/60 bg-muted/30 p-2.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Award className="h-3 w-3" />
             {t("bestOdd", { player: playerALast })}
           </div>
@@ -104,7 +104,7 @@ export function OddsComparator({
           </div>
         </div>
         <div className="rounded-lg border border-border/60 bg-muted/30 p-2.5">
-          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Award className="h-3 w-3" />
             {t("bestOdd", { player: playerBLast })}
           </div>

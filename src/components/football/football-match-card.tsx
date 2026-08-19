@@ -70,9 +70,9 @@ function fmtSigned(n: number): string {
 function StandingStatRow({ label, home, away }: { label: string; home: React.ReactNode; away: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 px-2 py-1">
-      <span className="text-left text-[10px] font-medium tabular-nums text-foreground">{home}</span>
-      <span className="text-[10px] text-muted-foreground/50">{label}</span>
-      <span className="text-right text-[10px] font-medium tabular-nums text-foreground">{away}</span>
+      <span className="text-left text-[11px] font-medium tabular-nums text-foreground">{home}</span>
+      <span className="text-[11px] text-muted-foreground/50">{label}</span>
+      <span className="text-right text-[11px] font-medium tabular-nums text-foreground">{away}</span>
     </div>
   );
 }
@@ -252,7 +252,7 @@ export function FootballMatchCard({
           <div className="flex items-center gap-1 text-xs text-white/60">
             <Clock className="h-3 w-3" />
             <span>{parisKickoff(match.scheduledAt)}</span>
-            <span className="hidden text-[10px] sm:inline">
+            <span className="hidden text-[11px] sm:inline">
               · {getDay(match.scheduledAt)}
             </span>
           </div>
@@ -262,7 +262,7 @@ export function FootballMatchCard({
       <div className="p-4 pt-3">
         {/* Round + Innovation badges */}
         <div className="mb-2 flex flex-col items-center gap-1">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             {match.round}
           </span>
           {/* Innovation 1 — xP badge */}
@@ -514,7 +514,7 @@ export function FootballMatchCard({
         {(match.home.topScorer || match.home.topAssister || match.home.topDefender ||
           match.away.topScorer || match.away.topAssister || match.away.topDefender) && (
           <div className="mt-2 border-t border-border/30 pt-2">
-            <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+            <div className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-amber-400">
               <Users className="h-3 w-3" />
               <span>Joueurs Clés</span>
             </div>
@@ -531,7 +531,7 @@ export function FootballMatchCard({
                     )}
                   </>
                 ) : (
-                  <span className="py-2 text-[10px] text-muted-foreground/30">—</span>
+                  <span className="py-2 text-[11px] text-muted-foreground/30">—</span>
                 )}
               </div>
               <div className="flex flex-col items-center rounded-lg bg-sky-500/5 px-1.5 py-1.5 text-center">
@@ -545,7 +545,7 @@ export function FootballMatchCard({
                     )}
                   </>
                 ) : (
-                  <span className="py-2 text-[10px] text-muted-foreground/30">—</span>
+                  <span className="py-2 text-[11px] text-muted-foreground/30">—</span>
                 )}
               </div>
               <div className="flex flex-col items-center rounded-lg bg-violet-500/5 px-1.5 py-1.5 text-center">
@@ -559,7 +559,7 @@ export function FootballMatchCard({
                     )}
                   </>
                 ) : (
-                  <span className="py-2 text-[10px] text-muted-foreground/30">—</span>
+                  <span className="py-2 text-[11px] text-muted-foreground/30">—</span>
                 )}
               </div>
             </div>
@@ -576,7 +576,7 @@ export function FootballMatchCard({
                     )}
                   </>
                 ) : (
-                  <span className="py-2 text-[10px] text-muted-foreground/30">—</span>
+                  <span className="py-2 text-[11px] text-muted-foreground/30">—</span>
                 )}
               </div>
               <div className="flex flex-col items-center rounded-lg bg-sky-500/5 px-1.5 py-1.5 text-center">
@@ -590,7 +590,7 @@ export function FootballMatchCard({
                     )}
                   </>
                 ) : (
-                  <span className="py-2 text-[10px] text-muted-foreground/30">—</span>
+                  <span className="py-2 text-[11px] text-muted-foreground/30">—</span>
                 )}
               </div>
               <div className="flex flex-col items-center rounded-lg bg-violet-500/5 px-1.5 py-1.5 text-center">
@@ -604,7 +604,7 @@ export function FootballMatchCard({
                     )}
                   </>
                 ) : (
-                  <span className="py-2 text-[10px] text-muted-foreground/30">—</span>
+                  <span className="py-2 text-[11px] text-muted-foreground/30">—</span>
                 )}
               </div>
             </div>
@@ -615,12 +615,12 @@ export function FootballMatchCard({
         {xGSummary && p.xGa && p.xGa.total > 0 ? (
           <div className="mt-2 border-t border-border/30 pt-2">
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <TrendingUp className="mr-1 inline-block h-3 w-3 text-cyan-400" />
                 Efficience xG
               </span>
               {p.xGd != null && (
-                <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums ${
+                <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
                   p.xGd > 0.05
                     ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                     : p.xGd < -0.05
@@ -648,7 +648,7 @@ export function FootballMatchCard({
             {/* Label qualitatif */}
             {p.xGd != null && (
               <div className="mt-1 text-center">
-                <span className={`text-[10px] font-medium ${
+                <span className={`text-[11px] font-medium ${
                   p.xGd > 0.05
                     ? "text-emerald-500"
                     : p.xGd < -0.05
@@ -666,7 +666,7 @@ export function FootballMatchCard({
           </div>
         ) : xGSummary ? (
           /* Fallback quand xGa est absent */
-          <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+          <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
             <span>📐</span>
             <span>{xGSummary}</span>
           </div>
@@ -678,7 +678,7 @@ export function FootballMatchCard({
             {/* Comparatifs inline (toujours visibles) */}
             {p.teamComparisons && p.teamComparisons.length > 0 && (
               <div className="mb-2">
-                <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   <BarChart3 className="mr-1 inline-block h-3 w-3 text-amber-400" />
                   Comparatifs
                 </div>
@@ -690,7 +690,7 @@ export function FootballMatchCard({
                   return (
                     <div key={comp.label} className="mb-1 flex flex-col">
                       <div className="flex items-center gap-2">
-                        <span className="w-20 shrink-0 text-right text-[10px] text-muted-foreground">
+                        <span className="w-20 shrink-0 text-right text-[11px] text-muted-foreground">
                           {comp.label}
                         </span>
                         <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted/50">
@@ -703,7 +703,7 @@ export function FootballMatchCard({
                             style={{ width: `${awayPct}%` }}
                           />
                         </div>
-                        <span className="w-16 shrink-0 text-left text-[10px] tabular-nums text-muted-foreground">
+                        <span className="w-16 shrink-0 text-left text-[11px] tabular-nums text-muted-foreground">
                           {homePct}% — {awayPct}%
                         </span>
                       </div>
@@ -739,7 +739,7 @@ export function FootballMatchCard({
               <div>
                 <button
                   onClick={() => setRadarOpen(!radarOpen)}
-                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
                 >
                   <span>
                     <Microscope className="mr-1 inline-block h-3 w-3 text-violet-400" />
@@ -764,7 +764,7 @@ export function FootballMatchCard({
                           return (
                             <div key={item.label} className="flex items-center gap-2">
                               <span className="w-5 text-center text-[11px]">{item.icon}</span>
-                              <span className="w-20 shrink-0 text-right text-[10px] text-muted-foreground">
+                              <span className="w-20 shrink-0 text-right text-[11px] text-muted-foreground">
                                 {item.label}
                               </span>
                               <div className="flex h-3 flex-1 overflow-hidden rounded-full bg-muted/30">
@@ -789,7 +789,7 @@ export function FootballMatchCard({
                                   </span>
                                 </motion.div>
                               </div>
-                              <span className="w-8 shrink-0 text-left text-[10px] tabular-nums text-muted-foreground">
+                              <span className="w-8 shrink-0 text-left text-[11px] tabular-nums text-muted-foreground">
                                 {homeDom ? (
                                   <Home className="inline-block h-3 w-3 text-emerald-500/70" />
                                 ) : (
@@ -811,7 +811,7 @@ export function FootballMatchCard({
         {/* Classement Domicile / Extérieur — bilan réel (MJ, Pts, PPG+Rang, GD) */}
         {standing && (
           <div className="mt-3 border-t border-border/40 pt-3">
-            <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               <BarChart3 className="mr-1 inline-block h-3 w-3 text-amber-400" />
               Classement (Dom / Ext)
             </div>

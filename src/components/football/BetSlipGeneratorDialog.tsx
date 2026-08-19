@@ -169,7 +169,7 @@ export function BetSlipGeneratorDialog({
                     <p className="truncate text-[11px] font-semibold">
                       {leg.match.home.shortName} – {leg.match.away.shortName}
                     </p>
-                    <p className="truncate text-[10px] text-muted-foreground">
+                    <p className="truncate text-[11px] text-muted-foreground">
                       {leg.pick} · {leg.prob}% · cote {leg.odds.toFixed(2)}
                     </p>
                   </div>

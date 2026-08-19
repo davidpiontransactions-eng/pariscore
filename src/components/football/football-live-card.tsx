@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScoreFlash } from "@/components/shared/score-flash";
 import type { FootballMatch } from "@/lib/football-data";
 import { parisKickoff } from "@/lib/football-time";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
@@ -55,6 +56,25 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
   const awayArea = awayPath && points.length > 0
     ? `${awayPath} L ${x(points[points.length - 1].minute).toFixed(1)} ${baseY} L ${x(points[0].minute).toFixed(1)} ${baseY} Z`
     : "";
+
+  // Momentum xG par tranche de 10' : ΔxG = (home - away) sur la fenêtre.
+  // Barres emerald vers le haut (domination home) / rose vers le bas (away).
+  const SLOT = 10;
+  const slots: { start: number; delta: number }[] = [];
+  if (points.length >= 1) {
+    let base = points[0];
+    for (let start = points[0].minute; start < maxMin; start += SLOT) {
+      const end = Math.min(start + SLOT, maxMin);
+      const inWindow = points.filter((pt) => pt.minute > start && pt.minute <= end);
+      const last = inWindow.length > 0 ? inWindow[inWindow.length - 1] : base;
+      slots.push({
+        start,
+        delta: (last.homeCumul - base.homeCumul) - (last.awayCumul - base.awayCumul),
+      });
+      base = last;
+    }
+  }
+  const maxAbsDelta = Math.max(0.05, ...slots.map((s) => Math.abs(s.delta)));
 
   return (
     <div className="mt-2 border-t border-border/30 pt-2">
@@ -107,6 +127,36 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
         <span>{Math.round(maxMin / 2)}&apos;</span>
         <span>{maxMin}&apos;</span>
       </div>
+      {/* Momentum xG par tranches (ΔxG 10') — la poussée se lit d'un coup d'œil */}
+      <div
+        className="relative mt-1.5 flex h-3.5 items-center gap-1"
+        role="img"
+        aria-label="Momentum xG par tranches de 10 minutes — vert : avantage domicile, rouge : extérieur"
+      >
+        <div className="absolute inset-x-0 top-1/2 h-px bg-border/40" />
+        {slots.map((s) => {
+          const h = Math.max(2, (Math.abs(s.delta) / maxAbsDelta) * 10);
+          return (
+            <div
+              key={s.start}
+              className="relative flex-1"
+              title={`${s.start}'–${s.start + SLOT}' : ΔxG ${s.delta >= 0 ? "+" : ""}${s.delta.toFixed(2)}`}
+            >
+              <div
+                className={cn(
+                  "absolute left-0 right-0 rounded-sm",
+                  s.delta >= 0 ? "bg-emerald-500/70" : "bg-rose-500/70",
+                )}
+                style={
+                  s.delta >= 0
+                    ? { height: `${h}px`, bottom: "50%", marginBottom: 1 }
+                    : { height: `${h}px`, top: "50%", marginTop: 1 }
+                }
+              />
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -121,7 +171,7 @@ function LiveBadge({ minute, status, period }: { minute: number; status: string;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider",
         isFT
           ? "bg-muted text-muted-foreground"
           : isHT
@@ -158,12 +208,12 @@ function StatRow({
       <span className="w-6 text-right font-semibold tabular-nums">{home}</span>
       <div className="flex flex-1 items-center gap-0.5">
         <div
-          className="h-1 rounded-full bg-emerald-500/60 transition-all"
+          className="h-1 rounded-full bg-emerald-500/60 transition-[width]"
           style={{ width: `${homePct}%` }}
         />
         <span className="mx-1 w-8 text-center text-[9px] text-muted-foreground">{label}</span>
         <div
-          className="h-1 rounded-full bg-rose-500/60 transition-all"
+          className="h-1 rounded-full bg-rose-500/60 transition-[width]"
           style={{ width: `${awayPct}%` }}
         />
       </div>
@@ -177,6 +227,21 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
   const p = match.prediction;
   // Hook appelé inconditionnellement (règles des hooks) avant l'early return.
   const [expanded, setExpanded] = useState(false);
+
+  // Annonceur live contextuel : le score est annoncé en toutes lettres à
+  // chaque but (aria-atomic = message complet, jamais un chiffre nu).
+  const scoreKey = live ? `${live.homeScore}-${live.awayScore}` : "";
+  const scoreAnnounceRef = useRef(scoreKey);
+  const [scoreAnnounce, setScoreAnnounce] = useState("");
+  useEffect(() => {
+    if (!live || !scoreKey) return;
+    if (scoreAnnounceRef.current !== scoreKey) {
+      scoreAnnounceRef.current = scoreKey;
+      setScoreAnnounce(
+        `${match.home.name} ${live.homeScore} — ${live.awayScore} ${match.away.name}`,
+      );
+    }
+  }, [scoreKey, live, match.home.name, match.away.name]);
 
   if (!live) return null;
 
@@ -198,7 +263,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
   const xGdAway = xGdPct !== null && xGdPct < 0;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-all hover:border-rose-500/50">
+    <div className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-[border-color] hover:border-rose-500/50">
       {/* Stade en filigrane (fond) — image BSD /img/venue/{id}/, masquée si absente/cassée */}
       {match.venue?.id && (
         <img
@@ -212,6 +277,9 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
         />
       )}
       <div className="relative p-4">
+        <div aria-live="polite" aria-atomic="true" role="status" className="sr-only">
+          {scoreAnnounce}
+        </div>
         {/* Live header */}
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
@@ -226,7 +294,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             <span className="truncate font-medium">{match.league.name}</span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/80">
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground/80">
               <Clock className="h-3 w-3" />
               {parisKickoff(match.scheduledAt)}
             </span>
@@ -267,11 +335,11 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             )}
           </div>
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-3">
+            <ScoreFlash scoreKey={scoreKey} className="flex items-center gap-3">
               <span className="text-3xl font-black tabular-nums">{live.homeScore}</span>
               <span className="text-xl font-bold text-muted-foreground">:</span>
               <span className="text-3xl font-black tabular-nums">{live.awayScore}</span>
-            </div>
+            </ScoreFlash>
           </div>
           <div className="flex flex-col items-center gap-1">
             <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-muted">
@@ -320,10 +388,10 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               <div className="flex items-center gap-2 text-[11px]">
                 <span className="w-6 text-right font-semibold tabular-nums text-sky-400">{p.xGa.home.toFixed(1)}</span>
                 <div className="flex flex-1 items-center gap-0.5">
-                  <div className="h-1 rounded-full bg-sky-500/60 transition-all"
+                  <div className="h-1 rounded-full bg-sky-500/60 transition-[width]"
                     style={{ width: `${Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
                   <span className="mx-1 w-8 text-center text-[9px] font-medium text-sky-400/80">xG</span>
-                  <div className="h-1 rounded-full bg-sky-500/40 transition-all"
+                  <div className="h-1 rounded-full bg-sky-500/40 transition-[width]"
                     style={{ width: `${Math.round((p.xGa.away / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
                 </div>
                 <span className="w-6 font-semibold tabular-nums text-sky-400/70">{p.xGa.away.toFixed(1)}</span>
@@ -340,7 +408,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums",
                   xGdHome
                     ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
                     : "bg-rose-500/15 text-rose-400 border border-rose-500/30",
@@ -354,7 +422,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               <span
                 key={b.key}
                 className={cn(
-                  "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+                  "inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
                   b.isTop
                     ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
                     : "bg-muted/50 text-muted-foreground border border-border/60",
@@ -389,7 +457,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           <div className="mt-2">
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-muted/30"
+              className="flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/30"
             >
               <span>📐 Détail xG</span>
               {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
@@ -404,20 +472,20 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                   className="overflow-hidden"
                 >
                   <div className="space-y-1.5 px-2 pb-1 pt-1.5">
-                    <div className="flex justify-between text-[10px]">
+                    <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">xG {match.home.shortName}</span>
                       <span className="font-semibold tabular-nums text-sky-400">{p.xGa.home.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-[10px]">
+                    <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">xG {match.away.shortName}</span>
                       <span className="font-semibold tabular-nums text-sky-400/70">{p.xGa.away.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-[10px]">
+                    <div className="flex justify-between text-[11px]">
                       <span className="text-muted-foreground">Total xG</span>
                       <span className="font-semibold tabular-nums">{p.xGa.total.toFixed(2)}</span>
                     </div>
                     {live.homeShotsOnTarget > 0 && Number.isFinite(p.xGa.home) && (
-                      <div className="flex justify-between text-[10px]">
+                      <div className="flex justify-between text-[11px]">
                         <span className="text-muted-foreground">xG/Tir {match.home.shortName}</span>
                         <span className="font-semibold tabular-nums text-muted-foreground">
                           {(p.xGa.home / live.homeShotsOnTarget).toFixed(2)}
@@ -425,7 +493,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                       </div>
                     )}
                     {live.awayShotsOnTarget > 0 && Number.isFinite(p.xGa.away) && (
-                      <div className="flex justify-between text-[10px]">
+                      <div className="flex justify-between text-[11px]">
                         <span className="text-muted-foreground">xG/Tir {match.away.shortName}</span>
                         <span className="font-semibold tabular-nums text-muted-foreground">
                           {(p.xGa.away / live.awayShotsOnTarget).toFixed(2)}
@@ -434,11 +502,11 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                     )}
                     {live.homeScore + live.awayScore > 0 && (
                       <div className="mt-1 border-t border-border/30 pt-1">
-                        <div className="flex justify-between text-[10px]">
+                        <div className="flex justify-between text-[11px]">
                           <span className="text-muted-foreground">Buts réels</span>
                           <span className="font-semibold tabular-nums">{live.homeScore + live.awayScore}</span>
                         </div>
-                        <div className="flex justify-between text-[10px]">
+                        <div className="flex justify-between text-[11px]">
                           <span className="text-muted-foreground">
                             {live.homeScore + live.awayScore > p.xGa.total ? "🔥 Overperformance" : "❄️ Underperformance"}
                           </span>
@@ -456,7 +524,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           </div>
         ) : (
           /* BF-02: xG live indisponible */
-          <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+          <div className="mt-2 flex items-center gap-1.5 rounded-md border border-border/40 bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
             <AlertCircle className="h-3 w-3 shrink-0 text-amber-500" />
             <span>xG live indisponible pour ce match</span>
           </div>
@@ -502,6 +570,40 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             />
           </div>
         )}
+      </div>
+
+      {/* Live dock mobile (B5) — score + proba jamais perdus pendant le scroll */}
+      <div className="sticky bottom-0 z-30 -mx-4 mt-3 border-t border-rose-500/20 bg-card/90 px-4 py-2 backdrop-blur-md md:hidden">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-[11px] font-medium text-muted-foreground">
+              {match.home.shortName}
+            </span>
+            <span className="font-mono text-lg font-black tabular-nums leading-none">
+              {live.homeScore}
+              <span className="mx-1 font-bold text-muted-foreground">–</span>
+              {live.awayScore}
+            </span>
+            <span className="truncate text-[11px] font-medium text-muted-foreground">
+              {match.away.shortName}
+            </span>
+          </div>
+          {p.homeProb != null && (
+            <span className="shrink-0 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-emerald-400">
+              {Math.round(p.homeProb)}%
+            </span>
+          )}
+          {onOpenDetail && (
+            <button
+              type="button"
+              onClick={() => onOpenDetail(match)}
+              className="shrink-0 rounded-lg bg-emerald-500 px-3 py-1.5 text-[11px] font-bold text-emerald-950 transition-colors hover:bg-emerald-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              title="Voir le match et parier"
+            >
+              Parier
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

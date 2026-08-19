@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { ScoreFlash } from "./score-flash";
+import { ScoreFlash } from "@/components/shared/score-flash";
 import { formatPoints } from "@/lib/tennis-format";
 
 type Props = {

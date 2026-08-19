@@ -21,7 +21,7 @@ export function SurfaceBadge({ surface, className }: SurfaceBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none text-muted-foreground",
+        "inline-flex items-center gap-1 rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[11px] font-bold uppercase leading-none text-muted-foreground",
         className,
       )}
     >

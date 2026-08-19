@@ -1,6 +1,6 @@
 "use client";
 
-import { Gauge } from "lucide-react";
+import { Gauge, Check, AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STAKING_LABELS, type StakingMethod } from "@/lib/football-backtest";
 import type { FootballBacktestState } from "@/hooks/use-football-backtest";
@@ -33,7 +33,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
           <Gauge className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
           Fiabilité du système
         </h3>
-        <span className="text-[10px] text-muted-foreground">{finishedCount} match(s) terminé(s)</span>
+        <span className="text-[11px] text-muted-foreground">{finishedCount} match(s) terminé(s)</span>
       </header>
 
       {finishedCount === 0 ? (
@@ -63,7 +63,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
                   type="button"
                   onClick={() => setWindowDays(d)}
                   className={cn(
-                    "rounded px-2 py-0.5 text-[10px] font-semibold transition-colors",
+                    "rounded px-2 py-0.5 text-[11px] font-semibold transition-colors",
                     windowDays === d ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -76,7 +76,16 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
           {/* Note globale + résumé P&L */}
           <div className="mb-3 flex items-center gap-4">
             <div className="flex flex-col items-center">
-              <span className={cn("text-3xl font-black tabular-nums", scoreColor(reliability.overall))}>
+              <span className={cn("flex items-center gap-1 text-3xl font-black tabular-nums", scoreColor(reliability.overall))}>
+                <span aria-hidden="true">
+                  {reliability.overall >= 70 ? (
+                    <Check className="h-4 w-4" strokeWidth={3} />
+                  ) : reliability.overall >= 45 ? (
+                    <AlertTriangle className="h-4 w-4" strokeWidth={3} />
+                  ) : (
+                    <X className="h-4 w-4" strokeWidth={3} />
+                  )}
+                </span>
                 {reliability.overall}
               </span>
               <span className="text-[9px] uppercase tracking-wider text-muted-foreground">/ 100</span>
@@ -106,7 +115,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
           <ul className="space-y-2">
             {reliability.pillars.map((p) => (
               <li key={p.key}>
-                <div className="mb-0.5 flex items-center justify-between gap-2 text-[10px]">
+                <div className="mb-0.5 flex items-center justify-between gap-2 text-[11px]">
                   <span className="font-medium text-foreground">{p.label}</span>
                   <span className="tabular-nums text-muted-foreground">
                     {p.score} · {p.detail}

@@ -53,7 +53,7 @@ export function MatchCardDetail({ match, stats, playerA, playerB }: Props) {
           label={t("decompLabel")}
           value={
             <span className="flex w-full flex-wrap items-baseline gap-x-1.5">
-              <span className="whitespace-nowrap rounded bg-muted/60 px-1.5 py-0.5 text-[10px] font-normal leading-tight text-muted-foreground">
+              <span className="whitespace-nowrap rounded bg-muted/60 px-1.5 py-0.5 text-[11px] font-normal leading-tight text-muted-foreground">
                 {match.model}
               </span>
               <span className="break-words">
@@ -133,7 +133,7 @@ function DetailItem({
     <div className="flex min-w-0 max-w-full flex-col gap-1.5 overflow-hidden rounded-lg border border-border/60 bg-background/60 p-3">
       <div className="flex min-w-0 items-center gap-2 text-muted-foreground">
         {icon}
-        <span className="break-words hyphens-auto text-[10px] font-semibold uppercase leading-tight tracking-[0.08em]">
+        <span className="break-words hyphens-auto text-[11px] font-semibold uppercase leading-tight tracking-[0.08em]">
           {label}
         </span>
       </div>

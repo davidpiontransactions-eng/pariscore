@@ -466,7 +466,7 @@ export function AICompareDialog({
               </div>
             )}
 
-            <p className="text-[10px] text-muted-foreground/60">
+            <p className="text-[11px] text-muted-foreground/60">
               Confiance {result.confidence}/5 · Source : {result.source}
               {result.cachedAt &&
                 ` · Cache : ${new Date(result.cachedAt).toLocaleTimeString("fr-FR")}`}

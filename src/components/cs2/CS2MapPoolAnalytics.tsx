@@ -75,7 +75,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
                     </div>
                   </div>
                   <WinrateBars t1={wr1} t2={wr2} />
-                  <div className="mt-1.5 flex items-center justify-between text-[10px] text-zinc-500">
+                  <div className="mt-1.5 flex items-center justify-between text-[11px] text-zinc-500">
                     <span>
                       {t1Name} {m1?.wr_6m != null ? `· 6m ${formatCS2Winrate(m1.wr_6m)}` : ""}
                       {m1?.map_rank_3m ? ` · #${m1.map_rank_3m}` : ""}
@@ -141,12 +141,12 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
           <div className="mb-3 flex items-center gap-3">
             <div className="flex-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-center">
               <p className="text-lg font-bold text-orange-400">{h2h.t1wins}</p>
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">{t1Name}</p>
+              <p className="text-[11px] uppercase tracking-wide text-zinc-500">{t1Name}</p>
             </div>
             <span className="text-xs font-semibold text-zinc-500">vs</span>
             <div className="flex-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-center">
               <p className="text-lg font-bold text-blue-400">{h2h.t2wins}</p>
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">{t2Name}</p>
+              <p className="text-[11px] uppercase tracking-wide text-zinc-500">{t2Name}</p>
             </div>
           </div>
 
@@ -156,7 +156,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
               <span
                 key={i}
                 className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold",
+                  "flex h-5 w-5 items-center justify-center rounded text-[11px] font-bold",
                   r === "T1" && "bg-orange-500/20 text-orange-400",
                   r === "T2" && "bg-blue-500/20 text-blue-400",
                   r === "N" && "bg-white/5 text-zinc-500",
@@ -165,7 +165,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
                 {r === "T1" ? "W" : r === "T2" ? "W" : "–"}
               </span>
             ))}
-            <span className="ml-2 text-[10px] text-zinc-600">({h2h.n} derniers)</span>
+            <span className="ml-2 text-[11px] text-zinc-600">({h2h.n} derniers)</span>
           </div>
 
           {/* Détail par confrontation */}

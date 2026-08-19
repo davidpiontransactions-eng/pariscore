@@ -27,18 +27,18 @@ export function AIMatchReport({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-violet-500/30 bg-violet-500/5 p-3.5",
+        "rounded-2xl border border-ai-insight/30 bg-ai-insight/5 p-3.5",
         className,
       )}
       aria-label="Rapport de match IA"
     >
       <header className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-violet-300">
+        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-ai-insight">
           <BrainCircuit className="h-3.5 w-3.5" aria-hidden />
           Rapport de match IA
         </h3>
         {report && (
-          <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-violet-300">
+          <span className="rounded-full bg-ai-insight/15 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-ai-insight">
             Confiance {report.confidence}/5
           </span>
         )}
@@ -79,7 +79,7 @@ export function AIMatchReport({
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold text-emerald-300">{report.combo.label}</p>
                 {report.combo.rationale && (
-                  <p className="text-[10px] text-card-foreground/70">{report.combo.rationale}</p>
+                  <p className="text-[11px] text-card-foreground/70">{report.combo.rationale}</p>
                 )}
               </div>
             </div>

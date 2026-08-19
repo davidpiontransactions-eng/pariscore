@@ -37,13 +37,13 @@ function ScoreLine({ match }: { match: BaseballMatch }) {
   return (
     <div className="flex items-center gap-2 rounded-lg bg-slate-800/80 px-3 py-1.5">
       {game.status === "live" && (
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-400">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
           Live
         </span>
       )}
       {game.status === "final" && (
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Final
         </span>
       )}
@@ -107,7 +107,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
             {LEAGUE_LABEL[game.league] ?? game.league}
           </span>
           <span
-            className="rounded bg-black/40 px-1.5 py-px font-mono text-[10px] font-bold tabular-nums text-amber-300 backdrop-blur-sm"
+            className="rounded bg-black/40 px-1.5 py-px font-mono text-[11px] font-bold tabular-nums text-amber-300 backdrop-blur-sm"
             title="Heure de Paris (CEST)"
           >
             {formatParisTimeWithZone(game.gameDateIso)}
@@ -115,7 +115,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
         </div>
         {/* VS central */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-1/2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-white/70 drop-shadow">
+          <span className="text-[11px] font-black uppercase tracking-widest text-white/70 drop-shadow">
             VS
           </span>
         </div>
@@ -140,14 +140,14 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
               {awayTeam.city} {awayTeam.name}
             </span>
-            <span className="font-mono text-[10px] text-slate-500">wRC+ {awayTeam.wrcPlus}</span>
+            <span className="font-mono text-[11px] text-slate-500">wRC+ {awayTeam.wrcPlus}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <TeamLogo team={homeTeam} size={30} />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
               {homeTeam.city} {homeTeam.name}
             </span>
-            <span className="font-mono text-[10px] text-slate-500">wRC+ {homeTeam.wrcPlus}</span>
+            <span className="font-mono text-[11px] text-slate-500">wRC+ {homeTeam.wrcPlus}</span>
           </div>
         </div>
 
@@ -197,7 +197,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
               </span>
               {quick.homeWinProb >= 0.51 || quick.homeWinProb <= 0.49 ? (
                 <span
-                  className="rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200"
+                  className="rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 font-mono text-[11px] tabular-nums text-sky-100"
                   aria-label={`Favori ${quick.homeWinProb > 0.5 ? homeTeam.city : awayTeam.city} à ${fmtPct(quick.homeWinProb > 0.5 ? quick.homeWinProb : 1 - quick.homeWinProb)}`}
                 >
                   Winner{" "}
@@ -210,7 +210,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
               ) : null}
               {quick.recommendation ? (
                 <span
-                  className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-300"
+                  className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-emerald-300"
                   role="status"
                   aria-label={`Recommandation : ${quick.recommendation === "over" ? "Over" : "Under"} avec confiance ${fmtPct(quick.confidence)}`}
                 >
@@ -218,7 +218,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
                 </span>
               ) : (
                 <span
-                  className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500"
+                  className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500"
                   aria-label="Confiance insuffisante, sous le seuil de 65 %"
                 >
                   Sous seuil 65 %
@@ -233,7 +233,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
           <button
             type="button"
             onClick={() => onOpen(game.id)}
-            className="ml-auto rounded-lg bg-amber-400 px-3.5 py-1.5 text-xs font-bold text-slate-950 transition-colors hover:bg-amber-300"
+            className="ml-auto rounded-lg bg-amber-400 px-3.5 py-1.5 text-xs font-bold text-amber-950 transition-colors hover:bg-amber-300"
           >
             Analyse complète →
           </button>

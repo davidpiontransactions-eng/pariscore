@@ -116,7 +116,7 @@ export function ConfidenceInterval({
             </div>
           </div>
 
-          <div className="mt-1 flex justify-between text-[10px] font-mono text-muted-foreground">
+          <div className="mt-1 flex justify-between text-[11px] font-mono text-muted-foreground">
             <span>0%</span>
             <span>25%</span>
             <span>50%</span>

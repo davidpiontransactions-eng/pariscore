@@ -147,9 +147,9 @@ function ConsentCategory({
         <p className="mt-0.5 text-[11px] text-muted-foreground">{desc}</p>
       </div>
       {alwaysOn ? (
-        <span className="text-[10px] font-semibold text-muted-foreground">ON</span>
+        <span className="text-[11px] font-semibold text-muted-foreground">ON</span>
       ) : (
-        <span className="text-[10px] font-semibold text-muted-foreground">OPT-IN</span>
+        <span className="text-[11px] font-semibold text-muted-foreground">OPT-IN</span>
       )}
     </div>
   );

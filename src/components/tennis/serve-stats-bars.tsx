@@ -131,7 +131,7 @@ export function ServeStatsBars({
 
             {/* Center label */}
             <div className="flex flex-col items-center px-1 text-center">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                 {stat}
               </span>
             </div>

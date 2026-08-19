@@ -215,9 +215,37 @@ export function StatsRadarChart({
           />
           <PolarAngleAxis
             dataKey="axis"
-            tick={{
-              fontSize: 11,
-              fill: "hsl(var(--muted-foreground, 215 14% 50%))",
+            tick={({ x, y, payload }) => {
+              const d = data.find((dd) => dd.axis === payload?.value);
+              const val = d
+                ? hasOverlay
+                  ? `${d.playerA.toFixed(0)} / ${d.playerB.toFixed(0)}`
+                  : `${d.playerA.toFixed(0)}`
+                : "";
+              return (
+                <g transform={`translate(${x},${y})`}>
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="hanging"
+                    fontSize={10}
+                    fill="hsl(var(--muted-foreground, 215 14% 50%))"
+                  >
+                    {payload?.value}
+                  </text>
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="hanging"
+                    dy={11}
+                    fontSize={10}
+                    fontWeight={600}
+                    fontFamily="var(--font-geist-mono)"
+                    fill="hsl(var(--foreground, 0 0% 98%))"
+                    style={{ fontVariantNumeric: "tabular-nums" }}
+                  >
+                    {val}
+                  </text>
+                </g>
+              );
             }}
           />
           <PolarRadiusAxis
@@ -297,7 +325,7 @@ function LegendItem({
         style={{ backgroundColor: color }}
       />
       <span
-        className="font-mono text-[10px] font-semibold tabular-nums shrink-0"
+        className="font-mono text-[11px] font-semibold tabular-nums shrink-0"
         style={{ color }}
       >
         {init}

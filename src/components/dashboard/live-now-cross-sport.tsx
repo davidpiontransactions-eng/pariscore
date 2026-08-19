@@ -117,7 +117,7 @@ export function LiveNowCrossSport({ className }: LiveNowCrossSportProps) {
             )}>
               <div className="flex items-center justify-between">
                 <span className="text-lg">{SPORT_EMOJI[item.sport] ?? "🏆"}</span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">
                   <LiveDot /> LIVE
                 </span>
               </div>

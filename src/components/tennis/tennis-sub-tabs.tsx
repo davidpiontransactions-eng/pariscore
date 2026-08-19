@@ -110,7 +110,7 @@ export function TennisSubTabs({
               <span
                 aria-hidden
                 className={cn(
-                  "ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[10px] font-bold tabular-nums",
+                  "ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[11px] font-bold tabular-nums",
                   isActive
                     ? `${tab.accent} text-white`
                     : "bg-muted-foreground/30 text-[#C0C0C0]",

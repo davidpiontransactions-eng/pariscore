@@ -63,7 +63,7 @@ function ValueBadge({ prob, show }: { prob: number; show: boolean }) {
   // prob ∈ [0, 100] ; value window = [60, 70].
   const isValue = prob >= VALUE_MIN * 100 && prob <= VALUE_MAX * 100;
   if (!isValue) return null;
-  return <span className="text-emerald-400 text-[10px] font-bold">✅ value</span>;
+  return <span className="text-emerald-400 text-[11px] font-bold">✅ value</span>;
 }
 
 /** Barre horizontale compacte pour une proba binaire (P1 vs P2). */
@@ -207,7 +207,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
 
   return (
     <div className="mt-1.5 rounded-lg border border-primary/40 bg-muted/20 px-2.5 py-2">
-      <div className="text-[10px] font-bold text-primary mb-2 flex items-center gap-1">
+      <div className="text-[11px] font-bold text-primary mb-2 flex items-center gap-1">
         <span>🎯</span>
         <span>BETS PRÉDICTIFS LIVE</span>
         <span className="text-muted-foreground/70 font-normal">· {nameA} vs {nameB}</span>
@@ -215,19 +215,19 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
 
       {/* BET #1 — Vainqueur du match */}
       <div className="mb-2.5">
-        <div className="flex items-center justify-between text-[10px] mb-1">
+        <div className="flex items-center justify-between text-[11px] mb-1">
           <span className="text-muted-foreground">① Vainqueur du match</span>
           <ValueBadge prob={Math.max(bet1.probA, bet1.probB)} show={!!liveState} />
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-[60px] truncate text-[10px] font-semibold">{nameA}</span>
+          <span className="w-[60px] truncate text-[11px] font-semibold">{nameA}</span>
           <div className="flex-1"><DualBar probA={bet1.probA} probB={bet1.probB} /></div>
-          <span className="w-8 text-right font-mono tabular-nums text-[10px] text-emerald-300">{bet1.probA}%</span>
+          <span className="w-8 text-right font-mono tabular-nums text-[11px] text-emerald-300">{bet1.probA}%</span>
         </div>
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="w-[60px] truncate text-[10px] font-semibold">{nameB}</span>
+          <span className="w-[60px] truncate text-[11px] font-semibold">{nameB}</span>
           <div className="flex-1" />
-          <span className="w-8 text-right font-mono tabular-nums text-[10px] text-blue-300">{bet1.probB}%</span>
+          <span className="w-8 text-right font-mono tabular-nums text-[11px] text-blue-300">{bet1.probB}%</span>
         </div>
       </div>
 
@@ -235,7 +235,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
 
       {/* BET #2 — Vainqueur du set actuel */}
       <div className="mb-2.5">
-        <div className="flex items-center justify-between text-[10px] mb-1">
+        <div className="flex items-center justify-between text-[11px] mb-1">
           <span className="text-muted-foreground">
             ② Vainqueur du set (Set {currentSetNumber})
             {/* Mélange bayésien Markov + marché. On affiche le poids relatif pour
@@ -255,24 +255,24 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
         {liveState ? (
           <>
             <div className="flex items-center gap-2">
-              <span className="w-[60px] truncate text-[10px] font-semibold">{nameA}</span>
+              <span className="w-[60px] truncate text-[11px] font-semibold">{nameA}</span>
               <div className="flex-1">
                 <DualBar probA={bet2.probA} probB={bet2.probB} />
               </div>
-              <span className="w-8 text-right font-mono tabular-nums text-[10px] text-emerald-300">
+              <span className="w-8 text-right font-mono tabular-nums text-[11px] text-emerald-300">
                 {bet2.probA}%
               </span>
             </div>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="w-[60px] truncate text-[10px] font-semibold">{nameB}</span>
+              <span className="w-[60px] truncate text-[11px] font-semibold">{nameB}</span>
               <div className="flex-1" />
-              <span className="w-8 text-right font-mono tabular-nums text-[10px] text-blue-300">
+              <span className="w-8 text-right font-mono tabular-nums text-[11px] text-blue-300">
                 {bet2.probB}%
               </span>
             </div>
           </>
         ) : (
-          <p className="text-[10px] text-muted-foreground/60 italic">En attente du live…</p>
+          <p className="text-[11px] text-muted-foreground/60 italic">En attente du live…</p>
         )}
       </div>
 
@@ -280,7 +280,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
 
       {/* BET #3 — Over games match */}
       <div className="mb-2.5">
-        <div className="flex items-center justify-between text-[10px] mb-1">
+        <div className="flex items-center justify-between text-[11px] mb-1">
           <span className="text-muted-foreground">
             ③ Over games match {setAndGames?.totalGames.recommendedBet.threshold ?? "—"}
           </span>
@@ -288,16 +288,16 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
         </div>
         {setAndGames ? (
           <div className="flex items-center gap-2">
-            <span className="w-[60px] text-[10px] text-muted-foreground/80">Over {setAndGames.totalGames.recommendedBet.threshold}</span>
+            <span className="w-[60px] text-[11px] text-muted-foreground/80">Over {setAndGames.totalGames.recommendedBet.threshold}</span>
             <div className="flex-1">
               <SingleBar prob={setAndGames.totalGames.recommendedBet.prob} />
             </div>
-            <span className="w-8 text-right font-mono tabular-nums text-[10px] text-amber-300">
+            <span className="w-8 text-right font-mono tabular-nums text-[11px] text-amber-300">
               {setAndGames.totalGames.recommendedBet.prob}%
             </span>
           </div>
         ) : (
-          <p className="text-[10px] text-muted-foreground/60 italic">En attente du live…</p>
+          <p className="text-[11px] text-muted-foreground/60 italic">En attente du live…</p>
         )}
       </div>
 
@@ -305,7 +305,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
 
       {/* BET #4 — Over games set actuel */}
       <div>
-        <div className="flex items-center justify-between text-[10px] mb-1">
+        <div className="flex items-center justify-between text-[11px] mb-1">
           <span className="text-muted-foreground">
             ④ Over games set {setAndGames?.setPred.recommendedBet.threshold ?? "—"}
           </span>
@@ -313,16 +313,16 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
         </div>
         {setAndGames ? (
           <div className="flex items-center gap-2">
-            <span className="w-[60px] text-[10px] text-muted-foreground/80">Over {setAndGames.setPred.recommendedBet.threshold}</span>
+            <span className="w-[60px] text-[11px] text-muted-foreground/80">Over {setAndGames.setPred.recommendedBet.threshold}</span>
             <div className="flex-1">
               <SingleBar prob={setAndGames.setPred.recommendedBet.prob} color="#f59e0b" />
             </div>
-            <span className="w-8 text-right font-mono tabular-nums text-[10px] text-amber-300">
+            <span className="w-8 text-right font-mono tabular-nums text-[11px] text-amber-300">
               {setAndGames.setPred.recommendedBet.prob}%
             </span>
           </div>
         ) : (
-          <p className="text-[10px] text-muted-foreground/60 italic">En attente du live…</p>
+          <p className="text-[11px] text-muted-foreground/60 italic">En attente du live…</p>
         )}
       </div>
 

@@ -83,7 +83,7 @@ export function LiveDecisionBadges({ metrics, className }: Props) {
         <span
           key={b.key}
           className={cn(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
             b.level === "critical" &&
               "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20",
             b.level === "warning" &&

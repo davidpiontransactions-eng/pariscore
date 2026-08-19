@@ -84,7 +84,7 @@ function StatCell({ label, valueA, valueB, unit, higherIsBetter }: {
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/15 p-3">
-      <div className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="mb-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
       <div className="flex items-center justify-between gap-2">
@@ -245,7 +245,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
           Statistiques de service · ce match
         </span>
         {b?.sets_detail && b.sets_detail.length > 0 && (
-          <span className="ml-auto text-[10px] text-muted-foreground">
+          <span className="ml-auto text-[11px] text-muted-foreground">
             Sets : {b.sets_detail.map((s) => `${s.p1}-${s.p2}`).join(", ")}
           </span>
         )}
@@ -272,7 +272,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
           <div className="flex items-center gap-2">
             <TournamentBadge category={match.tournamentCategory} />
             <SurfaceBadge surface={stats.surface} />
-            <span className="ml-auto rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+            <span className="ml-auto rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">
               {t("title")}
             </span>
           </div>
@@ -395,12 +395,12 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     <span className="text-sm font-bold" style={{ color: playerB.color }}>
                       {bsdPrediction.prob_player2_wins.toFixed(1)}%
                     </span>
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                       conf. {bsdPrediction.confidence.toFixed(0)}%
                     </span>
                     {Math.abs(probA - bsdPrediction.prob_player1_wins) >= 5 && (
                       <span
-                        className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400"
+                        className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400"
                         title="Écart ≥ 5 pts entre le modèle maison et le modèle BSD"
                       >
                         Divergence
@@ -431,7 +431,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   probA={probA}
                   probB={probB}
                   playerSlot={(p) => (
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground">
                       {match.synthetic || match.insufficientData
                         ? "Données indisponibles"
                         : `#${p.rank} · Elo ${p.elo?.toFixed(0) ?? "N/A"}`
@@ -559,7 +559,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                                   : t("statsSeasonHardSource", { year: tournamentStats?.season ?? new Date().getFullYear() })}
                               </span>
                             </div>
-                            <div className="mt-1 text-[10px] text-muted-foreground">
+                            <div className="mt-1 text-[11px] text-muted-foreground">
                               {t("statsMatches", { n: tsA.matchesPlayed })}
                             </div>
                           </div>
@@ -583,7 +583,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                                   : t("statsSeasonHardSource", { year: tournamentStats?.season ?? new Date().getFullYear() })}
                               </span>
                             </div>
-                            <div className="mt-1 text-[10px] text-muted-foreground">
+                            <div className="mt-1 text-[11px] text-muted-foreground">
                               {t("statsMatches", { n: tsB.matchesPlayed })}
                             </div>
                           </div>
@@ -624,14 +624,14 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                         Détail des points (BSD)
                       </span>
                       {bsdPointByPoint.sets[0].duration_seconds > 0 && (
-                        <span className="ml-auto text-[10px] text-muted-foreground">
+                        <span className="ml-auto text-[11px] text-muted-foreground">
                           {Math.round(bsdPointByPoint.sets[0].duration_seconds / 60)} min au 1er set
                         </span>
                       )}
                     </div>
                     {bsdPointByPoint.sets.map((set) => (
                       <div key={set.set} className="mb-2">
-                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                           Set {set.set}
                           {set.duration_seconds > 0
                             ? ` · ${Math.round(set.duration_seconds / 60)} min`
@@ -643,7 +643,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                               key={i}
                               className="rounded border border-border/40 bg-background/40 px-2 py-1"
                             >
-                              <div className="flex items-center gap-1 text-[10px]">
+                              <div className="flex items-center gap-1 text-[11px]">
                                 <span className="font-semibold">Jeu {g.game}</span>
                                 <span className="text-muted-foreground">
                                   · {g.server === "player1" ? playerA.shortName : playerB.shortName}
@@ -687,7 +687,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     <div className="text-2xl font-bold" style={{ color: playerA.color }}>
                       {h2hWinsA}
                     </div>
-                    <div className="text-[10px] uppercase text-muted-foreground">
+                    <div className="text-[11px] uppercase text-muted-foreground">
                       {playerA.shortName}
                     </div>
                   </div>
@@ -695,7 +695,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     <div className="text-xs font-semibold text-muted-foreground">
                       {t("h2hDirect")}
                     </div>
-                    <div className="mt-1 text-[10px] uppercase text-muted-foreground">
+                    <div className="mt-1 text-[11px] uppercase text-muted-foreground">
                       {t("h2hMatches", { n: h2hData?.total_matches ?? (h2hHistory ?? []).length })}
                     </div>
                   </div>
@@ -703,7 +703,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     <div className="text-2xl font-bold" style={{ color: playerB.color }}>
                       {h2hWinsB}
                     </div>
-                    <div className="text-[10px] uppercase text-muted-foreground">
+                    <div className="text-[11px] uppercase text-muted-foreground">
                       {playerB.shortName}
                     </div>
                   </div>
@@ -712,7 +712,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                 {h2hData && (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-lg border border-border/50 bg-muted/15 p-2.5 text-center">
-                      <div className="text-[10px] text-muted-foreground">Surface préférée {playerA.shortName}</div>
+                      <div className="text-[11px] text-muted-foreground">Surface préférée {playerA.shortName}</div>
                       <div className="text-sm font-bold" style={{ color: playerA.color }}>
                         {Object.entries(h2hData.by_surface)
                           .sort(([, a], [, b]) => (b.player1_wins / b.total) - (a.player1_wins / a.total))
@@ -720,7 +720,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                       </div>
                     </div>
                     <div className="rounded-lg border border-border/50 bg-muted/15 p-2.5 text-center">
-                      <div className="text-[10px] text-muted-foreground">Surface préférée {playerB.shortName}</div>
+                      <div className="text-[11px] text-muted-foreground">Surface préférée {playerB.shortName}</div>
                       <div className="text-sm font-bold" style={{ color: playerB.color }}>
                         {Object.entries(h2hData.by_surface)
                           .sort(([, a], [, b]) => ((a.total - a.player1_wins) / a.total) - ((b.total - b.player1_wins) / b.total))
@@ -789,14 +789,14 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                               <span className="text-muted-foreground">·</span>
                               <span className="font-medium">{h.tournament}</span>
                               <span className="text-muted-foreground">·</span>
-                              <span className="text-[10px] uppercase text-muted-foreground">
+                              <span className="text-[11px] uppercase text-muted-foreground">
                                 {h.surface}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-muted-foreground">{h.score}</span>
                               <span
-                                className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                                className="rounded px-1.5 py-0.5 text-[11px] font-bold uppercase"
                                 style={{
                                   background: winnerIsA ? `${playerA.color}20` : `${playerB.color}20`,
                                   color: winnerIsA ? playerA.color : playerB.color,
@@ -869,7 +869,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     <div className="text-xs font-semibold text-muted-foreground">
                       {t("eloProgression")}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground">
                       {eloLoading ? "…" : `${eloProgression.length} points`}
                     </div>
                   </div>

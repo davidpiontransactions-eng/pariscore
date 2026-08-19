@@ -16,7 +16,7 @@ const HAND_COLORS: Record<NonNullable<PitcherRecord["throws"]>, string> = {
 };
 
 const UNKNOWN_HAND_BADGE = "rounded border px-1 py-px text-[9px] font-bold leading-3 text-slate-400 border-slate-600/60 bg-slate-700/30";
-const UNKNOWN_HAND_BADGE_LG = "rounded border px-1.5 py-px text-[10px] font-bold leading-3.5 text-slate-400 border-slate-600/60 bg-slate-700/30";
+const UNKNOWN_HAND_BADGE_LG = "rounded border px-1.5 py-px text-[11px] font-bold leading-3.5 text-slate-400 border-slate-600/60 bg-slate-700/30";
 
 interface AvatarProps {
   pitcher: PitcherRecord;
@@ -101,7 +101,7 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
               <span className={UNKNOWN_HAND_BADGE}>—</span>
             )}
           </div>
-          <div className="flex items-center gap-1 font-mono text-[10px] text-slate-400">
+          <div className="flex items-center gap-1 font-mono text-[11px] text-slate-400">
             <span>ERA {fmtNum(pitcher.era)} · {fmtWinLoss(pitcher.wins, pitcher.losses)} · WHIP{" "}
             {fmtNum(pitcher.whip)}</span>
             {!pitcher.statsAvailable && (
@@ -133,7 +133,7 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
           <span className="truncate text-sm font-semibold text-slate-100">{pitcher.name}</span>
           {pitcher.throws ? (
             <span
-              className={`rounded border px-1.5 py-px text-[10px] font-bold leading-3.5 ${HAND_COLORS[pitcher.throws]}`}
+              className={`rounded border px-1.5 py-px text-[11px] font-bold leading-3.5 ${HAND_COLORS[pitcher.throws]}`}
             >
               {pitcher.throws}
             </span>

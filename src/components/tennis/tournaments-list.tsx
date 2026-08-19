@@ -183,7 +183,7 @@ function TournamentCard({ tournament }: { tournament: TournamentResult }) {
       <h4 className="line-clamp-2 text-xs font-semibold leading-tight text-foreground sm:text-sm">
         {tournament.name}
       </h4>
-      <p className="flex items-center gap-1 text-[10px] text-muted-foreground sm:text-[11px]">
+      <p className="flex items-center gap-1 text-[11px] text-muted-foreground sm:text-[11px]">
         {flag && (
           <span aria-hidden className="text-sm">
             {flag}

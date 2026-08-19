@@ -320,7 +320,7 @@ function PipMatchRowImpl({
               <span className="text-amber-400">{formatPoint(liveState!.scoreA.points)}</span>
             </span>
           ) : (
-            <span className="text-[10px] text-muted-foreground/60 italic shrink-0">prématch</span>
+            <span className="text-[11px] text-muted-foreground/60 italic shrink-0">prématch</span>
           )}
 
           {/* DR moyen match de A */}
@@ -353,7 +353,7 @@ function PipMatchRowImpl({
               <span className="text-amber-400">{formatPoint(liveState!.scoreB.points)}</span>
             </span>
           ) : (
-            <span className="text-[10px] text-muted-foreground/60 italic shrink-0">prématch</span>
+            <span className="text-[11px] text-muted-foreground/60 italic shrink-0">prématch</span>
           )}
 
           {/* DR moyen match de B */}
@@ -383,14 +383,14 @@ function PipMatchRowImpl({
             <DrSparkline drHistory={drHistory} currentDr={dr} />
           </span>
           <span
-            className="ml-auto font-mono tabular-nums text-[10px] font-semibold shrink-0"
+            className="ml-auto font-mono tabular-nums text-[11px] font-semibold shrink-0"
             style={{ color: drColor }}
           >
             {isLive ? drLabel : "—"}
           </span>
           <span
             className={cn(
-              "px-1.5 py-0.5 rounded text-[10px] font-bold shrink-0",
+              "px-1.5 py-0.5 rounded text-[11px] font-bold shrink-0",
               decision.bgClass,
               decision.colorClass,
             )}

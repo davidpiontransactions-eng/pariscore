@@ -175,7 +175,7 @@ export function MatchPipWidget() {
         <div className="flex items-center gap-1.5">
           <span className={`size-2 rounded-full ${statusColor} animate-pulse`} />
           <span className="text-[11px] font-bold tracking-wide">PariScore Live</span>
-          <span className="text-[10px] text-muted-foreground/70">
+          <span className="text-[11px] text-muted-foreground/70">
             · {liveFavoriteMatches.length} match{liveFavoriteMatches.length > 1 ? "s" : ""} · {statusLabel}
           </span>
         </div>
@@ -191,7 +191,7 @@ export function MatchPipWidget() {
                   ? "Notifications ACTIVÉES — alerte quand un match passe à ✅ PARIE"
                   : "Activer les notifications (alerte quand un match passe à ✅ PARIE)"
             }
-            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+            className={`rounded px-1.5 py-0.5 text-[11px] font-semibold transition-colors ${
               betNotify.enabled
                 ? "bg-emerald-500/20 text-emerald-300"
                 : betNotify.permission === "denied"
@@ -210,7 +210,7 @@ export function MatchPipWidget() {
           <p className="text-[11px] text-muted-foreground/70">
             Aucun favori en live.
           </p>
-          <p className="text-[10px] text-muted-foreground/50 mt-1">
+          <p className="text-[11px] text-muted-foreground/50 mt-1">
             Épingle des matchs ★ sur ParisScore pour les voir ici.
           </p>
         </div>

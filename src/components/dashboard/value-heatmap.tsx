@@ -137,7 +137,7 @@ export function ValueHeatmap({ data, className }: ValueHeatmapProps) {
       >
         {/* Header row — tournament column labels */}
         <div
-          className="flex items-center justify-center bg-card px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+          className="flex items-center justify-center bg-card px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
           role="columnheader"
         >
           Sport
@@ -145,7 +145,7 @@ export function ValueHeatmap({ data, className }: ValueHeatmapProps) {
         {tournaments.map((t) => (
           <div
             key={t}
-            className="flex items-center justify-center bg-card px-1 text-center text-[10px] font-medium leading-tight text-muted-foreground"
+            className="flex items-center justify-center bg-card px-1 text-center text-[11px] font-medium leading-tight text-muted-foreground"
             role="columnheader"
             title={t}
           >

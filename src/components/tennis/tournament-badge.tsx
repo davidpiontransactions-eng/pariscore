@@ -22,7 +22,7 @@ export function TournamentBadge({ category, className }: TournamentBadgeProps) {
     className: "text-muted-foreground bg-muted/30 border-border/60",
   };
   return (
-    <span className={cn("inline-flex rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none", badge.className, className)}>
+    <span className={cn("inline-flex rounded border px-1.5 py-0.5 text-[11px] font-bold uppercase leading-none", badge.className, className)}>
       {badge.label}
     </span>
   );

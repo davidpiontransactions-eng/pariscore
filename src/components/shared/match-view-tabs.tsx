@@ -134,7 +134,7 @@ export function MatchViewTabs({
             <span
               aria-hidden
               className={cn(
-                "ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[10px] font-bold tabular-nums",
+                "ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[11px] font-bold tabular-nums",
                 tab.count > 0
                   ? isActive
                     ? `${tab.activeCls} text-white`

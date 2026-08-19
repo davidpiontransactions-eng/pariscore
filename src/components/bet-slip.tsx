@@ -131,7 +131,7 @@ export function BetSlip() {
           "fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full",
           "border border-emerald-500/40 bg-background px-4 py-2.5 shadow-lg",
           "text-sm font-semibold text-foreground",
-          "transition-all hover:-translate-y-0.5 hover:shadow-xl hover:border-emerald-500",
+          "transition hover:-translate-y-0.5 hover:shadow-xl hover:border-emerald-500",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         )}
       >
@@ -228,7 +228,12 @@ export function BetSlip() {
 
       {/* Footer — totals + place bets */}
       <footer className="border-t border-border/60 bg-muted/20 px-4 py-3">
-        <div className="mb-2 space-y-1 text-xs">
+        <div
+          className="mb-2 space-y-1 text-xs"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <div className="flex items-center justify-between text-muted-foreground">
             <span>{t("total")}</span>
             <span className="font-mono font-semibold tabular-nums text-foreground">
@@ -342,14 +347,20 @@ function SlipRow({
         </button>
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <label className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <label
+          htmlFor={`slip-stake-${selection.matchId}-${selection.betOn}`}
+          className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+        >
           {t("stake")}
         </label>
         <Input
+          id={`slip-stake-${selection.matchId}-${selection.betOn}`}
+          name={`slip-stake-${selection.matchId}-${selection.betOn}`}
           type="number"
           inputMode="decimal"
           min="0"
           step="1"
+          autoComplete="off"
           value={stakeText}
           onChange={(e) => {
             setStakeText(e.target.value);

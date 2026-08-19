@@ -113,8 +113,8 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
               <span className="truncate text-sm font-bold">{driver.name}</span>
               {driver.pos != null && (
                 <span className={cn(
-                  "shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded",
-                  driver.pos <= 3 ? "bg-amber-500/20 text-amber-400" : "bg-white/5 text-zinc-500"
+                  "shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded",
+                  driver.pos <= 3 ? "bg-amber-500/20 text-amber-400" : "bg-white/5 text-zinc-400"
                 )}>
                   #{driver.pos}
                 </span>
@@ -129,7 +129,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
               <p className="text-lg font-bold tabular-nums" style={{ color: teamColor }}>
                 {driver.points}
               </p>
-              <p className="text-[10px] text-zinc-500">pts</p>
+              <p className="text-[11px] text-zinc-500">pts</p>
             </div>
           )}
         </div>
@@ -168,7 +168,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
 function StatBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-14 text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+      <span className="w-14 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
         {label}
       </span>
       <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -177,7 +177,7 @@ function StatBar({ label, value, color }: { label: string; value: number; color:
           style={{ width: value + "%", backgroundColor: color }}
         />
       </div>
-      <span className="w-8 text-right font-mono text-[10px] font-bold tabular-nums" style={{ color }}>
+      <span className="w-8 text-right font-mono text-[11px] font-bold tabular-nums" style={{ color }}>
         {value}%
       </span>
     </div>

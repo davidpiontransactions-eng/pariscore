@@ -197,6 +197,16 @@ exist (`player-vs-block`, `country-flag`, `surface-badge`…) and re-searching t
 - **Types**: `bun-types` for Bun runtime APIs
 - Commands: `bun run lint`, `bun run typecheck` (if configured)
 
+## Session: awesome-design-md / DESIGN.md (2026-08-19)
+
+**Scope**: Bibliothèque locale de **74 DESIGN.md** (format Google Stitch, extraits de vrais sites) + skill `design-md` câblé sur **opencode**, **cline** et **claude** (via `.claude/skills`). Miroir upstream [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) (MIT).
+
+**Fichiers clés**: `.agents/design-md/<marque>/DESIGN.md` (collection, 74 marques + README/LICENCE), `.agents/tools/design-md/SKILL.md` (source de vérité du skill), junctions : `.agents/tools-active/design-md` → `.agents/tools/design-md` (opencode), `.claude/skills/design-md` + `.cline/skills/design-md` → source.
+
+**Règle d'or**: un DESIGN.md externe est une **source d'inspiration** — les tokens PariScore (`DESIGN_CHARTER.md`, dark navy + vert néon `#00e676`) restent la source de vérité. Pas de rebrand sauf demande explicite. Composants uniquement via `COMPONENTS.md`. Catalogue complet + prompts dans le SKILL.md.
+
+**Refresh de la collection**: retélécharger le tarball upstream (`https://codeload.github.com/VoltAgent/awesome-design-md/tar.gz/refs/heads/main`) et réécrire `.agents/design-md/`. Ne jamais éditer les fichiers de la collection.
+
 ### Project-Specific Skills
 Available locally — use via `skill` tool for guided workflows:
 - `ps-add-strategy` — scaffold a new betting strategy
@@ -204,6 +214,8 @@ Available locally — use via `skill` tool for guided workflows:
 - `ps-changelog` — update CHANGELOG.md after feature completion
 - `ps-deploy` — Render.com deployment checklist
 - `ps-test` — QA audit of a module
+
+**Audit UI/UX** : `web-design-guidelines` (Vercel Labs, skill installé — règles fraîches fetchées depuis `raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md` avant chaque revue). Junctions : `.agents/tools-active/web-design-guidelines` + `.claude/skills` + `.cline/skills` → `.agents/tools/web-design-guidelines`. Sortie : format terse `file:line`.
 
 ### Multi-plateforme ZCode ↔ OpenCode (sync des skills)
 

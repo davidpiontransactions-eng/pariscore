@@ -15,7 +15,7 @@ export function StatChip({ label, value, className }: Props) {
         className
       )}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
         {label}
       </span>
       <span

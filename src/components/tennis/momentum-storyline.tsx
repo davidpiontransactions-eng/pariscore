@@ -102,7 +102,7 @@ function SetScoresRow({ sets }: { sets: SetData[] }) {
           {s.winner && (
             <span
               className={cn(
-                "rounded-sm px-1 py-px text-[10px] font-bold",
+                "rounded-sm px-1 py-px text-[11px] font-bold",
                 s.winner === "A"
                   ? "bg-[#10B981]/15 text-[#10B981]"
                   : "bg-[#EF4444]/15 text-[#EF4444]",
@@ -136,7 +136,7 @@ function EventPills({
       {resolved.map((ev, i) => (
         <span
           key={i}
-          className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-0.5 text-[10px] leading-none text-muted-foreground"
+          className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 px-2 py-0.5 text-[11px] leading-none text-muted-foreground"
           title={`Set ${ev.set} · Point ${ev.globalIndex + 1}: ${ev.label}`}
         >
           <span className="text-xs">{ev.emoji}</span>

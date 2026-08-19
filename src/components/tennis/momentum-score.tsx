@@ -80,7 +80,7 @@ export function MomentumScore({ score, size = 60, className }: Props) {
           y={cy - 2}
           textAnchor="middle"
           dominantBaseline="central"
-          className="fill-foreground text-[10px] font-bold"
+          className="fill-foreground text-[11px] font-bold"
           style={{ fontFamily: "var(--font-mono, monospace)" }}
         >
           {score}
@@ -107,7 +107,7 @@ export function MomentumScoreDuo({
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
       <MomentumScore score={scoreA} size={size} />
-      <span className="text-[10px] text-muted-foreground font-medium">vs</span>
+      <span className="text-[11px] text-muted-foreground font-medium">vs</span>
       <MomentumScore score={scoreB} size={size} />
     </div>
   );

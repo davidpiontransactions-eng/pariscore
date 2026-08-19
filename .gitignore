@@ -207,6 +207,9 @@ scripts/headroom-proxy.ps1
 .agents/tools-active/
 .opencode/skills
 
+# Junctions Cline → .claude/skills + .agents/tools (même logique : ne pas résoudre).
+.cline/
+
 # Binaire OpenCode (165MB, dépasse limite GitHub)
 /opencode.exe
 

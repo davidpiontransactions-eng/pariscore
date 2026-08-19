@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type Props = {
-  /** Key du score courant ("6-4 3-2") — chaque changement rejoue le flash. */
+  /** Key du score courant ("6-4 3-2" / "2-1") — chaque changement rejoue le flash. */
   scoreKey: string;
   children: ReactNode;
   className?: string;
@@ -18,10 +18,11 @@ type Props = {
 /**
  * ScoreFlash — annonce visuelle d'un changement de score.
  *
- * À chaque `scoreKey` nouveau (point gagné, set terminé), le contenu fait un
- * léger scale + un fondu bref : l'œil sait *où* le match a bougé sans avoir à
- * scanner la carte. Durée courte (450ms) et ease emphasized — un moment
- * authoré, pas un roll continu (anti-digit-roll, DESIGN.md).
+ * À chaque `scoreKey` nouveau (point gagné, set terminé, but marqué), le
+ * contenu fait un léger scale + un fondu bref : l'œil sait *où* le match a
+ * bougé sans avoir à scanner la carte. Durée courte (450ms) et ease
+ * emphasized — un moment authoré, pas un roll continu (anti-digit-roll,
+ * DESIGN.md).
  *
  * Respecte `prefers-reduced-motion` via framer-motion.
  */

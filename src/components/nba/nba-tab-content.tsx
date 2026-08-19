@@ -163,7 +163,7 @@ function NbaMatchCard({ match, index }: { match: NbaMatch; index: number }) {
 
         {/* VS + Prob */}
         <div className="flex shrink-0 flex-col items-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">@</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">@</span>
           <span className="mt-1 font-mono text-lg font-bold tabular-nums text-sky-400">
             {homeFav ? favProb : dogProb}%
           </span>

@@ -310,7 +310,7 @@ export function BookmakerComparatorDialog() {
                 <TrendingUp className="h-3.5 w-3.5" />
                 {t("sections.valueBets")}
                 {valueBets.length > 0 && (
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                     {valueBets.length}
                   </span>
                 )}
@@ -339,7 +339,7 @@ export function BookmakerComparatorDialog() {
                         </div>
                       </div>
                       <div className="shrink-0 text-right">
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("columns.edge")}</div>
+                        <div className="text-[11px] uppercase tracking-wider text-muted-foreground">{t("columns.edge")}</div>
                         <div className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           +{vb.edge}pp
                         </div>

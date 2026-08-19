@@ -28,7 +28,7 @@ export function FrenchBroadcasterBadge({ tournament, className }: Props) {
       )}
     >
       <Tv className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
-      <span className="text-[10px] font-medium leading-tight text-slate-300">
+      <span className="text-[11px] font-medium leading-tight text-slate-300">
         {t("streamOnFrance", { channel })}
       </span>
     </div>

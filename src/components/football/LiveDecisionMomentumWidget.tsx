@@ -8,6 +8,7 @@ import { Zap, AlertTriangle, Gauge } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { ScoreFlash } from "@/components/shared/score-flash";
 import type { LiveMLPrediction } from "@/lib/prediction/football/prediction-ml-engine";
 
 // ---------------------------------------------------------------------------
@@ -60,7 +61,7 @@ function PressureGauge({ value }: { value: number }) {
         </span>
       </div>
       <Progress value={pct} className="h-2.5" indicatorClassName={pressureBg(value)} />
-      <div className="flex justify-between text-[10px] text-muted-foreground">
+      <div className="flex justify-between text-[11px] text-muted-foreground">
         <span>Pression Ext.</span>
         <span className="font-medium">{side}</span>
         <span>Pression Dom.</span>
@@ -138,11 +139,11 @@ export function LiveDecisionMomentumWidget({
 
       <CardContent className="space-y-4">
         {/* Score */}
-        <div className="flex items-center justify-center gap-4 py-1">
+        <ScoreFlash scoreKey={`${score.home}-${score.away}`} className="flex items-center justify-center gap-4 py-1">
           <span className="text-2xl font-bold tabular-nums">{score.home}</span>
           <span className="text-lg text-muted-foreground">-</span>
           <span className="text-2xl font-bold tabular-nums">{score.away}</span>
-        </div>
+        </ScoreFlash>
 
         {/* Indice de Pression */}
         <PressureGauge value={pressureIndex} />

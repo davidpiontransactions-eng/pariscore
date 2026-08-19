@@ -157,7 +157,7 @@ function WnbaMatchCard({ match, index }: { match: WnbaMatch; index: number }) {
 
         {/* VS + Prob */}
         <div className="flex shrink-0 flex-col items-center">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">@</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">@</span>
           <span className="mt-1 font-mono text-lg font-bold tabular-nums text-purple-400">
             {homeFav ? homeProb : awayProb}%
           </span>
@@ -191,7 +191,7 @@ function WnbaMatchCard({ match, index }: { match: WnbaMatch; index: number }) {
             <span
               key={bet.label}
               className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                 i === 0
                   ? "bg-purple-500/10 text-purple-300"
                   : "bg-white/5 text-zinc-500"

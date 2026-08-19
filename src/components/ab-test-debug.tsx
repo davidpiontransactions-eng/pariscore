@@ -180,7 +180,7 @@ export function AbTestDebugBadge() {
                 >
                   <span className="flex flex-col">
                     <span className="font-mono font-semibold">{v}</span>
-                    <span className="text-[10px] text-muted-foreground">
+                    <span className="text-[11px] text-muted-foreground">
                       {v === "chips_visible"
                         ? "Control — chips visible"
                         : "Treatment — chips collapsed"}

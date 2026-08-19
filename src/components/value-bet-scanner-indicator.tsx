@@ -93,11 +93,11 @@ export function ValueBetScannerIndicator() {
                   : t("noAlerts")}
               </div>
               {lastScanAt && (
-                <div className="text-[10px] text-muted-foreground/70">
+                <div className="text-[11px] text-muted-foreground/70">
                   {t("lastScan")}: {new Date(lastScanAt).toLocaleTimeString()}
                 </div>
               )}
-              <div className="pt-1 text-[10px] text-muted-foreground/70">
+              <div className="pt-1 text-[11px] text-muted-foreground/70">
                 {t("description")}
               </div>
             </div>
@@ -135,7 +135,7 @@ export function ValueBetScannerIndicator() {
                 <div className="font-semibold">{tDigest("title")}</div>
                 <div className="text-muted-foreground">{digestTooltip}</div>
                 {digestOn && lastSent > 0 && (
-                  <div className="text-[10px] text-muted-foreground/70">
+                  <div className="text-[11px] text-muted-foreground/70">
                     {new Date(lastSent).toLocaleString()}
                   </div>
                 )}

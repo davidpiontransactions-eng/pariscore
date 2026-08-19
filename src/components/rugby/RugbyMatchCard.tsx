@@ -86,7 +86,7 @@ export function RugbyMatchCard({
               </p>
               <div className="mt-0.5 flex items-center gap-1.5">
                 {prediction && (
-                  <span className="text-[10px] font-semibold tabular-nums text-slate-500">
+                  <span className="text-[11px] font-semibold tabular-nums text-slate-500">
                     Elo {Math.round(prediction.homeElo)}
                   </span>
                 )}
@@ -107,7 +107,7 @@ export function RugbyMatchCard({
               </span>
             </div>
             {prediction && (
-              <span className="mt-1 text-[10px] font-semibold text-slate-500">
+              <span className="mt-1 text-[11px] font-semibold text-slate-500">
                 score attendu
               </span>
             )}
@@ -127,7 +127,7 @@ export function RugbyMatchCard({
               <div className="mt-0.5 flex items-center justify-end gap-1.5">
                 <FormBadges form={match.form.away} />
                 {prediction && (
-                  <span className="text-[10px] font-semibold tabular-nums text-slate-500">
+                  <span className="text-[11px] font-semibold tabular-nums text-slate-500">
                     Elo {Math.round(prediction.awayElo)}
                   </span>
                 )}
@@ -197,7 +197,7 @@ function MarketChip({
     <span
       title={title}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-semibold ring-1",
+        "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-semibold ring-1",
         highlight
           ? "bg-teal-500/10 text-teal-300 ring-teal-500/30"
           : "bg-[#0b0e14] text-slate-400 ring-white/8"

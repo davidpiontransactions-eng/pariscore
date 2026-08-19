@@ -79,7 +79,7 @@ function CompareRow({
       <span className="text-right font-semibold tabular-nums text-emerald-400">
         {home}
       </span>
-      <span className="text-center text-[10px] uppercase tracking-wider text-muted-foreground">
+      <span className="text-center text-[11px] uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
       <span className="tabular-nums font-semibold text-sky-400">{away}</span>
@@ -105,7 +105,7 @@ function BetTile({ bet }: { bet: PredictiveBetsResult["bets"][number] }) {
           />
         </div>
         <div className="mt-1 flex items-center justify-between gap-1">
-          <span className="text-[10px] text-emerald-300 tabular-nums">
+          <span className="text-[11px] text-emerald-300 tabular-nums">
             {Math.round(bet.prob)}%
           </span>
           <span className="text-[9px] uppercase tracking-wider text-muted-foreground">
@@ -250,11 +250,11 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 <span className="text-3xl font-black tabular-nums">{view.live?.awayScore ?? 0}</span>
               </div>
               {view.live ? (
-                <span className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-500">
+                <span className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-500">
                   {view.live.status === "HT" ? "MI-TEMPS" : `${view.live.minute}'`}
                 </span>
               ) : (
-                <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Prématch · {parisKickoff(view.scheduledAt)}
                 </span>
               )}
@@ -312,7 +312,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                         <FormBadge key={i} r={f} />
                       ))
                     ) : (
-                      <span className="text-[10px] text-muted-foreground">Forme —</span>
+                      <span className="text-[11px] text-muted-foreground">Forme —</span>
                     )}
                   </Column>
                   <Column label={view.away.shortName} variant="away">
@@ -321,7 +321,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                         <FormBadge key={i} r={f} />
                       ))
                     ) : (
-                      <span className="text-[10px] text-muted-foreground">Forme —</span>
+                      <span className="text-[11px] text-muted-foreground">Forme —</span>
                     )}
                   </Column>
                 </div>
@@ -347,7 +347,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     />
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center gap-1 rounded-lg bg-muted/30 py-2 text-[10px] text-muted-foreground">
+                  <div className="flex items-center justify-center gap-1 rounded-lg bg-muted/30 py-2 text-[11px] text-muted-foreground">
                     <AlertCircle className="h-3 w-3" />
                     Classement indisponible
                   </div>

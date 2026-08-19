@@ -139,7 +139,7 @@ export function PointTimeline({
       </ol>
 
       {breakPoints > 0 && (
-        <p className="mt-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+        <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
           {t("breakPointsInGame", { n: breakPoints })}
         </p>
       )}

@@ -141,7 +141,7 @@ function SurfaceCard({
 
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-card/60 p-3">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {icon} {surface}
       </span>
 
@@ -212,7 +212,7 @@ function RecentMatchRow({
       </span>
 
       {/* Surface badge */}
-      <span className="inline-flex items-center rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+      <span className="inline-flex items-center rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[11px] font-bold uppercase text-muted-foreground">
         {normalizeSurface(match.surface)}
       </span>
 
@@ -301,7 +301,7 @@ export function H2HAdvanced({
         </div>
 
         {/* ELO row */}
-        <div className="mt-3 flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
+        <div className="mt-3 flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
           <span>
             {playerA.shortName}{" "}
             <span className="font-mono tabular-nums text-foreground">
@@ -343,7 +343,7 @@ export function H2HAdvanced({
           {/* Column headers */}
           <div
             className={cn(
-              "grid items-center gap-x-3 border-b border-border/60 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground",
+              "grid items-center gap-x-3 border-b border-border/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground",
               "grid-cols-[auto_1fr_auto_auto]",
               "sm:grid-cols-[auto_auto_1fr_auto_auto_auto_auto]",
             )}

@@ -282,7 +282,7 @@ function StatCard({
 }) {
   return (
     <div className="rounded-lg border border-border/60 bg-muted/20 p-3">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         {label}
       </div>

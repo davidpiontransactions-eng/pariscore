@@ -280,12 +280,12 @@ export function MomentumDR({
         onClick={() => setCollapsed((c) => !c)}
         className="mb-2 flex w-full items-center justify-between"
       >
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: player1Color }} />
           {t("momentumDR")}
         </span>
         <span
-          className="text-[10px] font-semibold uppercase tracking-wider"
+          className="text-[11px] font-semibold uppercase tracking-wider"
           style={{ color: dominantColor }}
         >
           {label}
@@ -345,7 +345,7 @@ export function MomentumDR({
                   {momentumA}%
                 </span>
               </div>
-              <span className="mx-1 shrink-0 font-mono text-[10px] font-bold tabular-nums text-muted-foreground">
+              <span className="mx-1 shrink-0 font-mono text-[11px] font-bold tabular-nums text-muted-foreground">
                 {dr >= 0 ? "+" : ""}{(dr * 100).toFixed(0)}
               </span>
               <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-end">
@@ -385,6 +385,29 @@ export function MomentumDR({
                 className="cursor-crosshair overflow-visible focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <title id="momentum-dr-title">{momentumAriaLabel}</title>
+                {/* Set bands (alternating shade) — lecture causale set par set (A3) */}
+                {setDividers.map((d, i) => {
+                  const x0 = i === 0 ? 0 : setDividers[i - 1]!.x;
+                  return i % 2 === 0 ? (
+                    <rect
+                      key={`sb-${i}`}
+                      x={x0}
+                      y={0}
+                      width={d.x - x0}
+                      height={SPARK_H}
+                      fill="hsl(var(--muted-foreground) / 0.05)"
+                    />
+                  ) : null;
+                })}
+                {setDividers.length > 0 && setDividers.length % 2 === 1 && (
+                  <rect
+                    x={setDividers[setDividers.length - 1]!.x}
+                    y={0}
+                    width={chartW - setDividers[setDividers.length - 1]!.x}
+                    height={SPARK_H}
+                    fill="hsl(var(--muted-foreground) / 0.05)"
+                  />
+                )}
                 {/* Grid lines */}
                 {[-0.5, 0, 0.5].map((v) => (
                   <line

@@ -150,13 +150,13 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
                     key={s.label}
                     className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5"
                   >
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                       {s.label}
                     </div>
                     <div className="mt-0.5 text-lg font-bold tabular-nums">
                       {fmtNumber(s.elo)}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-[11px] text-muted-foreground">
                       Rang {fmtNumber(s.rank, "")}
                     </div>
                   </div>
@@ -192,7 +192,7 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
                         <span className="min-w-0 truncate text-xs font-medium">
                           vs <span className="font-semibold">{opp}</span>
                         </span>
-                        <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
+                        <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
                           <Clock className="h-3 w-3" aria-hidden />
                           {formatTime(m.scheduledAt, browserTimeZone)}
                         </span>

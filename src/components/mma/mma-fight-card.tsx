@@ -133,7 +133,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
                 {probA}%
               </span>
             </ProbabilityRing>
-            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/40">
+            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/40">
               VS
             </span>
             <ProbabilityRing

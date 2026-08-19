@@ -105,7 +105,7 @@ export function FootballRoundGroups({
                 )}
               </span>
               <span className="text-sm font-bold text-foreground">{g.leagueName}</span>
-              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {g.round}
               </span>
               <span className="text-[11px] capitalize text-muted-foreground">· {g.day}</span>

@@ -239,7 +239,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           <button
             type="button"
             onClick={() => { setMinEloGap(150); setMinSps(55); }}
-            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-3 w-3" />
             Réinitialiser
@@ -307,7 +307,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           >
             {tab.label}
             {tab.matches.length > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[10px] font-bold text-emerald-300">
+              <span className="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[11px] font-bold text-emerald-300">
                 {tab.matches.length}
               </span>
             )}

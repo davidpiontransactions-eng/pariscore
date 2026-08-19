@@ -104,7 +104,7 @@ export function PlayerVsBlock({
 
         <div className="flex flex-col items-center gap-1">
           {centerSlot ?? (
-            <span className="rounded-full bg-muted px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               VS
             </span>
           )}
@@ -143,7 +143,7 @@ export function PlayerVsBlock({
             />
           </div>
         </div>
-        <span className="shrink-0 text-[10px] font-semibold text-muted-foreground">
+        <span className="shrink-0 text-[11px] font-semibold text-muted-foreground">
           PROB
         </span>
         <div className="flex-1">

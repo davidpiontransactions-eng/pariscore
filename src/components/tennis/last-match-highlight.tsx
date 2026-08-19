@@ -36,7 +36,7 @@ export function LastMatchHighlight({
       className={cn(
         "mt-2 inline-flex max-w-full items-center gap-1.5",
         "rounded-full border border-border/60 bg-muted/40 px-2.5 py-1",
-        "text-[10px] font-medium text-muted-foreground",
+        "text-[11px] font-medium text-muted-foreground",
         "transition-colors hover:border-emerald-500/40 hover:text-emerald-600 dark:hover:text-emerald-400",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className

@@ -113,7 +113,7 @@ function TickerRow({ events, homeName, awayName }: { events: MatchEvent[]; homeN
   const minutesTxt = active.minutes.map((m) => `${m}'`).join(", ");
   const isMulti = active.minutes.length > 1;
   return (
-    <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-muted/40 px-2 py-1 text-[10px]">
+    <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-muted/40 px-2 py-1 text-[11px]">
       <span className={cn("font-semibold truncate", sideColor)}>{sideName}</span>
       <span className="text-muted-foreground/80 whitespace-nowrap">
         {active.label}
@@ -216,7 +216,7 @@ export function MomentumChart({
   return (
     <div className={cn("w-full", className)}>
       {/* Légende */}
-      <div className="mb-1.5 flex items-center justify-between text-[10px] font-medium text-muted-foreground">
+      <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1">
           <span className="inline-block h-2 w-2 rounded-sm bg-emerald-500" />
           {homeName}
@@ -346,7 +346,7 @@ export function MomentumChart({
 
       {/* Live stats summary — tirs cadrés + corners */}
       {liveStats && (liveStats.homeSOT > 0 || liveStats.awaySOT > 0 || liveStats.homeCorners > 0 || liveStats.awayCorners > 0) && (
-        <div className="mt-2 flex items-center justify-center gap-6 border-t border-border/30 pt-2 text-[10px]">
+        <div className="mt-2 flex items-center justify-center gap-6 border-t border-border/30 pt-2 text-[11px]">
           <div className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1 text-emerald-400">
               <Target className="h-3 w-3" />

@@ -96,7 +96,7 @@ function DecisionsContent({ metrics, liveState, playerAName, playerBName }: {
         </h4>
         <GaugeRow label="DPI" value={metrics.pressureIndex} icon={Target} />
         {metrics.pressureIndex > 65 && (
-          <p className="mt-1 text-[10px] text-red-400/80">Zone de danger — le serveur est sous pression constante</p>
+          <p className="mt-1 text-[11px] text-red-400/80">Zone de danger — le serveur est sous pression constante</p>
         )}
       </section>
       {/* Alerte fatigue */}
@@ -133,7 +133,7 @@ function DecisionsContent({ metrics, liveState, playerAName, playerBName }: {
         {metrics.holdProbA != null && <AlertRow icon={TrendingUp} label={`Hold prob (${playerAName})`} value={`${metrics.holdProbA}%`} />}
         {metrics.holdProbB != null && <AlertRow icon={TrendingUp} label={`Hold prob (${playerBName})`} value={`${metrics.holdProbB}%`} />}
       </section>
-      <div className="text-center text-[10px] text-muted-foreground/50 pt-2 border-t border-border">Métriques calculées · BSD Live</div>
+      <div className="text-center text-[11px] text-muted-foreground/50 pt-2 border-t border-border">Métriques calculées · BSD Live</div>
     </div>
   );
 }

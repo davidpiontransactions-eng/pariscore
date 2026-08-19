@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { ScoreFlash } from "./score-flash";
+import { ScoreFlash } from "@/components/shared/score-flash";
 
 /**
  * WinProbabilityChart — Live win-probability curve over the course of a match.

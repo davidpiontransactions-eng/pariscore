@@ -76,7 +76,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         ) : null}
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-zinc-300">{match.tournament ?? "CS2"}</p>
-          {match.is_lan && <p className="text-[10px] uppercase tracking-wide text-zinc-600">LAN</p>}
+          {match.is_lan && <p className="text-[11px] uppercase tracking-wide text-zinc-600">LAN</p>}
         </div>
       </div>
 
@@ -88,7 +88,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
       {/* Horaire + format (pastille 24h à gauche du badge BO, visible mobile) */}
       <div className="w-24 shrink-0">
         {isLive ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E676]/10 px-2 py-0.5 text-[10px] font-bold text-[#00E676]">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#00E676]/10 px-2 py-0.5 text-[11px] font-bold text-[#00E676]">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-[#00E676] opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#00E676]" />
@@ -102,7 +102,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
               {match.scheduled ? TIME_FMT.format(new Date(match.scheduled)) : "—"}
             </span>
             {match.best_of ? (
-              <span className="inline-flex rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-semibold text-zinc-400">
+              <span className="inline-flex rounded bg-white/5 px-1.5 py-0.5 text-[11px] font-semibold text-zinc-400">
                 BO{match.best_of}
               </span>
             ) : null}
@@ -115,7 +115,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         <div className="min-w-0 text-right">
           <p className="truncate text-sm font-semibold text-white">{t1Name}</p>
           {match.team1.hltv_rank ? (
-            <p className="text-[10px] text-zinc-600">#{match.team1.hltv_rank}</p>
+            <p className="text-[11px] text-zinc-600">#{match.team1.hltv_rank}</p>
           ) : null}
         </div>
         <TeamLogoImage
@@ -131,9 +131,18 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         {isLive &&
         match.maps_score &&
         (match.maps_score.team1 != null || match.maps_score.team2 != null) ? (
-          <span className="font-mono text-base font-bold tabular-nums text-[#00E676]">
-            {match.maps_score.team1 ?? "–"}–{match.maps_score.team2 ?? "–"}
-          </span>
+          <>
+            <span className="sr-only" role="status" aria-atomic="true">
+              Score live — {t1Name} {match.maps_score.team1 ?? "?"} à{" "}
+              {match.maps_score.team2 ?? "?"} {t2Name}
+            </span>
+            <span
+              aria-hidden="true"
+              className="font-mono text-base font-bold tabular-nums text-[#00E676]"
+            >
+              {match.maps_score.team1 ?? "–"}–{match.maps_score.team2 ?? "–"}
+            </span>
+          </>
         ) : (
           <span className="text-xs font-bold text-zinc-600">VS</span>
         )}
@@ -150,14 +159,14 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-white">{t2Name}</p>
           {match.team2.hltv_rank ? (
-            <p className="text-[10px] text-zinc-600">#{match.team2.hltv_rank}</p>
+            <p className="text-[11px] text-zinc-600">#{match.team2.hltv_rank}</p>
           ) : null}
         </div>
       </div>
 
       {/* Carte courante (live) */}
       {isLive && match.current_map && (
-        <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-zinc-400 lg:inline-flex">
+        <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[11px] text-zinc-400 lg:inline-flex">
           <MapIcon className="h-2.5 w-2.5" />
           {match.current_map}
         </span>

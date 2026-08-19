@@ -89,7 +89,7 @@ export function CyclingStageCard({
           <Badge
             variant="outline"
             className={cn(
-              "border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em]",
+              "border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em]",
               TYPE_COLORS[stage.type] ??
                 "border-gray-500/30 bg-gray-500/15 text-gray-400",
             )}
@@ -128,7 +128,7 @@ export function CyclingStageCard({
         )}
         {top3.length > 0 && (
           <div className="mt-4 border-t border-border/40 pt-3.5">
-            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-gray-500">
+            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-gray-500">
               Favoris du mod&egrave;le
             </p>
             <div className="space-y-2.5">
@@ -181,7 +181,7 @@ export function CyclingStageCard({
                       />
                     </div>
 
-                    <p className="mt-0.5 truncate text-[10px] text-gray-500">
+                    <p className="mt-0.5 truncate text-[11px] text-gray-500">
                       {rider.team}
                     </p>
                     {rider.form && rider.form.length > 0 && (

@@ -49,7 +49,7 @@ export function PressReviewPanel({
         <h3 className="text-sm font-bold text-card-foreground">
           {t("pressReviewTitle") ?? "Revue de Presse"}
         </h3>
-        <Badge variant="outline" className="ml-auto text-[10px]">
+        <Badge variant="outline" className="ml-auto text-[11px]">
           {consensus.totalSources} sources
         </Badge>
       </div>
@@ -95,7 +95,7 @@ function ConsensusBar({
 
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
         <span className="truncate max-w-[45%]" title={playerA}>{shortA}</span>
         <span className="flex items-center gap-1 font-mono tabular-nums">
           <TrendingUp className="h-3 w-3" />{label}
@@ -108,10 +108,10 @@ function ConsensusBar({
         {aPct < 100 && bPct < 100 && aPct > 0 && bPct > 0 && (
           <div className="h-full w-px bg-background/50" />
         )}
-        <div className="h-full bg-gradient-to-r from-violet-500 to-violet-400 transition-all duration-700"
+        <div className="h-full bg-gradient-to-r from-ai-insight to-purple-400 transition-all duration-700"
           style={{ width: `${bPct}%` }} />
       </div>
-      <div className="flex justify-between text-[10px] font-mono tabular-nums text-muted-foreground">
+      <div className="flex justify-between text-[11px] font-mono tabular-nums text-muted-foreground">
         <span>{aPct}%</span><span>{bPct}%</span>
       </div>
     </div>
@@ -140,7 +140,7 @@ function SourceCard({
         <span className="text-xs font-semibold text-card-foreground">{source.name}</span>
         {source.prediction.confidence > 0 && (
           <Badge variant="secondary" className={cn(
-            "ml-auto text-[10px]",
+            "ml-auto text-[11px]",
             source.prediction.confidence >= 70
               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
               : source.prediction.confidence >= 55
@@ -170,7 +170,7 @@ function SourceCard({
         </span>
         {source.url && (
           <a href={source.url} target="_blank" rel="noopener noreferrer"
-            className="ml-auto text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
+            className="ml-auto text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-primary"
             title="Lire l'article complet">
             <ExternalLink className="h-3 w-3" />
           </a>

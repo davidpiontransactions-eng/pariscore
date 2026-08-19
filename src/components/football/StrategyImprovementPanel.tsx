@@ -111,7 +111,7 @@ export function StrategyImprovementPanel({
           <FlaskConical className="h-3.5 w-3.5 text-violet-400" aria-hidden />
           Améliorer · {preset.label}
         </h3>
-        <span className="text-[10px] text-muted-foreground">base {baseScore.toFixed(1)}</span>
+        <span className="text-[11px] text-muted-foreground">base {baseScore.toFixed(1)}</span>
       </header>
 
       <div className="space-y-1.5">
@@ -124,14 +124,14 @@ export function StrategyImprovementPanel({
               className="flex items-center gap-2 rounded-lg border border-border/50 bg-background px-2.5 py-2"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-mono text-[10px] text-foreground">{v.label}</p>
+                <p className="truncate font-mono text-[11px] text-foreground">{v.label}</p>
                 <p className="text-[9px] text-muted-foreground">
                   {v.matchCount} match{v.matchCount > 1 ? "s" : ""} · conf. {v.avgConfidence.toFixed(0)}%
                 </p>
               </div>
               <span
                 className={cn(
-                  "shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums",
+                  "shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums",
                   positive ? "bg-emerald-500/15 text-emerald-400" : "bg-muted text-muted-foreground",
                 )}
               >
@@ -164,7 +164,7 @@ export function StrategyImprovementPanel({
       </div>
 
       {variations.length > 0 && !variations.some((v) => v.yieldScore > baseScore) && (
-        <p className="mt-2 text-[10px] text-muted-foreground">
+        <p className="mt-2 text-[11px] text-muted-foreground">
           Aucune variation ne bat le filtre actuel sur les matchs disponibles.
         </p>
       )}

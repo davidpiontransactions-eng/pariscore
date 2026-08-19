@@ -119,7 +119,7 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
                   setText(ex);
                   void handleCompile(ex);
                 }}
-                className="rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="rounded-full border border-border bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 {ex.length > 48 ? `${ex.slice(0, 48)}…` : ex}
               </button>
@@ -162,7 +162,7 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
                   className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Nom du filtre"
                 />
-                <span className="shrink-0 text-[10px] text-muted-foreground">
+                <span className="shrink-0 text-[11px] text-muted-foreground">
                   {draft.rules.length} règle{draft.rules.length > 1 ? "s" : ""}
                 </span>
               </div>
@@ -182,7 +182,7 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
                     <select
                       value={rule.operator}
                       onChange={(e) => updateRule(idx, { operator: e.target.value as FilterOperator })}
-                      className="rounded border border-border bg-background px-1 py-0.5 text-[10px]"
+                      className="rounded border border-border bg-background px-1 py-0.5 text-[11px]"
                       aria-label="Opérateur"
                     >
                       {OPERATORS.map((op) => (
@@ -195,7 +195,7 @@ export function AIFilterBuilderDialog({ open, onOpenChange, onSave }: Props) {
                       type="number"
                       value={rule.value}
                       onChange={(e) => updateRule(idx, { value: Number(e.target.value) })}
-                      className="w-16 rounded border border-border bg-background px-1 py-0.5 text-right text-[10px] tabular-nums"
+                      className="w-16 rounded border border-border bg-background px-1 py-0.5 text-right text-[11px] tabular-nums"
                       aria-label="Valeur"
                     />
                     <button

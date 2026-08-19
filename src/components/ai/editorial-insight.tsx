@@ -39,7 +39,7 @@ export function EditorialInsight({
     return (
       <p
         className={cn(
-          "mt-1 line-clamp-1 text-[10px] italic leading-snug text-slate-500",
+          "mt-1 line-clamp-1 text-[11px] italic leading-snug text-slate-500",
           className,
         )}
         title={`${summary.text} — ${t("source")} ${summary.source}`}
@@ -64,7 +64,7 @@ function EditorialFull({
   return (
     <div className={cn("rounded-lg border border-border/60 bg-muted/30 p-3", className)}>
       <p className="text-[13px] leading-relaxed text-card-foreground/90">{summary.text}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-500">
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
         <span>
           {t("source")} <span className="font-medium text-slate-600">{summary.source}</span>
           {summary.translated ? ` · ${t("translated")}` : ""}

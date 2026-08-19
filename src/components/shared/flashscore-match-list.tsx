@@ -124,7 +124,7 @@ function FilterBar({
             {f.label}
             {f.count > 0 && (
               <span className={cn(
-                "ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums",
+                "ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[11px] font-bold tabular-nums",
                 activeFilter === f.key ? `${f.accent} text-white` : "bg-muted-foreground/30 text-[#D0D0D0]",
               )}>
                 {f.count > 99 ? "99+" : f.count}
@@ -136,10 +136,12 @@ function FilterBar({
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
         <input
-          type="text"
+          type="search"
+          name="search"
+          autoComplete="off"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Rechercher..."
+          placeholder="Rechercher…"
           className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-3 text-xs placeholder:text-muted-foreground/60 focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:w-48"
           aria-label="Rechercher un joueur ou un club"
         />
@@ -167,7 +169,7 @@ function LeagueHeader({
       {league.country && <CountryFlag countryCode={league.country} size="sm" />}
       {league.logo && !league.country && <span className="text-sm" aria-hidden>{league.logo}</span>}
       <span className="flex-1 truncate text-sm font-bold tracking-tight text-[#F0F0F0]" title={league.name}>{league.name}</span>
-      <Badge variant="secondary" className="font-mono text-[10px] tabular-nums text-white">{matchCount}</Badge>
+      <Badge variant="secondary" className="font-mono text-[11px] tabular-nums text-white">{matchCount}</Badge>
       {onToggleFavorite && (
         <button onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
           className="rounded p-0.5 transition-colors hover:bg-muted-foreground/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -190,24 +192,24 @@ function MatchRow({
     <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2 text-xs transition-colors hover:bg-muted/30 last:border-b-0">
       <div className="flex w-14 shrink-0 flex-col items-start gap-0.5">
         {match.isLive ? (
-          <span className="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold text-rose-600 dark:text-rose-400">
+          <span className="inline-flex items-center gap-1 rounded bg-rose-500/15 px-1.5 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-400">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />LIVE
           </span>
         ) : (
           <span className="font-mono font-semibold tabular-nums text-[#E0E0E0]">{match.timeDisplay}</span>
         )}
-        {match.statusDetail && <span className="text-[10px] text-muted-foreground">{match.statusDetail}</span>}
+        {match.statusDetail && <span className="text-[11px] text-muted-foreground">{match.statusDetail}</span>}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5 truncate">
           <span className="truncate font-medium text-[#F0F0F0]">{match.homeName}
-            {match.homeRank != null && match.homeRank > 0 && <span className="ml-1 text-[10px] text-[#B0B0B0]">#{match.homeRank}</span>}
+            {match.homeRank != null && match.homeRank > 0 && <span className="ml-1 text-[11px] text-[#B0B0B0]">#{match.homeRank}</span>}
           </span>
           {match.server === "home" && <span className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-400" title="Au service" />}
         </div>
         <div className="flex items-center gap-1.5 truncate">
           <span className="truncate text-[#E0E0E0]">{match.awayName}
-            {match.awayRank != null && match.awayRank > 0 && <span className="ml-1 text-[10px] text-[#A0A0A0]">#{match.awayRank}</span>}
+            {match.awayRank != null && match.awayRank > 0 && <span className="ml-1 text-[11px] text-[#A0A0A0]">#{match.awayRank}</span>}
           </span>
           {match.server === "away" && <span className="inline-block h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-emerald-400" title="Au service" />}
         </div>
@@ -218,7 +220,7 @@ function MatchRow({
       <div className="hidden w-[72px] shrink-0 text-center sm:block">
         {match.oddsDisplay ? (
           <span className="font-mono text-[11px] font-semibold tabular-nums text-[#F0F0F0]">{match.oddsDisplay}</span>
-        ) : <span className="text-[10px] text-muted-foreground/40">—</span>}
+        ) : <span className="text-[11px] text-muted-foreground/40">—</span>}
       </div>
       <div className="flex shrink-0 items-center gap-1">
         {onToggleFavorite && (
@@ -267,7 +269,12 @@ function LeagueSkeleton() {
 
 export function FlashscoreSkeleton() {
   return (
-    <div className="space-y-1 rounded-lg border border-border/60">
+    <div
+      className="space-y-1 rounded-lg border border-border/60"
+      role="status"
+      aria-busy="true"
+      aria-label="Chargement des matchs"
+    >
       {[0, 1, 2].map((i) => <LeagueSkeleton key={i} />)}
     </div>
   );
@@ -447,7 +454,7 @@ export function FlashscoreMatchList({
                 >
                   {pullState === "ready" ? (
                     <>
-                      <ArrowDown className="h-4 w-4 animate-bounce text-emerald-400" />
+                      <ArrowDown className="h-4 w-4 animate-bounce-soft text-emerald-400" />
                       <span className="text-xs font-semibold text-emerald-400">Relâcher pour actualiser</span>
                     </>
                   ) : (
@@ -515,7 +522,7 @@ export function FlashscoreMatchList({
       )}
 
       {!isLoading && !error && filteredLeagues.length > 0 && (
-        <p className="text-center text-[10px] text-muted-foreground/60">
+        <p className="text-center text-[11px] text-muted-foreground/60">
           {filteredLeagues.length} compétition(s) · {totalMatches} match(s)
           {filter !== "all" && ` (filtré: ${filter})`}
         </p>
