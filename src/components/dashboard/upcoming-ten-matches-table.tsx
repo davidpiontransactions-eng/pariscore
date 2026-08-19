@@ -11,6 +11,7 @@ import { computePredictiveBets } from "@/lib/prediction/predictive-bets-engine";
 import { useEditorialSummary } from "@/hooks/use-editorial-summaries";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
+import { parisKickoff } from "@/lib/football-time";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -55,10 +56,7 @@ const SPORT_TABS: { key: SportFilter; label: string }[] = [
 // ---------------------------------------------------------------------------
 
 function formatHour(iso: string): string {
-  return new Date(iso).toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return parisKickoff(iso);
 }
 
 function formatOddsTennis(m: TennisMatch): string {

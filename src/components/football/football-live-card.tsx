@@ -6,6 +6,7 @@ import { Trophy, Clock, Activity, TrendingUp, ChevronDown, ChevronUp, AlertCircl
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FootballMatch } from "@/lib/football-data";
+import { parisKickoff } from "@/lib/football-time";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 import { CORNER_OVER_MIN_PROB } from "@/lib/football-predictions";
 import { WatchButton } from "@/components/shared/watch-button";
@@ -136,9 +137,6 @@ function LiveBadge({ minute, status, period }: { minute: number; status: string;
   );
 }
 
-function formatKickoff(iso: string): string {
-  return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-}
 
 function StatRow({
   label,
@@ -230,7 +228,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           <div className="flex shrink-0 items-center gap-2">
             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/80">
               <Clock className="h-3 w-3" />
-              {formatKickoff(match.scheduledAt)}
+              {parisKickoff(match.scheduledAt)}
             </span>
             <LiveBadge minute={live.minute} status={live.status} period={live.period} />
           </div>

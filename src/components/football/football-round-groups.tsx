@@ -3,16 +3,16 @@
 import { useMemo } from "react";
 import { Sparkles } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
+import { parisKickoff, parisDayLabel, parisDayLong } from "@/lib/football-time";
 import { FootballMatchCard } from "./football-match-card";
 import { pickScore, STRONG_PICK_THRESHOLD } from "@/lib/football-pick-utils";
 import { getFlagEmoji } from "@/lib/flag-utils";
 
 /** Libellé « weekend » / « aujourd'hui » dérivé de la date du match. */
 function dayLabel(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
-  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
+  const short = parisDayLabel(iso);
+  if (short === "Aujourd'hui" || short === "Demain") return short;
+  return parisDayLong(iso);
 }
 
 /** Clé de regroupement : par ligue + journée (round) ou par jour si pas de round. */

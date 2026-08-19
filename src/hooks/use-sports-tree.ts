@@ -16,7 +16,6 @@ import {
   sortSportsTree,
   tennisToRaw,
 } from "@/lib/sports-tree";
-import { transformV2 } from "@/hooks/use-football-matches";
 import { todayParisIso } from "@/lib/baseball/timezone";
 
 /**
@@ -39,14 +38,12 @@ async function loadFootball(): Promise<SportNode> {
     const legacy = await getJson("/api/football/matches");
     const raw = footballToRaw(legacy?.matches ?? []);
     if (raw.length > 0) return groupRawMatches("football", raw);
+    // API OK mais aucun match → nœud vide (jamais de données factices).
+    return emptySportNode("football");
   } catch {
-    // legacy indisponible → v2 Prisma
-  }
-  try {
-    const v2 = await getJson("/api/v2/matches?sport=football&limit=100");
-    const matches = (v2?.matches ?? []).map((m: any) => transformV2(m));
-    return groupRawMatches("football", footballToRaw(matches));
-  } catch {
+    // legacy indisponible → nœud vide. Jamais de repli sur la DB Prisma :
+    // elle a pu recevoir des seeds mock_fl* par le passé (mêmes ids que
+    // les équipes réelles BSD) — zéro donnée factice dans la sidebar.
     return emptySportNode("football");
   }
 }

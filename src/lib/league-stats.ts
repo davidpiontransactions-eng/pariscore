@@ -71,7 +71,7 @@ export type LeagueStatsResponse = {
   standings: TeamStanding[];
   marketTops: MarketTops;
   meta: {
-    source: "bsd" | "openligadb" | "cache" | "mock";
+    source: "bsd" | "openligadb" | "cache";
     computedAt: string;
     ttlSeconds: number;
   };

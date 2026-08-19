@@ -28,87 +28,6 @@ async function fetchBSDRaw<T>(endpoint: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-// ── Mock data generator (fallback quand BSD n'a pas de matchs pour cette ligue) ──
-
-function generateMockStandings(leagueName: string, location: string) {
-  const isHome = location === "home";
-  const isAway = location === "away";
-  const teams = [
-    { id: "1", name: `${leagueName} Team A`, short: "TMA", color: "#e11d48" },
-    { id: "2", name: `${leagueName} Team B`, short: "TMB", color: "#2563eb" },
-    { id: "3", name: `${leagueName} Team C`, short: "TMC", color: "#16a34a" },
-    { id: "4", name: `${leagueName} Team D`, short: "TMD", color: "#ca8a04" },
-    { id: "5", name: `${leagueName} Team E`, short: "TME", color: "#9333ea" },
-    { id: "6", name: `${leagueName} Team F`, short: "TMF", color: "#0891b2" },
-    { id: "7", name: `${leagueName} Team G`, short: "TMG", color: "#ea580c" },
-    { id: "8", name: `${leagueName} Team H`, short: "TMH", color: "#4f46e5" },
-    { id: "9", name: `${leagueName} Team I`, short: "TMI", color: "#be123c" },
-    { id: "10", name: `${leagueName} Team J`, short: "TMJ", color: "#047857" },
-  ];
-
-  const standings = teams.map((t, i) => {
-    const played = 19 + Math.floor(Math.random() * 15);
-    const pts = Math.max(15, 60 - i * 5 + Math.floor(Math.random() * 6));
-    const wins = Math.floor(pts / 3);
-    const draws = pts - wins * 3;
-    const losses = Math.max(0, played - wins - draws);
-    const gf = 25 + Math.floor((10 - i) * 3 + Math.random() * 10);
-    const ga = 10 + i * 2 + Math.floor(Math.random() * 8);
-    const mod = isHome ? 1.2 : isAway ? 0.8 : 1;
-    const clamp = (v: number, lo = 0, hi = 100) => Math.min(hi, Math.max(lo, v));
-    return {
-      rank: i + 1,
-      team: { id: t.id, name: t.name, shortName: t.short, logo: "", color: t.color },
-      stats: {
-        played: Math.round(played * mod),
-        wins: Math.round(wins * mod),
-        draws: Math.max(0, Math.round(draws * mod)),
-        losses: Math.max(0, Math.round(losses * mod)),
-        goalsFor: Math.round(gf * mod),
-        goalsAgainst: Math.round(ga * mod),
-        goalDiff: Math.round((gf - ga) * mod),
-        points: Math.round(pts * mod),
-        pointsPerGame: Math.round((pts / Math.max(1, played)) * mod * 100) / 100,
-        xG: Math.round((1.5 - i * 0.12) * 100) / 100,
-        xGA: Math.round((0.5 + i * 0.1) * 100) / 100,
-        xGD: Math.round((1.0 - i * 0.22) * 100) / 100,
-        over15Pct: clamp(80 - i * 4 + Math.floor(Math.random() * 10)),
-        over15PctL5: clamp(80 - i * 5 + Math.floor(Math.random() * 15)),
-        over15PctL10: clamp(78 - i * 4 + Math.floor(Math.random() * 10)),
-        under35Pct: clamp(50 + i * 4 + Math.floor(Math.random() * 10)),
-        under35PctL5: clamp(50 + i * 5 + Math.floor(Math.random() * 15)),
-        under35PctL10: clamp(52 + i * 4 + Math.floor(Math.random() * 10)),
-        bttsYesPct: clamp(60 - i * 3 + Math.floor(Math.random() * 15)),
-        bttsYesPctL5: clamp(55 - i * 4 + Math.floor(Math.random() * 20)),
-        bttsYesPctL10: clamp(58 - i * 3 + Math.floor(Math.random() * 15)),
-      },
-    };
-  });
-
-  const mkTop = (key: string, higherBetter: boolean) =>
-    [...standings]
-      .sort((a: any, b: any) => higherBetter ? b.stats[key] - a.stats[key] : a.stats[key] - b.stats[key])
-      .slice(0, 5)
-      .map((s: any) => ({
-        teamId: s.team.id,
-        teamName: s.team.name,
-        shortName: s.team.shortName,
-        logo: "",
-        value: s.stats[key],
-      }));
-
-  return {
-    standings,
-    marketTops: {
-      pointsPerGame: mkTop("pointsPerGame", true),
-      over15Pct: mkTop("over15Pct", true),
-      under35Pct: mkTop("under35Pct", true),
-      bttsYesPct: mkTop("bttsYesPct", true),
-      xG: mkTop("xG", true),
-      xGA: mkTop("xGA", false),
-    },
-  };
-}
 
 export async function GET(
   req: NextRequest,
@@ -147,7 +66,7 @@ export async function GET(
   try {
     let standings: any[] = [];
     let marketTops: any = {};
-    let source: "bsd" | "openligadb" | "mock" = "bsd";
+    let source: "bsd" | "openligadb" = "bsd";
 
     // Ligues non couvertes BSD (ex. 2. Bundesliga) → source alternative / mock explicite.
     if (!bsdId || BSD_UNCOVERED_LEAGUES.has(league_id)) {
@@ -193,16 +112,19 @@ export async function GET(
           source = "openligadb";
           console.log(`[league-stats] ${league_id}: OpenLigaDB standings → ${standings.length} teams`);
         } catch (olbErr) {
-          console.log(`[league-stats] ${league_id}: OpenLigaDB unavailable — mock (${(olbErr as Error).message})`);
+          console.log(`[league-stats] ${league_id}: OpenLigaDB unavailable (${(olbErr as Error).message})`);
+          return NextResponse.json(
+            { error: "Classement indisponible : source OpenLigaDB inaccessible." },
+            { status: 503 },
+          );
         }
-      }
-      if (source === "bsd") {
-        // Fallback mock explicite : ligue connue mais aucune source réelle branchée.
-        console.log(`[league-stats] ${league_id}: no BSD source — using mock data`);
-        source = "mock";
-        const mock = generateMockStandings(leagueInfo.name, location);
-        standings = mock.standings;
-        marketTops = mock.marketTops;
+      } else {
+        // Ligue connue mais aucune source réelle branchée — jamais de mock.
+        console.log(`[league-stats] ${league_id}: no real source for this league`);
+        return NextResponse.json(
+          { error: "Classement indisponible pour cette ligue." },
+          { status: 503 },
+        );
       }
     } else {
       // BSD — fetch finished matches, filter by real BSD league id
@@ -220,12 +142,11 @@ export async function GET(
           throw new Error(`Only ${leagueMatches.length} matches found`);
         }
       } catch (bsdErr) {
-        // Fallback mock
-        console.log(`[league-stats] ${league_id}: BSD fallback — using mock data (${(bsdErr as Error).message})`);
-        source = "mock";
-        const mock = generateMockStandings(leagueInfo.name, location);
-        standings = mock.standings;
-        marketTops = mock.marketTops;
+        console.log(`[league-stats] ${league_id}: BSD unavailable (${(bsdErr as Error).message})`);
+        return NextResponse.json(
+          { error: "Classement indisponible : source BSD inaccessible." },
+          { status: 503 },
+        );
       }
     }
 

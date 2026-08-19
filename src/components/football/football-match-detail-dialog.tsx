@@ -11,6 +11,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, AlertCircle, TrendingUp, Activity } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
+import { parisKickoff } from "@/lib/football-time";
 import type { MatchTimelineData } from "@/lib/football-timeline";
 import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/prediction/predictive-bets-engine";
 import { expectedPressureBaseline } from "@/lib/football-live-thresholds";
@@ -254,7 +255,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 </span>
               ) : (
                 <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Prématch · {new Date(view.scheduledAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                  Prématch · {parisKickoff(view.scheduledAt)}
                 </span>
               )}
             </div>

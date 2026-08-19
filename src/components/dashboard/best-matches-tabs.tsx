@@ -9,6 +9,7 @@ import { useCs2Matches } from "@/hooks/use-cs2-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { estimateFootballEloGap } from "@/lib/elo-utils";
+import { parisKickoff } from "@/lib/football-time";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -399,10 +400,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               <div className="text-right shrink-0">
                 <span className="block text-[11px] text-muted-foreground">{match.detail2}</span>
                 <span className="text-[11px] font-mono text-zinc-500">
-                  {new Date(match.scheduledAt).toLocaleTimeString("fr-FR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {parisKickoff(match.scheduledAt)}
                 </span>
               </div>
             </div>

@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { FootballMatch } from "@/lib/football-data";
-import { ALL_FOOTBALL_MATCHES } from "@/lib/football-data";
-import { COUNTRY_TO_CODE } from "@/lib/bsd-football-fetcher";
 
 type FootballResponse = {
   matches: FootballMatch[];
@@ -11,27 +9,12 @@ type FootballResponse = {
   updatedAt: string;
 };
 
-const MOCK_DELAY_MS = 300;
 const POLL_INTERVAL_MS = 60_000;
 
-// Transform API v2 (Prisma) → FootballMatch
-export function transformV2(m: any): FootballMatch {
-  return {
-    id: m.id,
-    league: m.league
-      ? { ...m.league, countryCode: m.league.countryCode ?? COUNTRY_TO_CODE[m.league.country] ?? "EU" }
-      : { id: "?", name: "?", country: "?", countryCode: "??", logo: "🌐", tier: "T2" },
-    round: m.round ?? "?",
-    scheduledAt: m.scheduledAt,
-    home: { id: m.home.id, name: m.home.name, shortName: m.home.shortName, logo: m.home.logo ?? "", color: m.home.color ?? "#666", form: [], rank: 99 },
-    away: { id: m.away.id, name: m.away.name, shortName: m.away.shortName, logo: m.away.logo ?? "", color: m.away.color ?? "#666", form: [], rank: 99 },
-    prediction: m.prediction ?? { homeProb: 50, drawProb: 25, awayProb: 25, bttsProb: 50, over25Prob: 50, model: "default" },
-    odds: m.odds?.[0] ? { bookmaker: m.odds[0].bookmaker, home: m.odds[0].home, draw: m.odds[0].draw ?? 3.5, away: m.odds[0].away } : undefined,
-    allOdds: m.odds?.map((o: any) => ({ bookmaker: o.bookmaker, home: o.home, draw: o.draw ?? 3.5, away: o.away, impliedHome: 33, impliedDraw: 33, impliedAway: 33, margin: 0.03 })),
-    live: m.status === "live" ? { homeScore: m.liveHomeScore ?? 0, awayScore: m.liveAwayScore ?? 0, minute: m.liveMinute ?? 0, status: m.liveStatus ?? "LIVE", homePossession: 50, homeShots: 0, awayShots: 0, homeShotsOnTarget: 0, awayShotsOnTarget: 0, homeCorners: 0, awayCorners: 0 } : null,
-  };
-}
-
+// /api/football/matches est l'unique source de l'onglet football : BSD (live +
+// prématch avec stats/xG complètes) + OpenLigaDB (2. Bundesliga).
+// Plus aucun mock (ALL_FOOTBALL_MATCHES) ni fallback v2 Prisma, dont les
+// seeds mock_fl2 polluaient l'onglet avec des matchs fictifs.
 export function useFootballMatches() {
   const [data, setData] = useState<FootballResponse | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -42,42 +25,13 @@ export function useFootballMatches() {
     setIsValidating(true);
     setError(null);
     try {
-      // Primaire: feed BSD réel (live + prématch avec stats/xG complètes).
-      // Anciennement la v2 Prisma passait en premier et servait les matchs mock
-      // seedés (mock_fl2…) → le dialog momentum appelait /stats sur un id mock
-      // → 503 → les features live (donuts, ticker, probas) ne s'affichaient pas.
-      // On privilégie désormais le vrai BSD ; la v2/mock reste en secours.
-      const legacyRes = await fetch("/api/football/matches");
-      if (legacyRes.ok) {
-        const json: FootballResponse = await legacyRes.json();
-        if ((json.matches ?? []).length > 0) {
-          setData(json);
-          setIsLoading(false);
-          setIsValidating(false);
-          return;
-        }
-      }
-      // Fallback: API v2 Prisma
-      const res = await fetch("/api/v2/matches?sport=football&limit=100");
-      if (res.ok) {
-        const json = await res.json();
-        const transformed = (json.matches ?? []).map(transformV2);
-        if (transformed.length > 0) {
-          setData({ matches: transformed, source: "prisma-v2", updatedAt: new Date().toISOString() });
-          setIsLoading(false);
-          setIsValidating(false);
-          return;
-        }
-      }
-      throw new Error("API BSD et v2 indisponibles");
-    } catch {
-      // Mock fallback
-      await new Promise((r) => setTimeout(r, MOCK_DELAY_MS));
-      setData({
-        matches: ALL_FOOTBALL_MATCHES,
-        source: "mock",
-        updatedAt: new Date().toISOString(),
-      });
+      const res = await fetch("/api/football/matches");
+      if (!res.ok) throw new Error(`API football HTTP ${res.status}`);
+      const json: FootballResponse = await res.json();
+      if ((json.matches ?? []).length === 0) throw new Error("API football vide");
+      setData(json);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("API football indisponible"));
     } finally {
       setIsLoading(false);
       setIsValidating(false);

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { FootballMatch } from "@/lib/football-data";
+import { parisKickoff } from "@/lib/football-time";
 import {
   FlashscoreMatchList,
   FlashscoreSkeleton,
@@ -21,15 +22,9 @@ type Props = {
   className?: string;
 };
 
-/** Formatte l'heure locale à partir d'un ISO timestamp. */
+/** Heure de coup d'envoi en heure française (Europe/Paris). */
 function formatTime(iso: string): string {
-  try {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return "??:??";
-    return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return "??:??";
-  }
+  return parisKickoff(iso);
 }
 
 /** Formatte le score football (score live principal). */

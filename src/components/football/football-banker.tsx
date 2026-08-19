@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Sparkles, ArrowRight, TrendingUp } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import type { PickLeg } from "@/lib/football-pick-utils";
+import { parisKickoff } from "@/lib/football-time";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
@@ -14,12 +15,6 @@ import {
   STRONG_PICK_THRESHOLD,
 } from "@/lib/football-pick-utils";
 
-function formatKickoff(iso: string): string {
-  return new Date(iso).toLocaleTimeString("fr-FR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 /** Confiance 1X2 dérivée pour la couleur du ring dominateur. */
 function homeDomProb(match: FootballMatch): number {
@@ -103,7 +98,7 @@ export function FootballBankerWidget({
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold">{b.m.home.shortName}</p>
                 <p className="text-[10px] font-medium text-muted-foreground">{b.m.round}</p>
-                <p className="text-[10px] text-muted-foreground">domicile · {formatKickoff(b.m.scheduledAt)}</p>
+                <p className="text-[10px] text-muted-foreground">domicile · {parisKickoff(b.m.scheduledAt)}</p>
               </div>
             </div>
             <div className="flex flex-col items-center px-2 text-center">

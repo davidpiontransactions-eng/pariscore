@@ -14,6 +14,7 @@ import { FormTimeline } from "@/components/shared/form-timeline";
 import { SportImage } from "@/components/ui/sport-image";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { getLeagueBanner } from "@/lib/sport-images";
+import { parisKickoff, parisDayLabel } from "@/lib/football-time";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 
 import { MetricComparePanel } from "@/components/football/MetricComparePanel";
@@ -22,25 +23,10 @@ import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { WatchButton } from "@/components/shared/watch-button";
 import { mostLikelyScore, bestEdgeMarket } from "@/lib/football-correct-score";
 
-function formatKickoff(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-}
-
-function formatDay(iso: string): string {
-  const d = new Date(iso);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
-  if (d.toDateString() === tomorrow.toDateString()) return "Demain";
-  return d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
-}
-
 const dayCache = new Map<string, string>();
 
 function getDay(iso: string): string {
-  if (!dayCache.has(iso)) dayCache.set(iso, formatDay(iso));
+  if (!dayCache.has(iso)) dayCache.set(iso, parisDayLabel(iso));
   return dayCache.get(iso)!;
 }
 
@@ -265,7 +251,7 @@ export function FootballMatchCard({
           </div>
           <div className="flex items-center gap-1 text-xs text-white/60">
             <Clock className="h-3 w-3" />
-            <span>{formatKickoff(match.scheduledAt)}</span>
+            <span>{parisKickoff(match.scheduledAt)}</span>
             <span className="hidden text-[10px] sm:inline">
               · {getDay(match.scheduledAt)}
             </span>
