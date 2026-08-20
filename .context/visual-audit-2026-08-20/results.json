@@ -1,6 +1,6 @@
 {
   "base": "https://pariscore.fr",
-  "date": "2026-08-20T00:35:00.976Z",
+  "date": "2026-08-20T01:43:57.289Z",
   "results": [
     {
       "name": "home-load",
@@ -60,7 +60,7 @@
     {
       "name": "hero-lucide-icons",
       "ok": true,
-      "detail": "lucide svg=607 emojis=224"
+      "detail": "lucide svg=596 emojis=216"
     },
     {
       "name": "shot-home-desktop",
@@ -73,9 +73,19 @@
       "detail": "live-text-elements=0"
     },
     {
-      "name": "mobile-375",
-      "ok": false,
-      "detail": "page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://pariscore.fr/?v=audit-"
+      "name": "overflow-mobile-375",
+      "ok": true,
+      "detail": "scrollWidth=375 innerWidth=375"
+    },
+    {
+      "name": "shot-home-mobile",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile-nav",
+      "ok": true,
+      "detail": "navs=2"
     },
     {
       "name": "sw-cache-version",
