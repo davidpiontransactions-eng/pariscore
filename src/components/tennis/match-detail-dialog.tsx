@@ -58,7 +58,7 @@ function FormDot({ result }: { result: "W" | "L" }) {
   return (
     <span
       className={cn(
-        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold",
+        "inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[11px] font-bold",
         result === "W"
           ? "bg-emerald-500/20 text-emerald-600"
           : "bg-rose-500/20 text-rose-600",

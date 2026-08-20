@@ -44,11 +44,11 @@ export function MetricLeaderboardTable({ rankings, homeTeamName, awayTeamName }:
             </option>
           ))}
         </select>
-        <span className="text-[8px] text-muted-foreground/50">Saison complète</span>
+        <span className="text-[11px] text-muted-foreground/50">Saison complète</span>
       </div>
       <div className="max-h-64 overflow-y-auto">
         <table className="w-full text-[11px]">
-          <thead className="border-b border-border/30 text-[8px] uppercase tracking-wide text-muted-foreground">
+          <thead className="border-b border-border/30 text-[11px] uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="w-8 px-1.5 py-1 text-right">#</th>
               <th className="px-1 py-1 text-left">Équipe</th>
@@ -73,12 +73,12 @@ export function MetricLeaderboardTable({ rankings, homeTeamName, awayTeamName }:
                   <td className="flex items-center gap-1 px-1 py-1 font-medium">
                     <span className="truncate">{r.name}</span>
                     {isHome && (
-                      <span className="shrink-0 rounded bg-emerald-500/20 px-1 py-px text-[7px] font-bold text-emerald-700 dark:text-emerald-300">
+                      <span className="shrink-0 rounded bg-emerald-500/20 px-1 py-px text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
                         [H]
                       </span>
                     )}
                     {isAway && (
-                      <span className="shrink-0 rounded bg-rose-500/20 px-1 py-px text-[7px] font-bold text-rose-700 dark:text-rose-300">
+                      <span className="shrink-0 rounded bg-rose-500/20 px-1 py-px text-[11px] font-bold text-rose-700 dark:text-rose-300">
                         [A]
                       </span>
                     )}

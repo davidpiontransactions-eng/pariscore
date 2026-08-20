@@ -106,7 +106,7 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
             {fmtNum(pitcher.whip)}</span>
             {!pitcher.statsAvailable && (
               <span
-                className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[8px] font-bold uppercase tracking-wider text-amber-300"
+                className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[11px] font-bold uppercase tracking-wider text-amber-300"
                 title="Stats saison absentes — moyennes de ligue utilisées (repli bayésien)"
               >
                 repli ligue
@@ -145,7 +145,7 @@ export function PitcherBadge({ pitcher, side, compact = false }: PitcherBadgePro
           <span>ERA {fmtNum(pitcher.era)} · WHIP {fmtNum(pitcher.whip)} · {fmtWinLoss(pitcher.wins, pitcher.losses)}</span>
           {!pitcher.statsAvailable && (
             <span
-              className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[8px] font-bold uppercase tracking-wider text-amber-300"
+              className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-px text-[11px] font-bold uppercase tracking-wider text-amber-300"
               title="Stats saison absentes — moyennes de ligue utilisées (repli bayésien)"
             >
               repli ligue

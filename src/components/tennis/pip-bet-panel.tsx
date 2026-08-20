@@ -243,7 +243,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
                 du set (plus le set avance, plus le Markov domine). */}
             {liveState && (
               <span
-                className="ml-1 text-[8px] text-muted-foreground/50"
+                className="ml-1 text-[11px] text-muted-foreground/50"
                 title="Mélange pondéré : modèle Markov (réactif au score live) + cotes du marché (force globale des joueurs). Le poids du Markov augmente avec l'avancement du set — un break en fin de set pèse plus qu'au début."
               >
                 🔀 markov+marché

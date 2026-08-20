@@ -124,14 +124,14 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
           <Zap className="h-3 w-3" />
           {t("title")}
           {isLive && (
-            <span className="ml-1 rounded bg-rose-600/90 px-1 py-px text-[8px] font-bold uppercase text-white">
+            <span className="ml-1 rounded bg-rose-600/90 px-1 py-px text-[11px] font-bold uppercase text-white">
               live
             </span>
           )}
         </span>
         {isFallback && (
           <span
-            className="ml-1 rounded bg-amber-500/15 px-1 py-px text-[8px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400"
+            className="ml-1 rounded bg-amber-500/15 px-1 py-px text-[11px] font-bold uppercase tracking-wide text-amber-600 dark:text-amber-400"
             title={t("fallbackHint")}
           >
             {t("fallbackBadge")}
@@ -158,14 +158,14 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
         <div className="flex justify-between text-[11px] font-mono tabular-nums">
           <div className="flex flex-col items-start leading-tight">
             <span>{match.playerA.shortName} {probAMoreAces}%</span>
-            <span className="text-muted-foreground/50 text-[8px]">
+            <span className="text-muted-foreground/50 text-[11px]">
               {isFallback ? t("fallbackAces") : `${predictions.lambdaA} ${t("acesPerMatch")}`}
             </span>
           </div>
           <span className="self-start text-muted-foreground/60">{t("tie")} {probTie}%</span>
           <div className="flex flex-col items-end leading-tight">
             <span>{match.playerB.shortName} {probBMoreAces}%</span>
-            <span className="text-muted-foreground/50 text-[8px]">
+            <span className="text-muted-foreground/50 text-[11px]">
               {isFallback ? t("fallbackAces") : `${predictions.lambdaB} ${t("acesPerMatch")}`}
             </span>
           </div>

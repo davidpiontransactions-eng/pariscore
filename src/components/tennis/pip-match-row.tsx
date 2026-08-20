@@ -151,13 +151,13 @@ function CourtBackground() {
  *  gris sinon (sous-performant au retour). */
 function DrMoyenBadge({ drMoyen }: { drMoyen: number | null | undefined }) {
   if (drMoyen == null || !isFinite(drMoyen)) {
-    return <span className="text-[8px] text-muted-foreground/30 font-mono">DRmoy —</span>;
+    return <span className="text-[11px] text-muted-foreground/30 font-mono">DRmoy —</span>;
   }
   const val = drMoyen.toFixed(2);
   const colorClass =
     drMoyen >= 1.2 ? "text-emerald-300" : drMoyen >= 0.9 ? "text-amber-300" : "text-muted-foreground/70";
   return (
-    <span className={cn("text-[8px] font-mono tabular-nums font-semibold", colorClass)} title={`DR moyen match : ${val} (médiane 5 derniers matchs)`}>
+    <span className={cn("text-[11px] font-mono tabular-nums font-semibold", colorClass)} title={`DR moyen match : ${val} (médiane 5 derniers matchs)`}>
       DRmoy {val}
     </span>
   );
@@ -378,7 +378,7 @@ function PipMatchRowImpl({
 
         {/* 3e ligne : mini-sparkline DR momentum + valeur + feu tricolore */}
         <div className="flex items-center gap-2 mt-1 pt-1 border-t border-border/20">
-          <span className="text-[8px] text-muted-foreground/60 shrink-0">DR momentum</span>
+          <span className="text-[11px] text-muted-foreground/60 shrink-0">DR momentum</span>
           <span className="flex items-center gap-1.5 shrink-0">
             <DrSparkline drHistory={drHistory} currentDr={dr} />
           </span>
@@ -401,7 +401,7 @@ function PipMatchRowImpl({
 
         {/* 4e ligne : DR match (vrai ratio Sofascore) + DR par set */}
         {isLive && drMatch && (
-          <div className="flex items-center gap-1.5 mt-1 text-[8px] font-mono tabular-nums">
+          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono tabular-nums">
             <span className="text-muted-foreground/60 shrink-0">DR match</span>
             {/* DR match global par joueur */}
             <span className={cn("font-semibold", drColorClass(drMatch.drA))} title={`DR match ${shortName(playerA.name)} = ${formatDr(drMatch.drA)}`}>
@@ -433,7 +433,7 @@ function PipMatchRowImpl({
 
         {/* R10 : Métriques calculées compactes (DR + 2nd sv + alerte) */}
         {isLive && liveState?.calculated && (
-          <div className="flex items-center gap-1.5 mt-1 text-[8px] font-mono tabular-nums">
+          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono tabular-nums">
             {liveState.calculated.dr.levelA !== "neutral" && (
               <span className={cn("font-semibold", liveState.calculated.dr.drA > 1.15 ? "text-emerald-300" : "text-amber-300")}>
                 DR {liveState.calculated.dr.drA.toFixed(2)}

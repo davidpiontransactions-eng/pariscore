@@ -122,7 +122,7 @@ function XGSparkline({ points, homeName, awayName }: { points: CumulPoint[]; hom
         })()}
       </svg>
       {/* Axe minutes */}
-      <div className="mt-0.5 flex justify-between text-[8px] text-muted-foreground/60">
+      <div className="mt-0.5 flex justify-between text-[11px] text-muted-foreground/60">
         <span>0&apos;</span>
         <span>{Math.round(maxMin / 2)}&apos;</span>
         <span>{maxMin}&apos;</span>
@@ -321,7 +321,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             </div>
             <span className="text-xs font-semibold">{match.home.shortName}</span>
             {(match.home.topScorer || match.home.topAssister || match.home.topDefender) && (
-              <span className="flex flex-wrap items-center gap-x-1 text-[8px] leading-none text-muted-foreground">
+              <span className="flex flex-wrap items-center gap-x-1 text-[11px] leading-none text-muted-foreground">
                 {match.home.topScorer && (
                   <span className="tabular-nums" title={`⚽ ${match.home.topScorer.name}`}>⚽{match.home.topScorer.goals}</span>
                 )}
@@ -358,7 +358,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
             </div>
             <span className="text-xs font-semibold">{match.away.shortName}</span>
             {(match.away.topScorer || match.away.topAssister || match.away.topDefender) && (
-              <span className="flex flex-wrap items-center gap-x-1 text-[8px] leading-none text-muted-foreground">
+              <span className="flex flex-wrap items-center gap-x-1 text-[11px] leading-none text-muted-foreground">
                 {match.away.topScorer && (
                   <span className="tabular-nums" title={`⚽ ${match.away.topScorer.name}`}>⚽{match.away.topScorer.goals}</span>
                 )}

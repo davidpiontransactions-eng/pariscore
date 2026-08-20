@@ -37,7 +37,7 @@ function MetricBar({
 
   const fmtRank = (rank: number | null) =>
     rank != null ? (
-      <span className="ml-1 rounded bg-muted px-1 py-px text-[8px] tabular-nums text-muted-foreground">
+      <span className="ml-1 rounded bg-muted px-1 py-px text-[11px] tabular-nums text-muted-foreground">
         #{rank}/{rankTotal}
       </span>
     ) : null;
@@ -58,7 +58,7 @@ function MetricBar({
           {fmtVal(av)}{fmtRank(awayValue.rank)}
         </span>
       </div>
-      <div className="flex justify-between px-2 text-[8px] text-muted-foreground/60">
+      <div className="flex justify-between px-2 text-[11px] text-muted-foreground/60">
         <span className="w-[38%] text-right">{label}</span>
         <span className="flex-1" />
         <span className="w-[38%] text-left">{label}</span>
@@ -70,12 +70,12 @@ function MetricBar({
 function PanelHeader({ partial }: { partial: boolean }) {
   return (
     <>
-      <div className="flex items-center gap-1 px-2 pt-1 text-[8px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 px-2 pt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
         <Home className="h-2.5 w-2.5 text-emerald-500" /> Dom. &nbsp;
         <PlaneTakeoff className="h-2.5 w-2.5 text-rose-500" /> Ext.
       </div>
       {partial && (
-        <div className="mt-0.5 flex items-center gap-1 px-2 pb-1 text-[8px] text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-1 px-2 pb-1 text-[11px] text-muted-foreground">
           <span aria-hidden="true">⚠️</span> Données partielles (&lt; 3 matchs)
         </div>
       )}
@@ -176,7 +176,7 @@ export function MetricComparePanel({ home, away, partial, onRankingsTab }: Props
             {c.label}
           </button>
         ))}
-        <div className="ml-auto text-[8px] text-muted-foreground/50">Home / Away</div>
+        <div className="ml-auto text-[11px] text-muted-foreground/50">Home / Away</div>
       </div>
       <PanelHeader partial={partial} />
       {content}

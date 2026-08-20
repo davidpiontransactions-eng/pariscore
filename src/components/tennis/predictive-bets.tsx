@@ -144,7 +144,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
           <Target className="h-3 w-3" />
           {t("title")}
           {isLive && (
-            <span className="ml-1 rounded bg-rose-600/90 px-1 py-px text-[8px] font-bold uppercase text-white">
+            <span className="ml-1 rounded bg-rose-600/90 px-1 py-px text-[11px] font-bold uppercase text-white">
               live
             </span>
           )}

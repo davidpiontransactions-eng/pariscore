@@ -204,7 +204,7 @@ export function LiveStatsBreakdown({
             <TrendingUp className="h-3 w-3 text-emerald-400" aria-hidden="true" />
             Probabilités live projetées
           </span>
-          <span className="text-[8px] uppercase tracking-wider text-muted-foreground/60">
+          <span className="text-[11px] uppercase tracking-wider text-muted-foreground/60">
             {markets.source === "xg" ? "basées xG live" : "estimées pré-match"}
           </span>
         </div>
@@ -218,7 +218,7 @@ export function LiveStatsBreakdown({
             { label: awayName, val: `${markets.awayWin}%` },
           ].map((cell) => (
             <div key={cell.label} className="rounded-lg bg-slate-900/60 px-1 py-1.5">
-              <p className="truncate text-[8px] uppercase tracking-wider text-muted-foreground">{cell.label}</p>
+              <p className="truncate text-[11px] uppercase tracking-wider text-muted-foreground">{cell.label}</p>
               <p className="text-[11px] font-bold tabular-nums text-slate-100">{cell.val}</p>
             </div>
           ))}

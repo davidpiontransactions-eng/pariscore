@@ -216,7 +216,7 @@ export function CyclingTabContent() {
                         className="flex items-center gap-2.5 text-xs"
                       >
                         <span className={cn(
-                          "flex h-4 w-4 shrink-0 items-center justify-center rounded text-[8px] font-bold",
+                          "flex h-4 w-4 shrink-0 items-center justify-center rounded text-[11px] font-bold",
                           i < 3 ? "bg-amber-500/20 text-amber-400" : "bg-slate-800 text-slate-400",
                         )}>
                           {i + 1}

@@ -524,10 +524,10 @@ export function FootballMatchCard({
                 {match.home.topScorer ? (
                   <>
                     <PlayerAvatar name={match.home.topScorer.name} photoUrl={match.home.topScorer.photoUrl} color="#10b981" size="sm" sport="football" />
-                    <span className="mt-1 text-[8px] font-semibold truncate w-full text-emerald-400">{match.home.topScorer.name}</span>
-                    <span className="text-[8px] tabular-nums text-muted-foreground">⚽ {match.home.topScorer.goals} buts</span>
+                    <span className="mt-1 text-[11px] font-semibold truncate w-full text-emerald-400">{match.home.topScorer.name}</span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">⚽ {match.home.topScorer.goals} buts</span>
                     {match.home.topScorer.xgPerMatch != null && (
-                      <span className="text-[7px] text-muted-foreground/50 tabular-nums">xG {match.home.topScorer.xgPerMatch.toFixed(1)}/m</span>
+                      <span className="text-[11px] text-muted-foreground/50 tabular-nums">xG {match.home.topScorer.xgPerMatch.toFixed(1)}/m</span>
                     )}
                   </>
                 ) : (
@@ -538,10 +538,10 @@ export function FootballMatchCard({
                 {match.home.topAssister ? (
                   <>
                     <PlayerAvatar name={match.home.topAssister.name} photoUrl={match.home.topAssister.photoUrl} color="#0ea5e9" size="sm" sport="football" />
-                    <span className="mt-1 text-[8px] font-semibold truncate w-full text-sky-400">{match.home.topAssister.name}</span>
-                    <span className="text-[8px] tabular-nums text-muted-foreground">🎯 {match.home.topAssister.assists} passes</span>
+                    <span className="mt-1 text-[11px] font-semibold truncate w-full text-sky-400">{match.home.topAssister.name}</span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">🎯 {match.home.topAssister.assists} passes</span>
                     {match.home.topAssister.keyPasses != null && (
-                      <span className="text-[7px] text-muted-foreground/50 tabular-nums">KP {match.home.topAssister.keyPasses.toFixed(1)}/m</span>
+                      <span className="text-[11px] text-muted-foreground/50 tabular-nums">KP {match.home.topAssister.keyPasses.toFixed(1)}/m</span>
                     )}
                   </>
                 ) : (
@@ -552,10 +552,10 @@ export function FootballMatchCard({
                 {match.home.topDefender ? (
                   <>
                     <PlayerAvatar name={match.home.topDefender.name} photoUrl={match.home.topDefender.photoUrl} color="#8b5cf6" size="sm" sport="football" />
-                    <span className="mt-1 text-[8px] font-semibold truncate w-full text-violet-400">{match.home.topDefender.name}</span>
-                    <span className="text-[8px] tabular-nums text-muted-foreground">🛡️ {match.home.topDefender.tackles} tacles</span>
+                    <span className="mt-1 text-[11px] font-semibold truncate w-full text-violet-400">{match.home.topDefender.name}</span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">🛡️ {match.home.topDefender.tackles} tacles</span>
                     {match.home.topDefender.duelsWonPct != null && (
-                      <span className="text-[7px] text-muted-foreground/50 tabular-nums">Duels {match.home.topDefender.duelsWonPct}%</span>
+                      <span className="text-[11px] text-muted-foreground/50 tabular-nums">Duels {match.home.topDefender.duelsWonPct}%</span>
                     )}
                   </>
                 ) : (
@@ -569,10 +569,10 @@ export function FootballMatchCard({
                 {match.away.topScorer ? (
                   <>
                     <PlayerAvatar name={match.away.topScorer.name} photoUrl={match.away.topScorer.photoUrl} color="#f43f5e" size="sm" sport="football" />
-                    <span className="mt-1 text-[8px] font-semibold truncate w-full text-rose-400">{match.away.topScorer.name}</span>
-                    <span className="text-[8px] tabular-nums text-muted-foreground">⚽ {match.away.topScorer.goals} buts</span>
+                    <span className="mt-1 text-[11px] font-semibold truncate w-full text-rose-400">{match.away.topScorer.name}</span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">⚽ {match.away.topScorer.goals} buts</span>
                     {match.away.topScorer.xgPerMatch != null && (
-                      <span className="text-[7px] text-muted-foreground/50 tabular-nums">xG {match.away.topScorer.xgPerMatch.toFixed(1)}/m</span>
+                      <span className="text-[11px] text-muted-foreground/50 tabular-nums">xG {match.away.topScorer.xgPerMatch.toFixed(1)}/m</span>
                     )}
                   </>
                 ) : (
@@ -583,10 +583,10 @@ export function FootballMatchCard({
                 {match.away.topAssister ? (
                   <>
                     <PlayerAvatar name={match.away.topAssister.name} photoUrl={match.away.topAssister.photoUrl} color="#0ea5e9" size="sm" sport="football" />
-                    <span className="mt-1 text-[8px] font-semibold truncate w-full text-sky-400">{match.away.topAssister.name}</span>
-                    <span className="text-[8px] tabular-nums text-muted-foreground">🎯 {match.away.topAssister.assists} passes</span>
+                    <span className="mt-1 text-[11px] font-semibold truncate w-full text-sky-400">{match.away.topAssister.name}</span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">🎯 {match.away.topAssister.assists} passes</span>
                     {match.away.topAssister.keyPasses != null && (
-                      <span className="text-[7px] text-muted-foreground/50 tabular-nums">KP {match.away.topAssister.keyPasses.toFixed(1)}/m</span>
+                      <span className="text-[11px] text-muted-foreground/50 tabular-nums">KP {match.away.topAssister.keyPasses.toFixed(1)}/m</span>
                     )}
                   </>
                 ) : (
@@ -597,10 +597,10 @@ export function FootballMatchCard({
                 {match.away.topDefender ? (
                   <>
                     <PlayerAvatar name={match.away.topDefender.name} photoUrl={match.away.topDefender.photoUrl} color="#8b5cf6" size="sm" sport="football" />
-                    <span className="mt-1 text-[8px] font-semibold truncate w-full text-violet-400">{match.away.topDefender.name}</span>
-                    <span className="text-[8px] tabular-nums text-muted-foreground">🛡️ {match.away.topDefender.tackles} tacles</span>
+                    <span className="mt-1 text-[11px] font-semibold truncate w-full text-violet-400">{match.away.topDefender.name}</span>
+                    <span className="text-[11px] tabular-nums text-muted-foreground">🛡️ {match.away.topDefender.tackles} tacles</span>
                     {match.away.topDefender.duelsWonPct != null && (
-                      <span className="text-[7px] text-muted-foreground/50 tabular-nums">Duels {match.away.topDefender.duelsWonPct}%</span>
+                      <span className="text-[11px] text-muted-foreground/50 tabular-nums">Duels {match.away.topDefender.duelsWonPct}%</span>
                     )}
                   </>
                 ) : (
@@ -709,7 +709,7 @@ export function FootballMatchCard({
                       </div>
                       {/* League stats sub-row */}
                       {seasonStat && (
-                        <div className="flex items-center gap-2 pl-[80px] text-[8px] text-muted-foreground/60">
+                        <div className="flex items-center gap-2 pl-[80px] text-[11px] text-muted-foreground/60">
                           <span className="inline-flex items-center gap-0.5">
                             <Home className="h-2.5 w-2.5 text-emerald-500/60" />
                             <span className="tabular-nums">{seasonStat.homeAvg.toFixed(1)}/m</span>
@@ -774,7 +774,7 @@ export function FootballMatchCard({
                                   transition={{ duration: 0.6, ease: "easeOut" }}
                                   className={`h-full ${homeDom ? "bg-emerald-500" : "bg-slate-500"} relative`}
                                 >
-                                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/90 tabular-nums">
+                                  <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white/90 tabular-nums">
                                     {homePct > 25 ? `${homePct}%` : ""}
                                   </span>
                                 </motion.div>
@@ -784,7 +784,7 @@ export function FootballMatchCard({
                                   transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
                                   className={`h-full ${!homeDom ? "bg-rose-500" : "bg-slate-600"} relative`}
                                 >
-                                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white/90 tabular-nums">
+                                  <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-white/90 tabular-nums">
                                     {awayPct > 25 ? `${awayPct}%` : ""}
                                   </span>
                                 </motion.div>
@@ -821,7 +821,7 @@ export function FootballMatchCard({
                   <Home className="h-3 w-3 shrink-0 text-emerald-500" />
                   <span className="truncate">{match.home.shortName || match.home.name}</span>
                 </span>
-                <span className="text-[8px] text-muted-foreground/40">vs</span>
+                <span className="text-[11px] text-muted-foreground/40">vs</span>
                 <span className="flex items-center justify-end gap-1 truncate">
                   <span className="truncate">{match.away.shortName || match.away.name}</span>
                   <PlaneTakeoff className="h-3 w-3 shrink-0 text-rose-500" />

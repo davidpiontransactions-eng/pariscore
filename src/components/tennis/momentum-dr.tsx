@@ -362,7 +362,7 @@ export function MomentumDR({
 
             {/* Serve indicator */}
             <div className="mb-1.5 text-center">
-              <span className="rounded-full bg-muted-foreground/10 px-2 py-0.5 text-[8px] font-mono text-muted-foreground/60">
+              <span className="rounded-full bg-muted-foreground/10 px-2 py-0.5 text-[11px] font-mono text-muted-foreground/60">
                 {t("servingLabel", { name: serverLabel })}
               </span>
             </div>
@@ -570,8 +570,8 @@ export function MomentumDR({
               </AnimatePresence>
 
               {/* Y-axis labels */}
-              <span className="absolute -top-0.5 right-0 text-[8px] font-mono text-muted-foreground/40">+1</span>
-              <span className="absolute -bottom-0.5 right-0 text-[8px] font-mono text-muted-foreground/40">-1</span>
+              <span className="absolute -top-0.5 right-0 text-[11px] font-mono text-muted-foreground/40">+1</span>
+              <span className="absolute -bottom-0.5 right-0 text-[11px] font-mono text-muted-foreground/40">-1</span>
               <AnimatePresence>
                 {setWinners.length > 0 && (
                   <motion.div
@@ -582,7 +582,7 @@ export function MomentumDR({
                     {setWinners.map((w, i) => (
                       <span
                         key={i}
-                        className="inline-block rounded-sm px-1 text-[7px] font-bold leading-[12px]"
+                        className="inline-block rounded-sm px-1 text-[11px] font-bold leading-[12px]"
                         style={
                           w === "A"
                             ? { backgroundColor: `${player1Color}33`, color: player1Color }
