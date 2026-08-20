@@ -10,6 +10,7 @@
 // LIVE (match-card-broadcast) et les vues détail.
 
 import { useTranslations } from "next-intl";
+import { Info } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { L10SurfaceScoreResult } from "@/types/tennis-l10";
 import { cn } from "@/lib/utils";
@@ -52,7 +53,7 @@ export function L10SurfaceBadge({ stats, surface, compact = false }: Props) {
         <button
           type="button"
           className={cn(
-            "inline-flex items-center gap-0.5 rounded border px-1.5 py-px font-medium",
+            "inline-flex cursor-help items-center gap-0.5 rounded border px-1.5 py-px font-medium",
             PERF_STYLES[stats.performance],
           )}
           aria-label={t("l10Surface")}
@@ -68,6 +69,15 @@ export function L10SurfaceBadge({ stats, surface, compact = false }: Props) {
           >
             {stats.wins}-{stats.losses}
           </span>
+          {/* Indicateur ⓘ explicite : signale que le badge est survolable
+              (historique des 10 matchs + points + tournoi au tooltip). */}
+          <Info
+            className={cn(
+              "h-3 w-3 shrink-0 opacity-70",
+              compact && "hidden sm:inline-block",
+            )}
+            aria-hidden
+          />
         </button>
       </TooltipTrigger>
       <TooltipContent
