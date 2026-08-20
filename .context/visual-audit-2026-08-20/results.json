@@ -1,0 +1,96 @@
+{
+  "base": "https://pariscore.fr",
+  "date": "2026-08-20T00:35:00.976Z",
+  "results": [
+    {
+      "name": "home-load",
+      "ok": true,
+      "detail": "title=PariScore · Tennis Prematch"
+    },
+    {
+      "name": "token-accent",
+      "ok": true,
+      "detail": "--accent=lab(75.8206% -64.9624 22.4718)"
+    },
+    {
+      "name": "token-bg-deep",
+      "ok": true,
+      "detail": "--bg-deep=#0a0e17 body=lab(2.75381 0 0)"
+    },
+    {
+      "name": "token-motion",
+      "ok": true,
+      "detail": "--motion-fast=.15s --motion-med=.3s"
+    },
+    {
+      "name": "ambient-sections",
+      "ok": true,
+      "detail": "1 .sport-ambient elements"
+    },
+    {
+      "name": "font-sans",
+      "ok": true,
+      "detail": "DOM fonts=geist,archivo"
+    },
+    {
+      "name": "css-keyframes-pulse-soft",
+      "ok": true,
+      "detail": "2 css files"
+    },
+    {
+      "name": "css-keyframes-aurora",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "css-motion-tokens",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "font-min-11px",
+      "ok": true,
+      "detail": "min=11px sub11=0 sub10=0"
+    },
+    {
+      "name": "overflow-desktop",
+      "ok": true,
+      "detail": "scrollWidth=1440 innerWidth=1440"
+    },
+    {
+      "name": "hero-lucide-icons",
+      "ok": true,
+      "detail": "lucide svg=607 emojis=224"
+    },
+    {
+      "name": "shot-home-desktop",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "football-page",
+      "ok": true,
+      "detail": "live-text-elements=0"
+    },
+    {
+      "name": "mobile-375",
+      "ok": false,
+      "detail": "page.goto: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"https://pariscore.fr/?v=audit-"
+    },
+    {
+      "name": "sw-cache-version",
+      "ok": true,
+      "detail": "CACHE_VERSION=v6"
+    },
+    {
+      "name": "no-js-errors",
+      "ok": true,
+      "detail": "clean"
+    }
+  ],
+  "screenshots": [
+    "home-desktop.png",
+    "football-desktop.png",
+    "home-mobile.png"
+  ]
+}

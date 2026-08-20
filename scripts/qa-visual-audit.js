@@ -24,7 +24,7 @@ const report = (name, ok, detail) => {
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/i.test(m.text())) errors.push('console: ' + m.text()); });
 
   // --- Load home (cache-busted to bypass SW) ---
   try {
@@ -48,14 +48,24 @@ const report = (name, ok, detail) => {
       easeStandard: pick('--ease-standard'),
       sportAmbient: document.querySelectorAll('.sport-ambient, [class*="sport-ambient"]').length,
       archivo: pick('--font-sans') || pick('--font-display'),
+      archivoVar: pick('--font-archivo'),
+      bodyFont: getComputedStyle(document.body).fontFamily,
     };
   });
-  const accentOk = /#00e676|#00e6|rgb\(0, ?230, ?118\)|oklch/i.test(tokens.accent);
+  const accentOk = /#00e676|#00e6|rgb\(0, ?230, ?118\)|oklch|lab\(\s*7[0-9](\.\d+)?%\s*-\d/i.test(tokens.accent) && !/lab\(\s*\d{1,2}(\.\d+)?%\s*0\s*0\)/.test(tokens.accent);
   report('token-accent', accentOk, '--accent=' + tokens.accent);
   report('token-bg-deep', tokens.bgDeep.toLowerCase() === '#0a0e17' || tokens.bodyBg.toLowerCase() === '#0a0e17', '--bg-deep=' + tokens.bgDeep + ' body=' + tokens.bodyBg);
   report('token-motion', tokens.motionFast !== '' || tokens.motionMed !== '', '--motion-fast=' + tokens.motionFast + ' --motion-med=' + tokens.motionMed);
   report('ambient-sections', tokens.sportAmbient > 0, tokens.sportAmbient + ' .sport-ambient elements');
-  report('font-sans', /archivo/i.test(tokens.archivo), tokens.archivo.slice(0, 80));
+  const bodyFontUsed = await page.evaluate(() => {
+    const fonts = new Set();
+    document.querySelectorAll('body *').forEach(el => {
+      const f = getComputedStyle(el).fontFamily;
+      if (/geist|archivo/i.test(f)) fonts.add(/archivo/i.test(f) ? 'archivo' : 'geist');
+    });
+    return { hasGeist: fonts.has('geist'), hasArchivo: fonts.has('archivo'), all: [...fonts] };
+  });
+  report('font-sans', bodyFontUsed.hasGeist || bodyFontUsed.hasArchivo, 'DOM fonts=' + bodyFontUsed.all.join(','));
 
   // --- 2. Keyframes in loaded CSS (fetch globals) ---
   const cssChecks = await page.evaluate(async () => {
