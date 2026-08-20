@@ -126,10 +126,11 @@ export function FootballTabContent() {
 
   const liveMatches = useMemo(() => {
     let list = matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT"));
+    if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
     if (timeRange !== null) list = filterLiveByWindow(list, timeRange, (m) => m.scheduledAt);
     else if (timeToday) list = filterByToday(list, (m) => m.scheduledAt);
     return filterBySelection(list, selectedMatchIds, (m) => m.id);
-  }, [matches, timeRange, timeToday, selectedMatchIds]);
+  }, [matches, selectedLeague, timeRange, timeToday, selectedMatchIds]);
 
   const prematchMatches = useMemo(() => {
     let list = matches.filter((m) => !m.live || m.live.status === "FT" || m.live.status === "PEN");
