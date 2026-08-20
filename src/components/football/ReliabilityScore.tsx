@@ -29,11 +29,11 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
   return (
     <section className={cn("rounded-2xl border border-border/70 bg-card p-4", className)} aria-label="Fiabilité du système">
       <header className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+        <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           <Gauge className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
           Fiabilité du système
         </h3>
-        <span className="text-[11px] text-muted-foreground">{finishedCount} match(s) terminé(s)</span>
+        <span className="text-xs text-muted-foreground">{finishedCount} match(s) terminé(s)</span>
       </header>
 
       {finishedCount === 0 ? (
@@ -47,7 +47,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value as StakingMethod)}
-              className="rounded-md border border-border bg-background px-2 py-1 text-[11px]"
+              className="rounded-md border border-border bg-background px-2 py-1 text-xs"
               aria-label="Méthode de staking"
             >
               {(Object.keys(STAKING_LABELS) as StakingMethod[]).map((m) => (
@@ -63,7 +63,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
                   type="button"
                   onClick={() => setWindowDays(d)}
                   className={cn(
-                    "rounded px-2 py-0.5 text-[11px] font-semibold transition-colors",
+                    "rounded px-2 py-0.5 text-xs font-semibold transition-colors",
                     windowDays === d ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -88,7 +88,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
                 </span>
                 {reliability.overall}
               </span>
-              <span className="text-[11px] uppercase tracking-wider text-muted-foreground">/ 100</span>
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">/ 100</span>
             </div>
             <div className="grid flex-1 grid-cols-3 gap-2 text-center">
               <div>
@@ -96,17 +96,17 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
                   {backtest.unitsProfit >= 0 ? "+" : ""}
                   {backtest.unitsProfit.toFixed(1)}u
                 </p>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Profit</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Profit</p>
               </div>
               <div>
                 <p className="text-sm font-bold tabular-nums text-foreground">{backtest.roi.toFixed(1)}%</p>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">ROI</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">ROI</p>
               </div>
               <div>
                 <p className="text-sm font-bold tabular-nums text-foreground">
                   {backtest.wins}/{backtest.totalBets}
                 </p>
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Gagnés</p>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">Gagnés</p>
               </div>
             </div>
           </div>
@@ -115,7 +115,7 @@ export function ReliabilityScore({ state, className }: { state: FootballBacktest
           <ul className="space-y-2">
             {reliability.pillars.map((p) => (
               <li key={p.key}>
-                <div className="mb-0.5 flex items-center justify-between gap-2 text-[11px]">
+                <div className="mb-0.5 flex items-center justify-between gap-2 text-xs">
                   <span className="font-medium text-foreground">{p.label}</span>
                   <span className="tabular-nums text-muted-foreground">
                     {p.score} · {p.detail}

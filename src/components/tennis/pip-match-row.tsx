@@ -151,13 +151,13 @@ function CourtBackground() {
  *  gris sinon (sous-performant au retour). */
 function DrMoyenBadge({ drMoyen }: { drMoyen: number | null | undefined }) {
   if (drMoyen == null || !isFinite(drMoyen)) {
-    return <span className="text-[11px] text-muted-foreground/30 font-mono">DRmoy —</span>;
+    return <span className="text-xs text-muted-foreground/30 font-mono">DRmoy —</span>;
   }
   const val = drMoyen.toFixed(2);
   const colorClass =
     drMoyen >= 1.2 ? "text-emerald-300" : drMoyen >= 0.9 ? "text-amber-300" : "text-muted-foreground/70";
   return (
-    <span className={cn("text-[11px] font-mono tabular-nums font-semibold", colorClass)} title={`DR moyen match : ${val} (médiane 5 derniers matchs)`}>
+    <span className={cn("text-xs font-mono tabular-nums font-semibold", colorClass)} title={`DR moyen match : ${val} (médiane 5 derniers matchs)`}>
       DRmoy {val}
     </span>
   );
@@ -290,14 +290,14 @@ function PipMatchRowImpl({
         {/* Badge 🔥 value alert : palier pair jeux joués set + DR P1/P2 ≥ 1.2 */}
         {valueAlert.active && (
           <span
-            className="absolute -top-1.5 -right-1.5 z-20 flex items-center gap-0.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-[11px] font-bold text-white shadow-lg ring-2 ring-card animate-pulse"
+            className="absolute -top-1.5 -right-1.5 z-20 flex items-center gap-0.5 rounded-full bg-orange-500 px-1.5 py-0.5 text-xs font-bold text-white shadow-lg ring-2 ring-card animate-pulse"
             title={`🔥 Value bet — ${valueAlert.totalGamesInSet} jeux joués dans le set (${valueAlert.setScore?.gamesA}-${valueAlert.setScore?.gamesB}) · ${valueAlert.leader === "A" ? shortName(playerA.name) : shortName(playerB.name)} dominant (DR match ${valueAlert.drLeader?.toFixed(2)} ≥ 1.2)`}
           >
             🔥 value
           </span>
         )}
         {/* Joueur A */}
-        <div className="flex items-center gap-2 text-[11px]">
+        <div className="flex items-center gap-2 text-xs">
           <span className="flex items-center gap-1 w-[80px] shrink-0">
             {isLive && liveState!.server === "A" && (
               <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" title="Au service" />
@@ -306,7 +306,7 @@ function PipMatchRowImpl({
           </span>
           {/* Cote décimale live A (badge discret) */}
           {isLive && liveState!.oddsA != null && (
-            <span className="rounded bg-amber-500/15 px-1 text-[11px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerA.name)} : ${liveState!.oddsA.toFixed(2)}`}>
+            <span className="rounded bg-amber-500/15 px-1 text-xs font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerA.name)} : ${liveState!.oddsA.toFixed(2)}`}>
               {liveState!.oddsA.toFixed(2)}
             </span>
           )}
@@ -320,7 +320,7 @@ function PipMatchRowImpl({
               <span className="text-amber-400">{formatPoint(liveState!.scoreA.points)}</span>
             </span>
           ) : (
-            <span className="text-[11px] text-muted-foreground/60 italic shrink-0">prématch</span>
+            <span className="text-xs text-muted-foreground/60 italic shrink-0">prématch</span>
           )}
 
           {/* DR moyen match de A */}
@@ -330,7 +330,7 @@ function PipMatchRowImpl({
         </div>
 
         {/* Joueur B */}
-        <div className="flex items-center gap-2 text-[11px] mt-0.5">
+        <div className="flex items-center gap-2 text-xs mt-0.5">
           <span className="flex items-center gap-1 w-[80px] shrink-0">
             {isLive && liveState!.server === "B" && (
               <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" title="Au service" />
@@ -339,7 +339,7 @@ function PipMatchRowImpl({
           </span>
           {/* Cote décimale live B (badge discret) */}
           {isLive && liveState!.oddsB != null && (
-            <span className="rounded bg-amber-500/15 px-1 text-[11px] font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerB.name)} : ${liveState!.oddsB.toFixed(2)}`}>
+            <span className="rounded bg-amber-500/15 px-1 text-xs font-mono tabular-nums text-amber-300 shrink-0" title={`Cote ${shortName(playerB.name)} : ${liveState!.oddsB.toFixed(2)}`}>
               {liveState!.oddsB.toFixed(2)}
             </span>
           )}
@@ -353,7 +353,7 @@ function PipMatchRowImpl({
               <span className="text-amber-400">{formatPoint(liveState!.scoreB.points)}</span>
             </span>
           ) : (
-            <span className="text-[11px] text-muted-foreground/60 italic shrink-0">prématch</span>
+            <span className="text-xs text-muted-foreground/60 italic shrink-0">prématch</span>
           )}
 
           {/* DR moyen match de B */}
@@ -364,7 +364,7 @@ function PipMatchRowImpl({
 
         {/* Cotes vainqueur du set en cours (sous le score, dérivées Markov) */}
         {isLive && setOdds && (
-          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono tabular-nums text-muted-foreground/80">
+          <div className="flex items-center gap-1.5 mt-1 text-xs font-mono tabular-nums text-muted-foreground/80">
             <span className="text-muted-foreground/50">Cotes set {setOdds.currentSetNumber}</span>
             <span className="rounded bg-amber-500/15 px-1 text-amber-300 font-semibold" title={`Cote vainqueur set ${setOdds.currentSetNumber} — ${shortName(playerA.name)} : ${setOdds.oddsA.toFixed(2)}`}>
               {shortName(playerA.name).substring(0, 4)} {setOdds.oddsA.toFixed(2)}
@@ -378,19 +378,19 @@ function PipMatchRowImpl({
 
         {/* 3e ligne : mini-sparkline DR momentum + valeur + feu tricolore */}
         <div className="flex items-center gap-2 mt-1 pt-1 border-t border-border/20">
-          <span className="text-[11px] text-muted-foreground/60 shrink-0">DR momentum</span>
+          <span className="text-xs text-muted-foreground/60 shrink-0">DR momentum</span>
           <span className="flex items-center gap-1.5 shrink-0">
             <DrSparkline drHistory={drHistory} currentDr={dr} />
           </span>
           <span
-            className="ml-auto font-mono tabular-nums text-[11px] font-semibold shrink-0"
+            className="ml-auto font-mono tabular-nums text-xs font-semibold shrink-0"
             style={{ color: drColor }}
           >
             {isLive ? drLabel : "—"}
           </span>
           <span
             className={cn(
-              "px-1.5 py-0.5 rounded text-[11px] font-bold shrink-0",
+              "px-1.5 py-0.5 rounded text-xs font-bold shrink-0",
               decision.bgClass,
               decision.colorClass,
             )}
@@ -401,7 +401,7 @@ function PipMatchRowImpl({
 
         {/* 4e ligne : DR match (vrai ratio Sofascore) + DR par set */}
         {isLive && drMatch && (
-          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono tabular-nums">
+          <div className="flex items-center gap-1.5 mt-1 text-xs font-mono tabular-nums">
             <span className="text-muted-foreground/60 shrink-0">DR match</span>
             {/* DR match global par joueur */}
             <span className={cn("font-semibold", drColorClass(drMatch.drA))} title={`DR match ${shortName(playerA.name)} = ${formatDr(drMatch.drA)}`}>
@@ -433,7 +433,7 @@ function PipMatchRowImpl({
 
         {/* R10 : Métriques calculées compactes (DR + 2nd sv + alerte) */}
         {isLive && liveState?.calculated && (
-          <div className="flex items-center gap-1.5 mt-1 text-[11px] font-mono tabular-nums">
+          <div className="flex items-center gap-1.5 mt-1 text-xs font-mono tabular-nums">
             {liveState.calculated.dr.levelA !== "neutral" && (
               <span className={cn("font-semibold", liveState.calculated.dr.drA > 1.15 ? "text-emerald-300" : "text-amber-300")}>
                 DR {liveState.calculated.dr.drA.toFixed(2)}

@@ -37,7 +37,7 @@ function MetricBar({
 
   const fmtRank = (rank: number | null) =>
     rank != null ? (
-      <span className="ml-1 rounded bg-muted px-1 py-px text-[11px] tabular-nums text-muted-foreground">
+      <span className="ml-1 rounded bg-muted px-1 py-px text-xs tabular-nums text-muted-foreground">
         #{rank}/{rankTotal}
       </span>
     ) : null;
@@ -47,18 +47,18 @@ function MetricBar({
   return (
     <div className="mb-px">
       <div className="flex items-center gap-1 px-2 py-1.5">
-        <span className="w-[38%] text-right text-[11px] font-medium tabular-nums text-foreground">
+        <span className="w-[38%] text-right text-xs font-medium tabular-nums text-foreground">
           {fmtVal(hv)}{fmtRank(homeValue.rank)}
         </span>
         <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted">
           <div className="h-full bg-emerald-500/70 transition-all" style={{ width: `${hp}%` }} />
           <div className="h-full bg-rose-500/70 transition-all" style={{ width: `${ap}%` }} />
         </div>
-        <span className="w-[38%] text-[11px] font-medium tabular-nums text-foreground">
+        <span className="w-[38%] text-xs font-medium tabular-nums text-foreground">
           {fmtVal(av)}{fmtRank(awayValue.rank)}
         </span>
       </div>
-      <div className="flex justify-between px-2 text-[11px] text-muted-foreground/60">
+      <div className="flex justify-between px-2 text-xs text-muted-foreground/60">
         <span className="w-[38%] text-right">{label}</span>
         <span className="flex-1" />
         <span className="w-[38%] text-left">{label}</span>
@@ -70,12 +70,12 @@ function MetricBar({
 function PanelHeader({ partial }: { partial: boolean }) {
   return (
     <>
-      <div className="flex items-center gap-1 px-2 pt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1 px-2 pt-1 text-xs uppercase tracking-wide text-muted-foreground">
         <Home className="h-2.5 w-2.5 text-emerald-500" /> Dom. &nbsp;
         <PlaneTakeoff className="h-2.5 w-2.5 text-rose-500" /> Ext.
       </div>
       {partial && (
-        <div className="mt-0.5 flex items-center gap-1 px-2 pb-1 text-[11px] text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-1 px-2 pb-1 text-xs text-muted-foreground">
           <span aria-hidden="true">⚠️</span> Données partielles (&lt; 3 matchs)
         </div>
       )}
@@ -169,14 +169,14 @@ export function MetricComparePanel({ home, away, partial, onRankingsTab }: Props
             key={c.key}
             onClick={() => setCat(c.key)}
             className={cn(
-              "rounded px-2 py-0.5 text-[11px] font-medium transition-colors",
+              "rounded px-2 py-0.5 text-xs font-medium transition-colors",
               cat === c.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {c.label}
           </button>
         ))}
-        <div className="ml-auto text-[11px] text-muted-foreground/50">Home / Away</div>
+        <div className="ml-auto text-xs text-muted-foreground/50">Home / Away</div>
       </div>
       <PanelHeader partial={partial} />
       {content}

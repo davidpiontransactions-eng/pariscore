@@ -221,7 +221,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           type="button"
           onClick={() => setShowFilters((v) => !v)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
             showFilters
               ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
               : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -230,7 +230,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           <SlidersHorizontal className="h-3 w-3" />
           Filtres
           {(minEloGap !== 150 || minSps !== 55) && (
-            <span className="inline-flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[11px] font-bold text-emerald-300">
+            <span className="inline-flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-xs font-bold text-emerald-300">
               !
             </span>
           )}
@@ -239,7 +239,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           <button
             type="button"
             onClick={() => { setMinEloGap(150); setMinSps(55); }}
-            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-3 w-3" />
             Réinitialiser
@@ -251,8 +251,8 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         <div className="rounded-xl border border-border/60 bg-muted/20 p-3 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-muted-foreground">ΔElo minimum</label>
-              <span className="text-[11px] font-mono font-semibold text-emerald-400 tabular-nums">{minEloGap}</span>
+              <label className="text-xs font-medium text-muted-foreground">ΔElo minimum</label>
+              <span className="text-xs font-mono font-semibold text-emerald-400 tabular-nums">{minEloGap}</span>
             </div>
             <Slider
               value={[minEloGap]}
@@ -262,7 +262,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               step={10}
               className="w-full"
             />
-            <div className="flex justify-between text-[11px] text-muted-foreground/60">
+            <div className="flex justify-between text-xs text-muted-foreground/60">
               <span>0 (tout)</span>
               <span>150 (défaut)</span>
               <span>300 (strict)</span>
@@ -270,8 +270,8 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-medium text-muted-foreground">SPS minimum</label>
-              <span className="text-[11px] font-mono font-semibold text-emerald-400 tabular-nums">{minSps}</span>
+              <label className="text-xs font-medium text-muted-foreground">SPS minimum</label>
+              <span className="text-xs font-mono font-semibold text-emerald-400 tabular-nums">{minSps}</span>
             </div>
             <Slider
               value={[minSps]}
@@ -281,7 +281,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               step={5}
               className="w-full"
             />
-            <div className="flex justify-between text-[11px] text-muted-foreground/60">
+            <div className="flex justify-between text-xs text-muted-foreground/60">
               <span>0 (tout)</span>
               <span>55 (défaut)</span>
               <span>100 (max)</span>
@@ -307,7 +307,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           >
             {tab.label}
             {tab.matches.length > 0 && (
-              <span className="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-[11px] font-bold text-emerald-300">
+              <span className="ml-1.5 inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-emerald-500/30 px-1 text-xs font-bold text-emerald-300">
                 {tab.matches.length}
               </span>
             )}
@@ -323,7 +323,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             className="shrink-0 cursor-not-allowed rounded-full bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground/60"
           >
             🎯 Darts
-            <span className="ml-1.5 text-[11px] font-bold uppercase tracking-wider">
+            <span className="ml-1.5 text-xs font-bold uppercase tracking-wider">
               Bientôt
             </span>
           </button>
@@ -395,11 +395,11 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               <span className="text-xl shrink-0">{SPORT_ICONS[match.sport]}</span>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-semibold truncate block">{match.matchName}</span>
-                <span className="text-[11px] text-muted-foreground">{match.detail1}</span>
+                <span className="text-xs text-muted-foreground">{match.detail1}</span>
               </div>
               <div className="text-right shrink-0">
-                <span className="block text-[11px] text-muted-foreground">{match.detail2}</span>
-                <span className="text-[11px] font-mono text-zinc-500">
+                <span className="block text-xs text-muted-foreground">{match.detail2}</span>
+                <span className="text-xs font-mono text-zinc-500">
                   {parisKickoff(match.scheduledAt)}
                 </span>
               </div>
@@ -411,7 +411,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         <div className="overflow-x-auto rounded-xl border border-border/60">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border/40 bg-muted/30 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+              <tr className="border-b border-border/40 bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <th className="px-3 py-2.5 font-medium">Heure</th>
                 <th className="px-3 py-2.5 font-medium">Sport</th>
                 <th className="px-3 py-2.5 font-medium">Rencontre</th>

@@ -273,7 +273,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
         <div className="relative flex items-start justify-between gap-2 px-4 py-3 sm:px-6">
           {/* Gauche : date + heure */}
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-white/60">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-white/60">
               <Calendar className="h-3 w-3 shrink-0" />
               <span className="whitespace-nowrap">{formattedDate}</span>
               <Clock className="h-3 w-3 shrink-0" />
@@ -287,7 +287,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
               <Trophy className="h-3.5 w-3.5 shrink-0 text-amber-300" />
               <span className="max-w-[180px] truncate">{match.tournament}</span>
             </div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+            <span className="text-xs font-semibold uppercase tracking-wider text-white/70">
               {match.round}
             </span>
           </div>
@@ -295,7 +295,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
           {/* Droite : statut LIVE/Prematch + favori */}
           <div className="flex flex-1 items-start justify-end gap-2">
             {isLive ? (
-              <span className="flex items-center gap-1 rounded-full bg-rose-600/90 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+              <span className="flex items-center gap-1 rounded-full bg-rose-600/90 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-white">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-white opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
@@ -303,7 +303,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
                 {t("live")}
               </span>
             ) : (
-              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white/70">
+              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-white/70">
                 <Clock className="h-3 w-3" />
                 {t("prematch")}
               </span>
@@ -369,7 +369,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
                 <ServerIndicator
                   server={liveState.server}
                   serverName={serverName}
-                  className="text-[11px] text-white/60"
+                  className="text-xs text-white/60"
                 />
               </>
             ) : (
@@ -514,7 +514,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
 
         {/* Cotes bookmaker + bouton "+N autres bookmakers" */}
         {match.odds && (
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="font-semibold uppercase tracking-wider">
               {match.odds.bookmaker}
             </span>
@@ -662,7 +662,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
         />
 
         {/* Footer : modèle + CTAs + indicateur offline (date déjà dans l'overlay top) */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-4 py-2 text-xs text-muted-foreground sm:px-6">
           <span className="font-mono">
             {match.model}
             {disconnected && (
@@ -830,7 +830,7 @@ function BroadcastPlayerColumn({
       </h3>
 
       {/* Colonne métriques 4 lignes (R7 review : white/60 minimum pour AA strict) */}
-      <div className="flex flex-col items-center gap-0.5 font-mono text-[11px] tabular-nums">
+      <div className="flex flex-col items-center gap-0.5 font-mono text-xs tabular-nums">
         {/* Ligne 1 : classement + drapeau */}
         <span className="flex items-center gap-1 text-white/80">
           {player.country && (

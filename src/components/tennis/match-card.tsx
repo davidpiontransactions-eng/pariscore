@@ -275,9 +275,9 @@ export function MatchCard({
   return (
     <article
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-border/70 bg-card text-card-foreground",
-        "shadow-sm transition-all duration-300",
-        "hover:-translate-y-0.5 hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-black/30",
+        "group relative overflow-hidden rounded-xl border border-border/70 bg-card text-card-foreground",
+        "transition-colors duration-200",
+        "hover:border-emerald-500/40 hover:bg-muted/10",
         "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background"
       )}
     >

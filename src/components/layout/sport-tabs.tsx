@@ -75,7 +75,7 @@ export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
               className={cn(
                 "relative flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-200",
                 isActive
-                  ? "text-white"
+                  ? "text-emerald-400"
                   : "text-zinc-500 hover:text-zinc-300"
               )}
             >
