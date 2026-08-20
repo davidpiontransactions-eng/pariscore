@@ -57,9 +57,12 @@ export function ServiceWorkerRegister() {
           const installingWorker = reg.installing;
           if (!installingWorker) return;
           installingWorker.addEventListener("statechange", () => {
-            if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
-              // Il y a déjà un SW actif → un nouveau vient d'arriver.
-              // On poste SKIP_WAITING pour forcer son activation.
+            if (installingWorker.state === "installed" && hadController) {
+              // SKIP_WAITING uniquement pour une MISE À JOUR (un SW actif
+              // est déjà présent, hadController=true). Au premier install le
+              // SW s'active seul via son skipWaiting() (public/sw.js) —
+              // poster ici créerait un controllerchange fantôme → double
+              // reload de la page (bug observé en QA mobile 375px).
               installingWorker.postMessage("SKIP_WAITING");
             }
           });
