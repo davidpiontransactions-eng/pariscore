@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import type { LeagueFilter } from "@/lib/baseball/types";
 import { useBaseballSchedule } from "@/lib/hooks/use-baseball";
 import { dayLabel, shiftIsoDate, todayParisIso } from "@/lib/baseball/timezone";
@@ -32,6 +32,11 @@ export function MLBKBOFolderTab() {
   const tabsId = useId();
 
   const { data, error, isLoading, mutate } = useBaseballSchedule(date, league);
+
+  // Force re-fetch au mount pour éviter les données stale
+  useEffect(() => {
+    void mutate();
+  }, [mutate]);
 
   // Live / Pre-match : status MLB StatsAPI "live" vs "scheduled" (les matchs
   // "final" sont exclus). Filtre horaire de début sur le pre-match.
@@ -116,7 +121,7 @@ export function MLBKBOFolderTab() {
               onClick={() => setDate(today)}
               className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors ${
                 date === today
-                  ? "border-amber-400/50 bg-amber-400/10 text-amber-300"
+                  ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
                   : "border-slate-700 text-slate-300 hover:bg-slate-800"
               }`}
             >
@@ -151,7 +156,7 @@ export function MLBKBOFolderTab() {
               >
                 <div
                   className={`text-[11px] font-bold uppercase tracking-wide ${
-                    active ? "text-amber-300" : "text-slate-500"
+                    active ? "text-amber-200" : "text-slate-500"
                   }`}
                 >
                   {offset === 0 ? "Auj." : dayLabel(d).split(" ")[0]}
@@ -172,7 +177,7 @@ export function MLBKBOFolderTab() {
       {/* Compteur slate */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-bold text-white">
-          ⚾ Calendrier <span className="text-amber-300">{dayLabel(date)}</span>
+          ⚾ Calendrier <span className="text-amber-200">{dayLabel(date)}</span>
         </h2>
         {data && (
           <span className="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-slate-400">

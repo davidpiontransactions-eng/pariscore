@@ -39,10 +39,20 @@ import type {
 } from "@/lib/baseball/types";
 import { round1 } from "@/lib/baseball/format";
 
-const SLATE_CACHE_TTL_MS = 60_000;
+/** Cache TTL dynamique : 15s si matchs live, 30s si matchs proches, 60s sinon */
+function getScheduleTTL(matches: BaseballMatch[]): number {
+  const hasLive = matches.some((m) => m.game.status === "live");
+  if (hasLive) return 15_000;
+  const hasSoon = matches.some((m) => {
+    const diff = new Date(m.game.gameDateIso).getTime() - Date.now();
+    return diff > 0 && diff < 30 * 60 * 1000;
+  });
+  if (hasSoon) return 30_000;
+  return 60_000;
+}
 
 type GlobalPipeline = typeof globalThis & {
-  __slateCache?: Map<string, { at: number; payload: SchedulePayload }>;
+  __slateCache?: Map<string, { at: number; payload: SchedulePayload; ttl: number }>;
   __predictionCache?: Map<string, { inputHash: string; payload: BaseballPrediction; at: number }>;
   __gameStore?: Map<string, BaseballGameRecord>;
   __pitcherStore?: Map<string, PitcherRecord>;
@@ -51,7 +61,7 @@ type GlobalPipeline = typeof globalThis & {
 
 const globalForPipeline = globalThis as GlobalPipeline;
 
-const slateCache: Map<string, { at: number; payload: SchedulePayload }> =
+const slateCache: Map<string, { at: number; payload: SchedulePayload; ttl: number }> =
   globalForPipeline.__slateCache ?? new Map();
 if (!globalForPipeline.__slateCache) globalForPipeline.__slateCache = slateCache;
 
@@ -221,7 +231,7 @@ export async function getSchedulePayload(
   ensureSeeded();
   const key = `${date}:${league}`;
   const cached = slateCache.get(key);
-  if (cached && Date.now() - cached.at < SLATE_CACHE_TTL_MS) {
+  if (cached && Date.now() - cached.at < cached.ttl) {
     return cached.payload;
   }
 
@@ -258,7 +268,7 @@ export async function getSchedulePayload(
     degraded,
     fetchedAt: new Date().toISOString(),
   };
-  slateCache.set(key, { at: Date.now(), payload });
+  slateCache.set(key, { at: Date.now(), payload, ttl: getScheduleTTL(withQuick) });
   return payload;
 }
 
@@ -283,7 +293,7 @@ function buildCalibration(game: BaseballGameRecord): CalibrationResult | null {
     actualTotalRuns: actualTotal,
     actualHomeRuns: game.homeRuns ?? 0,
     actualAwayRuns: game.awayRuns ?? 0,
-    overUnderHit,
+    overUnderHit: overHit,
     moneylineWinner: homeWin ? "home" : "away",
     moneylineFavoriteWon: pred.moneyline.homeProb >= 0.51 || pred.moneyline.homeProb <= 0.49
       ? favoriteWon

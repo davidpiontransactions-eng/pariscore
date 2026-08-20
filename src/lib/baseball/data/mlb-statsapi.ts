@@ -110,7 +110,8 @@ function mapStatus(code: string, state: string): GameStatus {
   return "scheduled";
 }
 
-const SEASON = 2026;
+/** Saison MLB courante — auto-détectée depuis la date actuelle. */
+const SEASON = new Date().getFullYear();
 
 /**
  * Récupère la slate MLB réelle pour une date Paris.

@@ -11,8 +11,7 @@ import type {
  * Hooks SWR du domaine baseball — clés de cache strictement isolées :
  *   baseball:schedule:{date}:{league}   (collisions MLB/KBO impossibles)
  *   baseball:match:{id}
- * Aucun re-fetch au focus (économie VPS) — rafraîchissement manuel ou
- * intervalle dédié uniquement.
+ * Re-fetch au focus + reconnexion pour éviter les données stale.
  */
 
 async function fetcher<T>(url: string): Promise<T> {
@@ -24,11 +23,11 @@ async function fetcher<T>(url: string): Promise<T> {
 }
 
 const SCHEDULE_CONFIG: SWRConfiguration<SchedulePayload> = {
-  revalidateOnFocus: false,
-  revalidateOnReconnect: false,
+  revalidateOnFocus: true,
+  revalidateOnReconnect: true,
   keepPreviousData: true,
-  refreshInterval: 30_000, // matchs live : refetch accéléré 30s
-  dedupingInterval: 10_000,
+  refreshInterval: 30_000,
+  dedupingInterval: 30_000,
 };
 
 export function useBaseballSchedule(date: string, league: LeagueFilter) {
@@ -49,9 +48,9 @@ export function useBaseballMatchDetail(id: string | null) {
     key,
     () => fetcher<MatchDetailPayload>(`/api/baseball/match/${encodeURIComponent(id ?? "")}`),
     {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 10_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 30_000,
     },
   );
 }

@@ -1,0 +1,61 @@
+# PariScore Superpowers — Cline Bootstrap
+
+<EXTREMELY_IMPORTANT>
+You have PariScore Superpowers — a structured development methodology.
+
+**Rule: Invoke relevant skills BEFORE any response or action** — including clarifying questions, exploring the codebase, or checking files.
+
+**Before entering plan mode:** if you haven't already brainstormed, invoke the brainstorming skill first.
+
+Then announce "Using [skill] to [purpose]" and follow the skill exactly. If it has a checklist, create a todo per item.
+
+## Skill Priority
+
+When multiple skills apply, process skills come first — they set the approach, then implementation skills carry it out.
+
+- "Let's build X" → brainstorming first, then implementation skills.
+- "Fix this bug" → systematic-debugging first, then domain skills.
+
+## Pipeline Order
+
+The development pipeline MUST follow this order:
+1. **brainstorming** — Design before code (HARD-GATE: no code until approved)
+2. **using-git-worktrees** — Isolated workspace on new branch
+3. **writing-plans** — Bite-sized tasks (2-5 min each)
+4. **executing-plans** or **subagent-driven-development** — Execute with review
+5. **test-driven-development** — RED-GREEN-REFACTOR strict
+6. **requesting-code-review** — Between tasks
+7. **verification-before-completion** — Verify fixes
+8. **finishing-a-development-branch** — Merge/PR decision
+
+## Red Flags — STOP if you think these
+
+| Thought | Reality |
+|---------|---------|
+| "This is just a simple question" | Questions are tasks. Check for skills. |
+| "I need more context first" | Skill check comes BEFORE clarifying questions. |
+| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
+| "This doesn't need a formal skill" | If a skill exists, use it. |
+| "The skill is overkill" | Simple things become complex. Use it. |
+| "I'll just do this one thing first" | Check BEFORE doing anything. |
+
+## Tool Mapping (Cline)
+
+When skills request actions, use Cline equivalents:
+- Create or update todos → Cline's todo system
+- Read files → Cline's read tool
+- Create/edit/delete files → Cline's write/edit tools
+- Run shell commands → Cline's execute command tool
+- Search files → Cline's search tools
+
+## PariScore Conventions
+
+- Project: Next.js 16 + Bun + React 19 + Prisma
+- Skills in `.agents/tools-active/` (47 skills)
+- Always use CMD syntax on Windows (never bash)
+- Use `oc_bash` not `bash` in OpenCode
+
+## User Instructions
+
+User instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence over skills.
+</EXTREMELY_IMPORTANT>

@@ -30,6 +30,29 @@ When multiple skills apply, process skills come first — they set the approach,
 - "Let's build X" → superpowers:brainstorming first, then implementation skills.
 - "Fix this bug" → superpowers:systematic-debugging first, then domain skills.
 
+## Pipeline Order (PariScore)
+
+The development pipeline MUST follow this order for new features:
+
+1. **brainstorming** — Design before code (HARD-GATE: no code until approved)
+2. **using-git-worktrees** — Isolated workspace on new branch
+3. **writing-plans** — Bite-sized tasks (2-5 min each)
+4. **executing-plans** or **subagent-driven-development** — Execute with review
+5. **test-driven-development** — RED-GREEN-REFACTOR strict
+6. **requesting-code-review** — Between tasks
+7. **verification-before-completion** — Verify fixes
+8. **finishing-a-development-branch** — Merge/PR decision
+
+For bug fixes: systematic-debugging → test-driven-development → verification-before-completion.
+
+## PariScore Conventions
+
+- Project: Next.js 16 + Bun + React 19 + Prisma
+- Skills in `.agents/tools-active/` (47 skills)
+- Always use CMD syntax on Windows (never bash)
+- Use `oc_bash` not `bash` in OpenCode (bash tool is disabled)
+- Legacy code in `server.js`, `pariscore.html` being migrated to Next.js
+
 ## Red Flags
 
 These thoughts mean STOP—you're rationalizing:
@@ -53,6 +76,8 @@ These thoughts mean STOP—you're rationalizing:
 
 If your harness appears here, read its reference file for special instructions:
 
+- OpenCode: Use `oc_bash` (CMD), not `bash`. Plugin auto-injects bootstrap.
+- Cline: Bootstrap injected via `.clinerules`. Skills in `.cline/skills/`.
 - Codex: `references/codex-tools.md`
 - Pi: `references/pi-tools.md`
 - Antigravity: `references/antigravity-tools.md`
