@@ -5,9 +5,13 @@
  * Body: { matchId: string, matchData: object }
  * Response: FootballAIReport + { source: "cache" | "gemini" }
  * Cache: 12h (gemini-cache), clé football-report:{matchId}:{jour}.
+ *
+ * Transport unifié via generateText() (src/lib/llm.ts) : Gemini cloud ou
+ * serveur local OpenAI-compatible selon LLM_PROVIDER / LLM_FALLBACK_ENABLED.
  */
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import { generateText } from "@/lib/llm";
 import {
   geminiCacheKey,
   geminiCacheGet,
@@ -48,39 +52,19 @@ function extractJson(raw: string): string {
   return raw.trim();
 }
 
-async function callGemini(prompt: string): Promise<FootballAIReport> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY non configurée");
-
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.5,
-        maxOutputTokens: 2048,
-        responseMimeType: "application/json",
-      },
-    }),
+async function callLlm(prompt: string): Promise<FootballAIReport & { provider: "gemini" | "local" }> {
+  const result = await generateText({
+    prompt,
+    temperature: 0.5,
+    maxOutputTokens: 2048,
+    json: true,
   });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "unknown");
-    throw new Error(`Gemini API error ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  const json = await res.json();
-  const rawText: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  if (!rawText) throw new Error("Gemini a retourné une réponse vide");
-
-  const cleaned = extractJson(rawText);
+  const cleaned = extractJson(result.text);
   const parsed = JSON.parse(cleaned) as Partial<FootballAIReport>;
 
   if (!parsed.synthesis || !Array.isArray(parsed.keyFacts)) {
-    throw new Error("Réponse Gemini mal formée");
+    throw new Error("Réponse LLM mal formée");
   }
 
   return {
@@ -94,6 +78,7 @@ async function callGemini(prompt: string): Promise<FootballAIReport> {
           }
         : null,
     confidence: Math.min(5, Math.max(1, Math.round(parsed.confidence || 3))),
+    provider: result.provider,
   };
 }
 
@@ -136,9 +121,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ ...cached, source: "cache" });
     }
 
-    const report = await callGemini(buildPrompt(matchData));
+    const report = await callLlm(buildPrompt(matchData));
     geminiCacheSet(key, report);
-    return NextResponse.json({ ...report, source: "gemini" });
+    return NextResponse.json({ ...report, source: "gemini", provider: report.provider });
   } catch (err) {
     return apiErrorHandler(err, "ai/football-match-report");
   }

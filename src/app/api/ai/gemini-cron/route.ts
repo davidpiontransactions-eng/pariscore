@@ -5,11 +5,14 @@
  *
  * Appelé par un cron VPS (ex: 6h, 12h, 18h UTC).
  * Parcourt les matchs tennis/football du jour, vérifie le cache, et pré-calcule
- * les analyses Gemini manquantes. Respecte le rate limit de l'API Gemini.
+ * les analyses manquantes via le LLM configuré (Gemini cloud ou serveur local
+ * OpenAI-compatible — src/lib/llm.ts, selon LLM_PROVIDER / LLM_FALLBACK_ENABLED).
+ * Respecte le rate limit de l'API Gemini.
  *
  * Réponse: { cached: number, computed: number, skipped: number, errors: string[] }
  */
 import { NextResponse } from "next/server";
+import { generateText } from "@/lib/llm";
 import {
   geminiCacheKey,
   geminiCacheGet,
@@ -50,30 +53,15 @@ Données : ${matchStr}
 Réponds UNIQUEMENT avec le JSON.`;
 }
 
-async function callGeminiCron(prompt: string): Promise<CachedGeminiInsight> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY non configurée");
-
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
-    }),
+async function callLlmCron(prompt: string): Promise<CachedGeminiInsight> {
+  const result = await generateText({
+    prompt,
+    temperature: 0.4,
+    maxOutputTokens: 512,
+    json: true,
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`Gemini ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  const json = await res.json();
-  const rawText: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  if (!rawText) throw new Error("Gemini a retourné une réponse vide");
-
-  const cleaned = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  const cleaned = result.text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
   const parsed = JSON.parse(cleaned) as CachedGeminiInsight;
   return {
     analysis: parsed.analysis,
@@ -123,7 +111,7 @@ export async function GET(request: Request) {
 
         try {
           const prompt = buildCronPrompt(sport, match.matchData);
-          const insight = await callGeminiCron(prompt);
+          const insight = await callLlmCron(prompt);
           geminiCacheSet(key, insight);
           computed++;
           if (computed < toProcess.length) {

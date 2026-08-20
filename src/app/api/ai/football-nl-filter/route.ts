@@ -7,11 +7,15 @@
  * Response: { preset: { label, description, rules: CompiledFilterRule[] } }
  *
  * Le vocabulaire de champs est partagé avec le client via
- * `FILTER_FIELD_VOCABULARY` (src/lib/football-nl-filter.ts) : le prompt Gemini
- * ne peut produire que des champs/opérateurs que le moteur sait évaluer.
+ * `FILTER_FIELD_VOCABULARY` (src/lib/football-nl-filter.ts) : le prompt ne
+ * peut produire que des champs/opérateurs que le moteur sait évaluer.
+ *
+ * Transport unifié via generateText() (src/lib/llm.ts) : Gemini cloud ou
+ * serveur local OpenAI-compatible selon LLM_PROVIDER / LLM_FALLBACK_ENABLED.
  */
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import { generateText } from "@/lib/llm";
 import {
   FILTER_FIELD_VOCABULARY,
   type CompiledFilterRule,
@@ -23,7 +27,7 @@ const MAX_RULES = 8;
 const VALID_FIELDS = new Set(FILTER_FIELD_VOCABULARY.map((f) => f.field));
 const VALID_OPERATORS: FilterOperator[] = [">=", "<=", "==", "delta_gt"];
 
-// Rate limiting: max 8 req/5min per IP (appels Gemini coûteux).
+// Rate limiting: max 8 req/5min per IP (appels LLM coûteux).
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 8;
 const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
@@ -60,35 +64,15 @@ function extractJson(raw: string): string {
   return raw.trim();
 }
 
-async function callGemini(prompt: string): Promise<Record<string, unknown>> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY non configurée");
-
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
-        responseMimeType: "application/json",
-      },
-    }),
+async function callLlm(prompt: string): Promise<Record<string, unknown>> {
+  const result = await generateText({
+    prompt,
+    temperature: 0.2,
+    maxOutputTokens: 2048,
+    json: true,
   });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "unknown");
-    throw new Error(`Gemini API error ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  const json = await res.json();
-  const rawText: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  if (!rawText) throw new Error("Gemini a retourné une réponse vide");
-
-  const cleaned = extractJson(rawText);
+  const cleaned = extractJson(result.text);
   return JSON.parse(cleaned) as Record<string, unknown>;
 }
 
@@ -143,7 +127,7 @@ export async function POST(request: Request) {
     }
 
     const prompt = buildPrompt(text);
-    const parsed = await callGemini(prompt);
+    const parsed = await callLlm(prompt);
     const rules = sanitizeRules(parsed.rules);
     if (rules.length === 0) {
       return NextResponse.json(

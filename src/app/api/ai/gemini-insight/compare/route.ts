@@ -1,5 +1,5 @@
 /**
- * Gemini AI — Comparaison de 2 matchs (même sport) via l'API Gemini.
+ * Gemini AI — Comparaison de 2 matchs (même sport) via le LLM configuré.
  *
  * POST /api/ai/gemini-insight/compare
  * Body: { sport: "tennis" | "football", matches: [{ matchId, label?, matchData }, { matchId, label?, matchData }] }
@@ -12,9 +12,13 @@
  * La route mono-match (/api/ai/gemini-insight) reste INCHANGÉE : la distinction
  * mono/compare se fait par URL (sous-route dédiée `/compare`), aucun risque de
  * régression sur l'existant.
+ *
+ * Transport unifié via generateText() (src/lib/llm.ts) : Gemini cloud ou
+ * serveur local OpenAI-compatible selon LLM_PROVIDER / LLM_FALLBACK_ENABLED.
  */
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import { generateText, LlmError } from "@/lib/llm";
 import { AppError, ValidationError } from "@/lib/api-error";
 import {
   geminiCompareCacheKey,
@@ -49,7 +53,7 @@ function pruneRateLimitMap(now: number) {
 // ---------------------------------------------------------------------------
 
 /**
- * Construit le prompt comparatif Gemini. Ce n'est PAS une concaténation de 2
+ * Construit le prompt comparatif. Ce n'est PAS une concaténation de 2
  * analyses mono : le prompt force une analyse croisée (forces/faiblesses en
  * regard, écart Elo, forme, cote) et une recommandation A/B.
  */
@@ -83,9 +87,9 @@ Réponds UNIQUEMENT avec un JSON valide (pas de markdown, pas de texte autour) a
 }
 
 /**
- * Erreur upstream Gemini — mappée sur un statut HTTP propre :
+ * Erreur upstream LLM — mappée sur un statut HTTP propre :
  * - 429 (quota) → 429
- * - toute autre erreur Gemini (clé invalide, surcharge, timeout) → 502
+ * - toute autre erreur (clé invalide, surcharge, timeout) → 502
  * Le message est porté au client, jamais de crash 500 générique.
  */
 class GeminiUpstreamError extends AppError {
@@ -97,43 +101,30 @@ class GeminiUpstreamError extends AppError {
   }
 }
 
-/** Appelle l'API Gemini (gemini-2.5-flash) via JSON direct. */
-async function callGeminiCompare(prompt: string): Promise<GeminiCompareInsight> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new GeminiUpstreamError(503, "GEMINI_API_KEY non configurée");
-  }
-
-  const url =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
-    },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1024 },
-    }),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "unknown");
+/** Appelle le LLM configuré (Gemini cloud ou serveur local) via le client unifié. */
+async function callGeminiCompare(prompt: string): Promise<{
+  insight: GeminiCompareInsight;
+  provider: "gemini" | "local";
+}> {
+  let rawText: string;
+  let provider: "gemini" | "local";
+  try {
+    const result = await generateText({
+      prompt,
+      temperature: 0.4,
+      maxOutputTokens: 1024,
+      json: true,
+    });
+    rawText = result.text;
+    provider = result.provider;
+  } catch (err) {
+    const status = err instanceof LlmError && err.status === 429 ? 429 : 502;
     throw new GeminiUpstreamError(
-      res.status,
-      res.status === 429
+      status,
+      status === 429
         ? "Quota Gemini dépassé (429). Réessayez dans quelques minutes."
-        : `Gemini API error ${res.status}: ${errText.slice(0, 200)}`,
+        : `Erreur LLM: ${err instanceof Error ? err.message : String(err)}`,
     );
-  }
-
-  const json = await res.json();
-  const rawText: string =
-    json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-  if (!rawText) {
-    throw new GeminiUpstreamError(502, "Gemini a retourné une réponse vide");
   }
 
   const cleaned = rawText
@@ -141,18 +132,21 @@ async function callGeminiCompare(prompt: string): Promise<GeminiCompareInsight> 
     .replace(/\s*```$/, "")
     .trim();
 
+  let insight: GeminiCompareInsight;
   try {
-    return normalizeCompareResponse(JSON.parse(cleaned));
+    insight = normalizeCompareResponse(JSON.parse(cleaned));
   } catch {
     throw new GeminiUpstreamError(
       502,
-      "Réponse Gemini illisible (JSON invalide)",
+      "Réponse LLM illisible (JSON invalide)",
     );
   }
+
+  return { insight, provider };
 }
 
 /**
- * Normalise la réponse brute de Gemini en GeminiCompareInsight.
+ * Normalise la réponse brute en GeminiCompareInsight.
  * Tolérant aux champs manquants / types étrangers — ne lève une erreur que si
  * l'essentiel (analysis A + B) est absent.
  */
@@ -165,7 +159,7 @@ function normalizeCompareResponse(raw: unknown): GeminiCompareInsight {
     !obj.matchB ||
     typeof obj.matchB.analysis !== "string"
   ) {
-    throw new Error("Réponse Gemini mal formée (comparaison JSON invalide)");
+    throw new Error("Réponse LLM mal formée (comparaison JSON invalide)");
   }
 
   const mkMatch = (m: any, matchId: string) => ({
@@ -313,11 +307,11 @@ export async function POST(request: Request) {
       });
     }
 
-    // Pas de cache → appel Gemini avec un prompt spécifiquement comparatif
+    // Pas de cache → appel LLM (Gemini ou local selon la config)
     const prompt = buildPrompt(sport, matchA, matchB);
-    const insight = await callGeminiCompare(prompt);
+    const { insight, provider } = await callGeminiCompare(prompt);
 
-    // Injecte les matchId réels (Gemini ne connaît que des labels)
+    // Injecte les matchId réels (le LLM ne connaît que des labels)
     insight.matchA.matchId = matchA.matchId;
     insight.matchB.matchId = matchB.matchId;
 
@@ -326,6 +320,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...insight,
       source: "gemini",
+      provider,
     });
   } catch (err) {
     return apiErrorHandler(err, "ai/gemini-insight/compare");

@@ -239,6 +239,28 @@ if (GROQ_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'Groq/Llama', type: 'openai', h
 if (XAI_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'Grok (xAI)', type: 'openai', host: 'api.x.ai', path: '/v1/chat/completions', key: XAI_API_KEY, model: 'grok-3-mini' });
 if (OPENROUTER_API_KEY) AI_DEEP_PROVIDERS.push({ name: 'OpenRouter', type: 'openai', host: 'openrouter.ai', path: '/api/v1/chat/completions', key: OPENROUTER_API_KEY, model: 'meta-llama/llama-3.3-70b-instruct:free' });
 
+// ── LLM local self-hosted (MAX serve / Ollama) — OpenAI-compatible ─────────
+// Inférence locale zéro coût : bascule des appels Gemini (analyses/prédictions/
+// insights) selon LLM_PROVIDER (gemini|local|auto) + LLM_FALLBACK_ENABLED.
+// Installation VPS : scripts/install-local-llm.sh (port 8000).
+const LOCAL_LLM_BASE_URL = (process.env.LOCAL_LLM_BASE_URL || '').replace(/\/+$/, '');
+const LOCAL_LLM_MODEL = process.env.LOCAL_LLM_MODEL || 'llama-3.1-8b-instruct';
+const LOCAL_LLM_API_KEY = process.env.LOCAL_LLM_API_KEY || '';
+const LLM_PROVIDER = (process.env.LLM_PROVIDER || 'gemini').toLowerCase();
+const LLM_FALLBACK_ENABLED = String(process.env.LLM_FALLBACK_ENABLED || 'false') === 'true';
+(function registerLocalProvider() {
+  if (!LOCAL_LLM_BASE_URL) return;
+  let _u = null;
+  try { _u = new URL(LOCAL_LLM_BASE_URL); } catch (e) { _u = null; }
+  if (!_u) return;
+  AI_DEEP_PROVIDERS.push({
+    name: 'Local (MAX/Ollama)', type: 'openai', protocol: _u.protocol === 'http:' ? 'http' : 'https',
+    host: _u.hostname, port: _u.port ? Number(_u.port) : (_u.protocol === 'http:' ? 80 : 443),
+    path: (_u.pathname === '/' ? '' : _u.pathname) + '/chat/completions',
+    key: LOCAL_LLM_API_KEY, model: LOCAL_LLM_MODEL,
+  });
+})();
+
 if (!ODDS_API_KEY) console.warn('  ⚠ ODDS_API_KEY manquante dans .env');
 if (!API_FOOTBALL_KEY && !AF_REMOVED) console.warn('  ⚠ API_FOOTBALL_KEY manquante dans .env');
 if (AI_DEEP_PROVIDERS.length === 0) console.warn('  ⚠ Aucun provider IA configuré (GEMINI_API_KEY / GROQ_API_KEY / XAI_API_KEY / OPENROUTER_API_KEY)');
@@ -7956,19 +7978,21 @@ function streamDeepWithProviders(promptText, res, onDone, providerIdx = 0) {
         stream: true,
       });
       const opts = {
+        protocol: prov.protocol === 'http' ? 'http:' : 'https:',
         hostname: prov.host,
+        port: prov.port || (prov.protocol === 'http' ? 80 : 443),
         path: prov.path,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${prov.key}`,
           'Content-Length': Buffer.byteLength(payload),
           'HTTP-Referer': 'https://pariscore.io',
           'X-Title': 'PariScore AI-AL',
         },
       };
+      if (prov.key) opts.headers['Authorization'] = 'Bearer ' + prov.key;
       let fullText = '';
-      const req = https.request(opts, apiRes => {
+      const req = (prov.protocol === 'http' ? require('http') : https).request(opts, apiRes => {
         if (handle._aborted) { try { apiRes.destroy(); } catch (_) {} return; }
         if (apiRes.statusCode === 429 || apiRes.statusCode === 401 || apiRes.statusCode >= 500) {
           apiRes.resume();
@@ -8094,13 +8118,14 @@ function httpsPost(urlStr, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr);
     const payload = JSON.stringify(body);
+    const httpMod = u.protocol === 'http:' ? require('http') : require('https');
     const opts = {
-      hostname: u.hostname, port: 443,
+      hostname: u.hostname, port: u.port || undefined,
       path: u.pathname + (u.search || ''),
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload), ...headers },
     };
-    const req = https.request(opts, (res) => {
+    const req = httpMod.request(opts, (res) => {
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
@@ -8113,6 +8138,84 @@ function httpsPost(urlStr, body, headers = {}) {
     req.write(payload);
     req.end();
   });
+}
+
+// ── LLM local : bascule Gemini ↔ inférence locale (MAX serve / Ollama) ─────
+// provBase : URL de base d'un provider AI_DEEP_PROVIDERS (http/https + port).
+function provBase(prov) {
+  return (prov.protocol === 'http' ? 'http://' : 'https://') + prov.host + (prov.port ? ':' + prov.port : '');
+}
+
+// Convertit un body Gemini {contents, generationConfig} en appel OpenAI-
+// compatible chat/completions (http local), puis re-shape la réponse au format
+// Gemini {data.candidates[0].content.parts[0].text} pour que les appelants
+// existants restent inchangés. Retourne null si indisponible/erreur.
+function localLlmGenerate(geminiBody) {
+  return new Promise((resolve) => {
+    const text = (geminiBody && geminiBody.contents && geminiBody.contents[0] &&
+      geminiBody.contents[0].parts && geminiBody.contents[0].parts[0] &&
+      geminiBody.contents[0].parts[0].text) || '';
+    if (!text || !LOCAL_LLM_BASE_URL) return resolve(null);
+    const cfg = geminiBody.generationConfig || {};
+    const payload = JSON.stringify({
+      model: LOCAL_LLM_MODEL,
+      messages: [{ role: 'user', content: text }],
+      temperature: (typeof cfg.temperature === 'number' ? cfg.temperature : 0.4),
+      max_tokens: (typeof cfg.maxOutputTokens === 'number' ? cfg.maxOutputTokens : 1024),
+      stream: false,
+    });
+    let u = null;
+    try { u = new URL(LOCAL_LLM_BASE_URL + '/chat/completions'); } catch (e) { u = null; }
+    if (!u) return resolve(null);
+    const httpMod = u.protocol === 'http:' ? require('http') : require('https');
+    const opts = {
+      hostname: u.hostname,
+      port: u.port || (u.protocol === 'http:' ? 80 : 443),
+      path: u.pathname + u.search,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) },
+    };
+    if (LOCAL_LLM_API_KEY) opts.headers['Authorization'] = 'Bearer ' + LOCAL_LLM_API_KEY;
+    const req = httpMod.request(opts, (res) => {
+      let data = '';
+      res.on('data', (c) => { data += c; });
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(data);
+          const out = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+          if (!out) return resolve(null);
+          resolve({ status: 200, data: { candidates: [{ content: { parts: [{ text: out }] } }] } });
+        } catch (e) { resolve(null); }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.setTimeout(30000, () => { try { req.destroy(); } catch (e) {} resolve(null); });
+    req.write(payload);
+    req.end();
+  });
+}
+
+// Tente le provider principal puis le secondaire selon LLM_PROVIDER.
+// URL/body restent au format Gemini — le fallback local les convertit.
+// Retourne le même shape que httpsPost : { status, data } (ou null).
+async function geminiWithLocalFallback(url, body) {
+  const primary = (LLM_PROVIDER === 'local') ? 'local' : 'gemini';
+  const secondary = (primary === 'local') ? 'gemini' : 'local';
+  const doFallback = (LLM_PROVIDER === 'auto') || LLM_FALLBACK_ENABLED;
+  const tryProvider = async (p) => {
+    if (p === 'local') {
+      if (!LOCAL_LLM_BASE_URL) return null;
+      return localLlmGenerate(body);
+    }
+    try { return await httpsPost(url, body); } catch (e) { return null; }
+  };
+  const r1 = await tryProvider(primary);
+  if (r1 && r1.status === 200) return r1;
+  if (doFallback) {
+    const r2 = await tryProvider(secondary);
+    if (r2 && r2.status === 200) return r2;
+  }
+  return r1;
 }
 
 function mockParlayOdds() {
@@ -13829,7 +13932,7 @@ async function getTeamAdvancedStats(teamKey, meta, leagueId, season) {
 async function callGemini(prompt, maxTokens = 600) {
   if (!GEMINI_API_KEY) throw new Error('Cle Gemini non configuree');
   const res = await Promise.race([
-    httpsPost(
+    geminiWithLocalFallback(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         contents: [{ parts: [{ text: prompt }] }],
@@ -15291,7 +15394,7 @@ async function generateAIScout() {
   const prompt = `Tu es l'expert en mathématiques appliquées au sport de la plateforme PariScore. Tu analyses les opportunités de paris à valeur à partir de données statistiques objectives.\n\n${advancedHeader}[RÉSUMÉ POISSON + EDGE NO-VIG]\n${summary}\n\nEn t'appuyant sur les 5 piliers du Scientific Mode (Stabilité, Forme, Différentiel dom/ext, Indice spéculatif, Tactique), rédige une synthèse CONCISE en français avec exactement 3 sections (une phrase percutante par section) :\n🎯 **La Combinaison du Jour** : propose une combinaison de 2-3 opportunités statistiques avec l'indice de cote total estimé.\n💎 **L'Opportunité Haute Probabilité** : identifie l'opportunité la plus solide (convergence Poisson + stats avancées + marché).\n🎲 **L'Écart Statistique à Exploiter** : une opportunité à haute volatilité avec un différentiel marché intéressant.\n\nVocabulaire scientifique uniquement. Chaque section = UNE phrase. Aucun disclaimer.`;
 
   try {
-    const res = await httpsPost(
+    const res = await geminiWithLocalFallback(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         contents: [{ parts: [{ text: prompt }] }],
@@ -23426,9 +23529,9 @@ Réponds UNIQUEMENT en français. Format strict ci-dessus. Max 300 mots. Zéro d
             if (r.status === 200) text = r.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
             else console.warn(`  [MMA Analysis] Gemini KO (${r.status})`);
           } else {
-            r = await httpsPost(`https://${prov.host}${prov.path}`,
+            r = await httpsPost(`${provBase(prov)}${prov.path}`,
               { model: prov.model, messages: [{ role: 'user', content: prompt }], temperature: 0.6, max_tokens: 900 },
-              { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore MMA' }
+              { ...(prov.key ? { 'Authorization': 'Bearer ' + prov.key } : {}), 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore MMA' }
             );
             if (r.status === 200) text = r.data?.choices?.[0]?.message?.content || '';
             else console.warn(`  [MMA Analysis] ${prov.name} KO (${r.status})`);
@@ -42393,7 +42496,7 @@ Genere ensuite un resume pret a l'emploi pour les reseaux sociaux.
       for (const prov of AI_DEEP_PROVIDERS) {
         if (prov.type !== 'openai') continue;
         try {
-          const r = await httpsPost(`https://${prov.host}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: fullPrompt }], temperature: 0.85, max_tokens: 4096 }, { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.fr', 'X-Title': 'PariScore WOM Analysis' });
+          const r = await httpsPost(`${provBase(prov)}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: fullPrompt }], temperature: 0.85, max_tokens: 4096 }, { ...(prov.key ? { 'Authorization': 'Bearer ' + prov.key } : {}), 'HTTP-Referer': 'https://pariscore.fr', 'X-Title': 'PariScore WOM Analysis' });
           if (r.status === 200) { const t = (r.data && r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || ''; if (t) { text = t; provider = prov.name; break; } }
         } catch (_) { /* provider next */ }
       }
@@ -42460,7 +42563,7 @@ Termine par "🔗 https://pariscore.fr/" + un message communautaire court. Utili
       for (const prov of AI_DEEP_PROVIDERS) {
         if (prov.type !== 'openai') continue;
         try {
-          const r = await httpsPost(`https://${prov.host}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: AI_DISCORD_PROMPT }], temperature: 0.7, max_tokens: 1500 }, { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.fr', 'X-Title': 'PariScore Discord Prediction' });
+          const r = await httpsPost(`${provBase(prov)}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: AI_DISCORD_PROMPT }], temperature: 0.7, max_tokens: 1500 }, { ...(prov.key ? { 'Authorization': 'Bearer ' + prov.key } : {}), 'HTTP-Referer': 'https://pariscore.fr', 'X-Title': 'PariScore Discord Prediction' });
           if (r.status === 200) { const t = (r.data && r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content) || ''; if (t) { text = t; provider = prov.name; break; } }
         } catch (_) { /* provider next */ }
       }
@@ -44318,13 +44421,13 @@ ${dataBlock}`;
         if (prov.type !== 'openai') continue;
         try {
           console.log(`  [TennisAI] Fallback → ${prov.name}`);
-          const r = await httpsPost(`https://${prov.host}${prov.path}`, {
+          const r = await httpsPost(`${provBase(prov)}${prov.path}`, {
             model: prov.model,
             messages: [{ role: 'user', content: systemPrompt }],
             temperature: 0.8,
             max_tokens: 4096,
           }, {
-            'Authorization': `Bearer ${prov.key}`,
+            ...(prov.key ? { 'Authorization': 'Bearer ' + prov.key } : {}),
             'HTTP-Referer': 'https://pariscore.io',
             'X-Title': 'PariScore AI-AL Tennis',
           });
@@ -44506,13 +44609,13 @@ ${dataBlock}`;
         if (prov.type !== 'openai') continue;
         try {
           console.log(`  [CS2AI] Fallback → ${prov.name}`);
-          const r = await httpsPost(`https://${prov.host}${prov.path}`, {
+          const r = await httpsPost(`${provBase(prov)}${prov.path}`, {
             model: prov.model,
             messages: [{ role: 'user', content: systemPrompt }],
             temperature: 0.8,
             max_tokens: 4096,
           }, {
-            'Authorization': `Bearer ${prov.key}`,
+            ...(prov.key ? { 'Authorization': 'Bearer ' + prov.key } : {}),
             'HTTP-Referer': 'https://pariscore.io',
             'X-Title': 'PariScore AI-AL CS2',
           });
@@ -44641,8 +44744,8 @@ ${dataBlock}`;
       for (const prov of AI_DEEP_PROVIDERS) {
         if (prov.type !== 'openai') continue;
         try {
-          const r = await httpsPost(`https://${prov.host}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: systemPrompt }], temperature: 0.8, max_tokens: 4096 },
-            { 'Authorization': `Bearer ${prov.key}`, 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore AI-AL NBA' });
+          const r = await httpsPost(`${provBase(prov)}${prov.path}`, { model: prov.model, messages: [{ role: 'user', content: systemPrompt }], temperature: 0.8, max_tokens: 4096 },
+            { ...(prov.key ? { 'Authorization': 'Bearer ' + prov.key } : {}), 'HTTP-Referer': 'https://pariscore.io', 'X-Title': 'PariScore AI-AL NBA' });
           if (r.status === 200) { const t = r.data?.choices?.[0]?.message?.content || ''; if (t) { text = t; provider = prov.name; break; } }
         } catch (provErr) { console.warn(`  [NBAAI] ${prov.name} → ${provErr.message}`); }
       }
@@ -48932,7 +49035,7 @@ ${dataBlock}${bsdEnrichBlock || ''}${fcBlockNs || ''}${pressBlockNs}`;
   (async () => {
     try {
       console.log(`  [DeepPro] Appel Gemini — ${match.home_team} vs ${match.away_team}`);
-      const gemRes = await httpsPost(
+      const gemRes = await geminiWithLocalFallback(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           contents: [{ parts: [{ text: systemPrompt }] }],
@@ -48978,7 +49081,7 @@ if (pathname === '/api/v1/gemini' && req.method === 'POST') {
       parsed.safetySettings = GEMINI_SAFETY_SETTINGS;
       parsed.generationConfig = { ...(parsed.generationConfig || {}), response_mime_type: 'application/json' };
 
-      const gemRes = await httpsPost(
+      const gemRes = await geminiWithLocalFallback(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
         parsed
       );

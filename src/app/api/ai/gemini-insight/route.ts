@@ -5,9 +5,16 @@
  * Body: { sport: "tennis" | "football", matchId: string, matchData: object }
  * Cache key: gemini-insight:{sport}:{matchId}:{YYYY-MM-DD}
  * TTL: 12 heures (cross-utilisateur)
+ *
+ * Depuis l'intégration LLM local (MAX/Ollama) : le transport passe par
+ * `generateText()` (src/lib/llm.ts) — Gemini cloud ou serveur local
+ * OpenAI-compatible selon LLM_PROVIDER / LLM_FALLBACK_ENABLED. La réponse
+ * porte `provider: "gemini" | "local"` (source reste "gemini" = LLM, l'UI
+ * est inchangée).
  */
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
+import { generateText } from "@/lib/llm";
 import {
   geminiCacheKey,
   geminiCacheGet,
@@ -32,7 +39,7 @@ const RATE_LIMIT_WINDOW_MS = 5 * 60_000;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Construit le prompt Gemini à partir des données du match. */
+/** Construit le prompt LLM à partir des données du match. */
 function buildPrompt(sport: string, matchData: Record<string, unknown>): string {
   const matchStr = JSON.stringify(matchData, null, 2);
   return `Tu es un analyste sportif expert en ${sport === "tennis" ? "tennis" : "football"}.
@@ -48,38 +55,16 @@ ${matchStr}
 Réponds UNIQUEMENT avec le JSON, pas de markdown, pas de texte autour.`;
 }
 
-/** Appelle l'API Gemini via fetch direct. */
-async function callGemini(prompt: string): Promise<CachedGeminiInsight> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY non configurée");
-  }
-
-  const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": apiKey,
-    },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 512 },
-    }),
+/** Appelle le LLM configuré (Gemini cloud ou serveur local) via le client unifié. */
+async function callLlm(prompt: string): Promise<CachedGeminiInsight & { provider: "gemini" | "local" }> {
+  const result = await generateText({
+    prompt,
+    temperature: 0.4,
+    maxOutputTokens: 512,
+    json: true,
   });
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "unknown");
-    throw new Error(`Gemini API error ${res.status}: ${errText.slice(0, 200)}`);
-  }
-
-  const json = await res.json();
-  const rawText: string = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-  if (!rawText) {
-    throw new Error("Gemini a retourné une réponse vide");
-  }
+  const rawText = result.text;
 
   // Nettoyer le markdown potentiel autour du JSON
   const cleaned = rawText
@@ -90,7 +75,7 @@ async function callGemini(prompt: string): Promise<CachedGeminiInsight> {
   const parsed = JSON.parse(cleaned) as CachedGeminiInsight;
 
   if (!parsed.analysis || !Array.isArray(parsed.factors)) {
-    throw new Error("Réponse Gemini mal formée (JSON invalide)");
+    throw new Error("Réponse LLM mal formée (JSON invalide)");
   }
 
   return {
@@ -101,6 +86,7 @@ async function callGemini(prompt: string): Promise<CachedGeminiInsight> {
     })),
     edge: Number.isFinite(parsed.edge) ? Math.round(parsed.edge) : 0,
     confidence: Math.min(5, Math.max(1, Math.round(parsed.confidence || 3))),
+    provider: result.provider,
   };
 }
 
@@ -161,16 +147,17 @@ export async function POST(request: Request) {
       });
     }
 
-    // Pas de cache → appel Gemini
+    // Pas de cache → appel LLM (Gemini ou local selon la config)
     const prompt = buildPrompt(sport, matchData);
-    const insight = await callGemini(prompt);
+    const llmResult = await callLlm(prompt);
 
     // Stockage dans le cache
-    geminiCacheSet(key, insight);
+    geminiCacheSet(key, llmResult);
 
     return NextResponse.json({
-      ...insight,
+      ...llmResult,
       source: "gemini",
+      provider: llmResult.provider,
     });
   } catch (err) {
     return apiErrorHandler(err, "ai/gemini-insight");

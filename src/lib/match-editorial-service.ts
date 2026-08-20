@@ -3,15 +3,17 @@
 // Orchestration à 4 étapes (boucle engineering) au-dessus du scraper éditorial
 // existant (`editorial-scraper-service.ts`) :
 //   1. Récupérer  — résumé source (EN) via le pipeline editorial-scraper (cache 24h).
-//   2. Traduire   — si locale demandée = fr : traduction EN→FR via Gemini
-//                   (cache 24h mémoire + disque, un seul appel LLM par contenu).
+//   2. Traduire   — si locale demandée = fr : traduction EN→FR via le LLM
+//                   configuré (Gemini cloud ou serveur local — src/lib/llm.ts,
+//                   cache 24h mémoire + disque, un seul appel LLM par contenu).
 //   3. Enrichir   — attacher source / url / lang / ttl au résultat.
 //   4. Vérifier   — ne JAMAIS jeter ; toute erreur → status "absent" (l'UI masque).
 //
-// Service server-only (node:fs + clé Gemini). Jamais importé côté client.
+// Service server-only (node:fs + LLM). Jamais importé côté client.
 
 import { promises as fs } from "fs";
 import path from "path";
+import { generateText } from "@/lib/llm";
 import {
   getEditorialSummary,
   type EditorialQuery,
@@ -49,9 +51,7 @@ const MAX_TRANSLATION_CHARS = 600;
 // Config
 // ---------------------------------------------------------------------------
 
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
-const GEMINI_TIMEOUT_MS = 20_000;
+const LLM_TIMEOUT_MS = 20_000;
 
 // ---------------------------------------------------------------------------
 // Cache traduction (mémoire + fichier .cache/editorial/<sport>-<id>.fr.json)
@@ -102,42 +102,24 @@ async function frCacheWrite(query: EditorialQuery, translated: string | null): P
 }
 
 // ---------------------------------------------------------------------------
-// Traduction EN→FR (Gemini 2.0 Flash) — appel unique par contenu + cache 24h
+// Traduction EN→FR (LLM configuré) — appel unique par contenu + cache 24h
 // ---------------------------------------------------------------------------
 
 async function translateEnToFr(text: string): Promise<string | null> {
-  if (!process.env.GEMINI_API_KEY) return null;
   if (text.length > MAX_TRANSLATION_CHARS) text = text.slice(0, MAX_TRANSLATION_CHARS);
 
-  const body = {
-    contents: [
-      {
-        parts: [
-          {
-            text: `Translate the following match preview from English to natural French. Keep it concise (2-3 sentences), keep proper names unchanged. Output only the French translation, no commentary, no quotes.
+  try {
+    const result = await generateText({
+      prompt: `Translate the following match preview from English to natural French. Keep it concise (2-3 sentences), keep proper names unchanged. Output only the French translation, no commentary, no quotes.
 ---
 ${text}`,
-          },
-        ],
-      },
-    ],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 300 },
-  };
-
-  try {
-    const res = await fetch(`${GEMINI_URL}?key=${process.env.GEMINI_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
+      temperature: 0.2,
+      maxOutputTokens: 300,
+      timeoutMs: LLM_TIMEOUT_MS,
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as Record<string, unknown>;
-    const candidates = (data as { candidates?: { content?: { parts?: { text?: string }[] } }[] })
-      ?.candidates;
-    const raw = candidates?.[0]?.content?.parts?.[0]?.text;
-    if (typeof raw !== "string" || raw.trim().length === 0) return null;
-    const out = raw.trim().replace(/^["'«]+|["'»]+$/g, "");
+    const raw = result.text.trim();
+    if (raw.length === 0) return null;
+    const out = raw.replace(/^["'«]+|["'»]+$/g, "");
     return out.length > 0 ? out : null;
   } catch {
     return null;
