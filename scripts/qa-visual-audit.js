@@ -28,7 +28,8 @@ const report = (name, ok, detail) => {
 
   // --- Load home (cache-busted to bypass SW) ---
   try {
-    await page.goto(BASE + BUST, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.goto(BASE + BUST, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForTimeout(3500);
   } catch (e) {
     report('home-load', false, e.message.slice(0, 120));
     await browser.close();
@@ -128,7 +129,7 @@ const report = (name, ok, detail) => {
   const mp = await mctx.newPage();
   mp.on('pageerror', (e) => errors.push('mobile pageerror: ' + e.message));
   try {
-    await mp.goto(BASE + BUST, { waitUntil: 'networkidle', timeout: 60000 });
+    await mp.goto(BASE + BUST, { waitUntil: "domcontentloaded", timeout: 60000 });
     const overM = await mp.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth }));
     report('overflow-mobile-375', overM.sw <= overM.iw, 'scrollWidth=' + overM.sw + ' innerWidth=' + overM.iw);
     await mp.screenshot({ path: path.join(OUT, 'home-mobile.png'), fullPage: false });

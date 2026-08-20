@@ -1,0 +1,128 @@
+{
+ "site": "sofascore",
+ "ok": true,
+ "note": "",
+ "sticky": [
+  {
+   "tag": "HEADER",
+   "cls": "pos_sticky top_0 inset-s_0 w_100% z_header bg-c_header.variant mdDown:trs_transf",
+   "pos": "sticky",
+   "top": 0,
+   "h": 160,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "stickyBox stickyBox--isStickingDisabled_false hide_md",
+   "pos": "sticky",
+   "top": 0,
+   "h": 0,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "pt_sm h_auto as_flex-start pos_sticky inset-s_0 z_sticky trs-prop_position trs-d",
+   "pos": "sticky",
+   "top": 160,
+   "h": 866,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "pos_fixed inset-s_0 inset-e_0 bottom_0 show_md z_fixed ad-unit-container",
+   "pos": "fixed",
+   "top": 900,
+   "h": 0,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "z_floatingCTA pos_fixed md:inset-s_0 mdDown:inset-e_0 bottom_[160px] md:bottom_[",
+   "pos": "fixed",
+   "top": 732,
+   "h": 76,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "pos_fixed bottom_0 inset-s_0 inset-e_0 z_bottomNavigation trs-prop_[transform] t",
+   "pos": "fixed",
+   "top": 0,
+   "h": 0,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "d_flex ai_center jc_center pos_fixed inset_0 bg_overlay.darken2 z_modalBackdrop",
+   "pos": "fixed",
+   "top": 0,
+   "h": 0,
+   "bg": "rgba(0, 0, 0, 0.5)"
+  },
+  {
+   "tag": "DIV",
+   "cls": "tooltip__root tooltip__root--colorPalette_secondary tooltip__root--isVisible_fal",
+   "pos": "fixed",
+   "top": 105,
+   "h": 34,
+   "bg": "rgb(255, 255, 255)"
+  }
+ ],
+ "structure": [
+  {
+   "tag": "DIV",
+   "cls": "",
+   "h": 7213,
+   "bg": "rgba(0, 0, 0, 0)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 30,
+   "linkCount": 396
+  },
+  {
+   "tag": "DIV",
+   "cls": "w_100% max-w_[1440px] mx_auto md:px_md min-h_[100vh] pb_4xl",
+   "h": 6149,
+   "bg": "rgba(0, 0, 0, 0)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 30,
+   "linkCount": 261
+  }
+ ],
+ "typeScale": [
+  "16px x3492",
+  "14px x1260",
+  "12px x572",
+  "28px x9",
+  "18px x7",
+  "10px x5"
+ ],
+ "accents": [
+  [
+   "rgb(0,0,238)",
+   330
+  ],
+  [
+   "rgb(34,34,38)",
+   252
+  ],
+  [
+   "rgb(255,255,255)",
+   112
+  ],
+  [
+   "rgb(55,77,245)",
+   111
+  ],
+  [
+   "rgb(203,24,24)",
+   104
+  ],
+  [
+   "rgba(34,34,38,0.45)",
+   16
+  ]
+ ],
+ "rowSpacing": "27px"
+}

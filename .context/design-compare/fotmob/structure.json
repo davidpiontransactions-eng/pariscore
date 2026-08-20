@@ -1,0 +1,82 @@
+{
+ "site": "fotmob",
+ "ok": true,
+ "note": "",
+ "sticky": [
+  {
+   "tag": "HEADER",
+   "cls": "css-ql0ocu-HeaderContainer e1v0hfa30",
+   "pos": "sticky",
+   "top": 0,
+   "h": 81,
+   "bg": "rgba(0, 0, 0, 0)"
+  },
+  {
+   "tag": "NAV",
+   "cls": "css-pzo5o5-MobileFooterWrapper e1p3gio10",
+   "pos": "fixed",
+   "top": 0,
+   "h": 0,
+   "bg": "rgb(255, 255, 255)"
+  }
+ ],
+ "structure": [
+  {
+   "tag": "DIV",
+   "cls": "",
+   "h": 3572,
+   "bg": "rgba(0, 0, 0, 0)",
+   "radius": "0px",
+   "hasTable": true,
+   "cardCount": 0,
+   "linkCount": 106
+  },
+  {
+   "tag": "DIV",
+   "cls": "css-yuw9kd-Content e1kd6xne1",
+   "h": 2684,
+   "bg": "rgba(0, 0, 0, 0)",
+   "radius": "0px",
+   "hasTable": true,
+   "cardCount": 0,
+   "linkCount": 66
+  }
+ ],
+ "typeScale": [
+  "16px x5853",
+  "14px x5806",
+  "10px x1239",
+  "13px x450",
+  "12px x59",
+  "19px x39",
+  "18px x4",
+  "24px x1"
+ ],
+ "accents": [
+  [
+   "rgb(25,103,210)",
+   1353
+  ],
+  [
+   "rgb(95,99,104)",
+   146
+  ],
+  [
+   "rgb(34,34,34)",
+   125
+  ],
+  [
+   "rgb(0,0,0)",
+   23
+  ],
+  [
+   "rgb(113,113,113)",
+   5
+  ],
+  [
+   "rgb(159,159,159)",
+   3
+  ]
+ ],
+ "rowSpacing": "15px"
+}

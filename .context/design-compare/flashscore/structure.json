@@ -1,0 +1,115 @@
+{
+ "site": "flashscore",
+ "ok": true,
+ "note": "",
+ "sticky": [],
+ "structure": [
+  {
+   "tag": "DIV",
+   "cls": "seoAdWrapper",
+   "h": 128,
+   "bg": "rgb(0, 20, 30)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 0,
+   "linkCount": 0
+  },
+  {
+   "tag": "HEADER",
+   "cls": "header",
+   "h": 88,
+   "bg": "rgb(0, 30, 40)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 0,
+   "linkCount": 5
+  },
+  {
+   "tag": "DIV",
+   "cls": "menuTop",
+   "h": 61,
+   "bg": "rgb(238, 238, 238)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 0,
+   "linkCount": 9
+  },
+  {
+   "tag": "DIV",
+   "cls": "container",
+   "h": 12376,
+   "bg": "rgba(0, 0, 0, 0)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 3,
+   "linkCount": 750
+  },
+  {
+   "tag": "SECTION",
+   "cls": "gambling gambling--aboveLivetable gambling--FR",
+   "h": 54,
+   "bg": "rgb(238, 238, 238)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 0,
+   "linkCount": 1
+  },
+  {
+   "tag": "DIV",
+   "cls": "container__livetable",
+   "h": 10997,
+   "bg": "rgba(0, 0, 0, 0)",
+   "radius": "8px",
+   "hasTable": false,
+   "cardCount": 3,
+   "linkCount": 448
+  },
+  {
+   "tag": "FOOTER",
+   "cls": "footerContainer",
+   "h": 807,
+   "bg": "rgb(255, 255, 255)",
+   "radius": "0px",
+   "hasTable": false,
+   "cardCount": 0,
+   "linkCount": 80
+  }
+ ],
+ "typeScale": [
+  "13px x7009",
+  "16px x266",
+  "12px x195",
+  "13.5px x35",
+  "11px x26",
+  "14px x16",
+  "10px x14",
+  "8px x13"
+ ],
+ "accents": [
+  [
+   "rgb(85,94,97)",
+   973
+  ],
+  [
+   "rgb(0,30,40)",
+   911
+  ],
+  [
+   "rgb(153,153,153)",
+   149
+  ],
+  [
+   "rgb(255,0,70)",
+   72
+  ],
+  [
+   "rgb(0,20,30)",
+   58
+  ],
+  [
+   "rgb(255,255,255)",
+   30
+  ]
+ ],
+ "rowSpacing": "46px"
+}

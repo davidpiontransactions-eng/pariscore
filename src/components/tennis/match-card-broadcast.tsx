@@ -668,9 +668,9 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             {disconnected && (
               <span
                 className="ml-2 inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-600 dark:text-amber-400"
-                title={tTennis("offline")}
+                title={t("offline")}
               >
-                ● {tTennis("offline")}
+                ● {t("offline")}
               </span>
             )}
           </span>

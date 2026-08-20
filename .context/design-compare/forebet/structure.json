@@ -1,0 +1,21 @@
+{
+ "site": "forebet",
+ "ok": true,
+ "note": "",
+ "sticky": [],
+ "structure": [],
+ "typeScale": [
+  "16px x17",
+  "12px x11",
+  "24px x2",
+  "40px x1",
+  "13.5px x1"
+ ],
+ "accents": [
+  [
+   "rgb(0,0,238)",
+   2
+  ]
+ ],
+ "rowSpacing": null
+}
