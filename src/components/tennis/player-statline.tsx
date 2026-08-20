@@ -168,6 +168,110 @@ export function PlayerStatline({
           </span>
         </>
       )}
+      {/* L10 Surface — score d'activité récente (10 derniers matchs terminés,
+          même surface, 3 mois, Elo figé par semaine). Badge compact inline,
+          coloré selon la catégorie de performance (sous-performant / moyen /
+          surperformance) + détail au survol. Masqué si aucun snapshot
+          (table absente / joueur inconnu). */}
+      {stats?.l10Surface != null && stats.l10Surface.matches > 0 && (
+        <>
+          <span className="text-border" aria-hidden>
+            ·
+          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex items-center gap-0.5 rounded border px-1.5 py-px font-medium",
+                  stats.l10Surface.performance === "over" &&
+                    "border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                  stats.l10Surface.performance === "average" &&
+                    "border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                  stats.l10Surface.performance === "under" &&
+                    "border-rose-500/40 bg-rose-500/15 text-rose-600 dark:text-rose-400",
+                )}
+                aria-label={t("l10Surface")}
+              >
+                <span className="tabular-nums">L10 {stats.l10Surface.score}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {stats.l10Surface.wins}-{stats.l10Surface.losses}
+                </span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              className="max-w-[380px] border bg-popover text-popover-foreground shadow-md"
+            >
+              <div className="space-y-1.5 py-0.5 text-[11px]">
+                <p className="font-semibold">
+                  {t("l10Surface")} · {surface}
+                </p>
+                <p className="text-muted-foreground">
+                  {t("l10SurfaceDetail", {
+                    score: stats.l10Surface.score,
+                    wins: stats.l10Surface.wins,
+                    losses: stats.l10Surface.losses,
+                    matches: stats.l10Surface.matches,
+                  })}
+                </p>
+                {/* Catégorie de performance — bornes : <10 sous-performant,
+                    10-24 moyen, ≥25 surperformance (voir tennis-l10.ts). */}
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                    stats.l10Surface.performance === "over" &&
+                      "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+                    stats.l10Surface.performance === "average" &&
+                      "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+                    stats.l10Surface.performance === "under" &&
+                      "bg-rose-500/15 text-rose-600 dark:text-rose-400",
+                  )}
+                >
+                  {t(
+                    stats.l10Surface.performance === "over"
+                      ? "l10PerfOver"
+                      : stats.l10Surface.performance === "average"
+                        ? "l10PerfAverage"
+                        : "l10PerfUnder",
+                  )}
+                </span>
+                <div className="max-h-56 space-y-0.5 overflow-y-auto border-t border-border/60 pt-1">
+                  {stats.l10Surface.details.map((m, i) => (
+                    <div
+                      key={i}
+                      title={`${new Date(m.date).toLocaleDateString()} · ${m.round}`}
+                      className="flex items-center gap-2 tabular-nums text-[10px]"
+                    >
+                      <span
+                        className={
+                          m.result === "W"
+                            ? "w-3 shrink-0 font-bold text-emerald-500"
+                            : "w-3 shrink-0 font-bold text-rose-500"
+                        }
+                      >
+                        {m.result}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">
+                        {m.opponentName}
+                      </span>
+                      <span className="min-w-0 max-w-[120px] flex-1 truncate text-muted-foreground/70">
+                        {m.tournament}
+                      </span>
+                      <span className="shrink-0 text-muted-foreground/60">
+                        {m.score || "—"}
+                      </span>
+                      <span className="w-6 shrink-0 text-right text-muted-foreground/80">
+                        +{m.points}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </>
+      )}
       {/* Indicateur tooltip + sparkline */}
       {hasSurfaceDetail && (
         <Tooltip>

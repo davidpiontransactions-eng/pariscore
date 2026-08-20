@@ -19,7 +19,18 @@ import { apiErrorHandler } from "@/lib/api-error-handler";
 import { ValidationError } from "@/lib/api-error";
 import { getPlayerStatsBatch } from "@/lib/tennis-stats/db";
 import { fetchPlayers } from "@/lib/bsd-tennis-service";
+import { computeL10SurfaceFromDb } from "@/lib/tennis-elo/l10-surface";
+import { prisma } from "@/lib/prisma";
 import type { PlayerStats } from "@/lib/tennis-stats/types";
+
+/** Surface UI (FR) → surface L10 (EN, format TennisAbstract). */
+function toL10Surface(surface: string): string {
+  const s = surface?.trim().toLowerCase();
+  if (!s) return "Hard";
+  if (s.startsWith("terre") || s.startsWith("clay")) return "Clay";
+  if (s.startsWith("gazon") || s.startsWith("grass")) return "Grass";
+  return "Hard";
+}
 
 const CACHE_TTL_MS = 60_000; // 1 min — cohérent avec /api/tennis/prematch
 
@@ -67,6 +78,33 @@ export async function GET(request: Request) {
     }
 
     const map = getPlayerStatsBatch(names, surface) as Record<string, PlayerStats>;
+
+    // Enrichissement L10 Surface (#12) : pour chaque joueur, calcule le score
+    // L10 sur la surface du match depuis les tables Prisma (TennisPlayerMatch
+    // + TennisEloSnapshot, cron hebdo). Dégradation gracieuse : si la table
+    // est absente ou vide, `l10Surface` reste null et l'UI masque le badge.
+    const l10Surface = toL10Surface(surface);
+    for (const name of names) {
+      try {
+        const norm = name
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9 ]/gi, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .toLowerCase();
+        // Clé de sortie : norm avec espaces (index du map, cohérent avec
+        // getPlayerStatsBatch). Clé DB : underscores (playerKey Prisma).
+        const outKey = norm.replace(/\s+/g, " ");
+        const playerKey = norm.replace(/\s+/g, "_");
+        const res = await computeL10SurfaceFromDb(playerKey, l10Surface, prisma);
+        if (res) {
+          map[outKey] = { ...(map[outKey] ?? {}), l10Surface: res };
+        }
+      } catch {
+        // Prisma KO → l10Surface reste null, l'UI masque le badge.
+      }
+    }
 
     // Repli BSD : joueurs absents de la DB → rang officiel courant via l'API
     // (cap 5 recherches pour ne pas exploser le budget requêtes du prematch).

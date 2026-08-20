@@ -13,6 +13,7 @@
 *    8. `pariscore-cron-dr`          : scraper DR tennis TennisAbstract quotidien 04:00 UTC
  *    9. `pariscore-cron-gemini`      : pré-calcul analyses Gemini matchs du jour (2h, 06:00-18:00 UTC)
  *   10. `pariscore-cron-press-review`: pré-chauffe cache revue de presse (quotidien 07:00 UTC, Zero-LLM)
+ *   11. `pariscore-cron-elo-weekly`   : snapshots Elo surface TennisAbstract + matchs L10 (lundi 14h Paris)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -219,6 +220,30 @@ module.exports = {
       },
       error_file: 'logs/cron-dr.err.log',
       out_file: 'logs/cron-dr.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job hebdo Elo Surface (lundi 14h Paris) ===
+      // Scrape tennisabstract.com → snapshots Elo DB (TennisEloSnapshot) +
+      // matchs récents par joueur (TennisPlayerMatch) pour le L10 Surface.
+      // PM2 cron : 12:00 ET 13:00 UTC le lundi — le wrapper vérifie l'heure
+      // Europe/Paris == 14h (été: 12 UTC, hiver: 13 UTC) pour ne scraper
+      // qu'une fois, au bon créneau. Durée ≈ 15 min (top 300, 1 req/1.5s).
+      name: 'pariscore-cron-elo-weekly',
+      script: 'scripts/cron-tennis-elo-weekly.sh',
+      interpreter: 'bash',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 12,13 * * 1', // lundi 12h + 13h UTC (garde 14h Paris dans le wrapper)
+      autorestart: false,            // cron-only
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        LEGAL_OVERRIDE_CONFIRMED: '1', // bypass du garde-fou (assumé par l'opérateur)
+      },
+      error_file: 'logs/cron-elo-weekly.err.log',
+      out_file: 'logs/cron-elo-weekly.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },

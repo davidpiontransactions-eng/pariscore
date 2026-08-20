@@ -105,6 +105,45 @@ model Odds {
   createdAt DateTime @default(now())
 }
 
+model TennisEloSnapshot {
+  id         String   @id @default(cuid())
+  playerKey  String // nom normalisé tennisabstract (ex: aryna_sabalenka)
+  playerName String
+  tour       String // "ATP" | "WTA"
+  weekIso    String // "2026-W34" — semaine ISO du snapshot
+  eloOverall Float
+  eloHard    Float?
+  eloClay    Float?
+  eloGrass   Float?
+  hEloRank   Int?
+  cEloRank   Int?
+  gEloRank   Int?
+  createdAt  DateTime @default(now())
+
+  @@unique([playerKey, weekIso])
+  @@index([weekIso])
+}
+
+model TennisPlayerMatch {
+  id           String   @id @default(cuid())
+  playerKey    String // clé normalisée tennisabstract
+  playerName   String
+  tour         String // "ATP" | "WTA"
+  date         DateTime
+  weekIso      String // semaine ISO du match
+  surface      String // "Hard" | "Clay" | "Grass"
+  tournament   String
+  round        String?
+  opponentKey  String? // clé normalisée de l'adversaire
+  opponentName String
+  result       String // "W" | "L" | "LIVE"
+  score        String?
+  createdAt    DateTime @default(now())
+
+  @@unique([playerKey, date, opponentKey, round])
+  @@index([playerKey, surface, date])
+}
+
 model TennisMatch {
   id          String   @id
   playerAId   String

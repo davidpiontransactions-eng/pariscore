@@ -44,7 +44,7 @@ NEED_BUILD=0     # next build
 if [ -z "$CHANGED" ]; then
   NEED_INSTALL=1; NEED_BUILD=1   # safe default
 else
-  if printf '%s\n' "$CHANGED" | grep -qE '^(src/|app/|next\.config|tsconfig|postcss|tailwind|components\.json)'; then
+  if printf '%s\n' "$CHANGED" | grep -qE '^(src/|app/|next\.config|tsconfig|postcss|tailwind|components\.json|prisma/)'; then
     NEED_BUILD=1
   fi
   if printf '%s\n' "$CHANGED" | grep -qE '^(package\.json|bun\.lock|package-lock\.json)'; then
@@ -87,6 +87,10 @@ if [ "$NEED_BUILD" = "1" ]; then
     exit 1
   fi
   BUILD_RAN=1
+  # Sync Prisma schema to the local SQLite DB (idempotent; no-op si inchangé).
+  echo "[4b] Prisma schema sync (db push)..."
+  npx prisma db push --skip-generate 2>&1 || { echo "ERR: prisma db push"; exit 1; }
+  npx prisma generate 2>&1 || { echo "ERR: prisma generate"; exit 1; }
 else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"
 fi
@@ -101,6 +105,7 @@ if [ "$BUILD_RAN" = "1" ]; then
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env 2>/dev/null || true
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env 2>/dev/null || true
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-gemini --update-env 2>/dev/null || true
+  pm2 startOrRestart ecosystem.config.js --only pariscore-cron-elo-weekly --update-env 2>/dev/null || true
 else
   echo "  $PM2_NEXT NOT restarted (no build)"
   echo "  cron jobs NOT restarted (legacy-only deploy)"

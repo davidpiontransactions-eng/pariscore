@@ -772,7 +772,12 @@
     "sparklineAria": "Tendance Elo 30 jours {name}",
     "spsRankInline": "Rang SPS sur cette surface : #{rank}",
     "drMoyen5m": "DR Moyen (5M)",
-    "drMoyen5mTooltip": "Dominance Ratio médian sur les 5 derniers matchs (filtré surface, source TennisAbstract)"
+    "drMoyen5mTooltip": "Dominance Ratio médian sur les 5 derniers matchs (filtré surface, source TennisAbstract)",
+    "l10Surface": "L10 Surface",
+    "l10SurfaceDetail": "Score {score} sur les {matches} derniers matchs ({wins} V / {losses} D) — Elo figé par semaine",
+    "l10PerfOver": "Surperformance",
+    "l10PerfAverage": "Moyen",
+    "l10PerfUnder": "Sous-performant"
   },
   "predictiveBets": {
     "title": "Paris prédictifs (games)",

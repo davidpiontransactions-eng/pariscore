@@ -47,7 +47,14 @@ export type PlayerStats = {
   acesPct?: number | null;
   /** #11 — % de double fautes [0..100], médiane 10 derniers matchs surface. */
   dfPct?: number | null;
+  /** #12 — Score L10 Surface (10 derniers matchs terminés, même surface,
+   *  3 mois, Elo figé par semaine via TennisEloSnapshot — table Prisma
+   *  alimentée par le cron hebdo `pariscore-cron-elo-weekly`).
+   *  null = surface sans historique ou snapshots absents (base vide). */
+  l10Surface?: L10SurfaceScoreResult | null;
 };
+
+import type { L10SurfaceScoreResult } from "../../types/tennis-l10";
 
 /** Map indexé par nom normalisé de joueur. */
 export type PlayerStatsMap = Record<string, PlayerStats>;

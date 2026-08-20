@@ -772,7 +772,12 @@
     "sparklineAria": "30-day Elo trend {name}",
     "spsRankInline": "SPS rank on this surface: #{rank}",
     "drMoyen5m": "DR Avg (5M)",
-    "drMoyen5mTooltip": "Median Dominance Ratio over the last 5 matches (surface-filtered, source TennisAbstract)"
+    "drMoyen5mTooltip": "Median Dominance Ratio over the last 5 matches (surface-filtered, source TennisAbstract)",
+    "l10Surface": "L10 Surface",
+    "l10SurfaceDetail": "Score {score} over the last {matches} matches ({wins} W / {losses} L) — Elo frozen per week",
+    "l10PerfOver": "Overperforming",
+    "l10PerfAverage": "Average",
+    "l10PerfUnder": "Underperforming"
   },
   "predictiveBets": {
     "title": "Predictive bets (games)",
