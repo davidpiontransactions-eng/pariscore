@@ -91,6 +91,9 @@ if [ "$NEED_BUILD" = "1" ]; then
   echo "[4b] Prisma schema sync (db push)..."
   npx prisma db push --skip-generate 2>&1 || { echo "ERR: prisma db push"; exit 1; }
   npx prisma generate 2>&1 || { echo "ERR: prisma generate"; exit 1; }
+  # Sync .env → standalone (.env vars lues au runtime par Next.js standalone ;
+  # les vars ajoutées après le build ne seraient pas copiées sans ce step).
+  cp -f .env .next/standalone/.env 2>/dev/null || true
 else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"
 fi
