@@ -204,20 +204,20 @@ function StatRow({
   const awayPct = pct ?? (away / max) * 70;
 
   return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="w-6 text-right font-semibold tabular-nums">{home}</span>
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-6 text-right font-display text-sm font-bold tabular-nums text-foreground">{home}</span>
       <div className="flex flex-1 items-center gap-0.5">
         <div
-          className="h-1 rounded-full bg-emerald-500/60 transition-[width]"
+          className="h-1.5 rounded-full bg-emerald-500/60 transition-[width]"
           style={{ width: `${homePct}%` }}
         />
-        <span className="mx-1 w-8 text-center text-xs text-muted-foreground">{label}</span>
+        <span className="mx-1 w-8 text-center text-xs font-medium uppercase tracking-wider text-slate-400">{label}</span>
         <div
-          className="h-1 rounded-full bg-rose-500/60 transition-[width]"
+          className="h-1.5 rounded-full bg-rose-500/60 transition-[width]"
           style={{ width: `${awayPct}%` }}
         />
       </div>
-      <span className="w-6 font-semibold tabular-nums">{away}</span>
+      <span className="w-6 font-display text-sm font-bold tabular-nums text-foreground">{away}</span>
     </div>
   );
 }
@@ -385,16 +385,16 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               </>
             ) : null}
             {p.xGa && p.xGa.total > 0 && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="w-6 text-right font-semibold tabular-nums text-sky-400">{p.xGa.home.toFixed(1)}</span>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="w-6 text-right font-display text-sm font-bold tabular-nums text-foreground">{p.xGa.home.toFixed(1)}</span>
                 <div className="flex flex-1 items-center gap-0.5">
-                  <div className="h-1 rounded-full bg-sky-500/60 transition-[width]"
+                  <div className="h-1.5 rounded-full bg-sky-500/60 transition-[width]"
                     style={{ width: `${Math.round((p.xGa.home / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
-                  <span className="mx-1 w-8 text-center text-xs font-medium text-sky-400/80">xG</span>
-                  <div className="h-1 rounded-full bg-sky-500/40 transition-[width]"
+                  <span className="mx-1 w-8 text-center text-xs font-medium uppercase tracking-wider text-slate-400">xG</span>
+                  <div className="h-1.5 rounded-full bg-sky-500/40 transition-[width]"
                     style={{ width: `${Math.round((p.xGa.away / Math.max(p.xGa.total, 0.01)) * 70)}%` }} />
                 </div>
-                <span className="w-6 font-semibold tabular-nums text-sky-400/70">{p.xGa.away.toFixed(1)}</span>
+                <span className="w-6 font-display text-sm font-bold tabular-nums text-foreground">{p.xGa.away.toFixed(1)}</span>
               </div>
             )}
           </div>

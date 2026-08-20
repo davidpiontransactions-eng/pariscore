@@ -1,0 +1,27 @@
+{
+ "title": "Attention Required! | Cloudflare",
+ "url": "https://www.whoscored.com/livefeed",
+ "fonts": [
+  "-apple-system x26",
+  "Times New Roman x6"
+ ],
+ "sizes": [
+  "13px x11",
+  "15px x10",
+  "16px x6",
+  "30px x4",
+  "60px x1"
+ ],
+ "colors": [
+  "rgb(64, 64, 64) x21",
+  "rgb(0, 0, 0) x6",
+  "rgb(89, 89, 89) x2",
+  "rgb(0, 81, 195) x2",
+  "rgb(255, 255, 255) x1"
+ ],
+ "weights": [
+  "400 x28",
+  "300 x3",
+  "600 x1"
+ ]
+}

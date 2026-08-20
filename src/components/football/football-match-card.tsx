@@ -70,9 +70,9 @@ function fmtSigned(n: number): string {
 function StandingStatRow({ label, home, away }: { label: string; home: React.ReactNode; away: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 px-2 py-1">
-      <span className="text-left text-xs font-medium tabular-nums text-foreground">{home}</span>
-      <span className="text-xs text-muted-foreground/50">{label}</span>
-      <span className="text-right text-xs font-medium tabular-nums text-foreground">{away}</span>
+      <span className="text-left font-display text-sm font-semibold tabular-nums text-foreground">{home}</span>
+      <span className="text-xs font-medium uppercase tracking-wider text-slate-400">{label}</span>
+      <span className="text-right font-display text-sm font-semibold tabular-nums text-foreground">{away}</span>
     </div>
   );
 }

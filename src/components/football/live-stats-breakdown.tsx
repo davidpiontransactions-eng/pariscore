@@ -76,21 +76,21 @@ function StatRow({
   const homeW = hasData && total > 0 ? ((h ?? 0) / total) * 100 : 50;
   const fmt = (v: number | null) => (v == null ? "—" : decimals > 0 ? v.toFixed(decimals) : String(Math.round(v)));
   return (
-    <div className={cn("grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-2 rounded-lg px-2 py-1", hot && "bg-emerald-500/5 ring-1 ring-emerald-500/30")}>
-      <span className="text-right text-[11px] font-semibold tabular-nums text-emerald-400">{fmt(h)}</span>
+    <div className={cn("grid grid-cols-[2.75rem_1fr_2.75rem] items-center gap-2 rounded-lg px-2 py-1", hot && "bg-emerald-500/5 ring-1 ring-emerald-500/30")}>
+      <span className="text-right font-display text-sm font-bold tabular-nums text-foreground">{fmt(h)}</span>
       <div className="min-w-0">
-        <p className="mb-0.5 flex items-center justify-center gap-1 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {hot && <Zap className="h-2.5 w-2.5 text-emerald-400" aria-hidden="true" />}
+        <p className="mb-1 flex items-center justify-center gap-1 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+          {hot && <Zap className="h-3 w-3 text-emerald-400" aria-hidden="true" />}
           <span className="truncate">{label}</span>
         </p>
         {hasData && (
-          <div className="flex h-1 overflow-hidden rounded-full bg-muted/60">
+          <div className="flex h-1.5 overflow-hidden rounded-full bg-muted/60">
             <div className={cn(h != null && (h ?? 0) >= (a ?? 0) ? "bg-emerald-500/90" : "bg-emerald-500/40")} style={{ width: `${homeW}%` }} />
             <div className={cn(a != null && (a ?? 0) > (h ?? 0) ? "bg-sky-500/90" : "bg-sky-500/40")} style={{ width: `${100 - homeW}%` }} />
           </div>
         )}
       </div>
-      <span className="text-[11px] font-semibold tabular-nums text-sky-400">{fmt(a)}</span>
+      <span className="font-display text-sm font-bold tabular-nums text-foreground">{fmt(a)}</span>
     </div>
   );
 }
