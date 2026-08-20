@@ -68,6 +68,7 @@ import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useAnalytics } from "@/components/analytics-provider";
+import { L10SurfaceBadge } from "./l10-surface-badge";
 
 // Normalisation identique à match-card.tsx pour la lookup stats enrichies.
 function normForLookup(s: string): string {
@@ -859,7 +860,16 @@ function BroadcastPlayerColumn({
         ) : (
           <span className="text-white/60">DR {EM_DASH}</span>
         )}
-        {/* Ligne 5 : Forme (dots) */}
+        {/* Ligne 5 : L10 Surface — score d'activité récente (10 derniers
+            matchs, même surface, 3 mois, Elo figé par semaine). Badge coloré
+            par catégorie + détail au survol (adversaire, tournoi, score,
+            points). Masqué si aucun snapshot / joueur inconnu. */}
+        {stats?.l10Surface != null && stats.l10Surface.matches > 0 && (
+          <span className="inline-flex items-center gap-1">
+            <L10SurfaceBadge stats={stats.l10Surface} surface={surface} compact />
+          </span>
+        )}
+        {/* Ligne 6 : Forme (dots) */}
         {!isSynthetic && (
           <FormDots
             form={player.form}

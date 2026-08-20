@@ -775,6 +775,7 @@
     "drMoyen5mTooltip": "Dominance Ratio médian sur les 5 derniers matchs (filtré surface, source TennisAbstract)",
     "l10Surface": "L10 Surface",
     "l10SurfaceDetail": "Score {score} sur les {matches} derniers matchs ({wins} V / {losses} D) — Elo figé par semaine",
+    "l10SurfaceUnrated": "{matches} derniers matchs — Elo figé indisponible pour ces semaines (score non calculé)",
     "l10PerfOver": "Surperformance",
     "l10PerfAverage": "Moyen",
     "l10PerfUnder": "Sous-performant"

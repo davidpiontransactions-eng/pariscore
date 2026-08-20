@@ -5,8 +5,8 @@
  *   - Historique du joueur : même surface, fenêtre 3 derniers mois,
  *     au plus 10 matchs terminés (LIVE exclus).
  *   - Elo figé : l'Elo de la SEMAINE du match (snapshot TennisEloSnapshot),
- *     pas l'Elo courant. Fallback : snapshot de la semaine la plus proche
- *     antérieure (≤ 30 jours), sinon null (match ignoré).
+ *     pas l'Elo courant. Fallback : snapshot le plus proche (≤ 30 jours,
+ *     avant ou après la semaine du match), sinon null (match non évalué).
  *   - Points par victoire selon ΔElo = EloAdversaire(semaine) − EloJoueur(semaine) :
  *       ≤ 50   → 1 pt
  *       51-100 → 3 pts
@@ -57,7 +57,11 @@ function mondayOfWeek(weekIso: string): Date {
 
 /**
  * Elo figé le plus proche : snapshot exact de la semaine du match, sinon le
- * snapshot antérieur le plus récent (≤ 30 jours avant), sinon null.
+ * snapshot le plus proche (avant OU après, ≤ 30 jours) — après le premier
+ * cron hebdo, seul le snapshot courant existe et les matchs des semaines
+ * antérieures seraient sinon tous « non évalués » (rated=0, score trompeur).
+ * Le « figé » garantit une échelle d'Elo cohérente entre joueurs (jamais
+ * l'Elo recalculé APRÈS le match, ce qui intégrerait le résultat analysé).
  */
 function frozenEloAt(
   snapshotsByWeek: Map<string, TennisEloSnapshot>,
@@ -68,15 +72,19 @@ function frozenEloAt(
   const exact = snapshotsByWeek.get(weekIso);
   if (exact) return snapshotElo(exact, surface);
   const matchMonday = mondayOfWeek(weekIso);
+  const MAX_MS = 30 * 86400e3;
+  let best: TennisEloSnapshot | null = null;
+  let bestDist = Infinity;
   for (const w of weeksSortedDesc) {
-    if (w < weekIso) {
-      const s = snapshotsByWeek.get(w);
-      if (!s) continue;
-      if (matchMonday.getTime() - mondayOfWeek(w).getTime() > 30 * 86400e3) return null;
-      return snapshotElo(s, surface);
+    const s = snapshotsByWeek.get(w);
+    if (!s) continue;
+    const dist = Math.abs(matchMonday.getTime() - mondayOfWeek(w).getTime());
+    if (dist <= MAX_MS && dist < bestDist) {
+      best = s;
+      bestDist = dist;
     }
   }
-  return null;
+  return best ? snapshotElo(best, surface) : null;
 }
 
 /**

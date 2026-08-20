@@ -14,6 +14,7 @@ import type { TennisMatch } from "@/lib/tennis-data";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useBrowserTimeZone } from "@/lib/tennis-format";
 import { cn } from "@/lib/utils";
+import { L10SurfaceBadge } from "./l10-surface-badge";
 
 type Props = {
   player: PlayerResult | null;
@@ -71,16 +72,19 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
       label: "Dur",
       elo: dur.data?.[normalizeName(playerName)]?.eloSurface ?? null,
       rank: dur.data?.[normalizeName(playerName)]?.surfaceEloRank ?? null,
+      l10: dur.data?.[normalizeName(playerName)]?.l10Surface ?? null,
     },
     {
       label: "Terre",
       elo: clay.data?.[normalizeName(playerName)]?.eloSurface ?? null,
       rank: clay.data?.[normalizeName(playerName)]?.surfaceEloRank ?? null,
+      l10: clay.data?.[normalizeName(playerName)]?.l10Surface ?? null,
     },
     {
       label: "Gazon",
       elo: grass.data?.[normalizeName(playerName)]?.eloSurface ?? null,
       rank: grass.data?.[normalizeName(playerName)]?.surfaceEloRank ?? null,
+      l10: grass.data?.[normalizeName(playerName)]?.l10Surface ?? null,
     },
   ];
 
@@ -159,6 +163,11 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
                     <div className="text-[11px] text-muted-foreground">
                       Rang {fmtNumber(s.rank, "")}
                     </div>
+                    {s.l10 != null && s.l10.matches > 0 && (
+                      <div className="mt-1.5">
+                        <L10SurfaceBadge stats={s.l10} surface={s.label} compact />
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
