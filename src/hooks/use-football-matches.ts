@@ -6,6 +6,8 @@ import type { FootballMatch } from "@/lib/football-data";
 type FootballResponse = {
   matches: FootballMatch[];
   source: string;
+  /** true si BSD (source des grandes ligues) n'a rien renvoyé → onglet dégradé. */
+  degraded?: boolean;
   updatedAt: string;
 };
 
@@ -28,7 +30,9 @@ export function useFootballMatches() {
       const res = await fetch("/api/football/matches");
       if (!res.ok) throw new Error(`API football HTTP ${res.status}`);
       const json: FootballResponse = await res.json();
-      if ((json.matches ?? []).length === 0) throw new Error("API football vide");
+      // Dégradé (BSD vide) ≠ erreur : on ne casse pas l'onglet, on laisse le
+      // bandeau « source limitée » + l'état vide s'afficher.
+      if ((json.matches ?? []).length === 0 && !json.degraded) throw new Error("API football vide");
       setData(json);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("API football indisponible"));

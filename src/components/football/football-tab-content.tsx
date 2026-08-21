@@ -327,6 +327,15 @@ export function FootballTabContent() {
       )}
 
       {/* Sous-onglets Live | Pre-match (modèle 1xbet) */}
+      {data?.degraded && !error && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <p>
+            Les grandes ligues sont momentanément indisponibles (source BSD limitée). Seules les ligues
+            de repli s&apos;affichent — récupération automatique en cours.
+          </p>
+        </div>
+      )}
       <MatchViewTabs
         idBase={tabsId}
         active={mode}
