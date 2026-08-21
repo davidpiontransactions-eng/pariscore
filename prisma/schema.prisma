@@ -187,6 +187,82 @@ model UserBet {
   updatedAt DateTime @updatedAt
 }
 
+// ─── Bet Manager (gestion de paris sportifs) ────────────────────────────────
+
+model Bankroll {
+  id        String        @id @default(cuid())
+  name      String
+  currency  String        @default("EUR")
+  initial   Float         @default(0)
+  note      String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  bets      Bet[]
+  imports   ImportBatch[]
+}
+
+model Bet {
+  id          String    @id @default(cuid())
+  bankrollId  String
+  bankroll    Bankroll  @relation(fields: [bankrollId], references: [id])
+  betType     String    @default("single") // single | combo | system | back | lay | dutch
+  sport       String    @default("football")
+  competition String?
+  matchLabel  String? // "PSG vs OM", "Alcaraz - Sinner", ticket 1xbet...
+  market      String? // "1X2", "BTTS", "Moneyline", "Over/Under 2.5"...
+  pick        String?
+  stake       Float
+  odds        Float     @default(0) // cote simple ou cote combinée totale
+  status      String    @default("pending") // pending | won | lost | void | cashout
+  payout      Float?
+  profit      Float?
+  cashoutAt   DateTime?
+  bookmaker   String?
+  tipster     String?
+  category    String?
+  tags        String    @default("") // CSV : "montante,taureau,closing"
+  closingOdd  Float? // closing odds pour mesurer la valeur
+  placedAt    DateTime  @default(now())
+  settledAt   DateTime?
+  note        String?
+  legs        BetLeg[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([bankrollId, placedAt])
+  @@index([status])
+  @@index([sport])
+}
+
+model BetLeg {
+  id         String  @id @default(cuid())
+  betId      String
+  bet        Bet     @relation(fields: [betId], references: [id])
+  matchLabel String
+  market     String?
+  pick       String?
+  odds       Float
+  order      Int     @default(0)
+}
+
+model Bookmaker {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+}
+
+model ImportBatch {
+  id         String   @id @default(cuid())
+  bankrollId String
+  bankroll   Bankroll @relation(fields: [bankrollId], references: [id])
+  source     String   @default("csv") // csv | ocr | manual
+  fileName   String?
+  count      Int      @default(0)
+  status     String   @default("done")
+  createdAt  DateTime @default(now())
+}
+
 model GeminiCache {
   id        String   @id // key: "gemini-insight:{sport}:{matchId}:{date}"
   data      String   // JSON serialized

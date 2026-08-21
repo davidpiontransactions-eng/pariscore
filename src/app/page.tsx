@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   Trophy,
@@ -16,6 +17,7 @@ import {
   Star,
   Timer,
   Sparkles,
+  BarChart3,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
@@ -250,6 +252,17 @@ function HomeInner() {
               <EmailToggle />
               <TerminalToggle />
               <ValueBetScannerIndicator />
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="gap-1.5 text-xs text-zinc-300 hover:text-white"
+              >
+                <Link href="/bankroll" title="Bet Manager — gestion de bankroll et de paris">
+                  <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="hidden sm:inline">Bet Manager</span>
+                </Link>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

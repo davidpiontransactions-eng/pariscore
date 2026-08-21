@@ -227,6 +227,24 @@ shadcn component is missing, add it via `bunx shadcn@latest add <name>`.
 
 ---
 
+## Bet Manager (`src/components/bet-manager/`) — 9 components
+
+Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, données Prisma `Bankroll`/`Bet`/`BetLeg`).
+
+| Component | File | Role |
+|-----------|------|------|
+| bet-manager-nav | bet-manager-nav.tsx | Sous-nav du module (tabs Dashboard/Paris/Outils + sélecteur bankroll) |
+| kpi-strip | kpi-strip.tsx | Bandeau KPIs trading cockpit (capital, profit, ROI, yield, réussite, drawdown) |
+| capital-chart | capital-chart.tsx | Courbe d'évolution du capital (AreaChart Recharts) |
+| breakdown-list | breakdown-list.tsx | Répartition par sport/bookmaker/cote avec barres de proportion |
+| bet-table | bet-table.tsx | Table des paris + actions de règlement (won/lost/void/cashout/delete) |
+| bet-form | bet-form.tsx | Formulaire d'ajout de pari (dialog) avec legs de combiné + scan OCR ticket |
+| bankroll-form | bankroll-form.tsx | Formulaire de création de bankroll (dialog) |
+| csv-import | csv-import.tsx | Import CSV de paris (fichier ou copier-coller, aperçu avant import) |
+| calculators-grid | calculators-grid.tsx | Grille des 17 calculateurs (Kelly, EV, arbitrage, Monte Carlo, plan de mise…) |
+
+---
+
 ## Conventions
 
 - **One component per file**, filename = kebab-case = export name (PascalCase).
