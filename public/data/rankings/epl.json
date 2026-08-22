@@ -4,149 +4,157 @@
     "leagueId": "epl",
     "leagueName": "England",
     "season": "2026-27",
-    "lastUpdated": "2026-08-21T04:46:00.374099Z",
+    "lastUpdated": "2026-08-22T03:01:21.808807Z",
     "source": "soccerstats.com",
     "teamCount": 20,
     "partial": false
   },
   "home": {
-    "ppg": [],
+    "ppg": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Arsenal",
+        "value": 3.0,
+        "played": 1
+      }
+    ],
     "pts": [
       {
         "rank": 1,
         "teamId": "",
         "teamName": "Arsenal",
-        "value": 0.0,
-        "played": 0
+        "value": 3.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Aston Villa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Bournemouth",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brentford",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brighton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Chelsea",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Coventry City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Everton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Fulham",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Hull",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Ipswich Town",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Leeds Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Liverpool",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester United",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Newcastle Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Nottm Forest",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sunderland",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Tottenham",
         "value": 0.0,
@@ -158,137 +166,137 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Arsenal",
-        "value": 0.0,
-        "played": 0
+        "value": 3.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Aston Villa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Bournemouth",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brentford",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brighton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Chelsea",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Coventry City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Everton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Fulham",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Hull",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Ipswich Town",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Leeds Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Liverpool",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester United",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Newcastle Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Nottm Forest",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sunderland",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Tottenham",
         "value": 0.0,
@@ -301,7 +309,7 @@
         "teamId": "",
         "teamName": "Arsenal",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
         "rank": 1,
@@ -442,137 +450,137 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Arsenal",
-        "value": 0.0,
-        "played": 0
+        "value": 3.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Aston Villa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Bournemouth",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brentford",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brighton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Chelsea",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Coventry City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Everton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Fulham",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Hull",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Ipswich Town",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Leeds Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Liverpool",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester United",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Newcastle Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Nottm Forest",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sunderland",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Tottenham",
         "value": 0.0,
@@ -584,137 +592,137 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Arsenal",
-        "value": 0.0,
-        "played": 0
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Aston Villa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Bournemouth",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brentford",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Brighton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Chelsea",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Coventry City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Everton",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Fulham",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Hull",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Ipswich Town",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Leeds Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Liverpool",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester City",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Manchester United",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Newcastle Utd",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Nottm Forest",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sunderland",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Tottenham",
         "value": 0.0,
@@ -727,7 +735,7 @@
         "teamId": "",
         "teamName": "Arsenal",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
         "rank": 1,
@@ -869,7 +877,7 @@
         "teamId": "",
         "teamName": "Arsenal",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
         "rank": 1,
@@ -1007,7 +1015,15 @@
     ]
   },
   "away": {
-    "ppg": [],
+    "ppg": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 0.0,
+        "played": 1
+      }
+    ],
     "pts": [
       {
         "rank": 1,
@@ -1048,13 +1064,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Chelsea",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Coventry City",
         "value": 0.0,
         "played": 0
       },
@@ -1148,6 +1157,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "gf": [
@@ -1196,13 +1212,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Coventry City",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
@@ -1290,6 +1299,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "ga": [
@@ -1338,13 +1354,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Coventry City",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
@@ -1432,6 +1441,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 3.0,
+        "played": 1
       }
     ],
     "gd": [
@@ -1480,13 +1496,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Coventry City",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
@@ -1574,6 +1583,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": -3.0,
+        "played": 1
       }
     ],
     "w": [
@@ -1622,13 +1638,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Coventry City",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
@@ -1716,6 +1725,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "d": [
@@ -1764,13 +1780,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Coventry City",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
@@ -1858,6 +1867,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "l": [
@@ -1906,13 +1922,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Coventry City",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Crystal Palace",
         "value": 0.0,
         "played": 0
@@ -2000,6 +2009,13 @@
         "teamName": "Tottenham",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Coventry City",
+        "value": 1.0,
+        "played": 1
       }
     ]
   },
