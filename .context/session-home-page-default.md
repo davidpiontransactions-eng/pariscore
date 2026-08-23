@@ -66,15 +66,37 @@ gantt
 | 5 | Implémentation | ✅ |
 | 6 | Vérifications statiques | ✅ |
 | 7 | QA visuelle + code review | ✅ |
-| 8 | Déploiement | ⏳ |
+| 8 | Déploiement + re-vérif prod | ✅ |
 
-## Vérifications
+## Vérifications statiques
 
 | Commande | Résultat |
 |---|---|
-| `tsc --noEmit` (6 fichiers touchés) | ✅ 0 erreur (erreurs préexistantes bankroll/skyvern non liées) |
+| `tsc --noEmit` (fichiers touchés) | ✅ 0 erreur (erreurs préexistantes bankroll/skyvern non liées) |
 | `eslint` fichiers touchés | ✅ 0 erreur / 0 warning (`globals.css` ignoré par config — attendu) |
 | `bun run build` | ✅ Compiled successfully, 70/70 pages statiques |
+
+## QA visuelle prod (`scripts/qa-home-probe.js`) — post-deploy `9f37e573`
+
+| Check | Résultat |
+|---|---|
+| Panneau « Bienvenue sur PariScore » affiché par défaut | ✅ |
+| Section `[aria-label="Accueil PariScore"]` dans le DOM | ✅ |
+| Onboarding « Choisis ton sport » visible (vue home active) | ✅ |
+| Premier onglet SportTabs = « Accueil » | ✅ |
+| CTA « Explorer le football » → bascule football + bloc Top 5 présent | ✅ |
+| URL après CTA : `?sport=football` (store sync OK) | ✅ |
+| Logo → retour accueil fonctionnel | ✅ |
+| **Verdict** | **QA_HOME_PASS** |
+
+Screenshot : `.context/qa-home-prod.png`.
+
+## Déploiements
+
+| Commit | Contenu | Statut |
+|---|---|---|
+| `9f37e573` | Feature complète + correctifs review | ✅ build_ran:1 · health OK · Discord OK |
+| (sonde) | `scripts/qa-home-probe.js` réutilisable | commit séparé |
 
 ## Implémentation livrée
 
