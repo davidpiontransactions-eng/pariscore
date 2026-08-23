@@ -303,5 +303,30 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
+    {
+      // === Cron job Stats Ligues OddAlerts (refresh quotidien) ===
+      // Scrape les 1582 pages ligues oddalerts.com (stats buts/cartons/
+      // corners/BTTS + fixtures cotes 1X2) et upserte la table SQLite
+      // `league_season_stats` dans pariscore.db. Consommée par l'API Next.js
+      // /api/v1/leagues-stats et les pages /ligues.
+      // Skip-cache intégré (<20h) → un `pm2 restart` manuel ne re-scrape que
+      // si nécessaire ; --force force le pass complet.
+      name: 'pariscore-cron-oddalerts',
+      script: 'scripts/scrape-oddalerts.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 4 * * *', // quotidien à 04:30 UTC (~2 min de run)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+        DATABASE_PATH: '/home/ubuntu/pariscore/pariscore.db',
+      },
+      error_file: 'logs/cron-oddalerts.err.log',
+      out_file: 'logs/cron-oddalerts.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
   ],
 };

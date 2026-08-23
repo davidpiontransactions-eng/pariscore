@@ -7,6 +7,16 @@ Do NOT narrate each step (*"Let me check…"*, *"Now I'll…"*, *"The X returned
 State intent in one short line, run your tool calls, then give a tight result summary.
 Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructions/communication.md).
 
+## Session: Stats Ligues OddAlerts (2026-08-23)
+
+**Scope**: Réplique des pages ligues oddalerts.com sur Pariscore pour **1582 championnats** (197 pays) — scraping quotidien → table SQLite `league_season_stats` dans pariscore.db → API Next + pages `/ligues`.
+
+**Fichiers clés**: `scripts/scrape-oddalerts.js` (scraper Node zéro-dép, https module **obligatoire** — undici `fetch` reçoit 403 WAF), `src/lib/leagues-stats/{types,db}.ts` (lecture readonly better-sqlite3), `src/app/api/v1/leagues-stats/` (index + `[country]/[slug]`), `src/app/ligues/` (index recherche+pays, détail replica OddAlerts FR), composants `league-stat-grid`/`league-fixtures-list`, modèle Prisma `LeagueSeasonStats` (DDL réel créé par le scraper via CREATE TABLE IF NOT EXISTS).
+
+**Cron VPS**: pm2 `pariscore-cron-oddalerts` (`30 4 * * *`), skip-cache <20h, `--force` pour re-scrape complet. Run local : `node scripts/scrape-oddalerts.js [--country=x|--only=c/s|--limit=n|--dry-run]`. Pass complet ≈2 min (concurrence 5, délai 350 ms).
+
+**Pièges**: (1) WAF OddAlerts fingerprint TLS → utiliser le module `https` Node, pas `global fetch` ; (2) HTML server-rendered BEM stable (`competition-card`, `competition-stat__value--{value|per|avg}`, liens index en **guillemets simples**) ; (3) fixtures parfois sans cotes (div prices absente) ; (4) DB = pariscore.db racine (convention `DATABASE_PATH || cwd/pariscore.db` partagée avec server.js et tennis-stats), PAS la DB Prisma `prisma/dev.db`.
+
 ## Session: Rankings Home/Away Pipeline (2026-08-02)
 
 **Scope**: Pipeline 100% gratuit de scraping soccerstats.com → classement Home/Away → JSON statiques servis via CDN Vercel.

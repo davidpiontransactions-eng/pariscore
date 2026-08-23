@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 149 components total (football: 11, leagues: 4, tennis: 52, etc.).
+> extract pass. 151 components total (football: 11, leagues: 6, tennis: 52, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -116,7 +116,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 
-## Leagues (`src/components/leagues/`) — 4 components
+## Leagues (`src/components/leagues/`) — 6 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -124,6 +124,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | league-location-tabs | league-location-tabs.tsx | Toggle Global / Domicile / Extérieur |
 | league-market-tops | league-market-tops.tsx | Grille widgets « Tops Équipes par Marché » |
 | league-market-widget | league-market-widget.tsx | Widget unitaire top 5 d'un marché (PPG, Over, BTTS…) |
+| league-stat-grid | league-stat-grid.tsx | Grille de stats section OddAlerts (générale, O/U, cartons, BTTS, corners…) |
+| league-fixtures-list | league-fixtures-list.tsx | Liste prochains matchs avec badges équipes + cotes 1X2 |
 
 ## F1 (`src/components/f1/`) — 2 components
 

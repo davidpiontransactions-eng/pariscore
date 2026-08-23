@@ -273,3 +273,27 @@ model KvStore {
   key   String @id
   value String
 }
+
+// ─── Stats ligues OddAlerts ──────────────────────────────────────────────────
+// Peuplée par scripts/scrape-oddalerts.js (cron PM2 pariscore-cron-oddalerts).
+// Lue en readonly par l'API /api/v1/leagues-stats via better-sqlite3.
+
+model LeagueSeasonStats {
+  id           String   @id // "{country}/{slug}", ex: "england/premier-league"
+  country      String
+  slug         String
+  leagueName   String
+  logoUrl      String?
+  sport        String   @default("football")
+  seasonLabel  String?
+  seasonsJson  String? // [{label,url,current}]
+  gamesPlayed  Int      @default(0)
+  statsJson    String   @default("{}") // sections [{id,title,items:[{key,label,value,pct,avg}]}]
+  fixturesJson String? // prochains matchs + cotes 1X2 best price
+  sourceUrl    String?
+  source       String   @default("oddalerts")
+  updatedAt    DateTime @updatedAt
+
+  @@unique([country, slug])
+  @@map("league_season_stats")
+}
