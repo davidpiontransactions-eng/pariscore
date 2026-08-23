@@ -57,11 +57,12 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const ocrFnRef = useRef<((image: Blob) => Promise<OcrTicket>) | null>(null);
 
   useEffect(() => {
-    // Import via variable + webpackIgnore pour éviter l'analyse statique
-    const modPath = "@/lib/bet-manager/ocr-client";
-    import(/* webpackIgnore: true */ modPath).then((mod) => {
+    // Import via fonction pour éviter l'analyse statique Next.js
+    const loadOcr = async () => {
+      const mod = await import("@/lib/bet-manager/ocr-client");
       ocrFnRef.current = mod.ocrTicketImage;
-    });
+    };
+    loadOcr();
   }, []);
 
   const effOdds = betType === "combo"

@@ -5,14 +5,22 @@
 import type { OcrTicket } from "./ocr";
 
 /**
- * OCR d'une image de ticket via tesseract.js (import dynamique, ~2 Mo).
+ * OCR d'une image de ticket via tesseract.js chargé depuis CDN.
  * Ne fonctionne qu'en environnement navigateur.
  */
 export async function ocrTicketImage(image: Blob): Promise<OcrTicket> {
-  // Import dynamique via variable pour éviter l'analyse statique Next.js
-  // tesseract.js utilise WebAssembly + web workers (incompatible SSR)
-  const tess = await import(/* webpackIgnore: true */ "tesseract.js");
-  const { createWorker } = tess;
+  // Charger tesseract.js depuis CDN pour éviter les problèmes de build Next.js
+  if (typeof window === "undefined") {
+    throw new Error("OCR uniquement disponible côté client");
+  }
+
+  // @ts-ignore - Tesseract sera chargé globalement via CDN
+  if (!window.Tesseract) {
+    await loadTesseractFromCDN();
+  }
+
+  // @ts-ignore
+  const { createWorker } = window.Tesseract;
   const worker = await createWorker("fra", 1, { logger: () => {} });
   try {
     const { data } = await worker.recognize(image);
@@ -22,20 +30,31 @@ export async function ocrTicketImage(image: Blob): Promise<OcrTicket> {
   }
 }
 
+function loadTesseractFromCDN(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === "undefined") {
+      reject(new Error("Pas de window"));
+      return;
+    }
+    // @ts-ignore
+    if (window.Tesseract) {
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Échec chargement tesseract.js depuis CDN"));
+    document.head.appendChild(script);
+  });
+}
+
 // Copie locale de parseTicketText pour éviter l'import circulaire
 function cleanNumber(s: string): number | undefined {
   const n = parseFloat(s.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", "."));
   return isNaN(n) ? undefined : n;
 }
-
-function normalize(s: string): string {
-  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-}
-
-const RX_STAKE = /(?:montant\s*(?:du\s*)?(?:pari|mise)|mise\s*totale|total\s*stake|stake)/i;
-const RX_POTENTIAL = /(?:gain\s*(?:possible|potentiel)|potential\s*(?:payout|winning)|to\s*win|gain\s*total)/i;
-const RX_TOTAL_ODDS = /(?:cote\s*totale|total\s*odds|odds\s*total)/i;
-const RX_COUPON = /(?:n[o°]\s*(?:de\s*)?coupon|coupon\s*(?:number|id)|bet\s*id|ticket\s*n[o°])/i;
 
 function parseTicketText(raw: string): OcrTicket {
   const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
