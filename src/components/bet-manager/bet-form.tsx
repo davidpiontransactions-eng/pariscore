@@ -57,8 +57,9 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const ocrFnRef = useRef<((image: Blob) => Promise<OcrTicket>) | null>(null);
 
   useEffect(() => {
+    // Import via variable + webpackIgnore pour éviter l'analyse statique
     const modPath = "@/lib/bet-manager/ocr-client";
-    import(modPath).then((mod) => {
+    import(/* webpackIgnore: true */ modPath).then((mod) => {
       ocrFnRef.current = mod.ocrTicketImage;
     });
   }, []);

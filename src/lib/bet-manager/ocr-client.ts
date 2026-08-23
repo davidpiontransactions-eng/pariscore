@@ -9,8 +9,10 @@ import type { OcrTicket } from "./ocr";
  * Ne fonctionne qu'en environnement navigateur.
  */
 export async function ocrTicketImage(image: Blob): Promise<OcrTicket> {
-  // Import dynamique : tesseract.js utilise WebAssembly + web workers
-  const { createWorker } = await import("tesseract.js");
+  // Import dynamique via variable pour éviter l'analyse statique Next.js
+  // tesseract.js utilise WebAssembly + web workers (incompatible SSR)
+  const tess = await import(/* webpackIgnore: true */ "tesseract.js");
+  const { createWorker } = tess;
   const worker = await createWorker("fra", 1, { logger: () => {} });
   try {
     const { data } = await worker.recognize(image);
