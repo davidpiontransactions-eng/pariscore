@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { BetType } from "@/lib/bet-manager/types";
 import type { OcrTicket } from "@/lib/bet-manager/ocr";
+import { ocrTicketImage } from "@/lib/bet-manager/ocr-client";
 
 const SPORTS = ["football", "tennis", "basketball", "mma", "rugby", "cs2", "nba", "wnba", "cycling", "f1", "baseball", "other"];
 
@@ -33,56 +34,42 @@ type Props = {
   bankrollId: string | null;
   defaultBookmaker?: string;
   onAdd: (input: any) => Promise<void>;
-  onClose: () => void;
 };
 
-export function BetForm({ bankrollId, defaultBookmaker = "1xbet", onAdd, onClose }: Props) {
-  const [sport, setSport] = useState("football");
+export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const [betType, setBetType] = useState<BetType>("single");
-  const [bookmaker, setBookmaker] = useState(defaultBookmaker);
+  const [sport, setSport] = useState(SPORTS[0]);
+  const [competition, setCompetition] = useState("");
   const [matchLabel, setMatchLabel] = useState("");
   const [market, setMarket] = useState("");
   const [pick, setPick] = useState("");
   const [stake, setStake] = useState("");
   const [odds, setOdds] = useState("");
-  const [placedAt, setPlacedAt] = useState(() => new Date().toISOString().slice(0, 16));
+  const [bookmaker, setBookmaker] = useState(defaultBookmaker || "");
   const [tipster, setTipster] = useState("");
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
   const [note, setNote] = useState("");
-  const [legs, setLegs] = useState<LegRow[]>([{ matchLabel: "", market: "", pick: "", odds: "" }]);
   const [saving, setSaving] = useState(false);
+
+  const [legs, setLegs] = useState<LegRow[]>([{ matchLabel: "", market: "", pick: "", odds: "" }]);
   const [ocrBusy, setOcrBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const comboOdds = legs.reduce((acc, l) => acc * (parseFloat(l.odds) || 1), 1);
-  const effOdds = betType === "combo" ? comboOdds : parseFloat(odds) || 0;
+  const effOdds = betType === "combo"
+    ? legs.reduce((acc, l) => acc * (parseFloat(l.odds) || 1), 1)
+    : parseFloat(odds) || 0;
 
   const applyTicket = useCallback((t: OcrTicket) => {
     if (t.matchLabel) setMatchLabel(t.matchLabel);
-    if (t.pick) setPick(t.pick);
     if (t.market) setMarket(t.market);
+    if (t.pick) setPick(t.pick);
     if (t.odds) setOdds(String(t.odds));
     if (t.stake) setStake(String(t.stake));
     if (t.bookmaker) setBookmaker(t.bookmaker);
     if (t.legs.length > 1) {
       setBetType("combo");
-      setLegs(
-        t.legs.map((l) => ({
-          matchLabel: l.matchLabel ?? "",
-          market: l.market ?? "",
-          pick: l.pick ?? "",
-          odds: l.odds !== undefined ? String(l.odds) : "",
-        }))
-      );
-      toast.success(`${t.legs.length} sélections reconnues (combiné) — vérifie les valeurs`);
-    } else if (t.legs.length === 1 && t.legs[0].matchLabel) {
-      setMatchLabel(t.legs[0].matchLabel);
-      setPick(t.legs[0].pick ?? "");
-      if (t.legs[0].market) setMarket(t.legs[0].market);
-      toast.success("Ticket reconnu — vérifie les valeurs ci-dessous");
-    } else {
-      toast.success("Ticket reconnu — vérifie les valeurs ci-dessous");
+      setLegs(t.legs.map((l) => ({ matchLabel: l.matchLabel, market: l.market ?? "", pick: l.pick ?? "", odds: String(l.odds ?? "") })));
     }
   }, []);
 
@@ -92,8 +79,6 @@ export function BetForm({ bankrollId, defaultBookmaker = "1xbet", onAdd, onClose
       if (!file) return;
       setOcrBusy(true);
       try {
-        // Import dynamique : tesseract.js (~2 Mo) ne charge qu'au premier scan
-        const { ocrTicketImage } = await import("@/lib/bet-manager/ocr");
         const ticket = await ocrTicketImage(file);
         if (!ticket.matchLabel && !ticket.odds && !ticket.stake) {
           toast.error("Aucun pari reconnu dans l'image. Colle le texte du ticket ci-dessous.");
@@ -132,10 +117,10 @@ export function BetForm({ bankrollId, defaultBookmaker = "1xbet", onAdd, onClose
         bankrollId,
         betType,
         sport,
-        competition: undefined,
-        matchLabel: matchLabel || undefined,
-        market: market || undefined,
-        pick: pick || undefined,
+        competition: competition || undefined,
+        matchLabel: betType === "combo" ? legs[0]?.matchLabel : matchLabel || undefined,
+        market: betType === "combo" ? undefined : market || undefined,
+        pick: betType === "combo" ? undefined : pick || undefined,
         stake: stakeNum,
         odds: effOdds,
         bookmaker: bookmaker || undefined,
@@ -143,249 +128,166 @@ export function BetForm({ bankrollId, defaultBookmaker = "1xbet", onAdd, onClose
         category: category || undefined,
         tags: tags || undefined,
         note: note || undefined,
-        placedAt: new Date(placedAt).toISOString(),
-        legs:
-          betType === "combo"
-            ? legs
-                .filter((l) => l.matchLabel.trim())
-                .map((l) => ({
-                  matchLabel: l.matchLabel,
-                  market: l.market || undefined,
-                  pick: l.pick || undefined,
-                  odds: parseFloat(l.odds) || 1,
-                }))
-            : undefined,
+        legs: betType === "combo"
+          ? legs.filter((l) => l.matchLabel && l.odds).map((l) => ({
+              matchLabel: l.matchLabel,
+              market: l.market || undefined,
+              pick: l.pick || undefined,
+              odds: parseFloat(l.odds),
+            }))
+          : undefined,
       });
-      toast.success("Pari ajouté ✅");
-      onClose();
+      setStake("");
+      setOdds("");
+      setMatchLabel("");
+      setMarket("");
+      setPick("");
+      setLegs([{ matchLabel: "", market: "", pick: "", odds: "" }]);
     } catch (err: any) {
-      toast.error(err.message ?? "Erreur à l'ajout du pari");
+      toast.error("Erreur : " + (err.message ?? "inconnue"));
     } finally {
       setSaving(false);
     }
   };
 
+  const addLeg = () =>
+    setLegs((prev) => [...prev, { matchLabel: "", market: "", pick: "", odds: "" }]);
+
+  const removeLeg = (i: number) =>
+    setLegs((prev) => (prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== i)));
+
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[88vh] overflow-y-auto border-white/10 bg-[#0d1117] text-zinc-100 sm:max-w-lg">
+    <Dialog open onOpenChange={() => {}}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            Ajouter un pari
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto gap-1.5 border-white/10 text-xs text-zinc-300"
-              onClick={() => fileRef.current?.click()}
-              disabled={ocrBusy}
-            >
-              {ocrBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5 text-emerald-400" />}
-              {ocrBusy ? "Lecture…" : "Scanner un ticket"}
-            </Button>
+          <DialogTitle className="flex items-center justify-between gap-2">
+            {betType === "combo" ? "Pari combiné" : "Nouveau pari"}
+            <span className="text-xs text-muted-foreground">
+              {betType === "combo" ? `${legs.length} sélection(s)` : `Cote effective ~${effOdds?.toFixed(2) ?? "—"}`}
+            </span>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Sport</Label>
-              <Select value={sport} onValueChange={setSport}>
-                <SelectTrigger className="h-9 border-white/10 bg-white/5 text-xs">
-                  <SelectValue />
+        <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label>Type</Label>
+              <Select value={betType} onValueChange={setBetType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Type" />
                 </SelectTrigger>
-                <SelectContent className="border-white/10 bg-[#101420] text-zinc-100">
+                <SelectContent>
+                  <SelectItem value="single">Simple</SelectItem>
+                  <SelectItem value="combo">Combiné</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Sport</Label>
+              <Select value={sport} onValueChange={setSport}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sport" />
+                </SelectTrigger>
+                <SelectContent>
                   {SPORTS.map((s) => (
-                    <SelectItem key={s} value={s} className="text-xs capitalize">
-                      {s}
-                    </SelectItem>
+                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Type</Label>
-              <Select value={betType} onValueChange={(v) => setBetType(v as BetType)}>
-                <SelectTrigger className="h-9 border-white/10 bg-white/5 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-white/10 bg-[#101420] text-zinc-100">
-                  <SelectItem value="single">Simple</SelectItem>
-                  <SelectItem value="combo">Combiné</SelectItem>
-                  <SelectItem value="system">Système</SelectItem>
-                  <SelectItem value="back">Back</SelectItem>
-                  <SelectItem value="lay">Lay</SelectItem>
-                  <SelectItem value="dutch">Dutching</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="sm:col-span-2">
+              <Label>Compétition (optionnel)</Label>
+              <Input value={competition} onChange={(e) => setCompetition(e.target.value)} placeholder="ex: Ligue 1, ATP 500, NBA" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Match / Ticket</Label>
-              <Input
-                className="h-9 border-white/10 bg-white/5 text-xs text-zinc-100"
-                placeholder="PSG vs OM"
-                value={matchLabel}
-                onChange={(e) => setMatchLabel(e.target.value)}
-              />
+          {betType === "single" ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Match / Événement</Label>
+                <Input value={matchLabel} onChange={(e) => setMatchLabel(e.target.value)} placeholder="ex: PSG vs OM" />
+              </div>
+              <div>
+                <Label>Marché</Label>
+                <Input value={market} onChange={(e) => setMarket(e.target.value)} placeholder="ex: 1X2, Over 2.5, BTTS" />
+              </div>
+              <div>
+                <Label>Pronostic</Label>
+                <Input value={pick} onChange={(e) => setPick(e.target.value)} placeholder="ex: PSG, Over, Oui" />
+              </div>
+              <div>
+                <Label>Cote</Label>
+                <Input type="number" step="0.01" min="1.01" value={odds} onChange={(e) => setOdds(e.target.value)} placeholder="1.85" />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Bookmaker</Label>
-              <Input
-                className="h-9 border-white/10 bg-white/5 text-xs text-zinc-100"
-                placeholder="1xbet"
-                value={bookmaker}
-                onChange={(e) => setBookmaker(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Marché</Label>
-              <Input
-                className="h-9 border-white/10 bg-white/5 text-xs text-zinc-100"
-                placeholder="1X2"
-                value={market}
-                onChange={(e) => setMarket(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Sélection</Label>
-              <Input
-                className="h-9 border-white/10 bg-white/5 text-xs text-zinc-100"
-                placeholder="PSG"
-                value={pick}
-                onChange={(e) => setPick(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {betType === "combo" ? (
-            <div className="space-y-2 rounded-lg border border-white/5 bg-white/[0.02] p-3">
+          ) : (
+            <div className="space-y-2 border rounded-lg p-3">
               <div className="flex items-center justify-between">
-                <Label className="text-[11px] text-zinc-400">Legs du combiné</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 gap-1 text-xs text-emerald-400"
-                  onClick={() => setLegs((p) => [...p, { matchLabel: "", market: "", pick: "", odds: "" }])}
-                >
-                  <Plus className="h-3 w-3" /> Leg
-                </Button>
+                <Label className="mb-0">Sélections ({legs.length})</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addLeg}><Plus className="h-3 w-3" /></Button>
               </div>
               {legs.map((leg, i) => (
-                <div key={i} className="grid grid-cols-[1fr_1fr_64px_24px] items-center gap-1.5">
-                  <Input
-                    className="h-8 border-white/10 bg-white/5 text-xs text-zinc-100"
-                    placeholder="Match"
-                    value={leg.matchLabel}
-                    onChange={(e) => setLeg(i, "matchLabel", e.target.value)}
-                  />
-                  <Input
-                    className="h-8 border-white/10 bg-white/5 text-xs text-zinc-100"
-                    placeholder="Sélection"
-                    value={leg.pick}
-                    onChange={(e) => setLeg(i, "pick", e.target.value)}
-                  />
-                  <Input
-                    className="h-8 border-white/10 bg-white/5 text-xs text-zinc-100"
-                    placeholder="1.85"
-                    value={leg.odds}
-                    onChange={(e) => setLeg(i, "odds", e.target.value)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-6 text-zinc-500 hover:bg-white/10"
-                    onClick={() => setLegs((p) => p.filter((_, idx) => idx !== i))}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
+                <div key={i} className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] items-end">
+                  <Input value={leg.matchLabel} onChange={(e) => setLeg(i, "matchLabel", e.target.value)} placeholder="Match" />
+                  <Input value={leg.market} onChange={(e) => setLeg(i, "market", e.target.value)} placeholder="Marché" />
+                  <Input value={leg.pick} onChange={(e) => setLeg(i, "pick", e.target.value)} placeholder="Pick" />
+                  <Input type="number" step="0.01" min="1.01" value={leg.odds} onChange={(e) => setLeg(i, "odds", e.target.value)} placeholder="Cote" style={{ width: "80px" }} />
+                  {legs.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeLeg(i)}><X className="h-3 w-3" /></Button>
+                  )}
                 </div>
               ))}
+              <div className="text-sm text-muted-foreground">
+                Cote totale effective : <strong>{effOdds.toFixed(2)}</strong>
+              </div>
             </div>
-          ) : null}
+          )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Mise (€)</Label>
-              <Input
-                className="h-9 border-white/10 bg-white/5 font-mono text-xs text-zinc-100"
-                placeholder="10"
-                inputMode="decimal"
-                value={stake}
-                onChange={(e) => setStake(e.target.value)}
-              />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label>Bookmaker</Label>
+              <Input value={bookmaker} onChange={(e) => setBookmaker(e.target.value)} placeholder="ex: 1xbet, Winamax, Betclic" />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-[11px] text-zinc-400">Cote</Label>
-              <Input
-                className={cn(
-                  "h-9 border-white/10 bg-white/5 font-mono text-xs",
-                  betType === "combo" ? "text-emerald-400" : "text-zinc-100"
-                )}
-                placeholder="1.85"
-                inputMode="decimal"
-                value={betType === "combo" ? (comboOdds > 0 ? comboOdds.toFixed(2) : "") : odds}
-                onChange={(e) => setOdds(e.target.value)}
-                readOnly={betType === "combo"}
-              />
+            <div>
+              <Label>Mise (€)</Label>
+              <Input type="number" step="0.01" min="0.01" value={stake} onChange={(e) => setStake(e.target.value)} placeholder="10" />
+            </div>
+            <div>
+              <Label>Tipster (optionnel)</Label>
+              <Input value={tipster} onChange={(e) => setTipster(e.target.value)} placeholder="ex: @paris_expert" />
+            </div>
+            <div>
+              <Label>Catégorie (optionnel)</Label>
+              <Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="ex: value, fun, system" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Tags (optionnel, séparés par des virgules)</Label>
+              <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="ex: live, weekend, favori" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Note (optionnel)</Label>
+              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Raison du pari, contexte..." />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-[11px] text-zinc-400">Date de placement</Label>
-            <Input
-              type="datetime-local"
-              className="h-9 border-white/10 bg-white/5 text-xs text-zinc-100 [color-scheme:dark]"
-              value={placedAt}
-              onChange={(e) => setPlacedAt(e.target.value)}
-            />
-          </div>
-
-          <details className="group">
-            <summary className="cursor-pointer select-none text-[11px] font-medium text-zinc-500 hover:text-zinc-300">
-              Options avancées (tipster, catégorie, tags, note)
-            </summary>
-            <div className="mt-2 grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-[11px] text-zinc-400">Tipster</Label>
-                <Input className="h-8 border-white/10 bg-white/5 text-xs" value={tipster} onChange={(e) => setTipster(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[11px] text-zinc-400">Catégorie</Label>
-                <Input className="h-8 border-white/10 bg-white/5 text-xs" value={category} onChange={(e) => setCategory(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[11px] text-zinc-400">Tags (CSV)</Label>
-                <Input className="h-8 border-white/10 bg-white/5 text-xs" placeholder="montante,closing" value={tags} onChange={(e) => setTags(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[11px] text-zinc-400">Note</Label>
-                <Input className="h-8 border-white/10 bg-white/5 text-xs" value={note} onChange={(e) => setNote(e.target.value)} />
-              </div>
-            </div>
-          </details>
-        </div>
-
-        <DialogFooter className="gap-2">
-          <DialogClose asChild>
-            <Button variant="ghost" size="sm" className="text-zinc-400">
-              Annuler
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={() => fileRef.current?.click()} disabled={ocrBusy}>
+              <Camera className="h-4 w-4 mr-2" />
+              {ocrBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Scanner un ticket"}
             </Button>
-          </DialogClose>
-          <Button
-            size="sm"
-            className="gap-1.5 bg-emerald-500 text-emerald-950 hover:bg-emerald-400"
-            onClick={submit}
-            disabled={saving}
-          >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-            Ajouter le pari
-          </Button>
-        </DialogFooter>
+            <input
+              type="file"
+              ref={fileRef}
+              accept="image/*"
+              capture="environment"
+              onChange={onFile}
+              className="hidden"
+            />
+            <Button type="submit" disabled={saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : "Ajouter"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

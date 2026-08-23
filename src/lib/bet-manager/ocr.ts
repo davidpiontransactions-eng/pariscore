@@ -224,15 +224,3 @@ export function parseTicketText(raw: string): OcrTicket {
     betType: "single",
   };
 }
-
-export async function ocrTicketImage(image: Blob): Promise<OcrTicket> {
-  // Import dynamique côté client uniquement : tesseract.js utilise WebAssembly + web workers
-  const { createWorker } = await import("tesseract.js");
-  const worker = await createWorker("fra", 1, { logger: () => {} });
-  try {
-    const { data } = await worker.recognize(image);
-    return parseTicketText(data.text);
-  } finally {
-    await worker.terminate();
-  }
-}
