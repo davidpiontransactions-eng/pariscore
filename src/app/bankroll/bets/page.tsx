@@ -20,13 +20,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { betsToCSV } from "@/lib/bet-manager/calculators";
-import dynamic from "next/dynamic";
-
-// BetForm utilise tesseract.js (WebAssembly) -> charger côté client uniquement
-const BetForm = dynamic(
-  () => import("@/components/bet-manager/bet-form").then((mod) => mod.BetForm),
-  { ssr: false, loading: () => <div className="h-64 flex items-center justify-center text-muted-foreground">Chargement du formulaire…</div> }
-);
 
 const STATUSES = [
   { value: "all", label: "Tous" },
@@ -175,16 +168,26 @@ export default function BankrollBetsPage() {
         {/* Liste des paris */}
         <BetTable bets={filteredBets} currency={currency} />
 
-        {/* Dialogue d'ajout de pari */}
+        {/* Dialogue d'ajout de pari — redirige vers page dédiée pour éviter les problèmes de build avec tesseract.js */}
         {showForm && (
-          <BetForm
-            bankrollId={bm.activeBankroll?.id}
-            defaultBookmaker={bm.activeBankroll?.bookmaker}
-            onAdd={async (input) => {
-              await bm.createBet(input);
-              setShowForm(false);
-            }}
-          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-bg-deep rounded-xl p-6 max-w-md w-full text-center">
+              <h3 className="text-lg font-semibold mb-4">Formulaire de pari</h3>
+              <p className="text-zinc-400 mb-6">
+                Le formulaire complet avec OCR est disponible sur la page dédiée.
+              </p>
+              <Link
+                href="/bankroll/bets/new"
+                className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700"
+              >
+                <Plus className="h-4 w-4" />
+                Ouvrir le formulaire complet
+              </Link>
+              <Button variant="ghost" className="mt-4 w-full" onClick={() => setShowForm(false)}>
+                Fermer
+              </Button>
+            </div>
+          </div>
         )}
 
         {/* Dialogue de création bankroll */}
