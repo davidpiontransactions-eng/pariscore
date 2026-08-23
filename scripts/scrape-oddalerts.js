@@ -30,6 +30,14 @@
  *   node scripts/scrape-oddalerts.js --dry-run              # parse sans écrire en DB
  *
  * Cron VPS : pm2 `pariscore-cron-oddalerts`, quotidien 04:30 UTC (ecosystem.config.js).
+ *
+ * Cloudflare / VPS : depuis une IP datacenter (OVH), OddAlerts est derrière un
+ * challenge "Just a moment". Le scraper bascule alors automatiquement sur
+ * FlareSolverr (conteneur Docker local au VPS, http://127.0.0.1:8191) : il
+ * crée FLARE_SESSIONS sessions navigateur réutilisées (~1s/page, pass complet
+ * ≈ 15-25 min). Sur une IP résidentielle le chemin direct https est utilisé
+ * (~2 min). Variables : FLARESOLVERR_URL, FLARESOLVERR_ENABLED=0 pour forcer
+ * le direct, FLARE_SESSIONS (défaut 2).
  */
 'use strict';
 
@@ -66,19 +74,115 @@ const DRY_RUN = !!args['dry-run'];
 const DELAY_MS = args.delay ? parseInt(args.delay, 10) : DEFAULT_DELAY_MS;
 const CONCURRENCY = args.concurrency ? parseInt(args.concurrency, 10) : DEFAULT_CONCURRENCY;
 
+// ─── FlareSolverr (bypass Cloudflare sur IP datacenter) ──────────────────────
+// Depuis le VPS (IP OVH), Cloudflare renvoie un challenge "Just a moment" (403).
+// Le conteneur FlareSolverr local au VPS (http://127.0.0.1:8191/v1) résout le
+// challenge une fois via un vrai Chrome ; on récupère alors son cookie
+// cf_clearance + son User-Agent exacts, et toutes les requêtes suivantes passent
+// en direct (rapide). Fallback : si une page repasse en 403, on la fetch via
+// FlareSolverr (lent, ~2-5s/page) plutôt que d'échouer.
+const FLARE_URL = process.env.FLARESOLVERR_URL || 'http://127.0.0.1:8191/v1';
+const FLARE_ENABLED = process.env.FLARESOLVERR_ENABLED !== '0';
+const flareState = { userAgent: null, cookieHeader: null, bootstrapped: false };
+
+async function flareRequest(urlOrBody) {
+  const body =
+    typeof urlOrBody === 'string'
+      ? { cmd: 'request.get', url: urlOrBody, maxTimeout: 60000 }
+      : urlOrBody;
+  const res = await fetch(FLARE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(90000),
+  });
+  if (!res.ok) throw new Error(`FlareSolverr HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.status !== 'ok' || !json.solution) {
+    throw new Error(`FlareSolverr: ${json.message || 'réponse invalide'}`);
+  }
+  return json.solution;
+}
+
+/** Résout le challenge via FlareSolverr et mémorise cookies + UA pour le direct. */
+async function bootstrapViaFlare(url) {
+  console.log(`[oddalerts] FlareSolverr: résolution du challenge via ${url}`);
+  const solution = await flareRequest(url);
+  flareState.userAgent = solution.userAgent || USER_AGENT;
+  const cookies = (solution.cookies || [])
+    .filter((c) => /(^|\.)oddalerts\.com$/.test(c.domain || ''))
+    .map((c) => `${c.name}=${c.value}`);
+  flareState.cookieHeader = cookies.length ? cookies.join('; ') : null;
+  flareState.bootstrapped = true;
+  console.log(
+    `[oddalerts] FlareSolverr: OK (${cookies.length} cookies, UA ${flareState.userAgent.slice(0, 40)}…)`
+  );
+}
+
+// ─── Mode sessions FlareSolverr (VPS derrière Cloudflare strict) ─────────────
+// Le cookie cf_clearance est lié à la fingerprint TLS du navigateur qui a
+// résolu : réutilisé depuis Node https, Cloudflare re-challenge (403). Sur une
+// IP datacenter, TOUTES les requêtes passent donc par FlareSolverr. On crée
+// FLARE_SESSIONS sessions navigateur réutilisées (≈1s/page vs 2-4s sans).
+const FLARE_SESSION_COUNT = process.env.FLARE_SESSIONS
+  ? parseInt(process.env.FLARE_SESSIONS, 10)
+  : 2;
+const flareSessions = new Set(); // ids créés (cleanup en fin de run)
+
+function sessionId(worker) {
+  return `oddalerts-w${worker}`;
+}
+
+async function ensureFlareSession(worker) {
+  const id = sessionId(worker);
+  if (flareSessions.has(id)) return id;
+  const res = await fetch(FLARE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ cmd: 'sessions.create', session: id }),
+    signal: AbortSignal.timeout(60000),
+  });
+  const json = await res.json();
+  if (json.status !== 'ok') throw new Error(`sessions.create: ${json.message}`);
+  flareSessions.add(id);
+  console.log(`[oddalerts] session FlareSolverr créée: ${id}`);
+  return id;
+}
+
+async function fetchViaFlareSession(url, worker) {
+  const session = await ensureFlareSession(worker);
+  const solution = await flareRequest({ cmd: 'request.get', url, session, maxTimeout: 60000 });
+  return { status: solution.status, html: solution.response || '' };
+}
+
+async function destroyFlareSessions() {
+  for (const id of [...flareSessions]) {
+    try {
+      await fetch(FLARE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cmd: 'sessions.destroy', session: id }),
+        signal: AbortSignal.timeout(15000),
+      });
+      flareSessions.delete(id);
+    } catch { /* best-effort */ }
+  }
+}
+
 // ─── HTTP ─────────────────────────────────────────────────────────────────────
-// NB : le module https de Node passe le WAF d'OddAlerts, contrairement à
-// undici fetch (global fetch) qui reçoit un 403 (fingerprint TLS/HTTP).
+// NB : le module https de Node passe le WAF d'OddAlerts depuis une IP
+// résidentielle ; depuis une IP datacenter (VPS), Cloudflare challenge → on
+// réutilise alors les cookies cf_clearance obtenus via FlareSolverr, avec le
+// User-Agent EXACT du navigateur qui a résolu (le cookie y est lié).
 function fetchOnce(url) {
   return new Promise((resolve, reject) => {
-    const req = https.get(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
-      timeout: HTTP_TIMEOUT_MS,
-    }, (res) => {
+    const headers = {
+      'User-Agent': flareState.userAgent || USER_AGENT,
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+    if (flareState.cookieHeader) headers.Cookie = flareState.cookieHeader;
+    const req = https.get(url, { headers, timeout: HTTP_TIMEOUT_MS }, (res) => {
       if (res.statusCode >= 301 && res.statusCode <= 308 && res.headers.location) {
         res.resume();
         return resolve(fetchOnce(new URL(res.headers.location, url).href));
@@ -93,20 +197,52 @@ function fetchOnce(url) {
   });
 }
 
-async function fetchText(url) {
+let USE_FLARE_SESSIONS = false; // bascule définitive dès qu'on détecte un re-challenge
+
+async function fetchText(url, worker = 0) {
+  // 0) Mode sessions FlareSolverr actif (VPS) → pas de tentative directe.
+  if (FLARE_ENABLED && USE_FLARE_SESSIONS) {
+    const res = await fetchViaFlareSession(url, worker);
+    if (res.status === 404) return { status: 404, html: null };
+    if (res.status !== 200) throw new Error(`HTTP ${res.status} (via FlareSolverr session)`);
+    return res;
+  }
+  // 1) Direct (IP résidentielle ou cookies FlareSolverr valides)
   let lastErr;
   for (let attempt = 1; attempt <= RETRIES; attempt++) {
     try {
       const res = await fetchOnce(url);
       if (res.status === 404) return { status: 404, html: null };
-      if (res.status === 403) throw new Error('HTTP 403 (WAF)');
       if (res.status !== 200) throw new Error(`HTTP ${res.status}`);
       return res;
     } catch (err) {
       lastErr = err;
-      if (attempt < RETRIES) {
+      const is403 = /HTTP 403/.test(err.message);
+      if (!is403 && attempt < RETRIES) {
         await sleep(1000 * attempt * attempt);
+      } else {
+        break; // 403 → tenter le chemin FlareSolverr tout de suite
       }
+    }
+  }
+  // 2) Fallback Cloudflare : bootstrap cookies puis direct ; si re-challenge
+  //    (cookie lié à la fingerprint TLS du navigateur) → mode sessions.
+  if (FLARE_ENABLED) {
+    try {
+      if (!flareState.bootstrapped) {
+        await bootstrapViaFlare(BASE_URL + LEAGUES_INDEX);
+        const res = await fetchOnce(url);
+        if (res.status === 200) return res;
+        if (res.status === 404) return { status: 404, html: null };
+      }
+      USE_FLARE_SESSIONS = true; // les cookies ne suffisent pas sur cette IP
+      console.log('[oddalerts] re-challenge Cloudflare malgré cf_clearance → mode sessions FlareSolverr');
+      const res = await fetchViaFlareSession(url, worker);
+      if (res.status === 404) return { status: 404, html: null };
+      if (res.status === 200) return res;
+      throw new Error(`HTTP ${res.status} (via FlareSolverr session)`);
+    } catch (err) {
+      lastErr = err;
     }
   }
   throw lastErr;
@@ -245,17 +381,28 @@ function parseFixtures(html) {
   return out;
 }
 
-/** Parse l'index /leagues → [{uid, country, slug, name}]. */
+/** Parse l'index /leagues → [{uid, country, slug, name}].
+ * Tolérant aux deux sérialisations d'attributs : le HTML source utilise des
+ * guillemets simples (<a class='league-link' ...>), mais une page récupérée
+ * via FlareSolverr/Chrome est resérialisée en guillemets doubles. */
 function parseIndex(html) {
   const seen = new Set();
   const out = [];
-  const re = /<a class='league-link' data-uid='([^']*)' href='\/leagues\/([a-z0-9-]+)\/([a-z0-9-]+)'>\s*([^<]+?)\s*<\/a>/g;
+  const anchorRe = /<a\b([^>]*\bclass=["']league-link["'][^>]*)>([\s\S]*?)<\/a>/g;
   let m;
-  while ((m = re.exec(html))) {
-    const key = `${m[2]}/${m[3]}`;
+  while ((m = anchorRe.exec(html))) {
+    const attrs = m[1];
+    const slugMatch = attrs.match(/href=["']\/leagues\/([a-z0-9-]+)\/([a-z0-9-]+)["']/);
+    if (!slugMatch) continue;
+    const key = `${slugMatch[1]}/${slugMatch[2]}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    out.push({ uid: m[1], country: m[2], slug: m[3], name: decodeEntities(m[4]) });
+    out.push({
+      uid: (attrs.match(/data-uid=["']([^"']*)["']/) || [])[1] || '',
+      country: slugMatch[1],
+      slug: slugMatch[2],
+      name: decodeEntities(m[2].replace(/<[^>]+>/g, '')),
+    });
   }
   return out;
 }
@@ -359,13 +506,13 @@ async function main() {
   const total = leagues.length;
   const queue = leagues.map((l, i) => ({ ...l, pos: i }));
 
-  async function worker() {
+  async function worker(workerIndex) {
     while (queue.length) {
       const job = queue.shift();
       if (!job) break;
       const url = `${BASE_URL}/leagues/${job.country}/${job.slug}`;
       try {
-        const res = await fetchText(url);
+        const res = await fetchText(url, workerIndex);
         if (res.status === 404) {
           skip404++;
           done++;
@@ -403,7 +550,14 @@ async function main() {
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, leagues.length) }, worker));
+  // En mode sessions FlareSolverr, la concurrence utile = nb de sessions
+  const effectiveConcurrency = USE_FLARE_SESSIONS
+    ? Math.min(FLARE_SESSION_COUNT, CONCURRENCY)
+    : CONCURRENCY;
+  await Promise.all(
+    Array.from({ length: Math.min(effectiveConcurrency, leagues.length) }, (_, i) => worker(i))
+  );
+  if (flareSessions.size) await destroyFlareSessions();
 
   // 4) Bilan
   console.log(`[oddalerts] terminé : ok=${okCount} 404=${skip404} fail=${failed.length} (total=${total})`);
