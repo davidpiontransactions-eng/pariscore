@@ -10,24 +10,31 @@ import type {
   SideFormStats,
 } from "@/lib/football-strategy-top5";
 import { useFootballTop5 } from "@/hooks/use-football-top5";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type StrategyDef = {
   key: StrategyTop5Key;
   label: string;
-  short: string;
+  emoji: string;
   format: (v: number) => string;
 };
 
 const STRATEGIES: StrategyDef[] = [
-  { key: "bestTeam", label: "Meilleure équipe (forme)", short: "Équipe", format: (v) => `${v.toFixed(0)}%` },
-  { key: "bestTeam1x2", label: "Meilleure équipe sur le 1X2", short: "1X2", format: (v) => `${v.toFixed(0)}%` },
-  { key: "bestAttack", label: "Meilleure attaque", short: "Att", format: (v) => `${v.toFixed(1)} buts` },
-  { key: "bestDefense", label: "Meilleure défense", short: "Déf", format: (v) => `${v.toFixed(1)} enc` },
-  { key: "doubleChance", label: "Double chance", short: "2Ch.", format: (v) => `${v.toFixed(0)}%` },
-  { key: "over15", label: "Over 1,5 buts", short: "O1.5", format: (v) => `${v.toFixed(0)}%` },
-  { key: "over35", label: "Over 3,5 buts", short: "O3.5", format: (v) => `${v.toFixed(0)}%` },
-  { key: "bttsYes", label: "BTTS yes", short: "BTTS", format: (v) => `${v.toFixed(0)}%` },
-  { key: "over65Corners", label: "Over 6,5 corners", short: "O6.5C", format: (v) => `${v.toFixed(0)}%` },
+  { key: "bestTeam", label: "Meilleure équipe (forme)", emoji: "⭐", format: (v) => `${v.toFixed(0)}%` },
+  { key: "bestTeam1x2", label: "Meilleure équipe sur le 1X2", emoji: "🎯", format: (v) => `${v.toFixed(0)}%` },
+  { key: "bestAttack", label: "Meilleure attaque", emoji: "⚡", format: (v) => `${v.toFixed(1)} buts` },
+  { key: "bestDefense", label: "Meilleure défense", emoji: "🧱", format: (v) => `${v.toFixed(1)} enc` },
+  { key: "doubleChance", label: "Double chance", emoji: "🛡️", format: (v) => `${v.toFixed(0)}%` },
+  { key: "over15", label: "Over 1,5 buts", emoji: "⚽", format: (v) => `${v.toFixed(0)}%` },
+  { key: "under35", label: "Under 3,5 buts", emoji: "❄️", format: (v) => `${v.toFixed(0)}%` },
+  { key: "bttsYes", label: "BTTS yes", emoji: "🥅", format: (v) => `${v.toFixed(0)}%` },
+  { key: "over65Corners", label: "Over 6,5 corners", emoji: "🚩", format: (v) => `${v.toFixed(0)}%` },
 ];
 
 type WindowKey = "l5" | "l10";
@@ -205,23 +212,28 @@ export function FootballStrategyTop5Widget() {
         </div>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto px-2.5 pb-1.5 scrollbar-none">
-        {STRATEGIES.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => setActive(s.key)}
-            className={cn(
-              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active === s.key
-                ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
-                : "border-slate-700/60 text-slate-400 hover:text-slate-200 hover:border-slate-500/60",
-            )}
+      <div className="space-y-1 px-2.5 pb-1.5">
+        {/* Sélecteur de stratégie (remplace la rangée de pills tronquée) */}
+        <Select value={active} onValueChange={(v) => setActive(v as StrategyTop5Key)}>
+          <SelectTrigger
+            size="sm"
+            aria-label="Stratégie du Top 5 matchs"
+            className="h-8 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
           >
-            {s.short}
-          </button>
-        ))}
+            <SelectValue placeholder="Choisir une stratégie…" />
+          </SelectTrigger>
+          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+            {STRATEGIES.map((s) => (
+              <SelectItem key={s.key} value={s.key} className="text-xs">
+                <span aria-hidden>{s.emoji}</span> {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {/* Description dynamique en vert émeraude */}
+        <p className="truncate pt-0.5 text-[11px] font-medium text-emerald-400" aria-live="polite">
+          {def.label}
+        </p>
       </div>
 
       {isLoading ? (
@@ -236,8 +248,8 @@ export function FootballStrategyTop5Widget() {
         </div>
       ) : hasData ? (
         <div className="px-2">
-          <p className="px-0.5 pb-1 text-[10px] font-medium text-emerald-400/90">
-            {def.label} · xG/buts/encaissés moyens D=E par côté ({winKey === "l5" ? "5" : "10"} derniers dom/ext)
+          <p className="px-0.5 pb-1 text-[10px] text-slate-500">
+            xG/buts/encaissés moyens D=E par côté ({winKey === "l5" ? "5" : "10"} derniers dom/ext)
           </p>
           <ul className="space-y-0.5">
             {rows.map((entry) => (

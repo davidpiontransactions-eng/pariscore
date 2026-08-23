@@ -17,7 +17,7 @@ import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
  *   - bestDefense  → Équipe la plus étanche (λ encaissés le + bas)    (plus bas = mieux)
  *   - doubleChance → Taux de non-défaite (V+N) équipe la + sûre       (plus haut = mieux)
  *   - over15       → P(≥ 2 buts) via Poisson sur λ                    (plus haut = mieux)
- *   - over35       → P(≥ 4 buts) via Poisson sur λ                    (plus haut = mieux)
+ *   - under35      → P(≤ 3 buts) via Poisson sur λ                    (plus haut = mieux)
  *   - bttsYes      → P(les 2 marquent) via Poisson sur λH, λA         (plus haut = mieux)
  *   - over65Corners→ P(≥ 7 corners) via Poisson sur λCorners          (plus haut = mieux)
  */
@@ -29,7 +29,7 @@ export type StrategyTop5Key =
   | "bestDefense"
   | "doubleChance"
   | "over15"
-  | "over35"
+  | "under35"
   | "bttsYes"
   | "over65Corners";
 
@@ -86,7 +86,7 @@ const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
   bestDefense: false,
   doubleChance: true,
   over15: true,
-  over35: true,
+  under35: true,
   bttsYes: true,
   over65Corners: true,
 };
@@ -292,8 +292,8 @@ function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: n
       const prob = impliedProb(m.odds_over_15, m.odds_under_15);
       return prob != null ? { value: prob, pick: null } : null;
     }
-    case "over35": {
-      const prob = impliedProb(m.odds_over_35, m.odds_under_35);
+    case "under35": {
+      const prob = impliedProb(m.odds_under_35, m.odds_over_35);
       return prob != null ? { value: prob, pick: null } : null;
     }
     case "bttsYes": {
@@ -339,8 +339,8 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
     }
     case "over15":
       return { value: poissonTailAt(lambdaTotal, 2) * 100, pick: null };
-    case "over35":
-      return { value: poissonTailAt(lambdaTotal, 4) * 100, pick: null };
+    case "under35":
+      return { value: (1 - poissonTailAt(lambdaTotal, 4)) * 100, pick: null };
     case "bttsYes":
       return { value: poissonAtLeastOne(lambdaHome) * poissonAtLeastOne(lambdaAway) * 100, pick: null };
     case "over65Corners":
