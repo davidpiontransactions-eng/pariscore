@@ -9,13 +9,19 @@ import { KpiStrip } from "@/components/bet-manager/kpi-strip";
 import { CapitalChart } from "@/components/bet-manager/capital-chart";
 import { BreakdownList } from "@/components/bet-manager/breakdown-list";
 import { BetTable } from "@/components/bet-manager/bet-table";
-import { BetForm } from "@/components/bet-manager/bet-form";
 import { BankrollForm } from "@/components/bet-manager/bankroll-form";
 import { CsvImport } from "@/components/bet-manager/csv-import";
 import { LocalStorageMigration } from "@/components/bet-manager/local-storage-migration";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Zap, Plus, Trophy, ArrowLeft, Loader2, Download } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// BetForm utilise tesseract.js (WebAssembly) -> charger côté client uniquement
+const BetForm = dynamic(
+  () => import("@/components/bet-manager/bet-form").then((mod) => mod.BetForm),
+  { ssr: false, loading: () => <div className="h-64 flex items-center justify-center text-muted-foreground">Chargement du formulaire…</div> }
+);
 
 export default function BankrollDashboardPage() {
   const bm = useBetManager();
@@ -39,146 +45,143 @@ export default function BankrollDashboardPage() {
               <Trophy className="h-4 w-4" />
             </span>
             PariScore
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-emerald-400">
-              Bet Manager
-            </span>
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1 text-xs text-zinc-400 transition-colors hover:text-white"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Accueil
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/bankroll/bets" className="text-sm text-zinc-400 hover:text-white">
+              Voir tous les paris
+            </Link>
+            <Link href="/bankroll/tools" className="text-sm text-zinc-400 hover:text-white">
+              Calculateurs
+            </Link>
+          </div>
         </div>
       </header>
 
-      <BetManagerNav
-        bankrolls={bm.bankrolls as any}
-        activeId={bm.activeId}
-        onSelect={bm.selectBankroll}
-        onCreate={() => setShowBankrollForm(true)}
-      />
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <LocalStorageMigration />
 
-      <main className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-6">
-        {loading ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-xl bg-white/5" />
-              ))}
+        {/* KPIs + Courbe de capital */}
+        <div className="grid gap-4 md:grid-cols-3">
+          <KpiStrip bankroll={bm.activeBankroll} currency={currency} />
+          <CapitalChart bankrollId={bm.activeBankroll?.id} currency={currency} className="md:col-span-2" />
+        </div>
+
+        {/* Répartitions */}
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <BreakdownList
+            bankrollId={bm.activeBankroll?.id}
+            title="Par sport"
+            groupBy="sport"
+            currency={currency}
+          />
+          <BreakdownList
+            bankrollId={bm.activeBankroll?.id}
+            title="Par bookmaker"
+            groupBy="bookmaker"
+            currency={currency}
+          />
+          <BreakdownList
+            bankrollId={bm.activeBankroll?.id}
+            title="Par plage de cote"
+            groupBy="oddsRange"
+            currency={currency}
+          />
+        </div>
+
+        {/* Derniers paris + Formulaire */}
+        <div className="mt-6 grid gap-4 md:grid-cols-[2fr_1fr]">
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Derniers paris</h2>
+              <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un pari
+              </Button>
             </div>
-            <Skeleton className="h-64 rounded-xl bg-white/5" />
-          </div>
-        ) : bm.bankrolls.length === 0 ? (
-          /* État vide — première bankroll */
-          <section className="mx-auto mt-16 max-w-md rounded-2xl border border-dashed border-emerald-500/25 bg-emerald-500/[0.03] p-8 text-center">
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
-              <Plus className="h-6 w-6" />
-            </div>
-            <h2 className="text-lg font-bold text-white">Crée ta première bankroll</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-400">
-              Une bankroll est ton capital de départ (ex. 1 000 €). Ensuite, enregistre tes paris
-              manuellement, par scan de ticket 1xbet (OCR) ou par import CSV.
-            </p>
-            <Button
-              className="mt-5 gap-1.5 bg-emerald-500 text-emerald-950 hover:bg-emerald-400"
-              onClick={() => setShowBankrollForm(true)}
-            >
-              <Plus className="h-4 w-4" /> Créer ma bankroll
-            </Button>
+            <BetTable bankrollId={bm.activeBankroll?.id} limit={10} currency={currency} />
           </section>
-        ) : !bm.stats ? (
-          <div className="flex items-center justify-center py-20 text-zinc-500">
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Chargement des paris…
-          </div>
-        ) : (
-          <>
-            {/* Migration ancien module */}
-            <LocalStorageMigration onMigrated={() => window.location.reload()} />
 
-            {/* Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h1 className="text-base font-bold text-white">
-                {bm.activeBankroll?.name}
-                <span className="ml-2 font-mono text-xs font-normal text-zinc-500">
-                  {bm.stats.stats.totalBets} paris · {bm.stats.stats.pendingCount} en attente
-                </span>
-              </h1>
-              <div className="flex items-center gap-2">
-                {bm.stats.stats.pendingCount > 0 ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 border-white/10 text-xs text-zinc-300 hover:bg-white/5"
-                    onClick={async () => {
-                      setSettling(true);
-                      const r = await bm.autoSettle();
-                      setSettling(false);
-                      if (r) {
-                        if (r.settled > 0) toast.success(`${r.settled} pari${r.settled > 1 ? "s" : ""} réglé${r.settled > 1 ? "s" : ""} automatiquement ⚡`);
-                        else toast.info(`Aucun pari réglable pour l'instant (${r.unresolved} non résolus)`);
-                      }
-                    }}
-                    disabled={settling}
-                  >
-                    {settling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5 text-amber-400" />}
-                    Résultats auto
-                  </Button>
-                ) : null}
-                <CsvImport onImport={bm.importCSV} />
-                <Button
-                  size="sm"
-                  className="gap-1.5 bg-emerald-500 text-emerald-950 hover:bg-emerald-400"
-                  onClick={() => setShowForm(true)}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Ajouter un pari
-                </Button>
-              </div>
-            </div>
+          <aside className="space-y-4">
+            <BankrollForm
+              bankrolls={bm.bankrolls}
+              activeId={bm.activeBankroll?.id}
+              onSelect={bm.setActiveBankroll}
+              onCreate={bm.createBankroll}
+              onUpdate={bm.updateBankroll}
+              onDelete={bm.deleteBankroll}
+              loading={bm.bankrollsLoading}
+            />
+            <CsvImport bankrollId={bm.activeBankroll?.id} onImported={bm.refresh} />
+            <BetForm
+              bankrollId={bm.activeBankroll?.id}
+              defaultBookmaker={bm.activeBankroll?.bookmaker}
+              onAdd={bm.createBet}
+            />
+          </aside>
+        </div>
 
-            {/* KPIs — signature trading cockpit */}
-            <KpiStrip stats={bm.stats.stats} currency={currency} />
-
-            {/* Courbe de capital */}
-            <CapitalChart curve={bm.stats.curve} currency={currency} />
-
-            {/* Répartitions */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <BreakdownList title="Par sport" groups={bm.stats.bySport} />
-              <BreakdownList title="Par bookmaker" groups={bm.stats.byBookmaker} />
-              <BreakdownList title="Par plage de cote" groups={bm.stats.byOdds} showOdds />
-            </div>
-
-            {/* Derniers paris */}
-            <section className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-                  Derniers paris
-                </h2>
-                <Link
-                  href="/bankroll/bets"
-                  className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300"
-                >
-                  Tout voir <Download className="h-3 w-3 rotate-[-90deg]" />
-                </Link>
-              </div>
-              <BetTable bets={bm.bets.slice(0, 8)} onSettle={bm.settleBet} onDelete={bm.deleteBet} />
-            </section>
-          </>
-        )}
+        {/* Auto-settle */}
+        <div className="mt-6">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              setSettling(true);
+              try {
+                const res = await fetch("/api/v1/bm/auto-settle", { method: "POST" });
+                const data = await res.json();
+                toast.success(data.message ?? `${data.settled} paris réglés, ${data.errors} erreurs`);
+                bm.refresh();
+              } catch (err: any) {
+                toast.error("Échec auto-settle : " + err.message);
+              } finally {
+                setSettling(false);
+              }
+            }}
+            disabled={settling || bm.betsLoading}
+            className="w-full sm:w-auto"
+          >
+            {settling ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Résolution en cours…
+              </>
+            ) : (
+              <>
+                <Zap className="h-4 w-4 mr-2" />
+                Résultats auto (API-Football)
+              </>
+            )}
+          </Button>
+        </div>
       </main>
 
-      {showForm && bm.activeId ? (
-        <BetForm bankrollId={bm.activeId} onAdd={bm.addBet} onClose={() => setShowForm(false)} />
-      ) : null}
-      <BankrollForm
-        open={showBankrollForm}
-        onOpenChange={setShowBankrollForm}
-        onCreate={async (name, initial, currency) => {
-          await bm.createBankroll(name, initial, currency);
-          window.location.reload();
-        }}
-      />
+      {/* Dialogue d'ajout de pari */}
+      {showForm && (
+        <BetForm
+          bankrollId={bm.activeBankroll?.id}
+          defaultBookmaker={bm.activeBankroll?.bookmaker}
+          onAdd={async (input) => {
+            await bm.createBet(input);
+            setShowForm(false);
+          }}
+        />
+      )}
+
+      {/* Dialogue de création bankroll */}
+      {showBankrollForm && (
+        <BankrollForm
+          bankrolls={bm.bankrolls}
+          activeId={bm.activeBankroll?.id}
+          onSelect={bm.setActiveBankroll}
+          onCreate={async (input) => {
+            await bm.createBankroll(input);
+            setShowBankrollForm(false);
+          }}
+          onUpdate={bm.updateBankroll}
+          onDelete={bm.deleteBankroll}
+          loading={bm.bankrollsLoading}
+        />
+      )}
     </div>
   );
 }
