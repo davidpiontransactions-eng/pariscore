@@ -41,6 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 local-*
+!local-storage-migration.tsx
 .claude
 .z-ai-config
 *.log
@@ -106,6 +107,7 @@ exports/*.xlsx
 
 # =============================================================================
 # Scrapy artifacts (intégration 2026-07-13)
+# =============================================================================
 .archive/
 .codex/
 .zcode/
@@ -176,37 +178,6 @@ docs/system-design-primer/
 # Backup de l'ancien dossier .opencode/skills/ avant junction (à supprimer manuellement après validation)
 .opencode/skills.bak/
 
-# =============================================================================
-# Graphify knowledge graph (généré, pas commit)
-# =============================================================================
-graphify-out/
-.graphify/
-plugin-error.log
-
-# =============================================================================
-# TypeScript incremental build cache (machine-local, accélère tsc/next build)
-# =============================================================================
-.tsbuildinfo
-
-# =============================================================================
-# Artefacts de probing/scraping (sessions de dev, pas de production)
-# =============================================================================
-atp-*-out.txt
-wta-bundle.js
-graphify-out.txt
-scripts/probe-atp-*.py
-scripts/probe-wta-*.js
-scripts/headroom-proxy.ps1
-*.tsbuildinfo
-
-# =============================================================================
-# OpenCode skills allowlist (junctions machine-spécifiques → .agents/tools/)
-# Ne pas committer le contenu résolu : il duplique .agents/tools/ (1800 fichiers).
-# Les junctions se recréent sur chaque poste (voir AGENTS.md § Multi-plateforme).
-# =============================================================================
-.agents/tools-active/
-.opencode/skills
-
 # Junctions Cline → .claude/skills + .agents/tools (même logique : ne pas résoudre).
 .cline/
 
@@ -238,8 +209,9 @@ scripts/vps_scripts/
 # =============================================================================
 .cache/
 
-
+# =============================================================================
 # Capacitor / mobile (artefacts generes)
+# =============================================================================
 dist/
 docs/mobile/graphify-studio/
 docs/mobile/graph-architecture.svg
@@ -261,7 +233,6 @@ scripts/tmp-rss-*.ts
 scripts/verify-seo-fix.shkeystore.properties
 icons/
 test-results/
-
 
 android/
 
