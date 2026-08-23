@@ -374,14 +374,20 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
         </div>
 
         {/* Stats + xG */}
-        {(live.homeShots > 0 || live.awayShots > 0 || p.xGa) && (
+        {(live.homeShots !== null || live.awayShots !== null || p.xGa) && (
           <div className="mt-4 space-y-1.5 border-t border-border/40 pt-3">
-            {live.homeShots > 0 || live.awayShots > 0 ? (
+            {(live.homeShots ?? 0) > 0 || (live.awayShots ?? 0) > 0 ? (
               <>
                 <StatRow label="Poss." home={live.homePossession} away={100 - live.homePossession} pct={live.homePossession / 1} />
-                <StatRow label="Tirs" home={live.homeShots} away={live.awayShots} />
-                <StatRow label="Cadrés" home={live.homeShotsOnTarget} away={live.awayShotsOnTarget} />
-                <StatRow label="Corners" home={live.homeCorners} away={live.awayCorners} />
+                {live.homeShots !== null && live.awayShots !== null && (
+                  <StatRow label="Tirs" home={live.homeShots} away={live.awayShots} />
+                )}
+                {live.homeShotsOnTarget !== null && live.awayShotsOnTarget !== null && (
+                  <StatRow label="Cadrés" home={live.homeShotsOnTarget} away={live.awayShotsOnTarget} />
+                )}
+                {live.homeCorners !== null && live.awayCorners !== null && (
+                  <StatRow label="Corners" home={live.homeCorners} away={live.awayCorners} />
+                )}
               </>
             ) : null}
             {p.xGa && p.xGa.total > 0 && (
@@ -484,7 +490,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                       <span className="text-muted-foreground">Total xG</span>
                       <span className="font-semibold tabular-nums">{p.xGa.total.toFixed(2)}</span>
                     </div>
-                    {live.homeShotsOnTarget > 0 && Number.isFinite(p.xGa.home) && (
+                    {typeof live.homeShotsOnTarget === "number" && live.homeShotsOnTarget > 0 && Number.isFinite(p.xGa.home) && (
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">xG/Tir {match.home.shortName}</span>
                         <span className="font-semibold tabular-nums text-muted-foreground">
@@ -492,7 +498,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                         </span>
                       </div>
                     )}
-                    {live.awayShotsOnTarget > 0 && Number.isFinite(p.xGa.away) && (
+                    {typeof live.awayShotsOnTarget === "number" && live.awayShotsOnTarget > 0 && Number.isFinite(p.xGa.away) && (
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">xG/Tir {match.away.shortName}</span>
                         <span className="font-semibold tabular-nums text-muted-foreground">

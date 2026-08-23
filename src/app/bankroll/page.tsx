@@ -13,8 +13,7 @@ import { BankrollForm } from "@/components/bet-manager/bankroll-form";
 import { CsvImport } from "@/components/bet-manager/csv-import";
 import { LocalStorageMigration } from "@/components/bet-manager/local-storage-migration";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Zap, Plus, Trophy, ArrowLeft, Loader2, Download } from "lucide-react";
+import { Zap, Plus, Trophy, Loader2 } from "lucide-react";
 // Force rebuild: timestamp
 const REBUILD_TRIGGER = Date.now();
 
@@ -24,7 +23,6 @@ export default function BankrollDashboardPage() {
   const [showBankrollForm, setShowBankrollForm] = useState(false);
   const [settling, setSettling] = useState(false);
 
-  const loading = !bm.bankrolls && bm.betsLoading;
   const currency = bm.activeBankroll?.currency ?? "EUR";
 
   return (
@@ -52,35 +50,33 @@ export default function BankrollDashboardPage() {
         </div>
       </header>
 
+      <BetManagerNav
+        bankrolls={bm.bankrolls}
+        activeId={bm.activeId}
+        onSelect={bm.selectBankroll}
+        onCreate={() => setShowBankrollForm(true)}
+      />
+
       <main className="mx-auto max-w-6xl px-4 py-6">
         <LocalStorageMigration />
 
         {/* KPIs + Courbe de capital */}
         <div className="grid gap-4 md:grid-cols-3">
-          <KpiStrip bankroll={bm.activeBankroll} currency={currency} />
-          <CapitalChart bankrollId={bm.activeBankroll?.id} currency={currency} className="md:col-span-2" />
+          {bm.stats && (
+            <>
+              <KpiStrip stats={bm.stats.stats} currency={currency} />
+              <div className="md:col-span-2">
+                <CapitalChart curve={bm.stats.curve} currency={currency} />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Répartitions */}
         <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <BreakdownList
-            bankrollId={bm.activeBankroll?.id}
-            title="Par sport"
-            groupBy="sport"
-            currency={currency}
-          />
-          <BreakdownList
-            bankrollId={bm.activeBankroll?.id}
-            title="Par bookmaker"
-            groupBy="bookmaker"
-            currency={currency}
-          />
-          <BreakdownList
-            bankrollId={bm.activeBankroll?.id}
-            title="Par plage de cote"
-            groupBy="oddsRange"
-            currency={currency}
-          />
+          <BreakdownList title="Par sport" groups={bm.stats?.bySport ?? []} />
+          <BreakdownList title="Par bookmaker" groups={bm.stats?.byBookmaker ?? []} />
+          <BreakdownList title="Par plage de cote" groups={bm.stats?.byOdds ?? []} />
         </div>
 
         {/* Derniers paris + Formulaire */}
@@ -93,25 +89,19 @@ export default function BankrollDashboardPage() {
                 Ajouter un pari
               </Button>
             </div>
-            <BetTable bankrollId={bm.activeBankroll?.id} limit={10} currency={currency} />
+            <BetTable
+              bets={bm.bets.slice(0, 10)}
+              onSettle={bm.settleBet}
+              onDelete={bm.deleteBet}
+            />
           </section>
 
           <aside className="space-y-4">
-            <BankrollForm
-              bankrolls={bm.bankrolls}
-              activeId={bm.activeBankroll?.id}
-              onSelect={bm.setActiveBankroll}
-              onCreate={bm.createBankroll}
-              onUpdate={bm.updateBankroll}
-              onDelete={bm.deleteBankroll}
-              loading={bm.bankrollsLoading}
-            />
-            <CsvImport bankrollId={bm.activeBankroll?.id} onImported={bm.refresh} />
-            <BetForm
-              bankrollId={bm.activeBankroll?.id}
-              defaultBookmaker={bm.activeBankroll?.bookmaker}
-              onAdd={bm.createBet}
-            />
+            <Button variant="outline" className="w-full" onClick={() => setShowBankrollForm(true)}>
+              <Trophy className="h-4 w-4 mr-2" />
+              Nouvelle bankroll
+            </Button>
+            <CsvImport onImport={bm.importCSV} />
           </aside>
         </div>
 
@@ -173,20 +163,14 @@ export default function BankrollDashboardPage() {
       )}
 
       {/* Dialogue de création bankroll */}
-      {showBankrollForm && (
-        <BankrollForm
-          bankrolls={bm.bankrolls}
-          activeId={bm.activeBankroll?.id}
-          onSelect={bm.setActiveBankroll}
-          onCreate={async (input) => {
-            await bm.createBankroll(input);
-            setShowBankrollForm(false);
-          }}
-          onUpdate={bm.updateBankroll}
-          onDelete={bm.deleteBankroll}
-          loading={bm.bankrollsLoading}
-        />
-      )}
+      <BankrollForm
+        open={showBankrollForm}
+        onOpenChange={setShowBankrollForm}
+        onCreate={async (name, initial, cur) => {
+          await bm.createBankroll(name, initial, cur);
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

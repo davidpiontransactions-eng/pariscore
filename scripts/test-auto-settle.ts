@@ -17,7 +17,7 @@ function mkBet(partial: Partial<Bet>): Bet {
   } as Bet;
 }
 
-const fx = (home: number, away: number) => ({
+const fx = (home: number | null, away: number | null) => ({
   fixture: { id: 1, date: "2026-08-20T00:00:00Z", status: { short: "FT" } },
   teams: { home: { name: "Paris Saint Germain" }, away: { name: "Olympique de Marseille" } },
   goals: { home, away },

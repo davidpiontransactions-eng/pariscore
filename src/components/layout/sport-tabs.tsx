@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Home,
@@ -46,6 +47,34 @@ type SportTabsProps = {
 
 export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
   const activeSport = (activeTab as SportId) || "football";
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Roving tabindex : ←/→/Home/End déplacent le focus ET sélectionnent l'onglet
+  // (activation automatique, pattern ARIA tabs). Le focus reste synchronisé
+  // avec l'onglet actif.
+  const handleTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const count = TABS.length;
+    let next: number;
+    switch (e.key) {
+      case "ArrowRight":
+        next = (index + 1) % count;
+        break;
+      case "ArrowLeft":
+        next = (index - 1 + count) % count;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = count - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    onTabChange(TABS[next].id);
+    tabRefs.current[next]?.focus();
+  };
 
   return (
     <nav
@@ -65,15 +94,20 @@ export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
       </div>
 
       <div className="relative z-10 flex min-w-max items-center gap-1 px-4 py-2.5">
-        {TABS.map((tab) => {
+        {TABS.map((tab, index) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
+              ref={(el) => {
+                tabRefs.current[index] = el;
+              }}
               role="tab"
               aria-selected={isActive}
+              tabIndex={isActive ? 0 : -1}
               onClick={() => onTabChange(tab.id)}
+              onKeyDown={(e) => handleTabKeyDown(e, index)}
               className={cn(
                 "relative flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors duration-200",
                 isActive

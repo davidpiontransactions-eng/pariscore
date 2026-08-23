@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Search, Trophy, FileDown, Zap, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trophy, FileDown, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useBetManager } from "@/hooks/use-bet-manager";
 import { BetManagerNav } from "@/components/bet-manager/bet-manager-nav";
@@ -54,8 +54,6 @@ export default function BankrollBetsPage() {
     return bets;
   }, [bm.bets, status, search]);
 
-  const currency = bm.activeBankroll?.currency ?? "EUR";
-
   return (
     <div className="min-h-screen bg-bg-deep pb-16 text-zinc-100">
       {/* En-tête du module */}
@@ -81,6 +79,13 @@ export default function BankrollBetsPage() {
           </div>
         </div>
       </header>
+
+      <BetManagerNav
+        bankrolls={bm.bankrolls}
+        activeId={bm.activeId}
+        onSelect={bm.selectBankroll}
+        onCreate={() => setShowBankrollForm(true)}
+      />
 
       <main className="mx-auto max-w-6xl px-4 py-6">
         <LocalStorageMigration />
@@ -163,10 +168,10 @@ export default function BankrollBetsPage() {
         </div>
 
         {/* Import CSV */}
-        <CsvImport bankrollId={bm.activeBankroll?.id} onImported={bm.refresh} />
+        <CsvImport onImport={bm.importCSV} />
 
         {/* Liste des paris */}
-        <BetTable bets={filteredBets} currency={currency} />
+        <BetTable bets={filteredBets} onSettle={bm.settleBet} onDelete={bm.deleteBet} />
 
         {/* Dialogue d'ajout de pari — redirige vers page dédiée pour éviter les problèmes de build avec tesseract.js */}
         {showForm && (
@@ -191,20 +196,14 @@ export default function BankrollBetsPage() {
         )}
 
         {/* Dialogue de création bankroll */}
-        {showBankrollForm && (
-          <BankrollForm
-            bankrolls={bm.bankrolls}
-            activeId={bm.activeBankroll?.id}
-            onSelect={bm.setActiveBankroll}
-            onCreate={async (input) => {
-              await bm.createBankroll(input);
-              setShowBankrollForm(false);
-            }}
-            onUpdate={bm.updateBankroll}
-            onDelete={bm.deleteBankroll}
-            loading={bm.bankrollsLoading}
-          />
-        )}
+        <BankrollForm
+          open={showBankrollForm}
+          onOpenChange={setShowBankrollForm}
+          onCreate={async (name, initial, cur) => {
+            await bm.createBankroll(name, initial, cur);
+            window.location.reload();
+          }}
+        />
       </main>
     </div>
   );

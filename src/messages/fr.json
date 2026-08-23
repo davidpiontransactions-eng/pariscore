@@ -806,5 +806,46 @@
     "source": "Source",
     "translated": "traduit",
     "readMore": "Lire l'article"
+  },
+  "home": {
+    "ariaLabel": "Accueil PariScore",
+    "welcome": "Bienvenue sur PariScore",
+    "intro": "L'outil d'analyse de paris sportifs qui croise forme récente, xG et cotes de marché pour détecter les value bets. Choisis un point de départ :",
+    "ctaFootball": "Explorer le football",
+    "ctaUpcoming": "Prochains matchs",
+    "howItWorks": "Comment ça marche",
+    "goFurther": "Aller plus loin",
+    "steps": {
+      "chooseSport": {
+        "title": "1 · Choisis ton sport",
+        "desc": "Tennis, football, CS2, NBA… chaque sport a ses marchés et son filtre latéral."
+      },
+      "spotValue": {
+        "title": "2 · Repère les value bets",
+        "desc": "PariScore compare cotes bookmakers et probabilités du modèle pour isoler l'edge."
+      },
+      "manageBankroll": {
+        "title": "3 · Pilote ta bankroll",
+        "desc": "Kelly fractionnaire, suivi des mises et courbe de capital dans le Bet Manager."
+      }
+    },
+    "features": {
+      "betManager": {
+        "label": "Bet Manager",
+        "desc": "Suivi de bankroll, historique de paris et courbe de capital."
+      },
+      "leagues": {
+        "label": "Championnats",
+        "desc": "Stats ligues OddAlerts : formes, fixtures et cotes dévigées."
+      },
+      "paperTrading": {
+        "label": "Paper Trading",
+        "desc": "Entraîne-toi sans risque : stratégies testées sur données réelles."
+      },
+      "apiDocs": {
+        "label": "API & Docs",
+        "desc": "Endpoints publics v1 pour intégrer les signaux PariScore."
+      }
+    }
   }
 }

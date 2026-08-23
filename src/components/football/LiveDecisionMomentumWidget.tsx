@@ -60,7 +60,7 @@ function PressureGauge({ value }: { value: number }) {
           {value > 0 ? "+" : ""}{value}
         </span>
       </div>
-      <Progress value={pct} className="h-2.5" indicatorClassName={pressureBg(value)} />
+      <Progress value={pct} className="h-2.5" />
       <div className="flex justify-between text-[11px] text-muted-foreground">
         <span>Pression Ext.</span>
         <span className="font-medium">{side}</span>

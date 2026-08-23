@@ -110,11 +110,17 @@ export function resolveField(match: FootballMatch, field: string): number | null
     case "xgTotal":
       return p.xGa && p.xGa.total > 0 ? p.xGa.total : null;
     case "liveDeltaShots":
-      return live ? live.homeShots - live.awayShots : null;
+      return live && live.homeShots !== null && live.awayShots !== null
+        ? live.homeShots - live.awayShots
+        : null;
     case "liveDeltaSot":
-      return live ? live.homeShotsOnTarget - live.awayShotsOnTarget : null;
+      return live && live.homeShotsOnTarget !== null && live.awayShotsOnTarget !== null
+        ? live.homeShotsOnTarget - live.awayShotsOnTarget
+        : null;
     case "liveDeltaCorners":
-      return live ? live.homeCorners - live.awayCorners : null;
+      return live && live.homeCorners !== null && live.awayCorners !== null
+        ? live.homeCorners - live.awayCorners
+        : null;
     case "liveHomePossession":
       return live && live.homePossession > 0 ? live.homePossession : null;
     default:

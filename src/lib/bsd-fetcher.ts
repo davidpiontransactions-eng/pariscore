@@ -330,6 +330,8 @@ export type LiveMatchItem = {
     p2_first_pct: number | null;
     p1_first_won: number | null;
     p2_first_won: number | null;
+    p1_second_won: number | null;
+    p2_second_won: number | null;
     p1_bp_saved: number | null;
     p2_bp_saved: number | null;
   } | null;

@@ -1,17 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useBetManager } from "@/hooks/use-bet-manager";
-import { BetManagerNav } from "@/components/bet-manager/bet-manager-nav";
 import { BetForm } from "@/components/bet-manager/bet-form";
-import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trophy } from "lucide-react";
 
 export default function BankrollNewBetPage() {
   const bm = useBetManager();
-  const currency = bm.activeBankroll?.currency ?? "EUR";
 
   return (
     <div className="min-h-screen bg-bg-deep pb-16 text-zinc-100">
@@ -32,10 +28,9 @@ export default function BankrollNewBetPage() {
 
       <main className="mx-auto max-w-2xl px-4 py-6">
         <BetForm
-          bankrollId={bm.activeBankroll?.id}
-          defaultBookmaker={bm.activeBankroll?.bookmaker}
+          bankrollId={bm.activeBankroll?.id ?? null}
           onAdd={async (input) => {
-            await bm.createBet(input);
+            await bm.addBet(input);
             toast.success("Pari ajouté !");
           }}
         />

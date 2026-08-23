@@ -82,8 +82,12 @@ test.describe("Smoke — page boots and renders core structure", () => {
     await page.goto("/");
     await waitForMatches(page, 3);
 
-    // Hero title is "Tennis · Prematch" (FR) or "Tennis · Prematch" (EN)
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(/Tennis/i);
+    // The landing is now the Home view: hero <h1> is "Bonjour" and the
+    // welcome panel (HomeDashboard) renders an <h2> "Bienvenue sur PariScore".
+    await expect(page.getByRole("heading", { level: 1, name: /Bonjour/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: /Bienvenue sur PariScore/i })
+    ).toBeVisible();
 
     // The "X matchs aujourd'hui" badge text in the hero
     await expect(page.locator("main").locator("..")).toContainText(/3/);

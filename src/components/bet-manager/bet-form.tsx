@@ -240,7 +240,7 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Type</Label>
-              <Select value={betType} onValueChange={setBetType}>
+              <Select value={betType} onValueChange={(v) => setBetType(v as BetType)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Type" />
                 </SelectTrigger>

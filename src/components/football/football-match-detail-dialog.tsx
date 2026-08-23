@@ -443,7 +443,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 dangerous={stats.dangerous}
                 layers={stats.layers}
                 pressure={stats.pressure}
-                liveStats={view?.live ? {
+                liveStats={view?.live && view.live.homeShotsOnTarget !== null && view.live.awayShotsOnTarget !== null && view.live.homeCorners !== null && view.live.awayCorners !== null ? {
                   homeSOT: view.live.homeShotsOnTarget,
                   awaySOT: view.live.awayShotsOnTarget,
                   homeCorners: view.live.homeCorners,

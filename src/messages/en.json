@@ -806,5 +806,46 @@
     "source": "Source",
     "translated": "translated",
     "readMore": "Read article"
+  },
+  "home": {
+    "ariaLabel": "PariScore Home",
+    "welcome": "Welcome to PariScore",
+    "intro": "The sports betting analysis tool that combines recent form, xG and market odds to detect value bets. Pick a starting point:",
+    "ctaFootball": "Explore football",
+    "ctaUpcoming": "Upcoming matches",
+    "howItWorks": "How it works",
+    "goFurther": "Go further",
+    "steps": {
+      "chooseSport": {
+        "title": "1 · Choose your sport",
+        "desc": "Tennis, football, CS2, NBA… each sport has its own markets and side filter."
+      },
+      "spotValue": {
+        "title": "2 · Spot the value bets",
+        "desc": "PariScore compares bookmaker odds with model probabilities to isolate the edge."
+      },
+      "manageBankroll": {
+        "title": "3 · Manage your bankroll",
+        "desc": "Fractional Kelly, stake tracking and capital curve in the Bet Manager."
+      }
+    },
+    "features": {
+      "betManager": {
+        "label": "Bet Manager",
+        "desc": "Bankroll tracking, bet history and capital curve."
+      },
+      "leagues": {
+        "label": "Leagues",
+        "desc": "OddAlerts league stats: form, fixtures and devigged odds."
+      },
+      "paperTrading": {
+        "label": "Paper Trading",
+        "desc": "Practice risk-free: strategies tested on real data."
+      },
+      "apiDocs": {
+        "label": "API & Docs",
+        "desc": "Public v1 endpoints to integrate PariScore signals."
+      }
+    }
   }
 }
