@@ -13,7 +13,7 @@ type TabDef = {
 };
 
 const TABS: TabDef[] = [
-  { id: "accueil", label: "Accueil", icon: Home, accent: "bg-emerald-500" },
+  { id: "home", label: "Accueil", icon: Home, accent: "bg-emerald-600" },
   { id: "live", label: "Live", icon: Radio, accent: "bg-red-500" },
   { id: "value", label: "Value", icon: Gem, accent: "bg-emerald-500" },
   { id: "favoris", label: "Favoris", icon: Star, accent: "bg-amber-500" },

@@ -56,6 +56,7 @@ import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
+import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
@@ -79,7 +80,21 @@ type DetailRequest =
   | { sport: "tennis"; match: TennisMatch }
   | { sport: "football"; match: FootballMatch };
 
-type SportTab = "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1" | "baseball" | "rugby";
+type SportTab = "home" | "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1" | "baseball" | "rugby";
+
+/** Ids de sport réels — les ids de nav mobile ("live", "profil"…) ne sont pas des sports. */
+const SPORT_IDS: ReadonlySet<string> = new Set<SportTab>([
+  "tennis",
+  "football",
+  "cs2",
+  "mma",
+  "nba",
+  "wnba",
+  "cycling",
+  "f1",
+  "baseball",
+  "rugby",
+]);
 
 class PageErrorBoundary extends Component<
   { children: ReactNode },
@@ -121,7 +136,8 @@ function HomeInner() {
   const tApiDocs = useTranslations("apiDocs");
   const tPaper = useTranslations("paperTrading");
 
-  const [activeTab, setActiveTab] = useState<SportTab>("tennis");
+  // La landing affiche la vue Accueil (dashboard neutre) — pas de sport imposé.
+  const [activeTab, setActiveTab] = useState<SportTab>("home");
   const reduceMotion = useReducedMotion();
 
   // Pills navigation active state
@@ -207,19 +223,44 @@ function HomeInner() {
     };
   }, [tennisData?.matches, footData?.matches]);
 
+  // Ids de sport réels (les ids de nav mobile comme "live"/"profil" sont
+  // ignorés : ils écriraient un faux sport dans le store et publieraient
+  // une URL ?sport=live invalide).
+  const SPORT_TABS: ReadonlySet<string> = new Set([
+    "tennis",
+    "football",
+    "cs2",
+    "mma",
+    "nba",
+    "wnba",
+    "cycling",
+    "f1",
+    "baseball",
+    "rugby",
+  ]);
+
   const handleTabChange = useCallback((tab: string) => {
+    // Ignore les ids de nav non-sport ("live", "value", "favoris", "profil") :
+    // ils écriraient un faux sport dans le store et publieraient une URL
+    // ?sport=live invalide.
+    if (tab !== "home" && !SPORT_IDS.has(tab)) return;
     setActiveTab(tab as SportTab);
-    useSportsSidebarStore.getState().syncSportFromTab(tab);
+    // "home" n'est pas un sport : on ne synchronise pas le store (l'arbre
+    // latéral garde le dernier sport consulté, l'URL ?sport= reste stable).
+    if (tab !== "home") {
+      useSportsSidebarStore.getState().syncSportFromTab(tab);
+    }
   }, []);
 
   // Sidebar (store) → onglet central : un clic sport/ligue dans le filtre
   // latéral bascule la grille. Le store reste source de vérité URL-partageable.
   const storeSportId = useSportsSidebarStore((s) => s.selectedSportId);
   useEffect(() => {
+    // activeTab volontairement hors deps : réagir à son changement re-déclencherait
+    // la bascule en boucle (store = seule source de vérité pour ce retour).
     if (storeSportId && storeSportId !== activeTab) {
       setActiveTab(storeSportId as SportTab);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeSportId]);
 
   const SPORT_CARDS = [
@@ -237,12 +278,18 @@ function HomeInner() {
         <AutoHideHeader className="bg-bg-deep/80 backdrop-blur-md">
           <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-1 px-4 py-1.5 sm:px-6">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                <Trophy className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-bold tracking-tight text-white">
-                {t("appName")}
-              </span>
+              <button
+                type="button"
+                onClick={() => handleTabChange("home")}
+                className="-my-2 flex items-center gap-2.5 rounded-lg px-1 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                  <Trophy className="h-4 w-4" aria-hidden />
+                </div>
+                <span className="text-sm font-bold tracking-tight text-white">
+                  {t("appName")}
+                </span>
+              </button>
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
@@ -398,6 +445,7 @@ function HomeInner() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         >
+        {activeTab === "home" && <HomeDashboard onSportSelect={handleTabChange} />}
         {activeTab === "tennis" && <TennisTabContent />}
         {activeTab === "football" && <FootballTabContent />}
         {activeTab === "cs2" && <Cs2TabContent />}

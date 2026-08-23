@@ -331,6 +331,11 @@
 .sport-ambient[data-sport="f1"]::after { --sport-tennis: var(--sport-f1); }
 .sport-ambient[data-sport="rugby"]::before,
 .sport-ambient[data-sport="rugby"]::after { --sport-tennis: var(--sport-rugby); }
+/* Accueil : ambiance neutre (accent charte) plutôt que le vert tennis par défaut */
+.sport-ambient[data-sport="home"]::before,
+.sport-ambient[data-sport="home"]::after {
+  --sport-tennis: color-mix(in srgb, var(--accent, #00e676) 55%, transparent);
+}
 
 /* Glass system — tokens de la chartre, classes utilitaires */
 .glass-sm {

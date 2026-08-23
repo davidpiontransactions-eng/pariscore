@@ -8,6 +8,7 @@
 const UNSPLASH_BASE = "https://images.unsplash.com";
 
 export type SportId =
+  | "home"
   | "tennis"
   | "football"
   | "cs2"
@@ -21,6 +22,10 @@ export type SportId =
 
 // Visuels par sport — sélectionnés pour palette sombre compatible dark mode.
 const SPORT_HERO: Record<SportId, string> = {
+  // Accueil : pas de visuel sportif — on réutilise le hero football (pattern
+  // anti-guess URL documenté, cf. baseball/rugby) ; la bannière est masquée
+  // par l'onglet actif côté SportTabs.
+  home: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
   tennis: `${UNSPLASH_BASE}/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1200&q=80`,
   football: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
   cs2: `${UNSPLASH_BASE}/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80`,
@@ -42,6 +47,7 @@ const SPORT_HERO: Record<SportId, string> = {
 
 // Version basse résolution pour thumbnails / arrière-plans floutés.
 const SPORT_BG: Record<SportId, string> = {
+  home: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
   tennis: `${UNSPLASH_BASE}/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=800&q=60&blur=20`,
   football: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
   cs2: `${UNSPLASH_BASE}/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=60&blur=20`,
@@ -56,6 +62,7 @@ const SPORT_BG: Record<SportId, string> = {
 
 // Accents de couleur par sport (pour fallbacks et overlays).
 const SPORT_ACCENT: Record<SportId, string> = {
+  home: "#00e676",
   tennis: "#10b981",
   football: "#0ea5e9",
   cs2: "#f97316",

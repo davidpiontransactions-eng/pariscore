@@ -4,8 +4,9 @@ import { useCallback, useRef } from "react";
 import { SportTabs } from "@/components/layout/sport-tabs";
 
 // Matches the tab order defined in SportTabs:
-// tennis → football → cs2 → mma → nba → wnba → cycling → f1 → baseball → rugby
+// home → tennis → football → cs2 → mma → nba → wnba → cycling → f1 → baseball → rugby
 const TAB_ORDER = [
+  "home",
   "tennis",
   "football",
   "cs2",

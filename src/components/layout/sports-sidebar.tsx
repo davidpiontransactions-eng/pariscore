@@ -841,7 +841,7 @@ export function SportsSidebarContent({
   return (
     <div className="flex h-full w-full flex-col bg-[#0F172A] text-slate-200">
       <div className="space-y-2 border-b border-slate-800/80 p-2.5">
-        <LiveLineToggle sportId={activeSport || "football"} />
+        <LiveLineToggle sportId={activeSport && activeSport !== "home" ? activeSport : "football"} />
         <SearchBar />
         <TimePills />
       </div>

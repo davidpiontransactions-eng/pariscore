@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import {
+  Home,
   Volleyball,
   Footprints,
   Swords,
@@ -25,6 +26,7 @@ type TabDef = {
 };
 
 const TABS: TabDef[] = [
+  { id: "home", label: "Accueil", icon: Home, accent: "bg-emerald-600" },
   { id: "tennis", label: "Tennis", icon: Volleyball, accent: "bg-emerald-500" },
   { id: "football", label: "Football", icon: Footprints, accent: "bg-sky-500" },
   { id: "cs2", label: "CS2", icon: Crosshair, accent: "bg-orange-500" },
