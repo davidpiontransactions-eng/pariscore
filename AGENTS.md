@@ -13,9 +13,9 @@ Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructio
 
 **Fichiers clés**: `scripts/scrape-oddalerts.js` (scraper Node zéro-dép, https module **obligatoire** — undici `fetch` reçoit 403 WAF), `src/lib/leagues-stats/{types,db}.ts` (lecture readonly better-sqlite3), `src/app/api/v1/leagues-stats/` (index + `[country]/[slug]`), `src/app/ligues/` (index recherche+pays, détail replica OddAlerts FR), composants `league-stat-grid`/`league-fixtures-list`, modèle Prisma `LeagueSeasonStats` (DDL réel créé par le scraper via CREATE TABLE IF NOT EXISTS).
 
-**Cron VPS**: pm2 `pariscore-cron-oddalerts` (`30 4 * * *`), skip-cache <20h, `--force` pour re-scrape complet. Run local : `node scripts/scrape-oddalerts.js [--country=x|--only=c/s|--limit=n|--dry-run]`. Pass complet ≈2 min (concurrence 5, délai 350 ms).
+**Cron VPS**: pm2 `pariscore-cron-oddalerts` (`30 4 * * *`), skip-cache <20h, `--force` pour re-scrape complet. Run local : `node scripts/scrape-oddalerts.js [--country=x|--only=c/s|--limit=n|--dry-run]`. Pass local ≈2 min ; pass VPS via FlareSolverr ≈15-25 min.
 
-**Pièges**: (1) WAF OddAlerts fingerprint TLS → utiliser le module `https` Node, pas `global fetch` ; (2) HTML server-rendered BEM stable (`competition-card`, `competition-stat__value--{value|per|avg}`, liens index en **guillemets simples**) ; (3) fixtures parfois sans cotes (div prices absente) ; (4) DB = pariscore.db racine (convention `DATABASE_PATH || cwd/pariscore.db` partagée avec server.js et tennis-stats), PAS la DB Prisma `prisma/dev.db`.
+**Pièges**: (1) WAF OddAlerts = **Cloudflare challenge "Just a moment"** sur IP datacenter — en local le module `https` Node passe, mais sur le VPS TOUT doit passer par **FlareSolverr** (conteneur Docker déjà présent sur le VPS, port 8191) : cf_clearance est lié à la fingerprint TLS du navigateur, inutile depuis Node → mode sessions réutilisées (`oddalerts-w{0..n}`, ~1s/page, FLARE_SESSIONS=2) ; (2) HTML renvoyé par Chrome resérialisé **guillemets doubles** (index `<a class='league-link'>` source simple-quote → parseur tolérant aux deux) ; (3) fixtures parfois sans cotes (div prices absente) ; (4) DB = pariscore.db racine (convention `DATABASE_PATH || cwd/pariscore.db` partagée avec server.js et tennis-stats), PAS la DB Prisma `prisma/dev.db`.
 
 ## Session: Rankings Home/Away Pipeline (2026-08-02)
 
