@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Camera, Loader2, Plus, X } from "lucide-react";
 import {
@@ -24,7 +24,6 @@ import {
 import { cn } from "@/lib/utils";
 import type { BetType } from "@/lib/bet-manager/types";
 import type { OcrTicket } from "@/lib/bet-manager/ocr";
-import { ocrTicketImage } from "@/lib/bet-manager/ocr-client";
 
 const SPORTS = ["football", "tennis", "basketball", "mma", "rugby", "cs2", "nba", "wnba", "cycling", "f1", "baseball", "other"];
 
@@ -55,6 +54,13 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const [legs, setLegs] = useState<LegRow[]>([{ matchLabel: "", market: "", pick: "", odds: "" }]);
   const [ocrBusy, setOcrBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const ocrFnRef = useRef<((image: Blob) => Promise<OcrTicket>) | null>(null);
+
+  useEffect(() => {
+    import("@/lib/bet-manager/ocr-client").then((mod) => {
+      ocrFnRef.current = mod.ocrTicketImage;
+    });
+  }, []);
 
   const effOdds = betType === "combo"
     ? legs.reduce((acc, l) => acc * (parseFloat(l.odds) || 1), 1)
@@ -77,9 +83,13 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
+      if (!ocrFnRef.current) {
+        toast.error("OCR pas encore prêt, réessayez dans un instant.");
+        return;
+      }
       setOcrBusy(true);
       try {
-        const ticket = await ocrTicketImage(file);
+        const ticket = await ocrFnRef.current(file);
         if (!ticket.matchLabel && !ticket.odds && !ticket.stake) {
           toast.error("Aucun pari reconnu dans l'image. Colle le texte du ticket ci-dessous.");
         }
