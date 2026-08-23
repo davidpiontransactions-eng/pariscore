@@ -1,8 +1,6 @@
 // OCR de ticket de pari — parser dédié au format 1xbet (FR/EN) + fallback générique.
 // 100% local via tesseract.js, aucune image ne quitte le navigateur.
 
-import { createWorker } from "tesseract.js";
-
 export type OcrLeg = {
   matchLabel: string;
   market?: string;
@@ -85,7 +83,7 @@ function splitEvent(line: string): [string, string] | null {
 /**
  * Parse le texte OCR d'un ticket 1xbet :
  *   - ligne événement "PSG — Olympique de Marseille"
- *   - en-tête marché "Résultat du match :" 
+ *   - en-tête marché "Résultat du match :"
  *   - sélection "Paris Saint-Germain va gagner" + cote "1.85"
  *   - pied "Montant du pari 10 €" / "Gain possible 18,50 €" / "Cote totale 4.25"
  * Retourne legs (combiné si >1), mise, cote, et le label marché canonique.
@@ -145,7 +143,8 @@ export function parse1xbetTicket(raw: string): OcrTicket {
         .replace(/\s{2,}/g, " ")
         .replace(/[:;]\s*$/, "")
         .trim();
-      if (odds && odds > 1 && odds < 1000) {        legs.push({
+      if (odds && odds > 1 && odds < 1000) {
+        legs.push({
           matchLabel: lastEvent,
           market: lastMarketHint,
           pick: pickText || lastMarketHint,
@@ -227,6 +226,8 @@ export function parseTicketText(raw: string): OcrTicket {
 }
 
 export async function ocrTicketImage(image: Blob): Promise<OcrTicket> {
+  // Import dynamique côté client uniquement : tesseract.js utilise WebAssembly + web workers
+  const { createWorker } = await import("tesseract.js");
   const worker = await createWorker("fra", 1, { logger: () => {} });
   try {
     const { data } = await worker.recognize(image);
