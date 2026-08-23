@@ -231,7 +231,11 @@ export function FootballStrategyTop5Widget() {
           </SelectContent>
         </Select>
         {/* Description dynamique en vert émeraude */}
-        <p className="truncate pt-0.5 text-[11px] font-medium text-emerald-400" aria-live="polite">
+        <p
+          className="truncate pt-0.5 text-[11px] font-medium text-emerald-400"
+          title={def.label}
+          aria-live="polite"
+        >
           {def.label}
         </p>
       </div>

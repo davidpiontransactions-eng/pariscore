@@ -13,7 +13,7 @@ const cache = createTtlCache<CachePayload>("__footballTop5Cache");
  * GET /api/football/top5
  *
  * Top 5 MATCHS à venir par stratégie de pari (Meilleure équipe, double chance,
- * Over 1.5 / Over 3.5 buts, BTTS yes, attaque, défense, Over 6.5 corners) —
+ * Over 1.5 / Under 3.5 buts, BTTS yes, attaque, défense, Over 6.5 corners) —
  * agrégé sur toutes les ligues BSD. Un match est scoré en croisant la forme
  * récente (5 derniers matchs terminés) de l'équipe à Domicile avec celle de
  * l'équipe à Extérieur. Cotes non requises.

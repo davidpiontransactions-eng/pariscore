@@ -101,3 +101,58 @@ gantt
 | `findstr over35` sur les 3 fichiers | ✅ 0 occurrence résiduelle |
 
 **Déploiement** : commit + push + `deploy.bat` (build complet déclenché car `src/` modifié).
+
+## Itération 3 — 2026-08-23 : Audit visuel QA + code review (boucle ingénierie)
+
+**Constat utilisateur** : « aucune modification visible en frontend ».
+
+### Phase A — Diagnostic
+
+| Étape | Résultat |
+|---|---|
+| Montage composant | ✅ `sports-sidebar.tsx:866` — rendu si `activeSport === "football"` uniquement |
+| État VPS (`ssh`) | ✅ commit `d9e78d7a` déployé ; « Choisir une strat… » dans chunk SSR ; « Under 3,5 buts » dans chunk client |
+| Sonde Playwright v1 | ❌ FAIL — **faux négatif** : `.first()` cliquait l'item d'arborescence sidebar au lieu de la carte sport |
+| Sonde diagnostique v2 | ✅ clic ciblé `button span.text-sm.font-semibold` = "Football" → section présente |
+
+### Phase B — QA visuelle prod (`scripts/qa-top5-probe.js`)
+
+| Check | Résultat |
+|---|---|
+| URL après clic Football | `?sport=football` ✅ |
+| Section Top 5 dans le DOM | ✅ |
+| Select Shadcn (`data-slot=select-trigger`) | ✅ 1 |
+| Description verte initiale | ✅ « Meilleure équipe (forme) » |
+| Options du select | ✅ 9 items dont **❄️ Under 3,5 buts** |
+| Wiring : sélection Under 3,5 → description | ✅ « Under 3,5 buts » |
+| Bascule L5/L10 | ✅ 2 boutons |
+| Erreurs JS console/pageerror | ✅ 0 |
+| **Verdict** | **QA_TOP5_PASS** |
+
+Screenshots : `.context/qa-top5-home.png`, `.context/qa-top5-section.png`.
+
+**Cause racine du constat utilisateur** : home charge l'onglet Tennis par défaut (carte
+Football à cliquer) et/ou service worker servant des chunks en cache → hard-refresh.
+
+### Phase C — Code reviewer (sous-agent, verdict APPROVE)
+
+| # | Gravité | Finding | Correctif appliqué |
+|---|---|---|---|
+| R1 | Mineur | `qa-top5-diag.js:26` TDZ crash si échec clic (`diag` déclaré après try/catch) | ✅ hoist `diag` avant le bloc try |
+| R2 | Mineur | `api/football/top5/route.ts:14` JSDoc obsolète « Over 3.5 » | ✅ → « Under 3.5 » |
+| R3 | Mineur | `impliedProb(odds_under_35, …)` params nommés inversés (résultat correct) | ✅ commentaire clarificateur |
+| S1 | Suggestion | description tronquée sans recovery | ✅ `title={def.label}` hover |
+| S2 | Suggestion | sonde n'assertait pas `afterSelectDesc` | ✅ assert `includes("Under 3,5")` |
+
+Points validés sans correctif : math P(X≤3)=1−P(X≥4) exacte ; devig symétrique ; zéro leftover
+`over35` ; pas de persistance localStorage de la clé (useState local, `partialize` store limité
+aux favoris/modes) ; contraste emerald-400/slate-900 ≈ 9.3:1 AAA ; nav clavier Radix OK.
+
+### Phase D — Vérifications post-correctifs
+
+| Commande | Résultat |
+|---|---|
+| `tsc --noEmit` (fichiers touchés) | ✅ 0 erreur |
+| `eslint` 5 fichiers | ✅ 0 erreur |
+
+**Déploiement itération 3** : commit + push + deploy.bat.

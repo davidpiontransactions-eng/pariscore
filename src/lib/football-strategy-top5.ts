@@ -293,6 +293,7 @@ function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: n
       return prob != null ? { value: prob, pick: null } : null;
     }
     case "under35": {
+      // 1er arg = côté dont on veut la proba (ici under) — devig symétrique.
       const prob = impliedProb(m.odds_under_35, m.odds_over_35);
       return prob != null ? { value: prob, pick: null } : null;
     }
