@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
   // tennis-stats pour lire pariscore.db. Il doit rester externe au bundle
   // server de Next.js — sinon le build standalone échoue à le résoudre.
   serverExternalPackages: ["better-sqlite3", "pariscore-services"],
+  transpilePackages: ["tesseract.js"],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.experiments = { ...config.experiments, asyncWebAssembly: true, layers: true };
+    }
+    return config;
+  },
 
   // Caches des leaderboards officiels ATP/WTA (scripts/scrape-tour-leaderboards.py).
   // lus par src/lib/tennis-stats/official-leaderboard.ts via fs.readFileSync.
