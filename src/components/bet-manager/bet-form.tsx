@@ -35,6 +35,75 @@ type Props = {
   onAdd: (input: any) => Promise<void>;
 };
 
+function cleanNumber(s: string): number | undefined {
+  const n = parseFloat(s.replace(/[^\d.,]/g, "").replace(/\s/g, "").replace(",", "."));
+  return isNaN(n) ? undefined : n;
+}
+
+function parseTicketText(raw: string): OcrTicket {
+  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const oddsMatches = raw.match(/(?<![\d.])([1-9]\d{0,1}[.,]\d{2})(?![\d.])/g);
+  const odds = oddsMatches?.length
+    ? Math.max(...oddsMatches.map((x) => parseFloat(x.replace(",", "."))))
+    : undefined;
+  let stake: number | undefined;
+  for (const l of lines) {
+    const m = l.match(/([\d\s.,]+)\s*[€$£]/i);
+    if (m) {
+      const v = cleanNumber(m[1]);
+      if (v !== undefined && v > 0) stake = v;
+    }
+  }
+  const participants = lines
+    .filter(
+      (l) =>
+        !/^(total|gain|cote|mise|solde|date|réf|coupon|montant)/i.test(l) &&
+        !/[€$£]/.test(l) &&
+        !/\d{2,}[.,]\d{2}/.test(l) &&
+        l.length > 2
+    )
+    .slice(-2);
+  return {
+    rawText: raw,
+    matchLabel: participants.length >= 2 ? participants.join(" vs ") : participants[0],
+    pick: participants[participants.length - 1],
+    odds,
+    stake,
+    bookmaker: "1xbet",
+    legs: [],
+    betType: "single",
+  };
+}
+
+async function loadTesseractFromCDN(): Promise<any> {
+  if (typeof window === "undefined") throw new Error("Pas de window");
+  // @ts-ignore
+  if (window.Tesseract) return window.Tesseract;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";
+    script.async = true;
+    script.onload = () => {
+      // @ts-ignore
+      resolve(window.Tesseract);
+    };
+    script.onerror = () => reject(new Error("Échec chargement tesseract.js depuis CDN"));
+    document.head.appendChild(script);
+  });
+}
+
+async function ocrTicketImage(image: Blob): Promise<OcrTicket> {
+  if (typeof window === "undefined") throw new Error("OCR uniquement disponible côté client");
+  const Tesseract = await loadTesseractFromCDN();
+  const worker = await Tesseract.createWorker("fra", 1, { logger: () => {} });
+  try {
+    const { data } = await worker.recognize(image);
+    return parseTicketText(data.text);
+  } finally {
+    await worker.terminate();
+  }
+}
+
 export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const [betType, setBetType] = useState<BetType>("single");
   const [sport, setSport] = useState(SPORTS[0]);
@@ -54,16 +123,6 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
   const [legs, setLegs] = useState<LegRow[]>([{ matchLabel: "", market: "", pick: "", odds: "" }]);
   const [ocrBusy, setOcrBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const ocrFnRef = useRef<((image: Blob) => Promise<OcrTicket>) | null>(null);
-
-  useEffect(() => {
-    // Import via fonction pour éviter l'analyse statique Next.js
-    const loadOcr = async () => {
-      const mod = await import("@/lib/bet-manager/ocr-client");
-      ocrFnRef.current = mod.ocrTicketImage;
-    };
-    loadOcr();
-  }, []);
 
   const effOdds = betType === "combo"
     ? legs.reduce((acc, l) => acc * (parseFloat(l.odds) || 1), 1)
@@ -86,13 +145,9 @@ export function BetForm({ bankrollId, defaultBookmaker, onAdd }: Props) {
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      if (!ocrFnRef.current) {
-        toast.error("OCR pas encore prêt, réessayez dans un instant.");
-        return;
-      }
       setOcrBusy(true);
       try {
-        const ticket = await ocrFnRef.current(file);
+        const ticket = await ocrTicketImage(file);
         if (!ticket.matchLabel && !ticket.odds && !ticket.stake) {
           toast.error("Aucun pari reconnu dans l'image. Colle le texte du ticket ci-dessous.");
         }
