@@ -1,0 +1,104 @@
+name: Refresh BetMines
+
+# Refresh of BetMines scraped league data (fixtures + real CORNER odds lines
+# O/U 7.5→10.5 + model probabilities). Feeds public/data/betmines/*.json used
+# by src/lib/betmines.ts → over65Corners strategy.
+#
+# Scheduled run: the 16 leagues actually wired in PariScore (~6 min of stealth
+# browsing). Full catalog (519 leagues, ~2-4 h): manual dispatch with
+# input scope=all — resumable, skips already-scraped files.
+#
+# Triggers:
+#   - schedule: 05:30 UTC daily
+#   - workflow_dispatch: optional input scope = "wired" (default) | "all"
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Scope: wired leagues only, or full catalog (slow)"
+        type: choice
+        default: "wired"
+        options: ["wired", "all"]
+
+concurrency:
+  group: refresh-betmines
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    name: Scrape BetMines leagues
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.scope == 'all' && 300 || 20 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scripts/requirements-rankings.txt
+          python -m scrapling install          # Camoufox binary (Linux)
+
+      - name: Build league catalog (if missing)
+        run: |
+          mkdir -p data public/data/betmines
+          if [ ! -f data/betmines-leagues-all.txt ]; then
+            python scripts/gen_betmines_catalog.py || true
+          fi
+
+      - name: Scrape wired leagues
+        if: inputs.scope != 'all'
+        run: |
+          IDS=$(python - <<'PY'
+          import json
+          m = json.load(open("src/lib/betmines-league-map.json"))
+          print(",".join(str(v) for v in m.values() if v))
+          PY
+          )
+          python scripts/scrape_betmines.py --ids "$IDS" --delay 1.0
+
+      - name: Scrape full catalog
+        if: inputs.scope == 'all'
+        run: |
+          # le sitemap doit être présent pour le catalogue complet
+          if [ ! -f data/betmines-leagues-all.txt ]; then
+            echo "Catalogue absent pour un run complet — régénère-le depuis un poste." >&2
+            exit 1
+          fi
+          python scripts/scrape_betmines.py --all --delay 1.2
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- public/data/betmines/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- public/data/betmines/ | tail -5
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/betmines/
+          git commit -m "chore(data): refresh betmines [skip ci]"
+          git push

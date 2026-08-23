@@ -45,6 +45,8 @@ import {
   useSportsSidebarStore,
 } from "@/stores/use-sports-sidebar-store";
 import { useSportsTree } from "@/hooks/use-sports-tree";
+import { FootballStrategyTop5Widget } from "@/components/football/football-strategy-top5-widget";
+import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
 
 const SPORT_ICONS: Record<string, LucideIcon> = {
   Trophy,
@@ -861,6 +863,8 @@ export function SportsSidebarContent({
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-1 p-1.5">
+          {activeSport === "football" && <FootballStrategyTop5Widget />}
+          {activeSport === "football" && <FootballLeagueRankingsWidget />}
           <QuickLinksBlock tree={tree} onFallbackSport={handleSportSelect} />
           <FavoritesBlock tree={tree} onLeagueSelect={handleLeagueSelect} />
           {tree.length === 0 || !hasAnyMatch ? (

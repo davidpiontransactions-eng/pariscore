@@ -211,7 +211,10 @@ async function _fetchOdds(apiKey) {
     const res = await _get(
       `https://api.the-odds-api.com/v4/sports/mma_mixed_martial_arts/odds/?${params}`
     );
-    if (!res || res.status !== 200 || !Array.isArray(res.data)) return _oddsCache.data || [];
+    if (!res || res.status !== 200 || !Array.isArray(res.data)) {
+      // Don't cache error/empty responses — let next call retry
+      return _oddsCache.data && _oddsCache.data.length ? _oddsCache.data : [];
+    }
 
     // Track quota
     if (res.headers && res.headers['x-requests-remaining']) {
@@ -221,12 +224,15 @@ async function _fetchOdds(apiKey) {
       }
     }
 
-    _oddsCache.data = res.data;
-    _oddsCache.ts   = Date.now();
+    // Only cache non-empty responses
+    if (res.data.length > 0) {
+      _oddsCache.data = res.data;
+      _oddsCache.ts   = Date.now();
+    }
     return res.data;
   } catch (e) {
     console.warn('[MMA] Odds API fetch:', e.message);
-    return _oddsCache.data || [];
+    return _oddsCache.data && _oddsCache.data.length ? _oddsCache.data : [];
   }
 }
 
@@ -321,22 +327,28 @@ function _1xBetOddsToISO(ts) {
 function _fetchOdds1xBet() {
   const raw = getOdds1xBet();
   if (!raw || !Array.isArray(raw.fights) || !raw.fights.length) return [];
+  const now = Date.now();
   
-  return raw.fights.map(f => ({
-    home_team:    f.fighter1 || '',
-    away_team:    f.fighter2 || '',
-    commence_time: _1xBetOddsToISO(f.start_time) || null,
-    bookmakers:   [{
-      title:    '1xBet',
-      markets:  [{
-        key: 'h2h',
-        outcomes: [
-          { name: f.fighter1, price: f.odds_f1 },
-          { name: f.fighter2, price: f.odds_f2 },
-        ],
+  return raw.fights
+    .map(f => ({
+      home_team:    f.fighter1 || '',
+      away_team:    f.fighter2 || '',
+      commence_time: _1xBetOddsToISO(f.start_time) || null,
+      start_time:   f.start_time, // keep for filtering
+      bookmakers:   [{
+        title:    '1xBet',
+        markets:  [{
+          key: 'h2h',
+          outcomes: [
+            { name: f.fighter1, price: f.odds_f1 },
+            { name: f.fighter2, price: f.odds_f2 },
+          ],
+        }],
       }],
-    }],
-  })).filter(f => f.home_team && f.away_team);
+    }))
+    .filter(f => f.home_team && f.away_team)
+    // Filter out past events (start_time is Unix timestamp in seconds)
+    .filter(f => f.start_time && f.start_time * 1000 > now);
 }
 
 // ─── Public: getMMAFights ─────────────────────────────────────────────────────
@@ -356,6 +368,15 @@ async function getMMAFights(apiKey) {
         console.log('[MMA] Odds API empty — fallback 1xBet:', fb.length, 'fights');
         rawFights = fb;
       }
+    }
+    // Safety: filter out past events from ALL sources (Odds API + 1xBet fallback)
+    const now = Date.now();
+    rawFights = (rawFights || []).filter(f => {
+      const ts = f.commence_time ? new Date(f.commence_time).getTime() : null;
+      return ts && ts > now;
+    });
+    if (!rawFights.length) {
+      console.log('[MMA] No upcoming fights after past-event filter');
     }
     const [drIdx] = await Promise.all([
       _fetchDRatings(),

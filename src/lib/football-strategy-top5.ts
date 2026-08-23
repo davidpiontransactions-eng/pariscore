@@ -1,0 +1,463 @@
+import type { BSDFootballMatch } from "@/lib/bsd-football-fetcher";
+import { lookupClubLogo } from "@/lib/club-logos";
+import { matchForm, scoreFormMatch, expectedMatchCorners } from "@/lib/football-form";
+import { matchXg } from "@/lib/football-xg";
+import { betminesCornerMarket } from "@/lib/betmines";
+import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
+
+/**
+ * Top 5 MATCHS à venir par stratégie de pari. Un match est scoré en croisant la
+ * forme récente (5 derniers matchs terminés) de l'équipe à Domicile (contexte
+ * home) avec celle de l'équipe à Extérieur (contexte away). Aucun market de
+ * cotes requis : tout est dérivé des résultats + stats réelles BSD.
+ *
+ * Stratégies servies :
+ *   - bestTeam     → PPG (pt/match) de la plus forte équipe du match   (plus haut = mieux)
+ *   - bestAttack   → Expected Goals du match (λH + λA)                (plus haut = mieux)
+ *   - bestDefense  → Équipe la plus étanche (λ encaissés le + bas)    (plus bas = mieux)
+ *   - doubleChance → Taux de non-défaite (V+N) équipe la + sûre       (plus haut = mieux)
+ *   - over15       → P(≥ 2 buts) via Poisson sur λ                    (plus haut = mieux)
+ *   - over35       → P(≥ 4 buts) via Poisson sur λ                    (plus haut = mieux)
+ *   - bttsYes      → P(les 2 marquent) via Poisson sur λH, λA         (plus haut = mieux)
+ *   - over65Corners→ P(≥ 7 corners) via Poisson sur λCorners          (plus haut = mieux)
+ */
+
+export type StrategyTop5Key =
+  | "bestTeam"
+  | "bestTeam1x2"
+  | "bestAttack"
+  | "bestDefense"
+  | "doubleChance"
+  | "over15"
+  | "over35"
+  | "bttsYes"
+  | "over65Corners";
+
+export type Side = "home" | "away";
+
+export type StrategySideTeam = {
+  teamId: string;
+  teamName: string;
+  shortName: string;
+  logo: string;
+};
+
+/** Stats d'affichage xG/buts (source Understat, contexte Home/Away). */
+export type SideFormStats = {
+  gp: number;
+  xgFor: number;
+  xgAgainst: number;
+  goalsFor: number;
+  goalsAgainst: number;
+};
+
+export type MatchDisplayStats = {
+  home: { l5: SideFormStats | null; l10: SideFormStats | null };
+  away: { l5: SideFormStats | null; l10: SideFormStats | null };
+};
+
+export type StrategyMatchEntry = {
+  matchId: string;
+  league: string;
+  kickoff: string;
+  home: StrategySideTeam;
+  away: StrategySideTeam;
+  /** Valeur de la stratégie pour ce match (format précis par stratégie côté UI). */
+  value: number;
+  /** Côté à jouer si la stratégie désigne une équipe (bestTeam/DoubleChance/bestDefense), sinon null. */
+  pick: Side | null;
+  /** Stats xG/buts L5/L10 Home/Away (null si ligue non couverte par Understat). */
+  stats?: MatchDisplayStats | null;
+};
+
+export type StrategyTop5 = {
+  window: number;
+  minPlayed: number;
+  strategies: Record<StrategyTop5Key, StrategyMatchEntry[]>;
+};
+
+const FORM_WINDOW = 5;
+const MIN_PLAYED = 2;
+
+const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
+  bestTeam: true,
+  bestTeam1x2: true,
+  bestAttack: true,
+  bestDefense: false,
+  doubleChance: true,
+  over15: true,
+  over35: true,
+  bttsYes: true,
+  over65Corners: true,
+};
+
+/** Garde en mémoire la liste des stratégies (ordre stable de rendu). */
+export const STRATEGY_TOP5_KEYS = Object.keys(HIGHER_BETTER) as StrategyTop5Key[];
+
+type TeamForm = {
+  gf: number;
+  ga: number;
+  corners: number;
+};
+
+type TeamFormAgg = {
+  n: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  gf: number;
+  ga: number;
+  corners: number;
+};
+
+type SideKey = "home" | "away";
+
+function num(v: number | null | undefined): number {
+  return v != null && Number.isFinite(v) ? v : 0;
+}
+
+function normaliseTeamName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function teamKey(objId: number | undefined, name: string): string {
+  return objId != null ? `id:${objId}` : normaliseTeamName(name);
+}
+
+function aggForm(form: TeamForm[]): TeamFormAgg {
+  let gf = 0,
+    ga = 0,
+    corners = 0,
+    wins = 0,
+    draws = 0,
+    losses = 0;
+  for (const f of form) {
+    gf += f.gf;
+    ga += f.ga;
+    corners += f.corners;
+    if (f.gf > f.ga) wins++;
+    else if (f.gf === f.ga) draws++;
+    else losses++;
+  }
+  return { n: form.length, wins, draws, losses, gf, ga, corners };
+}
+
+function ppg(a: TeamFormAgg): number {
+  return a.n > 0 ? (a.wins * 3 + a.draws) / a.n : 0;
+}
+
+function nonDefeatRate(a: TeamFormAgg): number {
+  return a.n > 0 ? ((a.wins + a.draws) / a.n) * 100 : 0;
+}
+
+/** P(X = k) pour une loi de Poisson (λ). */
+function poissonPmf(lambda: number, k: number): number {
+  let p = Math.exp(-lambda);
+  for (let i = 1; i <= k; i++) p *= lambda / i;
+  return p;
+}
+
+/** P(X ≥ k). */
+function poissonTailAt(lambda: number, k: number): number {
+  let cdf = 0;
+  for (let i = 0; i < k; i++) cdf += poissonPmf(lambda, i);
+  return Math.min(1, Math.max(0, 1 - cdf));
+}
+
+/** P(X ≥ 1) = 1 − P(X = 0). */
+function poissonAtLeastOne(lambda: number): number {
+  return 1 - Math.exp(-lambda);
+}
+
+type TeamFormRec = { home: TeamForm[]; away: TeamForm[]; all: TeamForm[] };
+
+type FormStore = Map<string, TeamFormRec>;
+
+function buildFormStore(matches: BSDFootballMatch[]): FormStore {
+  const store: FormStore = new Map();
+
+  const push = (teamId: string, side: SideKey, form: TeamForm) => {
+    let rec = store.get(teamId);
+    if (!rec) {
+      rec = { home: [], away: [], all: [] };
+      store.set(teamId, rec);
+    }
+    rec[side].push(form);
+    rec.all.push(form);
+  };
+
+  for (const m of matches) {
+    if (m.home_score === null || m.away_score === null) continue;
+    const corners = num(m.live_stats?.home?.corner_kicks) + num(m.live_stats?.away?.corner_kicks);
+    const homeId = teamKey(m.home_team_obj?.id, m.home_team);
+    const awayId = teamKey(m.away_team_obj?.id, m.away_team);
+    push(homeId, "home", { gf: m.home_score, ga: m.away_score, corners });
+    push(awayId, "away", { gf: m.away_score, ga: m.home_score, corners });
+  }
+
+  return store;
+}
+
+function recentForm(full: TeamForm[]): TeamForm[] {
+  return full.slice(0, FORM_WINDOW);
+}
+
+/**
+ * Forme d'une équipe pour un contexte donné, avec repli graduel :
+ * contexte exact (home/away) → sinon forme globale (tout contexte). Une équipe
+ * est considérée comme « disponible » à partir de MIN_PLAYED matchs.
+ */
+function sideForm(rec: TeamFormRec | undefined, side: SideKey): TeamFormAgg | null {
+  if (!rec) return null;
+  const exact = rec[side];
+  if (exact.length >= MIN_PLAYED) return aggForm(recentForm(exact));
+  if (rec.all.length >= MIN_PLAYED) return aggForm(recentForm(rec.all));
+  return null;
+}
+
+function formFor(store: FormStore, match: BSDFootballMatch): { home: TeamFormAgg; away: TeamFormAgg } | null {
+  const home = sideForm(store.get(teamKey(match.home_team_obj?.id, match.home_team)), "home");
+  const away = sideForm(store.get(teamKey(match.away_team_obj?.id, match.away_team)), "away");
+  if (!home || !away) return null;
+  return { home, away };
+}
+
+function teamRow(match: BSDFootballMatch, side: Side): StrategySideTeam {
+  const obj = side === "home" ? match.home_team_obj : match.away_team_obj;
+  const name = side === "home" ? match.home_team : match.away_team;
+  return {
+    teamId: teamKey(obj?.id, name),
+    teamName: name,
+    shortName: obj?.short_name || name,
+    logo: lookupClubLogo(name) ?? "",
+  };
+}
+
+type ScoredMatch = {
+  fixture: BSDFootballMatch;
+  form: { home: TeamFormAgg; away: TeamFormAgg } | null;
+  value: number;
+  pick: Side | null;
+};
+
+/**
+ * Probabilités justes (de-vig) dérivées des cotes du book, si présentes.
+ * Retourne null si le fixture ne porte pas les cotes requises.
+ */
+function fairProbs(m: BSDFootballMatch): { home: number; draw: number; away: number } | null {
+  const h = m.odds_home;
+  const d = m.odds_draw;
+  const a = m.odds_away;
+  if (h == null || d == null || a == null || h <= 1 || d <= 1 || a <= 1) return null;
+  const ih = 1 / h;
+  const id = 1 / d;
+  const ia = 1 / a;
+  const vig = ih + id + ia;
+  if (vig <= 0) return null;
+  return { home: ih / vig, draw: id / vig, away: ia / vig };
+}
+
+/** Probabilité juste d'un marché Over/BTTS depuis une cote décimale (1/odds normé vs la cote inverse). */
+function impliedProb(over: number | null | undefined, under: number | null | undefined): number | null {
+  if (over == null || under == null || over <= 1 || under <= 1) return null;
+  const io = 1 / over;
+  const iu = 1 / under;
+  const vig = io + iu;
+  if (vig <= 0) return null;
+  return (io / vig) * 100;
+}
+
+/** Scor un match à partir des seules cotes (repli quand la forme L5 est indisponible). */
+function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: number; pick: Side | null } | null {
+  const p = fairProbs(m);
+  switch (key) {
+    case "bestTeam":
+    case "bestTeam1x2": {
+      if (!p) return null;
+      const isHome = (p.home as number) >= (p.away as number);
+      return { value: Math.max(p.home, p.away) * 100, pick: isHome ? "home" : "away" };
+    }
+    case "bestAttack":
+    case "bestDefense": {
+      // Non distinguables par les cotes seules : on cède à la forme sinon null.
+      return null;
+    }
+    case "doubleChance": {
+      if (!p) return null;
+      const homeDC = (p.home + p.draw) * 100;
+      const awayDC = (p.away + p.draw) * 100;
+      return { value: Math.max(homeDC, awayDC), pick: homeDC >= awayDC ? "home" : "away" };
+    }
+    case "over15": {
+      const prob = impliedProb(m.odds_over_15, m.odds_under_15);
+      return prob != null ? { value: prob, pick: null } : null;
+    }
+    case "over35": {
+      const prob = impliedProb(m.odds_over_35, m.odds_under_35);
+      return prob != null ? { value: prob, pick: null } : null;
+    }
+    case "bttsYes": {
+      const prob = impliedProb(m.odds_btts_yes, m.odds_btts_no);
+      return prob != null ? { value: prob, pick: null } : null;
+    }
+    case "over65Corners":
+      // Pas de cotes corners exposées sur les fixtures → indisponible.
+      return null;
+  }
+}
+
+/** Scor un match pour une stratégie (croise forme home du recevant + away du visiteur). */
+function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamFormAgg }): { value: number; pick: Side | null } {
+  const h = m.home;
+  const a = m.away;
+  const nH = Math.max(h.n, 1);
+  const nA = Math.max(a.n, 1);
+  const lambdaHome = (h.gf / nH + a.ga / nA) / 2;
+  const lambdaAway = (a.gf / nA + h.ga / nH) / 2;
+  const lambdaTotal = lambdaHome + lambdaAway;
+  const lambdaCorners = (h.corners / nH + a.corners / nA) / 2;
+
+  switch (key) {
+    case "bestTeam":
+    case "bestTeam1x2": {
+      const hp = ppg(h);
+      const ap = ppg(a);
+      return { value: Math.max(hp, ap), pick: hp >= ap ? "home" : "away" };
+    }
+    case "bestAttack":
+      return { value: lambdaTotal, pick: null };
+    case "bestDefense": {
+      // On garde l'équipe qui encaisse le moins (λ encaissés relatif le plus bas).
+      const hAgainst = h.ga / nH;
+      const aAgainst = a.ga / nA;
+      return { value: Math.min(hAgainst, aAgainst), pick: hAgainst <= aAgainst ? "home" : "away" };
+    }
+    case "doubleChance": {
+      const hRate = nonDefeatRate(h);
+      const aRate = nonDefeatRate(a);
+      return { value: Math.max(hRate, aRate), pick: hRate >= aRate ? "home" : "away" };
+    }
+    case "over15":
+      return { value: poissonTailAt(lambdaTotal, 2) * 100, pick: null };
+    case "over35":
+      return { value: poissonTailAt(lambdaTotal, 4) * 100, pick: null };
+    case "bttsYes":
+      return { value: poissonAtLeastOne(lambdaHome) * poissonAtLeastOne(lambdaAway) * 100, pick: null };
+    case "over65Corners":
+      return { value: poissonTailAt(lambdaCorners, 7) * 100, pick: null };
+  }
+}
+
+/**
+ * Calcule le Top 5 matchs à venir par stratégie.
+ *
+ * @param finished matchs terminés (source de la forme L5 Home/Away)
+ * @param fixtures matchs planifiés (notstarted) à classer
+ */
+export function computeStrategyTop5Matches(
+  finished: BSDFootballMatch[],
+  fixtures: BSDFootballMatch[],
+): StrategyTop5 {
+  const store = buildFormStore(finished);
+
+  const scores = {} as Record<StrategyTop5Key, ScoredMatch[]>;
+  for (const key of STRATEGY_TOP5_KEYS) scores[key] = [];
+
+  for (const fixture of fixtures) {
+    if (fixture.status !== "notstarted") continue;
+    const form = formFor(store, fixture);
+    const leagueSlug = BSD_ID_TO_SLUG[fixture.league?.id ?? -1];
+    const soccerForm = leagueSlug ? matchForm(leagueSlug, fixture) : null;
+
+    for (const key of STRATEGY_TOP5_KEYS) {
+      // bestAttack / bestDefense : priorité à la forme soccerstats réelle,
+      // sinon forme dérivée BSD, sinon cotes.
+      if (soccerForm && (key === "bestAttack" || key === "bestDefense")) {
+        const s = scoreFormMatch(soccerForm);
+        if (key === "bestAttack") {
+          scores[key].push({ fixture, form, value: s.bestAttack, pick: null });
+        } else {
+          scores[key].push({ fixture, form, value: s.bestDefense, pick: s.defensePick });
+        }
+        continue;
+      }
+
+      // over65Corners : modèle corners dérivé de la forme soccerstats (λCorners),
+      // sinon par Poisson sur la forme BSD, sinon cotes (indisponibles → skip).
+      if (key === "over65Corners") {
+        // Priorité 1 : marché CORNERS réel BetMines (cotes O/U dé-vigées → λ).
+        const bmLeagueSlug = leagueSlug;
+        const bm = betminesCornerMarket(bmLeagueSlug, fixture);
+        if (bm) {
+          scores[key].push({ fixture, form, value: bm.pOver65, pick: null });
+          continue;
+        }
+        // Priorité 2 : modèle corners dérivé de la forme soccerstats.
+        if (soccerForm) {
+          const expected = expectedMatchCorners(soccerForm);
+          scores[key].push({ fixture, form, value: poissonTailAt(expected, 7) * 100, pick: null });
+          continue;
+        }
+        // Priorité 3 : corners réels des matchs finis BSD.
+        if (form) {
+          const nH = Math.max(form.home.n, 1);
+          const nA = Math.max(form.away.n, 1);
+          const lambdaCorners = (form.home.corners / nH + form.away.corners / nA) / 2;
+          scores[key].push({ fixture, form, value: poissonTailAt(lambdaCorners, 7) * 100, pick: null });
+          continue;
+        }
+        continue;
+      }
+
+      // bestTeam1x2 : stratégie « meilleure équipe sur le 1X2 » — probabilité
+      // de victoire du favori dérivée des cotes 1X2 (de-vig). Toujours cotes.
+      if (key === "bestTeam1x2") {
+        const scored = scoreMatchByOdds("bestTeam", fixture);
+        if (!scored) continue;
+        scores[key].push({ fixture, form, value: scored.value, pick: scored.pick });
+        continue;
+      }
+
+      if (form) {
+        const { value, pick } = scoreMatch(key, form);
+        scores[key].push({ fixture, form, value, pick });
+      } else {
+        // Pas de forme L5 exploitable : repli sur les cotes embarquées du fixture.
+        const scored = scoreMatchByOdds(key, fixture);
+        if (!scored) continue;
+        scores[key].push({ fixture, form: null, value: scored.value, pick: scored.pick });
+      }
+    }
+  }
+
+  // Stats d'affichage xG/buts L5/L10 (Understat) — calculées une fois par fixture.
+  const xgByFixture = new Map<string, MatchDisplayStats | null>();
+  for (const key of STRATEGY_TOP5_KEYS) {
+    for (const s of scores[key]) {
+      const id = String(s.fixture.id);
+      if (!xgByFixture.has(id)) {
+        const leagueSlug = BSD_ID_TO_SLUG[s.fixture.league?.id ?? -1];
+        xgByFixture.set(id, matchXg(leagueSlug, s.fixture));
+      }
+    }
+  }
+
+  const strategies = {} as Record<StrategyTop5Key, StrategyMatchEntry[]>;
+  for (const key of STRATEGY_TOP5_KEYS) {
+    const higher = HIGHER_BETTER[key];
+    const list = scores[key];
+    list.sort((a, b) => (higher ? b.value - a.value : a.value - b.value));
+    strategies[key] = list.slice(0, 5).map((s) => ({
+      matchId: String(s.fixture.id),
+      league: s.fixture.league?.name ?? "",
+      kickoff: s.fixture.event_date,
+      home: teamRow(s.fixture, "home"),
+      away: teamRow(s.fixture, "away"),
+      value: Math.round(s.value * 100) / 100,
+      pick: s.pick,
+      stats: xgByFixture.get(String(s.fixture.id)) ?? null,
+    }));
+  }
+
+  return { window: FORM_WINDOW, minPlayed: MIN_PLAYED, strategies };
+}

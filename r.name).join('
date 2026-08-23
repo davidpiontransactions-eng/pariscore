@@ -1,0 +1,14 @@
+-rw-r--r-- 1 ubuntu ubuntu 135168 Aug 20 06:08 /home/ubuntu/pariscore/dev.db
+[eval]:1
+const D=require('better-sqlite3');const d=new D('/home/ubuntu/pariscore/dev.db',{readonly:true});console.log(d.prepare('SELECT name FROM sqlite_master WHERE type=chr(39)+chr(116)+chr(97)+chr(98)+chr(108)+chr(101)+chr(39)').all().map(r=, '))
+                                                                                                                                                                                                                                           ^
+
+SyntaxError: Unexpected token ','
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
+Node.js v20.20.2

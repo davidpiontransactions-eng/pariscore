@@ -1,244 +1,173 @@
 #!/usr/bin/env python3
 """
-scrape_understat.py — Connecteur Understat xG/PPDA pour PariScore.
+scrape_understat.py — xG réel (Opta) par équipe depuis understat.com.
 
-Récupère les données xG/PPDA par match pour une ligue+saison via l'endpoint
-interne de Understat (SPA). Endpoint:
+Utilise l'endpoint XHR `GET /getLeagueData/{league}/{season}` (le même que le
+front Understat), qui renvoie par équipe un historique match par match :
+h_a (contexte Home/Away), xG, xGA, scored, missed, result, date.
 
-    GET https://understat.com/getLeagueData/{league}/{season}
-    Headers: User-Agent navigateur, Referer: https://understat.com/league/{league}/{season},
-             X-Requested-With: XMLHttpRequest
-    Réponse: gzip → JSON {teams, players, dates}
-
-Les ligues Understat (slugs EXACTS, sensibles à la casse): EPL, La%20liga,
-Bundesliga, Serie A, Ligue 1. La saison est l'ANNÉE DE DÉPART (2025 = 2025/26).
-PPDA est dérivé de history[].ppda = {att (passes), def (actions défensives)}
-→ ppda = att/def. Alignement BSD par date + noms d'équipes normalisés.
+Couverture : EPL, La_liga, Bundesliga, Serie_A, Ligue_1, RFPL (6 ligues).
+Cumule la saison courante et la précédente (comme scrape_form.py) : en début
+de saison 2026/27 l'historique courant est vide → la saison précédente
+fournit les fenêtres L5/L10.
 
 USAGE:
-    python scripts/scrape_understat.py --league EPL --season 2025 --output-dir public/data/xg
-    python scripts/scrape_understat.py --league EPL --current --output-dir public/data/xg
+    python scripts/scrape_understat.py --all --output-dir public/data/xg
+    python scripts/scrape_understat.py --league epl --output-dir public/data/xg
 """
 
-import sys, os, json, argparse, gzip
-from datetime import datetime, timezone, date as _date
-from typing import Optional, Dict, Any, List
+import sys, os, json, argparse, time
+from datetime import datetime, timezone
+from typing import Optional, Dict, List, Any
 
 try:
     import requests
+    from tenacity import retry, stop_after_attempt, wait_exponential
 except ImportError as e:
     print(json.dumps({"error": "Deps missing",
-          "install": "pip install -r scripts/requirements-rankings.txt",
-          "detail": str(e)}), file=sys.stderr)
+                      "install": "pip install -r scripts/requirements-rankings.txt",
+                      "detail": str(e)}), file=sys.stderr)
     sys.exit(1)
 
-try:
-    from team_name_mapping import TEAM_NAME_OVERRIDES
-except ImportError:
-    TEAM_NAME_OVERRIDES = {}
-
-BASE = "https://understat.com"
-UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-      "(KHTML, like Gecko) Chrome/131.0 Safari/537.36")
-
-# Slugs Understat (exacts, casse comprise — "La%20liga" est le vrai slug)
-LEAGUES = {
-    "EPL": "EPL",
-    "La Liga": "La%20liga",
-    "Bundesliga": "Bundesliga",
-    "Serie A": "Serie A",
-    "Ligue 1": "Ligue 1",
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+    "X-Requested-With": "XMLHttpRequest",
+    "Accept": "application/json, text/javascript, */*; q=0.01",
 }
 
+# slug interne PariScore → slug Understat
+LEAGUES = {
+    "epl":             "EPL",
+    "laliga":          "La_liga",
+    "bundesliga":      "Bundesliga",
+    "seriea":          "Serie_A",
+    "ligue1":          "Ligue_1",
+    "russian_premier": "RFPL",
+}
 
-def headers_for(league_slug: str) -> Dict[str, str]:
-    return {
-        "User-Agent": UA,
-        "Referer": f"{BASE}/league/{league_slug}",
-        "X-Requested-With": "XMLHttpRequest",
-        "Accept-Encoding": "gzip, deflate",
-    }
+CURRENT_SEASON = 2026   # saison 2026/27 (année de départ)
+PREVIOUS_SEASON = 2025  # saison 2025/26
 
-
-def fetch_league(league_slug: str, season: str) -> Dict[str, Any]:
-    url = f"{BASE}/getLeagueData/{league_slug}/{season}"
-    r = requests.get(url, headers=headers_for(league_slug), timeout=30)
-    r.raise_for_status()
-    # gzip automatiquement décompressé par requests (Accept-Encoding)
-    return r.json()
+MATCH_FIELDS = ["date", "h_a", "xG", "xGA", "scored", "missed", "result"]
 
 
-def standardize_team_name(raw: str) -> str:
-    key = raw.strip().lower()
-    if key in TEAM_NAME_OVERRIDES:
-        return TEAM_NAME_OVERRIDES[key]
-    return raw.strip()
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=30))
+def _fetch_league(understat_slug: str, season: int) -> Optional[Dict]:
+    url = f"https://understat.com/getLeagueData/{understat_slug}/{season}"
+    resp = requests.get(url, headers=HEADERS, timeout=30)
+    resp.raise_for_status()
+    return resp.json()
 
 
-def build_matches(league_slug: str, season: str, data: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Construit la liste des matchs avec xG/PPDA dérivés des history teams."""
-    teams = data.get("teams") or {}
-    # index par date+équipe : history[].date → {team_id, match}
-    by_team_date: Dict[str, List[tuple]] = {}
-    for tid, tinfo in (teams or {}).items():
-        if not isinstance(tinfo, dict):
-            continue  # certaines valeurs de 'teams' sont des strings (robustesse)
-        for h in tinfo.get("history") or []:
-            hdate = h.get("date", "")[:10]
-            by_team_date.setdefault((hdate, tid), []).append(h)
-
-    matches: List[Dict[str, Any]] = []
-    for m in data.get("dates") or []:
-        h = m.get("h") or {}
-        a = m.get("a") or {}
-        dt = (m.get("datetime") or "")[:10]
-        home_team = standardize_team_name(h.get("title") or "")
-        away_team = standardize_team_name(a.get("title") or "")
-        goals_h = m.get("goals", {}).get("h")
-        goals_a = m.get("goals", {}).get("a")
-        xg_h = m.get("xG", {}).get("h")
-        xg_a = m.get("xG", {}).get("a")
-        forecast = m.get("forecast") or {}
-
-        def _team_hist(team_id: Optional[str]) -> Optional[Dict[str, Any]]:
-            if not team_id:
-                return None
-            for entry in by_team_date.get((dt, team_id), []):
-                return entry
-            return None
-
-        hh = _team_hist(h.get("id"))
-        aa = _team_hist(a.get("id"))
-
-        def _ppda(entry: Optional[Dict[str, Any]]) -> Optional[float]:
-            if not entry:
-                return None
-            pp = entry.get("ppda") or {}
-            att, deff = pp.get("att"), pp.get("def")
-            if att is not None and deff:
-                try:
-                    return round(float(att) / float(deff), 3)
-                except (ValueError, ZeroDivisionError):
-                    return None
-            return None
-
-        match = {
-            "id": m.get("id"),
-            "isResult": m.get("isResult"),
-            "date": dt,
-            "datetime": m.get("datetime"),
-            "homeTeam": home_team,
-            "awayTeam": away_team,
-            "goals": {"h": int(goals_h) if goals_h is not None else None,
-                      "a": int(goals_a) if goals_a is not None else None},
-            "xG": {"h": float(xg_h) if xg_h is not None else None,
-                   "a": float(xg_a) if xg_a is not None else None},
-            "ppda": {"h": _ppda(hh), "a": _ppda(aa)},
-            "deep": {"h": (hh or {}).get("deep"), "a": (aa or {}).get("deep")},
-            "npxGD": {"h": (hh or {}).get("npxGD"), "a": (aa or {}).get("npxGD")},
-            "forecast": {
-                "w": float(forecast.get("w")) if forecast.get("w") else None,
-                "d": float(forecast.get("d")) if forecast.get("d") else None,
-                "l": float(forecast.get("l")) if forecast.get("l") else None,
-            },
-        }
-        matches.append(match)
-
-    matches.sort(key=lambda x: (x["date"] or "", int(x["id"] or 0)))
-    return matches
-
-
-def build_teams(data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    """Table des équipes avec agrégats saison (xG, xGA, ppda, deep)."""
-    out: Dict[str, Dict[str, Any]] = {}
-    for tid, tinfo in (data.get("teams") or {}).items():
-        if not isinstance(tinfo, dict):
-            continue  # certaines valeurs de 'teams' sont des strings (robustesse)
-        history = tinfo.get("history") or []
-        def _avg(field):
-            vals = [float(h.get(field)) for h in history
-                    if h.get(field) is not None]
-            return round(sum(vals) / len(vals), 3) if vals else None
-
-        ppda_vals = []
-        for h in history:
-            pp = h.get("ppda") or {}
-            if pp.get("att") is not None and pp.get("def"):
-                try:
-                    ppda_vals.append(float(pp["att"]) / float(pp["def"]))
-                except (ValueError, ZeroDivisionError):
-                    pass
-        ppda_avg = round(sum(ppda_vals) / len(ppda_vals), 3) if ppda_vals else None
-
-        out[str(tid)] = {
-            "id": tinfo.get("id"),
-            "title": standardize_team_name(tinfo.get("title") or ""),
-            "short_title": tinfo.get("short_title"),
-            "games": len(history),
-            "wins": sum(int(h.get("wins") or 0) for h in history),
-            "draws": sum(int(h.get("draws") or 0) for h in history),
-            "losses": sum(int(h.get("loses") or 0) for h in history),
-            "pts": sum(int(h.get("pts") or 0) for h in history),
-            "scored": sum(int(h.get("scored") or 0) for h in history),
-            "missed": sum(int(h.get("missed") or 0) for h in history),
-            "xG": _avg("xG"), "xGA": _avg("xGA"),
-            "npxG": _avg("npxG"), "npxGA": _avg("npxGA"),
-            "ppda": ppda_avg,
-            "deep": _avg("deep"), "deep_allowed": _avg("deep_allowed"),
-        }
+def _extract_teams(payload: Optional[Dict]) -> Dict[str, List[Dict]]:
+    """→ {teamTitle: [matchs triés du plus récent au plus ancien]}."""
+    out: Dict[str, List[Dict]] = {}
+    if not payload:
+        return out
+    for team in (payload.get("teams") or {}).values():
+        title = team.get("title")
+        hist = team.get("history") or []
+        if not title or not hist:
+            continue
+        matches = []
+        for m in hist:
+            row = {k: m.get(k) for k in MATCH_FIELDS}
+            if row["xG"] is None and row["scored"] is None:
+                continue
+            matches.append(row)
+        if matches:
+            # history est déjà trié récent→ancien côté Understat ; on s'assure de l'ordre.
+            matches.sort(key=lambda r: str(r.get("date", "")), reverse=True)
+            out[title] = matches
     return out
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Connecteur Understat xG/PPDA")
-    ap.add_argument("--league", required=True, choices=sorted(LEAGUES.keys()))
-    ap.add_argument("--season", default=None, help="Année de départ (2025 = 2025/26)")
-    ap.add_argument("--current", action="store_true",
-                    help="Saison en cours (année de départ de la saison)")
-    ap.add_argument("--output-dir", default="public/data/xg")
-    args = ap.parse_args()
+def _merge(current: Dict[str, List], previous: Dict[str, List]) -> Dict[str, List]:
+    """Cumule 2 saisons par équipe : matchs courants d'abord (plus récents),
+    puis complément de la saison précédente."""
+    teams = set(current) | set(previous)
+    merged: Dict[str, List] = {}
+    for t in teams:
+        merged[t] = list(current.get(t, [])) + list(previous.get(t, []))
+    return merged
 
-    season = args.season
-    if args.current or not season:
-        now = _date.today()
-        start_year = now.year
-        # sous-understat la saison "2025" = 2025/26 ; on déduit l'année de départ
-        if now.month < 6:
-            start_year = now.year - 1
-        season = season or str(start_year)
 
-    slug = LEAGUES[args.league]
+def scrape_league(pariscore_slug: str, understat_slug: str) -> Optional[Dict]:
+    print(f"[{pariscore_slug}] Fetching {understat_slug} saisons {PREVIOUS_SEASON}+{CURRENT_SEASON}", file=sys.stderr)
     try:
-        data = fetch_league(slug, season)
-    except Exception as e:  # noqa: BLE001
-        print(json.dumps({"league": args.league, "season": season, "status": "error",
-                          "error": str(e)[:300]}, ensure_ascii=False))
-        sys.exit(1)
+        prev_payload = _fetch_league(understat_slug, PREVIOUS_SEASON)
+    except Exception as e:
+        print(f"[{pariscore_slug}] ERROR fetch saison {PREVIOUS_SEASON}: {e}", file=sys.stderr)
+        return None
+    try:
+        cur_payload = _fetch_league(understat_slug, CURRENT_SEASON)
+    except Exception as e:
+        cur_payload = None
+        print(f"[{pariscore_slug}] WARN saison {CURRENT_SEASON}: {e}", file=sys.stderr)
 
-    matches = build_matches(slug, season, data)
-    teams = build_teams(data)
-    out_dir = os.path.join(args.output_dir, args.league.lower().replace(" ", "_").replace("%", ""))
-    os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, f"{season}.json")
-    payload = {
-        "_meta": {
-            "source": "understat.com",
-            "league": args.league,
-            "league_slug": slug,
-            "season": season,
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
-            "endpoint": f"{BASE}/getLeagueData/{slug}/{season}",
-            "matches": len(matches),
+    prev_teams = _extract_teams(prev_payload)
+    cur_teams = _extract_teams(cur_payload)
+    teams = _merge(cur_teams, prev_teams)
+
+    if not teams:
+        print(f"[{pariscore_slug}] ERROR: aucune donnée", file=sys.stderr)
+        return None
+
+    n_matches = sum(len(v) for v in teams.values())
+    avg = n_matches / max(len(teams), 1)
+    print(f"[{pariscore_slug}] {len(teams)} équipes | {n_matches} matchs cumulés ({avg:.0f}/équipe)", file=sys.stderr)
+
+    season_label = "2025/26+2026/27" if cur_teams else "2025/26"
+    return {
+        "meta": {
+            "schemaVersion": 1,
+            "leagueId": pariscore_slug,
+            "source": "understat.com/getLeagueData",
+            "season": season_label,
+            "lastUpdated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+            "teamCount": len(teams),
+            "currentSeasonMatches": sum(len(v) for v in cur_teams.values()),
         },
-        "matches": matches,
         "teams": teams,
     }
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False)
 
-    print(json.dumps({"league": args.league, "season": season, "status": "ok",
-                      "matches": len(matches), "teams": len(teams),
-                      "output": out_path}, ensure_ascii=False))
+
+def main():
+    parser = argparse.ArgumentParser(description="Understat xG scraper")
+    parser.add_argument("--league", type=str, help="slug PariScore (ex: epl)")
+    parser.add_argument("--all", action="store_true")
+    parser.add_argument("--output-dir", type=str, default="public/data/xg")
+    parser.add_argument("--delay", type=float, default=2.0)
+    args = parser.parse_args()
+
+    if args.league:
+        if args.league not in LEAGUES:
+            print(f"Unknown league: '{args.league}'. Dispo: {', '.join(LEAGUES)}", file=sys.stderr)
+            sys.exit(1)
+        targets = {args.league: LEAGUES[args.league]}
+    elif args.all:
+        targets = LEAGUES
+    else:
+        print("Use --all or --league <slug>", file=sys.stderr)
+        sys.exit(1)
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    ok, fail = 0, 0
+    keys = list(targets.keys())
+    for i, (slug, uslug) in enumerate(targets.items()):
+        data = scrape_league(slug, uslug)
+        if data is None:
+            fail += 1
+            continue
+        fpath = os.path.join(args.output_dir, f"{slug}.json")
+        with open(fpath, "w", encoding="utf-8") as f:
+            json.dump(data, f, separators=(",", ":"), ensure_ascii=False)
+        print(f"  -> {fpath}", file=sys.stderr)
+        ok += 1
+        if i != len(keys) - 1:
+            time.sleep(args.delay)
+    print(f"\nDone: {ok} OK, {fail} failed", file=sys.stderr)
+    sys.exit(0 if fail == 0 else 1)
 
 
 if __name__ == "__main__":

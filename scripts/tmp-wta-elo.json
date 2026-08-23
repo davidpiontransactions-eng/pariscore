@@ -1,0 +1,3831 @@
+{
+ "ArynaSabalenka": {
+  "name": "Aryna Sabalenka",
+  "elo": 2194.6,
+  "hElo": 2179.4,
+  "cElo": 2090.4,
+  "gElo": 1976.2
+ },
+ "ElenaRybakina": {
+  "name": "Elena Rybakina",
+  "elo": 2125.8,
+  "hElo": 2114.5,
+  "cElo": 2003.3,
+  "gElo": 1885.6
+ },
+ "IgaSwiatek": {
+  "name": "Iga Swiatek",
+  "elo": 2104.2,
+  "hElo": 2068.2,
+  "cElo": 2028.2,
+  "gElo": 1926.6
+ },
+ "CocoGauff": {
+  "name": "Coco Gauff",
+  "elo": 2088.1,
+  "hElo": 2045.5,
+  "cElo": 2026.8,
+  "gElo": 1874.2
+ },
+ "JessicaPegula": {
+  "name": "Jessica Pegula",
+  "elo": 2086.3,
+  "hElo": 2045.9,
+  "cElo": 1936.3,
+  "gElo": 1911.3
+ },
+ "MartaKostyuk": {
+  "name": "Marta Kostyuk",
+  "elo": 2063.4,
+  "hElo": 1973,
+  "cElo": 1995.5,
+  "gElo": 1825.5
+ },
+ "ElinaSvitolina": {
+  "name": "Elina Svitolina",
+  "elo": 2054.9,
+  "hElo": 1991.4,
+  "cElo": 1987,
+  "gElo": 1834.9
+ },
+ "MirraAndreeva": {
+  "name": "Mirra Andreeva",
+  "elo": 2040.6,
+  "hElo": 1969,
+  "cElo": 2017.7,
+  "gElo": 1789.9
+ },
+ "LindaNoskova": {
+  "name": "Linda Noskova",
+  "elo": 2033.5,
+  "hElo": 1928.9,
+  "cElo": 1840.7,
+  "gElo": 1932.7
+ },
+ "NaomiOsaka": {
+  "name": "Naomi Osaka",
+  "elo": 2012.2,
+  "hElo": 1943.4,
+  "cElo": 1898.5,
+  "gElo": 1835.1
+ },
+ "BelindaBencic": {
+  "name": "Belinda Bencic",
+  "elo": 2012.1,
+  "hElo": 1973.6,
+  "cElo": 1860,
+  "gElo": 1815.5
+ },
+ "AlexandraEala": {
+  "name": "Alexandra Eala",
+  "elo": 1983.8,
+  "hElo": 1924.1,
+  "cElo": 1721.5,
+  "gElo": 1850.2
+ },
+ "MadisonKeys": {
+  "name": "Madison Keys",
+  "elo": 1971.3,
+  "hElo": 1902.1,
+  "cElo": 1886,
+  "gElo": 1839.4
+ },
+ "KarolinaMuchova": {
+  "name": "Karolina Muchova",
+  "elo": 1969.4,
+  "hElo": 1925.7,
+  "cElo": 1784.1,
+  "gElo": 1796.8
+ },
+ "SoranaCirstea": {
+  "name": "Sorana Cirstea",
+  "elo": 1943.9,
+  "hElo": 1900.4,
+  "cElo": 1849.4,
+  "gElo": 1696.6
+ },
+ "DianaShnaider": {
+  "name": "Diana Shnaider",
+  "elo": 1931.5,
+  "hElo": 1884.4,
+  "cElo": 1861.1,
+  "gElo": 1719.7
+ },
+ "IvaJovic": {
+  "name": "Iva Jovic",
+  "elo": 1919.7,
+  "hElo": 1850.6,
+  "cElo": 1799.8,
+  "gElo": 1820.8
+ },
+ "EliseMertens": {
+  "name": "Elise Mertens",
+  "elo": 1918.6,
+  "hElo": 1857.9,
+  "cElo": 1823.3,
+  "gElo": 1787.8
+ },
+ "AnnaKalinskaya": {
+  "name": "Anna Kalinskaya",
+  "elo": 1913,
+  "hElo": 1869.4,
+  "cElo": 1807.3,
+  "gElo": 1736.9
+ },
+ "AmandaAnisimova": {
+  "name": "Amanda Anisimova",
+  "elo": 1912.7,
+  "hElo": 1877.3,
+  "cElo": 1750.9,
+  "gElo": 1769.7
+ },
+ "BarboraKrejcikova": {
+  "name": "Barbora Krejcikova",
+  "elo": 1903.8,
+  "hElo": 1851.1,
+  "cElo": 1733.1,
+  "gElo": 1796.1
+ },
+ "VictoriaMboko": {
+  "name": "Victoria Mboko",
+  "elo": 1895.9,
+  "hElo": 1896.3,
+  "cElo": 1746.1,
+  "gElo": 1651.6
+ },
+ "AnastasiaPotapova": {
+  "name": "Anastasia Potapova",
+  "elo": 1884.1,
+  "hElo": 1795.8,
+  "cElo": 1871.4,
+  "gElo": 1664.2
+ },
+ "SonayKartal": {
+  "name": "Sonay Kartal",
+  "elo": 1874,
+  "hElo": 1832.6,
+  "cElo": 1602.3,
+  "gElo": 1731.6
+ },
+ "KarolinaPliskova": {
+  "name": "Karolina Pliskova",
+  "elo": 1873.4,
+  "hElo": 1811,
+  "cElo": 1807.8,
+  "gElo": 1758.7
+ },
+ "MarieBouzkova": {
+  "name": "Marie Bouzkova",
+  "elo": 1867.6,
+  "hElo": 1795,
+  "cElo": 1797.2,
+  "gElo": 1760.3
+ },
+ "EkaterinaAlexandrova": {
+  "name": "Ekaterina Alexandrova",
+  "elo": 1861.4,
+  "hElo": 1818.9,
+  "cElo": 1745.2,
+  "gElo": 1749.1
+ },
+ "EmmaNavarro": {
+  "name": "Emma Navarro",
+  "elo": 1852,
+  "hElo": 1751.5,
+  "cElo": 1787.1,
+  "gElo": 1757.9
+ },
+ "JelenaOstapenko": {
+  "name": "Jelena Ostapenko",
+  "elo": 1849.9,
+  "hElo": 1784.8,
+  "cElo": 1805.7,
+  "gElo": 1767.7
+ },
+ "CatyMcnally": {
+  "name": "Caty Mcnally",
+  "elo": 1845,
+  "hElo": 1761.5,
+  "cElo": 1760.5,
+  "gElo": 1724.5
+ },
+ "HaileyBaptiste": {
+  "name": "Hailey Baptiste",
+  "elo": 1843.9,
+  "hElo": 1780.5,
+  "cElo": 1770.5,
+  "gElo": 1631.6
+ },
+ "MariaSakkari": {
+  "name": "Maria Sakkari",
+  "elo": 1840.9,
+  "hElo": 1819.4,
+  "cElo": 1768.6,
+  "gElo": 1664.7
+ },
+ "TaylorTownsend": {
+  "name": "Taylor Townsend",
+  "elo": 1838.8,
+  "hElo": 1810.9,
+  "cElo": 1737.8,
+  "gElo": 1622.3
+ },
+ "AshlynKrueger": {
+  "name": "Ashlyn Krueger",
+  "elo": 1836.5,
+  "hElo": 1752.2,
+  "cElo": 1700.8,
+  "gElo": 1770.3
+ },
+ "LiudmilaSamsonova": {
+  "name": "Liudmila Samsonova",
+  "elo": 1836.1,
+  "hElo": 1786.2,
+  "cElo": 1748.6,
+  "gElo": 1732
+ },
+ "EmmaRaducanu": {
+  "name": "Emma Raducanu",
+  "elo": 1834,
+  "hElo": 1772.9,
+  "cElo": 1726.8,
+  "gElo": 1742.6
+ },
+ "KaterinaSiniakova": {
+  "name": "Katerina Siniakova",
+  "elo": 1832.1,
+  "hElo": 1792.4,
+  "cElo": 1715.1,
+  "gElo": 1718.4
+ },
+ "QinwenZheng": {
+  "name": "Qinwen Zheng",
+  "elo": 1829,
+  "hElo": 1807.6,
+  "cElo": 1799.8,
+  "gElo": 1603
+ },
+ "JasminePaolini": {
+  "name": "Jasmine Paolini",
+  "elo": 1828.6,
+  "hElo": 1784.2,
+  "cElo": 1767.9,
+  "gElo": 1697.8
+ },
+ "AlinaKorneeva": {
+  "name": "Alina Korneeva",
+  "elo": 1826.1,
+  "hElo": 1803.7,
+  "cElo": 1668.4,
+  "gElo": 1632.6
+ },
+ "PaulaBadosa": {
+  "name": "Paula Badosa",
+  "elo": 1825,
+  "hElo": 1770.4,
+  "cElo": 1772.1,
+  "gElo": 1662.3
+ },
+ "JaquelineCristian": {
+  "name": "Jaqueline Cristian",
+  "elo": 1824.5,
+  "hElo": 1798.4,
+  "cElo": 1741.4,
+  "gElo": 1521.6
+ },
+ "KristinaLiutova": {
+  "name": "Kristina Liutova",
+  "elo": 1823.5,
+  "hElo": 1783.4,
+  "cElo": 1686.2,
+  "gElo": 1586.7
+ },
+ "ElenaGabrielaRuse": {
+  "name": "Elena Gabriela Ruse",
+  "elo": 1822.8,
+  "hElo": 1742.3,
+  "cElo": 1722.7,
+  "gElo": 1735.6
+ },
+ "OlgaDanilovic": {
+  "name": "Olga Danilovic",
+  "elo": 1819.1,
+  "hElo": 1739.8,
+  "cElo": 1796.1,
+  "gElo": 1639.9
+ },
+ "DariaSnigur": {
+  "name": "Daria Snigur",
+  "elo": 1816.4,
+  "hElo": 1774.9,
+  "cElo": 1642,
+  "gElo": 1680.4
+ },
+ "LeylahFernandez": {
+  "name": "Leylah Fernandez",
+  "elo": 1816.1,
+  "hElo": 1798.5,
+  "cElo": 1707.3,
+  "gElo": 1647
+ },
+ "NikolaBartunkova": {
+  "name": "Nikola Bartunkova",
+  "elo": 1814.8,
+  "hElo": 1751.6,
+  "cElo": 1699.3,
+  "gElo": 1707.3
+ },
+ "VarvaraGracheva": {
+  "name": "Varvara Gracheva",
+  "elo": 1809.9,
+  "hElo": 1763.2,
+  "cElo": 1701.4,
+  "gElo": 1641.3
+ },
+ "TerezaValentova": {
+  "name": "Tereza Valentova",
+  "elo": 1806.3,
+  "hElo": 1787.1,
+  "cElo": 1757.3,
+  "gElo": 1630.4
+ },
+ "DariaKasatkina": {
+  "name": "Daria Kasatkina",
+  "elo": 1802.8,
+  "hElo": 1763.3,
+  "cElo": 1773.3,
+  "gElo": 1673.2
+ },
+ "MagdaLinette": {
+  "name": "Magda Linette",
+  "elo": 1798.5,
+  "hElo": 1747.3,
+  "cElo": 1748.8,
+  "gElo": 1643.1
+ },
+ "ElisabettaCocciaretto": {
+  "name": "Elisabetta Cocciaretto",
+  "elo": 1796.5,
+  "hElo": 1769.4,
+  "cElo": 1708.4,
+  "gElo": 1662.9
+ },
+ "MajaChwalinska": {
+  "name": "Maja Chwalinska",
+  "elo": 1796.1,
+  "hElo": 1710,
+  "cElo": 1782.2,
+  "gElo": 1568.6
+ },
+ "CamilaOsorio": {
+  "name": "Camila Osorio",
+  "elo": 1795.7,
+  "hElo": 1766.9,
+  "cElo": 1725,
+  "gElo": 1616
+ },
+ "MccartneyKessler": {
+  "name": "Mccartney Kessler",
+  "elo": 1790.4,
+  "hElo": 1760.1,
+  "cElo": 1664.6,
+  "gElo": 1680.2
+ },
+ "DonnaVekic": {
+  "name": "Donna Vekic",
+  "elo": 1787.9,
+  "hElo": 1720.6,
+  "cElo": 1744.1,
+  "gElo": 1709
+ },
+ "KatieVolynets": {
+  "name": "Katie Volynets",
+  "elo": 1787.3,
+  "hElo": 1737.8,
+  "cElo": 1715.8,
+  "gElo": 1683.6
+ },
+ "AnhelinaKalinina": {
+  "name": "Anhelina Kalinina",
+  "elo": 1787,
+  "hElo": 1714.5,
+  "cElo": 1773.1,
+  "gElo": 1623.2
+ },
+ "MayarSherif": {
+  "name": "Mayar Sherif",
+  "elo": 1785.7,
+  "hElo": 1555.1,
+  "cElo": 1767.8,
+  "gElo": 1534
+ },
+ "LilliTagger": {
+  "name": "Lilli Tagger",
+  "elo": 1784.5,
+  "hElo": 1795.3,
+  "cElo": 1642.2,
+  "gElo": 1524.1
+ },
+ "KatieBoulter": {
+  "name": "Katie Boulter",
+  "elo": 1783.5,
+  "hElo": 1751,
+  "cElo": 1671.6,
+  "gElo": 1692.8
+ },
+ "DayanaYastremska": {
+  "name": "Dayana Yastremska",
+  "elo": 1783.4,
+  "hElo": 1728.8,
+  "cElo": 1726.8,
+  "gElo": 1660.2
+ },
+ "SaraBejlek": {
+  "name": "Sara Bejlek",
+  "elo": 1782.4,
+  "hElo": 1759.6,
+  "cElo": 1727.2,
+  "gElo": 1518.8
+ },
+ "YuliaPutintseva": {
+  "name": "Yulia Putintseva",
+  "elo": 1780.6,
+  "hElo": 1740.2,
+  "cElo": 1731.2,
+  "gElo": 1622.1
+ },
+ "ViktorijaGolubic": {
+  "name": "Viktorija Golubic",
+  "elo": 1779.3,
+  "hElo": 1727.7,
+  "cElo": 1669.3,
+  "gElo": 1670.4
+ },
+ "AnnLi": {
+  "name": "Ann Li",
+  "elo": 1778.3,
+  "hElo": 1725.2,
+  "cElo": 1729.1,
+  "gElo": 1573.2
+ },
+ "ClaraTauson": {
+  "name": "Clara Tauson",
+  "elo": 1775.9,
+  "hElo": 1750.4,
+  "cElo": 1679.8,
+  "gElo": 1617.6
+ },
+ "AnastasiaPavlyuchenkova": {
+  "name": "Anastasia Pavlyuchenkova",
+  "elo": 1774.6,
+  "hElo": 1741.6,
+  "cElo": 1692.1,
+  "gElo": 1678.7
+ },
+ "PeytonStearns": {
+  "name": "Peyton Stearns",
+  "elo": 1772.6,
+  "hElo": 1728.1,
+  "cElo": 1740.2,
+  "gElo": 1536.3
+ },
+ "ZeynepSonmez": {
+  "name": "Zeynep Sonmez",
+  "elo": 1771.2,
+  "hElo": 1707.4,
+  "cElo": 1654.7,
+  "gElo": 1663.8
+ },
+ "EvaLys": {
+  "name": "Eva Lys",
+  "elo": 1763,
+  "hElo": 1740.9,
+  "cElo": 1667.9,
+  "gElo": 1586.9
+ },
+ "LauraSiegemund": {
+  "name": "Laura Siegemund",
+  "elo": 1762.3,
+  "hElo": 1710.2,
+  "cElo": 1688.5,
+  "gElo": 1620.8
+ },
+ "LanlanaTararudee": {
+  "name": "Lanlana Tararudee",
+  "elo": 1762.2,
+  "hElo": 1760.4,
+  "cElo": 1569.4,
+  "gElo": 1581.2
+ },
+ "RobinMontgomery": {
+  "name": "Robin Montgomery",
+  "elo": 1761.8,
+  "hElo": 1660.9,
+  "cElo": 1617.1,
+  "gElo": 1735.3
+ },
+ "AnastasiaZakharova": {
+  "name": "Anastasia Zakharova",
+  "elo": 1761.7,
+  "hElo": 1743.7,
+  "cElo": 1604.9,
+  "gElo": 1629.8
+ },
+ "SinjaKraus": {
+  "name": "Sinja Kraus",
+  "elo": 1755.8,
+  "hElo": 1654.6,
+  "cElo": 1724.8,
+  "gElo": 1563.5
+ },
+ "XinYuWang": {
+  "name": "Xin Yu Wang",
+  "elo": 1755.3,
+  "hElo": 1706.3,
+  "cElo": 1630.9,
+  "gElo": 1689.9
+ },
+ "MananchayaSawangkaew": {
+  "name": "Mananchaya Sawangkaew",
+  "elo": 1754,
+  "hElo": 1694.2,
+  "cElo": 1579.8,
+  "gElo": 1685.4
+ },
+ "AnnaBondar": {
+  "name": "Anna Bondar",
+  "elo": 1750.6,
+  "hElo": 1668.6,
+  "cElo": 1746.4,
+  "gElo": 1495.3
+ },
+ "SolanaSierra": {
+  "name": "Solana Sierra",
+  "elo": 1749.9,
+  "hElo": 1622.7,
+  "cElo": 1731.7,
+  "gElo": 1610.9
+ },
+ "OleksandraOliynykova": {
+  "name": "Oleksandra Oliynykova",
+  "elo": 1749.1,
+  "hElo": 1555.4,
+  "cElo": 1727.1,
+  "gElo": 1500
+ },
+ "XiyuWang": {
+  "name": "Xiyu Wang",
+  "elo": 1741.5,
+  "hElo": 1694.7,
+  "cElo": 1715,
+  "gElo": 1567
+ },
+ "HanneVandewinkel": {
+  "name": "Hanne Vandewinkel",
+  "elo": 1740.2,
+  "hElo": 1769.8,
+  "cElo": 1583.6,
+  "gElo": 1540
+ },
+ "TaliaGibson": {
+  "name": "Talia Gibson",
+  "elo": 1739.5,
+  "hElo": 1755.9,
+  "cElo": 1556.4,
+  "gElo": 1571.7
+ },
+ "MagdalenaFrech": {
+  "name": "Magdalena Frech",
+  "elo": 1736.5,
+  "hElo": 1712.5,
+  "cElo": 1653.3,
+  "gElo": 1553.5
+ },
+ "KaitlinQuevedo": {
+  "name": "Kaitlin Quevedo",
+  "elo": 1736.2,
+  "hElo": 1644.2,
+  "cElo": 1708.1,
+  "gElo": 1542.9
+ },
+ "JessicaBouzasManeiro": {
+  "name": "Jessica Bouzas Maneiro",
+  "elo": 1732.7,
+  "hElo": 1658.9,
+  "cElo": 1682.9,
+  "gElo": 1652.1
+ },
+ "ShuaiZhang": {
+  "name": "Shuai Zhang",
+  "elo": 1731.4,
+  "hElo": 1704.5,
+  "cElo": 1604.5,
+  "gElo": 1628.3
+ },
+ "AjlaTomljanovic": {
+  "name": "Ajla Tomljanovic",
+  "elo": 1729.9,
+  "hElo": 1715.1,
+  "cElo": 1622.1,
+  "gElo": 1658.1
+ },
+ "TatjanaMaria": {
+  "name": "Tatjana Maria",
+  "elo": 1729.4,
+  "hElo": 1623.5,
+  "cElo": 1598.9,
+  "gElo": 1721
+ },
+ "AntoniaRuzic": {
+  "name": "Antonia Ruzic",
+  "elo": 1727.5,
+  "hElo": 1698.7,
+  "cElo": 1615.2,
+  "gElo": 1602.1
+ },
+ "KimberlyBirrell": {
+  "name": "Kimberly Birrell",
+  "elo": 1727.4,
+  "hElo": 1718.4,
+  "cElo": 1523,
+  "gElo": 1582.1
+ },
+ "MariaTimofeeva": {
+  "name": "Maria Timofeeva",
+  "elo": 1718.7,
+  "hElo": 1623,
+  "cElo": 1699.4,
+  "gElo": 1558
+ },
+ "AnastasijaSevastova": {
+  "name": "Anastasija Sevastova",
+  "elo": 1718.5,
+  "hElo": 1664.3,
+  "cElo": 1695,
+  "gElo": 1619.5
+ },
+ "AliaksandraSasnovich": {
+  "name": "Aliaksandra Sasnovich",
+  "elo": 1717.6,
+  "hElo": 1685.7,
+  "cElo": 1650.4,
+  "gElo": 1605.7
+ },
+ "PetraMarcinko": {
+  "name": "Petra Marcinko",
+  "elo": 1717.3,
+  "hElo": 1625.3,
+  "cElo": 1683.5,
+  "gElo": 1566.4
+ },
+ "BiancaAndreescu": {
+  "name": "Bianca Andreescu",
+  "elo": 1714.6,
+  "hElo": 1688.3,
+  "cElo": 1629.7,
+  "gElo": 1620.4
+ },
+ "DianeParry": {
+  "name": "Diane Parry",
+  "elo": 1712.2,
+  "hElo": 1614.6,
+  "cElo": 1669.5,
+  "gElo": 1635.8
+ },
+ "AlinaCharaeva": {
+  "name": "Alina Charaeva",
+  "elo": 1711.6,
+  "hElo": 1613.7,
+  "cElo": 1676.2,
+  "gElo": 1588.8
+ },
+ "KamillaRakhimova": {
+  "name": "Kamilla Rakhimova",
+  "elo": 1710.6,
+  "hElo": 1684.1,
+  "cElo": 1618.1,
+  "gElo": 1597.6
+ },
+ "DarjaVidmanova": {
+  "name": "Darja Vidmanova",
+  "elo": 1709.1,
+  "hElo": 1696.6,
+  "cElo": 1546.4,
+  "gElo": 1587.4
+ },
+ "ClaireLiu": {
+  "name": "Claire Liu",
+  "elo": 1708,
+  "hElo": 1654.4,
+  "cElo": 1637.4,
+  "gElo": 1603.3
+ },
+ "YuliiaStarodubtseva": {
+  "name": "Yuliia Starodubtseva",
+  "elo": 1707.4,
+  "hElo": 1626.3,
+  "cElo": 1693.3,
+  "gElo": 1555
+ },
+ "FrancescaJones": {
+  "name": "Francesca Jones",
+  "elo": 1706.9,
+  "hElo": 1625,
+  "cElo": 1706.3,
+  "gElo": 1477.1
+ },
+ "MarinaStakusic": {
+  "name": "Marina Stakusic",
+  "elo": 1706.7,
+  "hElo": 1672.1,
+  "cElo": 1558.8,
+  "gElo": 1592.9
+ },
+ "RebekaMasarova": {
+  "name": "Rebeka Masarova",
+  "elo": 1705.3,
+  "hElo": 1633.2,
+  "cElo": 1675.8,
+  "gElo": 1643.6
+ },
+ "LoisBoisson": {
+  "name": "Lois Boisson",
+  "elo": 1704.1,
+  "hElo": 1550.4,
+  "cElo": 1681.8,
+  "gElo": 1481.8
+ },
+ "CarolYoungSuhLee": {
+  "name": "Carol Young Suh Lee",
+  "elo": 1703.8,
+  "hElo": 1705.6,
+  "cElo": 1579,
+  "gElo": 1528.1
+ },
+ "YafanWang": {
+  "name": "Yafan Wang",
+  "elo": 1703.6,
+  "hElo": 1673,
+  "cElo": 1538.6,
+  "gElo": 1539.9
+ },
+ "MayaJoint": {
+  "name": "Maya Joint",
+  "elo": 1702.1,
+  "hElo": 1682.2,
+  "cElo": 1632.9,
+  "gElo": 1596.4
+ },
+ "ElinaAvanesyan": {
+  "name": "Elina Avanesyan",
+  "elo": 1701.2,
+  "hElo": 1643.4,
+  "cElo": 1675.1,
+  "gElo": 1591.5
+ },
+ "PannaUdvardy": {
+  "name": "Panna Udvardy",
+  "elo": 1700.6,
+  "hElo": 1600.7,
+  "cElo": 1650.7,
+  "gElo": 1563.5
+ },
+ "RenataZarazua": {
+  "name": "Renata Zarazua",
+  "elo": 1699.8,
+  "hElo": 1678,
+  "cElo": 1604.3,
+  "gElo": 1549.5
+ },
+ "TyraCaterinaGrant": {
+  "name": "Tyra Caterina Grant",
+  "elo": 1699.1,
+  "hElo": 1557.9,
+  "cElo": 1640.7,
+  "gElo": 1637.4
+ },
+ "PolinaKudermetova": {
+  "name": "Polina Kudermetova",
+  "elo": 1697.8,
+  "hElo": 1644.2,
+  "cElo": 1634.6,
+  "gElo": 1607.9
+ },
+ "KajaJuvan": {
+  "name": "Kaja Juvan",
+  "elo": 1696.2,
+  "hElo": 1637.2,
+  "cElo": 1684.7,
+  "gElo": 1641.5
+ },
+ "SofiaKenin": {
+  "name": "Sofia Kenin",
+  "elo": 1695.8,
+  "hElo": 1653.9,
+  "cElo": 1656,
+  "gElo": 1574.9
+ },
+ "TamaraKorpatsch": {
+  "name": "Tamara Korpatsch",
+  "elo": 1695.5,
+  "hElo": 1609.3,
+  "cElo": 1692.5,
+  "gElo": 1450.3
+ },
+ "VeraZvonareva": {
+  "name": "Vera Zvonareva",
+  "elo": 1695.4,
+  "hElo": 1662.7,
+  "cElo": 1615.1,
+  "gElo": 1633.4
+ },
+ "CristinaBucsa": {
+  "name": "Cristina Bucsa",
+  "elo": 1695.1,
+  "hElo": 1678.5,
+  "cElo": 1549.3,
+  "gElo": 1580.3
+ },
+ "GreetMinnen": {
+  "name": "Greet Minnen",
+  "elo": 1694.6,
+  "hElo": 1637.8,
+  "cElo": 1594.1,
+  "gElo": 1652.4
+ },
+ "JilTeichmann": {
+  "name": "Jil Teichmann",
+  "elo": 1689.1,
+  "hElo": 1632.1,
+  "cElo": 1653.9,
+  "gElo": 1482.6
+ },
+ "LeoliaJeanjean": {
+  "name": "Leolia Jeanjean",
+  "elo": 1687.9,
+  "hElo": 1600.2,
+  "cElo": 1650.7,
+  "gElo": 1586.1
+ },
+ "LauraSamson": {
+  "name": "Laura Samson",
+  "elo": 1686.3,
+  "hElo": 1527.4,
+  "cElo": 1709.1,
+  "gElo": 1500.8
+ },
+ "SloaneStephens": {
+  "name": "Sloane Stephens",
+  "elo": 1683.5,
+  "hElo": 1630.5,
+  "cElo": 1664.9,
+  "gElo": 1589.5
+ },
+ "JelineVandromme": {
+  "name": "Jeline Vandromme",
+  "elo": 1678.8,
+  "hElo": 1674.8,
+  "cElo": 1601,
+  "gElo": 1535.8
+ },
+ "CarolineDolehide": {
+  "name": "Caroline Dolehide",
+  "elo": 1676.6,
+  "hElo": 1650.8,
+  "cElo": 1620.7,
+  "gElo": 1480.3
+ },
+ "LinZhu": {
+  "name": "Lin Zhu",
+  "elo": 1673.3,
+  "hElo": 1646.5,
+  "cElo": 1454.7,
+  "gElo": 1551.5
+ },
+ "StormHunter": {
+  "name": "Storm Hunter",
+  "elo": 1672.1,
+  "hElo": 1659.2,
+  "cElo": 1543.1,
+  "gElo": 1569.3
+ },
+ "SimonaWaltert": {
+  "name": "Simona Waltert",
+  "elo": 1670.4,
+  "hElo": 1606.3,
+  "cElo": 1655.5,
+  "gElo": 1451.3
+ },
+ "JaniceTjen": {
+  "name": "Janice Tjen",
+  "elo": 1670.2,
+  "hElo": 1679,
+  "cElo": 1566.4,
+  "gElo": 1551.2
+ },
+ "AnnaBlinkova": {
+  "name": "Anna Blinkova",
+  "elo": 1669.2,
+  "hElo": 1626.7,
+  "cElo": 1591.2,
+  "gElo": 1583.9
+ },
+ "TatianaProzorova": {
+  "name": "Tatiana Prozorova",
+  "elo": 1668.7,
+  "hElo": 1650.2,
+  "cElo": 1569.6,
+  "gElo": 1535.8
+ },
+ "VendulaValdmannova": {
+  "name": "Vendula Valdmannova",
+  "elo": 1662,
+  "hElo": 1649,
+  "cElo": 1398.7,
+  "gElo": 1534.3
+ },
+ "SaraSorribesTormo": {
+  "name": "Sara Sorribes Tormo",
+  "elo": 1656.5,
+  "hElo": 1586.6,
+  "cElo": 1637.2,
+  "gElo": 1540.3
+ },
+ "RebeccaSramkova": {
+  "name": "Rebecca Sramkova",
+  "elo": 1653.1,
+  "hElo": 1632.9,
+  "cElo": 1586.6,
+  "gElo": 1545.4
+ },
+ "FionaFerro": {
+  "name": "Fiona Ferro",
+  "elo": 1652.7,
+  "hElo": 1619.4,
+  "cElo": 1609.6,
+  "gElo": 1473.6
+ },
+ "TaylahPreston": {
+  "name": "Taylah Preston",
+  "elo": 1651.7,
+  "hElo": 1646.7,
+  "cElo": 1423,
+  "gElo": 1493.4
+ },
+ "LuciaBronzetti": {
+  "name": "Lucia Bronzetti",
+  "elo": 1651.3,
+  "hElo": 1565.3,
+  "cElo": 1640.8,
+  "gElo": 1518.1
+ },
+ "TamaraZidansek": {
+  "name": "Tamara Zidansek",
+  "elo": 1650.6,
+  "hElo": 1578.9,
+  "cElo": 1636.1,
+  "gElo": 1470.5
+ },
+ "CelineNaef": {
+  "name": "Celine Naef",
+  "elo": 1650.2,
+  "hElo": 1642.5,
+  "cElo": 1481.4,
+  "gElo": 1600.4
+ },
+ "OksanaSelekhmeteva": {
+  "name": "Oksana Selekhmeteva",
+  "elo": 1649.8,
+  "hElo": 1650.1,
+  "cElo": 1594.1,
+  "gElo": 1522.3
+ },
+ "MoyukaUchijima": {
+  "name": "Moyuka Uchijima",
+  "elo": 1645,
+  "hElo": 1624.8,
+  "cElo": 1603.7,
+  "gElo": 1443.6
+ },
+ "MaryStoiana": {
+  "name": "Mary Stoiana",
+  "elo": 1642.8,
+  "hElo": 1561.7,
+  "cElo": 1528.7,
+  "gElo": 1585.8
+ },
+ "KatarzynaKawa": {
+  "name": "Katarzyna Kawa",
+  "elo": 1642.5,
+  "hElo": 1484,
+  "cElo": 1636,
+  "gElo": 1541.5
+ },
+ "JulietaPareja": {
+  "name": "Julieta Pareja",
+  "elo": 1637.8,
+  "hElo": 1601.1,
+  "cElo": 1539.3,
+  "gElo": 1493.9
+ },
+ "AlyciaParks": {
+  "name": "Alycia Parks",
+  "elo": 1636.8,
+  "hElo": 1626.5,
+  "cElo": 1560.6,
+  "gElo": 1481.8
+ },
+ "TeodoraKostovic": {
+  "name": "Teodora Kostovic",
+  "elo": 1631,
+  "hElo": 1549.7,
+  "cElo": 1599.1,
+  "gElo": 1572.9
+ },
+ "MartynaKubka": {
+  "name": "Martyna Kubka",
+  "elo": 1630,
+  "hElo": 1598.4,
+  "cElo": 1495.6,
+  "gElo": 1577.4
+ },
+ "LuluSun": {
+  "name": "Lulu Sun",
+  "elo": 1629,
+  "hElo": 1650.3,
+  "cElo": 1479.2,
+  "gElo": 1519.9
+ },
+ "MarinaBassolsRibera": {
+  "name": "Marina Bassols Ribera",
+  "elo": 1627.5,
+  "hElo": 1516.5,
+  "cElo": 1605.2,
+  "gElo": 1537.7
+ },
+ "KaylaDay": {
+  "name": "Kayla Day",
+  "elo": 1626,
+  "hElo": 1588.4,
+  "cElo": 1560.5,
+  "gElo": 1503.5
+ },
+ "ClaraBurel": {
+  "name": "Clara Burel",
+  "elo": 1625.7,
+  "hElo": 1629.9,
+  "cElo": 1583.7,
+  "gElo": 1484.4
+ },
+ "DalmaGalfi": {
+  "name": "Dalma Galfi",
+  "elo": 1624.6,
+  "hElo": 1567.4,
+  "cElo": 1613.1,
+  "gElo": 1546.8
+ },
+ "EmersonJones": {
+  "name": "Emerson Jones",
+  "elo": 1622.9,
+  "hElo": 1616.5,
+  "cElo": 1425.6,
+  "gElo": 1494.7
+ },
+ "MaddisonInglis": {
+  "name": "Maddison Inglis",
+  "elo": 1620.6,
+  "hElo": 1597.1,
+  "cElo": 1452.4,
+  "gElo": 1487
+ },
+ "DominikaSalkova": {
+  "name": "Dominika Salkova",
+  "elo": 1617.8,
+  "hElo": 1634.1,
+  "cElo": 1547.7,
+  "gElo": 1438.5
+ },
+ "JuliaRiera": {
+  "name": "Julia Riera",
+  "elo": 1617.1,
+  "hElo": 1515.4,
+  "cElo": 1600.2,
+  "gElo": 1476.9
+ },
+ "HanyuGuo": {
+  "name": "Hanyu Guo",
+  "elo": 1614.6,
+  "hElo": 1586.8,
+  "cElo": 1549.6,
+  "gElo": 1467.8
+ },
+ "MiaRistic": {
+  "name": "Mia Ristic",
+  "elo": 1611.8,
+  "hElo": 1419.9,
+  "cElo": 1594.1,
+  "gElo": 1480.9
+ },
+ "ViktoriyaTomova": {
+  "name": "Viktoriya Tomova",
+  "elo": 1610.3,
+  "hElo": 1575.2,
+  "cElo": 1565.5,
+  "gElo": 1506
+ },
+ "SuzanLamens": {
+  "name": "Suzan Lamens",
+  "elo": 1609.2,
+  "hElo": 1566,
+  "cElo": 1551.6,
+  "gElo": 1501.6
+ },
+ "VeronikaErjavec": {
+  "name": "Veronika Erjavec",
+  "elo": 1608.8,
+  "hElo": 1513.7,
+  "cElo": 1594.8,
+  "gElo": 1505.6
+ },
+ "BeatrizHaddadMaia": {
+  "name": "Beatriz Haddad Maia",
+  "elo": 1606.9,
+  "hElo": 1575.7,
+  "cElo": 1596.6,
+  "gElo": 1558.3
+ },
+ "HarmonyTan": {
+  "name": "Harmony Tan",
+  "elo": 1606.9,
+  "hElo": 1568.9,
+  "cElo": 1453.8,
+  "gElo": 1579.7
+ },
+ "AnastasiyaSoboleva": {
+  "name": "Anastasiya Soboleva",
+  "elo": 1606.5,
+  "hElo": 1432.7,
+  "cElo": 1598,
+  "gElo": 1439.4
+ },
+ "LucreziaStefanini": {
+  "name": "Lucrezia Stefanini",
+  "elo": 1603.2,
+  "hElo": 1581.8,
+  "cElo": 1514,
+  "gElo": 1539.8
+ },
+ "LeyreRomeroGormaz": {
+  "name": "Leyre Romero Gormaz",
+  "elo": 1601.6,
+  "hElo": 1519,
+  "cElo": 1576.9,
+  "gElo": 1440.1
+ },
+ "AndreaLazaroGarcia": {
+  "name": "Andrea Lazaro Garcia",
+  "elo": 1601.3,
+  "hElo": 1516.7,
+  "cElo": 1582.8,
+  "gElo": 1448.6
+ },
+ "JuliaGrabher": {
+  "name": "Julia Grabher",
+  "elo": 1600.2,
+  "hElo": 1480,
+  "cElo": 1582.2,
+  "gElo": 1384.8
+ },
+ "PolinaIatcenko": {
+  "name": "Polina Iatcenko",
+  "elo": 1600,
+  "hElo": 1548.1,
+  "cElo": 1390.3,
+  "gElo": 1614.5
+ },
+ "HarrietDart": {
+  "name": "Harriet Dart",
+  "elo": 1596.9,
+  "hElo": 1583.8,
+  "cElo": 1445.5,
+  "gElo": 1508.3
+ },
+ "RebeccaMarino": {
+  "name": "Rebecca Marino",
+  "elo": 1595.1,
+  "hElo": 1561.5,
+  "cElo": 1478.1,
+  "gElo": 1555.4
+ },
+ "CarsonBranstine": {
+  "name": "Carson Branstine",
+  "elo": 1593.6,
+  "hElo": 1511.9,
+  "cElo": 1559.2,
+  "gElo": 1571.3
+ },
+ "HeatherWatson": {
+  "name": "Heather Watson",
+  "elo": 1592.8,
+  "hElo": 1560.3,
+  "cElo": 1451.6,
+  "gElo": 1518.6
+ },
+ "ElenaPridankina": {
+  "name": "Elena Pridankina",
+  "elo": 1591.5,
+  "hElo": 1515,
+  "cElo": 1587,
+  "gElo": 1457.6
+ },
+ "EmilianaArango": {
+  "name": "Emiliana Arango",
+  "elo": 1590.9,
+  "hElo": 1559.6,
+  "cElo": 1528.2,
+  "gElo": 1462.5
+ },
+ "TerezaMartincova": {
+  "name": "Tereza Martincova",
+  "elo": 1589.3,
+  "hElo": 1572.9,
+  "cElo": 1476.2,
+  "gElo": 1545.2
+ },
+ "FionaCrawley": {
+  "name": "Fiona Crawley",
+  "elo": 1589,
+  "hElo": 1548.7,
+  "cElo": 1380.8,
+  "gElo": 1492.3
+ },
+ "ElvinaKalieva": {
+  "name": "Elvina Kalieva",
+  "elo": 1588.3,
+  "hElo": 1560.4,
+  "cElo": 1505.5,
+  "gElo": 1456.6
+ },
+ "YueYuan": {
+  "name": "Yue Yuan",
+  "elo": 1585.8,
+  "hElo": 1570.2,
+  "cElo": 1524.2,
+  "gElo": 1457.9
+ },
+ "FrancescaCurmi": {
+  "name": "Francesca Curmi",
+  "elo": 1583.6,
+  "hElo": 1475.7,
+  "cElo": 1558.3,
+  "gElo": 1466.8
+ },
+ "SusanBandecchi": {
+  "name": "Susan Bandecchi",
+  "elo": 1583.1,
+  "hElo": 1526.7,
+  "cElo": 1540,
+  "gElo": 1456.4
+ },
+ "ElizaraYaneva": {
+  "name": "Elizara Yaneva",
+  "elo": 1582.9,
+  "hElo": 1586.3,
+  "cElo": 1509,
+  "gElo": 1475.2
+ },
+ "EllaSeidel": {
+  "name": "Ella Seidel",
+  "elo": 1582.8,
+  "hElo": 1571.9,
+  "cElo": 1510,
+  "gElo": 1484.4
+ },
+ "HimenoSakatsume": {
+  "name": "Himeno Sakatsume",
+  "elo": 1579.7,
+  "hElo": 1569.7,
+  "cElo": 1480.9,
+  "gElo": 1444.5
+ },
+ "JanaFett": {
+  "name": "Jana Fett",
+  "elo": 1579.7,
+  "hElo": 1522.8,
+  "cElo": 1556.2,
+  "gElo": 1496.4
+ },
+ "AlevtinaIbragimova": {
+  "name": "Alevtina Ibragimova",
+  "elo": 1579.4,
+  "hElo": 1504.1,
+  "cElo": 1554.1,
+  "gElo": 1464.7
+ },
+ "NomaNohaAkugue": {
+  "name": "Noma Noha Akugue",
+  "elo": 1579.3,
+  "hElo": 1557.9,
+  "cElo": 1526.7,
+  "gElo": 1424
+ },
+ "AnnaSiskova": {
+  "name": "Anna Siskova",
+  "elo": 1577,
+  "hElo": 1540.5,
+  "cElo": 1548,
+  "gElo": 1377.4
+ },
+ "KatieSwan": {
+  "name": "Katie Swan",
+  "elo": 1575.9,
+  "hElo": 1488.1,
+  "cElo": 1423.6,
+  "gElo": 1518.4
+ },
+ "AnastasiaGasanova": {
+  "name": "Anastasia Gasanova",
+  "elo": 1574.7,
+  "hElo": 1526.8,
+  "cElo": 1474.5,
+  "gElo": 1542.3
+ },
+ "IrynaShymanovich": {
+  "name": "Iryna Shymanovich",
+  "elo": 1574.4,
+  "hElo": 1496.2,
+  "cElo": 1518.2,
+  "gElo": 1533
+ },
+ "ZhuoxuanBai": {
+  "name": "Zhuoxuan Bai",
+  "elo": 1573.6,
+  "hElo": 1551.5,
+  "cElo": 1439.1,
+  "gElo": 1536.3
+ },
+ "LisaPigato": {
+  "name": "Lisa Pigato",
+  "elo": 1573.6,
+  "hElo": 1542.3,
+  "cElo": 1555.6,
+  "gElo": 1479.3
+ },
+ "ElsaJacquemot": {
+  "name": "Elsa Jacquemot",
+  "elo": 1573.1,
+  "hElo": 1556.2,
+  "cElo": 1514.5,
+  "gElo": 1494.1
+ },
+ "JessikaPonchet": {
+  "name": "Jessika Ponchet",
+  "elo": 1572,
+  "hElo": 1504.3,
+  "cElo": 1560.8,
+  "gElo": 1465.9
+ },
+ "EkaterineGorgodze": {
+  "name": "Ekaterine Gorgodze",
+  "elo": 1571.3,
+  "hElo": 1511,
+  "cElo": 1531.9,
+  "gElo": 1475.2
+ },
+ "PolonaHercog": {
+  "name": "Polona Hercog",
+  "elo": 1569.8,
+  "hElo": 1514.2,
+  "cElo": 1551.9,
+  "gElo": 1500.5
+ },
+ "GuiomarMaristanyZuletaDeReales": {
+  "name": "Guiomar Maristany Zuleta De Reales",
+  "elo": 1569.7,
+  "hElo": 1493.7,
+  "cElo": 1547,
+  "gElo": 1421.2
+ },
+ "DarjaSemenistaja": {
+  "name": "Darja Semenistaja",
+  "elo": 1569.6,
+  "hElo": 1526,
+  "cElo": 1547.1,
+  "gElo": 1496.1
+ },
+ "OliviaGadecki": {
+  "name": "Olivia Gadecki",
+  "elo": 1568.8,
+  "hElo": 1539.3,
+  "cElo": 1489.7,
+  "gElo": 1470.9
+ },
+ "MaiHontama": {
+  "name": "Mai Hontama",
+  "elo": 1568.8,
+  "hElo": 1533.1,
+  "cElo": 1489.7,
+  "gElo": 1450.7
+ },
+ "AlisaOktiabreva": {
+  "name": "Alisa Oktiabreva",
+  "elo": 1568.4,
+  "hElo": 1426.4,
+  "cElo": 1558.3,
+  "gElo": 1459.2
+ },
+ "LindaFruhvirtova": {
+  "name": "Linda Fruhvirtova",
+  "elo": 1567,
+  "hElo": 1552.3,
+  "cElo": 1492.6,
+  "gElo": 1480.2
+ },
+ "VarvaraLepchenko": {
+  "name": "Varvara Lepchenko",
+  "elo": 1565.3,
+  "hElo": 1551.1,
+  "cElo": 1524,
+  "gElo": 1448.3
+ },
+ "MiaPohankova": {
+  "name": "Mia Pohankova",
+  "elo": 1563.6,
+  "hElo": 1564.9,
+  "cElo": 1455,
+  "gElo": 1460.9
+ },
+ "AkashaUrhobo": {
+  "name": "Akasha Urhobo",
+  "elo": 1562.3,
+  "hElo": 1433.6,
+  "cElo": 1541,
+  "gElo": 1446.7
+ },
+ "GabrielaAndreaKnutson": {
+  "name": "Gabriela Andrea Knutson",
+  "elo": 1560.3,
+  "hElo": 1533.3,
+  "cElo": 1394.6,
+  "gElo": 1508.4
+ },
+ "VeronikaPodrez": {
+  "name": "Veronika Podrez",
+  "elo": 1557,
+  "hElo": 1510.6,
+  "cElo": 1486.4,
+  "gElo": 1421.4
+ },
+ "VictoriaJimenezKasintseva": {
+  "name": "Victoria Jimenez Kasintseva",
+  "elo": 1556.3,
+  "hElo": 1549.6,
+  "cElo": 1515.2,
+  "gElo": 1435.4
+ },
+ "NaoHibino": {
+  "name": "Nao Hibino",
+  "elo": 1553.4,
+  "hElo": 1519.9,
+  "cElo": 1483.6,
+  "gElo": 1474
+ },
+ "MariamBolkvadze": {
+  "name": "Mariam Bolkvadze",
+  "elo": 1551.1,
+  "hElo": 1502.1,
+  "cElo": 1335.9,
+  "gElo": 1497
+ },
+ "JoannaGarland": {
+  "name": "Joanna Garland",
+  "elo": 1550.9,
+  "hElo": 1553,
+  "cElo": 1461.8,
+  "gElo": 1476.4
+ },
+ "MonaBarthel": {
+  "name": "Mona Barthel",
+  "elo": 1549.7,
+  "hElo": 1537.8,
+  "cElo": 1495,
+  "gElo": 1385.7
+ },
+ "EnShuoLiang": {
+  "name": "En Shuo Liang",
+  "elo": 1547.3,
+  "hElo": 1544.7,
+  "cElo": 1357.6,
+  "gElo": 1493.7
+ },
+ "JenniferRuggeri": {
+  "name": "Jennifer Ruggeri",
+  "elo": 1547.3,
+  "hElo": 1388.7,
+  "cElo": 1525.5,
+  "gElo": 1448.7
+ },
+ "ErikaAndreeva": {
+  "name": "Erika Andreeva",
+  "elo": 1545.1,
+  "hElo": 1501.6,
+  "cElo": 1504.5,
+  "gElo": 1434.4
+ },
+ "MadisonBrengle": {
+  "name": "Madison Brengle",
+  "elo": 1545,
+  "hElo": 1508.8,
+  "cElo": 1543.8,
+  "gElo": 1483.1
+ },
+ "OceaneDodin": {
+  "name": "Oceane Dodin",
+  "elo": 1544.3,
+  "hElo": 1515,
+  "cElo": 1470.7,
+  "gElo": 1472.8
+ },
+ "PriscillaHon": {
+  "name": "Priscilla Hon",
+  "elo": 1541.5,
+  "hElo": 1532.8,
+  "cElo": 1453.2,
+  "gElo": 1433.2
+ },
+ "SavannahBroadus": {
+  "name": "Savannah Broadus",
+  "elo": 1540,
+  "hElo": 1521,
+  "cElo": 1448,
+  "gElo": 1445
+ },
+ "XinyuGao": {
+  "name": "Xinyu Gao",
+  "elo": 1539.3,
+  "hElo": 1533.8,
+  "cElo": 1466.9,
+  "gElo": 1398.9
+ },
+ "AliceTubello": {
+  "name": "Alice Tubello",
+  "elo": 1538.7,
+  "hElo": 1378.1,
+  "cElo": 1536.8,
+  "gElo": 1402.4
+ },
+ "NoemiBasiletti": {
+  "name": "Noemi Basiletti",
+  "elo": 1538.6,
+  "hElo": 1321.8,
+  "cElo": 1514.5,
+  "gElo": 1444.3
+ },
+ "KatarinaZavatska": {
+  "name": "Katarina Zavatska",
+  "elo": 1537,
+  "hElo": 1420.8,
+  "cElo": 1517.8,
+  "gElo": 1430.3
+ },
+ "CaroleMonnet": {
+  "name": "Carole Monnet",
+  "elo": 1536.6,
+  "hElo": 1458,
+  "cElo": 1515.9,
+  "gElo": 1374.2
+ },
+ "SofiaCostoulas": {
+  "name": "Sofia Costoulas",
+  "elo": 1535.5,
+  "hElo": 1533.2,
+  "cElo": 1485.2,
+  "gElo": 1397.9
+ },
+ "LauraPigossi": {
+  "name": "Laura Pigossi",
+  "elo": 1530.8,
+  "hElo": 1468,
+  "cElo": 1516.9,
+  "gElo": 1362.7
+ },
+ "EvaVedder": {
+  "name": "Eva Vedder",
+  "elo": 1530.7,
+  "hElo": 1523.3,
+  "cElo": 1483.3,
+  "gElo": 1450.8
+ },
+ "ElizabethMandlik": {
+  "name": "Elizabeth Mandlik",
+  "elo": 1530.6,
+  "hElo": 1503.9,
+  "cElo": 1467.7,
+  "gElo": 1504.3
+ },
+ "AnoukKoevermans": {
+  "name": "Anouk Koevermans",
+  "elo": 1529.9,
+  "hElo": 1537.1,
+  "cElo": 1486.2,
+  "gElo": 1395.9
+ },
+ "NuriaBrancaccio": {
+  "name": "Nuria Brancaccio",
+  "elo": 1525.2,
+  "hElo": 1336.6,
+  "cElo": 1517.5,
+  "gElo": 1367.8
+ },
+ "RadaZolotareva": {
+  "name": "Rada Zolotareva",
+  "elo": 1520.6,
+  "hElo": 1411.1,
+  "cElo": 1497.7,
+  "gElo": 1404.8
+ },
+ "AlionaFalei": {
+  "name": "Aliona Falei",
+  "elo": 1519.8,
+  "hElo": 1521.6,
+  "cElo": 1413.5,
+  "gElo": 1435.6
+ },
+ "AylaAksu": {
+  "name": "Ayla Aksu",
+  "elo": 1518.7,
+  "hElo": 1511.3,
+  "cElo": 1425.2,
+  "gElo": 1434.3
+ },
+ "AnnaLenaFriedsam": {
+  "name": "Anna Lena Friedsam",
+  "elo": 1517.5,
+  "hElo": 1488.4,
+  "cElo": 1475.2,
+  "gElo": 1406
+ },
+ "YeonWooKu": {
+  "name": "Yeon Woo Ku",
+  "elo": 1516.4,
+  "hElo": 1501.1,
+  "cElo": 1357.8,
+  "gElo": 1401.7
+ },
+ "LolaRadivojevic": {
+  "name": "Lola Radivojevic",
+  "elo": 1513.4,
+  "hElo": 1454.9,
+  "cElo": 1499.4,
+  "gElo": 1451.8
+ },
+ "IreneBurilloEscorihuela": {
+  "name": "Irene Burillo Escorihuela",
+  "elo": 1513.2,
+  "hElo": 1385.1,
+  "cElo": 1499.7,
+  "gElo": 1399.1
+ },
+ "LindaKlimovicova": {
+  "name": "Linda Klimovicova",
+  "elo": 1510.9,
+  "hElo": 1503.8,
+  "cElo": 1436.1,
+  "gElo": 1370.7
+ },
+ "TiantsoaSarahRakotomangaRajaonah": {
+  "name": "Tiantsoa Sarah Rakotomanga Rajaonah",
+  "elo": 1510.7,
+  "hElo": 1464.8,
+  "cElo": 1464.1,
+  "gElo": 1438.8
+ },
+ "EminaBektas": {
+  "name": "Emina Bektas",
+  "elo": 1509.5,
+  "hElo": 1481.6,
+  "cElo": 1314.9,
+  "gElo": 1464.9
+ },
+ "AlionaBolsova": {
+  "name": "Aliona Bolsova",
+  "elo": 1509.5,
+  "hElo": 1458.9,
+  "cElo": 1487.2,
+  "gElo": 1407.7
+ },
+ "LuisinaGiovannini": {
+  "name": "Luisina Giovannini",
+  "elo": 1508,
+  "hElo": 1334.8,
+  "cElo": 1495.9,
+  "gElo": 1407.6
+ },
+ "AlexandraShubladze": {
+  "name": "Alexandra Shubladze",
+  "elo": 1507.8,
+  "hElo": 1498.8,
+  "cElo": 1362.2,
+  "gElo": 1390.8
+ },
+ "MariaLourdesCarle": {
+  "name": "Maria Lourdes Carle",
+  "elo": 1505.7,
+  "hElo": 1470.2,
+  "cElo": 1481.2,
+  "gElo": 1393.1
+ },
+ "FranciscaJorge": {
+  "name": "Francisca Jorge",
+  "elo": 1505,
+  "hElo": 1493.6,
+  "cElo": 1419.1,
+  "gElo": 1460.3
+ },
+ "HannahKlugman": {
+  "name": "Hannah Klugman",
+  "elo": 1501.1,
+  "hElo": 1475.2,
+  "cElo": 1388.4,
+  "gElo": 1383.8
+ },
+ "SachiaVickery": {
+  "name": "Sachia Vickery",
+  "elo": 1500.5,
+  "hElo": 1469.1,
+  "cElo": 1498.3,
+  "gElo": 1408.9
+ },
+ "AnastasiaKulikova": {
+  "name": "Anastasia Kulikova",
+  "elo": 1500.3,
+  "hElo": 1491.1,
+  "cElo": 1413.1,
+  "gElo": 1408.2
+ },
+ "KaylaCross": {
+  "name": "Kayla Cross",
+  "elo": 1499.4,
+  "hElo": 1497.8,
+  "cElo": 1395.1,
+  "gElo": 1358.5
+ },
+ "MartinaTrevisan": {
+  "name": "Martina Trevisan",
+  "elo": 1499.2,
+  "hElo": 1465.4,
+  "cElo": 1487.3,
+  "gElo": 1315.4
+ },
+ "ViktoriaHruncakova": {
+  "name": "Viktoria Hruncakova",
+  "elo": 1497.6,
+  "hElo": 1463.4,
+  "cElo": 1441.8,
+  "gElo": 1431.2
+ },
+ "ArantxaRus": {
+  "name": "Arantxa Rus",
+  "elo": 1497.1,
+  "hElo": 1489.5,
+  "cElo": 1486.9,
+  "gElo": 1389.7
+ },
+ "AoiIto": {
+  "name": "Aoi Ito",
+  "elo": 1496.3,
+  "hElo": 1505.4,
+  "cElo": 1301.7,
+  "gElo": 1351.4
+ },
+ "JazminOrtenzi": {
+  "name": "Jazmin Ortenzi",
+  "elo": 1493.9,
+  "hElo": 1366.6,
+  "cElo": 1476.2,
+  "gElo": 1367.1
+ },
+ "AliciaHerreroLinana": {
+  "name": "Alicia Herrero Linana",
+  "elo": 1493.7,
+  "hElo": 1350.9,
+  "cElo": 1475.1,
+  "gElo": 1421.8
+ },
+ "CaijsaWildaHennemann": {
+  "name": "Caijsa Wilda Hennemann",
+  "elo": 1493.3,
+  "hElo": 1350.5,
+  "cElo": 1462.2,
+  "gElo": 1421.6
+ },
+ "KajsaRinaldoPersson": {
+  "name": "Kajsa Rinaldo Persson",
+  "elo": 1492.4,
+  "hElo": 1423.8,
+  "cElo": 1460.2,
+  "gElo": 1354.4
+ },
+ "FedericaUrgesi": {
+  "name": "Federica Urgesi",
+  "elo": 1492.1,
+  "hElo": 1373.4,
+  "cElo": 1476.9,
+  "gElo": 1421
+ },
+ "DestaneeAiava": {
+  "name": "Destanee Aiava",
+  "elo": 1491.8,
+  "hElo": 1474.5,
+  "cElo": 1403.8,
+  "gElo": 1383.9
+ },
+ "LucieHavlickova": {
+  "name": "Lucie Havlickova",
+  "elo": 1489.4,
+  "hElo": 1488.6,
+  "cElo": 1433.8,
+  "gElo": 1407.5
+ },
+ "SonjaZhiyenbayeva": {
+  "name": "Sonja Zhiyenbayeva",
+  "elo": 1488.9,
+  "hElo": 1488.3,
+  "cElo": 1359.4,
+  "gElo": 1419.4
+ },
+ "ValentinaRyser": {
+  "name": "Valentina Ryser",
+  "elo": 1487.2,
+  "hElo": 1454.9,
+  "cElo": 1301.1,
+  "gElo": 1515
+ },
+ "KatrinaScott": {
+  "name": "Katrina Scott",
+  "elo": 1487.1,
+  "hElo": 1454.5,
+  "cElo": 1480.7,
+  "gElo": 1356.7
+ },
+ "MikaStojsavljevic": {
+  "name": "Mika Stojsavljevic",
+  "elo": 1481.8,
+  "hElo": 1406.7,
+  "cElo": 1355.9,
+  "gElo": 1362.5
+ },
+ "LeaNilsson": {
+  "name": "Lea Nilsson",
+  "elo": 1481.6,
+  "hElo": 1395.2,
+  "cElo": 1463.1,
+  "gElo": 1415.8
+ },
+ "JuliaAvdeeva": {
+  "name": "Julia Avdeeva",
+  "elo": 1480.2,
+  "hElo": 1463.9,
+  "cElo": 1450.9,
+  "gElo": 1379.8
+ },
+ "EvaGuerreroAlvarez": {
+  "name": "Eva Guerrero Alvarez",
+  "elo": 1480.1,
+  "hElo": 1469.9,
+  "cElo": 1398.4,
+  "gElo": 1393
+ },
+ "NastasjaSchunk": {
+  "name": "Nastasja Schunk",
+  "elo": 1478.5,
+  "hElo": 1390.3,
+  "cElo": 1462.9,
+  "gElo": 1469.9
+ },
+ "ArinaRodionova": {
+  "name": "Arina Rodionova",
+  "elo": 1478,
+  "hElo": 1457.7,
+  "cElo": 1375.9,
+  "gElo": 1450.2
+ },
+ "DaryaAstakhova": {
+  "name": "Darya Astakhova",
+  "elo": 1477.8,
+  "hElo": 1429.1,
+  "cElo": 1457.4,
+  "gElo": 1381.8
+ },
+ "BarboraPalicova": {
+  "name": "Barbora Palicova",
+  "elo": 1476.9,
+  "hElo": 1384.6,
+  "cElo": 1475.1,
+  "gElo": 1417.2
+ },
+ "LouisaChirico": {
+  "name": "Louisa Chirico",
+  "elo": 1475.7,
+  "hElo": 1410.8,
+  "cElo": 1515.9,
+  "gElo": 1376.6
+ },
+ "HayuKinoshita": {
+  "name": "Hayu Kinoshita",
+  "elo": 1475.3,
+  "hElo": 1464.2,
+  "cElo": 1300.2,
+  "gElo": 1401.3
+ },
+ "JuleNiemeier": {
+  "name": "Jule Niemeier",
+  "elo": 1475.2,
+  "hElo": 1451.5,
+  "cElo": 1463,
+  "gElo": 1457.6
+ },
+ "KatherineSebov": {
+  "name": "Katherine Sebov",
+  "elo": 1473.2,
+  "hElo": 1451.1,
+  "cElo": 1377.7,
+  "gElo": 1427.4
+ },
+ "TaraWurth": {
+  "name": "Tara Wurth",
+  "elo": 1473,
+  "hElo": 1381.8,
+  "cElo": 1446,
+  "gElo": 1411.5
+ },
+ "ZongyuLi": {
+  "name": "Zongyu Li",
+  "elo": 1472.5,
+  "hElo": 1475.4,
+  "cElo": 1353.9,
+  "gElo": 1411.3
+ },
+ "YeXinMa": {
+  "name": "Ye Xin Ma",
+  "elo": 1469.9,
+  "hElo": 1461.1,
+  "cElo": 1253.3,
+  "gElo": 1370.9
+ },
+ "AliciaDudeney": {
+  "name": "Alicia Dudeney",
+  "elo": 1467.3,
+  "hElo": 1467.1,
+  "cElo": 1348.7,
+  "gElo": 1357.6
+ },
+ "HanShi": {
+  "name": "Han Shi",
+  "elo": 1465.7,
+  "hElo": 1467.7,
+  "cElo": 1322.2,
+  "gElo": 1398.9
+ },
+ "FangranTian": {
+  "name": "Fangran Tian",
+  "elo": 1464.8,
+  "hElo": 1445.2,
+  "cElo": 1347.4,
+  "gElo": 1407.4
+ },
+ "AyanaAkli": {
+  "name": "Ayana Akli",
+  "elo": 1462.5,
+  "hElo": 1467.4,
+  "cElo": 1362.2,
+  "gElo": 1377.8
+ },
+ "SilviaAmbrosio": {
+  "name": "Silvia Ambrosio",
+  "elo": 1460.8,
+  "hElo": 1359.5,
+  "cElo": 1448.2,
+  "gElo": 1405.4
+ },
+ "LinaGjorcheska": {
+  "name": "Lina Gjorcheska",
+  "elo": 1458.7,
+  "hElo": 1419.2,
+  "cElo": 1407.4,
+  "gElo": 1481.7
+ },
+ "IdaWobker": {
+  "name": "Ida Wobker",
+  "elo": 1456,
+  "hElo": 1443.6,
+  "cElo": 1448.6,
+  "gElo": 1478
+ },
+ "RositsaDencheva": {
+  "name": "Rositsa Dencheva",
+  "elo": 1453.8,
+  "hElo": 1390,
+  "cElo": 1434.8,
+  "gElo": 1401.9
+ },
+ "ArianneHartono": {
+  "name": "Arianne Hartono",
+  "elo": 1452.8,
+  "hElo": 1435.5,
+  "cElo": 1375.4,
+  "gElo": 1364.6
+ },
+ "JanaKovackova": {
+  "name": "Jana Kovackova",
+  "elo": 1452.4,
+  "hElo": 1398,
+  "cElo": 1388.2,
+  "gElo": 1401.2
+ },
+ "AlenaKovackova": {
+  "name": "Alena Kovackova",
+  "elo": 1451.6,
+  "hElo": 1373.1,
+  "cElo": 1414.1,
+  "gElo": 1400.8
+ },
+ "WhitneyOsuigwe": {
+  "name": "Whitney Osuigwe",
+  "elo": 1451.3,
+  "hElo": 1418,
+  "cElo": 1426.9,
+  "gElo": 1311.4
+ },
+ "VivianWolff": {
+  "name": "Vivian Wolff",
+  "elo": 1451.2,
+  "hElo": 1451.3,
+  "cElo": 1392.7,
+  "gElo": 1400.6
+ },
+ "CamillaRosatello": {
+  "name": "Camilla Rosatello",
+  "elo": 1450.8,
+  "hElo": 1373.4,
+  "cElo": 1483.5,
+  "gElo": 1342.6
+ },
+ "SadaNahimana": {
+  "name": "Sada Nahimana",
+  "elo": 1450,
+  "hElo": 1331.9,
+  "cElo": 1442.4,
+  "gElo": 1400
+ },
+ "AngelinaVoloshchuk": {
+  "name": "Angelina Voloshchuk",
+  "elo": 1449.3,
+  "hElo": 1435.7,
+  "cElo": 1296,
+  "gElo": 1399.7
+ },
+ "ClervieNgounoue": {
+  "name": "Clervie Ngounoue",
+  "elo": 1449.1,
+  "hElo": 1428.1,
+  "cElo": 1394,
+  "gElo": 1362.3
+ },
+ "BerfuCengiz": {
+  "name": "Berfu Cengiz",
+  "elo": 1448,
+  "hElo": 1402.9,
+  "cElo": 1435.3,
+  "gElo": 1379.3
+ },
+ "GinaFeistel": {
+  "name": "Gina Feistel",
+  "elo": 1447.4,
+  "hElo": 1321.4,
+  "cElo": 1439.1,
+  "gElo": 1398.7
+ },
+ "TessahAndrianjafitrimo": {
+  "name": "Tessah Andrianjafitrimo",
+  "elo": 1446.7,
+  "hElo": 1410.2,
+  "cElo": 1421.1,
+  "gElo": 1366.6
+ },
+ "XiaodiYou": {
+  "name": "Xiaodi You",
+  "elo": 1445.2,
+  "hElo": 1466.8,
+  "cElo": 1324,
+  "gElo": 1324.4
+ },
+ "JulieStruplova": {
+  "name": "Julie Struplova",
+  "elo": 1445.1,
+  "hElo": 1347.9,
+  "cElo": 1429.7,
+  "gElo": 1397.6
+ },
+ "ElenaRuxandraBertea": {
+  "name": "Elena Ruxandra Bertea",
+  "elo": 1442.8,
+  "hElo": 1320.5,
+  "cElo": 1421.7,
+  "gElo": 1396.4
+ },
+ "AmandineMonnot": {
+  "name": "Amandine Monnot",
+  "elo": 1439.7,
+  "hElo": 1443.5,
+  "cElo": 1369,
+  "gElo": 1394.8
+ },
+ "AmandineHesse": {
+  "name": "Amandine Hesse",
+  "elo": 1437.4,
+  "hElo": 1415.8,
+  "cElo": 1384.6,
+  "gElo": 1335.2
+ },
+ "ReeseBrantmeier": {
+  "name": "Reese Brantmeier",
+  "elo": 1435.4,
+  "hElo": 1406.2,
+  "cElo": 1284.8,
+  "gElo": 1399.6
+ },
+ "ChloePaquet": {
+  "name": "Chloe Paquet",
+  "elo": 1435,
+  "hElo": 1409.5,
+  "cElo": 1407.4,
+  "gElo": 1347.1
+ },
+ "AngelaFitaBoluda": {
+  "name": "Angela Fita Boluda",
+  "elo": 1434.5,
+  "hElo": 1283.1,
+  "cElo": 1415.9,
+  "gElo": 1361.8
+ },
+ "LizetteCabrera": {
+  "name": "Lizette Cabrera",
+  "elo": 1433.8,
+  "hElo": 1399.8,
+  "cElo": 1337.9,
+  "gElo": 1424.9
+ },
+ "SaraSaito": {
+  "name": "Sara Saito",
+  "elo": 1432.2,
+  "hElo": 1432.4,
+  "cElo": 1362.7,
+  "gElo": 1313.5
+ },
+ "LeaBoskovic": {
+  "name": "Lea Boskovic",
+  "elo": 1429.4,
+  "hElo": 1370.3,
+  "cElo": 1405.3,
+  "gElo": 1424.6
+ },
+ "MargauxRouvroy": {
+  "name": "Margaux Rouvroy",
+  "elo": 1429.1,
+  "hElo": 1390.8,
+  "cElo": 1391.7,
+  "gElo": 1389.5
+ },
+ "AneMintegiDelOlmo": {
+  "name": "Ane Mintegi Del Olmo",
+  "elo": 1427.9,
+  "hElo": 1396.9,
+  "cElo": 1394.7,
+  "gElo": 1388.9
+ },
+ "YasmineKabbaj": {
+  "name": "Yasmine Kabbaj",
+  "elo": 1427.1,
+  "hElo": 1347.7,
+  "cElo": 1412.9,
+  "gElo": 1388.5
+ },
+ "MeiYamaguchi": {
+  "name": "Mei Yamaguchi",
+  "elo": 1424.6,
+  "hElo": 1397.2,
+  "cElo": 1303.9,
+  "gElo": 1355.9
+ },
+ "LisaZaar": {
+  "name": "Lisa Zaar",
+  "elo": 1424.6,
+  "hElo": 1342.8,
+  "cElo": 1387.3,
+  "gElo": 1387.3
+ },
+ "AnetaKladivova": {
+  "name": "Aneta Kladivova",
+  "elo": 1424,
+  "hElo": 1356.1,
+  "cElo": 1414.7,
+  "gElo": 1387
+ },
+ "EkaterinaReyngold": {
+  "name": "Ekaterina Reyngold",
+  "elo": 1423,
+  "hElo": 1431.1,
+  "cElo": 1362.7,
+  "gElo": 1386.5
+ },
+ "KristinaMladenovic": {
+  "name": "Kristina Mladenovic",
+  "elo": 1422.4,
+  "hElo": 1407.8,
+  "cElo": 1370.7,
+  "gElo": 1418
+ },
+ "HongYiCodyWong": {
+  "name": "Hong Yi Cody Wong",
+  "elo": 1422.4,
+  "hElo": 1390.3,
+  "cElo": 1342.1,
+  "gElo": 1386.2
+ },
+ "CadenceBrace": {
+  "name": "Cadence Brace",
+  "elo": 1422.3,
+  "hElo": 1420.1,
+  "cElo": 1247.3,
+  "gElo": 1325.2
+ },
+ "AnastasiaZolotareva": {
+  "name": "Anastasia Zolotareva",
+  "elo": 1422.1,
+  "hElo": 1353.9,
+  "cElo": 1413.1,
+  "gElo": 1386.1
+ },
+ "ElenaMicic": {
+  "name": "Elena Micic",
+  "elo": 1422,
+  "hElo": 1400.2,
+  "cElo": 1295.8,
+  "gElo": 1386
+ },
+ "SakuraHosogi": {
+  "name": "Sakura Hosogi",
+  "elo": 1421.3,
+  "hElo": 1421.5,
+  "cElo": 1291.6,
+  "gElo": 1385.6
+ },
+ "SamiraDeStefano": {
+  "name": "Samira De Stefano",
+  "elo": 1421,
+  "hElo": 1392.2,
+  "cElo": 1329.8,
+  "gElo": 1385.5
+ },
+ "BrittDuPree": {
+  "name": "Britt Du Pree",
+  "elo": 1418.8,
+  "hElo": 1430.2,
+  "cElo": 1302.4,
+  "gElo": 1354
+ },
+ "ZhibekKulambayeva": {
+  "name": "Zhibek Kulambayeva",
+  "elo": 1418,
+  "hElo": 1274.7,
+  "cElo": 1397.9,
+  "gElo": 1384
+ },
+ "EvaBennemann": {
+  "name": "Eva Bennemann",
+  "elo": 1417.2,
+  "hElo": 1445.9,
+  "cElo": 1360.5,
+  "gElo": 1383.6
+ },
+ "LeaMa": {
+  "name": "Lea Ma",
+  "elo": 1416.1,
+  "hElo": 1389.2,
+  "cElo": 1318.1,
+  "gElo": 1379.6
+ },
+ "MihoKuramochi": {
+  "name": "Miho Kuramochi",
+  "elo": 1413.7,
+  "hElo": 1398,
+  "cElo": 1321.9,
+  "gElo": 1379.7
+ },
+ "AuroraZantedeschi": {
+  "name": "Aurora Zantedeschi",
+  "elo": 1413.7,
+  "hElo": 1237.5,
+  "cElo": 1401.9,
+  "gElo": 1381.8
+ },
+ "JennyLim": {
+  "name": "Jenny Lim",
+  "elo": 1413.1,
+  "hElo": 1317.8,
+  "cElo": 1390,
+  "gElo": 1381.6
+ },
+ "EnaShibahara": {
+  "name": "Ena Shibahara",
+  "elo": 1411.7,
+  "hElo": 1385.2,
+  "cElo": 1437.2,
+  "gElo": 1394.7
+ },
+ "LoesEbelingKoning": {
+  "name": "Loes Ebeling Koning",
+  "elo": 1410.5,
+  "hElo": 1320.3,
+  "cElo": 1381.5,
+  "gElo": 1342.5
+ },
+ "MinaHodzic": {
+  "name": "Mina Hodzic",
+  "elo": 1410.4,
+  "hElo": 1392.3,
+  "cElo": 1378.5,
+  "gElo": 1362.2
+ },
+ "ElenaMilovanovic": {
+  "name": "Elena Milovanovic",
+  "elo": 1409.4,
+  "hElo": 1388.2,
+  "cElo": 1357.9,
+  "gElo": 1379.7
+ },
+ "HarukaKaji": {
+  "name": "Haruka Kaji",
+  "elo": 1408.7,
+  "hElo": 1394.4,
+  "cElo": 1330.5,
+  "gElo": 1416.9
+ },
+ "YelyzavetaKotliar": {
+  "name": "Yelyzaveta Kotliar",
+  "elo": 1408.5,
+  "hElo": 1319.3,
+  "cElo": 1391.4,
+  "gElo": 1379.3
+ },
+ "MarthaMatoula": {
+  "name": "Martha Matoula",
+  "elo": 1407,
+  "hElo": 1328.9,
+  "cElo": 1400.3,
+  "gElo": 1453.5
+ },
+ "SelenaJanicijevic": {
+  "name": "Selena Janicijevic",
+  "elo": 1405.5,
+  "hElo": 1337.3,
+  "cElo": 1385.9,
+  "gElo": 1396.5
+ },
+ "LaimaVladson": {
+  "name": "Laima Vladson",
+  "elo": 1405.5,
+  "hElo": 1300.4,
+  "cElo": 1385.1,
+  "gElo": 1377.8
+ },
+ "MatildeJorge": {
+  "name": "Matilde Jorge",
+  "elo": 1405.1,
+  "hElo": 1408.5,
+  "cElo": 1289.8,
+  "gElo": 1377.5
+ },
+ "EnaKoike": {
+  "name": "Ena Koike",
+  "elo": 1404.2,
+  "hElo": 1386.6,
+  "cElo": 1301.3,
+  "gElo": 1377.1
+ },
+ "DespinaPapamichail": {
+  "name": "Despina Papamichail",
+  "elo": 1404.1,
+  "hElo": 1368.5,
+  "cElo": 1372.6,
+  "gElo": 1382.2
+ },
+ "JustinaMikulskyte": {
+  "name": "Justina Mikulskyte",
+  "elo": 1402.3,
+  "hElo": 1381.3,
+  "cElo": 1362.3,
+  "gElo": 1335.5
+ },
+ "TinaNadineSmith": {
+  "name": "Tina Nadine Smith",
+  "elo": 1401.1,
+  "hElo": 1388.2,
+  "cElo": 1363.1,
+  "gElo": 1375.5
+ },
+ "CarolineUebelhoer": {
+  "name": "Caroline Uebelhoer",
+  "elo": 1400.6,
+  "hElo": 1338.3,
+  "cElo": 1378.2,
+  "gElo": 1382.6
+ },
+ "NaikthaBains": {
+  "name": "Naiktha Bains",
+  "elo": 1400.4,
+  "hElo": 1397.2,
+  "cElo": 1330.6,
+  "gElo": 1283
+ },
+ "NuriaParrizasDiaz": {
+  "name": "Nuria Parrizas Diaz",
+  "elo": 1398.1,
+  "hElo": 1399.5,
+  "cElo": 1393.7,
+  "gElo": 1351.8
+ },
+ "JulieBelgraver": {
+  "name": "Julie Belgraver",
+  "elo": 1397.4,
+  "hElo": 1341.9,
+  "cElo": 1370.1,
+  "gElo": 1373.7
+ },
+ "SijiaWei": {
+  "name": "Sijia Wei",
+  "elo": 1396.9,
+  "hElo": 1396,
+  "cElo": 1281.2,
+  "gElo": 1347.8
+ },
+ "IsabellaShinikova": {
+  "name": "Isabella Shinikova",
+  "elo": 1394.4,
+  "hElo": 1429.6,
+  "cElo": 1264.4,
+  "gElo": 1295.1
+ },
+ "DariaKhomutsianskaya": {
+  "name": "Daria Khomutsianskaya",
+  "elo": 1393.4,
+  "hElo": 1378.8,
+  "cElo": 1311.7,
+  "gElo": 1371.7
+ },
+ "KathinkaVonDeichmann": {
+  "name": "Kathinka Von Deichmann",
+  "elo": 1392.9,
+  "hElo": 1404.4,
+  "cElo": 1345.9,
+  "gElo": 1350.4
+ },
+ "MartinaCapurroTaborda": {
+  "name": "Martina Capurro Taborda",
+  "elo": 1392.6,
+  "hElo": 1303.1,
+  "cElo": 1377.7,
+  "gElo": 1403.3
+ },
+ "AmarissaKiaraToth": {
+  "name": "Amarissa Kiara Toth",
+  "elo": 1390.4,
+  "hElo": 1364.2,
+  "cElo": 1369.1,
+  "gElo": 1370.2
+ },
+ "KyokaOkamura": {
+  "name": "Kyoka Okamura",
+  "elo": 1390,
+  "hElo": 1345.1,
+  "cElo": 1299.9,
+  "gElo": 1458.2
+ },
+ "IpekOz": {
+  "name": "Ipek Oz",
+  "elo": 1389.3,
+  "hElo": 1353.4,
+  "cElo": 1368.2,
+  "gElo": 1338.6
+ },
+ "YlenaInAlbon": {
+  "name": "Ylena In Albon",
+  "elo": 1388.9,
+  "hElo": 1311.7,
+  "cElo": 1371.4,
+  "gElo": 1360.1
+ },
+ "TessaJohannaBrockmann": {
+  "name": "Tessa Johanna Brockmann",
+  "elo": 1388.7,
+  "hElo": 1334,
+  "cElo": 1342.9,
+  "gElo": 1375.3
+ },
+ "JuliaStusek": {
+  "name": "Julia Stusek",
+  "elo": 1387.5,
+  "hElo": 1320.6,
+  "cElo": 1343.4,
+  "gElo": 1335.2
+ },
+ "ErynCayetano": {
+  "name": "Eryn Cayetano",
+  "elo": 1385.7,
+  "hElo": 1373.7,
+  "cElo": 1261.3,
+  "gElo": 1367.9
+ },
+ "SuJeongJang": {
+  "name": "Su Jeong Jang",
+  "elo": 1383.6,
+  "hElo": 1354.5,
+  "cElo": 1414,
+  "gElo": 1333.3
+ },
+ "YukiNaito": {
+  "name": "Yuki Naito",
+  "elo": 1383.3,
+  "hElo": 1386.3,
+  "cElo": 1271.9,
+  "gElo": 1336.1
+ },
+ "HiromiAbe": {
+  "name": "Hiromi Abe",
+  "elo": 1380.7,
+  "hElo": 1360.8,
+  "cElo": 1305.3,
+  "gElo": 1365.3
+ },
+ "MariaSaraPopa": {
+  "name": "Maria Sara Popa",
+  "elo": 1380.6,
+  "hElo": 1257.9,
+  "cElo": 1356.9,
+  "gElo": 1365.3
+ },
+ "YurikoMiyazaki": {
+  "name": "Yuriko Miyazaki",
+  "elo": 1380.2,
+  "hElo": 1366.4,
+  "cElo": 1252.5,
+  "gElo": 1337.6
+ },
+ "WeronikaFalkowska": {
+  "name": "Weronika Falkowska",
+  "elo": 1377.9,
+  "hElo": 1401,
+  "cElo": 1286,
+  "gElo": 1363.9
+ },
+ "SofyaLansere": {
+  "name": "Sofya Lansere",
+  "elo": 1376,
+  "hElo": 1397.9,
+  "cElo": 1307.7,
+  "gElo": 1363
+ },
+ "AnnaKubareva": {
+  "name": "Anna Kubareva",
+  "elo": 1375.8,
+  "hElo": 1364.7,
+  "cElo": 1275.2,
+  "gElo": 1362.9
+ },
+ "LucijaCiricBagaric": {
+  "name": "Lucija Ciric Bagaric",
+  "elo": 1375.3,
+  "hElo": 1267.3,
+  "cElo": 1368.5,
+  "gElo": 1338.4
+ },
+ "LidiaEncheva": {
+  "name": "Lidia Encheva",
+  "elo": 1375,
+  "hElo": 1340.7,
+  "cElo": 1323.1,
+  "gElo": 1362.5
+ },
+ "GabrielaLee": {
+  "name": "Gabriela Lee",
+  "elo": 1374.6,
+  "hElo": 1280,
+  "cElo": 1378.8,
+  "gElo": 1295
+ },
+ "DalilaJakupovic": {
+  "name": "Dalila Jakupovic",
+  "elo": 1373.9,
+  "hElo": 1364.6,
+  "cElo": 1334.8,
+  "gElo": 1323.4
+ },
+ "KylieCollins": {
+  "name": "Kylie Collins",
+  "elo": 1372.3,
+  "hElo": 1350.5,
+  "cElo": 1309.4,
+  "gElo": 1370.9
+ },
+ "DeborahChiesa": {
+  "name": "Deborah Chiesa",
+  "elo": 1372.3,
+  "hElo": 1281,
+  "cElo": 1364.9,
+  "gElo": 1332.3
+ },
+ "YidiYang": {
+  "name": "Yidi Yang",
+  "elo": 1372,
+  "hElo": 1367.9,
+  "cElo": 1284.6,
+  "gElo": 1361
+ },
+ "AliceRame": {
+  "name": "Alice Rame",
+  "elo": 1370.3,
+  "hElo": 1189,
+  "cElo": 1376.3,
+  "gElo": 1329.6
+ },
+ "XinxinYao": {
+  "name": "Xinxin Yao",
+  "elo": 1370.2,
+  "hElo": 1400,
+  "cElo": 1278.2,
+  "gElo": 1360.1
+ },
+ "MisakiMatsuda": {
+  "name": "Misaki Matsuda",
+  "elo": 1369.1,
+  "hElo": 1350.7,
+  "cElo": 1356,
+  "gElo": 1359.5
+ },
+ "EllaMcdonald": {
+  "name": "Ella Mcdonald",
+  "elo": 1368.6,
+  "hElo": 1249.9,
+  "cElo": 1286.8,
+  "gElo": 1385.4
+ },
+ "VarvaraPanshina": {
+  "name": "Varvara Panshina",
+  "elo": 1368.5,
+  "hElo": 1308.6,
+  "cElo": 1417,
+  "gElo": 1359.3
+ },
+ "PetraSedlackova": {
+  "name": "Petra Sedlackova",
+  "elo": 1367.8,
+  "hElo": 1298.9,
+  "cElo": 1339.8,
+  "gElo": 1358.9
+ },
+ "EunhyeLee": {
+  "name": "Eunhye Lee",
+  "elo": 1367.7,
+  "hElo": 1353.7,
+  "cElo": 1298.9,
+  "gElo": 1358.9
+ },
+ "HibahShaikh": {
+  "name": "Hibah Shaikh",
+  "elo": 1366.2,
+  "hElo": 1364.8,
+  "cElo": 1316.1,
+  "gElo": 1358.1
+ },
+ "MinggeXu": {
+  "name": "Mingge Xu",
+  "elo": 1365.9,
+  "hElo": 1338.9,
+  "cElo": 1298,
+  "gElo": 1301.6
+ },
+ "IlincaDalinaAmariei": {
+  "name": "Ilinca Dalina Amariei",
+  "elo": 1365.1,
+  "hElo": 1252.4,
+  "cElo": 1346.9,
+  "gElo": 1357.5
+ },
+ "ViolaTurini": {
+  "name": "Viola Turini",
+  "elo": 1364.1,
+  "hElo": 1299,
+  "cElo": 1360.4,
+  "gElo": 1357.1
+ },
+ "CarolZhao": {
+  "name": "Carol Zhao",
+  "elo": 1363.8,
+  "hElo": 1381.8,
+  "cElo": 1282,
+  "gElo": 1334.9
+ },
+ "DalilaSpiteri": {
+  "name": "Dalila Spiteri",
+  "elo": 1362.6,
+  "hElo": 1281.5,
+  "cElo": 1359.1,
+  "gElo": 1356.3
+ },
+ "RasheedaMcadoo": {
+  "name": "Rasheeda Mcadoo",
+  "elo": 1362.2,
+  "hElo": 1301,
+  "cElo": 1313.1,
+  "gElo": 1356.1
+ },
+ "JiaJingLu": {
+  "name": "Jia Jing Lu",
+  "elo": 1361.6,
+  "hElo": 1331,
+  "cElo": 1331.4,
+  "gElo": 1271.4
+ },
+ "NatsumiKawaguchi": {
+  "name": "Natsumi Kawaguchi",
+  "elo": 1359.8,
+  "hElo": 1342.2,
+  "cElo": 1294.9,
+  "gElo": 1324.4
+ },
+ "IvaPrimorac": {
+  "name": "Iva Primorac",
+  "elo": 1358.6,
+  "hElo": 1245.9,
+  "cElo": 1368.2,
+  "gElo": 1354.3
+ },
+ "YufeiRen": {
+  "name": "Yufei Ren",
+  "elo": 1357.8,
+  "hElo": 1310.1,
+  "cElo": 1367.1,
+  "gElo": 1353.9
+ },
+ "VictoriaRodriguez": {
+  "name": "Victoria Rodriguez",
+  "elo": 1356.9,
+  "hElo": 1340.7,
+  "cElo": 1297.8,
+  "gElo": 1353.5
+ },
+ "MirianaTona": {
+  "name": "Miriana Tona",
+  "elo": 1356.8,
+  "hElo": 1329.4,
+  "cElo": 1327.4,
+  "gElo": 1353.4
+ },
+ "TenaLukas": {
+  "name": "Tena Lukas",
+  "elo": 1356.6,
+  "hElo": 1304.9,
+  "cElo": 1337.3,
+  "gElo": 1331.5
+ },
+ "HannaChang": {
+  "name": "Hanna Chang",
+  "elo": 1355,
+  "hElo": 1322.6,
+  "cElo": 1377.2,
+  "gElo": 1304.4
+ },
+ "EstherAdeshina": {
+  "name": "Esther Adeshina",
+  "elo": 1353.1,
+  "hElo": 1290,
+  "cElo": 1291.6,
+  "gElo": 1360
+ },
+ "MiriamBiancaBulgaru": {
+  "name": "Miriam Bianca Bulgaru",
+  "elo": 1352.6,
+  "hElo": 1279.1,
+  "cElo": 1321.2,
+  "gElo": 1313.7
+ },
+ "ElenaMalygina": {
+  "name": "Elena Malygina",
+  "elo": 1350.5,
+  "hElo": 1370.9,
+  "cElo": 1265.8,
+  "gElo": 1425.3
+ },
+ "RanahAkuaStoiber": {
+  "name": "Ranah Akua Stoiber",
+  "elo": 1350,
+  "hElo": 1325.2,
+  "cElo": 1287.9,
+  "gElo": 1321
+ },
+ "KiraPavlova": {
+  "name": "Kira Pavlova",
+  "elo": 1349.6,
+  "hElo": 1329.3,
+  "cElo": 1289.8,
+  "gElo": 1349.8
+ },
+ "MathildeLollia": {
+  "name": "Mathilde Lollia",
+  "elo": 1348.6,
+  "hElo": 1260.6,
+  "cElo": 1323.2,
+  "gElo": 1349.3
+ },
+ "SohyunPark": {
+  "name": "Sohyun Park",
+  "elo": 1347.2,
+  "hElo": 1359.1,
+  "cElo": 1297.6,
+  "gElo": 1423.6
+ },
+ "AyanoShimizu": {
+  "name": "Ayano Shimizu",
+  "elo": 1346.8,
+  "hElo": 1314.7,
+  "cElo": 1231.7,
+  "gElo": 1358.5
+ },
+ "ValeriaSavinykh": {
+  "name": "Valeria Savinykh",
+  "elo": 1344.2,
+  "hElo": 1318.9,
+  "cElo": 1247.5,
+  "gElo": 1314.8
+ },
+ "EkaterinaMaklakova": {
+  "name": "Ekaterina Maklakova",
+  "elo": 1343.3,
+  "hElo": 1318.3,
+  "cElo": 1309.9,
+  "gElo": 1346.6
+ },
+ "DenislavaGlushkova": {
+  "name": "Denislava Glushkova",
+  "elo": 1342,
+  "hElo": 1421,
+  "cElo": 1323.9,
+  "gElo": 1421
+ },
+ "HaleyGiavara": {
+  "name": "Haley Giavara",
+  "elo": 1341.6,
+  "hElo": 1322.1,
+  "cElo": 1252.3,
+  "gElo": 1356
+ },
+ "ViktoriaMorvayova": {
+  "name": "Viktoria Morvayova",
+  "elo": 1341.1,
+  "hElo": 1332.3,
+  "cElo": 1264.1,
+  "gElo": 1377.6
+ },
+ "AmeliaRajecki": {
+  "name": "Amelia Rajecki",
+  "elo": 1340.8,
+  "hElo": 1245.8,
+  "cElo": 1285.4,
+  "gElo": 1279.9
+ },
+ "MalaikaRapolu": {
+  "name": "Malaika Rapolu",
+  "elo": 1340.6,
+  "hElo": 1324,
+  "cElo": 1287.7,
+  "gElo": 1345.3
+ },
+ "KristianaSidorova": {
+  "name": "Kristiana Sidorova",
+  "elo": 1339.9,
+  "hElo": 1338.3,
+  "cElo": 1260.4,
+  "gElo": 1344.9
+ },
+ "RinaSaigo": {
+  "name": "Rina Saigo",
+  "elo": 1338.9,
+  "hElo": 1328,
+  "cElo": 1245.5,
+  "gElo": 1341
+ },
+ "SakiImamura": {
+  "name": "Saki Imamura",
+  "elo": 1338,
+  "hElo": 1318.1,
+  "cElo": 1284,
+  "gElo": 1336
+ },
+ "AlinaGranwehr": {
+  "name": "Alina Granwehr",
+  "elo": 1335.7,
+  "hElo": 1282.8,
+  "cElo": 1316.9,
+  "gElo": 1342.8
+ },
+ "ZuzannaPawlikowska": {
+  "name": "Zuzanna Pawlikowska",
+  "elo": 1335.6,
+  "hElo": 1337.2,
+  "cElo": 1284.3,
+  "gElo": 1342.8
+ },
+ "ManonLeonard": {
+  "name": "Manon Leonard",
+  "elo": 1335.4,
+  "hElo": 1338.9,
+  "cElo": 1168.9,
+  "gElo": 1265.9
+ },
+ "HinaInoue": {
+  "name": "Hina Inoue",
+  "elo": 1335.4,
+  "hElo": 1317.6,
+  "cElo": 1211.5,
+  "gElo": 1337.4
+ },
+ "LinaGlushko": {
+  "name": "Lina Glushko",
+  "elo": 1334.3,
+  "hElo": 1324.7,
+  "cElo": 1299,
+  "gElo": 1396.6
+ },
+ "WeronikaEwald": {
+  "name": "Weronika Ewald",
+  "elo": 1333.3,
+  "hElo": 1272.7,
+  "cElo": 1365.5,
+  "gElo": 1341.6
+ },
+ "KatarinaKuzmova": {
+  "name": "Katarina Kuzmova",
+  "elo": 1331.2,
+  "hElo": 1326,
+  "cElo": 1189.1,
+  "gElo": 1340.6
+ },
+ "DalaynaHewitt": {
+  "name": "Dalayna Hewitt",
+  "elo": 1331.1,
+  "hElo": 1316.8,
+  "cElo": 1218.7,
+  "gElo": 1340.5
+ },
+ "EkaterinaKazionova": {
+  "name": "Ekaterina Kazionova",
+  "elo": 1330.7,
+  "hElo": 1303,
+  "cElo": 1301.8,
+  "gElo": 1319.5
+ },
+ "AnastasiaAbbagnato": {
+  "name": "Anastasia Abbagnato",
+  "elo": 1330.6,
+  "hElo": 1284.1,
+  "cElo": 1323.3,
+  "gElo": 1340.3
+ },
+ "CarlotaMartinezCirez": {
+  "name": "Carlota Martinez Cirez",
+  "elo": 1330.5,
+  "hElo": 1223.4,
+  "cElo": 1311.9,
+  "gElo": 1321.3
+ },
+ "AntoniaVergaraRivera": {
+  "name": "Antonia Vergara Rivera",
+  "elo": 1328.8,
+  "hElo": 1279.4,
+  "cElo": 1315.1,
+  "gElo": 1339.4
+ },
+ "LucieNguyenTan": {
+  "name": "Lucie Nguyen Tan",
+  "elo": 1327.9,
+  "hElo": 1254.8,
+  "cElo": 1297.7,
+  "gElo": 1339
+ },
+ "DianaMartynov": {
+  "name": "Diana Martynov",
+  "elo": 1327.3,
+  "hElo": 1284.5,
+  "cElo": 1296.6,
+  "gElo": 1338.6
+ },
+ "GabrielaCe": {
+  "name": "Gabriela Ce",
+  "elo": 1325.7,
+  "hElo": 1256.6,
+  "cElo": 1305.2,
+  "gElo": 1310.9
+ },
+ "TatianaPieri": {
+  "name": "Tatiana Pieri",
+  "elo": 1325,
+  "hElo": 1285.3,
+  "cElo": 1298.6,
+  "gElo": 1337.5
+ },
+ "GeorginaGarciaPerez": {
+  "name": "Georgina Garcia Perez",
+  "elo": 1324.4,
+  "hElo": 1295.5,
+  "cElo": 1333.1,
+  "gElo": 1304.4
+ },
+ "AnetaLaboutkova": {
+  "name": "Aneta Laboutkova",
+  "elo": 1323.5,
+  "hElo": 1235.9,
+  "cElo": 1301.2,
+  "gElo": 1336.8
+ },
+ "JanaKolodynska": {
+  "name": "Jana Kolodynska",
+  "elo": 1322.7,
+  "hElo": 1318.7,
+  "cElo": 1201.2,
+  "gElo": 1297.5
+ },
+ "GerganaTopalova": {
+  "name": "Gergana Topalova",
+  "elo": 1322.3,
+  "hElo": 1172.7,
+  "cElo": 1310.1,
+  "gElo": 1326
+ },
+ "RadkaZelnickova": {
+  "name": "Radka Zelnickova",
+  "elo": 1321.7,
+  "hElo": 1297.6,
+  "cElo": 1263.1,
+  "gElo": 1335.9
+ },
+ "WushuangZheng": {
+  "name": "Wushuang Zheng",
+  "elo": 1319.7,
+  "hElo": 1308.2,
+  "cElo": 1245.9,
+  "gElo": 1334.9
+ },
+ "CarolynAnsari": {
+  "name": "Carolyn Ansari",
+  "elo": 1318.1,
+  "hElo": 1312.1,
+  "cElo": 1263.9,
+  "gElo": 1313.3
+ },
+ "RalukaSerban": {
+  "name": "Raluka Serban",
+  "elo": 1316.7,
+  "hElo": 1345.5,
+  "cElo": 1292.5,
+  "gElo": 1341.2
+ },
+ "SahajaYamalapalli": {
+  "name": "Sahaja Yamalapalli",
+  "elo": 1315.6,
+  "hElo": 1298.5,
+  "cElo": 1238.7,
+  "gElo": 1315.7
+ },
+ "AnouckVranckenPeeters": {
+  "name": "Anouck Vrancken Peeters",
+  "elo": 1314.1,
+  "hElo": 1350.2,
+  "cElo": 1285.4,
+  "gElo": 1257.4
+ },
+ "MomokoKobori": {
+  "name": "Momoko Kobori",
+  "elo": 1313.9,
+  "hElo": 1306.3,
+  "cElo": 1180.1,
+  "gElo": 1306
+ },
+ "GeorgiaPedone": {
+  "name": "Georgia Pedone",
+  "elo": 1311.7,
+  "hElo": 1168.6,
+  "cElo": 1313.1,
+  "gElo": 1323.2
+ },
+ "CaglaBuyukakcay": {
+  "name": "Cagla Buyukakcay",
+  "elo": 1310.9,
+  "hElo": 1312.1,
+  "cElo": 1289.7,
+  "gElo": 1219.7
+ },
+ "JuliePastikova": {
+  "name": "Julie Pastikova",
+  "elo": 1310.9,
+  "hElo": 1258.3,
+  "cElo": 1302.9,
+  "gElo": 1330.5
+ },
+ "ValentinaSteiner": {
+  "name": "Valentina Steiner",
+  "elo": 1310.1,
+  "hElo": 1276.9,
+  "cElo": 1303.4,
+  "gElo": 1330
+ },
+ "EmilyAppleton": {
+  "name": "Emily Appleton",
+  "elo": 1308.9,
+  "hElo": 1272.2,
+  "cElo": 1235,
+  "gElo": 1296.7
+ },
+ "PriskaMadelynNugroho": {
+  "name": "Priska Madelyn Nugroho",
+  "elo": 1307.9,
+  "hElo": 1295.4,
+  "cElo": 1335.1,
+  "gElo": 1404
+ },
+ "DariaLodikova": {
+  "name": "Daria Lodikova",
+  "elo": 1307.8,
+  "hElo": 1234.1,
+  "cElo": 1301.1,
+  "gElo": 1328.9
+ },
+ "JessicaPieri": {
+  "name": "Jessica Pieri",
+  "elo": 1307.6,
+  "hElo": 1262.8,
+  "cElo": 1300.4,
+  "gElo": 1318.3
+ },
+ "VictoriaAllen": {
+  "name": "Victoria Allen",
+  "elo": 1306.9,
+  "hElo": 1286.2,
+  "cElo": 1268.5,
+  "gElo": 1248.9
+ },
+ "AnaSofiaSanchez": {
+  "name": "Ana Sofia Sanchez",
+  "elo": 1306.4,
+  "hElo": 1275.9,
+  "cElo": 1309.1,
+  "gElo": 1302.3
+ },
+ "EllieSchoppe": {
+  "name": "Ellie Schoppe",
+  "elo": 1305.3,
+  "hElo": 1312,
+  "cElo": 1243.4,
+  "gElo": 1327.7
+ },
+ "DayeonBack": {
+  "name": "Dayeon Back",
+  "elo": 1305.3,
+  "hElo": 1260.9,
+  "cElo": 1286.8,
+  "gElo": 1327.7
+ },
+ "SofiaRocchetti": {
+  "name": "Sofia Rocchetti",
+  "elo": 1304.7,
+  "hElo": 1252.8,
+  "cElo": 1292.1,
+  "gElo": 1327.3
+ },
+ "LiaKaratancheva": {
+  "name": "Lia Karatancheva",
+  "elo": 1304.7,
+  "hElo": 1228.1,
+  "cElo": 1292.7,
+  "gElo": 1327.3
+ },
+ "JoelleLillySophieSteur": {
+  "name": "Joelle Lilly Sophie Steur",
+  "elo": 1299.7,
+  "hElo": 1295.5,
+  "cElo": 1265.6,
+  "gElo": 1324.8
+ },
+ "MellElizabethReascoGonzalez": {
+  "name": "Mell Elizabeth Reasco Gonzalez",
+  "elo": 1296.2,
+  "hElo": 1364,
+  "cElo": 1246.1,
+  "gElo": 1398.1
+ },
+ "MariaKozyreva": {
+  "name": "Maria Kozyreva",
+  "elo": 1296,
+  "hElo": 1307.6,
+  "cElo": 1248.8,
+  "gElo": 1265.9
+ },
+ "MeiqiGuo": {
+  "name": "Meiqi Guo",
+  "elo": 1295.7,
+  "hElo": 1251.4,
+  "cElo": 1274.5,
+  "gElo": 1322.8
+ },
+ "DilettaCherubini": {
+  "name": "Diletta Cherubini",
+  "elo": 1292.5,
+  "hElo": 1231.3,
+  "cElo": 1276.3,
+  "gElo": 1321.3
+ },
+ "AnastasiaTikhonova": {
+  "name": "Anastasia Tikhonova",
+  "elo": 1291.2,
+  "hElo": 1273.9,
+  "cElo": 1253.2,
+  "gElo": 1397.2
+ },
+ "CristinaDiazAdrover": {
+  "name": "Cristina Diaz Adrover",
+  "elo": 1290.4,
+  "hElo": 1217.7,
+  "cElo": 1289,
+  "gElo": 1320.2
+ },
+ "MariaFlorenciaUrrutia": {
+  "name": "Maria Florencia Urrutia",
+  "elo": 1289.8,
+  "hElo": 1259.9,
+  "cElo": 1279.5,
+  "gElo": 1319.9
+ },
+ "SofiaJohnson": {
+  "name": "Sofia Johnson",
+  "elo": 1289.3,
+  "hElo": 1264.9,
+  "cElo": 1236.4,
+  "gElo": 1308.8
+ },
+ "AlessandraMazzola": {
+  "name": "Alessandra Mazzola",
+  "elo": 1287.2,
+  "hElo": 1258.6,
+  "cElo": 1272.1,
+  "gElo": 1318.6
+ },
+ "LuciaCortezLlorca": {
+  "name": "Lucia Cortez Llorca",
+  "elo": 1285.7,
+  "hElo": 1167.9,
+  "cElo": 1332.2,
+  "gElo": 1317.8
+ },
+ "ValentiniGrammatikopoulou": {
+  "name": "Valentini Grammatikopoulou",
+  "elo": 1284.9,
+  "hElo": 1257.2,
+  "cElo": 1300.7,
+  "gElo": 1247.7
+ },
+ "SofiaElenaCabezasDominguez": {
+  "name": "Sofia Elena Cabezas Dominguez",
+  "elo": 1283.1,
+  "hElo": 1302.3,
+  "cElo": 1197,
+  "gElo": 1316.5
+ },
+ "ArianaArseneault": {
+  "name": "Ariana Arseneault",
+  "elo": 1281.6,
+  "hElo": 1271.1,
+  "cElo": 1226.3,
+  "gElo": 1298.4
+ },
+ "MadisonSieg": {
+  "name": "Madison Sieg",
+  "elo": 1279.7,
+  "hElo": 1273.5,
+  "cElo": 1227.9,
+  "gElo": 1314.8
+ },
+ "NahiaBerecoechea": {
+  "name": "Nahia Berecoechea",
+  "elo": 1278.9,
+  "hElo": 1217.3,
+  "cElo": 1280.8,
+  "gElo": 1314.4
+ },
+ "ElinaNepliy": {
+  "name": "Elina Nepliy",
+  "elo": 1278.8,
+  "hElo": 1251.7,
+  "cElo": 1298,
+  "gElo": 1314.4
+ },
+ "AndreeaPrisacariu": {
+  "name": "Andreea Prisacariu",
+  "elo": 1275.9,
+  "hElo": 1241,
+  "cElo": 1252.4,
+  "gElo": 1313
+ },
+ "TiphanieFiquet": {
+  "name": "Tiphanie Fiquet",
+  "elo": 1275.6,
+  "hElo": 1254,
+  "cElo": 1272.3,
+  "gElo": 1312.8
+ },
+ "CarlaMarkus": {
+  "name": "Carla Markus",
+  "elo": 1275.1,
+  "hElo": 1252.6,
+  "cElo": 1265.2,
+  "gElo": 1312.6
+ },
+ "IndiannaSpink": {
+  "name": "Indianna Spink",
+  "elo": 1273.2,
+  "hElo": 1264.7,
+  "cElo": 1251.6,
+  "gElo": 1285.3
+ },
+ "AliceRobbe": {
+  "name": "Alice Robbe",
+  "elo": 1272.4,
+  "hElo": 1217.8,
+  "cElo": 1329.2,
+  "gElo": 1300.5
+ },
+ "YasmineMansouri": {
+  "name": "Yasmine Mansouri",
+  "elo": 1270.1,
+  "hElo": 1287.5,
+  "cElo": 1137.4,
+  "gElo": 1310.1
+ },
+ "FrancescaPace": {
+  "name": "Francesca Pace",
+  "elo": 1269.6,
+  "hElo": 1262.8,
+  "cElo": 1244.9,
+  "gElo": 1309.8
+ },
+ "EkaterinaOvcharenko": {
+  "name": "Ekaterina Ovcharenko",
+  "elo": 1269.1,
+  "hElo": 1224,
+  "cElo": 1281.8,
+  "gElo": 1309.5
+ },
+ "LeonieKung": {
+  "name": "Leonie Kung",
+  "elo": 1268.4,
+  "hElo": 1297.5,
+  "cElo": 1226.5,
+  "gElo": 1256
+ },
+ "AnnaSinclairRogers": {
+  "name": "Anna Sinclair Rogers",
+  "elo": 1268.3,
+  "hElo": 1240.2,
+  "cElo": 1242.1,
+  "gElo": 1324.7
+ },
+ "CarolinaAlves": {
+  "name": "Carolina Alves",
+  "elo": 1267.2,
+  "hElo": 1268.7,
+  "cElo": 1251.3,
+  "gElo": 1260
+ },
+ "BeatriseZeltina": {
+  "name": "Beatrise Zeltina",
+  "elo": 1267.2,
+  "hElo": 1210.5,
+  "cElo": 1274.4,
+  "gElo": 1308.6
+ },
+ "BrianaSzabo": {
+  "name": "Briana Szabo",
+  "elo": 1266,
+  "hElo": 1238.3,
+  "cElo": 1280.2,
+  "gElo": 1383
+ },
+ "UrszulaRadwanska": {
+  "name": "Urszula Radwanska",
+  "elo": 1264.1,
+  "hElo": 1236,
+  "cElo": 1319.8,
+  "gElo": 1304.3
+ },
+ "JiaqiWang": {
+  "name": "Jiaqi Wang",
+  "elo": 1261.6,
+  "hElo": 1246.8,
+  "cElo": 1228.3,
+  "gElo": 1305.8
+ },
+ "AnkitaRaina": {
+  "name": "Ankita Raina",
+  "elo": 1261.5,
+  "hElo": 1233,
+  "cElo": 1317.2,
+  "gElo": 1267.4
+ },
+ "MartinaColmegna": {
+  "name": "Martina Colmegna",
+  "elo": 1260.3,
+  "hElo": 1245.2,
+  "cElo": 1248.5,
+  "gElo": 1305.2
+ },
+ "YujiaHuang": {
+  "name": "Yujia Huang",
+  "elo": 1258.3,
+  "hElo": 1300,
+  "cElo": 1140.7,
+  "gElo": 1304.2
+ },
+ "DashaPlekhanova": {
+  "name": "Dasha Plekhanova",
+  "elo": 1257.6,
+  "hElo": 1234.6,
+  "cElo": 1204.6,
+  "gElo": 1303.8
+ },
+ "AlanaSmith": {
+  "name": "Alana Smith",
+  "elo": 1256.3,
+  "hElo": 1258.9,
+  "cElo": 1160.1,
+  "gElo": 1273.8
+ },
+ "PeangtarnPlipuech": {
+  "name": "Peangtarn Plipuech",
+  "elo": 1254.6,
+  "hElo": 1255,
+  "cElo": 1175.7,
+  "gElo": 1277.6
+ },
+ "StephanieJudithVisscher": {
+  "name": "Stephanie Judith Visscher",
+  "elo": 1253,
+  "hElo": 1255.3,
+  "cElo": 1176,
+  "gElo": 1301.5
+ },
+ "LauraMair": {
+  "name": "Laura Mair",
+  "elo": 1250.4,
+  "hElo": 1219.1,
+  "cElo": 1249.2,
+  "gElo": 1300.2
+ },
+ "YingZhang": {
+  "name": "Ying Zhang",
+  "elo": 1248,
+  "hElo": 1238.2,
+  "cElo": 1194.5,
+  "gElo": 1299
+ },
+ "EriShimizu": {
+  "name": "Eri Shimizu",
+  "elo": 1245,
+  "hElo": 1225.9,
+  "cElo": 1237.5,
+  "gElo": 1303.6
+ },
+ "AstridLewYanFoon": {
+  "name": "Astrid Lew Yan Foon",
+  "elo": 1243.8,
+  "hElo": 1249.6,
+  "cElo": 1214.2,
+  "gElo": 1296.9
+ },
+ "VaishnaviAdkar": {
+  "name": "Vaishnavi Adkar",
+  "elo": 1241,
+  "hElo": 1227.2,
+  "cElo": 1235.5,
+  "gElo": 1295.5
+ },
+ "LauraHietaranta": {
+  "name": "Laura Hietaranta",
+  "elo": 1240.3,
+  "hElo": 1223.1,
+  "cElo": 1208.8,
+  "gElo": 1295.1
+ },
+ "KseniaZaytseva": {
+  "name": "Ksenia Zaytseva",
+  "elo": 1239.6,
+  "hElo": 1255.7,
+  "cElo": 1210.4,
+  "gElo": 1294.8
+ },
+ "CeliaCervinoRuiz": {
+  "name": "Celia Cervino Ruiz",
+  "elo": 1236.8,
+  "hElo": 1232.9,
+  "cElo": 1190,
+  "gElo": 1293.4
+ },
+ "RuienZhang": {
+  "name": "Ruien Zhang",
+  "elo": 1235.9,
+  "hElo": 1226.6,
+  "cElo": 1232.9,
+  "gElo": 1292.9
+ },
+ "NinaVargova": {
+  "name": "Nina Vargova",
+  "elo": 1235.1,
+  "hElo": 1208.6,
+  "cElo": 1213.2,
+  "gElo": 1292.6
+ },
+ "JosyDaems": {
+  "name": "Josy Daems",
+  "elo": 1234.1,
+  "hElo": 1217.7,
+  "cElo": 1186.4,
+  "gElo": 1292
+ },
+ "MariaMartinezVaquero": {
+  "name": "Maria Martinez Vaquero",
+  "elo": 1228.4,
+  "hElo": 1256.7,
+  "cElo": 1142.5,
+  "gElo": 1289.2
+ },
+ "JasmijnGimbrere": {
+  "name": "Jasmijn Gimbrere",
+  "elo": 1222.6,
+  "hElo": 1218.7,
+  "cElo": 1201.5,
+  "gElo": 1242.8
+ },
+ "KaterinaTsygourova": {
+  "name": "Katerina Tsygourova",
+  "elo": 1221.8,
+  "hElo": 1212.1,
+  "cElo": 1211.2,
+  "gElo": 1285.9
+ },
+ "VictoriaBosio": {
+  "name": "Victoria Bosio",
+  "elo": 1220,
+  "hElo": 1190.5,
+  "cElo": 1203.6,
+  "gElo": 1285
+ },
+ "IsabellaMariaSerban": {
+  "name": "Isabella Maria Serban",
+  "elo": 1219.4,
+  "hElo": 1223.4,
+  "cElo": 1196.9,
+  "gElo": 1284.7
+ },
+ "AnastasiiaFirman": {
+  "name": "Anastasiia Firman",
+  "elo": 1219,
+  "hElo": 1182.6,
+  "cElo": 1210.5,
+  "gElo": 1284.5
+ },
+ "BiancaElenaBarbulescu": {
+  "name": "Bianca Elena Barbulescu",
+  "elo": 1216,
+  "hElo": 1223,
+  "cElo": 1183.1,
+  "gElo": 1283
+ },
+ "AnaCandiotto": {
+  "name": "Ana Candiotto",
+  "elo": 1214.8,
+  "hElo": 1201.6,
+  "cElo": 1197.3,
+  "gElo": 1282.4
+ },
+ "MartinaOkalova": {
+  "name": "Martina Okalova",
+  "elo": 1213.6,
+  "hElo": 1222.4,
+  "cElo": 1187.8,
+  "gElo": 1281.8
+ },
+ "NicoleFossaHuergo": {
+  "name": "Nicole Fossa Huergo",
+  "elo": 1209.6,
+  "hElo": 1198.5,
+  "cElo": 1176.4,
+  "gElo": 1279.8
+ },
+ "ChelseaFontenel": {
+  "name": "Chelsea Fontenel",
+  "elo": 1206.4,
+  "hElo": 1235.9,
+  "cElo": 1152.3,
+  "gElo": 1278.2
+ },
+ "JanaOtzipka": {
+  "name": "Jana Otzipka",
+  "elo": 1206.2,
+  "hElo": 1241.8,
+  "cElo": 1162.5,
+  "gElo": 1278.1
+ },
+ "SaraCakarevic": {
+  "name": "Sara Cakarevic",
+  "elo": 1202.3,
+  "hElo": 1184.5,
+  "cElo": 1210.4,
+  "gElo": 1276.2
+ },
+ "NikaRadisic": {
+  "name": "Nika Radisic",
+  "elo": 1196,
+  "hElo": 1192.7,
+  "cElo": 1199.2,
+  "gElo": 1348
+ },
+ "VictoriaHu": {
+  "name": "Victoria Hu",
+  "elo": 1194.8,
+  "hElo": 1191.9,
+  "cElo": 1164.4,
+  "gElo": 1272.4
+ },
+ "GinaMarieDittmann": {
+  "name": "Gina Marie Dittmann",
+  "elo": 1190.4,
+  "hElo": 1176.9,
+  "cElo": 1184.9,
+  "gElo": 1270.2
+ },
+ "IkumiYamazaki": {
+  "name": "Ikumi Yamazaki",
+  "elo": 1189,
+  "hElo": 1188.8,
+  "cElo": 1215.3,
+  "gElo": 1269.5
+ },
+ "MarineSzostak": {
+  "name": "Marine Szostak",
+  "elo": 1184.1,
+  "hElo": 1152.7,
+  "cElo": 1221.8,
+  "gElo": 1267
+ },
+ "GabriellaDaSilvaFick": {
+  "name": "Gabriella Da Silva Fick",
+  "elo": 1184,
+  "hElo": 1168.5,
+  "cElo": 1177.4,
+  "gElo": 1267
+ },
+ "YaroslavaBartashevich": {
+  "name": "Yaroslava Bartashevich",
+  "elo": 1181.5,
+  "hElo": 1132.5,
+  "cElo": 1167.1,
+  "gElo": 1265.8
+ },
+ "KristinaNovak": {
+  "name": "Kristina Novak",
+  "elo": 1180.9,
+  "hElo": 1199.2,
+  "cElo": 1125.9,
+  "gElo": 1265.4
+ },
+ "DariaZelinskaya": {
+  "name": "Daria Zelinskaya",
+  "elo": 1168.9,
+  "hElo": 1157.4,
+  "cElo": 1199.5,
+  "gElo": 1259.5
+ },
+ "ValeriyaStrakhova": {
+  "name": "Valeriya Strakhova",
+  "elo": 1164.9,
+  "hElo": 1101.5,
+  "cElo": 1179.3,
+  "gElo": 1257.4
+ },
+ "SofiaShapatava": {
+  "name": "Sofia Shapatava",
+  "elo": 1163.2,
+  "hElo": 1165.2,
+  "cElo": 1155.5,
+  "gElo": 1227
+ },
+ "ChengyiyiYuan": {
+  "name": "Chengyiyi Yuan",
+  "elo": 1152.4,
+  "hElo": 1070,
+  "cElo": 1237.1,
+  "gElo": 1251.2
+ },
+ "LianTran": {
+  "name": "Lian Tran",
+  "elo": 1152.3,
+  "hElo": 1191.1,
+  "cElo": 1133.6,
+  "gElo": 1254.3
+ },
+ "NadiiaKolb": {
+  "name": "Nadiia Kolb",
+  "elo": 1150.7,
+  "hElo": 1134.4,
+  "cElo": 1147.6,
+  "gElo": 1250.3
+ },
+ "EkaterinaYashina": {
+  "name": "Ekaterina Yashina",
+  "elo": 1145.9,
+  "hElo": 1143.4,
+  "cElo": 1108.7,
+  "gElo": 1208.1
+ },
+ "MayukaAikawa": {
+  "name": "Mayuka Aikawa",
+  "elo": 1139.1,
+  "hElo": 1113,
+  "cElo": 1151.7,
+  "gElo": 1244.5
+ },
+ "JuliaAdams": {
+  "name": "Julia Adams",
+  "elo": 1138.2,
+  "hElo": 1152.3,
+  "cElo": 1128.8,
+  "gElo": 1244.1
+ },
+ "AnaGrubor": {
+  "name": "Ana Grubor",
+  "elo": 1127.8,
+  "hElo": 1137.6,
+  "cElo": 1114.8,
+  "gElo": 1238.9
+ },
+ "SapfoSakellaridi": {
+  "name": "Sapfo Sakellaridi",
+  "elo": 1119.6,
+  "hElo": 1069.8,
+  "cElo": 1123.8,
+  "gElo": 1234.8
+ },
+ "DemiTran": {
+  "name": "Demi Tran",
+  "elo": 1092.4,
+  "hElo": 1149,
+  "cElo": 1065.1,
+  "gElo": 1221.2
+ },
+ "AlbaReyGarcia": {
+  "name": "Alba Rey Garcia",
+  "elo": 1089.1,
+  "hElo": 1086.3,
+  "cElo": 1097.3,
+  "gElo": 1219.6
+ },
+ "ChentingZhu": {
+  "name": "Chenting Zhu",
+  "elo": 1082,
+  "hElo": 1064.4,
+  "cElo": 1125.5,
+  "gElo": 1216
+ },
+ "AmyZhu": {
+  "name": "Amy Zhu",
+  "elo": 1050.8,
+  "hElo": 1060.2,
+  "cElo": 1084.7,
+  "gElo": 1200.4
+ },
+ "SaraLanca": {
+  "name": "Sara Lanca",
+  "elo": 1019.6,
+  "hElo": 1003.5,
+  "cElo": 1077.3,
+  "gElo": 1184.8
+ }
+}

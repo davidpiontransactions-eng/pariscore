@@ -1,69 +1,62 @@
-import { NextRequest, NextResponse } from "next/server";
-import { readFile } from "fs/promises";
-import path from "path";
-import type { MetricRankings } from "@/lib/football-data";
-
-/** Structure du fichier statique public/data/rankings/{leagueId}.json */
-type RankingsFile = {
-  meta?: { league?: string; updatedAt?: string; season?: string };
-  home?: MetricRankings;
-  away?: MetricRankings;
-  metricDefs?: Record<string, unknown>;
-};
+import { NextResponse } from "next/server";
+import {
+  fdRanking,
+  fdSeasons,
+  FD_MARKETS,
+  type FdMarketKey,
+  type FdScope,
+} from "@/lib/football-fd";
+import { leagueXgRanking } from "@/lib/football-xg";
 
 /**
- * GET /api/football/rankings?leagueId=epl&side=home
+ * GET /api/football/rankings?league=ligue1&season=2025/26&scope=overall
  *
- * Sert le fichier statique /public/data/rankings/{leagueId}.json
- * via lecture filesystem — un fetch relatif échoue en Route Handler
- * (pas de base URL) et en build standalone le répertoire public/ est
- * copié dans .next/standalone/. Cache 1h serveur, SWR 24h CDN.
+ * Classements complets d'un championnat pour tous les marchés en un appel :
+ * buts moyens, Over 1.5 / Under 3.5, BTTS, corners O6.5/O7.5/match, PPM
+ * (source football-data.co.uk) + xG moyen et xG défensif moyen (Understat,
+ * si la ligue est couverte).
  */
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const leagueId = url.searchParams.get("leagueId");
-  const side = (url.searchParams.get("side") || "home") as "home" | "away";
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const league = url.searchParams.get("league");
+  if (!league) {
+    return NextResponse.json({ error: "league requise" }, { status: 400 });
+  }
+  const scopeParam = url.searchParams.get("scope") ?? "overall";
+  const scope: FdScope = ["overall", "home", "away"].includes(scopeParam)
+    ? (scopeParam as FdScope)
+    : "overall";
 
-  if (!leagueId) {
-    return NextResponse.json(
-      { error: "leagueId required" },
-      { status: 400 }
-    );
+  const seasons = fdSeasons(league);
+  if (!seasons.length && !leagueXgRanking(league, "2025/26", scope)) {
+    return NextResponse.json({ error: "ligue indisponible" }, { status: 404 });
   }
 
-  if (side !== "home" && side !== "away") {
-    return NextResponse.json(
-      { error: "side must be 'home' or 'away'" },
-      { status: 400 }
-    );
+  const season = url.searchParams.get("season") ?? seasons[0] ?? "2025/26";
+  const higherBetter = Object.fromEntries(
+    Object.entries(FD_MARKETS).map(([k, v]) => [k, v.higherBetter]),
+  );
+
+  const markets: Partial<Record<FdMarketKey | "xgFor" | "xgAgainst", unknown>> = {};
+  for (const key of Object.keys(FD_MARKETS) as FdMarketKey[]) {
+    const rows = fdRanking(league, season, key, scope);
+    if (rows) markets[key] = rows;
   }
 
-  try {
-    const filePath = path.join(
-      process.cwd(),
-      "public",
-      "data",
-      "rankings",
-      `${leagueId}.json`
-    );
-    const raw = await readFile(filePath, "utf8");
-    const full: RankingsFile = JSON.parse(raw);
-    const data: MetricRankings = full[side] ?? {};
-
-    return NextResponse.json(data, {
-      headers: {
-        "Cache-Control":
-          "public, s-maxage=3600, stale-while-revalidate=86400",
-      },
-    });
-  } catch (err) {
-    console.error(
-      `[rankings-api] ${leagueId}/${side}:`,
-      (err as Error).message
-    );
-    return NextResponse.json(
-      { error: "Rankings unavailable — upstream error" },
-      { status: 503 }
-    );
+  // xG offensif/défensif (Understat) — classement séparé car source distincte.
+  const xgRows = leagueXgRanking(league, season, scope);
+  if (xgRows?.length) {
+    markets.xgFor = [...xgRows].sort((a, b) => b.xgFor - a.xgFor);
+    markets.xgAgainst = [...xgRows].sort((a, b) => a.xgAgainst - b.xgAgainst);
   }
+
+  return NextResponse.json({
+    league,
+    season,
+    scope,
+    availableSeasons: seasons.length ? seasons : xgRows ? [season] : [],
+    higherBetter,
+    markets,
+    meta: { computedAt: new Date().toISOString() },
+  });
 }

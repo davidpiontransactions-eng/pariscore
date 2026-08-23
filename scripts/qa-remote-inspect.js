@@ -1,0 +1,11 @@
+const fs = require("fs");
+const p = "/home/ubuntu/pariscore/.next/standalone/.next/server/app/api/tennis/player-stats/route.js";
+const t = fs.readFileSync(p, "utf8");
+console.log("prisma refs:", (t.match(/prisma/g) || []).length);
+console.log("l10 refs:", (t.match(/l10/g) || []).length);
+console.log("computeL10 refs:", (t.match(/computeL10/g) || []).length);
+console.log("len:", t.length);
+const nft = JSON.parse(fs.readFileSync(p + ".nft.json", "utf8"));
+const prismaFiles = nft.files.filter((f) => f.includes("prisma"));
+console.log("nft files:", nft.files.length, "| prisma in nft:", prismaFiles.length);
+console.log(prismaFiles.slice(0, 5).join("\n"));

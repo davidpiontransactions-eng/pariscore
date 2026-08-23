@@ -1,0 +1,74 @@
+name: Refresh xG
+
+# Daily auto-refresh of REAL expected-goals (xG) per team from understat.com
+# (Opta data via the site's own getLeagueData XHR endpoint). Generates
+# /public/data/xg/*.json with per-match history {h_a, xG, xGA, scored, missed}
+# cumulating current + previous season, then commits back to main.
+#
+# Coverage: EPL, La Liga, Bundesliga, Serie A, Ligue 1, RFPL.
+#
+# Triggers:
+#   - schedule: 05:00 UTC daily (after rankings + form refreshes)
+#   - workflow_dispatch: manual trigger
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: refresh-xg
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    name: Scrape xG from understat.com
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scripts/requirements-rankings.txt
+
+      - name: Scrape xG
+        run: |
+          mkdir -p public/data/xg
+          python scripts/scrape_understat.py --all --output-dir public/data/xg
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- public/data/xg/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected xG changes:"
+            git diff --stat -- public/data/xg/
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/xg/
+          git commit -m "chore(data): refresh xg [skip ci]"
+          git push

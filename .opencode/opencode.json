@@ -81,6 +81,38 @@
           "name": "DeepSeek V4 Flash 0731"
         }
       }
+    },
+    "nvidia": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NVIDIA NIM",
+      "options": {
+        "baseURL": "https://integrate.api.nvidia.com/v1",
+        "apiKey": "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"
+      },
+      "models": {
+        "deepseek-ai/deepseek-v4-flash-0731": { "name": "DeepSeek V4 Flash 0731" },
+        "openai/gpt-oss-120b": { "name": "GPT-OSS 120B (MoE reasoning)" },
+        "openai/gpt-oss-20b": { "name": "GPT-OSS 20B" },
+        "nvidia/llama-3.3-nemotron-super-49b-v1": { "name": "Llama 3.3 Nemotron Super 49B v1" },
+        "nvidia/llama-3.3-nemotron-super-49b-v1.5": { "name": "Llama 3.3 Nemotron Super 49B v1.5" },
+        "nvidia/nemotron-3-nano-30b-a3b": { "name": "Nemotron 3 Nano 30B A3B" },
+        "nvidia/nemotron-3-super-120b-a12b": { "name": "Nemotron 3 Super 120B A12B" },
+        "nvidia/nemotron-3-ultra-550b-a55b": { "name": "Nemotron 3 Ultra 550B A55B" },
+        "nvidia/nemotron-3.5-lightning-30b-a3b": { "name": "Nemotron 3.5 Lightning 30B A3B" },
+        "nvidia/nemotron-nano-12b-v2-vl": { "name": "Nemotron Nano 12B v2 VL" },
+        "nvidia/nvidia-nemotron-nano-9b-v2": { "name": "Nemotron Nano 9B v2" },
+        "nvidia/llama-3.1-nemotron-51b-instruct": { "name": "Llama 3.1 Nemotron 51B Instruct" },
+        "nvidia/llama-3.1-nemotron-70b-instruct": { "name": "Llama 3.1 Nemotron 70B Instruct" },
+        "nvidia/llama-3.1-nemotron-ultra-253b-v1": { "name": "Llama 3.1 Nemotron Ultra 253B v1" },
+        "mistralai/mistral-large-2-instruct": { "name": "Mistral Large 2 Instruct" },
+        "mistralai/mistral-large": { "name": "Mistral Large" },
+        "mistralai/mistral-nemotron": { "name": "Mistral Nemotron" },
+        "moonshotai/kimi-k3": { "name": "Kimi K3" },
+        "moonshotai/kimi-k2.6": { "name": "Kimi K2.6" },
+        "thinkingmachines/inkling": { "name": "Inkling (MoE 256-experts)" },
+        "poolside/laguna-xs-2.1": { "name": "Laguna XS 2.1" },
+        "meta/llama-3.3-70b-instruct": { "name": "Llama 3.3 70B Instruct" }
+      }
     }
   }
 }

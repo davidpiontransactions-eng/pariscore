@@ -103,6 +103,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-live-card | football-live-card.tsx | Carte match live football |
 | football-match-card | football-match-card.tsx | Carte de match football |
 | football-match-detail-dialog | football-match-detail-dialog.tsx | Dialogue analyse détaillée d'un match foot |
+| football-strategy-top5-widget | football-strategy-top5-widget.tsx | Widget sidebar « Top 5 matchs par stratégie » (9 pills, cotes dévigées + forme soccerstats, stats xG/buts/encaissés L5/L10 D/E) |
+| football-league-rankings-widget | football-league-rankings-widget.tsx | Widget sidebar « Classements championnat » (buts/m, PPM, O1.5/U3.5, BTTS, corners O6.5/O7.5, xG/xGA × global/dom/ext × saison) |
 | FootballPressReviewWidget | FootballPressReviewWidget.tsx | Widget « Revue de Presse & Pronostics Médias » (3+ sources, consensus 1X2/Over/BTTS) |
 | football-tab-content | football-tab-content.tsx | Contenu de l'onglet football |
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
