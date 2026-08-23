@@ -15,6 +15,8 @@ import { LocalStorageMigration } from "@/components/bet-manager/local-storage-mi
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Zap, Plus, Trophy, ArrowLeft, Loader2, Download } from "lucide-react";
+// Force rebuild: timestamp
+const REBUILD_TRIGGER = Date.now();
 
 export default function BankrollDashboardPage() {
   const bm = useBetManager();
