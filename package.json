@@ -14,6 +14,7 @@
     "test": "node scripts/run-bun.js test",
     "qa:node": "node scripts/qa-node-check.js",
     "qa:press-review": "bun run scripts/qa-press-review.ts",
+    "deploy:force-rebuild": "echo 'force rebuild'",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
