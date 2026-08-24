@@ -39,22 +39,12 @@ type UnderstatPlayer = {
   assists?: number | string;
 };
 
-function decodeUnderstatJson(raw: string): string {
-  // Les blobs Understat encodent les caractères non-ASCII en \xXX.
-  return raw.replace(/\\x([0-9A-Fa-f]{2})/g, (_, h) =>
-    String.fromCharCode(parseInt(h, 16)),
-  );
-}
-
-function extractPlayersData(html: string): UnderstatPlayer[] {
-  const m = html.match(/var\s+playersData\s*=\s*JSON\.parse\('([^']+)'\)/);
-  if (!m) return [];
-  try {
-    return JSON.parse(decodeUnderstatJson(m[1])) as UnderstatPlayer[];
-  } catch {
-    return [];
-  }
-}
+/** Headers XHR obligatoires — sans `X-Requested-With`, Understat renvoie 404. */
+const UNDERSTAT_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+  "X-Requested-With": "XMLHttpRequest",
+  Accept: "application/json, text/javascript, */*; q=0.01",
+};
 
 function topBy(
   players: UnderstatPlayer[],
@@ -78,26 +68,25 @@ function topBy(
     .slice(0, top);
 }
 
-async function fetchPlayers(league: string, seasonYear: number): Promise<PlayersPayload> {
+async function fetchPlayers(league: string, seasonYear: number, top: number): Promise<PlayersPayload> {
   const understatSlug = UNDERSTAT_LEAGUES[league];
   if (!understatSlug) throw new Error("UNSUPPORTED_LEAGUE");
 
+  // Endpoint XHR du front Understat (même mécanique que scripts/scrape_understat.py).
   const res = await fetch(
-    `https://understat.com/league/${understatSlug}/${seasonYear}`,
-    {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; PariScore/1.0)" },
-      signal: AbortSignal.timeout(20000),
-    },
+    `https://understat.com/getLeagueData/${understatSlug}/${seasonYear}`,
+    { headers: UNDERSTAT_HEADERS, signal: AbortSignal.timeout(20000) },
   );
   if (!res.ok) throw new Error(`UNDERSTAT_HTTP_${res.status}`);
-  const players = extractPlayersData(await res.text());
-  if (players.length === 0) throw new Error("UNDERSTAT_PARSE_EMPTY");
+  const payload = (await res.json()) as { players?: UnderstatPlayer[] };
+  const players = payload.players ?? [];
+  if (players.length === 0) throw new Error("UNDERSTAT_PLAYERS_EMPTY");
 
   return {
     league,
     seasonYear,
-    scorers: topBy(players, "goals", 10),
-    assisters: topBy(players, "assists", 10),
+    scorers: topBy(players, "goals", top),
+    assisters: topBy(players, "assists", top),
   };
 }
 
@@ -134,7 +123,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const payload = await fetchPlayers(league, seasonYear);
+    const payload = await fetchPlayers(league, seasonYear, top);
     cache.set(key, { payload, at: Date.now() });
     return NextResponse.json(payload);
   } catch (e) {
