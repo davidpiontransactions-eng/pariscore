@@ -61,6 +61,7 @@ import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
+import { Top5SelectionPanel } from "@/components/football/top5-selection-panel";
 import {
   LiveNavView,
   ValueNavView,
@@ -482,11 +483,19 @@ function HomeInner() {
 
         {/* Sections déplacées : Meilleurs Matchs + Prochains Matchs + Gemini */}
         <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-6">
+          <Top5SelectionPanel variant="inline" />
           <BestMatchesTabs id="section-best-matches" />
           <UpcomingTenMatchesTable id="section-upcoming" />
           <AIInsightCard id="section-gemini" />
         </section>
           </div>
+        {/* Panneau des matchs sélectionnés Top5 — rail droit (desktop) */}
+        <aside
+          aria-label="Matchs sélectionnés"
+          className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-slate-800 bg-[#0b0f19]/40 xl:block"
+        >
+          <Top5SelectionPanel variant="rail" />
+        </aside>
         </div>
 
         {/* Footer — toujours visible, padding bottom pour la bottom nav mobile */}

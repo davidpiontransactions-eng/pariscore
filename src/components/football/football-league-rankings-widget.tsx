@@ -144,10 +144,29 @@ function PlayersPanel({
                   {i + 1}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[10px] leading-tight text-slate-300">
-                    {r.name}
+                  <span className="flex items-center gap-1.5">
+                    {r.photo ? (
+                      <img
+                        src={r.photo}
+                        alt=""
+                        loading="lazy"
+                        width={18}
+                        height={18}
+                        className="h-[18px] w-[18px] shrink-0 rounded-full bg-slate-800 object-cover"
+                      />
+                    ) : (
+                      <span
+                        aria-hidden
+                        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-slate-800 text-[8px] font-bold text-slate-400"
+                      >
+                        {r.name.slice(0, 1).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="truncate text-[10px] leading-tight text-slate-300">
+                      {r.name}
+                    </span>
                   </span>
-                  <span className="block truncate text-[8px] leading-tight text-slate-500">
+                  <span className="block truncate pl-[24px] text-[8px] leading-tight text-slate-500">
                     {r.team}
                   </span>
                 </span>
