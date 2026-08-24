@@ -57,6 +57,12 @@ import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
+import {
+  LiveNavView,
+  ValueNavView,
+  FavorisNavView,
+  ProfilNavView,
+} from "@/components/dashboard/nav-extra-views";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
@@ -80,7 +86,23 @@ type DetailRequest =
   | { sport: "tennis"; match: TennisMatch }
   | { sport: "football"; match: FootballMatch };
 
-type SportTab = "home" | "tennis" | "football" | "cs2" | "mma" | "nba" | "wnba" | "cycling" | "f1" | "baseball" | "rugby";
+type SportTab =
+  | "home"
+  | "tennis"
+  | "football"
+  | "cs2"
+  | "mma"
+  | "nba"
+  | "wnba"
+  | "cycling"
+  | "f1"
+  | "baseball"
+  | "rugby"
+  /** Vues nav mobile (bottom nav) — pas des sports : jamais synchronisées au store. */
+  | "live"
+  | "value"
+  | "favoris"
+  | "profil";
 
 /** Ids de sport réels — les ids de nav mobile ("live", "profil"…) ne sont pas des sports. */
 const SPORT_IDS: ReadonlySet<string> = new Set<SportTab>([
@@ -94,6 +116,15 @@ const SPORT_IDS: ReadonlySet<string> = new Set<SportTab>([
   "f1",
   "baseball",
   "rugby",
+]);
+
+/** Vues nav (bottom nav mobile) + accueil : gérées par la page, hors store sport. */
+const VIEW_TABS: ReadonlySet<string> = new Set<SportTab>([
+  "home",
+  "live",
+  "value",
+  "favoris",
+  "profil",
 ]);
 
 class PageErrorBoundary extends Component<
@@ -240,14 +271,11 @@ function HomeInner() {
   ]);
 
   const handleTabChange = useCallback((tab: string) => {
-    // Ignore les ids de nav non-sport ("live", "value", "favoris", "profil") :
-    // ils écriraient un faux sport dans le store et publieraient une URL
-    // ?sport=live invalide.
-    if (tab !== "home" && !SPORT_IDS.has(tab)) return;
+    // Ignore les ids inconnus (protection) ; "home"/vues nav ne touchent pas
+    // au store : l'arbre latéral garde le dernier sport, l'URL ?sport= reste stable.
+    if (!VIEW_TABS.has(tab) && !SPORT_IDS.has(tab)) return;
     setActiveTab(tab as SportTab);
-    // "home" n'est pas un sport : on ne synchronise pas le store (l'arbre
-    // latéral garde le dernier sport consulté, l'URL ?sport= reste stable).
-    if (tab !== "home") {
+    if (SPORT_IDS.has(tab)) {
       useSportsSidebarStore.getState().syncSportFromTab(tab);
     }
   }, []);
@@ -446,6 +474,12 @@ function HomeInner() {
           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         >
         {activeTab === "home" && <HomeDashboard onSportSelect={handleTabChange} />}
+        {activeTab === "live" && <LiveNavView onSportSelect={handleTabChange} />}
+        {activeTab === "value" && <ValueNavView />}
+        {activeTab === "favoris" && (
+          <FavorisNavView onOpenDrawer={() => useSportsSidebarStore.getState().setDrawerOpen(true)} />
+        )}
+        {activeTab === "profil" && <ProfilNavView />}
         {activeTab === "tennis" && <TennisTabContent />}
         {activeTab === "football" && <FootballTabContent />}
         {activeTab === "cs2" && <Cs2TabContent />}

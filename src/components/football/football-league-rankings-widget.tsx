@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useFootballLeagueRankings } from "@/hooks/use-football-rankings";
+import type { FdRankRow, XgRankRow } from "@/hooks/use-football-rankings";
 
 const LEAGUES: { slug: string; label: string }[] = [
   { slug: "ligue1", label: "Ligue 1" },
@@ -54,6 +55,56 @@ function isXgRows(rows: unknown): rows is { team: string; gp: number; xgFor: num
   return Array.isArray(rows) && rows.length > 0 && typeof (rows[0] as { xgFor?: unknown }).xgFor === "number";
 }
 
+/** Stats fusionnées par équipe (tous marchés du payload en un seul appel API). */
+type TeamStats = {
+  gp: number;
+  ppm?: number;
+  gfPg?: number;
+  o15?: number;
+  u35?: number;
+  bttsYesPct?: number;
+  cornersOver65?: number;
+  xgFor?: number;
+  xgAgainst?: number;
+};
+
+const MERGE_KEYS: MarketKey[] = ["ppm", "gfPg", "o15", "u35", "bttsYesPct", "cornersOver65"];
+
+function mergeMarkets(markets: Record<string, FdRankRow[] | XgRankRow[] | undefined>): Map<string, TeamStats> {
+  const map = new Map<string, TeamStats>();
+  const touch = (team: string, gp: number): TeamStats => {
+    let s = map.get(team);
+    if (!s) {
+      s = { gp };
+      map.set(team, s);
+    }
+    return s;
+  };
+  for (const key of MERGE_KEYS) {
+    const rows = markets[key];
+    if (!Array.isArray(rows)) continue;
+    for (const r of rows as FdRankRow[]) {
+      const s = touch(r.team, r.gp);
+      (s as Record<string, number | undefined>)[key] = r.value;
+    }
+  }
+  // xG : lignes dédiées {team, gp, xgFor, xgAgainst}
+  const xg = markets.xgFor;
+  if (Array.isArray(xg)) {
+    for (const r of xg as XgRankRow[]) {
+      const s = touch(r.team, r.gp);
+      s.xgFor = r.xgFor;
+      s.xgAgainst = r.xgAgainst;
+    }
+  }
+  return map;
+}
+
+const num1 = (v: number | undefined): string =>
+  v == null || !Number.isFinite(v) ? "–" : v.toFixed(2);
+const pct0 = (v: number | undefined): string =>
+  v == null || !Number.isFinite(v) ? "–" : `${Math.round(v)}%`;
+
 export function FootballLeagueRankingsWidget() {
   const [league, setLeague] = useState("ligue1");
   const [season, setSeason] = useState<string | null>(null);
@@ -66,6 +117,7 @@ export function FootballLeagueRankingsWidget() {
 
   const def = MARKETS.find((m) => m.key === market) ?? MARKETS[0];
   const rawRows = rowsFor(market);
+  const merged = mergeMarkets((data?.markets ?? {}) as Record<string, FdRankRow[] | XgRankRow[] | undefined>);
 
   return (
     <section aria-label="Classements championnat" className="border-b border-slate-800/80 pb-2">
@@ -153,36 +205,94 @@ export function FootballLeagueRankingsWidget() {
           {!rawRows?.length ? (
             <p className="py-2 text-[11px] text-slate-500">Pas de données pour cette saison.</p>
           ) : (
-            <ol className="space-y-px">
-              {rawRows.slice(0, 12).map((row, i) => {
-                const isXg = isXgRows(rawRows);
-                const teamName = row.team;
-                const value = isXg
-                  ? market === "xgAgainst"
-                    ? (row as { xgAgainst: number }).xgAgainst
-                    : (row as { xgFor: number }).xgFor
-                  : (row as { value: number }).value;
-                const gp = row.gp;
-                return (
-                  <li
-                    key={`${teamName}-${i}`}
-                    className="flex items-center gap-1.5 rounded px-0.5 py-0.5 hover:bg-slate-800/60"
-                  >
-                    <span className="w-4 shrink-0 text-right font-mono text-[9px] tabular-nums text-slate-600">
-                      {i + 1}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[10px] text-slate-300">{teamName}</span>
-                    <span className="shrink-0 font-mono text-[8px] tabular-nums text-slate-600">{gp}j</span>
-                    <span className="shrink-0 rounded bg-slate-800 px-1 py-0.5 font-mono text-[9px] tabular-nums text-slate-300">
-                      {def.fmt(value)}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
+            <div
+              className="max-h-72 overflow-y-auto pr-0.5 scrollbar-thin"
+              role="region"
+              aria-label={`Classement complet ${def.title}`}
+            >
+              <table className="w-full border-collapse text-[9px]">
+                <thead>
+                  <tr className="text-slate-600">
+                    <th scope="col" className="w-4 py-0.5 pr-1 text-right font-medium">#</th>
+                    <th scope="col" className="py-0.5 text-left font-medium">Équipe</th>
+                    <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Matchs joués">J</th>
+                    {isXgRows(rawRows) ? (
+                      <>
+                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title={MARKETS.find((m) => m.key === "xgFor")!.title}>xG</th>
+                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title={MARKETS.find((m) => m.key === "xgAgainst")!.title}>xGA</th>
+                        <th scope="col" className="py-0.5 text-right font-medium" title={def.title}>{def.short}</th>
+                      </>
+                    ) : (
+                      <>
+                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Points par match">PPM</th>
+                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Buts marqués par match">B/m</th>
+                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Over 1,5 buts (%)">O1.5</th>
+                        <th scope="col" className="py-0.5 text-right font-medium" title="Les 2 équipes marquent (%)">BTTS</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(rawRows as (FdRankRow | XgRankRow)[]).map((row, i) => {
+                    const teamName = row.team;
+                    const st = merged.get(teamName);
+                    return (
+                      <tr
+                        key={`${teamName}-${i}`}
+                        className="border-t border-slate-800/50 hover:bg-slate-800/60"
+                      >
+                        <td className="py-0.5 pr-1 text-right font-mono tabular-nums text-slate-600">
+                          {i + 1}
+                        </td>
+                        <td className="max-w-0 truncate py-0.5 text-[10px] text-slate-300">
+                          {teamName}
+                        </td>
+                        <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-500">
+                          {row.gp}
+                        </td>
+                        {isXgRows(rawRows) ? (
+                          <>
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-300">
+                              {num1((row as XgRankRow).xgFor)}
+                            </td>
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-300">
+                              {num1((row as XgRankRow).xgAgainst)}
+                            </td>
+                            <td className="rounded bg-slate-800 py-0.5 text-right font-mono tabular-nums text-slate-200">
+                              {market === "xgAgainst"
+                                ? num1((row as XgRankRow).xgAgainst)
+                                : num1((row as XgRankRow).xgFor)}
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
+                              {num1(st?.ppm)}
+                            </td>
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
+                              {num1(st?.gfPg)}
+                            </td>
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
+                              {pct0(st?.o15)}
+                            </td>
+                            <td className="rounded bg-slate-800 py-0.5 text-right font-mono tabular-nums text-slate-200">
+                              {pct0(
+                                market === "bttsYesPct"
+                                  ? st?.bttsYesPct ?? (row as FdRankRow).value
+                                  : st?.bttsYesPct,
+                              )}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
           <p className="pt-1 text-[8px] leading-tight text-slate-600">
-            Source : football-data.co.uk{xgKeys.has(market) ? " · xG : Understat" : ""} · top 12 affiché
+            Source : football-data.co.uk{xgKeys.has(market) ? " · xG : Understat" : ""} · classement complet trié par {def.short}
           </p>
         </div>
       )}

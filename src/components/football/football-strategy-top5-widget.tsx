@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, X } from "lucide-react";
 import type {
   StrategyTop5Key,
   StrategyMatchEntry,
@@ -22,19 +22,21 @@ type StrategyDef = {
   key: StrategyTop5Key;
   label: string;
   emoji: string;
+  /** La valeur de la stratégie est une probabilité (%) ? */
+  isProb: boolean;
   format: (v: number) => string;
 };
 
 const STRATEGIES: StrategyDef[] = [
-  { key: "bestTeam", label: "Meilleure équipe (forme)", emoji: "⭐", format: (v) => `${v.toFixed(0)}%` },
-  { key: "bestTeam1x2", label: "Meilleure équipe sur le 1X2", emoji: "🎯", format: (v) => `${v.toFixed(0)}%` },
-  { key: "bestAttack", label: "Meilleure attaque", emoji: "⚡", format: (v) => `${v.toFixed(1)} buts` },
-  { key: "bestDefense", label: "Meilleure défense", emoji: "🧱", format: (v) => `${v.toFixed(1)} enc` },
-  { key: "doubleChance", label: "Double chance", emoji: "🛡️", format: (v) => `${v.toFixed(0)}%` },
-  { key: "over15", label: "Over 1,5 buts", emoji: "⚽", format: (v) => `${v.toFixed(0)}%` },
-  { key: "under35", label: "Under 3,5 buts", emoji: "❄️", format: (v) => `${v.toFixed(0)}%` },
-  { key: "bttsYes", label: "BTTS yes", emoji: "🥅", format: (v) => `${v.toFixed(0)}%` },
-  { key: "over65Corners", label: "Over 6,5 corners", emoji: "🚩", format: (v) => `${v.toFixed(0)}%` },
+  { key: "bestTeam", label: "Meilleure équipe (forme)", emoji: "⭐", isProb: false, format: (v) => `${v.toFixed(0)}%` },
+  { key: "bestTeam1x2", label: "Meilleure équipe sur le 1X2", emoji: "🎯", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "bestAttack", label: "Meilleure attaque", emoji: "⚡", isProb: false, format: (v) => `${v.toFixed(1)} buts` },
+  { key: "bestDefense", label: "Meilleure défense", emoji: "🧱", isProb: false, format: (v) => `${v.toFixed(1)} enc` },
+  { key: "doubleChance", label: "Double chance", emoji: "🛡️", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "over15", label: "Over 1,5 buts", emoji: "⚽", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "under35", label: "Under 3,5 buts", emoji: "❄️", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "bttsYes", label: "BTTS yes", emoji: "🥅", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "over65Corners", label: "Over 6,5 corners", emoji: "🚩", isProb: true, format: (v) => `${v.toFixed(0)}%` },
 ];
 
 type WindowKey = "l5" | "l10";
@@ -135,36 +137,75 @@ function StatsLine({
 
 function MatchRow({
   entry,
-  format,
+  def,
   kickoff,
   winKey,
+  selected,
+  onToggle,
 }: {
   entry: StrategyMatchEntry;
-  format: (v: number) => string;
+  def: StrategyDef;
   kickoff: string;
   winKey: WindowKey;
+  selected: boolean;
+  onToggle: () => void;
 }) {
   const home = sideBadge(entry, "home");
   const away = sideBadge(entry, "away");
+  const probPct = def.isProb ? Math.round(entry.value) : null;
+
   return (
-    <li className="rounded px-0.5 py-1 hover:bg-slate-800/60">
-      <div className="flex items-center gap-1.5">
-        <span className="w-11 shrink-0 font-mono text-[9px] tabular-nums text-slate-500">{kickoff}</span>
-        <div className="min-w-0 flex-1">
-          <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
-          <div className="px-1 text-[8px] text-slate-600">vs</div>
-          <TeamName side={entry.away} highlight={away.highlight} bg="bg-slate-700" />
+    <li>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-pressed={selected}
+        title={selected ? "Retirer de la sélection" : "Ajouter à la sélection"}
+        className={cn(
+          "w-full rounded px-0.5 py-1 text-left transition-colors",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          selected
+            ? "bg-emerald-500/10 ring-1 ring-emerald-500/40 hover:bg-emerald-500/15"
+            : "hover:bg-slate-800/60",
+        )}
+      >
+        <div className="flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className={cn(
+              "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border",
+              selected ? "border-emerald-400 bg-emerald-500/30 text-emerald-300" : "border-slate-600",
+            )}
+          >
+            {selected ? "✓" : ""}
+          </span>
+          <span className="w-11 shrink-0 font-mono text-[9px] tabular-nums text-slate-500">{kickoff}</span>
+          <div className="min-w-0 flex-1">
+            <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
+            <div className="px-1 text-[8px] text-slate-600">vs</div>
+            <TeamName side={entry.away} highlight={away.highlight} bg="bg-slate-700" />
+          </div>
+          <span
+            className={cn(
+              "shrink-0 rounded px-1 py-0.5 font-mono text-[9px] tabular-nums",
+              entry.pick ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-800 text-slate-400",
+            )}
+          >
+            {def.format(entry.value)}
+          </span>
         </div>
-        <span
-          className={cn(
-            "shrink-0 rounded px-1 py-0.5 font-mono text-[9px] tabular-nums",
-            entry.pick ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-800 text-slate-400",
+        {/* Probabilité de réussite du modèle pour ce match */}
+        <p className="mt-0.5 pl-[19px] text-[8.5px] leading-none">
+          {probPct != null ? (
+            <span className="font-medium tabular-nums text-emerald-400">
+              Réussite estimée&nbsp;: {probPct}&nbsp;%
+            </span>
+          ) : (
+            <span className="text-slate-600">Métrique de forme (non probabiliste)</span>
           )}
-        >
-          {format(entry.value)}
-        </span>
-      </div>
-      <StatsLine entry={entry} winKey={winKey} />
+        </p>
+        <StatsLine entry={entry} winKey={winKey} />
+      </button>
     </li>
   );
 }
@@ -180,10 +221,23 @@ export function FootballStrategyTop5Widget() {
   const { matchesFor, isLoading, error, isReady, window: win } = useFootballTop5();
   const [active, setActive] = useState<StrategyTop5Key>("bestTeam");
   const [winKey, setWinKey] = useState<WindowKey>("l5");
+  /** Multi-sélection de matchs → cards en tête de sidebar (clé = matchId). */
+  const [selected, setSelected] = useState<Record<string, StrategyMatchEntry>>({});
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
-  const rows = matchesFor(active);
+  const rows = useMemo(() => matchesFor(active), [matchesFor, active]);
   const hasData = rows.length > 0;
+
+  const toggleSelect = (entry: StrategyMatchEntry) => {
+    setSelected((prev) => {
+      const next = { ...prev };
+      if (next[entry.matchId]) delete next[entry.matchId];
+      else next[entry.matchId] = entry;
+      return next;
+    });
+  };
+
+  const selectedList = Object.values(selected);
 
   return (
     <section aria-label="Top 5 matchs par stratégie" className="border-b border-slate-800/80 pb-2">
@@ -240,6 +294,71 @@ export function FootballStrategyTop5Widget() {
         </p>
       </div>
 
+      {/* Cards des matchs sélectionnés — affichées en tête de sidebar */}
+      {selectedList.length > 0 && (
+        <div className="mx-2.5 mb-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-1.5">
+          <div className="flex items-center justify-between pb-1">
+            <h3 className="text-[9px] font-bold uppercase tracking-wider text-emerald-300">
+              Sélection ({selectedList.length})
+            </h3>
+            <button
+              type="button"
+              onClick={() => setSelected({})}
+              className="rounded px-1 text-[9px] font-semibold text-slate-400 transition-colors hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Tout effacer
+            </button>
+          </div>
+          <ul className="space-y-1">
+            {selectedList.map((entry) => {
+              const selDef =
+                STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
+              const probPct = selDef.isProb ? Math.round(entry.value) : null;
+              const home = sideBadge(entry, "home");
+              const away = sideBadge(entry, "away");
+              return (
+                <li
+                  key={entry.matchId}
+                  className="relative rounded-md border border-slate-700/60 bg-slate-900/80 p-1.5 pr-6"
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleSelect(entry)}
+                    aria-label={`Retirer ${entry.home.shortName} contre ${entry.away.shortName} de la sélection`}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <X className="h-3 w-3" aria-hidden />
+                  </button>
+                  <div className="flex items-center gap-1 text-[8.5px] text-slate-500">
+                    <span className="font-mono tabular-nums">{formatKickoff(entry.kickoff)}</span>
+                    <span aria-hidden>·</span>
+                    <span className="truncate">
+                      {selDef.emoji} {selDef.label}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center justify-between gap-1">
+                    <div className="min-w-0 flex-1 space-y-px">
+                      <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
+                      <TeamName side={entry.away} highlight={away.highlight} bg="bg-slate-700" />
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <span className="block rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-[9px] tabular-nums text-emerald-300">
+                        {selDef.format(entry.value)}
+                      </span>
+                      {probPct != null && (
+                        <span className="mt-0.5 block text-[8px] font-medium tabular-nums text-emerald-400">
+                          P {probPct}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
@@ -253,16 +372,18 @@ export function FootballStrategyTop5Widget() {
       ) : hasData ? (
         <div className="px-2">
           <p className="px-0.5 pb-1 text-[10px] text-slate-500">
-            xG/buts/encaissés moyens D=E par côté ({winKey === "l5" ? "5" : "10"} derniers dom/ext)
+            xG/buts/encaissés moyens D=E par côté ({winKey === "l5" ? "5" : "10"} derniers dom/ext) · clic sur un match pour le sélectionner
           </p>
           <ul className="space-y-0.5">
             {rows.map((entry) => (
               <MatchRow
                 key={entry.matchId}
                 entry={entry}
-                format={def.format}
+                def={def}
                 kickoff={formatKickoff(entry.kickoff)}
                 winKey={winKey}
+                selected={Boolean(selected[entry.matchId])}
+                onToggle={() => toggleSelect(entry)}
               />
             ))}
           </ul>

@@ -908,7 +908,7 @@ export function SportsSidebar({
   return (
     <aside
       aria-label={t("title")}
-      className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 border-r border-slate-800 lg:block xl:w-64"
+      className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r border-slate-800 lg:block xl:w-72"
     >
       <SportsSidebarContent activeSport={activeSport} onSportChange={onSportChange} />
     </aside>
