@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useFootballLeagueRankings } from "@/hooks/use-football-rankings";
@@ -55,20 +55,14 @@ function isXgRows(rows: unknown): rows is { team: string; gp: number; xgFor: num
   return Array.isArray(rows) && rows.length > 0 && typeof (rows[0] as { xgFor?: unknown }).xgFor === "number";
 }
 
-/** Stats fusionnées par équipe (tous marchés du payload en un seul appel API). */
+/** Stats fusionnées par équipe (marchés affichés en colonnes fixes). */
 type TeamStats = {
   gp: number;
   ppm?: number;
   gfPg?: number;
-  o15?: number;
-  u35?: number;
-  bttsYesPct?: number;
-  cornersOver65?: number;
-  xgFor?: number;
-  xgAgainst?: number;
 };
 
-const MERGE_KEYS: MarketKey[] = ["ppm", "gfPg", "o15", "u35", "bttsYesPct", "cornersOver65"];
+const MERGE_KEYS: MarketKey[] = ["ppm", "gfPg"];
 
 function mergeMarkets(markets: Record<string, FdRankRow[] | XgRankRow[] | undefined>): Map<string, TeamStats> {
   const map = new Map<string, TeamStats>();
@@ -84,17 +78,7 @@ function mergeMarkets(markets: Record<string, FdRankRow[] | XgRankRow[] | undefi
     const rows = markets[key];
     if (!Array.isArray(rows)) continue;
     for (const r of rows as FdRankRow[]) {
-      const s = touch(r.team, r.gp);
-      (s as Record<string, number | undefined>)[key] = r.value;
-    }
-  }
-  // xG : lignes dédiées {team, gp, xgFor, xgAgainst}
-  const xg = markets.xgFor;
-  if (Array.isArray(xg)) {
-    for (const r of xg as XgRankRow[]) {
-      const s = touch(r.team, r.gp);
-      s.xgFor = r.xgFor;
-      s.xgAgainst = r.xgAgainst;
+      touch(r.team, r.gp)[key] = r.value;
     }
   }
   return map;
@@ -102,8 +86,6 @@ function mergeMarkets(markets: Record<string, FdRankRow[] | XgRankRow[] | undefi
 
 const num1 = (v: number | undefined): string =>
   v == null || !Number.isFinite(v) ? "–" : v.toFixed(2);
-const pct0 = (v: number | undefined): string =>
-  v == null || !Number.isFinite(v) ? "–" : `${Math.round(v)}%`;
 
 export function FootballLeagueRankingsWidget() {
   const [league, setLeague] = useState("ligue1");
@@ -117,7 +99,10 @@ export function FootballLeagueRankingsWidget() {
 
   const def = MARKETS.find((m) => m.key === market) ?? MARKETS[0];
   const rawRows = rowsFor(market);
-  const merged = mergeMarkets((data?.markets ?? {}) as Record<string, FdRankRow[] | XgRankRow[] | undefined>);
+  const merged = useMemo(
+    () => mergeMarkets((data?.markets ?? {}) as Record<string, FdRankRow[] | XgRankRow[] | undefined>),
+    [data?.markets],
+  );
 
   return (
     <section aria-label="Classements championnat" className="border-b border-slate-800/80 pb-2">
@@ -175,6 +160,7 @@ export function FootballLeagueRankingsWidget() {
             key={m.key}
             type="button"
             title={m.title}
+            aria-pressed={market === m.key}
             onClick={() => setMarket(m.key)}
             className={cn(
               "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors",
@@ -203,7 +189,11 @@ export function FootballLeagueRankingsWidget() {
         <div className="px-2.5">
           <p className="pb-1 text-[10px] font-medium text-emerald-400/90">{def.title}</p>
           {!rawRows?.length ? (
-            <p className="py-2 text-[11px] text-slate-500">Pas de données pour cette saison.</p>
+            <p className="py-2 text-[11px] text-slate-500">
+              {market === "xgFor" || market === "xgAgainst"
+                ? "xG indisponible pour cette ligue (couverture Understat limitée)."
+                : "Pas de données pour cette saison."}
+            </p>
           ) : (
             <div
               className="max-h-72 overflow-y-auto pr-0.5 scrollbar-thin"
@@ -219,15 +209,13 @@ export function FootballLeagueRankingsWidget() {
                     {isXgRows(rawRows) ? (
                       <>
                         <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title={MARKETS.find((m) => m.key === "xgFor")!.title}>xG</th>
-                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title={MARKETS.find((m) => m.key === "xgAgainst")!.title}>xGA</th>
                         <th scope="col" className="py-0.5 text-right font-medium" title={def.title}>{def.short}</th>
                       </>
                     ) : (
                       <>
                         <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Points par match">PPM</th>
                         <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Buts marqués par match">B/m</th>
-                        <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Over 1,5 buts (%)">O1.5</th>
-                        <th scope="col" className="py-0.5 text-right font-medium" title="Les 2 équipes marquent (%)">BTTS</th>
+                        <th scope="col" className="py-0.5 text-right font-medium" title={def.title}>{def.short}</th>
                       </>
                     )}
                   </tr>
@@ -238,7 +226,7 @@ export function FootballLeagueRankingsWidget() {
                     const st = merged.get(teamName);
                     return (
                       <tr
-                        key={`${teamName}-${i}`}
+                        key={teamName}
                         className="border-t border-slate-800/50 hover:bg-slate-800/60"
                       >
                         <td className="py-0.5 pr-1 text-right font-mono tabular-nums text-slate-600">
@@ -255,13 +243,12 @@ export function FootballLeagueRankingsWidget() {
                             <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-300">
                               {num1((row as XgRankRow).xgFor)}
                             </td>
-                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-300">
-                              {num1((row as XgRankRow).xgAgainst)}
-                            </td>
                             <td className="rounded bg-slate-800 py-0.5 text-right font-mono tabular-nums text-slate-200">
-                              {market === "xgAgainst"
-                                ? num1((row as XgRankRow).xgAgainst)
-                                : num1((row as XgRankRow).xgFor)}
+                              {def.fmt(
+                                market === "xgAgainst"
+                                  ? (row as XgRankRow).xgAgainst
+                                  : (row as XgRankRow).xgFor,
+                              )}
                             </td>
                           </>
                         ) : (
@@ -272,15 +259,9 @@ export function FootballLeagueRankingsWidget() {
                             <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
                               {num1(st?.gfPg)}
                             </td>
-                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
-                              {pct0(st?.o15)}
-                            </td>
+                            {/* Colonne de tri = métrique active (toujours visible) */}
                             <td className="rounded bg-slate-800 py-0.5 text-right font-mono tabular-nums text-slate-200">
-                              {pct0(
-                                market === "bttsYesPct"
-                                  ? st?.bttsYesPct ?? (row as FdRankRow).value
-                                  : st?.bttsYesPct,
-                              )}
+                              {def.fmt((row as FdRankRow).value)}
                             </td>
                           </>
                         )}

@@ -254,22 +254,6 @@ function HomeInner() {
     };
   }, [tennisData?.matches, footData?.matches]);
 
-  // Ids de sport réels (les ids de nav mobile comme "live"/"profil" sont
-  // ignorés : ils écriraient un faux sport dans le store et publieraient
-  // une URL ?sport=live invalide).
-  const SPORT_TABS: ReadonlySet<string> = new Set([
-    "tennis",
-    "football",
-    "cs2",
-    "mma",
-    "nba",
-    "wnba",
-    "cycling",
-    "f1",
-    "baseball",
-    "rugby",
-  ]);
-
   const handleTabChange = useCallback((tab: string) => {
     // Ignore les ids inconnus (protection) ; "home"/vues nav ne touchent pas
     // au store : l'arbre latéral garde le dernier sport, l'URL ?sport= reste stable.

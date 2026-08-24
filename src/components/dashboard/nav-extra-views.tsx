@@ -111,11 +111,10 @@ export function ValueNavView() {
     for (const m of tennisData?.matches ?? []) {
       let best: { side: "A" | "B"; bookmaker: string; edge: number } | null = null;
       for (const o of m.allOdds ?? []) {
-        // Unités défensives : implied peut être 0-1 ou 0-100 selon la source.
-        const iA = o.impliedProbA <= 1 ? o.impliedProbA * 100 : o.impliedProbA;
-        const iB = o.impliedProbB <= 1 ? o.impliedProbB * 100 : o.impliedProbB;
-        const eA = m.probA - iA;
-        const eB = m.probB - iB;
+        // impliedProbA/B sont en 0-100 chez tous les producteurs (bsd-fetcher,
+        // real-matches, mocks) — soustraction directe comme les autres vues.
+        const eA = m.probA - o.impliedProbA;
+        const eB = m.probB - o.impliedProbB;
         const cand =
           eA >= eB
             ? { side: "A" as const, bookmaker: o.bookmaker, edge: eA }

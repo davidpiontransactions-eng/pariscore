@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle, X } from "lucide-react";
 import type {
@@ -221,23 +221,31 @@ export function FootballStrategyTop5Widget() {
   const { matchesFor, isLoading, error, isReady, window: win } = useFootballTop5();
   const [active, setActive] = useState<StrategyTop5Key>("bestTeam");
   const [winKey, setWinKey] = useState<WindowKey>("l5");
-  /** Multi-sélection de matchs → cards en tête de sidebar (clé = matchId). */
-  const [selected, setSelected] = useState<Record<string, StrategyMatchEntry>>({});
+  /**
+   * Multi-sélection de matchs → cards en tête de sidebar.
+   * On fige la STRATÉGIE au moment de la sélection avec l'entrée : la valeur
+   * d'un match est spécifique à chaque stratégie (PPG ≠ λ ≠ %) — afficher la
+   * carte sous une autre stratégie fabriquerait des métriques fausses.
+   */
+  const [selected, setSelected] = useState<Record<string, { entry: StrategyMatchEntry; strategy: StrategyTop5Key }>>({});
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
-  const rows = useMemo(() => matchesFor(active), [matchesFor, active]);
+  const rows = matchesFor(active);
   const hasData = rows.length > 0;
 
   const toggleSelect = (entry: StrategyMatchEntry) => {
     setSelected((prev) => {
       const next = { ...prev };
-      if (next[entry.matchId]) delete next[entry.matchId];
-      else next[entry.matchId] = entry;
+      const existing = next[entry.matchId];
+      // Re-cliquer le même couple match/stratégie retire ; cliquer sous une
+      // autre stratégie met à jour la capture (corrige le pairing naturellement).
+      if (existing && existing.strategy === active) delete next[entry.matchId];
+      else next[entry.matchId] = { entry, strategy: active };
       return next;
     });
   };
 
-  const selectedList = Object.values(selected);
+  const selectedList = Object.entries(selected);
 
   return (
     <section aria-label="Top 5 matchs par stratégie" className="border-b border-slate-800/80 pb-2">
@@ -310,22 +318,24 @@ export function FootballStrategyTop5Widget() {
             </button>
           </div>
           <ul className="space-y-1">
-            {selectedList.map((entry) => {
+            {selectedList.map(([matchId, sel]) => {
+              // Définition FIGÉE à la sélection — jamais la stratégie active courante.
               const selDef =
-                STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
+                STRATEGIES.find((s) => s.key === sel.strategy) ?? STRATEGIES[0];
+              const entry = sel.entry;
               const probPct = selDef.isProb ? Math.round(entry.value) : null;
               const home = sideBadge(entry, "home");
               const away = sideBadge(entry, "away");
               return (
                 <li
-                  key={entry.matchId}
+                  key={matchId}
                   className="relative rounded-md border border-slate-700/60 bg-slate-900/80 p-1.5 pr-6"
                 >
                   <button
                     type="button"
                     onClick={() => toggleSelect(entry)}
                     aria-label={`Retirer ${entry.home.shortName} contre ${entry.away.shortName} de la sélection`}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <X className="h-3 w-3" aria-hidden />
                   </button>
