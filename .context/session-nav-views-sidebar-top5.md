@@ -176,7 +176,9 @@ Fichier : `nav-extra-views.tsx` uniquement (shapes défensifs optionnels).
 |---|---|
 | eslint / tsc | ✅ 0/0 |
 | Build | ✅ |
-| Deploy + QA prod | ⏳ |
+| **Deploy + QA prod** (`scripts/qa-live-probe.js`) | ✅ **QA_LIVE_PASS** — sections Football (3 matchs : 89' 1–1, 62' 0–0, 46') + Tennis rendues, boutons analyse ×2, **0 erreur JS** |
+
+Déployé : `ee1ebb41` · build_ran:1 · health OK. Screenshot `.context/qa-live-view.png`.
 
 ---
 
