@@ -149,9 +149,34 @@ Health OK · Discord OK à chaque déploiement.
 ### Follow-ups
 
 - Split Dom/Ext pour les joueurs (crawl pages joueur Understat — lourd, à arbitrer).
-- Flux live multi-sports agrégé (LiveNavView = passerelle aujourd'hui).
+- ~~Flux live multi-sports agrégé~~ → **Itération 6 ci-dessous.**
 - Router les ids mobile `live/value/favoris/profil` vers des vues enrichies.
 - i18n des nouvelles chaînes FR (home-dashboard, classements, panel joueurs).
+
+---
+
+# Itération 6 — 2026-08-24 : LiveNavView réelle (flux agrégé 30 s)
+
+**Suivi du follow-up « flux live »** : la vue Live passe de passerelle à **vrai flux
+agrégé** — SWR sur `/api/football/live` (BSD) et `/api/tennis/live`, refresh 30 s,
+revalidate au focus.
+
+| Sport | Rendu |
+|---|---|
+| Football | badge minute / MT, affiche tronquée, score émeraude (12 max + « +N autres ») |
+| Tennis | joueurs avec pastille service ●, sets 1–0, tournoi + set courant & jeux |
+| Vide | état dédié (« apparaissent dès le coup d'envoi ») |
+| Pied | boutons secondaires → analyse complète par sport |
+
+Fichier : `nav-extra-views.tsx` uniquement (shapes défensifs optionnels).
+
+## Vérifications itération 6
+
+| Check | Résultat |
+|---|---|
+| eslint / tsc | ✅ 0/0 |
+| Build | ✅ |
+| Deploy + QA prod | ⏳ |
 
 ---
 

@@ -16,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { useMemo } from "react";
+import useSWR from "swr";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";
@@ -62,42 +63,153 @@ function ViewShell({
   );
 }
 
-/** Vue « Live » — passerelle vers les filtres Live de chaque sport (flux agrégé = follow-up). */
+/** Matchs live — formes défensives (les deux APIs renvoient des shapes BSD enrichis). */
+type LiveFoot = {
+  id: string;
+  league?: { name?: string; country?: string };
+  home?: { name?: string };
+  away?: { name?: string };
+  live?: { homeScore?: number; awayScore?: number; minute?: number; status?: string } | null;
+};
+type LiveTennis = {
+  id: string;
+  tournament?: string;
+  playerA?: { name?: string };
+  playerB?: { name?: string };
+  player1_sets?: number;
+  player2_sets?: number;
+  current_set?: number;
+  current_game_p1?: number;
+  current_game_p2?: number;
+  is_serving_p1?: boolean;
+};
+
+const liveFetcher = async (url: string) => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+};
+
+/** Vue « Live » — flux agrégé temps réel Tennis + Football (SWR 30 s). */
 export function LiveNavView({ onSportSelect }: ViewProps) {
-  const sports = [
-    { id: "tennis", label: "Tennis", icon: Volleyball, accent: "border-emerald-500/30 hover:border-emerald-500/60", chip: "text-emerald-400 bg-emerald-500/10" },
-    { id: "football", label: "Football", icon: Footprints, accent: "border-sky-500/30 hover:border-sky-500/60", chip: "text-sky-400 bg-sky-500/10" },
-  ];
+  const { data: foot } = useSWR<{ matches?: LiveFoot[] }>("/api/football/live", liveFetcher, {
+    refreshInterval: 30_000,
+    revalidateOnFocus: true,
+  });
+  const { data: tennis } = useSWR<{ matches?: LiveTennis[] }>("/api/tennis/live", liveFetcher, {
+    refreshInterval: 30_000,
+    revalidateOnFocus: true,
+  });
+
+  const footMatches = foot?.matches ?? [];
+  const tennisMatches = tennis?.matches ?? [];
+  const total = footMatches.length + tennisMatches.length;
+
   return (
     <ViewShell
       icon={Radio}
       title="Matchs en direct"
-      desc="Ouvre un sport puis bascule sur son filtre « Live » pour suivre les scores en temps réel."
+      desc={`${total} match${total > 1 ? "s" : ""} en cours · actualisation toutes les 30 s`}
     >
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {sports.map((s) => {
-          const SIcon = s.icon;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onSportSelect(s.id)}
-              className={`flex min-h-[44px] items-center gap-3 rounded-xl border bg-zinc-900/60 p-4 text-left transition-colors ${s.accent}`}
-            >
-              <span className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", s.chip)} aria-hidden>
-                <SIcon className="h-4 w-4" />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-white">Live {s.label}</span>
-                <span className="block text-xs text-zinc-400">Scores, xG et momentum en direct</span>
-              </span>
-            </button>
-          );
-        })}
+      {total === 0 ? (
+        <p className="rounded-xl border border-white/5 bg-zinc-900/60 p-4 text-sm text-zinc-500">
+          Aucun match en direct pour l'instant. Les rencontres apparaissent ici dès le coup d'envoi.
+        </p>
+      ) : (
+        <div className="space-y-5">
+          {/* Football */}
+          {footMatches.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-sky-400">
+                Football · {footMatches.length}
+              </h3>
+              <ul className="mt-2 space-y-1.5">
+                {footMatches.slice(0, 12).map((m) => (
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-2.5 rounded-lg border border-white/5 bg-zinc-900/60 px-3 py-2"
+                  >
+                    <span className="w-9 shrink-0 rounded bg-red-500/15 px-1 py-0.5 text-center font-mono text-[10px] font-bold tabular-nums text-red-300">
+                      {m.live?.status === "HT" ? "MT" : `${m.live?.minute ?? ""}'`}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-slate-200">
+                      {m.home?.name} <span className="text-slate-600">vs</span> {m.away?.name}
+                    </span>
+                    <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-emerald-400">
+                      {m.live?.homeScore ?? 0}–{m.live?.awayScore ?? 0}
+                    </span>
+                  </li>
+                ))}
+                {footMatches.length > 12 && (
+                  <li className="px-3 text-[11px] text-zinc-500">+ {footMatches.length - 12} autres…</li>
+                )}
+              </ul>
+            </div>
+          )}
+
+          {/* Tennis */}
+          {tennisMatches.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                Tennis · {tennisMatches.length}
+              </h3>
+              <ul className="mt-2 space-y-1.5">
+                {tennisMatches.slice(0, 12).map((m) => {
+                  const serving = m.is_serving_p1 ? "●" : "";
+                  const servingB = !m.is_serving_p1 ? "●" : "";
+                  return (
+                    <li
+                      key={m.id}
+                      className="rounded-lg border border-white/5 bg-zinc-900/60 px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="min-w-0 flex-1 truncate text-sm text-slate-200">
+                          <span aria-hidden className="text-emerald-400">{serving}</span>{" "}
+                          {m.playerA?.name}{" "}
+                          <span className="text-slate-600">vs</span>{" "}
+                          {m.playerB?.name}{" "}
+                          <span aria-hidden className="text-emerald-400">{servingB}</span>
+                        </p>
+                        <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-emerald-400">
+                          {m.player1_sets ?? 0}–{m.player2_sets ?? 0}
+                        </span>
+                      </div>
+                      <p className="truncate text-[11px] text-zinc-500">
+                        {m.tournament}
+                        {m.current_set != null && (
+                          <>
+                            {" "}· Set {m.current_set} ({m.current_game_p1 ?? 0}-{m.current_game_p2 ?? 0})
+                          </>
+                        )}
+                      </p>
+                    </li>
+                  );
+                })}
+                {tennisMatches.length > 12 && (
+                  <li className="px-3 text-[11px] text-zinc-500">+ {tennisMatches.length - 12} autres…</li>
+                )}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Accès aux analyses complètes par sport */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {[
+          { id: "tennis", label: "Analyse tennis" },
+          { id: "football", label: "Analyse football" },
+        ].map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => onSportSelect(s.id)}
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {s.label}
+          </button>
+        ))}
       </div>
-      <p className="mt-3 text-[11px] leading-relaxed text-zinc-500">
-        Un flux live multi-sports agrégé est prévu en follow-up.
-      </p>
     </ViewShell>
   );
 }
