@@ -113,8 +113,45 @@ moyennes /match selon saison et contexte ; drapeaux pays dans le dropdown champi
 |---|---|
 | eslint / tsc ciblés | ✅ 0/0 |
 | Build | ✅ 70/70 |
-| QA prod (sonde dédiée + debug saisons) | ⏳ |
-| Déploy | ⏳ |
+| **QA prod finale** (`scripts/qa-players-probe.js`) | **QA_PLAYERS_PASS** |
+
+### Résultats QA prod détaillés
+
+| Check | Valeur |
+|---|---|
+| Panel Buteurs : lignes top 10 nom+équipe+J+moyenne+total | ✅ 10 |
+| Footer « source Understat » | ✅ |
+| Drapeaux dans Select championnats | ✅ 16/16 |
+| Colonne équipe compacte (`w-[104px]`, stats collées à J) | ✅ |
+| Régression : Select marché (10 options) / L5 / saisons | ✅ |
+| Plancher cotes Top5 (< 87 %) | ✅ (validé itération 4 sur Over 1.5 : 86/86/85/84/83) |
+
+### Débug notable (itération 5)
+
+Premier déploiement → `UNDERSTAT_PARSE_EMPTY` : la page `/league/{slug}` servie au
+serveur est une coquille JS sans données. **Fix** : endpoint XHR du front
+`GET /getLeagueData/{slug}/{year}` avec headers `X-Requested-With: XMLHttpRequest`
+(sans lui → 404), payload contient directement `players[]` (553 joueurs ligue 1).
+Vérifié accessible depuis le VPS (200, 0.49 s).
+
+### Déploiements du lot
+
+| Commit | Contenu |
+|---|---|
+| `51b20d9c` | Pictos sports + classements L5/L10/saisons |
+| `cdfd7ee8` | Marché statistique en Select |
+| `410c29d9` | Plancher cotes 1.15 |
+| `fd673373` | Buteurs/Passeurs + drapeaux + table compacte |
+| `bb91e623` | Fix endpoint XHR players |
+
+Health OK · Discord OK à chaque déploiement.
+
+### Follow-ups
+
+- Split Dom/Ext pour les joueurs (crawl pages joueur Understat — lourd, à arbitrer).
+- Flux live multi-sports agrégé (LiveNavView = passerelle aujourd'hui).
+- Router les ids mobile `live/value/favoris/profil` vers des vues enrichies.
+- i18n des nouvelles chaînes FR (home-dashboard, classements, panel joueurs).
 
 ---
 

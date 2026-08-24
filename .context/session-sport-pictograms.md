@@ -1,6 +1,6 @@
 # Session — Pictogrammes sports style Winamax → PariScore
 
-**Date** : 2026-08-24 · **Skills** : ui-ux-pro-max · **Statut** : 🔄 EN COURS
+**Date** : 2026-08-24 · **Skills** : ui-ux-pro-max · **Statut** : ✅ TERMINÉ (déployé `51b20d9c`, QA prod onglets ✓ via probes suivantes)
 
 ## Demande
 
