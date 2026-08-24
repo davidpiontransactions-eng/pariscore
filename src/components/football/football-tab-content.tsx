@@ -505,13 +505,32 @@ export function FootballTabContent() {
                 <Trophy className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="text-sm font-medium">Aucun match trouvé</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="max-w-md text-xs text-muted-foreground">
                 {filter === "today"
                   ? "Aucun match programmé aujourd'hui pour cette ligue"
                   : timeRange !== null
                     ? "Aucun match ne commence dans cette fenêtre horaire"
                     : "Aucun match ne correspond aux filtres sélectionnés"}
               </p>
+              {/* Hint contextuel : quand une ligue est filtrée mais vide dans la
+                  fenêtre, indiquer son PROCHAIN match (source : liste non filtrée). */}
+              {selectedLeague && (() => {
+                const leagueMatches = matches
+                  .filter((m) => m.league.id === selectedLeague && (!m.live || m.live.status === "FT"))
+                  .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+                const next = leagueMatches[0];
+                if (!next) return null;
+                const d = new Date(next.scheduledAt);
+                if (!Number.isFinite(d.getTime())) return null;
+                return (
+                  <p className="text-xs font-medium text-emerald-400">
+                    Prochain {next.league.name} :{" "}
+                    {d.toLocaleDateString([], { weekday: "short", day: "numeric", month: "short" })}{" "}
+                    à {d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} —{" "}
+                    {next.home.name} vs {next.away.name}
+                  </p>
+                );
+              })()}
             </div>
           )}
             </div>

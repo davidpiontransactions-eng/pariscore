@@ -224,7 +224,15 @@ autres sports (nba/mma… lisent hours/today only) → follow-up tracé.
 | eslint 6 fichiers / tsc ciblé | ✅ 0/0 |
 | `bun test sports-tree.test.ts` | ✅ **37 pass / 0 fail** |
 | Build | ✅ |
-| Deploy + QA prod scénario B2/Demain | ⏳ |
+| **QA prod scénario B2/Demain** (`scripts/qa-b2-demain-probe.js`) | ✅ **PASS** — verdict : B2 a 9 matchs à venir mais **0 le 25/08** (prochain ven. 28/08 18:30) → l'état vide post-fix est **légitime et explicite** ; pill Demain active grid+sidebar, auto-bascule Pre-match ✓, 41 cartes autres ligues |
+
+### Amélioration UX finale (hint prochain match)
+
+Quand une ligue filtrée est vide dans la fenêtre, l'état vide affiche désormais :
+« Prochain {ligue} : ven. 28 août à 18:30 — {home} vs {away} » (source liste non
+filtrée) — transforme le ressenti « bug » en information actionnable.
+
+Déploiements : `b7d1c471` (fix filtres) + hint (commit suivant).
 
 ---
 
