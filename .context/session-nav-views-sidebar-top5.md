@@ -1,6 +1,35 @@
 # Session — Vues nav réelles + Sidebar élargie + Top5 interactif + Classements complets
 
-**Date** : 2026-08-24 · **Skills** : ui-ux-pro-max · **Statut** : 🔄 EN COURS
+**Date** : 2026-08-24 · **Skills** : ui-ux-pro-max · **Statut** : ✅ TERMINÉ
+
+> **Déploiements** : `ff1bbcc0` (features) puis `a20418de` (correctifs review) — build_ran:1,
+> health OK. **QA prod finale : QA_FEATURES_PASS** (incluant test anti-régression C1).
+
+## Round review (REQUEST CHANGES → corrigé, commit a20418de)
+
+| # | Gravité | Finding | Correctif |
+|---|---|---|---|
+| R1 | **CRITIQUE** | Cards de sélection : `selDef` résolue depuis la stratégie ACTIVE alors que `entry.value` avait été capturé sous une autre → métriques fabriquées (« BTTS · 3 % ») ; re-clic sous autre stratégie supprimait au lieu de corriger | ✅ Capture figée `{entry, strategy}` par matchId ; card rend la définition capturée ; re-clic sous une autre stratégie = re-capture |
+| R2 | MAJEUR | ValueNavView heuristique `<=1` : impliedProb est 0-100 chez TOUS les producteurs → l'heuristique détruisait les edges sur longshots (implied arrondi à 1) | ✅ Soustraction directe (comme le reste du codebase) |
+| R3 | MAJEUR | Classements : tri sur la métrique active mais colonne surlignée fixe (BTTS) → 7 marchés/8 triés sur colonne invisible | ✅ Colonne dynamique `{def.short}` = valeur de tri (`def.fmt(row.value)`) ; dup xG supprimée |
+| R4 | Mineur | Chips marché sans aria-pressed / X cards 20px <24px / message « pas de données » trompeur pour xG / SPORT_TABS local mort / key index / useMemo inutiles | ✅ tous |
+| R5 | NIT | Probe : `waituntil` typo + gap structurel (jamais de bascule post-sélection) | ✅ cas cross-stratégie ajouté et PASS en prod |
+
+**Validé sans correctif** : boundary vue/store exemplaire ; mergeMarkets sans risque de drift
+de noms (source unique teams map ; xG lit rawRows directement) ; perf OK (scroll cap, ≤24 rows).
+
+## Résultats QA prod finaux
+
+```json
+sidebarWidthClass: w-64 xl:w-72 ✅
+probLineCount: 5 ✅   selectionBlock(2 clicks): 1 ✅
+cardKeepsCapturedStrategy: true ✅ (anti-C1)
+rankTableRows: 18 (>12 ancien top) ✅   colonne PPM ✅
+mobileViews Live/Value/Favoris/Profil: 4/4 ✅
+Verdict: QA_FEATURES_PASS
+```
+
+Screenshots : `.context/qa-top5-interactive.png`, `.context/qa-rankings-prod.png`.
 
 ## Demandes (5)
 
