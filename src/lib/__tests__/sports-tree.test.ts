@@ -3,6 +3,7 @@ import {
   parseTimeFilter,
   filterByStartWindow,
   filterByToday,
+  filterByTomorrow,
   filterLiveByWindow,
   filterBySelection,
 } from "../match-view";
@@ -23,16 +24,41 @@ import {
 
 describe("parseTimeFilter", () => {
   test("'all' → aucune fenêtre", () => {
-    expect(parseTimeFilter("all")).toEqual({ hours: null, today: false });
+    expect(parseTimeFilter("all")).toEqual({ hours: null, today: false, tomorrow: false });
   });
   test("'2h' → fenêtre 2 heures", () => {
-    expect(parseTimeFilter("2h")).toEqual({ hours: 2, today: false });
+    expect(parseTimeFilter("2h")).toEqual({ hours: 2, today: false, tomorrow: false });
   });
   test("'24h' → fenêtre 24 heures", () => {
-    expect(parseTimeFilter("24h")).toEqual({ hours: 24, today: false });
+    expect(parseTimeFilter("24h")).toEqual({ hours: 24, today: false, tomorrow: false });
   });
   test("'today' → jour calendaire", () => {
-    expect(parseTimeFilter("today")).toEqual({ hours: null, today: true });
+    expect(parseTimeFilter("today")).toEqual({ hours: null, today: true, tomorrow: false });
+  });
+  test("'tomorrow' → jour calendaire suivant", () => {
+    expect(parseTimeFilter("tomorrow")).toEqual({ hours: null, today: false, tomorrow: true });
+  });
+});
+
+// ─── filterByToday ─────────────────────────────────────────────────────────
+
+describe("filterByTomorrow", () => {
+  const now = new Date("2026-08-15T22:30:00"); // soir → demain = 16/08
+  type M = { at: string };
+  const items: M[] = [
+    { at: "2026-08-15T23:59:00" }, // encore aujourd'hui (après 22h30)
+    { at: "2026-08-16T00:00:00" }, // demain minuit
+    { at: "2026-08-16T20:45:00" }, // demain soir
+    { at: "2026-08-17T12:00:00" }, // après-demain
+  ];
+  test("garde uniquement les matchs du jour calendaire suivant", () => {
+    expect(filterByTomorrow(items, (m) => m.at, now).map((m) => m.at)).toEqual([
+      "2026-08-16T00:00:00",
+      "2026-08-16T20:45:00",
+    ]);
+  });
+  test("match sans date exclu", () => {
+    expect(filterByTomorrow([{ at: "" }] as M[], (m) => m.at, now)).toHaveLength(0);
   });
 });
 

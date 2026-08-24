@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useId, useCallback, lazy, Suspense } from "react";
+import { useState, useMemo, useId, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import {
   Trophy,
@@ -43,6 +43,7 @@ import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import {
   filterByStartWindow,
   filterByToday,
+  filterByTomorrow,
   filterBySelection,
   filterLiveByWindow,
   parseTimeFilter,
@@ -94,7 +95,7 @@ export function FootballTabContent() {
   );
   const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
-  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
+  const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);
 
   // Suite AI Pricing — filtres NL, combiné, backtest/fiabilité.
   const { presets: aiPresets, addPreset: addAIPreset, removePreset: removeAIPreset } = useFootballAIFilters();
@@ -171,11 +172,14 @@ export function FootballTabContent() {
     if (activeAIFilter) {
       list = applyCompiledRules(list, activeAIFilter.rules);
     }
-    // Filtre par heure de début (fenêtre glissante 1h → 24h ou jour calendaire).
+    // Filtre par heure de début (fenêtre glissante 1h → 24h, jour calendaire
+    // aujourd'hui ou demain).
     if (timeRange !== null) {
       list = filterByStartWindow(list, timeRange, (m) => m.scheduledAt);
     } else if (timeToday) {
       list = filterByToday(list, (m) => m.scheduledAt);
+    } else if (timeTomorrow) {
+      list = filterByTomorrow(list, (m) => m.scheduledAt);
     }
     // Sélection sidebar : ne montrer que les matchs choisis. Vide = pas de filtre.
     list = filterBySelection(list, selectedMatchIds, (m) => m.id);
@@ -184,7 +188,26 @@ export function FootballTabContent() {
       return [...list].sort((a, b) => (bestMatchEdge(b) ?? -Infinity) - (bestMatchEdge(a) ?? -Infinity));
     }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday, selectedMatchIds]);
+  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday, timeTomorrow, selectedMatchIds]);
+
+  // Auto-bascule Live → Pre-match : sélectionner une ligue sans match en cours
+  // mais avec des matchs à venir ne doit jamais atterrir sur un onglet Live vide
+  // (repro : Bundesliga 2 « pour demain » → grille vide en mode par défaut).
+  // Gated par « intention » (ligue|fenêtre) : la bascule ne joue qu'au montage
+  // et au CHANGEMENT de filtre — un retour manuel à l'onglet Live n'est plus
+  // écrasé, même si la liste live est vide.
+  const lastIntentRef = useRef<string | null>(null);
+  useEffect(() => {
+    const intentKey = `${selectedLeagueId ?? ""}|${timeKey}`;
+    const isFirstRun = lastIntentRef.current === null;
+    const isIntentChange = !isFirstRun && lastIntentRef.current !== intentKey;
+    lastIntentRef.current = intentKey;
+    if (!isFirstRun && !isIntentChange) return;
+    if (mode !== "live") return;
+    if (liveMatches.length === 0 && prematchMatches.length > 0) {
+      setMode("prematch");
+    }
+  }, [selectedLeagueId, timeKey, mode, liveMatches.length, prematchMatches.length, setMode]);
 
   const FILTERS: { key: FootFilter; label: string }[] = [
     { key: "all", label: "Tous" },

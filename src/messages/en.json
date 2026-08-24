@@ -214,7 +214,8 @@
     "timeFilterLabel": "Start time",
     "timeAll": "All",
     "timeHour": "{hours}h",
-    "timeToday": "Today"
+    "timeToday": "Today",
+    "timeTomorrow": "Tomorrow"
   },
   "sportsSidebar": {
     "title": "Sports filters",
@@ -227,6 +228,7 @@
     "timeAll": "All",
     "timeHour": "{hours}h",
     "timeToday": "Today",
+    "timeTomorrow": "Tomorrow",
     "favorites": "Favorites & top leagues",
     "toggleFavorite": "Add or remove from favorites",
     "quickLinks": "Predictions",

@@ -15,6 +15,7 @@ import {
   filterByStartWindow,
   filterByToday,
   filterBySelection,
+  filterByTomorrow,
   filterLiveByWindow,
   parseTimeFilter,
 } from "@/lib/match-view";
@@ -436,18 +437,21 @@ return [...matches, ...synthetic];
   // le coup d'envoi sort de la fenêtre.
   const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
-  const { hours: timeRange, today: timeToday } = parseTimeFilter(timeKey);
-  /** Applique la fenêtre horaire (ou « aujourd'hui ») en excluant le live. */
+  const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);
+  /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en excluant le live. */
   const scopeByTime = useCallback(
     <T extends { id: string; scheduledAt: string }>(list: T[]): T[] => {
-      if (timeRange === null && !timeToday) return list;
+      if (timeRange === null && !timeToday && !timeTomorrow) return list;
       const prematchOnly = list.filter((m) => !liveStates[m.id]?.isLive);
       if (timeRange !== null) {
         return filterByStartWindow(prematchOnly, timeRange, (m) => m.scheduledAt);
       }
+      if (timeTomorrow) {
+        return filterByTomorrow(prematchOnly, (m) => m.scheduledAt);
+      }
       return filterByToday(prematchOnly, (m) => m.scheduledAt);
     },
-    [liveStates, timeRange, timeToday],
+    [liveStates, timeRange, timeToday, timeTomorrow],
   );
 
   // Nombre de matchs pour la carte tournoi (sur la liste scoped).

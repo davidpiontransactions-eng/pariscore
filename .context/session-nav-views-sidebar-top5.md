@@ -182,6 +182,52 @@ Déployé : `ee1ebb41` · build_ran:1 · health OK. Screenshot `.context/qa-live
 
 ---
 
+# Itération 7 — 2026-08-24 : AUDIT filtres sidebar (matchs qui ne s'affichent pas)
+
+**Repro utilisateur** : « Bundesliga 2 pour demain → aucun match dans la partie ».
+
+## Phase A — Audit statique de la chaîne
+
+Pipeline vérifié : arbre (`use-sports-tree` ← `/api/football/matches`) → clic ligue
+(`selectLeague("football:{id}")`) → grille (`FootballTabContent`, source identique
+`use-football-matches`) → filtres league/mode/time/sélection.
+
+| # | Cause racine | Gravité |
+|---|---|---|
+| RC1 | `modes.football` **persisté à "live"** : cliquer une ligue prematch-only garde l'onglet Live actif → 0 carte (le Pre-match en contient N, visible seulement si on devine le switch) | 🔴 principale |
+| RC2 | Aucun filtre « Demain » nulle part (union `TimeFilterKey`, lib, pills grid **et** sidebar) ; un `selectedTimeFilter` persisté (ex 24h) masque demain même en Pre-match | 🟠 |
+| RC3 | BSD prematch `limit=100` tronque les petites ligues (arbre ET grille cohérents mais tronqués) — hors repro B2 (couvert par OpenLigaDB) | ⚪ noté |
+
+## Phase B — Correctifs (commit dédié)
+
+| Fix | Contenu |
+|---|---|
+| F1 (RC1+) | **Auto-bascule Live→Pre-match gated par intention** (`lastIntentRef` sur `leagueId\|timeKey`) : joue au montage + au changement de filtre uniquement — plus de trappe « retour manuel Live impossible », plus de yank quand un match se termine |
+| F2a | `match-view.ts` : `TimeFilterKey += "tomorrow"`, `parseTimeFilter` → `{tomorrow}`, nouveau `filterByTomorrow()` (jour calendaire now+1) |
+| F2b | `sports-tree.ts` : `matchInTimeWindow` branche tomorrow (compteurs arbre cohérents) |
+| F2c | `time-range-filter.tsx` + sidebar : pill **« Demain »** (i18n fr/en ×2 namespaces) |
+| F2d | `football-tab-content.tsx` : prematch honore tomorrow ; tennis `scopeByTime` aussi (`tennis-tab-content.tsx`) ; store `TIME_PARAM_KEYS += "tomorrow"` (URL round-trip réparé) |
+| Tests | Assertions parseTimeFilter mises à jour + 2 cas filterByTomorrow (minuit / sans date) |
+
+## Phase C — Review (REQUEST CHANGES → tout corrigé)
+
+R1 effet continu = piège a11y/UX → remplacé par gating intention ✓ · R2 pills sidebar
+sans Demain (clé morte) → ajoutées ✓ · R3 URL `?time=tomorrow` rejetée au hydrate →
+TIME_PARAM_KEYS ✓ · R4 tennis ignorait Demain → scopeByTime ✓ · R5 live memo foot
+sémantique → choix produit : **Demain ne filtre pas le Live** (documenté) · R6 leakage
+autres sports (nba/mma… lisent hours/today only) → follow-up tracé.
+
+## Vérifications itération 7
+
+| Check | Résultat |
+|---|---|
+| eslint 6 fichiers / tsc ciblé | ✅ 0/0 |
+| `bun test sports-tree.test.ts` | ✅ **37 pass / 0 fail** |
+| Build | ✅ |
+| Deploy + QA prod scénario B2/Demain | ⏳ |
+
+---
+
 # Itération 4 — 2026-08-24 : plancher de cotes 1.15 dans le Top5
 
 **Demande** : « ne pas voir de matchs avec des cotes ≤ 1.15 sur les stratégies ».

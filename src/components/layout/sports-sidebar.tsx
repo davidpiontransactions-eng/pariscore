@@ -182,6 +182,7 @@ function TimePills() {
       label: t("timeHour", { hours }),
     })),
     { key: "today" as const, label: t("timeToday") },
+    { key: "tomorrow" as const, label: t("timeTomorrow") },
   ];
 
   return (

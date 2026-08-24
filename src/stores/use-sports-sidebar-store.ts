@@ -165,7 +165,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
 // pas de refonte du routing Next (cf. décision use-tab-view.ts).
 // ---------------------------------------------------------------------------
 
-const TIME_PARAM_KEYS: TimeFilterKey[] = ["1h", "2h", "4h", "6h", "12h", "24h", "today"];
+const TIME_PARAM_KEYS: TimeFilterKey[] = ["1h", "2h", "4h", "6h", "12h", "24h", "today", "tomorrow"];
 
 /** Lit les query params au montage et hydrate le store (1x). */
 export function hydrateStoreFromUrl(): void {

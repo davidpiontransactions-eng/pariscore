@@ -9,6 +9,7 @@ import type {
 import {
   filterByStartWindow,
   filterByToday,
+  filterByTomorrow,
   filterLiveByWindow,
   parseTimeFilter,
 } from "@/lib/match-view";
@@ -656,7 +657,7 @@ export function sortSportsTree(sports: SportNode[]): SportNode[] {
 }
 
 function matchInTimeWindow(m: TreeMatchSummary, tf: TimeFilterHours, now: Date): boolean {
-  const { hours, today } = parseTimeFilter(tf);
+  const { hours, today, tomorrow } = parseTimeFilter(tf);
   if (hours !== null) {
     // Live : fenêtre glissante passée [now − Nh, now] (coup d'envoi déjà eu
     // lieu) ; prematch : fenêtre à venir [now − tolérance, now + Nh].
@@ -665,6 +666,9 @@ function matchInTimeWindow(m: TreeMatchSummary, tf: TimeFilterHours, now: Date):
   }
   if (today) {
     return filterByToday([m], (x) => x.scheduledAt, now).length > 0;
+  }
+  if (tomorrow) {
+    return filterByTomorrow([m], (x) => x.scheduledAt, now).length > 0;
   }
   return true;
 }

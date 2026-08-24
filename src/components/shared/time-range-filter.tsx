@@ -14,9 +14,10 @@ type Props = {
 
 /**
  * TimeRangeFilter — filtre par heure de début (1h / 2h / 4h / 6h / 12h / 24h
- * / Aujourd'hui). Fenêtre glissante à partir de maintenant (tolérance arrière
- * 15 min, cf. `filterByStartWindow` dans src/lib/match-view.ts) ; « today »
- * couvre le jour calendaire local (`filterByToday`).
+ * / Aujourd'hui / Demain). Fenêtre glissante à partir de maintenant (tolérance
+ * arrière 15 min, cf. `filterByStartWindow` dans src/lib/match-view.ts) ;
+ * « today » / « tomorrow » couvrent les jours calendaires locaux
+ * (`filterByToday` / `filterByTomorrow`).
  *
  * Source de vérité : le store sidebar (`useSportsSidebarStore.selectedTimeFilter`)
  * pour les onglets couplés — ce composant n'est qu'un contrôleur déporté.
@@ -34,6 +35,7 @@ export function TimeRangeFilter({ value, onChange, className }: Props) {
       label: t("timeHour", { hours }),
     })),
     { key: "today", label: t("timeToday") },
+    { key: "tomorrow", label: t("timeTomorrow") },
   ];
 
   return (

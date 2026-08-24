@@ -18,20 +18,23 @@ export type TimeFilterKey =
   | "6h"
   | "12h"
   | "24h"
-  | "today";
+  | "today"
+  | "tomorrow";
 
 /**
  * Décompose une clé de filtre temporel en fenêtre glissante (heures) et/ou
- * drapeau « aujourd'hui » (jour calendaire local).
+ * drapeaux « aujourd'hui » / « demain » (jours calendaires locaux).
  */
 export function parseTimeFilter(key: TimeFilterKey): {
   hours: number | null;
   today: boolean;
+  tomorrow: boolean;
 } {
-  if (key === "all") return { hours: null, today: false };
-  if (key === "today") return { hours: null, today: true };
+  if (key === "all") return { hours: null, today: false, tomorrow: false };
+  if (key === "today") return { hours: null, today: true, tomorrow: false };
+  if (key === "tomorrow") return { hours: null, today: false, tomorrow: true };
   const hours = Number.parseInt(key, 10);
-  return { hours: Number.isFinite(hours) ? hours : null, today: false };
+  return { hours: Number.isFinite(hours) ? hours : null, today: false, tomorrow: false };
 }
 
 /**
@@ -44,6 +47,26 @@ export function filterByToday<T>(
   now: Date = new Date(),
 ): T[] {
   const day = now.toDateString();
+  return items.filter((match) => {
+    const raw = getScheduledAt(match);
+    if (!raw) return false;
+    const ts = new Date(raw).getTime();
+    return Number.isFinite(ts) && new Date(ts).toDateString() === day;
+  });
+}
+
+/**
+ * Filtre les matchs dont le coup d'envoi tombe DEMAIN (jour calendaire local).
+ * Complément de `filterByToday` pour la pill « Demain ».
+ */
+export function filterByTomorrow<T>(
+  items: T[],
+  getScheduledAt: (match: T) => string | null | undefined,
+  now: Date = new Date(),
+): T[] {
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const day = tomorrow.toDateString();
   return items.filter((match) => {
     const raw = getScheduledAt(match);
     if (!raw) return false;
