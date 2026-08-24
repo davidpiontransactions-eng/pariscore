@@ -389,7 +389,9 @@ type MinimalTennisMatch = {
 export function tennisToRaw(matches: MinimalTennisMatch[] | undefined | null): RawTreeMatch[] {
   const list = Array.isArray(matches) ? matches : [];
   return list
-    .filter((m) => m && m.playerA?.name && m.playerB?.name)
+    .filter((m) => m && 
+          m.playerA?.name != null && m.playerA?.name !== "" &&
+          m.playerB?.name != null && m.playerB?.name !== "")
     .map((m) => {
       const tournament = m.tournament?.trim() || "Tournoi";
       return {

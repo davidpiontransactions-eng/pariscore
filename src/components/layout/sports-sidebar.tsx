@@ -376,7 +376,10 @@ function MatchRow({
       )}
       <button
         type="button"
-        onClick={() => toggleSelection(match.id)}
+        onClick={() => {
+          toggleSelection(match.id);
+          openDetail();
+        }}
         title={isSelected ? t("selectionRemove") : t("selectionAdd")}
         aria-pressed={isSelected}
         className="min-w-0 flex-1 truncate rounded px-1 text-left transition-colors hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"

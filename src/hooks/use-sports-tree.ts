@@ -50,13 +50,21 @@ async function loadFootball(): Promise<SportNode> {
 
 async function loadTennis(): Promise<SportNode> {
   try {
-    const json = await getJson("/api/tennis/prematch");
-    return groupRawMatches("tennis", tennisToRaw(json?.matches ?? []));
+    // Fetch both live and prematch tennis matches
+    const [liveJson, prematchJson] = await Promise.all([
+      getJson("/api/tennis/live").catch(() => ({ matches: [] })),
+      getJson("/api/tennis/prematch").catch(() => ({ matches: [] }))
+    ]);
+    
+    // Combine live and prematch matches
+    const allMatches = [
+      ...(liveJson?.matches ?? []),
+      ...(prematchJson?.matches ?? [])
+    ];
+    
+    return groupRawMatches("tennis", tennisToRaw(allMatches));
   } catch {
-    // /api/tennis/prematch en erreur (503 : BSD+odds-api indisponibles, cache
-    // périmé) → nœud marqué `degraded` plutôt qu'un « Tennis | 0 » trompeur.
-    // Les matchs réels restent lisibles via l'onglet tennis (usePrematchMatches
-    // gère son propre état de charge) — on ne prétend pas ici qu'il n'y a rien.
+    // If both endpoints fail, return degraded node
     return { ...emptySportNode("tennis"), degraded: true };
   }
 }
