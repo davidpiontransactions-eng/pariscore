@@ -59,8 +59,30 @@ pour la saison précédente, dédupliqué 1 h).
 | Check | Résultat |
 |---|---|
 | eslint / tsc ciblés | ✅ 0/0 |
-| Build | ⏳ |
-| QA prod : footer L5, bouton saison actif, tableau re-trié | ⏳ |
+| Build | ✅ 70/70 |
+| QA prod | ✅ via itération 3 |
+
+---
+
+# Itération 3 — 2026-08-24 : marché statistique en liste déroulante
+
+**Demande** : « sélectionner ma stratégie par une liste déroulante et non des boutons »
+dans les Classements (= sélecteur de marché Buts/m / PPM / O1.5 / … qui débordait,
+même problème que les pills Top5 corrigées précédemment).
+
+**Correctif** (`football-league-rankings-widget.tsx`) :
+- Rangée de pills `overflow-x-auto scrollbar-none` → **Shadcn Select** (`size="sm"`,
+  h-8 w-full, thème sombre, focus ring émeraude) — même pattern que le Top5.
+- Items libellés avec le titre descriptif complet ; ligne sous le trigger :
+  « Trié par : {def.short} » (vert émeraude, truncate + title).
+- `aria-label="Marché statistique"` ; duplication du titre supprimée au-dessus du tableau.
+
+## Vérifications itération 3
+
+| Check | Résultat |
+|---|---|
+| eslint / tsc ciblés | ✅ 0/0 |
+| Build + deploy + QA prod | ⏳ |
 
 ## Demandes (5)
 

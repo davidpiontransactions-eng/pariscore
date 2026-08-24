@@ -5,6 +5,13 @@ import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useFootballLeagueRankings } from "@/hooks/use-football-rankings";
 import type { FdRankRow, XgRankRow } from "@/hooks/use-football-rankings";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const LEAGUES: { slug: string; label: string }[] = [
   { slug: "ligue1", label: "Ligue 1" },
@@ -311,25 +318,27 @@ export function FootballLeagueRankingsWidget() {
         )}
       </div>
 
-      <div className="flex gap-1 overflow-x-auto px-2.5 pb-1.5 scrollbar-none">
-        {MARKETS.map((m) => (
-          <button
-            key={m.key}
-            type="button"
-            title={m.title}
-            aria-pressed={market === m.key}
-            onClick={() => setMarket(m.key)}
-            className={cn(
-              "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              market === m.key
-                ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300"
-                : "border-slate-700/60 text-slate-400 hover:text-slate-200 hover:border-slate-500/60",
-            )}
+      {/* Marché statistique — liste déroulante (les pills débordaient) */}
+      <div className="space-y-0.5 px-2.5 pb-1.5">
+        <Select value={market} onValueChange={(v) => setMarket(v as MarketKey)}>
+          <SelectTrigger
+            size="sm"
+            aria-label="Marché statistique"
+            className="h-8 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
           >
-            {m.short}
-          </button>
-        ))}
+            <SelectValue placeholder="Choisir un marché…" />
+          </SelectTrigger>
+          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+            {MARKETS.map((m) => (
+              <SelectItem key={m.key} value={m.key} className="text-xs">
+                {m.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="truncate pt-0.5 text-[10px] font-medium text-emerald-400/90" title={def.title}>
+          Trié par : {def.short}
+        </p>
       </div>
 
       {isLoading ? (
@@ -344,7 +353,6 @@ export function FootballLeagueRankingsWidget() {
         </div>
       ) : (
         <div className="px-2.5">
-          <p className="pb-1 text-[10px] font-medium text-emerald-400/90">{def.title}</p>
           {!rawRows?.length ? (
             <p className="py-2 text-[11px] text-slate-500">
               {market === "xgFor" || market === "xgAgainst"
