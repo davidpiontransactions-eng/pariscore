@@ -431,6 +431,24 @@ export function computeStrategyTop5Matches(
     }
   }
 
+  // Plancher de cotes : au-delà de ~87% de proba implicite, la cote équitable
+  // passe sous 1.15 — aucun intérêt à parier, on exclut le match de la liste.
+  // (bestAttack/bestDefense = λ moyens, pas des probabilités → hors périmètre.)
+  const MAX_PROB_PCT = (1 / 1.15) * 100;
+  const PROBABILISTIC_KEYS: ReadonlySet<StrategyTop5Key> = new Set([
+    "bestTeam",
+    "bestTeam1x2",
+    "doubleChance",
+    "over15",
+    "under35",
+    "bttsYes",
+    "over65Corners",
+  ]);
+  for (const key of STRATEGY_TOP5_KEYS) {
+    if (!PROBABILISTIC_KEYS.has(key)) continue;
+    scores[key] = scores[key].filter((s) => s.value < MAX_PROB_PCT);
+  }
+
   // Stats d'affichage xG/buts L5/L10 (Understat) — calculées une fois par fixture.
   const xgByFixture = new Map<string, MatchDisplayStats | null>();
   for (const key of STRATEGY_TOP5_KEYS) {

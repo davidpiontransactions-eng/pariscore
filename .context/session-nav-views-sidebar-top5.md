@@ -82,7 +82,32 @@ même problème que les pills Top5 corrigées précédemment).
 | Check | Résultat |
 |---|---|
 | eslint / tsc ciblés | ✅ 0/0 |
-| Build + deploy + QA prod | ⏳ |
+| Build + deploy + QA prod | ✅ (voir itération 4) |
+
+---
+
+# Itération 4 — 2026-08-24 : plancher de cotes 1.15 dans le Top5
+
+**Demande** : « ne pas voir de matchs avec des cotes ≤ 1.15 sur les stratégies ».
+
+## Implémentation (`src/lib/football-strategy-top5.ts`)
+
+- Filtrage **post-scoring, point unique** (couvre les 3 chemins : cotes dévigées,
+  forme soccerstats, Poisson BSD) : exclusion si `value ≥ 1/1.15 ≈ 86.96 %`.
+- Périmètre : les 7 stratégies probabilistes (`bestTeam`, `bestTeam1x2`,
+  `doubleChance`, `over15`, `under35`, `bttsYes`, `over65Corners`).
+  `bestAttack`/`bestDefense` = λ moyens (buts/encaissés), pas des probabilités → hors périmètre.
+- `bestTeam` : la forme renvoie du PPG (≤3, jamais filtré à tort) ; le chemin cotes
+  renvoie un % — filtré correctement.
+- Effet attendu : listes Top5 plus courtes (< 5), état « Pas de match qualifié » possible
+  quand tout est écrêté — copie existante réutilisée.
+
+## Vérifications itération 4
+
+| Check | Résultat |
+|---|---|
+| eslint / tsc lib | ✅ 0/0 |
+| Build + deploy + QA prod (assert proba < 87 %) | ⏳ |
 
 ## Demandes (5)
 
