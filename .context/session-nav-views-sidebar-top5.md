@@ -82,7 +82,39 @@ même problème que les pills Top5 corrigées précédemment).
 | Check | Résultat |
 |---|---|
 | eslint / tsc ciblés | ✅ 0/0 |
-| Build + deploy + QA prod | ✅ (voir itération 4) |
+| Build + deploy + QA prod | ✅ `cdfd7ee8` (déployé via 410c29d9) |
+
+---
+
+# Itérations 4-5 — 2026-08-24 : plancher cotes + buteurs/passeurs + drapeaux
+
+## Itération 4 — plancher de cotes 1.15 (Top5)
+
+- Filtrage post-scoring unique dans la lib : exclusion si proba ≥ 1/1.15 ≈ 86,96 %
+  (7 stratégies probabilistes ; bestAttack/bestDefense = λ moyens → hors périmètre).
+- Déployé `410c29d9` · QA prod : Over 1.5 affiche 86/86/85/84/83 % → aucun ≥ 87 ✅.
+
+## Itération 5 — Buteurs & Passeurs par championnat (+ drapeaux)
+
+**Demandes** : meilleurs buteurs & passeurs décisifs par championnat avec stats
+moyennes /match selon saison et contexte ; drapeaux pays dans le dropdown championnats.
+
+| Élément | Implémentation |
+|---|---|
+| Route `GET /api/football/players` | **Nouveau** — scrape serveur Understat `/league/{slug}/{year}` (blob `playersData`, décodage `\xXX`), top 10 buteurs + passeurs avec `games/total/perMatch` ; cache Map 6 h multi-clés + fallback stale ; ligues couvertes : epl, laliga, bundesliga, seriea, ligue1, russian_premier (404 documenté sinon) |
+| Hook `use-football-players.ts` | **Nouveau** SWR dédup 1 h |
+| Widget classements | Vue segmentée header **[Équipes/Buteurs/Passeurs]** ; panel joueurs (rang, nom+équipe, J, moy/m vert, total chip) ; scope Dom/Ext masqué en vue joueurs avec note explicite (Understat ne fournit pas le split venue sur playersData — follow-up crawl pages joueurs si requis) |
+| Drapeaux | Select championnats custom (Radix) : PNG flagcdn 18×13 + label, codes ISO ajoutés aux 16 ligues (GB-ENG/Gb-SCT inclus) |
+| Lisibilité tableau | Fin du stretch `w-full` → colonnes compactées à gauche, nom tronqué à 104 px, stats collées à « J » |
+
+## Vérifications itérations 4-5
+
+| Check | Résultat |
+|---|---|
+| eslint / tsc ciblés | ✅ 0/0 |
+| Build | ✅ 70/70 |
+| QA prod (sonde dédiée + debug saisons) | ⏳ |
+| Déploy | ⏳ |
 
 ---
 

@@ -12,24 +12,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getFlagAssets } from "@/lib/flag-utils";
+import { useFootballPlayers } from "@/hooks/use-football-players";
+import type { PlayerRow } from "@/app/api/football/players/route";
 
-const LEAGUES: { slug: string; label: string }[] = [
-  { slug: "ligue1", label: "Ligue 1" },
-  { slug: "epl", label: "Premier League" },
-  { slug: "laliga", label: "La Liga" },
-  { slug: "bundesliga", label: "Bundesliga" },
-  { slug: "seriea", label: "Serie A" },
-  { slug: "primeira_liga", label: "Liga Portugal" },
-  { slug: "eredivisie", label: "Eredivisie" },
-  { slug: "championship", label: "Championship" },
-  { slug: "ligue2", label: "Ligue 2" },
-  { slug: "laliga2", label: "La Liga 2" },
-  { slug: "bundesliga2", label: "2. Bundesliga" },
-  { slug: "serieb", label: "Serie B" },
-  { slug: "jupiler", label: "Pro League" },
-  { slug: "super_lig", label: "Süper Lig" },
-  { slug: "superleague_greece", label: "Super League GR" },
-  { slug: "scot_prem", label: "Écosse" },
+const LEAGUES: { slug: string; label: string; cc: string }[] = [
+  { slug: "ligue1", label: "Ligue 1", cc: "FR" },
+  { slug: "epl", label: "Premier League", cc: "GB-ENG" },
+  { slug: "laliga", label: "La Liga", cc: "ES" },
+  { slug: "bundesliga", label: "Bundesliga", cc: "DE" },
+  { slug: "seriea", label: "Serie A", cc: "IT" },
+  { slug: "primeira_liga", label: "Liga Portugal", cc: "PT" },
+  { slug: "eredivisie", label: "Eredivisie", cc: "NL" },
+  { slug: "championship", label: "Championship", cc: "GB-ENG" },
+  { slug: "ligue2", label: "Ligue 2", cc: "FR" },
+  { slug: "laliga2", label: "La Liga 2", cc: "ES" },
+  { slug: "bundesliga2", label: "2. Bundesliga", cc: "DE" },
+  { slug: "serieb", label: "Serie B", cc: "IT" },
+  { slug: "jupiler", label: "Pro League", cc: "BE" },
+  { slug: "super_lig", label: "Süper Lig", cc: "TR" },
+  { slug: "superleague_greece", label: "Super League GR", cc: "GR" },
+  { slug: "scot_prem", label: "Écosse", cc: "GB-SCT" },
 ];
 
 type MarketKey =
@@ -93,6 +96,90 @@ function mergeMarkets(markets: Record<string, FdRankRow[] | XgRankRow[] | undefi
 
 const num1 = (v: number | undefined): string =>
   v == null || !Number.isFinite(v) ? "–" : v.toFixed(2);
+
+/** Panel Buteurs / Passeurs — source Understat, moyennes par match. */
+function PlayersPanel({
+  kind,
+  league,
+  season,
+  scopeNote,
+}: {
+  kind: "scorers" | "assisters";
+  league: string;
+  season: string;
+  scopeNote: boolean;
+}) {
+  const { data, error, isLoading } = useFootballPlayers(league, season);
+  const rows = kind === "scorers" ? data?.scorers : data?.assisters;
+  const unit = kind === "scorers" ? "buts/m" : "passes/m";
+
+  return (
+    <div className="px-2.5">
+      {scopeNote && (
+        <p className="pb-1 text-[8.5px] leading-tight text-slate-600">
+          Joueurs : Global uniquement (source Understat — split Dom/Ext non couvert).
+        </p>
+      )}
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
+          <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+          Chargement…
+        </div>
+      ) : error ? (
+        <div className="flex items-start gap-1.5 px-2.5 py-3 text-[11px] leading-snug text-slate-500">
+          <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+          {(error as Error).message}
+        </div>
+      ) : !rows?.length ? (
+        <p className="py-2 text-[11px] text-slate-500">Aucune donnée joueur pour cette saison.</p>
+      ) : (
+        <>
+          <ol className="space-y-px">
+            {rows.map((r: PlayerRow, i) => (
+              <li
+                key={r.name}
+                className="flex items-center gap-1.5 rounded px-0.5 py-0.5 hover:bg-slate-800/60"
+              >
+                <span className="w-4 shrink-0 text-right font-mono text-[9px] tabular-nums text-slate-600">
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[10px] leading-tight text-slate-300">
+                    {r.name}
+                  </span>
+                  <span className="block truncate text-[8px] leading-tight text-slate-500">
+                    {r.team}
+                  </span>
+                </span>
+                <span
+                  className="shrink-0 font-mono text-[8px] tabular-nums text-slate-600"
+                  title="Matchs joués"
+                >
+                  {r.games}j
+                </span>
+                <span
+                  className="shrink-0 text-right font-mono text-[8.5px] tabular-nums text-emerald-400"
+                  title={`Moyenne par match (${unit})`}
+                >
+                  {num1(r.perMatch)}
+                </span>
+                <span
+                  title={kind === "scorers" ? "Buts" : "Passes décisives"}
+                  className="shrink-0 rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-[9px] font-bold tabular-nums text-emerald-300"
+                >
+                  {r.total}
+                </span>
+              </li>
+            ))}
+          </ol>
+          <p className="pt-1 text-[8px] leading-tight text-slate-600">
+            {kind === "scorers" ? "Buts" : "Passes décisives"} · moyenne / match · source Understat · top 10
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Fenêtre de forme : saison complète ou N derniers matchs (toutes saisons). */
 type FormKey = "full" | "l5" | "l10";
@@ -163,6 +250,7 @@ export function FootballLeagueRankingsWidget() {
   const [scope, setScope] = useState<Scope>("overall");
   const [market, setMarket] = useState<MarketKey>("gfPg");
   const [formKey, setFormKey] = useState<FormKey>("full");
+  const [view, setView] = useState<"teams" | "scorers" | "assisters">("teams");
 
   // Saisons triées (récentes d'abord) — la sélection par défaut se fera sur
   // availableSeasons une fois chargées (voir effectiveSeason plus bas).
@@ -196,6 +284,7 @@ export function FootballLeagueRankingsWidget() {
   const def = MARKETS.find((m) => m.key === market) ?? MARKETS[0];
   const rawRowsBase = rowsFor(market);
   const higherBetter = data?.higherBetter ?? {};
+  const players = useFootballPlayers(view === "teams" ? null : league, effectiveSeason);
 
   // Lignes affichées selon la fenêtre : saison complète ou blend N derniers.
   const rawRows = useMemo(() => {
@@ -227,19 +316,62 @@ export function FootballLeagueRankingsWidget() {
         <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Classements
         </h2>
+        {/* Vue : équipes ou joueurs */}
+        <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Vue">
+          {([
+            { key: "teams", label: "Équipes" },
+            { key: "scorers", label: "Buteurs" },
+            { key: "assisters", label: "Passeurs" },
+          ] as const).map((v) => (
+            <button
+              key={v.key}
+              type="button"
+              onClick={() => setView(v.key)}
+              aria-pressed={view === v.key}
+              className={cn(
+                "px-1.5 py-0.5 text-[9px] font-semibold transition-colors",
+                view === v.key
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "bg-transparent text-slate-500 hover:text-slate-300",
+              )}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-1 px-2.5 pb-1.5">
-        <select
-          value={league}
-          onChange={(e) => setLeague(e.target.value)}
-          className="w-full rounded border border-slate-700/60 bg-slate-900 px-1 py-0.5 text-[10px] text-slate-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          aria-label="Championnat"
-        >
-          {LEAGUES.map((l) => (
-            <option key={l.slug} value={l.slug}>{l.label}</option>
-          ))}
-        </select>
+        <Select value={league} onValueChange={setLeague}>
+          <SelectTrigger
+            size="sm"
+            aria-label="Championnat"
+            className="h-8 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
+          >
+            <SelectValue placeholder="Choisir un championnat…" />
+          </SelectTrigger>
+          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+            {LEAGUES.map((l) => {
+              const flag = getFlagAssets(l.cc);
+              return (
+                <SelectItem key={l.slug} value={l.slug} className="text-xs">
+                  <span className="inline-flex items-center gap-2">
+                    <img
+                      src={flag.url}
+                      alt=""
+                      loading="lazy"
+                      width={18}
+                      height={13}
+                      className="h-[13px] w-[18px] shrink-0 rounded-[2px] object-cover"
+                    />
+                    {l.label}
+                  </span>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+        {view === "teams" && (
         <div className="flex items-center justify-between gap-1">
           <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Contexte">
           {SCOPES.map((s) => (
@@ -284,6 +416,7 @@ export function FootballLeagueRankingsWidget() {
             ))}
           </div>
         </div>
+        )}
         {/* Filtre saison — segmenté sur les saisons disponibles */}
         {sortedSeasons.length > 0 && (
           <div className="flex items-center gap-1.5">
@@ -319,6 +452,8 @@ export function FootballLeagueRankingsWidget() {
       </div>
 
       {/* Marché statistique — liste déroulante (les pills débordaient) */}
+      {view === "teams" ? (
+        <>
       <div className="space-y-0.5 px-2.5 pb-1.5">
         <Select value={market} onValueChange={(v) => setMarket(v as MarketKey)}>
           <SelectTrigger
@@ -365,11 +500,11 @@ export function FootballLeagueRankingsWidget() {
               role="region"
               aria-label={`Classement complet ${def.title}`}
             >
-              <table className="w-full border-collapse text-[9px]">
+              <table className="border-collapse text-[9px]">
                 <thead>
                   <tr className="text-slate-600">
                     <th scope="col" className="w-4 py-0.5 pr-1 text-right font-medium">#</th>
-                    <th scope="col" className="py-0.5 text-left font-medium">Équipe</th>
+                    <th scope="col" className="w-[104px] py-0.5 text-left font-medium">Équipe</th>
                     <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Matchs joués">J</th>
                     {isXgRows(rawRows) ? (
                       <>
@@ -397,7 +532,7 @@ export function FootballLeagueRankingsWidget() {
                         <td className="py-0.5 pr-1 text-right font-mono tabular-nums text-slate-600">
                           {i + 1}
                         </td>
-                        <td className="max-w-0 truncate py-0.5 text-[10px] text-slate-300">
+                        <td className="w-[104px] truncate py-0.5 text-[10px] text-slate-300">
                           {teamName}
                         </td>
                         <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-500">
@@ -448,6 +583,15 @@ export function FootballLeagueRankingsWidget() {
             )}
           </p>
         </div>
+      )}
+        </>
+      ) : (
+        <PlayersPanel
+          kind={view === "scorers" ? "scorers" : "assisters"}
+          league={league}
+          season={effectiveSeason}
+          scopeNote={scope !== "overall"}
+        />
       )}
     </section>
   );
