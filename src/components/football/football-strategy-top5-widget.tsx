@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Loader2, AlertCircle, X } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import type {
   StrategyTop5Key,
   StrategyMatchEntry,
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 
 type StrategyDef = {
   key: StrategyTop5Key;
@@ -27,7 +28,8 @@ type StrategyDef = {
   format: (v: number) => string;
 };
 
-const STRATEGIES: StrategyDef[] = [
+/** Partagé avec le panneau de sélection (cards côté droit). */
+export const STRATEGIES: StrategyDef[] = [
   { key: "bestTeam", label: "Meilleure équipe (forme)", emoji: "⭐", isProb: false, format: (v) => `${v.toFixed(0)}%` },
   { key: "bestTeam1x2", label: "Meilleure équipe sur le 1X2", emoji: "🎯", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "bestAttack", label: "Meilleure attaque", emoji: "⚡", isProb: false, format: (v) => `${v.toFixed(1)} buts` },
@@ -221,37 +223,32 @@ export function FootballStrategyTop5Widget() {
   const { matchesFor, isLoading, error, isReady, window: win } = useFootballTop5();
   const [active, setActive] = useState<StrategyTop5Key>("bestTeam");
   const [winKey, setWinKey] = useState<WindowKey>("l5");
-  /**
-   * Multi-sélection de matchs → cards en tête de sidebar.
-   * On fige la STRATÉGIE au moment de la sélection avec l'entrée : la valeur
-   * d'un match est spécifique à chaque stratégie (PPG ≠ λ ≠ %) — afficher la
-   * carte sous une autre stratégie fabriquerait des métriques fausses.
-   */
-  const [selected, setSelected] = useState<Record<string, { entry: StrategyMatchEntry; strategy: StrategyTop5Key }>>({});
+  const selectedItems = useTop5SelectionStore((s) => s.items);
+  const toggleStore = useTop5SelectionStore((s) => s.toggle);
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
   const rows = matchesFor(active);
   const hasData = rows.length > 0;
+  const selCount = Object.keys(selectedItems).length;
 
   const toggleSelect = (entry: StrategyMatchEntry) => {
-    setSelected((prev) => {
-      const next = { ...prev };
-      const existing = next[entry.matchId];
-      // Re-cliquer le même couple match/stratégie retire ; cliquer sous une
-      // autre stratégie met à jour la capture (corrige le pairing naturellement).
-      if (existing && existing.strategy === active) delete next[entry.matchId];
-      else next[entry.matchId] = { entry, strategy: active };
-      return next;
-    });
+    // La capture {entry, strategy} est figée dans le store (cards à droite).
+    toggleStore(entry, active);
   };
-
-  const selectedList = Object.entries(selected);
 
   return (
     <section aria-label="Top 5 matchs par stratégie" className="border-b border-slate-800/80 pb-2">
       <div className="flex items-center justify-between pr-2.5">
         <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Top 5 matchs
+          {selCount > 0 && (
+            <span
+              className="ml-1.5 inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-px align-middle font-mono text-[9px] font-bold text-emerald-300"
+              title="Matchs sélectionnés (cards dans le panneau de droite)"
+            >
+              {selCount}
+            </span>
+          )}
         </h2>
         {/* Bascule fenêtre L5/L10 pour les stats xG/buts */}
         <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
@@ -302,72 +299,7 @@ export function FootballStrategyTop5Widget() {
         </p>
       </div>
 
-      {/* Cards des matchs sélectionnés — affichées en tête de sidebar */}
-      {selectedList.length > 0 && (
-        <div className="mx-2.5 mb-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-1.5">
-          <div className="flex items-center justify-between pb-1">
-            <h3 className="text-[9px] font-bold uppercase tracking-wider text-emerald-300">
-              Sélection ({selectedList.length})
-            </h3>
-            <button
-              type="button"
-              onClick={() => setSelected({})}
-              className="rounded px-1 text-[9px] font-semibold text-slate-400 transition-colors hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Tout effacer
-            </button>
-          </div>
-          <ul className="space-y-1">
-            {selectedList.map(([matchId, sel]) => {
-              // Définition FIGÉE à la sélection — jamais la stratégie active courante.
-              const selDef =
-                STRATEGIES.find((s) => s.key === sel.strategy) ?? STRATEGIES[0];
-              const entry = sel.entry;
-              const probPct = selDef.isProb ? Math.round(entry.value) : null;
-              const home = sideBadge(entry, "home");
-              const away = sideBadge(entry, "away");
-              return (
-                <li
-                  key={matchId}
-                  className="relative rounded-md border border-slate-700/60 bg-slate-900/80 p-1.5 pr-6"
-                >
-                  <button
-                    type="button"
-                    onClick={() => toggleSelect(entry)}
-                    aria-label={`Retirer ${entry.home.shortName} contre ${entry.away.shortName} de la sélection`}
-                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <X className="h-3 w-3" aria-hidden />
-                  </button>
-                  <div className="flex items-center gap-1 text-[8.5px] text-slate-500">
-                    <span className="font-mono tabular-nums">{formatKickoff(entry.kickoff)}</span>
-                    <span aria-hidden>·</span>
-                    <span className="truncate">
-                      {selDef.emoji} {selDef.label}
-                    </span>
-                  </div>
-                  <div className="mt-0.5 flex items-center justify-between gap-1">
-                    <div className="min-w-0 flex-1 space-y-px">
-                      <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
-                      <TeamName side={entry.away} highlight={away.highlight} bg="bg-slate-700" />
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <span className="block rounded bg-emerald-500/15 px-1 py-0.5 font-mono text-[9px] tabular-nums text-emerald-300">
-                        {selDef.format(entry.value)}
-                      </span>
-                      {probPct != null && (
-                        <span className="mt-0.5 block text-[8px] font-medium tabular-nums text-emerald-400">
-                          P {probPct}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+      {/* Les cards de sélection s'affichent dans le panneau droit (Top5SelectionPanel). */}
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
@@ -392,7 +324,7 @@ export function FootballStrategyTop5Widget() {
                 def={def}
                 kickoff={formatKickoff(entry.kickoff)}
                 winKey={winKey}
-                selected={Boolean(selected[entry.matchId])}
+                selected={Boolean(selectedItems[entry.matchId])}
                 onToggle={() => toggleSelect(entry)}
               />
             ))}
