@@ -4,30 +4,30 @@
     "leagueId": "serieb",
     "leagueName": "Italy2",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-08-22T17:40:13.536908Z",
+    "lastUpdated": "2026-08-24T05:11:40.404582Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
-    "teamCount": 24,
+    "teamCount": 22,
     "window": 8,
     "targetWindow": 5,
     "partial": true
   },
   "home": [
     {
-      "teamName": "Benevento",
-      "gp": 0,
-      "w": 0,
+      "teamName": "Venezia",
+      "gp": 5,
+      "w": 4,
       "d": 0,
-      "l": 0,
-      "gf": 0,
-      "ga": 0
+      "l": 1,
+      "gf": 12,
+      "ga": 4
     },
     {
       "teamName": "Palermo",
       "gp": 5,
       "w": 4,
-      "d": 1,
+      "d": 0,
       "l": 0,
-      "gf": 12,
+      "gf": 11,
       "ga": 4
     },
     {
@@ -40,49 +40,58 @@
       "ga": 4
     },
     {
-      "teamName": "Frosinone",
+      "teamName": "Empoli",
       "gp": 5,
-      "w": 3,
+      "w": 2,
       "d": 2,
       "l": 0,
-      "gf": 12,
+      "gf": 7,
       "ga": 4
     },
     {
-      "teamName": "Arezzo",
-      "gp": 0,
-      "w": 0,
-      "d": 0,
-      "l": 0,
-      "gf": 0,
-      "ga": 0
+      "teamName": "Sampdoria",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 5,
+      "ga": 6
     },
     {
-      "teamName": "Juve Stabia",
+      "teamName": "Mantova",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 4
+    },
+    {
+      "teamName": "Avellino",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 6,
+      "ga": 4
+    },
+    {
+      "teamName": "Carrarese",
       "gp": 5,
       "w": 1,
       "d": 2,
       "l": 1,
-      "gf": 8,
-      "ga": 6
+      "gf": 6,
+      "ga": 5
     },
     {
       "teamName": "Sudtirol",
       "gp": 5,
-      "w": 0,
-      "d": 3,
-      "l": 2,
-      "gf": 2,
-      "ga": 6
-    },
-    {
-      "teamName": "Cesena",
-      "gp": 5,
       "w": 1,
       "d": 2,
       "l": 2,
-      "gf": 8,
-      "ga": 11
+      "gf": 3,
+      "ga": 5
     },
     {
       "teamName": "Catanzaro",
@@ -94,6 +103,15 @@
       "ga": 8
     },
     {
+      "teamName": "Juve Stabia",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
+      "ga": 6
+    },
+    {
       "teamName": "Modena",
       "gp": 5,
       "w": 2,
@@ -101,78 +119,6 @@
       "l": 2,
       "gf": 8,
       "ga": 5
-    },
-    {
-      "teamName": "Avellino",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 6,
-      "ga": 4
-    },
-    {
-      "teamName": "Entella",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Sampdoria",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 5,
-      "ga": 6
-    },
-    {
-      "teamName": "Mantova",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 4
-    },
-    {
-      "teamName": "Carrarese",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 5
-    },
-    {
-      "teamName": "Bari",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 7
-    },
-    {
-      "teamName": "Ascoli",
-      "gp": 0,
-      "w": 0,
-      "d": 0,
-      "l": 0,
-      "gf": 0,
-      "ga": 0
-    },
-    {
-      "teamName": "Venezia",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 12,
-      "ga": 4
     },
     {
       "teamName": "Reggiana",
@@ -184,6 +130,15 @@
       "ga": 6
     },
     {
+      "teamName": "Vicenza",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 3,
+      "ga": 2
+    },
+    {
       "teamName": "Spezia",
       "gp": 5,
       "w": 1,
@@ -191,15 +146,6 @@
       "l": 2,
       "gf": 9,
       "ga": 8
-    },
-    {
-      "teamName": "Monza",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 9,
-      "ga": 3
     },
     {
       "teamName": "Pescara",
@@ -211,33 +157,69 @@
       "ga": 6
     },
     {
-      "teamName": "Empoli",
+      "teamName": "Frosinone",
       "gp": 5,
-      "w": 1,
-      "d": 3,
-      "l": 1,
-      "gf": 7,
-      "ga": 6
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 12,
+      "ga": 4
     },
     {
-      "teamName": "Vicenza",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
+      "teamName": "Bari",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
+      "ga": 7
+    },
+    {
+      "teamName": "Cesena",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 10
+    },
+    {
+      "teamName": "Monza",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
       "l": 0,
-      "gf": 3,
-      "ga": 2
+      "gf": 9,
+      "ga": 3
+    },
+    {
+      "teamName": "Entella",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 6
     }
   ],
   "away": [
     {
-      "teamName": "Benevento",
-      "gp": 0,
-      "w": 0,
+      "teamName": "Venezia",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
+      "l": 0,
+      "gf": 9,
+      "ga": 4
+    },
+    {
+      "teamName": "Ascoli",
+      "gp": 1,
+      "w": 1,
       "d": 0,
       "l": 0,
-      "gf": 0,
-      "ga": 0
+      "gf": 2,
+      "ga": 1
     },
     {
       "teamName": "Palermo",
@@ -251,92 +233,20 @@
     {
       "teamName": "Padova",
       "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Frosinone",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 10,
-      "ga": 5
-    },
-    {
-      "teamName": "Arezzo",
-      "gp": 0,
-      "w": 0,
-      "d": 0,
-      "l": 0,
-      "gf": 0,
-      "ga": 0
-    },
-    {
-      "teamName": "Juve Stabia",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 8
-    },
-    {
-      "teamName": "Sudtirol",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Cesena",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 2,
-      "ga": 9
-    },
-    {
-      "teamName": "Catanzaro",
-      "gp": 5,
       "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 10,
-      "ga": 8
-    },
-    {
-      "teamName": "Modena",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
+      "d": 0,
       "l": 2,
       "gf": 6,
-      "ga": 7
-    },
-    {
-      "teamName": "Avellino",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 4,
       "ga": 8
     },
     {
-      "teamName": "Entella",
+      "teamName": "Empoli",
       "gp": 5,
-      "w": 1,
-      "d": 1,
+      "w": 0,
+      "d": 2,
       "l": 3,
-      "gf": 2,
-      "ga": 8
+      "gf": 5,
+      "ga": 9
     },
     {
       "teamName": "Sampdoria",
@@ -350,11 +260,20 @@
     {
       "teamName": "Mantova",
       "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 6,
+      "ga": 8
+    },
+    {
+      "teamName": "Avellino",
+      "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 6,
-      "ga": 9
+      "gf": 4,
+      "ga": 8
     },
     {
       "teamName": "Carrarese",
@@ -366,40 +285,49 @@
       "ga": 8
     },
     {
-      "teamName": "Bari",
+      "teamName": "Sudtirol",
       "gp": 5,
       "w": 1,
       "d": 1,
-      "l": 3,
-      "gf": 5,
+      "l": 2,
+      "gf": 6,
       "ga": 9
     },
     {
-      "teamName": "Ascoli",
-      "gp": 0,
-      "w": 0,
+      "teamName": "Arezzo",
+      "gp": 1,
+      "w": 1,
       "d": 0,
       "l": 0,
-      "gf": 0,
-      "ga": 0
+      "gf": 2,
+      "ga": 1
     },
     {
-      "teamName": "Venezia",
+      "teamName": "Catanzaro",
       "gp": 5,
       "w": 2,
-      "d": 3,
-      "l": 0,
-      "gf": 9,
-      "ga": 4
+      "d": 2,
+      "l": 1,
+      "gf": 10,
+      "ga": 8
     },
     {
-      "teamName": "Reggiana",
+      "teamName": "Juve Stabia",
       "gp": 5,
       "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 5,
+      "ga": 8
+    },
+    {
+      "teamName": "Modena",
+      "gp": 5,
+      "w": 2,
       "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 9
+      "l": 2,
+      "gf": 6,
+      "ga": 7
     },
     {
       "teamName": "Spezia",
@@ -411,13 +339,13 @@
       "ga": 11
     },
     {
-      "teamName": "Monza",
+      "teamName": "Reggiana",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 8,
-      "ga": 6
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 2,
+      "ga": 9
     },
     {
       "teamName": "Pescara",
@@ -429,13 +357,49 @@
       "ga": 8
     },
     {
-      "teamName": "Empoli",
+      "teamName": "Frosinone",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 10,
+      "ga": 5
+    },
+    {
+      "teamName": "Bari",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 9
+    },
+    {
+      "teamName": "Cesena",
       "gp": 5,
       "w": 0,
       "d": 2,
       "l": 3,
-      "gf": 5,
+      "gf": 2,
       "ga": 9
+    },
+    {
+      "teamName": "Monza",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Entella",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 2,
+      "ga": 8
     }
   ]
 }

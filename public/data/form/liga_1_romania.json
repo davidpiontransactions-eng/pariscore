@@ -4,7 +4,7 @@
     "leagueId": "liga_1_romania",
     "leagueName": "Romania",
     "season": "2026/27",
-    "lastUpdated": "2026-08-22T17:40:33.076865Z",
+    "lastUpdated": "2026-08-24T05:12:10.107663Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,12 +13,12 @@
   },
   "home": [
     {
-      "teamName": "Din. Bucharest",
-      "gp": 2,
+      "teamName": "Cornivul H.",
+      "gp": 3,
       "w": 2,
-      "d": 0,
+      "d": 1,
       "l": 0,
-      "gf": 9,
+      "gf": 7,
       "ga": 1
     },
     {
@@ -31,15 +31,6 @@
       "ga": 1
     },
     {
-      "teamName": "Fcsb",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 7,
-      "ga": 4
-    },
-    {
       "teamName": "U. Cluj",
       "gp": 3,
       "w": 3,
@@ -49,13 +40,22 @@
       "ga": 3
     },
     {
-      "teamName": "Cornivul H.",
+      "teamName": "Din. Bucharest",
+      "gp": 3,
+      "w": 3,
+      "d": 0,
+      "l": 0,
+      "gf": 11,
+      "ga": 2
+    },
+    {
+      "teamName": "Fcsb",
       "gp": 3,
       "w": 2,
       "d": 1,
       "l": 0,
       "gf": 7,
-      "ga": 1
+      "ga": 4
     }
   ],
   "away": [
@@ -78,21 +78,21 @@
       "ga": 1
     },
     {
-      "teamName": "Din. Bucharest",
-      "gp": 3,
-      "w": 1,
-      "d": 1,
-      "l": 1,
-      "gf": 2,
-      "ga": 2
-    },
-    {
       "teamName": "Arges",
       "gp": 2,
       "w": 1,
       "d": 0,
       "l": 1,
       "gf": 1,
+      "ga": 2
+    },
+    {
+      "teamName": "Din. Bucharest",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
+      "l": 1,
+      "gf": 2,
       "ga": 2
     },
     {
