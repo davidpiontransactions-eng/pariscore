@@ -224,7 +224,7 @@ export function FootballMatchCard({
     : null;
 
   return (
-    <div className="group relative max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
+    <article className="group relative max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
       {/* Bannière ligue en fond (overlay sombre) */}
       <div className="relative h-36 overflow-hidden sm:h-44">
         <SportImage
@@ -888,7 +888,7 @@ export function FootballMatchCard({
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

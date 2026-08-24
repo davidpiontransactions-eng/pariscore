@@ -263,7 +263,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
   const xGdAway = xGdPct !== null && xGdPct < 0;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-[border-color] hover:border-rose-500/50">
+    <article className="relative overflow-hidden rounded-2xl border border-rose-500/30 bg-gradient-to-b from-rose-500/[0.04] to-card shadow-lg shadow-rose-500/5 transition-[border-color] hover:border-rose-500/50">
       {/* Stade en filigrane (fond) — image BSD /img/venue/{id}/, masquée si absente/cassée */}
       {match.venue?.id && (
         <img
@@ -611,7 +611,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
