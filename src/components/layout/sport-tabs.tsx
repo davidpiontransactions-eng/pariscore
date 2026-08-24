@@ -2,22 +2,21 @@
 
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import {
-  Home,
-  Volleyball,
-  Footprints,
-  Swords,
-  Bike,
-  Gauge,
-  Crosshair,
-  Target,
-  Trophy,
-  Shield,
-} from "lucide-react";
-import { BaseballIcon } from "@/components/ui/baseball-icon";
+import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSportBg, type SportId } from "@/lib/sport-images";
 import { SportImage } from "@/components/ui/sport-image";
+import {
+  TennisPicto,
+  FootballPicto,
+  CrosshairPicto,
+  MmaPicto,
+  BasketballPicto,
+  CyclingPicto,
+  HelmetPicto,
+  BaseballPicto,
+  RugbyPicto,
+} from "@/components/ui/sport-pictograms";
 
 type TabDef = {
   id: SportId;
@@ -28,16 +27,16 @@ type TabDef = {
 
 const TABS: TabDef[] = [
   { id: "home", label: "Accueil", icon: Home, accent: "bg-emerald-600" },
-  { id: "tennis", label: "Tennis", icon: Volleyball, accent: "bg-emerald-500" },
-  { id: "football", label: "Football", icon: Footprints, accent: "bg-sky-500" },
-  { id: "cs2", label: "CS2", icon: Crosshair, accent: "bg-orange-500" },
-  { id: "mma", label: "MMA", icon: Swords, accent: "bg-red-500" },
-  { id: "nba", label: "NBA", icon: Target, accent: "bg-sky-600" },
-  { id: "wnba", label: "WNBA", icon: Trophy, accent: "bg-purple-500" },
-  { id: "cycling", label: "Cycling", icon: Bike, accent: "bg-amber-500" },
-  { id: "f1", label: "F1", icon: Gauge, accent: "bg-red-600" },
-  { id: "baseball", label: "Baseball", icon: BaseballIcon, accent: "bg-amber-500" },
-  { id: "rugby", label: "Rugby", icon: Shield, accent: "bg-teal-500" },
+  { id: "tennis", label: "Tennis", icon: TennisPicto, accent: "bg-emerald-500" },
+  { id: "football", label: "Football", icon: FootballPicto, accent: "bg-sky-500" },
+  { id: "cs2", label: "CS2", icon: CrosshairPicto, accent: "bg-orange-500" },
+  { id: "mma", label: "MMA", icon: MmaPicto, accent: "bg-red-500" },
+  { id: "nba", label: "NBA", icon: BasketballPicto, accent: "bg-sky-600" },
+  { id: "wnba", label: "WNBA", icon: BasketballPicto, accent: "bg-purple-500" },
+  { id: "cycling", label: "Cycling", icon: CyclingPicto, accent: "bg-amber-500" },
+  { id: "f1", label: "F1", icon: HelmetPicto, accent: "bg-red-600" },
+  { id: "baseball", label: "Baseball", icon: BaseballPicto, accent: "bg-amber-500" },
+  { id: "rugby", label: "Rugby", icon: RugbyPicto, accent: "bg-teal-500" },
 ] as const;
 
 type SportTabsProps = {

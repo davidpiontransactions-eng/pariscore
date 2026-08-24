@@ -87,18 +87,128 @@ function mergeMarkets(markets: Record<string, FdRankRow[] | XgRankRow[] | undefi
 const num1 = (v: number | undefined): string =>
   v == null || !Number.isFinite(v) ? "–" : v.toFixed(2);
 
+/** Fenêtre de forme : saison complète ou N derniers matchs (toutes saisons). */
+type FormKey = "full" | "l5" | "l10";
+const FORM_WINDOWS: { key: FormKey; label: string; n: number }[] = [
+  { key: "l5", label: "L5", n: 5 },
+  { key: "l10", label: "L10", n: 10 },
+  { key: "full", label: "Saison", n: 0 },
+];
+
+const seasonSortKey = (s: string): number => parseInt(s.slice(0, 4), 10) || 0;
+
+/**
+ * Blend inter-saisons : les gp matchs les plus récents d'abord (saison en
+ * cours), complétés par la saison précédente. Moyennes pondérées par le
+ * nombre réel de matchs — ex. L5 avec 1 match en 2026/27 = 4 derniers de
+ * 2025/26 + ce match.
+ */
+function blendFd(
+  cur: FdRankRow[],
+  prev: FdRankRow[] | undefined,
+  n: number,
+): FdRankRow[] {
+  const prevMap = new Map((prev ?? []).map((r) => [r.team, r]));
+  const teams = new Set([...cur.map((r) => r.team), ...prevMap.keys()]);
+  const out: FdRankRow[] = [];
+  for (const team of teams) {
+    const a = cur.find((r) => r.team === team);
+    const b = prevMap.get(team);
+    const wA = Math.min(a?.gp ?? 0, n);
+    const wB = Math.min(b?.gp ?? 0, Math.max(0, n - wA));
+    if (wA + wB === 0) continue;
+    out.push({
+      team,
+      gp: wA + wB,
+      value: ((a?.value ?? 0) * wA + (b?.value ?? 0) * wB) / (wA + wB),
+    });
+  }
+  return out;
+}
+
+function blendXg(
+  cur: XgRankRow[],
+  prev: XgRankRow[] | undefined,
+  n: number,
+): XgRankRow[] {
+  const prevMap = new Map((prev ?? []).map((r) => [r.team, r]));
+  const teams = new Set([...cur.map((r) => r.team), ...prevMap.keys()]);
+  const out: XgRankRow[] = [];
+  for (const team of teams) {
+    const a = cur.find((r) => r.team === team);
+    const b = prevMap.get(team);
+    const wA = Math.min(a?.gp ?? 0, n);
+    const wB = Math.min(b?.gp ?? 0, Math.max(0, n - wA));
+    if (wA + wB === 0) continue;
+    out.push({
+      team,
+      gp: wA + wB,
+      xgFor: ((a?.xgFor ?? 0) * wA + (b?.xgFor ?? 0) * wB) / (wA + wB),
+      xgAgainst: ((a?.xgAgainst ?? 0) * wA + (b?.xgAgainst ?? 0) * wB) / (wA + wB),
+    });
+  }
+  return out;
+}
+
 export function FootballLeagueRankingsWidget() {
   const [league, setLeague] = useState("ligue1");
   const [season, setSeason] = useState<string | null>(null);
   const [scope, setScope] = useState<Scope>("overall");
   const [market, setMarket] = useState<MarketKey>("gfPg");
+  const [formKey, setFormKey] = useState<FormKey>("full");
 
-  const effectiveSeason = season ?? "2025/26";
-  const { data, error, isLoading, isReady, availableSeasons, rowsFor } =
-    useFootballLeagueRankings(league, effectiveSeason, scope);
+  // Saisons triées (récentes d'abord) — la sélection par défaut se fera sur
+  // availableSeasons une fois chargées (voir effectiveSeason plus bas).
+  const { availableSeasons: seasonsFromProbe } = useFootballLeagueRankings(
+    league,
+    season ?? "2025/26",
+    scope,
+  );
+  const sortedSeasons = useMemo(
+    () => [...seasonsFromProbe].sort((a, b) => seasonSortKey(b) - seasonSortKey(a)),
+    [seasonsFromProbe],
+  );
+  const effectiveSeason = season ?? sortedSeasons[0] ?? "2025/26";
+  const prevIdx = sortedSeasons.indexOf(effectiveSeason) + 1;
+  const prevSeason = sortedSeasons[prevIdx] ?? null;
+
+  // Appel principal sur la saison effective + appel de la saison précédente
+  // (nécessaire au blend L5/L10 inter-saisons ; league=null → pas de fetch).
+  const { data, error, isLoading, isReady, rowsFor } = useFootballLeagueRankings(
+    league,
+    effectiveSeason,
+    scope,
+  );
+  const prevProbeSeason = formKey === "full" ? null : prevSeason;
+  const { rowsFor: rowsForPrev } = useFootballLeagueRankings(
+    prevProbeSeason ? league : null,
+    prevProbeSeason ?? effectiveSeason,
+    scope,
+  );
 
   const def = MARKETS.find((m) => m.key === market) ?? MARKETS[0];
-  const rawRows = rowsFor(market);
+  const rawRowsBase = rowsFor(market);
+  const higherBetter = data?.higherBetter ?? {};
+
+  // Lignes affichées selon la fenêtre : saison complète ou blend N derniers.
+  const rawRows = useMemo(() => {
+    if (formKey === "full" || !rawRowsBase?.length) return rawRowsBase;
+    const n = formKey === "l5" ? 5 : 10;
+    const prevRows = rowsForPrev(market);
+    if (!prevRows?.length) return rawRowsBase;
+    const dir = higherBetter[market] === false ? -1 : 1;
+    if (isXgRows(rawRowsBase)) {
+      return blendXg(rawRowsBase as XgRankRow[], prevRows as XgRankRow[] | undefined, n).sort(
+        (a, b) =>
+          dir *
+          ((market === "xgAgainst" ? a.xgAgainst : a.xgFor) -
+            (market === "xgAgainst" ? b.xgAgainst : b.xgFor)),
+      );
+    }
+    return blendFd(rawRowsBase as FdRankRow[], prevRows as FdRankRow[] | undefined, n).sort(
+      (a, b) => dir * (a.value - b.value),
+    );
+  }, [formKey, rawRowsBase, rowsForPrev, market, higherBetter]);
   const merged = useMemo(
     () => mergeMarkets((data?.markets ?? {}) as Record<string, FdRankRow[] | XgRankRow[] | undefined>),
     [data?.markets],
@@ -110,31 +220,21 @@ export function FootballLeagueRankingsWidget() {
         <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Classements
         </h2>
-        {/* Sélecteur de saison */}
-        <select
-          value={effectiveSeason}
-          onChange={(e) => setSeason(e.target.value)}
-          className="rounded border border-slate-700/60 bg-slate-900 px-1 py-px font-mono text-[9px] text-slate-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          aria-label="Saison"
-        >
-          {(availableSeasons.length ? availableSeasons : ["2025/26"]).map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
       </div>
 
-      <div className="flex gap-1 px-2.5 pb-1.5">
+      <div className="space-y-1 px-2.5 pb-1.5">
         <select
           value={league}
           onChange={(e) => setLeague(e.target.value)}
-          className="min-w-0 flex-1 rounded border border-slate-700/60 bg-slate-900 px-1 py-0.5 text-[10px] text-slate-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="w-full rounded border border-slate-700/60 bg-slate-900 px-1 py-0.5 text-[10px] text-slate-300 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           aria-label="Championnat"
         >
           {LEAGUES.map((l) => (
             <option key={l.slug} value={l.slug}>{l.label}</option>
           ))}
         </select>
-        <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Contexte">
+        <div className="flex items-center justify-between gap-1">
+          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Contexte">
           {SCOPES.map((s) => (
             <button
               key={s.key}
@@ -151,7 +251,64 @@ export function FootballLeagueRankingsWidget() {
               {s.label}
             </button>
           ))}
+          </div>
+          {/* Fenêtre de forme : N derniers matchs (toutes saisons) ou saison entière */}
+          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
+            {FORM_WINDOWS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFormKey(f.key)}
+                aria-pressed={formKey === f.key}
+                title={
+                  f.key === "full"
+                    ? "Classement de la saison complète"
+                    : `${f.n} derniers matchs toutes saisons confondues`
+                }
+                className={cn(
+                  "px-1.5 py-0.5 font-mono text-[9px] font-bold transition-colors",
+                  formKey === f.key
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : "bg-transparent text-slate-500 hover:text-slate-300",
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
+        {/* Filtre saison — segmenté sur les saisons disponibles */}
+        {sortedSeasons.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+              Saison
+            </span>
+            <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Saison">
+              {sortedSeasons.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSeason(s)}
+                  aria-pressed={effectiveSeason === s}
+                  title={`Saison ${s}`}
+                  className={cn(
+                    "px-1.5 py-0.5 font-mono text-[9px] font-bold transition-colors",
+                    effectiveSeason === s
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "bg-transparent text-slate-500 hover:text-slate-300",
+                  )}
+                >
+                  {s.slice(2)}
+                </button>
+              ))}
+            </div>
+            {formKey !== "full" && prevSeason && (
+              <span className="text-[8.5px] leading-tight text-slate-600">
+                + complément {prevSeason} si besoin
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-1 overflow-x-auto px-2.5 pb-1.5 scrollbar-none">
@@ -273,7 +430,14 @@ export function FootballLeagueRankingsWidget() {
             </div>
           )}
           <p className="pt-1 text-[8px] leading-tight text-slate-600">
-            Source : football-data.co.uk{xgKeys.has(market) ? " · xG : Understat" : ""} · classement complet trié par {def.short}
+            {formKey === "full" ? (
+              <>Source : football-data.co.uk{xgKeys.has(market) ? " · xG : Understat" : ""} · classement complet trié par {def.short}</>
+            ) : (
+              <>
+                {formKey === "l5" ? 5 : 10} derniers matchs · {effectiveSeason}
+                {prevSeason ? ` + complément ${prevSeason}` : ""} · trié par {def.short}
+              </>
+            )}
           </p>
         </div>
       )}

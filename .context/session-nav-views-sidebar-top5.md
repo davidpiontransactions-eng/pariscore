@@ -31,6 +31,37 @@ Verdict: QA_FEATURES_PASS
 
 Screenshots : `.context/qa-top5-interactive.png`, `.context/qa-rankings-prod.png`.
 
+---
+
+# Itération 2 — 2026-08-24 : Classements L5/L10 inter-saisons + filtre saison
+
+**Demande** : (1) confirmer Global/Dom/Ext ✓ (déjà présent) ; (2) ajouter un filtre
+**L5/L10/Saison** où la fenêtre N chevauche les saisons — ex. L5 avec 1 match joué en
+2026/27 = 4 derniers de 2025/26 + ce match ; (3) ajouter un **filtre saison segmenté**
+(25/26, 26/27…) en plus des L5/L10.
+
+## Design & implémentation
+
+| Élément | Choix |
+|---|---|
+| Toggle fenêtre | Groupe `[L5] [L10] [Saison]` à côté du contexte Dom/Ext (défaut Saison = comportement historique) |
+| Blend inter-saisons | `blendFd` / `blendXg` : poids réels par matchs joués — `w_cur=min(gp_cur,N)`, `w_prev=min(gp_prev,N−w_cur)` ; moyenne pondérée exacte sur agrégats de saison |
+| Saisons | Tri desc sur année ; `effectiveSeason` = la plus récente dispo par défaut ; `prevSeason` = suivante dans la liste (générique au-delà des 2 citées) |
+| Filtre saison | Dropdown remplacé par groupe segmenté `25/26 · 26/27…` (`slice(2)`), aria-pressed, ligne dédiée sous contexte/fenêtre |
+| Tri blended | Respecte `higherBetter[market]` renvoyé par l'API (xGA ascendant inclus) |
+| Transparence | Footer dynamique : « 5 derniers matchs · 26/27 + complément 25/26 · trié par X » |
+
+Fichiers : `football-league-rankings-widget.tsx` uniquement (+ hook inchangé, 2e appel SWR
+pour la saison précédente, dédupliqué 1 h).
+
+## Vérifications itération 2
+
+| Check | Résultat |
+|---|---|
+| eslint / tsc ciblés | ✅ 0/0 |
+| Build | ⏳ |
+| QA prod : footer L5, bouton saison actif, tableau re-trié | ⏳ |
+
 ## Demandes (5)
 
 | # | Demande | Réponse design |

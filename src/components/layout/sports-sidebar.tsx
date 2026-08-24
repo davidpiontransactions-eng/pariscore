@@ -3,20 +3,11 @@
 import { useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import {
-  Activity,
-  Bike,
   ChevronRight,
-  Crosshair,
-  Dribbble,
-  Flag,
   ListFilter,
   Search,
-  Shield,
-  Swords,
   Trophy,
-  Volleyball,
   X,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFlagEmoji, getFlagUrl } from "@/lib/flag-utils";
@@ -48,16 +39,32 @@ import { useSportsTree } from "@/hooks/use-sports-tree";
 import { FootballStrategyTop5Widget } from "@/components/football/football-strategy-top5-widget";
 import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
 
-const SPORT_ICONS: Record<string, LucideIcon> = {
-  Trophy,
-  Activity,
-  Crosshair,
-  Dribbble,
-  Swords,
-  Bike,
-  Flag,
-  Volleyball,
-  Shield,
+import {
+  TennisPicto,
+  FootballPicto,
+  CrosshairPicto,
+  MmaPicto,
+  BasketballPicto,
+  CyclingPicto,
+  HelmetPicto,
+  BaseballPicto,
+  RugbyPicto,
+} from "@/components/ui/sport-pictograms";
+
+/**
+ * Pictogrammes par sport — clé = nom d'icône envoyé par le payload arbre
+ * (SPORT_META, src/lib/sports-tree.ts). Valeurs = pictos SVG maison.
+ */
+const SPORT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Trophy: FootballPicto,
+  Activity: TennisPicto,
+  Crosshair: CrosshairPicto,
+  Dribbble: BasketballPicto,
+  Swords: MmaPicto,
+  Bike: CyclingPicto,
+  Flag: HelmetPicto,
+  Volleyball: BaseballPicto,
+  Shield: RugbyPicto,
 };
 
 /** Favoris par défaut tant que l'utilisateur n'a pas personnalisé. */

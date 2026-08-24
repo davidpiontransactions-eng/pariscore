@@ -11,14 +11,18 @@ import {
   HelpCircle,
   Activity,
   CircleDot,
-  Swords,
-  Bike,
-  Shield,
   Star,
   Timer,
   Sparkles,
   BarChart3,
 } from "lucide-react";
+import {
+  TennisPicto,
+  FootballPicto,
+  MmaPicto,
+  CyclingPicto,
+  RugbyPicto,
+} from "@/components/ui/sport-pictograms";
 import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
 import { openAboutDialog } from "@/components/about-dialog";
@@ -276,11 +280,11 @@ function HomeInner() {
   }, [storeSportId]);
 
   const SPORT_CARDS = [
-    { id: "tennis" as const, label: "Tennis", icon: Activity, accentIcon: "text-emerald-400 bg-emerald-500/15", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
-    { id: "football" as const, label: "Football", icon: CircleDot, accentIcon: "text-sky-400 bg-sky-500/15", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
-    { id: "mma" as const, label: "MMA", icon: Swords, accentIcon: "text-red-400 bg-red-500/15", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
-    { id: "cycling" as const, label: "Cycling", icon: Bike, accentIcon: "text-amber-400 bg-amber-500/15", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
-    { id: "rugby" as const, label: "Rugby", icon: Shield, accentIcon: "text-teal-400 bg-teal-500/15", matchCount: 0, valueCount: 0, accent: "border-teal-500/30 hover:border-teal-500/60", accentBg: "bg-teal-500/10", accentText: "text-teal-400" },
+    { id: "tennis" as const, label: "Tennis", icon: TennisPicto, accentIcon: "text-emerald-400 bg-emerald-500/15", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
+    { id: "football" as const, label: "Football", icon: FootballPicto, accentIcon: "text-sky-400 bg-sky-500/15", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
+    { id: "mma" as const, label: "MMA", icon: MmaPicto, accentIcon: "text-red-400 bg-red-500/15", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
+    { id: "cycling" as const, label: "Cycling", icon: CyclingPicto, accentIcon: "text-amber-400 bg-amber-500/15", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
+    { id: "rugby" as const, label: "Rugby", icon: RugbyPicto, accentIcon: "text-teal-400 bg-teal-500/15", matchCount: 0, valueCount: 0, accent: "border-teal-500/30 hover:border-teal-500/60", accentBg: "bg-teal-500/10", accentText: "text-teal-400" },
   ];
 
   return (
