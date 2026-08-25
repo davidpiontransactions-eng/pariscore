@@ -33,6 +33,7 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { PushToggle } from "@/components/push-toggle";
 import { EmailToggle } from "@/components/email-toggle";
 import { TerminalToggle } from "@/components/terminal-toggle";
+import { DensityToggle } from "@/components/ui/density-toggle";
 import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicator";
 import { Button } from "@/components/ui/button";
 import { openBankrollDialog } from "@/components/bankroll-dialog";
@@ -59,6 +60,7 @@ import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
 import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
+import { HeroSection } from "@/components/dashboard/hero-stats";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import { Top5SelectionPanel } from "@/components/football/top5-selection-panel";
@@ -69,6 +71,7 @@ import {
   ProfilNavView,
 } from "@/components/dashboard/nav-extra-views";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
+import { FeatureCards } from "@/components/dashboard/feature-cards";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
 
@@ -315,6 +318,7 @@ function HomeInner() {
               <PushToggle />
               <EmailToggle />
               <TerminalToggle />
+              <DensityToggle />
               <ValueBetScannerIndicator />
               <Button
                 variant="ghost"
@@ -368,20 +372,14 @@ function HomeInner() {
           <SportsSidebar activeSport={activeTab} onSportChange={handleTabChange} />
           <div className="flex min-w-0 flex-1 flex-col">
 
-        {/* Hero Dashboard Section */}
+        {/* Hero Dashboard Section (refonte 2026-08-25 — cf. .context/design-refonte-2026-08-25.md) */}
         <section className="sport-ambient max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
-          <div className="flex items-center gap-3">
-          <h1 className="score-display text-2xl font-bold tracking-tight text-white">Bonjour</h1>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
-            {stats.totalValueBets > 0 ? `${stats.totalValueBets} value` : "scan"}
-          </span>
-        </div>
-          <p className="text-sm text-zinc-400 mt-1">
-            {stats.totalValueBets > 0
-              ? `${stats.totalValueBets} value bets détectés aujourd'hui`
-              : "Analyse des marchés en cours..."}
-          </p>
+          <HeroSection totalValueBets={stats.totalValueBets} />
+
+          {/* Feature Cards — bento grid avec images sportives */}
+          <div className="mt-5">
+            <FeatureCards />
+          </div>
 
           {/* Sport Trend Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
