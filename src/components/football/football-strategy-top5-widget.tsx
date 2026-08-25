@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
+import { Top5BacktestStrip } from "./top5-backtest-strip";
 
 type StrategyDef = {
   key: StrategyTop5Key;
@@ -39,7 +40,7 @@ export const STRATEGIES: StrategyDef[] = [
   { key: "over15", label: "Over 1,5 buts", emoji: "⚽", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "under35", label: "Under 3,5 buts", emoji: "❄️", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "bttsYes", label: "BTTS yes", emoji: "🥅", isProb: true, format: (v) => `${v.toFixed(0)}%` },
-  { key: "over65Corners", label: "Over 6,5 corners", emoji: "🚩", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "over65Corners", label: "Over 6,5 corners", emoji: "🚩", isProb: false, format: (v) => `${v.toFixed(1)} cor` },
 ];
 
 type WindowKey = "l5" | "l10";
@@ -323,6 +324,8 @@ export function FootballStrategyTop5Widget() {
         >
           {def.label}
         </p>
+        {/* Backtest : réussite / ROI de la stratégie active sur l'historique des top 5 */}
+        <Top5BacktestStrip strategyKey={active} />
       </div>
 
       {/* Les cards de sélection s'affichent dans le panneau droit (Top5SelectionPanel). */}

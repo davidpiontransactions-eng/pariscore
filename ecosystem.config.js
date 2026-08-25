@@ -14,6 +14,7 @@
  *    9. `pariscore-cron-gemini`      : pré-calcul analyses Gemini matchs du jour (2h, 06:00-18:00 UTC)
  *   10. `pariscore-cron-press-review`: pré-chauffe cache revue de presse (quotidien 07:00 UTC, Zero-LLM)
  *   11. `pariscore-cron-elo-weekly`   : snapshots Elo surface TennisAbstract + matchs L10 (lundi 14h Paris)
+ *   12. `pariscore-cron-top5-backtest`: settle + snapshot quotidien du backtest Top 5 foot (05:15 UTC)
  *
  *  Lancement initial (VPS) :
  *    pm2 start ecosystem.config.js
@@ -325,6 +326,30 @@ module.exports = {
       },
       error_file: 'logs/cron-oddalerts.err.log',
       out_file: 'logs/cron-oddalerts.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Backtest Top 5 (settle + snapshot quotidien) ===
+      // 1. Settle les picks du backtest Top 5 football dont la date est passée
+      //    (résultats BSD) ; 2. Snapshot du top 5 du jour tel que rendu par le
+      //    moteur prod → data/top5-backtest/football.json. Consommé par
+      //    GET /api/football/top5/backtest (bandeau backtest du widget sidebar).
+      // Idempotent : un re-run le même jour ne duplique rien.
+      name: 'pariscore-cron-top5-backtest',
+      script: 'scripts/cron-top5-backtest.sh',
+      interpreter: 'bash',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '15 5 * * *', // quotidien à 05:15 UTC (après les crons de nuit)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-top5-backtest.err.log',
+      out_file: 'logs/cron-top5-backtest.out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },

@@ -139,6 +139,8 @@ data/betwatch_wom.json
 data/smarkets_tennis_wom.json
 # Rugby backtest store (runtime, machine-local — regenere par le moteur)
 data/rugby-backtest.json
+# Backtest Top 5 (runtime, machine-local — settle quotidien cron)
+data/top5-backtest/
 
 # =============================================================================
 # Langflow artifacts (intégration 2026-07-13)
