@@ -108,4 +108,22 @@ TEAM_NAME_OVERRIDES = {
     "besiktas": "Besiktas", "olympiacos": "Olympiacos",
     "panathinaikos": "Panathinaikos", "celtic": "Celtic",
     "rangers": "Rangers", "club brugge": "Club Brugge",
+
+    # ── Saudi Pro League ── (soccerstats = tirets, BSD/BetMines = espaces)
+    "al-hilal": "Al Hilal", "al hilal": "Al Hilal",
+    "al-nassr": "Al Nassr", "al nassr": "Al Nassr",
+    "al-ittihad": "Al Ittihad", "al ittihad": "Al Ittihad",
+    "al-ahli": "Al Ahli", "al ahli": "Al Ahli", "al-ahli jeddah": "Al Ahli",
+    "al-shabab": "Al Shabab", "al shabab": "Al Shabab",
+    "al-ettifaq": "Al Ettifaq", "al ettifaq": "Al Ettifaq",
+    "al-taawoun": "Al Taawoun", "al taawoun": "Al Taawoun",
+    "al-fateh": "Al Fateh", "al fateh": "Al Fateh",
+    "al-khaleej": "Al Khaleej", "al khaleej": "Al Khaleej",
+    "al-riyadh": "Al Riyadh", "al riyadh": "Al Riyadh",
+    "al-fayha": "Al Fayha", "al fayha": "Al Fayha",
+    "damac": "Damac", "al-wehda": "Al Wehda", "al wehda": "Al Wehda",
+    "al-okhdood": "Al Okhdood", "al okhdood": "Al Okhdood",
+    "al-raed": "Al Raed", "al raed": "Al Raed",
+    "al-kholood": "Al Kholood", "al kholood": "Al Kholood",
+    "neom": "Neom", "neom sc": "Neom",
 }

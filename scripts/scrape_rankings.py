@@ -42,6 +42,7 @@ LEAGUES = {
     "italy2":      ("https://www.soccerstats.com/homeaway.asp?league=italy2",      "serieb"),
     "netherlands": ("https://www.soccerstats.com/homeaway.asp?league=netherlands", "eredivisie"),
     "portugal":    ("https://www.soccerstats.com/homeaway.asp?league=portugal",    "primeira_liga"),
+    "saudiarabia": ("https://www.soccerstats.com/homeaway.asp?league=saudiarabia", "saudi_pro_league"),
 }
 
 

@@ -36,6 +36,7 @@ export const BSD_LEAGUE_IDS: Record<string, number> = {
   colombia_primera: 80, // BSD "Categoría Primera A"
   denmark_superliga: 84, // BSD "Danish Superliga"
   norway_eliteserien: 54, // BSD "Eliteserien" (Norvège)
+  saudi_pro_league: 17, // BSD "Saudi Pro League"
 };
 
 /**

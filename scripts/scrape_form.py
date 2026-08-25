@@ -67,6 +67,7 @@ LEAGUES = {
     "mexico":      ("mexico",      "liga_mx"),
     "argentina":   ("argentina2",  "argentina_primera"),
     "austria":     ("austria",     "austria_bundesliga"),
+    "saudiarabia": ("saudiarabia", "saudi_pro_league"),
 }
 
 # Saison cible (saison précédente). `_2026` = saison dont l'année de fin est 2026.
