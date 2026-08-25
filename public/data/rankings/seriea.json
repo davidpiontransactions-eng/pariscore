@@ -4,13 +4,20 @@
     "leagueId": "seriea",
     "leagueName": "Italy",
     "season": "2026-27",
-    "lastUpdated": "2026-08-24T04:53:37.980696Z",
+    "lastUpdated": "2026-08-25T04:46:28.417842Z",
     "source": "soccerstats.com",
     "teamCount": 20,
     "partial": false
   },
   "home": {
     "ppg": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "As Roma",
+        "value": 3.0,
+        "played": 1
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -26,42 +33,49 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Udinese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
@@ -72,6 +86,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "As Roma",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Inter Milan",
         "value": 3.0,
         "played": 1
@@ -84,126 +105,119 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Udinese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "AC Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "As Roma",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Bologna",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Cagliari",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Fiorentina",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Juventus",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Lecce",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Monza",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Napoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
@@ -214,138 +228,138 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "As Roma",
+        "value": 4.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Inter Milan",
         "value": 4.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Udinese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Torino",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "AC Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "As Roma",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Bologna",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Cagliari",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Fiorentina",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Juventus",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Lecce",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Monza",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Napoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
@@ -356,21 +370,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "AC Milan",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Bologna",
+        "teamName": "AC Milan",
         "value": 0.0,
         "played": 0
       },
@@ -438,35 +445,42 @@
         "played": 0
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Inter Milan",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Udinese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Parma",
         "value": 1.0,
@@ -498,124 +512,124 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "As Roma",
+        "value": 4.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Inter Milan",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Udinese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "AC Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "As Roma",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Bologna",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Cagliari",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Fiorentina",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Juventus",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lecce",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Monza",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Napoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Torino",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 15,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": -1.0,
+        "played": 1
+      },
+      {
+        "rank": 15,
         "teamId": "",
         "teamName": "Frosinone",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Parma",
         "value": -1.0,
@@ -640,6 +654,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "As Roma",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Inter Milan",
         "value": 1.0,
         "played": 1
@@ -652,126 +673,119 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Udinese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "AC Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "As Roma",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Bologna",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Cagliari",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Fiorentina",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Juventus",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lecce",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Monza",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Napoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
@@ -789,6 +803,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "As Roma",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Inter Milan",
         "value": 0.0,
         "played": 1
@@ -804,20 +825,6 @@
         "rank": 2,
         "teamId": "",
         "teamName": "AC Milan",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "As Roma",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Bologna",
         "value": 0.0,
         "played": 0
       },
@@ -888,6 +895,13 @@
         "rank": 2,
         "teamId": "",
         "teamName": "Torino",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Bologna",
         "value": 0.0,
         "played": 1
       },
@@ -924,6 +938,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "As Roma",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Inter Milan",
         "value": 0.0,
         "played": 1
@@ -946,20 +967,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "AC Milan",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "As Roma",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Bologna",
         "value": 0.0,
         "played": 0
       },
@@ -1027,35 +1034,42 @@
         "played": 0
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Torino",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 15,
+        "teamId": "",
+        "teamName": "Bologna",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 15,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Parma",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Genoa",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Venezia",
         "value": 1.0,
@@ -1101,23 +1115,37 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Lazio",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Como",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Monza",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Fiorentina",
         "value": 0.0,
         "played": 1
       }
@@ -1159,107 +1187,107 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Lazio",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Como",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Bologna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Inter Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Lazio",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Udinese",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Monza",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Fiorentina",
         "value": 0.0,
         "played": 1
       }
@@ -1303,6 +1331,13 @@
       {
         "rank": 4,
         "teamId": "",
+        "teamName": "Lazio",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
         "teamName": "Como",
         "value": 1.0,
         "played": 1
@@ -1322,88 +1357,81 @@
         "played": 1
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Bologna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Inter Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Lazio",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Udinese",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
         "played": 0
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Fiorentina",
+        "value": 0.0,
+        "played": 1
       }
     ],
     "ga": [
@@ -1438,6 +1466,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lazio",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
         "played": 0
@@ -1459,13 +1494,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
@@ -1481,13 +1509,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Inter Milan",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
@@ -1520,30 +1541,37 @@
         "played": 0
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "AC Milan",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Como",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 20,
+        "rank": 19,
         "teamId": "",
         "teamName": "Monza",
+        "value": 4.0,
+        "played": 1
+      },
+      {
+        "rank": 19,
+        "teamId": "",
+        "teamName": "Fiorentina",
         "value": 4.0,
         "played": 1
       }
@@ -1585,108 +1613,108 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Lazio",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Bologna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Inter Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Lazio",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Udinese",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 20,
+        "rank": 19,
         "teamId": "",
         "teamName": "Monza",
         "value": -3.0,
+        "played": 1
+      },
+      {
+        "rank": 20,
+        "teamId": "",
+        "teamName": "Fiorentina",
+        "value": -4.0,
         "played": 1
       }
     ],
@@ -1727,107 +1755,107 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Lazio",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Atalanta",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Bologna",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Genoa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Inter Milan",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Lazio",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Parma",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Torino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Udinese",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Venezia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Monza",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Fiorentina",
         "value": 0.0,
         "played": 1
       }
@@ -1878,6 +1906,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Lazio",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "As Roma",
         "value": 0.0,
         "played": 0
@@ -1899,13 +1934,6 @@
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
@@ -1921,13 +1949,6 @@
         "rank": 2,
         "teamId": "",
         "teamName": "Inter Milan",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
@@ -1970,6 +1991,13 @@
         "rank": 2,
         "teamId": "",
         "teamName": "Monza",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Fiorentina",
         "value": 0.0,
         "played": 1
       }
@@ -2013,6 +2041,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lazio",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Como",
         "value": 0.0,
         "played": 1
@@ -2041,13 +2076,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Fiorentina",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Frosinone",
         "value": 0.0,
         "played": 0
@@ -2063,13 +2091,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Inter Milan",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lazio",
         "value": 0.0,
         "played": 0
       },
@@ -2102,16 +2123,23 @@
         "played": 0
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Sassuolo",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 19,
+        "rank": 18,
         "teamId": "",
         "teamName": "Monza",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Fiorentina",
         "value": 1.0,
         "played": 1
       }
