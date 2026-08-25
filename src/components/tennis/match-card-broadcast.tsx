@@ -267,23 +267,22 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
 
         {/* Scrim déjà géré par SportImage (overlayIntensity="heavy") */}
 
-        {/* Overlay TOP — 3 colonnes : date (g) · tournoi+round centrés (m) · LIVE/favori (d)
-            R7.2 hotfix : tournoi + round déplacés au centre (avant à gauche en
-            compact). Permet une lecture broadcast TV claire : le tournoi est
-            l'identité visuelle forte du match, il mérite le centre. */}
-        <div className="relative flex items-start justify-between gap-2 px-4 py-3 sm:px-6">
-          {/* Gauche : date + heure */}
-          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-white/60">
-              <Calendar className="h-3 w-3 shrink-0" />
-              <span className="whitespace-nowrap">{formattedDate}</span>
-              <Clock className="h-3 w-3 shrink-0" />
-              <span className="whitespace-nowrap font-semibold text-white/80">{formattedTime}</span>
-            </div>
+        {/* Overlay TOP — 3 colonnes : date/heure (g, shrink-0) · tournoi+round centrés tronquables (m) · LIVE/favori (d)
+            R7.2 hotfix : tournoi + round déplacés au centre.
+            Fix visibilité horaire : la colonne date/heure était en flex-1/min-w-0,
+            écrasée par le bloc central puis rognée par l'overflow-hidden de la
+            carte → chip shrink-0 garantit l'affichage à toutes les largeurs. */}
+        <div className="relative flex items-start justify-between gap-2 px-4 py-3 sm:gap-3 sm:px-6">
+          {/* Gauche : date + heure — chip non compressable */}
+          <div className="flex shrink-0 items-center gap-1.5 rounded-md bg-black/35 px-2 py-1 text-xs font-medium text-white/70 backdrop-blur-sm">
+            <Calendar className="h-3 w-3 shrink-0" />
+            <span className="whitespace-nowrap">{formattedDate}</span>
+            <Clock className="h-3 w-3 shrink-0" />
+            <span className="whitespace-nowrap font-semibold text-white">{formattedTime}</span>
           </div>
 
-          {/* Centre : tournoi (gros) + round (dessous) */}
-          <div className="flex shrink-0 flex-col items-center gap-0.5 text-center">
+          {/* Centre : tournoi (gros) + round (dessous) — tronque si étroit */}
+          <div className="flex min-w-0 flex-col items-center gap-0.5 text-center">
             <div className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.1em] text-white sm:text-sm">
               <Trophy className="h-3.5 w-3.5 shrink-0 text-amber-300" />
               <span className="max-w-[180px] truncate">{match.tournament}</span>
@@ -294,7 +293,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
           </div>
 
           {/* Droite : statut LIVE/Prematch + favori */}
-          <div className="flex flex-1 items-start justify-end gap-2">
+          <div className="flex shrink-0 items-start justify-end gap-2">
             {isLive ? (
               <span className="flex items-center gap-1 rounded-full bg-rose-600/90 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-white">
                 <span className="relative flex h-1.5 w-1.5">

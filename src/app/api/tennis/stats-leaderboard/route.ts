@@ -144,6 +144,8 @@ export async function GET(request: Request) {
           bpSavedPct: null,
           tiebreaksWonPct: null,
           decidingSetsWonPct: null,
+          servicePointsWonPct: null,
+          returnPointsWonPct: null,
         }));
         if (rows.length > 0) {
           payload = {

@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 151 components total (football: 11, leagues: 6, tennis: 52, etc.).
+> extract pass. 152 components total (football: 11, leagues: 6, tennis: 54, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 53 components
+## Tennis (`src/components/tennis/`) — 54 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -88,6 +88,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | stats-radar-chart | stats-radar-chart.tsx | Radar chart des stats (6 axes) |
 | surface-badge | surface-badge.tsx | Badge surface (Dur/Terre battue/Gazon) |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |
+| tennis-strategy-top5-widget | tennis-strategy-top5-widget.tsx | Top 5 matchs par métrique (Élo surface, service, retour…) — filtres déroulants, miroir du widget foot sidebar |
 | tournament-header-card | tournament-header-card.tsx | Carte tournoi sélectionné (filtre de la liste + annulation) |
 | tennis-sub-tabs | tennis-sub-tabs.tsx | Sous-onglets tennis |
 | tournament-badge | tournament-badge.tsx | Badge catégorie tournoi (GS/M1000/500) |

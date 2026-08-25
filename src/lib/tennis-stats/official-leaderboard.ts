@@ -228,6 +228,8 @@ function emptyRow(
     firstServePct: null,
     firstServeWonPct: null,
     secondServeWonPct: null,
+    servicePointsWonPct: null,
+    returnPointsWonPct: null,
     serviceGamesWonPct: null,
     acesPerMatch: null,
     dfsPerMatch: null,

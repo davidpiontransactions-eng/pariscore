@@ -65,8 +65,10 @@ export function MatchCardHeader({
           <span className="shrink-0">{match.round}</span>
         </div>
 
-        {/* Date + heure précise du match — TZ navigateur dynamique */}
-        <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#B8B8B8]">
+        {/* Date + heure précise du match — TZ navigateur dynamique.
+            flex-wrap : en largeur réduite la ligne passe à la ligne au lieu
+            d'être rognée par l'overflow-hidden de la carte. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-medium text-[#B8B8B8]">
           <Calendar className="h-3 w-3 shrink-0" />
           <span className="whitespace-nowrap">{formattedDate}</span>
           <Clock className="h-3 w-3 shrink-0" />

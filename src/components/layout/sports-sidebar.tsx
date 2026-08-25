@@ -38,6 +38,7 @@ import {
 import { useSportsTree } from "@/hooks/use-sports-tree";
 import { FootballStrategyTop5Widget } from "@/components/football/football-strategy-top5-widget";
 import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
+import { TennisStrategyTop5Widget } from "@/components/tennis/tennis-strategy-top5-widget";
 
 import {
   TennisPicto,
@@ -876,6 +877,7 @@ export function SportsSidebarContent({
         <div className="space-y-1 p-1.5">
           {activeSport === "football" && <FootballStrategyTop5Widget />}
           {activeSport === "football" && <FootballLeagueRankingsWidget />}
+          {activeSport === "tennis" && <TennisStrategyTop5Widget />}
           <QuickLinksBlock tree={tree} onFallbackSport={handleSportSelect} />
           <FavoritesBlock tree={tree} onLeagueSelect={handleLeagueSelect} />
           {tree.length === 0 || !hasAnyMatch ? (

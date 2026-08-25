@@ -394,12 +394,26 @@ export function tennisToRaw(matches: MinimalTennisMatch[] | undefined | null): R
           m.playerB?.name != null && m.playerB?.name !== "")
     .map((m) => {
       const tournament = m.tournament?.trim() || "Tournoi";
+      // Live BSD : live_stats/currentPoint présents uniquement sur les items
+      // du flux /api/tennis/live (les prematch ne les portent pas).
+      const isLive = !!(m as any).live_stats || !!(m as any).currentPoint;
+      // Un match EN DIRECT se joue maintenant : si la source ne fournit pas
+      // de coup d'envoi exploitable (payload LiveMatchItem BSD sans date),
+      // on l'ancre à maintenant — sinon applyTimeFilter/tri l'éjectent et
+      // la sidebar affiche « Tennis | 0 » malgré des API 200 (bug tracé dans
+      // TENNIS_SIDEBAR_DEBUG.md).
+      const scheduledAt = isValidDate(m.scheduledAt)
+        ? m.scheduledAt!
+        : isLive
+          ? new Date().toISOString()
+          : null;
+
       return {
         id: String(m.id),
         homeName: m.playerA!.name!,
         awayName: m.playerB!.name!,
-        scheduledAt: isValidDate(m.scheduledAt) ? m.scheduledAt! : null,
-        isLive: false,
+        scheduledAt,
+        isLive: isLive,
         leagueId: slug(tournament),
         leagueName: tournament,
         countryName: m.tournamentCategory?.trim() || "Circuit",
@@ -660,6 +674,11 @@ export function sortSportsTree(sports: SportNode[]): SportNode[] {
 
 function matchInTimeWindow(m: TreeMatchSummary, tf: TimeFilterHours, now: Date): boolean {
   const { hours, today, tomorrow } = parseTimeFilter(tf);
+  // Un match en direct se joue MAINTENANT : il relève de toute fenêtre
+  // « heures » et de « Aujourd'hui », même sans date de début exploitable
+  // (ex: flux live tennis sans coup d'envoi) — sinon la sidebar affiche
+  // « Tennis | 0 » avec un filtre temporel persisté (bug TENNIS_SIDEBAR_DEBUG).
+  if (m.isLive && (hours !== null || today)) return true;
   if (hours !== null) {
     // Live : fenêtre glissante passée [now − Nh, now] (coup d'envoi déjà eu
     // lieu) ; prematch : fenêtre à venir [now − tolérance, now + Nh].

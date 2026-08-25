@@ -87,6 +87,10 @@ export interface LeaderboardRow {
   bpSavedPct: number | null;
   tiebreaksWonPct: number | null;
   decidingSetsWonPct: number | null;
+  /** Points gagnés sur mise en jeu (%) — SRV_PTS_WON (Dryja/Sipko). */
+  servicePointsWonPct: number | null;
+  /** Points gagnés en retour (%) — RET_PTS_WON (Dryja/Sipko). */
+  returnPointsWonPct: number | null;
 }
 
 /** Provenance des données servies (défaut : agrégation interne temps réel). */
@@ -465,6 +469,13 @@ function buildRow(a: Acc): LeaderboardRow {
   const tiebreaksWonPct = pct(a.tbWon, a.tbWon + a.tbLost);
   const decidingSetsWonPct = pct(a.decWon, a.decTotal);
 
+  // — Points (métriques composites Dryja : SRV_PTS_WON / RET_PTS_WON)
+  const servicePointsWonPct = pct(a.firstWon + a.secondWon, a.svpt);
+  const returnPointsWonPct =
+    a.oppSvpt > 0
+      ? round1(100 * ((a.oppSvpt - a.oppFirstWon - a.oppSecondWon) / a.oppSvpt))
+      : null;
+
   return {
     rank: 0, // assigné après tri
     player: displayNameOf(a),
@@ -485,6 +496,8 @@ function buildRow(a: Acc): LeaderboardRow {
     bpSavedPct,
     tiebreaksWonPct,
     decidingSetsWonPct,
+    servicePointsWonPct,
+    returnPointsWonPct,
   };
 }
 
