@@ -150,7 +150,7 @@ export function TennisStrategyTop5Widget() {
 
   return (
     <section aria-label="Top 5 matchs tennis par métrique" className="border-b border-slate-800/80 pb-2">
-      <div className="flex items-center justify-between pr-2.5">
+      <div className="flex items-center pr-2.5">
         <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
           Top 5 matchs tennis
         </h2>
@@ -164,7 +164,7 @@ export function TennisStrategyTop5Widget() {
               aria-pressed={timeWin === w.key}
               title={`Matchs ${w.key === "jour" ? "du jour" : w.key === "48h" ? "sous 48 heures" : "de la semaine"}`}
               className={cn(
-                "px-1.5 py-px font-mono text-[9px] font-bold uppercase transition-colors",
+                "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                 timeWin === w.key
                   ? "bg-emerald-500/20 text-emerald-300"
                   : "bg-transparent text-slate-500 hover:text-slate-300",
