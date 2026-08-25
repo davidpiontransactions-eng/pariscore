@@ -19560,6 +19560,8 @@ async function openInsights(matchId) {
       if (opt) { opt.disabled = !show; opt.hidden = !show; }
     });
   })(_hasBsd);
+  // Insights v2 — mémoriser la couverture BSD pour le filtrage des sous-onglets de zones
+  window._ins2BsdVisible = _hasBsd;
 
   const insLiveScore = m.live_score ? ` 🔴 ${m.live_score}${m.live_minute ? ` (${m.live_minute}′)` : ''}` : '';
   const insIntensity = (m.live_score && m.live_intensity != null)
@@ -19582,7 +19584,9 @@ async function openInsights(matchId) {
 
   document.getElementById('insights-modal').classList.add('open');
   trapFocus(document.getElementById('insights-modal'));
-  insShowTab('resume');
+  // Insights v2 « Brief Match » — hero/verdict pré-fetch depuis l'objet match, puis zones
+  ins2PreRender(m);
+  insShowZone('analyse');
 
   // CTA-2 — bandeau bonus footer (active uniquement si match a un best_edge)
   try {
@@ -19610,6 +19614,9 @@ async function openInsights(matchId) {
       const leagueEl = document.getElementById('ins-league');
       if (leagueEl) leagueEl.innerHTML += ` · <span style="color:var(--blue);font-size:11px;font-family:'DM Mono',monospace">${d.round_name}</span>`;
     }
+
+    // Insights v2 « Brief Match » — enrichissement hero/verdict après payload
+    ins2Enrich(d, m);
 
     document.getElementById('ins-tab-resume').innerHTML     = buildResumeTab(d);
     const statsEl = document.getElementById('ins-tab-stats');
@@ -19657,6 +19664,478 @@ function copyScoutTelegram() {
     window.getSelection().removeAllRanges();
     window.getSelection().addRange(range);
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INSIGHTS V2 « BRIEF MATCH » (bd ParisScorebis-w3dk)
+// Hero décisionnel + verdict Poisson vs marché + navigation 5 zones consolidées.
+// Données pré-fetch depuis l'objet match (m) ; enrichissement après /insights (d).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const INS2_ZONES = [
+  { id: 'analyse',    icon: '⚡', label: 'Analyse',    tabs: ['stats', 'graphique', 'corners'] },
+  { id: 'joueurs',    icon: '👥', label: 'Joueurs',    tabs: ['joueurs', 'compos'] },
+  { id: 'historique', icon: '📊', label: 'Historique', tabs: ['h2h', 'classement', 'shotmap'] },
+  { id: 'contexte',   icon: '🌍', label: 'Contexte',   tabs: ['resume'] },
+  { id: 'ia',         icon: '🤖', label: 'IA',         tabs: ['powerscore', 'scouting'] }
+];
+const INS2_TAB_LABELS = {
+  stats: 'Stats', graphique: 'Forme', corners: 'Corners',
+  joueurs: 'Stats Joueurs', compos: 'Compos',
+  h2h: 'H2H', classement: 'Classement', shotmap: 'Shotmap',
+  resume: 'Dossier match',
+  powerscore: 'Power Score', scouting: 'Pro Scout',
+  incidents: 'Incidents', videos: 'Vidéos'
+};
+let ins2CurrentZone = null;
+let _ins2CdTimer = null;
+window._ins2BsdVisible = true;
+
+// Échappement HTML local (noms équipes / arbitres / stades interpolés en innerHTML)
+function _ins2e(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+// Raccourcir un nom d'équipe pour les libellés compacts
+function _ins2short(s, n) {
+  const t = String(s || '');
+  return t.length > n ? t.slice(0, n - 1) + '…' : t;
+}
+
+// ── Navigation par zones ─────────────────────────────────────────────────────
+
+function ins2RenderZones(m) {
+  const bar = document.getElementById('ins2-zonebar');
+  if (!bar) return;
+  const zones = [...INS2_ZONES];
+  // Zone Live conditionnelle : incidents/vidéos uniquement sur un match en direct
+  if (m && m.live_score) zones.push({ id: 'live', icon: '🔴', label: 'Live', tabs: ['incidents', 'videos'] });
+  bar.innerHTML = zones.map(z =>
+    `<button class="ins2-zone" data-zone="${z.id}" onclick="insShowZone('${z.id}')">${z.icon} ${z.label}</button>`
+  ).join('');
+}
+
+function ins2RenderSubtabs(zoneId) {
+  const wrap = document.getElementById('ins2-subtabs');
+  if (!wrap) return;
+  const zone = INS2_ZONES.find(z => z.id === zoneId) ||
+    { id: 'live', tabs: ['incidents', 'videos'] };
+  const bsdOk = window._ins2BsdVisible !== false;
+  const m = allMatches.find(x => x.id === insCurrentMatchId);
+  wrap.innerHTML = zone.tabs.filter(t => {
+    if (['compos', 'incidents', 'shotmap'].includes(t) && !bsdOk) return false;
+    if (t === 'videos' && !(m && m.live_score)) return false;
+    return true;
+  }).map(t =>
+    `<button class="ins-tab" data-tab="${t}" onclick="insShowTab('${t}')">${INS2_TAB_LABELS[t] || t}</button>`
+  ).join('');
+}
+
+function insShowZone(zoneId) {
+  const zone = INS2_ZONES.find(z => z.id === zoneId) ||
+    (zoneId === 'live' ? { id: 'live', tabs: ['incidents', 'videos'] } : INS2_ZONES[0]);
+  ins2CurrentZone = zone.id;
+  document.querySelectorAll('#ins2-zonebar .ins2-zone').forEach(el => {
+    el.classList.toggle('active', el.dataset.zone === zone.id);
+  });
+  ins2RenderSubtabs(zone.id);
+  const firstTab = (document.querySelector(`#ins2-subtabs .ins-tab[data-tab]`) || {}).dataset
+    ? document.querySelector('#ins2-subtabs .ins-tab[data-tab]').dataset.tab
+    : zone.tabs[0];
+  // Synchroniser le select mobile si l'option existe
+  const sel = document.getElementById('ins-tab-mob');
+  if (sel && sel.querySelector(`option[value="${firstTab}"]`)) sel.value = firstTab;
+  insShowTab(firstTab);
+}
+
+// ── Compte à rebours kickoff ────────────────────────────────────────────────
+
+function _ins2FmtCd(ms) {
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), mn = Math.floor((s % 3600) / 60);
+  if (d > 0) return `J-${d} · ${h}h${String(mn).padStart(2, '0')}`;
+  if (h > 0) return `${h}h ${String(mn).padStart(2, '0')}m`;
+  if (mn > 0) return `${mn}m ${String(s % 60).padStart(2, '0')}s`;
+  return `${s}s`;
+}
+
+function ins2StartCountdown(commenceTime) {
+  const el = document.getElementById('ins2-countdown');
+  if (_ins2CdTimer) { clearInterval(_ins2CdTimer); _ins2CdTimer = null; }
+  if (!el) return;
+  const t0 = new Date(commenceTime).getTime();
+  if (!commenceTime || isNaN(t0)) { el.style.display = 'none'; return; }
+  const tick = () => {
+    const ms = t0 - Date.now();
+    if (ms <= 0 && ms > -3 * 3600 * 1000) {
+      el.classList.add('live');
+      el.innerHTML = `🔴 Coup d'envoi imminent`;
+    } else if (ms <= -3 * 3600 * 1000) {
+      el.style.display = 'none';
+      if (_ins2CdTimer) { clearInterval(_ins2CdTimer); _ins2CdTimer = null; }
+      return;
+    } else {
+      el.classList.remove('live');
+      el.textContent = `⏱ Coup d'envoi dans ${_ins2FmtCd(ms)}`;
+    }
+    el.style.display = '';
+  };
+  tick();
+  _ins2CdTimer = setInterval(tick, 1000);
+}
+
+// ── Verdict PariScore : modèle Poisson vs marché dévigé ──────────────────────
+
+function ins2ComputeVerdict(m) {
+  const p = m.poisson || {};
+  const f = m.fair || {};
+  const model = { h: +p.homeWin || null, d: +p.draw || null, a: +p.awayWin || null };
+  const market = { h: (+f.home || null) , d: (+f.draw || null), a: (+f.away || null) };
+  // Edge = probabilité modèle − probabilité marché dévigée (points de pourcentage)
+  let best = null;
+  [['1', model.h, market.h], ['N', model.d, market.d], ['2', model.a, market.a]].forEach(([lbl, mo, ma]) => {
+    if (mo == null || ma == null) return;
+    const dv = mo - ma;
+    if (!best || dv > best.dv) best = { lbl, dv, mo, ma };
+  });
+  return { model, market, best };
+}
+
+function _ins2BarsRow(srcLabel, vals, isMarket) {
+  // Une ligne de barres empilées 1/N/2 — couleurs par issue : domicile/nul/extérieur
+  const clsMap = ['h', 'd', 'a'];
+  const cells = vals.map((v, i) =>
+    v == null ? '' : `<div class="ins2-seg ${clsMap[i]}" style="width:${Math.max(v * 100, 4)}%">${v * 100 >= 10 ? Math.round(v * 100) + '%' : ''}</div>`
+  ).join('');
+  return `<div class="ins2-barline"><span class="b-src">${srcLabel}</span><div class="ins2-barseg ${isMarket ? 'market' : ''}">${cells || '<div class="ins2-seg" style="width:100%"></div>'}</div></div>`;
+}
+
+function ins2RenderVerdict(m) {
+  const barsEl = document.getElementById('ins2-bars');
+  const edgeEl = document.getElementById('ins2-edgerow');
+  const confEl = document.getElementById('ins2-conf');
+  if (!barsEl) return;
+  const v = ins2ComputeVerdict(m);
+  const hasModel = v.model.h != null || v.model.d != null || v.model.a != null;
+  const hasMarket = v.market.h != null || v.market.d != null || v.market.a != null;
+  if (!hasModel && !hasMarket) {
+    barsEl.innerHTML = `<span class="ins2-empty-mini">Modèle et cotes indisponibles pour ce match — verdict indisponible.</span>`;
+    if (edgeEl) edgeEl.classList.remove('has');
+    if (confEl) confEl.innerHTML = '';
+    return;
+  }
+  const outc = `<div class="ins2-outc"><span>1 · ${_ins2e(_ins2short(m.home_team, 18))}</span><span>NUL</span><span>2 · ${_ins2e(_ins2short(m.away_team, 18))}</span></div>`;
+  barsEl.innerHTML =
+    (hasModel ? _ins2BarsRow('Modèle', [v.model.h, v.model.d, v.model.a], false) : '') +
+    (hasMarket ? _ins2BarsRow('Marché', [v.market.h, v.market.d, v.market.a], true) : '') +
+    outc;
+  // Badge value : edge modèle vs marché ≥ 4 pts
+  if (edgeEl) {
+    if (v.best && v.best.dv >= 0.04) {
+      const pts = (v.best.dv * 100).toFixed(1).replace('.', ',');
+      edgeEl.innerHTML =
+        `<span class="ins2-edge-badge">VALUE ${v.best.lbl} +${pts} pts</span>` +
+        `<span class="ins2-edge-hint">Probabilité modèle supérieure au consensus marché dévigé sur le choix ${v.best.lbl}.</span>`;
+      edgeEl.classList.add('has');
+    } else {
+      edgeEl.innerHTML = '';
+      edgeEl.classList.remove('has');
+    }
+  }
+  // Marquer la cellule de cote portant l'edge
+  const oddsBar = document.getElementById('ins2-oddsbar');
+  if (oddsBar && v.best && v.best.dv >= 0.04) {
+    oddsBar.querySelectorAll('.ins2-oddcell').forEach(c => c.classList.remove('edge'));
+    const idx = v.best.lbl === '1' ? 0 : v.best.lbl === 'N' ? 1 : 2;
+    const cell = oddsBar.children[idx];
+    if (cell) cell.classList.add('edge');
+  }
+  if (confEl) {
+    const conf = ins2Confidence(m, insCurrentData);
+    confEl.innerHTML = `★${'★'.repeat(conf.stars - 1)}${'☆'.repeat(5 - conf.stars)} <span title="${conf.tip}">confiance</span>`;
+  }
+}
+
+function ins2Confidence(m, d) {
+  // Heuristique 5 étoiles basée sur la complétude des signaux disponibles
+  let stars = 1;
+  const tips = [];
+  const p = m.poisson || {};
+  const poiOk = ['homeWin', 'draw', 'awayWin'].some(k => typeof p[k] === 'number' && p[k] > 0);
+  if (poiOk) { stars++; tips.push('modèle Poisson disponible'); }
+  if (m.fair && m.fair.home != null) { stars++; tips.push('consensus marché dévigé'); }
+  if (d && d.bsdCoverage && d.bsdCoverage.available && (d.bsdCoverage.pct || 0) >= 50) { stars++; tips.push('couverture BSD élevée'); }
+  if (d && Array.isArray(d.h2h) && d.h2h.length >= 3) { stars++; tips.push('historique H2H fourni'); }
+  return { stars: Math.min(stars, 5), tip: 'Signaux : ' + (tips.join(', ') || 'données limitées') };
+}
+
+// ── Barre de cotes 1/N/2 (hero) ─────────────────────────────────────────────
+
+function ins2RenderOddsbar(m) {
+  const el = document.getElementById('ins2-oddsbar');
+  if (!el) return;
+  const o = m.odds || {};
+  const f = m.fair || {};
+  const fmtO = x => (x != null && !isNaN(+x)) ? (+x).toFixed(2) : '—';
+  const pct = x => (x != null && !isNaN(+x)) ? Math.round(x * 100) + '%' : '—';
+  const cells = [
+    ['1', o.home, f.home], ['NUL', o.draw, f.draw], ['2', o.away, f.away]
+  ].map(([lbl, odd, fair]) =>
+    `<div class="ins2-oddcell"><div class="o-lbl">${lbl}</div><div class="o-val">${fmtO(odd)}</div><div class="o-fair">dévigé ${pct(fair)}</div></div>`
+  ).join('');
+  el.innerHTML = cells;
+}
+
+// ── Faits marquants « 3 choses à savoir » ───────────────────────────────────
+
+function ins2BuildFacts(m, d) {
+  const facts = [];
+  const p = m.poisson || {}, f = m.fair || {};
+  // 1) Edge modèle vs marché (signal prioritaire)
+  const v = ins2ComputeVerdict(m);
+  if (v.best && v.best.dv >= 0.04) {
+    const pts = (v.best.dv * 100).toFixed(1).replace('.', ',');
+    facts.push({ s: 100 + Math.round(v.best.dv * 500), html: `<b>Value détectée sur le ${v.best.lbl}</b> — modèle ${Math.round(v.best.mo * 100)}% vs marché ${Math.round(v.best.ma * 100)}% (+${pts} pts)` });
+  }
+  // 2) Écart de classement (standings du payload insights)
+  if (d && Array.isArray(d.standings) && d.standings.length) {
+    const norm = s => (s || '').toLowerCase().trim();
+    const rankOf = n => { const row = d.standings.find(r => norm(r.team) === norm(n)); return row ? row.rank : null; };
+    const rH = rankOf(m.home_team), rA = rankOf(m.away_team);
+    if (rH && rA) {
+      const gap = Math.abs(rH - rA);
+      const top = Math.min(rH, rA);
+      if (rH <= 3 && rA <= 3) facts.push({ s: 90, html: `<b>Duel au sommet</b> — N°${rH} reçoit le N°${rA}, les deux aux avant-postes` });
+      else if (gap >= 6) facts.push({ s: 60 + gap, html: `<b>Écart de classement</b> — N°${rH} vs N°${rA} (${gap} rangs d'écart)` });
+      else if (top <= 6) facts.push({ s: 55, html: `Match de haut de tableau — N°${rH} contre N°${rA}` });
+    }
+  }
+  // 3) Profil arbitre sévère → cartons probables
+  const ref = (d && (d.bsd_referee_profile || (d.sofascore_venue_referee || {}).referee)) || null;
+  if (ref && ref.yc_per_game != null && +ref.yc_per_game >= 4.5) {
+    facts.push({ s: 70, html: `<b>Arbitre sévère</b> — ${_ins2e(ref.name)} : ${ref.yc_per_game} jaunes/match en moyenne, marchés cartons à surveiller` });
+  }
+  // 4) Série en cours (forme L5)
+  const streakTxt = (formStr, team) => {
+    if (!formStr) return null;
+    const c = formStr[0];
+    let n = 0; while (n < formStr.length && formStr[n] === c) n++;
+    if (n >= 3) {
+      const word = c === 'W' ? 'victoires' : c === 'L' ? 'défaites' : 'matchs nuls';
+      return `<b>Série de ${team}</b> — ${n} ${word} consécutif·ves avant ce match`;
+    }
+    return null;
+  };
+  const hFormS = (d && d.homeStats && d.homeStats.form) || '', aFormS = (d && d.awayStats && d.awayStats.form) || '';
+  const s1 = streakTxt(hFormS, m.home_team); if (s1) facts.push({ s: 65 + hFormS.split('').findIndex(ch => ch !== hFormS[0]) * -1, html: s1 });
+  const s2 = streakTxt(aFormS, m.away_team); if (s2) facts.push({ s: 64, html: s2 });
+  // 5) Tendance buts du modèle
+  if (typeof p.over25 === 'number' && p.over25 >= 0.6) {
+    facts.push({ s: 50 + Math.round(p.over25 * 30), html: `<b>Tendance buts</b> — Over 2.5 dans ${Math.round(p.over25 * 100)}% des simulations Poisson` });
+  }
+  return facts.sort((a, b) => b.s - a.s).slice(0, 3);
+}
+
+// ── Narratif « Histoire du match » (templates, zéro LLM) ────────────────────
+
+function ins2BuildStory(m, d) {
+  const parts = [];
+  const p = m.poisson || {};
+  // Enjeu classement
+  if (d && Array.isArray(d.standings) && d.standings.length) {
+    const norm = s => (s || '').toLowerCase().trim();
+    const rankOf = n => { const row = d.standings.find(r => norm(r.team) === norm(n)); return row ? row.rank : null; };
+    const rH = rankOf(m.home_team), rA = rankOf(m.away_team);
+    if (rH && rA) {
+      if (rH <= 3 && rA <= 3) parts.push(`<b>Affiche de haut de classement</b> : le N°${rH} accueille le N°${rA} dans un duel direct pour les places majeures.`);
+      else if (Math.abs(rH - rA) >= 8) parts.push(`<b>Rapport de force asymétrique</b> : le N°${rH} (${_ins2e(_ins2short(m.home_team, 26))}) reçoit le N°${rA} (${_ins2e(_ins2short(m.away_team, 26))}).`);
+      else parts.push(`Le N°${rH} reçoit le N°${rA}.`);
+    }
+  }
+  // Lecture du favori modèle
+  const v = ins2ComputeVerdict(m);
+  if (v.model.h != null) {
+    const arr = [[v.model.h, m.home_team], [v.model.d, 'le nul'], [v.model.a, m.away_team]].filter(x => x[0] != null).sort((a, b) => b[0] - a[0]);
+    if (arr.length && arr[0][0] > 0) {
+      const pctFav = Math.round(arr[0][0] * 100);
+      parts.push(`Le modèle Poisson donne <b>${_ins2e(_ins2short(String(arr[0][1]), 28))} favori à ${pctFav}%</b>.`);
+    }
+  }
+  // Historique H2H dominant
+  if (d && Array.isArray(d.h2h) && d.h2h.length >= 3) {
+    const meetings = d.h2h.slice(0, 5);
+    let wH = 0, wA = 0;
+    meetings.forEach(x => {
+      if (x.home_goals == null) return;
+      const meHome = x.home === m.home_team;
+      const scored = meHome ? x.home_goals : x.away_goals;
+      const conceded = meHome ? x.away_goals : x.home_goals;
+      if (scored > conceded) wH++; else if (scored < conceded) wA++;
+    });
+    const tot = wH + wA;
+    if (tot >= 3 && Math.max(wH, wA) / tot >= 0.6) {
+      const dom = wH > wA ? m.home_team : m.away_team;
+      parts.push(`<b>Historique favorable</b> : ${_ins2e(_ins2short(dom, 24))} a gagné ${Math.max(wH, wA)} des ${tot} dernières confrontations.`);
+    } else if (meetings.filter(x => x.home_goals != null && (x.home_goals + x.away_goals) >= 3).length / Math.max(meetings.filter(x => x.home_goals != null).length, 1) >= 0.6) {
+      parts.push(`<b>Confrontations prolifiques</b> : la majorité des derniers duels ont produit 3 buts ou plus.`);
+    }
+  }
+  return parts.join(' ');
+}
+
+// ── Timeline de forme L10 (pastilles V/N/D) ─────────────────────────────────
+
+function ins2FormTimeline(d, m) {
+  const build = (fixtures, teamName, formFallback) => {
+    const norm = s => (s || '').toLowerCase().trim();
+    const cells = [];
+    (fixtures || []).slice(0, 10).forEach(fx => {
+      const homeName = fx.home || fx.home_team || fx.homeTeam || '';
+      const awayName = fx.away || fx.away_team || fx.awayTeam || '';
+      const hs = fx.home_goals ?? fx.home_score ?? (fx.score ? fx.score.home : null);
+      const as = fx.away_goals ?? fx.away_score ?? (fx.score ? fx.score.away : null);
+      const isHome = norm(homeName) === norm(teamName);
+      const teamScore = isHome ? hs : as, oppScore = isHome ? as : hs;
+      let res = 'U';
+      if (teamScore != null && oppScore != null) res = teamScore > oppScore ? 'W' : teamScore === oppScore ? 'D' : 'L';
+      const opp = isHome ? awayName : homeName;
+      cells.push({ res, tip: res === 'U' ? '—' : `${teamScore}-${oppScore} vs ${opp}`, letter: res === 'W' ? 'V' : res === 'D' ? 'N' : res === 'L' ? 'D' : '–' });
+    });
+    if (!cells.length && formFallback) {
+      [...String(formFallback)].slice(0, 10).forEach(c => {
+        const map = { W: ['V', 'Victoire'], D: ['N', 'Match nul'], L: ['D', 'Défaite'] };
+        const it = map[c] || ['–', '—'];
+        cells.push({ res: c === 'U' ? 'U' : c, letter: it[0], tip: it[1] });
+      });
+    }
+    return cells;
+  };
+  const dots = cells => cells.length
+    ? `<div class="ins2-formdots">${cells.map(c => `<div class="ins2-fdot ${c.res}" title="${_ins2e(c.tip)}">${c.letter}</div>`).join('')}</div>`
+    : `<span class="ins2-empty-mini">Forme indisponible</span>`;
+  const hCells = build(d.homeAllFixtures, m.home_team, (d.homeStats || {}).form);
+  const aCells = build(d.awayAllFixtures, m.away_team, (d.awayStats || {}).form);
+  return `
+    <div class="ins2-formteam"><div class="ft-name" title="${_ins2e(m.home_team)}">${_ins2e(_ins2short(m.home_team, 24))}</div>${dots(hCells)}</div>
+    <div class="ins2-formteam"><div class="ft-name" title="${_ins2e(m.away_team)}">${_ins2e(_ins2short(m.away_team, 24))}</div>${dots(aCells)}</div>`;
+}
+
+// ── Pré-rendu (avant fetch insights, données issues de l'objet match) ───────
+
+function ins2PreRender(m) {
+  window._ins2BsdVisible = window._ins2BsdVisible !== undefined ? window._ins2BsdVisible : true;
+  ins2RenderZones(m);
+  ins2StartCountdown(m.commence_time);
+  ins2RenderOddsbar(m);
+  // Chips : réinitialisées, enrichies après payload
+  const chips = document.getElementById('ins2-chips');
+  if (chips) chips.innerHTML = '';
+  // Verdict immédiat depuis m (fonctionne même hors plan Pro)
+  ins2RenderVerdict(m);
+  // Faits limités au signal présent sur l'objet match
+  const factsEl = document.getElementById('ins2-facts');
+  if (factsEl) {
+    const pre = ins2BuildFacts(m, null);
+    factsEl.innerHTML = pre.length
+      ? pre.map((f, i) => `<div class="ins2-fact"><span class="f-n">${i + 1}</span><span>${f.html}</span></div>`).join('')
+      : '';
+  }
+  const storyEl = document.getElementById('ins2-story');
+  if (storyEl) storyEl.style.display = 'none';
+  const flEl = document.getElementById('ins2-formline');
+  if (flEl) flEl.innerHTML = '<div class="ins2-skel"></div><div class="ins2-skel"></div>';
+  // Sparkline cotes (Phase suivante) — slot caché tant qu'aucune série dispo
+  const spark = document.getElementById('ins2-spark');
+  if (spark) spark.style.display = 'none';
+  if (typeof ins2LoadSpark === 'function') ins2LoadSpark(m);
+}
+
+// ── Enrichissement post-fetch (/api/v1/insights/:id) ────────────────────────
+
+function ins2Enrich(d, m) {
+  try {
+    // Chips contexte : stade · arbitre · diffuseurs · couverture BSD
+    const chips = [];
+    const vr = (d.sofascore_venue_referee || {});
+    if (vr.venue && vr.venue.name) {
+      chips.push(`🏟️ ${_ins2e(vr.venue.name)}${vr.venue.city ? ' · ' + _ins2e(vr.venue.city) : ''}`);
+    }
+    const ref = d.bsd_referee_profile || vr.referee || null;
+    if (ref && ref.name) {
+      const sev = ref.yc_per_game != null ? (ref.yc_per_game >= 6 ? '🔴' : ref.yc_per_game >= 4.5 ? '🟠' : ref.yc_per_game >= 3 ? '🟡' : '🟢') : '';
+      chips.push(`⚖️ ${_ins2e(ref.name)}${ref.yc_per_game != null ? ` · ${sev} ${ref.yc_per_game}🟨/m` : ''}`);
+    }
+    if (Array.isArray(d.tv_channels) && d.tv_channels.length) {
+      chips.push(`📺 ${d.tv_channels.length} chaîne${d.tv_channels.length > 1 ? 's' : ''}`);
+    }
+    if (d.bsdCoverage && d.bsdCoverage.available && d.bsdCoverage.pct != null) {
+      chips.push(`📡 Couverture data ${Math.round(d.bsdCoverage.pct)}%`);
+    }
+    const chipsEl = document.getElementById('ins2-chips');
+    if (chipsEl && chips.length) {
+      chipsEl.innerHTML = chips.map(c => `<span class="ins2-chip">${c}</span>`).join('');
+    }
+    // Verdict recalculé avec confiance complète
+    ins2RenderVerdict(m);
+    // Faits enrichis
+    const factsEl = document.getElementById('ins2-facts');
+    if (factsEl) {
+      const facts = ins2BuildFacts(m, d);
+      factsEl.innerHTML = facts.map((f, i) => `<div class="ins2-fact"><span class="f-n">${i + 1}</span><span>${f.html}</span></div>`).join('');
+    }
+    // Narratif
+    const storyEl = document.getElementById('ins2-story');
+    if (storyEl) {
+      const story = ins2BuildStory(m, d);
+      storyEl.innerHTML = story || '';
+      storyEl.style.display = story ? '' : 'none';
+    }
+    // Timeline forme L10
+    const flEl = document.getElementById('ins2-formline');
+    if (flEl) flEl.innerHTML = ins2FormTimeline(d, m);
+  } catch (e) {
+    console.error('[ins2Enrich] enrichissement v2 partiel', e);
+  }
+}
+
+// ── Replier/déplier le verdict ──────────────────────────────────────────────
+
+function ins2ToggleVerdict() {
+  const v = document.getElementById('ins2-verdict');
+  if (v) v.classList.toggle('collapsed');
+}
+
+// ── Sparkline mouvement de cotes (snapshots mémoire serveur) ────────────────
+
+async function ins2LoadSpark(m) {
+  const wrap = document.getElementById('ins2-spark');
+  if (!wrap || !m || !m.id) return;
+  try {
+    const r = await fetch(`/api/v1/odds-history/${encodeURIComponent(m.id)}`);
+    if (!r.ok) return;
+    const j = await r.json();
+    const pts = (j && j.points || []).filter(p => p && p.home != null);
+    if (pts.length < 3) { wrap.style.display = 'none'; return; }
+    const W = 120, H = 34, P = 3;
+    const vals = pts.map(p => p.home);
+    const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+    const xy = pts.map((p, i) => [
+      P + (i / (pts.length - 1)) * (W - 2 * P),
+      H - P - ((p.home - min) / span) * (H - 2 * P)
+    ]);
+    const path = xy.map((c, i) => `${i ? 'L' : 'M'}${c[0].toFixed(1)},${c[1].toFixed(1)}`).join('');
+    const lastXY = xy[xy.length - 1];
+    // Cote en baisse = argent entrant sur le choix → vert ; en hausse → rouge
+    const down = vals[vals.length - 1] < vals[0];
+    const col = down ? '#00e676' : '#ff6b6b';
+    const fmt = x => (+x).toFixed(2);
+    wrap.innerHTML =
+      `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">` +
+      `<path d="${path}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linecap="round" opacity="0.9"/>` +
+      `<circle cx="${lastXY[0].toFixed(1)}" cy="${lastXY[1].toFixed(1)}" r="2.4" fill="${col}"/></svg>` +
+      `<div class="ins2-spark-label" title="Historique ${fmt(vals[0])} → ${fmt(vals[vals.length-1])} · Nul ${j.last && j.last.draw != null ? fmt(j.last.draw) : '—'} · 2 ${j.last && j.last.away != null ? fmt(j.last.away) : '—'}">` +
+      `COTE 1 ${fmt(vals[0])}→<b style="color:${col}">${fmt(vals[vals.length - 1])}</b> ${down ? '▼' : '▲'}</div>`;
+    wrap.style.display = '';
+  } catch (_) { /* silencieux — sparkline best-effort */ }
 }
 
 async function buildScoutingTab(matchId) {
@@ -20647,6 +21126,8 @@ function openPowerScore(matchId) {
 function closeInsights() {
   if (psEventSource) { psEventSource.close(); psEventSource = null; }
   if (gmEventSource) { gmEventSource.close(); gmEventSource = null; }
+  // Insights v2 — stopper le compte à rebours kickoff
+  if (_ins2CdTimer) { clearInterval(_ins2CdTimer); _ins2CdTimer = null; }
   document.getElementById('insights-modal').classList.remove('open');
 }
 

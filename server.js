@@ -4301,6 +4301,27 @@ function computePolymarketDivergence(bsdOddsSummary, polymarketData) {
   };
 }
 
+// ── Snapshots cotes prematch (mémoire) pour la sparkline du modal Insights v2 (bd w3dk) ──
+// Alimenté par enrichMatchWithBSDFullStack (cron BSD) — dédup 4 min, cap 120 points (~24h).
+const _prematchOddsHistory = new Map(); // matchId → [{ts, home, draw, away}]
+const PREMATCH_ODDS_MAX = 120;
+
+function recordPrematchOddsSnapshot(match) {
+  try {
+    if (!match || !match.id || !match.odds) return;
+    const h = match.odds.home, d = match.odds.draw, a = match.odds.away;
+    if (h == null && a == null) return;
+    const now = Date.now();
+    const hist = _prematchOddsHistory.get(match.id) || [];
+    const last = hist[hist.length - 1];
+    // Dédup : ignorer si dernier snapshot < 4 min et valeurs inchangées
+    if (last && now - last.ts < 4 * 60 * 1000 && last.home === (h != null ? +h : null) && last.draw === (d != null ? +d : null) && last.away === (a != null ? +a : null)) return;
+    hist.push({ ts: now, home: h != null ? +h : null, draw: d != null ? +d : null, away: a != null ? +a : null });
+    if (hist.length > PREMATCH_ODDS_MAX) hist.shift();
+    _prematchOddsHistory.set(match.id, hist);
+  } catch (_) { /* best-effort — ne doit jamais casser l'enrichissement */ }
+}
+
 // Enrichit un match record avec BSD odds compare + predictions ML + polymarket (fire-and-forget appelé via cron).
 async function enrichMatchWithBSDFullStack(match) {
   if (!match || !match._bsd_event_id) return;
@@ -4332,6 +4353,8 @@ async function enrichMatchWithBSDFullStack(match) {
         match.odds._source = 'bsd_compare';
         match.odds._books_count = summary.books_count;
       }
+      // Insights v2 — capturer le snapshot de cotes pour la sparkline mouvement
+      recordPrematchOddsSnapshot(match);
       // Market depth bonus: patch reliability_score after BSD books count known
       const _depthBonus = summary.books_count >= 10 ? 8 : summary.books_count >= 6 ? 4 : 0;
       if (_depthBonus > 0 && match.reliability_score != null) {
@@ -4511,6 +4534,7 @@ async function cronEnrichBSDFullStack() {
       .slice(0, 5);
     for (const m of candidates) {
       await enrichMatchWithBSDFullStack(m);
+      recordPrematchOddsSnapshot(m); // Insights v2 — snapshot cotes même sans flux multi-books
       await new Promise(r => setTimeout(r, 200)); // throttle 5 calls/sec safe
     }
     if (candidates.length) console.log(`  [BSD Enrich] ${candidates.length} matchs enrichis (odds+pred+polymarket)`);
@@ -46476,6 +46500,7 @@ if (pathname.startsWith('/api/v1/match/') && pathname.endsWith('/bsd-enriched') 
   // Force enrichissement on-demand si pas déjà fait
   if (!m.bsd_odds_summary) {
     try { await enrichMatchWithBSDFullStack(m); } catch (e) { _trackCatch('matchs', 'enrich_bsd_fullstack', e); }
+    recordPrematchOddsSnapshot(m); // Insights v2 — snapshot cotes post-enrichissement on-demand
   }
   if (!m.home_manager && !m.away_manager) {
     try { await enrichMatchWithManagers(m); } catch (e) { _trackCatch('matchs', 'enrich_managers', e); }
@@ -47144,6 +47169,23 @@ if (pathname === '/api/v1/national-elo' && req.method === 'GET') {
   } catch (e) {
     return jsonResponse(res, 500, { ok: false, error: e.message });
   }
+}
+
+// Insights v2 — historique de cotes prematch pour sparkline (public, hors gate Pro)
+if (pathname.startsWith('/api/v1/odds-history/') && req.method === 'GET') {
+  const matchId = decodeURIComponent(pathname.slice('/api/v1/odds-history/'.length));
+  const hist = _prematchOddsHistory.get(matchId) || [];
+  // Downsample à 60 points max côté réponse
+  let points = hist;
+  if (hist.length > 60) {
+    const step = Math.ceil(hist.length / 60);
+    points = hist.filter((_, i) => i % step === 0 || i === hist.length - 1);
+  }
+  const first = hist[0] || null, lastP = hist[hist.length - 1] || null;
+  const dir = first && lastP && first.home != null && lastP.home != null
+    ? (lastP.home < first.home ? 'shortening' : lastP.home > first.home ? 'drifting' : 'flat')
+    : null;
+  return jsonResponse(res, 200, { success: true, matchId, count: hist.length, dir, first, last: lastP, points });
 }
 
 if (pathname.startsWith('/api/v1/insights/') && req.method === 'GET') {

@@ -4745,6 +4745,86 @@
 .ins-tab { padding: 8px 16px; font: 500 12px/1 var(--font-sans); color: var(--text2); border: 1px solid var(--border); border-radius: 20px; cursor: pointer; transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; flex-shrink: 0; background: var(--bg2); letter-spacing: 0.2px; position: relative; overflow: hidden; }
 .ins-tab:hover { color: var(--text); border-color: var(--text2); background: var(--bg3); }
 .ins-tab.active { color: #fff; background: linear-gradient(135deg, var(--green), rgba(0,200,83,0.9)); border-color: transparent; box-shadow: 0 2px 8px rgba(0,230,118,0.3); font-weight: 600; }
+
+  /* ═══ INSIGHTS V2 « BRIEF MATCH » · hero + verdict + zones (bd w3dk) ═══ */
+  #insights-panel { max-width: 920px; }
+  .ins2-hero { border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 12px; }
+  .ins2-hero-top { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
+  .ins2-hero-main { min-width:0; }
+  .ins2-countdown { display:inline-flex; align-items:center; gap:6px; margin-top:6px; font:700 11px/1 var(--font-mono); color:var(--green); background:rgba(0,230,118,0.08); border:1px solid rgba(0,230,118,0.25); padding:4px 9px; border-radius:6px; letter-spacing:.04em; }
+  .ins2-countdown.live { color:#ff5252; border-color:rgba(255,82,82,.35); background:rgba(255,82,82,.07); }
+  .ins2-spark { flex-shrink:0; text-align:right; }
+  .ins2-spark svg { display:block; }
+  .ins2-spark-label { font:600 9px/1.4 var(--font-mono); color:var(--text3); letter-spacing:.05em; }
+  .ins2-oddsbar { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+  .ins2-oddcell { background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:8px 10px; text-align:center; position:relative; overflow:hidden; }
+  .ins2-oddcell .o-lbl { font:600 9px/1 var(--font-mono); letter-spacing:.12em; color:var(--text3); }
+  .ins2-oddcell .o-val { font:800 16px/1.15 var(--font-head); color:var(--text); margin-top:3px; }
+  .ins2-oddcell .o-fair { font:600 10px/1 var(--font-mono); color:var(--text3); margin-top:3px; }
+  .ins2-oddcell.edge { border-color:rgba(0,230,118,.55); box-shadow:inset 0 0 10px rgba(0,230,118,.12); }
+  .ins2-oddcell.edge::after { content:'EDGE'; position:absolute; top:4px; right:6px; font:800 7px/1 var(--font-mono); letter-spacing:.1em; color:var(--green); }
+  .ins2-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .ins2-chip { display:inline-flex; align-items:center; gap:5px; font:500 10.5px/1 var(--font-sans); color:var(--text2); background:var(--bg3); border:1px solid var(--border); padding:5px 9px; border-radius:999px; white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis; }
+  .ins2-chip img { width:13px; height:auto; vertical-align:middle; border-radius:2px; }
+  /* Verdict PariScore */
+  .ins2-verdict { background:linear-gradient(135deg, rgba(0,230,118,0.06), rgba(0,0,0,0) 55%), var(--bg3); border:1px solid rgba(0,230,118,0.22); border-radius:14px; padding:12px 14px; margin-bottom:14px; }
+  .ins2-verdict-head { display:flex; align-items:center; gap:10px; }
+  .ins2-verdict-title { font:800 12px/1 var(--font-sans); letter-spacing:.08em; text-transform:uppercase; color:var(--green); }
+  .ins2-conf { font:600 11px/1 var(--font-mono); color:var(--text2); letter-spacing:.06em; }
+  .ins2-verdict-toggle { margin-left:auto; background:none; border:none; color:var(--text3); font-size:14px; cursor:pointer; padding:2px 6px; transition:transform .2s; }
+  .ins2-verdict.collapsed .ins2-verdict-toggle { transform:rotate(-90deg); }
+  .ins2-verdict-body { margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+  .ins2-verdict.collapsed .ins2-verdict-body { display:none; }
+  .ins2-bars-wrap { display:flex; flex-direction:column; gap:6px; }
+  .ins2-barline { display:grid; grid-template-columns:64px 1fr; align-items:center; gap:8px; }
+  .ins2-barline .b-src { font:600 10px/1 var(--font-mono); letter-spacing:.06em; color:var(--text3); text-transform:uppercase; }
+  .ins2-barseg { display:flex; height:20px; border-radius:6px; overflow:hidden; background:var(--bg4); }
+  .ins2-seg { display:flex; align-items:center; justify-content:center; font:700 10px/1 var(--font-mono); color:#fff; min-width:0; overflow:hidden; white-space:nowrap; transition:width .5s ease; }
+  .ins2-seg.h { background:linear-gradient(135deg,var(--blue),#2563eb); }
+  .ins2-seg.d { background:#546e7a; }
+  .ins2-seg.a { background:linear-gradient(135deg,#38bdf8,#0ea5e9); }
+  .ins2-barseg.market .ins2-seg { opacity:.45; }
+  .ins2-outc { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .ins2-outc span { text-align:center; font:600 10px/1 var(--font-mono); color:var(--text3); }
+  .ins2-edgerow { display:none; align-items:center; gap:8px; flex-wrap:wrap; }
+  .ins2-edgerow.has { display:flex; }
+  .ins2-edge-badge { display:inline-flex; align-items:center; gap:6px; font:800 11px/1 var(--font-mono); color:#041b10; background:linear-gradient(135deg,#00e676,#69f0ae); padding:6px 10px; border-radius:8px; letter-spacing:.03em; box-shadow:0 2px 10px rgba(0,230,118,.25); }
+  .ins2-edge-hint { font:500 10.5px/1.4 var(--font-sans); color:var(--text2); }
+  /* Faits + narratif + forme */
+  .ins2-facts { display:flex; flex-direction:column; gap:6px; }
+  .ins2-fact { display:flex; gap:8px; align-items:flex-start; font:500 12px/1.45 var(--font-sans); color:var(--text2); }
+  .ins2-fact .f-n { flex-shrink:0; width:18px; height:18px; border-radius:50%; background:rgba(0,230,118,.12); color:var(--green); font:800 10px/18px var(--font-mono); text-align:center; }
+  .ins2-story { font:400 12px/1.55 var(--font-sans); color:var(--text2); background:var(--bg2); border:1px dashed var(--border2); border-radius:10px; padding:10px 12px; }
+  .ins2-story b { color:var(--text); }
+  .ins2-formline { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .ins2-formteam { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:8px 10px; }
+  .ins2-formteam .ft-name { font:700 10.5px/1 var(--font-sans); color:var(--text3); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ins2-formdots { display:flex; gap:4px; flex-wrap:nowrap; }
+  .ins2-fdot { width:20px; height:20px; border-radius:6px; display:flex; align-items:center; justify-content:center; font:800 9px/1 var(--font-mono); color:#fff; cursor:default; flex-shrink:0; }
+  .ins2-fdot.W { background:#00c853; } .ins2-fdot.D { background:#78909c; } .ins2-fdot.L { background:#e53935; } .ins2-fdot.U { background:var(--bg4); color:var(--text3); }
+  .ins2-empty-mini { font:500 11px/1.4 var(--font-sans); color:var(--text3); }
+  /* Navigation par zones */
+  .ins2-zonebar { display:flex; gap:6px; padding:4px; background:var(--bg3); border:1px solid var(--border); border-radius:12px; margin-bottom:10px; overflow-x:auto; scrollbar-width:none; }
+  .ins2-zonebar::-webkit-scrollbar { display:none; }
+  .ins2-zone { flex:1; min-width:86px; display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; border:none; border-radius:9px; background:transparent; color:var(--text2); font:600 12px/1 var(--font-sans); cursor:pointer; white-space:nowrap; transition:background .2s,color .2s,box-shadow .2s; }
+  .ins2-zone:hover { color:var(--text); background:var(--bg2); }
+  .ins2-zone.active { background:linear-gradient(135deg,var(--green),rgba(0,200,83,.9)); color:#fff; box-shadow:0 2px 10px rgba(0,230,118,.28); font-weight:700; }
+  #ins2-subtabs { margin-bottom:16px; min-height:32px; }
+  #ins2-subtabs:empty { display:none; }
+  .ins2-skel { height:52px; border-radius:8px; background:linear-gradient(100deg,var(--bg4) 40%,var(--bg3) 50%,var(--bg4) 60%); background-size:200% 100%; animation:ins2Shimmer 1.4s infinite; }
+  @keyframes ins2Shimmer { from{background-position:180% 0} to{background-position:-20% 0} }
+  /* Thème clair — surfaces ins2 */
+  body[data-cf-light="1"] .ins2-verdict { background:#f4faf7; border-color:rgba(0,140,76,.28); }
+  body[data-cf-light="1"] .ins2-story, body[data-cf-light="1"] .ins2-formteam, body[data-cf-light="1"] .ins2-oddcell { background:#ffffff; }
+  body[data-cf-light="1"] .ins2-zonebar { background:#edf1ef; }
+  body[data-cf-light="1"] .ins2-zone.active { color:#ffffff; }
+  /* Mobile bottom-sheet v2 */
+  html.ps-mobile-v2 .ins2-hero-top { flex-direction:column; gap:8px; }
+  html.ps-mobile-v2 .ins2-spark { display:none; }
+  html.ps-mobile-v2 .ins2-oddsbar { gap:6px; }
+  html.ps-mobile-v2 .ins2-formline { grid-template-columns:1fr; }
+  html.ps-mobile-v2 .ins2-zone { min-width:70px; padding:8px 10px; font-size:11px; }
+  html.ps-mobile-v2 .ins2-verdict-body { gap:8px; }
   
   /* Segmented Control iOS */
   .stats-segmented { display: flex; gap: 2px; padding: 3px; background: var(--bg3); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 20px; max-width: 320px; }
@@ -22042,25 +22122,35 @@ window.tn2SetupH2H = function() {
   <div id="insights-panel">
     <button class="modal-close" onclick="closeInsights()" aria-label="Fermer" style="position:absolute;top:16px;right:16px;">é</button>
     <div id="insights-panel-inner">
-      <div class="ins-header">
-        <div class="ins-teams" id="ins-teams">é</div>
-        <div class="ins-league" id="ins-league">é</div>
+      <!-- ═══ INSIGHTS V2 « BRIEF MATCH » · hero décisionnel + verdict + zones ═══ -->
+      <div class="ins2-hero">
+        <div class="ins2-hero-top">
+          <div class="ins2-hero-main">
+            <div class="ins-teams" id="ins-teams">—</div>
+            <div class="ins-league" id="ins-league">—</div>
+            <div class="ins2-countdown" id="ins2-countdown"></div>
+          </div>
+          <div class="ins2-spark" id="ins2-spark" title="Mouvement des cotes depuis l'ouverture" style="display:none;"></div>
+        </div>
+        <div class="ins2-oddsbar" id="ins2-oddsbar"></div>
+        <div class="ins2-chips" id="ins2-chips"></div>
       </div>
-      <div class="ins-tabs">
-        <button class="ins-tab active" data-tab="resume" onclick="insShowTab('resume')">Résumé</button>
-        <button class="ins-tab" data-tab="stats" onclick="insShowTab('stats')">Stats</button>
-        <button class="ins-tab" data-tab="joueurs" onclick="insShowTab('joueurs')">Stats Joueurs</button>
-        <button class="ins-tab" data-tab="compos" onclick="insShowTab('compos')">Compos</button>
-        <button class="ins-tab" data-tab="scouting" onclick="insShowTab('scouting')">Pro Scout</button>
-        <button class="ins-tab" data-tab="graphique" onclick="insShowTab('graphique')">Forme</button>
-        <button class="ins-tab" data-tab="classement" onclick="insShowTab('classement')">Classement</button>
-        <button class="ins-tab" data-tab="corners" onclick="insShowTab('corners')">Corners</button>
-        <button class="ins-tab" data-tab="powerscore" onclick="insShowTab('powerscore')">Power Score</button>
-        <button class="ins-tab" data-tab="h2h" onclick="insShowTab('h2h')">H2H</button>
-        <button class="ins-tab" data-tab="incidents" onclick="insShowTab('incidents')">Incidents</button>
-        <button class="ins-tab" data-tab="shotmap" onclick="insShowTab('shotmap')">Shotmap</button>
-        <button class="ins-tab" data-tab="videos" onclick="insShowTab('videos')">?? Vidéos</button>
+      <div class="ins2-verdict" id="ins2-verdict">
+        <div class="ins2-verdict-head">
+          <span class="ins2-verdict-title">Verdict PariScore</span>
+          <span class="ins2-conf" id="ins2-conf"></span>
+          <button class="ins2-verdict-toggle" id="ins2-verdict-toggle" onclick="ins2ToggleVerdict()" aria-label="Replier le verdict">&#9662;</button>
+        </div>
+        <div class="ins2-verdict-body" id="ins2-verdict-body">
+          <div class="ins2-bars-wrap" id="ins2-bars"><div class="ins2-skel"></div></div>
+          <div class="ins2-edgerow" id="ins2-edgerow"></div>
+          <div class="ins2-facts" id="ins2-facts"></div>
+          <div class="ins2-story" id="ins2-story"></div>
+          <div class="ins2-formline" id="ins2-formline"></div>
+        </div>
       </div>
+      <div class="ins2-zonebar" id="ins2-zonebar"></div>
+      <div class="ins2-subtabs ins-tabs" id="ins2-subtabs"></div>
       <select id="ins-tab-mob" aria-label="Section" onchange="insShowTab(this.value)">
         <option value="resume">Résumé</option>
         <option value="stats">Stats</option>
