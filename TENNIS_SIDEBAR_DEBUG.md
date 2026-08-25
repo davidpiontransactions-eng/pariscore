@@ -216,3 +216,45 @@ que 2/30 matchs (repli officiel ≈ top ~100 ATP) ; table interne vide en dev.
 - [ ] Retenter Tennis Abstract quand les IDs 2026 seront réparés côté TA
       (utile surtout pour l'historique profond >30 j hors BSD).
 
+---
+
+# V3 — Filtre Tout/Live/Avant-match + noms de tournois + cap tennis
+
+**Date** : 2026-08-25 · Demandes : « je n'ai pas tous les matchs live/prematch »,
+« un filtre Global/Prematch/Live », « les noms des tournois dans la sidebar ».
+
+## Diagnostic
+
+1. **Cap de rendu** : `pickLevel4` plafonne chaque ligue à `MAX_LEVEL4_MATCHES = 8` ;
+   le live tennis se regroupe dans un seul bucket ⇒ ~8 visibles sur ~30.
+2. **Toggle existant inopérant sur l'arbre** : le toggle Live/Avant-match n'écrivait
+   que `modes[sportId]` (lu par les grilles centrales), jamais appliqué à l'arbre.
+3. **Noms génériques** : `tennisToRaw` lisait `m.tournament` uniquement — le flux
+   live BSD porte `tournamentName` ⇒ tous les live sous « Circuit › Tournoi ».
+
+## Corrections
+
+- **Filtre 3 états** : nouveau store `treeStatus` (`all|live|prematch`, persisté)
+  + `applyStatusFilter()` dans sports-tree.ts (filtre matches, purge conteneurs
+  vides, recalcule badges). Toggle passé en 3 segments Tout/Live/Avant-match ;
+  écrit `treeStatus` ET `modes` (compat grilles centrales) hors état « Tout ».
+  i18n fr/en : clé `all`, aria mise à jour.
+- **Cap tennis relevé** : `pickLevel4(x, max)` paramétré — tennis 60/ligue
+  (foot inchangé à 8).
+- **Noms de tournois** : fallback `tournamentName` (live BSD) dans `tennisToRaw`.
+- **Tool backfill** : `--limit=0` signifie désormais illimité (bug : LIMIT 0
+  liait 0 ligne — cause du run VPS « ok=0 » immédiat).
+
+## Validation (sonde scripts/probe-sidebar-status.js)
+
+- Tout : badge « Tennis | 7 | 37 », **56 lignes** (avant : ~16) ; Live : 7 ;
+  Avant-match : 30 ; retour Tout restauré. Badges recalculés par vue.
+- Noms réels visibles (« US Open, Men », « US Open, Women »…), 0 erreur console.
+- TypeScript : 0 erreur src/.
+
+## Déploiement données
+
+- ETL 30 j relancé sur VPS (+3 293 → 26 490 rows) puis backfill pcts complet
+  lancé en nohup (26 339 cibles, récents d'abord) — progression loggée dans
+  /tmp/backfill-pcts.log ; les métriques points s'activent progressivement.
+
