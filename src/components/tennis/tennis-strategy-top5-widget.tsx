@@ -19,6 +19,7 @@ import {
   type Top5Surface,
 } from "@/lib/tennis-top5";
 import { useTennisTop5 } from "@/hooks/use-tennis-top5";
+import { Top5BacktestStrip } from "@/components/football/top5-backtest-strip";
 import { isInKickoffWindow, parisDateShort, parisKickoff, type KickoffWindow } from "@/lib/football-time";
 
 /** Filtre temporel des matchs listés (jour / 48 h / semaine). */
@@ -188,6 +189,9 @@ export function TennisStrategyTop5Widget() {
             ))}
           </SelectContent>
         </Select>
+
+        {/* Backtest : réussite / ROI de la métrique active sur l'historique des top 5 */}
+        <Top5BacktestStrip sport="tennis" strategyKey={metric} />
 
         {/* Surface + période côte à côte pour rester compact */}
         <div className="grid grid-cols-2 gap-1">
