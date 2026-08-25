@@ -10,7 +10,10 @@ import fs from "fs";
 import path from "path";
 import type { Top5BacktestEntry, Top5Sport } from "./types";
 
-const DIR = path.join(process.cwd(), "data", "top5-backtest");
+const DIR = process.env.TOP5_BACKTEST_DIR || path.join(process.cwd(), "data", "top5-backtest");
+// ⚠️ Prod VPS : le serveur standalone Next fait chdir(.next/standalone) → sans
+// TOP5_BACKTEST_DIR le store serait lu/écrit sous .next/standalone/data et
+// perdu à chaque build. L'écosystem.pm2 épingle la racine projet.
 const MAX_ENTRIES = 20_000;
 
 /* ------------------------------------------------------------------ */

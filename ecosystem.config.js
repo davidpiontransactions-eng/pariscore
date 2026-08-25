@@ -347,6 +347,7 @@ module.exports = {
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'production',
+        TOP5_BACKTEST_DIR: '/home/ubuntu/pariscore/data/top5-backtest',
       },
       error_file: 'logs/cron-top5-backtest.err.log',
       out_file: 'logs/cron-top5-backtest.out.log',
