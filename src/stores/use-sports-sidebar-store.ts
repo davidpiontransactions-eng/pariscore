@@ -30,6 +30,12 @@ interface SportsSidebarState {
   selectedLeagueId: string | null;
   selectedSportId: string | null;
   modes: Record<string, MatchViewMode>;
+  /**
+   * Filtre de statut de l'arbre sidebar : Tout / Live / Avant-match.
+   * Indépendant de `modes` (utilisé par les grilles centrales) — le toggle
+   * 3 états écrit les deux pour rester compatible.
+   */
+  treeStatus: "all" | "live" | "prematch";
   drawerOpen: boolean;
   /**
    * Sélection multi-matchs (clic sur un match dans la sidebar) : la grille
@@ -49,6 +55,7 @@ interface SportsSidebarState {
   /** Sync onglet central → store (pas d'effet de bord inverse). */
   syncSportFromTab: (sportId: string) => void;
   setMode: (sportId: string, mode: MatchViewMode) => void;
+  setTreeStatus: (status: "all" | "live" | "prematch") => void;
   setDrawerOpen: (open: boolean) => void;
   clearFilters: () => void;
   /** Ajoute/retire un match de la sélection (multi-sélection sidebar). */
@@ -60,6 +67,7 @@ interface SportsSidebarState {
 const DEFAULTS = {
   searchQuery: "",
   selectedTimeFilter: "all" as TimeFilterKey,
+  treeStatus: "all" as "all" | "live" | "prematch",
   selectedLeagueId: null as string | null,
   selectedSportId: null as string | null,
   drawerOpen: false,
@@ -133,6 +141,8 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
       setMode: (sportId, mode) =>
         set((s) => ({ modes: { ...s.modes, [sportId]: mode } })),
 
+      setTreeStatus: (treeStatus) => set({ treeStatus }),
+
       setDrawerOpen: (drawerOpen) => set({ drawerOpen }),
 
       clearFilters: () => set({ ...DEFAULTS }),
@@ -154,6 +164,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
         expandedSports: s.expandedSports,
         expandedCountries: s.expandedCountries,
         modes: s.modes,
+        treeStatus: s.treeStatus,
         selectedTimeFilter: s.selectedTimeFilter,
       }),
     },

@@ -19,6 +19,7 @@ import {
   applyTimeFilter,
   collectQuickLinks,
   DEFAULT_FAVORITE_LEAGUES,
+  applyStatusFilter,
   filterTreeByQuery,
   findLeaguePath,
   isDefaultFavoriteLeague,
@@ -84,8 +85,12 @@ function LiveLineToggle({ sportId }: { sportId: string }) {
   const t = useTranslations("sportsSidebar");
   const mode = useSportsSidebarStore((s) => s.modes[sportId] ?? "live");
   const setMode = useSportsSidebarStore((s) => s.setMode);
+  const treeStatus = useSportsSidebarStore((s) => s.treeStatus ?? "all");
+  const setTreeStatus = useSportsSidebarStore((s) => s.setTreeStatus);
 
-  const options: Array<{ value: MatchViewMode; label: string }> = [
+  type StatusOption = { value: "all" | "live" | "prematch"; label: string };
+  const options: StatusOption[] = [
+    { value: "all", label: t("all") },
     { value: "live", label: t("live") },
     { value: "prematch", label: t("prematch") },
   ];
@@ -94,18 +99,22 @@ function LiveLineToggle({ sportId }: { sportId: string }) {
     <div
       role="group"
       aria-label={t("modeAria")}
-      className="grid grid-cols-2 gap-1 rounded-lg bg-slate-900 p-1"
+      className="grid grid-cols-3 gap-1 rounded-lg bg-slate-900 p-1"
     >
       {options.map((opt) => {
-        const active = mode === opt.value;
+        const active = treeStatus === opt.value;
         return (
           <button
             key={opt.value}
             type="button"
             aria-pressed={active}
-            onClick={() => setMode(sportId, opt.value)}
+            onClick={() => {
+              setTreeStatus(opt.value);
+              // Compat grilles centrales : elles lisent `modes` (binaire).
+              if (opt.value !== "all") setMode(sportId, opt.value as MatchViewMode);
+            }}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors",
+              "flex items-center justify-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs font-semibold transition-colors",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               active ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
             )}
@@ -824,10 +833,14 @@ export function SportsSidebarContent({
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const clearMatchSelection = useSportsSidebarStore((s) => s.clearMatchSelection);
 
+  const treeStatus = useSportsSidebarStore((s) => s.treeStatus ?? "all");
   const tree = useMemo(() => {
     const base = treeData ?? [];
-    return filterTreeByQuery(applyTimeFilter(base, timeFilter), searchQuery);
-  }, [treeData, timeFilter, searchQuery]);
+    return filterTreeByQuery(
+      applyStatusFilter(applyTimeFilter(base, timeFilter), treeStatus),
+      searchQuery,
+    );
+  }, [treeData, timeFilter, searchQuery, treeStatus]);
 
   // Recherche active (>= 2 lettres, seuil de filterTreeByQuery) : les branches
   // matchées sont affichées dépliées pour rendre les résultats visibles (P0-9).

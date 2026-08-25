@@ -274,10 +274,14 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
   }
 
   const countries = Array.from(countryMap.values());
+  // Tennis : une ligue par tournoi mais le live se regroupe sous un seul
+  // bucket « Circuit » — cap relevé pour ne pas tronquer la liste (foot garde
+  // le cap standard de lisibilité).
+  const level4Cap = sportId === "tennis" ? 60 : MAX_LEVEL4_MATCHES;
   for (const country of countries) {
     country.leagues.sort((a, b) => b.matchCount - a.matchCount || a.name.localeCompare(b.name));
     for (const league of country.leagues) {
-      league.matches = pickLevel4(league.matches ?? []);
+      league.matches = pickLevel4(league.matches ?? [], level4Cap);
       // Edge moyen de la ligue (P0-2) : moyenne des edges 1X2 calculables.
       const edges = (league.matches as TreeMatchSummary[])
         .map((m) => m.edgePct)
@@ -305,7 +309,7 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
 }
 
 /** Niveau 4 : matchs live d'abord, puis les plus proches, N éléments max. */
-function pickLevel4(matches: TreeMatchSummary[]): TreeMatchSummary[] {
+function pickLevel4(matches: TreeMatchSummary[], max: number = MAX_LEVEL4_MATCHES): TreeMatchSummary[] {
   return [...matches]
     .sort((a, b) => {
       if (!!a.isLive !== !!b.isLive) return a.isLive ? -1 : 1;
@@ -313,7 +317,47 @@ function pickLevel4(matches: TreeMatchSummary[]): TreeMatchSummary[] {
       const tb = isValidDate(b.scheduledAt) ? new Date(b.scheduledAt).getTime() : Infinity;
       return ta - tb;
     })
-    .slice(0, MAX_LEVEL4_MATCHES);
+    .slice(0, max);
+}
+
+/** Filtre de statut de l'arbre sidebar : Tout / Live / Avant-match. */
+export type TreeStatusFilter = "all" | "live" | "prematch";
+
+/**
+ * Filtre l'arbre par statut (client, affichage seul) : ne garde que les
+ * matchs correspondants, purge pays/ligues devenus vides et recalcule les
+ * compteurs de badges pour refléter la vue filtrée.
+ */
+export function applyStatusFilter(
+  tree: SportNode[],
+  status: TreeStatusFilter,
+): SportNode[] {
+  if (status === "all") return tree;
+  const wantLive = status === "live";
+  return tree.map((sport) => {
+    let sportTotal = 0;
+    let sportLive = 0;
+    const countries = sport.countries
+      .map((country) => {
+        let countryTotal = 0;
+        let countryLive = 0;
+        const leagues = country.leagues
+          .map((league) => {
+            const matches = (league.matches ?? []).filter(
+              (m) => !!m.isLive === wantLive,
+            );
+            countryTotal += matches.length;
+            countryLive += matches.filter((m) => m.isLive).length;
+            return { ...league, matches, matchCount: matches.length };
+          })
+          .filter((lg) => lg.matchCount > 0);
+        sportTotal += countryTotal;
+        sportLive += countryLive;
+        return { ...country, leagues, matchCount: countryTotal };
+      })
+      .filter((c) => c.leagues.length > 0);
+    return { ...sport, countries, totalMatches: sportTotal, liveMatches: sportLive };
+  });
 }
 
 /** Nœud vide (sport indisponible : API en erreur / aucune donnée). */
@@ -393,7 +437,11 @@ export function tennisToRaw(matches: MinimalTennisMatch[] | undefined | null): R
           m.playerA?.name != null && m.playerA?.name !== "" &&
           m.playerB?.name != null && m.playerB?.name !== "")
     .map((m) => {
-      const tournament = m.tournament?.trim() || "Tournoi";
+      // Nom de tournoi réel : `tournament` (prematch) sinon `tournamentName`
+      // (flux live BSD) — sans quoi les matchs live tombent sous « Tournoi »
+      // générique et la sidebar masque les vrais tournois.
+      const tournament =
+        m.tournament?.trim() || (m as any).tournamentName?.trim() || "Tournoi";
       // Live BSD : live_stats/currentPoint présents uniquement sur les items
       // du flux /api/tennis/live (les prematch ne les portent pas).
       const isLive = !!(m as any).live_stats || !!(m as any).currentPoint;

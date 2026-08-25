@@ -70,8 +70,8 @@ async function main() {
     SELECT source_id FROM tennis_matches_internal
     WHERE source='bsd' AND w_1st_in_pct IS NULL
     ORDER BY match_date DESC
-    LIMIT ?
-  `).all(LIMIT);
+    ${LIMIT > 0 ? "LIMIT ?" : ""}
+  `).all(...(LIMIT > 0 ? [LIMIT] : []));
   console.log(`[detail-backfill] à traiter: ${rows.length} (limite ${LIMIT}, pause ${PAUSE}ms)`);
 
   const upd = db.prepare(`UPDATE tennis_matches_internal SET
