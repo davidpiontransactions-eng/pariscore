@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-08-24T05:12:19.923310Z",
+    "lastUpdated": "2026-08-25T05:05:47.005931Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,15 +13,6 @@
   },
   "home": [
     {
-      "teamName": "Dalian Yingbo",
-      "gp": 8,
-      "w": 5,
-      "d": 0,
-      "l": 3,
-      "gf": 14,
-      "ga": 13
-    },
-    {
       "teamName": "Beijing Guoan",
       "gp": 8,
       "w": 5,
@@ -29,15 +20,6 @@
       "l": 1,
       "gf": 18,
       "ga": 9
-    },
-    {
-      "teamName": "Shandong T.",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 21,
-      "ga": 13
     },
     {
       "teamName": "Qingdao West C.",
@@ -49,6 +31,15 @@
       "ga": 6
     },
     {
+      "teamName": "Shandong T.",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 21,
+      "ga": 13
+    },
+    {
       "teamName": "Yunnan Yukun",
       "gp": 8,
       "w": 5,
@@ -56,18 +47,18 @@
       "l": 2,
       "gf": 16,
       "ga": 12
+    },
+    {
+      "teamName": "Dalian Yingbo",
+      "gp": 8,
+      "w": 5,
+      "d": 0,
+      "l": 3,
+      "gf": 14,
+      "ga": 13
     }
   ],
   "away": [
-    {
-      "teamName": "Henan Sl",
-      "gp": 8,
-      "w": 3,
-      "d": 2,
-      "l": 3,
-      "gf": 13,
-      "ga": 17
-    },
     {
       "teamName": "Beijing Guoan",
       "gp": 8,
@@ -78,13 +69,13 @@
       "ga": 10
     },
     {
-      "teamName": "Shanghai Port",
+      "teamName": "Henan Sl",
       "gp": 8,
-      "w": 4,
+      "w": 3,
       "d": 2,
-      "l": 2,
-      "gf": 16,
-      "ga": 14
+      "l": 3,
+      "gf": 13,
+      "ga": 17
     },
     {
       "teamName": "Chengdu",
@@ -103,6 +94,15 @@
       "l": 1,
       "gf": 9,
       "ga": 9
+    },
+    {
+      "teamName": "Shanghai Port",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 16,
+      "ga": 14
     }
   ]
 }

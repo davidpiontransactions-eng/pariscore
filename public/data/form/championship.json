@@ -4,7 +4,7 @@
     "leagueId": "championship",
     "leagueName": "England2",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-08-24T05:11:11.995143Z",
+    "lastUpdated": "2026-08-25T05:04:38.515630Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 25,
     "window": 8,
@@ -12,42 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Ipswich Town",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 9,
-      "ga": 4
-    },
-    {
-      "teamName": "Swansea",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Norwich",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 7,
-      "ga": 5
-    },
-    {
-      "teamName": "Watford",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
-      "ga": 8
-    },
     {
       "teamName": "Stoke",
       "gp": 5,
@@ -58,84 +22,12 @@
       "ga": 9
     },
     {
-      "teamName": "Hull",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 9
-    },
-    {
-      "teamName": "Middlesbrough",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 4
-    },
-    {
-      "teamName": "Wrexham",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 9
-    },
-    {
-      "teamName": "Sheffield United",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 10
-    },
-    {
-      "teamName": "Southampton",
-      "gp": 5,
-      "w": 4,
-      "d": 2,
-      "l": 0,
-      "gf": 12,
-      "ga": 4
-    },
-    {
-      "teamName": "Preston",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Oxford Utd",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 7,
-      "ga": 5
-    },
-    {
-      "teamName": "Derby County",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 8,
-      "ga": 4
-    },
-    {
-      "teamName": "Qp Rangers",
+      "teamName": "Bristol City",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 8,
+      "gf": 5,
       "ga": 10
     },
     {
@@ -148,22 +40,103 @@
       "ga": 4
     },
     {
-      "teamName": "Millwall",
+      "teamName": "Portsmouth",
       "gp": 5,
-      "w": 3,
-      "d": 0,
+      "w": 1,
+      "d": 1,
       "l": 2,
+      "gf": 4,
+      "ga": 5
+    },
+    {
+      "teamName": "Preston",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 9
+    },
+    {
+      "teamName": "Hull",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Southampton",
+      "gp": 5,
+      "w": 4,
+      "d": 2,
+      "l": 0,
+      "gf": 12,
+      "ga": 4
+    },
+    {
+      "teamName": "Blackburn",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 4,
+      "ga": 3
+    },
+    {
+      "teamName": "Watford",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 4,
+      "ga": 8
+    },
+    {
+      "teamName": "Derby County",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 8,
+      "ga": 4
+    },
+    {
+      "teamName": "Ipswich Town",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 0,
       "gf": 9,
       "ga": 4
     },
     {
-      "teamName": "Charlton",
+      "teamName": "Sheffield Wed",
       "gp": 5,
       "w": 1,
-      "d": 0,
-      "l": 4,
+      "d": 2,
+      "l": 2,
       "gf": 4,
       "ga": 8
+    },
+    {
+      "teamName": "Norwich",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 7,
+      "ga": 5
+    },
+    {
+      "teamName": "Oxford Utd",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 7,
+      "ga": 5
     },
     {
       "teamName": "Bolton",
@@ -175,6 +148,15 @@
       "ga": 1
     },
     {
+      "teamName": "Coventry City",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 1,
+      "gf": 12,
+      "ga": 5
+    },
+    {
       "teamName": "Birmingham City",
       "gp": 5,
       "w": 2,
@@ -184,21 +166,21 @@
       "ga": 4
     },
     {
-      "teamName": "Portsmouth",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
-      "ga": 5
-    },
-    {
-      "teamName": "Bristol City",
+      "teamName": "Qp Rangers",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 5,
+      "gf": 8,
+      "ga": 10
+    },
+    {
+      "teamName": "Sheffield United",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
       "ga": 10
     },
     {
@@ -211,69 +193,60 @@
       "ga": 9
     },
     {
-      "teamName": "Coventry City",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 1,
-      "gf": 12,
-      "ga": 5
-    },
-    {
-      "teamName": "Blackburn",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 4,
-      "ga": 3
-    },
-    {
-      "teamName": "Sheffield Wed",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 8
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Ipswich Town",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 8,
-      "ga": 5
-    },
-    {
-      "teamName": "Norwich",
+      "teamName": "Millwall",
       "gp": 5,
       "w": 3,
       "d": 0,
       "l": 2,
-      "gf": 8,
+      "gf": 9,
       "ga": 4
+    },
+    {
+      "teamName": "Wrexham",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Middlesbrough",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 4
+    },
+    {
+      "teamName": "Charlton",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 4,
+      "ga": 8
     },
     {
       "teamName": "Swansea",
       "gp": 5,
       "w": 2,
       "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 8
-    },
+      "l": 1,
+      "gf": 9,
+      "ga": 6
+    }
+  ],
+  "away": [
     {
-      "teamName": "Watford",
+      "teamName": "Bristol City",
       "gp": 5,
       "w": 1,
-      "d": 1,
-      "l": 3,
+      "d": 2,
+      "l": 2,
       "gf": 5,
-      "ga": 12
+      "ga": 6
     },
     {
       "teamName": "Stoke",
@@ -285,39 +258,39 @@
       "ga": 9
     },
     {
+      "teamName": "West Bromwich Albion",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 5
+    },
+    {
+      "teamName": "Portsmouth",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Preston",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 9
+    },
+    {
       "teamName": "Hull",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 2,
       "gf": 5,
-      "ga": 8
-    },
-    {
-      "teamName": "Middlesbrough",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 10,
-      "ga": 7
-    },
-    {
-      "teamName": "Wolves",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 3,
-      "ga": 1
-    },
-    {
-      "teamName": "Wrexham",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
       "ga": 8
     },
     {
@@ -330,13 +303,13 @@
       "ga": 6
     },
     {
-      "teamName": "Preston",
-      "gp": 5,
+      "teamName": "Wolves",
+      "gp": 1,
       "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 9
+      "d": 0,
+      "l": 0,
+      "gf": 3,
+      "ga": 1
     },
     {
       "teamName": "Blackburn",
@@ -348,10 +321,73 @@
       "ga": 7
     },
     {
+      "teamName": "Watford",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 12
+    },
+    {
+      "teamName": "Derby County",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 6,
+      "ga": 10
+    },
+    {
+      "teamName": "Ipswich Town",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
+      "ga": 5
+    },
+    {
+      "teamName": "Sheffield Wed",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 2,
+      "ga": 10
+    },
+    {
+      "teamName": "Norwich",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 8,
+      "ga": 4
+    },
+    {
       "teamName": "Oxford Utd",
       "gp": 5,
       "w": 1,
       "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 6
+    },
+    {
+      "teamName": "Coventry City",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 2
+    },
+    {
+      "teamName": "Birmingham City",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
       "l": 2,
       "gf": 4,
       "ga": 6
@@ -366,12 +402,21 @@
       "ga": 8
     },
     {
-      "teamName": "Charlton",
+      "teamName": "Sheffield United",
       "gp": 5,
       "w": 2,
-      "d": 2,
-      "l": 0,
+      "d": 1,
+      "l": 1,
       "gf": 6,
+      "ga": 4
+    },
+    {
+      "teamName": "Leicester",
+      "gp": 5,
+      "w": 1,
+      "d": 3,
+      "l": 1,
+      "gf": 4,
       "ga": 5
     },
     {
@@ -384,85 +429,40 @@
       "ga": 3
     },
     {
-      "teamName": "West Bromwich Albion",
+      "teamName": "Middlesbrough",
       "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 5
+      "l": 1,
+      "gf": 10,
+      "ga": 7
     },
     {
-      "teamName": "Derby County",
-      "gp": 5,
-      "w": 1,
-      "d": 0,
-      "l": 4,
-      "gf": 6,
-      "ga": 10
-    },
-    {
-      "teamName": "Birmingham City",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
-      "ga": 6
-    },
-    {
-      "teamName": "Portsmouth",
+      "teamName": "Wrexham",
       "gp": 5,
       "w": 2,
       "d": 1,
       "l": 2,
-      "gf": 9,
-      "ga": 9
+      "gf": 6,
+      "ga": 8
     },
     {
-      "teamName": "Bristol City",
+      "teamName": "Charlton",
       "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 6
-    },
-    {
-      "teamName": "Leicester",
-      "gp": 5,
-      "w": 1,
-      "d": 3,
-      "l": 1,
-      "gf": 4,
+      "l": 0,
+      "gf": 6,
       "ga": 5
     },
     {
-      "teamName": "Coventry City",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 2
-    },
-    {
-      "teamName": "Sheffield United",
+      "teamName": "Swansea",
       "gp": 5,
       "w": 2,
       "d": 1,
-      "l": 1,
+      "l": 2,
       "gf": 6,
-      "ga": 4
-    },
-    {
-      "teamName": "Sheffield Wed",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 10
+      "ga": 8
     }
   ]
 }

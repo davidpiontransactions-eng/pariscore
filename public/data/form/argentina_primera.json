@@ -4,7 +4,7 @@
     "leagueId": "argentina_primera",
     "leagueName": "Argentina",
     "season": "2026/27",
-    "lastUpdated": "2026-08-24T05:12:35.426010Z",
+    "lastUpdated": "2026-08-25T05:06:02.193151Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,22 +13,22 @@
   },
   "home": [
     {
-      "teamName": "Velez Sarsfield",
+      "teamName": "Newells",
+      "gp": 4,
+      "w": 3,
+      "d": 1,
+      "l": 0,
+      "gf": 7,
+      "ga": 3
+    },
+    {
+      "teamName": "Tigre",
       "gp": 3,
       "w": 2,
       "d": 1,
       "l": 0,
       "gf": 3,
       "ga": 1
-    },
-    {
-      "teamName": "Sarmiento",
-      "gp": 4,
-      "w": 3,
-      "d": 0,
-      "l": 1,
-      "gf": 8,
-      "ga": 4
     },
     {
       "teamName": "Defensa Y J.",
@@ -40,13 +40,13 @@
       "ga": 3
     },
     {
-      "teamName": "Newells",
+      "teamName": "Sarmiento",
       "gp": 4,
       "w": 3,
-      "d": 1,
-      "l": 0,
-      "gf": 7,
-      "ga": 3
+      "d": 0,
+      "l": 1,
+      "gf": 8,
+      "ga": 4
     },
     {
       "teamName": "G. Mendoza",
@@ -60,13 +60,13 @@
   ],
   "away": [
     {
-      "teamName": "A. Tucuman",
-      "gp": 3,
+      "teamName": "Argentinos Jrs",
+      "gp": 4,
       "w": 2,
       "d": 1,
-      "l": 0,
-      "gf": 3,
-      "ga": 0
+      "l": 1,
+      "gf": 5,
+      "ga": 5
     },
     {
       "teamName": "Instituto",
@@ -78,6 +78,15 @@
       "ga": 1
     },
     {
+      "teamName": "A. Tucuman",
+      "gp": 3,
+      "w": 2,
+      "d": 1,
+      "l": 0,
+      "gf": 3,
+      "ga": 0
+    },
+    {
       "teamName": "Independiente",
       "gp": 3,
       "w": 2,
@@ -87,22 +96,13 @@
       "ga": 2
     },
     {
-      "teamName": "Platense",
-      "gp": 3,
-      "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 4,
-      "ga": 3
-    },
-    {
       "teamName": "Rosario Central",
-      "gp": 3,
+      "gp": 4,
       "w": 2,
-      "d": 0,
+      "d": 1,
       "l": 1,
-      "gf": 3,
-      "ga": 2
+      "gf": 5,
+      "ga": 4
     }
   ]
 }

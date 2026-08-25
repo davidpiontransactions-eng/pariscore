@@ -4,7 +4,7 @@
     "leagueId": "liga_1_romania",
     "leagueName": "Romania",
     "season": "2026/27",
-    "lastUpdated": "2026-08-24T05:12:10.107663Z",
+    "lastUpdated": "2026-08-25T05:05:36.534486Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,22 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Cornivul H.",
-      "gp": 3,
+      "teamName": "Otelul",
+      "gp": 4,
       "w": 2,
-      "d": 1,
+      "d": 2,
       "l": 0,
-      "gf": 7,
-      "ga": 1
-    },
-    {
-      "teamName": "Arges",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 3,
-      "ga": 1
+      "gf": 5,
+      "ga": 3
     },
     {
       "teamName": "U. Cluj",
@@ -40,6 +31,15 @@
       "ga": 3
     },
     {
+      "teamName": "Cornivul H.",
+      "gp": 3,
+      "w": 2,
+      "d": 1,
+      "l": 0,
+      "gf": 7,
+      "ga": 1
+    },
+    {
       "teamName": "Din. Bucharest",
       "gp": 3,
       "w": 3,
@@ -49,24 +49,24 @@
       "ga": 2
     },
     {
-      "teamName": "Fcsb",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 7,
-      "ga": 4
+      "teamName": "Univ. Craiova",
+      "gp": 4,
+      "w": 3,
+      "d": 0,
+      "l": 1,
+      "gf": 11,
+      "ga": 2
     }
   ],
   "away": [
     {
-      "teamName": "Petrolul",
+      "teamName": "Din. Bucharest",
       "gp": 3,
       "w": 1,
-      "d": 0,
-      "l": 2,
+      "d": 1,
+      "l": 1,
       "gf": 2,
-      "ga": 6
+      "ga": 2
     },
     {
       "teamName": "Rapid Bucharest",
@@ -79,30 +79,30 @@
     },
     {
       "teamName": "Arges",
-      "gp": 2,
+      "gp": 3,
       "w": 1,
       "d": 0,
-      "l": 1,
+      "l": 2,
       "gf": 1,
-      "ga": 2
+      "ga": 3
     },
     {
-      "teamName": "Din. Bucharest",
+      "teamName": "Farul Constanta",
+      "gp": 4,
+      "w": 0,
+      "d": 3,
+      "l": 1,
+      "gf": 5,
+      "ga": 6
+    },
+    {
+      "teamName": "Fcsb",
       "gp": 3,
       "w": 1,
       "d": 1,
       "l": 1,
       "gf": 2,
-      "ga": 2
-    },
-    {
-      "teamName": "Fcsb",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 2,
-      "ga": 0
+      "ga": 1
     }
   ]
 }
