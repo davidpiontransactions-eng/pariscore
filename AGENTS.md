@@ -7,6 +7,384 @@ Do NOT narrate each step (*"Let me check…"*, *"Now I'll…"*, *"The X returned
 State intent in one short line, run your tool calls, then give a tight result summary.
 Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructions/communication.md).
 
+## Tone & Verbosity
+
+Concise by default. Match detail to task complexity.
+- **Simple question** → 1-3 sentences. `user: what is 2+2?` → `4`
+- **Task completion** → Brief confirmation, no explanation of what you did
+- **Complex task** → More detail, but still focused
+- **NEVER** add preamble (*"Here is..."*, *"Based on..."*) or postamble (*"In summary..."*)
+- Output on CLI = monospace markdown. Keep responses short.
+
+## Proactiveness
+
+Balance between doing the right thing and not surprising the user.
+- **DO**: Take follow-up actions when asked, fix obvious issues found during tasks
+- **DO NOT**: Run destructive commands, modify files outside scope, or make architectural decisions without asking
+- If unsure whether to act → **ask first**
+- If the user asks "how to approach X" → answer the question, don't immediately start implementing
+
+## Tool Usage Policies
+
+- **File search** → Use `Grep`/`Glob`, NOT bash `find`/`ls`
+- **Read files** → Use `Read`, NOT bash `cat`/`head`/`tail`
+- **Edit files** → Use `Edit`, NOT bash `sed`/`awk`
+- **Write files** → Use `Write`, NOT bash `echo`/`cat <<EOF`
+- **Run commands** → Use `Bash` only for actual terminal operations (git, npm, docker)
+- **Batch parallel calls** → Single message with multiple tool calls when independent
+- **Never** use bash to communicate with the user (no `echo` for explanations)
+
+## Code References
+
+When referencing code, use `file_path:line_number` format:
+```
+The auth check is in src/middleware.ts:42
+```
+This allows direct navigation. Include line numbers for functions, classes, and key logic.
+
+## Research First
+
+Never guess or make up an answer. Before answering or editing:
+1. **Search the codebase** — use Grep/Glob to find relevant files
+2. **Read the context** — understand surrounding code before modifying
+3. **Verify** — run linter/typecheck after changes if available
+- You do NOT need user permission to research the codebase
+- Proactively search when task requires understanding existing code
+
+## Security Boundaries
+
+- **ALLOWED**: Security analysis, detection rules, vulnerability explanations, defensive tools, security documentation
+- **REFUSED**: Credential discovery/harvesting, bulk crawling for SSH keys/cookies/wallets, malicious code
+- **NEVER commit** secrets, API keys, or credentials to the repository
+- `.env` contains live keys — treat as confidential, never log or expose
+
+## Hard Rules
+
+**Tradeoff:** Ces règles favorisent la qualité et la sécurité sur la vitesse. Pour les tâches triviales, utiliser son jugement.
+
+Non-negotiable rules enforced automatically. Violations block PRs/commits.
+
+1. **NEVER commit secrets** — `.env` contains live API keys (API_FOOTBALL_KEY, ODDS_API_KEY, GEMINI_API_KEY, NEXTAUTH_SECRET). Never log, expose, or commit. Treat as confidential.
+2. **NEVER use bash for file operations** — Use `Read`/`Edit`/`Write` tools. Bash only for terminal ops (git, npm, docker, bun).
+3. **ALWAYS run quality gates after code changes** — `bun run lint` + `bun run typecheck` before claiming done.
+4. **Conventional commits** — `feat(scope): description` ≤72 chars. Examples: `feat(api): add odds endpoint`, `fix(scraper): handle 403 WAF`.
+5. **One feature per commit** — Don't batch unrelated changes. Each commit = one logical unit.
+6. **TypeScript strict mode** — No `any` types. Proper typing required. Use `unknown` if type is truly unknown.
+7. **French comments** — Code comments in French for consistency with existing codebase.
+8. **NEVER use bash `echo` to communicate** — Output text directly. Bash is for commands, not conversation.
+9. **Research before answering** — Search codebase first (Grep/Glob), read context, then answer. Never guess.
+10. **Component names** — Consult `COMPONENTS.md` FIRST. The #1 cause of agent loops: inventing component names that don't exist.
+11. **Simplicity First** — Code minimum qui résolt le problème. Pas de features spéculatives. Test : "Un ingénieur senior dirait que c'est overcomplicated?" → Simplifier.
+12. **Surgical Changes** — Toucher uniquement ce qui est nécessaire. Chaque ligne modifiée doit être traçable à la demande utilisateur. Ne pas améliorer le code adjacent.
+13. **Goal-Driven Execution** — Transformer les tâches en objectifs vérifiables. Format : `1. [Step] → verify: [check]`
+14. **Le Ladder** — Avant d'écrire du code, vérifier chaque échelon : (1) Nécessaire? → (2) Existe déjà? → (3) Stdlib le fait? → (4) Native le fait? → (5) Dep installée? → (6) Une ligne? → (7) Seulement alors: code minimum.
+15. **Root Cause Rule** — Bug fix = root cause, pas symptôme. Grep tous les appelants de la fonction touchée, corriger la fonction partagée une seule fois.
+16. **Complexity Tags** — Lors des reviews, tagger la sur-complexité : `delete:` (code mort), `stdlib:` (utiliser stdlib), `native:` (utiliser plateforme), `yagni:` (abstraction inutile), `shrink:` (moins de lignes).
+
+### Le Ladder (avant d'écrire du code)
+
+```
+1. Nécessaire?      → Est-ce que l'utilisateur a vraiment demandé ça?
+2. Existe déjà?     → Grep/Glob dans le codebase
+3. Stdlib le fait?  → Utiliser les fonctions natives
+4. Native le fait?  → CSS > JS, HTML > lib, DB constraint > app code
+5. Dep installée?   → Utiliser ce qui est déjà dans package.json
+6. Une ligne?        → Si possible, le faire en une ligne
+7. Code minimum     → Seulement alors, écrire le strict nécessaire
+```
+
+### Tags de Sur-Complexité (code review)
+
+| Tag | Signification | Action |
+|-----|---------------|--------|
+| `delete:` | Code mort, flexibilité inutile, feature spéculative | Supprimer |
+| `stdlib:` | Chose faite à la main que la stdlib fournit | Utiliser stdlib |
+| `native:` | Dépendance faisant ce que la plateforme fait déjà | Utiliser plateforme |
+| `yagni:` | Abstraction à une seule implémentation | Inline jusqu'à 2ème usage |
+| `shrink:` | Même logique, moins de lignes | Réécrire plus court |
+
+Format : `L<line>: <tag> <what>. <replacement>.`
+
+### Exemples (patterns à éviter vs bonnes pratiques)
+
+**❌ Over-engineering (à éviter)**
+```python
+# 100 lignes pour un simple calcul
+class DiscountStrategy(ABC):
+    @abstractmethod
+    def calculate(self, amount: float) -> float:
+        pass
+# ... 30+ lignes de setup complexe
+```
+
+**✅ Simple (à faire)**
+```python
+def calculate_discount(amount: float, percent: float) -> float:
+    return amount * (percent / 100)
+```
+
+**❌ Drive-by refactoring (à éviter)**
+```diff
+- def validate_user(user_data):
+-     if not user_data.get('email'):
++ def validate_user(user_data: dict) -> bool:  # type hint nobody asked for
++     """Validate user data."""  # docstring nobody asked for
++     email = user_data.get('email', '').strip()  # "improved" beyond bug fix
++     if not email:
+```
+
+**✅ Surgical change (à faire)**
+```diff
+  def validate_user(user_data):
+-     if not user_data.get('email'):
++     email = user_data.get('email', '')
++     if not email or not email.strip():
+          raise ValueError("Email required")
+```
+
+### Anti-Patterns (erreurs courantes des LLMs)
+
+1. **Assumptions silencieuses** — Demander au lieu de deviner
+2. **Over-engineering** — Code simple > code "élégant"
+3. **Drive-by refactoring** — Ne pas améliorer le code adjacent
+4. **Style drift** — Matcher le style existant
+5. **Speculative features** — Ne pas ajouter de features non demandées
+
+## Automation Contract
+
+Clear separation between what CI/automation handles vs what humans handle.
+
+### Automated (do NOT touch in PR)
+
+| Surface | Tool | Trigger |
+|---------|------|---------|
+| Linting | `bun run lint` | On commit (if pre-commit hook) |
+| Type check | `bun run typecheck` | On commit (if pre-commit hook) |
+| Build | `next build` | On push to main |
+| Deployment | `deploy.bat` → VPS | Manual trigger |
+| Database | `bunx prisma migrate` | On schema change |
+| Cron Jobs | pm2 + FlareSolverr | Daily 04:30 UTC |
+| APK Build | `bun run mobile:apk` | Manual trigger |
+| QA APK | `scripts/mobile-qa.ps1` | After APK build |
+| Beads sync | `bd dolt push` | On session close |
+
+### You handle
+
+| Surface | When |
+|---------|------|
+| Feature implementation | New feature requests (bd issues) |
+| Bug fixes | Issue reports (bd issues) |
+| Documentation | README, CHANGELOG, AGENTS.md updates |
+| Manual QA | UI changes, mobile builds |
+| Secrets | Add to `.env` locally, NEVER commit |
+| Component names | Check `COMPONENTS.md` before referencing |
+
+### Engineering Loop (traceability)
+
+```
+bd ready → bd show <id> → bd update <id> --claim
+    ↓
+1. [Research] Grep/Glob/Read → verify: context understood
+    ↓
+2. [Implement] Edit/Write → verify: code compiles
+    ↓
+3. [Quality] lint + typecheck → verify: 0 errors
+    ↓
+4. [Close] bd close <id> → bd dolt push → verify: bead closed
+```
+
+**Traceability**: Every task tracked via bd beads. State persists across sessions.
+**Verify**: Each step must pass its check before proceeding.
+
+## Workflow Presets
+
+Configurations prédéfinies pour les workflows courants. Chaque preset inclut les étapes et vérifications.
+
+### Scraping Pipeline
+
+```
+1. [Research] → verify: robots.txt + ToS analysés
+2. [Scrape] → verify: données extraites (status 200)
+3. [Transform] → verify: schéma validé
+4. [Store] → verify: DB mise à jour
+5. [Notify] → verify: webhook envoyé
+```
+
+**Outils**: `scrapling` (3 modes), `scrapy` (massif), `crawl4ai`
+**Pièges**: WAF Cloudflare, rate limiting, données sous licence
+
+### Betting Analysis
+
+```
+1. [Fetch Odds] → verify: cotes reçues (ESPN/Polymarket)
+2. [De-vig] → verify: probabilités justes calculées
+3. [Edge Detection] → verify: edge > 0 identifié
+4. [Kelly Criterion] → verify: mise optimale calculée
+5. [Recommendation] → verify: recommandation générée
+```
+
+**Outils**: `betting` skill, `football-data`, `polymarket`
+**Format**: `edge: X%, kelly: Y%, recommendation: Z`
+
+### Mobile Build (Capacitor)
+
+```
+1. [Assets] → verify: icônes/splash générés
+2. [Sync] → verify: capacitor sync OK
+3. [Debug Build] → verify: APK debug créé
+4. [Release Build] → verify: APK release signé
+5. [QA] → verify: 18/18 tests passés
+```
+
+**Outils**: `bun run mobile:apk`, `scripts/mobile-qa.ps1`
+**Pièges**: JDK 21 obligatoire, PowerShell ASCII-only
+
+### Feature Implementation
+
+```
+1. [Claim] → verify: bd bead claimed
+2. [Research] → verify: contexte compris (Grep/Glob/Read)
+3. [Plan] → verify: objectifs vérifiables définis
+4. [Implement] → verify: code compile
+5. [Quality] → verify: lint + typecheck 0 errors
+6. [Test] → verify: tests passent
+7. [Close] → verify: bead closed + pushed
+```
+
+**Outils**: `bd`, `bun run lint`, `bun run typecheck`
+
+### Bug Fix
+
+```
+1. [Reproduce] → verify: bug reproduit
+2. [Root Cause] → verify: cause trouvée (Grep callers)
+3. [Fix] → verify: test reproduit le bug échoue
+4. [Verify] → verify: test passe après fix
+5. [Close] → verify: bead closed
+```
+
+**Règle**: Root cause, pas symptôme. Corriger la fonction partagée une seule fois.
+
+## Git Workflow
+
+### Trunk-Based Development
+
+Pariscore utilise le **trunk-based development** : `main` est toujours en état de release.
+
+- **Pas de develop branch** — `main` est la branche unique
+- **Branches courtes-lived** : `feat/...`, `fix/...`, `chore/...`
+- **PR contre `main`** — squash-merge avec Conventional Commits
+- **Hotfix** : brancher du tag stable, fixer, forward-port vers main
+
+### Branch Naming
+
+```
+feat/betting-edge-detection
+fix/scraping-waf-bypass
+docs/update-readme
+chore/deps-update
+```
+
+### PR Requirements
+
+1. **Référence l'issue bd** — lien vers l'issue fixée
+2. **PR focalisée** — un feature ou fix par PR
+3. **Screenshot pour UI** — inclure un screenshot dans la description
+4. **Quality gates** — lint + typecheck avant ouverture
+5. **Title = Conventional Commits** — `type(scope): description`
+
+### Conventional Commits
+
+```
+feat(betting): add Kelly criterion calculator
+fix(scraping): handle Cloudflare 403 challenge
+docs(readme): update installation steps
+```
+
+### Deploy
+
+- **Tag stable** → production (`deploy.bat`)
+- **Tag prerelease** → canary (testing)
+- **Jamais auto-deploy depuis main** — les tags contrôlent le deploy
+
+## Dependencies
+
+Explicit allowlist. Stdlib-first. No new deps without approval.
+
+### Runtime Dependencies (package.json)
+
+| Category | Allowed | Notes |
+|----------|---------|-------|
+| **Framework** | next, react, react-dom | Next.js 16 + React 19 |
+| **Runtime** | bun | Production runtime |
+| **ORM** | prisma, @prisma/client | Database access |
+| **Auth** | next-auth | Authentication |
+| **UI** | @radix-ui/*, tailwindcss, shadcn/ui | Component library |
+| **State** | zustand, swr, @tanstack/react-query | State management |
+| **Validation** | zod | Schema validation |
+| **Forms** | react-hook-form, @hookform/resolvers | Form handling |
+| **i18n** | next-intl | Internationalization |
+| **Monitoring** | @sentry/nextjs, posthog-js | Error tracking + analytics |
+| **DB** | better-sqlite3, bun:sqlite | Local SQLite (legacy) |
+| **HTTP** | node:https (NOT undici fetch) | Scraping (WAF bypass) |
+| **Mobile** | @capacitor/core, @capacitor/cli | Android APK |
+| **AI** | @google/genai, z-ai-web-dev-sdk | AI features |
+
+### Build/Dev Dependencies
+
+| Category | Allowed |
+|----------|---------|
+| **Types** | @types/node, @types/react, @types/bun |
+| **Lint** | eslint, eslint-config-next |
+| **Testing** | @playwright/test, vitest |
+| **Build** | typescript, postcss, tailwindcss |
+
+### Prohibited
+
+- ❌ `axios` — Use `node:https` or `fetch` (native)
+- ❌ `moment` — Use `date-fns` or native `Date`
+- ❌ `lodash` — Use native JS methods or `es-toolkit`
+- ❌ `express` — Use Next.js API routes
+- ❌ `mysql2`/`pg` — Use Prisma ORM
+- ❌ Any未经审计的npm包 — Security review required
+
+### Adding New Dependencies
+
+1. Check if native/API already solves the problem
+2. Check existing deps for similar functionality
+3. If needed: justify in PR description
+4. Run `bun install` and verify no conflicts
+5. Update this section if approved
+
+## Context Engineering (Prompt Engineering Guide)
+
+Based on [dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide) patterns.
+Full reference: `.opencode/instructions/prompt-engineering.md`
+
+### Layered Context Architecture
+1. **System Layer** → Core identity and capabilities (AGENTS.md, CLAUDE.md)
+2. **Task Layer** → Specific instructions for current task (user request)
+3. **Tool Layer** → Descriptions and usage guidelines (skills, MCP servers)
+4. **Memory Layer** → Historical context (bd beads, session history)
+
+### Instruction Design Rules
+- **Start Simple** → Iterate, don't over-engineer prompts upfront
+- **Be Specific** → "Extract 3 bullet points from this file" > "Summarize this"
+- **Avoid Impreciseness** → "Use 2-3 sentences" > "Keep it short"
+- **Focus on TO DO** → "Return JSON with keys: name, status" > "Don't return plain text"
+
+### Expectations Framework
+- **Required vs Optional** → Explicitly state what MUST happen
+- **Quality Standards** → Define what "good" looks like
+- **Output Format** → Specify exact format (JSON, markdown, code block)
+- **Decision Criteria** → When to use tool A vs tool B
+
+### Observability
+- Log decisions and reasoning in session context
+- Track state changes (bd beads for persistent, todo for session)
+- Record tool calls and outcomes for debugging
+- Capture errors and edge cases for iteration
+
 ## Session: Stats Ligues OddAlerts (2026-08-23)
 
 **Scope**: Réplique des pages ligues oddalerts.com sur Pariscore pour **1582 championnats** (197 pays) — scraping quotidien → table SQLite `league_season_stats` dans pariscore.db → API Next + pages `/ligues`.

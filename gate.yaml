@@ -1,14 +1,102 @@
+# gate.yaml — Pariscore Gate System
+# Machine-readable path denylist + auto-merge allowlist
+# Used by verification scripts and CI/CD gates
 version: 1
+
+# Paths that MUST NEVER be auto-modified by agents
+# Any change to these paths requires explicit human review
 denylist:
-  - "src/auth/**"
-  - "**/*.env"
-  - "**/.env*"
+  # Secrets & credentials
+  - ".env"
+  - ".env.*"
+  - "**/secrets/**"
+  - "**/credentials/**"
+  - "**/*_key*"
+  - "**/*_secret*"
+  - "**/*_token*"
+
+  # Database files
+  - "pariscore.db"
+  - "pariscore.db-journal"
+  - "prisma/dev.db"
+  - "prisma/dev.db-journal"
+
+  # Deployment & infrastructure
+  - "render.yaml"
+  - "deploy.bat"
+  - "scripts/deploy.bat"
+  - "scripts/update_vps.sh"
+
+  # Android signing
+  - "android/keystore.properties"
+  - "**/*.keystore"
+  - "**/*.jks"
+
+  # Node modules & build output (should not be committed)
+  - "node_modules/**"
+  - ".next/**"
+  - "android/**/.gradle/**"
+
+  # Legacy monolith (changes here affect production)
   - "server.js"
   - "pariscore.html"
-  - "prisma/**"
-  - "**/*.db"
+  - "admin.html"
+
+  # Config files that affect all agents
+  - "AGENTS.md"
+  - ".opencode/opencode.json"
+  - ".mcp.json"
+  - "package.json"
+  - "tsconfig.json"
+  - "next.config.js"
+
+# Maximum files per agent change (prevents sprawling edits)
+maxFiles: 15
+
+# Paths that CAN be auto-merged (low-risk, documentation)
 autoMergeAllowlist:
+  # Documentation
   - "docs/**"
-  - "*.md"
+  - "**/*.md"
+  - "CHANGELOG.md"
+
+  # Tests
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
+  - "**/*.test.tsx"
+
+  # Skill references (non-breaking additions)
+  - ".opencode/skills/**/references/**"
+  - ".agents/tools/**/references/**"
+
+  # Design collection (refreshable)
+  - ".agents/design-md/**"
+
+  # Analysis reports
   - ".context/**"
-  - "tests/**"
+
+  # Components documentation
+  - "COMPONENTS.md"
+
+# Human gate triggers (paths that ALWAYS require review)
+humanGateTriggers:
+  # Auth & security
+  - "src/**/auth/**"
+  - "src/**/middleware*"
+  - "**/security*"
+
+  # Payment/betting logic
+  - "src/**/betting/**"
+  - "src/**/odds/**"
+  - "src/**/kelly*"
+
+  # Database schema
+  - "prisma/schema.prisma"
+  - "prisma/migrations/**"
+
+  # API routes (affect production)
+  - "src/app/api/**"
+
+  # Mobile build config
+  - "capacitor.config.ts"
+  - "android/app/build.gradle"

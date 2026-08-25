@@ -46,6 +46,15 @@ recherche sécurité, CTF, sources où tu as une autorisation explicite.
 (Cloudflare/Datadome) pour refuser l'extraction, pour un usage commercial, sans autorisation.
 Demande confirmation explicite à l'utilisateur + nature de l'autorisation avant d'agir.
 
+## When not to use
+
+- **HTML statique simple** — Utiliser `fetch()` ou `curl` directement
+- **API endpoint connu** — Utiliser le skill sportif ou MCP correspondant
+- **Site sans WAF** — `Fetcher` suffit, pas besoin de StealthyFetcher
+- **Données sous licence** — Utiliser l'API officielle (Sportradar, ATP/WTA)
+- **Scraping massif** — Utiliser `scrapy` (framework dédié)
+- **Site tiers sans autorisation** — REFUSÉ par défaut (voir garde-fous)
+
 ## Les 3 fetchers (à choisir selon la résistance de la cible)
 
 | Mode | Classe | Tech | Quand l'utiliser | Latence |

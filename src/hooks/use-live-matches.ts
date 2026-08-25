@@ -107,16 +107,18 @@ export function useLiveMatches(): UseLiveMatchesResult {
   // Détection de la disponibilité du SSE (une seule fois, au mount).
   // On utilise un state séparé pour éviter de conditionner le rendu pendant
   // l'initialisation (évite un flash de polling quand le SSE est dispo).
+  // IMPORTANT : on attend d'avoir des DONNÉES (liveMatchList non vide) avant de
+  // basculer sur SSE, sinon le polling s'arrête avant le 1er snapshot (~5-30s).
   const [sseActive, setSseActive] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // SSE dispo ? On l'active dès que la 1ère maj arrive (status connected).
-    // Tant qu'aucune maj, on laisse le polling tourner pour ne pas rester à vide.
-    if (stream.connectionStatus === "connected") {
+    // SSE dispo ET a reçu des données ? On l'active.
+    // `stream.liveMatchList` est peuplé dès le 1er snapshot reçu.
+    if (stream.connectionStatus === "connected" && stream.liveMatchList.length > 0) {
       Promise.resolve().then(() => setSseActive(true));
     }
-  }, [stream.connectionStatus]);
+  }, [stream.connectionStatus, stream.liveMatchList.length]);
 
   // C1 fix : reset sseActive on disconnect pour débloquer le polling fallback.
   useEffect(() => {

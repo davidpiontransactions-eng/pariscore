@@ -1,65 +1,59 @@
-# Loop Run Log — PariScore
+# Loop Run Log — Pariscore
 
-> Journal d'exécution des boucles automatiques. Une entrée datée par run.
-> Règle : 1 ligne (outcome) + faits clés. Voir `.context/loop-engineering-procedure.md`.
+> Historique structuré JSON des runs d'agents et workflows.
+> Append one entry per run. Prune entries older than 30 days.
 
-| Date | Heure | Loop | Outcome | Liens / Fails |
-|------|-------|------|---------|---------------|### [04/08/2026 14:27:02,64] triage start 
-### [05/08/2026] QA visuelle Tennis (Phase 2 pays/drapeau/rang)
-| 05/08/2026 | matin | qa-tennis | PASS — 0 erreur console, 53 rangs+drapeaux rendus, prematch 200. Fix: remotePatterns +dicebear/tennis-warehouse, DocPiP SSR-safe. Reviewer APPROVE, verifier APPROVE. | R1: SVG DiceBear unoptimized; R2: stale-closure auto-open widget. Harness: `scripts\qa-tennis-run.bat`
-### [05/08/2026] R9 — latence stats live tennis (sans-date) | R9: client SSE partagé, identity-stable hook, fallback demo 3 pushes/6s, cache useMomentumDR. Validé: typecheck + eslint. Issue 10kj couverte, UAT restante. | Détail: `.context/session-tennis-live-latency.md`
-| 05/08/2026 | apr | uat-sse-tennis | PASS — `/api/tennis/live-stream` HTTP 200, 2 snapshots en 12s, `live_stats` (10 champs) présents sur 17 matchs Toronto/Montreal; `/api/tennis/live` OK. **Issue 10kj CLOSED.** | Preuves: `.context/uat-sse.txt`, `.context/uat-rest.txt`, dev log `.context/dev-server-uat.log`
-| 05/08/2026 | apr | v6ka-builder | PASS — builder identity-stable partagé (SSE + polling), types dans la lib, corrections review appliquées. typecheck ✅ eslint ✅ reviewer APPROVE ×2. **Issue v6ka CLOSED.** | `src/lib/live-state-builder.ts` (nouveau), hooks refactorés; TODO R9 résolu
-| 05/08/2026 | soir | kelly-value-bets | PASS — calcul + affichage % mise Kelly (fractional) dans Top Value Bets : f*=(p·b−q)/b, cap 0.25, tick si f*>0 (réf. `engine.py`), badge « Kelly X% » / « ≥25% » par opportunité. typecheck ✅, eslint ✅. Logique extraite dans `src/lib/kelly.ts` + test unitaire 5/5. Issue ParisScorebis-m13e ouverte. | `src/components/dashboard/top-value-bets.tsx`, `src/lib/kelly.ts`, `src/lib/kelly.test.ts`
-# Loop State — PariScore
+## Format
 
-Last run: never
+```json
+{
+  "run_id": "2026-08-25T10:00:00Z",
+  "pattern": "workflow-name",
+  "agent": "opencode|cline|zcode",
+  "duration_s": 120,
+  "items_found": 582,
+  "actions_taken": 1,
+  "escalations": 0,
+  "tokens_estimate": 0,
+  "mcp_calls": 0,
+  "files_changed": 0,
+  "outcome": "success | partial | failed | no-op",
+  "error": null
+}
+```
 
-## High Priority (loop is acting or waiting on human)
+## Fields
 
-## Watch List
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | ISO 8601 | Timestamp unique du run |
+| `pattern` | string | Nom du workflow/pattern |
+| `agent` | string | Agent utilisé (opencode/cline/zcode) |
+| `duration_s` | int | Durée en secondes |
+| `items_found` | int | Éléments découverts |
+| `actions_taken` | int | Actions effectuées |
+| `escalations` | int | Escalations vers human |
+| `tokens_estimate` | int | Tokens estimés consommés |
+| `mcp_calls` | int | Appels MCP effectués |
+| `files_changed` | int | Fichiers modifiés |
+| `outcome` | string | Résultat final |
+| `error` | string|null | Message d'erreur si échec |
 
-## Recent Noise (ignored this run)
+## Patterns Known
 
----
-Run log: —
---- bd ready --- 
-○ ParisScorebis-ufh6 ● P1 Mobile responsive adaptation — Tennis Scope
-○ ParisScorebis-k684 ● P1 C5 teaser value bets freemium (onglet vide non-Pro = 0 accroche conversion)
-○ ParisScorebis-10kj ● P1 C3 SSE push liste live tennis (polling 5min trop lent vs WS <5s dispo, trader perd momentum)
-○ ParisScorebis-mxkl ● P2 P3-G (3.16) : Go/No-Go Phase 3 - decision Chef de projet
-○ ParisScorebis-dutv ● P2 DESIGN: 49 couleurs hardcodées hors charte (#fbbf24x29, #0077ffx19) -> variabiliser
-○ ParisScorebis-6glh ● P2 T2 curseur fraction Kelly réglable (cap 0.25 bridant pro)
-○ ParisScorebis-44o9 ● P2 T1 badges âge cote (rouge si >2min live) — confiance trader
-○ ParisScorebis-tq1l ● P2 [eng-review] C: Post-implementation — logs, vérif, cleanup, PATCH_LOG
-○ ParisScorebis-bwnk ● P2 Local WOM provider — scheduling + coverage (local-only, not in repo)
-○ ParisScorebis-uvy6 ● P2 Pro rework tennis top10 match detail modal — consolidated API + CSS-3D/Chart.js viz, zero emoji
-○ ParisScorebis-k3ma ● P3 gstack sprint audit tennis (2026-06-30): GO PROD atteint après C1+C6+D3 (commit 90c1e9e). Reste backlog P1-P3 ci-dessous.
-○ ParisScorebis-kuvf ● P3 T3 tri default EV desc + watchlist persistante (finir scroll 387 matchs)
-○ ParisScorebis-697s ● P3 C2 gzip nginx ACTIF (bloquant perf, pariscore.js 1.77MB non compressé) — config à ajouter dans nginx
-○ ParisScorebis-das9 ● P3 Déprécier pipeline FBref (xG retiré du site 01/2026)
-○ ParisScorebis-49pe ● P3 DG: étude OddAlerts API officielle £69.99/mo
-○ ParisScorebis-m5rf ● P3 WOM server-side value-bet gate (backtested)
-○ ParisScorebis-vrbw ● P3 F1 images self-host (prod hardening) — mirror Wikimedia photos/logos locally
-○ ParisScorebis-kxst ● P3 Nav: add MMA icon (top nav) via dormant .nav-icon-3d
+| Pattern | Description | Risk |
+|---------|-------------|------|
+| `scraping-oddalerts` | Extraction ligues oddalerts.com | low |
+| `betting-analysis` | Analyse odds + edge detection | medium |
+| `qa-apk` | QA automatisé APK Android | low |
+| `code-review` | Review de code | low |
+| `feature-impl` | Implémentation feature | medium |
+| `bug-fix` | Correction de bug | medium |
+| `bd-triage` | Triage des issues bd | low |
+| `skill-update` | Mise à jour d'un skill | low |
+| `deploy` | Déploiement VPS | high |
 
---------------------------------------------------------------------------------
-Ready: 18 issues with no active blockers
+## Recent Runs
 
-Status: ○ open  ◐ in_progress  ● blocked  ✓ closed  ❄ deferred
-
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Error: no beads database found
-Hint: run 'bd where' to inspect the resolved workspace, or 'bd init' to create a new database
-      or set BEADS_DIR to point to your .beads directory
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Le processus ne peut pas acc�der au fichier car ce fichier est utilis� par un autre processus.
-Error: no beads database found
-Hint: run 'bd where' to inspect the resolved workspace, or 'bd init' to create a new database
-      or set BEADS_DIR to point to your .beads directory
+<!-- Loop appends below this line -->
+{"run_id":"2026-08-25T10:00:00Z","pattern":"scraping-oddalerts","agent":"node","duration_s":120,"items_found":582,"actions_taken":1,"escalations":0,"tokens_estimate":0,"mcp_calls":0,"files_changed":1,"outcome":"success","error":null}

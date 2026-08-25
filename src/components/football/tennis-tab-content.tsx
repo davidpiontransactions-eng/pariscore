@@ -438,6 +438,16 @@ return [...matches, ...synthetic];
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
 
+  // Sync subTab from URL ?view=live|prematch on mount (independent of sidebar treeStatus)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    console.log("[TennisTabContent] URL view param:", view, "-> setting subTab to:", view === "live" ? "live" : "today");
+    if (view === "live") setSubTab("live");
+    else if (view === "prematch") setSubTab("today");
+  }, []);
+
   // Sélection sidebar : auto-scroll vers la carte sélectionnée (sinon elle
   // tombe sous le fold et semble « absente »). Poll résilient : la carte peut
   // n'être rendue qu'après le chargement des données / le switch de sous-onglet.
@@ -464,11 +474,19 @@ return [...matches, ...synthetic];
   const timeKey = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const setTimeKey = useSportsSidebarStore((s) => s.setTimeFilter);
   const { hours: timeRange, today: timeToday, tomorrow: timeTomorrow } = parseTimeFilter(timeKey);
+
+  // Ensemble des IDs de matchs live (fallback quand liveStates pas encore peuplé
+  // par le SSE — évite le filtre 0 cartes au chargement initial ~5s).
+  const liveMatchIdSet = useMemo(
+    () => new Set(liveMatchList.filter((m) => m.isLive).map((m) => m.id)),
+    [liveMatchList],
+  );
+
   /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en excluant le live. */
   const scopeByTime = useCallback(
     <T extends { id: string; scheduledAt: string }>(list: T[]): T[] => {
       if (timeRange === null && !timeToday && !timeTomorrow) return list;
-      const prematchOnly = list.filter((m) => !liveStates[m.id]?.isLive);
+      const prematchOnly = list.filter((m) => !liveStates[m.id]?.isLive && !liveMatchIdSet.has(m.id));
       if (timeRange !== null) {
         return filterByStartWindow(prematchOnly, timeRange, (m) => m.scheduledAt);
       }
@@ -477,7 +495,7 @@ return [...matches, ...synthetic];
       }
       return filterByToday(prematchOnly, (m) => m.scheduledAt);
     },
-    [liveStates, timeRange, timeToday, timeTomorrow],
+    [liveStates, liveMatchIdSet, timeRange, timeToday, timeTomorrow],
   );
 
   // Nombre de matchs pour la carte tournoi (sur la liste scoped).
@@ -494,13 +512,13 @@ return [...matches, ...synthetic];
   // pour les compteurs), mais la grille principale n'affiche que `rest`.
   const subFiltered = useMemo(() => {
     if (subTab === "live") {
-      const liveOnly = filtered.filter((m) => liveStates[m.id]?.isLive);
+      const liveOnly = filtered.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
       if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
       if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
       return liveOnly;
     }
     return scopeByTime(filtered); // "today" = tout (hors filtre horaire)
-  }, [subTab, filtered, liveStates, scopeByTime, timeRange, timeToday]);
+  }, [subTab, filtered, liveStates, liveMatchIdSet, scopeByTime, timeRange, timeToday]);
 
   // Version "rest" filtrée par sous-onglet (pour la grille principale).
   // En live, on garde featured + rest (sinon les matchs phares live
@@ -508,13 +526,13 @@ return [...matches, ...synthetic];
   // que `rest` car featured est déjà dans le carrousel.
   const restForGrid = useMemo(() => {
     if (subTab === "live") {
-      const liveOnly = curation.rest.filter((m) => liveStates[m.id]?.isLive);
+      const liveOnly = curation.rest.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
       if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
       if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
       return liveOnly;
     }
     return scopeByTime(curation.rest);
-  }, [subTab, curation.rest, liveStates, scopeByTime, timeRange, timeToday]);
+  }, [subTab, curation.rest, liveStates, liveMatchIdSet, scopeByTime, timeRange, timeToday]);
 
   // Cotes live P1/P2 — 1xBet avec repli BSD. Un seul POST batch
   // /api/v1/odds/live toutes les 15s sur la grille live ; chaque slot est
@@ -535,13 +553,25 @@ return [...matches, ...synthetic];
   // les featured live ; en "today", tous les featured).
   const featuredForMarquee = useMemo(() => {
     if (subTab === "live") {
-      const liveOnly = curation.featured.filter((m) => liveStates[m.id]?.isLive);
+      const liveOnly = curation.featured.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
       if (timeRange !== null) return filterLiveByWindow(liveOnly, timeRange, (m) => m.scheduledAt);
       if (timeToday) return filterByToday(liveOnly, (m) => m.scheduledAt);
       return liveOnly;
     }
     return scopeByTime(curation.featured);
-  }, [subTab, curation.featured, liveStates, scopeByTime, timeRange, timeToday]);
+  }, [subTab, curation.featured, liveStates, liveMatchIdSet, scopeByTime, timeRange, timeToday]);
+
+  // DEBUG: expose live data to window for test verification
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    (window as any).__TENNIS_DEBUG__ = {
+      subTab,
+      liveMatchList: liveMatchList.map(m => ({ id: m.id, isLive: m.isLive, nameA: m.playerA.name, nameB: m.playerB.name })),
+      liveStates: Object.fromEntries(Object.entries(liveStates).map(([k, v]) => [k, { isLive: v.isLive, lastUpdate: v.lastUpdate }])),
+      restForGrid: restForGrid.map(m => ({ id: m.id, isLive: m.synthetic ? true : false })),
+      time: Date.now(),
+    };
+  }, [subTab, liveMatchList, liveStates, restForGrid]);
 
   const handleSubTabChange = (tab: TennisSubTab) => {
     setSubTab(tab);

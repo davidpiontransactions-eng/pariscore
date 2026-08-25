@@ -17,6 +17,15 @@ This skill ensures all code follows security best practices and identifies poten
 - Storing or transmitting sensitive data
 - Integrating third-party APIs
 
+## When not to use
+
+- **Code review général** — Utiliser `code-reviewer` à la place
+- **Performance optimization** — Utiliser `performance` ou `core-web-vitals`
+- **UI/UX review** — Utiliser `impeccable` ou `web-design-guidelines`
+- **Dependency audit** — Utiliser `npm audit` ou `snyk`
+- **Penetration testing** — Utiliser les skills dédiés (pentest-tools, src-hunter)
+- **Architecture review** — Utiliser `aos-code-review-and-quality`
+
 ## Security Checklist
 
 ### 1. Secrets Management

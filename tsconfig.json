@@ -29,6 +29,24 @@
       "@/*": [
         "./src/*"
       ],
+      "~/*": [
+        "./src/*"
+      ],
+      "~/skills/*": [
+        "./.opencode/skills/*"
+      ],
+      "~/mcp/*": [
+        "./.mcp/*"
+      ],
+      "~/components/*": [
+        "./src/components/*"
+      ],
+      "~/lib/*": [
+        "./src/lib/*"
+      ],
+      "~/app/*": [
+        "./src/app/*"
+      ],
       "@pariscore/shared": [
         "./packages/shared/src"
       ],

@@ -8,6 +8,16 @@ license: Complete terms in LICENSE.txt
 
 Approach this as the design lead at a small studio known for giving every client a visual identity that could not be mistaken for anyone else's. This client has already rejected proposals that felt templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take one real aesthetic risk you can justify.
 
+## When not to use
+
+- **UI existing components** — Utiliser `shadcn-ui` ou `ui-styling` à la place
+- **Design system/token architecture** — Utiliser `design-system` ou `design-system-patterns`
+- **Responsive layout only** — Utiliser `tailwind-theme-builder`
+- **Brand identity/logo** — Utiliser `brand` ou `design` (logo generation)
+- **Performance optimization** — Utiliser `performance` ou `react-performance`
+- **Accessibility audit** — Utiliser `web-design-guidelines`
+- **Specific component styling** — Utiliser `react-styling`
+
 ## Ground it in the subject
 
 If the brief does not pin down what the product or subject is, pin it yourself before designing: name one concrete subject, its audience, and the page's single job, and state your choice. If there's any information in your memory about the human's preferences, context about what they're building, or designs you've made before – use that as a hint. The subject's own world, its materials, instruments, artifacts, and vernacular, is where distinctive choices come from. Build with the brief's real content and subject matter throughout.
