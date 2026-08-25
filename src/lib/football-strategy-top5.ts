@@ -19,7 +19,7 @@ import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
  *   - over15       → P(≥ 2 buts) via Poisson sur λ                    (plus haut = mieux)
  *   - under35      → P(≤ 3 buts) via Poisson sur λ                    (plus haut = mieux)
  *   - bttsYes      → P(les 2 marquent) via Poisson sur λH, λA         (plus haut = mieux)
- *   - over65Corners→ P(≥ 7 corners) via Poisson sur λCorners          (plus haut = mieux)
+ *   - over65Corners→ λ corners attendus du match                    (plus haut = mieux)
  */
 
 export type StrategyTop5Key =
@@ -390,13 +390,12 @@ export function computeStrategyTop5Matches(
         const bmLeagueSlug = leagueSlug;
         const bm = betminesCornerMarket(bmLeagueSlug, fixture);
         if (bm) {
-          scores[key].push({ fixture, form, value: bm.pOver65, pick: null });
+          scores[key].push({ fixture, form, value: bm.lambdaCorners, pick: null });
           continue;
         }
         // Priorité 2 : modèle corners dérivé de la forme soccerstats.
         if (soccerForm) {
-          const expected = expectedMatchCorners(soccerForm);
-          scores[key].push({ fixture, form, value: poissonTailAt(expected, 7) * 100, pick: null });
+          scores[key].push({ fixture, form, value: expectedMatchCorners(soccerForm), pick: null });
           continue;
         }
         // Priorité 3 : corners réels des matchs finis BSD.
@@ -404,7 +403,7 @@ export function computeStrategyTop5Matches(
           const nH = Math.max(form.home.n, 1);
           const nA = Math.max(form.away.n, 1);
           const lambdaCorners = (form.home.corners / nH + form.away.corners / nA) / 2;
-          scores[key].push({ fixture, form, value: poissonTailAt(lambdaCorners, 7) * 100, pick: null });
+          scores[key].push({ fixture, form, value: lambdaCorners, pick: null });
           continue;
         }
         continue;
@@ -433,7 +432,9 @@ export function computeStrategyTop5Matches(
 
   // Plancher de cotes : au-delà de ~87% de proba implicite, la cote équitable
   // passe sous 1.15 — aucun intérêt à parier, on exclut le match de la liste.
-  // (bestAttack/bestDefense = λ moyens, pas des probabilités → hors périmètre.)
+  // (bestAttack/bestDefense/over65Corners = λ moyens, pas des probabilités
+  // marché → hors périmètre. over65Corners est classé par λ corners : le
+  // filtrer comme une proba saturée (~90% sur O6.5) inverserait le signal.)
   const MAX_PROB_PCT = (1 / 1.15) * 100;
   const PROBABILISTIC_KEYS: ReadonlySet<StrategyTop5Key> = new Set([
     "bestTeam",
@@ -442,7 +443,6 @@ export function computeStrategyTop5Matches(
     "over15",
     "under35",
     "bttsYes",
-    "over65Corners",
   ]);
   for (const key of STRATEGY_TOP5_KEYS) {
     if (!PROBABILISTIC_KEYS.has(key)) continue;
