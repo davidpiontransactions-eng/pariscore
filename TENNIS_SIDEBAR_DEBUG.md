@@ -218,6 +218,64 @@ que 2/30 matchs (repli officiel ≈ top ~100 ATP) ; table interne vide en dev.
 
 ---
 
+# V4 — Redesign widget Live Tennis + investigation sélection live (EN COURS)
+
+**Date** : 2026-08-25 (fin de session) · Statut : design widget **livré et validé
+visuellement** ; bug « sélection live invisible dans la grille » **diagnostiqué,
+non résolu** → reprise prioritaire demain.
+
+## [A] Redesign du widget « Matchs en direct » (section Tennis) — LIVRÉ
+
+- Fichier : `src/components/dashboard/nav-extra-views.tsx` (`LiveNavView`).
+- Références concurrentielles : Sofascore/Flashscore (rangées joueurs alignées,
+  colonnes de sets, balle de service), 1xBet/Bet365 (chip statut, cotes inline),
+  21st.dev (esthétique shadcn dashboard). Tokens PariScore uniquement.
+- Implémenté : groupement par tournoi (header Trophy + count), carte par match
+  avec chip « Set N » pulsante, colonnes sets (gagnant gras blanc), jeu courant
+  en encart émeraude + points en sub, balle de service glow, barre probabilité
+  live duo (émeraude/sky), cotes décimales chips. Type `LiveTennis` étendu
+  (setsDetail/currentPoint/server/liveProb/odds — tous fournis par le flux).
+- QA : `scripts/probe-live-tennis.js` (mobile 400px, bottom-nav) → 7 cartes,
+  0 erreur console, screenshots `.context/live-tennis-mobile.png`.
+- ⚠️ Découvert au passage : un **badge debug A/B test chevauche la bottom-nav
+  mobile** (z-[100]) — à vérifier/corriger en prod.
+
+## [B] Bug ouvert — « match live sélectionné invisible dans la grille »
+
+### Établi (preuves via sondes `repro-*.js` + store exposé sur window)
+1. Les ids sont ALIGNÉS partout en `bsd-<rawId>` (arbre=grille=liveStates).
+2. Le clic sidebar enregistre bien la sélection (aria-pressed=true, store OK).
+3. La grille rend parfois la BONNE carte unique (C. WANG / C. HOOLE vus)…
+4. …mais d'autres runs : **0 carte**, bannière de sélection disparue, alors que
+   `__ssStore.getState().selectedMatchIds` contient toujours l'id et sans reload.
+5. `repro-compare.js` : même à froid, vue live ET vue prematch ⇒ **0 carte**
+   (avec ou sans sélection) sur certaines passes — intermittent.
+
+### Hypothèses restantes (à tester demain, dans l'ordre)
+- H1 **liveStates vide/décalé** (SSE `/api/tennis/live-stream` lent: 5,4 s vu
+  dans les logs) : sous-onglet Live filtre `liveStates[m.id]?.isLive` → si la
+  map est vide, TOUT disparaît. Tester à froid : compter cartes en onglet Live
+  sans sélection après 15 s (si 0 ⇒ confirmé).
+- H2 **double instance du store** (deux asides visibles = deux montages) :
+  instrumenter chaque composant consommateur avec un id d'instance en dev.
+- H3 **course SWR/SSE au mount** de tennis-tab-content après navigation.
+
+### Correctifs déjà en place (utiles indépendamment)
+- Auto-scroll + anneau émeraude sur `[data-selected-match="true"]`
+  (`tennis-tab-content.tsx`, poll 200 ms ×20, deps selectedMatchIds+subTab).
+
+### Plan de reprise
+1. `bun run dev` puis `node scripts/repro-compare.js` à froid (cas A d'abord,
+   sans sélection, wait 15 s au lieu de 7).
+2. Si A=0 ⇒ inspecter `use-live-matches.ts` (SSE builder + clés) et le
+   sous-onglet Live; envisager fallback polling si stream vide >10 s.
+3. Si A>0 ⇒ rejouer B/C et comparer ids DOM des cartes vs sélection
+   (ajouter `data-match-id={match.id}` temporairement sur le wrapper).
+4. Re-valider `repro-min.js` (doit finir [OK] carte centrée), tsc, deploy:
+   `deploy.bat "fix(tennis): selection live visible + auto-scroll + redesign widget live"`
+
+---
+
 # V3 — Filtre Tout/Live/Avant-match + noms de tournois + cap tennis
 
 **Date** : 2026-08-25 · Demandes : « je n'ai pas tous les matchs live/prematch »,

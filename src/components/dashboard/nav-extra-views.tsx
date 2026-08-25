@@ -82,6 +82,15 @@ type LiveTennis = {
   current_game_p1?: number;
   current_game_p2?: number;
   is_serving_p1?: boolean;
+  /** Champs enrichis du flux BSD (shapes réels de /api/tennis/live). */
+  setsDetail?: Array<{ p1: number; p2: number }>;
+  currentPoint?: { p1: number; p2: number };
+  server?: "A" | "B";
+  liveProbA?: number;
+  liveProbB?: number;
+  oddsA?: number | null;
+  oddsB?: number | null;
+  roundName?: string | null;
 };
 
 const liveFetcher = async (url: string) => {
@@ -89,6 +98,131 @@ const liveFetcher = async (url: string) => {
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r.json();
 };
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Widget Live Tennis — style broadcast (références Sofascore/Flashscore :
+   rangées joueurs alignées, colonnes de sets, jeu courant en accent,
+   barre de proba, groupement par tournoi). Tokens PariScore uniquement.
+   ───────────────────────────────────────────────────────────────────────── */
+
+const TENNIS_LIVE_MAX = 15;
+
+function fmtPoints(n?: number): string {
+  if (n == null || !Number.isFinite(n)) return "";
+  // BSD expose des points entiers (0/15/30/40/45=Ad selon flux) — affiché brut.
+  return String(Math.round(n));
+}
+
+/** Carte d'un match live tennis : 2 rangées alignées + barre de probabilité. */
+function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
+  const sets = Array.isArray(m.setsDetail) ? m.setsDetail : [];
+  const nSets = Math.max(sets.length, 1);
+  const server = m.server === "B" ? "B" : m.server === "A" ? "A" : m.is_serving_p1 ? "A" : null;
+  const probA =
+    typeof m.liveProbA === "number" && Number.isFinite(m.liveProbA)
+      ? Math.min(100, Math.max(0, Math.round(m.liveProbA)))
+      : null;
+  const probB = probA != null ? 100 - probA : null;
+  // Grille partagée par les 2 rangées pour un alignement broadcast parfait.
+  const gridCols = `12px minmax(0,1fr) repeat(${nSets}, 26px) 54px`;
+
+  const playerRow = (
+    side: "p1" | "p2",
+    name: string | undefined,
+    isServing: boolean,
+    probPct: number | null,
+  ) => (
+    <div className="grid items-center gap-x-1" style={{ gridTemplateColumns: gridCols }}>
+      <span className="flex justify-center" aria-hidden>
+        {isServing ? (
+          <span className="block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(0,230,118,0.9)]" />
+        ) : (
+          <span className="block h-1.5 w-1.5" />
+        )}
+      </span>
+      <span
+        className={cn(
+          "truncate text-[13px] leading-tight",
+          isServing ? "font-semibold text-white" : "text-slate-300",
+        )}
+      >
+        {name ?? "—"}
+      </span>
+      {Array.from({ length: nSets }, (_, i) => {
+        const s = sets[i];
+        if (!s) return <span key={i} />;
+        const mine = side === "p1" ? s.p1 : s.p2;
+        const other = side === "p1" ? s.p2 : s.p1;
+        return (
+          <span
+            key={`s${i}`}
+            className={cn(
+              "text-center font-mono text-xs tabular-nums",
+              mine > other ? "font-bold text-white" : "text-zinc-500",
+            )}
+          >
+            {mine}
+          </span>
+        );
+      })}
+      {/* Jeu courant : encart accent + points en exposant */}
+      <span className="flex items-center justify-center gap-0.5 rounded bg-emerald-500/10 px-1 py-0.5 font-mono text-xs font-bold tabular-nums text-emerald-300">
+        {side === "p1" ? (m.current_game_p1 ?? 0) : (m.current_game_p2 ?? 0)}
+        {showPoint(m, side) && (
+          <sub className="text-[8px] font-medium text-emerald-400/80">
+            {fmtPoints(side === "p1" ? m.currentPoint?.p1 : m.currentPoint?.p2)}
+          </sub>
+        )}
+      </span>
+      <span
+        className={cn(
+          "text-right font-mono text-[11px] tabular-nums",
+          probPct != null && probPct >= 50 ? "font-bold text-emerald-300" : "text-zinc-600",
+        )}
+      >
+        {probPct != null ? `${probPct}%` : ""}
+      </span>
+    </div>
+  );
+
+  return (
+    <article className="rounded-xl border border-white/5 bg-zinc-900/60 p-3 transition-colors hover:border-emerald-500/30">
+      {/* Statut + cotes */}
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-300">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+          </span>
+          Set {(m.current_set ?? Math.max(sets.length - 1, 0)) + 1}
+        </span>
+        <span className="flex items-center gap-1 font-mono text-[10px] tabular-nums text-zinc-500">
+          {m.oddsA != null && <span className="rounded bg-zinc-800 px-1 py-px">{m.oddsA.toFixed(2)}</span>}
+          {m.oddsB != null && <span className="rounded bg-zinc-800 px-1 py-px">{m.oddsB.toFixed(2)}</span>}
+        </span>
+      </div>
+
+      {/* Rangées joueurs */}
+      <div className="space-y-1">
+        {playerRow("p1", m.playerA?.name, server === "A", probA)}
+        {playerRow("p2", m.playerB?.name, server === "B", probB)}
+      </div>
+
+      {/* Barre de probabilité live */}
+      {probA != null && (
+        <div className="mt-2 flex h-1 overflow-hidden rounded-full bg-zinc-800" role="img" aria-label={`Probabilité ${probA}% / ${100 - probA}%`}>
+          <span className="bg-emerald-500/90" style={{ width: `${probA}%` }} />
+          <span className="flex-1 bg-sky-500/50" />
+        </div>
+      )}
+    </article>
+  );
+}
+
+function showPoint(m: LiveTennis, side: "p1" | "p2"): boolean {
+  const v = side === "p1" ? m.currentPoint?.p1 : m.currentPoint?.p2;
+  return typeof v === "number" && Number.isFinite(v);
+}
 
 /** Vue « Live » — flux agrégé temps réel Tennis + Football (SWR 30 s). */
 export function LiveNavView({ onSportSelect }: ViewProps) {
@@ -147,48 +281,55 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
             </div>
           )}
 
-          {/* Tennis */}
+          {/* Tennis — widget broadcast groupé par tournoi */}
           {tennisMatches.length > 0 && (
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-400">
                 Tennis · {tennisMatches.length}
+                <span className="relative flex h-1.5 w-1.5" aria-hidden>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
               </h3>
-              <ul className="mt-2 space-y-1.5">
-                {tennisMatches.slice(0, 12).map((m) => {
-                  const serving = m.is_serving_p1 ? "●" : "";
-                  const servingB = !m.is_serving_p1 ? "●" : "";
-                  return (
-                    <li
-                      key={m.id}
-                      className="rounded-lg border border-white/5 bg-zinc-900/60 px-3 py-2"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="min-w-0 flex-1 truncate text-sm text-slate-200">
-                          <span aria-hidden className="text-emerald-400">{serving}</span>{" "}
-                          {m.playerA?.name}{" "}
-                          <span className="text-slate-600">vs</span>{" "}
-                          {m.playerB?.name}{" "}
-                          <span aria-hidden className="text-emerald-400">{servingB}</span>
-                        </p>
-                        <span className="shrink-0 font-mono text-sm font-bold tabular-nums text-emerald-400">
-                          {m.player1_sets ?? 0}–{m.player2_sets ?? 0}
-                        </span>
-                      </div>
-                      <p className="truncate text-[11px] text-zinc-500">
-                        {m.tournament}
-                        {m.current_set != null && (
-                          <>
-                            {" "}· Set {m.current_set} ({m.current_game_p1 ?? 0}-{m.current_game_p2 ?? 0})
-                          </>
-                        )}
+              {(() => {
+                const groups = new Map<string, LiveTennis[]>();
+                for (const m of tennisMatches.slice(0, TENNIS_LIVE_MAX)) {
+                  const t = m.tournament?.trim() || "Autres tournois";
+                  const arr = groups.get(t) ?? [];
+                  arr.push(m);
+                  groups.set(t, arr);
+                }
+                const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length);
+                return (
+                  <div className="mt-2 space-y-4">
+                    {ordered.map(([tournament, matches]) => (
+                      <section key={tournament}>
+                        <header className="mb-1.5 flex items-center gap-2">
+                          <Trophy className="h-3.5 w-3.5 shrink-0 text-amber-300/80" aria-hidden />
+                          <h4 className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-300">
+                            {tournament}
+                          </h4>
+                          <span className="shrink-0 rounded-full bg-zinc-800 px-1.5 py-px font-mono text-[9px] font-bold tabular-nums text-zinc-400">
+                            {matches.length}
+                          </span>
+                        </header>
+                        <ul className="space-y-2">
+                          {matches.map((m) => (
+                            <li key={m.id}>
+                              <TennisLiveMatchCard m={m} />
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    ))}
+                    {tennisMatches.length > TENNIS_LIVE_MAX && (
+                      <p className="text-[11px] text-zinc-500">
+                        + {tennisMatches.length - TENNIS_LIVE_MAX} autres matchs…
                       </p>
-                    </li>
-                  );
-                })}
-                {tennisMatches.length > 12 && (
-                  <li className="px-3 text-[11px] text-zinc-500">+ {tennisMatches.length - 12} autres…</li>
-                )}
-              </ul>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

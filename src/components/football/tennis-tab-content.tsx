@@ -407,6 +407,13 @@ return [...matches, ...synthetic];
   // → liste complète (pas de changement de comportement).
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
 
+  // Sélection sidebar : Set pour lookup O(1) + auto-scroll vers la première
+  // carte sélectionnée (sinon elle tombe sous le fold et semble « absente »).
+  const selectedIdSet = useMemo(
+    () => new Set(selectedMatchIds),
+    [selectedMatchIds],
+  );
+
   const matchesWithScoped = useMemo(() => {
     let list = matchesWithLive;
     if (selectedTournament) {
@@ -430,6 +437,25 @@ return [...matches, ...synthetic];
 
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
+
+  // Sélection sidebar : auto-scroll vers la carte sélectionnée (sinon elle
+  // tombe sous le fold et semble « absente »). Poll résilient : la carte peut
+  // n'être rendue qu'après le chargement des données / le switch de sous-onglet.
+  useEffect(() => {
+    if (selectedMatchIds.length === 0) return;
+    let attempts = 0;
+    const iv = setInterval(() => {
+      attempts += 1;
+      const el = document.querySelector('[data-selected-match="true"]');
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        clearInterval(iv);
+      } else if (attempts >= 20) {
+        clearInterval(iv);
+      }
+    }, 200);
+    return () => clearInterval(iv);
+  }, [selectedMatchIds, subTab]);
 
   // Filtre par heure de début (fenêtre glissante 1h → 24h / jour calendaire) —
   // partagé avec la sidebar (store unique, modèle 1xBet). S'applique aux vues
@@ -867,19 +893,31 @@ return [...matches, ...synthetic];
               </button>
             )}
             <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
-              {restForGrid.map((match, idx) => (
-                <MemoMatchCardBroadcastItem
-                  key={match.id}
-                  match={match}
-                  chipsCollapsedByDefault={variant === "chips_collapsed"}
-                  liveState={liveStates[match.id]}
-                  liveOdds={onexLive.odds[match.id] ?? null}
-                  disconnected={connectionStatus === "disconnected"}
-                  onOpenDetail={openDetail}
-                  onBetClick={openBet}
-                  priority={idx < 2}
-                />
-              ))}
+              {restForGrid.map((match, idx) => {
+                const isSelected = selectedIdSet.has(match.id);
+                return (
+                  <div
+                    key={match.id}
+                    data-selected-match={isSelected || undefined}
+                    className={cn(
+                      "rounded-2xl",
+                      isSelected &&
+                        "ring-2 ring-emerald-500/70 ring-offset-2 ring-offset-background transition-shadow",
+                    )}
+                  >
+                    <MemoMatchCardBroadcastItem
+                      match={match}
+                      chipsCollapsedByDefault={variant === "chips_collapsed"}
+                      liveState={liveStates[match.id]}
+                      liveOdds={onexLive.odds[match.id] ?? null}
+                      disconnected={connectionStatus === "disconnected"}
+                      onOpenDetail={openDetail}
+                      onBetClick={openBet}
+                      priority={idx < 2}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </>
         )}
