@@ -73,3 +73,17 @@ export function parisDayLong(iso: string): string {
   if (Number.isNaN(d.getTime())) return "";
   return longDayFormatter.format(d);
 }
+
+/** Fenêtres temporelles du Top 5 sidebar : aujourd'hui (Paris), 48 h, 7 jours. */
+export type KickoffWindow = "jour" | "48h" | "semaine";
+
+/** Match à venir dans la fenêtre choisie ? Borne basse = maintenant. */
+export function isInKickoffWindow(iso: string, win: KickoffWindow): boolean {
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return false;
+  const now = Date.now();
+  if (t < now) return false;
+  if (win === "jour") return parisDayKey(new Date(t)) === parisDayKey(new Date());
+  const hours = win === "48h" ? 48 : 24 * 7;
+  return t <= now + hours * 3_600_000;
+}

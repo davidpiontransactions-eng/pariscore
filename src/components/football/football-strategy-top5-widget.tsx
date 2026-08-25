@@ -10,7 +10,7 @@ import type {
   SideFormStats,
 } from "@/lib/football-strategy-top5";
 import { useFootballTop5 } from "@/hooks/use-football-top5";
-import { parisDateShort, parisKickoff } from "@/lib/football-time";
+import { isInKickoffWindow, parisDateShort, parisKickoff, type KickoffWindow } from "@/lib/football-time";
 import {
   Select,
   SelectContent,
@@ -43,6 +43,13 @@ export const STRATEGIES: StrategyDef[] = [
 ];
 
 type WindowKey = "l5" | "l10";
+
+/** Filtre temporel des matchs listés (jour / 48 h / semaine). */
+const TIME_WINDOWS: { key: KickoffWindow; label: string }[] = [
+  { key: "jour", label: "Jour" },
+  { key: "48h", label: "48h" },
+  { key: "semaine", label: "Sem." },
+];
 
 function sideBadge(entry: StrategyMatchEntry, side: Side): { text: string; highlight: boolean } {
   const isPick = entry.pick === side;
@@ -222,7 +229,10 @@ export function FootballStrategyTop5Widget() {
   const toggleStore = useTop5SelectionStore((s) => s.toggle);
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
-  const rows = matchesFor(active);
+  const [timeWin, setTimeWin] = useState<KickoffWindow>("semaine");
+  const rawRows = matchesFor(active);
+  // Filtre temporel : matchs à venir dans la fenêtre choisie.
+  const rows = rawRows.filter((e) => isInKickoffWindow(e.kickoff, timeWin));
   const hasData = rows.length > 0;
   const selCount = Object.keys(selectedItems).length;
 
@@ -245,8 +255,28 @@ export function FootballStrategyTop5Widget() {
             </span>
           )}
         </h2>
-        {/* Bascule fenêtre L5/L10 pour les stats xG/buts */}
-        <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
+        {/* Filtre temporel + bascule fenêtre L5/L10 (stats xG/buts) */}
+        <div className="flex shrink-0 items-center gap-1">
+          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Période des matchs">
+            {TIME_WINDOWS.map((w) => (
+              <button
+                key={w.key}
+                type="button"
+                onClick={() => setTimeWin(w.key)}
+                aria-pressed={timeWin === w.key}
+                title={`Matchs ${w.key === "jour" ? "du jour" : w.key === "48h" ? "sous 48 heures" : "de la semaine"}`}
+                className={cn(
+                  "px-1.5 py-px font-mono text-[9px] font-bold uppercase transition-colors",
+                  timeWin === w.key
+                    ? "bg-emerald-500/20 text-emerald-300"
+                    : "bg-transparent text-slate-500 hover:text-slate-300",
+                )}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
           {(["l5", "l10"] as WindowKey[]).map((k) => (
             <button
               key={k}
@@ -263,6 +293,7 @@ export function FootballStrategyTop5Widget() {
               {k.replace("l", "L")}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -327,6 +358,10 @@ export function FootballStrategyTop5Widget() {
             xG réel Understat · B = buts marqués moy. · E = encaissés moy.
           </p>
         </div>
+      ) : rawRows.length > 0 ? (
+        <p className="px-2.5 py-3 text-[11px] text-slate-500">
+          Aucun match dans cette période.
+        </p>
       ) : (
         <p className="px-2.5 py-3 text-[11px] text-slate-500">
           Pas de match qualifié (forme L{win} home/away exigée).

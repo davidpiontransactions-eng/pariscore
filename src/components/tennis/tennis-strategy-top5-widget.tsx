@@ -19,7 +19,14 @@ import {
   type Top5Surface,
 } from "@/lib/tennis-top5";
 import { useTennisTop5 } from "@/hooks/use-tennis-top5";
-import { parisDateShort, parisKickoff } from "@/lib/football-time";
+import { isInKickoffWindow, parisDateShort, parisKickoff, type KickoffWindow } from "@/lib/football-time";
+
+/** Filtre temporel des matchs listés (jour / 48 h / semaine). */
+const TIME_WINDOWS: { key: KickoffWindow; label: string }[] = [
+  { key: "jour", label: "Jour" },
+  { key: "48h", label: "48h" },
+  { key: "semaine", label: "Sem." },
+];
 
 /**
  * Top 5 matchs tennis par métrique joueur — miroir du widget foot
@@ -126,21 +133,47 @@ export function TennisStrategyTop5Widget() {
   const [metric, setMetric] = useState<TennisTop5Key>("surfaceElo");
   const [surface, setSurface] = useState<Top5Surface>("all");
   const [period, setPeriod] = useState<Top5Period>("52w");
+  const [timeWin, setTimeWin] = useState<KickoffWindow>("semaine");
 
   const { entries, meta, isLoading, error, isReady } = useTennisTop5(metric, surface, period);
 
   const def: TennisTop5Def =
     TENNIS_TOP5_METRICS.find((d) => d.key === metric) ?? TENNIS_TOP5_METRICS[0];
-  const hasData = entries.length > 0;
+  // Filtre temporel : matchs à venir dans la fenêtre choisie.
+  const rawCount = entries.length;
+  const visibleEntries = entries.filter((e) => isInKickoffWindow(e.scheduledAt, timeWin));
+  const hasData = visibleEntries.length > 0;
 
   const selectCls =
     "h-7 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-[11px] font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500";
 
   return (
     <section aria-label="Top 5 matchs tennis par métrique" className="border-b border-slate-800/80 pb-2">
-      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-        Top 5 matchs tennis
-      </h2>
+      <div className="flex items-center justify-between pr-2.5">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          Top 5 matchs tennis
+        </h2>
+        {/* Filtre temporel des matchs listés */}
+        <div className="flex shrink-0 overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Période des matchs">
+          {TIME_WINDOWS.map((w) => (
+            <button
+              key={w.key}
+              type="button"
+              onClick={() => setTimeWin(w.key)}
+              aria-pressed={timeWin === w.key}
+              title={`Matchs ${w.key === "jour" ? "du jour" : w.key === "48h" ? "sous 48 heures" : "de la semaine"}`}
+              className={cn(
+                "px-1.5 py-px font-mono text-[9px] font-bold uppercase transition-colors",
+                timeWin === w.key
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "bg-transparent text-slate-500 hover:text-slate-300",
+              )}
+            >
+              {w.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="space-y-1 px-2.5 pb-1.5">
         <Select value={metric} onValueChange={(v) => setMetric(v as TennisTop5Key)}>
@@ -203,7 +236,7 @@ export function TennisStrategyTop5Widget() {
       ) : hasData ? (
         <>
           <ul className="space-y-0.5 px-2 pb-1">
-            {entries.map((e) => (
+            {visibleEntries.map((e) => (
               <MatchRow key={e.matchId} entry={e} def={def} />
             ))}
           </ul>
@@ -211,6 +244,10 @@ export function TennisStrategyTop5Widget() {
             Métriques par surface (Élo surface, service, retour, pression) · côté favori en vert
           </p>
         </>
+      ) : rawCount > 0 ? (
+        <p className="px-2.5 py-3 text-[11px] text-slate-500">
+          Aucun match dans cette période.
+        </p>
       ) : (
         <p className="px-2.5 py-3 text-[11px] leading-snug text-slate-500">
           {meta?.dataUnavailable
