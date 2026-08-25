@@ -10,6 +10,7 @@ import type {
   SideFormStats,
 } from "@/lib/football-strategy-top5";
 import { useFootballTop5 } from "@/hooks/use-football-top5";
+import { parisDateShort, parisKickoff } from "@/lib/football-time";
 import {
   Select,
   SelectContent,
@@ -140,14 +141,12 @@ function StatsLine({
 function MatchRow({
   entry,
   def,
-  kickoff,
   winKey,
   selected,
   onToggle,
 }: {
   entry: StrategyMatchEntry;
   def: StrategyDef;
-  kickoff: string;
   winKey: WindowKey;
   selected: boolean;
   onToggle: () => void;
@@ -181,7 +180,10 @@ function MatchRow({
           >
             {selected ? "✓" : ""}
           </span>
-          <span className="w-11 shrink-0 font-mono text-[9px] tabular-nums text-slate-500">{kickoff}</span>
+          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-500">
+            <span className="text-[8px] leading-tight">{parisDateShort(entry.kickoff)}</span>
+            <span className="text-[9px] leading-tight">{parisKickoff(entry.kickoff)}</span>
+          </span>
           <div className="min-w-0 flex-1">
             <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
             <div className="px-1 text-[8px] text-slate-600">vs</div>
@@ -210,13 +212,6 @@ function MatchRow({
       </button>
     </li>
   );
-}
-
-function formatKickoff(iso: string): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return "";
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
 export function FootballStrategyTop5Widget() {
@@ -322,7 +317,6 @@ export function FootballStrategyTop5Widget() {
                 key={entry.matchId}
                 entry={entry}
                 def={def}
-                kickoff={formatKickoff(entry.kickoff)}
                 winKey={winKey}
                 selected={Boolean(selectedItems[entry.matchId])}
                 onToggle={() => toggleSelect(entry)}

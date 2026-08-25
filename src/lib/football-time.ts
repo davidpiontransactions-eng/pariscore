@@ -31,6 +31,12 @@ const longDayFormatter = new Intl.DateTimeFormat("fr-FR", {
   month: "short",
 });
 
+const shortDateFormatter = new Intl.DateTimeFormat("fr-FR", {
+  timeZone: PARIS_TZ,
+  day: "2-digit",
+  month: "2-digit",
+});
+
 function parisDayKey(d: Date): string {
   return dayKeyFormatter.format(d);
 }
@@ -40,6 +46,13 @@ export function parisKickoff(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "--:--";
   return parisFormatter.format(d);
+}
+
+/** JJ/MM — date de Paris (jamais le fuseau du navigateur). */
+export function parisDateShort(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return shortDateFormatter.format(d);
 }
 
 /** "Aujourd'hui" / "Demain" / "jeu. 20 août" — jour calculé dans le fuseau Paris. */

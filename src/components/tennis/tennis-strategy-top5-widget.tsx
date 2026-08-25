@@ -19,6 +19,7 @@ import {
   type Top5Surface,
 } from "@/lib/tennis-top5";
 import { useTennisTop5 } from "@/hooks/use-tennis-top5";
+import { parisDateShort, parisKickoff } from "@/lib/football-time";
 
 /**
  * Top 5 matchs tennis par métrique joueur — miroir du widget foot
@@ -42,13 +43,6 @@ const PERIODS: { key: Top5Period; label: string }[] = [
   { key: "ytd", label: "Depuis janv." },
   { key: "all", label: "Tout l'historique" },
 ];
-
-function formatKickoff(iso: string): string {
-  if (!iso) return "--:--";
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return "--:--";
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
 
 function PlayerLine({
   side,
@@ -94,8 +88,9 @@ function MatchRow({ entry, def }: { entry: TennisTop5Entry; def: TennisTop5Def }
     <li>
       <div className="rounded px-0.5 py-1 transition-colors hover:bg-slate-800/60">
         <div className="flex items-center gap-1.5">
-          <span className="w-10 shrink-0 font-mono text-[9px] tabular-nums text-slate-500">
-            {formatKickoff(entry.scheduledAt)}
+          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-500">
+            <span className="text-[8px] leading-tight">{parisDateShort(entry.scheduledAt)}</span>
+            <span className="text-[9px] leading-tight">{parisKickoff(entry.scheduledAt)}</span>
           </span>
           <div className="min-w-0 flex-1 space-y-0.5">
             <PlayerLine side="A" entry={entry} def={def} />
