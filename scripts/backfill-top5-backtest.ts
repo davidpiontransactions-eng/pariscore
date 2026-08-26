@@ -98,3 +98,9 @@ void main().catch((err) => {
   console.error("[top5-backtest] FATAL:", err);
   process.exit(1);
 });
+
+/** Compute CLV % = (pickOdds - closingOdds) / closingOdds ; null if closingOdds missing/invalid. */
+function computeClvPct(pickOdds: number | null, closingOdds: number | null): number | null {
+  if (closingOdds == null || closingOdds <= 1) return null;
+  return ((pickOdds ?? 0) - closingOdds) / closingOdds;
+}

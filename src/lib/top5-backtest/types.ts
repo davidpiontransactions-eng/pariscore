@@ -29,6 +29,10 @@ export interface Top5BacktestEntry {
   pick?: string | null;
   /** Cote décimale pré-match si disponible (sinon null → exclu du ROI). */
   odds: number | null;
+  /** Cote clôture (au moment du coup d'envoi), pour calcul CLV. Null si non dispo. */
+  closingOdds: number | null;
+  /** CLV en % : (pickOdds - closingOdds) / closingOdds ; null si closingOdds manquant. */
+  clvPct: number | null;
   status: Top5BacktestStatus;
   settledAt?: string;
   /** Score final (« 2-1 ») ou total (« 11 corners ») pour audit visuel. */
