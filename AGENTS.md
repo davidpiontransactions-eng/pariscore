@@ -385,6 +385,16 @@ Full reference: `.opencode/instructions/prompt-engineering.md`
 - Record tool calls and outcomes for debugging
 - Capture errors and edge cases for iteration
 
+## Session: Predictions Live — Markov Engine (2026-08-26)
+
+**Scope**: Remplacement du modèle odometer statique par un moteur Markov récursif score-conditionné pour les prédictions live tennis. Modèle sensible à QUI mène, à la force de service observée, et aux probabilités implicites marché.
+
+**Fichiers clés**: `src/lib/prediction/live-markov.ts` (nouveau — `gameWinProb`, `breakProb`, `setWinProb`, `setScoreDistribution`, `setOverUnder`, `expectedRemainingGames`, `expectedRemainingSets`, `matchWinProb`, `clearAllMemos`), `src/lib/prediction/total-games.ts` (`adjustLambdaLive()` v2 + `LiveGamesContext` étendu + `setOver75/setUnder125` en %), `src/components/tennis/predictive-bets.tsx` (section "Set en cours" Over 7,5 / Under 12,5), `src/components/tennis/most-aces-compare.tsx` + `pip-bet-panel.tsx` + `src/lib/set-odds.ts` (`buildLiveContext` synchronisé).
+
+**Tests**: `tests/live-markov-sanity.spec.ts` (**bun:test**, 17/17). Sanity rules : `setOverUnder` retourne des floats 0-1 — convertis ×100 dans `adjustLambdaLive` ; les clés de mémoïsation incluent les holds quantisés (Maps module-level partagées entre matchs) ; `clearAllMemos()` est appelé dans la branche live d'`adjustLambdaLive` (point de passage unique) ; `gameWinProb(p)` prend point-level (pas hold) ; `expectedRemainingSets` = DP récursif — E(1,0,.65,true)=1.35, E(0,0)≈2.46 ; tie-break réparti sur `"7-6"` ET `"6-7"` dans la distribution.
+
+**Trace**: `.context/session-predictions-live-v2.md` (journal de boucle P6 complet : review NO-GO→fixes→gates verts→commits→deploy).
+
 ## Session: Stats Ligues OddAlerts (2026-08-23)
 
 **Scope**: Réplique des pages ligues oddalerts.com sur Pariscore pour **1582 championnats** (197 pays) — scraping quotidien → table SQLite `league_season_stats` dans pariscore.db → API Next + pages `/ligues`.
