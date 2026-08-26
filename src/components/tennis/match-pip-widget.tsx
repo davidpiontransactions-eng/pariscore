@@ -15,6 +15,7 @@ import { useLiveStream } from "@/hooks/use-live-stream";
 import { useFavorites } from "@/hooks/use-favorites";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useBetNotify } from "@/hooks/use-bet-notify";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { ServeStats } from "@/lib/prediction/total-games";
 import { PipMatchRow } from "@/components/tennis/pip-match-row";
@@ -89,18 +90,21 @@ function buildSyntheticMatch(
 export function MatchPipWidget() {
   const { favorites } = useFavorites();
   const { liveStates, liveMatchList, connectionStatus } = useLiveStream();
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // Matchs favoris en live = intersection des favoris et des matchs live.
-  // Pour chaque match live non en prematch, on construit un TennisMatch synthétique.
+  // Matchs favoris/sélectionnés en live : intersection des favoris + sélection sidebar
+  // avec les matchs live. Pour chaque match live, on construit un TennisMatch synthétique.
   const liveFavoriteMatches = useMemo(() => {
+    const selectedSet = new Set(selectedMatchIds);
     const result: Array<{
       match: TennisMatch;
       liveState: (typeof liveStates)[string];
     }> = [];
     for (const lm of liveMatchList) {
       if (!lm.isLive) continue;
-      if (!favorites.has(lm.id)) continue;
+      // Match si favori ★ OU sélectionné dans la sidebar
+      if (!favorites.has(lm.id) && !selectedSet.has(lm.id)) continue;
       const liveState = liveStates[lm.id];
       if (!liveState) continue; // pas encore de state live détaillé
       result.push({
@@ -115,7 +119,7 @@ export function MatchPipWidget() {
       });
     }
     return result;
-  }, [favorites, liveMatchList, liveStates]);
+  }, [favorites, liveMatchList, liveStates, selectedMatchIds]);
 
   // Récupère les stats serve pour TOUS les joueurs affichés (1 seul call SWR).
   // Comme dans match-card.tsx:117 — on concatène les noms.
@@ -208,10 +212,10 @@ export function MatchPipWidget() {
       {liveFavoriteMatches.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border/40 p-6 text-center">
           <p className="text-[11px] text-muted-foreground/70">
-            Aucun favori en live.
+            Aucun match en live.
           </p>
           <p className="text-[11px] text-muted-foreground/50 mt-1">
-            Épingle des matchs ★ sur ParisScore pour les voir ici.
+            Épingle des matchs ★ ou sélectionne-les dans la sidebar pour les voir ici.
           </p>
         </div>
       ) : (
