@@ -47,6 +47,9 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
     gamesPlayed: completedSetsGames + currentSetGames,
     setsWon: [state.scoreA.sets.length, state.scoreB.sets.length],
     currentSetGames: [state.scoreA.games, state.scoreB.games],
+    liveProbA: state.liveProbA,
+    liveProbB: state.liveProbB,
+    server: state.server,
   };
 }
 

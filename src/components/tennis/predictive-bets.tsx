@@ -47,9 +47,8 @@ function toModelSurface(s: string): PredictionSurface {
 }
 
 /** Construit le contexte live (games joués + sets + set en cours) pour le
- *  recalcul de λ_restant. */
+ *  recalcul de λ_restant. Inclut liveProb (implicite marché) + server. */
 function buildLiveContext(state: LiveMatchState): LiveGamesContext {
-  // Games joués = somme sets terminés + jeux du set en cours.
   const completedSetsGames =
     state.scoreA.sets.reduce((a, b) => a + b, 0) +
     state.scoreB.sets.reduce((a, b) => a + b, 0);
@@ -61,6 +60,9 @@ function buildLiveContext(state: LiveMatchState): LiveGamesContext {
       state.scoreB.sets.length,
     ],
     currentSetGames: [state.scoreA.games, state.scoreB.games],
+    liveProbA: state.liveProbA,
+    liveProbB: state.liveProbB,
+    server: state.server,
   };
 }
 
@@ -70,6 +72,8 @@ type Prediction = {
   over18_5: number;
   over19_5: number;
   over21_5: number;
+  setOver75: number;
+  setUnder125: number;
   lambda: number;
   recommendedBet: { threshold: Threshold; direction: "over" | "under"; prob: number };
   source: string;
@@ -87,10 +91,11 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
   // absent, le guard d'affichage est en dessous.
   const predictions: Prediction | null = useMemo(() => {
     if (!prematch || !liveState) {
-      return prematch ?? null;
+      if (!prematch) return null;
+      // Prematch : setOver75/Under125 non calculés → baseline 0-0 set (≈ 50%)
+      return { ...prematch, setOver75: 50, setUnder125: 50 };
     }
-    // Recalcul live avec contexte (games restants). Stats serve depuis les
-    // props (résolues côté serveur via usePlayerStats) — pas d'import node:fs.
+    // (Reset mémoïsations Markov géré dans adjustLambdaLive — couche modèle.)
     const modelSurface = toModelSurface(match.stats.surface);
     const liveCtx = buildLiveContext(liveState);
     const result = predictTotalGames(
@@ -106,16 +111,24 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
       over18_5: result.over18_5,
       over19_5: result.over19_5,
       over21_5: result.over21_5,
+      setOver75: result.setOver75,
+      setUnder125: result.setUnder125,
       lambda: result.lambda,
       recommendedBet: result.recommendedBet,
       source: result.source,
     };
   }, [
+    prematch,
     liveState?.scoreA.games,
     liveState?.scoreB.games,
     liveState?.scoreA.sets.length,
     liveState?.scoreB.sets.length,
+    liveState?.liveProbA,
+    liveState?.liveProbB,
+    liveState?.server,
     match.stats.surface,
+    match.playerA.elo,
+    match.playerB.elo,
     serveStatsA,
     serveStatsB,
   ]);
@@ -193,6 +206,42 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
           );
         })}
       </div>
+
+      {/* Marchés par set — live seulement */}
+      {isLive && (
+        <div className="mt-1.5 space-y-1 border-t border-border/40 pt-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+            Set en cours
+          </span>
+          {[
+            { label: "Over 7,5 jeux", prob: predictions.setOver75 },
+            { label: "Under 12,5 jeux", prob: predictions.setUnder125 },
+          ].map(({ label, prob }) => {
+            const cClass =
+              prob >= 65
+                ? "bg-emerald-500"
+                : prob >= 45
+                  ? "bg-amber-500"
+                  : "bg-muted-foreground/40";
+            return (
+              <div key={label} className="flex items-center gap-2 px-1 py-0.5">
+                <span className="w-24 shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                  {label}
+                </span>
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                  <span
+                    className={cn("block h-full rounded-full transition-all duration-500", cClass)}
+                    style={{ width: `${prob}%` }}
+                  />
+                </span>
+                <span className="w-8 shrink-0 text-right font-mono text-[10px] font-semibold tabular-nums">
+                  {prob}%
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Reco : le seuil le plus proche de 60% (value sweet spot). */}
       <div className="mt-1.5 flex items-center gap-1 border-t border-border/40 pt-1 text-[11px]">
