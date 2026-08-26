@@ -14,6 +14,13 @@
 // Toutes les formules sont fermées (O(1)) → utilisable en live (poll 8s).
 // Pas de Monte-Carlo en runtime (réservé à la calibration hors-ligne).
 
+import {
+  expectedRemainingGames,
+  setScoreDistribution,
+  setOverUnder,
+  clearAllMemos,
+} from "./live-markov";
+
 export type PredictionSurface = "Hard" | "Clay" | "Grass";
 
 /** Stats de service/retour d'un joueur (depuis cache DR étendu ou fallback). */
@@ -31,6 +38,11 @@ export type LiveGamesContext = {
   setsWon: [number, number];
   /** Score de jeux du set en cours [A, B] (ex: [4, 3]). */
   currentSetGames: [number, number];
+  /** Probabilités de victoire implicites marché (BSD live odds). */
+  liveProbA?: number;
+  liveProbB?: number;
+  /** Joueur au service (pour le set en cours). */
+  server?: "A" | "B";
 };
 
 export type TotalGamesPrediction = {
@@ -48,6 +60,10 @@ export type TotalGamesPrediction = {
   over19_5: number;
   /** P(Over 21.5) [0..100]. */
   over21_5: number;
+  /** P(Over 7.5 jeux set courant) [0..100] — live seulement. */
+  setOver75: number;
+  /** P(Under 12.5 jeux set courant) [0..100] — live seulement. */
+  setUnder125: number;
   /** Seuil recommandé = celui dont la proba Over est la plus proche de 60%
    *  (le plus "value", ni trop évident ni trop risqué). */
   recommendedBet: {
@@ -280,10 +296,14 @@ export function predictTotalGames(
   //    statistiquement plus long que la moyenne prematch → λ_final monte).
   let lambda = lambdaPrematch;
   let gamesAlreadyPlayed = 0;
+  let setOver75 = 50;
+  let setUnder125 = 50;
   if (liveCtx) {
     gamesAlreadyPlayed = liveCtx.gamesPlayed;
-    const lambdaRestant = adjustLambdaLive(lambdaPrematch, liveCtx, bestOf);
+    const { lambdaRestant, setOver75: o75, setUnder125: u125 } = adjustLambdaLive(lambdaPrematch, liveCtx, bestOf, pHoldA, pHoldB);
     lambda = gamesAlreadyPlayed + lambdaRestant;
+    setOver75 = o75;
+    setUnder125 = u125;
   }
 
   // 4. P(Over X.5) pour les 3 seuils — calculé sur λ (total final attendu).
@@ -317,56 +337,101 @@ export function predictTotalGames(
     over18_5,
     over19_5,
     over21_5,
+    setOver75,
+    setUnder125,
     recommendedBet,
     source,
   };
 }
 
 /**
- * Espérance de games RESTANTS vu depuis le moment live actuel.
+ * Ajuste λ (total games attendu) en mode live.
  *
- * Modèle : E[restants] = densitéGamesParSet × E[sets restants].
- *   - densitéGamesParSet = λPrematch / E[sets]_prematch (≈ 10.8 g/set best-of-3).
- *   - E[sets restants] décroît selon le nombre de sets déjà joués :
- *       0 set joué → ~2.10 (match entier à venir)
- *       1 set joué → ~1.35 (set en cours + éventuel 3e set)
- *       2 sets joués (1-1) → ~1.0 (décisif seulement)
+ * Nouveau modèle (v2) : remplace l'odomètre statique par une récursion Markov
+ * score-conditionnée. Le λ final est maintenant sensible à :
+ *   - QUI mène (pas seulement combien de sets/joués)
+ *   - La force de service observée en live (via holdA/B déjà computed)
+ *   - La probabilité implicite marché (liveProbA/B → E[sets restants])
  *
- * Bonus tiebreak imminent (set en cours 5-5 ou 6-6) : +2/+1 games.
+ * Formule : λ_restant = E[jeux restants set en cours | score] +
+ *                       Σ_sets E[games/set] × P(set encore joué)
  *
- * Le total final prédit = gamesJoués + E[restants] augmente légèrement quand
- * le match avance (un match à 16 games est statistiquement plus long que la
- * moyenne prematch) — c'est la bonne sémantique pour P(Over).
+ * Le old modèle ajoutait +1.0 par jeu (odomètre) — le nouveau peut
+ * DESCENDRE quand un joueur domine (sets courts 6-2 6-3) ou MONTER
+ * quand c'est serré (tiebreaks, sets longs).
  */
 function adjustLambdaLive(
   lambdaPrematch: number,
   ctx: LiveGamesContext,
   bestOf: 3 | 5,
-): number {
-  if (ctx.gamesPlayed === 0) return lambdaPrematch;
-
-  // Densité de games par set (héritée du prematch).
-  const eSetsPrematch = bestOf === 3 ? BASE_SETS_BO3 : 4.0;
-  const densiteParSet = lambdaPrematch / eSetsPrematch;
-
-  // E[sets restants] selon le nombre de sets déjà joués.
-  const setsJoues = ctx.setsWon[0] + ctx.setsWon[1];
-  let eSetsRestants: number;
-  if (bestOf === 3) {
-    eSetsRestants = setsJoues === 0 ? 2.10 : setsJoues === 1 ? 1.35 : 1.0;
-  } else {
-    // best-of-5 : plus granulaire.
-    eSetsRestants = setsJoues === 0 ? 4.0 : setsJoues === 1 ? 3.0 : setsJoues === 2 ? 2.0 : 1.2;
+  pHoldA: number,
+  pHoldB: number,
+): { lambdaRestant: number; setOver75: number; setUnder125: number } {
+  if (ctx.gamesPlayed === 0) {
+    return { lambdaRestant: lambdaPrematch, setOver75: 50, setUnder125: 50 };
   }
 
-  let lambdaRestant = densiteParSet * eSetsRestants;
+  // Reset mémoïsations Markov : borne la mémoire en process long et garantit
+  // un recalcul frais à chaque poll (les clés incluent les holds, le clear
+  // est redondant pour la justesse mais pas pour la taille des Maps).
+  clearAllMemos();
 
-  // Bonus tiebreak imminent dans le set en cours.
+  // Biais assumé si le serveur est inconnu : on crédite A du hold.
+  const server = ctx.server ?? "A";
   const [gA, gB] = ctx.currentSetGames;
-  if (gA >= 5 && gB >= 5) lambdaRestant += 2;
-  else if (gA >= 6 && gB >= 6) lambdaRestant += 1;
 
-  return Math.max(2, lambdaRestant);
+  // 1. E[jeux restants dans le set en cours] — Markov récursion
+  const erSetCurrent = expectedRemainingGames(pHoldA, pHoldB, server, gA, gB);
+
+  // 2. Distribution des scores terminaux → Over 7,5 / Under 12,5
+  const dist = setScoreDistribution(pHoldA, pHoldB, server, gA, gB);
+  const { over75, under125 } = setOverUnder(dist);
+
+  // 3. E[sets restants] pondérée par liveProb (implicite marché)
+  const setsWonA = ctx.setsWon[0];
+  const setsWonB = ctx.setsWon[1];
+  const setsNeeded = bestOf === 3 ? 2 : 3;
+
+  let eSetsRestants: number;
+  // liveProbA/B sont en % (0-100, cf. bsd-fetcher). Si A absent mais B
+  // présent → déduction symétrique ; sinon neutre 50%.
+  const livePctA =
+    ctx.liveProbA ?? (ctx.liveProbB != null ? 100 - ctx.liveProbB : 50);
+
+  if (setsWonA >= setsNeeded || setsWonB >= setsNeeded) {
+    eSetsRestants = 0;
+  } else if (setsWonA + setsWonB === 0) {
+    const pWinA = livePctA / 100;
+    const q = 1 - pWinA;
+    if (bestOf === 3) {
+      eSetsRestants = 2 * (pWinA * pWinA + q * q) + 3 * (2 * pWinA * q) + 4 * 0.05;
+    } else {
+      eSetsRestants = 4.0 - (pWinA > 0.7 ? 0.5 : pWinA < 0.3 ? 0.5 : 0);
+    }
+  } else {
+    if (bestOf === 3) {
+      // Mené 1-0 en BO3 : E[sets à jouer] = 1.35 (= 1 + q avec q≈0.35).
+      // Les deux branches lead/trail donnent la même valeur → constante.
+      eSetsRestants = 1.35;
+    } else {
+      eSetsRestants = 3.0;
+    }
+  }
+
+  // 4. E[jeux dans les sets restants après celui-ci
+  const avgDensity = ((pHoldA + pHoldB) / 2) * 12;
+  const erSetsAfter = eSetsRestants * avgDensity;
+
+  // 5. Total restant = set courant + sets après
+  const lambdaRestant = erSetCurrent + erSetsAfter;
+
+  // setOver75/setUnder125 : convertis en % [0..100] ici (contrat du type
+  // TotalGamesPrediction) car setOverUnder retourne des probas brutes 0-1.
+  return {
+    lambdaRestant: Math.max(2, lambdaRestant),
+    setOver75: Math.round(over75 * 100),
+    setUnder125: Math.round(under125 * 100),
+  };
 }
 
 // ---------------------------------------------------------------------------
