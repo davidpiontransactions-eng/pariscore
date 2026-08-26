@@ -114,3 +114,39 @@ Remplacement du modèle odometer statique dans `adjustLambdaLive()` par un moteu
 | Graphe connaissances | `graphify update .` | ✅ AST 1428/1428 fichiers, graphe régénéré + backup 2026-08-26 |
 
 **Verdict review après fixes : GO** (les 3 bloquants critiques corrigés + 10 mineurs traités).
+
+## P4 — Commits
+
+| SHA | Message | Fichiers |
+|-----|---------|----------|
+| `45e2626b` | feat(tennis): moteur Markov DP live pour ajustement lambda | live-markov.ts, total-games.ts |
+| `9fb84631` | feat(tennis): over/under set en cours + propagation liveCtx | 3 composants + set-odds.ts |
+| `9e0a65c7` | test(tennis): sanity suite moteur Markov (17 cas) | spec |
+| `43667c17` | docs(context): trace boucle predictions-live-v2 | trace .md + AGENTS.md |
+
+⚠️ Incident deploy évité : le mode par défaut de `deploy.bat` fait `git add -u` (aurait embarqué le WIP top5-backtest de l'autre session). Chemin sûr utilisé : `stash → pull --rebase → push → stash pop` puis `deploy.bat --no-commit`. Le VPS fait `reset --hard origin/main` → seuls les commits poussés partent en prod.
+
+## P5 — Deploy VPS
+
+| Action | Verify | Résultat |
+|--------|--------|----------|
+| Push origin/main (`803885d4..43667c17`) | fast-forward OK | ✅ |
+| `scripts\deploy.bat --no-commit` | log VPS | ✅ **VPS_DEPLOY_OK** — build complet (`build_ran: 1`, 7 fichiers session détectés), pm2 restarté, `health: OK` |
+
+Commit sondes QA : `0897588d` (test(tennis): sondes QA live moteur Markov).
+
+## P6 — QA live (prod)
+
+| Sonde | Méthode | Résultat |
+|-------|---------|----------|
+| API live | `GET /api/tennis/live` | ✅ HTTP OK — 13 matchs live |
+| **Moteur sur données prod** | `scripts/qa-markov-live-engine.ts` — predictTotalGames sur 8 matchs réels | ✅ **PASS** : 8/8 sorties ∈ [0..100], 4 valeurs distinctes (modèle actif), cas limites validés : **6-6 → Under12,5=0%** (TB certain), **4-2/5-2 → Over7,5=100%** (min 6-2=8 jeux), leader 83% à 2-0 → Over7,5=24% |
+| UI DOM (screenshot) | `scripts/qa-markov-live-probe.ts` (Playwright) | ⚠️ Impossible localement : chromium headless-shell ET chrome système timeout au lancement (RAM commit saturée — piège connu machine). Sonde committée pour re-run ultérieur : `bun run scripts/qa-markov-live-probe.ts` |
+
+## Bilan de boucle
+
+- Review agent : NO-GO → 3 bloquants corrigés → GO
+- Gates : tests 17/17 · tsc 0 erreur session · eslint 0 erreur · graphify régénéré
+- 4 commits rebasés proprement sur l'upstream (refresh données concurrents), poussés, déployés
+- Deploy prod validé + QA moteur PASS sur données live réelles
+- Bead `ParisScorebis-gmdr` fermé
