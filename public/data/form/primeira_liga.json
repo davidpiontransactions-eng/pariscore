@@ -4,7 +4,7 @@
     "leagueId": "primeira_liga",
     "leagueName": "Portugal",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-08-25T05:05:14.671417Z",
+    "lastUpdated": "2026-08-26T05:05:25.251725Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 20,
     "window": 8,
@@ -13,31 +13,31 @@
   },
   "home": [
     {
-      "teamName": "Moreirense",
+      "teamName": "Alverca",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
+      "l": 0,
+      "gf": 8,
+      "ga": 7
+    },
+    {
+      "teamName": "Gil Vicente",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 9,
+      "ga": 4
+    },
+    {
+      "teamName": "Estoril",
       "gp": 5,
       "w": 1,
       "d": 2,
       "l": 2,
       "gf": 5,
-      "ga": 7
-    },
-    {
-      "teamName": "Fc Porto",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 9,
-      "ga": 2
-    },
-    {
-      "teamName": "Guimaraes",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 5,
-      "ga": 3
+      "ga": 8
     },
     {
       "teamName": "Sporting Braga",
@@ -49,31 +49,13 @@
       "ga": 7
     },
     {
-      "teamName": "Avs",
+      "teamName": "Sporting Cp",
       "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 6
-    },
-    {
-      "teamName": "Alverca",
-      "gp": 5,
-      "w": 2,
-      "d": 3,
+      "w": 4,
+      "d": 0,
       "l": 0,
-      "gf": 8,
-      "ga": 7
-    },
-    {
-      "teamName": "Estrela Amadora",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 8
+      "gf": 14,
+      "ga": 6
     },
     {
       "teamName": "Santa Clara",
@@ -94,6 +76,51 @@
       "ga": 5
     },
     {
+      "teamName": "Arouca",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 12,
+      "ga": 6
+    },
+    {
+      "teamName": "Estrela Amadora",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 8
+    },
+    {
+      "teamName": "Fc Porto",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 9,
+      "ga": 2
+    },
+    {
+      "teamName": "Avs",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 5,
+      "ga": 6
+    },
+    {
+      "teamName": "Guimaraes",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 5,
+      "ga": 3
+    },
+    {
       "teamName": "Benfica",
       "gp": 5,
       "w": 3,
@@ -101,51 +128,6 @@
       "l": 0,
       "gf": 13,
       "ga": 5
-    },
-    {
-      "teamName": "Nacional",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 6,
-      "ga": 3
-    },
-    {
-      "teamName": "Estoril",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 8
-    },
-    {
-      "teamName": "Casa Pia",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 11
-    },
-    {
-      "teamName": "Gil Vicente",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 9,
-      "ga": 4
-    },
-    {
-      "teamName": "Rio Ave",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 4,
-      "ga": 9
     },
     {
       "teamName": "Academico Viseu",
@@ -157,22 +139,13 @@
       "ga": 1
     },
     {
-      "teamName": "Arouca",
+      "teamName": "Nacional",
       "gp": 5,
-      "w": 4,
+      "w": 2,
       "d": 0,
-      "l": 1,
-      "gf": 12,
-      "ga": 6
-    },
-    {
-      "teamName": "Sporting Cp",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 14,
-      "ga": 6
+      "l": 2,
+      "gf": 6,
+      "ga": 3
     },
     {
       "teamName": "Maritimo",
@@ -184,6 +157,24 @@
       "ga": 2
     },
     {
+      "teamName": "Rio Ave",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 3,
+      "gf": 4,
+      "ga": 9
+    },
+    {
+      "teamName": "Casa Pia",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 11
+    },
+    {
       "teamName": "Famalicao",
       "gp": 5,
       "w": 3,
@@ -191,44 +182,44 @@
       "l": 1,
       "gf": 8,
       "ga": 4
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Sporting Cp",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 11,
-      "ga": 6
     },
     {
       "teamName": "Moreirense",
       "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 5,
+      "ga": 7
+    }
+  ],
+  "away": [
+    {
+      "teamName": "Alverca",
+      "gp": 5,
       "w": 0,
       "d": 1,
       "l": 4,
-      "gf": 3,
-      "ga": 12
+      "gf": 4,
+      "ga": 9
     },
     {
-      "teamName": "Fc Porto",
+      "teamName": "Gil Vicente",
       "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 8,
-      "ga": 5
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 9
     },
     {
-      "teamName": "Guimaraes",
+      "teamName": "Estoril",
       "gp": 5,
-      "w": 0,
-      "d": 0,
-      "l": 4,
-      "gf": 6,
-      "ga": 13
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 4,
+      "ga": 9
     },
     {
       "teamName": "Sporting Braga",
@@ -240,31 +231,13 @@
       "ga": 6
     },
     {
-      "teamName": "Avs",
+      "teamName": "Sporting Cp",
       "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 2,
-      "l": 2,
-      "gf": 3,
-      "ga": 8
-    },
-    {
-      "teamName": "Estrela Amadora",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 8
-    },
-    {
-      "teamName": "Alverca",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 4,
-      "ga": 9
+      "l": 0,
+      "gf": 11,
+      "ga": 6
     },
     {
       "teamName": "Santa Clara",
@@ -285,12 +258,66 @@
       "ga": 11
     },
     {
+      "teamName": "Arouca",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 5,
+      "ga": 6
+    },
+    {
+      "teamName": "Estrela Amadora",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 8
+    },
+    {
+      "teamName": "Fc Porto",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 8,
+      "ga": 5
+    },
+    {
+      "teamName": "Avs",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 3,
+      "ga": 8
+    },
+    {
+      "teamName": "Guimaraes",
+      "gp": 5,
+      "w": 0,
+      "d": 0,
+      "l": 4,
+      "gf": 6,
+      "ga": 13
+    },
+    {
       "teamName": "Benfica",
       "gp": 5,
       "w": 4,
       "d": 2,
       "l": 0,
       "gf": 14,
+      "ga": 4
+    },
+    {
+      "teamName": "Academico Viseu",
+      "gp": 2,
+      "w": 0,
+      "d": 2,
+      "l": 0,
+      "gf": 4,
       "ga": 4
     },
     {
@@ -303,31 +330,13 @@
       "ga": 8
     },
     {
-      "teamName": "Estoril",
-      "gp": 5,
+      "teamName": "Maritimo",
+      "gp": 1,
       "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 4,
-      "ga": 9
-    },
-    {
-      "teamName": "Casa Pia",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 1,
-      "ga": 8
-    },
-    {
-      "teamName": "Gil Vicente",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 9
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 1
     },
     {
       "teamName": "Rio Ave",
@@ -339,31 +348,13 @@
       "ga": 5
     },
     {
-      "teamName": "Arouca",
+      "teamName": "Casa Pia",
       "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 5,
-      "ga": 6
-    },
-    {
-      "teamName": "Academico Viseu",
-      "gp": 2,
       "w": 0,
-      "d": 2,
-      "l": 0,
-      "gf": 4,
-      "ga": 4
-    },
-    {
-      "teamName": "Maritimo",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
+      "d": 1,
+      "l": 4,
+      "gf": 1,
+      "ga": 8
     },
     {
       "teamName": "Famalicao",
@@ -373,6 +364,15 @@
       "l": 2,
       "gf": 4,
       "ga": 6
+    },
+    {
+      "teamName": "Moreirense",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 3,
+      "ga": 12
     }
   ]
 }

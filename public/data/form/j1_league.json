@@ -4,7 +4,7 @@
     "leagueId": "j1_league",
     "leagueName": "Japan",
     "season": "2026/27",
-    "lastUpdated": "2026-08-25T05:05:49.883284Z",
+    "lastUpdated": "2026-08-26T05:06:00.026729Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,21 +13,12 @@
   },
   "home": [
     {
-      "teamName": "Kashiwa Reysol",
+      "teamName": "Cerezo Osaka",
       "gp": 2,
       "w": 2,
       "d": 0,
       "l": 0,
-      "gf": 6,
-      "ga": 3
-    },
-    {
-      "teamName": "S. Hiroshima",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
+      "gf": 3,
       "ga": 1
     },
     {
@@ -40,13 +31,13 @@
       "ga": 0
     },
     {
-      "teamName": "Cerezo Osaka",
+      "teamName": "Kashiwa Reysol",
       "gp": 2,
       "w": 2,
       "d": 0,
       "l": 0,
-      "gf": 3,
-      "ga": 1
+      "gf": 6,
+      "ga": 3
     },
     {
       "teamName": "Kashima Antlers",
@@ -56,9 +47,27 @@
       "l": 0,
       "gf": 5,
       "ga": 3
+    },
+    {
+      "teamName": "S. Hiroshima",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
     }
   ],
   "away": [
+    {
+      "teamName": "Mito Hollyhock",
+      "gp": 2,
+      "w": 1,
+      "d": 0,
+      "l": 1,
+      "gf": 4,
+      "ga": 3
+    },
     {
       "teamName": "Kashiwa Reysol",
       "gp": 1,
@@ -66,15 +75,6 @@
       "d": 0,
       "l": 0,
       "gf": 3,
-      "ga": 1
-    },
-    {
-      "teamName": "S. Hiroshima",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 4,
       "ga": 1
     },
     {
@@ -87,15 +87,6 @@
       "ga": 1
     },
     {
-      "teamName": "Mito Hollyhock",
-      "gp": 2,
-      "w": 1,
-      "d": 0,
-      "l": 1,
-      "gf": 4,
-      "ga": 3
-    },
-    {
       "teamName": "Kashima Antlers",
       "gp": 1,
       "w": 1,
@@ -103,6 +94,15 @@
       "l": 0,
       "gf": 4,
       "ga": 3
+    },
+    {
+      "teamName": "S. Hiroshima",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
     }
   ]
 }

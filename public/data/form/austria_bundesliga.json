@@ -4,7 +4,7 @@
     "leagueId": "austria_bundesliga",
     "leagueName": "Austria",
     "season": "2026/27",
-    "lastUpdated": "2026-08-25T05:06:05.192255Z",
+    "lastUpdated": "2026-08-26T05:06:15.307237Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,15 +13,6 @@
   },
   "home": [
     {
-      "teamName": "Wolfsberger Ac",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
-      "ga": 1
-    },
-    {
       "teamName": "A. Lustenau",
       "gp": 2,
       "w": 1,
@@ -29,15 +20,6 @@
       "l": 0,
       "gf": 3,
       "ga": 2
-    },
-    {
-      "teamName": "Sturm Graz",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
     },
     {
       "teamName": "Rapid Wien",
@@ -56,17 +38,6 @@
       "l": 0,
       "gf": 7,
       "ga": 1
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Hartberg",
-      "gp": 2,
-      "w": 1,
-      "d": 0,
-      "l": 1,
-      "gf": 2,
-      "ga": 2
     },
     {
       "teamName": "Sturm Graz",
@@ -74,9 +45,20 @@
       "w": 1,
       "d": 1,
       "l": 0,
-      "gf": 3,
+      "gf": 2,
       "ga": 1
     },
+    {
+      "teamName": "Wolfsberger Ac",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
+    }
+  ],
+  "away": [
     {
       "teamName": "Salzburg",
       "gp": 2,
@@ -103,6 +85,24 @@
       "l": 0,
       "gf": 2,
       "ga": 0
+    },
+    {
+      "teamName": "Sturm Graz",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 3,
+      "ga": 1
+    },
+    {
+      "teamName": "Hartberg",
+      "gp": 2,
+      "w": 1,
+      "d": 0,
+      "l": 1,
+      "gf": 2,
+      "ga": 2
     }
   ]
 }
