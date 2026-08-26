@@ -79,7 +79,7 @@ export function llmConfig(): LlmConfig {
   return {
     mode: mode === "local" || mode === "auto" ? mode : "gemini",
     fallbackEnabled: String(process.env.LLM_FALLBACK_ENABLED ?? "false") === "true",
-    geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
+    geminiModel: process.env.GEMINI_MODEL ?? "gemini-3.6-flash",
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
     localBaseUrl: baseUrl,
     localModel: process.env.LOCAL_LLM_MODEL ?? "llama-3.1-8b-instruct",

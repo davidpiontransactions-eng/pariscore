@@ -8,11 +8,26 @@ import type { FootballMatch } from "@/lib/football-data";
  * produit une synthèse narrative, 3 faits marquants et une suggestion de combiné.
  */
 
+export type AIPredictiveBet = {
+  /** Label du pari (ex: "Double Chance 1X", "Over 2.5 Buts"). */
+  label: string;
+  /** Probabilité estimée par l'IA [0-100]. */
+  prob: number;
+  /** Cote décimale indicative (null si non estimable). */
+  odds: number | null;
+  /** Niveau de confiance du pari [1-5]. */
+  confidence: number;
+  /** Rationale courte (1 phrase). */
+  rationale: string;
+};
+
 export type FootballAIReport = {
   /** Synthèse narrative (2-3 phrases) sur la physionomie attendue du match. */
   synthesis: string;
   /** 3 faits statistiques marquants. */
   keyFacts: string[];
+  /** 3 paris prédictifs générés par l'IA. */
+  predictiveBets: AIPredictiveBet[];
   /** Suggestion de combiné (null si aucun ne se détache). */
   combo: { label: string; rationale: string } | null;
   /** Confiance 1-5. */

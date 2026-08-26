@@ -32,6 +32,7 @@ import { computeSetOdds } from "@/lib/set-odds";
 import type { CalculatedLiveMetrics } from "@/lib/tennis-live-metrics";
 import type { ServeStats } from "@/lib/prediction/total-games";
 import { cn } from "@/lib/utils";
+import { playTennisSound } from "@/lib/tennis-sound";
 
 type Props = {
   match: TennisMatch;
@@ -265,6 +266,24 @@ function PipMatchRowImpl({
     }
   }, [valueAlert, liveState, onValueAlert, playerA.name, playerB.name]);
 
+  // ── Alerte DR Set >= 1.2 (visuelle + sonore) ──
+  // Se déclenche quand un joueur atteint DR >= 1.2 sur un set,
+  // avec un cooldown de 2 jeux entre chaque alerte sonore.
+  const lastDrAlertGameRef = useRef<number>(-2);
+  useEffect(() => {
+    if (!drMatch || !liveState) return;
+    const totalGames = liveState.scoreA.sets.reduce((s, g) => s + g, 0)
+      + liveState.scoreB.sets.reduce((s, g) => s + g, 0)
+      + liveState.scoreA.games + liveState.scoreB.games;
+    // Ne jouer le son que si ≥ 2 jeux depuis la dernière alerte.
+    if (totalGames - lastDrAlertGameRef.current < 2) return;
+    const dominantSet = drMatch.drBySet.find((s) => s !== null && (s.drA >= 1.2 || s.drB >= 1.2));
+    if (dominantSet) {
+      lastDrAlertGameRef.current = totalGames;
+      playTennisSound("value");
+    }
+  }, [drMatch, liveState]);
+
   // Couleur du DR actuel (vert si A domine, bleu si B domine).
   const drColor = dr >= 0 ? "#22c55e" : "#3b82f6";
   const drPct = Math.round(dr * 100);
@@ -401,29 +420,39 @@ function PipMatchRowImpl({
 
         {/* 4e ligne : DR match (vrai ratio Sofascore) + DR par set */}
         {isLive && drMatch && (
-          <div className="flex items-center gap-1.5 mt-1 text-xs font-mono tabular-nums">
-            <span className="text-muted-foreground/60 shrink-0">DR match</span>
-            {/* DR match global par joueur */}
-            <span className={cn("font-semibold", drColorClass(drMatch.drA))} title={`DR match ${shortName(playerA.name)} = ${formatDr(drMatch.drA)}`}>
-              {shortName(playerA.name).substring(0, 4)} {formatDr(drMatch.drA)}
-            </span>
-            <span className="text-muted-foreground/40">·</span>
-            <span className={cn("font-semibold", drColorClass(drMatch.drB))} title={`DR match ${shortName(playerB.name)} = ${formatDr(drMatch.drB)}`}>
-              {shortName(playerB.name).substring(0, 4)} {formatDr(drMatch.drB)}
-            </span>
-            {/* DR par set (si au moins 1 set joué) */}
+          <div className="flex flex-col gap-0.5 mt-1 text-xs font-mono tabular-nums w-full">
+            {/* DR match global — ligne du haut */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-muted-foreground/60 shrink-0">DR match</span>
+              <span className={cn("font-semibold", drColorClass(drMatch.drA))} title={`DR match ${shortName(playerA.name)} = ${formatDr(drMatch.drA)}`}>
+                {shortName(playerA.name).substring(0, 4)} {formatDr(drMatch.drA)}
+              </span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className={cn("font-semibold", drColorClass(drMatch.drB))} title={`DR match ${shortName(playerB.name)} = ${formatDr(drMatch.drB)}`}>
+                {shortName(playerB.name).substring(0, 4)} {formatDr(drMatch.drB)}
+              </span>
+            </div>
+            {/* DR par set — ligne par ligne */}
             {drMatch.drBySet.some((s) => s !== null) && (
               <>
-                <span className="text-muted-foreground/40 ml-1">│sets</span>
                 {drMatch.drBySet.map((s, i) =>
                   s ? (
-                    <span
-                      key={i}
-                      className={cn("font-semibold", drColorClass(s.drA))}
-                      title={`DR Set ${i + 1} — ${shortName(playerA.name)} ${formatDr(s.drA)} · ${shortName(playerB.name)} ${formatDr(s.drB)}`}
-                    >
-                      S{i + 1}:{formatDr(s.drA)}/{formatDr(s.drB)}
-                    </span>
+                    <div key={i} className="flex items-center gap-1.5">
+                      <span className="text-muted-foreground/60 shrink-0 w-10">Set {i + 1}</span>
+                      <span className={cn("font-semibold", drColorClass(s.drA))}>
+                        {shortName(playerA.name).substring(0, 4)} {formatDr(s.drA)}
+                      </span>
+                      <span className="text-muted-foreground/40">·</span>
+                      <span className={cn("font-semibold", drColorClass(s.drB))}>
+                        {shortName(playerB.name).substring(0, 4)} {formatDr(s.drB)}
+                      </span>
+                      {/* Alerte DR Set >= 1.2 */}
+                      {(s.drA >= 1.2 || s.drB >= 1.2) && (
+                        <span className="ml-1 inline-flex items-center rounded-full bg-amber-500/20 px-1.5 py-px text-[9px] font-bold text-amber-300 animate-pulse">
+                          {s.drA >= 1.2 ? `${shortName(playerA.name).substring(0, 3)} domine` : `${shortName(playerB.name).substring(0, 3)} domine`}
+                        </span>
+                      )}
+                    </div>
                   ) : null,
                 )}
               </>

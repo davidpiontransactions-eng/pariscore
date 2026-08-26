@@ -102,7 +102,7 @@ function toReplayFixture(m: BSDFootballMatch): BSDFootballMatch {
 
 const num = (v: number | null | undefined): number => (v != null && Number.isFinite(v) ? v : 0);
 
-type Settled = { status: "won" | "lost" | "void"; odds: number | null; score?: string };
+type Settled = { status: "won" | "lost" | "void"; odds: number | null; closingOdds: number | null; score?: string };
 
 /** Règle de réussite par stratégie contre le résultat réel. */
 export function settleFootballPick(
@@ -110,7 +110,7 @@ export function settleFootballPick(
   pick: "home" | "away" | null,
   m: BSDFootballMatch,
 ): Settled {
-  if (m.home_score == null || m.away_score == null) return { status: "void", odds: null };
+  if (m.home_score == null || m.away_score == null) return { status: "void", odds: null, closingOdds: null };
   const hs = m.home_score;
   const as = m.away_score;
   const total = hs + as;
@@ -118,34 +118,53 @@ export function settleFootballPick(
   switch (key) {
     case "bestTeam":
     case "bestTeam1x2": {
-      if (!pick) return { status: "void", odds: null };
+      if (!pick) return { status: "void", odds: null, closingOdds: null };
       const won = pick === "home" ? hs > as : as > hs;
-      return { status: won ? "won" : "lost", odds: pick === "home" ? m.odds_home : m.odds_away, score: `${hs}-${as}` };
+      const clo = pick === "home" ? m.odds_home : m.odds_away;
+      return { status: won ? "won" : "lost", odds: clo ?? null, closingOdds: clo ?? null, score: `${hs}-${as}` };
     }
     case "doubleChance": {
-      if (!pick) return { status: "void", odds: null };
+      if (!pick) return { status: "void", odds: null, closingOdds: null };
       const won = pick === "home" ? hs >= as : as >= hs;
-      return { status: won ? "won" : "lost", odds: null, score: `${hs}-${as}` };
+      return { status: won ? "won" : "lost", odds: null, closingOdds: null, score: `${hs}-${as}` };
     }
     case "bestDefense": {
-      if (!pick) return { status: "void", odds: null };
+      if (!pick) return { status: "void", odds: null, closingOdds: null };
       const conceded = pick === "home" ? as : hs;
-      return { status: conceded <= 1 ? "won" : "lost", odds: null, score: `${hs}-${as}` };
+      return { status: conceded <= 1 ? "won" : "lost", odds: null, closingOdds: null, score: `${hs}-${as}` };
     }
     case "bestAttack":
-      return { status: total >= 3 ? "won" : "lost", odds: null, score: `${hs}-${as}` };
+      return { status: total >= 3 ? "won" : "lost", odds: null, closingOdds: null, score: `${hs}-${as}` };
     case "over15":
-      return { status: total >= 2 ? "won" : "lost", odds: m.odds_over_15 ?? null, score: `${hs}-${as}` };
+      return { status: total >= 2 ? "won" : "lost", odds: m.odds_over_15 ?? null, closingOdds: m.odds_over_15 ?? null, score: `${hs}-${as}` };
     case "under35":
-      return { status: total <= 3 ? "won" : "lost", odds: m.odds_under_35 ?? null, score: `${hs}-${as}` };
+      return { status: total <= 3 ? "won" : "lost", odds: m.odds_under_35 ?? null, closingOdds: m.odds_under_35 ?? null, score: `${hs}-${as}` };
     case "bttsYes":
-      return { status: hs > 0 && as > 0 ? "won" : "lost", odds: m.odds_btts_yes ?? null, score: `${hs}-${as}` };
+      return { status: hs > 0 && as > 0 ? "won" : "lost", odds: m.odds_btts_yes ?? null, closingOdds: m.odds_btts_yes ?? null, score: `${hs}-${as}` };
     case "over65Corners": {
       const lsH = m.live_stats?.home?.corner_kicks;
       const lsA = m.live_stats?.away?.corner_kicks;
-      if (lsH == null && lsA == null) return { status: "void", odds: null };
+      if (lsH == null && lsA == null) return { status: "void", odds: null, closingOdds: null };
       const corners = num(lsH) + num(lsA);
-      return { status: corners >= 7 ? "won" : "lost", odds: null, score: `${corners} cor` };
+      return { status: corners >= 7 ? "won" : "lost", odds: null, closingOdds: null, score: `${corners} cor` };
+    }
+    case "edge1x2Home": {
+      // Pick = home → home win = won.
+      const won = hs > as;
+      return { status: won ? "won" : "lost", odds: m.odds_home ?? null, closingOdds: m.odds_home ?? null, score: `${hs}-${as}` };
+    }
+    case "drawValueLigue": {
+      // Pick = draw → draw = won.
+      const won = hs === as;
+      return { status: won ? "won" : "lost", odds: m.odds_draw ?? null, closingOdds: m.odds_draw ?? null, score: `${hs}-${as}` };
+    }
+    case "edgeOU25": {
+      // pick "home" = over 2.5, pick "away" = under 2.5.
+      if (!pick) return { status: "void", odds: null, closingOdds: null };
+      const isOver = pick === "home";
+      const won = isOver ? total > 2.5 : total <= 2.5;
+      const clo = isOver ? m.odds_over_25 : m.odds_under_25;
+      return { status: won ? "won" : "lost", odds: clo ?? null, closingOdds: clo ?? null, score: `${hs}-${as}` };
     }
   }
 }
@@ -170,6 +189,12 @@ function pickDesc(key: StrategyTop5Key, e: StrategyMatchEntry): string {
       return "BTTS oui";
     case "over65Corners":
       return "Over 6,5 corners";
+    case "edge1x2Home":
+      return `${e.home.teamName} (edge home)`;
+    case "drawValueLigue":
+      return "Draw (valeur ligue)";
+    case "edgeOU25":
+      return e.pick === "home" ? "Over 2,5" : "Under 2,5";
   }
 }
 
@@ -184,7 +209,7 @@ function buildEntries(
       const real = resultMap.get(e.matchId);
       const settled = real
         ? settleFootballPick(key, e.pick, real)
-        : { status: "pending" as const, odds: null, score: undefined };
+        : { status: "pending" as const, odds: null, closingOdds: null, score: undefined };
       entries.push({
         id: `football:${key}:${e.matchId}`,
         sport: "football",
@@ -199,6 +224,8 @@ function buildEntries(
         status: settled.status,
         settledAt: settled.status !== "pending" ? new Date().toISOString() : undefined,
         score: settled.score,
+        closingOdds: settled.closingOdds ?? null,
+        clvPct: null,
       });
     }
   }
@@ -291,7 +318,15 @@ export async function runFootballDaily(): Promise<DailyRunResult> {
           const real = results.get(e.matchId);
           if (!real) return null;
           const s = settleFootballPick(e.strategyKey as StrategyTop5Key, (e.pick as "home" | "away" | null) ?? null, real);
-          return { ...e, ...s, settledAt: new Date().toISOString() };
+          // CLV : comparer cote pick (capture snapshot) vs cote finale (closing)
+          const closingOdds = s.closingOdds;
+          const pickOdds = e.odds;
+          let clvPct: number | null = null;
+          if (closingOdds != null && pickOdds != null && pickOdds > 1 && closingOdds > 1) {
+            clvPct = ((closingOdds - pickOdds) / pickOdds) * 100;
+            clvPct = Math.round(clvPct * 100) / 100;
+          }
+          return { ...e, ...s, closingOdds, clvPct, settledAt: new Date().toISOString() };
         })
         .filter((e): e is Top5BacktestEntry => e !== null);
       if (updates.length > 0) {

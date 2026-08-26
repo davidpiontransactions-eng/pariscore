@@ -376,7 +376,12 @@ export async function fetchBSDLiveMatches(): Promise<LiveMatchItem[]> {
         if (v === "0" || v === "LOVE") return 0;
         if (v === "15") return 1;
         if (v === "30") return 2;
-        if (v === "40" || v === "AV" || v === "AD" || v === "ADV") return 3;
+        if (v === "40") return 3;
+        // Avantage = 4 (distinct de 40=3) pour que le diffPoints infère
+        // correctement les points de break et le momentum. Sans ça,
+        // AV-40 est identique à 40-40 (deuce) et les points avantage
+        // sont silencieusement droppés du buffer momentum.
+        if (v === "AV" || v === "AD" || v === "ADV") return 4;
         return 0;
       };
       pointP1 = parts[0] ? ptVal(parts[0]) : 0;

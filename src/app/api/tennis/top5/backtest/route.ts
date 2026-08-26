@@ -26,11 +26,19 @@ export async function GET() {
     .sort((a, b) => b.kickoff.localeCompare(a.kickoff))
     .slice(0, 30);
 
+  const allDecided = entries.filter((e) => e.status === "won" || e.status === "lost");
+  const clvEntries = allDecided.filter((e) => e.clvPct != null);
+  const avgClvPct =
+    clvEntries.length > 0
+      ? Math.round((clvEntries.reduce((a, e) => a + (e.clvPct ?? 0), 0) / clvEntries.length) * 100) / 100
+      : null;
+
   const payload: SportBacktestSummary = {
     sport: "tennis",
     strategies,
     recent,
     updatedAt: new Date().toISOString(),
+    avgClvPct,
   };
   return NextResponse.json(payload, { headers: { "Cache-Control": "no-store" } });
 }

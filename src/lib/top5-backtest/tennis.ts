@@ -27,7 +27,12 @@ const FORM_LEN = 10;
 const ELO_K = 32;
 const ELO_BASE = 1500;
 
-export const TENNIS_BACKTEST_KEYS = TENNIS_TOP5_METRICS.map((d) => d.key);
+export const TENNIS_BACKTEST_KEYS = [
+  ...TENNIS_TOP5_METRICS.map((d) => d.key),
+  "edgeEloMarche",
+  "fatigueAdversaire",
+  "serveMismatch",
+] as const;
 
 /* ------------------------------------------------------------------ */
 /* Accès DB — double driver bun:sqlite / better-sqlite3                */
@@ -117,6 +122,8 @@ interface PlayerAgg {
   tbPlayed: number;
   dsWon: number;
   dsPlayed: number;
+  /** Derniers matchs joués (buffer circulaire, max 10) — pour fatigue tracking. */
+  recentMatches: { dateMs: number; totalSets: number }[];
 }
 
 function newAgg(): PlayerAgg {
@@ -132,6 +139,7 @@ function newAgg(): PlayerAgg {
     tbPlayed: 0,
     dsWon: 0,
     dsPlayed: 0,
+    recentMatches: [],
   };
 }
 
@@ -222,6 +230,21 @@ class TennisState {
       W.dsPlayed += 1;
       L.dsPlayed += 1;
     }
+
+    // Fatigue tracking : buffer circulaire des 10 derniers matchs.
+    const dateMs = row.match_date ?? 0;
+    const totalSets = sw + sl;
+    if (dateMs > 0 && totalSets > 0) {
+      W.recentMatches.push({ dateMs, totalSets });
+      L.recentMatches.push({ dateMs, totalSets });
+      if (W.recentMatches.length > 10) W.recentMatches.shift();
+      if (L.recentMatches.length > 10) L.recentMatches.shift();
+    }
+  }
+
+  /** Accès brut à l'agrégat d'un joueur (pour calculs cross-player comme edgeEloMarche). */
+  get(key: string): PlayerAgg | undefined {
+    return this.players.get(key);
   }
 
   /** Valeur d'une métrique pour un joueur, null si insuffisante. */
@@ -252,6 +275,24 @@ class TennisState {
         if (tb == null) return dec!;
         if (dec == null) return tb;
         return (tb + dec) / 2;
+      }
+      /** Fatigue : score de fraîcheur 0-100 (100 = parfaitement reposé). */
+      case "fatigueAdversaire": {
+        if (a.recentMatches.length === 0) return 50; // pas de données → neutre
+        const now = Date.now();
+        const MS_48H = 48 * 3600_000;
+        const MS_7D = 7 * 86_400_000;
+        let score = 100;
+        for (const rm of a.recentMatches) {
+          const age = now - rm.dateMs;
+          if (age < MS_7D) score -= 12; // -12 par match joué <7 j
+          if (age < MS_48H && rm.totalSets >= 3) score -= 15; // -15 bonus si 3 sets <48 h
+        }
+        return Math.max(0, Math.min(100, score));
+      }
+      /** Service mismatch : domination service sur la surface (hold % proxy). */
+      case "serveMismatch": {
+        return a.nSrv >= MIN_MATCHES ? a.sumSrv / a.nSrv : null;
       }
       default:
         return null;
@@ -312,6 +353,65 @@ const ymd = (d: Date) => d.toISOString().slice(0, 10);
 const addDays = (b: Date, n: number) => new Date(b.getTime() + n * 86_400_000);
 const startOfDayMs = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 
+/**
+ * Probabilité Élo→victoire (logistique standard, K=32, base 1500).
+ * Retourne P(A) en % (0-100).
+ */
+function eloWinProb(eloA: number, eloB: number): number {
+  return 100 / (1 + 10 ** ((eloB - eloA) / 400));
+}
+
+/**
+ * Dé-vig multiplicative : retourne probabilités « justes » (%)
+ * pour une marché 1x2, ou null si les cotes sont absentes.
+ */
+function deVig1x2(
+  oddsH: number | null,
+  oddsD: number | null,
+  oddsA: number | null,
+): { home: number; draw: number; away: number } | null {
+  if (oddsH == null || oddsD == null || oddsA == null) return null;
+  if (oddsH < 1 || oddsD < 1 || oddsA < 1) return null;
+  const rawH = 1 / oddsH;
+  const rawD = 1 / oddsD;
+  const rawA = 1 / oddsA;
+  const vig = rawH + rawD + rawA;
+  if (vig <= 0) return null;
+  return { home: (rawH / vig) * 100, draw: (rawD / vig) * 100, away: (rawA / vig) * 100 };
+}
+
+/**
+ * Edge Élo vs Marché : compare la probabilité Élo du modèle aux probabilités
+ * marché dé-viggées. Retourne l'edge (%) du côté favori Élo, ou null si
+ * pas de cotes ou edge insuffisant (< 5 points).
+ *
+ * Convention : si le modèle favorise A (P(A) > P(marché)), on retourne
+ * l'edge positif pour A. Si l'edge est négatif ou < 5, on retourne null
+ * (pas de valeur détectée).
+ */
+function computeEdgeEloMarche(
+  eloA: number,
+  eloB: number,
+  oddsP1: number | null,
+  oddsP2: number | null,
+): { pick: "A" | "B"; edge: number } | null {
+  if (oddsP1 == null || oddsP2 == null) return null;
+  const pModelA = eloWinProb(eloA, eloB);
+  // P(marché) ≈ 100/odds (approximation simple, pas de dé-vig car c'est 2-way)
+  const pMktA = 100 / oddsP1;
+  const pMktB = 100 / oddsP2;
+  // Le fav Élo est le côté avec la plus grande probabilité modèle
+  const favorA = pModelA >= 50;
+  if (favorA) {
+    const edge = pModelA - pMktA;
+    return edge >= 5 ? { pick: "A", edge } : null;
+  } else {
+    const pModelB = 100 - pModelA;
+    const edge = pModelB - pMktB;
+    return edge >= 5 ? { pick: "B", edge } : null;
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Replay                                                              */
 /* ------------------------------------------------------------------ */
@@ -328,6 +428,35 @@ function buildEntriesForDay(
     const kB = normPlayerName(f.player2.name);
     const surf = f.tournament?.surface ?? null;
     for (const metric of metricKeys) {
+      // edgeEloMarche : cas spécial — nécessite odds + ambos Élos
+      if (metric === "edgeEloMarche") {
+        const aggA = state.get(kA);
+        const aggB = state.get(kB);
+        if (!aggA || !aggB) continue;
+        const edge = computeEdgeEloMarche(aggA.elo, aggB.elo, f.odds_player1 ?? null, f.odds_player2 ?? null);
+        if (!edge) continue;
+        const won = f.winner_id != null && f.winner_id === (edge.pick === "A" ? f.player1.id : f.player2.id);
+        const settled = f.winner_id != null;
+        const odds = edge.pick === "A" ? f.odds_player1 : (f.odds_player2 ?? null);
+        entries.push({
+          id: `tennis:${metric}:${f.id}`,
+          sport: "tennis",
+          strategyKey: metric,
+          matchId: String(f.id),
+          league: f.tournament?.name ?? "",
+          kickoff: f.match_date ?? "",
+          pickDesc: (edge.pick === "A" ? f.player1.name : f.player2.name) ?? "?",
+          pick: edge.pick,
+          value: Math.round(edge.edge * 100) / 100,
+          odds: settled && odds != null && odds > 1 ? odds : null,
+          status: settled ? (won ? "won" : "lost") : "pending",
+          settledAt: settled ? new Date().toISOString() : undefined,
+          score: f.player1_sets != null && f.player2_sets != null ? `${f.player1_sets}-${f.player2_sets}` : undefined,
+          closingOdds: null,
+          clvPct: null,
+        });
+        continue;
+      }
       const va = state.value(kA, metric, surf);
       const vb = state.value(kB, metric, surf);
       if (va == null || vb == null || !Number.isFinite(va) || !Number.isFinite(vb)) continue;
@@ -335,7 +464,7 @@ function buildEntriesForDay(
       if (!pick) continue;
       const won = f.winner_id != null && f.winner_id === (pick === "A" ? f.player1.id : f.player2.id);
       const settled = f.winner_id != null;
-      const odds = pick === "A" ? f.odds_player1 : f.odds_player2;
+      const odds = pick === "A" ? f.odds_player1 : (f.odds_player2 ?? null);
       entries.push({
         id: `tennis:${metric}:${f.id}`,
         sport: "tennis",
@@ -349,8 +478,9 @@ function buildEntriesForDay(
         odds: settled && odds != null && odds > 1 ? odds : null,
         status: settled ? (won ? "won" : "lost") : "pending",
         settledAt: settled ? new Date().toISOString() : undefined,
-        score:
-          f.player1_sets != null && f.player2_sets != null ? `${f.player1_sets}-${f.player2_sets}` : undefined,
+        score: f.player1_sets != null && f.player2_sets != null ? `${f.player1_sets}-${f.player2_sets}` : undefined,
+        closingOdds: null,
+        clvPct: null,
       });
     }
   }
@@ -438,11 +568,20 @@ export async function runTennisDaily(): Promise<DailyRunResult> {
           if (!f || f.winner_id == null || !f.player1 || !f.player2) return null;
           const pickIsP1 = e.pick === "A";
           const won = f.winner_id === (pickIsP1 ? f.player1.id : f.player2.id);
-          const odds = pickIsP1 ? f.odds_player1 : f.odds_player2;
+          const closingOdds = pickIsP1 ? (f.odds_player1 ?? null) : (f.odds_player2 ?? null);
+          // CLV : comparer cote pick (capture snapshot) vs cote finale (closing)
+          const pickOdds = e.odds;
+          let clvPct: number | null = null;
+          if (closingOdds != null && pickOdds != null && pickOdds > 1 && closingOdds > 1) {
+            clvPct = ((closingOdds - pickOdds) / pickOdds) * 100;
+            clvPct = Math.round(clvPct * 100) / 100;
+          }
           return {
             ...e,
             status: won ? "won" : "lost",
-            odds: odds != null && odds > 1 ? odds : e.odds,
+            odds: closingOdds != null && closingOdds > 1 ? closingOdds : e.odds,
+            closingOdds,
+            clvPct,
             settledAt: new Date().toISOString(),
             score: f.player1_sets != null && f.player2_sets != null ? `${f.player1_sets}-${f.player2_sets}` : e.score,
           };

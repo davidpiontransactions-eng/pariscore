@@ -53,6 +53,8 @@ export interface StrategyBacktestStats {
   l10WinRatePct: number | null;
   /** ROI mise fixe 1u, calculé uniquement sur les picks avec cote. */
   roi: { nWithOdds: number; roiPct: number | null };
+  /** CLV moyen (%) sur les picks avec closingOdds — null si aucun. */
+  avgClvPct: number | null;
 }
 
 export interface SportBacktestSummary {
@@ -61,6 +63,10 @@ export interface SportBacktestSummary {
   /** Derniers picks réglés (chronologique inverse), pour le drawer UI. */
   recent: Top5BacktestEntry[];
   updatedAt: string;
+  /** Rollup par league — présent uniquement quand ?by=league est passé (football). */
+  byLeague?: Record<string, Record<string, StrategyBacktestStats>>;
+  /** CLV moyen global — présent uniquement sur tennis. */
+  avgClvPct?: number | null;
 }
 
 /**
@@ -93,6 +99,13 @@ export function aggregateStrategyStats(
       return a + (e.status === "won" ? e.odds - 1 : -1);
     }, 0);
 
+    // CLV moyen : uniquement les entrées avec clvPct non-null.
+    const clvEntries = decided.filter((e) => e.clvPct != null);
+    const avgClvPct =
+      clvEntries.length > 0
+        ? Math.round((clvEntries.reduce((a, e) => a + (e.clvPct ?? 0), 0) / clvEntries.length) * 100) / 100
+        : null;
+
     out[key] = {
       n: list.length,
       wins,
@@ -106,7 +119,32 @@ export function aggregateStrategyStats(
         nWithOdds: staked,
         roiPct: staked > 0 ? (pnl / staked) * 100 : null,
       },
+      avgClvPct,
     };
+  }
+  return out;
+}
+
+/**
+ * Agrège les stats par league (pour le drawer « Par championnat »).
+ * Retourne un Record<league, StrategyBacktestStats> trié par ROI desc.
+ */
+export function aggregateByLeague(
+  entries: Top5BacktestEntry[],
+  strategyKey: string,
+): Record<string, StrategyBacktestStats> {
+  const filtered = entries.filter((e) => e.strategyKey === strategyKey);
+  const byLeague = new Map<string, Top5BacktestEntry[]>();
+  for (const e of filtered) {
+    const league = e.league || "Inconnu";
+    const list = byLeague.get(league) ?? [];
+    list.push(e);
+    byLeague.set(league, list);
+  }
+  const out: Record<string, StrategyBacktestStats> = {};
+  for (const [league, list] of byLeague) {
+    const stats = aggregateStrategyStats(list, [strategyKey]);
+    out[league] = stats[strategyKey];
   }
   return out;
 }
