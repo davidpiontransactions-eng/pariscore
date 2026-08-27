@@ -104,3 +104,31 @@ et poller les marqueurs `.done` ; résultat tracé ci-dessous dès completion.
 **Statut boucle : terminée.** Foot (DC gagnant) + tennis (confiance blend) + UI widgets +
 tests verts + gates vertes.
 
+## [Deploy] VPS (27/08/2026)
+
+- Fusion fast-forward `feat/top5-gagnant` → `main` (`a34fc217..1589ca3b`, 607 insertions)
+  + push origin/main. (Le choix PR initialement prévu est resté bloqué : `gh` non
+  authentifié, pas de token dispo — corps de PR conservé dans `.context/pr-body-top5.md`.)
+- `scripts\deploy.bat --no-commit` (les fichiers package.json/bun.lock/opencode.json
+  modifiés localement appartiennent à un autre chantier — jamais commités ni déployés).
+- Runner VPS : build complet déclenché (src/ changé) → install skipped, next build OK,
+  garde-fou standalone OK, prisma db push + generate OK, pm2 `pariscore` + `pariscore-next`
+  relancés, crons ré-enregistrés, **health VPS OK**, Discord OK.
+- Note outillage : le tool shell local timeout à 30 s sur deploy.bat (attente bloquante)
+  — mais le nohup VPS poursuit ; suivi via `ssh … tail -f /tmp/update_vps.log` jusqu'au
+  marqueur `--- VPS_DEPLOY_OK ---` (commit `1589ca3b`, `build_ran: 1`).
+- QA post-deploy (mirroring scripts/post-deploy-qa.sh) :
+  - sync git local ↔ VPS : `1589ca3b` = `1589ca3b` ✓ ; standalone server.js frais ✓
+  - home HTTP 200 (159 Ko), SSR markers `SetPoint`/`tennis`/`Elo` présents ✓
+  - APIs : tennis/search 200 ✓, tennis/tournaments 200 ✓, football/top5 200 ✓,
+    tennis/top5 200 ✓
+  - **Feature en prod** : `/api/tennis/top5?metric=gagnant` → 5 entrées triées par
+    confiance modèle (top : Purcell 72 % vs Andrade, Kingston 2 QF) ✓ ;
+    `/api/football/top5` → stratégie `gagnant` présente dans la payload ✓
+  - `/api/v1/status` externe = 404 HTML Next : comportement historique (nginx → Next:3001
+    pour tout, la route vit sur le legacy :3000 côté serveur) — health VPS
+    `{"status":"ok","ready":true}` OK sur :3000, **non régressif**.
+- Logs erreurs préexistants (non bloquants, non liés au deploy) : BSD poll timeouts
+  live-broker, BSD-WS `subscription_required`.
+- Branche `feat/top5-gagnant` conservée (locale + origin) après FF-merge.
+
