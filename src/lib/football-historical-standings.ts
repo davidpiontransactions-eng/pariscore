@@ -174,6 +174,30 @@ function parseSideAgg(cells: HTMLElement[]): SideAgg | null {
 const HISTORICAL_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h (données statiques)
 const historicalCache = new Map<string, HistoricalLeagueStandings>();
 
+const FLARE_URL = process.env.FLARESOLVERR_URL || "http://127.0.0.1:8191/v1";
+const FLARE_ENABLED = process.env.FLARESOLVERR_ENABLED !== "0";
+
+function isChallenge(status: number, body: string): boolean {
+  return status === 403 || status === 503 || /just a moment|challenge-platform/i.test(body.slice(0, 2000));
+}
+
+/** Fetch via FlareSolverr (session éphémère) — résout les challenges Cloudflare. */
+async function fetchViaFlare(url: string): Promise<string> {
+  const res = await fetch(FLARE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      cmd: "request.get",
+      url,
+      maxTimeout: 20_000,
+    }),
+    signal: AbortSignal.timeout(25_000),
+  });
+  if (!res.ok) throw new Error(`FlareSolverr HTTP ${res.status}`);
+  const body = await res.json() as { solution?: { response?: string } };
+  return body.solution?.response ?? "";
+}
+
 function sidePts(s: SideAgg): number { return s.wins * 3 + s.draws; }
 
 function toStandingSide(
@@ -217,18 +241,38 @@ export async function fetchHistoricalStandings(
 
   const url = `https://www.soccerstats.com/homeaway.asp?league=${cacheKey}`;
   try {
-    const resp = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-      },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!resp.ok) {
-      console.warn(`[hist-stand] HTTP ${resp.status} for ${url}`);
+    // Tentative directe d'abord ( fonctionne en local, échoue sur VPS → 403 Cloudflare )
+    let html = "";
+    try {
+      const resp = await fetch(url, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+        signal: AbortSignal.timeout(15_000),
+      });
+      const body = await resp.text();
+      if (resp.ok && !isChallenge(resp.status, body)) {
+        html = body;
+      }
+    } catch {
+      // Direct échoue → FlareSolverr en fallback
+    }
+
+    // Fallback FlareSolverr si direct a échoué ou retourné un challenge
+    if (!html && FLARE_ENABLED) {
+      try {
+        html = await fetchViaFlare(url);
+      } catch (e) {
+        console.warn(`[hist-stand] FlareSolverr failed for ${cacheKey}:`, (e as Error).message);
+      }
+    }
+
+    if (!html) {
+      console.warn(`[hist-stand] All fetch methods failed for ${cacheKey}`);
       return null;
     }
-    const html = await resp.text();
+
     const teams = parseHomeAwayHtml(html);
 
     if (teams.size === 0) {
