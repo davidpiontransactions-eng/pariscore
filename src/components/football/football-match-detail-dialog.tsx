@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, AlertCircle, TrendingUp, Activity } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
@@ -201,90 +202,93 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
           </DialogDescription>
         </DialogHeader>
 
-        {/* Analyse éditoriale prédictive — cache 24h, masquée si absent */}
-        {view && (
-          <EditorialInsight
-            sport="football"
-            matchId={view.id}
-            playerA={view.home.name}
-            playerB={view.away.name}
-            variant="full"
-            className="mb-1"
-          />
-        )}
+        {/* L2+L3 — contenu scrollable avec analyse, presse, score, live */}
+        <ScrollArea className="max-h-[calc(90vh-80px)] max-h-[calc(90dvh-80px)]">
+          <div className="px-6 py-4 space-y-4">
+            {/* Analyse éditoriale prédictive — cache 24h, masquée si absent */}
+            {view && (
+              <EditorialInsight
+                sport="football"
+                matchId={view.id}
+                playerA={view.home.name}
+                playerB={view.away.name}
+                variant="full"
+                className="mb-1"
+              />
+            )}
 
-        {/* Revue de Presse & Pronostics Médias (3+ sources) */}
-        {view && (
-          <FootballPressReviewWidget
-            matchId={view.id}
-            homeTeam={view.home.name}
-            awayTeam={view.away.name}
-            leagueName={view.league.name}
-            className="mt-3"
-          />
-        )}
+            {/* Revue de Presse & Pronostics Médias (3+ sources) */}
+            {view && (
+              <FootballPressReviewWidget
+                matchId={view.id}
+                homeTeam={view.home.name}
+                awayTeam={view.away.name}
+                leagueName={view.league.name}
+                className="mt-3"
+              />
+            )}
 
-        {/* Rapport de match IA (Phase 2) — synthèse + faits + combiné suggéré */}
-        {view && !view.live && (
-          <AIMatchReport match={view} enabled={open} className="mt-3" />
-        )}
+            {/* Rapport de match IA (Phase 2) — synthèse + faits + combiné suggéré */}
+            {view && !view.live && (
+              <AIMatchReport match={view} enabled={open} className="mt-3" />
+            )}
 
-        {/* En-tête : logos + score + minute */}
-        {view && (
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
-                {view.home.logo ? (
-                  <img src={view.home.logo} alt={view.home.name} className="h-9 w-9 object-contain" />
-                ) : (
-                  <Trophy className="h-5 w-5 text-muted-foreground" />
-                )}
+            {/* En-tête : logos + score + minute */}
+            {view && (
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
+                    {view.home.logo ? (
+                      <img src={view.home.logo} alt={view.home.name} className="h-9 w-9 object-contain" />
+                    ) : (
+                      <Trophy className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className="text-center text-xs font-semibold leading-tight">{view.home.shortName}</span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-black tabular-nums">{view.live?.homeScore ?? 0}</span>
+                    <span className="text-xl text-muted-foreground">:</span>
+                    <span className="text-3xl font-black tabular-nums">{view.live?.awayScore ?? 0}</span>
+                  </div>
+                  {view.live ? (
+                    <span className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-500">
+                      {view.live.status === "HT" ? "MI-TEMPS" : `${view.live.minute}'`}
+                    </span>
+                  ) : (
+                    <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Prématch · {parisKickoff(view.scheduledAt)}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
+                    {view.away.logo ? (
+                      <img src={view.away.logo} alt={view.away.name} className="h-9 w-9 object-contain" />
+                    ) : (
+                      <Trophy className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <span className="text-center text-xs font-semibold leading-tight">{view.away.shortName}</span>
+                </div>
               </div>
-              <span className="text-center text-xs font-semibold leading-tight">{view.home.shortName}</span>
-            </div>
+            )}
 
-            <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2">
-                <span className="text-3xl font-black tabular-nums">{view.live?.homeScore ?? 0}</span>
-                <span className="text-xl text-muted-foreground">:</span>
-                <span className="text-3xl font-black tabular-nums">{view.live?.awayScore ?? 0}</span>
+            {/* Visionner (LiveTV) — uniquement si le match est un direct. */}
+            {view?.live && (
+              <div className="mt-3 flex justify-center">
+                <WatchButton
+                  sport="football"
+                  home={view.home.shortName || view.home.name}
+                  away={view.away.shortName || view.away.name}
+                  label="Visionner en direct"
+                  variant="default"
+                />
               </div>
-              {view.live ? (
-                <span className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-500">
-                  {view.live.status === "HT" ? "MI-TEMPS" : `${view.live.minute}'`}
-                </span>
-              ) : (
-                <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Prématch · {parisKickoff(view.scheduledAt)}
-                </span>
-              )}
-            </div>
-
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
-                {view.away.logo ? (
-                  <img src={view.away.logo} alt={view.away.name} className="h-9 w-9 object-contain" />
-                ) : (
-                  <Trophy className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
-              <span className="text-center text-xs font-semibold leading-tight">{view.away.shortName}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Visionner (LiveTV) — uniquement si le match est un direct. */}
-        {view?.live && (
-          <div className="mt-3 flex justify-center">
-            <WatchButton
-              sport="football"
-              home={view.home.shortName || view.home.name}
-              away={view.away.shortName || view.away.name}
-              label="Visionner en direct"
-              variant="default"
-            />
-          </div>
-        )}
+            )}
 
         {/* ---------- CORPS : PRÉMATCH → comparatif + 3 paris ---------- */}
         {view && !view.live && (
@@ -476,6 +480,8 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             />
           </div>
         )}
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

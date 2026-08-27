@@ -80,7 +80,11 @@ export function PressureDuoDonuts({
   );
 
   return (
-    <section className={cn("rounded-2xl border border-slate-800 bg-slate-950/60 p-3", className)} aria-label="Pression live vs attendue">
+    <section 
+      className={cn("rounded-2xl border border-slate-800 bg-slate-950/60 p-3", className)} 
+      aria-label="Pression live vs attendue"
+      title="Pression = pondération attacks (0.35) + dangerous attacks (0.40) + possession (0.15) + tirs (0.10) sur 10 minutes glissantes"
+    >
       <div className="flex items-center justify-around gap-2">
         <Donut
           homePct={Math.round(live.homePct)}

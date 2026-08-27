@@ -253,6 +253,13 @@ export function MomentumChart({
           </linearGradient>
         </defs>
 
+        {/* Axe Y : échelle -100 à +100 (domaine momentum) */}
+        <text x={PAD_L + 2} y={valueToY(100) + 3} fontSize="7" fill="currentColor" className="text-muted-foreground/50">+100</text>
+        <text x={PAD_L + 2} y={valueToY(50) + 3} fontSize="7" fill="currentColor" className="text-muted-foreground/50">+50</text>
+        <text x={PAD_L + 2} y={valueToY(0) + 3} fontSize="7" fill="currentColor" className="text-muted-foreground/50">0</text>
+        <text x={PAD_L + 2} y={valueToY(-50) + 3} fontSize="7" fill="currentColor" className="text-muted-foreground/50">-50</text>
+        <text x={PAD_L + 2} y={valueToY(-100) + 3} fontSize="7" fill="currentColor" className="text-muted-foreground/50">-100</text>
+
         {/* Lignes de ticks verticales (grille) */}
         {ticks.map((t) => (
           <line
