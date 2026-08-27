@@ -4,6 +4,7 @@ import { matchForm, scoreFormMatch, expectedMatchCorners } from "@/lib/football-
 import { matchXg } from "@/lib/football-xg";
 import { betminesCornerMarket } from "@/lib/betmines";
 import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
+import { dixonColesMarkets } from "@/lib/prediction/football/dixon-coles";
 
 /**
  * Top 5 MATCHS à venir par stratégie de pari. Un match est scoré en croisant la
@@ -25,6 +26,7 @@ import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
 export type StrategyTop5Key =
   | "bestTeam"
   | "bestTeam1x2"
+  | "gagnant"
   | "bestAttack"
   | "bestDefense"
   | "doubleChance"
@@ -85,6 +87,7 @@ const MIN_PLAYED = 2;
 const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
   bestTeam: true,
   bestTeam1x2: true,
+  gagnant: true,
   bestAttack: true,
   bestDefense: false,
   doubleChance: true,
@@ -355,6 +358,15 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
       const ap = ppg(a);
       return { value: Math.max(hp, ap), pick: hp >= ap ? "home" : "away" };
     }
+    case "gagnant": {
+      // Repli exhaustif TS : le scoring réel est intercepté plus tôt par la
+      // branche dédiée de computeStrategyTop5Matches (exclusion nul modal).
+      const mkG = dixonColesMarkets(lambdaHome, lambdaAway);
+      const maxWinG = Math.max(mkG.homeWin, mkG.awayWin);
+      if (mkG.draw >= maxWinG) return { value: -Infinity, pick: null };
+      // Markets en pourcentages (Σ1X2 = 100) — pas de ×100.
+      return { value: maxWinG, pick: mkG.homeWin >= mkG.awayWin ? "home" : "away" };
+    }
     case "bestAttack":
       return { value: lambdaTotal, pick: null };
     case "bestDefense": {
@@ -491,6 +503,27 @@ export function computeStrategyTop5Matches(
         continue;
       }
 
+      // gagnant : Dixon-Coles 1997 sur λ forme L5 — vainqueur prédit = max
+      // P(dom)/P(ext) ; match écarté si le nul est l'issue modale (pas de
+      // gagnant fiable). Zéro dépendance cotes (classement confiance modèle).
+      if (key === "gagnant") {
+        if (!form) continue;
+        const nHg = Math.max(form.home.n, 1);
+        const nAg = Math.max(form.away.n, 1);
+        const lambdaHg = (form.home.gf / nHg + form.away.ga / nAg) / 2;
+        const lambdaAg = (form.away.gf / nAg + form.home.ga / nHg) / 2;
+        const mk = dixonColesMarkets(lambdaHg, lambdaAg);
+        const maxWin = Math.max(mk.homeWin, mk.awayWin);
+        if (mk.draw >= maxWin) continue;
+        scores[key].push({
+          fixture,
+          form,
+          value: maxWin, // Markets DC déjà en %
+          pick: mk.homeWin >= mk.awayWin ? "home" : "away",
+        });
+        continue;
+      }
+
       // edge1x2Home : avantage domicile Poisson — compare proba home dé-viggée
       // au taux moyen de victoire à domicile du pool (walk-forward, pas d'enrichissement ligue).
       if (key === "edge1x2Home") {
@@ -598,6 +631,7 @@ export function computeStrategyTop5Matches(
   const PROBABILISTIC_KEYS: ReadonlySet<StrategyTop5Key> = new Set([
     "bestTeam",
     "bestTeam1x2",
+    "gagnant",
     "doubleChance",
     "over15",
     "under35",
