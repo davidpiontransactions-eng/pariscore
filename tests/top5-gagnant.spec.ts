@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { dixonColesMarkets } from "../src/lib/prediction/football/dixon-coles";
 import { computeStrategyTop5Matches } from "../src/lib/football-strategy-top5";
 import type { BSDFootballMatch } from "../src/lib/bsd-football-fetcher";
+import { buildTennisTop5, TENNIS_TOP5_METRICS } from "../src/lib/tennis-top5";
+import type { TennisMatch } from "../src/lib/tennis-data";
 
 /**
  * Filtre « Gagnant » Top5 — tests foot & tennis.
@@ -95,5 +97,78 @@ describe("top5 gagnant — foot", () => {
   it("gagnant : sans forme L5 exploitable → aucun match listé", () => {
     const res = computeStrategyTop5Matches([], [fixture()]);
     expect(res.strategies.gagnant.length).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tennis — métrique « gagnant » (confiance du blend moteur serveur)
+// ---------------------------------------------------------------------------
+
+let tseq = 0;
+
+function joueur(n: string): TennisMatch["playerA"] {
+  return {
+    id: n.toLowerCase(),
+    name: n,
+    shortName: n.slice(0, 3),
+    rank: 10,
+    elo: 1900,
+    surfaceElo: 1950,
+    photoUrl: "",
+    color: "#fff",
+    form: ["W", "W"],
+  };
+}
+
+function match(pA: number, pB: number, extra?: Partial<TennisMatch>): TennisMatch {
+  tseq++;
+  return {
+    id: `m${tseq}`,
+    tournament: "ATP Masters",
+    round: "QF",
+    scheduledAt: "2026-09-01T14:00:00Z",
+    playerA: joueur("Anna"),
+    playerB: joueur("Bea"),
+    probA: pA,
+    probB: pB,
+    stats: { form: "3V-1D", eloGap: 140, surface: "Dur", h2h: "4-1", ic: [55, 88], confidence: 0.8 },
+    model: "blend-v1",
+    modelUpdatedAt: "2026-08-27T00:00:00Z",
+    ...extra,
+  } as TennisMatch;
+}
+
+const LB = new Map();
+
+describe("top5 gagnant — tennis", () => {
+  it("déf présente et probabiliste (auto-wire UI)", () => {
+    const def = TENNIS_TOP5_METRICS.find((m) => m.key === "gagnant");
+    expect(def?.isProb).toBe(true);
+  });
+
+  it("tri confiance desc + pick favori", () => {
+    const entries = buildTennisTop5([match(72, 28), match(54, 46)], LB, "gagnant");
+    expect(entries.length).toBe(2);
+    expect(entries[0].playerA.value).toBeGreaterThan(entries[1].playerA.value);
+    expect(entries[0].pick).toBe("A");
+    expect(entries[0].probPick).toBe(72);
+  });
+
+  it("exclusions synthetic / insufficientData", () => {
+    const entries = buildTennisTop5(
+      [
+        match(80, 20, { synthetic: true }),
+        match(80, 20, { insufficientData: true }),
+        match(66, 34),
+      ],
+      LB,
+      "gagnant",
+    );
+    expect(entries.length).toBe(1);
+    expect(entries[0].probPick).toBe(66);
+  });
+
+  it("régression : surfaceElo intact", () => {
+    expect(buildTennisTop5([match(70, 30)], LB, "surfaceElo").length).toBe(1);
   });
 });

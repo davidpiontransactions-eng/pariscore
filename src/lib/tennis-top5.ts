@@ -29,7 +29,8 @@ export type TennisTop5Key =
   | "serveDominance"
   | "returnEfficiency"
   | "completeness"
-  | "pressure";
+  | "pressure"
+  | "gagnant";
 
 export type Top5Surface = "all" | "hard" | "clay" | "grass";
 export type Top5Period = "52w" | "ytd" | "all";
@@ -130,6 +131,14 @@ export const TENNIS_TOP5_METRICS: readonly TennisTop5Def[] = [
     format: pct1,
     source: "leaderboard",
   },
+  {
+    key: "gagnant",
+    label: "Gagnant prédit par le modèle (confiance)",
+    emoji: "🏆",
+    isProb: true,
+    format: pct1,
+    source: "match",
+  },
 ];
 
 /** Valeur d'une métrique pour un côté de match (payload BSD). */
@@ -218,7 +227,14 @@ export function buildTennisTop5(
 
     let va: number | null;
     let vb: number | null;
-    if (TENNIS_TOP5_METRICS.find((d) => d.key === metric)?.source === "leaderboard") {
+    if (metric === "gagnant") {
+      // Confiance du modèle serveur (blend Élo-surface/forme/H2H — Kovalchik
+      // 2016 & Dryja 2025). playerA = favori par construction du type.
+      // Synthétiques/données insuffisantes : aucune prédiction fiable.
+      const fiable = !m.synthetic && !m.insufficientData;
+      va = fiable && Number.isFinite(m.probA) ? m.probA : null;
+      vb = fiable && Number.isFinite(m.probB) ? m.probB : null;
+    } else if (TENNIS_TOP5_METRICS.find((d) => d.key === metric)?.source === "leaderboard") {
       const rowA = lbByPlayer.get(normPlayerName(m.playerA.name));
       const rowB = lbByPlayer.get(normPlayerName(m.playerB.name));
       va = rowValue(rowA, metric);
