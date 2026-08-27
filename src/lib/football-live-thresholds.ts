@@ -426,3 +426,63 @@ export function projectLiveMarkets(input: LiveProjectionInput): LiveMarketsProje
     source,
   };
 }
+
+// ─── Filtres Live pour sidebar (P2 — InPlayGuru/OddAlerts pattern) ─────────
+
+export type LiveStatFilters = {
+  minPressure: number;    // 0-100, default 0 (no filter)
+  minDangerous: number;   // 0-50, default 0
+  minXg: number;          // 0-5, default 0
+  minShotsOnTarget: number; // 0-30, default 0
+};
+
+export const DEFAULT_LIVE_STAT_FILTERS: LiveStatFilters = {
+  minPressure: 0,
+  minDangerous: 0,
+  minXg: 0,
+  minShotsOnTarget: 0,
+};
+
+// Vérifie si un match passe tous les filtres stats actifs
+export function matchPassesStatFilters(
+  match: {
+    pressure?: { homePct: number; awayPct: number } | null;
+    homeXg?: number | null;
+    awayXg?: number | null;
+    homeDangerous?: number | null;
+    awayDangerous?: number | null;
+    homeSOT?: number | null;
+    awaySOT?: number | null;
+  },
+  filters: LiveStatFilters,
+): boolean {
+  // Si tous les filtres sont à 0, tout passe
+  if (filters.minPressure === 0 && filters.minDangerous === 0 &&
+      filters.minXg === 0 && filters.minShotsOnTarget === 0) return true;
+
+  // Vérification pression (max home/away)
+  if (filters.minPressure > 0) {
+    const maxPct = Math.max(match.pressure?.homePct ?? 0, match.pressure?.awayPct ?? 0);
+    if (maxPct < filters.minPressure) return false;
+  }
+
+  // Vérification attaques dangereuses (somme des deux équipes)
+  if (filters.minDangerous > 0) {
+    const totalDangerous = (match.homeDangerous ?? 0) + (match.awayDangerous ?? 0);
+    if (totalDangerous < filters.minDangerous) return false;
+  }
+
+  // Vérification xG (max home/away)
+  if (filters.minXg > 0) {
+    const maxXg = Math.max(match.homeXg ?? 0, match.awayXg ?? 0);
+    if (maxXg < filters.minXg) return false;
+  }
+
+  // Vérification tirs cadrés (somme des deux équipes)
+  if (filters.minShotsOnTarget > 0) {
+    const totalSOT = (match.homeSOT ?? 0) + (match.awaySOT ?? 0);
+    if (totalSOT < filters.minShotsOnTarget) return false;
+  }
+
+  return true;
+}

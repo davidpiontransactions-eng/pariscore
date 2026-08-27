@@ -42,6 +42,16 @@ interface SportsSidebarState {
    * centrale n'affiche que ces matchs (ids compatibles arbre ↔ payload).
    */
   selectedMatchIds: string[];
+  /** Ensembles nommés de ligues favorites (nom → liste d'ids "sport:slug"). */
+  namedLeagueSets: Record<string, string[]>;
+  /** Ensemble nommé actuellement actif (null = aucun, affiche tous les favoris). */
+  activeLeagueSet: string | null;
+  /** Masquer les cotes 1X2 dans la sidebar (affiche "—" à la place). */
+  hideOdds: boolean;
+  /** IDs des équipes suivies (format "sport:slug" ou "sport:pays:nom"). */
+  followedTeamIds: string[];
+  /** true dès que l'utilisateur a modifié ses équipes suivies. */
+  teamsCustomized: boolean;
 
   setSearchQuery: (query: string) => void;
   setTimeFilter: (filter: TimeFilterKey) => void;
@@ -62,6 +72,20 @@ interface SportsSidebarState {
   toggleMatchSelection: (matchId: string) => void;
   /** Vide la sélection de matchs. */
   clearMatchSelection: () => void;
+  /** Sauvegarde les favoris courants sous un nom d'ensemble. */
+  saveLeagueSet: (name: string) => void;
+  /** Charge un ensemble nommé dans les favoris et l'active. */
+  loadLeagueSet: (name: string) => void;
+  /** Supprime un ensemble nommé. */
+  deleteLeagueSet: (name: string) => void;
+  /** Désactive l'ensemble actif, revient aux favoris normaux. */
+  clearActiveLeagueSet: () => void;
+  /** Afficher / masquer les cotes 1X2. */
+  setHideOdds: (hide: boolean) => void;
+  /** Ajoute/retire une équipe de la liste des suivies. */
+  toggleFollowedTeam: (teamId: string) => void;
+  /** Vérifie si une équipe est suivie. */
+  isFollowedTeam: (teamId: string) => boolean;
 }
 
 const DEFAULTS = {
@@ -72,6 +96,26 @@ const DEFAULTS = {
   selectedSportId: null as string | null,
   drawerOpen: false,
   selectedMatchIds: [] as string[],
+  activeLeagueSet: null as string | null,
+  hideOdds: false,
+  followedTeamIds: [] as string[],
+  teamsCustomized: false,
+};
+
+const DEFAULT_NAMED_SETS: Record<string, string[]> = {
+  "Top 5": [
+    "football:premier-league",
+    "football:la-liga",
+    "football:bundesliga",
+    "football:serie-a",
+    "football:ligue-1",
+  ],
+  "Grand Slams": [
+    "tennis:australian-open",
+    "tennis:roland-garros",
+    "tennis:wimbledon",
+    "tennis:us-open",
+  ],
 };
 
 export const useSportsSidebarStore = create<SportsSidebarState>()(
@@ -83,6 +127,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
       expandedLeagues: {},
       favoriteLeagueIds: [],
       favoritesCustomized: false,
+      namedLeagueSets: { ...DEFAULT_NAMED_SETS },
       modes: {},
 
       setSearchQuery: (searchQuery) => set({ searchQuery }),
@@ -155,17 +200,58 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
         })),
 
       clearMatchSelection: () => set({ selectedMatchIds: [] }),
+
+      saveLeagueSet: (name) =>
+        set((s) => ({
+          namedLeagueSets: { ...s.namedLeagueSets, [name]: [...s.favoriteLeagueIds] },
+        })),
+
+      loadLeagueSet: (name) =>
+        set((s) => {
+          const ids = s.namedLeagueSets[name];
+          if (!ids) return s;
+          return { favoriteLeagueIds: [...ids], activeLeagueSet: name };
+        }),
+
+      deleteLeagueSet: (name) =>
+        set((s) => {
+          const { [name]: _, ...rest } = s.namedLeagueSets;
+          return {
+            namedLeagueSets: rest,
+            activeLeagueSet: s.activeLeagueSet === name ? null : s.activeLeagueSet,
+          };
+        }),
+
+      clearActiveLeagueSet: () => set({ activeLeagueSet: null }),
+
+      setHideOdds: (hideOdds) => set({ hideOdds }),
+
+      toggleFollowedTeam: (teamId) =>
+        set((s) => ({
+          teamsCustomized: true,
+          followedTeamIds: s.followedTeamIds.includes(teamId)
+            ? s.followedTeamIds.filter((id) => id !== teamId)
+            : [...s.followedTeamIds, teamId],
+        })),
+
+      isFollowedTeam: (teamId) => get().followedTeamIds.includes(teamId),
     }),
     {
       name: "pariscore.sportsSidebar",
       partialize: (s) => ({
         favoriteLeagueIds: s.favoriteLeagueIds,
         favoritesCustomized: s.favoritesCustomized,
+        namedLeagueSets: s.namedLeagueSets,
+        activeLeagueSet: s.activeLeagueSet,
         expandedSports: s.expandedSports,
         expandedCountries: s.expandedCountries,
+        expandedLeagues: s.expandedLeagues,
         modes: s.modes,
         treeStatus: s.treeStatus,
         selectedTimeFilter: s.selectedTimeFilter,
+        hideOdds: s.hideOdds,
+        followedTeamIds: s.followedTeamIds,
+        teamsCustomized: s.teamsCustomized,
       }),
     },
   ),
@@ -201,8 +287,15 @@ export function hydrateStoreFromUrl(): void {
   }
   if (q) patch.searchQuery = q;
   if (view === "live" || view === "prematch") {
+    patch.treeStatus = view;
     const target = patch.selectedSportId ?? "football";
     patch.modes = { ...useSportsSidebarStore.getState().modes, [target]: view };
+  } else if (view === "all") {
+    patch.treeStatus = "all";
+  }
+  const ids = params.get("ids");
+  if (ids) {
+    patch.selectedMatchIds = ids.split(",").filter(Boolean);
   }
   if (Object.keys(patch).length > 0) useSportsSidebarStore.setState(patch);
 }
@@ -214,6 +307,8 @@ export function syncStoreToUrl(state: {
   selectedTimeFilter: TimeFilterKey;
   searchQuery: string;
   modes: Record<string, MatchViewMode>;
+  treeStatus: "all" | "live" | "prematch";
+  selectedMatchIds: string[];
 }): void {
   if (typeof window === "undefined" || !window.history?.replaceState) return;
   const params = new URLSearchParams();
@@ -221,11 +316,8 @@ export function syncStoreToUrl(state: {
   if (state.selectedLeagueId) params.set("league", state.selectedLeagueId);
   if (state.selectedTimeFilter !== "all") params.set("time", state.selectedTimeFilter);
   if (state.searchQuery.trim().length >= 2) params.set("q", state.searchQuery.trim());
-  const sportForView = state.selectedLeagueId
-    ? state.selectedLeagueId.split(":")[0]
-    : state.selectedSportId;
-  const view = sportForView ? state.modes[sportForView] : undefined;
-  if (view) params.set("view", view);
+  if (state.treeStatus !== "all") params.set("view", state.treeStatus);
+  if (state.selectedMatchIds.length > 0) params.set("ids", state.selectedMatchIds.join(","));
   const qs = params.toString();
   const next = `${window.location.pathname}${qs ? `?${qs}` : ""}`;
   if (next !== `${window.location.pathname}${window.location.search}`) {

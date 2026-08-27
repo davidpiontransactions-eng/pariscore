@@ -4,8 +4,7 @@ import { useRef } from "react";
 import { motion } from "framer-motion";
 import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getSportBg, type SportId } from "@/lib/sport-images";
-import { SportImage } from "@/components/ui/sport-image";
+import { type SportId } from "@/lib/sport-images";
 import {
   TennisPicto,
   FootballPicto,
@@ -45,7 +44,6 @@ type SportTabsProps = {
 };
 
 export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
-  const activeSport = (activeTab as SportId) || "football";
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Roving tabindex : ←/→/Home/End déplacent le focus ET sélectionnent l'onglet
@@ -81,17 +79,6 @@ export function SportTabs({ activeTab, onTabChange }: SportTabsProps) {
       role="tablist"
       aria-label="Sport selection"
     >
-      {/* Bannière fond sport actif (floutée via Unsplash + image/ blur param) */}
-      <div className="absolute inset-0 overflow-hidden opacity-50">
-        <SportImage
-          src={getSportBg(activeSport)}
-          alt=""
-          fill
-          darkOverlay={false}
-          className="scale-110 blur-sm"
-        />
-      </div>
-
       <div className="relative z-10 flex min-w-max items-center gap-1 px-4 py-2.5">
         {TABS.map((tab, index) => {
           const isActive = activeTab === tab.id;
