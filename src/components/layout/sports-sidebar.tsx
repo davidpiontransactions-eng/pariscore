@@ -35,7 +35,7 @@ import {
   isDefaultFavoriteLeague,
   sortSportsTreeChronological,
 } from "@/lib/sports-tree";
-import { LiveStatFilters, DEFAULT_LIVE_STAT_FILTERS } from "@/lib/football-live-thresholds";
+import { LiveStatFilters, DEFAULT_LIVE_STAT_FILTERS, matchPassesStatFilters } from "@/lib/football-live-thresholds";
 import type {
   CountryNode,
   LeagueNode,
@@ -1042,10 +1042,23 @@ export function SportsSidebarContent({
     if (sortMode === "chrono") {
       filtered = sortSportsTreeChronological(filtered);
     }
-    // TODO(P2): Apply football live stat filters (requires live stats integration)
-    // TreeMatchSummary doesn't currently include pressure/xG/dangerous attacks data.
-    // This would need enrichment from live-broker or live-state-builder.
-    // if (activeSport === "football" && showStatFilters) { ... }
+    // Apply football live stat filters (P2 — funnel sliders enabled)
+    if (activeSport === "football" && showStatFilters) {
+      const hasActiveFilters = Object.values(statFilters).some((v) => v > 0);
+      if (hasActiveFilters) {
+        filtered = filtered.map((sport) => ({
+          ...sport,
+          countries: sport.countries.map((country) => ({
+            ...country,
+            leagues: country.leagues.map((league) => ({
+              ...league,
+              matches: league.matches?.filter((m) => matchPassesStatFilters(m, statFilters)) ?? [],
+              matchCount: (league.matches?.filter((m) => matchPassesStatFilters(m, statFilters)) ?? []).length,
+            })).filter((l) => (l.matches?.length ?? 0) > 0),
+          })).filter((c) => (c.leagues?.length ?? 0) > 0),
+        })).filter((s) => (s.countries?.length ?? 0) > 0);
+      }
+    }
     return filtered;
   }, [treeData, timeFilter, searchQuery, treeStatus, sortMode, statFilters, showStatFilters, activeSport]);
 

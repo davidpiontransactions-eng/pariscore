@@ -87,6 +87,20 @@ export interface RawTreeMatch {
   probH?: number;
   probD?: number;
   probA?: number;
+  // Live stats (P2 — funnel sliders, momentum sparkline)
+  /** Minute du match live (0 si non-live). */
+  liveMinute?: number;
+  /** Pression : % possession temps dominant par équipe. */
+  pressure?: { homePct: number; awayPct: number };
+  /** xG cumulé live par équipe. */
+  homeXg?: number;
+  awayXg?: number;
+  /** Attaques dangereuses par équipe. */
+  homeDangerous?: number;
+  awayDangerous?: number;
+  /** Tirs cadrés (shots on target) par équipe. */
+  homeSOT?: number;
+  awaySOT?: number;
 }
 
 /**
@@ -303,6 +317,15 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
       scheduledAt: raw.scheduledAt ?? "",
       isLive: raw.isLive,
       edgePct: edge,
+      // Live stats (P2 — funnel sliders, momentum sparkline)
+      liveMinute: raw.liveMinute,
+      pressure: raw.pressure,
+      homeXg: raw.homeXg,
+      awayXg: raw.awayXg,
+      homeDangerous: raw.homeDangerous,
+      awayDangerous: raw.awayDangerous,
+      homeSOT: raw.homeSOT,
+      awaySOT: raw.awaySOT,
     };
     if (hasOdds) summary.odds = { home: raw.oddsH!, draw: raw.oddsD!, away: raw.oddsA! };
     if (hasProb) summary.prob = { home: raw.probH!, draw: raw.probD!, away: raw.probA! };
@@ -412,7 +435,32 @@ type MinimalFootballMatch = {
   league?: { id?: string | number; name?: string | null; country?: string | null; countryCode?: string | null } | null;
   home?: { name?: string | null } | null;
   away?: { name?: string | null } | null;
-  live?: { status?: string | null } | null;
+  live?: {
+    status?: string | null;
+    minute?: number;
+    homePossession?: number;
+    homeShots?: number | null;
+    awayShots?: number | null;
+    homeShotsOnTarget?: number | null;
+    awayShotsOnTarget?: number | null;
+    homeCorners?: number | null;
+    awayCorners?: number | null;
+    homeAttacks?: number | null;
+    awayAttacks?: number | null;
+    homeDangerousAttacks?: number | null;
+    awayDangerousAttacks?: number | null;
+    homeFouls?: number | null;
+    awayFouls?: number | null;
+    homeYellowCards?: number | null;
+    awayYellowCards?: number | null;
+    homeRedCards?: number | null;
+    awayRedCards?: number | null;
+    homeXg?: number | null;
+    awayXg?: number | null;
+    momentum?: { minute: number; value: number }[];
+    xgPerMinute?: { minute: number; home: number; away: number }[];
+    goals?: { minute: number; home: boolean; type: string }[];
+  } | null;
   prediction?: {
     homeProb?: number | null;
     drawProb?: number | null;
@@ -452,6 +500,22 @@ export function footballToRaw(matches: MinimalFootballMatch[] | undefined | null
         raw.oddsH = odds!.home!;
         raw.oddsD = odds!.draw!;
         raw.oddsA = odds!.away!;
+      }
+      // Live stats enrichment (P2 — funnel sliders, momentum sparkline)
+      if (isLive && m.live) {
+        const ls = m.live;
+        raw.liveMinute = ls.minute ?? 0;
+        // Pressure: derive from possession (approximation) or use existing if available
+        raw.pressure = {
+          homePct: ls.homePossession ?? 50,
+          awayPct: 100 - (ls.homePossession ?? 50),
+        };
+        raw.homeXg = ls.homeXg ?? undefined;
+        raw.awayXg = ls.awayXg ?? undefined;
+        raw.homeDangerous = ls.homeDangerousAttacks ?? undefined;
+        raw.awayDangerous = ls.awayDangerousAttacks ?? undefined;
+        raw.homeSOT = ls.homeShotsOnTarget ?? undefined;
+        raw.awaySOT = ls.awayShotsOnTarget ?? undefined;
       }
       return raw;
     });

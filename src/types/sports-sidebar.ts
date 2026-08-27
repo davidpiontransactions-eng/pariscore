@@ -33,6 +33,20 @@ export interface TreeMatchSummary {
    * de % — permet le badge « +2,1 » par match/ligue (signal P0-2). null → non calculé.
    */
   edgePct?: number | null;
+  // Live stats (P2 — funnel sliders, momentum sparkline)
+  /** Minute du match live (0 si non-live). */
+  liveMinute?: number;
+  /** Pression : % possession temps dominant par équipe. */
+  pressure?: { homePct: number; awayPct: number };
+  /** xG cumulé live par équipe. */
+  homeXg?: number;
+  awayXg?: number;
+  /** Attaques dangereuses par équipe. */
+  homeDangerous?: number;
+  awayDangerous?: number;
+  /** Tirs cadrés (shots on target) par équipe. */
+  homeSOT?: number;
+  awaySOT?: number;
 }
 
 /** Niveau 3 — Championnat / ligue / compétition. */
