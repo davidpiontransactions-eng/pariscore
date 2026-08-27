@@ -349,8 +349,10 @@ function parseHomeAwayHtml(html: string): Map<string, { home: TeamStandingStats;
 
 /** Extrait le bloc HTML d'une table à partir du contexte textuel qui la précède. */
 function extractTableBlock(html: string, contextPattern: RegExp): string | null {
-  // Cherche le pattern dans le texte, puis trouve la <table> suivante
-  const idx = html.search(contextPattern);
+  // Cherche le pattern dans un <h2> (pas dans le <title> ou <meta>)
+  // Pattern: <h2>Home table</h2> ou <h2>Away table</h2>
+  const h2Pattern = new RegExp(`<h2[^>]*>[^<]*${contextPattern.source}[^<]*</h2>`, "i");
+  const idx = html.search(h2Pattern);
   if (idx < 0) return null;
   const tableStart = html.indexOf("<table", idx);
   if (tableStart < 0) return null;
@@ -380,12 +382,12 @@ function parseTableRows(tableHtml: string): ParsedRow[] {
   let trMatch: RegExpExecArray | null;
   while ((trMatch = trRegex.exec(tableHtml)) !== null) {
     const trContent = trMatch[1];
-    // Extraire le texte de chaque cellule
+    // Extraire le texte de chaque cellule <td>...</td>
     const cells: string[] = [];
-    const tdRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
     let tdMatch: RegExpExecArray | null;
     while ((tdMatch = tdRegex.exec(trContent)) !== null) {
-      // Nettoyer le HTML contenu dans la cellule
+      // Nettoyer tout le HTML contenu dans la cellule (font, b, span, etc.)
       const raw = tdMatch[1].replace(/<[^>]+>/g, "").trim();
       cells.push(raw);
     }
