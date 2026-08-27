@@ -837,7 +837,11 @@ export function FootballMatchCard({
             {(standing.home.partial || standing.away.partial) && (
               <div className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground">
                 <span aria-hidden="true">⚠️</span>
-                <span>Données partielles — championnat en début de saison (&lt; 3 matchs)</span>
+                {standing.historicalSeason ? (
+                  <span>Stats enrichies avec saison {standing.historicalSeason} (début de saison — données combinées)</span>
+                ) : (
+                  <span>Données partielles — championnat en début de saison (&lt; 3 matchs)</span>
+                )}
               </div>
             )}
           </div>

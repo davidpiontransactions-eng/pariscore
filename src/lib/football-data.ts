@@ -172,6 +172,8 @@ export type FootballMatchDetail = {
 export type StandingContext = {
   home: TeamStandingStats;
   away: TeamStandingStats;
+  /** Si blend avec saison N-1, label de la saison historique (ex: "2025/26"). */
+  historicalSeason?: string;
 };
 
 

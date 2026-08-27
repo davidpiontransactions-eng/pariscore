@@ -1,6 +1,12 @@
 import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState, StandingContext, TeamStandingStats, MatchMetricStats, TeamMetricStats, MetricValue, MetricRankings, MetricRankingRow, TeamMetricCategory, GoalMetrics, CornerMetrics } from "@/lib/football-data";
 import { lookupClubLogo } from "@/lib/club-logos";
 import { enrichPrediction } from "./football-predictions";
+import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
+import {
+  fetchHistoricalStandings,
+  blendWithHistorical,
+  type HistoricalLeagueStandings,
+} from "./football-historical-standings";
 
 // Hôte racine BSD (l'API sous /api, les images sous /img). Identique au legacy
 // server.js:3795 (BSD_ROOT_URL = BSD_BASE sans le suffixe /api).
@@ -530,6 +536,8 @@ type LeagueDerivedData = {
   teams: Map<string, TeamDerived>;
   rankings: MetricRankings;
   partial: boolean;
+  /** Si blend avec saison N-1, label de la saison historique (ex: "2025/26"). */
+  historicalSeason?: string;
 };
 
 function normTeamKey(name: string): string {
@@ -791,7 +799,33 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
     "goals-avg-away": buildLeaderboard(teams, (t) => t.away, avgGoalsOf),
   };
 
-  const data: LeagueDerivedData = { teams: teamsOut, rankings, partial };
+  // ── Enrichissement avec standings historiques (saison N-1) ──────────────
+  // Si le championnat est partial (< 3 matchs joués en dom ou ext), on fetch
+  // les standings de la saison précédente via soccerstats.com et on fait un
+  // blend pondéré pour stabiliser les stats en début de saison.
+  let historicalSeason: string | undefined;
+  if (partial) {
+    const slug = BSD_ID_TO_SLUG[leagueId];
+    if (slug) {
+      try {
+        const hist = await fetchHistoricalStandings(slug);
+        if (hist && hist.teams.size > 0) {
+          for (const [key, derived] of teamsOut) {
+            const histTeam = hist.teams.get(key);
+            if (histTeam) {
+              derived.standing = blendWithHistorical(derived.standing, histTeam);
+            }
+          }
+          historicalSeason = hist.seasonLabel;
+          console.log(`[bsd-foot] league=${leagueId} blended with historical season ${hist.seasonLabel}`);
+        }
+      } catch (e) {
+        console.warn(`[bsd-foot] historical blend failed league=${leagueId}:`, (e as Error).message);
+      }
+    }
+  }
+
+  const data: LeagueDerivedData = { teams: teamsOut, rankings, partial, historicalSeason };
   standingsCache.set(leagueId, { at: Date.now(), data });
   return data;
 }
@@ -805,7 +839,11 @@ function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): v
   if (!home || !away) return;
   fm.prediction = {
     ...fm.prediction,
-    standingStats: { home: home.standing.home, away: away.standing.away },
+    standingStats: {
+      home: home.standing.home,
+      away: away.standing.away,
+      historicalSeason: data.historicalSeason,
+    },
     metricStats: { home: home.stats.home, away: away.stats.away, partial: data.partial },
     metricRankings: data.rankings,
   };
