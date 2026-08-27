@@ -40,6 +40,9 @@
     "postinstall": "node -e \"try{require('child_process').execSync('npm rebuild better-sqlite3 sharp',{stdio:'pipe',timeout:120000})}catch(e){process.exit(0)}\""
   },
   "dependencies": {
+    "@ai-sdk/groq": "^4.0.33",
+    "@ai-sdk/mistral": "^4.0.35",
+    "@ai-sdk/openai-compatible": "^3.0.39",
     "@capacitor/android": "^8.5.0",
     "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.0",

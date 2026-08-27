@@ -82,6 +82,127 @@
         }
       }
     },
+    "groq": {
+      "npm": "@ai-sdk/groq",
+      "name": "Groq (LPU ultra-rapide)",
+      "models": {
+        "openai/gpt-oss-120b": { "name": "GPT-OSS 120B", "limit": { "context": 131072, "output": 65536 } },
+        "openai/gpt-oss-20b": { "name": "GPT-OSS 20B", "limit": { "context": 131072, "output": 65536 } },
+        "qwen/qwen3.6-27b": { "name": "Qwen 3.6 27B", "limit": { "context": 131072, "output": 16384 } },
+        "groq/compound": { "name": "Groq Compound", "limit": { "context": 131072, "output": 8192 } },
+        "groq/compound-mini": { "name": "Groq Compound Mini", "limit": { "context": 131072, "output": 8192 } }
+      }
+    },
+    "mistral": {
+      "npm": "@ai-sdk/mistral",
+      "name": "Mistral AI ($10/mois gratuits)",
+      "models": {
+        "mistral-medium-latest": { "name": "Mistral Medium 3.5 (128B)", "limit": { "context": 262144, "output": 131072 } },
+        "mistral-small-latest": { "name": "Mistral Small 4", "limit": { "context": 262144, "output": 131072 } },
+        "mistral-large-latest": { "name": "Mistral Large 3", "limit": { "context": 262144, "output": 131072 } },
+        "codestral-latest": { "name": "Codestral (code)", "limit": { "context": 131072, "output": 131072 } },
+        "ministral-3b-latest": { "name": "Ministral 3B", "limit": { "context": 262144, "output": 131072 } },
+        "ministral-8b-latest": { "name": "Ministral 8B", "limit": { "context": 262144, "output": 131072 } },
+        "ministral-14b-latest": { "name": "Ministral 14B", "limit": { "context": 262144, "output": 131072 } }
+      }
+    },
+    "openrouter": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OpenRouter (free models)",
+      "options": {
+        "baseURL": "https://openrouter.ai/api/v1"
+      },
+      "models": {
+        "nvidia/nemotron-3-super-120b-a12b:free": { "name": "Nemotron 3 Super 120B (free)", "limit": { "context": 262144, "output": 262144 } },
+        "openai/gpt-oss-20b:free": { "name": "GPT-OSS 20B (free)", "limit": { "context": 131072, "output": 32768 } },
+        "cohere/north-mini-code:free": { "name": "Cohere North Mini Code (free)", "limit": { "context": 262144, "output": 65536 } },
+        "google/gemma-4-26b-a4b-it:free": { "name": "Gemma 4 26B (free)", "limit": { "context": 262144, "output": 32768 } },
+        "google/gemma-4-31b-it:free": { "name": "Gemma 4 31B (free)", "limit": { "context": 262144, "output": 32768 } },
+        "poolside/laguna-s-2.1:free": { "name": "Poolside Laguna S (code, free)", "limit": { "context": 262144, "output": 32768 } },
+        "poolside/laguna-xs-2.1:free": { "name": "Poolside Laguna XS (code, free)", "limit": { "context": 262144, "output": 32768 } },
+        "inclusionai/ling-3.0-flash:free": { "name": "Ling 3.0 Flash (free)", "limit": { "context": 262144, "output": 32768 } },
+        "nvidia/nemotron-3-nano-30b-a3b:free": { "name": "Nemotron 3 Nano 30B (free)", "limit": { "context": 262144, "output": 131072 } },
+        "nvidia/nemotron-nano-12b-v2-vl:free": { "name": "Nemotron Nano 12B v2 VL (free)", "limit": { "context": 131072, "output": 131072 } }
+      }
+    },
+    "huggingface": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Hugging Face Inference",
+      "options": {
+        "baseURL": "https://router.huggingface.co/v1"
+      },
+      "models": {
+        "meta-llama/Meta-Llama-3.1-8B-Instruct": { "name": "Llama 3.1 8B Instruct", "limit": { "context": 131072, "output": 4096 } },
+        "google/gemma-3-4b-it": { "name": "Gemma 3 4B IT", "limit": { "context": 131072, "output": 4096 } },
+        "microsoft/phi-4": { "name": "Phi-4", "limit": { "context": 16384, "output": 4096 } },
+        "Qwen/Qwen2.5-Coder-7B-Instruct": { "name": "Qwen2.5 Coder 7B", "limit": { "context": 131072, "output": 4096 } },
+        "Qwen/Qwen2.5-7B-Instruct": { "name": "Qwen2.5 7B Instruct", "limit": { "context": 131072, "output": 4096 } }
+      }
+    },
+    "aionlabs": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Aion Labs",
+      "options": {
+        "baseURL": "https://api.aionlabs.ai/v1"
+      },
+      "models": {
+        "aion-labs/aion-3.0": { "name": "Aion 3.0 (reasoning)", "limit": { "context": 131072, "output": 32768 } },
+        "aion-labs/aion-3.0-mini": { "name": "Aion 3.0 Mini (reasoning)", "limit": { "context": 131072, "output": 32768 } },
+        "aion-labs/aion-2.0": { "name": "Aion 2.0 (reasoning)", "limit": { "context": 131072, "output": 32768 } }
+      }
+    },
+    "kilocode": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Kilo Code (pas de clé requise)",
+      "options": {
+        "baseURL": "https://api.kilo.ai/api/gateway"
+      },
+      "models": {
+        "nvidia/nemotron-3-ultra-550b-a55b:free": { "name": "Nemotron 3 Ultra 550B (free)", "limit": { "context": 1048576, "output": 65536 } },
+        "stepfun/step-3.7-flash:free": { "name": "Step 3.7 Flash (free)", "limit": { "context": 262144, "output": 262144 } },
+        "nvidia/nemotron-3-super-120b-a12b:free": { "name": "Nemotron 3 Super 120B (free)", "limit": { "context": 262144, "output": 262144 } },
+        "poolside/laguna-s-2.1:free": { "name": "Poolside Laguna S (code, free)", "limit": { "context": 262144, "output": 32768 } },
+        "cohere/north-mini-code:free": { "name": "Cohere North Mini Code (free)", "limit": { "context": 262144, "output": 65536 } },
+        "tencent/hy3:free": { "name": "Tencent HY3 (free)", "limit": { "context": 262144, "output": 131072 } }
+      }
+    },
+    "ovhcloud": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OVHcloud AI Endpoints (EU)",
+      "options": {
+        "baseURL": "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
+      },
+      "models": {
+        "gpt-oss-120b": { "name": "GPT-OSS 120B", "limit": { "context": 131072, "output": 32768 } },
+        "gpt-oss-20b": { "name": "GPT-OSS 20B", "limit": { "context": 131072, "output": 8192 } },
+        "Meta-Llama-3_3-70B-Instruct": { "name": "Llama 3.3 70B Instruct", "limit": { "context": 131072, "output": 4096 } },
+        "Qwen3.5-397B-A17B": { "name": "Qwen 3.5 397B", "limit": { "context": 131072, "output": 32768 } },
+        "Qwen3.6-27B": { "name": "Qwen 3.6 27B", "limit": { "context": 131072, "output": 32768 } },
+        "Qwen3-Coder-30B-A3B-Instruct": { "name": "Qwen3 Coder 30B", "limit": { "context": 262144, "output": 32768 } }
+      }
+    },
+    "zai": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Z AI (Zhipu GLM)",
+      "options": {
+        "baseURL": "https://api.z.ai/api/paas/v4"
+      },
+      "models": {
+        "glm-4.7-flash": { "name": "GLM 4.7 Flash (reasoning)", "limit": { "context": 200000, "output": 131072 } },
+        "glm-4.6v-flash": { "name": "GLM 4.6V Flash (multimodal)", "limit": { "context": 131072, "output": 32768 } }
+      }
+    },
+    "llm7": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "LLM7.io (anon OK)",
+      "options": {
+        "baseURL": "https://api.llm7.io/v1"
+      },
+      "models": {
+        "gpt-oss:20b": { "name": "GPT-OSS 20B", "limit": { "context": 131072, "output": 32768 } },
+        "minimax-m2.7": { "name": "MiniMax M2.7 (reasoning)", "limit": { "context": 180000, "output": 32768 } }
+      }
+    },
     "nvidia": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "NVIDIA NIM",
