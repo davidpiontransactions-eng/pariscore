@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   ChevronRight,
+  Clock,
+  Eye,
+  EyeOff,
+  Filter,
+  Layers,
   ListFilter,
+  Radio,
   Search,
+  Target,
   Trophy,
+  Users,
   X,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getFlagEmoji, getFlagUrl } from "@/lib/flag-utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,13 +26,16 @@ import { Button } from "@/components/ui/button";
 import { TIME_RANGE_OPTIONS, type MatchViewMode } from "@/lib/match-view";
 import {
   applyTimeFilter,
+  collectPicksConsensus,
   collectQuickLinks,
   DEFAULT_FAVORITE_LEAGUES,
   applyStatusFilter,
   filterTreeByQuery,
   findLeaguePath,
   isDefaultFavoriteLeague,
+  sortSportsTreeChronological,
 } from "@/lib/sports-tree";
+import { LiveStatFilters, DEFAULT_LIVE_STAT_FILTERS, matchPassesStatFilters } from "@/lib/football-live-thresholds";
 import type {
   CountryNode,
   LeagueNode,
@@ -40,6 +52,7 @@ import { useSportsTree } from "@/hooks/use-sports-tree";
 import { FootballStrategyTop5Widget } from "@/components/football/football-strategy-top5-widget";
 import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
 import { TennisStrategyTop5Widget } from "@/components/tennis/tennis-strategy-top5-widget";
+import { MomentumSparkline } from "@/components/football/momentum-sparkline";
 
 import {
   TennisPicto,
@@ -88,47 +101,119 @@ function LiveLineToggle({ sportId }: { sportId: string }) {
   const treeStatus = useSportsSidebarStore((s) => s.treeStatus ?? "all");
   const setTreeStatus = useSportsSidebarStore((s) => s.setTreeStatus);
 
-  type StatusOption = { value: "all" | "live" | "prematch"; label: string };
+  const { data: tree } = useSportsTree();
+
+  const counts = useMemo(() => {
+    if (!tree) return { total: 0, live: 0, prematch: 0 };
+    let total = 0;
+    let live = 0;
+    for (const sport of tree) {
+      for (const country of sport.countries) {
+        for (const league of country.leagues) {
+          for (const m of league.matches ?? []) {
+            total++;
+            if (m.isLive) live++;
+          }
+        }
+      }
+    }
+    return { total, live, prematch: total - live };
+  }, [tree]);
+
+  type StatusOption = {
+    value: "all" | "live" | "prematch";
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    count: number;
+  };
   const options: StatusOption[] = [
-    { value: "all", label: t("all") },
-    { value: "live", label: t("live") },
-    { value: "prematch", label: t("prematch") },
+    { value: "all", label: t("all"), icon: Layers, count: counts.total },
+    { value: "live", label: t("live"), icon: Radio, count: counts.live },
+    { value: "prematch", label: t("prematch"), icon: Clock, count: counts.prematch },
   ];
+
+  const btnRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    const len = options.length;
+    let next: number;
+    switch (e.key) {
+      case "ArrowRight":
+        next = (idx + 1) % len;
+        break;
+      case "ArrowLeft":
+        next = (idx - 1 + len) % len;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = len - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    setTreeStatus(options[next].value);
+    if (options[next].value !== "all")
+      setMode(sportId, options[next].value as MatchViewMode);
+    btnRefs.current[next]?.focus();
+  };
 
   return (
     <div
       role="group"
       aria-label={t("modeAria")}
+      title="All = live + upcoming (within active time window)"
       className="grid grid-cols-3 gap-1 rounded-lg bg-slate-900 p-1"
     >
-      {options.map((opt) => {
+      {options.map((opt, idx) => {
         const active = treeStatus === opt.value;
+        const Icon = opt.icon;
         return (
           <button
             key={opt.value}
+            ref={(el) => { btnRefs.current[idx] = el; }}
             type="button"
             aria-pressed={active}
+            tabIndex={active ? 0 : -1}
             onClick={() => {
               setTreeStatus(opt.value);
-              // Compat grilles centrales : elles lisent `modes` (binaire).
               if (opt.value !== "all") setMode(sportId, opt.value as MatchViewMode);
             }}
+            onKeyDown={(e) => handleKeyDown(e, idx)}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs font-semibold transition-colors",
+              "relative flex items-center justify-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs font-semibold transition-colors",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active ? "bg-slate-700 text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
+              active ? "text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
             )}
           >
-            {opt.value === "live" ? (
-              <span
-                aria-hidden
-                className={cn(
-                  "h-1.5 w-1.5 rounded-full",
-                  active ? "animate-pulse bg-red-500" : "bg-slate-600",
-                )}
+            {active && (
+              <motion.div
+                layoutId="filter-tree-indicator"
+                className="absolute inset-0 rounded-md bg-slate-700"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
-            ) : null}
-            {opt.label}
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              <Icon className="h-3.5 w-3.5" />
+              {opt.label}
+              <span
+                aria-live="polite"
+                className="font-mono text-[10px] tabular-nums text-slate-500"
+              >
+                {opt.count > 0 ? `(${opt.count})` : "(—)"}
+              </span>
+              {opt.value === "live" ? (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "h-1.5 w-1.5 rounded-full",
+                    active ? "animate-pulse bg-red-500" : "bg-slate-600",
+                  )}
+                />
+              ) : null}
+            </span>
           </button>
         );
       })}
@@ -338,6 +423,7 @@ function MatchRow({
   const t = useTranslations("sportsSidebar");
   const isSelected = useSportsSidebarStore((s) => s.selectedMatchIds.includes(match.id));
   const toggleSelection = useSportsSidebarStore((s) => s.toggleMatchSelection);
+  const hideOdds = useSportsSidebarStore((s) => s.hideOdds);
 
   const openDetail = (pick?: string) => {
     const sport = league.sportId;
@@ -398,7 +484,7 @@ function MatchRow({
         {match.homeName}
         {match.awayName ? ` – ${match.awayName}` : ""}
       </button>
-      {cells.length ? (
+      {cells.length && !hideOdds ? (
         <span className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
           {cells.map((c, i) => (
             <button
@@ -417,6 +503,10 @@ function MatchRow({
               {c.value}
             </button>
           ))}
+        </span>
+      ) : cells.length && hideOdds ? (
+        <span className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+          <span className="rounded bg-slate-800/80 px-1 py-0.5 font-mono text-[11px] tabular-nums text-slate-500">—</span>
         </span>
       ) : (
         <span />
@@ -449,6 +539,18 @@ function LeagueRow({
 }) {
   const t = useTranslations("sportsSidebar");
   const hasMatches = (league.matches?.length ?? 0) > 0;
+
+  // Build momentum data from live matches in this league (P2)
+  // Using edgePct as momentum proxy since live minute not in TreeMatchSummary
+  const momentumData = useMemo(() => {
+    if (!hasMatches) return [];
+    const liveMatches = league.matches!.filter((m) => m.isLive);
+    if (liveMatches.length < 2) return []; // Only show if 2+ live matches
+    return liveMatches.map((m, idx) => ({
+      minute: idx * 15, // Approximate timeline
+      value: Math.max(-100, Math.min(100, (m.edgePct ?? 0) * 10)), // Scale edgePct to momentum range
+    }));
+  }, [league.matches, hasMatches]);
 
   return (
     <li>
@@ -484,6 +586,9 @@ function LeagueRow({
         >
           {league.name}
         </button>
+        {momentumData.length > 0 && (
+          <MomentumSparkline data={momentumData} className="ml-1" />
+        )}
         {league.edgePct != null && Number.isFinite(league.edgePct) ? (
           <EdgeBadge value={league.edgePct} />
         ) : null}
@@ -669,15 +774,17 @@ function QuickLinksBlock({
 }) {
   const t = useTranslations("sportsSidebar");
   const quick = useMemo(() => collectQuickLinks(tree), [tree]);
+  const picks = useMemo(() => collectPicksConsensus(tree).slice(0, 6), [tree]);
 
   const rows: Array<{
-    key: "live" | "value" | "today";
+    key: "live" | "value" | "today" | "picks";
     label: string;
     items: Array<{ match: TreeMatchSummary; league: LeagueNode }>;
   }> = [
     { key: "live", label: t("quickLive"), items: quick.live },
     { key: "value", label: t("quickValue"), items: quick.value },
     { key: "today", label: t("quickToday"), items: quick.today },
+    { key: "picks", label: "Picks", items: picks },
   ];
 
   // Bloc masqué entièrement si aucune ligne n'a de match (arbre vide/dégradé).
@@ -692,13 +799,17 @@ function QuickLinksBlock({
       <div className="space-y-1">
         {visible.map((row) => (
           <div key={row.key}>
-            <p className="flex items-center gap-1 px-2.5 pb-0.5 text-[11px] font-semibold text-emerald-400/90">
+            <p className="flex items-center gap-1 px-2.5 pb-0.5 text-[11px] font-semibold">
               {row.key === "live" ? (
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-red-500" />
+              ) : row.key === "picks" ? (
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-purple-500" />
               ) : (
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-emerald-500/60" />
               )}
-              {row.label}
+              <span className={row.key === "picks" ? "text-purple-400" : "text-emerald-400/90"}>
+                {row.label}
+              </span>
             </p>
             <ul className="space-y-0.5">
               {row.items.map(({ match, league }) => (
@@ -714,6 +825,77 @@ function QuickLinksBlock({
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bloc 3bis — My Teams (P2)
+// ---------------------------------------------------------------------------
+
+function MyTeamsBlock({
+  followedTeamIds,
+  onToggleFollow,
+  tree,
+}: {
+  followedTeamIds: string[];
+  onToggleFollow: (teamId: string) => void;
+  tree: SportNode[];
+}) {
+  const t = useTranslations("sportsSidebar");
+
+  // Build a map of teamId -> team name from tree
+  const teamNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const sport of tree) {
+      for (const country of sport.countries) {
+        for (const league of country.leagues) {
+          for (const m of league.matches ?? []) {
+            if (m.homeName) map.set(`${sport.id}:${m.homeName}`, m.homeName);
+            if (m.awayName) map.set(`${sport.id}:${m.awayName}`, m.awayName);
+          }
+        }
+      }
+    }
+    return map;
+  }, [tree]);
+
+  if (followedTeamIds.length === 0) {
+    return (
+      <section aria-label="My Teams" className="border-b border-slate-800/80 pb-2">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          My Teams
+        </h2>
+        <p className="px-2.5 py-2 text-[11px] text-slate-500 text-center">
+          Follow teams to see them here
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="My Teams" className="border-b border-slate-800/80 pb-2">
+      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        My Teams
+      </h2>
+      <ul className="space-y-0.5">
+        {followedTeamIds.map((teamId) => {
+          const name = teamNames.get(teamId) ?? teamId.split(":").pop() ?? teamId;
+          return (
+            <li key={teamId} className="flex items-center gap-1.5 rounded-md px-2.5 py-1 hover:bg-slate-800/80">
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-300">{name}</span>
+              <button
+                type="button"
+                onClick={() => onToggleFollow(teamId)}
+                aria-label="Unfollow team"
+                className="p-0.5 text-slate-500 hover:text-red-400"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -824,7 +1006,15 @@ export function SportsSidebarContent({
   onNavigate?: () => void;
 }) {
   const t = useTranslations("sportsSidebar");
-  const { data: treeData } = useSportsTree();
+  const { data: treeData, isValidating } = useSportsTree();
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const prevValidating = useRef(isValidating);
+  useEffect(() => {
+    if (prevValidating.current && !isValidating && treeData) {
+      setLastSyncTime(new Date());
+    }
+    prevValidating.current = isValidating;
+  }, [isValidating, treeData]);
 
   const searchQuery = useSportsSidebarStore((s) => s.searchQuery);
   const timeFilter = useSportsSidebarStore((s) => s.selectedTimeFilter);
@@ -832,15 +1022,45 @@ export function SportsSidebarContent({
   const selectLeague = useSportsSidebarStore((s) => s.selectLeague);
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const clearMatchSelection = useSportsSidebarStore((s) => s.clearMatchSelection);
+  const hideOdds = useSportsSidebarStore((s) => s.hideOdds);
+  const setHideOdds = useSportsSidebarStore((s) => s.setHideOdds);
+  const followedTeamIds = useSportsSidebarStore((s) => s.followedTeamIds);
+  const toggleFollowedTeam = useSportsSidebarStore((s) => s.toggleFollowedTeam);
 
   const treeStatus = useSportsSidebarStore((s) => s.treeStatus ?? "all");
+  const [sortMode, setSortMode] = useState<"default" | "chrono">("default");
+  const [statFilters, setStatFilters] = useState<LiveStatFilters>(DEFAULT_LIVE_STAT_FILTERS);
+  const [showStatFilters, setShowStatFilters] = useState(false);
+
   const tree = useMemo(() => {
     const base = treeData ?? [];
-    return filterTreeByQuery(
+    let filtered = filterTreeByQuery(
       applyStatusFilter(applyTimeFilter(base, timeFilter), treeStatus),
       searchQuery,
     );
-  }, [treeData, timeFilter, searchQuery, treeStatus]);
+    // Apply chronological sort if selected
+    if (sortMode === "chrono") {
+      filtered = sortSportsTreeChronological(filtered);
+    }
+    // Apply football live stat filters (P2 — funnel sliders enabled)
+    if (activeSport === "football" && showStatFilters) {
+      const hasActiveFilters = Object.values(statFilters).some((v) => v > 0);
+      if (hasActiveFilters) {
+        filtered = filtered.map((sport) => ({
+          ...sport,
+          countries: sport.countries.map((country) => ({
+            ...country,
+            leagues: country.leagues.map((league) => ({
+              ...league,
+              matches: league.matches?.filter((m) => matchPassesStatFilters(m, statFilters)) ?? [],
+              matchCount: (league.matches?.filter((m) => matchPassesStatFilters(m, statFilters)) ?? []).length,
+            })).filter((l) => (l.matches?.length ?? 0) > 0),
+          })).filter((c) => (c.leagues?.length ?? 0) > 0),
+        })).filter((s) => (s.countries?.length ?? 0) > 0);
+      }
+    }
+    return filtered;
+  }, [treeData, timeFilter, searchQuery, treeStatus, sortMode, statFilters, showStatFilters, activeSport]);
 
   // Recherche active (>= 2 lettres, seuil de filterTreeByQuery) : les branches
   // matchées sont affichées dépliées pour rendre les résultats visibles (P0-9).
@@ -867,8 +1087,131 @@ export function SportsSidebarContent({
     <div className="flex h-full w-full flex-col bg-[#0F172A] text-slate-200">
       <div className="space-y-2 border-b border-slate-800/80 p-2.5">
         <LiveLineToggle sportId={activeSport && activeSport !== "home" ? activeSport : "football"} />
-        <SearchBar />
+        <div className="flex items-center justify-between gap-2">
+          <SearchBar />
+          <button
+            type="button"
+            aria-label={hideOdds ? "Show odds" : "Hide odds"}
+            onClick={() => setHideOdds(!hideOdds)}
+            className={cn(
+              "shrink-0 rounded-md p-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              hideOdds
+                ? "text-emerald-400 hover:text-emerald-300"
+                : "text-slate-500 hover:text-slate-300",
+            )}
+          >
+            {hideOdds ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+          </button>
+        </div>
         <TimePills />
+        {activeSport === "football" && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowStatFilters(!showStatFilters)}
+                aria-label={showStatFilters ? "Hide stat filters" : "Show stat filters"}
+                className={cn(
+                  "shrink-0 rounded-md p-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  showStatFilters
+                    ? "text-emerald-400 hover:text-emerald-300"
+                    : "text-slate-500 hover:text-slate-300",
+                )}
+              >
+                <Filter className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setSortMode(sortMode === "default" ? "chrono" : "default")}
+                aria-label={sortMode === "chrono" ? "Sort by A-Z" : "Sort by kickoff time"}
+                className={cn(
+                  "shrink-0 rounded-md px-2 py-1 text-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  sortMode === "chrono"
+                    ? "bg-emerald-600/20 text-emerald-400"
+                    : "bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200",
+                )}
+              >
+                {sortMode === "chrono" ? "Time" : "A-Z"}
+              </button>
+            </div>
+            {showStatFilters && (
+              <div className="bg-slate-900 rounded-lg p-2 space-y-1.5 text-[11px]">
+                <div>
+                  <label className="flex items-center justify-between">
+                    <span className="text-slate-400">Pressure</span>
+                    <span className="font-mono tabular-nums text-emerald-400">{statFilters.minPressure}%</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={statFilters.minPressure}
+                    onChange={(e) => setStatFilters({ ...statFilters, minPressure: Number(e.target.value) })}
+                    className="w-full h-1.5 accent-emerald-500"
+                    aria-label="Minimum pressure percentage"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center justify-between">
+                    <span className="text-slate-400">Dangerous Attacks</span>
+                    <span className="font-mono tabular-nums text-emerald-400">{statFilters.minDangerous}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="50"
+                    step="1"
+                    value={statFilters.minDangerous}
+                    onChange={(e) => setStatFilters({ ...statFilters, minDangerous: Number(e.target.value) })}
+                    className="w-full h-1.5 accent-emerald-500"
+                    aria-label="Minimum dangerous attacks"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center justify-between">
+                    <span className="text-slate-400">xG</span>
+                    <span className="font-mono tabular-nums text-emerald-400">{statFilters.minXg.toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={statFilters.minXg}
+                    onChange={(e) => setStatFilters({ ...statFilters, minXg: Number(e.target.value) })}
+                    className="w-full h-1.5 accent-emerald-500"
+                    aria-label="Minimum expected goals"
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center justify-between">
+                    <span className="text-slate-400">Shots on Target</span>
+                    <span className="font-mono tabular-nums text-emerald-400">{statFilters.minShotsOnTarget}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="30"
+                    step="1"
+                    value={statFilters.minShotsOnTarget}
+                    onChange={(e) => setStatFilters({ ...statFilters, minShotsOnTarget: Number(e.target.value) })}
+                    className="w-full h-1.5 accent-emerald-500"
+                    aria-label="Minimum shots on target"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-1.5">
+          {isValidating && (
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          )}
+          <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+            Last sync: {lastSyncTime ? lastSyncTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—"}
+          </span>
+        </div>
       </div>
 
       {selectedMatchIds.length > 0 ? (
@@ -892,6 +1235,7 @@ export function SportsSidebarContent({
           {activeSport === "football" && <FootballLeagueRankingsWidget />}
           {activeSport === "tennis" && <TennisStrategyTop5Widget />}
           <QuickLinksBlock tree={tree} onFallbackSport={handleSportSelect} />
+          <MyTeamsBlock followedTeamIds={followedTeamIds} onToggleFollow={toggleFollowedTeam} tree={tree} />
           <FavoritesBlock tree={tree} onLeagueSelect={handleLeagueSelect} />
           {tree.length === 0 || !hasAnyMatch ? (
             <div className="px-2.5 py-6 text-center">
@@ -988,14 +1332,16 @@ export function SportsSidebarUrlSync() {
   const selectedTimeFilter = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const searchQuery = useSportsSidebarStore((s) => s.searchQuery);
   const modes = useSportsSidebarStore((s) => s.modes);
+  const treeStatus = useSportsSidebarStore((s) => s.treeStatus);
+  const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
 
   useEffect(() => {
     hydrateStoreFromUrl();
   }, []);
 
   useEffect(() => {
-    syncStoreToUrl({ selectedLeagueId, selectedSportId, selectedTimeFilter, searchQuery, modes });
-  }, [selectedLeagueId, selectedSportId, selectedTimeFilter, searchQuery, modes]);
+    syncStoreToUrl({ selectedLeagueId, selectedSportId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds });
+  }, [selectedLeagueId, selectedSportId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds]);
 
   return null;
 }

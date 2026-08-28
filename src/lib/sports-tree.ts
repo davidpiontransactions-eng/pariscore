@@ -87,6 +87,20 @@ export interface RawTreeMatch {
   probH?: number;
   probD?: number;
   probA?: number;
+  // Live stats (P2 — funnel sliders, momentum sparkline)
+  /** Minute du match live (0 si non-live). */
+  liveMinute?: number;
+  /** Pression : % possession temps dominant par équipe. */
+  pressure?: { homePct: number; awayPct: number };
+  /** xG cumulé live par équipe. */
+  homeXg?: number;
+  awayXg?: number;
+  /** Attaques dangereuses par équipe. */
+  homeDangerous?: number;
+  awayDangerous?: number;
+  /** Tirs cadrés (shots on target) par équipe. */
+  homeSOT?: number;
+  awaySOT?: number;
 }
 
 /**
@@ -193,6 +207,42 @@ export function collectQuickLinks(tree: SportNode[], now: Date = new Date()): Qu
   };
 }
 
+// P2 — Collecte les picks consensus : matchs où 2+ stratégies/indicateurs convergent.
+// Source : InPlayGuru "Picks" column — "2+ strategies agree = strongest signal".
+// Critères de convergence (basés sur les données disponibles dans le tree) :
+// 1. edgePct > 0 (valeur détectée par le modèle)
+// 2. isLive = true (match en cours — priorité)
+// 3. match has odds (marché actif)
+// Retourne les matchs triés par nombre de critères satisfaits (3 > 2 > 1), puis par edge décroissant.
+export function collectPicksConsensus(tree: SportNode[]): QuickLinkMatch[] {
+  const all: (QuickLinkMatch & { _consensusScore: number })[] = [];
+  for (const sport of tree) {
+    for (const country of sport.countries ?? []) {
+      for (const league of country.leagues ?? []) {
+        for (const match of league.matches ?? []) {
+          if (!match) continue;
+          // Score de convergence : combien de critères sont satisfaits
+          let score = 0;
+          if (match.edgePct != null && match.edgePct > 0) score++;
+          if (match.isLive) score++;
+          if (match.odds && match.odds.home != null && match.odds.draw != null && match.odds.away != null) score++;
+          
+          // Garde-fou : au moins 2 critères pour être un "pick"
+          if (score >= 2) {
+            all.push({ match, league, _consensusScore: score });
+          }
+        }
+      }
+    }
+  }
+  
+  // Tri : score décroissant, puis edge décroissant
+  return all.sort((a, b) => {
+    if (b._consensusScore !== a._consensusScore) return b._consensusScore - a._consensusScore;
+    return (b.match.edgePct ?? 0) - (a.match.edgePct ?? 0);
+  });
+}
+
 /** Chemin d'ancêtres d'une ligue sélectionnée (a11y P0-9 : surlignage sport→pays→ligue). */
 export function findLeaguePath(
   tree: SportNode[],
@@ -267,6 +317,15 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
       scheduledAt: raw.scheduledAt ?? "",
       isLive: raw.isLive,
       edgePct: edge,
+      // Live stats (P2 — funnel sliders, momentum sparkline)
+      liveMinute: raw.liveMinute,
+      pressure: raw.pressure,
+      homeXg: raw.homeXg,
+      awayXg: raw.awayXg,
+      homeDangerous: raw.homeDangerous,
+      awayDangerous: raw.awayDangerous,
+      homeSOT: raw.homeSOT,
+      awaySOT: raw.awaySOT,
     };
     if (hasOdds) summary.odds = { home: raw.oddsH!, draw: raw.oddsD!, away: raw.oddsA! };
     if (hasProb) summary.prob = { home: raw.probH!, draw: raw.probD!, away: raw.probA! };
@@ -376,7 +435,32 @@ type MinimalFootballMatch = {
   league?: { id?: string | number; name?: string | null; country?: string | null; countryCode?: string | null } | null;
   home?: { name?: string | null } | null;
   away?: { name?: string | null } | null;
-  live?: { status?: string | null } | null;
+  live?: {
+    status?: string | null;
+    minute?: number;
+    homePossession?: number;
+    homeShots?: number | null;
+    awayShots?: number | null;
+    homeShotsOnTarget?: number | null;
+    awayShotsOnTarget?: number | null;
+    homeCorners?: number | null;
+    awayCorners?: number | null;
+    homeAttacks?: number | null;
+    awayAttacks?: number | null;
+    homeDangerousAttacks?: number | null;
+    awayDangerousAttacks?: number | null;
+    homeFouls?: number | null;
+    awayFouls?: number | null;
+    homeYellowCards?: number | null;
+    awayYellowCards?: number | null;
+    homeRedCards?: number | null;
+    awayRedCards?: number | null;
+    homeXg?: number | null;
+    awayXg?: number | null;
+    momentum?: { minute: number; value: number }[];
+    xgPerMinute?: { minute: number; home: number; away: number }[];
+    goals?: { minute: number; home: boolean; type: string }[];
+  } | null;
   prediction?: {
     homeProb?: number | null;
     drawProb?: number | null;
@@ -416,6 +500,22 @@ export function footballToRaw(matches: MinimalFootballMatch[] | undefined | null
         raw.oddsH = odds!.home!;
         raw.oddsD = odds!.draw!;
         raw.oddsA = odds!.away!;
+      }
+      // Live stats enrichment (P2 — funnel sliders, momentum sparkline)
+      if (isLive && m.live) {
+        const ls = m.live;
+        raw.liveMinute = ls.minute ?? 0;
+        // Pressure: derive from possession (approximation) or use existing if available
+        raw.pressure = {
+          homePct: ls.homePossession ?? 50,
+          awayPct: 100 - (ls.homePossession ?? 50),
+        };
+        raw.homeXg = ls.homeXg ?? undefined;
+        raw.awayXg = ls.awayXg ?? undefined;
+        raw.homeDangerous = ls.homeDangerousAttacks ?? undefined;
+        raw.awayDangerous = ls.awayDangerousAttacks ?? undefined;
+        raw.homeSOT = ls.homeShotsOnTarget ?? undefined;
+        raw.awaySOT = ls.awayShotsOnTarget ?? undefined;
       }
       return raw;
     });
@@ -718,6 +818,188 @@ export function sortSportsTree(sports: SportNode[]): SportNode[] {
   return [...sports].sort(
     (a, b) => b.totalMatches - a.totalMatches || a.name.localeCompare(b.name),
   );
+}
+
+/**
+ * Trie l'arbre par heure de coup d'envoi (chronologique) au lieu du nombre
+ * total de matchs. Les matchs en direct apparaissent toujours en premier,
+ * puis les matchs programmés sont triés par `scheduledAt` ascendant.
+ *
+ * L'arbre est aplati, les matchs triés, puis reconstruit en conservant la
+ * hiérarchie sport → pays → ligue. Les compteurs `totalMatches` et
+ * `liveMatches` sont recalculés sur chaque nœud.
+ *
+ * Fonction pure : aucune mutation de l'entrée.
+ */
+export function sortSportsTreeChronological(sports: SportNode[]): SportNode[] {
+  type FlatMatch = TreeMatchSummary & {
+    sportId: string;
+    sportName: string;
+    sportIcon: string;
+    countryId: string;
+    countryName: string;
+    countryCode: string;
+    leagueId: string;
+    leagueName: string;
+  };
+
+  // 1. Aplatir tous les matchs depuis l'arbre complet
+  const flat: FlatMatch[] = [];
+  for (const sport of sports) {
+    for (const country of sport.countries) {
+      for (const league of country.leagues) {
+        for (const m of league.matches ?? []) {
+          flat.push({
+            ...m,
+            sportId: sport.id,
+            sportName: sport.name,
+            sportIcon: sport.icon,
+            countryId: country.id,
+            countryName: country.name,
+            countryCode: country.countryCode,
+            leagueId: league.id,
+            leagueName: league.name,
+          });
+        }
+      }
+    }
+  }
+
+  // 2. Tri chronologique : live d'abord, puis scheduledAt asc
+  flat.sort((a, b) => {
+    if (!!a.isLive !== !!b.isLive) return a.isLive ? -1 : 1;
+    const ta = isValidDate(a.scheduledAt) ? new Date(a.scheduledAt).getTime() : Infinity;
+    const tb = isValidDate(b.scheduledAt) ? new Date(b.scheduledAt).getTime() : Infinity;
+    return ta - tb;
+  });
+
+  // 3. Regrouper par sport → pays → ligue pour reconstruire l'arbre
+  const sportMap = new Map<string, {
+    id: string;
+    name: string;
+    icon: string;
+    countries: Map<string, {
+      id: string;
+      name: string;
+      countryCode: string;
+      leagues: Map<string, {
+        id: string;
+        name: string;
+        matches: TreeMatchSummary[];
+      }>;
+    }>;
+  }>();
+
+  for (const m of flat) {
+    if (!sportMap.has(m.sportId)) {
+      sportMap.set(m.sportId, {
+        id: m.sportId,
+        name: m.sportName,
+        icon: m.sportIcon,
+        countries: new Map(),
+      });
+    }
+    const sportNode = sportMap.get(m.sportId)!;
+
+    if (!sportNode.countries.has(m.countryId)) {
+      sportNode.countries.set(m.countryId, {
+        id: m.countryId,
+        name: m.countryName,
+        countryCode: m.countryCode,
+        leagues: new Map(),
+      });
+    }
+    const countryNode = sportNode.countries.get(m.countryId)!;
+
+    if (!countryNode.leagues.has(m.leagueId)) {
+      countryNode.leagues.set(m.leagueId, {
+        id: m.leagueId,
+        name: m.leagueName,
+        matches: [],
+      });
+    }
+    countryNode.leagues.get(m.leagueId)!.matches.push({
+      id: m.id,
+      homeName: m.homeName,
+      awayName: m.awayName,
+      scheduledAt: m.scheduledAt,
+      isLive: m.isLive,
+      edgePct: m.edgePct,
+      odds: m.odds,
+      prob: m.prob,
+    });
+  }
+
+  // 4. Reconstruire la structure SportNode[] et recalculer les compteurs
+  const result: SportNode[] = [];
+  for (const [, sData] of sportMap) {
+    let totalMatches = 0;
+    let liveMatches = 0;
+    const countries: CountryNode[] = [];
+
+    for (const [, cData] of sData.countries) {
+      let countryTotal = 0;
+      let countryLive = 0;
+      const leagues: LeagueNode[] = [];
+
+      for (const [, lData] of cData.leagues) {
+        const matches = lData.matches;
+        countryTotal += matches.length;
+        countryLive += matches.filter((m) => m.isLive).length;
+
+        // Calcul edge moyen de la ligue
+        const edges = matches
+          .map((m) => m.edgePct)
+          .filter((e): e is number => Number.isFinite(e));
+        let avgEdge: number | undefined;
+        if (edges.length > 0) {
+          const avg = edges.reduce((s, e) => s + e, 0) / edges.length;
+          if (Number.isFinite(avg)) avgEdge = Math.round(avg * 10) / 10;
+        }
+
+        leagues.push({
+          id: lData.id,
+          name: lData.name,
+          matchCount: matches.length,
+          sportId: sData.id,
+          matches: pickLevel4(matches, MAX_LEVEL4_MATCHES),
+          ...(avgEdge != null ? { edgePct: avgEdge } : {}),
+        });
+      }
+
+      // Trier les ligues par nombre de matchs décroissant
+      leagues.sort((a, b) => b.matchCount - a.matchCount || a.name.localeCompare(b.name));
+
+      if (leagues.length > 0) {
+        totalMatches += countryTotal;
+        liveMatches += countryLive;
+        countries.push({
+          id: cData.id,
+          name: cData.name,
+          countryCode: cData.countryCode,
+          leagues,
+        });
+      }
+    }
+
+    // Trier les pays par nombre total de matchs décroissant
+    countries.sort((a, b) => {
+      const ac = a.leagues.reduce((n, l) => n + l.matchCount, 0);
+      const bc = b.leagues.reduce((n, l) => n + l.matchCount, 0);
+      return bc - ac || a.name.localeCompare(b.name);
+    });
+
+    result.push({
+      id: sData.id,
+      name: sData.name,
+      icon: sData.icon,
+      totalMatches,
+      liveMatches,
+      countries,
+    });
+  }
+
+  return result;
 }
 
 function matchInTimeWindow(m: TreeMatchSummary, tf: TimeFilterHours, now: Date): boolean {

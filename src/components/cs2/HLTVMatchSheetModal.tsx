@@ -23,6 +23,7 @@ import {
   type VetoStep,
 } from "@/lib/prediction/cs2/cs2-predictive-ml-engine";
 import { CS2MapPoolAnalytics } from "./CS2MapPoolAnalytics";
+import { Cs2MarketsPanel } from "./Cs2MarketsPanel";
 
 type Props = {
   match: Cs2Match | null;
@@ -406,6 +407,20 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                       </div>
                     )}
                   </div>
+                </section>
+              )}
+
+              {/* Marchés calibrés (gate ≥65% + EV + backtest) */}
+              {match && (
+                <section>
+                  <h3 className="mb-2 text-sm font-semibold text-white">Marchés calibrés</h3>
+                  <Cs2MarketsPanel
+                    team1={match.team1.name}
+                    team2={match.team2.name}
+                    bestOf={(match.best_of as 1 | 3 | 5) ?? 3}
+                    oddsTeam1={match.odds?.team1 ?? null}
+                    oddsTeam2={match.odds?.team2 ?? null}
+                  />
                 </section>
               )}
 
