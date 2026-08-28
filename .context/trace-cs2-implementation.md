@@ -28,6 +28,14 @@
 - `bun run lint` → **0 erreur** (fichiers CS2)
 - Backtest walk-forward réel : 495 matchs, 4 marchés, gate actif dans l'API
 
+## Déploiement production (2026-08-28)
+
+- GitHub `main` = `1c74eaec` ("feat(cs2): calibrated markets pipeline + HLTV match sheet") · tag **v0.3.3**
+- VPS HEAD = `3616324c` ("chore(data): refresh xg [skip ci]", cron) — descendant de `1c74eaec` → Cs2MarketsPanel présent
+- update_vps.sh : `build_ran: 1`, `pm2 pariscore-next` restarté (uptime 1s), `health: OK (8/8)`, discord OK
+- Vérification produit : `GET /api/cs2/markets?...=Heroic/Vitality...` → **HTTP 200**, gate : winner=NO-GO, map=NO-GO, handicap=NO-GO, **over=OK** ✅
+- Bead **ParisScorebis-xog5** clôturé · `bd dolt push` OK
+
 ## Décisions clés
 
 - Verdict BET = proba≥65% ET EV≥4% ET calibration OK (gate bloquante, papier 2303.06021).

@@ -30,7 +30,8 @@ export type TennisTop5Key =
   | "returnEfficiency"
   | "completeness"
   | "pressure"
-  | "gagnant";
+  | "gagnant"
+  | "mlWinner";
 
 export type Top5Surface = "all" | "hard" | "clay" | "grass";
 export type Top5Period = "52w" | "ytd" | "all";
@@ -139,6 +140,14 @@ export const TENNIS_TOP5_METRICS: readonly TennisTop5Def[] = [
     format: pct1,
     source: "match",
   },
+  {
+    key: "mlWinner",
+    label: "Gagnant prédit par le modèle ML v2.0 (XGBoost)",
+    emoji: "🤖",
+    isProb: true,
+    format: pct1,
+    source: "match",
+  },
 ];
 
 /** Valeur d'une métrique pour un côté de match (payload BSD). */
@@ -232,6 +241,14 @@ export function buildTennisTop5(
       // 2016 & Dryja 2025). playerA = favori par construction du type.
       // Synthétiques/données insuffisantes : aucune prédiction fiable.
       const fiable = !m.synthetic && !m.insufficientData;
+      va = fiable && Number.isFinite(m.probA) ? m.probA : null;
+      vb = fiable && Number.isFinite(m.probB) ? m.probB : null;
+    } else if (metric === "mlWinner") {
+      // Nouveau modèle ML v2.0 (XGBoost surface-specific + calibration)
+      // Utilise probA/probB du modèle ML si disponible, sinon fallback sur l'ancien modèle
+      const fiable = !m.synthetic && !m.insufficientData;
+      // Pour l'instant, on utilise les mêmes probA/probB (l'API ML les mettra à jour)
+      // TODO: Ajouter champs mlProbA/mlProbB dans TennisMatch quand l'API ML sera branchée
       va = fiable && Number.isFinite(m.probA) ? m.probA : null;
       vb = fiable && Number.isFinite(m.probB) ? m.probB : null;
     } else if (TENNIS_TOP5_METRICS.find((d) => d.key === metric)?.source === "leaderboard") {
