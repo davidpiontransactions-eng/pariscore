@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-08-27T15:24:31.173069Z",
+    "lastUpdated": "2026-08-28T16:49:19.974809Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -52,22 +52,13 @@
       "teamName": "Dalian Yingbo",
       "gp": 8,
       "w": 5,
-      "d": 0,
-      "l": 3,
+      "d": 1,
+      "l": 2,
       "gf": 14,
-      "ga": 13
+      "ga": 11
     }
   ],
   "away": [
-    {
-      "teamName": "Shanghai Port",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 16,
-      "ga": 14
-    },
     {
       "teamName": "Chengdu",
       "gp": 8,
@@ -83,8 +74,8 @@
       "w": 4,
       "d": 4,
       "l": 0,
-      "gf": 17,
-      "ga": 10
+      "gf": 18,
+      "ga": 11
     },
     {
       "teamName": "Qingdao West C.",
@@ -94,6 +85,15 @@
       "l": 1,
       "gf": 9,
       "ga": 9
+    },
+    {
+      "teamName": "Shanghai Port",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 15,
+      "ga": 12
     },
     {
       "teamName": "Henan Sl",
