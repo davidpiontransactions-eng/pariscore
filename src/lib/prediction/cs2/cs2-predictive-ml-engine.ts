@@ -121,8 +121,9 @@ export type MatchPrediction = {
  * Biais CT par carte (en points de proba, + = CT favorisé).
  * Priors empiriques issus de la littérature de méta CS2 (côté défenseur avantagé
  * sur les cartes "exécution-heavy"). Recalibrables sur backtest.
+ * Exporté pour réutilisation par le harness de backtest (scripts/cs2-backtest.ts).
  */
-const CT_BIAS: Record<Cs2MapName, number> = {
+export const CT_BIAS: Record<Cs2MapName, number> = {
   Mirage: -0.01, // légèrement T
   Inferno: 0.03, // CT
   Nuke: 0.05, // CT fort
