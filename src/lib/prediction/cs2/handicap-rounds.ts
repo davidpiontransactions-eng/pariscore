@@ -1,4 +1,4 @@
-import type { RoundDistribution } from "../cs2-predictive-ml-engine";
+import type { RoundDistribution } from "./cs2-predictive-ml-engine";
 
 /**
  * handicap-rounds.ts — Marché handicap rounds CS2.

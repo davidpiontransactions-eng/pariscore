@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { handicapRoundMarkets } from "./handicap-rounds";
-import type { RoundDistribution } from "../cs2-predictive-ml-engine";
+import type { RoundDistribution } from "./cs2-predictive-ml-engine";
 
 describe("cs2-handicap-rounds — marché handicap rounds", () => {
   test("distribution connue → probas de cover exactes par comptage", () => {

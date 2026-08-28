@@ -78,6 +78,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | quick-add-ring | quick-add-ring.tsx | Anneau d'ajout rapide au bet-slip |
 | serve-stats-bars | serve-stats-bars.tsx | Barres divergentes comparant les stats service |
 | server-indicator | server-indicator.tsx | Indicateur "X sert" (balle pulsée) |
+| ml-model-badge | ml-model-badge.tsx | Badge version/performance modèle ML (accuracy, AUC, calibration) |
 | set-by-set-table | set-by-set-table.tsx | Tableau set par set |
 | set-scoreline | set-scoreline.tsx | Scoreline set par set (notation tennis, flash score live via ScoreFlash) |
 | score-flash | score-flash.tsx | Flash d'animation sur changement de score (scale+fade 450ms, reduced-motion aware) |
@@ -152,12 +153,17 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | cycling-stage-card | cycling-stage-card.tsx | Carte d'étape cyclisme |
 | cycling-tab-content | cycling-tab-content.tsx | Contenu de l'onglet cyclisme |
 
-## CS2 (`src/components/cs2/`) — 2 components
+## CS2 (`src/components/cs2/`) — 7 components
 
 | Component | File | Role |
 |-----------|------|------|
 | cs2-tab-content | cs2-tab-content.tsx | Contenu de l'onglet CS2 |
 | team-logo-image | TeamLogoImage.tsx | Logo équipe local-first (cache VPS) avec fallback initiales |
+| team-logo | TeamLogo.tsx | Logo équipe (variante simple) |
+| hltv-match-schedule | HLTVMatchSchedule.tsx | Schedule HLTV-like (stars, LAN, scores live, cartes) |
+| hltv-match-sheet-modal | HLTVMatchSheetModal.tsx | Fiche match 3 onglets (Aperçu/Rosters/Map Pool & H2H) |
+| cs2-map-pool-analytics | CS2MapPoolAnalytics.tsx | Map pool winrates 3m/6m + pistol index + H2H |
+| cs2-markets-panel | Cs2MarketsPanel.tsx | Marchés calibrés (winner/map/over/handicap) + EV/Kelly + gate ≥65% |
 
 ## NBA (`src/components/nba/`) — 1 component
 
