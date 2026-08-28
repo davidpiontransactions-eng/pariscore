@@ -105,15 +105,15 @@ function scoreOf(m: BSDMatch): string {
 }
 
 function playerWon(m: BSDMatch, playerId: string): boolean {
-  const isP1 = m.player1.id.toString() === playerId;
+  const isP1 = m.player1?.id?.toString() === playerId;
   return isP1
     ? m.player1_sets > m.player2_sets
     : m.player2_sets > m.player1_sets;
 }
 
 function contextFromMatch(m: BSDMatch, playerId: string): PreviousRoundContext {
-  const isP1 = m.player1.id.toString() === playerId;
-  const opponent = isP1 ? m.player2.name : m.player1.name;
+  const isP1 = m.player1?.id?.toString() === playerId;
+  const opponent = isP1 ? m.player2?.name : m.player1?.name;
   return {
     round: m.round_name ?? null,
     tournament: m.tournament?.name ?? null,

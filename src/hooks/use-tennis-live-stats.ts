@@ -5,7 +5,7 @@
 // Avant : socket.io dédié vers Bun :3001 (mini-services/tennis-live) qui écoutait
 // `live_patch`… un événement que le mini-service n'émet jamais (il émet
 // `initial_state`/`match_update`, sans stats) → les stats n'arrivaient JAMAIS et
-// le hook retombait sur le fallback demo après 3 échecs (~5-10s de latence).
+// le hook retombait sur le fallback vide après 3 échecs (~5-10s de latence).
 //
 // Le broker (live-broker.ts) propage maintenant `live_stats` depuis BSD
 // (bsd-fetcher.ts ne les jette plus), avec hash incluant les stats → un point
@@ -55,24 +55,27 @@ export const TennisLiveStatsSchema = ServiceStatsSchema.extend({
 
 export type TennisLiveStats = z.infer<typeof TennisLiveStatsSchema>;
 
-const DEMO_STATS: TennisLiveStats = {
-  p1_aces: 5,
-  p2_aces: 2,
-  p1_df: 1,
-  p2_df: 4,
-  p1_first_pct: 65,
-  p2_first_pct: 64,
-  p1_first_won: 72,
-  p2_first_won: 77,
-  p1_second_won: 55,
-  p2_second_won: 53,
-  p1_bp_saved: 5,
-  p2_bp_saved: 1,
-  p1_ret_won: 37,
-  p2_ret_won: 39,
-  p1_total_pts: 50,
-  p2_total_pts: 50,
-  _mock: true,
+// État vide honnête — tous les champs null → l'UI affiche « — » au lieu
+// de chiffres inventés. Le badge « Données de démonstration » n'apparaît
+// plus (pas de données fausses présentées comme réelles).
+const EMPTY_STATS: TennisLiveStats = {
+  p1_aces: null,
+  p2_aces: null,
+  p1_df: null,
+  p2_df: null,
+  p1_first_pct: null,
+  p2_first_pct: null,
+  p1_first_won: null,
+  p2_first_won: null,
+  p1_second_won: null,
+  p2_second_won: null,
+  p1_bp_saved: null,
+  p2_bp_saved: null,
+  p1_ret_won: null,
+  p2_ret_won: null,
+  p1_total_pts: null,
+  p2_total_pts: null,
+  _mock: false,
   perSet: [],
 };
 
@@ -175,10 +178,10 @@ export function useTennisLiveStats(
     attemptRef.current = 0;
     hasDataRef.current = false;
 
-    const fallbackToDemo = (errMsg?: string) => {
-      setStats(DEMO_STATS);
+    const fallbackToEmpty = (errMsg?: string) => {
+      setStats(EMPTY_STATS);
       setLoading(false);
-      setIsDemo(true);
+      setIsDemo(false);
       if (errMsg) setError(errMsg);
     };
 
@@ -200,23 +203,23 @@ export function useTennisLiveStats(
       }
 
       // Match absent du flux live ou sans stats BSD : on laisse le flux tourner
-      // (un match peut apparaître au prochain point). Fallback demo après 3
+      // (un match peut apparaître au prochain point). Fallback vide après 3
       // pushes sans données (~10-15s) — jamais avant, pour ne pas masquer une
       // vraie donnée qui arrive en retard.
       if (!hasDataRef.current) {
         attemptRef.current += 1;
         if (attemptRef.current >= 3) {
-          fallbackToDemo();
+          fallbackToEmpty();
         }
       }
     };
 
     // Délai de secours : si le flux SSE ne se connecte pas du tout (EventSource
-    // indisponible / serveur HS), on bascule en demo après 6s au lieu de rester
+    // indisponible / serveur HS), on bascule en état vide après 6s au lieu de rester
     // en loading infini.
     const connectTimeout = setTimeout(() => {
       if (!hasDataRef.current) {
-        fallbackToDemo();
+        fallbackToEmpty();
       }
     }, 6_000);
 

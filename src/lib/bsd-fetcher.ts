@@ -68,11 +68,11 @@ function generateColor(name: string): string {
  * Enrichit avec Elo, forme, prédictions, stats serve, photos.
  */
 function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
-  const nameA = b.player1.name;
-  const nameB = b.player2.name;
+  const nameA = b.player1?.name;
+  const nameB = b.player2?.name;
   if (!nameA || !nameB) return null;
 
-  const surface = normalizeSurface(b.tournament.surface);
+  const surface = normalizeSurface(b.tournament?.surface);
 
   // ─── Résolution Elo (4 sources, par priorité) ──────────────────────
   const abstractA = lookupAbstractElo(nameA, surface);
@@ -114,8 +114,9 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     : [];
 
   // ─── Rang réel BSD (quand BSD le fournit) ───────────────────────────
-  const rankA = b.player1.current_ranking?.position ?? 0; // 0 = inconnu
-  const rankB = b.player2.current_ranking?.position ?? 0;
+  // Après le guard, player1/player2 sont non-null (TypeScript ne narrow pas via nameA/nameB)
+  const rankA = b.player1!.current_ranking?.position ?? 0; // 0 = inconnu
+  const rankB = b.player2!.current_ranking?.position ?? 0;
   // Fallback : rang officiel ATP/WTA depuis pariscore.db (scraper hebdo
   // tour-leaderboards) quand BSD ne l'expose pas encore.
   const dbRankA = rankA > 0
@@ -126,7 +127,7 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     : (dbB?.atpRank ?? dbB?.wtaRank ?? 0);
 
   const playerAInputs: PlayerInputs = {
-    id: String(b.player1.id ?? index),
+    id: String(b.player1!.id ?? index),
     name: nameA,
     elo: eloA,
     surfaceElo: surfaceEloA,
@@ -134,7 +135,7 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     h2h: { won: eloKnownA ? Math.min(3, formA.filter((f) => f === "W").length) : 0, lost: 0 },
   };
   const playerBInputs: PlayerInputs = {
-    id: String(b.player2.id ?? index),
+    id: String(b.player2!.id ?? index),
     name: nameB,
     elo: eloB,
     surfaceElo: surfaceEloB,
@@ -149,7 +150,7 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     ? null
     : predict(playerAInputs, playerBInputs);
 
-  const tournamentName = b.tournament.name || "Tennis";
+  const tournamentName = b.tournament?.name || "Tennis";
 
   const modelSurface = toModelSurface(surface);
   const serveA = lookupServeStats(nameA, modelSurface);
@@ -194,8 +195,8 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     elo: playerAInputs.elo,
     eloKnown: eloKnownA,
     surfaceElo: playerAInputs.surfaceElo,
-    photoUrl: b.player1.id
-      ? getPlayerPhotoUrl(b.player1.id)
+    photoUrl: b.player1!.id
+      ? getPlayerPhotoUrl(b.player1!.id)
       : resolvePlayerPhoto(nameA),
     color: colorA,
     form: playerAInputs.form,
@@ -211,8 +212,8 @@ function buildMatch(b: BSDMatch, index: number): TennisMatch | null {
     elo: playerBInputs.elo,
     eloKnown: eloKnownB,
     surfaceElo: playerBInputs.surfaceElo,
-    photoUrl: b.player2.id
-      ? getPlayerPhotoUrl(b.player2.id)
+    photoUrl: b.player2!.id
+      ? getPlayerPhotoUrl(b.player2!.id)
       : resolvePlayerPhoto(nameB),
     color: colorB,
     form: playerBInputs.form,
@@ -476,7 +477,7 @@ export async function fetchBSDMatches(): Promise<TennisMatch[]> {
   const tennisMatches: TennisMatch[] = [];
   for (let i = 0; i < matches.length && tennisMatches.length < 30; i++) {
     const bsdMatch = matches[i];
-    if (isExcludedTournament(bsdMatch.tournament.name)) continue;
+    if (isExcludedTournament(bsdMatch.tournament?.name)) continue;
     const m = buildMatch(bsdMatch, i);
     if (m) tennisMatches.push(m);
   }

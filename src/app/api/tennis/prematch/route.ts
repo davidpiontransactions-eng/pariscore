@@ -120,9 +120,17 @@ export async function GET() {
       });
     }
 
-    // Dernier recours : mock local re-daté — l'onglet reste exploitable
-    // (source "mock", bandeau mode dégradé côté UI).
-    console.warn("[prematch] Sources KO + no stale cache, serving local mock");
+    // En production : ne JAMAIS servir de faux matchs — liste vide honnête.
+    // En dev : dernier recours = mock re-daté pour que l'onglet reste exploitable.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[prematch] ALL SOURCES FAILED in production — returning empty matches");
+      return NextResponse.json({
+        matches: [],
+        source: "error",
+        updatedAt: new Date(now).toISOString(),
+      });
+    }
+    console.warn("[prematch] Sources KO + no stale cache, serving local mock (dev only)");
     return NextResponse.json({
       matches: mockForToday(),
       source: "mock",

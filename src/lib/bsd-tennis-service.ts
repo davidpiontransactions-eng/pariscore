@@ -65,9 +65,9 @@ export type BSDPlayer = {
 
 export type BSDMatch = {
   id: number;
-  tournament: { id?: number; name: string; surface: string };
-  player1: { id: number; name: string; current_ranking: { position: number; type: string } | null };
-  player2: { id: number; name: string; current_ranking: { position: number; type: string } | null };
+  tournament: { id?: number; name: string; surface: string } | null;
+  player1: { id: number; name: string; current_ranking: { position: number; type: string } | null } | null;
+  player2: { id: number; name: string; current_ranking: { position: number; type: string } | null } | null;
   status: "scheduled" | "live" | "interrupted" | "finished" | "cancelled" | "postponed" | "walkover" | "retired";
   round_name: string | null;
   match_date: string | null;

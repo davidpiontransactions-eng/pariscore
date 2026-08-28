@@ -51,7 +51,6 @@ import { MatchCardSkeleton } from "@/components/tennis/match-card-skeleton";
 import { FlashscoreTennisList } from "@/components/tennis/flashscore-tennis-list";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
-import { MATCHES } from "@/lib/tennis-data";
 import {
   AB_TEST_DEFAULT_VARIANT,
   AB_TEST_FLAG_KEY,
@@ -183,7 +182,8 @@ export function TennisTabContent() {
   const degraded =
     error != null ||
     data?.source === "mock" ||
-    data?.source === "cache-stale";
+    data?.source === "cache-stale" ||
+    data?.source === "error";
   const { liveStates, liveMatchList, connectionStatus, latency } = useLiveMatches();
   const { favorites, count: favCount, toggle: toggleFavorite } = useFavorites();
   const { terminalMode } = useTerminalMode();
@@ -590,8 +590,8 @@ return [...matches, ...synthetic];
 
   return (
     <TennisErrorBoundary>
-      {/* SportsEvent JSON-LD */}
-      {MATCHES.map((match) => (
+      {/* SportsEvent JSON-LD — données réelles (pas de mock) */}
+      {matchesWithLive.slice(0, 50).map((match) => (
         <script
           key={`ld-${match.id}`}
           type="application/ld+json"

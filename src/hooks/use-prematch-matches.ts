@@ -5,7 +5,7 @@ import type { TennisMatch } from "@/lib/tennis-data";
 
 export type PrematchResponse = {
   matches: TennisMatch[];
-  source: "cache" | "cache-stale" | "bsd" | "odds-api" | "mock";
+  source: "cache" | "cache-stale" | "bsd" | "odds-api" | "mock" | "error";
   updatedAt: string;
 };
 
@@ -76,7 +76,8 @@ export function usePrematchMatches() {
   const isDegraded =
     swr.error != null ||
     swr.data?.source === "mock" ||
-    swr.data?.source === "cache-stale";
+    swr.data?.source === "cache-stale" ||
+    swr.data?.source === "error";
 
   return { ...swr, isDegraded };
 }
