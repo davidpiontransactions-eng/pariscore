@@ -8,18 +8,25 @@
 
 ## Journal d'exécution
 
-| Task | Statut | Date | Notes & vérifications |
+| Task | Statut | Commit | Notes & vérifications |
 |---|---|---|---|
-| T0 Setup | pending | | branch + bead + plan + trace |
-| T1 Calibration lib | pending | | Brier/ECE/ROI/verdict |
-| T2 Handicap rounds | pending | | P(cover) depuis MC |
-| T3 Map play prob | pending | | veto + historique |
-| T4 EV/devig/Kelly | pending | | verdict BET/SKIP |
-| T5 Backtest harness | pending | | gate calibration |
-| T6 API /markets | pending | | agrégation |
-| T7 UI markets panel | pending | | fiche match |
-| T8 UI bans+last5 | pending | | map pool table |
-| T9 Gates + clôture | pending | | lint/typecheck + bd close |
+| T0 Setup | ✅ done | 53ef0067 | branch + bead xog5 + plan + trace |
+| T1 Calibration lib | ✅ done | b466c0c1 | 12 tests verts |
+| T2 Handicap rounds | ✅ done | 3637ed51 | 3 tests verts |
+| T3 Map play prob | ✅ done | 31a8a98a | 5 tests verts (fix imports ./) |
+| T4 EV/devig/Kelly | ✅ done | 4e0f14f4 | 13 tests verts |
+| T5 Backtest harness | ✅ done | f1d746b4 | run réel 495 matchs (résultats ci-dessous) |
+| T6 API /markets | ✅ done | f8375ac8 | cache 5 min + gate calibration |
+| T7 UI markets panel | ✅ done | f8375ac8+85453c0e | composant + intégration modal + COMPONENTS.md |
+| T8 UI bans+last5 | ⚠️ N/A | — | bans non exposées par csapi/BSD — pas de données inventées (Le Ladder #2) ; last-5 par carte = bead ouvert (nécessite calcul csapi dans buildMatchEnrichment) |
+| T9 Gates + clôture | ✅ done | (ce commit) | 53 tests pass, typecheck 0 err, lint 0 err, backtest gate appliqué |
+
+## Vérifications finales (2026-08-28)
+
+- `bun test src/lib/prediction/cs2/ src/lib/cs2/ev.test.ts` → **53 pass / 0 fail**
+- `bun run typecheck` → **0 erreur TS** (fichiers CS2)
+- `bun run lint` → **0 erreur** (fichiers CS2)
+- Backtest walk-forward réel : 495 matchs, 4 marchés, gate actif dans l'API
 
 ## Décisions clés
 
