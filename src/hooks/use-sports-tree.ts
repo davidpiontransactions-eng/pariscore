@@ -168,10 +168,10 @@ async function buildTree(): Promise<SportNode[]> {
 
 export function useSportsTree() {
   return useSWR<SportNode[]>("sports-tree", buildTree, {
-    refreshInterval: 300_000, // 5 min — economie VPS
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    dedupingInterval: 60_000,
+    refreshInterval: 60_000, // 1 min — données live plus fraîches
+    revalidateOnFocus: true, // revalider quand l'utilisateur revient sur l'onglet
+    revalidateOnReconnect: true,
+    dedupingInterval: 30_000,
     errorRetryCount: 1,
     keepPreviousData: true,
   });
