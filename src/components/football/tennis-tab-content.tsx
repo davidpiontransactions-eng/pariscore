@@ -11,6 +11,7 @@ import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
+import { StrategyFilterDropdown } from "@/components/shared/strategy-filter-dropdown";
 import {
   filterByStartWindow,
   filterByToday,
@@ -18,6 +19,7 @@ import {
   filterByTomorrow,
   filterLiveByWindow,
   parseTimeFilter,
+  type StrategyFilter,
 } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { useSportsTree } from "@/hooks/use-sports-tree";
@@ -193,7 +195,7 @@ export function TennisTabContent() {
   // à côté du bookmaker (1xWin+). Connexion SSE indépendante dans le PiP.
   const pip = useDocumentPip();
 
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [filter, setFilter] = useState<StrategyFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("default");
   const [detailMatch, setDetailMatch] = useState<TennisMatch | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -648,7 +650,7 @@ return [...matches, ...synthetic];
     track("sub_tab_click", { tab });
   };
 
-  const handleFilter = (key: FilterKey) => {
+  const handleFilter = (key: StrategyFilter) => {
     setFilter(key);
     track("filter_click", { filter: key });
   };
@@ -872,23 +874,12 @@ return [...matches, ...synthetic];
             </>
           ) : (
             <>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {FILTERS.map((f) => (
-                  <button
-                    key={f.key}
-                    onClick={() => handleFilter(f.key)}
-                    title={f.hint}
-                    className={cn(
-                      "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
-                      "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                      filter === f.key
-                        ? "border-foreground bg-foreground text-background"
-                        : "border-border bg-background text-[#C0C0C0] hover:bg-muted hover:text-white"
-                    )}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+              <div className="mt-4">
+                <StrategyFilterDropdown
+                  sport="tennis"
+                  value={filter}
+                  onChange={setFilter}
+                />
               </div>
 
               {/* Sort controls */}

@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { StrategyFilterDropdown } from "@/components/shared/strategy-filter-dropdown";
+import type { StrategyFilter } from "@/lib/match-view";
 import { useFavorites } from "@/hooks/use-favorites";
 import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
@@ -58,10 +60,7 @@ const FootballMatchDetailDialog = lazy(() =>
   import("./football-match-detail-dialog").then((m) => ({ default: m.FootballMatchDetailDialog })),
 );
 
-type FootFilter = "all" | "value" | "today" | "topConf" | "corners" | "over65corners" | "btts";
-
-// Import du type partagé pour usage futur (Phase 3 unifiée)
-import type { StrategyFilter } from "@/lib/match-view";
+type FootFilter = StrategyFilter;
 
 export function FootballTabContent() {
   const t = useTranslations("common");
@@ -87,7 +86,7 @@ export function FootballTabContent() {
         .selectLeague(id === null ? null : `football:${id}`, "football"),
     [],
   );
-  const [filter, setFilter] = useState<FootFilter>("all");
+  const [filter, setFilter] = useState<StrategyFilter>("all");
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [presetFilter, setPresetFilter] = useState<TopTeamPreset | null>(null);
   const tabsId = useId();
@@ -238,16 +237,6 @@ export function FootballTabContent() {
       setMode("live");
     }
   }, [selectedMatchIds, matches, mode, setMode]);
-
-  const FILTERS: { key: FootFilter; label: string }[] = [
-    { key: "all", label: "Tous" },
-    { key: "today", label: "Aujourd'hui" },
-    { key: "value", label: "Value Bets" },
-    { key: "topConf", label: "Fortes Confiances" },
-    { key: "corners", label: "Spe Corners" },
-    { key: "over65corners", label: "Over 6.5 Corners" },
-    { key: "btts", label: "BTTS" },
-  ];
 
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
@@ -534,18 +523,11 @@ export function FootballTabContent() {
 
           {/* Sub-filters — dropdown */}
           <div className="mb-4">
-            <Select value={filter} onValueChange={(v) => setFilter(v as FootFilter)}>
-              <SelectTrigger className="w-[200px] text-xs font-semibold">
-                <SelectValue placeholder="Filtrer..." />
-              </SelectTrigger>
-              <SelectContent>
-                {FILTERS.map((f) => (
-                  <SelectItem key={f.key} value={f.key} className="text-xs">
-                    {f.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <StrategyFilterDropdown
+              sport="football"
+              value={filter}
+              onChange={setFilter}
+            />
           </div>
 
           {/* Filtre par heure de début (fenêtre glissante 1h → 24h / aujourd'hui) */}

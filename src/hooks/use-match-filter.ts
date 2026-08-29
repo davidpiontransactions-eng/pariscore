@@ -5,10 +5,12 @@ import type { TennisMatch } from "@/lib/tennis-data";
 import { resolveTournamentPriority } from "@/lib/tournament-priority";
 import { resolveRoundPriority } from "@/lib/round-priority";
 
+import type { StrategyFilter } from "@/lib/match-view";
+
 /**
  * Keys for the prematch filter bar.
  */
-export type FilterKey = "all" | "favorites" | "balanced" | "starred";
+export type FilterKey = StrategyFilter;
 
 /** Sort options for the prematch match list. */
 export type SortKey = "default" | "rank_asc" | "rank_desc" | "elo_asc" | "elo_desc";
