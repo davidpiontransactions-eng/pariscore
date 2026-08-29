@@ -1173,6 +1173,15 @@ export function SportsSidebarContent({
         </button>
       </div>
       <div className="space-y-2 border-b border-slate-800/80 p-2.5">
+        {/* Compteur live global : pulse + nombre total de matchs live */}
+        {liveMatchList.filter((m) => m.isLive).length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-red-500/10 px-2.5 py-1.5">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+            <span className="text-xs font-semibold text-red-300">
+              {liveMatchList.filter((m) => m.isLive).length} match{liveMatchList.filter((m) => m.isLive).length > 1 ? "s" : ""} live
+            </span>
+          </div>
+        )}
         <LiveLineToggle sportId={activeSport && activeSport !== "home" ? activeSport : "football"} />
         <div className="flex items-center justify-between gap-2">
           <SearchBar />
