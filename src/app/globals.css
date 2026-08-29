@@ -25,8 +25,7 @@
   --color-ai-insight: var(--ai-insight);
   --color-sport-f1: var(--sport-f1);
   --color-sport-cs2: var(--sport-cs2);
-  --color-sport-nba: var(--sport-nba);
-  --color-sport-wnba: var(--sport-wnba);
+  --color-sport-basketball: var(--sport-basketball);
   --color-sport-rugby: var(--sport-rugby);
   --color-bg-deep: var(--bg-deep);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -94,8 +93,7 @@
   --ai-insight: #A855F7;
   --sport-f1: #DC2626;
   --sport-cs2: #F97316;
-  --sport-nba: #0EA5E9;
-  --sport-wnba: #A855F7;
+  --sport-basketball: #0EA5E9;
   --sport-rugby: #14B8A6;
   --bg-deep: #0a0e17;
   --glass-bg: rgba(15, 23, 42, 0.55);
@@ -150,8 +148,7 @@
   --ai-insight: #A855F7;
   --sport-f1: #DC2626;
   --sport-cs2: #F97316;
-  --sport-nba: #0EA5E9;
-  --sport-wnba: #A855F7;
+  --sport-basketball: #0EA5E9;
   --sport-rugby: #14B8A6;
   --bg-deep: #0a0e17;
   --glass-bg: rgba(15, 23, 42, 0.55);
@@ -323,10 +320,8 @@
 .sport-ambient[data-sport="cycling"]::after { --sport-tennis: var(--sport-cycling); }
 .sport-ambient[data-sport="cs2"]::before,
 .sport-ambient[data-sport="cs2"]::after { --sport-tennis: var(--sport-cs2); }
-.sport-ambient[data-sport="nba"]::before,
-.sport-ambient[data-sport="nba"]::after { --sport-tennis: var(--sport-nba); }
-.sport-ambient[data-sport="wnba"]::before,
-.sport-ambient[data-sport="wnba"]::after { --sport-tennis: var(--sport-wnba); }
+.sport-ambient[data-sport="basketball"]::before,
+.sport-ambient[data-sport="basketball"]::after { --sport-tennis: var(--sport-basketball); }
 .sport-ambient[data-sport="f1"]::before,
 .sport-ambient[data-sport="f1"]::after { --sport-tennis: var(--sport-f1); }
 .sport-ambient[data-sport="rugby"]::before,

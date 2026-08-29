@@ -30,8 +30,7 @@ export const SPORT_META: Record<SportTabId, { name: string; icon: string }> = {
   football: { name: "Football", icon: "Trophy" },
   tennis: { name: "Tennis", icon: "Activity" },
   cs2: { name: "CS2", icon: "Crosshair" },
-  nba: { name: "NBA", icon: "Dribbble" },
-  wnba: { name: "WNBA", icon: "Dribbble" },
+  basketball: { name: "Basket", icon: "Dribbble" },
   mma: { name: "MMA", icon: "Swords" },
   cycling: { name: "Cyclisme", icon: "Bike" },
   f1: { name: "Formule 1", icon: "Flag" },
@@ -60,7 +59,7 @@ export const DEFAULT_FAVORITE_LEAGUES: ReadonlyArray<{
   { id: "football:premier-league", sportId: "football", name: "Premier League" },
   { id: "football:ligue-1", sportId: "football", name: "Ligue 1" },
   { id: "tennis:grand-slam", sportId: "tennis", name: "Grand Slam" },
-  { id: "nba:nba", sportId: "nba", name: "NBA" },
+  { id: "basketball:nba", sportId: "basketball", name: "NBA" },
 ];
 
 /** Vrai si l'id de ligue correspond à un favori par défaut du catalogue. */

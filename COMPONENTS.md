@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 152 components total (football: 11, leagues: 6, tennis: 54, etc.).
+> extract pass. 159 components total (football: 11, leagues: 6, tennis: 54, basketball: 7, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -176,6 +176,18 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | Component | File | Role |
 |-----------|------|------|
 | wnba-tab-content | wnba-tab-content.tsx | Contenu de l'onglet WNBA |
+
+## Basketball (`src/components/basketball/`) — 7 components
+
+| Component | File | Role |
+|-----------|------|------|
+| basketball-tab-content | basketball-tab-content.tsx | Onglet principal unifié NBA+WNBA+EuroLeague+domestique |
+| basketball-match-card | basketball-match-card.tsx | Carte match avec win prob, Four Factors, odds |
+| basketball-match-detail-dialog | basketball-match-detail-dialog.tsx | Dialog détail match (teams, win prob, Four Factors, odds, value, H2H) |
+| basketball-odds-comparator | basketball-odds-comparator.tsx | Tableau multi-bookmakers avec tri, best odds, value detection |
+| basketball-odds-chart | basketball-odds-chart.tsx | Graphique line movement (ML + implied probability via recharts) |
+| basketball-four-factors | basketball-four-factors.tsx | Tableau Four Factors Off/Def (eFG%, TOV%, ORB%, FT, ORtg, DRtg, NetRtg, Pace) |
+| basketball-league-selector | basketball-league-selector.tsx | Sélecteur de ligues (NBA/WNBA/EuroLeague/EuroCup/domestique) |
 
 ## Layout (`src/components/layout/`) — 6 components
 

@@ -27,7 +27,7 @@ export type FormResult = "W" | "D" | "L";
 export interface MatchRowData {
   id: string;
   /** Nom du sport (pour la couleur d'accent optionnelle). */
-  sport?: "football" | "tennis" | "nba" | "cs2" | "mma" | "cycling" | "f1" | "baseball" | "rugby" | "wnba";
+  sport?: "football" | "tennis" | "basketball" | "cs2" | "mma" | "cycling" | "f1" | "baseball" | "rugby";
   /** Équipe / joueur domicile. */
   homeName: string;
   homeRank?: number;

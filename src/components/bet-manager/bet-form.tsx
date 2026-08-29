@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils";
 import type { BetType } from "@/lib/bet-manager/types";
 import type { OcrTicket } from "@/lib/bet-manager/ocr";
 
-const SPORTS = ["football", "tennis", "basketball", "mma", "rugby", "cs2", "nba", "wnba", "cycling", "f1", "baseball", "other"];
+const SPORTS = ["football", "tennis", "basketball", "mma", "rugby", "cs2", "cycling", "f1", "baseball", "other"];
 
 type LegRow = { matchLabel: string; market: string; pick: string; odds: string };
 

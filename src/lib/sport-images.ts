@@ -13,8 +13,7 @@ export type SportId =
   | "football"
   | "cs2"
   | "mma"
-  | "nba"
-  | "wnba"
+  | "basketball"
   | "cycling"
   | "f1"
   | "baseball"
@@ -30,8 +29,7 @@ const SPORT_HERO: Record<SportId, string> = {
   football: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
   cs2: `${UNSPLASH_BASE}/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80`,
   mma: `${UNSPLASH_BASE}/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=1200&q=80`,
-  nba: `${UNSPLASH_BASE}/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=1200&q=80`,
-  wnba: `${UNSPLASH_BASE}/photo-1546519638-68e109498f28?auto=format&fit=crop&w=1200&q=80`,
+  basketball: `${UNSPLASH_BASE}/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=1200&q=80`,
   cycling: `${UNSPLASH_BASE}/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=1200&q=80`,
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1200&q=80`,
   // Baseball : pas d'image identifiée Unsplash aujourd'hui — on réutilise
@@ -52,8 +50,7 @@ const SPORT_BG: Record<SportId, string> = {
   football: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
   cs2: `${UNSPLASH_BASE}/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=60&blur=20`,
   mma: `${UNSPLASH_BASE}/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=800&q=60&blur=20`,
-  nba: `${UNSPLASH_BASE}/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=800&q=60&blur=20`,
-  wnba: `${UNSPLASH_BASE}/photo-1546519638-68e109498f28?auto=format&fit=crop&w=800&q=60&blur=20`,
+  basketball: `${UNSPLASH_BASE}/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=800&q=60&blur=20`,
   cycling: `${UNSPLASH_BASE}/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=800&q=60&blur=20`,
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=60&blur=20`,
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
@@ -67,8 +64,7 @@ const SPORT_ACCENT: Record<SportId, string> = {
   football: "#0ea5e9",
   cs2: "#f97316",
   mma: "#ef4444",
-  nba: "#0284c7",
-  wnba: "#a855f7",
+  basketball: "#0ea5e9",
   cycling: "#f59e0b",
   f1: "#dc2626",
   baseball: "#f59e0b",

@@ -79,15 +79,17 @@ async function loadCs2(): Promise<SportNode> {
   }
 }
 
-async function loadBasketball(kind: "nba" | "wnba"): Promise<SportNode> {
+async function loadBasketball(): Promise<SportNode> {
   try {
-    const json = await getJson(`/api/${kind}/matches`);
-    return groupRawMatches(
-      kind,
-      basketballToRaw(kind === "nba" ? "NBA" : "WNBA", json?.matches ?? []),
-    );
+    const [nbaJson, wnbaJson] = await Promise.all([
+      getJson("/api/nba/matches"),
+      getJson("/api/wnba/matches"),
+    ]);
+    const nbaRaw = basketballToRaw("NBA", nbaJson?.matches ?? []);
+    const wnbaRaw = basketballToRaw("WNBA", wnbaJson?.matches ?? []);
+    return groupRawMatches("basketball", [...nbaRaw, ...wnbaRaw]);
   } catch {
-    return emptySportNode(kind);
+    return emptySportNode("basketball");
   }
 }
 
@@ -139,13 +141,12 @@ async function loadRugby(): Promise<SportNode> {
 }
 
 async function buildTree(): Promise<SportNode[]> {
-  const [football, tennis, cs2, nba, wnba, mma, cycling, f1, baseball, rugby] =
+  const [football, tennis, cs2, basketball, mma, cycling, f1, baseball, rugby] =
     await Promise.all([
       loadFootball(),
       loadTennis(),
       loadCs2(),
-      loadBasketball("nba"),
-      loadBasketball("wnba"),
+      loadBasketball(),
       loadMma(),
       loadCycling(),
       loadF1(),
@@ -156,8 +157,7 @@ async function buildTree(): Promise<SportNode[]> {
     football,
     tennis,
     cs2,
-    nba,
-    wnba,
+    basketball,
     mma,
     cycling,
     f1,

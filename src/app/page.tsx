@@ -52,8 +52,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { FootballTabContent } from "@/components/football/football-tab-content";
 import { Cs2TabContent } from "@/components/cs2/cs2-tab-content";
 import { MmaTabContent } from "@/components/mma/mma-tab-content";
-import { NbaTabContent } from "@/components/nba/nba-tab-content";
-import { WnbaTabContent } from "@/components/wnba/wnba-tab-content";
+import { BasketballTabContent } from "@/components/basketball/basketball-tab-content";
 import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
 import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
@@ -74,6 +73,7 @@ import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/
 import { FeatureCards } from "@/components/dashboard/feature-cards";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
+import type { BasketballMatch } from "@/lib/basketball-data";
 
 // Dialogs de détail globaux — lazy : ne chargent le code que si un match est
 // réellement ouvert via le tableau "10 prochains matchs" (event open-match-detail).
@@ -88,11 +88,17 @@ const FootballMatchDetailDialog = lazy(() =>
     default: m.FootballMatchDetailDialog,
   })),
 );
+const BasketballMatchDetailDialog = lazy(() =>
+  import("@/components/basketball/basketball-match-detail-dialog").then((m) => ({
+    default: m.BasketballMatchDetailDialog,
+  })),
+);
 
 /** Demande d'ouverture d'un dialog de détail — union discriminée par sport. */
 type DetailRequest =
   | { sport: "tennis"; match: TennisMatch }
-  | { sport: "football"; match: FootballMatch };
+  | { sport: "football"; match: FootballMatch }
+  | { sport: "basketball"; match: BasketballMatch };
 
 type SportTab =
   | "home"
@@ -100,8 +106,7 @@ type SportTab =
   | "football"
   | "cs2"
   | "mma"
-  | "nba"
-  | "wnba"
+  | "basketball"
   | "cycling"
   | "f1"
   | "baseball"
@@ -118,8 +123,7 @@ const SPORT_IDS: ReadonlySet<string> = new Set<SportTab>([
   "football",
   "cs2",
   "mma",
-  "nba",
-  "wnba",
+  "basketball",
   "cycling",
   "f1",
   "baseball",
@@ -223,16 +227,17 @@ function HomeInner() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const evt = e as CustomEvent<{ sport?: string; matchId?: string }>;
-      const { sport, matchId } = evt.detail ?? {};
+      const evt = e as CustomEvent<{ sport?: string; matchId?: string; match?: unknown }>;
+      const { sport, matchId, match } = evt.detail ?? {};
       if (!sport || !matchId) return;
       if (sport === "tennis") {
-        const match = (tennisData?.matches ?? []).find((m) => m.id === matchId);
-        if (match) setDetail({ sport: "tennis", match });
+        const m = (tennisData?.matches ?? []).find((item) => item.id === matchId);
+        if (m) setDetail({ sport: "tennis", match: m });
       } else if (sport === "football") {
-        const match = (footData?.matches ?? []).find((m) => m.id === matchId);
-        if (match) setDetail({ sport: "football", match });
+        const m = (footData?.matches ?? []).find((item) => item.id === matchId);
+        if (m) setDetail({ sport: "football", match: m });
       }
+      // basketball est géré dans BasketballTabContent (données locales)
     };
     window.addEventListener("open-match-detail", handler);
     return () => window.removeEventListener("open-match-detail", handler);
@@ -470,8 +475,7 @@ function HomeInner() {
         {activeTab === "football" && <FootballTabContent />}
         {activeTab === "cs2" && <Cs2TabContent />}
         {activeTab === "mma" && <MmaTabContent />}
-        {activeTab === "nba" && <NbaTabContent />}
-        {activeTab === "wnba" && <WnbaTabContent />}
+        {activeTab === "basketball" && <BasketballTabContent />}
         {activeTab === "cycling" && <CyclingTabContent />}
         {activeTab === "f1" && <F1TabContent />}
         {activeTab === "baseball" && <BaseballTabContent />}

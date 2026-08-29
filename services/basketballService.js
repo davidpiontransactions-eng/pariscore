@@ -141,6 +141,64 @@ function _ftRate(stats) {
   return +((fta / fga) * 100).toFixed(1);
 }
 
+// TOV% = TOV / (FGA + 0.44*FTA + TOV) — Four Factor #2 (Oliver poids 25%)
+function _tovPct(stats) {
+  const tov = _statVal(stats, 'turnovers');
+  const fga = _statVal(stats, 'fieldGoalsAttempted');
+  const fta = _statVal(stats, 'freeThrowsAttempted');
+  if (tov == null || fga == null) return null;
+  const denom = fga + 0.44 * (fta || 0) + tov;
+  if (!denom) return null;
+  return +((tov / denom) * 100).toFixed(1);
+}
+
+// ORB% = orebounds / (orebounds + opp_drebounds) — Four Factor #3 (Oliver poids 20%)
+// ESPN scoreboard: reboundsOffensive, reboundsDefensive sur les statistics
+function _orbPct(stats, oppStats) {
+  const orb = _statVal(stats, 'reboundsOffensive');
+  const drbOpp = _statVal(oppStats, 'reboundsDefensive');
+  if (orb == null || drbOpp == null) return null;
+  const denom = orb + drbOpp;
+  if (!denom) return null;
+  return +((orb / denom) * 100).toFixed(1);
+}
+
+// Defensive Rating = points allowed per 100 possessions (proxy depuis standings PF/PA)
+// DRtg = avgPA * (100 / pace_estime) — mais on utilise le proxy simple : avgPA
+function _defRating(teamId) {
+  const s = _standings.map && _standings.map[teamId];
+  if (!s || s.avgPA == null) return null;
+  return +s.avgPA.toFixed(1);
+}
+
+// Offensive Rating = points scored per 100 possessions (proxy : avgPF)
+function _offRating(teamId) {
+  const s = _standings.map && _standings.map[teamId];
+  if (!s || s.avgPF == null) return null;
+  return +s.avgPF.toFixed(1);
+}
+
+// Pace = possessions per 48 minutes (estimation depuis PF + PA)
+// Pace ≈ (PF + PA) * 48 / (minutes_jouees * 2) — proxy avec 48 min standard NBA
+function _paceEstimate(teamId) {
+  const s = _standings.map && _standings.map[teamId];
+  if (!s || s.avgPF == null || s.avgPA == null) return null;
+  // Proxy : possessions ≈ (PF + PA) / 2 * (48/48) = PF + PA (pour une équipe)
+  // Pace réelle = (possessions_team + possessions_opp) / 2 * (48/game_minutes)
+  // Simplifié : pace ≈ avgPF + avgPA (total pts par match ≈ 2 * pace * efficiency)
+  // Estimation conservatrice : pace = (avgPF + avgPA) / (2 * avgEfficiency)
+  // Sans efficiency : fallback = avgPF + avgPA (raw proxy, calibrable)
+  return +(s.avgPF + s.avgPA).toFixed(1);
+}
+
+// Net Rating = ORtg - DRtg
+function _netRating(teamId) {
+  const off = _offRating(teamId);
+  const def = _defRating(teamId);
+  if (off == null || def == null) return null;
+  return +(off - def).toFixed(1);
+}
+
 // Leader PPG d'un competitor ESPN (pour détecter star out)
 function _ppgLeader(competitor) {
   const cats = (competitor && competitor.leaders) || [];
@@ -233,16 +291,38 @@ function computeNbaPythagorean(homeId, awayId) {
   return { p_home: +(p * 100).toFixed(1), pyth_home: +(wH * 100).toFixed(1), pyth_away: +(wA * 100).toFixed(1) };
 }
 
-// (2) Four Factors partiels (eFG% + FT rate — TOV/ORB non exposés ESPN scoreboard)
-function computeNbaFourFactors(homeStats, awayStats) {
+// (2) Four Factors complets (eFG% + TOV% + ORB% + FT rate) — Oliver weights révisés
+// Poids WinProb (inpredictable.com) : shooting 71%, turnovers 11%, rebonds 9%, FT 8%
+function computeNbaFourFactors(homeStats, awayStats, homeId, awayId) {
   const efgH = _efgPct(homeStats), efgA = _efgPct(awayStats);
   const ftH = _ftRate(homeStats), ftA = _ftRate(awayStats);
+  const tovH = _tovPct(homeStats), tovA = _tovPct(awayStats);
+  const orbH = _orbPct(homeStats, awayStats), orbA = _orbPct(awayStats, homeStats);
   if (efgH == null || efgA == null) return null;
-  // eFG% pondéré 0.40, FT rate 0.15 (poids Oliver) → score différentiel → logistic
-  const scoreH = 0.40 * efgH + 0.15 * (ftH || 0);
-  const scoreA = 0.40 * efgA + 0.15 * (ftA || 0);
-  const p = 1 / (1 + Math.exp(-(scoreH - scoreA) / 3.2)); // pente calibrable
-  return { p_home: +(p * 100).toFixed(1), efg_home: efgH, efg_away: efgA, partial: true };
+  // Poids WinProb : shooting 71%, turnovers 11%, rebonds 9%, FT 8%
+  // Note : TOV% et ORB% sont inversés (lower TOV% = mieux, higher ORB% = mieux)
+  const tovDiff = (tovA != null && tovH != null) ? (tovA - tovH) : 0; // positif = home avantage (away tourne plus)
+  const orbDiff = (orbH != null && orbA != null) ? (orbH - orbA) : 0; // positif = home avantage (home prend plus de off reb)
+  const scoreH = 0.71 * efgH + 0.11 * tovDiff + 0.09 * orbDiff + 0.08 * (ftH || 0);
+  const scoreA = 0.71 * efgA + 0.11 * (-tovDiff) + 0.09 * (-orbDiff) + 0.08 * (ftA || 0);
+  const p = 1 / (1 + Math.exp(-(scoreH - scoreA) / 3.2));
+  // Ratings et pace
+  const offH = _offRating(homeId), offA = _offRating(awayId);
+  const defH = _defRating(homeId), defA = _defRating(awayId);
+  const netH = _netRating(homeId), netA = _netRating(awayId);
+  const paceH = _paceEstimate(homeId), paceA = _paceEstimate(awayId);
+  return {
+    p_home: +(p * 100).toFixed(1),
+    efg_home: efgH, efg_away: efgA,
+    tov_home: tovH, tov_away: tovA,
+    orb_home: orbH, orb_away: orbA,
+    ft_home: ftH, ft_away: ftA,
+    off_rating_home: offH, off_rating_away: offA,
+    def_rating_home: defH, def_rating_away: defA,
+    net_rating_home: netH, net_rating_away: netA,
+    pace_home: paceH, pace_away: paceA,
+    complete: tovH != null && orbH != null,
+  };
 }
 
 // (3) Bayesian blend Elo + Pythagorean + Four Factors → proba consolidée
@@ -449,7 +529,7 @@ function _normalizeEvent(ev) {
   const total   = computeNbaTotal(home.statistics, away.statistics, hTeam.id, aTeam.id);
   // Modèles poussés
   const pyth  = computeNbaPythagorean(hTeam.id, aTeam.id);
-  const ff    = computeNbaFourFactors(home.statistics, away.statistics);
+  const ff    = computeNbaFourFactors(home.statistics, away.statistics, hTeam.id, aTeam.id);
   const blend = computeNbaBlend(winProb && winProb.p_home, pyth && pyth.p_home, ff && ff.p_home);
   const spreadUQD = computeNbaSpreadUQD(
     winProb && winProb.edge_elo,
@@ -528,6 +608,9 @@ function _normalizeEvent(ev) {
       record: _recordSummary(home.records, 'total'),
       avg_pts: _statVal(home.statistics, 'avgPoints'),
       efg_pct: _efgPct(home.statistics), ft_rate: _ftRate(home.statistics),
+      tov_pct: _tovPct(home.statistics), orb_pct: _orbPct(home.statistics, away.statistics),
+      off_rating: _offRating(hTeam.id), def_rating: _defRating(hTeam.id),
+      net_rating: _netRating(hTeam.id), pace: _paceEstimate(hTeam.id),
     },
     away: {
       id: aTeam.id, name: aTeam.displayName, abbr: aTeam.abbreviation, logo: aTeam.logo, color: aTeam.color,
@@ -535,6 +618,9 @@ function _normalizeEvent(ev) {
       record: _recordSummary(away.records, 'total'),
       avg_pts: _statVal(away.statistics, 'avgPoints'),
       efg_pct: _efgPct(away.statistics), ft_rate: _ftRate(away.statistics),
+      tov_pct: _tovPct(away.statistics), orb_pct: _orbPct(away.statistics, home.statistics),
+      off_rating: _offRating(aTeam.id), def_rating: _defRating(aTeam.id),
+      net_rating: _netRating(aTeam.id), pace: _paceEstimate(aTeam.id),
     },
     odds: odds ? {
       provider: odds.provider && odds.provider.displayName,
@@ -623,4 +709,6 @@ module.exports = {
   computeNbaAdjusted,
   invalidateCache() { _cache.ts = 0; },
   _normalizeEvent, _devigEv, // testing
+  // Nouvelles fonctions Four Factors complètes
+  _tovPct, _orbPct, _defRating, _offRating, _netRating, _paceEstimate,
 };
