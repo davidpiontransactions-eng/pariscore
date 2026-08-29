@@ -612,6 +612,8 @@ function LeagueRow({
 function CountryBlock({
   country,
   selectedLeagueId,
+  selectedCountryId,
+  sportId,
   active,
   forceExpanded,
   onLeagueSelect,
@@ -619,9 +621,11 @@ function CountryBlock({
 }: {
   country: CountryNode;
   selectedLeagueId: string | null;
+  selectedCountryId: string | null;
+  sportId: string;
   /** Ancêtre direct de la ligue sélectionnée (chemin actif sport→pays→ligue). */
   active?: boolean;
-  /** Recherche active : force l'affichage des ligues quel que soit le store. */
+  /** Recherche active : force l'affichage des pays/ligues quel que soit le store. */
   forceExpanded?: boolean;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
@@ -632,17 +636,27 @@ function CountryBlock({
   const expandedLeagues = useSportsSidebarStore((s) => s.expandedLeagues);
   const toggleCountry = useSportsSidebarStore((s) => s.toggleCountry);
   const toggleLeague = useSportsSidebarStore((s) => s.toggleLeague);
+  const selectCountry = useSportsSidebarStore((s) => s.selectCountry);
+  const isCountrySelected = selectedCountryId === country.id;
+
+  const handleCountryClick = () => {
+    toggleCountry(country.id);
+    selectCountry(country.id, sportId);
+  };
 
   return (
     <li>
       <button
         type="button"
-        onClick={() => toggleCountry(country.id)}
+        onClick={handleCountryClick}
         aria-expanded={expanded}
         aria-label={t(expanded ? "collapseAria" : "expandAria", { name: country.name })}
         className={cn(
           "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 pl-5 text-left",
-          "text-slate-300 transition-colors hover:bg-slate-800/80",
+          "transition-colors hover:bg-slate-800/80",
+          isCountrySelected
+            ? "bg-emerald-500/10 font-semibold text-emerald-300"
+            : "text-slate-300",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
@@ -683,6 +697,7 @@ function CountryBlock({
 function SportBlock({
   sport,
   selectedLeagueId,
+  selectedCountryId,
   activePath,
   forceExpanded,
   onLeagueSelect,
@@ -690,6 +705,7 @@ function SportBlock({
 }: {
   sport: SportNode;
   selectedLeagueId: string | null;
+  selectedCountryId: string | null;
   /** Chemin actif sport→pays→ligue (P0-9) : marque le sport et le pays ancêtres. */
   activePath?: { sportId: string; countryId: string } | null;
   /** Recherche active : force l'affichage des pays/ligues quel que soit le store. */
@@ -703,7 +719,7 @@ function SportBlock({
   const toggleSport = useSportsSidebarStore((s) => s.toggleSport);
   const Icon = SPORT_ICONS[sport.icon] ?? Trophy;
   const sportLabel = t(`sport.${sport.id}`) || sport.name;
-  const active = activePath?.sportId === sport.id;
+  const active = activePath?.sportId === sport.id || sport.countries.some((c) => c.id === selectedCountryId);
 
   return (
     <li>
@@ -753,6 +769,8 @@ function SportBlock({
               key={country.id}
               country={country}
               selectedLeagueId={selectedLeagueId}
+              selectedCountryId={selectedCountryId}
+              sportId={sport.id}
               active={activePath?.countryId === country.id}
               forceExpanded={forceExpanded}
               onLeagueSelect={onLeagueSelect}
@@ -1024,6 +1042,7 @@ export function SportsSidebarContent({
   const timeFilter = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const selectedLeagueId = useSportsSidebarStore((s) => s.selectedLeagueId);
   const selectLeague = useSportsSidebarStore((s) => s.selectLeague);
+  const selectedCountryId = useSportsSidebarStore((s) => s.selectedCountryId);
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const clearMatchSelection = useSportsSidebarStore((s) => s.clearMatchSelection);
   const hideOdds = useSportsSidebarStore((s) => s.hideOdds);
@@ -1269,6 +1288,7 @@ export function SportsSidebarContent({
                   key={sport.id}
                   sport={sport}
                   selectedLeagueId={selectedLeagueId}
+                  selectedCountryId={selectedCountryId}
                   activePath={activePath}
                   forceExpanded={searchActive}
                   onLeagueSelect={handleLeagueSelect}
@@ -1349,6 +1369,7 @@ export function SportsSidebarDrawer({
 export function SportsSidebarUrlSync() {
   const selectedLeagueId = useSportsSidebarStore((s) => s.selectedLeagueId);
   const selectedSportId = useSportsSidebarStore((s) => s.selectedSportId);
+  const selectedCountryId = useSportsSidebarStore((s) => s.selectedCountryId);
   const selectedTimeFilter = useSportsSidebarStore((s) => s.selectedTimeFilter);
   const searchQuery = useSportsSidebarStore((s) => s.searchQuery);
   const modes = useSportsSidebarStore((s) => s.modes);
@@ -1360,8 +1381,8 @@ export function SportsSidebarUrlSync() {
   }, []);
 
   useEffect(() => {
-    syncStoreToUrl({ selectedLeagueId, selectedSportId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds });
-  }, [selectedLeagueId, selectedSportId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds]);
+    syncStoreToUrl({ selectedLeagueId, selectedSportId, selectedCountryId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds });
+  }, [selectedLeagueId, selectedSportId, selectedCountryId, selectedTimeFilter, searchQuery, modes, treeStatus, selectedMatchIds]);
 
   return null;
 }

@@ -13,6 +13,7 @@ import {
   Gauge,
   TrendingUp,
   X,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFootballMatches } from "@/hooks/use-football-matches";
@@ -124,18 +125,29 @@ export function FootballTabContent() {
   const backtestState = useFootballBacktest(matches);
 
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
+  const selectedCountryId = useSportsSidebarStore((s) => s.selectedCountryId);
+  const clearCountry = useSportsSidebarStore((s) => s.selectCountry);
 
   const liveMatches = useMemo(() => {
     let list = matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT"));
     if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
+    else if (selectedCountryId) {
+      // selectedCountryId = slug du nom pays (ex: "england"), league.country = nom lisible
+      const target = selectedCountryId.toLowerCase();
+      list = list.filter((m) => m.league.country?.toLowerCase().replace(/\s+/g, "-") === target);
+    }
     if (timeRange !== null) list = filterLiveByWindow(list, timeRange, (m) => m.scheduledAt);
     else if (timeToday) list = filterByToday(list, (m) => m.scheduledAt);
     return filterBySelection(list, selectedMatchIds, (m) => m.id);
-  }, [matches, selectedLeague, timeRange, timeToday, selectedMatchIds]);
+  }, [matches, selectedLeague, selectedCountryId, timeRange, timeToday, selectedMatchIds]);
 
   const prematchMatches = useMemo(() => {
     let list = matches.filter((m) => !m.live || m.live.status === "FT" || m.live.status === "PEN");
     if (selectedLeague) list = list.filter((m) => m.league.id === selectedLeague);
+    else if (selectedCountryId) {
+      const target = selectedCountryId.toLowerCase();
+      list = list.filter((m) => m.league.country?.toLowerCase().replace(/\s+/g, "-") === target);
+    }
     // Appliquer le preset Top Teams AVANT les sous-filtres existants
     if (presetFilter) {
       list = applyPresetFilter(list, presetFilter, cvData, adData).filtered;
@@ -188,7 +200,7 @@ export function FootballTabContent() {
       return [...list].sort((a, b) => (bestMatchEdge(b) ?? -Infinity) - (bestMatchEdge(a) ?? -Infinity));
     }
     return list.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [matches, selectedLeague, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday, timeTomorrow, selectedMatchIds]);
+  }, [matches, selectedLeague, selectedCountryId, presetFilter, cvData, adData, filter, activeAIFilter, sortByEdge, timeRange, timeToday, timeTomorrow, selectedMatchIds]);
 
   // Auto-bascule Live → Pre-match : sélectionner une ligue sans match en cours
   // mais avec des matchs à venir ne doit jamais atterrir sur un onglet Live vide
@@ -220,6 +232,39 @@ export function FootballTabContent() {
 
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+      {/* Breadcrumb contextuel — sport > pays > ligue */}
+      {(selectedCountryId || selectedLeague) && (
+        <div className="mb-4 flex items-center gap-1.5 text-xs">
+          <button
+            type="button"
+            onClick={() => {
+              if (selectedLeague) {
+                clearCountry(null);
+                setSelectedLeague(null);
+              } else if (selectedCountryId) {
+                clearCountry(null);
+              }
+            }}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+          >
+            ← Retour
+          </button>
+          <ChevronRight className="h-3 w-3 text-slate-500" />
+          <span className="font-medium text-slate-300">Football</span>
+          {selectedCountryId && (
+            <>
+              <ChevronRight className="h-3 w-3 text-slate-500" />
+              <span className="font-medium text-slate-300 capitalize">{selectedCountryId}</span>
+            </>
+          )}
+          {selectedLeague && (
+            <>
+              <ChevronRight className="h-3 w-3 text-slate-500" />
+              <span className="font-semibold text-emerald-400">{selectedLeague}</span>
+            </>
+          )}
+        </div>
+      )}
       {/* View mode toggle + refresh */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex rounded-lg border border-border/60 bg-muted/30 p-1">

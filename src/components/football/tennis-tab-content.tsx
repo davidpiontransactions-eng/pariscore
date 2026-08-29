@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, memo, lazy, Suspense, Component, type ReactNode } from "react";
 import Link from "next/link";
-import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3 } from "lucide-react";
+import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3, X, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openBookmakerComparatorDialog } from "@/components/bookmaker-comparator-dialog";
@@ -414,6 +414,8 @@ return [...matches, ...synthetic];
     [selectedMatchIds],
   );
 
+  const selectedCountryId = useSportsSidebarStore((s) => s.selectedCountryId);
+
   const matchesWithScoped = useMemo(() => {
     let list = matchesWithLive;
     if (selectedTournament) {
@@ -424,9 +426,19 @@ return [...matches, ...synthetic];
           m.tournament.toLowerCase().includes(target),
       );
     }
+    // Filtre par catégorie de tournoi sélectionnée dans la sidebar
+    // (tennis tree groupe par tournamentCategory, pas par nationalité joueur).
+    if (selectedCountryId) {
+      const target = selectedCountryId.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.tournamentCategory?.toLowerCase().replace(/\s+/g, "-") === target ||
+          m.tournament.toLowerCase().replace(/\s+/g, "-") === target,
+      );
+    }
     // Sélection sidebar : ne montrer que les matchs choisis. Vide = pas de filtre.
     return filterBySelection(list, selectedMatchIds, (m) => m.id);
-  }, [matchesWithLive, selectedTournament, selectedMatchIds]);
+  }, [matchesWithLive, selectedTournament, selectedCountryId, selectedMatchIds]);
 
   const { filtered, valueBetCount } = useMatchFilter(matchesWithScoped, filter, favorites, sortKey);
 
@@ -612,6 +624,24 @@ return [...matches, ...synthetic];
         />
       ))}
 
+      {/* Breadcrumb contextuel — sport > pays */}
+      {selectedCountryId && (
+        <div className="mx-auto max-w-6xl px-4 pt-4">
+          <div className="flex items-center gap-1.5 text-xs">
+            <button
+              type="button"
+              onClick={() => useSportsSidebarStore.getState().selectCountry(null)}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-emerald-400 transition-colors hover:bg-emerald-500/10 hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+            >
+              ← Retour
+            </button>
+            <ChevronRight className="h-3 w-3 text-slate-500" />
+            <span className="font-medium text-slate-300">Tennis</span>
+            <ChevronRight className="h-3 w-3 text-slate-500" />
+            <span className="font-semibold text-emerald-400 capitalize">{selectedCountryId}</span>
+          </div>
+        </div>
+      )}
       {/* Hero */}
       <section className="border-b border-border/60 bg-gradient-to-b from-muted/40 to-background">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">

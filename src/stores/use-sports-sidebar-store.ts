@@ -29,6 +29,8 @@ interface SportsSidebarState {
   favoritesCustomized: boolean;
   selectedLeagueId: string | null;
   selectedSportId: string | null;
+  /** Filtre par pays sélectionné dans la sidebar (ex: "france", "england"). */
+  selectedCountryId: string | null;
   modes: Record<string, MatchViewMode>;
   /**
    * Filtre de statut de l'arbre sidebar : Tout / Live / Avant-match.
@@ -62,6 +64,8 @@ interface SportsSidebarState {
   /** Sélection depuis la sidebar : bascule aussi le sport central. */
   selectLeague: (leagueId: string | null, sportId?: string) => void;
   selectSport: (sportId: string | null) => void;
+  /** Sélectionne un pays → filtre la grille centrale sur ce pays. */
+  selectCountry: (countryId: string | null, sportId?: string) => void;
   /** Sync onglet central → store (pas d'effet de bord inverse). */
   syncSportFromTab: (sportId: string) => void;
   setMode: (sportId: string, mode: MatchViewMode) => void;
@@ -94,6 +98,7 @@ const DEFAULTS = {
   treeStatus: "all" as "all" | "live" | "prematch",
   selectedLeagueId: null as string | null,
   selectedSportId: null as string | null,
+  selectedCountryId: null as string | null,
   drawerOpen: false,
   selectedMatchIds: [] as string[],
   activeLeagueSet: null as string | null,
@@ -175,7 +180,20 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
             s.selectedLeagueId && sportId && !s.selectedLeagueId.startsWith(`${sportId}:`)
               ? null
               : s.selectedLeagueId,
+          // Changer de sport annule aussi le filtre pays.
+          selectedCountryId: null,
         })),
+
+      selectCountry: (countryId, sportId) =>
+        set((s) => {
+          const isDeselect = countryId === null || s.selectedCountryId === countryId;
+          return {
+            selectedCountryId: isDeselect ? null : countryId,
+            // Sélectionner un pays annule le filtre ligue (une ligue est plus spécifique).
+            selectedLeagueId: isDeselect ? s.selectedLeagueId : null,
+            selectedSportId: !isDeselect && sportId ? sportId : s.selectedSportId,
+          };
+        }),
 
       syncSportFromTab: (sportId) => {
         if (get().selectedSportId !== sportId) {
@@ -190,7 +208,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
 
       setDrawerOpen: (drawerOpen) => set({ drawerOpen }),
 
-      clearFilters: () => set({ ...DEFAULTS }),
+      clearFilters: () => set({ ...DEFAULTS, selectedCountryId: null }),
 
       toggleMatchSelection: (matchId) =>
         set((s) => ({
@@ -272,6 +290,7 @@ export function hydrateStoreFromUrl(): void {
 
   const league = params.get("league");
   const sport = params.get("sport");
+  const country = params.get("country");
   const time = params.get("time");
   const q = params.get("q");
   const view = params.get("view");
@@ -282,6 +301,7 @@ export function hydrateStoreFromUrl(): void {
   } else if (sport) {
     patch.selectedSportId = sport;
   }
+  if (country) patch.selectedCountryId = country;
   if (time && (time === "all" || TIME_PARAM_KEYS.includes(time as TimeFilterKey))) {
     patch.selectedTimeFilter = time as TimeFilterKey;
   }
@@ -304,6 +324,7 @@ export function hydrateStoreFromUrl(): void {
 export function syncStoreToUrl(state: {
   selectedLeagueId: string | null;
   selectedSportId: string | null;
+  selectedCountryId: string | null;
   selectedTimeFilter: TimeFilterKey;
   searchQuery: string;
   modes: Record<string, MatchViewMode>;
@@ -314,6 +335,7 @@ export function syncStoreToUrl(state: {
   const params = new URLSearchParams();
   if (state.selectedSportId) params.set("sport", state.selectedSportId);
   if (state.selectedLeagueId) params.set("league", state.selectedLeagueId);
+  if (state.selectedCountryId) params.set("country", state.selectedCountryId);
   if (state.selectedTimeFilter !== "all") params.set("time", state.selectedTimeFilter);
   if (state.searchQuery.trim().length >= 2) params.set("q", state.searchQuery.trim());
   if (state.treeStatus !== "all") params.set("view", state.treeStatus);
