@@ -57,3 +57,9 @@
 
 <!-- Loop appends below this line -->
 {"run_id":"2026-08-25T10:00:00Z","pattern":"scraping-oddalerts","agent":"node","duration_s":120,"items_found":582,"actions_taken":1,"escalations":0,"tokens_estimate":0,"mcp_calls":0,"files_changed":1,"outcome":"success","error":null}
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Error: no beads database found
+Hint: run 'bd where' to inspect the resolved workspace, or 'bd init' to create a new database
+      or set BEADS_DIR to point to your .beads directory
