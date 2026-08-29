@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFavorites } from "@/hooks/use-favorites";
 import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
@@ -57,7 +58,7 @@ const FootballMatchDetailDialog = lazy(() =>
   import("./football-match-detail-dialog").then((m) => ({ default: m.FootballMatchDetailDialog })),
 );
 
-type FootFilter = "all" | "value" | "today" | "topConf" | "corners" | "btts";
+type FootFilter = "all" | "value" | "today" | "topConf" | "corners" | "over65corners" | "btts";
 
 export function FootballTabContent() {
   const t = useTranslations("common");
@@ -177,6 +178,9 @@ export function FootballTabContent() {
     if (filter === "corners") {
       list = list.filter((m) => m.prediction.bestCornerOver && m.prediction.bestCornerOver.overProb >= 60);
     }
+    if (filter === "over65corners") {
+      list = list.filter((m) => m.prediction.bestCornerOver && m.prediction.bestCornerOver.over65Prob >= 55);
+    }
     if (filter === "btts") {
       list = list.filter((m) => m.prediction.bttsProb >= 55);
     }
@@ -238,6 +242,7 @@ export function FootballTabContent() {
     { key: "value", label: "Value Bets" },
     { key: "topConf", label: "Fortes Confiances" },
     { key: "corners", label: "Spe Corners" },
+    { key: "over65corners", label: "Over 6.5 Corners" },
     { key: "btts", label: "BTTS" },
   ];
 
@@ -524,23 +529,20 @@ export function FootballTabContent() {
             />
           </div>
 
-          {/* Sub-filters */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            {FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={cn(
-                  "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
-                  "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  filter === f.key
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border bg-background hover:bg-muted",
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+          {/* Sub-filters — dropdown */}
+          <div className="mb-4">
+            <Select value={filter} onValueChange={(v) => setFilter(v as FootFilter)}>
+              <SelectTrigger className="w-[200px] text-xs font-semibold">
+                <SelectValue placeholder="Filtrer..." />
+              </SelectTrigger>
+              <SelectContent>
+                {FILTERS.map((f) => (
+                  <SelectItem key={f.key} value={f.key} className="text-xs">
+                    {f.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Filtre par heure de début (fenêtre glissante 1h → 24h / aujourd'hui) */}
