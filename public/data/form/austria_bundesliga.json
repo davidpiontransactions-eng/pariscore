@@ -4,7 +4,7 @@
     "leagueId": "austria_bundesliga",
     "leagueName": "Austria",
     "season": "2026/27",
-    "lastUpdated": "2026-08-28T16:49:38.443848Z",
+    "lastUpdated": "2026-08-29T11:18:52.093298Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,15 +13,6 @@
   },
   "home": [
     {
-      "teamName": "Sturm Graz",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
-    },
-    {
       "teamName": "Lask Linz",
       "gp": 2,
       "w": 2,
@@ -29,15 +20,6 @@
       "l": 0,
       "gf": 7,
       "ga": 1
-    },
-    {
-      "teamName": "A. Lustenau",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 3,
-      "ga": 2
     },
     {
       "teamName": "Rapid Wien",
@@ -56,27 +38,27 @@
       "l": 0,
       "gf": 4,
       "ga": 1
-    }
-  ],
-  "away": [
+    },
+    {
+      "teamName": "A. Lustenau",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
+      "l": 1,
+      "gf": 3,
+      "ga": 6
+    },
     {
       "teamName": "Sturm Graz",
       "gp": 2,
       "w": 1,
       "d": 1,
       "l": 0,
-      "gf": 3,
-      "ga": 1
-    },
-    {
-      "teamName": "Hartberg",
-      "gp": 2,
-      "w": 1,
-      "d": 0,
-      "l": 1,
       "gf": 2,
-      "ga": 2
-    },
+      "ga": 1
+    }
+  ],
+  "away": [
     {
       "teamName": "Lask Linz",
       "gp": 1,
@@ -85,6 +67,15 @@
       "l": 0,
       "gf": 2,
       "ga": 0
+    },
+    {
+      "teamName": "Rapid Wien",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 1
     },
     {
       "teamName": "Salzburg",
@@ -96,13 +87,22 @@
       "ga": 1
     },
     {
-      "teamName": "Rapid Wien",
-      "gp": 1,
+      "teamName": "Sturm Graz",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 3,
+      "ga": 1
+    },
+    {
+      "teamName": "Tirol",
+      "gp": 2,
       "w": 1,
       "d": 0,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
+      "l": 1,
+      "gf": 5,
+      "ga": 3
     }
   ]
 }

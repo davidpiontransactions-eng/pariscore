@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-08-28T16:49:25.952797Z",
+    "lastUpdated": "2026-08-29T11:18:40.542625Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -31,15 +31,6 @@
       "ga": 9
     },
     {
-      "teamName": "Jeonbuk",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 11,
-      "ga": 7
-    },
-    {
       "teamName": "Seoul",
       "gp": 8,
       "w": 4,
@@ -56,9 +47,45 @@
       "l": 2,
       "gf": 11,
       "ga": 9
+    },
+    {
+      "teamName": "Jeonbuk",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 11,
+      "ga": 7
     }
   ],
   "away": [
+    {
+      "teamName": "Incheon Utd",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 12,
+      "ga": 8
+    },
+    {
+      "teamName": "Jeju Utd",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 11,
+      "ga": 6
+    },
+    {
+      "teamName": "Seoul",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 16,
+      "ga": 5
+    },
     {
       "teamName": "Anyang",
       "gp": 8,
@@ -76,33 +103,6 @@
       "l": 2,
       "gf": 10,
       "ga": 6
-    },
-    {
-      "teamName": "Seoul",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 16,
-      "ga": 5
-    },
-    {
-      "teamName": "Jeju Utd",
-      "gp": 8,
-      "w": 5,
-      "d": 1,
-      "l": 2,
-      "gf": 11,
-      "ga": 6
-    },
-    {
-      "teamName": "Incheon Utd",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 12,
-      "ga": 8
     }
   ]
 }

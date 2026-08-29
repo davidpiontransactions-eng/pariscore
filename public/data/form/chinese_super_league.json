@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-08-28T16:49:19.974809Z",
+    "lastUpdated": "2026-08-29T11:18:35.009237Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,15 @@
     "partial": false
   },
   "home": [
+    {
+      "teamName": "Qingdao West C.",
+      "gp": 8,
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 13,
+      "ga": 6
+    },
     {
       "teamName": "Yunnan Yukun",
       "gp": 8,
@@ -31,24 +40,6 @@
       "ga": 9
     },
     {
-      "teamName": "Shandong T.",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 21,
-      "ga": 13
-    },
-    {
-      "teamName": "Qingdao West C.",
-      "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 13,
-      "ga": 6
-    },
-    {
       "teamName": "Dalian Yingbo",
       "gp": 8,
       "w": 5,
@@ -56,17 +47,26 @@
       "l": 2,
       "gf": 14,
       "ga": 11
+    },
+    {
+      "teamName": "Shandong T.",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 21,
+      "ga": 13
     }
   ],
   "away": [
     {
-      "teamName": "Chengdu",
+      "teamName": "Qingdao West C.",
       "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 11,
-      "ga": 10
+      "w": 3,
+      "d": 4,
+      "l": 1,
+      "gf": 9,
+      "ga": 9
     },
     {
       "teamName": "Beijing Guoan",
@@ -78,15 +78,6 @@
       "ga": 11
     },
     {
-      "teamName": "Qingdao West C.",
-      "gp": 8,
-      "w": 3,
-      "d": 4,
-      "l": 1,
-      "gf": 9,
-      "ga": 9
-    },
-    {
       "teamName": "Shanghai Port",
       "gp": 8,
       "w": 5,
@@ -94,6 +85,15 @@
       "l": 2,
       "gf": 15,
       "ga": 12
+    },
+    {
+      "teamName": "Chengdu",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 11,
+      "ga": 10
     },
     {
       "teamName": "Henan Sl",

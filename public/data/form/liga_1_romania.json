@@ -4,7 +4,7 @@
     "leagueId": "liga_1_romania",
     "leagueName": "Romania",
     "season": "2026/27",
-    "lastUpdated": "2026-08-28T16:49:10.129080Z",
+    "lastUpdated": "2026-08-29T11:18:25.863815Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,6 +13,15 @@
   },
   "home": [
     {
+      "teamName": "U. Cluj",
+      "gp": 4,
+      "w": 3,
+      "d": 0,
+      "l": 1,
+      "gf": 8,
+      "ga": 6
+    },
+    {
       "teamName": "Cornivul H.",
       "gp": 3,
       "w": 2,
@@ -20,15 +29,6 @@
       "l": 0,
       "gf": 7,
       "ga": 1
-    },
-    {
-      "teamName": "Din. Bucharest",
-      "gp": 3,
-      "w": 3,
-      "d": 0,
-      "l": 0,
-      "gf": 11,
-      "ga": 2
     },
     {
       "teamName": "Otelul",
@@ -40,6 +40,15 @@
       "ga": 3
     },
     {
+      "teamName": "Din. Bucharest",
+      "gp": 3,
+      "w": 3,
+      "d": 0,
+      "l": 0,
+      "gf": 11,
+      "ga": 2
+    },
+    {
       "teamName": "Univ. Craiova",
       "gp": 4,
       "w": 3,
@@ -47,18 +56,27 @@
       "l": 1,
       "gf": 11,
       "ga": 2
-    },
-    {
-      "teamName": "U. Cluj",
-      "gp": 3,
-      "w": 3,
-      "d": 0,
-      "l": 0,
-      "gf": 6,
-      "ga": 3
     }
   ],
   "away": [
+    {
+      "teamName": "Petrolul",
+      "gp": 4,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 5,
+      "ga": 8
+    },
+    {
+      "teamName": "Farul Constanta",
+      "gp": 4,
+      "w": 0,
+      "d": 3,
+      "l": 1,
+      "gf": 5,
+      "ga": 6
+    },
     {
       "teamName": "Din. Bucharest",
       "gp": 3,
@@ -67,24 +85,6 @@
       "l": 1,
       "gf": 2,
       "ga": 2
-    },
-    {
-      "teamName": "Fcsb",
-      "gp": 3,
-      "w": 1,
-      "d": 1,
-      "l": 1,
-      "gf": 2,
-      "ga": 1
-    },
-    {
-      "teamName": "Arges",
-      "gp": 3,
-      "w": 1,
-      "d": 0,
-      "l": 2,
-      "gf": 1,
-      "ga": 3
     },
     {
       "teamName": "Rapid Bucharest",
@@ -96,13 +96,13 @@
       "ga": 1
     },
     {
-      "teamName": "Farul Constanta",
-      "gp": 4,
-      "w": 0,
-      "d": 3,
+      "teamName": "Fcsb",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
       "l": 1,
-      "gf": 5,
-      "ga": 6
+      "gf": 2,
+      "ga": 1
     }
   ]
 }

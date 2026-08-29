@@ -4,7 +4,7 @@
     "leagueId": "superleague_greece",
     "leagueName": "Greece",
     "season": "2026/27",
-    "lastUpdated": "2026-08-28T16:48:56.801271Z",
+    "lastUpdated": "2026-08-29T11:18:13.860580Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,15 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Olympiakos",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 1,
-      "ga": 0
-    },
     {
       "teamName": "Ofi Crete",
       "gp": 1,
@@ -40,12 +31,12 @@
       "ga": 0
     },
     {
-      "teamName": "Paok",
+      "teamName": "Olympiakos",
       "gp": 1,
       "w": 1,
       "d": 0,
       "l": 0,
-      "gf": 4,
+      "gf": 1,
       "ga": 0
     },
     {
@@ -56,20 +47,20 @@
       "l": 0,
       "gf": 3,
       "ga": 1
+    },
+    {
+      "teamName": "Paok",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 4,
+      "ga": 0
     }
   ],
   "away": [
     {
       "teamName": "Ofi Crete",
-      "gp": 0,
-      "w": 0,
-      "d": 0,
-      "l": 0,
-      "gf": 0,
-      "ga": 0
-    },
-    {
-      "teamName": "Kalamata",
       "gp": 0,
       "w": 0,
       "d": 0,
@@ -87,13 +78,13 @@
       "ga": 0
     },
     {
-      "teamName": "Aris",
-      "gp": 1,
-      "w": 1,
+      "teamName": "Kalamata",
+      "gp": 0,
+      "w": 0,
       "d": 0,
       "l": 0,
-      "gf": 3,
-      "ga": 2
+      "gf": 0,
+      "ga": 0
     },
     {
       "teamName": "Kifisia",
@@ -103,6 +94,15 @@
       "l": 0,
       "gf": 0,
       "ga": 0
+    },
+    {
+      "teamName": "Aris",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 3,
+      "ga": 2
     }
   ]
 }
