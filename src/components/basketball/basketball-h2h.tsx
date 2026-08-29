@@ -31,8 +31,10 @@ export function BasketballH2H({ className, defaultLeague = "nba" }: BasketballH2
   const { players: playersB } = useH2HPlayers(league, teamBId);
 
   const handleSwap = useCallback(() => {
-    setTeamAId(teamBId);
-    setTeamBId(teamAId);
+    setTeamAId((prev) => {
+      setTeamBId(teamAId);
+      return teamBId;
+    });
   }, [teamAId, teamBId]);
 
   // League toggle

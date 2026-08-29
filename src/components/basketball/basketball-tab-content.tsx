@@ -126,7 +126,10 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       const evt = e as CustomEvent<{ sport?: string; matchId?: string }>;
       const { sport, matchId } = evt.detail ?? {};
       if (sport !== "basketball" || !matchId) return;
-      const match = nbaWnbaMatches.find((m) => m.id === matchId);
+      // Chercher d'abord dans NBA/WNBA (données complètes), puis EuroLeague/EuroCup
+      const match = nbaWnbaMatches.find((m) => m.id === matchId)
+        ?? euroMatches.find((m) => String(m.id) === matchId) as unknown as BasketballMatch | undefined
+        ?? cupMatches.find((m) => String(m.id) === matchId) as unknown as BasketballMatch | undefined;
       if (match) setDetailMatch(match);
     };
     window.addEventListener("open-match-detail", handler);

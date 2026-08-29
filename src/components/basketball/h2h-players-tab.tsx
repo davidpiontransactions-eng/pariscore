@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { H2HPlayer } from "@/lib/types/basketball-h2h";
@@ -32,8 +32,12 @@ function SortHeader({
   const isActive = currentSort === sortKey;
   return (
     <th
+      role="columnheader"
+      tabIndex={0}
+      aria-sort={isActive ? (currentDir === "desc" ? "descending" : "ascending") : "none"}
       className="py-1 px-2 text-right text-[10px] font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none"
       onClick={() => onSort(sortKey)}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSort(sortKey); } }}
     >
       <span className="inline-flex items-center gap-0.5">
         {label}
@@ -94,11 +98,11 @@ function PlayerTable({
   sortDir: SortDir;
   onSort: (key: SortKey) => void;
 }) {
-  const sorted = [...players].sort((a, b) => {
+  const sorted = useMemo(() => [...players].sort((a, b) => {
     const av = a[sortKey] ?? -Infinity;
     const bv = b[sortKey] ?? -Infinity;
     return sortDir === "desc" ? bv - av : av - bv;
-  });
+  }), [players, sortKey, sortDir]);
 
   return (
     <div className="overflow-x-auto">

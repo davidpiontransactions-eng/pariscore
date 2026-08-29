@@ -172,9 +172,6 @@ export function OverUnderTable({
                   Over {row.threshold}
                 </td>
                 <td className="py-1 px-2 text-right"><BarFill pct={row.pct} isMoney={isMoney} /></td>
-                <td className="py-1 px-2 text-right">
-                  <span className="text-[10px] font-mono text-muted-foreground">{row.pct.toFixed(1)}%</span>
-                </td>
               </tr>
             );
           })}

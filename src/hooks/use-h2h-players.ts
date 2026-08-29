@@ -3,7 +3,11 @@
 import useSWR from "swr";
 import type { PlayersResponse } from "@/lib/types/basketball-h2h";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = async (url: string) => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+};
 
 /**
  * Hook SWR pour les joueurs H2H d'une équipe.

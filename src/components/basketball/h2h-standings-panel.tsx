@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import type { StandingRow } from "@/lib/types/basketball-h2h";
 
 type H2HStandingsPanelProps = {
@@ -27,8 +28,6 @@ export function H2HStandingsPanel({
       </div>
     );
   }
-
-  const maxWins = Math.max(...standings.map((r) => r.wins), 1);
 
   return (
     <div className={cn("rounded-lg border bg-card p-3", className)}>
@@ -83,6 +82,3 @@ export function H2HStandingsPanel({
   );
 }
 
-function cn(...classes: (string | boolean | undefined | null)[]) {
-  return classes.filter(Boolean).join(" ");
-}

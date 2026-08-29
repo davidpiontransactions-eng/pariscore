@@ -718,7 +718,12 @@ function SportBlock({
   const expanded = forceExpanded || storeExpanded;
   const toggleSport = useSportsSidebarStore((s) => s.toggleSport);
   const Icon = SPORT_ICONS[sport.icon] ?? Trophy;
-  const sportLabel = t(`sport.${sport.id}`) || sport.name;
+  const sportLabel = (() => {
+    const key = `sport.${sport.id}`;
+    const translated = t(key);
+    // Si la clé n'existe pas, next-intl retourne la clé elle-même → fallback sur sport.name
+    return translated !== key && translated ? translated : sport.name;
+  })();
   const active = activePath?.sportId === sport.id || sport.countries.some((c) => c.id === selectedCountryId);
 
   return (
