@@ -26,6 +26,7 @@ import {
 export const MAX_LEVEL4_MATCHES = 8;
 
 export const SPORT_META: Record<SportTabId, { name: string; icon: string }> = {
+  home: { name: "Accueil", icon: "Home" },
   football: { name: "Football", icon: "Trophy" },
   tennis: { name: "Tennis", icon: "Activity" },
   cs2: { name: "CS2", icon: "Crosshair" },

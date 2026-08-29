@@ -97,6 +97,7 @@ export type SidebarMode = MatchViewMode;
 
 /** Clés d'onglet central — identiques aux ids de sport de l'arborescence. */
 export type SportTabId =
+  | "home"
   | "tennis"
   | "football"
   | "cs2"

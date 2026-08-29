@@ -184,8 +184,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | auto-hide-header | auto-hide-header.tsx | Header qui se masque au scroll descendant |
 | drawer-detail | drawer-detail.tsx | Drawer générique de détail |
 | mobile-bottom-nav | mobile-bottom-nav.tsx | Navigation basse mobile |
-| sport-swipe-header | sport-swipe-header.tsx | En-tête onglets sport avec swipe tactile |
-| sport-tabs | sport-tabs.tsx | Onglets de navigation entre sports |
+
 | sports-sidebar | sports-sidebar.tsx | Filtre latéral multi-sports (1xBet) : recherche, pills horaires, favoris, arborescence Sport→Pays→Ligue→Matchs, toggle Live/Line ; aside sticky desktop + Sheet drawer mobile + sync URL |
 
 ## AI (`src/components/ai/`) — 2 components

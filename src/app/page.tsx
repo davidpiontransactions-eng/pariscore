@@ -39,7 +39,7 @@ import { Button } from "@/components/ui/button";
 import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 import { AutoHideHeader } from "@/components/layout/auto-hide-header";
-import { SportSwipeHeader } from "@/components/layout/sport-swipe-header";
+
 import {
   SportsSidebar,
   SportsSidebarDrawer,
@@ -450,8 +450,7 @@ function HomeInner() {
           </div>
         </section>
 
-        {/* Sport tabs */}
-        <SportSwipeHeader activeTab={activeTab} onTabChange={handleTabChange} />
+
 
         {/* Content — entrée douce au changement de sport */}
         <motion.div

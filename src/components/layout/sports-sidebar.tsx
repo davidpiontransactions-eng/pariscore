@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
   Filter,
+  Home,
   Layers,
   ListFilter,
   Radio,
@@ -717,6 +718,9 @@ function SportBlock({
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
+        {sport.liveMatches > 0 ? (
+          <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" aria-label="Live" />
+        ) : null}
         <Icon aria-hidden className="h-4 w-4 shrink-0 text-emerald-400" />
         <span
           className={cn(
@@ -1085,6 +1089,22 @@ export function SportsSidebarContent({
 
   return (
     <div className="flex h-full w-full flex-col bg-[#0F172A] text-slate-200">
+      {/* Header sidebar — logo + Accueil */}
+      <div className="flex items-center gap-2 border-b border-slate-800/80 px-3 py-2.5">
+        <button
+          type="button"
+          onClick={() => handleSportSelect("home")}
+          className={cn(
+            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+            activeSport === "home"
+              ? "bg-emerald-500/10 text-emerald-400"
+              : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
+          )}
+        >
+          <Home className="h-4 w-4" />
+          <span>Accueil</span>
+        </button>
+      </div>
       <div className="space-y-2 border-b border-slate-800/80 p-2.5">
         <LiveLineToggle sportId={activeSport && activeSport !== "home" ? activeSport : "football"} />
         <div className="flex items-center justify-between gap-2">
