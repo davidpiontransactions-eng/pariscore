@@ -105,7 +105,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-live-card | football-live-card.tsx | Carte match live football |
 | football-match-card | football-match-card.tsx | Carte de match football |
 | football-match-detail-dialog | football-match-detail-dialog.tsx | Dialogue analyse détaillée d'un match foot |
-| football-strategy-top5-widget | football-strategy-top5-widget.tsx | Widget sidebar « Top 5 matchs par stratégie » (9 pills, cotes dévigées + forme soccerstats, stats xG/buts/encaissés L5/L10 D/E) |
+| football-strategy-top5-widget | football-strategy-top5-widget.tsx | Composants partagés du top matchs par stratégie (STRATEGIES, MatchRow, TeamName) — l'ancien widget sidebar a été remplacé par le top10 central |
+| football-top10-widget | football-top10-widget.tsx | Widget central « Top 10 matchs par stratégie » — global ou par championnat (sélecteur ligue + stratégie, règle ≥60 % sur la sélection) |
 | top5-backtest-strip | top5-backtest-strip.tsx | Bandeau backtest des widgets Top 5 foot+tennis (WR/ROI par stratégie + 10 derniers picks dépliables) |
 | football-league-rankings-widget | football-league-rankings-widget.tsx | Widget sidebar « Classements championnat » (buts/m, PPM, O1.5/U3.5, BTTS, corners O6.5/O7.5, xG/xGA × global/dom/ext × saison) |
 | FootballPressReviewWidget | FootballPressReviewWidget.tsx | Widget « Revue de Presse & Pronostics Médias » (3+ sources, consensus 1X2/Over/BTTS) |

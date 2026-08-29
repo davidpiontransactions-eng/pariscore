@@ -436,12 +436,21 @@ function computeLeaguePoolStats(pool: BSDFootballMatch[]): Map<string, LeaguePoo
 /**
  * Calcule le Top 5 matchs à venir par stratégie.
  *
- * @param finished matchs terminés (source de la forme L5 Home/Away)
+  * @param finished matchs terminés (source de la forme L5 Home/Away)
  * @param fixtures matchs planifiés (notstarted) à classer
+ * @param opts options de calcul (limit = top N par stratégie ; league = filtre un championnat)
  */
+export interface ComputeTop5Options {
+  /** Nombre d'entrées par stratégie (5 = top5 historique/backtest, 10 = top10 widget central). */
+  limit?: number;
+  /** Si fourni, ne classe que les matchs du championnat (nom de ligue BSD). */
+  league?: string;
+}
+
 export function computeStrategyTop5Matches(
   finished: BSDFootballMatch[],
   fixtures: BSDFootballMatch[],
+  opts: ComputeTop5Options = {},
 ): StrategyTop5 {
   const store = buildFormStore(finished);
   const leaguePoolStats = computeLeaguePoolStats(finished);
@@ -449,8 +458,10 @@ export function computeStrategyTop5Matches(
   const scores = {} as Record<StrategyTop5Key, ScoredMatch[]>;
   for (const key of STRATEGY_TOP5_KEYS) scores[key] = [];
 
-  for (const fixture of fixtures) {
+    for (const fixture of fixtures) {
     if (fixture.status !== "notstarted") continue;
+    // Top 10 par championnat (widget central) : filtrer avant le scoring.
+    if (opts.league && fixture.league?.name !== opts.league) continue;
     const form = formFor(store, fixture);
     const leagueSlug = BSD_ID_TO_SLUG[fixture.league?.id ?? -1];
     const soccerForm = leagueSlug ? matchForm(leagueSlug, fixture) : null;
@@ -662,7 +673,7 @@ export function computeStrategyTop5Matches(
     const higher = HIGHER_BETTER[key];
     const list = scores[key];
     list.sort((a, b) => (higher ? b.value - a.value : a.value - b.value));
-    strategies[key] = list.slice(0, 5).map((s) => ({
+    strategies[key] = list.slice(0, opts.limit ?? 5).map((s) => ({
       matchId: String(s.fixture.id),
       league: s.fixture.league?.name ?? "",
       kickoff: s.fixture.event_date,

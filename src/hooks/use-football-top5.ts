@@ -28,3 +28,27 @@ export function useFootballTop5() {
     window: data?.window ?? 5,
   };
 }
+
+/**
+ * Top 10 (limit paramétrable) — global « Toutes les ligues » ou par championnat.
+ * Chaque combinaison limit/league a sa clé SWR (cache serveur 30 min par clé).
+ */
+export function useFootballTopN(limit: number, league: string | null) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (league) params.set("league", league);
+  const url = `/api/football/top5?${params.toString()}`;
+
+  const { data, error, isLoading } = useSWR<Top5Response>(url, fetcher, {
+    revalidateOnFocus: false,
+    dedupingInterval: 20 * 60_000,
+  });
+
+  return {
+    data,
+    error,
+    isLoading,
+    isReady: data != null,
+    matchesFor: (key: StrategyTop5Key) => data?.strategies?.[key] ?? [],
+    window: data?.window ?? 5,
+  };
+}

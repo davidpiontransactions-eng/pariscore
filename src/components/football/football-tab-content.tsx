@@ -31,6 +31,7 @@ import { FootballMatchCardSkeleton } from "./football-match-card";
 import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
 import { FootballBankerWidget } from "./football-banker";
+import { FootballTop10Widget } from "./football-top10-widget";
 import { FootballRoundGroups } from "./football-round-groups";
 import { AIFilterBuilderDialog } from "./AIFilterBuilderDialog";
 import { BetSlipGeneratorDialog } from "./BetSlipGeneratorDialog";
@@ -494,6 +495,11 @@ export function FootballTabContent() {
               id={`${tabsId}-panel-prematch`}
               aria-labelledby={`${tabsId}-prematch`}
             >
+              {/* Top 10 par stratégie — global ou par championnat (remplace le Top5 sidebar) */}
+              {!isLoading && prematchMatches.length > 0 && (
+                <FootballTop10Widget matches={prematchMatches} />
+              )}
+
               {/* Banker du week-end — pick éditorial + top 3 (respecte la ligue/no filtres) */}
               {!isLoading && prematchMatches.length > 0 && (
                 <FootballBankerWidget matches={prematchMatches} onOpenDetail={openDetail} />

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { createTtlCache, isFresh } from "@/lib/cached-route";
+import { NextRequest, NextResponse } from "next/server";
 import { computeStrategyTop5Matches, type StrategyTop5 } from "@/lib/football-strategy-top5";
 import type { BSDFootballMatch } from "@/lib/bsd-football-fetcher";
 
@@ -7,7 +6,7 @@ const CACHE_TTL = 30 * 60_000;
 
 type CachePayload = StrategyTop5;
 
-const cache = createTtlCache<CachePayload>("__footballTop5Cache");
+const cacheByKey = new Map<string, { at: number; data: CachePayload }>();
 
 /**
  * GET /api/football/top5
@@ -38,9 +37,14 @@ function unpackList<T>(raw: T[] | { results?: T[] } | { count?: number; results?
   return r?.results ?? [];
 }
 
-export async function GET() {
-  const cached = cache.getEntry();
-  if (cached && isFresh(cached, CACHE_TTL)) {
+export async function GET(request: NextRequest) {
+  const sp = request.nextUrl.searchParams;
+  const limit = Math.min(Math.max(Number(sp.get("limit")) || 5, 1), 20);
+  const league = sp.get("league") ?? undefined;
+  const cacheKey = `${limit}|${league ?? "all"}`;
+
+  const cached = cacheByKey.get(cacheKey);
+  if (cached && Date.now() - cached.at < CACHE_TTL) {
     return NextResponse.json({
       ...cached.data,
       meta: { source: "cache", computedAt: new Date(cached.at).toISOString() },
@@ -59,8 +63,8 @@ export async function GET() {
     const finished = unpackList<BSDFootballMatch>(finishedRaw);
     const fixtures = unpackList<BSDFootballMatch>(fixturesRaw);
 
-    const data: StrategyTop5 = computeStrategyTop5Matches(finished, fixtures);
-    cache.set(data);
+    const data: StrategyTop5 = computeStrategyTop5Matches(finished, fixtures, { limit, league });
+    cacheByKey.set(cacheKey, { at: Date.now(), data });
 
     return NextResponse.json({
       ...data,

@@ -44,7 +44,7 @@ export const STRATEGIES: StrategyDef[] = [
   { key: "gagnant", label: "Gagnant prédit (Dixon-Coles)", emoji: "🏆", isProb: true, format: (v) => `${v.toFixed(0)}%` },
 ];
 
-type WindowKey = "l5" | "l10";
+export type WindowKey = "l5" | "l10";
 
 /** Filtre temporel des matchs listés (jour / 48 h / semaine). */
 const TIME_WINDOWS: { key: KickoffWindow; label: string }[] = [
@@ -147,18 +147,21 @@ function StatsLine({
   );
 }
 
-function MatchRow({
+export function MatchRow({
   entry,
   def,
   winKey,
   selected,
   onToggle,
+  badge,
 }: {
   entry: StrategyMatchEntry;
   def: StrategyDef;
   winKey: WindowKey;
   selected: boolean;
   onToggle: () => void;
+  /** Badge optionnel (ex : « ★ Sélection » pour l'inclusion forcée ≥60 %). */
+  badge?: string;
 }) {
   const home = sideBadge(entry, "home");
   const away = sideBadge(entry, "away");
@@ -207,6 +210,11 @@ function MatchRow({
             {def.format(entry.value)}
           </span>
         </div>
+        {badge && (
+          <span className="mt-1 inline-flex items-center rounded-full bg-emerald-500/20 px-1.5 py-px text-[8.5px] font-bold uppercase tracking-wide text-emerald-300">
+            {badge}
+          </span>
+        )}
         {/* Probabilité de réussite du modèle pour ce match */}
         <p className="mt-0.5 pl-[19px] text-[8.5px] leading-none">
           {probPct != null ? (
