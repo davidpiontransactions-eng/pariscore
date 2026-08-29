@@ -104,3 +104,15 @@ Le « Classement (Dom/Ext) » servi aux cards est donc figé par `STANDINGS_TTL=
 | `src/lib/__tests__/football-standings-freshness.test.ts` | test de régression (nouveau) |
 | `scripts/probe-prematch-classement-freshness.ts` | sonde QA read-only (nouveau, non critique) |
 | `.context/session-prematch-classement-stale.md` | journal de trace |
+
+## Phase 5 — Déploiement + vérif prod (2026-08-29)
+
+- Commit : `d7869713 fix(football): standings Dom/Ext prematch frais (TTL 20min + asOf + badge Maj)`
+  (rebase par-dessus 5 commits `chore(data)` poussés pendant la session ; push sur origin/main OK).
+- Deploy VPS : `scripts/deploy.bat --no-commit` → VPS sur `d7869713`, `server.js` régénéré
+  (Aug 29 18:14), pm2 `pariscore`/`pariscore-next` **online** (restart récents).
+- **Vérif prod** (`https://pariscore.fr/api/football/matches`) :
+  - total = 128 matchs, 92 avec `standingStats`, **92/92 avec `asOf`**
+  - ex. `asOf = 2026-08-29T16:15:08.921Z` (float exposé, partial début saison)
+  → le badge « Maj HH:MM » s'affiche désormais sur les cards prematch foot.
+- `bd dolt push` : timeout réseau Dolt (~30s) — à relancer hors-session (non bloquant).
