@@ -221,6 +221,17 @@ export function FootballTabContent() {
     }
   }, [selectedLeagueId, timeKey, mode, liveMatches.length, prematchMatches.length, setMode]);
 
+  // Auto-switch mode "live" quand un match live est sélectionné dans la sidebar.
+  useEffect(() => {
+    if (selectedMatchIds.length === 0) return;
+    const hasLiveSelected = selectedMatchIds.some((id) =>
+      matches.some((m) => m.id === id && m.live && (m.live.status === "LIVE" || m.live.status === "HT")),
+    );
+    if (hasLiveSelected && mode !== "live") {
+      setMode("live");
+    }
+  }, [selectedMatchIds, matches, mode, setMode]);
+
   const FILTERS: { key: FootFilter; label: string }[] = [
     { key: "all", label: "Tous" },
     { key: "today", label: "Aujourd'hui" },

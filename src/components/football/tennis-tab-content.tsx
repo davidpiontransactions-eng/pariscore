@@ -494,6 +494,18 @@ return [...matches, ...synthetic];
     [liveMatchList],
   );
 
+  // Auto-switch onglet "live" quand un match live est sélectionné dans la
+  // sidebar — sinon scopeByTime l'exclut de l'onglet "today" (par défaut).
+  useEffect(() => {
+    if (selectedMatchIds.length === 0) return;
+    const hasLiveSelected = selectedMatchIds.some(
+      (id) => liveStates[id]?.isLive || liveMatchIdSet.has(id),
+    );
+    if (hasLiveSelected && subTab !== "live") {
+      setSubTab("live");
+    }
+  }, [selectedMatchIds, liveStates, liveMatchIdSet, subTab]);
+
   /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en excluant le live. */
   const scopeByTime = useCallback(
     <T extends { id: string; scheduledAt: string }>(list: T[]): T[] => {
