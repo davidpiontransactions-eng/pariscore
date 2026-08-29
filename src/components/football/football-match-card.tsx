@@ -66,6 +66,14 @@ function fmtSigned(n: number): string {
   return n > 0 ? `+${n}` : `${n}`;
 }
 
+/** Formate un timestamp ISO en heure locale compacte « 14:32 ». */
+function fmtAsOfHour(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
 /** Cellule valeur par défaut (aligne à gauche pour home, à droite pour away). */
 function StandingStatRow({ label, home, away }: { label: string; home: React.ReactNode; away: React.ReactNode }) {
   return (
@@ -811,9 +819,16 @@ export function FootballMatchCard({
         {/* Classement Domicile / Extérieur — bilan réel (MJ, Pts, PPG+Rang, GD) */}
         {standing && (
           <div className="mt-3 border-t border-border/40 pt-3">
-            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <BarChart3 className="mr-1 inline-block h-3 w-3 text-amber-400" />
-              Classement (Dom / Ext)
+            <div className="mb-1.5 flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <span>
+                <BarChart3 className="mr-1 inline-block h-3 w-3 text-amber-400" />
+                Classement (Dom / Ext)
+              </span>
+              {fmtAsOfHour(standing.asOf) && (
+                <span className="normal-case tracking-normal text-muted-foreground/60" title="Horodatage du dernier calcul des standings (source BSD)">
+                  Maj {fmtAsOfHour(standing.asOf)}
+                </span>
+              )}
             </div>
             <div className="overflow-hidden rounded-lg border border-border/40">
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/40 bg-muted/30 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

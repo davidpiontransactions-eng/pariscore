@@ -174,6 +174,8 @@ export type StandingContext = {
   away: TeamStandingStats;
   /** Si blend avec saison N-1, label de la saison historique (ex: "2025/26"). */
   historicalSeason?: string;
+  /** Timestamp ISO du calcul des standings (permet d'afficher l'âge de la donnée). */
+  asOf?: string;
 };
 
 

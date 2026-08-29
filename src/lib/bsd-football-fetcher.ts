@@ -538,6 +538,8 @@ type LeagueDerivedData = {
   partial: boolean;
   /** Si blend avec saison N-1, label de la saison historique (ex: "2025/26"). */
   historicalSeason?: string;
+  /** Timestamp ISO du calcul de ces standings (pour l'affichage de l'âge). */
+  computedAt?: string;
 };
 
 function normTeamKey(name: string): string {
@@ -573,9 +575,15 @@ function toStandingSide(side: SideAgg, rank: number, rankTotal: number): TeamSta
   };
 }
 
-// Cache par ligue (6h) pour ne pas rescaner tous les events à chaque call prematch.
+// Cache par ligue pour ne pas rescaner tous les events à chaque call prematch.
+// ⚠️ La source BSD bouge en continu (scores/stands actualisés en temps réel). Un TTL trop long
+// fige le « Classement (Dom/Ext) » affiché sur les cards pre-match (cf. ParisScorebis-asqo :
+// à 6h les usagers voyaient des standings jusqu'à 6h d'ancienneté alors que la source est fraîche).
+// TTL 20 min = bon compromis : les matchs terminés de la journée entrent vite dans les splits
+// home/away tout en limitant le nombre de scans events (2-3 pages par ligue, paginé).
 const standingsCache = new Map<number, { at: number; data: LeagueDerivedData | null }>();
-const STANDINGS_TTL = 6 * 60 * 60 * 1000;
+/** TTL du cache standings par ligue. Exposé pour tests (ParisScorebis-asqo : ne pas repasser à 6h). */
+export const STANDINGS_TTL = 20 * 60 * 1000;
 
 // ── Métriques par catégorie (Buts réelles ; Tirs/Corners/Attaques indisponibles) ──
 type GoalRankMaps = { avg: Map<string, number>; scored: Map<string, number>; scoredPg: Map<string, number>; conceded: Map<string, number>; concededPg: Map<string, number> };
@@ -825,7 +833,7 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
     }
   }
 
-  const data: LeagueDerivedData = { teams: teamsOut, rankings, partial, historicalSeason };
+  const data: LeagueDerivedData = { teams: teamsOut, rankings, partial, historicalSeason, computedAt: new Date().toISOString() };
   standingsCache.set(leagueId, { at: Date.now(), data });
   return data;
 }
@@ -843,6 +851,7 @@ function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): v
       home: home.standing.home,
       away: away.standing.away,
       historicalSeason: data.historicalSeason,
+      asOf: data.computedAt,
     },
     metricStats: { home: home.stats.home, away: away.stats.away, partial: data.partial },
     metricRankings: data.rankings,
