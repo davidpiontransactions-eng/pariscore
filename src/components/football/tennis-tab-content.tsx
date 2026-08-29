@@ -20,6 +20,7 @@ import {
   parseTimeFilter,
 } from "@/lib/match-view";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { useSportsTree } from "@/hooks/use-sports-tree";
 import { TournamentsList } from "@/components/tennis/tournaments-list";
 import { TennisSearchBar } from "@/components/tennis/tennis-search-bar";
 import { TournamentHeaderCard } from "@/components/tennis/tournament-header-card";
@@ -416,6 +417,26 @@ return [...matches, ...synthetic];
 
   const selectedCountryId = useSportsSidebarStore((s) => s.selectedCountryId);
 
+  // Vérifie si un match est marqué comme live dans le tree sidebar (SWR).
+  // Utile quand liveStates n'est pas encore peuplé (SSE pas encore reçu).
+  const { data: treeData } = useSportsTree();
+  const isInTreeAsLive = useCallback(
+    (matchId: string): boolean => {
+      if (!treeData) return false;
+      for (const sport of treeData) {
+        for (const country of sport.countries) {
+          for (const league of country.leagues) {
+            if (league.matches?.some((m) => m.id === matchId && m.isLive)) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    },
+    [treeData],
+  );
+
   const matchesWithScoped = useMemo(() => {
     let list = matchesWithLive;
     if (selectedTournament) {
@@ -428,10 +449,14 @@ return [...matches, ...synthetic];
     }
     // Filtre par catégorie de tournoi sélectionnée dans la sidebar
     // (tennis tree groupe par tournamentCategory, pas par nationalité joueur).
+    // Exception : si le match est explicitement sélectionné dans la sidebar,
+    // on le garde même si le tournamentCategory ne matche pas (live match).
     if (selectedCountryId) {
       const target = selectedCountryId.toLowerCase();
+      const selectedSet = new Set(selectedMatchIds);
       list = list.filter(
         (m) =>
+          selectedSet.has(m.id) ||
           m.tournamentCategory?.toLowerCase().replace(/\s+/g, "-") === target ||
           m.tournament.toLowerCase().replace(/\s+/g, "-") === target,
       );
@@ -496,15 +521,16 @@ return [...matches, ...synthetic];
 
   // Auto-switch onglet "live" quand un match live est sélectionné dans la
   // sidebar — sinon scopeByTime l'exclut de l'onglet "today" (par défaut).
+  // Triple fallback : liveStates (SSE) → liveMatchIdSet (polling) → tree (SWR)
   useEffect(() => {
     if (selectedMatchIds.length === 0) return;
     const hasLiveSelected = selectedMatchIds.some(
-      (id) => liveStates[id]?.isLive || liveMatchIdSet.has(id),
+      (id) => liveStates[id]?.isLive || liveMatchIdSet.has(id) || isInTreeAsLive(id),
     );
     if (hasLiveSelected && subTab !== "live") {
       setSubTab("live");
     }
-  }, [selectedMatchIds, liveStates, liveMatchIdSet, subTab]);
+  }, [selectedMatchIds, liveStates, liveMatchIdSet, isInTreeAsLive, subTab]);
 
   /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en excluant le live. */
   const scopeByTime = useCallback(
