@@ -475,14 +475,30 @@ return [...matches, ...synthetic];
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
 
+  // Sync modes.tennis (store sidebar) → subTab (local state)
+  const modesTennis = useSportsSidebarStore((s) => s.modes["tennis"]);
+  const setModeTennis = useSportsSidebarStore((s) => s.setMode);
+  useEffect(() => {
+    if (modesTennis === "live") setSubTab("live");
+    else if (modesTennis === "prematch" || modesTennis === "today") setSubTab("today");
+  }, [modesTennis]);
+
+  // Sync subTab → modes.tennis (quand l'utilisateur change localement)
+  const setSubTabSynced = useCallback((tab: TennisSubTab) => {
+    setSubTab(tab);
+    // Écrire dans le store pour que la sidebar reflète le changement
+    if (tab === "live") setModeTennis("tennis", "live");
+    else setModeTennis("tennis", "prematch");
+  }, [setModeTennis]);
+
   // Sync subTab from URL ?view=live|prematch on mount (independent of sidebar treeStatus)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
     console.log("[TennisTabContent] URL view param:", view, "-> setting subTab to:", view === "live" ? "live" : "today");
-    if (view === "live") setSubTab("live");
-    else if (view === "prematch") setSubTab("today");
+    if (view === "live") setSubTabSynced("live");
+    else if (view === "prematch") setSubTabSynced("today");
   }, []);
 
   // Sélection sidebar : auto-scroll vers la carte sélectionnée (sinon elle
@@ -528,9 +544,9 @@ return [...matches, ...synthetic];
       (id) => liveStates[id]?.isLive || liveMatchIdSet.has(id) || isInTreeAsLive(id),
     );
     if (hasLiveSelected && subTab !== "live") {
-      setSubTab("live");
+      setSubTabSynced("live");
     }
-  }, [selectedMatchIds, liveStates, liveMatchIdSet, isInTreeAsLive, subTab]);
+  }, [selectedMatchIds, liveStates, liveMatchIdSet, isInTreeAsLive, subTab, setSubTabSynced]);
 
   /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en excluant le live. */
   const scopeByTime = useCallback(
@@ -624,7 +640,7 @@ return [...matches, ...synthetic];
   }, [subTab, liveMatchList, liveStates, restForGrid]);
 
   const handleSubTabChange = (tab: TennisSubTab) => {
-    setSubTab(tab);
+    setSubTabSynced(tab);
     track("sub_tab_click", { tab });
   };
 
