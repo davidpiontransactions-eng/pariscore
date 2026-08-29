@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 159 components total (football: 11, leagues: 6, tennis: 54, basketball: 7, etc.).
+> extract pass. 170 components total (football: 11, leagues: 6, tennis: 54, basketball: 18, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -178,17 +178,26 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 |-----------|------|------|
 | wnba-tab-content | wnba-tab-content.tsx | Contenu de l'onglet WNBA |
 
-## Basketball (`src/components/basketball/`) — 7 components
+## Basketball (`src/components/basketball/`) — 17 components
 
 | Component | File | Role |
 |-----------|------|------|
-| basketball-tab-content | basketball-tab-content.tsx | Onglet principal unifié NBA+WNBA+EuroLeague+domestique |
+| basketball-tab-content | basketball-tab-content.tsx | Onglet principal unifié NBA+WNBA+EuroLeague+domestique + sous-nav H2H |
 | basketball-match-card | basketball-match-card.tsx | Carte match avec win prob, Four Factors, odds |
 | basketball-match-detail-dialog | basketball-match-detail-dialog.tsx | Dialog détail match (teams, win prob, Four Factors, odds, value, H2H) |
 | basketball-odds-comparator | basketball-odds-comparator.tsx | Tableau multi-bookmakers avec tri, best odds, value detection |
 | basketball-odds-chart | basketball-odds-chart.tsx | Graphique line movement (ML + implied probability via recharts) |
 | basketball-four-factors | basketball-four-factors.tsx | Tableau Four Factors Off/Def (eFG%, TOV%, ORB%, FT, ORtg, DRtg, NetRtg, Pace) |
 | basketball-league-selector | basketball-league-selector.tsx | Sélecteur de ligues (NBA/WNBA/EuroLeague/EuroCup/domestique) |
+| basketball-h2h | basketball-h2h.tsx | Conteneur page H2H complet (sélecteur + header duel + 3 tabs + side panel standings) |
+| h2h-standings-panel | h2h-standings-panel.tsx | Panel classement ligue (desktop lg:+, sticky) |
+| h2h-team-selector | h2h-team-selector.tsx | Sélecteur de paire d'équipes (2 dropdowns + bouton ⇄) |
+| h2h-header | h2h-header.tsx | Hero duel : badges forme, split H2H, verdict |
+| h2h-data-points | h2h-data-points.tsx | Tableau 8 métriques H2H miroir (wins, PPG, FG%, 3P%, AST, REB) |
+| h2h-stats-tab | h2h-stats-tab.tsx | Onglet Stats complet (DataPoints + SeasonStats + Over/Under + Spread + BTTS) |
+| h2h-matches-tab | h2h-matches-tab.tsx | Liste confrontations directes triées par saison |
+| h2h-players-tab | h2h-players-tab.tsx | Tableau joueurs 2 équipes avec tri colonnes |
+| over-under-table | over-under-table.tsx | Tableau générique O/U : seuils + barres % + option 3 colonnes |
 
 ## Layout (`src/components/layout/`) — 6 components
 

@@ -19,6 +19,11 @@ const BasketballMatchDetailDialog = dynamic(
   { ssr: false },
 );
 
+const BasketballH2H = dynamic(
+  () => import("./basketball-h2h").then((m) => m.BasketballH2H),
+  { ssr: false },
+);
+
 type BasketballTabContentProps = {
   className?: string;
 };
@@ -36,7 +41,10 @@ type UnifiedMatch = {
   edgeElo: number | null;
 };
 
+type PageView = "matchs" | "h2h";
+
 export function BasketballTabContent({ className }: BasketballTabContentProps) {
+  const [pageView, setPageView] = useState<PageView>("matchs");
   const [viewMode, setViewMode] = useState<MatchViewMode>("today");
   const [selectedLeagues, setSelectedLeagues] = useState<BasketballLeagueId[]>([
     "nba", "wnba", "euroleague", "eurocup",
@@ -130,19 +138,50 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Basket</h2>
-        <MatchViewTabs
-          active={viewMode}
-          onChange={setViewMode}
-          liveCount={liveCount}
-          prematchCount={prematchCount}
-        />
+        <div className="flex items-center gap-2">
+          {/* Toggle Matchs / H2H */}
+          <div className="flex rounded-md bg-muted p-0.5">
+            <button
+              onClick={() => setPageView("matchs")}
+              className={cn(
+                "rounded px-3 py-1 text-xs font-medium transition-colors",
+                pageView === "matchs"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Matchs
+            </button>
+            <button
+              onClick={() => setPageView("h2h")}
+              className={cn(
+                "rounded px-3 py-1 text-xs font-medium transition-colors",
+                pageView === "h2h"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              H2H
+            </button>
+          </div>
+          {pageView === "matchs" && (
+            <MatchViewTabs
+              active={viewMode}
+              onChange={setViewMode}
+              liveCount={liveCount}
+              prematchCount={prematchCount}
+            />
+          )}
+        </div>
       </div>
 
-      {/* League selector */}
-      <LeagueSelector
-        selected={selectedLeagues}
-        onChange={setSelectedLeagues}
-      />
+      {/* League selector — visible en mode matchs */}
+      {pageView === "matchs" && (
+        <LeagueSelector
+          selected={selectedLeagues}
+          onChange={setSelectedLeagues}
+        />
+      )}
 
       {/* Errors */}
       {errors.length > 0 && (
@@ -153,41 +192,52 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         </div>
       )}
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <BasketballMatchCardSkeleton key={`sk-${i}`} />
-          ))}
-        </div>
+      {/* Vue H2H */}
+      {pageView === "h2h" && (
+        <BasketballH2H defaultLeague="nba" />
       )}
 
-      {/* Matches */}
-      {!isLoading && filteredMatches.length === 0 && (
-        <MatchEmptyState mode={viewMode} />
-      )}
+      {/* Vue Matchs */}
+      {pageView === "matchs" && (
+        <>
+          {/* Loading */}
+          {isLoading && (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <BasketballMatchCardSkeleton key={`sk-${i}`} />
+              ))}
+            </div>
+          )}
 
-      {!isLoading && filteredMatches.length > 0 && (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredMatches.map((match) => (
-            <BasketballMatchCard
-              key={match.id}
-              match={match}
-              onClick={(m) => setExpandedMatch(m.id)}
-              onDetailRequest={(matchId) => {
-                window.dispatchEvent(
-                  new CustomEvent("open-match-detail", {
-                    detail: { sport: "basketball", matchId },
-                  }),
-                );
-              }}
-              className={cn(
-                expandedMatch === match.id && "border-primary/50 ring-1 ring-primary/20",
-                selectedMatchIds.includes(match.id) && "border-primary",
-              )}
-            />
-          ))}
-        </div>
+          {/* Empty */}
+          {!isLoading && filteredMatches.length === 0 && (
+            <MatchEmptyState mode={viewMode} />
+          )}
+
+          {/* Match cards */}
+          {!isLoading && filteredMatches.length > 0 && (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredMatches.map((match) => (
+                <BasketballMatchCard
+                  key={match.id}
+                  match={match}
+                  onClick={(m) => setExpandedMatch(m.id)}
+                  onDetailRequest={(matchId) => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: "basketball", matchId },
+                      }),
+                    );
+                  }}
+                  className={cn(
+                    expandedMatch === match.id && "border-primary/50 ring-1 ring-primary/20",
+                    selectedMatchIds.includes(match.id) && "border-primary",
+                  )}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Dialog de détail basketball */}
