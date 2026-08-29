@@ -228,9 +228,17 @@ export function FootballTabContent() {
     }
   }, [selectedLeagueId, timeKey, mode, liveMatches.length, prematchMatches.length, setMode]);
 
-  // Auto-switch mode "live" quand un match live est sélectionné dans la sidebar.
+    // Auto-switch mode "live" quand un match live est sélectionné dans la sidebar.
+  // Garde-fou : ne se déclenche que sur un CHANGEMENT de sélection — sinon le
+  // re-run via la dep `mode` rebasculait en boucle sur Live (clic Pre-match
+  // inerte dès qu'un match sélectionné devient live). cf. root cause du bounce.
+  const prevSelectedIdsRef = useRef<string[]>([]);
   useEffect(() => {
-    if (selectedMatchIds.length === 0) return;
+    const idsChanged =
+      prevSelectedIdsRef.current.length !== selectedMatchIds.length ||
+      prevSelectedIdsRef.current.some((id, i) => id !== selectedMatchIds[i]);
+    prevSelectedIdsRef.current = selectedMatchIds;
+    if (!idsChanged) return;
     const hasLiveSelected = selectedMatchIds.some((id) =>
       matches.some((m) => m.id === id && m.live && (m.live.status === "LIVE" || m.live.status === "HT")),
     );

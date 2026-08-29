@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, memo, lazy, Suspense, Component, type ReactNode } from "react";
+import { useState, useMemo, useCallback, memo, lazy, Suspense, Component, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { Trophy, TrendingUp, Info, RefreshCw, AlertCircle, HelpCircle, Wallet, FlaskConical, Scale, SlidersHorizontal, ArrowUpDown, PictureInPicture2, BarChart3, X, ChevronRight } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -537,11 +537,19 @@ return [...matches, ...synthetic];
     [liveMatchList],
   );
 
-  // Auto-switch onglet "live" quand un match live est sélectionné dans la
+    // Auto-switch onglet "live" quand un match live est sélectionné dans la
   // sidebar — sinon scopeByTime l'exclut de l'onglet "today" (par défaut).
   // Triple fallback : liveStates (SSE) → liveMatchIdSet (polling) → tree (SWR)
+  // Garde-fou : ne se déclenche que sur un CHANGEMENT de sélection — sinon le
+  // re-run via la dep `subTab` rebasculait en boucle sur live (clic pre-match
+  // inerte dès qu'un match sélectionné devient live).
+  const prevSelectedIdsRef = useRef<string[]>([]);
   useEffect(() => {
-    if (selectedMatchIds.length === 0) return;
+    const idsChanged =
+      prevSelectedIdsRef.current.length !== selectedMatchIds.length ||
+      prevSelectedIdsRef.current.some((id, i) => id !== selectedMatchIds[i]);
+    prevSelectedIdsRef.current = selectedMatchIds;
+    if (!idsChanged) return;
     const hasLiveSelected = selectedMatchIds.some(
       (id) => liveStates[id]?.isLive || liveMatchIdSet.has(id) || isInTreeAsLive(id),
     );
