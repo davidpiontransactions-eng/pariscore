@@ -548,18 +548,22 @@ return [...matches, ...synthetic];
     }
   }, [selectedMatchIds, liveStates, liveMatchIdSet, isInTreeAsLive, subTab, setSubTabSynced]);
 
-  /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en excluant le live. */
+  /** Applique la fenêtre horaire (ou « aujourd'hui » / « demain ») en gardant le live visible. */
   const scopeByTime = useCallback(
     <T extends { id: string; scheduledAt: string }>(list: T[]): T[] => {
       if (timeRange === null && !timeToday && !timeTomorrow) return list;
+      // Séparer live et prematch : le live reste toujours visible
+      const liveItems = list.filter((m) => liveStates[m.id]?.isLive || liveMatchIdSet.has(m.id));
       const prematchOnly = list.filter((m) => !liveStates[m.id]?.isLive && !liveMatchIdSet.has(m.id));
+      let filteredPrematch: T[];
       if (timeRange !== null) {
-        return filterByStartWindow(prematchOnly, timeRange, (m) => m.scheduledAt);
+        filteredPrematch = filterByStartWindow(prematchOnly, timeRange, (m) => m.scheduledAt);
+      } else if (timeTomorrow) {
+        filteredPrematch = filterByTomorrow(prematchOnly, (m) => m.scheduledAt);
+      } else {
+        filteredPrematch = filterByToday(prematchOnly, (m) => m.scheduledAt);
       }
-      if (timeTomorrow) {
-        return filterByTomorrow(prematchOnly, (m) => m.scheduledAt);
-      }
-      return filterByToday(prematchOnly, (m) => m.scheduledAt);
+      return [...liveItems, ...filteredPrematch];
     },
     [liveStates, liveMatchIdSet, timeRange, timeToday, timeTomorrow],
   );
