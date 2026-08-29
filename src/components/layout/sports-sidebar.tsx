@@ -37,6 +37,7 @@ import {
   sortSportsTreeChronological,
 } from "@/lib/sports-tree";
 import { LiveStatFilters, DEFAULT_LIVE_STAT_FILTERS, matchPassesStatFilters } from "@/lib/football-live-thresholds";
+import { useLiveMatches } from "@/hooks/use-live-matches";
 import type {
   CountryNode,
   LeagueNode,
@@ -1029,6 +1030,7 @@ export function SportsSidebarContent({
 }) {
   const t = useTranslations("sportsSidebar");
   const { data: treeData, isValidating } = useSportsTree();
+  const { liveMatchList } = useLiveMatches();
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const prevValidating = useRef(isValidating);
   useEffect(() => {
@@ -1057,8 +1059,54 @@ export function SportsSidebarContent({
 
   const tree = useMemo(() => {
     const base = treeData ?? [];
+
+    // Merge live-only tennis matches into the tree (SWR cache stale 5 min).
+    // Without this, matches that just went live don't appear in the sidebar.
+    const merged = base.map((sport) => {
+      if (sport.id !== "tennis" || liveMatchList.length === 0) return sport;
+      const existingIds = new Set(
+        sport.countries.flatMap((c) => c.leagues.flatMap((l) => l.matches?.map((m) => m.id) ?? [])),
+      );
+      const liveOnly = liveMatchList.filter((m) => m.isLive && !existingIds.has(m.id));
+      if (liveOnly.length === 0) return sport;
+      // Group live-only matches by tournament (league) under "International" country
+      const liveLeagues = new Map<string, { name: string; matches: typeof sport.countries[0]["leagues"][0]["matches"] }>();
+      for (const lm of liveOnly) {
+        const leagueName = lm.tournamentName || "Live";
+        if (!liveLeagues.has(leagueName)) {
+          liveLeagues.set(leagueName, { name: leagueName, matches: [] });
+        }
+        liveLeagues.get(leagueName)!.matches!.push({
+          id: lm.id,
+          homeName: lm.playerA.name,
+          awayName: lm.playerB.name,
+          scheduledAt: new Date().toISOString(),
+          isLive: true,
+          edgePct: undefined,
+        });
+      }
+      const liveCountry = {
+        id: "tennis:international",
+        name: "International",
+        countryCode: "INT",
+        leagues: Array.from(liveLeagues.entries()).map(([slug, lg]) => ({
+          id: `tennis:${slug.toLowerCase().replace(/\s+/g, "-")}`,
+          name: lg.name,
+          matchCount: lg.matches!.length,
+          sportId: "tennis" as const,
+          matches: lg.matches,
+        })),
+      };
+      return {
+        ...sport,
+        totalMatches: sport.totalMatches + liveOnly.length,
+        liveMatches: sport.liveMatches + liveOnly.length,
+        countries: [liveCountry, ...sport.countries],
+      };
+    });
+
     let filtered = filterTreeByQuery(
-      applyStatusFilter(applyTimeFilter(base, timeFilter), treeStatus),
+      applyStatusFilter(applyTimeFilter(merged, timeFilter), treeStatus),
       searchQuery,
     );
     // Apply chronological sort if selected
@@ -1083,7 +1131,7 @@ export function SportsSidebarContent({
       }
     }
     return filtered;
-  }, [treeData, timeFilter, searchQuery, treeStatus, sortMode, statFilters, showStatFilters, activeSport]);
+  }, [treeData, liveMatchList, timeFilter, searchQuery, treeStatus, sortMode, statFilters, showStatFilters, activeSport]);
 
   // Recherche active (>= 2 lettres, seuil de filterTreeByQuery) : les branches
   // matchées sont affichées dépliées pour rendre les résultats visibles (P0-9).
