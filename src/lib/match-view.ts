@@ -22,6 +22,45 @@ export type TimeFilterKey =
   | "tomorrow";
 
 /**
+ * Filtres de stratégie unifiés (partagés entre football et tennis).
+ * Affichés dans le dropdown du contenu central. Les filtres sport-spécifiques
+ * sont en complément (over65corners pour football, etc.).
+ */
+export type StrategyFilter =
+  | "all"
+  | "value"
+  | "confidence"
+  | "favorites"
+  | "corners"
+  | "btts"
+  | "today"
+  | "topConf"
+  | "over65corners"
+  | "balanced"
+  | "starred";
+
+/** Labels d'affichage pour chaque filtre (i18n-friendly). */
+export const STRATEGY_FILTER_LABELS: Record<StrategyFilter, string> = {
+  all: "Tous",
+  value: "Value Bets",
+  confidence: "Confiance",
+  favorites: "Favoris",
+  corners: "Corners",
+  btts: "Les deux marquent",
+  today: "Aujourd'hui",
+  topConf: "Haute confiance",
+  over65corners: "Over 6.5 Corners",
+  balanced: "Équilibrés",
+  starred: "Favoris (étoilés)",
+};
+
+/** Filtres disponibles par sport. */
+export const STRATEGY_FILTERS_BY_SPORT: Record<string, StrategyFilter[]> = {
+  football: ["all", "today", "value", "topConf", "corners", "over65corners", "btts"],
+  tennis: ["all", "favorites", "balanced", "starred", "confidence"],
+};
+
+/**
  * Décompose une clé de filtre temporel en fenêtre glissante (heures) et/ou
  * drapeaux « aujourd'hui » / « demain » (jours calendaires locaux).
  */

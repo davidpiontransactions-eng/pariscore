@@ -60,6 +60,9 @@ const FootballMatchDetailDialog = lazy(() =>
 
 type FootFilter = "all" | "value" | "today" | "topConf" | "corners" | "over65corners" | "btts";
 
+// Import du type partagé pour usage futur (Phase 3 unifiée)
+import type { StrategyFilter } from "@/lib/match-view";
+
 export function FootballTabContent() {
   const t = useTranslations("common");
   const { data, error, isLoading, isValidating, mutate } = useFootballMatches();
