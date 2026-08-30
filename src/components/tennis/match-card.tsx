@@ -37,7 +37,6 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { useTennisHighlights } from "@/hooks/use-tennis-highlights";
-import { useTop20Contenders, isTop20Contender } from "@/hooks/use-top20-contenders";
 import { Badge } from "@/components/ui/badge";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup

@@ -352,6 +352,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             quickAddLabel={tSlip("quickAdd", { player: playerA.name })}
             bestOdd={bestOddA ? { decimal: bestOddA.decimalA, bookmaker: bestOddA.bookmaker } : null}
             tTennis={tTennis}
+            isContender={isTop20Contender(playerA.name, top20)}
           />
 
           {/* ─── Score central (LIVE) ou VS (prematch) ─── */}
@@ -403,6 +404,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
             quickAddLabel={tSlip("quickAdd", { player: playerB.name })}
             bestOdd={bestOddB ? { decimal: bestOddB.decimalB, bookmaker: bestOddB.bookmaker } : null}
             tTennis={tTennis}
+            isContender={isTop20Contender(playerB.name, top20)}
           />
         </div>
 
@@ -799,6 +801,7 @@ function BroadcastPlayerColumn({
   quickAddLabel: string;
   bestOdd: { decimal: number; bookmaker: string } | null;
   tTennis: (key: string) => string;
+  isContender?: boolean;
 }) {
   // Résolution métriques (depuis player-statline.tsx, format vertical)
   const elo = Math.round(stats?.elo ?? player.elo);
@@ -828,7 +831,7 @@ function BroadcastPlayerColumn({
         className="max-w-full truncate text-sm font-bold leading-tight text-white sm:text-base"
         title={player.name}
       >
-        {isTop20Contender(player.name, top20) && "👑 "}{formatPlayerName(player.name)}
+        {isContender && "👑 "}{formatPlayerName(player.name)}
       </h3>
 
       {/* Colonne métriques 4 lignes (R7 review : white/60 minimum pour AA strict) */}
