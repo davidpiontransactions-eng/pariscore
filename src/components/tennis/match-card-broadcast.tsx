@@ -787,6 +787,7 @@ function BroadcastPlayerColumn({
   quickAddLabel,
   bestOdd,
   tTennis,
+  isContender,
 }: {
   player: Player;
   stats?: PlayerStats | null;
