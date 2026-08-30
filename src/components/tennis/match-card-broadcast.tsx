@@ -69,6 +69,7 @@ import { useToast } from "@/hooks/use-toast";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useAnalytics } from "@/components/analytics-provider";
 import { L10SurfaceBadge } from "./l10-surface-badge";
+import { useTop20Contenders, isTop20Contender } from "@/hooks/use-top20-contenders";
 
 // Normalisation identique à match-card.tsx pour la lookup stats enrichies.
 function normForLookup(s: string): string {
@@ -124,6 +125,7 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
   const { addToSlip, isFull } = useBetSlip();
   const { toast } = useToast();
   const fav = isFavorite(match.id);
+  const top20 = useTop20Contenders();
 
   const { playerA, playerB, stats } = match;
   const isSynthetic = match.synthetic === true;
@@ -826,7 +828,7 @@ function BroadcastPlayerColumn({
         className="max-w-full truncate text-sm font-bold leading-tight text-white sm:text-base"
         title={player.name}
       >
-        {formatPlayerName(player.name)}
+        {isTop20Contender(player.name, top20) && "👑 "}{formatPlayerName(player.name)}
       </h3>
 
       {/* Colonne métriques 4 lignes (R7 review : white/60 minimum pour AA strict) */}

@@ -14,6 +14,8 @@ type Props = {
   priority?: boolean;
   /** Mode terminal : tailles compactes. */
   terminalMode?: boolean;
+  /** Affiche 👑 si le joueur est top 20 prétendant. */
+  isContender?: boolean;
   /** Contenu sous le nom du joueur (statline, form dots, odds, ring). */
   children?: React.ReactNode;
 };
@@ -30,6 +32,7 @@ export function PlayerBlock({
   align,
   priority = false,
   terminalMode = false,
+  isContender = false,
   children,
 }: Props) {
   return (
@@ -60,7 +63,7 @@ export function PlayerBlock({
           )}
           title={player.name}
         >
-          {formatPlayerName(player.name)}
+          {isContender && "👑 "}{formatPlayerName(player.name)}
         </h3>
         {children}
       </div>

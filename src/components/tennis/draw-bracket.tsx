@@ -13,8 +13,8 @@ type DrawBracketProps = {
   className?: string;
 };
 
-/** Rounds affichés dans le bracket (R32 → F). */
-const BRACKET_ROUNDS: DrawRound[] = ["R32", "R16", "QF", "SF", "F"];
+/** Rounds affichés dans le bracket (R64 → F). */
+const BRACKET_ROUNDS: DrawRound[] = ["R64", "R32", "R16", "QF", "SF", "F"];
 
 export function DrawBracket({
   matches,
