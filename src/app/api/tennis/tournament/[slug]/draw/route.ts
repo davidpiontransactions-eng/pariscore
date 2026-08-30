@@ -1,14 +1,16 @@
 // GET /api/tennis/tournament/[slug]/draw?year=2026
 //
 // Tableau forecast d'un tournoi TennisAbstract depuis pariscore.db.
-// La table `tennis_draw_forecast` est peuplée par scripts/scrape-tennis-draw.js.
+// Pour les Grand Slams US Open, lit aussi `tennis_draw_bracket` (tnnslive.com)
+// pour construire le bracket tree (matches).
 // Lecture seule (better-sqlite3 readonly), cache 5 min via createTtlCache.
 
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
-import type { TournamentDraw, ForecastRow } from "@/lib/types/tennis-draw";
+import type { TournamentDraw, ForecastRow, DrawMatch, DrawMatchPlayer, DrawRound } from "@/lib/types/tennis-draw";
+import { ROUND_ORDER } from "@/lib/types/tennis-draw";
 
 /** Métadonnées des tournois (nom, surface, catégorie). */
 const TOURNAMENT_META: Record<string, { name: string; surface: string; category: string }> = {
@@ -81,6 +83,25 @@ interface DrawRow {
   updated_at: string;
 }
 
+/** Ligne de la table tennis_draw_bracket (tnnslive.com). */
+interface BracketRow {
+  section: number;
+  player_name: string;
+  player_seed: number | null;
+  player_country: string | null;
+  qualifier: number;
+  wildcard: number;
+  round_r128: string | null;
+  round_r64: string | null;
+  round_r32: string | null;
+  round_r16: string | null;
+  round_qf: string | null;
+  round_sf: string | null;
+  round_f: string | null;
+  round_w: string | null;
+  updated_at: string;
+}
+
 function rowToForecast(row: DrawRow): ForecastRow {
   return {
     name: row.player_name,
@@ -96,6 +117,86 @@ function rowToForecast(row: DrawRow): ForecastRow {
       W: row.prob_win ?? undefined,
     },
   };
+}
+
+/** Construit le bracket tree (DrawMatch[]) depuis les lignes plates du bracket. */
+function buildBracketFromRows(rows: BracketRow[]): DrawMatch[] {
+  const matches: DrawMatch[] = [];
+  // Taille du tableau = première puissance de 2 >= nombre de joueurs
+  const drawSize = rows.length <= 128 ? 128 : rows.length <= 64 ? 64 : 32;
+  const roundSizes: Record<DrawRound, number> = {
+    R128: 64, R64: 32, R32: 16, R16: 8, QF: 4, SF: 2, F: 1, W: 0,
+  };
+
+  // Map section → player pour lookup rapide
+  const playerBySection = new Map<number, BracketRow>();
+  for (const r of rows) playerBySection.set(r.section, r);
+
+  // Map pour les gagnants de chaque round (section → player name)
+  const winnersByRound = new Map<string, string>();
+  for (const r of rows) {
+    const roundCols: [DrawRound, string | null][] = [
+      ["R128", r.round_r128], ["R64", r.round_r64], ["R32", r.round_r32],
+      ["R16", r.round_r16], ["QF", r.round_qf], ["SF", r.round_sf], ["F", r.round_f],
+    ];
+    for (const [round, val] of roundCols) {
+      if (val && val !== "BYE") winnersByRound.set(`${round}:${r.section}`, val);
+    }
+    if (r.round_w) winnersByRound.set(`W:${r.section}`, r.round_w);
+  }
+
+  // Construire chaque round
+  let matchPos = 0;
+  for (const round of ROUND_ORDER) {
+    if (round === "W") continue; // Pas de match pour "Champion"
+    const numMatches = roundSizes[round];
+    if (!numMatches) continue;
+
+    for (let i = 0; i < numMatches; i++) {
+      const position = i;
+      // Sections des deux joueurs de ce match
+      const section1 = i * 2;
+      const section2 = i * 2 + 1;
+
+      const p1 = playerBySection.get(section1);
+      const p2 = playerBySection.get(section2);
+
+      const player1: DrawMatchPlayer = p1 ? {
+        name: p1.player_name,
+        seed: p1.player_seed ?? undefined,
+        country: p1.player_country ?? undefined,
+      } : { name: "BYE" };
+
+      const player2: DrawMatchPlayer = p2 ? {
+        name: p2.player_name,
+        seed: p2.player_seed ?? undefined,
+        country: p2.player_country ?? undefined,
+      } : { name: "BYE" };
+
+      // Déterminer le status et le gagnant
+      const winnerName = winnersByRound.get(`${round}:${section1}`) ?? winnersByRound.get(`${round}:${section2}`);
+      let status: "upcoming" | "live" | "completed" = "upcoming";
+      let winner: 1 | 2 | undefined;
+
+      if (winnerName) {
+        status = "completed";
+        if (winnerName === player1.name) winner = 1;
+        else if (winnerName === player2.name) winner = 2;
+      }
+
+      matches.push({
+        round,
+        position,
+        player1,
+        player2,
+        status,
+        winner,
+      });
+      matchPos++;
+    }
+  }
+
+  return matches;
 }
 
 export async function GET(
@@ -138,6 +239,9 @@ export async function GET(
     }
 
     try {
+      // Slugs US Open qui ont un bracket tnnslive.com
+      const hasBracket = slug === "us-open" || slug === "us-open-women";
+
       const rows = db
         .prepare(
           `SELECT player_name, player_seed, player_qualifier, player_country,
@@ -149,7 +253,29 @@ export async function GET(
         )
         .all(slug, year) as DrawRow[];
 
-      if (rows.length === 0) {
+      // Bracket tnnslive (si dispo)
+      let bracketRows: BracketRow[] = [];
+      let matches: DrawMatch[] = [];
+      if (hasBracket) {
+        const bracketSlug = slug === "us-open" ? "us-open-men" : "us-open-women";
+        bracketRows = db
+          .prepare(
+            `SELECT section, player_name, player_seed, player_country,
+                    qualifier, wildcard, round_r128, round_r64, round_r32,
+                    round_r16, round_qf, round_sf, round_f, round_w, updated_at
+             FROM tennis_draw_bracket
+             WHERE tournament_slug = ? AND year = ?
+             ORDER BY section ASC`,
+          )
+          .all(bracketSlug, year) as BracketRow[];
+
+        if (bracketRows.length > 0) {
+          matches = buildBracketFromRows(bracketRows);
+        }
+      }
+
+      // Si ni forecast ni bracket → 404
+      if (rows.length === 0 && bracketRows.length === 0) {
         return NextResponse.json(
           { error: "NO_DATA", message: `Aucune donnée pour ${slug} ${year}` },
           { status: 404 },
@@ -157,10 +283,14 @@ export async function GET(
       }
 
       // Date de dernière mise à jour (la plus récente)
-      const updatedAt = rows[0]?.updated_at ?? new Date().toISOString();
+      const updatedAt = rows[0]?.updated_at ?? bracketRows[0]?.updated_at ?? new Date().toISOString();
 
       // Taille du tableau (basée sur la catégorie, ou calculée depuis les sections)
-      const maxSection = Math.max(...rows.map((r) => r.section));
+      const maxSection = rows.length > 0
+        ? Math.max(...rows.map((r) => r.section))
+        : bracketRows.length > 0
+          ? Math.max(...bracketRows.map((r) => r.section))
+          : 0;
       const drawSize = DRAW_SIZE_BY_CATEGORY[meta.category] ?? (maxSection + 1) * 8;
 
       const data: TournamentDraw = {
@@ -170,9 +300,10 @@ export async function GET(
         surface: meta.surface,
         category: meta.category,
         drawSize,
-        source: "tennisabstract",
+        source: hasBracket && bracketRows.length > 0 ? "manual" : "tennisabstract",
         updatedAt,
         forecast: rows.map(rowToForecast),
+        ...(matches.length > 0 ? { matches } : {}),
       };
 
       cache.set(data);
