@@ -87,9 +87,41 @@ async function loadBasketball(): Promise<SportNode> {
     ]);
     const nbaRaw = basketballToRaw("NBA", nbaJson?.matches ?? []);
     const wnbaRaw = basketballToRaw("WNBA", wnbaJson?.matches ?? []);
-    return groupRawMatches("basketball", [...nbaRaw, ...wnbaRaw]);
+    const node = groupRawMatches("basketball", [...nbaRaw, ...wnbaRaw]);
+
+    // Toujours inclure la structure ligue NBA/WNBA même hors saison
+    if (node.countries.length === 0) {
+      return {
+        ...node,
+        countries: [
+          {
+            id: "USA",
+            name: "USA",
+            countryCode: "US",
+            leagues: [
+              { id: "NBA", name: "NBA", matchCount: 0, sportId: "basketball" as const, matches: [] },
+              { id: "WNBA", name: "WNBA", matchCount: 0, sportId: "basketball" as const, matches: [] },
+            ],
+          },
+        ],
+      };
+    }
+    return node;
   } catch {
-    return emptySportNode("basketball");
+    return {
+      ...emptySportNode("basketball"),
+      countries: [
+        {
+          id: "USA",
+          name: "USA",
+          countryCode: "US",
+          leagues: [
+            { id: "NBA", name: "NBA", matchCount: 0, sportId: "basketball" as const, matches: [] },
+            { id: "WNBA", name: "WNBA", matchCount: 0, sportId: "basketball" as const, matches: [] },
+          ],
+        },
+      ],
+    };
   }
 }
 

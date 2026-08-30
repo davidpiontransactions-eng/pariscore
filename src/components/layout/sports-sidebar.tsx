@@ -730,7 +730,10 @@ function SportBlock({
     <li>
       <button
         type="button"
-        onClick={() => toggleSport(sport.id)}
+        onClick={() => {
+          toggleSport(sport.id);
+          onSportSelect(sport.id as SportTabId);
+        }}
         aria-expanded={expanded}
         aria-label={t(expanded ? "collapseAria" : "expandAria", { name: sportLabel })}
         className={cn(
