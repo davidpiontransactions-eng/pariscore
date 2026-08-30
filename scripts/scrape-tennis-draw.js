@@ -62,6 +62,8 @@ const TOURNAMENT_KEY = typeof args.tournament === 'string' ? args.tournament : n
 const YEAR = args.year ? parseInt(args.year, 10) : new Date().getFullYear();
 const DRY_RUN = !!args['dry-run'];
 const LIST_ONLY = !!args.list;
+const ALL_MODE = !!args.all;
+const FORCE_FLARE = !!args.flaresolverr;
 
 // ─── HTTPS GET (module natif, zéro-dépendance) ────────────────────────────────
 function httpsGet(url) {
@@ -88,6 +90,78 @@ function httpsGet(url) {
     req.on('error', reject);
     req.on('timeout', () => { req.destroy(); reject(new Error(`Timeout ${url}`)); });
   });
+}
+
+// ─── FlareSolverr fallback (pour VPS/datacenter IPs) ──────────────────────────
+const FLARE_HOST = process.env.FLARE_HOST || 'localhost';
+const FLARE_PORT = process.env.FLARE_PORT || '8191';
+const FLARE_URL = `http://${FLARE_HOST}:${FLARE_PORT}/v1`;
+
+function flareSolverrGet(url) {
+  return new Promise((resolve, reject) => {
+    const http = require('http');
+    const body = JSON.stringify({
+      cmd: 'request.get',
+      url,
+      maxTimeout: HTTP_TIMEOUT_MS,
+    });
+    const opts = {
+      hostname: FLARE_HOST,
+      port: parseInt(FLARE_PORT, 10),
+      path: '/v1',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body),
+      },
+      timeout: HTTP_TIMEOUT_MS + 10000,
+    };
+    const req = http.request(opts, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+          if (json.status === 'ok' && json.solution && json.solution.response) {
+            resolve(json.solution.response);
+          } else {
+            reject(new Error(`FlareSolverr: ${json.message || 'status ' + json.status}`));
+          }
+        } catch (e) {
+          reject(new Error(`FlareSolverr parse error: ${e.message}`));
+        }
+      });
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error(`FlareSolverr timeout ${url}`)); });
+    req.write(body);
+    req.end();
+  });
+}
+
+// ─── Fetch avec fallback FlareSolverr ─────────────────────────────────────────
+async function fetchHtml(url) {
+  // Mode forcé FlareSolverr (pour test ou VPS sans HTTPS direct)
+  if (FORCE_FLARE) {
+    console.log(`[draw] Mode FlareSolverr forcé`);
+    return flareSolverrGet(url);
+  }
+  try {
+    return await httpsGet(url);
+  } catch (err) {
+    const msg = String(err.message || err);
+    console.log(`[draw] HTTPS échoué: ${msg}`);
+    if (msg.includes('403') || msg.includes('Timeout') || msg.includes('timeout')) {
+      console.log(`[draw] Tentative FlareSolverr...`);
+      try {
+        return await flareSolverrGet(url);
+      } catch (flareErr) {
+        throw new Error(`HTTPS (${msg}) + FlareSolverr (${flareErr.message})`);
+      }
+    }
+    throw err;
+  }
 }
 
 // ─── Extraction de la variable JS proj32 depuis le HTML ────────────────────────
@@ -274,40 +348,18 @@ function upsertPlayers(db, slug, year, players) {
   insert(players);
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
-async function main() {
-  // Mode --list : affiche les tournois disponibles
-  if (LIST_ONLY) {
-    console.log('Tournois disponibles :');
-    for (const [key, info] of Object.entries(TOURNAMENTS)) {
-      console.log(`  ${key.padEnd(20)} ${info.name} (${info.category}, ${info.surface})`);
-    }
-    return;
-  }
-
-  if (!TOURNAMENT_KEY) {
-    console.error('Usage: node scripts/scrape-tennis-draw.js --tournament=<slug> [--year=2026] [--dry-run]');
-    console.error('       node scripts/scrape-tennis-draw.js --list');
-    process.exit(1);
-  }
-
-  const tournament = TOURNAMENTS[TOURNAMENT_KEY];
-  if (!tournament) {
-    console.error(`Tournoi inconnu : "${TOURNAMENT_KEY}". Utilisez --list pour voir les options.`);
-    process.exit(1);
-  }
-
+// ─── Scraper un seul tournoi ──────────────────────────────────────────────────
+async function scrapeOne(slug, tournament) {
   const url = `${BASE_URL}${tournament.filename}.html`;
-  console.log(`[draw] ${tournament.name} (${tournament.category}) — ${url}`);
-  console.log(`[draw] Année: ${YEAR} | Dry-run: ${DRY_RUN ? 'oui' : 'non'}`);
+  console.log(`\n[draw] ${tournament.name} (${tournament.category}) — ${url}`);
 
   try {
-    const html = await httpsGet(url);
+    const html = await fetchHtml(url);
     const proj32 = extractProj32(html);
 
     if (!proj32) {
-      console.error(`[draw] Variable proj32 introuvable dans ${tournament.filename}.html`);
-      process.exit(1);
+      console.error(`[draw] Variable proj32 introuvable pour ${slug}`);
+      return 0;
     }
 
     const players = parseProj32(proj32);
@@ -344,14 +396,56 @@ async function main() {
       }
     } else {
       const db = openDb();
-      upsertPlayers(db, TOURNAMENT_KEY, YEAR, players);
+      upsertPlayers(db, slug, YEAR, players);
       db.close();
       console.log(`[draw] ${players.length} joueurs insérés/upsertés dans ${DB_PATH}`);
     }
+    return players.length;
   } catch (err) {
-    console.error(`[draw] Erreur: ${(err).message}`);
+    console.error(`[draw] Erreur ${slug}: ${(err).message}`);
+    return 0;
+  }
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+async function main() {
+  // Mode --list : affiche les tournois disponibles
+  if (LIST_ONLY) {
+    console.log('Tournois disponibles :');
+    for (const [key, info] of Object.entries(TOURNAMENTS)) {
+      console.log(`  ${key.padEnd(20)} ${info.name} (${info.category}, ${info.surface})`);
+    }
+    return;
+  }
+
+  // Mode --all : scrape tous les tournois
+  if (ALL_MODE) {
+    console.log(`[draw] Mode ALL — ${Object.keys(TOURNAMENTS).length} tournois`);
+    let total = 0;
+    let ok = 0;
+    for (const [slug, info] of Object.entries(TOURNAMENTS)) {
+      const n = await scrapeOne(slug, info);
+      total += n;
+      if (n > 0) ok++;
+    }
+    console.log(`\n[draw] Terminé : ${ok}/${Object.keys(TOURNAMENTS).length} tournois, ${total} joueurs total`);
+    return;
+  }
+
+  if (!TOURNAMENT_KEY) {
+    console.error('Usage: node scripts/scrape-tennis-draw.js --tournament=<slug> [--year=2026] [--dry-run]');
+    console.error('       node scripts/scrape-tennis-draw.js --all [--dry-run]');
+    console.error('       node scripts/scrape-tennis-draw.js --list');
     process.exit(1);
   }
+
+  const tournament = TOURNAMENTS[TOURNAMENT_KEY];
+  if (!tournament) {
+    console.error(`Tournoi inconnu : "${TOURNAMENT_KEY}". Utilisez --list pour voir les options.`);
+    process.exit(1);
+  }
+
+  await scrapeOne(TOURNAMENT_KEY, tournament);
 }
 
 function fmt(v) {
