@@ -46,7 +46,7 @@ function ProbBar({ prob }: { prob: number }) {
     <div className="flex items-center gap-1.5">
       <div className="relative h-4 w-16 overflow-hidden rounded-sm bg-muted/50 sm:w-20">
         <div
-          className="absolute inset-y-0 left-0 rounded-sm bg-foreground/70 transition-all duration-300"
+          className="absolute inset-y-0 left-0 rounded-sm bg-sky-400 transition-all duration-300"
           style={{ width: `${width}%` }}
         />
         <span className="relative z-10 flex h-full items-center pl-1 font-mono text-[10px] tabular-nums text-foreground">
@@ -169,15 +169,15 @@ export function DrawForecastTable({
       {/* Légende */}
       <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border/40 pt-3 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-foreground/70" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-400" />
           ≥ 50%
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-foreground/40" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-400/60" />
           20-49%
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-foreground/15" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-400/30" />
           &lt; 10%
         </div>
         <div className="ml-auto flex items-center gap-1">
