@@ -17,6 +17,7 @@ const TOURNAMENT_META: Record<string, { name: string; surface: string; category:
   "roland-garros":   { name: "Roland-Garros",            surface: "Clay",        category: "Grand Slam" },
   wimbledon:         { name: "Wimbledon",                surface: "Grass",       category: "Grand Slam" },
   "us-open":         { name: "US Open",                  surface: "Hard",        category: "Grand Slam" },
+  "us-open-women":   { name: "US Open Women",            surface: "Hard",        category: "Grand Slam" },
   "indian-wells":    { name: "Indian Wells",             surface: "Hard",        category: "ATP/WTA 1000" },
   miami:             { name: "Miami Open",               surface: "Hard",        category: "ATP/WTA 1000" },
   "monte-carlo":     { name: "Monte-Carlo Masters",      surface: "Clay",        category: "ATP 1000" },
