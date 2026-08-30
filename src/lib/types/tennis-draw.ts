@@ -71,6 +71,8 @@ export interface ForecastRow {
   name: string;
   /** Seed. */
   seed?: number;
+  /** Qualifier (Q, WC, LL, PR). */
+  qualifier?: string;
   /** Code pays. */
   country?: string;
   /** ID du joueur. */

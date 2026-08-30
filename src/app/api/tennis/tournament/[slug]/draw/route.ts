@@ -84,6 +84,7 @@ function rowToForecast(row: DrawRow): ForecastRow {
   return {
     name: row.player_name,
     seed: row.player_seed ?? undefined,
+    qualifier: row.player_qualifier ?? undefined,
     country: row.player_country ?? undefined,
     id: row.player_ta_id ?? undefined,
     probabilities: {
