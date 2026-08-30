@@ -31,15 +31,15 @@ const ROUND_LABELS: Record<DrawRound, string> = {
 function barColor(prob: number): string {
   if (prob >= 60) return "bg-emerald-500";
   if (prob >= 40) return "bg-emerald-400/70";
-  if (prob >= 20) return "bg-amber-400/70";
-  if (prob >= 10) return "bg-amber-500/50";
+  if (prob >= 20) return "bg-sky-500/70";
+  if (prob >= 10) return "bg-sky-400/50";
   return "bg-slate-500/40";
 }
 
 /** Couleur du texte selon la probabilité. */
 function textColor(prob: number): string {
   if (prob >= 50) return "text-emerald-400 font-semibold";
-  if (prob >= 20) return "text-amber-400";
+  if (prob >= 20) return "text-sky-400";
   if (prob >= 10) return "text-muted-foreground";
   return "text-muted-foreground/60";
 }
@@ -54,7 +54,7 @@ function SeedBadge({ seed }: { seed?: number }) {
       className={cn(
         "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold",
         isTop4 && "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
-        !isTop4 && isTop8 && "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20",
+        !isTop4 && isTop8 && "bg-amber-500/10 text-amber-300 ring-1 ring-amber-400/20",
         !isTop8 && "bg-muted text-muted-foreground",
       )}
     >
@@ -66,7 +66,7 @@ function SeedBadge({ seed }: { seed?: number }) {
 /** Icône de rang pour le podium. */
 function RankIcon({ rank }: { rank: number }) {
   if (rank === 0) return <Crown className="h-3.5 w-3.5 text-emerald-400" />;
-  if (rank === 1) return <Medal className="h-3 w-3 text-amber-400" />;
+  if (rank === 1) return <Medal className="h-3 w-3 text-sky-400" />;
   if (rank === 2) return <Medal className="h-3 w-3 text-slate-400" />;
   return (
     <span className="inline-flex h-4 w-4 items-center justify-center text-[9px] font-mono text-muted-foreground/50">
@@ -222,7 +222,7 @@ export function DrawForecastTable({
           ≥ 50%
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-amber-400/70" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/70" />
           20-49%
         </div>
         <div className="flex items-center gap-1.5">
