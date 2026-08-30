@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, Crown, Medal } from "lucide-react";
+import { Trophy, Crown } from "lucide-react";
 import { CountryFlag } from "./country-flag";
 import { RoundBadge } from "./round-badge";
 import type { DrawRound, ForecastRow } from "@/lib/types/tennis-draw";
@@ -16,83 +16,44 @@ type DrawForecastTableProps = {
 /** Rounds affichés (R16 → W = colonnes cumulatives). */
 const COLUMN_ROUNDS: DrawRound[] = ["R16", "QF", "SF", "F", "W"];
 
-/** Labels complets pour tooltips. */
-const ROUND_LABELS: Record<DrawRound, string> = {
-  R64: "1/32e de finale",
-  R32: "1/16e de finale",
-  R16: "1/8e de finale",
-  QF: "Quart de finale",
-  SF: "Demi-finale",
-  F: "Finale",
-  W: "Vainqueur",
-};
-
-/** Couleur de la barre selon la probabilité. */
-function barColor(prob: number): string {
-  if (prob >= 60) return "bg-emerald-500";
-  if (prob >= 40) return "bg-emerald-400/70";
-  if (prob >= 20) return "bg-sky-500/70";
-  if (prob >= 10) return "bg-sky-400/50";
-  return "bg-slate-500/40";
-}
-
-/** Couleur du texte selon la probabilité. */
-function textColor(prob: number): string {
-  if (prob >= 50) return "text-emerald-400 font-semibold";
-  if (prob >= 20) return "text-sky-400";
-  if (prob >= 10) return "text-muted-foreground";
-  return "text-muted-foreground/60";
-}
-
-/** Badge seed avec couleur par seed. */
+/** Badge seed — blanc sur fond sombre. */
 function SeedBadge({ seed }: { seed?: number }) {
   if (!seed) return null;
-  const isTop4 = seed <= 4;
-  const isTop8 = seed <= 8;
   return (
-    <span
-      className={cn(
-        "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold",
-        isTop4 && "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30",
-        !isTop4 && isTop8 && "bg-amber-500/10 text-amber-300 ring-1 ring-amber-400/20",
-        !isTop8 && "bg-muted text-muted-foreground",
-      )}
-    >
+    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 font-mono text-[10px] font-bold text-white/90 ring-1 ring-white/20">
       {seed}
     </span>
   );
 }
 
-/** Icône de rang pour le podium. */
+/** Icône de rang — blanc/gris uniquement. */
 function RankIcon({ rank }: { rank: number }) {
-  if (rank === 0) return <Crown className="h-3.5 w-3.5 text-emerald-400" />;
-  if (rank === 1) return <Medal className="h-3 w-3 text-sky-400" />;
-  if (rank === 2) return <Medal className="h-3 w-3 text-slate-400" />;
+  if (rank === 0) return <Crown className="h-3.5 w-3.5 text-white" />;
   return (
-    <span className="inline-flex h-4 w-4 items-center justify-center text-[9px] font-mono text-muted-foreground/50">
+    <span className="inline-flex h-4 w-4 items-center justify-center text-[9px] font-mono text-white/40">
       {rank + 1}
     </span>
   );
 }
 
-/** Barre de progression horizontale. */
-function ProbBar({ prob, maxProb }: { prob: number; maxProb: number }) {
+/** Barre de progression — blanc sur fond sombre. */
+function ProbBar({ prob }: { prob: number }) {
   if (prob <= 0) {
-    return <span className="text-[10px] text-muted-foreground/30">—</span>;
+    return <span className="text-[10px] text-white/20">—</span>;
   }
-  const width = maxProb > 0 ? Math.max((prob / maxProb) * 100, 8) : 0;
+  const width = Math.max(prob, 5);
   return (
     <div className="flex items-center gap-1.5">
-      <div className="relative h-4 w-16 overflow-hidden rounded-sm bg-muted/30 sm:w-20">
+      <div className="relative h-4 w-16 overflow-hidden rounded-sm bg-white/5 sm:w-20">
         <div
-          className={cn("absolute inset-y-0 left-0 rounded-sm transition-all duration-300", barColor(prob))}
+          className="absolute inset-y-0 left-0 rounded-sm bg-white/80 transition-all duration-300"
           style={{ width: `${width}%` }}
         />
-        <span className={cn("relative z-10 flex h-full items-center pl-1 font-mono text-[10px] tabular-nums", textColor(prob))}>
+        <span className="relative z-10 flex h-full items-center pl-1 font-mono text-[10px] tabular-nums text-white">
           {prob.toFixed(1)}
         </span>
       </div>
-      <span className={cn("font-mono text-[10px] tabular-nums", textColor(prob))}>%</span>
+      <span className="font-mono text-[10px] tabular-nums text-white/50">%</span>
     </div>
   );
 }
@@ -102,7 +63,6 @@ export function DrawForecastTable({
   currentRound,
   className,
 }: DrawForecastTableProps) {
-  // Tri par probabilité de victoire (décroissant)
   const sorted = useMemo(
     () =>
       [...forecast].sort(
@@ -111,32 +71,26 @@ export function DrawForecastTable({
     [forecast],
   );
 
-  // Prob max pour normaliser les barres
-  const maxProbWin = useMemo(
-    () => Math.max(...sorted.map((r) => r.probabilities.W ?? 0), 1),
-    [sorted],
-  );
-
   return (
     <div className={cn("overflow-x-auto", className)}>
-      {/* Header du tableau */}
+      {/* Header */}
       <div className="mb-2 flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <Trophy className="h-4 w-4 text-emerald-400" />
-          <span className="text-xs font-semibold text-foreground">
+          <Trophy className="h-4 w-4 text-white/60" />
+          <span className="text-xs font-semibold text-white">
             Forecast — {sorted.length} joueurs
           </span>
         </div>
-        <span className="text-[10px] text-muted-foreground/60">
+        <span className="text-[10px] text-white/30">
           Simulations Elo surface-specific
         </span>
       </div>
 
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="sticky top-0 z-20 border-b border-border/60 bg-card">
+          <tr className="sticky top-0 z-20 border-b border-white/10 bg-[#0b0e17]">
             <th className="w-7 px-1 py-2" />
-            <th className="min-w-[140px] px-1 py-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <th className="min-w-[140px] px-1 py-2 text-[10px] font-medium uppercase tracking-wider text-white/40">
               Joueur
             </th>
             {COLUMN_ROUNDS.map((r) => (
@@ -144,7 +98,7 @@ export function DrawForecastTable({
                 key={r}
                 className={cn(
                   "px-1 py-2 text-center text-[10px] font-medium uppercase tracking-wider",
-                  currentRound === r ? "text-emerald-400" : "text-muted-foreground",
+                  currentRound === r ? "text-white" : "text-white/40",
                 )}
               >
                 <RoundBadge round={r} isActive={currentRound === r} size="sm" />
@@ -156,18 +110,16 @@ export function DrawForecastTable({
         <tbody>
           {sorted.map((row, i) => {
             const isFav = i === 0 && (row.probabilities.W ?? 0) > 0;
-            const isPodium = i < 3;
-            const winProb = row.probabilities.W ?? 0;
 
             return (
               <tr
                 key={row.id ?? `${row.name}-${i}`}
                 className={cn(
-                  "group border-b border-border/30 transition-colors hover:bg-muted/40",
-                  isFav && "bg-emerald-500/5",
+                  "group border-b border-white/5 transition-colors hover:bg-white/[0.03]",
+                  isFav && "bg-white/[0.04]",
                 )}
               >
-                {/* Rang + icône */}
+                {/* Rang */}
                 <td className="px-1 py-2.5 text-center">
                   <RankIcon rank={i} />
                 </td>
@@ -181,21 +133,19 @@ export function DrawForecastTable({
                       <span
                         className={cn(
                           "truncate text-[11px] font-medium leading-tight",
-                          isFav && "text-emerald-400",
-                          isPodium && !isFav && "text-foreground",
-                          !isPodium && "text-foreground/80",
+                          isFav ? "text-white font-semibold" : "text-white/80",
                         )}
                       >
                         {row.name}
                       </span>
                       {row.qualifier && (
-                        <span className="text-[9px] text-muted-foreground/50">
+                        <span className="text-[9px] text-white/30">
                           {row.qualifier}
                         </span>
                       )}
                     </div>
                     {isFav && (
-                      <Crown className="ml-auto h-3.5 w-3.5 text-emerald-400/70" />
+                      <Crown className="ml-auto h-3.5 w-3.5 text-white/50" />
                     )}
                   </div>
                 </td>
@@ -205,7 +155,7 @@ export function DrawForecastTable({
                   const prob = (row.probabilities[r] ?? 0) * 100;
                   return (
                     <td key={r} className="px-1 py-2.5">
-                      <ProbBar prob={prob} maxProb={100} />
+                      <ProbBar prob={prob} />
                     </td>
                   );
                 })}
@@ -216,28 +166,28 @@ export function DrawForecastTable({
       </table>
 
       {/* Légende */}
-      <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border/30 pt-3 text-[10px] text-muted-foreground">
+      <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-white/10 pt-3 text-[10px] text-white/40">
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-white/80" />
           ≥ 50%
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-sky-500/70" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-white/40" />
           20-49%
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-sm bg-slate-500/40" />
+          <span className="h-2.5 w-2.5 rounded-sm bg-white/15" />
           &lt; 10%
         </div>
         <div className="ml-auto flex items-center gap-1">
-          <Crown className="h-3 w-3 text-emerald-400" />
+          <Crown className="h-3 w-3 text-white/60" />
           Favori titre
         </div>
       </div>
 
       {/* Méthodologie */}
-      <div className="mt-2 rounded-md bg-muted/30 px-3 py-2 text-[10px] leading-relaxed text-muted-foreground/70">
-        <span className="font-medium text-muted-foreground">Méthodologie :</span>{" "}
+      <div className="mt-2 rounded-md bg-white/[0.03] px-3 py-2 text-[10px] leading-relaxed text-white/30">
+        <span className="font-medium text-white/50">Méthodologie :</span>{" "}
         Probabilités calculées par simulation Monte Carlo (100k tirages) utilisant
         des ratings Elo surface-specific. Chaque round est cumulatif — la colonne QF
         représente la probabilité d&apos;atteindre les quarts <em>ou mieux</em>.
