@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-08-29T11:18:40.542625Z",
+    "lastUpdated": "2026-08-30T10:03:50.109238Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,21 +13,12 @@
   },
   "home": [
     {
-      "teamName": "Incheon Utd",
-      "gp": 8,
-      "w": 3,
-      "d": 2,
-      "l": 3,
-      "gf": 8,
-      "ga": 5
-    },
-    {
-      "teamName": "Daejeon Citizen",
+      "teamName": "Gangwon",
       "gp": 8,
       "w": 3,
       "d": 3,
       "l": 2,
-      "gf": 12,
+      "gf": 11,
       "ga": 9
     },
     {
@@ -40,12 +31,12 @@
       "ga": 9
     },
     {
-      "teamName": "Gangwon",
+      "teamName": "Bucheon Fc",
       "gp": 8,
       "w": 3,
       "d": 3,
       "l": 2,
-      "gf": 11,
+      "gf": 12,
       "ga": 9
     },
     {
@@ -56,26 +47,26 @@
       "l": 2,
       "gf": 11,
       "ga": 7
+    },
+    {
+      "teamName": "Daejeon Citizen",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 12,
+      "ga": 9
     }
   ],
   "away": [
     {
-      "teamName": "Incheon Utd",
+      "teamName": "Anyang",
       "gp": 8,
       "w": 4,
       "d": 2,
       "l": 2,
-      "gf": 12,
-      "ga": 8
-    },
-    {
-      "teamName": "Jeju Utd",
-      "gp": 8,
-      "w": 5,
-      "d": 1,
-      "l": 2,
-      "gf": 11,
-      "ga": 6
+      "gf": 13,
+      "ga": 11
     },
     {
       "teamName": "Seoul",
@@ -87,13 +78,13 @@
       "ga": 5
     },
     {
-      "teamName": "Anyang",
+      "teamName": "Incheon Utd",
       "gp": 8,
-      "w": 5,
-      "d": 1,
+      "w": 4,
+      "d": 2,
       "l": 2,
-      "gf": 13,
-      "ga": 10
+      "gf": 12,
+      "ga": 8
     },
     {
       "teamName": "Jeonbuk",
@@ -102,6 +93,15 @@
       "d": 3,
       "l": 2,
       "gf": 10,
+      "ga": 6
+    },
+    {
+      "teamName": "Jeju Utd",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 11,
       "ga": 6
     }
   ]

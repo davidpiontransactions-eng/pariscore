@@ -4,7 +4,7 @@
     "leagueId": "liga_mx",
     "leagueName": "Mexico",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-08-29T11:18:46.668289Z",
+    "lastUpdated": "2026-08-30T10:03:56.708512Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 18,
     "window": 8,
@@ -12,24 +12,6 @@
     "partial": false
   },
   "home": [
-    {
-      "teamName": "Juarez",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 8
-    },
-    {
-      "teamName": "Mazatlan",
-      "gp": 5,
-      "w": 1,
-      "d": 4,
-      "l": 1,
-      "gf": 8,
-      "ga": 9
-    },
     {
       "teamName": "Pumas Unam",
       "gp": 5,
@@ -40,49 +22,13 @@
       "ga": 6
     },
     {
-      "teamName": "Cruz Azul",
+      "teamName": "Queretaro",
       "gp": 5,
-      "w": 4,
+      "w": 2,
       "d": 1,
-      "l": 1,
-      "gf": 12,
-      "ga": 7
-    },
-    {
-      "teamName": "Monterrey",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 16,
-      "ga": 6
-    },
-    {
-      "teamName": "Cf America",
-      "gp": 5,
-      "w": 5,
-      "d": 0,
-      "l": 0,
-      "gf": 13,
-      "ga": 2
-    },
-    {
-      "teamName": "Puebla",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
+      "l": 2,
       "gf": 7,
-      "ga": 12
-    },
-    {
-      "teamName": "A. San Luis",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 6,
-      "ga": 9
+      "ga": 7
     },
     {
       "teamName": "Toluca",
@@ -94,31 +40,13 @@
       "ga": 7
     },
     {
-      "teamName": "Queretaro",
+      "teamName": "Atlas",
       "gp": 5,
       "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
-      "teamName": "Guadalajara",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 10,
-      "ga": 7
-    },
-    {
-      "teamName": "Tigres",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
+      "d": 2,
       "l": 1,
-      "gf": 13,
-      "ga": 5
+      "gf": 9,
+      "ga": 9
     },
     {
       "teamName": "Tijuana",
@@ -130,22 +58,13 @@
       "ga": 3
     },
     {
-      "teamName": "Pachuca",
+      "teamName": "Guadalajara",
       "gp": 5,
-      "w": 2,
+      "w": 3,
       "d": 0,
-      "l": 3,
-      "gf": 4,
-      "ga": 6
-    },
-    {
-      "teamName": "Necaxa",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 7,
-      "ga": 4
+      "l": 2,
+      "gf": 10,
+      "ga": 7
     },
     {
       "teamName": "Santos Laguna",
@@ -157,6 +76,60 @@
       "ga": 6
     },
     {
+      "teamName": "Monterrey",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 16,
+      "ga": 6
+    },
+    {
+      "teamName": "Pachuca",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 3,
+      "gf": 4,
+      "ga": 6
+    },
+    {
+      "teamName": "Mazatlan",
+      "gp": 5,
+      "w": 1,
+      "d": 4,
+      "l": 1,
+      "gf": 8,
+      "ga": 9
+    },
+    {
+      "teamName": "Tigres",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 13,
+      "ga": 5
+    },
+    {
+      "teamName": "Juarez",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 8
+    },
+    {
+      "teamName": "Cf America",
+      "gp": 5,
+      "w": 5,
+      "d": 0,
+      "l": 0,
+      "gf": 12,
+      "ga": 1
+    },
+    {
       "teamName": "Club Leon",
       "gp": 5,
       "w": 2,
@@ -166,34 +139,43 @@
       "ga": 6
     },
     {
-      "teamName": "Atlas",
+      "teamName": "Puebla",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 7,
+      "ga": 12
+    },
+    {
+      "teamName": "Necaxa",
       "gp": 5,
       "w": 2,
       "d": 2,
       "l": 1,
-      "gf": 9,
-      "ga": 9
-    }
-  ],
-  "away": [
+      "gf": 7,
+      "ga": 4
+    },
     {
-      "teamName": "Juarez",
+      "teamName": "A. San Luis",
       "gp": 5,
       "w": 1,
       "d": 1,
-      "l": 2,
-      "gf": 7,
+      "l": 4,
+      "gf": 6,
       "ga": 9
     },
     {
-      "teamName": "Mazatlan",
+      "teamName": "Cruz Azul",
       "gp": 5,
-      "w": 0,
+      "w": 4,
       "d": 1,
-      "l": 4,
-      "gf": 3,
-      "ga": 8
-    },
+      "l": 1,
+      "gf": 12,
+      "ga": 7
+    }
+  ],
+  "away": [
     {
       "teamName": "Pumas Unam",
       "gp": 5,
@@ -204,49 +186,13 @@
       "ga": 7
     },
     {
-      "teamName": "Cruz Azul",
+      "teamName": "Queretaro",
       "gp": 5,
-      "w": 3,
+      "w": 2,
       "d": 1,
       "l": 1,
-      "gf": 10,
-      "ga": 7
-    },
-    {
-      "teamName": "Monterrey",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 9,
-      "ga": 11
-    },
-    {
-      "teamName": "Cf America",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 8,
-      "ga": 5
-    },
-    {
-      "teamName": "Puebla",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 13
-    },
-    {
-      "teamName": "A. San Luis",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 9,
-      "ga": 9
+      "gf": 7,
+      "ga": 6
     },
     {
       "teamName": "Toluca",
@@ -258,12 +204,21 @@
       "ga": 3
     },
     {
-      "teamName": "Queretaro",
+      "teamName": "Atlas",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "Tijuana",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 5,
+      "gf": 6,
       "ga": 11
     },
     {
@@ -276,21 +231,21 @@
       "ga": 5
     },
     {
-      "teamName": "Tigres",
+      "teamName": "Santos Laguna",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 8,
-      "ga": 5
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 5,
+      "ga": 11
     },
     {
-      "teamName": "Tijuana",
+      "teamName": "Monterrey",
       "gp": 5,
-      "w": 1,
+      "w": 2,
       "d": 1,
-      "l": 3,
-      "gf": 6,
+      "l": 2,
+      "gf": 9,
       "ga": 11
     },
     {
@@ -303,22 +258,40 @@
       "ga": 6
     },
     {
-      "teamName": "Necaxa",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 8,
-      "ga": 14
-    },
-    {
-      "teamName": "Santos Laguna",
+      "teamName": "Mazatlan",
       "gp": 5,
       "w": 0,
       "d": 1,
       "l": 4,
-      "gf": 5,
-      "ga": 11
+      "gf": 3,
+      "ga": 8
+    },
+    {
+      "teamName": "Tigres",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 0,
+      "gf": 8,
+      "ga": 5
+    },
+    {
+      "teamName": "Juarez",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 9
+    },
+    {
+      "teamName": "Cf America",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 8,
+      "ga": 5
     },
     {
       "teamName": "Club Leon",
@@ -330,11 +303,38 @@
       "ga": 11
     },
     {
-      "teamName": "Atlas",
+      "teamName": "Puebla",
       "gp": 5,
-      "w": 3,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 6,
+      "ga": 13
+    },
+    {
+      "teamName": "Necaxa",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 8,
+      "ga": 14
+    },
+    {
+      "teamName": "A. San Luis",
+      "gp": 5,
+      "w": 2,
       "d": 0,
-      "l": 2,
+      "l": 3,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Cruz Azul",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
       "gf": 8,
       "ga": 6
     }

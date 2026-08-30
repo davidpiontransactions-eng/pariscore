@@ -4,31 +4,31 @@
     "leagueId": "ligue2",
     "leagueName": "France2",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-08-29T11:17:37.217422Z",
+    "lastUpdated": "2026-08-30T10:02:39.064134Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
-    "teamCount": 19,
+    "teamCount": 18,
     "window": 8,
     "targetWindow": 5,
-    "partial": true
+    "partial": false
   },
   "home": [
     {
-      "teamName": "Guingamp",
+      "teamName": "Annecy",
       "gp": 5,
       "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
       "ga": 4
     },
     {
-      "teamName": "Laval",
+      "teamName": "Saint-Etienne",
       "gp": 5,
-      "w": 1,
-      "d": 3,
+      "w": 4,
+      "d": 0,
       "l": 1,
-      "gf": 8,
-      "ga": 7
+      "gf": 13,
+      "ga": 3
     },
     {
       "teamName": "Sc Bastia",
@@ -40,40 +40,13 @@
       "ga": 5
     },
     {
-      "teamName": "Montpellier",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 7
-    },
-    {
-      "teamName": "Metz",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 3,
-      "ga": 2
-    },
-    {
-      "teamName": "Annecy",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 8,
-      "ga": 4
-    },
-    {
-      "teamName": "Red Star",
+      "teamName": "Le Mans",
       "gp": 5,
       "w": 2,
       "d": 2,
-      "l": 1,
-      "gf": 7,
-      "ga": 6
+      "l": 0,
+      "gf": 8,
+      "ga": 2
     },
     {
       "teamName": "Pau Fc",
@@ -85,13 +58,22 @@
       "ga": 10
     },
     {
-      "teamName": "Reims",
+      "teamName": "Laval",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 10,
+      "w": 1,
+      "d": 3,
+      "l": 1,
+      "gf": 8,
       "ga": 7
+    },
+    {
+      "teamName": "Usl Dunkerque",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 5
     },
     {
       "teamName": "Clermont",
@@ -100,6 +82,69 @@
       "d": 1,
       "l": 2,
       "gf": 4,
+      "ga": 6
+    },
+    {
+      "teamName": "Montpellier",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 7
+    },
+    {
+      "teamName": "Boulogne",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 9
+    },
+    {
+      "teamName": "Nancy",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 12
+    },
+    {
+      "teamName": "Red Star",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 7,
+      "ga": 6
+    },
+    {
+      "teamName": "Amiens",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 6,
+      "ga": 12
+    },
+    {
+      "teamName": "Guingamp",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 7,
+      "ga": 5
+    },
+    {
+      "teamName": "Rodez Aveyron",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 9,
       "ga": 6
     },
     {
@@ -112,22 +157,13 @@
       "ga": 5
     },
     {
-      "teamName": "Usl Dunkerque",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 5
-    },
-    {
-      "teamName": "Le Mans",
+      "teamName": "Reims",
       "gp": 5,
       "w": 2,
       "d": 2,
       "l": 0,
-      "gf": 8,
-      "ga": 2
+      "gf": 10,
+      "ga": 7
     },
     {
       "teamName": "Grenoble",
@@ -137,71 +173,26 @@
       "l": 1,
       "gf": 4,
       "ga": 4
-    },
-    {
-      "teamName": "Nancy",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 12
-    },
-    {
-      "teamName": "Boulogne",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Amiens",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 6,
-      "ga": 12
-    },
-    {
-      "teamName": "Saint-Etienne",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 13,
-      "ga": 3
-    },
-    {
-      "teamName": "Rodez Aveyron",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 9,
-      "ga": 6
     }
   ],
   "away": [
     {
-      "teamName": "Guingamp",
+      "teamName": "Annecy",
       "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 4,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
       "ga": 8
     },
     {
-      "teamName": "Laval",
+      "teamName": "Saint-Etienne",
       "gp": 5,
       "w": 1,
       "d": 2,
       "l": 2,
-      "gf": 3,
-      "ga": 8
+      "gf": 4,
+      "ga": 4
     },
     {
       "teamName": "Sc Bastia",
@@ -213,31 +204,13 @@
       "ga": 6
     },
     {
-      "teamName": "Montpellier",
+      "teamName": "Le Mans",
       "gp": 5,
-      "w": 3,
-      "d": 1,
+      "w": 2,
+      "d": 2,
       "l": 1,
-      "gf": 5,
-      "ga": 1
-    },
-    {
-      "teamName": "Annecy",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 8
-    },
-    {
-      "teamName": "Red Star",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 5
+      "gf": 9,
+      "ga": 6
     },
     {
       "teamName": "Pau Fc",
@@ -249,31 +222,13 @@
       "ga": 9
     },
     {
-      "teamName": "Reims",
+      "teamName": "Laval",
       "gp": 5,
       "w": 1,
-      "d": 3,
-      "l": 1,
-      "gf": 5,
-      "ga": 4
-    },
-    {
-      "teamName": "Clermont",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 7,
-      "ga": 8
-    },
-    {
-      "teamName": "Troyes",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
+      "d": 2,
       "l": 2,
-      "gf": 7,
-      "ga": 5
+      "gf": 3,
+      "ga": 8
     },
     {
       "teamName": "Usl Dunkerque",
@@ -285,13 +240,22 @@
       "ga": 11
     },
     {
-      "teamName": "Le Mans",
+      "teamName": "Clermont",
       "gp": 5,
-      "w": 2,
-      "d": 2,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 7,
+      "ga": 8
+    },
+    {
+      "teamName": "Montpellier",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
       "l": 1,
-      "gf": 9,
-      "ga": 6
+      "gf": 5,
+      "ga": 1
     },
     {
       "teamName": "Nancy",
@@ -303,15 +267,6 @@
       "ga": 3
     },
     {
-      "teamName": "Grenoble",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 6
-    },
-    {
       "teamName": "Boulogne",
       "gp": 5,
       "w": 2,
@@ -319,6 +274,15 @@
       "l": 1,
       "gf": 4,
       "ga": 4
+    },
+    {
+      "teamName": "Red Star",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 5
     },
     {
       "teamName": "Amiens",
@@ -330,13 +294,13 @@
       "ga": 11
     },
     {
-      "teamName": "Saint-Etienne",
+      "teamName": "Guingamp",
       "gp": 5,
-      "w": 2,
+      "w": 0,
       "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 4
+      "l": 3,
+      "gf": 4,
+      "ga": 8
     },
     {
       "teamName": "Rodez Aveyron",
@@ -346,6 +310,33 @@
       "l": 0,
       "gf": 8,
       "ga": 4
+    },
+    {
+      "teamName": "Troyes",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 5
+    },
+    {
+      "teamName": "Reims",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
+      "l": 0,
+      "gf": 7,
+      "ga": 3
+    },
+    {
+      "teamName": "Grenoble",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 5,
+      "ga": 6
     }
   ]
 }
