@@ -4,7 +4,7 @@
     "leagueId": "serieb",
     "leagueName": "Italy2",
     "season": "2026-27",
-    "lastUpdated": "2026-08-29T10:58:20.040330Z",
+    "lastUpdated": "2026-08-30T08:13:49.646142Z",
     "source": "soccerstats.com",
     "teamCount": 20,
     "partial": false
@@ -42,6 +42,20 @@
       {
         "rank": 5,
         "teamId": "",
+        "teamName": "Avellino",
+        "value": 1.5,
+        "played": 2
+      },
+      {
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Ascoli",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Cesena",
         "value": 1.0,
         "played": 1
@@ -49,40 +63,54 @@
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "Avellino",
-        "value": 0.0,
+        "teamName": "Padova",
+        "value": 1.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Verona",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
@@ -93,6 +121,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Avellino",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Vicenza",
         "value": 3.0,
         "played": 1
@@ -119,7 +154,14 @@
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Ascoli",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Cesena",
         "value": 1.0,
@@ -128,103 +170,89 @@
       {
         "rank": 6,
         "teamId": "",
+        "teamName": "Padova",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
+        "teamId": "",
         "teamName": "Arezzo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Entella",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Juve Stabia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Modena",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Avellino",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Verona",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
@@ -235,138 +263,138 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Avellino",
+        "value": 4.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Vicenza",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Empoli",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Palermo",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Ascoli",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Cesena",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
-        "teamName": "Avellino",
+        "teamName": "Padova",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Benevento",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Verona",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 10,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Arezzo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 10,
+        "rank": 14,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Entella",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 10,
+        "rank": 14,
         "teamId": "",
         "teamName": "Juve Stabia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 10,
+        "rank": 14,
         "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 10,
+        "rank": 14,
         "teamId": "",
         "teamName": "Modena",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 10,
+        "rank": 14,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 10,
+        "rank": 14,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
@@ -405,21 +433,7 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Catanzaro",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Entella",
         "value": 0.0,
         "played": 0
       },
@@ -445,65 +459,79 @@
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 9,
         "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Ascoli",
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 13,
+        "rank": 9,
         "teamId": "",
         "teamName": "Cesena",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Padova",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Pisa",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Avellino",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Vicenza",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Avellino",
-        "value": 2.0,
-        "played": 1
-      },
-      {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
         "teamName": "Benevento",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Verona",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Sampdoria",
         "value": 2.0,
         "played": 1
       },
@@ -519,131 +547,131 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Avellino",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Vicenza",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Empoli",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Palermo",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Ascoli",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Cesena",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Padova",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Arezzo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Entella",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Juve Stabia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Modena",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Avellino",
-        "value": -1.0,
-        "played": 1
-      },
-      {
-        "rank": 15,
+        "rank": 14,
         "teamId": "",
         "teamName": "Benevento",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 14,
         "teamId": "",
         "teamName": "Carrarese",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": -1.0,
+        "played": 1
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Verona",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": -1.0,
+        "played": 1
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Pisa",
         "value": -1.0,
@@ -661,6 +689,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Avellino",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Vicenza",
         "value": 1.0,
         "played": 1
@@ -687,112 +722,105 @@
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Ascoli",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Cesena",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Padova",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Arezzo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Entella",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Juve Stabia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Modena",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Avellino",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Verona",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
@@ -803,138 +831,138 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Ascoli",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Cesena",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Padova",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Avellino",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Vicenza",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Empoli",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Palermo",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Arezzo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Entella",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Juve Stabia",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Modena",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Avellino",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Verona",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
@@ -973,7 +1001,21 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Ascoli",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Cesena",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Padova",
         "value": 0.0,
         "played": 1
       },
@@ -987,21 +1029,7 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Ascoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Catanzaro",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Entella",
         "value": 0.0,
         "played": 0
       },
@@ -1027,56 +1055,56 @@
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Padova",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Sampdoria",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
         "teamName": "Avellino",
         "value": 1.0,
-        "played": 1
+        "played": 2
       },
       {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
         "teamName": "Benevento",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
         "teamName": "Carrarese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Entella",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Verona",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Pisa",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 1.0,
@@ -1110,6 +1138,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Cesena",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Mantova",
         "value": 3.0,
         "played": 1
@@ -1122,37 +1157,58 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Juve Stabia",
+        "value": 1.5,
+        "played": 2
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Carrarese",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Verona",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Sampdoria",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Entella",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
-        "teamName": "Juve Stabia",
+        "teamName": "Vicenza",
         "value": 0.0,
         "played": 1
       }
@@ -1182,6 +1238,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Cesena",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Mantova",
         "value": 3.0,
         "played": 1
@@ -1194,107 +1257,100 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Juve Stabia",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Carrarese",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Verona",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Sampdoria",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Avellino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Empoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Verona",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Palermo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Vicenza",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
         "teamName": "Entella",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 11,
         "teamId": "",
-        "teamName": "Juve Stabia",
+        "teamName": "Vicenza",
         "value": 0.0,
         "played": 1
       }
@@ -1324,9 +1380,23 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Cesena",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Mantova",
         "value": 2.0,
         "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Juve Stabia",
+        "value": 2.0,
+        "played": 2
       },
       {
         "rank": 2,
@@ -1336,107 +1406,93 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Padova",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Sampdoria",
+        "teamName": "Carrarese",
         "value": 1.0,
         "played": 1
       },
       {
         "rank": 8,
         "teamId": "",
+        "teamName": "Verona",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Sampdoria",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 12,
+        "teamId": "",
         "teamName": "Avellino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Empoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Verona",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Palermo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Vicenza",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Entella",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
-        "teamName": "Juve Stabia",
+        "teamName": "Vicenza",
         "value": 0.0,
         "played": 1
       }
@@ -1466,28 +1522,7 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Empoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Verona",
         "value": 0.0,
         "played": 0
       },
@@ -1513,72 +1548,93 @@
         "played": 0
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Vicenza",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 12,
+        "rank": 8,
         "teamId": "",
         "teamName": "Modena",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 8,
         "teamId": "",
         "teamName": "Arezzo",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 12,
+        "rank": 8,
         "teamId": "",
         "teamName": "Ascoli",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 12,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Cesena",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Mantova",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 12,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Carrarese",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Verona",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Sampdoria",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 12,
+        "rank": 8,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 12,
+        "rank": 8,
         "teamId": "",
         "teamName": "Entella",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 12,
+        "rank": 18,
         "teamId": "",
         "teamName": "Juve Stabia",
-        "value": 1.0,
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 19,
+        "teamId": "",
+        "teamName": "Catanzaro",
+        "value": 3.0,
         "played": 1
       },
       {
-        "rank": 20,
+        "rank": 19,
         "teamId": "",
-        "teamName": "Catanzaro",
+        "teamName": "Vicenza",
         "value": 3.0,
         "played": 1
       }
@@ -1608,6 +1664,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Cesena",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Mantova",
         "value": 1.0,
         "played": 1
@@ -1620,79 +1683,72 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Juve Stabia",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Carrarese",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Verona",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Sampdoria",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Avellino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Empoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Verona",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Palermo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Sudtirol",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Vicenza",
         "value": 0.0,
         "played": 0
       },
@@ -1718,10 +1774,10 @@
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 20,
         "teamId": "",
-        "teamName": "Juve Stabia",
-        "value": -1.0,
+        "teamName": "Vicenza",
+        "value": -3.0,
         "played": 1
       }
     ],
@@ -1750,6 +1806,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Cesena",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Mantova",
         "value": 1.0,
         "played": 1
@@ -1762,107 +1825,100 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Juve Stabia",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Carrarese",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Verona",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Sampdoria",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Avellino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Empoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Verona",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Palermo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Vicenza",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Entella",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Juve Stabia",
+        "teamName": "Vicenza",
         "value": 0.0,
         "played": 1
       }
@@ -1871,140 +1927,140 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Carrarese",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Verona",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Sampdoria",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Modena",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Arezzo",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Ascoli",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Cesena",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Padova",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Juve Stabia",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Avellino",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Benevento",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Empoli",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Verona",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Palermo",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Pisa",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Sudtirol",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Vicenza",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
         "teamName": "Entella",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 4,
         "teamId": "",
-        "teamName": "Juve Stabia",
+        "teamName": "Vicenza",
         "value": 0.0,
         "played": 1
       }
@@ -2034,6 +2090,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Cesena",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Mantova",
         "value": 0.0,
         "played": 1
@@ -2042,6 +2105,20 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Padova",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Carrarese",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Verona",
         "value": 0.0,
         "played": 1
       },
@@ -2069,28 +2146,7 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Carrarese",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Cesena",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Empoli",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Verona",
         "value": 0.0,
         "played": 0
       },
@@ -2116,37 +2172,37 @@
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Vicenza",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Juve Stabia",
+        "value": 1.0,
+        "played": 2
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Catanzaro",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Cremonese",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Entella",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Juve Stabia",
+        "teamName": "Vicenza",
         "value": 1.0,
         "played": 1
       }

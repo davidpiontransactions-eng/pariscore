@@ -4,7 +4,7 @@
     "leagueId": "ligue1",
     "leagueName": "France",
     "season": "2026-27",
-    "lastUpdated": "2026-08-29T10:58:02.493863Z",
+    "lastUpdated": "2026-08-30T08:13:29.485943Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -26,56 +26,91 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Strasbourg",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lille",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Rennes",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Lyon",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Nice",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Troyes",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Lorient",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
@@ -98,112 +133,112 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Strasbourg",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lille",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Rennes",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Lyon",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Nice",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Troyes",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Auxerre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
-        "teamName": "Strasbourg",
+        "teamName": "Lorient",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 11,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
@@ -228,6 +263,20 @@
       {
         "rank": 3,
         "teamId": "",
+        "teamName": "Strasbourg",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
+        "teamId": "",
         "teamName": "Le Mans",
         "value": 2.0,
         "played": 1
@@ -247,91 +296,77 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Lyon",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Lorient",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Troyes",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Auxerre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Strasbourg",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 11,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
@@ -363,34 +398,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Auxerre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 0
@@ -410,59 +417,87 @@
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 7,
         "teamId": "",
         "teamName": "Strasbourg",
-        "value": 0.0,
-        "played": 0
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 12,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Lyon",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 10,
         "teamId": "",
         "teamName": "Lens",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 10,
         "teamId": "",
         "teamName": "Lille",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 10,
         "teamId": "",
         "teamName": "Rennes",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Lorient",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Angers",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 13,
+        "rank": 10,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 3.0,
         "played": 1
       }
     ],
@@ -484,110 +519,110 @@
       {
         "rank": 3,
         "teamId": "",
+        "teamName": "Strasbourg",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lille",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Lyon",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Troyes",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Auxerre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 14,
         "teamId": "",
-        "teamName": "Strasbourg",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Lorient",
+        "value": -1.0,
+        "played": 1
       },
       {
-        "rank": 16,
+        "rank": 14,
         "teamId": "",
         "teamName": "Le Havre",
         "value": -1.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": -2.0,
+        "played": 1
+      },
+      {
+        "rank": 16,
         "teamId": "",
         "teamName": "Angers",
         "value": -2.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Toulouse",
         "value": -2.0,
@@ -610,112 +645,112 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Strasbourg",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lille",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Lyon",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Troyes",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Auxerre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
-        "teamName": "Strasbourg",
+        "teamName": "Lorient",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
@@ -726,6 +761,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Brest",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Le Mans",
         "value": 1.0,
         "played": 1
@@ -747,6 +789,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lyon",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Nice",
         "value": 1.0,
         "played": 1
@@ -759,91 +808,77 @@
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Marseille",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Lens",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Auxerre",
+        "teamName": "Strasbourg",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
-        "teamName": "Strasbourg",
+        "teamName": "Lorient",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
@@ -868,6 +903,20 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Strasbourg",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Brest",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 1
@@ -889,6 +938,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lyon",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 1
@@ -899,34 +955,6 @@
         "teamName": "Troyes",
         "value": 0.0,
         "played": 1
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Auxerre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Brest",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lorient",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lyon",
-        "value": 0.0,
-        "played": 0
       },
       {
         "rank": 1,
@@ -950,28 +978,35 @@
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 14,
         "teamId": "",
-        "teamName": "Strasbourg",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Lorient",
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 16,
+        "rank": 14,
         "teamId": "",
         "teamName": "Le Havre",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Auxerre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Angers",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 14,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 1.0,
@@ -984,6 +1019,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Angers",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lille",
         "value": 3.0,
         "played": 1
@@ -998,47 +1040,75 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Troyes",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Monaco",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Brest",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Lorient",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Lens",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Strasbourg",
         "value": 0.0,
@@ -1049,6 +1119,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Angers",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lille",
         "value": 3.0,
         "played": 1
@@ -1063,110 +1140,103 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Troyes",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Monaco",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Brest",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Lorient",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Lens",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Marseille",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
-        "teamName": "Toulouse",
+        "teamName": "Lens",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 12,
         "teamId": "",
         "teamName": "Strasbourg",
         "value": 0.0,
@@ -1184,117 +1254,117 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Angers",
+        "value": 3.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
+        "teamId": "",
         "teamName": "Lille",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Lyon",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Troyes",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Brest",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 3,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 6,
+        "rank": 9,
         "teamId": "",
         "teamName": "Monaco",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Lens",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Lorient",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Lens",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Marseille",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Toulouse",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 7,
+        "rank": 12,
         "teamId": "",
         "teamName": "Strasbourg",
         "value": 0.0,
@@ -1340,28 +1410,7 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Le Mans",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lens",
         "value": 0.0,
         "played": 0
       },
@@ -1387,23 +1436,44 @@
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 10,
         "teamId": "",
-        "teamName": "Toulouse",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Angers",
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 1,
+        "rank": 10,
         "teamId": "",
         "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 15,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
         "teamId": "",
         "teamName": "Brest",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Lens",
         "value": 2.0,
         "played": 1
       },
@@ -1433,6 +1503,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Angers",
+        "value": 2.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lille",
         "value": 2.0,
         "played": 1
@@ -1445,102 +1522,95 @@
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
-        "teamName": "Monaco",
+        "teamName": "Troyes",
         "value": 1.0,
         "played": 1
       },
       {
         "rank": 4,
         "teamId": "",
+        "teamName": "Monaco",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Brest",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Lorient",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Lens",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Marseille",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Toulouse",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Lens",
+        "value": -1.0,
+        "played": 1
       },
       {
         "rank": 17,
@@ -1561,6 +1631,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Angers",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lille",
         "value": 1.0,
         "played": 1
@@ -1575,110 +1652,103 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Troyes",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Monaco",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Paris SG",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Brest",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Lorient",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Paris Fc",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Lens",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Marseille",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
-        "teamName": "Toulouse",
+        "teamName": "Lens",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 6,
         "teamId": "",
         "teamName": "Strasbourg",
         "value": 0.0,
@@ -1703,6 +1773,20 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Toulouse",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 1.0,
+        "played": 1
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Lorient",
         "value": 1.0,
         "played": 1
@@ -1715,98 +1799,84 @@
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Angers",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Lille",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Lyon",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Troyes",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Monaco",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Lens",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Marseille",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Nice",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Rennes",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
-        "teamName": "Toulouse",
+        "teamName": "Lens",
         "value": 0.0,
-        "played": 0
+        "played": 1
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Strasbourg",
         "value": 0.0,
@@ -1817,6 +1887,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Angers",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lille",
         "value": 0.0,
         "played": 1
@@ -1825,6 +1902,13 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Lyon",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Troyes",
         "value": 0.0,
         "played": 1
       },
@@ -1852,6 +1936,20 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Toulouse",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Le Havre",
+        "value": 0.0,
+        "played": 1
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Lorient",
         "value": 0.0,
         "played": 1
@@ -1866,28 +1964,7 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Angers",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Le Havre",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Le Mans",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lens",
         "value": 0.0,
         "played": 0
       },
@@ -1913,28 +1990,21 @@
         "played": 0
       },
       {
-        "rank": 1,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Toulouse",
-        "value": 0.0,
-        "played": 0
+        "teamName": "Lens",
+        "value": 1.0,
+        "played": 1
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Troyes",
-        "value": 0.0,
-        "played": 0
-      },
-      {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Strasbourg",
         "value": 1.0,
