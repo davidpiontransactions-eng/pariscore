@@ -120,48 +120,48 @@ function rowToForecast(row: DrawRow): ForecastRow {
 }
 
 /** Construit le bracket tree (DrawMatch[]) depuis les lignes plates du bracket.
- *  Utilise l'ordre des sections (0-127) comme position standard tennis.
- *  Pas de résultats : tous les matches sont "upcoming" (avant le tournoi). */
+ *  Pour un bracket pré-tournoi, seul R128 contient les vrais matchups.
+ *  Les rounds suivants sont laissés vides (pas de résultats encore). */
 function buildBracketFromRows(rows: BracketRow[]): DrawMatch[] {
   const matches: DrawMatch[] = [];
-  const roundSizes: Record<DrawRound, number> = {
-    R128: 64, R64: 32, R32: 16, R16: 8, QF: 4, SF: 2, F: 1, W: 0,
-  };
 
   // Trier par section pour garantir l'ordre du bracket
   const sorted = [...rows].sort((a, b) => a.section - b.section);
 
-  // Construire chaque round
-  for (const round of ROUND_ORDER) {
-    if (round === "W") continue;
-    const numMatches = roundSizes[round];
-    if (!numMatches) continue;
+  // R128 : 64 matches (joueurs pairs : 0v1, 2v3, ..., 126v127)
+  const r128Count = Math.floor(sorted.length / 2);
+  for (let i = 0; i < r128Count; i++) {
+    const p1 = sorted[i * 2];
+    const p2 = sorted[i * 2 + 1];
 
-    for (let i = 0; i < numMatches; i++) {
-      // Index des deux joueurs dans le bracket standard
-      const idx1 = i * 2;
-      const idx2 = i * 2 + 1;
-
-      const p1 = sorted[idx1];
-      const p2 = sorted[idx2];
-
-      const player1: DrawMatchPlayer = p1 ? {
+    matches.push({
+      round: "R128",
+      position: i,
+      player1: p1 ? {
         name: p1.player_name,
         seed: p1.player_seed ?? undefined,
         country: p1.player_country ?? undefined,
-      } : { name: "BYE" };
-
-      const player2: DrawMatchPlayer = p2 ? {
+      } : { name: "BYE" },
+      player2: p2 ? {
         name: p2.player_name,
         seed: p2.player_seed ?? undefined,
         country: p2.player_country ?? undefined,
-      } : { name: "BYE" };
+      } : { name: "BYE" },
+      status: "upcoming",
+    });
+  }
 
+  // Rounds R64→F : placeholders vides (pas de résultats tant que le tournoi n'a pas commencé)
+  const roundSizes: [DrawRound, number][] = [
+    ["R64", 32], ["R32", 16], ["R16", 8], ["QF", 4], ["SF", 2], ["F", 1],
+  ];
+  for (const [round, count] of roundSizes) {
+    for (let i = 0; i < count; i++) {
       matches.push({
         round,
         position: i,
-        player1,
-        player2,
+        player1: { name: "—" },
+        player2: { name: "—" },
         status: "upcoming",
       });
     }
