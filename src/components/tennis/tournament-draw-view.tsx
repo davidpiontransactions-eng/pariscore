@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useTournamentDraw } from "@/hooks/use-tournament-draw";
 import { DrawForecastTable } from "./draw-forecast-table";
 import { DrawBracket } from "./draw-bracket";
+import { ContendersMatches } from "./contenders-matches";
 import { SurfaceBadge } from "./surface-badge";
 import { RoundBadge } from "./round-badge";
 import { Table, BarChart3, Trophy, AlertCircle } from "lucide-react";
@@ -150,12 +151,15 @@ export function TournamentDrawView({
 
       {/* Contenu */}
       {viewMode === "forecast" ? (
-        <DrawForecastTable
-          forecast={draw.forecast}
-          currentRound={
-            draw.forecast.find((f) => f.currentRound)?.currentRound
-          }
-        />
+        <>
+          <DrawForecastTable
+            forecast={draw.forecast}
+            currentRound={
+              draw.forecast.find((f) => f.currentRound)?.currentRound
+            }
+          />
+          <ContendersMatches slug={slug} year={year} />
+        </>
       ) : hasMatches ? (
         <DrawBracket matches={draw.matches!} />
       ) : (
