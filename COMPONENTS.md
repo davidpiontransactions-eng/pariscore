@@ -28,7 +28,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 
 ---
 
-## Tennis (`src/components/tennis/`) — 54 components
+## Tennis (`src/components/tennis/`) — 60 components
 
 | Component | File | Role |
 |-----------|------|------|
@@ -37,6 +37,9 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | break-points-grid | break-points-grid.tsx | Matrice visuelle des balles de break |
 | confidence-interval | confidence-interval.tsx | Intervalle de confiance (dual-track V2) |
 | country-flag | country-flag.tsx | Drapeau du pays par code ISO |
+| draw-bracket | draw-bracket.tsx | Bracket visual simplifié (colonnes rounds + matchs groupés + connexions) |
+| draw-forecast-table | draw-forecast-table.tsx | Tableau TennisAbstract de probabilités par round (R16→W) avec BarFill |
+| draw-match-row | draw-match-row.tsx | Ligne de match du bracket (2 joueurs, score, status live) |
 | current-game-score | current-game-score.tsx | Score du jeu en cours (0/15/30/40/Av.) |
 | featured-matches-marquee | featured-matches-marquee.tsx | Bandeau défilant des matchs à la une |
 | form-dots | form-dots.tsx | Forme récente en points colorés (● W / ○ L) |
@@ -75,6 +78,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | press-review-panel | press-review-panel.tsx | Revue de presse tennis (3+ sources, consensus, LLM fallback) |
 | probability-bar | probability-bar.tsx | Barre de probabilité (décomposition) |
 | probability-ring | probability-ring.tsx | Anneau de probabilité (SVG) |
+| round-badge | round-badge.tsx | Badge round (R32, R16, QF, SF, F, W) avec variant actif/inactif |
 | quick-add-ring | quick-add-ring.tsx | Anneau d'ajout rapide au bet-slip |
 | serve-stats-bars | serve-stats-bars.tsx | Barres divergentes comparant les stats service |
 | server-indicator | server-indicator.tsx | Indicateur "X sert" (balle pulsée) |
@@ -93,7 +97,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | tournament-header-card | tournament-header-card.tsx | Carte tournoi sélectionné (filtre de la liste + annulation) |
 | tennis-sub-tabs | tennis-sub-tabs.tsx | Sous-onglets tennis |
 | tournament-badge | tournament-badge.tsx | Badge catégorie tournoi (GS/M1000/500) |
-| tournament-view | tournament-view.tsx | Vue `/tennis/tournament/[slug]` |
+| tournament-draw-view | tournament-draw-view.tsx | Conteneur principal draw tournoi (header, toggle forecast/bracket, loading/error/empty states) |
+| tournament-view | tournament-view.tsx | Vue `/tennis/tournament/[slug]` (wrapper vers tournament-draw-view) |
 | tournaments-list | tournaments-list.tsx | Liste des tournois |
 | win-probability-chart | win-probability-chart.tsx | Graphique de probabilité de victoire |
 
