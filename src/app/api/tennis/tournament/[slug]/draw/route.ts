@@ -119,47 +119,31 @@ function rowToForecast(row: DrawRow): ForecastRow {
   };
 }
 
-/** Construit le bracket tree (DrawMatch[]) depuis les lignes plates du bracket. */
+/** Construit le bracket tree (DrawMatch[]) depuis les lignes plates du bracket.
+ *  Utilise l'ordre des sections (0-127) comme position standard tennis.
+ *  Pas de résultats : tous les matches sont "upcoming" (avant le tournoi). */
 function buildBracketFromRows(rows: BracketRow[]): DrawMatch[] {
   const matches: DrawMatch[] = [];
-  // Taille du tableau = première puissance de 2 >= nombre de joueurs
-  const drawSize = rows.length <= 128 ? 128 : rows.length <= 64 ? 64 : 32;
   const roundSizes: Record<DrawRound, number> = {
     R128: 64, R64: 32, R32: 16, R16: 8, QF: 4, SF: 2, F: 1, W: 0,
   };
 
-  // Map section → player pour lookup rapide
-  const playerBySection = new Map<number, BracketRow>();
-  for (const r of rows) playerBySection.set(r.section, r);
-
-  // Map pour les gagnants de chaque round (section → player name)
-  const winnersByRound = new Map<string, string>();
-  for (const r of rows) {
-    const roundCols: [DrawRound, string | null][] = [
-      ["R128", r.round_r128], ["R64", r.round_r64], ["R32", r.round_r32],
-      ["R16", r.round_r16], ["QF", r.round_qf], ["SF", r.round_sf], ["F", r.round_f],
-    ];
-    for (const [round, val] of roundCols) {
-      if (val && val !== "BYE") winnersByRound.set(`${round}:${r.section}`, val);
-    }
-    if (r.round_w) winnersByRound.set(`W:${r.section}`, r.round_w);
-  }
+  // Trier par section pour garantir l'ordre du bracket
+  const sorted = [...rows].sort((a, b) => a.section - b.section);
 
   // Construire chaque round
-  let matchPos = 0;
   for (const round of ROUND_ORDER) {
-    if (round === "W") continue; // Pas de match pour "Champion"
+    if (round === "W") continue;
     const numMatches = roundSizes[round];
     if (!numMatches) continue;
 
     for (let i = 0; i < numMatches; i++) {
-      const position = i;
-      // Sections des deux joueurs de ce match
-      const section1 = i * 2;
-      const section2 = i * 2 + 1;
+      // Index des deux joueurs dans le bracket standard
+      const idx1 = i * 2;
+      const idx2 = i * 2 + 1;
 
-      const p1 = playerBySection.get(section1);
-      const p2 = playerBySection.get(section2);
+      const p1 = sorted[idx1];
+      const p2 = sorted[idx2];
 
       const player1: DrawMatchPlayer = p1 ? {
         name: p1.player_name,
@@ -173,26 +157,13 @@ function buildBracketFromRows(rows: BracketRow[]): DrawMatch[] {
         country: p2.player_country ?? undefined,
       } : { name: "BYE" };
 
-      // Déterminer le status et le gagnant
-      const winnerName = winnersByRound.get(`${round}:${section1}`) ?? winnersByRound.get(`${round}:${section2}`);
-      let status: "upcoming" | "live" | "completed" = "upcoming";
-      let winner: 1 | 2 | undefined;
-
-      if (winnerName) {
-        status = "completed";
-        if (winnerName === player1.name) winner = 1;
-        else if (winnerName === player2.name) winner = 2;
-      }
-
       matches.push({
         round,
-        position,
+        position: i,
         player1,
         player2,
-        status,
-        winner,
+        status: "upcoming",
       });
-      matchPos++;
     }
   }
 
