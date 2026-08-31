@@ -7,6 +7,9 @@
 |-------|---------|------|
 | `/api/v1/predictions/compute` | POST | Calcule prédictions 1X2/BTTS/O-U on-demand (Poisson + ML blend) |
 | `/api/v1/predictions/accuracy` | GET | Métriques Brier/logLoss/calibration par marché (walk-forward) |
+| `/api/v1/predictions/drift` | GET | Détection de drift (period vs baseline) |
+| `/api/v1/predictions/compare` | GET | Comparaison A/B deux versions de modèle |
+| `/api/v1/predictions/health` | GET | Dashboard santé du système de prédiction |
 
 ### Ajouté — ML infrastructure
 - **`catboost-bridge.ts`** : Bridge Python → CatBoost via subprocess stdin/stdout. Kill-switch `CATBOOST_ENABLED`, cache process, 30s timeout
@@ -50,6 +53,17 @@ Phase 6 ░░░░░░░░░░░░░░░░░░░░  0%
 ### Fichiers (12 créés, 5 modifiés)
 **Créés** : `compute/route.ts`, `accuracy/route.ts`, `catboost-bridge.ts`, `brier-score.ts`, `walk-forward.ts`, `football-prediction-markets.tsx`, `use-prediction-compute.ts`, `etl-history-matches.js`, `gantt-v2.json`, `gantt-v2.svg`, `session-*.md`, `adr-*.md`
 **Modifiés** : `random-forest.ts`, `prediction-ml-engine.ts`, `football-match-card.tsx`, `football-match-detail-dialog.tsx`, `prisma/schema.prisma`
+
+### Ajouté — Scheduling & Retraining
+- **`cron-retrain-catboost.sh`** : Pipeline weekly complet (ETL → train → metrics). Cron: `0 5 * * 0`
+- **`cron-retrain-catboost.js`** : Version Node.js pour pm2. Logs dans `data/logs/retrain-YYYYMMDD.log`
+
+### Ajouté — A/B Testing & Comparison
+- **`ab-testing.ts`** : `assignVariant()` (hash deterministic), `compareVariants()` (Brier/accuracy/chi-squared). Seuil p<0.05
+- **`/api/v1/predictions/compare`** : GET — compare deux versions de modèle sur une période donnée
+
+### Ajouté — Health Dashboard
+- **`/api/v1/predictions/health`** : GET — vue d'ensemble du système. Status: healthy/degraded/critical. Model actif, métriques, drift, CatBoost status, counts prédictions
 
 ### Ajouté — Monitoring & Drift
 - **`drift-detection.ts`** : `detectDrift(recent, baseline)` — comparaison Brier score par marché. Seuil: +0.02 = drift significatif
