@@ -55,7 +55,7 @@ const cutoff = new Date(Date.now() - PERIOD_DAYS * 86400000).toISOString();
 const rows = db.prepare(`
   SELECT id, modelVersionId, homeProb, drawProb, awayProb, bttsProb, over25Prob,
          actualHome, actualAway, createdAt
-  FROM prediction_log
+  FROM "PredictionLog"
   WHERE settled = 1 AND createdAt >= ?
 `).all(cutoff);
 
@@ -129,7 +129,7 @@ if (DRY_RUN || OUTPUT === "json") {
       accuracy REAL,
       sampleSize INTEGER,
       computedAt TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (modelVersionId) REFERENCES model_versions(id)
+      FOREIGN KEY (modelVersionId) REFERENCES "ModelVersion"(id)
     )
   `);
   
