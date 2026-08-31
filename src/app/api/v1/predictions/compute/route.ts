@@ -21,6 +21,8 @@ type ComputeRequest = {
   awayElo?: number;
   homeXG?: number;
   awayXG?: number;
+  homeTeam?: string;
+  awayTeam?: string;
 };
 
 type ComputeResponse = {
@@ -173,11 +175,13 @@ export async function POST(request: Request) {
     const match = buildMinimalMatch(body.matchId);
     // Injecter les xG fournis dans le match ML
     if (homeXG != null || awayXG != null) {
-      match.prediction.xGa = {
-        home: homeXG ?? match.prediction.xGa?.home ?? null,
-        away: awayXG ?? match.prediction.xGa?.away ?? null,
-      };
+      const h = homeXG ?? 0;
+      const a = awayXG ?? 0;
+      match.prediction.xGa = { home: h, away: a, total: h + a };
     }
+    // Injecter les team names si fournis
+    if (body.homeTeam) match.home.name = body.homeTeam;
+    if (body.awayTeam) match.away.name = body.awayTeam;
     const mlInputs: MLEngineInputs = {
       match,
       homeElo: homeElo ?? undefined,
