@@ -62,14 +62,6 @@ export function AthleteGallery({
     [sport],
   );
 
-  // Style d'image
-  const imgStyle: React.CSSProperties = {
-    width: imageSize,
-    height: imageSize,
-    objectFit: "cover",
-    objectPosition: "center",
-  };
-
   // Couleur accent par sport (calculée directement, pas de useCallback complexe)
   const accentColor = getSportAccent(sport);
 
@@ -89,6 +81,9 @@ export function AthleteGallery({
               src={athlete.imageUrl ?? "/placeholder-athlete.webp"}
               alt={athlete.name}
               className="h-full w-full rounded-t-xl object-cover transition-transform duration-300 group-hover:scale-105"
+              width={imageSize}
+              height={imageSize}
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 25vw"
               loading="lazy"
               priority={false}
             />

@@ -64,14 +64,6 @@ export function AthleteHeader({
   // Couleur accent par sport (calculée directement)
   const accentColor = getSportAccent(sport);
 
-  // Tailles d'image
-  const imgStyle = {
-    width: 200,
-    height: 200,
-    objectFit: "cover",
-    objectPosition: "center",
-  };
-
   // Galerie en entête
   const headerGallery = (
     <div className="athlete-grid grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -88,7 +80,9 @@ export function AthleteHeader({
               src={athlete.imageUrl ?? "/placeholder-athlete.webp"}
               alt={athlete.name}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              style={{ width: 200, height: 200 }}
+              width={80}
+              height={80}
+              sizes="80px"
               loading="lazy"
               priority={false}
             />
