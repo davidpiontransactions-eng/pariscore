@@ -30,6 +30,9 @@ const isDry = process.argv.includes('--dry');
 
 const pause = ms => new Promise(r => setTimeout(r, ms));
 
+const httpMod = require('http');
+const httpsMod = require('https');
+
 // Top ligues pour les prédictions
 const BSD_LEAGUE_IDS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20];
 
@@ -61,7 +64,8 @@ function computePrediction(matchData) {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(matchData);
     const url = new URL('/api/v1/predictions/compute', PREDICTIONS_BASE);
-    const req = https.request(url, {
+    const mod = url.protocol === 'https:' ? httpsMod : httpMod;
+    const req = mod.request(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }
     }, (res) => {
