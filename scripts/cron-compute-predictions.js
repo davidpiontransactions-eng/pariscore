@@ -85,6 +85,7 @@ async function main() {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const events = [];
+  const seenIds = new Set();
 
   for (const leagueId of BSD_LEAGUE_IDS) {
     try {
@@ -97,8 +98,10 @@ async function main() {
       const res = await bsdFetch(`/events/?${params.toString()}`);
       const results = res?.data?.results ?? res?.results ?? [];
       for (const event of results) {
-        // Only upcoming (no score yet)
-        if (event.home_score == null && event.away_score == null) {
+        const eid = String(event.id);
+        // Only upcoming (no score yet) + dedup
+        if (event.home_score == null && event.away_score == null && !seenIds.has(eid)) {
+          seenIds.add(eid);
           events.push(event);
         }
       }
