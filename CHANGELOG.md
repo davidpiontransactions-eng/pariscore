@@ -2,6 +2,13 @@
 
 ## [v13.01] — 2026-08-31 — Boucle ingénierie modèle prédictif football (6 marchés)
 
+### Ajouté — Admin Dashboard
+- **`/admin/predictions`** : Page admin complète — Health status, Calibration curves, Recent predictions, Model versions, Drift monitor
+
+### Ajouté — Alerting
+- **`alerting.ts`** : Service d'alerte drift (webhook Slack/Discord + email + console). Cooldown 24h, escalade warning→critical
+- **`/api/v1/predictions/alerts`** : POST (trigger check) + GET (recent alerts)
+
 ### Ajouté — API endpoints
 | Route | Méthode | Rôle |
 |-------|---------|------|
@@ -10,6 +17,8 @@
 | `/api/v1/predictions/drift` | GET | Détection de drift (period vs baseline) |
 | `/api/v1/predictions/compare` | GET | Comparaison A/B deux versions de modèle |
 | `/api/v1/predictions/health` | GET | Dashboard santé du système de prédiction |
+| `/api/v1/predictions/alerts` | GET/POST | Alertes drift (historique + trigger manuel) |
+| `/admin/predictions` | GET | Page admin dashboard prédictions |
 
 ### Ajouté — ML infrastructure
 - **`catboost-bridge.ts`** : Bridge Python → CatBoost via subprocess stdin/stdout. Kill-switch `CATBOOST_ENABLED`, cache process, 30s timeout
