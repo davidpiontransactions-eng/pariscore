@@ -128,11 +128,57 @@ Boucle d'ingénierie complète pour accélérer le modèle prédictif football. 
 - 🔲 Calibration plots
 - 🔲 A/B testing framework
 
+## Bilan final (session complète)
+
+### 20 commits conventional
+```
+d4ca2555 docs: add prediction system architecture (ASCII diagrams + API reference)
+dec7e1e4 test(predictions): add 21 integration tests for API endpoints
+c7b6992d feat(deploy): add prediction system deploy + VPS setup scripts
+e6e84c37 test(predictions): add 31 unit tests for brier/walk-forward/drift/AB
+8934a780 docs: update CHANGELOG v13.01 with admin dashboard + alerting
+95b8a5f9 feat(alerting): add drift alerting service (webhook/email/console)
+8356a06f feat(admin): add predictions admin dashboard (health + calibration + drift)
+513a689d docs: update CHANGELOG v13.01 with scheduling + A/B + health
+4b900252 feat(predictions): add prediction system health dashboard endpoint
+acaa5fad feat(predictions): add A/B testing service + model comparison endpoint
+809cfbe8 feat(scheduling): add weekly CatBoost retrain cron (bash + Node.js)
+2b42c19c docs: update CHANGELOG v13.01 with monitoring + training results
+7635a19f feat(monitoring): add model metrics computation script + cron
+7f415711 feat(predictions): add calibration chart component (Canvas 2D)
+4dcd1481 feat(predictions): add drift detection endpoint + service
+a5a4aebf docs: add engineering loop session + ADR + CHANGELOG v13.01
+11379f90 feat(etl): add standalone history-matches script for CatBoost training
+4ae43184 feat(predictions): add 6-market panel UI + usePredictionCompute hook
+8ff94393 feat(db): add ModelVersion + ModelMetrics + PredictionLog schemas
+fbdfef4d feat(predictions): add CatBoost bridge + RF model persistence
+3e6f1ff3 feat(predictions): add compute API + Brier score + walk-forward validation
+```
+
+### 34 fichiers créés/modifiés
+- **API** (7 endpoints), **ML** (7 modules), **Prisma** (4 modèles), **Frontend** (3 composants)
+- **ETL** (4 scripts), **Scheduling** (2 crons), **Deploy** (2 scripts), **Tests** (52 tests)
+- **Traçabilité** (session + 6 ADR + architecture + CHANGELOG + Gantt v2)
+
+### Tests
+- 31 unit tests (brier, walk-forward, drift, AB) — ✅
+- 21 integration tests (API endpoints) — ✅
+- Total: **52 tests, 0 fail**
+
+### Gantt final
+```
+Phase 1 ████████████████████ DONE
+Phase 2 ████████████████████ DONE
+Phase 3 ████████████████████ DONE
+Phase 4 ████████████████████ DONE
+Phase 5 ████████████████████ DONE
+Phase 6 ████████░░░░░░░░░░░░ 40%  ← prêt pour lancement
+```
+
 ## Prochaines étapes
 
-1. **ETL local** — `node scripts/etl-history-matches.js --source=both` pour peupler le kv
-2. **Entraîner CatBoost** — `python ml/train_catboost.py --db pariscore.db`
-3. **Hook React** — `usePredictionCompute` déjà créé, à câbler dans les composants
-4. **Scheduling** — cron pour réentraîner les modèles weekly
-5. **Phase 5** — drift detection (comparer `PredictionLog.actual` vs `predicted`)
-6. **Phase 6** — lancement marchés prioritaires (BTTS, O/U 2.5)
+1. **VPS deploy** : `scripts\deploy-predictions.bat "v13.01"`
+2. **Setup VPS** : `bash scripts/setup-prediction-env.sh`
+3. **Monitorer** : `/admin/predictions` + `/api/v1/predictions/health`
+4. **A/B live** : router 10% du traffic vers CatBoost, comparer via `/predictions/compare`
+5. **Lancement** : activer BTTS + O/U 2.5 en production après 2 semaines de monitoring
