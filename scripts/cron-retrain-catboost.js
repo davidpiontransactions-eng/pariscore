@@ -8,7 +8,8 @@
  * Étapes :
  *   1. Refresh ETL       → node scripts/etl-history-matches.js --source=db
  *   2. Training CatBoost → python ml/train_catboost.py --db pariscore.db
- *   3. Métriques modèle  → node scripts/compute-model-metrics.js --period=30d --output=db
+ *   3. Register model    → INSERT INTO ModelVersion (via better-sqlite3)
+ *   4. Métriques modèle  → node scripts/compute-model-metrics.js --period=30d --output=db
  *
  * Usage :
  *   node scripts/cron-retrain-catboost.js              # exécution réelle
@@ -200,7 +201,39 @@ async function main() {
   // Extraire métriques du training
   const trainingResult = parseTrainingResult(train.stdout);
 
-  // ── Étape 3 : Métriques ──────────────────────────────────────────────────
+  // ── Étape 3 : Register model in DB ───────────────────────────────────────
+  if (trainingResult) {
+    try {
+      const { createRequire } = await import('node:module');
+      const req = createRequire(import.meta.url);
+      const Database = req('better-sqlite3');
+      const prismaDbPath = process.env.DATABASE_PATH || join(ROOT, 'dev.db');
+      const db = new Database(prismaDbPath);
+      const modelId = `catboost_football_${trainingResult.sport}_v${Date.now()}`;
+      const maxVersion = db.prepare('SELECT COALESCE(MAX(version), 0) as mv FROM "ModelVersion" WHERE modelType = ?').get('catboost');
+      const newVersion = (maxVersion?.mv ?? 0) + 1;
+      const metricsJson = JSON.stringify({
+        rps_1x2: trainingResult.models?.['1x2']?.rps,
+        accuracy_btts: trainingResult.models?.btts?.accuracy,
+        accuracy_over25: trainingResult.models?.over25?.accuracy,
+        n_total: trainingResult.n_total,
+        n_train: trainingResult.n_train,
+      });
+      db.prepare(`
+        INSERT INTO "ModelVersion" (id, name, modelType, version, status, trainedAt, promotedAt, configJson, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, 'production', datetime('now'), datetime('now'), ?, datetime('now'), datetime('now'))
+      `).run(modelId, `CatBoost ${trainingResult.sport} v${newVersion}`, 'catboost', newVersion, metricsJson);
+      // Demote previous production versions
+      db.prepare('UPDATE "ModelVersion" SET status = ? WHERE modelType = ? AND id != ? AND status = ?')
+        .run('archived', 'catboost', modelId, 'production');
+      db.close();
+      log(`  ✓ Modèle enregistré : ${modelId} (v${newVersion})`);
+    } catch (err) {
+      log(`  ⚠ Enregistrement modèle échoué : ${err.message}`);
+    }
+  }
+
+  // ── Étape 4 : Métriques ──────────────────────────────────────────────────
   const metrics = await runStep(
     'Métriques modèle',
     `node scripts/compute-model-metrics.js --period=${METRICS_PERIOD} --output=db --db="${DB_PATH}"`,
