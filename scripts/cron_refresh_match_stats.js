@@ -407,6 +407,21 @@ function extractHalfSide(s) {
   console.log(`[cron-match-stats] State saved → ${STATE_FILE}`);
 
   db.close();
+
+  // ── Auto-settle predictions ────────────────────────────────────────────────
+  if (!isDry) {
+    try {
+      const { execSync } = require('child_process');
+      const settleResult = execSync(
+        'node scripts/settle-predictions.js --apply --limit=200',
+        { cwd: ROOT, encoding: 'utf8', timeout: 30000 }
+      );
+      console.log(settleResult);
+    } catch (e) {
+      console.error('[cron-match-stats] settle predictions error:', e.message);
+    }
+  }
+
   process.exit(0);
 })().catch(e => {
   console.error('[cron-match-stats] FATAL:', e.message);
