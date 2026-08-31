@@ -58,6 +58,7 @@ const ROOT = resolve(import.meta.dirname, '..');
 const DRY_RUN = args['dry-run'];
 const METRICS_PERIOD = args.period;
 const DB_PATH = args.db ? resolve(args.db) : join(ROOT, 'pariscore.db');
+const PRISMA_DB = process.env.DATABASE_PATH || join(ROOT, 'dev.db');
 const LOG_DIR = join(ROOT, 'data', 'logs');
 const DATE = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 const LOG_FILE = join(LOG_DIR, `retrain-${DATE}.log`);
@@ -207,7 +208,7 @@ async function main() {
       const { createRequire } = await import('node:module');
       const req = createRequire(import.meta.url);
       const Database = req('better-sqlite3');
-      const prismaDbPath = process.env.DATABASE_PATH || join(ROOT, 'dev.db');
+      const prismaDbPath = PRISMA_DB;
       const db = new Database(prismaDbPath);
       const modelId = `catboost_football_${trainingResult.sport}_v${Date.now()}`;
       const maxVersion = db.prepare('SELECT COALESCE(MAX(version), 0) as mv FROM "ModelVersion" WHERE modelType = ?').get('catboost');
@@ -236,7 +237,7 @@ async function main() {
   // ── Étape 4 : Métriques ──────────────────────────────────────────────────
   const metrics = await runStep(
     'Métriques modèle',
-    `node scripts/compute-model-metrics.js --period=${METRICS_PERIOD} --output=db --db="${DB_PATH}"`,
+    `node scripts/compute-model-metrics.js --period=${METRICS_PERIOD} --output=db --db="${PRISMA_DB}"`,
   );
   if (!metrics.success) {
     log('Pipeline échoué à l\'étape Métriques');
