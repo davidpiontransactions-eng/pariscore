@@ -113,7 +113,7 @@ export function AlertPreferencesModal() {
                 <Bell className="h-3 w-3 text-emerald-500 " />
                 {t("valueBet.label")}
               </span>
-            </ Label>
+            </Label>
             <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
               {t("valueBet.description")}
             </div>
@@ -127,11 +127,10 @@ export function AlertPreferencesModal() {
                 <AlertTriangle className="h-3 w-3 text-amber-500 " />
                 {t("liveShift.label")}
               </span>
-            < Label>
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                {t("liveShift.description")}
-              </div>
-            </ Label>
+            </Label>
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              {t("liveShift.description")}
+            </div>
           </div>
 
           {/* Weekly summary toggle */}
@@ -142,12 +141,11 @@ export function AlertPreferencesModal() {
                 <Calendar className="h-3 w-3 text-emerald-500 " />
                 {t("weeklySummary.label")}
               </span>
-            < Label>
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                {t("weeklySummary.description")}
-              </div>
-            </ Label>
-          </ div>
+            </Label>
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              {t("weeklySummary.description")}
+            </div>
+          </div>
 
           {/* Sport-specific filter toggle */}
           <div>
@@ -157,12 +155,11 @@ export function AlertPreferencesModal() {
                 <Filter className="h-3 w-3 text-emerald-500 " />
                 {t("sportFilter.label")}
               </span>
-            < Label>
-              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                {t("sportFilter.description")}
-              </div>
-            </ Label>
-          </ div>
+            </Label>
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              {t("sportFilter.description")}
+            </div>
+          </div>
         </div>
 
         {/* Save button */}
@@ -183,7 +180,7 @@ export function AlertPreferencesModal() {
             className="text-muted-foreground hover:bg-muted/10"
           >
             {t("cancel.button")}
-          </ Button>
+          </Button>
         </div>
       </div>
     </div>
@@ -203,12 +200,12 @@ Button = ({
   className: string;
   variant?: "default" | "outline" | "ghost";
   onClick: () => void;
-  ... props: any;
+  [key: string]: any;
 }) => (
   <button
     className={className}
-    onClick={ onClick }
-    {... props}
+    onClick={onClick}
+    {...props}
   />
 );
 

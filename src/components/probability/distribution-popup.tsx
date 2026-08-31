@@ -137,58 +137,58 @@ function DistributionPopup({
             <div>
               <p className="text-xs font-medium text-amber-600">{t("covers")}</p>
               <p className="text-2xl font-medium">{t("approximately")} {confidence}σ</p>
-            </ div>
-          </ div>
+            </div>
+          </div>
 
           {/* 2σ interval if different from 1σ */}
           {confidence !== 1 && (
-            < div className="flex justify-around my-3">
-              < div>
-                < p className="text-xs font-medium text-emerald-600">{t("two.sigma")}</ p>
-                < p className="text-2xl font-bold">{fmt2Lower}% — {fmt2Upper}%</ p>
-              </ div>
-              < div>
-                < p className="text-xs font-medium text-amber-600">{t("covers")}</ p>
-                < p className="text-2xl font-medium">{t("approximately")} {confidence}σ</ p>
-              </ div>
-            </ div>
+            <div className="flex justify-around my-3">
+              <div>
+                <p className="text-xs font-medium text-emerald-600">{t("two.sigma")}</p>
+                <p className="text-2xl font-bold">{fmt2Lower}% — {fmt2Upper}%</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-amber-600">{t("covers")}</p>
+                <p className="text-2xl font-medium">{t("approximately")} {confidence}σ</p>
+              </div>
+            </div>
           )}
 
           {/* Interpretation text */}
-          < p className="text-sm text-muted-foreground mt-4 line-clamp-3">
+          <p className="text-sm text-muted-foreground mt-4 line-clamp-3">
             {t(" interpretation")}
-          </ p>
-        </ div>
+          </p>
+        </div>
 
         {/* Bookmaker comparison if shown */}
         {showComparison && bookmakerProbability !== undefined && (
-          < div className="mt-6 p-4 rounded-lg bg-card/80 text-center">
-            < h3 className="text-base font-medium text-emerald-600 mb-3">
+          <div className="mt-6 p-4 rounded-lg bg-card/80 text-center">
+            <h3 className="text-base font-medium text-emerald-600 mb-3">
               {t("bookmaker.comparison")}
-            </ h3>
-            < p className="text-lg font-medium">
+            </h3>
+            <p className="text-lg font-medium">
               {t("bookmaker.implied")}: {bookmakerProbability}%
-            </ p>
-            < p className="text-sm text-muted-foreground">
+            </p>
+            <p className="text-sm text-muted-foreground">
               {t("difference")}: {Math.abs(
                 probability - bookmakerProbability,
-              ).toFixed(1}}%
-            </ p>
-          </ div>
+              ).toFixed(1)}%
+            </p>
+          </div>
         )}
 
         {/* Action button */}
-        < div className="mt-8 flex justify-end gap-2">
-          < Button
+        <div className="mt-8 flex justify-end gap-2">
+          <Button
             variant="outline"
-            onClick={ onClose }
+            onClick={onClose}
             className="text-sm"
           >
-            { t( " close.button" )}
-          </ Button>
-        </ div>
-      </ div>
-    </ div>
+            {t("close.button")}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -200,8 +200,8 @@ function ButtonClose({ className, onClick, ...props }: any) {
       onClick={ onClick }
       className={ className }
     >
-      < X className="h-4 w-4" />
-    </ Button>
+      <X className="h-4 w-4" />
+    </Button>
   );
 }
 
@@ -216,10 +216,10 @@ Button = ({
   variant?: "default" | "outline" | "ghost";
   size?: "sm" | "md" | "lg";
   onClick: () => void;
-  ...props: any;
+  [key: string]: any;
 }) => (
-  < button
-    className={ className || `px-4 py-2 rounded-md font-medium transition-colors ${
+  <button
+    className={className || `px-4 py-2 rounded-md font-medium transition-colors ${
       variant === "default"
         ? "bg-primary text-primary-foreground"
         : variant === "outline"
@@ -235,8 +235,9 @@ Button = ({
       variant === "outline"
         ? "border-2"
         : ""
-    } ${onClick !== undefined ? "cursor-pointer" : ""} ${props.className || ""}
-    onClick={ onClick }
+    } ${onClick !== undefined ? "cursor-pointer" : ""} ${props.className || ""}`
+    }
+    onClick={onClick}
     {...props}
   />
 );

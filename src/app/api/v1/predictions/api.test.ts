@@ -19,6 +19,7 @@ let mockPrisma: {
     findFirst: ReturnType<typeof mock>;
   };
   predictionLog: {
+    findFirst: ReturnType<typeof mock>;
     findMany: ReturnType<typeof mock>;
     count: ReturnType<typeof mock>;
   };

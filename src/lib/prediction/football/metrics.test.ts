@@ -24,7 +24,9 @@ function makePredictionLog(overrides: Record<string, unknown> = {}) {
     actualHome: 1,
     actualAway: 1,
     settled: true,
-    createdAt: new Date().toISOString(),
+    confidence: null as number | null,
+    edge: null as number | null,
+    createdAt: new Date(),
     ...overrides,
   };
 }

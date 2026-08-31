@@ -630,7 +630,7 @@ function VersionsSection({
               {m1x2 && (
                 <div className="text-right">
                   <p className="text-sm font-bold tabular-nums text-zinc-100">
-                    {m1x2.brier.toFixed(4)}
+                    {m1x2.brierScore.toFixed(4)}
                   </p>
                   <p className="text-xs text-zinc-500">
                     Acc: {m1x2.accuracy != null ? `${(m1x2.accuracy * 100).toFixed(1)}%` : "—"}
@@ -683,7 +683,7 @@ function DriftSection({
         </div>
       </CardHeader>
       <CardContent>
-        {error && (
+        {error != null && (
           <p className="text-sm text-red-400">Erreur de chargement</p>
         )}
 
