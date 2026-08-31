@@ -64,12 +64,13 @@ function main() {
   const matchesNotFound = [];
 
   for (const pred of unsettled) {
-    // Le matchId peut être un bsd_event_id ou un format custom
+    // Le matchId peut être "bsd-12345", "12345", ou un format custom
+    const rawId = pred.matchId.replace(/^bsd-/, '');
     const result = legacyDb.prepare(`
       SELECT bsd_event_id, home_score, away_score, home_team, away_team, match_date
       FROM match_stats_history
-      WHERE bsd_event_id = ?
-    `).get(pred.matchId);
+      WHERE bsd_event_id = ? OR bsd_event_id = ?
+    `).get(pred.matchId, rawId);
 
     if (result && result.home_score != null && result.away_score != null) {
       matchesFound.push({
