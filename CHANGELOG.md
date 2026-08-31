@@ -1,4 +1,63 @@
 # PariScore — Journal des modifications
+
+## [v13.01] — 2026-08-31 — Boucle ingénierie modèle prédictif football (6 marchés)
+
+### Ajouté — API endpoints
+| Route | Méthode | Rôle |
+|-------|---------|------|
+| `/api/v1/predictions/compute` | POST | Calcule prédictions 1X2/BTTS/O-U on-demand (Poisson + ML blend) |
+| `/api/v1/predictions/accuracy` | GET | Métriques Brier/logLoss/calibration par marché (walk-forward) |
+
+### Ajouté — ML infrastructure
+- **`catboost-bridge.ts`** : Bridge Python → CatBoost via subprocess stdin/stdout. Kill-switch `CATBOOST_ENABLED`, cache process, 30s timeout
+- **`random-forest.ts`** : +`loadModel()`/`saveModel()` pour persistance RF (deserialize JSON, backward-compatible)
+- **`prediction-ml-engine.ts`** : `getRFModel()` charge depuis `$RF_MODEL_PATH` au module init
+
+### Ajouté — Métriques ML
+- **`brier-score.ts`** : `brierScore()`, `logLoss()`, `calibrationCurve()`, `rankedProbabilityScore()`, `accuracy()`
+- **`walk-forward.ts`** : Walk-forward validation sliding window (train N → predict M → step K). Métriques par marché, ROI simulation
+
+### Ajouté — Prisma schema (3 modèles)
+- **`ModelVersion`** : Registry de modèles (name, modelType, version, status staging→production→archived)
+- **`ModelMetrics`** : Métriques par marché (Brier, logLoss, RPS, accuracy, sampleSize)
+- **`PredictionLog`** : Log des prédictions avec outcomes pour backtest
+- **`Prediction`** : +FK `modelVersionId` vers ModelVersion
+
+### Ajouté — Frontend
+- **`football-prediction-markets.tsx`** : Panel UI unifié 6 marchés (1X2 stacked bar, DC 3 chips, O/U 2.5 two-bar, BTTS yes/no, Corners best line, Correct Score top 3). Modes compact + full
+- **`use-prediction-compute.ts`** : Hook SWR `usePredictionCompute(matchId)` + `usePredictionBatch(matchIds)`
+- **`football-match-card.tsx`** : +toggle "Marchés prédictifs" expandable (compact mode)
+- **`football-match-detail-dialog.tsx`** : +section "6 Marchés de prédiction" (full mode)
+
+### Ajouté — ETL
+- **`scripts/etl-history-matches.js`** : Script standalone pour peupler `kv['history_matches']` (training CatBoost). Modes `--source=db|file|both`. De-vig cotes, Poisson snapshot estimé. Flags: `--dry-run`, `--limit`, `--min-verified`
+
+### Ajouté — Traçabilité
+- **`.context/session-engineering-loop-prediction-2026-08-31.md`** : Journal complet de la boucle ingénierie (audit, décisions, fichiers, tests, impact Gantt)
+- **`.context/adr-prediction-infrastructure-2026-08-31.md`** : 6 Architecture Decision Records (API compute, CatBoost bridge, walk-forward, ModelVersion, UI panel, ETL standalone)
+- **`pariscore-predict-gantt-v2.json/.svg`** : Gantt chart mis à jour avec 7 tracks, 28 items, status par item
+
+### Impact Gantt
+```
+Phase 1 ████████████████████ DONE
+Phase 2 ████████████████████ DONE   ← RF trees fix + CatBoost bridge
+Phase 3 ████████████████░░░░ 75%   ← API + Prisma + UI panel
+Phase 4 ████░░░░░░░░░░░░░░░░ 20%   ← Brier + walk-forward infra
+Phase 5 ░░░░░░░░░░░░░░░░░░░░  0%
+Phase 6 ░░░░░░░░░░░░░░░░░░░░  0%
+```
+
+### Fichiers (12 créés, 5 modifiés)
+**Créés** : `compute/route.ts`, `accuracy/route.ts`, `catboost-bridge.ts`, `brier-score.ts`, `walk-forward.ts`, `football-prediction-markets.tsx`, `use-prediction-compute.ts`, `etl-history-matches.js`, `gantt-v2.json`, `gantt-v2.svg`, `session-*.md`, `adr-*.md`
+**Modifiés** : `random-forest.ts`, `prediction-ml-engine.ts`, `football-match-card.tsx`, `football-match-detail-dialog.tsx`, `prisma/schema.prisma`
+
+### Quality gate
+- `bun run typecheck` : 0 nouvelles erreurs (12 pré-existantes)
+- `bun run lint` : 0 nouvelles erreurs (13 pré-existantes)
+- `npx prisma generate` : ✅ client v6.19.2 généré
+
+---
+
 ## [v13.00.1] — 2026-08-18 — Bug fixes, intégration PropLine→computeEdge, Dino paths validés
 
 ### Corrigé (bugs trouvés via tests en conditions réelles)
