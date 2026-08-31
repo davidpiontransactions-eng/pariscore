@@ -11,18 +11,21 @@ const http = require('http');
 
 const ROOT = path.join(__dirname, '..');
 const LEGACY_DB = path.join(ROOT, 'pariscore.db');
+const PRISMA_DB = path.join(ROOT, 'dev.db');
 const PREDICTIONS_BASE = 'http://localhost:3005';
 
 // Pick a random finished match not yet predicted
-const db = new Database(LEGACY_DB, { readonly: true });
-const match = db.prepare(`
+const legacyDb = new Database(LEGACY_DB, { readonly: true });
+const prismaDb = new Database(PRISMA_DB, { readonly: true });
+const predictedIds = new Set(prismaDb.prepare('SELECT matchId FROM "PredictionLog"').all().map(r => r.matchId));
+const match = legacyDb.prepare(`
   SELECT bsd_event_id, home_team, away_team, home_score, away_score
   FROM match_stats_history
   WHERE home_score IS NOT NULL
-    AND bsd_event_id NOT IN (SELECT matchId FROM "PredictionLog")
   ORDER BY RANDOM() LIMIT 1
-`).get();
-db.close();
+`).all().find(m => !predictedIds.has(m.bsd_event_id));
+legacyDb.close();
+prismaDb.close();
 
 if (!match) { console.log('No unsettled matches found'); process.exit(0); }
 
