@@ -13,7 +13,7 @@ import { ConfidenceRing } from "@/components/shared/confidence-ring";
 import { FormTimeline } from "@/components/shared/form-timeline";
 import { SportImage } from "@/components/ui/sport-image";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
-import { getLeagueBanner } from "@/lib/sport-images";
+import { getSportHero } from "@/lib/sport-images";
 import { parisKickoff, parisDayLabel } from "@/lib/football-time";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 
@@ -238,7 +238,7 @@ export function FootballMatchCard({
       {/* Bannière ligue en fond (overlay sombre) */}
       <div className="relative h-36 overflow-hidden sm:h-44">
         <SportImage
-          src={getLeagueBanner(null, "football")}
+          src={getSportHero("football")}
           alt={match.league.name}
           fill
           darkOverlay
