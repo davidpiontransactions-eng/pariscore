@@ -9,6 +9,7 @@ import { predictPrematch, type PrematchInputs } from "@/lib/prediction/football/
 import { predictML, type MLEngineInputs, type MLPrediction } from "@/lib/prediction/football/prediction-ml-engine";
 import type { FootballMatch, Prediction } from "@/lib/football-data";
 import { round2 } from "@/lib/prediction/football/math-utils";
+import { prisma } from "@/lib/prisma";
 
 // ---------------------------------------------------------------------------
 // Types requête / réponse
@@ -206,6 +207,30 @@ export async function POST(request: Request) {
         summary: mlResult.summary,
       },
     };
+
+    // --- Log prediction en DB pour métriques futures ---
+    try {
+      const activeModel = await prisma.modelVersion.findFirst({
+        where: { status: "production" },
+        orderBy: { promotedAt: "desc" },
+      });
+      await prisma.predictionLog.create({
+        data: {
+          matchId: body.matchId,
+          modelVersionId: activeModel?.id ?? null,
+          homeProb: mlResult.homeProb,
+          drawProb: mlResult.drawProb,
+          awayProb: mlResult.awayProb,
+          bttsProb: round2(mlResult.markets.btts),
+          over25Prob: round2(mlResult.markets.over25),
+          edge: edge > 0 ? edge : null,
+          confidence,
+        },
+      });
+    } catch (logErr) {
+      // Non-bloquant : le calcul est déjà fait
+      console.error("[predictions/compute] log error:", logErr);
+    }
 
     return NextResponse.json(response);
   } catch (err: unknown) {
