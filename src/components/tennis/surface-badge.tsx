@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Popover, PopoverContent, PopoverTrigger, PopoverHeader, PopoverTitle, PopoverDescription } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type SurfaceBadgeProps = {
   surface: string;
@@ -124,10 +124,10 @@ export function SurfaceBadge({
       {isHovered && (
         <Popover>
           <PopoverContent>
-            <PopoverHeader>
-              <PopoverTitle>{playerName || "Analyse surface"}</PopoverTitle>
-              <PopoverDescription>Statistiques sur {surfaceDisplay}</PopoverDescription>
-            </PopoverHeader>
+            <div className="mb-2">
+              <div className="font-medium">{playerName || "Analyse surface"}</div>
+              <div className="text-xs text-muted-foreground">Statistiques sur {surfaceDisplay}</div>
+            </div>
             {tooltipContent}
             {(!playerName || eloDifferential === undefined) && (
               <div className="mt-2 text-xs text-muted-foreground">
