@@ -56,10 +56,19 @@ const rows = db.prepare(`
   SELECT id, modelVersionId, homeProb, drawProb, awayProb, bttsProb, over25Prob,
          actualHome, actualAway, createdAt
   FROM "PredictionLog"
-  WHERE settled = 1 AND createdAt >= ?
-`).all(cutoff);
+  WHERE settled = 1
+`).all();
 
-if (rows.length === 0) {
+// Filter by date (handles both ISO strings and epoch ms from Prisma)
+const cutoffMs = Date.now() - PERIOD_DAYS * 86400000;
+const filtered = rows.filter((r) => {
+  const ts = typeof r.createdAt === 'number'
+    ? r.createdAt
+    : new Date(r.createdAt).getTime();
+  return ts >= cutoffMs;
+});
+
+if (filtered.length === 0) {
   console.log(`Aucune prédiction settlée sur les ${PERIOD_DAYS} derniers jours.`);
   db.close();
   process.exit(2);
@@ -67,7 +76,7 @@ if (rows.length === 0) {
 
 // Compute per-market metrics
 const metrics = {};
-for (const row of rows) {
+for (const row of filtered) {
   const versionId = row.modelVersionId || "default";
   if (!metrics[versionId]) metrics[versionId] = {};
 
