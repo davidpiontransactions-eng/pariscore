@@ -51,10 +51,24 @@ Phase 6 ░░░░░░░░░░░░░░░░░░░░  0%
 **Créés** : `compute/route.ts`, `accuracy/route.ts`, `catboost-bridge.ts`, `brier-score.ts`, `walk-forward.ts`, `football-prediction-markets.tsx`, `use-prediction-compute.ts`, `etl-history-matches.js`, `gantt-v2.json`, `gantt-v2.svg`, `session-*.md`, `adr-*.md`
 **Modifiés** : `random-forest.ts`, `prediction-ml-engine.ts`, `football-match-card.tsx`, `football-match-detail-dialog.tsx`, `prisma/schema.prisma`
 
+### Ajouté — Monitoring & Drift
+- **`drift-detection.ts`** : `detectDrift(recent, baseline)` — comparaison Brier score par marché. Seuil: +0.02 = drift significatif
+- **`/api/v1/predictions/drift`** : GET endpoint drift detection. Params: `period=7d|30d|90d`, `baseline=90d|180d`
+- **`calibration-chart.tsx`** : Composant Canvas 2D — courbes de calibration par marché (1X2, BTTS, O/U). Diagonale parfaite + courbes réelles
+- **`compute-model-metrics.js`** : Script standalone — calcule Brier/logLoss/accuracy par marché, écrit en DB ou JSON. Flags: `--period`, `--dry-run`, `--output`
+- **`cron-model-metrics.sh`** : Script cron pour calculer les métriques weekly
+
+### Ajouté — Training CatBoost
+- **Training exécuté** : 29,981 records (24 avec Poisson, 29,957 catégoriels uniquement)
+- **Résultats** : 1X2 RPS 0.2084 (baseline Poisson: 0.2082), O/U 2.5 acc 55.23%, BTTS acc 55.24%
+- **Note** : Amélioration marginale car 0.1% des records ont des features Poisson. Nécessite plus de données Poisson pour surpasser la baseline
+
 ### Quality gate
 - `bun run typecheck` : 0 nouvelles erreurs (12 pré-existantes)
 - `bun run lint` : 0 nouvelles erreurs (13 pré-existantes)
 - `npx prisma generate` : ✅ client v6.19.2 généré
+- `python ml/infer_catboost.py` : ✅ 3 modèles chargés, inference OK
+- `python ml/train_catboost.py` : ✅ training terminé, modèles mis à jour
 
 ---
 
