@@ -3,12 +3,9 @@
 // et les stocke en DB ou en JSON. Usage: node scripts/compute-model-metrics.js --period=7d
 
 import { parseArgs } from "node:util";
-import { createRequire } from "node:module";
+import Database from "better-sqlite3";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-
-const require = createRequire(import.meta.url);
-const { Database } = require("better-sqlite3");
 
 const { values } = parseArgs({
   options: {
