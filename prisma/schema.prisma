@@ -75,21 +75,23 @@ model Match {
 }
 
 model Prediction {
-  id         String @id @default(cuid())
-  matchId    String @unique
-  match      Match  @relation(fields: [matchId], references: [id])
-  homeProb   Float
-  drawProb   Float?
-  awayProb   Float
-  bttsProb   Float?
-  over25Prob Float?
-  over15Prob Float?
-  under35Prob Float?
-  model      String  @default("Elo+Poisson")
-  edge       Float   @default(0)
-  confidence Int     @default(3)
+  id             String       @id @default(cuid())
+  matchId        String       @unique
+  match          Match        @relation(fields: [matchId], references: [id])
+  modelVersionId String?
+  modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])
+  homeProb       Float
+  drawProb       Float?
+  awayProb       Float
+  bttsProb       Float?
+  over25Prob     Float?
+  over15Prob     Float?
+  under35Prob    Float?
+  model          String       @default("Elo+Poisson")
+  edge           Float        @default(0)
+  confidence     Int          @default(3)
 
-  createdAt DateTime @default(now())
+  createdAt      DateTime     @default(now())
 }
 
 model Odds {
@@ -296,4 +298,66 @@ model LeagueSeasonStats {
 
   @@unique([country, slug])
   @@map("league_season_stats")
+}
+
+// ─── Model Versioning & Metrics ─────────────────────────────────────────────
+
+model ModelVersion {
+  id          String   @id @default(cuid())
+  name        String   // e.g. "v1.0-poisson-elo"
+  modelType   String   // "poisson", "dixon-coles", "catboost", "ensemble", "ml-meta"
+  version     Int      // incrementing number
+  status      String   @default("staging") // "staging", "production", "archived"
+  metricsJson String?  // JSON serialized metrics
+  configJson  String?  // JSON serialized model config/hyperparams
+  trainedAt   DateTime @default(now())
+  promotedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  predictions     Prediction[]
+  predictionLogs  PredictionLog[]
+  modelMetrics    ModelMetrics[]
+
+  @@unique([modelType, version])
+  @@index([modelType, status])
+}
+
+model ModelMetrics {
+  id             String   @id @default(cuid())
+  modelVersionId String
+  modelVersion   ModelVersion @relation(fields: [modelVersionId], references: [id])
+  market         String   // "1x2", "btts", "over25", "double_chance"
+  brierScore     Float
+  logLoss        Float?
+  rps            Float?
+  accuracy       Float?
+  sampleSize     Int
+  period         String   // "daily", "weekly", "monthly"
+  computedAt     DateTime @default(now())
+
+  @@index([modelVersionId, market])
+  @@index([market, computedAt])
+}
+
+model PredictionLog {
+  id             String   @id @default(cuid())
+  matchId        String
+  modelVersionId String?
+  modelVersion   ModelVersion? @relation(fields: [modelVersionId], references: [id])
+  homeProb       Float
+  drawProb       Float
+  awayProb       Float
+  bttsProb       Float?
+  over25Prob     Float?
+  edge           Float?
+  confidence     Float?
+  actualHome     Int?
+  actualAway     Int?
+  settled        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([matchId])
+  @@index([settled, createdAt])
+  @@index([modelVersionId])
 }
