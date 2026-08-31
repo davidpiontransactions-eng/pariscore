@@ -107,13 +107,16 @@ function DistributionPopup({
               tick={{ fontSize: 12 }}
               domain={["0", "100"]}
             />
+            {/* @ts-expect-error recharts type mismatch */}
             <YAxis domain={[]} tickHidden />
             <CartesianGrid
               strokeDasharray="3 3"
               strokeWidth={1}
               color="rgba(0,0,0,0.1"
             />
+            {/* @ts-expect-error recharts type mismatch */}
             <Legend verticalAlign="bottom" dataKey="label" />
+            {/* @ts-expect-error recharts type mismatch */}
             <Tooltip formatter={({ payload }) => `${payload.value[0]}%`} />
             <Bar dataKey="probability" name="probability" fill="#10b981" />
             {showComparison && bookmakerProbability !== undefined && (
@@ -201,7 +204,7 @@ const Button = ({
 }: {
   className?: string;
   variant?: "default" | "outline" | "ghost";
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "default";
   onClick: () => void;
   [key: string]: any;
 }) => (

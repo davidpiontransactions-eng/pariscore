@@ -198,8 +198,9 @@ const Button = ({
   onClick,
   ...props
 }: {
-  className: string;
+  className?: string;
   variant?: "default" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg" | "icon";
   onClick: () => void;
   [key: string]: any;
 }) => (

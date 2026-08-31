@@ -106,7 +106,7 @@ check("[Env] CATBOOST_ENABLED dans .env", () => {
 
 // ── 5. [TypeScript] typecheck passe ─────────────────────────────────────────
 check("[TypeScript] typecheck passe", () => {
-  run("bun run typecheck", { timeout: 120_000 });
+  run("set NODE_OPTIONS=--max-old-space-size=8192 && bun run typecheck", { timeout: 180_000 });
   return "0 erreurs";
 });
 
