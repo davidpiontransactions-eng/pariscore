@@ -53,6 +53,7 @@ import { useBankroll, type GroupStats } from "@/hooks/use-bankroll";
 import { useAnalytics } from "@/components/analytics-provider";
 import { betsToCSV, betsToJSON, downloadFile, getDateStamp } from "@/lib/export-bankroll";
 import { cn } from "@/lib/utils";
+import { BankrollHeatmap } from "@/components/bankroll/bankroll-heatmap";
 
 let openFn: ((open: boolean) => void) | null = null;
 export function openBankrollDialog() {
@@ -200,6 +201,12 @@ export function BankrollDialog() {
                   </div>
                 ) : (
                   <div className="space-y-3">
+                    <BankrollHeatmap
+                      historicalDays={30}
+                      widthChars={50}
+                      heightLines={2}
+                      onPeriodSelect={() => {}}
+                    />
                     {/* Export buttons */}
                     <div className="flex items-center justify-end gap-2">
                       <Button

@@ -139,16 +139,109 @@ transitions. Motion is restrained (see Principles: calm under pressure).
   (`hover:shadow-[0_0_20px_rgba(0,230,118,0.15)]` on F1 cards, etc.). Use the
   relevant `--sport-*` accent per context.
 
-## Source of truth
+## Athlete Images
 
-- **CSS variables** → `src/app/globals.css` (`:root`, `.dark`, `@theme inline`)
-- **Tailwind mapping** → `tailwind.config.ts` (`theme.extend.colors`,
-  `borderRadius`)
-- **Fonts** → `src/app/layout.tsx` (`next/font/google`: Geist, Geist Mono)
-- **Components** → `src/components/ui/` (shadcn/ui, owned)
+### Règles d'usage
+- **Sources**: Uniquement images libres de droit (Unsplash, Pexels, Wikimedia Commons)
+- **Dimensions**: Minimum 400×400px, affichées en 200×200px dans l'interface
+- **Légende**: Nom + sport + équipe obligatoire en tooltip/accessible
+- **Accessibilité**: `alt` text requis: "Photo de [Nom], [Sport], [Équipe]"
+- **Droits**: Vérifier licence avant utilisation; préférer domaine public
+- **Responsive**: `max-width: 100%; height: auto; width: 100%;`
 
-Do **not** introduce inline ad-hoc color values in components (e.g. literal hex
-in `style={{}}`). Add a token to `globals.css` + surface it in Tailwind, then use
-the semantic class. The one documented exception is per-sport accent tints inside
-`style` for assets that must composite with a team/sport color (see
-`f1-driver-card.tsx` `boxShadow`).
+### Palette de couleurs par sport (variables CSS)
+| Sport | Variable CSS | Signification |
+|-------|-------------|---------------|
+| Tennis | `--sport-tennis` | `#10B981` — emerald |
+| Football | `--sport-football` | `#0EA5E9` — sky |
+| Basketball | `--sport-basketball` | `#FBBF24` — amber |
+| CS2 | `--sport-cs2` | `#EC4899` — rose |
+| MMA | `--sport-mma` | `#EF4444` — red |
+| Baseball | `--sport-baseball` | `#FF8C00` — orange |
+| Rugby | `--sport-rugby` | `#14B8A6` — teal |
+| F1 | `--sport-f1` | `#6B46C1` — violet |
+| Cyclisme | `--sport-cyclisme` | `#F59E0B` — amber |
+
+### Composants d'affichage
+
+#### AthleteHeader — Entête par sport
+- Affiche en entête de page les 3 athlètes stars du sport actif
+- Photos Unsplash en grille responsive (3 colonnes mobile, 5 colonnes desktop)
+- Chaque carte: image + nom + équipe + note (sur 10) + pictogramme sport
+- Au clic: tooltip/dialog avec infos complètes (nationalité, position)
+- Utilise le composant `SportImage` avec fallback pictogramme
+
+#### AthleteGallery — Galerie latérale
+- Onglet par sport avec grille d'athlètes
+- Mode grid (grille responsive), list (liste), carousel (carrousel)
+- Navigation par sport en haut (onglets avec pictos)
+- Scroll latent: `loading="lazy"` sur toutes les images
+- Accessibilité: `alt` text complet sur chaque image
+
+#### SportImage — Image sportive réutilisable
+- Wrapper `next/image` avec fallback pictogramme SportPicto
+- Overlay sombre paramétrable (light/medium/heavy)
+- Flou d'arrière-plan optionnel (`backdrop-blur`)
+- Ratio d'aspect fixe ou mode `fill`
+- CLS optimisé: `width`/`height` stricts ou `fill` avec conteneur
+
+### Intégration UI
+
+#### SportTabs avec AthleteHeader
+- Les onglets sport (Tennis, Football, Basketball, etc.) affichent
+  automatiquement AthleteHeader en entête lorsqu'ils sont actifs
+- Mode par défaut: `mode="header"` pour l'entête principal
+- Alternative: `mode="gallery"` pour galerie latérale compacte
+- Transition fluide lors du changement de sport
+
+#### AthleteInfoDialog — Dialog détaillé (optionnel)
+- Ouverture au clic sur une carte athlète
+- Affiche: photo grande taille, biographie complète,
+  statistiques, liens vers ressources externes
+- Accessible via `Cmd/Ctrl + Click` ou bouton "Details"
+- Fermable avec `Escape` ou bouton "Fermer"
+
+### Bonnes pratiques
+
+1. **Toujours fournir** `alt` text complet: "Photo de [Nom], [Sport]",
+   [Équipe]"
+2. **Utiliser uniquement** images libres de droit (Unsplash/Pexels/Wikimedia)
+3. **Respecter les licences**: crédit photo dans la footer de l'app
+4. **Maintenir la cohérence**: même style d'image dans tous les sports
+5. **Accessibilité d'abord**: contraste image+texte ≥ 4.5:1, focus visible
+6. **Performance**: `loading="lazy"` sur toutes les images, `priority` uniquement
+   sur l'athlète en vue principale
+7. **Thème cohérent**: couleurs `--sport-*` thème-invariantes, fonctement sombre
+   et clair
+
+### Exemple d'implémentation
+
+```tsx
+// Dans une page ou composant sport:
+// import { AthleteHeader } from "@/components/athlete-header"
+// import { AthleteGallery } from "@/components/athlete-gallery"
+
+// Mode entête (défaut)
+<AthleteHeader mode="header" maxAthletes={3} onAthleteSelect={handleSelect} />
+
+// Mode galerie latérale
+<AthleteGallery mode="gallery" maxAthletes={5} onAthleteSelect={handleSelect} />
+```
+
+### Mise à jour des tokens
+
+Ajouter aux variables CSS `src/app/globals.css` (déjà présentes par sport):
+
+```css
+/* Sport colors already defined in DESIGN.md — pas de redéfinition nécessaire */
+/* Athlete image specific */
+--avatar-default: url('/images/placeholder-athlete.webp');
+```
+
+### Évolution future
+
+- **Personnalisation utilisateur**: permettre de sélectionner ses athlètes favoris
+- **Intégration statistique**: afficher les stats récentes de l'athlète cliqué
+- **Ressources externes**: liens vers Wikipedia, site officiel, réseaux sociaux
+- **Mises à jour saisonnières**: actualiser les listes d'athlètes en début de saison
+- **Comparaison**: comparer deux athlètes en side-by-side view

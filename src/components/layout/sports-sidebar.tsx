@@ -54,6 +54,7 @@ import { useSportsTree } from "@/hooks/use-sports-tree";
 import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
 import { TennisStrategyTop5Widget } from "@/components/tennis/tennis-strategy-top5-widget";
 import { MomentumSparkline } from "@/components/football/momentum-sparkline";
+import { AthleteHeader } from "@/components/athlete-header/athlete-header";
 
 import {
   TennisPicto,
@@ -1178,6 +1179,7 @@ export function SportsSidebarContent({
           <Home className="h-4 w-4" />
           <span>Accueil</span>
         </button>
+        <AthleteHeader sport={activeSport} maxAthletes={3} onAthleteSelect={() => {}} />
       </div>
       <div className="space-y-2 border-b border-slate-800/80 p-2.5">
         {/* Compteur live global : pulse + nombre total de matchs live */}
