@@ -32,9 +32,57 @@ const pause = ms => new Promise(r => setTimeout(r, ms));
 
 const httpMod = require('http');
 const httpsMod = require('https');
+const Database = require('better-sqlite3');
 
 // Top ligues pour les prédictions
 const BSD_LEAGUE_IDS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20];
+
+// Estimer Elo depuis les cotes (implied probability → Elo relatif)
+function eloFromOdds(oddsH, oddsA) {
+  if (!oddsH || !oddsA) return { home: 1500, away: 1500 };
+  const pH = 1 / oddsH;
+  const pA = 1 / oddsA;
+  const total = pH + pA;
+  const normH = pH / total;
+  // Elo diff = -400 * log10(1/expected - 1)
+  const expected = Math.max(0.05, Math.min(0.95, normH));
+  const eloDiff = -400 * Math.log10((1 - expected) / expected);
+  return { home: Math.round(1500 + eloDiff / 2), away: Math.round(1500 - eloDiff / 2) };
+}
+
+// Chercher forme récente dans match_stats_history
+function getTeamForm(db, teamName, limit = 5) {
+  if (!teamName || !db) return null;
+  const rows = db.prepare(`
+    SELECT home_team, away_team, home_score, away_score, match_date
+    FROM match_stats_history
+    WHERE (home_team = ? OR away_team = ?) AND match_date IS NOT NULL
+    ORDER BY match_date DESC
+    LIMIT ?
+  `).all(teamName, teamName, limit);
+
+  if (rows.length < 3) return null;
+
+  let wins = 0, draws = 0, losses = 0, goalsFor = 0, goalsAgainst = 0;
+  for (const r of rows) {
+    const isHome = r.home_team === teamName;
+    const gf = isHome ? r.home_score : r.away_score;
+    const ga = isHome ? r.away_score : r.home_score;
+    goalsFor += gf || 0;
+    goalsAgainst += ga || 0;
+    if (gf > ga) wins++;
+    else if (gf === ga) draws++;
+    else losses++;
+  }
+
+  return {
+    ppg: (wins * 3 + draws) / rows.length,
+    wins, draws, losses,
+    goalsPerGame: goalsFor / rows.length,
+    goalsConcededPerGame: goalsAgainst / rows.length,
+    matches: rows.length,
+  };
+}
 
 function bsdFetch(endpoint) {
   return new Promise((resolve, reject) => {
@@ -88,6 +136,18 @@ async function main() {
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
+  // Open match_stats_history for form lookups
+  let db = null;
+  try {
+    const legacyDbPath = path.join(ROOT, 'pariscore.db');
+    if (fs.existsSync(legacyDbPath)) {
+      db = new Database(legacyDbPath, { readonly: true });
+      console.log('[cron-compute-predictions] Opened pariscore.db for form lookups');
+    }
+  } catch (e) {
+    console.warn('[cron-compute-predictions] Could not open DB for form:', e.message);
+  }
+
   const events = [];
   const seenIds = new Set();
 
@@ -123,11 +183,23 @@ async function main() {
   for (const event of events) {
     const matchId = `bsd-${event.id}`;
 
-    // Estimate xG from odds (simple approximation)
+    // Estimate xG and Elo from odds
     const oddsH = event.odds_home ? Number(event.odds_home) : null;
+    const oddsD = event.odds_draw ? Number(event.odds_draw) : null;
     const oddsA = event.odds_away ? Number(event.odds_away) : null;
     const xgH = oddsH ? Math.round((1 / oddsH * 2.5) * 100) / 100 : undefined;
     const xgA = oddsA ? Math.round((1 / oddsA * 2.5) * 100) / 100 : undefined;
+
+    // Elo from odds (implied probability)
+    const elo = eloFromOdds(oddsH, oddsA);
+
+    // Team form from history
+    const formH = getTeamForm(db, event.home_team, 5);
+    const formA = getTeamForm(db, event.away_team, 5);
+
+    // Adjust Elo with form (±50 based on PPG)
+    if (formH) elo.home += Math.round((formH.ppg - 1.3) * 50);
+    if (formA) elo.away += Math.round((formA.ppg - 1.3) * 50);
 
     const matchData = {
       matchId,
@@ -135,10 +207,14 @@ async function main() {
       awayTeam: event.away_team || 'Away',
       homeXg: xgH,
       awayXg: xgA,
+      homeElo: elo.home,
+      awayElo: elo.away,
     };
 
     if (isDry) {
-      console.log(`  [DRY] ${matchData.homeTeam} vs ${matchData.awayTeam} (xG: ${xgH ?? 'N/A'}-${xgA ?? 'N/A'})`);
+      const formStrH = formH ? ` PPG=${formH.ppg.toFixed(1)} W${formH.wins}D${formH.draws}L${formH.losses}` : '';
+      const formStrA = formA ? ` PPG=${formA.ppg.toFixed(1)} W${formA.wins}D${formA.draws}L${formA.losses}` : '';
+      console.log(`  [DRY] ${matchData.homeTeam} vs ${matchData.awayTeam} | Elo: ${elo.home}-${elo.away} | xG: ${xgH ?? 'N/A'}-${xgA ?? 'N/A'}${formStrH}${formStrA}`);
       continue;
     }
 
@@ -150,7 +226,7 @@ async function main() {
       } else {
         computed++;
         const mk = result.markets;
-        console.log(`  [OK] ${matchData.homeTeam} vs ${matchData.awayTeam}: H${mk?.homeProb}% D${mk?.drawProb}% A${mk?.awayProb}%`);
+        console.log(`  [OK] ${matchData.homeTeam} vs ${matchData.awayTeam}: H${mk?.homeProb}% D${mk?.drawProb}% A${mk?.awayProb}% (Elo: ${elo.home}-${elo.away})`);
       }
     } catch (e) {
       console.error(`  [ERR] ${matchId}: ${e.message}`);
@@ -160,6 +236,7 @@ async function main() {
     await pause(500);
   }
 
+  if (db) db.close();
   console.log(`\n[cron-compute-predictions] Done: ${computed} computed, ${errors} errors`);
 }
 
