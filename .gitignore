@@ -11,6 +11,9 @@ node_modules
 !.yarn/versions
 
 # testing
+# worktrees agents
+/.worktrees/
+
 /coverage
 
 # next.js
