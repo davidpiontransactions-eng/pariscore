@@ -22,6 +22,7 @@ import { MetricLeaderboardTable } from "@/components/football/MetricLeaderboardT
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { WatchButton } from "@/components/shared/watch-button";
 import { mostLikelyScore, bestEdgeMarket } from "@/lib/football-correct-score";
+import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
 
 const dayCache = new Map<string, string>();
 
@@ -120,6 +121,7 @@ export function FootballMatchCard({
   // Métriques par catégorie (Général / Buts / Tirs / Attaques / Corners) — sub-tab panel.
   const metrics = p.metricStats;
   const [showRankings, setShowRankings] = useState(false);
+  const [showMarkets, setShowMarkets] = useState(false);
 
   // Collect prediction badges for the "Prédictions Clés" section
   const predictionBadges = useMemo(() => {
@@ -487,6 +489,38 @@ export function FootballMatchCard({
           playerB={match.away.name}
           variant="compact"
         />
+
+        {/* Marchés prédictifs — panneau repliable avec les 6 marchés */}
+        <div className="mt-2">
+          <button
+            onClick={() => setShowMarkets(!showMarkets)}
+            className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/50"
+          >
+            <span className="flex items-center gap-1">
+              <BarChart3 className="h-3 w-3 text-cyan-400" />
+              Marchés prédictifs
+            </span>
+            {showMarkets ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </button>
+          <AnimatePresence>
+            {showMarkets && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="overflow-hidden"
+              >
+                <div className="pt-2">
+                  <FootballPredictionMarkets
+                    prediction={p}
+                    compact
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Innovation badges — Referee xCards + Set-Piece Edge */}
         {(p.refereeCardRisk || p.setPieceEdge != null) && (

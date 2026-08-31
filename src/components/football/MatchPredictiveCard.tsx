@@ -3,10 +3,11 @@
 // MatchPredictiveCard — Analyse prédictive hybride (ML + statistique).
 // Affiche badge tendance, résumé, 3 paris. ZERO lien externe.
 
-import { TrendingUp, Target, Sparkles } from "lucide-react";
+import { TrendingUp, Target, Sparkles, Cpu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { MLPrediction, TrendLabel } from "@/lib/prediction/football/prediction-ml-engine";
+import { usePredictionCompute } from "@/hooks/use-prediction-compute";
 
 const TREND_STYLES: Record<TrendLabel, { variant: "default" | "secondary" | "destructive" | "outline"; emoji: string; label: string }> = {
   strong_home: { variant: "default", emoji: "🔥", label: "Forte domination domicile" },
@@ -34,10 +35,21 @@ function BetRow({ icon, label, prob }: { icon: string; label: string; prob: numb
   );
 }
 
-export type MatchPredictiveCardProps = { prediction: MLPrediction; className?: string };
+export type MatchPredictiveCardProps = {
+  prediction: MLPrediction;
+  className?: string;
+  /** ID match pour déclencher le calcul ML via usePredictionCompute */
+  matchId?: string;
+};
 
-export function MatchPredictiveCard({ prediction, className }: MatchPredictiveCardProps) {
+export function MatchPredictiveCard({ prediction, className, matchId }: MatchPredictiveCardProps) {
   const { trend, summary, topBets, homeProb, drawProb, awayProb, sources } = prediction;
+
+  // Prédiction ML compute (optionnelle — activée si matchId fourni)
+  const { prediction: mlCompute, isLoading: mlLoading } = usePredictionCompute(
+    matchId ? { matchId } : null,
+  );
+  const mlData = mlCompute?.ml;
 
   return (
     <Card className={className}>
@@ -69,6 +81,32 @@ export function MatchPredictiveCard({ prediction, className }: MatchPredictiveCa
             </div>
           ))}
         </div>
+
+        {/* ML Compute — indicateur optionnel si hook actif */}
+        {mlData && (
+          <div className="p-2.5 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/20 dark:to-blue-950/15 border border-cyan-200/50 dark:border-cyan-800/30">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Cpu className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
+                ML Compute
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-1.5 text-center text-xs">
+              <div><span className="text-muted-foreground">Dom </span><span className="font-bold tabular-nums">{Math.round(mlData.homeProb * 100)}%</span></div>
+              <div><span className="text-muted-foreground">Nul </span><span className="font-bold tabular-nums">{Math.round(mlData.drawProb * 100)}%</span></div>
+              <div><span className="text-muted-foreground">Ext </span><span className="font-bold tabular-nums">{Math.round(mlData.awayProb * 100)}%</span></div>
+            </div>
+            {mlData.summary && (
+              <p className="text-[11px] text-muted-foreground mt-1.5 leading-snug">{mlData.summary}</p>
+            )}
+          </div>
+        )}
+        {mlLoading && matchId && (
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <Cpu className="w-3 h-3 animate-pulse" />
+            <span>Chargement ML Compute...</span>
+          </div>
+        )}
 
         {/* 3 Paris */}
         <div>

@@ -23,6 +23,7 @@ import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { FootballPressReviewWidget } from "@/components/football/FootballPressReviewWidget";
 import { AIMatchReport } from "./AIMatchReport";
 import { WatchButton } from "@/components/shared/watch-button";
+import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
 
@@ -417,6 +418,20 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     <BetTile key={i} bet={bet} />
                   ))}
                 </div>
+              </section>
+            )}
+
+            {/* 6 Marchés de prédiction — vue complète */}
+            {view && !view.live && (
+              <section className="mt-2">
+                <FootballPredictionMarkets
+                  prediction={view.prediction}
+                  match={{
+                    homeTeam: view.home.name,
+                    awayTeam: view.away.name,
+                    league: view.league.name,
+                  }}
+                />
               </section>
             )}
           </div>
