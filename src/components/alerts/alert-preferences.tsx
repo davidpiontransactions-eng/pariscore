@@ -9,6 +9,7 @@ import {
   Filter,
   AlertTriangle,
   CheckCircle,
+  X,
 } from "lucide-react";
 
 type AlertType = 
@@ -187,11 +188,11 @@ export function AlertPreferencesModal() {
   );
 }
 
-Label = ({ className, children }: { className: string; children: React.ReactNode }) => (
+const Label = ({ className, children }: { className: string; children: React.ReactNode }) => (
   <span className={className}>{children}</span>
 );
 
-Button = ({
+const Button = ({
   className,
   variant,
   onClick,

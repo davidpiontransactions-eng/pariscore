@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const svc = require("../../../../../../services/basketballH2HService");
+    const svc = await import("../../../../../../services/basketballH2HService");
     if (teamA === teamB) {
       return NextResponse.json(
         { error: "paire invalide", details: "teamA et teamB doivent être distincts" },

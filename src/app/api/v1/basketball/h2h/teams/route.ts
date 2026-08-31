@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const svc = require("../../../../../../../services/basketballH2HService");
+    const svc = await import("../../../../../../../services/basketballH2HService");
     const teams = await svc.getTeams(league);
     return NextResponse.json(teams, {
       headers: { "Cache-Control": "public, max-age=3600, stale-while-revalidate=21600" },

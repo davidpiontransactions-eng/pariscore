@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { XCircle, CheckCircle, Loader2, Calendar, TrendingUp, TrendingDown } from "lucide-react";
+import { XCircle, CheckCircle, Loader2, Calendar, TrendingUp, TrendingDown, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type DistributionPopupProps = {
@@ -192,20 +192,7 @@ function DistributionPopup({
   );
 }
 
-function ButtonClose({ className, onClick, ...props }: any) {
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={ onClick }
-      className={ className }
-    >
-      <X className="h-4 w-4" />
-    </Button>
-  );
-}
-
-Button = ({
+const Button = ({
   className,
   variant = "default",
   size = "default",
@@ -241,5 +228,18 @@ Button = ({
     {...props}
   />
 );
+
+function ButtonClose({ className, onClick, ...props }: any) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onClick}
+      className={className}
+    >
+      <X className="h-4 w-4" />
+    </Button>
+  );
+}
 
 export { DistributionPopup as ProbabilityDistributionPopup };

@@ -8,6 +8,8 @@ import { predictPrematch, predictLive } from "./engine";
 import type { FootballMatch } from "../../football-data";
 import type { Markets, LiveInputs, LiveMarkets, EloPair } from "./types";
 import { round2 } from "./math-utils";
+import fs from "fs";
+import path from "path";
 
 // ── Modèle RF chargé une seule fois au démarrage du module ──────────────────
 // Si aucun fichier de modèle n'existe, on reste sur le fallback Elo (comportement
@@ -19,8 +21,6 @@ function getRFModel(featCount: number): RandomForest | null {
   if (_rfLoadAttempted) return _cachedRF;
   _rfLoadAttempted = true;
   try {
-    const fs = require("fs");
-    const path = require("path");
     const modelPath = process.env.RF_MODEL_PATH
       || path.join(process.cwd(), "models", "rf_football_1x2_v1.json");
     if (fs.existsSync(modelPath)) {

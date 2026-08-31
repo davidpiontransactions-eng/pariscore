@@ -10,6 +10,7 @@ import {
   LightVertical,
   Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type ThemeToggleProps = {
   /** Whether to show the toggle or just the current mode */

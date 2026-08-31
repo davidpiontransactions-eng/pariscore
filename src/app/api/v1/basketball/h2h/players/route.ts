@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const svc = require("../../../../../../../services/basketballH2HService");
+    const svc = await import("../../../../../../../services/basketballH2HService");
     const [players, standings, teams] = await Promise.all([
       svc.getPlayerSeasonStats(league, team),
       svc.getStandings(league).catch(() => []),

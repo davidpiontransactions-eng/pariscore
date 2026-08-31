@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { Moon, Sun, TextSize, ZoomIn, ZoomOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type FontSizePreset = "smaller" | "default" | "larger";
 

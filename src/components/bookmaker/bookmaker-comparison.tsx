@@ -11,7 +11,8 @@ import {
   TableCell,
   TableCaption,
 } from "@/components/ui/table";
-import { X, Check, Clock, ArrowUp, ArrowDown, TrendingUp, TrendingDown } from "lucide-react";
+import { X, Check, Clock, ArrowUp, ArrowDown, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type BookmakerOdds = {
   bookmaker: string;
