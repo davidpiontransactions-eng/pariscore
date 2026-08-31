@@ -187,9 +187,10 @@ async function main() {
   }
 
   // ── Étape 2 : Training ───────────────────────────────────────────────────
+  const PYTHON_BIN = process.env.CATBOOST_PYTHON_BIN || 'python3';
   const train = await runStep(
     'Training CatBoost',
-    `python ml/train_catboost.py --db "${DB_PATH}"`,
+    `${PYTHON_BIN} ml/train_catboost.py --db "${DB_PATH}"`,
   );
   if (!train.success) {
     log('Pipeline échoué à l\'étape Training');
