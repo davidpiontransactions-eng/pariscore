@@ -45,6 +45,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+--color-destructive-foreground: #ffffff;
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -387,3 +388,4 @@
 .tab-content-animate {
   animation: tab-fade-in 200ms ease-out;
 }
+".text-destructive-foreground { color: var(--color-destructive-foreground); }" 
