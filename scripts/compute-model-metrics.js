@@ -3,7 +3,8 @@
 // et les stocke en DB ou en JSON. Usage: node scripts/compute-model-metrics.js --period=7d
 
 import { parseArgs } from "node:util";
-import { Database } from "better-sqlite3";
+import pkg from "better-sqlite3";
+const { Database } = pkg;
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
