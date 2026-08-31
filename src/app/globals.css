@@ -388,4 +388,7 @@
 .tab-content-animate {
   animation: tab-fade-in 200ms ease-out;
 }
-".text-destructive-foreground { color: var(--color-destructive-foreground); }" 
+
+.text-destructive-foreground { color: var(--color-destructive-foreground); }
+'/* Charter Design Tokens (DESIGN_CHARTER.md v1.0) */'  
+'/* --accent: #00e676; --bg: #0b0e17; --font-head: "Poppins"; --font-body: "Inter" */'  
