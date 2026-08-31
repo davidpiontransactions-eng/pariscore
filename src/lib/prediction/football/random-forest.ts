@@ -1,6 +1,9 @@
 // Random Forest classifier — JS-native inference.
 // Soft-voting across decision trees for 3-class output (Home/Draw/Away).
 // Trees stored as flat arrays for fast traversal.
+// Serialization: loadModel() / saveModel() pour persister les arbres entraînés.
+
+import { readFileSync, writeFileSync, existsSync } from "fs";
 
 const NODE_SIZE = 7; // [featIdx, thresh, leftIdx, rightIdx, valHome, valDraw, valAway]
 const LEAF_MARKER = -1;
@@ -14,6 +17,13 @@ type TreeNode = {
 type DecisionTree = TreeNode[];
 
 type Sample = { features: number[]; label: number }; // 0=Home, 1=Draw, 2=Away
+
+/** Représentation sérialisée d'un modèle RF pour stockage JSON. */
+type SerializedRF = {
+  version: 1;
+  featureCount: number;
+  trees: number[][]; // chaque arbre = flat array [featIdx, thresh, left, right, vH, vD, vA, ...]
+};
 
 export type RFProbs = { home: number; draw: number; away: number };
 
@@ -105,6 +115,53 @@ export class RandomForest {
   constructor(trees: DecisionTree[], featureCount: number) {
     this.trees = trees;
     this.featureCount = featureCount;
+  }
+
+  /** Nombre d'arbres dans la forêt. */
+  get treeCount(): number {
+    return this.trees.length;
+  }
+
+  /** Charge un modèle RF sérialisé depuis un fichier JSON. */
+  static loadModel(path: string): RandomForest | null {
+    try {
+      if (!existsSync(path)) return null;
+      const raw = readFileSync(path, "utf-8");
+      const data: SerializedRF = JSON.parse(raw);
+      if (data.version !== 1 || !Array.isArray(data.trees)) return null;
+
+      const trees: DecisionTree[] = data.trees.map((flat) => {
+        const nodes: TreeNode[] = [];
+        for (let i = 0; i < flat.length; i += NODE_SIZE) {
+          nodes.push({
+            featIdx: flat[i],
+            threshold: flat[i + 1],
+            left: flat[i + 2],
+            right: flat[i + 3],
+            valHome: flat[i + 4],
+            valDraw: flat[i + 5],
+            valAway: flat[i + 6],
+          });
+        }
+        return nodes;
+      });
+
+      return new RandomForest(trees, data.featureCount);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Sérialise le modèle RF en JSON et l'écrit sur disque. */
+  saveModel(path: string): void {
+    const data: SerializedRF = {
+      version: 1,
+      featureCount: this.featureCount,
+      trees: this.trees.map((tree) =>
+        tree.flatMap((n) => [n.featIdx, n.threshold, n.left, n.right, n.valHome, n.valDraw, n.valAway])
+      ),
+    };
+    writeFileSync(path, JSON.stringify(data), "utf-8");
   }
 
   /** Predict class probabilities. */

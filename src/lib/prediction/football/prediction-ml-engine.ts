@@ -9,6 +9,35 @@ import type { FootballMatch } from "../../football-data";
 import type { Markets, LiveInputs, LiveMarkets, EloPair } from "./types";
 import { round2 } from "./math-utils";
 
+// ── Modèle RF chargé une seule fois au démarrage du module ──────────────────
+// Si aucun fichier de modèle n'existe, on reste sur le fallback Elo (comportement
+// identique à avant). Le chemin peut être surchargé via env RF_MODEL_PATH.
+let _cachedRF: RandomForest | null = null;
+let _rfLoadAttempted = false;
+
+function getRFModel(featCount: number): RandomForest | null {
+  if (_rfLoadAttempted) return _cachedRF;
+  _rfLoadAttempted = true;
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const modelPath = process.env.RF_MODEL_PATH
+      || path.join(process.cwd(), "models", "rf_football_1x2_v1.json");
+    if (fs.existsSync(modelPath)) {
+      _cachedRF = RandomForest.loadModel(modelPath);
+      if (_cachedRF && _cachedRF.treeCount > 0) {
+        console.log(`[RF] ✓ Modèle chargé: ${_cachedRF.treeCount} arbres (${modelPath})`);
+      } else {
+        console.warn("[RF] Fichier présent mais invalide — fallback Elo");
+        _cachedRF = null;
+      }
+    }
+  } catch {
+    // silencieux — fallback Elo
+  }
+  return _cachedRF;
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -162,9 +191,10 @@ export function predictML(inputs: MLEngineInputs): MLPrediction {
   const feat = extractFeatures(inputs.match, inputs.homeElo, inputs.awayElo);
   const featArr = featureToArray(feat);
 
-  // 2. Random Forest (fallback to Elo if not trained)
-  const rf = new RandomForest([], featArr.length);
-  const rfProbs: RFProbs = rf.trees.length > 0 ? rf.predict(featArr)
+  // 2. Random Forest (fallback to Elo if no trained model available)
+  const rfModel = getRFModel(featArr.length);
+  const rfProbs: RFProbs = rfModel !== null && rfModel.treeCount > 0
+    ? rfModel.predict(featArr)
     : { home: feat.eloProbHome, draw: Math.max(0, 1 - feat.eloProbHome - 0.25), away: 0.25 };
 
   // 3. XGBoost
