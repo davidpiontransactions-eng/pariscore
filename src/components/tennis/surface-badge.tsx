@@ -109,7 +109,7 @@ export function SurfaceBadge({
             "inline-flex items-center gap-1 rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[11px] font-bold uppercase leading-none text-muted-foreground",
             colorClass,
             " hover:bg-card/50 transition-colors",
-            isHovered && "ring-2 ring-primary/20"
+            "data-[state=hover]:ring-2 ring-primary/20"
           )}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -136,7 +136,7 @@ export function SurfaceBadge({
             )}
           </PopoverContent>
         </Popover>
-      )}
-    </Tooltip>
+      </Tooltip>
+    </div>
   );
 }
