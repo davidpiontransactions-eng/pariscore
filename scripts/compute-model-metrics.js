@@ -127,30 +127,17 @@ if (DRY_RUN || OUTPUT === "json") {
   writeFileSync(outPath, JSON.stringify(results, null, 2));
   console.log(`[DRY-RUN] Écriture dans ${outPath}`);
 } else {
-  // Create table if not exists
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS model_metrics (
-      id TEXT PRIMARY KEY,
-      modelVersionId TEXT,
-      market TEXT,
-      brierScore REAL,
-      logLoss REAL,
-      accuracy REAL,
-      sampleSize INTEGER,
-      computedAt TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (modelVersionId) REFERENCES "ModelVersion"(id)
-    )
-  `);
-  
+  // Write to Prisma ModelMetrics table
+  const periodLabel = `${PERIOD_DAYS}d`;
   const insert = db.prepare(`
-    INSERT INTO model_metrics (id, modelVersionId, market, brierScore, logLoss, accuracy, sampleSize, computedAt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    INSERT INTO "ModelMetrics" (id, modelVersionId, market, brierScore, logLoss, accuracy, sampleSize, period, computedAt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `);
-  
+
   for (const r of results) {
-    insert.run(`metrics_${Date.now()}_${r.market}`, r.modelVersionId, r.market, r.brierScore, r.logLoss, r.accuracy, r.sampleSize);
+    insert.run(`metrics_${Date.now()}_${r.market}`, r.modelVersionId, r.market, r.brierScore, r.logLoss, r.accuracy, r.sampleSize, periodLabel);
   }
-  console.log(`✓ ${results.length} métriques écrites en DB`);
+  console.log(`✓ ${results.length} métriques écrites en ModelMetrics`);
 }
 
 // Print summary table
