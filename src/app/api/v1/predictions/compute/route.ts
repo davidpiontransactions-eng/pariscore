@@ -171,6 +171,13 @@ export async function POST(request: Request) {
 
     // --- Moteur ML hybride ---
     const match = buildMinimalMatch(body.matchId);
+    // Injecter les xG fournis dans le match ML
+    if (homeXG != null || awayXG != null) {
+      match.prediction.xGa = {
+        home: homeXG ?? match.prediction.xGa?.home ?? null,
+        away: awayXG ?? match.prediction.xGa?.away ?? null,
+      };
+    }
     const mlInputs: MLEngineInputs = {
       match,
       homeElo: homeElo ?? undefined,
