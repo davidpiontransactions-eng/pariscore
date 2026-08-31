@@ -1,0 +1,69 @@
+name: Deploy VPS
+
+# Déploiement automatique sur le VPS Production après chaque push sur main.
+#
+# Réutilise le même runner que scripts/deploy.bat (scripts/update_vps.sh) :
+#   - git fetch + reset --hard origin/main sur le VPS
+#   - npm install (si deps changées) + next build (si src/app/next.config/tsconfig changés)
+#   - pm2 restart pariscore / pariscore-next
+#   - health check + notification Discord optionnelle
+#
+# Prérequis (secrets GitHub — Settings → Secrets and variables → Actions) :
+#   VPS_HOST     ex: 51.75.21.239
+#   VPS_USER     ex: ubuntu
+#   VPS_SSH_KEY  clé privée SSH (la clé publique doit être dans ~/.ssh/authorized_keys du VPS)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}  # déclenchement manuel possible
+
+concurrency:
+  group: vps-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Déploiement VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SSH host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.VPS_SSH_KEY }}
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      - name: Lancer update_vps.sh sur le VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -e
+          # Streaming du runner (scripts/update_vps.sh) vers le VPS, puis exécution.
+          # Supprime les \r (CRLF) pour éviter "$'\r': command not found" sur bash.
+          ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new \
+            "${VPS_USER}@${VPS_HOST}" \
+            "cat > /tmp/update_vps.raw && tr -d '\r' < /tmp/update_vps.raw > /tmp/update_vps.sh && chmod +x /tmp/update_vps.sh && bash /tmp/update_vps.sh" \
+            < scripts/update_vps.sh
+
+      - name: Notification Discord (optionnelle)
+        if: always()
+        env:
+          DISCORD_DEPLOY_WEBHOOK_URL: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL }}
+        run: |
+          if [ -n "$DISCORD_DEPLOY_WEBHOOK_URL" ]; then
+            STATUS="${{ job.status }}"
+            curl -s -H "Content-Type: application/json" -X POST \
+              -d "{\"content\":\"GitHub Actions déploiement VPS: **${STATUS}**\"}" \
+              "$DISCORD_DEPLOY_WEBHOOK_URL" || true
+          fi

@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build && mkdir .next\\standalone && xcopy /E /I .next\\static .next\\standalone && xcopy /E /I public .next\\standalone && mkdir .next\\standalone\\src\\lib\\tennis-elo && copy src\\lib\\tennis-elo\\abstract-cache.json .next\\standalone\\src\\lib\\tennis-elo 2>nul || true && mkdir .next\\standalone\\src\\lib\\tennis-dr && copy src\\lib\\tennis-dr\\dr-cache.json .next\\standalone\\src\\lib\\tennis-dr 2>nul || true",
+    "build": "next build && node scripts/postbuild.mjs",
     "start": "RUN_BUN_TIMEOUT_MS=0 NODE_ENV=production node scripts/run-bun.js .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint src scripts public packages",
     "typecheck": "tsc --noEmit",
