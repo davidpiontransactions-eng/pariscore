@@ -4,7 +4,7 @@
     "leagueId": "austria_bundesliga",
     "leagueName": "Austria",
     "season": "2026/27",
-    "lastUpdated": "2026-08-30T10:04:02.724151Z",
+    "lastUpdated": "2026-08-31T11:03:10.263740Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -22,6 +22,24 @@
       "ga": 1
     },
     {
+      "teamName": "Wolfsberger Ac",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
+    },
+    {
+      "teamName": "Salzburg",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 5,
+      "ga": 1
+    },
+    {
       "teamName": "Grazer Ak",
       "gp": 2,
       "w": 1,
@@ -32,29 +50,11 @@
     },
     {
       "teamName": "Rapid Wien",
-      "gp": 2,
-      "w": 2,
+      "gp": 3,
+      "w": 3,
       "d": 0,
       "l": 0,
-      "gf": 9,
-      "ga": 0
-    },
-    {
-      "teamName": "Sturm Graz",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
-    },
-    {
-      "teamName": "Wolfsberger Ac",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
+      "gf": 12,
       "ga": 1
     }
   ],
@@ -69,15 +69,6 @@
       "ga": 0
     },
     {
-      "teamName": "Salzburg",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
-      "ga": 1
-    },
-    {
       "teamName": "Rapid Wien",
       "gp": 1,
       "w": 1,
@@ -87,12 +78,12 @@
       "ga": 1
     },
     {
-      "teamName": "Sturm Graz",
+      "teamName": "Salzburg",
       "gp": 2,
       "w": 1,
       "d": 1,
       "l": 0,
-      "gf": 3,
+      "gf": 4,
       "ga": 1
     },
     {
@@ -103,6 +94,15 @@
       "l": 1,
       "gf": 5,
       "ga": 3
+    },
+    {
+      "teamName": "Sturm Graz",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
+      "l": 1,
+      "gf": 4,
+      "ga": 4
     }
   ]
 }
