@@ -1,0 +1,11 @@
+src/components/athlete-gallery/athlete-gallery.tsx(135,193): error TS1003: Identifier expected.
+src/components/athlete-gallery/athlete-gallery.tsx(135,198): error TS1005: ';' expected.
+src/components/athlete-gallery/athlete-gallery.tsx(136,27): error TS1005: ',' expected.
+src/components/athlete-gallery/athlete-gallery.tsx(175,7): error TS1128: Declaration or statement expected.
+src/components/athlete-gallery/athlete-gallery.tsx(176,5): error TS1109: Expression expected.
+src/components/athlete-header/athlete-header.tsx(138,136): error TS1003: Identifier expected.
+src/components/athlete-header/athlete-header.tsx(138,157): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/athlete-header/athlete-header.tsx(138,159): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/athlete-header/athlete-header.tsx(190,7): error TS1005: ')' expected.
+src/components/athlete-header/athlete-header.tsx(229,5): error TS1128: Declaration or statement expected.
+src/components/athlete-header/athlete-header.tsx(230,3): error TS1109: Expression expected.

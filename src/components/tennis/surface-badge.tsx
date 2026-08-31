@@ -77,7 +77,7 @@ export function SurfaceBadge({
           <div>
             <span className="font-medium">Differential Elo</span>
             <span className={eloDifferential > 0 ? "text-green-600" : "text-red-600"}>
-              {eloDifferential:+.1f}
+              {Number(eloDifferential).toFixed(1)}
             </span>
             {` points ${eloDifferential > 0 ? "favorise" : "défavorise"} ce surface`}
           </div>
@@ -86,7 +86,7 @@ export function SurfaceBadge({
           <div>
             <span className="font-medium">Ajustement prob.</span>
             <span className={probAdjustment > 0 ? "text-green-600" : "text-red-600"}>
-              {probAdjustment:+.1f}%
+              {Number(probAdjustment).toFixed(1)}%
             </span>
             {` au gain attendu`}
           </div>
@@ -136,7 +136,7 @@ export function SurfaceBadge({
             )}
           </PopoverContent>
         </Popover>
-      </Tooltip>
-    </div>
+      )}
+    </Tooltip>
   );
 }

@@ -1,0 +1,1 @@
+praxist setup: --interactive requires a local interactive terminal

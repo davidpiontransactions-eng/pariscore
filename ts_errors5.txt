@@ -1,0 +1,6 @@
+src/components/athlete-header/athlete-header.tsx(124,6): error TS17008: JSX element 'div' has no corresponding closing tag.
+src/components/athlete-header/athlete-header.tsx(158,17): error TS1005: '}' expected.
+src/components/athlete-header/athlete-header.tsx(159,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/athlete-header/athlete-header.tsx(160,12): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/athlete-header/athlete-header.tsx(179,2): error TS1005: ')' expected.
+src/components/athlete-header/athlete-header.tsx(179,2): error TS1005: '</' expected.

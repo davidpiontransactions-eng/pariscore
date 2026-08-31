@@ -1,0 +1,39 @@
+src/components/alerts/alert-preferences.tsx(125,14): error TS17008: JSX element 'Label' has no corresponding closing tag.
+src/components/alerts/alert-preferences.tsx(140,14): error TS17008: JSX element 'Label' has no corresponding closing tag.
+src/components/alerts/alert-preferences.tsx(155,14): error TS17008: JSX element 'Label' has no corresponding closing tag.
+src/components/alerts/alert-preferences.tsx(206,3): error TS1131: Property or signature expected.
+src/components/alerts/alert-preferences.tsx(206,17): error TS1005: ',' expected.
+src/components/alerts/alert-preferences.tsx(207,1): error TS1138: Parameter declaration expected.
+src/components/disclosure/progressive-disclosure.tsx(153,94): error TS1003: Identifier expected.
+src/components/disclosure/progressive-disclosure.tsx(153,113): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/disclosure/progressive-disclosure.tsx(153,115): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/disclosure/progressive-disclosure.tsx(155,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/disclosure/progressive-disclosure.tsx(159,94): error TS1003: Identifier expected.
+src/components/disclosure/progressive-disclosure.tsx(159,113): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/disclosure/progressive-disclosure.tsx(159,115): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/disclosure/progressive-disclosure.tsx(161,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/disclosure/progressive-disclosure.tsx(162,13): error TS17002: Expected corresponding JSX closing tag for 'DialogContent'.
+src/components/disclosure/progressive-disclosure.tsx(165,91): error TS1003: Identifier expected.
+src/components/disclosure/progressive-disclosure.tsx(165,110): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/disclosure/progressive-disclosure.tsx(165,112): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/disclosure/progressive-disclosure.tsx(167,15): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/disclosure/progressive-disclosure.tsx(168,13): error TS17002: Expected corresponding JSX closing tag for 'Dialog'.
+src/components/disclosure/progressive-disclosure.tsx(169,9): error TS1005: ')' expected.
+src/components/disclosure/progressive-disclosure.tsx(172,14): error TS1005: ';' expected.
+src/components/disclosure/progressive-disclosure.tsx(173,11): error TS2657: JSX expressions must have one parent element.
+src/components/disclosure/progressive-disclosure.tsx(189,9): error TS1128: Declaration or statement expected.
+src/components/disclosure/progressive-disclosure.tsx(192,14): error TS1005: ';' expected.
+src/components/disclosure/progressive-disclosure.tsx(200,9): error TS1128: Declaration or statement expected.
+src/components/disclosure/progressive-disclosure.tsx(201,7): error TS1109: Expression expected.
+src/components/disclosure/progressive-disclosure.tsx(202,5): error TS1109: Expression expected.
+src/components/disclosure/progressive-disclosure.tsx(203,3): error TS1109: Expression expected.
+src/components/probability/distribution-popup.tsx(175,26): error TS1005: ',' expected.
+src/components/probability/distribution-popup.tsx(175,27): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/probability/distribution-popup.tsx(219,3): error TS1131: Property or signature expected.
+src/components/probability/distribution-popup.tsx(219,16): error TS1005: ',' expected.
+src/components/probability/distribution-popup.tsx(220,1): error TS1138: Parameter declaration expected.
+src/components/probability/distribution-popup.tsx(244,62): error TS1160: Unterminated template literal.
+src/components/tennis/surface-badge.tsx(80,31): error TS1005: '}' expected.
+src/components/tennis/surface-badge.tsx(80,36): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/tennis/surface-badge.tsx(89,30): error TS1005: '}' expected.
+src/components/tennis/surface-badge.tsx(89,35): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?

@@ -1,0 +1,272 @@
+# PRODUCT.md
+
+# PRODUCT.md — PariScore
+
+> Strategic root file for PariScore. Read by every Impeccable command before
+> doing any work. Answers **who / what / why**. Visual answers live in
+> [DESIGN.md](./DESIGN.md).
+
+## Register
+
+**product**
+
+PariScore is an **app UI**, not a marketing surface. The interface serves the
+product (betting analysis, live predictions, value-bet detection). Users come
+here to *do* a job — read data, compare odds, track matches, act on a bet — not
+to be sold a brand story.
+
+The few landing-shaped routes (`/`, `/setpoint`) exist for entry/navigation, but
+the **primary surface is product**: dialogs, data tables, live match cards,
+prediction panels, dashboards. Design is in service of clarity and speed, not
+theater.
+
+## Target users
+
+- **Primary**: recreational-but-informed sports bettors. They understand odds,
+  Elo/ratings, and form; they want an edge, not a casino thrill.
+- **Secondary**: data-curious sports fans who follow tennis / football / MMA /
+  F1 and want predictive context around matches.
+- **Context of use**: mobile-first (PWA, Web Push alerts), often checking live
+  matches and odds mid-game. Sessions are short, frequent, glanceable.
+- **Language**: French primary (`next-intl`, FR config), English-capable.
+
+## Purpose
+
+Centralize, in one fast PWA:
+
+- **Pre-match intelligence** across 8 sports (tennis, football, MMA, cycling, F1,
+  CS2, NBA, WNBA): Elo + surface-Elo + form-driven win probabilities, PowerScore,
+  H2H, implied-probability vs bookmaker odds (value-bet detection).
+- **Live tracking**: scores, momentum, set-by-set, serve stats, live probability
+  shifts, in-play value detection.
+- **Strategy & bankroll**: betting strategies, bankroll management, bet tracking.
+- **Alerts**: Web Push notifications for value bets and live match events.
+
+The job the user is trying to get done: **"Is there a value bet here, and should
+I act on it now?"** Every screen should help answer that fast.
+
+## Brand personality
+
+- **Data-driven, not flashy.** Numbers and probabilities lead; decoration
+  follows. Trust comes from transparency (show the model, the inputs, the
+  margin), not from neon excitement.
+- **Calm under pressure.** During a live match the screen must stay legible and
+  uncluttered even with rapid updates. No aggressive pulsing/flashing that mimics
+  gambling UI.
+- **Fast and decisive.** The UI should feel instant — pre-match scans, quick
+  bet-slip add, one-tap value alerts. Latency and friction are the enemy.
+- **Sobriety over spectacle.** A muted, dark-friendly palette with one or two
+  accent colors per sport. Color encodes meaning (sport, confidence, value),
+  never just decoration.
+
+## Anti-references (what we are NOT)
+
+- **Not a casino / gambling UI.** No slot-machine animations, no confetti, no
+  "BIG WIN" flashes, no aggressive red/green pulsing that mimics roulette. We are
+  an analytics tool that happens to surface bets, not a game.
+- **Not a cluttered odds aggregator.** Not a wall of 40 bookmaker logos and
+  scrolling tickers à la Flashscore at its busiest. Information density yes,
+  visual chaos no.
+- **Not a hype-y "AI prediction" landing page.** No purple gradients, no "🤖
+  SUPER AI" badges, no fake authority. Models are explained in plain terms
+  (Elo, form, surface) with their limits.
+- **Not a dark-pattern upsell machine.** No manipulative CTAs, no urgency
+  timers pushing a bet, no hidden odds margins. Honesty about vig and value.
+
+## Strategic design principles
+
+1. **Probability is the hero.** When a screen has a probability / PowerScore /
+   value indicator, it is the largest, clearest element. Odds and bookmaker names
+   are secondary.
+2. **Color encodes meaning, always.** Sport (tennis green, football blue, MMA
+   red, cycling amber), confidence/value (green = value for player, red = trap),
+   live state (live = accent pulse, finished = muted). Never decorative color.
+3. **Glanceable first, detailed on demand.** Card → dialog/tap pattern. The card
+   answers "anything worth my attention?" in <1s; the detail does the deep dive.
+4. **Dark mode is first-class.** Live betting happens at night, on phones, in
+  low light. Dark theme must be fully designed, not an afterthought inversion.
+5. **Responsible by default.** No visuals that mimic gambling reward loops.
+   Bankroll/loss context is always one tap away. We surface value, we do not
+   manufacture urgency.
+6. **One source of truth for theme.** Design tokens live in `src/app/globals.css`
+   (CSS variables) and `tailwind.config.ts`. Components are shadcn/ui (New York).
+   Do not introduce ad-hoc color values in components.
+
+---
+
+# DESIGN.md
+
+# DESIGN.md — PariScore
+
+> Visual root file for PariScore. Follows the [design.md format spec].
+> Answers **how it looks**. Strategic answers (who/what/why) live in
+> [PRODUCT.md](./PRODUCT.md).
+>
+> [design.md format spec]: https://raw.githubusercontent.com/google-labs-code/design.md/main/docs/spec.md
+
+## Foundation
+
+### Theme model
+
+**Dual-theme, class-based.** `darkMode: "class"` in `tailwind.config.ts`. Dark is
+**first-class** (live betting happens at night, on phones) — it is designed, not
+an inverted afterthought. Light is the shadcn/ui New York default.
+
+Tokens are defined once as **CSS variables** in `src/app/globals.css` (oklch for
+the shadcn semantic set, hex for the fixed sport/surface brand set) and surfaced
+to Tailwind via `@theme inline` + `tailwind.config.ts`. Components consume
+semantic Tailwind classes (`bg-card`, `text-muted-foreground`), **never raw
+color values**.
+
+### Typography
+
+| Role | Family | Notes |
+|------|--------|-------|
+| Sans (UI, body) | **Geist** (`next/font/google`) | variable, `--font-geist-sans`, `-moz-osx-font-smoothing: grayscale` |
+| Mono (numbers, code) | **Geist Mono** (`next/font/google`) | variable, `--font-geist-mono` |
+
+Loaded in `src/app/layout.tsx` via `next/font`. Numeric data (odds, Elo,
+probabilities, scores) leans on **tabular-nums** (`tabular-nums` utility) so
+columns of figures align and don't jitter as values update live.
+
+Type scale follows Tailwind defaults; dense data screens favor smaller sizes
+(`text-xs`/`text-sm`) with `font-semibold`/`font-bold` for emphasis over size.
+
+### Iconography
+
+**lucide-react** — consistent 1.5px stroke, tree-shakeable. Sport glyphs and
+logos are raster assets (CDN-resfu / scraped), not icons.
+
+## Color
+
+### Semantic palette (shadcn/ui New York, oklch)
+
+Defined as CSS variables, swapped between `:root` (light) and `.dark`:
+
+| Token | Light | Dark |
+|-------|-------|------|
+| `--background` | `oklch(1 0 0)` | `oklch(0.145 0 0)` |
+| `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` |
+| `--card` | `oklch(1 0 0)` | `oklch(0.205 0 0)` |
+| `--primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` |
+| `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
+| `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
+| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` |
+| `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` |
+| `--destructive` | `oklch(0.577 0.245 27.325)` | `oklch(0.704 0.191 22.216)` |
+| `--border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` |
+| `--input` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 15%)` |
+| `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` |
+
+The set is **achromatic** (zero chroma except `destructive`) on purpose: it keeps
+the UI calm and lets the **sport/value colors** (below) carry all meaning.
+Refrain from adding chromatic neutrals.
+
+### Brand & sport colors (fixed hex, same in both themes)
+
+These encode **meaning**, so they are theme-invariant:
+
+| Token | Value | Meaning |
+|-------|-------|---------|
+| `--sport-tennis` | `#10B981` | emerald — tennis |
+| `--sport-football` | `#0EA5E9` | sky — football |
+| `--sport-mma` | `#EF4444` | red — MMA |
+| `--sport-cycling` | `#F59E0B` | amber — cycling |
+| `--surface-dark` | `#0F0F1A` | near-black blue — deep background for sport cards (F1/MMA) |
+| `--surface-card` | `#1A1A2E` | dark navy — sport card surface |
+
+**Value/confidence convention:** green = value / favorable, red = trap /
+unfavorable. Reuse `--destructive` for traps, emerald tones for value. Never use
+these colors decoratively.
+
+### Chart palette (recharts, oklch)
+
+5-step categorical palette, distinct between themes for contrast on each
+background: `--chart-1..5`. Dark skews more saturated (`0.488 0.243 264.376`
+→ blue, `0.696 0.17 162.48` → green, …) to read on `oklch(0.145 0 0)`.
+
+### Radius
+
+`--radius: 0.625rem` (10px), scaled via Tailwind: `lg = --radius`,
+`md = --radius - 2px`, `sm = --radius - 4px`. Cards/dialogs use `rounded-lg`
+(often `rounded-2xl` on sport-specific cards like F1/MMA). Pill badges use
+`rounded-full`.
+
+## Components
+
+**Library: shadcn/ui (New York style) + Radix UI primitives**, 48 components in
+`src/components/ui/`. Not a dependency — source is owned and edited in-repo.
+
+- **Surfaces**: `card`, `dialog`, `drawer` (mobile), `sheet`, `popover`,
+  `hover-card`, `tooltip`, `alert-dialog`.
+- **Inputs**: `button`, `input`, `textarea`, `select`, `checkbox`, `radio-group`,
+  `switch`, `slider`, `toggle`, `toggle-group`, `calendar`, `form`,
+  `input-otp`, `command` (cmdk), `combobox`-pattern.
+- **Data display**: `table`, `badge`, `avatar`, `progress`, `separator`,
+  `scroll-area`, `carousel` (embla), `tabs`, `accordion`, `collapsible`,
+  `chart` (recharts wrapper).
+- **Navigation**: `navigation-menu`, `menubar`, `dropdown-menu`, `context-menu`,
+  `breadcrumb`, `pagination`.
+- **Feedback**: `sonner` toasts, `alert`.
+
+**Animation**: `framer-motion` for orchestrated motion (page transitions, card
+entrance, dialog springs), `tw-animate-css` + `tailwindcss-animate` for utility
+transitions. Motion is restrained (see Principles: calm under pressure).
+
+## Layout
+
+- **Mobile-first PWA**. Primary canvas is a phone in portrait; the app is
+  installable with Web Push.
+- **Card → detail pattern**: dense lists of match cards (glanceable) open into
+  dialogs/drawers/tabs for deep analysis. See PRODUCT.md principle 3.
+- **App shell**: top/side nav depending on viewport; `navigation-menu` + tabs
+  for sport switching.
+- **Grids**: responsive auto-grids for match cards; `container` max-widths via
+  Tailwind. Data tables use `tanstack/react-table`.
+- **Safe areas**: respect mobile notches; PWA display standalone.
+
+## Patterns & motion
+
+- **Entrance**: cards fade + slide-up (`initial={{opacity:0,y:20}}` →
+  `animate={{opacity:1,y:0}}`), staggered by `index * 0.04s`.
+- **Live state**: a restrained accent pulse on live indicators — **never**
+  casino-style flashing. "Live" = subtle motion; "finished" = muted/dimmed.
+- **Numbers updating**: tabular-nums + a brief opacity fade, not digit-roll
+  animations (keeps the UI legible during rapid live updates).
+- **Hover**: borders shift to an accent-tinted color + soft shadow
+  (`hover:shadow-[0_0_20px_rgba(0,230,118,0.15)]` on F1 cards, etc.). Use the
+  relevant `--sport-*` accent per context.
+
+## Source of truth
+
+- **CSS variables** → `src/app/globals.css` (`:root`, `.dark`, `@theme inline`)
+- **Tailwind mapping** → `tailwind.config.ts` (`theme.extend.colors`,
+  `borderRadius`)
+- **Fonts** → `src/app/layout.tsx` (`next/font/google`: Geist, Geist Mono)
+- **Components** → `src/components/ui/` (shadcn/ui, owned)
+
+Do **not** introduce inline ad-hoc color values in components (e.g. literal hex
+in `style={{}}`). Add a token to `globals.css` + surface it in Tailwind, then use
+the semantic class. The one documented exception is per-sport accent tints inside
+`style` for assets that must composite with a team/sport color (see
+`f1-driver-card.tsx` `boxShadow`).
+
+---
+
+RESOLVED_CONTEXT:
+{
+  "targetPath": ".",
+  "targetExists": true,
+  "projectRoot": "C:\\Users\\David\\ZCodeProject\\pariscore",
+  "repoRoot": "C:\\Users\\David\\ZCodeProject\\pariscore",
+  "productPath": "PRODUCT.md",
+  "designPath": "DESIGN.md"
+}
+
+---
+
+NEXT STEP: You MUST now read the matching register reference (`reference/brand.md` or `reference/product.md`) before producing any design output. Pick based on PRODUCT.md above.
+
+---
+
+UPDATE_AVAILABLE: A newer Impeccable skill is available (installed v3.9.1, latest v4.1.1). Before continuing, ask the user once: "A newer Impeccable (v4.1.1) is available. Update now? It runs `npx impeccable update`." If they agree, run `npx impeccable update` (the update applies to the next session, not this one). Either way, continue the current task without waiting, and do not raise this again.

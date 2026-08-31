@@ -1,0 +1,10 @@
+src/components/alerts/alert-preferences.tsx(125,14): error TS17008: JSX element 'Label' has no corresponding closing tag.
+src/components/alerts/alert-preferences.tsx(140,14): error TS17008: JSX element 'Label' has no corresponding closing tag.
+src/components/alerts/alert-preferences.tsx(155,14): error TS17008: JSX element 'Label' has no corresponding closing tag.
+src/components/alerts/alert-preferences.tsx(206,3): error TS1131: Property or signature expected.
+src/components/alerts/alert-preferences.tsx(206,17): error TS1005: ',' expected.
+src/components/alerts/alert-preferences.tsx(207,1): error TS1138: Parameter declaration expected.
+src/components/tennis/surface-badge.tsx(80,31): error TS1005: '}' expected.
+src/components/tennis/surface-badge.tsx(80,36): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/tennis/surface-badge.tsx(89,30): error TS1005: '}' expected.
+src/components/tennis/surface-badge.tsx(89,35): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
