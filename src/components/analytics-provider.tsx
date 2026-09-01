@@ -3,7 +3,6 @@
 import posthog, { type PostHog } from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
 import { useEffect, useState } from "react";
-import { useConsent } from "@/components/consent-provider";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://app.posthog.com";
@@ -34,50 +33,19 @@ function initPostHog(): PostHog | null {
 }
 
 function getPostHog(): PostHog | null {
-  // Returns the client only if it has been initialized AND consent was granted.
-  // The init happens lazily on first consent grant (see PHProvider below).
   return posthogClient;
 }
 
 export function PHProvider({ children }: { children: React.ReactNode }) {
-  const { state, hasDecided } = useConsent();
   const [client, setClient] = useState<PostHog | null>(null);
 
-  // Initialiser PostHog dès le mount (eager) pour éviter le remount des
-  // enfants quand le type d'élément change de Fragment → PostHogProvider.
-  // On opt-out immédiatement tant que le consentement n'est pas donné.
+  // Initialiser PostHog dès le mount (eager)
   useEffect(() => {
     const ph = initPostHog();
     if (ph) {
-      try {
-        // Opt-out par défaut — sera réactivé quand le consentement sera accordé
-        if (!ph.has_opted_out_capturing()) {
-          ph.opt_out_capturing();
-        }
-      } catch {
-        /* ignore */
-      }
       setClient(ph);
     }
   }, []);
-
-  // Réagir aux changements de consentement pour opt-in/opt-out
-  useEffect(() => {
-    if (!hasDecided || !posthogClient) return;
-    try {
-      if (state.analytics) {
-        if (posthogClient.has_opted_out_capturing()) {
-          posthogClient.opt_in_capturing();
-        }
-      } else {
-        if (!posthogClient.has_opted_out_capturing()) {
-          posthogClient.opt_out_capturing();
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [hasDecided, state.analytics]);
 
   // Toujours rendre PostHogProvider pour éviter le remount des enfants
   if (!client) return <>{children}</>;
@@ -136,7 +104,7 @@ export function useAnalytics() {
      * variant without having to thread the variant through every `track`
      * call.
      *
-     * No-op when consent is denied or PostHog is uninitialised.
+     * No-op when PostHog is uninitialised.
      */
     setPersonProperties: (properties: Record<string, unknown>) => {
       const ph = getPostHog();

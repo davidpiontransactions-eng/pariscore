@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
 import { PHProvider } from "@/components/analytics-provider";
 import { ConsentProvider } from "@/components/consent-provider";
-import { ConsentBanner } from "@/components/consent-banner";
+
 import { PrivacyDialog } from "@/components/privacy-dialog";
 import { BankrollDialog } from "@/components/bankroll-dialog";
 import { PaperTradingDialog } from "@/components/paper-trading-dialog";
@@ -186,7 +186,6 @@ export default async function RootLayout({
                     <main id="main">
                       {children}
                     </main>
-                    <ConsentBanner />
                     <PrivacyDialog />
                     <BankrollDialog />
                     <PaperTradingDialog />

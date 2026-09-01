@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useEmailAlerts } from "@/hooks/use-email-alerts";
-import { useHasAnalyticsConsent } from "@/components/consent-provider";
 import { useAnalytics } from "@/components/analytics-provider";
 import type { TennisMatch } from "@/lib/tennis-data";
 
@@ -131,7 +130,6 @@ export function useDigestScheduler() {
   const { data } = usePrematchMatches();
   const { subscribed: pushSubscribed } = usePushNotifications();
   const { subscribed: emailSubscribed } = useEmailAlerts();
-  const hasConsent = useHasAnalyticsConsent();
   const { track } = useAnalytics();
 
   const [enabled, setEnabled] = useState(false);
@@ -142,7 +140,6 @@ export function useDigestScheduler() {
   const matchesRef = useRef<TennisMatch[]>(data?.matches ?? []);
   const pushRef = useRef(pushSubscribed);
   const emailRef = useRef(emailSubscribed);
-  const consentRef = useRef(hasConsent);
   const trackRef = useRef(track);
 
   useEffect(() => {
@@ -154,9 +151,6 @@ export function useDigestScheduler() {
   useEffect(() => {
     emailRef.current = emailSubscribed;
   }, [emailSubscribed]);
-  useEffect(() => {
-    consentRef.current = hasConsent;
-  }, [hasConsent]);
   useEffect(() => {
     trackRef.current = track;
   }, [track]);
@@ -241,8 +235,6 @@ export function useDigestScheduler() {
 
     const check = async () => {
       if (cancelled) return;
-      // RGPD: only fire when analytics consent has been granted.
-      if (!consentRef.current) return;
       // Digest must be opted-in.
       if (!isDigestEnabled()) return;
       // 24h must have elapsed since the last send (or never sent).
