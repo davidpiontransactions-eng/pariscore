@@ -76,7 +76,7 @@ export function RugbyTabContent() {
             <StandingsView slug={activeSlug} />
           )
         ) : (
-          <Card className="p-10 text-center text-sm text-slate-400">
+          <Card className="p-10 text-center text-sm text-white/60">
             {compsLoading ? "Chargement des compétitions…" : "Aucune compétition disponible."}
           </Card>
         )}

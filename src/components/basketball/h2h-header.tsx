@@ -126,7 +126,7 @@ export function H2HHeader({
         {/* Team A */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {teamALogo && (
-            <img src={teamALogo} alt="" className="h-10 w-10 object-contain shrink-0" />
+            <img src={teamALogo} alt="" className="h-10 w-10 object-contain shrink-0" loading="lazy" />
           )}
           <div className="min-w-0">
             <div className="text-sm font-bold truncate">{teamAName}</div>
@@ -144,7 +144,7 @@ export function H2HHeader({
             <div className="text-[10px] text-muted-foreground font-mono">{teamBAbr}</div>
           </div>
           {teamBLogo && (
-            <img src={teamBLogo} alt="" className="h-10 w-10 object-contain shrink-0" />
+            <img src={teamBLogo} alt="" className="h-10 w-10 object-contain shrink-0" loading="lazy" />
           )}
         </div>
       </div>

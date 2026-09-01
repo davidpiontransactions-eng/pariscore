@@ -190,7 +190,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
               key={threshold}
               type="button"
               className={cn(
-                "flex w-full items-center gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-muted/40",
+                "flex w-full items-center gap-2 rounded px-1 py-0.5 min-h-11 text-left transition-colors hover:bg-muted/40",
                 isRec && "ring-1 ring-emerald-500/40",
               )}
               title={t("overTooltip", { threshold: label, prob })}

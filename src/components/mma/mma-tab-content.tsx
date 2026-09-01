@@ -32,7 +32,7 @@ type ApiResponse = {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-5">
+    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-5" aria-busy="true">
       <div className="mx-auto mb-3 h-14 w-14 rounded-full bg-white/10" />
       <div className="mx-auto mb-2 h-4 w-32 rounded bg-white/10" />
       <div className="mx-auto mb-1 h-3 w-24 rounded bg-white/10" />

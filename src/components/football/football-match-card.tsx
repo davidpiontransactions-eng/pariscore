@@ -255,7 +255,7 @@ export function FootballMatchCard({
               <span className="text-xs font-bold text-white/90">{countryFlag(match.league.country)}</span>
             )}
             {match.league.logo && match.league.logo.startsWith("http") && (
-              <img src={match.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain brightness-125" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              <img src={match.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain brightness-125" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
             )}
             <span className="text-xs font-semibold text-white/80">{match.league.name}</span>
           </div>

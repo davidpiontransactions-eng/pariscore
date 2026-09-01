@@ -46,7 +46,7 @@ const SPORT_ICONS: Record<SportTab, string> = {
 
 function MatchCardSkeleton() {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
+    <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3" aria-busy="true">
       <Skeleton className="h-8 w-8 rounded-full" />
       <div className="flex-1 space-y-1.5">
         <Skeleton className="h-4 w-3/4" />

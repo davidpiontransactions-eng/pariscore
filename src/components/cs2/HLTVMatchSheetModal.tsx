@@ -217,7 +217,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
             <div>
               <div className="mb-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
                 {match.tournament_logo ? (
-                  <img src={match.tournament_logo} alt="" className="h-4 w-4 object-contain" />
+                  <img src={match.tournament_logo} alt="" className="h-4 w-4 object-contain" loading="lazy" />
                 ) : (
                   <Trophy className="h-3.5 w-3.5" />
                 )}

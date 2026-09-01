@@ -114,13 +114,13 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
               {driver.pos != null && (
                 <span className={cn(
                   "shrink-0 text-[11px] font-bold px-1.5 py-0.5 rounded",
-                  driver.pos <= 3 ? "bg-amber-500/20 text-amber-400" : "bg-white/5 text-zinc-400"
+                  driver.pos <= 3 ? "bg-amber-500/20 text-amber-400" : "bg-white/5 text-white/60"
                 )}>
                   #{driver.pos}
                 </span>
               )}
             </div>
-            <p className="truncate text-xs text-zinc-400">{driver.team}</p>
+            <p className="truncate text-xs text-white/50">{driver.team}</p>
           </div>
 
           {/* Championship points */}
@@ -129,7 +129,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
               <p className="text-lg font-bold tabular-nums" style={{ color: teamColor }}>
                 {driver.points}
               </p>
-              <p className="text-[11px] text-zinc-500">pts</p>
+              <p className="text-[11px] text-white/50">pts</p>
             </div>
           )}
         </div>
@@ -168,7 +168,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
 function StatBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="w-14 text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+      <span className="w-14 text-[11px] font-semibold uppercase tracking-wider text-white/50">
         {label}
       </span>
       <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-white/10">
@@ -186,7 +186,7 @@ function StatBar({ label, value, color }: { label: string; value: number; color:
 
 function StrengthBadge({ label, value }: { label: string; value: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+    <span className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white/60">
       {label}: {value}
     </span>
   );

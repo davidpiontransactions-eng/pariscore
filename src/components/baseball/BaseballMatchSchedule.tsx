@@ -28,7 +28,7 @@ export function BaseballMatchSchedule({
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="h-56 animate-pulse rounded-xl border border-slate-800 bg-[#11161f]"
+            className="h-56 animate-pulse rounded-xl border border-slate-800 bg-[#11161f]" aria-busy="true"
           />
         ))}
       </div>

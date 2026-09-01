@@ -44,11 +44,11 @@ const TYPE_COLORS: Record<string, string> = {
   Hills: "border-amber-500/30 bg-amber-500/15 text-amber-400",
 };
 
-const RANK_COLORS = ["text-amber-400", "text-gray-300", "text-orange-500"] as const;
-const RANK_BG = ["bg-amber-500/20", "bg-gray-400/20", "bg-orange-600/20"] as const;
+const RANK_COLORS = ["text-amber-400", "text-white/70", "text-orange-500"] as const;
+const RANK_BG = ["bg-amber-500/20", "bg-white/10", "bg-orange-600/20"] as const;
 const BAR_GRADIENTS = [
   "from-amber-500 to-amber-400",
-  "from-gray-400 to-gray-300",
+  "from-white/50 to-white/40",
   "from-orange-500 to-orange-400",
 ] as const;
 
@@ -83,7 +83,7 @@ export function CyclingStageCard({
               <span className="text-sm font-semibold text-white">
                 &Eacute;tape {stage.stage}
               </span>
-              <p className="text-[11px] text-gray-400">{stage.date}</p>
+              <p className="text-[11px] text-white/50">{stage.date}</p>
             </div>
           </div>
           <Badge
@@ -91,7 +91,7 @@ export function CyclingStageCard({
             className={cn(
               "border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.08em]",
               TYPE_COLORS[stage.type] ??
-                "border-gray-500/30 bg-gray-500/15 text-gray-400",
+                "border-white/20 bg-white/10 text-white/60",
             )}
           >
             {stage.type === "Hills" ? "Hilly" : stage.type}
@@ -101,17 +101,17 @@ export function CyclingStageCard({
           {stage.route}
         </h3>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-gray-400">
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-white/50">
           <span className="inline-flex items-center gap-1.5">
-            <TrendingUp className="h-3.5 w-3.5 text-gray-500" />
+            <TrendingUp className="h-3.5 w-3.5 text-white/40" />
             <span className="font-medium tabular-nums">{stage.km}</span> km
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Mountain className="h-3.5 w-3.5 text-gray-500" />
+            <Mountain className="h-3.5 w-3.5 text-white/40" />
             <span className="font-medium tabular-nums">{stage.elev}</span> m D+
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-gray-500" />
+            <MapPin className="h-3.5 w-3.5 text-white/40" />
             {stage.country}
           </span>
         </div>
@@ -128,7 +128,7 @@ export function CyclingStageCard({
         )}
         {top3.length > 0 && (
           <div className="mt-4 border-t border-border/40 pt-3.5">
-            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-gray-500">
+            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
               Favoris du mod&egrave;le
             </p>
             <div className="space-y-2.5">
@@ -181,7 +181,7 @@ export function CyclingStageCard({
                       />
                     </div>
 
-                    <p className="mt-0.5 truncate text-[11px] text-gray-500">
+                    <p className="mt-0.5 truncate text-[11px] text-white/50">
                       {rider.team}
                     </p>
                     {rider.form && rider.form.length > 0 && (

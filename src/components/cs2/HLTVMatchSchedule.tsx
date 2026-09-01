@@ -72,7 +72,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
       {/* Événement / tournoi */}
       <div className="hidden w-40 shrink-0 items-center gap-2 sm:flex">
         {match.tournament_logo ? (
-          <img src={match.tournament_logo} alt="" className="h-5 w-5 object-contain" />
+          <img src={match.tournament_logo} alt="" className="h-5 w-5 object-contain" loading="lazy" />
         ) : null}
         <div className="min-w-0">
           <p className="truncate text-xs font-medium text-zinc-300">{match.tournament ?? "CS2"}</p>

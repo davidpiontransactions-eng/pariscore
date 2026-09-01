@@ -221,7 +221,7 @@ function FourFactorsRow({ ff }: { ff: NonNullable<BasketballMatchCardMatch["pred
 
 export function BasketballMatchCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("rounded-lg border bg-card p-3", className)}>
+    <div className={cn("rounded-lg border bg-card p-3", className)} aria-busy="true">
       {/* Header */}
       <div className="mb-2 flex items-center justify-between">
         <Skeleton className="h-4 w-16 rounded-full" />

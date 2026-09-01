@@ -187,7 +187,7 @@ function LiveLineToggle({ sportId }: { sportId: string }) {
             className={cn(
               "relative flex items-center justify-center gap-1.5 rounded-md px-1.5 py-1.5 text-xs font-semibold transition-colors",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              active ? "text-white shadow-sm" : "text-slate-400 hover:text-slate-200",
+              active ? "text-white shadow-sm" : "text-white/60 hover:text-slate-200",
             )}
           >
             {active && (
@@ -301,7 +301,7 @@ function TimePills() {
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               active
                 ? "bg-emerald-600 text-white"
-                : "bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200",
+                : "bg-slate-800/80 text-white/60 hover:bg-slate-700/80 hover:text-slate-200",
             )}
           >
             {opt.label}
@@ -321,7 +321,7 @@ function CountBadge({ n, live }: { n: number; live?: boolean }) {
     <span
       className={cn(
         "rounded-full px-1.5 py-0.5 font-mono text-[11px] leading-none tabular-nums",
-        live ? "bg-red-500/15 text-red-300" : "bg-slate-800 text-slate-400",
+        live ? "bg-red-500/15 text-red-300" : "bg-slate-800 text-white/60",
       )}
     >
       {n}
@@ -462,13 +462,13 @@ function MatchRow({
         "flex w-full items-center gap-1.5 rounded px-1 py-1 pl-0 text-[11px]",
         isSelected
           ? "bg-emerald-500/15 text-emerald-200 ring-1 ring-emerald-500/40"
-          : "text-slate-400 hover:bg-slate-800/80",
+          : "text-white/60 hover:bg-slate-800/80",
       )}
     >
       {match.isLive ? (
         <span aria-hidden className="ml-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" />
       ) : (
-        <span className="ml-1 w-8 shrink-0 font-mono text-[11px] tabular-nums text-slate-500">
+        <span className="ml-1 w-8 shrink-0 font-mono text-[11px] tabular-nums text-white/50">
           {formatKickoff(match.scheduledAt)}
         </span>
       )}
@@ -499,7 +499,7 @@ function MatchRow({
                 "hover:bg-emerald-600/25 hover:text-emerald-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 i === bestCellIndex(cells) && hasOdds
                   ? "text-emerald-300"
-                  : "text-slate-400",
+                  : "text-white/60",
               )}
             >
               {c.value}
@@ -562,7 +562,7 @@ function LeagueRow({
           "transition-colors",
           selected
             ? "border-l-2 border-emerald-400 bg-emerald-500/15 font-semibold text-emerald-300"
-            : "border-l-2 border-transparent text-slate-300 hover:bg-slate-800/80",
+            : "border-l-2 border-transparent text-white/70 hover:bg-slate-800/80",
         )}
       >
         {hasMatches ? (
@@ -657,7 +657,7 @@ function CountryBlock({
           "transition-colors hover:bg-slate-800/80",
           isCountrySelected
             ? "bg-emerald-500/10 font-semibold text-emerald-300"
-            : "text-slate-300",
+            : "text-white/70",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
@@ -669,7 +669,7 @@ function CountryBlock({
         <span
           className={cn(
             "min-w-0 flex-1 truncate text-xs font-medium",
-            active ? "font-semibold text-emerald-300" : "text-slate-300",
+            active ? "font-semibold text-emerald-300" : "text-white/70",
           )}
         >
           {country.name}
@@ -824,7 +824,7 @@ function QuickLinksBlock({
 
   return (
     <section aria-label={t("quickLinks")} className="border-b border-slate-800/80 pb-2">
-      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-white/50">
         {t("quickLinks")}
       </h2>
       <div className="space-y-1">
@@ -894,10 +894,10 @@ function MyTeamsBlock({
   if (followedTeamIds.length === 0) {
     return (
       <section aria-label="My Teams" className="border-b border-slate-800/80 pb-2">
-        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-white/50">
           My Teams
         </h2>
-        <p className="px-2.5 py-2 text-[11px] text-slate-500 text-center">
+        <p className="px-2.5 py-2 text-[11px] text-white/50 text-center">
           Follow teams to see them here
         </p>
       </section>
@@ -906,7 +906,7 @@ function MyTeamsBlock({
 
   return (
     <section aria-label="My Teams" className="border-b border-slate-800/80 pb-2">
-      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-white/50">
         My Teams
       </h2>
       <ul className="space-y-0.5">
@@ -914,7 +914,7 @@ function MyTeamsBlock({
           const name = teamNames.get(teamId) ?? teamId.split(":").pop() ?? teamId;
           return (
             <li key={teamId} className="flex items-center gap-1.5 rounded-md px-2.5 py-1 hover:bg-slate-800/80">
-              <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-300">{name}</span>
+              <span className="min-w-0 flex-1 truncate text-xs font-medium text-white/70">{name}</span>
               <button
                 type="button"
                 onClick={() => onToggleFollow(teamId)}
@@ -995,7 +995,7 @@ function FavoritesBlock({
 
   return (
     <section aria-label={t("favorites")} className="border-b border-slate-800/80 pb-2">
-      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-white/50">
         {t("favorites")}
       </h2>
       <ul className="space-y-0.5">
@@ -1007,7 +1007,7 @@ function FavoritesBlock({
             <button
               type="button"
               onClick={() => onLeagueSelect(league)}
-              className="min-w-0 flex-1 truncate rounded text-left text-xs font-medium text-slate-300 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="min-w-0 flex-1 truncate rounded text-left text-xs font-medium text-white/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {league.name}
             </button>
@@ -1173,7 +1173,7 @@ export function SportsSidebarContent({
             "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50",
             activeSport === "home"
               ? "bg-emerald-500/10 text-emerald-400"
-              : "text-slate-300 hover:bg-slate-800/80 hover:text-white",
+              : "text-white/70 hover:bg-slate-800/80 hover:text-white",
           )}
         >
           <Home className="h-4 w-4" />
@@ -1233,7 +1233,7 @@ export function SportsSidebarContent({
                   "shrink-0 rounded-md px-2 py-1 text-[10px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   sortMode === "chrono"
                     ? "bg-emerald-600/20 text-emerald-400"
-                    : "bg-slate-800/80 text-slate-400 hover:bg-slate-700/80 hover:text-slate-200",
+                : "bg-slate-800/80 text-white/60 hover:bg-slate-700/80 hover:text-slate-200",
                 )}
               >
                 {sortMode === "chrono" ? "Time" : "A-Z"}
@@ -1243,7 +1243,7 @@ export function SportsSidebarContent({
               <div className="bg-slate-900 rounded-lg p-2 space-y-1.5 text-[11px]">
                 <div>
                   <label className="flex items-center justify-between">
-                    <span className="text-slate-400">Pressure</span>
+                    <span className="text-white/60">Pressure</span>
                     <span className="font-mono tabular-nums text-emerald-400">{statFilters.minPressure}%</span>
                   </label>
                   <input
@@ -1259,7 +1259,7 @@ export function SportsSidebarContent({
                 </div>
                 <div>
                   <label className="flex items-center justify-between">
-                    <span className="text-slate-400">Dangerous Attacks</span>
+                    <span className="text-white/60">Dangerous Attacks</span>
                     <span className="font-mono tabular-nums text-emerald-400">{statFilters.minDangerous}</span>
                   </label>
                   <input
@@ -1275,7 +1275,7 @@ export function SportsSidebarContent({
                 </div>
                 <div>
                   <label className="flex items-center justify-between">
-                    <span className="text-slate-400">xG</span>
+                    <span className="text-white/60">xG</span>
                     <span className="font-mono tabular-nums text-emerald-400">{statFilters.minXg.toFixed(1)}</span>
                   </label>
                   <input
@@ -1291,7 +1291,7 @@ export function SportsSidebarContent({
                 </div>
                 <div>
                   <label className="flex items-center justify-between">
-                    <span className="text-slate-400">Shots on Target</span>
+                    <span className="text-white/60">Shots on Target</span>
                     <span className="font-mono tabular-nums text-emerald-400">{statFilters.minShotsOnTarget}</span>
                   </label>
                   <input
@@ -1327,7 +1327,7 @@ export function SportsSidebarContent({
           <button
             type="button"
             onClick={clearMatchSelection}
-            className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded bg-slate-800 px-1.5 py-0.5 text-[11px] font-medium text-white/70 transition-colors hover:bg-slate-700 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t("selectionClear")}
           </button>
@@ -1344,8 +1344,8 @@ export function SportsSidebarContent({
           <FavoritesBlock tree={tree} onLeagueSelect={handleLeagueSelect} />
           {tree.length === 0 || !hasAnyMatch ? (
             <div className="px-2.5 py-6 text-center">
-              <p className="text-xs font-medium text-slate-400">{t("emptyTree")}</p>
-              <p className="mt-1 text-[11px] text-slate-500">{t("emptyTreeHint")}</p>
+              <p className="text-xs font-medium text-white/60">{t("emptyTree")}</p>
+              <p className="mt-1 text-[11px] text-white/50">{t("emptyTreeHint")}</p>
             </div>
           ) : (
             <ul className="space-y-0.5">
@@ -1409,7 +1409,7 @@ export function SportsSidebarDrawer({
           variant="ghost"
           size="sm"
           aria-label={t("openDrawer")}
-          className="gap-1.5 px-2 text-xs text-zinc-300 hover:text-white lg:hidden"
+          className="gap-1.5 px-2 text-xs text-white/70 hover:text-white lg:hidden"
         >
           <ListFilter className="h-4 w-4" />
         </Button>

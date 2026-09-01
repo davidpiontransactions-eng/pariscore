@@ -66,7 +66,7 @@ function PlayerRow({
       <td className="py-1 px-2">
         <div className="flex items-center gap-2">
           {player.photo && (
-            <img src={player.photo} alt="" className="h-5 w-5 rounded-full object-cover" />
+            <img src={player.photo} alt="" className="h-5 w-5 rounded-full object-cover" loading="lazy" />
           )}
           <div className="min-w-0">
             <div className="text-[11px] font-medium truncate max-w-[120px]">{player.name}</div>

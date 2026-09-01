@@ -289,7 +289,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
               <span className="shrink-0">{countryFlag(match.league.country)}</span>
             )}
             {match.league.logo && match.league.logo.startsWith("http") && (
-              <img src={match.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              <img src={match.league.logo} alt="" className="h-4 w-4 shrink-0 object-contain" loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} />
             )}
             <span className="truncate font-medium">{match.league.name}</span>
           </div>
@@ -617,7 +617,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
 
 export function FootballLiveCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-4">
+    <div className="rounded-2xl border border-border/70 bg-card p-4" aria-busy="true">
       <div className="mb-3 flex items-center justify-between">
         <Skeleton className="h-4 w-16 rounded-full" />
         <Skeleton className="h-6 w-20" />

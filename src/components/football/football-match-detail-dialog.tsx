@@ -240,7 +240,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
                     {view.home.logo ? (
-                      <img src={view.home.logo} alt={view.home.name} className="h-9 w-9 object-contain" />
+                      <img src={view.home.logo} alt={view.home.name} className="h-9 w-9 object-contain" loading="lazy" />
                     ) : (
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                     )}
@@ -268,7 +268,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-muted">
                     {view.away.logo ? (
-                      <img src={view.away.logo} alt={view.away.name} className="h-9 w-9 object-contain" />
+                      <img src={view.away.logo} alt={view.away.name} className="h-9 w-9 object-contain" loading="lazy" />
                     ) : (
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                     )}

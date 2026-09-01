@@ -57,7 +57,7 @@ function useCs2Data() {
 // ── Skeleton ──
 function Cs2CardSkeleton() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-5">
+    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-5" aria-busy="true">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-full bg-white/10" />

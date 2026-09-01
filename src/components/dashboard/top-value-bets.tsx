@@ -49,7 +49,7 @@ function computeEdge(match: TennisMatch): ValueBetItem[] {
 
 function TopValueBetsSkeleton() {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" aria-busy="true">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
           <Skeleton className="h-5 w-5 rounded-full" />

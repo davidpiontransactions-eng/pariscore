@@ -55,7 +55,7 @@ export function H2HStandingsPanel({
                 {row.rank}
               </span>
               {row.team.logo && (
-                <img src={row.team.logo} alt="" className="h-3.5 w-3.5 object-contain" />
+                <img src={row.team.logo} alt="" className="h-3.5 w-3.5 object-contain" loading="lazy" />
               )}
               <span className={cn("flex-1 truncate font-medium", isHighlighted && "text-primary")}>
                 {row.team.abbr}

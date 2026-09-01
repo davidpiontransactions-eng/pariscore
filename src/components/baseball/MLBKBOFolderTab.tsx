@@ -90,7 +90,7 @@ export function MLBKBOFolderTab() {
                 className={`rounded-md px-3.5 py-1.5 text-xs font-bold transition-colors ${
                   league === t.id
                     ? "bg-amber-400 text-amber-950"
-                    : "text-slate-300 hover:bg-slate-800"
+                    : "text-white/70 hover:bg-slate-800"
                 }`}
               >
                 {t.label}
@@ -103,16 +103,16 @@ export function MLBKBOFolderTab() {
               type="button"
               onClick={refresh}
               disabled={isLoading}
-              className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-800 disabled:opacity-50"
+              className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-semibold text-white/70 transition-colors hover:bg-slate-800 disabled:opacity-50"
               title="Rafraîchir la slate (cache serveur)"
             >
-              ⟳ {isLoading ? "..." : "Refresh"}
+              ⟳ {isLoading ? "…" : "Refresh"}
             </button>
             <button
               type="button"
               onClick={() => setDate(shiftIsoDate(date, -1))}
               aria-label="Jour précédent"
-              className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-800"
+              className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-white/70 hover:bg-slate-800"
             >
               ←
             </button>
@@ -122,7 +122,7 @@ export function MLBKBOFolderTab() {
               className={`rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-colors ${
                 date === today
                   ? "border-amber-400/50 bg-amber-400/10 text-amber-200"
-                  : "border-slate-700 text-slate-300 hover:bg-slate-800"
+                  : "border-slate-700 text-white/70 hover:bg-slate-800"
               }`}
             >
               Aujourd&apos;hui
@@ -131,7 +131,7 @@ export function MLBKBOFolderTab() {
               type="button"
               onClick={() => setDate(shiftIsoDate(date, 1))}
               aria-label="Jour suivant"
-              className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-800"
+              className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-bold text-white/70 hover:bg-slate-800"
             >
               →
             </button>
@@ -156,14 +156,14 @@ export function MLBKBOFolderTab() {
               >
                 <div
                   className={`text-[11px] font-bold uppercase tracking-wide ${
-                    active ? "text-amber-200" : "text-slate-500"
+                    active ? "text-amber-200" : "text-white/50"
                   }`}
                 >
                   {offset === 0 ? "Auj." : dayLabel(d).split(" ")[0]}
                 </div>
                 <div
                   className={`font-mono text-xs font-bold tabular-nums ${
-                    active ? "text-white" : "text-slate-400"
+                    active ? "text-white" : "text-white/60"
                   }`}
                 >
                   {d.slice(8, 10)}.{d.slice(5, 7)}
@@ -180,7 +180,7 @@ export function MLBKBOFolderTab() {
           ⚾ Calendrier <span className="text-amber-200">{dayLabel(date)}</span>
         </h2>
         {data && (
-          <span className="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-slate-400">
+          <span className="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-white/60">
             {data.matches.length} match{data.matches.length > 1 ? "s" : ""} ·{" "}
             {data.degraded ? "mode dégradé (API MLB KO)" : "API live OK"}
           </span>

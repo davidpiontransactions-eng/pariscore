@@ -148,7 +148,7 @@ export function CyclingTabContent() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">{data?.race || "Tour de France"} 2026</h1>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-white/60">
               {currentStage
                 ? "Étape " + currentStage.stage + " · " + currentStage.date
                 : "Cyclisme vertical"}
@@ -206,7 +206,7 @@ export function CyclingTabContent() {
                 </div>
                 {/* Favourites sidebar */}
                 <div className="rounded-2xl border border-border/60 bg-[#1A1A2E] p-4 sm:p-5">
-                  <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-gray-500">
+                  <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-white/50">
                     Top 10 Favoris
                   </h3>
                   <div className="space-y-2">

@@ -59,7 +59,7 @@ function useF1Data() {
 
 function SkeletonDriver() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-4">
+    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-4" aria-busy="true">
       <div className="flex items-center gap-4">
         <div className="h-14 w-14 rounded-full bg-white/10" />
         <div className="flex-1 space-y-2">
@@ -107,7 +107,7 @@ export function F1TabContent() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">Formula 1 {data?.season || ""}</h1>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-white/60">
               {nextRace ? `${nextRace.name} · ${nextRace.date}` : data?.model || "Hiérarchie ROL"}
             </p>
           </div>
@@ -150,7 +150,7 @@ export function F1TabContent() {
                   <Calendar className="h-5 w-5 text-red-400" />
                   <div>
                     <p className="font-semibold text-white">{nextRace.name}</p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-xs text-white/50">
                       {nextRace.country ? `${nextRace.country} · ` : ""}
                       Round {nextRace.round} · {nextRace.date}
                       {nextRace.circuit ? ` · ${nextRace.circuit}` : ""}
@@ -163,7 +163,7 @@ export function F1TabContent() {
 
           {/* Note */}
           {data.note && (
-            <p className="mb-4 text-[11px] italic text-zinc-600">{data.note}</p>
+            <p className="mb-4 text-[11px] italic text-white/40">{data.note}</p>
           )}
 
           {/* Team filter */}
@@ -175,7 +175,7 @@ export function F1TabContent() {
                   "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
                   !teamFilter
                     ? "bg-red-500/20 text-red-300"
-                    : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                    : "bg-white/5 text-white/60 hover:bg-white/10"
                 )}
               >
                 Toutes
@@ -188,7 +188,7 @@ export function F1TabContent() {
                     "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
                     teamFilter === t
                       ? "bg-red-500/20 text-red-300"
-                      : "bg-white/5 text-zinc-400 hover:bg-white/10"
+                      : "bg-white/5 text-white/60 hover:bg-white/10"
                   )}
                 >
                   {t}
@@ -211,8 +211,8 @@ export function F1TabContent() {
             </section>
           ) : (
             <div className="mt-16 flex flex-col items-center justify-center gap-3 text-center">
-              <Trophy className="h-8 w-8 text-zinc-600" />
-              <p className="text-sm font-medium text-zinc-400">Aucun pilote</p>
+              <Trophy className="h-8 w-8 text-white/30" />
+              <p className="text-sm font-medium text-white/60">Aucun pilote</p>
             </div>
           )}
         </>

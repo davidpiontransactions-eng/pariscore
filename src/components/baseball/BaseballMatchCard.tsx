@@ -125,7 +125,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
       <div className="flex flex-col gap-3 px-3.5 pb-3.5 sm:px-4 sm:pb-4">
         {/* Ligne méta : venue + score */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="hidden truncate text-[11px] text-slate-500 sm:inline">
+          <span className="hidden truncate text-[11px] text-white/50 sm:inline">
             {game.venueName}
           </span>
           <span className="ml-auto">
@@ -140,37 +140,37 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
             <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
               {awayTeam.city} {awayTeam.name}
             </span>
-            <span className="font-mono text-[11px] text-slate-500">wRC+ {awayTeam.wrcPlus}</span>
+            <span className="font-mono text-[11px] text-white/50">wRC+ {awayTeam.wrcPlus}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <TeamLogo team={homeTeam} size={30} />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
               {homeTeam.city} {homeTeam.name}
             </span>
-            <span className="font-mono text-[11px] text-slate-500">wRC+ {homeTeam.wrcPlus}</span>
+            <span className="font-mono text-[11px] text-white/50">wRC+ {homeTeam.wrcPlus}</span>
           </div>
         </div>
 
         {/* Duel de lanceurs */}
         <div className="grid gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/50 p-2.5 sm:grid-cols-2 sm:gap-3">
           <div className="flex items-center justify-between gap-2">
-            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/50">
               SP Ext
             </span>
             {awayPitcher ? (
               <PitcherBadge pitcher={awayPitcher} side="away" compact />
             ) : (
-              <span className="text-[11px] italic text-slate-500">Partant non annoncé</span>
+              <span className="text-[11px] italic text-white/50">Partant non annoncé</span>
             )}
           </div>
           <div className="flex items-center justify-between gap-2 border-slate-800 sm:justify-end sm:border-l sm:pl-3">
-            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-white/50">
               SP Dom
             </span>
             {homePitcher ? (
               <PitcherBadge pitcher={homePitcher} side="home" compact />
             ) : (
-              <span className="text-[11px] italic text-slate-500">Partant non annoncé</span>
+              <span className="text-[11px] italic text-white/50">Partant non annoncé</span>
             )}
           </div>
         </div>
