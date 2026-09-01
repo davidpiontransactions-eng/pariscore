@@ -43,34 +43,43 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
   const { state, hasDecided } = useConsent();
   const [client, setClient] = useState<PostHog | null>(null);
 
-  // Initialize PostHog only after user has granted analytics consent
+  // Initialiser PostHog dès le mount (eager) pour éviter le remount des
+  // enfants quand le type d'élément change de Fragment → PostHogProvider.
+  // On opt-out immédiatement tant que le consentement n'est pas donné.
   useEffect(() => {
-    if (!hasDecided) return; // wait for user decision
-    if (!state.analytics) {
-      // Consent denied — opt out if previously initialized
-      if (posthogClient) {
-        try {
-          posthog.opt_out_capturing();
-        } catch {
-          /* ignore */
-        }
-      }
-      return;
-    }
-    // Consent granted — initialize if not done, opt in if previously opted out
     const ph = initPostHog();
     if (ph) {
       try {
-        if (posthog.has_opted_out_capturing()) {
-          posthog.opt_in_capturing();
+        // Opt-out par défaut — sera réactivé quand le consentement sera accordé
+        if (!ph.has_opted_out_capturing()) {
+          ph.opt_out_capturing();
         }
       } catch {
         /* ignore */
       }
-      Promise.resolve().then(() => setClient(ph));
+      setClient(ph);
+    }
+  }, []);
+
+  // Réagir aux changements de consentement pour opt-in/opt-out
+  useEffect(() => {
+    if (!hasDecided || !posthogClient) return;
+    try {
+      if (state.analytics) {
+        if (posthogClient.has_opted_out_capturing()) {
+          posthogClient.opt_in_capturing();
+        }
+      } else {
+        if (!posthogClient.has_opted_out_capturing()) {
+          posthogClient.opt_out_capturing();
+        }
+      }
+    } catch {
+      /* ignore */
     }
   }, [hasDecided, state.analytics]);
 
+  // Toujours rendre PostHogProvider pour éviter le remount des enfants
   if (!client) return <>{children}</>;
   return <PostHogProvider client={client}>{children}</PostHogProvider>;
 }

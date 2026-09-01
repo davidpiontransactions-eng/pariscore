@@ -109,12 +109,12 @@ export function ConsentProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<ConsentState>(DEFAULT_STATE);
   const [hydrated, setHydrated] = useState(false);
 
-  // Read consent on mount (deferred to satisfy react-hooks/set-state-in-effect)
+  // Lire le consentement au mount. Pas de microtask — on écrit directement
+  // dans useEffect (React 18+ batching gère la perf). Le flag `hydrated`
+  // empêche le banner de clignoter pendant le SSR.
   useEffect(() => {
-    Promise.resolve().then(() => {
-      setState(readConsent());
-      setHydrated(true);
-    });
+    setState(readConsent());
+    setHydrated(true);
   }, []);
 
   const applyConsent = useCallback((next: ConsentState) => {
