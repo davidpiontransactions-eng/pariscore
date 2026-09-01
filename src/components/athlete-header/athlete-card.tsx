@@ -1,4 +1,8 @@
+"use client";
+
+import { useState, useCallback } from "react";
 import Image from "next/image";
+import { Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AthleteInfo } from "@/lib/sport-images";
 
@@ -33,6 +37,29 @@ function getPositionAbbrev(position: string): string {
   return position.slice(0, 3).toUpperCase();
 }
 
+const FAVORITES_KEY = "ps-athlete-favorites";
+
+function getFavorites(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const stored = localStorage.getItem(FAVORITES_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function toggleFavorite(name: string): Set<string> {
+  const favs = getFavorites();
+  if (favs.has(name)) {
+    favs.delete(name);
+  } else {
+    favs.add(name);
+  }
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favs]));
+  return favs;
+}
+
 type AthleteCardProps = {
   athlete: AthleteInfo;
   accentColor: string;
@@ -53,12 +80,20 @@ export function AthleteCard({
   onClick,
   className,
 }: AthleteCardProps) {
+  const [isFavorite, setIsFavorite] = useState(() => getFavorites().has(athlete.name));
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       onClick?.();
     }
   };
+
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newFavs = toggleFavorite(athlete.name);
+    setIsFavorite(newFavs.has(athlete.name));
+  }, [athlete.name]);
 
   if (variant === "list") {
     return (
@@ -93,10 +128,22 @@ export function AthleteCard({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium line-clamp-1">
-            {athlete.name}
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium line-clamp-1">{athlete.name}</span>
+            <button
+              type="button"
+              onClick={handleFavoriteClick}
+              className={cn(
+                "flex-shrink-0 p-0.5 rounded transition-all duration-200",
+                "hover:bg-card/80 focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+                isFavorite ? "text-red-400" : "text-muted-foreground hover:text-foreground"
+              )}
+              aria-label={isFavorite ? `Remove ${athlete.name} from favorites` : `Add ${athlete.name} to favorites`}
+            >
+              <Heart className="h-3 w-3" fill={isFavorite ? "currentColor" : "none"} />
+            </button>
           </div>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1 mt-0.5">
             {athlete.team && (
               <span className="text-xs opacity-70">{athlete.team}</span>
             )}
@@ -130,7 +177,7 @@ export function AthleteCard({
       )}
       aria-label={`Select ${athlete.name}${athlete.team ? `, ${athlete.team}` : ""}`}
     >
-      {/* Image athlète + badge position */}
+      {/* Image athlète + badge position + favori */}
       <div className="relative h-20 w-20 rounded-2xl overflow-hidden mb-2">
         <Image
           src={athlete.imageUrl ?? "/placeholder-athlete.webp"}
@@ -149,6 +196,18 @@ export function AthleteCard({
             {getPositionAbbrev(athlete.position)}
           </span>
         )}
+        <button
+          type="button"
+          onClick={handleFavoriteClick}
+          className={cn(
+            "absolute top-0.5 right-0.5 p-1 rounded-full transition-all duration-200",
+            "hover:bg-black/40 focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+            isFavorite ? "text-red-400" : "text-white/60 hover:text-white"
+          )}
+          aria-label={isFavorite ? `Remove ${athlete.name} from favorites` : `Add ${athlete.name} to favorites`}
+        >
+          <Heart className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
+        </button>
       </div>
 
       {/* Informations */}
