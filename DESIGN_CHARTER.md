@@ -48,11 +48,13 @@
 
 ### 2.1 Font stack
 
-| Rôle | Variable CSS | Famille | Fallback |
-|---|---|---|---|
-| Headings | `--font-head` | `'Poppins'` | `sans-serif` |
-| Body | `--font-body` | `'Inter'` | `sans-serif` |
-| Monospace | `--font-mono` | `'DM Mono'` | `monospace` |
+> **MAJ 2026-09-02** : Le Next.js app utilise Geist (pas Poppins/Inter). Ce charter documente la source de vérité actuelle.
+
+| Rôle | Variable CSS | Famille | Fallback | Usage |
+|---|---|---|---|---|
+| Body/Sans | `--font-sans` | `Geist` | `sans-serif` | Texte principal, labels, tout le body |
+| Monospace | `--font-mono` | `Geist Mono` | `monospace` | Odds, stats, données tabulaires, code |
+| Display | `--font-display` | `Archivo` | `sans-serif` | Scores broadcast, grands chiffres uniquement |
 
 ### 2.2 Poids
 
@@ -78,7 +80,7 @@
 
 ### 2.4 Règle
 
-**Interdiction formelle** d'utiliser `font-family` avec une chaîne directe (`'Poppins'`, `'Inter'`, etc.) hors variables `--font-*`. Toute référence doit passer par `var(--font-head/body/mono)`.
+**Interdiction formelle** d'utiliser `font-family` avec une chaîne directe hors variables `--font-*`. Toute référence doit passer par `var(--font-sans/mono/display)`. Les classes Tailwind `font-sans`, `font-mono`, `font-display` mapent vers ces variables.
 
 ---
 
@@ -237,7 +239,7 @@ Les modales et overlays utilisent des valeurs fines (9000 → 10002) pour permet
 ## 10. Conventions Générales
 
 ### 10.1 À FAIRE
-- Utiliser `var(--font-head/body/mono)` pour toute déclaration `font-family`
+- Utiliser `var(--font-sans/mono/display)` pour toute déclaration `font-family`
 - Utiliser `var(--cf-blur-light/medium/heavy)` pour tout `backdrop-filter`
 - Utiliser les classes `.cf-u-*` utilitaires quand disponibles
 - Utiliser `color-mix()` pour les variations de couleur plutôt que `rgba()` brut
@@ -248,7 +250,7 @@ Les modales et overlays utilisent des valeurs fines (9000 → 10002) pour permet
 - `!important` sauf override CSS de librairie externe
 - Valeurs `blur(Xpx)` en dur hors variables
 - `rgba(X, Y, Z, 0.XX)` pour des backgrounds de carte — utiliser `--cf-glass-*`
-- Noms de fontes en dur (`'Poppins'`, `'Inter'`) — toujours via `--font-*`
+- Noms de fontes en dur — toujours via `--font-sans/mono/display`
 - `backdrop-filter` sans `-webkit-backdrop-filter` correspondant
 
 ### 10.3 Nommage des classes utilitaires
