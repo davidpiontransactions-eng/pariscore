@@ -47,11 +47,13 @@ function getFormDotColor(result: FormResult): string {
 }
 
 function FormDots({ form }: { form: FormResult[] }) {
+  const formLabels = form.map((r) => (r === "W" ? "Win" : r === "D" ? "Draw" : "Loss"));
   return (
-    <div className="flex items-center gap-0.5" aria-label={`Form: ${form.join(" ")}`}>
+    <div className="flex items-center gap-0.5" aria-label={`Recent form: ${formLabels.join(", ")}`}>
       {form.map((result, i) => (
         <span
           key={i}
+          aria-hidden="true"
           className={cn("h-2 w-2 rounded-full", getFormDotColor(result))}
           title={result === "W" ? "Win" : result === "D" ? "Draw" : "Loss"}
         />
@@ -94,7 +96,7 @@ type AthleteCardProps = {
 /**
  * AthleteCard — Composant partagé pour l'affichage d'un athlète.
  *
- * Accessibility: role="button", tabIndex=0, onKeyDown pour Enter/Space.
+ * Accessibility: role="button", tabIndex=0, onKeyDown quand onClick est fourni.
  */
 export function AthleteCard({
   athlete,
@@ -121,12 +123,17 @@ export function AthleteCard({
   if (variant === "list") {
     return (
       <div
-        role="button"
-        tabIndex={0}
-        onClick={onClick}
-        onKeyDown={handleKeyDown}
+        {...(onClick
+          ? {
+              role: "button" as const,
+              tabIndex: 0,
+              onClick,
+              onKeyDown: handleKeyDown,
+            }
+          : {})}
         className={cn(
-          "flex items-start gap-2 hover:bg-card/50 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+          "flex items-start gap-2 hover:bg-card/50 transition-colors",
+          onClick && "cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500/50",
           className
         )}
         aria-label={`Select ${athlete.name}${athlete.team ? `, ${athlete.team}` : ""}`}
@@ -142,10 +149,13 @@ export function AthleteCard({
             loading="lazy"
           />
           {athlete.position && (
-            <span className={cn(
-              "absolute -bottom-1 -right-1 text-[8px] font-bold px-1 py-0.5 rounded border leading-none",
-              getPositionBadgeColor(athlete.position)
-            )}>
+            <span
+              aria-label={athlete.position}
+              className={cn(
+                "absolute -bottom-1 -right-1 text-[8px] font-bold px-1 py-0.5 rounded border leading-none",
+                getPositionBadgeColor(athlete.position)
+              )}
+            >
               {getPositionAbbrev(athlete.position)}
             </span>
           )}
@@ -157,21 +167,21 @@ export function AthleteCard({
               type="button"
               onClick={handleFavoriteClick}
               className={cn(
-                "flex-shrink-0 p-0.5 rounded transition-all duration-200",
+                "flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center p-1.5 rounded transition-all duration-200",
                 "hover:bg-card/80 focus-visible:ring-2 focus-visible:ring-emerald-500/50",
                 isFavorite ? "text-red-400" : "text-muted-foreground hover:text-foreground"
               )}
               aria-label={isFavorite ? `Remove ${athlete.name} from favorites` : `Add ${athlete.name} to favorites`}
             >
-              <Heart className="h-3 w-3" fill={isFavorite ? "currentColor" : "none"} />
+              <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
             </button>
           </div>
           <div className="flex items-center gap-1 mt-0.5">
             {athlete.team && (
-              <span className="text-xs opacity-70">{athlete.team}</span>
+              <span className="text-xs opacity-75">{athlete.team}</span>
             )}
             {athlete.nationality && (
-              <span className="text-xs opacity-50">· {athlete.nationality}</span>
+              <span className="text-xs opacity-60">· {athlete.nationality}</span>
             )}
           </div>
           {athlete.rating != null && (
@@ -195,12 +205,17 @@ export function AthleteCard({
   // Variante grid (défaut)
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
+      {...(onClick
+        ? {
+            role: "button" as const,
+            tabIndex: 0,
+            onClick,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
       className={cn(
-        "group athlete-card rounded-xl border border-border/50 p-3 hover:border-primary/20 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500/50",
+        "group athlete-card rounded-xl border border-border/50 p-3 hover:border-primary/20 transition-colors",
+        onClick && "cursor-pointer focus-visible:ring-2 focus-visible:ring-emerald-500/50",
         className
       )}
       aria-label={`Select ${athlete.name}${athlete.team ? `, ${athlete.team}` : ""}`}
@@ -217,10 +232,13 @@ export function AthleteCard({
           loading="lazy"
         />
         {athlete.position && (
-          <span className={cn(
-            "absolute bottom-0.5 right-0.5 text-[8px] font-bold px-1 py-0.5 rounded border leading-none backdrop-blur-sm",
-            getPositionBadgeColor(athlete.position)
-          )}>
+          <span
+            aria-label={athlete.position}
+            className={cn(
+              "absolute bottom-0.5 right-0.5 text-[8px] font-bold px-1 py-0.5 rounded border leading-none backdrop-blur-sm",
+              getPositionBadgeColor(athlete.position)
+            )}
+          >
             {getPositionAbbrev(athlete.position)}
           </span>
         )}
@@ -228,13 +246,13 @@ export function AthleteCard({
           type="button"
           onClick={handleFavoriteClick}
           className={cn(
-            "absolute top-0.5 right-0.5 p-1 rounded-full transition-all duration-200",
+            "absolute top-0.5 right-0.5 min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-full transition-all duration-200",
             "hover:bg-black/40 focus-visible:ring-2 focus-visible:ring-emerald-500/50",
             isFavorite ? "text-red-400" : "text-white/60 hover:text-white"
           )}
           aria-label={isFavorite ? `Remove ${athlete.name} from favorites` : `Add ${athlete.name} to favorites`}
         >
-          <Heart className="h-3.5 w-3.5" fill={isFavorite ? "currentColor" : "none"} />
+          <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
         </button>
       </div>
 
@@ -244,10 +262,10 @@ export function AthleteCard({
       </div>
       <div className="flex items-center gap-1 mt-0.5">
         {athlete.team && (
-          <span className="text-xxs opacity-70">{athlete.team}</span>
+          <span className="text-xxs opacity-75">{athlete.team}</span>
         )}
         {athlete.nationality && (
-          <span className="text-xxs opacity-50">· {athlete.nationality}</span>
+          <span className="text-xxs opacity-60">· {athlete.nationality}</span>
         )}
       </div>
       {athlete.rating != null && (
@@ -274,7 +292,8 @@ export function AthleteCard({
 export function AthleteCardSkeleton({ variant = "grid" }: { variant?: "grid" | "list" }) {
   if (variant === "list") {
     return (
-      <div className="flex items-start gap-2 animate-pulse">
+      <div className="flex items-start gap-2 animate-pulse" aria-busy="true" role="status">
+        <span className="sr-only">Loading...</span>
         <div className="h-10 w-10 rounded-md bg-muted flex-shrink-0 mt-1" />
         <div className="flex-1 space-y-1.5">
           <div className="h-3 w-24 rounded bg-muted" />
@@ -286,7 +305,8 @@ export function AthleteCardSkeleton({ variant = "grid" }: { variant?: "grid" | "
   }
 
   return (
-    <div className="animate-pulse rounded-xl border border-border/50 p-3">
+    <div className="animate-pulse rounded-xl border border-border/50 p-3" aria-busy="true" role="status">
+      <span className="sr-only">Loading...</span>
       <div className="h-20 w-20 rounded-2xl bg-muted mb-2" />
       <div className="h-3 w-20 rounded bg-muted mb-1" />
       <div className="h-2.5 w-16 rounded bg-muted mb-0.5" />
