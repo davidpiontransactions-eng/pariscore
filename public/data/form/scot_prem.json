@@ -4,7 +4,7 @@
     "leagueId": "scot_prem",
     "leagueName": "Scotland",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-08-31T11:02:36.880937Z",
+    "lastUpdated": "2026-09-01T09:32:51.134323Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 13,
     "window": 8,
@@ -22,21 +22,21 @@
       "ga": 4
     },
     {
-      "teamName": "Rangers",
-      "gp": 5,
-      "w": 2,
+      "teamName": "St. Johnstone",
+      "gp": 1,
+      "w": 1,
       "d": 0,
-      "l": 2,
-      "gf": 13,
-      "ga": 8
+      "l": 0,
+      "gf": 4,
+      "ga": 3
     },
     {
-      "teamName": "Aberdeen",
+      "teamName": "Dundee Fc",
       "gp": 5,
       "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 8,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
       "ga": 6
     },
     {
@@ -49,6 +49,15 @@
       "ga": 6
     },
     {
+      "teamName": "St. Mirren",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 2,
+      "gf": 6,
+      "ga": 7
+    },
+    {
       "teamName": "Dundee Utd",
       "gp": 5,
       "w": 2,
@@ -58,13 +67,13 @@
       "ga": 6
     },
     {
-      "teamName": "Celtic",
+      "teamName": "Rangers",
       "gp": 5,
-      "w": 5,
+      "w": 2,
       "d": 0,
-      "l": 0,
-      "gf": 10,
-      "ga": 4
+      "l": 2,
+      "gf": 13,
+      "ga": 8
     },
     {
       "teamName": "Falkirk",
@@ -85,15 +94,6 @@
       "ga": 12
     },
     {
-      "teamName": "Dundee Fc",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
-    },
-    {
       "teamName": "Livingston",
       "gp": 5,
       "w": 0,
@@ -103,22 +103,22 @@
       "ga": 10
     },
     {
-      "teamName": "St. Mirren",
+      "teamName": "Celtic",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 7
-    },
-    {
-      "teamName": "St. Johnstone",
-      "gp": 1,
-      "w": 1,
+      "w": 5,
       "d": 0,
       "l": 0,
-      "gf": 4,
-      "ga": 3
+      "gf": 10,
+      "ga": 4
+    },
+    {
+      "teamName": "Aberdeen",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 8,
+      "ga": 6
     },
     {
       "teamName": "Hearts",
@@ -141,22 +141,22 @@
       "ga": 8
     },
     {
-      "teamName": "Rangers",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 8,
-      "ga": 6
+      "teamName": "St. Johnstone",
+      "gp": 2,
+      "w": 0,
+      "d": 0,
+      "l": 2,
+      "gf": 1,
+      "ga": 3
     },
     {
-      "teamName": "Aberdeen",
+      "teamName": "Dundee Fc",
       "gp": 5,
-      "w": 0,
+      "w": 1,
       "d": 1,
-      "l": 4,
-      "gf": 2,
-      "ga": 10
+      "l": 3,
+      "gf": 4,
+      "ga": 7
     },
     {
       "teamName": "Hibernian",
@@ -168,6 +168,24 @@
       "ga": 7
     },
     {
+      "teamName": "Rangers",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
+      "ga": 6
+    },
+    {
+      "teamName": "St. Mirren",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 6,
+      "ga": 6
+    },
+    {
       "teamName": "Dundee Utd",
       "gp": 5,
       "w": 1,
@@ -175,15 +193,6 @@
       "l": 3,
       "gf": 8,
       "ga": 11
-    },
-    {
-      "teamName": "Celtic",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 13,
-      "ga": 7
     },
     {
       "teamName": "Falkirk",
@@ -204,13 +213,13 @@
       "ga": 14
     },
     {
-      "teamName": "Dundee Fc",
+      "teamName": "Hearts",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 4,
-      "ga": 7
+      "gf": 7,
+      "ga": 8
     },
     {
       "teamName": "Livingston",
@@ -222,31 +231,22 @@
       "ga": 8
     },
     {
-      "teamName": "St. Mirren",
+      "teamName": "Aberdeen",
       "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 6,
-      "ga": 6
-    },
-    {
-      "teamName": "St. Johnstone",
-      "gp": 2,
       "w": 0,
-      "d": 0,
-      "l": 2,
-      "gf": 1,
-      "ga": 3
+      "d": 1,
+      "l": 4,
+      "gf": 2,
+      "ga": 10
     },
     {
-      "teamName": "Hearts",
+      "teamName": "Celtic",
       "gp": 5,
-      "w": 1,
+      "w": 4,
       "d": 1,
-      "l": 3,
-      "gf": 7,
-      "ga": 8
+      "l": 0,
+      "gf": 13,
+      "ga": 7
     }
   ]
 }

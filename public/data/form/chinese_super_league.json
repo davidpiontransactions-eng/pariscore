@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-08-31T11:02:52.441217Z",
+    "lastUpdated": "2026-09-01T09:33:06.657323Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,13 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Beijing Guoan",
+      "teamName": "Qingdao West C.",
       "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 18,
-      "ga": 9
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 13,
+      "ga": 6
     },
     {
       "teamName": "Yunnan Yukun",
@@ -31,22 +31,13 @@
       "ga": 12
     },
     {
-      "teamName": "Shandong T.",
+      "teamName": "Beijing Guoan",
       "gp": 8,
       "w": 5,
       "d": 2,
       "l": 1,
-      "gf": 21,
-      "ga": 13
-    },
-    {
-      "teamName": "Qingdao West C.",
-      "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 13,
-      "ga": 6
+      "gf": 18,
+      "ga": 9
     },
     {
       "teamName": "Zhejiang",
@@ -56,18 +47,18 @@
       "l": 2,
       "gf": 21,
       "ga": 15
+    },
+    {
+      "teamName": "Shandong T.",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 21,
+      "ga": 13
     }
   ],
   "away": [
-    {
-      "teamName": "Beijing Guoan",
-      "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 18,
-      "ga": 11
-    },
     {
       "teamName": "Qingdao West C.",
       "gp": 8,
@@ -76,15 +67,6 @@
       "l": 1,
       "gf": 10,
       "ga": 10
-    },
-    {
-      "teamName": "Henan Sl",
-      "gp": 8,
-      "w": 3,
-      "d": 2,
-      "l": 3,
-      "gf": 13,
-      "ga": 17
     },
     {
       "teamName": "Shanghai Port",
@@ -96,6 +78,15 @@
       "ga": 12
     },
     {
+      "teamName": "Beijing Guoan",
+      "gp": 8,
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 18,
+      "ga": 11
+    },
+    {
       "teamName": "Chengdu",
       "gp": 8,
       "w": 4,
@@ -103,6 +94,15 @@
       "l": 2,
       "gf": 11,
       "ga": 10
+    },
+    {
+      "teamName": "Henan Sl",
+      "gp": 8,
+      "w": 3,
+      "d": 2,
+      "l": 3,
+      "gf": 13,
+      "ga": 17
     }
   ]
 }
