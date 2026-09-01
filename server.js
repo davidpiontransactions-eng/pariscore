@@ -35837,9 +35837,83 @@ if (pathname === '/api/v1/status') {
     tennisEloPlayers: tennisEloCalculator ? tennisEloCalculator.getStats().totalPlayers : 0,
     tennisGlicko2Players: tennisGlicko2 ? tennisGlicko2.serveCalc.getStats().totalPlayers : 0,
     highlightly: highlightlyService ? highlightlyService.status() : { name: 'highlightly', enabled: false },
-  });
+});
 }
-
+// GET /api/v1/multi-matches?sport=football|tennis|basketball&league=&status=FT
+if (pathname === '/api/v1/multi-matches') {
+  const sport = searchParams.get('sport') || 'football';
+  const league = searchParams.get('league');
+  const status = searchParams.get('status') || 'FT';
+  
+  let matches = [];
+  let source = 'unknown';
+  
+  switch (sport.toLowerCase()) {
+    case 'football':
+      try {
+        const footRes = await fetch('/api/football/matches', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        if (footRes.ok) {
+          const footData = await footRes.json();
+          matches = (footData.matches ?? []).filter(
+            (m) => !league || m.league?.id === league || m.league?.name?.toLowerCase().includes((league ?? '').toLowerCase()),
+          );
+          source = footData.source || 'football-api';
+        }
+      } catch {}
+      // Fallback vers tennis si aucun match football
+      if (matches.length === 0) {
+        try {
+          const tenRes = await fetch('/api/tennis/matches/live?status=FT', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+          });
+          if (tenRes.ok) {
+            const tenData = await tenRes.json();
+            matches = (tenData.matches ?? []).filter(
+              (m) => !league || m.league?.id === league || m.league?.name?.toLowerCase().includes((league ?? '').toLowerCase()),
+            );
+            source = 'tennis-fallback';
+          }
+        } catch {}
+      }
+      break;
+    case 'tennis':
+      try {
+        const tenRes = await fetch('/api/tennis/matches/live?status=FT', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        if (tenRes.ok) {
+          const tenData = await tenRes.json();
+          matches = (tenData.matches ?? []).filter(
+            (m) => !league || m.league?.id === league || m.league?.name?.toLowerCase().includes((league ?? '').toLowerCase()),
+          );
+          source = 'tennis-api';
+        }
+      } catch {}
+      break;
+    case 'basketball':
+      try {
+        const balRes = await fetch('/api/basketball/matches?status=FT', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+        });
+        if (balRes.ok) {
+          const balData = await balRes.json();
+          matches = (balData.matches ?? []).filter(
+            (m) => !league || m.league?.id === league || m.league?.name?.toLowerCase().includes((league ?? '').toLowerCase()),
+          );
+          source = 'basketball-api';
+        }
+      } catch {}
+      break;
+  }
+  
+  return jsonResponse(res, 200, { matches, sport, source, status });
+}
 // ────────────────────────────────────────────────────────────────────────────
 // GET /api/v1/db-health — bd b50 monitoring SQLite (cron VPS / alerting webhook)
 // Public read-only : ne contient aucune donnée sensible, juste métadonnées
