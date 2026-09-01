@@ -11,6 +11,28 @@ function getRatingBadgeColor(rating: number): string {
   return "bg-red-500/20 text-red-400 border-red-500/30";
 }
 
+/** Couleur du badge position */
+function getPositionBadgeColor(position: string): string {
+  const pos = position.toLowerCase();
+  if (pos.includes("goal") || pos.includes("gardien") || pos.includes("gk")) return "bg-yellow-500/15 text-yellow-400 border-yellow-500/25";
+  if (pos.includes("def") || pos.includes("défens") || pos.includes("central")) return "bg-blue-500/15 text-blue-400 border-blue-500/25";
+  if (pos.includes("milieu") || pos.includes("midfield") || pos.includes("mf")) return "bg-purple-500/15 text-purple-400 border-purple-500/25";
+  if (pos.includes("attaq") || pos.includes("forward") || pos.includes("wing") || pos.includes("att")) return "bg-red-500/15 text-red-400 border-red-500/25";
+  return "bg-slate-500/15 text-slate-400 border-slate-500/25";
+}
+
+/** Abréviation position */
+function getPositionAbbrev(position: string): string {
+  const pos = position.toLowerCase();
+  if (pos.includes("goal") || pos.includes("gardien") || pos.includes("gk")) return "GK";
+  if (pos.includes("def") || pos.includes("défens") || pos.includes("central")) return "DEF";
+  if (pos.includes("milieu") || pos.includes("midfield") || pos.includes("mf")) return "MIL";
+  if (pos.includes("attaq") || pos.includes("forward") || pos.includes("wing") || pos.includes("att")) return "ATT";
+  if (pos.includes("ailier")) return "W";
+  if (pos.includes("pilote")) return "PIL";
+  return position.slice(0, 3).toUpperCase();
+}
+
 type AthleteCardProps = {
   athlete: AthleteInfo;
   accentColor: string;
@@ -22,7 +44,6 @@ type AthleteCardProps = {
 /**
  * AthleteCard — Composant partagé pour l'affichage d'un athlète.
  *
- * Utilisé par AthleteHeader (grid) et potentiellement par d'autres vues.
  * Accessibility: role="button", tabIndex=0, onKeyDown pour Enter/Space.
  */
 export function AthleteCard({
@@ -52,29 +73,37 @@ export function AthleteCard({
         )}
         aria-label={`Select ${athlete.name}${athlete.team ? `, ${athlete.team}` : ""}`}
       >
-        <Image
-          src={athlete.imageUrl ?? "/placeholder-athlete.webp"}
-          alt={athlete.name}
-          className="h-10 w-10 rounded-md object-cover flex-shrink-0 mt-1"
-          width={40}
-          height={40}
-          sizes="40px"
-          loading="lazy"
-        />
+        <div className="relative flex-shrink-0 mt-1">
+          <Image
+            src={athlete.imageUrl ?? "/placeholder-athlete.webp"}
+            alt={athlete.name}
+            className="h-10 w-10 rounded-md object-cover"
+            width={40}
+            height={40}
+            sizes="40px"
+            loading="lazy"
+          />
+          {athlete.position && (
+            <span className={cn(
+              "absolute -bottom-1 -right-1 text-[8px] font-bold px-1 py-0.5 rounded border leading-none",
+              getPositionBadgeColor(athlete.position)
+            )}>
+              {getPositionAbbrev(athlete.position)}
+            </span>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="font-medium line-clamp-1">
             {athlete.name}
           </div>
-          {athlete.team && (
-            <div className="text-xs opacity-70">
-              {athlete.team}
-            </div>
-          )}
-          {athlete.nationality && (
-            <div className="text-xs opacity-60">
-              {athlete.nationality}
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {athlete.team && (
+              <span className="text-xs opacity-70">{athlete.team}</span>
+            )}
+            {athlete.nationality && (
+              <span className="text-xs opacity-50">· {athlete.nationality}</span>
+            )}
+          </div>
           {athlete.rating != null && (
             <div className={cn(
               "text-[10px] font-semibold mt-1 px-1.5 py-0.5 rounded-full border inline-block",
@@ -101,7 +130,7 @@ export function AthleteCard({
       )}
       aria-label={`Select ${athlete.name}${athlete.team ? `, ${athlete.team}` : ""}`}
     >
-      {/* Image athlète */}
+      {/* Image athlète + badge position */}
       <div className="relative h-20 w-20 rounded-2xl overflow-hidden mb-2">
         <Image
           src={athlete.imageUrl ?? "/placeholder-athlete.webp"}
@@ -112,22 +141,28 @@ export function AthleteCard({
           sizes="80px"
           loading="lazy"
         />
+        {athlete.position && (
+          <span className={cn(
+            "absolute bottom-0.5 right-0.5 text-[8px] font-bold px-1 py-0.5 rounded border leading-none backdrop-blur-sm",
+            getPositionBadgeColor(athlete.position)
+          )}>
+            {getPositionAbbrev(athlete.position)}
+          </span>
+        )}
       </div>
 
       {/* Informations */}
       <div className="text-xs font-medium line-clamp-1" style={{ color: accentColor }}>
         {athlete.name}
       </div>
-      {athlete.team && (
-        <div className="text-xxs opacity-70 mt-1">
-          {athlete.team}
-        </div>
-      )}
-      {athlete.nationality && (
-        <div className="text-xxs opacity-60">
-          {athlete.nationality}
-        </div>
-      )}
+      <div className="flex items-center gap-1 mt-0.5">
+        {athlete.team && (
+          <span className="text-xxs opacity-70">{athlete.team}</span>
+        )}
+        {athlete.nationality && (
+          <span className="text-xxs opacity-50">· {athlete.nationality}</span>
+        )}
+      </div>
       {athlete.rating != null && (
         <div className={cn(
           "text-xxs font-semibold mt-1 px-1.5 py-0.5 rounded-full border inline-block",
@@ -136,6 +171,35 @@ export function AthleteCard({
           {athlete.rating.toFixed(1)}/10
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * AthleteCardSkeleton — Placeholder de chargement pour AthleteCard.
+ * Utilise des animations pulse pour indiquer le chargement.
+ */
+export function AthleteCardSkeleton({ variant = "grid" }: { variant?: "grid" | "list" }) {
+  if (variant === "list") {
+    return (
+      <div className="flex items-start gap-2 animate-pulse">
+        <div className="h-10 w-10 rounded-md bg-muted flex-shrink-0 mt-1" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-3 w-24 rounded bg-muted" />
+          <div className="h-2.5 w-16 rounded bg-muted" />
+          <div className="h-4 w-10 rounded-full bg-muted" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-pulse rounded-xl border border-border/50 p-3">
+      <div className="h-20 w-20 rounded-2xl bg-muted mb-2" />
+      <div className="h-3 w-20 rounded bg-muted mb-1" />
+      <div className="h-2.5 w-16 rounded bg-muted mb-0.5" />
+      <div className="h-2.5 w-12 rounded bg-muted mb-1" />
+      <div className="h-4 w-10 rounded-full bg-muted" />
     </div>
   );
 }

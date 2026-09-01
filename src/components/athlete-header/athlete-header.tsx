@@ -8,7 +8,7 @@ import {
   SportId,
 } from "@/lib/sport-images";
 import { TennisPicto, FootballPicto, BasketballPicto } from "@/components/ui/sport-pictograms";
-import { AthleteCard } from "./athlete-card";
+import { AthleteCard, AthleteCardSkeleton } from "./athlete-card";
 
 type AthleteHeaderProps = {
   /** Sport actif */
@@ -17,6 +17,8 @@ type AthleteHeaderProps = {
   maxAthletes?: number;
   /** Mode: 'header' (entête) | 'gallery' (galerie latérale) */
   mode?: "header" | "gallery";
+  /** État de chargement */
+  isLoading?: boolean;
   /** Callback sur sélection d'un athlète */
   onAthleteSelect?: (info: {
     name: string;
@@ -38,6 +40,7 @@ export function AthleteHeader({
   sport,
   maxAthletes = 3,
   mode = "header",
+  isLoading = false,
   onAthleteSelect,
 }: AthleteHeaderProps) {
   const athletes = getSportAthletes(sport);
@@ -60,14 +63,19 @@ export function AthleteHeader({
   // Galerie en entête
   const headerGallery = (
     <div className="athlete-grid grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {displayedAthletes.map((athlete, index) => (
-        <AthleteCard
-          key={athlete.name}
-          athlete={athlete}
-          accentColor={accentColor}
-          onClick={() => handleAthleteClick(index)}
-        />
-      ))}
+      {isLoading
+        ? Array.from({ length: maxAthletes }).map((_, i) => (
+            <AthleteCardSkeleton key={`skeleton-${i}`} />
+          ))
+        : displayedAthletes.map((athlete, index) => (
+            <AthleteCard
+              key={athlete.name}
+              athlete={athlete}
+              accentColor={accentColor}
+              onClick={() => handleAthleteClick(index)}
+            />
+          ))
+      }
     </div>
   );
 
