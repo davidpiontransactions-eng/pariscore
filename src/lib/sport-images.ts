@@ -76,6 +76,8 @@ const SPORT_ACCENT: Record<SportId, string> = {
 // ─── URLs images athlètes par sport ──────────────────────────────────────
 // Format: tableau d'objets AthleteInfo avec imageUrl en libre de droit
 const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
+  home: [],
+  cs2: [],
   tennis: [
     {
       name: "Rafael Nadal",
@@ -106,7 +108,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Argentine",
       position: "Attaquant",
       rating: 9.9,
-      imageUrl: `${UNSPLASH_BASE}/players/leo-messi?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Kylian Mbappé",
@@ -114,7 +116,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Francaise",
       position: "Attaquant",
       rating: 9.8,
-      imageUrl: `${UNSPLASH_BASE}/players/k-mbappe?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Erling Haaland",
@@ -122,7 +124,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Norvegienne",
       position: "Attaquant",
       rating: 9.7,
-      imageUrl: `${UNSPLASH_BASE}/players/h-haaland?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=400&q=80`,
     },
   ],
   basketball: [
@@ -132,7 +134,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Americaine",
       position: "Ailier",
       rating: 9.8,
-      imageUrl: `${UNSPLASH_BASE}/players/lebron-james?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Kevin Durant",
@@ -140,7 +142,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Americaine",
       position: "Ailier",
       rating: 9.7,
-      imageUrl: `${UNSPLASH_BASE}/players/k-durant?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Giannis Antetokounmpo",
@@ -148,7 +150,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Greek",
       position: "Ailier fort",
       rating: 9.6,
-      imageUrl: `${UNSPLASH_BASE}/players/giannis-ants?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=400&q=80`,
     },
   ],
   mma: [
@@ -157,21 +159,21 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Irlandaise",
       position: "Poids plumes",
       rating: 9.5,
-      imageUrl: `${UNSPLASH_BASE}/fighters/conor-mcgregor?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Israel Adesanya",
       nationality: "Nigeria",
       position: "Moyen",
       rating: 9.4,
-      imageUrl: `${UNSPLASH_BASE}/fighters/isa-adesanya?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1555597673-b21d5c935865?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Khabib Nurmagomedov",
       nationality: "Russe",
       position: "Leger",
       rating: 9.3,
-      imageUrl: `${UNSPLASH_BASE}/fighters/khabib-nurmagomedov?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1517438322307-e67111335449?auto=format&fit=crop&w=400&q=80`,
     },
   ],
   cycling: [
@@ -180,21 +182,21 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Slovene",
       position: "Général",
       rating: 9.7,
-      imageUrl: `${UNSPLASH_BASE}/riders/tadej-pogacar?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1534787238916-9ba6764efd4f?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Egan Bernal",
       nationality: "Colombienne",
       position: "Général",
       rating: 9.5,
-      imageUrl: `${UNSPLASH_BASE}/riders/egan-bernal?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Primož Roglič",
       nationality: "Slovene",
       position: "Général",
       rating: 9.4,
-      imageUrl: `${UNSPLASH_BASE}/riders/primoz-roglic?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=400&q=80`,
     },
   ],
   f1: [
@@ -204,7 +206,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Britanno-europeenne",
       position: "Pilote",
       rating: 9.8,
-      imageUrl: `${UNSPLASH_BASE}/drivers/lewis-hamilton?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Max Verstappen",
@@ -212,7 +214,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Nederlan",
       position: "Pilote",
       rating: 9.7,
-      imageUrl: `${UNSPLASH_BASE}/drivers/max-verstappen?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1504817343863-5092a923803e?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Charles Leclerc",
@@ -220,7 +222,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Monégasque",
       position: "Pilote",
       rating: 9.5,
-      imageUrl: `${UNSPLASH_BASE}/drivers/charles-leclerc?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=400&q=80`,
     },
   ],
   baseball: [
@@ -230,7 +232,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Americaine",
       position: "Centre",
       rating: 9.6,
-      imageUrl: `${UNSPLASH_BASE}/players/mike-trout?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1529768167801-9173d94c2a42?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Shohei Ohtani",
@@ -238,7 +240,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Americaine/japonaise",
       position: "Dhoigneur / lanceur",
       rating: 9.7,
-      imageUrl: `${UNSPLASH_BASE}/players/shohei-ohtani?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Mookie Betts",
@@ -246,7 +248,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Americaine",
       position: "Champ droit",
       rating: 9.4,
-      imageUrl: `${UNSPLASH_BASE}/players/mookie-betts?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1508344929928-f9133fee5109?auto=format&fit=crop&w=400&q=80`,
     },
   ],
   rugby: [
@@ -256,7 +258,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Francaise",
       position: "Demi de melée",
       rating: 9.7,
-      imageUrl: `${UNSPLASH_BASE}/rugby/antoine-dupont?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Siya Kolisi",
@@ -264,7 +266,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Sud-africaine",
       position: "Capitaine",
       rating: 9.6,
-      imageUrl: `${UNSPLASH_BASE}/rugby/siya-kolisi?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=400&q=80`,
     },
     {
       name: "Marieke Vlietstra",
@@ -272,7 +274,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       nationality: "Hollandaise",
       position: "Arriere",
       rating: 9.4,
-      imageUrl: `${UNSPLASH_BASE}/rugby/marieke-vlietstra?auto=format&fit=crop&w=400&q=80`,
+      imageUrl: `${UNSPLASH_BASE}/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80`,
     },
   ],
 };
