@@ -1,8 +1,3 @@
-import { metadata } from "@/app/results/metadata";
-import { notFound } from "next/navigation";
-
-export const generateMetadata = metadata;
-
 "use client";
 
 import { useMemo } from "react";
@@ -12,10 +7,21 @@ import { SportsSidebar } from "@/components/layout/sports-sidebar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function ResultsPage() {
+export function generateMetadata() {
+  return {
+    title: "Résultats de matchs — PariScore",
+    description:
+      "Résultats des matchs de football terminés avec scores finaux, ligues et dates",
+    keywords: ["résultats", "football", "matchs", "scores", "ligues"],
+  };
+}
+
+export default function ResultsPage() {
   const { data, isLoading } = useFootballMatches();
   const selectedSportId = useSportsSidebarStore((s) => s.selectedSportId);
   const selectedLeagueId = useSportsSidebarStore((s) => s.selectedLeagueId);
+  const activeSport = useSportsSidebarStore((s) => s.selectedSportId) ?? "football";
+  const onSportChange = useSportsSidebarStore((s) => s.selectSport) ?? (() => {});
 
   const finishedMatches = useMemo(() => {
     if (!data?.matches) return [];
@@ -31,7 +37,7 @@ export function ResultsPage() {
 
   return (
     <div className="p-4">
-      <SportsSidebar />
+      <SportsSidebar activeSport={activeSport} onSportChange={onSportChange} />
       <h1 className="mt-6 text-2xl font-bold">Résultats</h1>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {finishedMatches.map((m) => (
