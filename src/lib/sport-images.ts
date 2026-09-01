@@ -15,6 +15,7 @@ export type AthleteInfo = {
   position?: string;
   rating?: number; // Sur 10, pour affichage badge
   imageUrl?: string; // URL photo Unsplash libre de droit
+  form?: ("W" | "D" | "L")[]; // 5 derniers résultats (W=win, D=draw, L=loss)
 };
 
 // Sport IDs — utilisés comme clés dans les enregistrements
@@ -109,6 +110,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       position: "Attaquant",
       rating: 9.9,
       imageUrl: `${UNSPLASH_BASE}/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80`,
+      form: ["W", "W", "D", "W", "W"],
     },
     {
       name: "Kylian Mbappé",
@@ -117,6 +119,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       position: "Attaquant",
       rating: 9.8,
       imageUrl: `${UNSPLASH_BASE}/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80`,
+      form: ["W", "L", "W", "W", "D"],
     },
     {
       name: "Erling Haaland",
@@ -125,6 +128,7 @@ const SPORT_ATHLETE: Record<SportId, AthleteInfo[]> = {
       position: "Attaquant",
       rating: 9.7,
       imageUrl: `${UNSPLASH_BASE}/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=400&q=80`,
+      form: ["W", "W", "W", "L", "W"],
     },
   ],
   basketball: [

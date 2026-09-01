@@ -37,6 +37,29 @@ function getPositionAbbrev(position: string): string {
   return position.slice(0, 3).toUpperCase();
 }
 
+/** Forme récente — 5 derniers résultats (W=win, D=draw, L=loss) */
+type FormResult = "W" | "D" | "L";
+
+function getFormDotColor(result: FormResult): string {
+  if (result === "W") return "bg-emerald-500";
+  if (result === "D") return "bg-yellow-500";
+  return "bg-red-500";
+}
+
+function FormDots({ form }: { form: FormResult[] }) {
+  return (
+    <div className="flex items-center gap-0.5" aria-label={`Form: ${form.join(" ")}`}>
+      {form.map((result, i) => (
+        <span
+          key={i}
+          className={cn("h-2 w-2 rounded-full", getFormDotColor(result))}
+          title={result === "W" ? "Win" : result === "D" ? "Draw" : "Loss"}
+        />
+      ))}
+    </div>
+  );
+}
+
 const FAVORITES_KEY = "ps-athlete-favorites";
 
 function getFavorites(): Set<string> {
@@ -159,6 +182,11 @@ export function AthleteCard({
               {athlete.rating.toFixed(1)}/10
             </div>
           )}
+          {athlete.form && athlete.form.length > 0 && (
+            <div className="mt-1">
+              <FormDots form={athlete.form} />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -228,6 +256,11 @@ export function AthleteCard({
           getRatingBadgeColor(athlete.rating)
         )}>
           {athlete.rating.toFixed(1)}/10
+        </div>
+      )}
+      {athlete.form && athlete.form.length > 0 && (
+        <div className="mt-1.5">
+          <FormDots form={athlete.form} />
         </div>
       )}
     </div>
