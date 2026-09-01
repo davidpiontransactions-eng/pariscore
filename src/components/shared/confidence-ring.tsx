@@ -1,214 +1,172 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export type ConfidenceRingSize = "sm" | "md" | "lg";
-
-type ConfidenceRingProps = {
-  /** Win probability (0–100). */
-  prob: number;
-  /** Model confidence (0–1). */
+type Props = {
+  /** Probabilité de victoire (0-100) */
+  value: number;
+  /** Confiance du modèle (0-1) */
   confidence: number;
-  /** Sport accent colour (used for the centre percentage text). */
+  /** Taille en px */
+  size?: number;
+  /** Épaisseur du stroke principal */
+  stroke?: number;
+  /** Couleur principale (hex) */
   color: string;
-  /** Ring size preset. Default "md". */
-  size?: ConfidenceRingSize;
-  /** Optional label displayed below the ring. */
-  label?: string;
-  className?: string;
+  trackColor?: string;
+  animate?: boolean;
+  durationMs?: number;
+  children?: React.ReactNode;
 };
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-const SIZE_MAP: Record<ConfidenceRingSize, number> = {
-  sm: 64,
-  md: 80,
-  lg: 96,
-} as const;
-
-const OUTER_STROKE = 3;
-const INNER_STROKE = 2;
-const RING_GAP = 2;
-
-// ---------------------------------------------------------------------------
-// Colour helpers
-// ---------------------------------------------------------------------------
-
-/** Linear interpolation between two hex colours. */
-function lerpColor(c1: string, c2: string, t: number): string {
-  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
-  const r1 = parseInt(c1.slice(1, 3), 16);
-  const g1 = parseInt(c1.slice(3, 5), 16);
-  const b1 = parseInt(c1.slice(5, 7), 16);
-  const r2 = parseInt(c2.slice(1, 3), 16);
-  const g2 = parseInt(c2.slice(3, 5), 16);
-  const b2 = parseInt(c2.slice(5, 7), 16);
-  return `#${clamp(r1 + (r2 - r1) * t)
-    .toString(16)
-    .padStart(2, "0")}${clamp(g1 + (g2 - g1) * t)
-    .toString(16)
-    .padStart(2, "0")}${clamp(b1 + (b2 - b1) * t)
-    .toString(16)
-    .padStart(2, "0")}`;
-}
-
 /**
- * Probability → colour ramp.
- *   0–35:  red (#EF4444) → amber (#F59E0B)
- *  35–65:  amber (#F59E0B) → green (#22C55E)
- *  65–100: green (#22C55E)
+ * Anneau de confiance — ProbabilityRing augmentée avec un arc de confiance.
+ * L'arc extérieur (plus fin) représente la confiance du modèle (0-1).
+ * L'arc intérieur (plus épais) représente la probabilité de victoire (0-100).
+ *
+ * Convention visuelle :
+ * - Arc principal (épais) = probabilité de victoire
+ * - Arc extérieur (fin, opacité réduite) = confiance du modèle
+ * - Plus la confiance est haute, plus l'arc extérieur est complet
  */
-function getProbColor(value: number): string {
-  const clamped = Math.max(0, Math.min(100, value));
-  if (clamped <= 35) return lerpColor("#EF4444", "#F59E0B", clamped / 35);
-  if (clamped <= 65)
-    return lerpColor("#F59E0B", "#22C55E", (clamped - 35) / 30);
-  return "#22C55E";
-}
-
-/**
- * Confidence → colour buckets.
- *   ≥ 0.7  → green  #22C55E
- *   ≥ 0.4  → amber  #F59E0B
- *   < 0.4  → red    #EF4444
- */
-function getConfidenceColor(confidence: number): string {
-  if (confidence >= 0.7) return "#22C55E";
-  if (confidence >= 0.4) return "#F59E0B";
-  return "#EF4444";
-}
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export function ConfidenceRing({
-  prob,
+  value,
   confidence,
+  size = 96,
+  stroke = 8,
   color,
-  size = "md",
-  label,
-  className,
-}: ConfidenceRingProps) {
-  const pixelSize = SIZE_MAP[size];
+  trackColor,
+  animate = true,
+  durationMs = 1100,
+  children,
+}: Props) {
+  const [progress, setProgress] = useState(() => (animate ? 0 : value));
+  const [confProgress, setConfProgress] = useState(() => (animate ? 0 : confidence * 100));
+  const fromRef = useRef(animate ? 0 : value);
+  const confFromRef = useRef(animate ? 0 : confidence * 100);
 
-  const probColor = getProbColor(prob);
-  const confColor = getConfidenceColor(confidence);
+  useEffect(() => {
+    if (!animate) {
+      setProgress(value);
+      setConfProgress(confidence * 100);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const from = fromRef.current;
+    const confFrom = confFromRef.current;
+    const to = value;
+    const confTo = confidence * 100;
 
-  // ---- SVG geometry -------------------------------------------------------
-  const center = pixelSize / 2;
-  const outerRadius = (pixelSize - OUTER_STROKE) / 2;
-  const innerRadius =
-    outerRadius - OUTER_STROKE / 2 - RING_GAP - INNER_STROKE / 2;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3);
+      const next = from + (to - from) * eased;
+      const confNext = confFrom + (confTo - confFrom) * eased;
+      fromRef.current = next;
+      confFromRef.current = confNext;
+      setProgress(next);
+      setConfProgress(confNext);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        fromRef.current = to;
+        confFromRef.current = confTo;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, confidence, animate, durationMs]);
 
-  const outerCircumference = 2 * Math.PI * outerRadius;
-  const innerCircumference = 2 * Math.PI * innerRadius;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference * (1 - progress / 100);
 
-  // Clamp input ranges
-  const safeProb = Math.max(0, Math.min(100, prob));
-  const safeConfFill = Math.max(0, Math.min(100, confidence * 100));
+  // Confiance: arc extérieur plus fin
+  const confStroke = Math.max(2, stroke * 0.4);
+  const confRadius = radius + stroke / 2 + confStroke / 2 + 1;
+  const confCircumference = 2 * Math.PI * confRadius;
+  const confDashOffset = confCircumference * (1 - confProgress / 100);
 
-  const outerDashOffset = outerCircumference * (1 - safeProb / 100);
-  const innerDashOffset = innerCircumference * (1 - safeConfFill / 100);
-
-  // ---- Centre text sizing -------------------------------------------------
-  const fontSizeClass =
-    size === "sm" ? "text-sm" : size === "md" ? "text-lg" : "text-xl";
+  // Couleur de la confiance: vert si > 0.7, amber si > 0.4, rouge sinon
+  const confColor = confidence > 0.7 ? "#00e676" : confidence > 0.4 ? "#fbbf24" : "#ff3856";
 
   return (
-    <div className={cn("inline-flex flex-col items-center gap-1", className)}>
-      {/* Ring */}
-      <div
-        className="relative inline-flex items-center justify-center"
-        style={{ width: pixelSize, height: pixelSize }}
-        role="img"
-        aria-label={`Probability ${Math.round(prob)}%, Confidence ${Math.round(confidence * 100)}%`}
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={`Probabilité ${Math.round(value)}%, confiance ${Math.round(confidence * 100)}%`}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ transform: "rotate(-90deg)" }}
       >
-        <svg
-          width={pixelSize}
-          height={pixelSize}
-          viewBox={`0 0 ${pixelSize} ${pixelSize}`}
-          className="-rotate-90"
-        >
-          {/* ---- Outer track (probability background) ---- */}
-          <circle
-            cx={center}
-            cy={center}
-            r={outerRadius}
-            fill="none"
-            stroke="currentColor"
-            strokeOpacity={0.2}
-            strokeWidth={OUTER_STROKE}
-          />
+        {/* Track confiance (extérieur) */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={confRadius}
+          fill="none"
+          stroke={trackColor ?? "currentColor"}
+          strokeOpacity={0.06}
+          strokeWidth={confStroke}
+        />
 
-          {/* ---- Outer ring (probability fill, animated) ---- */}
-          <motion.circle
-            cx={center}
-            cy={center}
-            r={outerRadius}
-            fill="none"
-            stroke={probColor}
-            strokeWidth={OUTER_STROKE}
-            strokeLinecap="round"
-            strokeDasharray={outerCircumference}
-            initial={{ strokeDashoffset: outerCircumference }}
-            animate={{ strokeDashoffset: outerDashOffset }}
-            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-          />
+        {/* Arc confiance (extérieur) */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={confRadius}
+          fill="none"
+          stroke={confColor}
+          strokeWidth={confStroke}
+          strokeLinecap="round"
+          strokeDasharray={confCircumference}
+          strokeDashoffset={confDashOffset}
+          style={{
+            transition: animate
+              ? `stroke-dashoffset ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`
+              : undefined,
+          }}
+        />
 
-          {/* ---- Inner track (confidence background) ---- */}
-          <circle
-            cx={center}
-            cy={center}
-            r={innerRadius}
-            fill="none"
-            stroke="currentColor"
-            strokeOpacity={0.2}
-            strokeWidth={INNER_STROKE}
-          />
+        {/* Track principal (intérieur) */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={trackColor ?? "currentColor"}
+          strokeOpacity={trackColor ? 1 : 0.12}
+          strokeWidth={stroke}
+        />
 
-          {/* ---- Inner ring (confidence fill, animated with slight delay) ---- */}
-          <motion.circle
-            cx={center}
-            cy={center}
-            r={innerRadius}
-            fill="none"
-            stroke={confColor}
-            strokeWidth={INNER_STROKE}
-            strokeLinecap="round"
-            strokeDasharray={innerCircumference}
-            initial={{ strokeDashoffset: innerCircumference }}
-            animate={{ strokeDashoffset: innerDashOffset }}
-            transition={{
-              duration: 0.9,
-              ease: [0.22, 1, 0.36, 1],
-              delay: 0.15,
-            }}
-          />
-        </svg>
+        {/* Arc principal (intérieur) */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={dashOffset}
+          style={{
+            transition: animate
+              ? `stroke-dashoffset ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`
+              : undefined,
+          }}
+        />
+      </svg>
 
-        {/* ---- Centre percentage ---- */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className={cn("font-bold tabular-nums leading-none", fontSizeClass)}
-            style={{ color }}
-          >
-            {Math.round(prob)}%
-          </span>
-        </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        {children}
       </div>
-
-      {/* Optional label */}
-      {label && (
-        <span className="text-xs text-muted-foreground">{label}</span>
-      )}
     </div>
   );
 }
