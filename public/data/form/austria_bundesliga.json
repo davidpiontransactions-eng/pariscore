@@ -4,7 +4,7 @@
     "leagueId": "austria_bundesliga",
     "leagueName": "Austria",
     "season": "2026/27",
-    "lastUpdated": "2026-09-01T09:33:24.071771Z",
+    "lastUpdated": "2026-09-02T08:57:15.862575Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,33 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Wolfsberger Ac",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
-      "ga": 1
-    },
-    {
-      "teamName": "Grazer Ak",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
-    },
-    {
-      "teamName": "Salzburg",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 5,
-      "ga": 1
-    },
     {
       "teamName": "Rapid Wien",
       "gp": 3,
@@ -56,25 +29,43 @@
       "l": 0,
       "gf": 10,
       "ga": 1
-    }
-  ],
-  "away": [
+    },
     {
-      "teamName": "Sturm Graz",
+      "teamName": "Wolfsberger Ac",
       "gp": 3,
       "w": 1,
       "d": 1,
       "l": 1,
-      "gf": 4,
+      "gf": 5,
       "ga": 4
     },
     {
       "teamName": "Salzburg",
       "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 5,
+      "ga": 1
+    },
+    {
+      "teamName": "Grazer Ak",
+      "gp": 2,
       "w": 1,
       "d": 1,
       "l": 0,
-      "gf": 4,
+      "gf": 2,
+      "ga": 1
+    }
+  ],
+  "away": [
+    {
+      "teamName": "Lask Linz",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 5,
       "ga": 1
     },
     {
@@ -87,15 +78,6 @@
       "ga": 1
     },
     {
-      "teamName": "Lask Linz",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 2,
-      "ga": 0
-    },
-    {
       "teamName": "Tirol",
       "gp": 2,
       "w": 1,
@@ -103,6 +85,24 @@
       "l": 1,
       "gf": 5,
       "ga": 3
+    },
+    {
+      "teamName": "Salzburg",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
+    },
+    {
+      "teamName": "Sturm Graz",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
+      "l": 1,
+      "gf": 4,
+      "ga": 4
     }
   ]
 }
