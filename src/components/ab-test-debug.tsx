@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
  *    event so we can filter those QA sessions out of the production
  *    experiment analysis.
  */
-export function AbTestDebugBadge() {
+export function AbTestDebugBadge({ inline = false }: { inline?: boolean } = {}) {
   const { track, getVariant, reloadFlags } = useAnalytics();
   const [variant, setVariant] = useState<AbTestVariant | null>(null);
   const [overridden, setOverridden] = useState(false);
@@ -105,7 +105,7 @@ export function AbTestDebugBadge() {
 
   return (
     <div
-      className="fixed bottom-4 left-4 z-[100] select-none font-sans"
+      className={inline ? "select-none font-sans" : "fixed bottom-4 left-4 z-[100] select-none font-sans"}
       role="region"
       aria-label="A/B test debug badge"
     >

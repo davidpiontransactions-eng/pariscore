@@ -18,7 +18,6 @@ import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ServiceWorkerUpdate } from "@/components/mobile/service-worker-update";
 import { FollowNotificationBridge } from "@/components/shared/follow-notification-bridge";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
-import { AbTestDebugBadge } from "@/components/ab-test-debug";
 import { AppMotionConfig } from "@/components/motion-config";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -204,9 +203,6 @@ export default async function RootLayout({
                     <ServiceWorkerRegister />
                     <ServiceWorkerUpdate />
                     <FollowNotificationBridge />
-                    {/* Dev-only floating A/B test badge — returns null in
-                        production builds (see AbTestDebugBadge). */}
-                    <AbTestDebugBadge />
                   </AppMotionConfig>
                 </SentryErrorBoundary>
               </PHProvider>

@@ -15,6 +15,7 @@ import {
   Timer,
   Sparkles,
   BarChart3,
+  Settings,
 } from "lucide-react";
 import {
   TennisPicto,
@@ -367,6 +368,17 @@ function HomeInner() {
                 <span className="hidden md:inline">{tPaper("trigger")}</span>
               </Button>
               <ThemeToggle />
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="gap-1.5 text-xs text-zinc-300 hover:text-white"
+              >
+                <Link href="/settings" title="Paramètres et debug">
+                  <Settings className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">Réglages</span>
+                </Link>
+              </Button>
             </div>
           </div>
         </AutoHideHeader>
