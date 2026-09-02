@@ -233,9 +233,22 @@ export function TennisStrategyTop5Widget() {
           Calcul en cours…
         </div>
       ) : error || !isReady ? (
-        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-slate-500">
-          <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
-          Données indisponibles.
+        <div className="flex flex-col gap-1.5 px-2.5 py-3 text-[11px] text-slate-500">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
+            <span>
+              {error?.message?.includes("BSD") 
+                ? "Source de données temporairement indisponible."
+                : error?.message?.includes("HTTP")
+                  ? "Erreur de connexion au serveur."
+                  : "Données indisponibles — réessayez dans quelques minutes."}
+            </span>
+          </div>
+          {meta?.dataUnavailable && (
+            <p className="text-[10px] text-slate-600">
+              Stats joueurs non disponibles pour cette métrique.
+            </p>
+          )}
         </div>
       ) : hasData ? (
         <>

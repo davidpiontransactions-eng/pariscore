@@ -1042,11 +1042,21 @@ export function SportsSidebarContent({
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const prevValidating = useRef(isValidating);
   useEffect(() => {
-    if (prevValidating.current && !isValidating && treeData) {
+    // MAJ lastSyncTime à chaque cycle SWR (succès OU erreur) pour que
+    // l'UI affiche "Last sync: HH:MM:SS" même si le fetch échoue —
+    // l'utilisateur voit au moins que le système a tenté une synchro.
+    if (prevValidating.current && !isValidating) {
       setLastSyncTime(new Date());
     }
     prevValidating.current = isValidating;
   }, [isValidating, treeData]);
+
+  // Initialiser lastSyncTime au mount pour éviter "—" pendant le 1er cycle.
+  useEffect(() => {
+    if (!lastSyncTime && isValidating) {
+      setLastSyncTime(new Date());
+    }
+  }, [lastSyncTime, isValidating]);
 
   const searchQuery = useSportsSidebarStore((s) => s.searchQuery);
   const timeFilter = useSportsSidebarStore((s) => s.selectedTimeFilter);

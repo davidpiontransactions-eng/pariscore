@@ -990,6 +990,11 @@ return [...matches, ...synthetic];
                   {t("retry")}
                 </button>
               </p>
+              {data?.source && (
+                <p className="mt-1 text-[10px] opacity-70">
+                  Source: {data.source} · Dernière MAJ: {new Date(data.updatedAt).toLocaleTimeString("fr-FR")}
+                </p>
+              )}
             </div>
           </div>
         )}
