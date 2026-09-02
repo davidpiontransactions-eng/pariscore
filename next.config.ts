@@ -5,6 +5,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Autoriser les requêtes cross-origin depuis pariscore.fr en mode dev
+  // (le VPS reverse-proxy accède à next dev sur le même host mais via un
+  // nom de domaine différent → sinon Next.js bloque les chunks JS/HMR).
+  allowedDevOrigins: ["https://pariscore.fr"],
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
