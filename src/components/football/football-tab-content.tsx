@@ -27,7 +27,7 @@ import { FootballLeagueBar } from "./football-filters";
 import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top-teams-presets-bar";
 import { useCornervalueStats } from "@/hooks/use-cornervalue-stats";
 import { useTeamAttackDefenseStats } from "@/hooks/use-team-attack-defense-stats";
-import { FootballMatchCardSkeleton } from "./football-match-card";
+import { MatchCardSkeleton } from "@/components/mobile/match-card-skeleton";
 import { FootballLiveCard, FootballLiveCardSkeleton } from "./football-live-card";
 import { FlashscoreFootballList } from "./flashscore-football-list";
 import { FootballBankerWidget } from "./football-banker";
@@ -551,7 +551,7 @@ export function FootballTabContent() {
           {isLoading ? (
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               {[0, 1, 2, 3].map((i) => (
-                <FootballMatchCardSkeleton key={i} />
+                <MatchCardSkeleton key={i} variant="football" />
               ))}
             </div>
           ) : prematchMatches.length > 0 ? (

@@ -50,7 +50,7 @@ import { useAnalytics } from "@/components/analytics-provider";
 import { useDocumentPip } from "@/hooks/use-document-pip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MatchPipWidget } from "@/components/tennis/match-pip-widget";
-import { MatchCardSkeleton } from "@/components/tennis/match-card-skeleton";
+import { MatchCardSkeleton } from "@/components/mobile/match-card-skeleton";
 import { FlashscoreTennisList } from "@/components/tennis/flashscore-tennis-list";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
