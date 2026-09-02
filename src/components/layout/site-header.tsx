@@ -17,7 +17,7 @@ const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma"
 /**
  * SiteHeader — Barre du haut unifiée à 2 niveaux, style gradient modern.
  *
- * Niveau 1 (52px) : Logo shield + Recherche + Notifications + Profil + Sport athlete
+ * Niveau 1 (56px) : Logo shield + Recherche + Actions + Sport athlete image
  * Niveau 2 (40px) : Onglets sport scrollables
  */
 export function SiteHeader() {
@@ -50,43 +50,24 @@ export function SiteHeader() {
           }}
         />
 
-        {/* Sports action silhouette — right side */}
-        <div className="absolute right-0 top-0 h-full w-48 overflow-hidden opacity-[0.07] pointer-events-none">
-          <svg
-            viewBox="0 0 200 60"
-            className="h-full w-full"
-            preserveAspectRatio="xMaxYMid slice"
-          >
-            <defs>
-              <linearGradient id="athleteGrad" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#00e676" />
-                <stop offset="100%" stopColor="#29b6f6" />
-              </linearGradient>
-            </defs>
-            {/* Running athlete silhouette */}
-            <g fill="url(#athleteGrad)">
-              {/* Head */}
-              <circle cx="140" cy="18" r="6" />
-              {/* Body */}
-              <path d="M 140 24 L 138 38 L 142 38 Z" />
-              {/* Arms */}
-              <path d="M 140 28 L 130 32 M 140 28 L 150 24" strokeWidth="3" stroke="url(#athleteGrad)" fill="none" strokeLinecap="round" />
-              {/* Legs */}
-              <path d="M 138 38 L 128 52 M 142 38 L 152 50" strokeWidth="3" stroke="url(#athleteGrad)" fill="none" strokeLinecap="round" />
-              {/* Motion lines */}
-              <path d="M 155 20 L 170 20 M 158 28 L 175 28 M 155 36 L 168 36" strokeWidth="1.5" stroke="url(#athleteGrad)" fill="none" opacity="0.5" strokeLinecap="round" />
-            </g>
-            {/* Soccer ball */}
-            <circle cx="125" cy="48" r="5" fill="white" opacity="0.6" />
-            <path d="M 125 43 L 123 46 M 125 43 L 127 46 M 122 48 L 128 48" stroke="#333" strokeWidth="0.5" fill="none" opacity="0.6" />
-          </svg>
+        {/* Sports athlete image — right side with splash effect */}
+        <div className="absolute right-0 top-0 h-full w-[400px] pointer-events-none">
+          <Image
+            src="/sports-athlete-header.svg"
+            alt=""
+            fill
+            className="object-cover object-right opacity-80"
+            priority
+          />
+          {/* Fade gradient to blend with header */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#060a14] via-[#060a14]/60 to-transparent" />
         </div>
 
         {/* Bottom glow line */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
 
-        {/* Content — Niveau 1 (52px) */}
-        <div className="relative mx-auto flex h-[52px] max-w-7xl items-center justify-between gap-x-4 px-4 sm:px-6">
+        {/* Content — Niveau 1 (56px) */}
+        <div className="relative mx-auto flex h-[56px] max-w-7xl items-center justify-between gap-x-4 px-4 sm:px-6">
           {/* Gauche : Logo Shield */}
           <Link
             href="/"
@@ -98,9 +79,9 @@ export function SiteHeader() {
               <Image
                 src="/logo-header.svg"
                 alt="PariScore Shield"
-                width={44}
-                height={44}
-                className="h-[44px] w-[44px] transition-all group-hover:drop-shadow-[0_0_8px_rgba(0,230,118,0.4)]"
+                width={48}
+                height={48}
+                className="h-[48px] w-[48px] transition-all group-hover:drop-shadow-[0_0_12px_rgba(0,230,118,0.5)]"
                 priority
               />
               {/* Glow effect on hover */}
@@ -109,11 +90,11 @@ export function SiteHeader() {
             
             {/* Texte logo */}
             <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tight text-white leading-none">
+              <span className="text-xl font-black tracking-tight text-white leading-none">
                 PARI<span className="text-emerald-400">SCORE</span>
               </span>
-              <span className="text-[9px] font-medium tracking-[0.2em] text-zinc-500 leading-none mt-0.5">
-                MULTISPORT DATA
+              <span className="text-[10px] font-medium tracking-[0.25em] text-zinc-500 leading-none mt-1">
+                MULTISPORT DATA & PRÉDICTIONS
               </span>
             </div>
           </Link>
