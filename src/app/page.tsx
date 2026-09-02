@@ -34,7 +34,6 @@ import { LanguageToggle } from "@/components/language-toggle";
 import { PushToggle } from "@/components/push-toggle";
 import { EmailToggle } from "@/components/email-toggle";
 import { TerminalToggle } from "@/components/terminal-toggle";
-import { DensityToggle } from "@/components/ui/density-toggle";
 import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicator";
 import { Button } from "@/components/ui/button";
 import { openBankrollDialog } from "@/components/bankroll-dialog";
@@ -324,7 +323,6 @@ function HomeInner() {
               <PushToggle />
               <EmailToggle />
               <TerminalToggle />
-              <DensityToggle />
               <ValueBetScannerIndicator />
               <Button
                 variant="ghost"
