@@ -4,7 +4,7 @@
     "leagueId": "liga_1_romania",
     "leagueName": "Romania",
     "season": "2026/27",
-    "lastUpdated": "2026-09-01T09:32:56.918394Z",
+    "lastUpdated": "2026-09-02T08:56:47.487162Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -31,6 +31,15 @@
       "ga": 2
     },
     {
+      "teamName": "Cornivul H.",
+      "gp": 4,
+      "w": 2,
+      "d": 2,
+      "l": 0,
+      "gf": 8,
+      "ga": 2
+    },
+    {
       "teamName": "Otelul",
       "gp": 4,
       "w": 2,
@@ -47,26 +56,17 @@
       "l": 1,
       "gf": 8,
       "ga": 6
-    },
-    {
-      "teamName": "Cornivul H.",
-      "gp": 4,
-      "w": 2,
-      "d": 2,
-      "l": 0,
-      "gf": 8,
-      "ga": 2
     }
   ],
   "away": [
     {
-      "teamName": "Din. Bucharest",
+      "teamName": "Sepsi Osk",
       "gp": 4,
       "w": 1,
       "d": 2,
       "l": 1,
-      "gf": 3,
-      "ga": 3
+      "gf": 2,
+      "ga": 2
     },
     {
       "teamName": "Rapid Bucharest",
@@ -78,13 +78,13 @@
       "ga": 1
     },
     {
-      "teamName": "Sepsi Osk",
+      "teamName": "Din. Bucharest",
       "gp": 4,
       "w": 1,
       "d": 2,
       "l": 1,
-      "gf": 2,
-      "ga": 2
+      "gf": 3,
+      "ga": 3
     },
     {
       "teamName": "Fcsb",

@@ -4,7 +4,7 @@
     "leagueId": "super_league_swiss",
     "leagueName": "Switzerland",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-01T09:32:47.705966Z",
+    "lastUpdated": "2026-09-02T08:56:38.037720Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 12,
     "window": 8,
@@ -13,6 +13,15 @@
   },
   "home": [
     {
+      "teamName": "Fc Basel",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 8
+    },
+    {
       "teamName": "Fc Zurich",
       "gp": 5,
       "w": 2,
@@ -20,15 +29,6 @@
       "l": 3,
       "gf": 6,
       "ga": 8
-    },
-    {
-      "teamName": "Winterthur",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 4,
-      "ga": 12
     },
     {
       "teamName": "Lugano",
@@ -40,22 +40,22 @@
       "ga": 4
     },
     {
-      "teamName": "Bsc Young Boys",
+      "teamName": "Winterthur",
       "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 16,
-      "ga": 9
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 4,
+      "ga": 12
     },
     {
-      "teamName": "Thun",
+      "teamName": "Grasshopper",
       "gp": 5,
-      "w": 3,
+      "w": 1,
       "d": 1,
-      "l": 1,
-      "gf": 13,
-      "ga": 9
+      "l": 3,
+      "gf": 6,
+      "ga": 10
     },
     {
       "teamName": "Lausanne Sport",
@@ -76,13 +76,22 @@
       "ga": 9
     },
     {
-      "teamName": "Grasshopper",
+      "teamName": "Servette",
       "gp": 5,
-      "w": 1,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 8,
+      "ga": 5
+    },
+    {
+      "teamName": "Thun",
+      "gp": 5,
+      "w": 3,
       "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 10
+      "l": 1,
+      "gf": 13,
+      "ga": 9
     },
     {
       "teamName": "St. Gallen",
@@ -94,15 +103,6 @@
       "ga": 9
     },
     {
-      "teamName": "Fc Basel",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 8
-    },
-    {
       "teamName": "Sion",
       "gp": 5,
       "w": 3,
@@ -112,16 +112,25 @@
       "ga": 5
     },
     {
-      "teamName": "Servette",
+      "teamName": "Bsc Young Boys",
       "gp": 5,
-      "w": 2,
+      "w": 3,
       "d": 2,
-      "l": 1,
-      "gf": 8,
-      "ga": 5
+      "l": 0,
+      "gf": 16,
+      "ga": 9
     }
   ],
   "away": [
+    {
+      "teamName": "Fc Basel",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 8,
+      "ga": 9
+    },
     {
       "teamName": "Fc Zurich",
       "gp": 5,
@@ -130,15 +139,6 @@
       "l": 4,
       "gf": 4,
       "ga": 10
-    },
-    {
-      "teamName": "Winterthur",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 7,
-      "ga": 14
     },
     {
       "teamName": "Lugano",
@@ -150,21 +150,21 @@
       "ga": 5
     },
     {
-      "teamName": "Bsc Young Boys",
+      "teamName": "Winterthur",
       "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 15,
-      "ga": 7
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 7,
+      "ga": 14
     },
     {
-      "teamName": "Thun",
+      "teamName": "Grasshopper",
       "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 12,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 6,
       "ga": 11
     },
     {
@@ -186,13 +186,22 @@
       "ga": 6
     },
     {
-      "teamName": "Grasshopper",
+      "teamName": "Thun",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 12,
+      "ga": 11
+    },
+    {
+      "teamName": "Servette",
       "gp": 5,
       "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 11
+      "d": 3,
+      "l": 1,
+      "gf": 9,
+      "ga": 8
     },
     {
       "teamName": "St. Gallen",
@@ -213,21 +222,12 @@
       "ga": 4
     },
     {
-      "teamName": "Fc Basel",
+      "teamName": "Bsc Young Boys",
       "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 9
-    },
-    {
-      "teamName": "Servette",
-      "gp": 5,
-      "w": 1,
-      "d": 3,
+      "w": 3,
+      "d": 2,
       "l": 1,
-      "gf": 9,
+      "gf": 16,
       "ga": 8
     }
   ]
