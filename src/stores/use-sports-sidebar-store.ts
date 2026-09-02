@@ -54,6 +54,8 @@ interface SportsSidebarState {
   followedTeamIds: string[];
   /** true dès que l'utilisateur a modifié ses équipes suivies. */
   teamsCustomized: boolean;
+  /** Sidebar réduite en mode icônes (style 1xBet collapsed). */
+  collapsed: boolean;
 
   setSearchQuery: (query: string) => void;
   setTimeFilter: (filter: TimeFilterKey) => void;
@@ -90,6 +92,8 @@ interface SportsSidebarState {
   toggleFollowedTeam: (teamId: string) => void;
   /** Vérifie si une équipe est suivie. */
   isFollowedTeam: (teamId: string) => boolean;
+  /** Bascule le mode réduit/étendu de la sidebar. */
+  toggleCollapsed: () => void;
 }
 
 const DEFAULTS = {
@@ -105,6 +109,7 @@ const DEFAULTS = {
   hideOdds: false,
   followedTeamIds: [] as string[],
   teamsCustomized: false,
+  collapsed: false,
 };
 
 const DEFAULT_NAMED_SETS: Record<string, string[]> = {
@@ -253,6 +258,8 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
         })),
 
       isFollowedTeam: (teamId) => get().followedTeamIds.includes(teamId),
+
+      toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
     }),
     {
       name: "pariscore.sportsSidebar",
@@ -270,6 +277,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
         hideOdds: s.hideOdds,
         followedTeamIds: s.followedTeamIds,
         teamsCustomized: s.teamsCustomized,
+        collapsed: s.collapsed,
       }),
     },
   ),

@@ -36,6 +36,15 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-sidebar-surface: var(--sidebar-surface);
+  --color-sidebar-surface-elevated: var(--sidebar-surface-elevated);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-border: var(--sidebar-active-border);
+  --color-sidebar-live-pulse: var(--sidebar-live-pulse);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-text-muted: var(--sidebar-text-muted);
+  --color-sidebar-accent-color: var(--sidebar-accent-color);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -129,6 +138,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Sidebar 1xBet design tokens */
+  --sidebar-surface: #0e121e;
+  --sidebar-surface-elevated: #131722;
+  --sidebar-hover: rgba(255,255,255,0.04);
+  --sidebar-active: rgba(0,230,118,0.08);
+  --sidebar-active-border: #00e676;
+  --sidebar-live-pulse: rgba(255,56,86,0.15);
+  --sidebar-text: #e8eaed;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-accent-color: #00e676;
 }
 
 .dark {
@@ -184,6 +203,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  /* Sidebar 1xBet design tokens */
+  --sidebar-surface: #0e121e;
+  --sidebar-surface-elevated: #131722;
+  --sidebar-hover: rgba(255,255,255,0.04);
+  --sidebar-active: rgba(0,230,118,0.08);
+  --sidebar-active-border: #00e676;
+  --sidebar-live-pulse: rgba(255,56,86,0.15);
+  --sidebar-text: #e8eaed;
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-accent-color: #00e676;
 }
 
 @layer base {

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Home, Radio, Gem, Star, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLiveMatches } from "@/hooks/use-live-matches";
 
 type TabDef = {
   id: string;
@@ -27,6 +28,8 @@ type MobileBottomNavProps = {
 
 export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
   const isMobile = useIsMobile();
+  const { liveMatchList } = useLiveMatches();
+  const liveCount = liveMatchList.filter((m) => m.isLive).length;
 
   if (!isMobile) return null;
 
@@ -70,13 +73,12 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
                 />
               )}
 
-              {/* Icon with optional live pulse dot */}
+              {/* Icon with optional live count badge */}
               <span className="relative inline-flex">
                 <Icon className="h-5 w-5" />
-                {isLive && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full scale-150 animate-pulse-soft rounded-full bg-red-400 opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                {isLive && liveCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[8px] font-bold text-white shadow-sm shadow-red-500/30">
+                    {liveCount}
                   </span>
                 )}
               </span>

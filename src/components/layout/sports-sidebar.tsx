@@ -15,8 +15,9 @@ import {
   Search,
   Target,
   Trophy,
-  Users,
   X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -82,6 +83,19 @@ const SPORT_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Flag: HelmetPicto,
   Volleyball: BaseballPicto,
   Shield: RugbyPicto,
+};
+
+/** Couleurs de fond par sport pour les badges de la sidebar réduite. */
+const SPORT_COLORS: Record<string, { bg: string; text: string }> = {
+  football: { bg: "bg-emerald-500/15", text: "text-emerald-400" },
+  tennis: { bg: "bg-blue-500/15", text: "text-blue-400" },
+  basketball: { bg: "bg-orange-500/15", text: "text-orange-400" },
+  mma: { bg: "bg-amber-500/15", text: "text-amber-400" },
+  cs2: { bg: "bg-purple-500/15", text: "text-purple-400" },
+  cycling: { bg: "bg-cyan-500/15", text: "text-cyan-400" },
+  f1: { bg: "bg-red-500/15", text: "text-red-400" },
+  baseball: { bg: "bg-yellow-500/15", text: "text-yellow-400" },
+  rugby: { bg: "bg-teal-500/15", text: "text-teal-400" },
 };
 
 /** Favoris par défaut tant que l'utilisateur n'a pas personnalisé. */
@@ -495,11 +509,11 @@ function MatchRow({
               aria-label={`${c.label} ${c.value}`}
               onClick={() => openDetail(c.label)}
               className={cn(
-                "rounded bg-slate-800/80 px-1 py-0.5 font-mono text-[11px] tabular-nums transition-colors",
-                "hover:bg-emerald-600/25 hover:text-emerald-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "rounded-md border px-1.5 py-0.5 font-mono text-[11px] tabular-nums transition-all duration-150",
                 i === bestCellIndex(cells) && hasOdds
-                  ? "text-emerald-300"
-                  : "text-white/60",
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  : "border-slate-700/40 bg-slate-800/50 text-white/60 hover:border-emerald-500/30 hover:bg-emerald-500/15 hover:text-emerald-300",
+                "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               )}
             >
               {c.value}
@@ -508,7 +522,7 @@ function MatchRow({
         </span>
       ) : cells.length && hideOdds ? (
         <span className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
-          <span className="rounded bg-slate-800/80 px-1 py-0.5 font-mono text-[11px] tabular-nums text-slate-500">—</span>
+          <span className="rounded-md border border-slate-700/40 bg-slate-800/50 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-slate-500">—</span>
         </span>
       ) : (
         <span />
@@ -531,6 +545,7 @@ function LeagueRow({
   selected,
   onSelect,
   onFallbackSport,
+  registerRef,
 }: {
   league: LeagueNode;
   expanded: boolean;
@@ -538,6 +553,7 @@ function LeagueRow({
   selected: boolean;
   onSelect: () => void;
   onFallbackSport: () => void;
+  registerRef?: (id: string, el: HTMLLIElement | null) => void;
 }) {
   const t = useTranslations("sportsSidebar");
   const hasMatches = (league.matches?.length ?? 0) > 0;
@@ -555,14 +571,14 @@ function LeagueRow({
   }, [league.matches, hasMatches]);
 
   return (
-    <li>
+    <li ref={(el) => registerRef?.(league.id, el)}>
       <div
         className={cn(
           "flex w-full items-center gap-1.5 rounded-md py-1.5 pl-8 pr-2 text-left",
           "transition-colors",
           selected
             ? "border-l-2 border-emerald-400 bg-emerald-500/15 font-semibold text-emerald-300"
-            : "border-l-2 border-transparent text-white/70 hover:bg-slate-800/80",
+            : "border-l-2 border-transparent text-white/70 hover:bg-gradient-to-r hover:from-white/[0.03] hover:to-transparent",
         )}
       >
         {hasMatches ? (
@@ -619,6 +635,7 @@ function CountryBlock({
   forceExpanded,
   onLeagueSelect,
   onSportSelect,
+  leagueRefs,
 }: {
   country: CountryNode;
   selectedLeagueId: string | null;
@@ -630,6 +647,7 @@ function CountryBlock({
   forceExpanded?: boolean;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
+  leagueRefs?: React.RefObject<Map<string, HTMLLIElement>>;
 }) {
   const t = useTranslations("sportsSidebar");
   const storeExpanded = useSportsSidebarStore((s) => !!s.expandedCountries[country.id]);
@@ -654,7 +672,7 @@ function CountryBlock({
         aria-label={t(expanded ? "collapseAria" : "expandAria", { name: country.name })}
         className={cn(
           "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 pl-5 text-left",
-          "transition-colors hover:bg-slate-800/80",
+          "transition-all duration-150 hover:bg-gradient-to-r hover:from-white/[0.03] hover:to-transparent",
           isCountrySelected
             ? "bg-emerald-500/10 font-semibold text-emerald-300"
             : "text-white/70",
@@ -687,6 +705,10 @@ function CountryBlock({
               selected={selectedLeagueId === league.id}
               onSelect={() => onLeagueSelect(league)}
               onFallbackSport={() => onSportSelect(league.sportId as SportTabId)}
+              registerRef={(id, el) => {
+                if (el) leagueRefs?.current?.set(id, el);
+                else leagueRefs?.current?.delete(id);
+              }}
             />
           ))}
         </ul>
@@ -703,6 +725,7 @@ function SportBlock({
   forceExpanded,
   onLeagueSelect,
   onSportSelect,
+  leagueRefs,
 }: {
   sport: SportNode;
   selectedLeagueId: string | null;
@@ -713,6 +736,7 @@ function SportBlock({
   forceExpanded?: boolean;
   onLeagueSelect: (league: LeagueNode) => void;
   onSportSelect: (sportId: SportTabId) => void;
+  leagueRefs?: React.RefObject<Map<string, HTMLLIElement>>;
 }) {
   const t = useTranslations("sportsSidebar");
   const storeExpanded = useSportsSidebarStore((s) => !!s.expandedSports[sport.id]);
@@ -739,14 +763,16 @@ function SportBlock({
         aria-label={t(expanded ? "collapseAria" : "expandAria", { name: sportLabel })}
         className={cn(
           "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left",
-          "transition-colors hover:bg-slate-800/80",
+          "transition-all duration-150 hover:bg-gradient-to-r hover:from-white/[0.03] hover:to-transparent",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       >
         {sport.liveMatches > 0 ? (
           <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" aria-label="Live" />
         ) : null}
-        <Icon aria-hidden className="h-4 w-4 shrink-0 text-emerald-400" />
+        <span className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-full", SPORT_COLORS[sport.id]?.bg ?? "bg-slate-800/60")}>
+          <Icon aria-hidden className={cn("h-4 w-4", SPORT_COLORS[sport.id]?.text ?? "text-slate-300")} />
+        </span>
         <span
           className={cn(
             "min-w-0 flex-1 truncate text-xs font-semibold",
@@ -784,6 +810,7 @@ function SportBlock({
               forceExpanded={forceExpanded}
               onLeagueSelect={onLeagueSelect}
               onSportSelect={onSportSelect}
+              leagueRefs={leagueRefs}
             />
           ))}
         </ul>
@@ -1039,6 +1066,7 @@ export function SportsSidebarContent({
   const t = useTranslations("sportsSidebar");
   const { data: treeData, isValidating } = useSportsTree();
   const { liveMatchList } = useLiveMatches();
+  const liveCount = liveMatchList.filter((m) => m.isLive).length;
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const prevValidating = useRef(isValidating);
   useEffect(() => {
@@ -1158,6 +1186,17 @@ export function SportsSidebarContent({
   // Chemin actif sport→pays→ligue (P0-9) : la ligue sélectionnée marque ses ancêtres.
   const activePath = useMemo(() => findLeaguePath(tree, selectedLeagueId), [tree, selectedLeagueId]);
 
+  // Auto-scroll vers la ligue active dans l'arbre (scroll-to-active)
+  // Via refs React (pas de document.querySelector — evite XSS via URL params).
+  const leagueRefs = useRef<Map<string, HTMLLIElement>>(new Map());
+  useEffect(() => {
+    if (!selectedLeagueId) return;
+    const el = leagueRefs.current.get(selectedLeagueId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [selectedLeagueId]);
+
   const handleLeagueSelect = (league: LeagueNode) => {
     const sportId = league.sportId as SportTabId;
     selectLeague(league.id, sportId);
@@ -1173,31 +1212,41 @@ export function SportsSidebarContent({
   const hasAnyMatch = tree.some((s) => s.totalMatches > 0);
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#0F172A] text-slate-200">
-      {/* Header sidebar — logo + Accueil */}
-      <div className="flex items-center gap-2 border-b border-slate-800/80 px-3 py-2.5">
-        <button
-          type="button"
-          onClick={() => handleSportSelect("home")}
-          className={cn(
-            "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-semibold transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50",
-            activeSport === "home"
-              ? "bg-emerald-500/10 text-emerald-400"
-              : "text-white/70 hover:bg-slate-800/80 hover:text-white",
-          )}
-        >
-          <Home className="h-4 w-4" />
-          <span>Accueil</span>
-        </button>
-        <AthleteHeader sport={activeSport} maxAthletes={3} onAthleteSelect={() => {}} />
+    <div className="flex h-full w-full flex-col bg-[#0e121e] text-slate-200">
+      {/* Header sidebar premium — gradient + live counter */}
+      <div className="border-b border-slate-800/60 bg-gradient-to-b from-[#0e121e] via-[#0e121e] to-transparent">
+        <div className="flex items-center justify-between px-3 py-3">
+          <button
+            type="button"
+            onClick={() => handleSportSelect("home")}
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-bold transition-all duration-150",
+              activeSport === "home"
+                ? "bg-[#00e676]/10 text-[#00e676] shadow-sm shadow-[#00e676]/10"
+                : "text-white/80 hover:bg-slate-800/60 hover:text-white",
+            )}
+          >
+            <span className="text-base">⚽</span>
+            <span className="tracking-tight">PariScore</span>
+          </button>
+          <div className="flex items-center gap-1.5">
+            {liveCount > 0 && (
+              <div className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2 py-0.5">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                <span className="text-[10px] font-bold tabular-nums text-red-300">{liveCount}</span>
+              </div>
+            )}
+            <AthleteHeader sport={activeSport} maxAthletes={3} onAthleteSelect={() => {}} />
+          </div>
+        </div>
       </div>
       <div className="space-y-2 border-b border-slate-800/80 p-2.5">
         {/* Compteur live global : pulse + nombre total de matchs live */}
-        {liveMatchList.filter((m) => m.isLive).length > 0 && (
+        {liveCount > 0 && (
           <div className="flex items-center gap-2 rounded-lg bg-red-500/10 px-2.5 py-1.5">
             <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
             <span className="text-xs font-semibold text-red-300">
-              {liveMatchList.filter((m) => m.isLive).length} match{liveMatchList.filter((m) => m.isLive).length > 1 ? "s" : ""} live
+              {liveCount} match{liveCount > 1 ? "s" : ""} live
             </span>
           </div>
         )}
@@ -1369,12 +1418,103 @@ export function SportsSidebarContent({
                   forceExpanded={searchActive}
                   onLeagueSelect={handleLeagueSelect}
                   onSportSelect={handleSportSelect}
+                  leagueRefs={leagueRefs}
                 />
               ))}
             </ul>
           )}
         </div>
       </ScrollArea>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sidebar réduite — mode icônes seul (style 1xBet collapsed)
+// ---------------------------------------------------------------------------
+
+function CollapsedSidebar({
+  activeSport,
+  onSportChange,
+}: {
+  activeSport: string;
+  onSportChange: (sportId: SportTabId) => void;
+}) {
+  const { data: tree } = useSportsTree();
+  const { liveMatchList } = useLiveMatches();
+  const toggleCollapsed = useSportsSidebarStore((s) => s.toggleCollapsed);
+  const liveCount = liveMatchList.filter((m) => m.isLive).length;
+
+  return (
+    <div className="flex h-full w-full flex-col items-center bg-[#0e121e] py-2">
+      {/* Toggle expand */}
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-label="Expand sidebar"
+        className="mb-3 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800/80 hover:text-white"
+      >
+        <PanelLeftOpen className="h-4 w-4" />
+      </button>
+
+      {/* Home */}
+      <button
+        type="button"
+        onClick={() => onSportChange("home")}
+        className={`mb-1 rounded-lg p-2 transition-colors ${
+          activeSport === "home"
+            ? "bg-emerald-500/15 text-emerald-400"
+            : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
+        }`}
+        title="Accueil"
+      >
+        <Home className="h-4 w-4" />
+      </button>
+
+      {/* Live badge */}
+      {liveCount > 0 && (
+        <div className="relative mb-1">
+          <button
+            type="button"
+            onClick={() => onSportChange("football")}
+            className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-500/10"
+            title={`${liveCount} matchs live`}
+          >
+            <Radio className="h-4 w-4" />
+          </button>
+          <span className="absolute -right-0.5 -top-0.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-red-500 px-0.5 text-[8px] font-bold text-white">
+            {liveCount}
+          </span>
+        </div>
+      )}
+
+      {/* Separator */}
+      <div className="mx-2 mb-1 h-px w-8 bg-slate-800" />
+
+      {/* Sport icons */}
+      {tree?.map((sport) => {
+        const Icon = SPORT_ICONS[sport.icon] ?? Trophy;
+        const colors = SPORT_COLORS[sport.id] ?? { bg: "bg-slate-800/60", text: "text-slate-300" };
+        const isActive = activeSport === sport.id;
+        return (
+          <button
+            key={sport.id}
+            type="button"
+            onClick={() => onSportChange(sport.id as SportTabId)}
+            className={`relative mb-1 rounded-lg p-2 transition-colors ${
+              isActive ? colors.bg + " " + colors.text : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
+            }`}
+            title={sport.name}
+          >
+            <Icon className="h-4 w-4" />
+            {sport.liveMatches > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-red-500 px-0.5 text-[7px] font-bold text-white">
+                {sport.liveMatches}
+              </span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -1391,12 +1531,37 @@ export function SportsSidebar({
   onSportChange: (sportId: SportTabId) => void;
 }) {
   const t = useTranslations("sportsSidebar");
+  const collapsed = useSportsSidebarStore((s) => s.collapsed);
+  const toggleCollapsed = useSportsSidebarStore((s) => s.toggleCollapsed);
+
   return (
     <aside
       aria-label={t("title")}
-      className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r border-slate-800 lg:block xl:w-72"
+      className={cn(
+        "sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 border-r border-slate-800/60 transition-all duration-300 lg:block",
+        collapsed ? "w-[4.5rem]" : "w-64 xl:w-72",
+      )}
     >
-      <SportsSidebarContent activeSport={activeSport} onSportChange={onSportChange} />
+      {collapsed ? (
+        <div className="flex h-full flex-col">
+          <CollapsedSidebar activeSport={activeSport} onSportChange={onSportChange} />
+        </div>
+      ) : (
+        <div className="flex h-full flex-col border-r border-slate-800/60">
+          {/* Collapse toggle — header intégré */}
+          <div className="flex items-center justify-end border-b border-slate-800/60 px-2 py-1">
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              aria-label="Collapse sidebar"
+              className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
+            >
+              <PanelLeftClose className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <SportsSidebarContent activeSport={activeSport} onSportChange={onSportChange} />
+        </div>
+      )}
     </aside>
   );
 }
@@ -1426,7 +1591,7 @@ export function SportsSidebarDrawer({
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-[19rem] max-w-[85vw] border-slate-800 bg-[#0F172A] p-0"
+        className="w-[19rem] max-w-[85vw] border-slate-800/60 bg-[#0e121e]/95 p-0 backdrop-blur-xl"
       >
         <SheetTitle className="sr-only">{t("title")}</SheetTitle>
         <div className="h-full pt-10">
