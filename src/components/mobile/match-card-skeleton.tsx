@@ -31,7 +31,12 @@ type Props = {
 
 function TennisSkeleton() {
   return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3">
+    <div
+      className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3"
+      aria-busy="true"
+      aria-label="Chargement du match"
+      role="status"
+    >
       {/* Tournament badge */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-24 rounded-full" />

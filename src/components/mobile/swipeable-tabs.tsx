@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
  * - Indicateur animé sous l'onglet actif
  * - Rubber band aux extrémités
  * - Respecte prefers-reduced-motion
+ * - Navigation clavier (ArrowLeft/ArrowRight)
  *
  * Usage :
  * <SwipeableTabs tabs={["Tennis", "Football", "Basket"]}>
@@ -21,6 +22,8 @@ import { cn } from "@/lib/utils";
  *   <div>Contenu Football</div>
  *   <div>Contenu Basketball</div>
  * </SwipeableTabs>
+ *
+ * Accessibility: aria-selected, aria-controls, keyboard navigation
  */
 
 type Tab = {
@@ -105,6 +108,26 @@ export function SwipeableTabs({
     [activeIndex, tabs, handleChange],
   );
 
+  // Navigation clavier (ArrowLeft/ArrowRight)
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "ArrowLeft" && activeIndex > 0) {
+        e.preventDefault();
+        handleChange(tabs[activeIndex - 1].id);
+      } else if (e.key === "ArrowRight" && activeIndex < tabs.length - 1) {
+        e.preventDefault();
+        handleChange(tabs[activeIndex + 1].id);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        handleChange(tabs[0].id);
+      } else if (e.key === "End") {
+        e.preventDefault();
+        handleChange(tabs[tabs.length - 1].id);
+      }
+    },
+    [activeIndex, tabs, handleChange],
+  );
+
   // Calculer le style de l'indicateur
   const indicatorStyle = {
     width: `${100 / tabs.length}%`,
@@ -120,14 +143,17 @@ export function SwipeableTabs({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onKeyDown={handleKeyDown}
         role="tablist"
         aria-orientation="horizontal"
       >
-        {tabs.map((tab) => (
+        {tabs.map((tab, index) => (
           <button
             key={tab.id}
             role="tab"
             aria-selected={activeTab === tab.id}
+            aria-controls={`tabpanel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
             onClick={() => handleChange(tab.id)}
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors relative z-10",

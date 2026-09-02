@@ -75,6 +75,7 @@ type LevelProps = {
 
 function Level({ label, children, priority = 2, className }: LevelProps) {
   const [expanded, setExpanded] = useState(priority === 1);
+  const contentId = `stats-disclosure-content-${label?.replace(/\s+/g, "-").toLowerCase() ?? "default"}`;
 
   return (
     <div className={cn("border-b border-border/20 last:border-b-0", className)}>
@@ -83,6 +84,7 @@ function Level({ label, children, priority = 2, className }: LevelProps) {
           onClick={() => setExpanded(!expanded)}
           className="flex w-full items-center justify-between py-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
           aria-expanded={expanded}
+          aria-controls={contentId}
         >
           <span>{label}</span>
           {expanded ? (
@@ -96,6 +98,9 @@ function Level({ label, children, priority = 2, className }: LevelProps) {
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
+            id={contentId}
+            role="region"
+            aria-label={label}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}

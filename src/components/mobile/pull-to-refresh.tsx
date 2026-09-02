@@ -17,11 +17,14 @@ import { cn } from "@/lib/utils";
  * - Rubber band aux extrémités
  * - Respecte prefers-reduced-motion
  * - Désactivé si isRefreshing (évite les double-refresh)
+ * - Accessibility: aria-live pour les announceurs de statut
  *
  * Usage :
  * <PullToRefresh onRefresh={async () => { await refetch(); }}>
  *   <MatchList matches={matches} />
  * </PullToRefresh>
+ *
+ * Accessibility: aria-live regions for pull/refresh status announcements
  */
 
 type Props = {
