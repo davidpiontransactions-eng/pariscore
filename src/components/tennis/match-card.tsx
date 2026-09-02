@@ -39,6 +39,9 @@ import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { useTennisHighlights } from "@/hooks/use-tennis-highlights";
 import { Badge } from "@/components/ui/badge";
 import { FollowButton } from "@/components/shared/follow-button";
+import { OddsSparkline } from "@/components/shared/odds-sparkline";
+import { MiniProbabilityCurve } from "@/components/shared/mini-probability-curve";
+import { useOddsHistory } from "@/hooks/use-odds-history";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
 // des stats enrichies. Identique à player-matcher.ts:normalize et db.ts.
@@ -107,6 +110,10 @@ export function MatchCard({
   // Sparklines Elo (P2 — Quant Terminal)
   const sparklineA = useEloSparkline(match.id, "a", 30);
   const sparklineB = useEloSparkline(match.id, "b", 30);
+  // Odds sparkline — historique client des mouvements de cotes
+  const oddsHistory = useOddsHistory(match.id, match.odds?.decimalA, match.odds?.decimalB);
+  const oddsDataA = oddsHistory.map((o) => o.a);
+  const oddsDataB = oddsHistory.map((o) => o.b);
   // Best odds (P3 — Bet Action Hub)
   const bestOddA = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalA > max.decimalA ? o : max)) : null;
   const bestOddB = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalB > max.decimalB ? o : max)) : null;
@@ -507,6 +514,16 @@ export function MatchCard({
               shortNameA={playerA.shortName}
               shortNameB={playerB.shortName}
             />
+            {/* Mini courbe de probabilité live — tendance temps réel */}
+            <MiniProbabilityCurve
+              probA={probA}
+              probB={probB}
+              player1Name={playerA.shortName}
+              player2Name={playerB.shortName}
+              player1Color={playerA.color}
+              player2Color={playerB.color}
+              className="mt-2"
+            />
           </div>
         )}
 
@@ -633,6 +650,16 @@ export function MatchCard({
                 {match.odds.decimalA.toFixed(2)}
               </span>
             </span>
+            {/* Odds sparkline (si historique disponible) */}
+            {oddsDataA.length >= 2 && (
+              <OddsSparkline
+                dataA={oddsDataA}
+                dataB={oddsDataB.length >= 2 ? oddsDataB : undefined}
+                width={60}
+                height={22}
+                className="opacity-70"
+              />
+            )}
             <span className="text-border">/</span>
             <span className="font-mono">
               {playerB.shortName}{" "}

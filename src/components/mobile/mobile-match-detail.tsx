@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, Share2, Heart, Bell } from "lucide-react";
 import { DrawerDetail } from "@/components/layout/drawer-detail";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SwipeableTabs } from "@/components/mobile/swipeable-tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FollowButton } from "@/components/shared/follow-button";
 import { OddsSparkline } from "@/components/shared/odds-sparkline";
@@ -114,23 +114,18 @@ export function MobileMatchDetail({ match, open, onOpenChange, children }: Props
             </div>
           </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="h-9 w-full justify-start rounded-none border-b border-border/30 bg-transparent px-2">
-              <TabsTrigger value="overview" className="text-xs h-7 px-3">
-                {t("overview")}
-              </TabsTrigger>
-              <TabsTrigger value="stats" className="text-xs h-7 px-3">
-                {t("stats")}
-              </TabsTrigger>
-              <TabsTrigger value="odds" className="text-xs h-7 px-3">
-                {t("odds")}
-              </TabsTrigger>
-              <TabsTrigger value="h2h" className="text-xs h-7 px-3">
-                H2H
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {/* Tabs — SwipeableTabs pour swipe horizontal mobile */}
+          <SwipeableTabs
+            tabs={[
+              { id: "overview", label: t("overview") },
+              { id: "stats", label: t("stats") },
+              { id: "odds", label: t("odds") },
+              { id: "h2h", label: "H2H" },
+            ]}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            className="border-b border-border/30"
+          />
         </div>
 
         {/* Scrollable content */}
