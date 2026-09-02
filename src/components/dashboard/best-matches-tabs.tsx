@@ -10,8 +10,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { estimateFootballEloGap } from "@/lib/elo-utils";
 import { parisKickoff } from "@/lib/football-time";
-import { computeMatchScore } from "@/lib/match-score";
+import {
+  computeMatchScore,
+  computeFootballScore,
+  computeBasketballScore,
+  computeCs2Score,
+  type MatchScoreResult,
+} from "@/lib/match-score";
 import { TopMatchCard, type TopMatchData } from "@/components/tennis/top-match-card";
+import { MultiSportMatchCard, type MultiSportMatchData } from "@/components/tennis/multi-sport-match-card";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,6 +39,9 @@ type MatchCard = {
 
 /** Match tennis avec score 0-10 pour l'affichage "Meilleurs matchs". */
 type ScoredTennisMatch = TopMatchData;
+
+/** Match generique multi-sport avec score 0-10. */
+type ScoredMultiSportMatch = MultiSportMatchData;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -182,6 +192,136 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
       })
       .sort((a, b) => b.matchScore.score - a.matchScore.score);
   }, [tennisData?.matches, minEloGap, minSps]);
+
+  // ── Football avec score 0-10 ──
+  const scoredFootballMatches = useMemo<ScoredMultiSportMatch[]>(() => {
+    const matches = footData?.matches ?? [];
+    return matches
+      .filter((m) => {
+        const gap = estimateFootballEloGap(m);
+        return gap >= minEloGap;
+      })
+      .map((m) => {
+        const scoreResult = computeFootballScore({
+          homeProb: m.prediction.homeProb,
+          drawProb: m.prediction.drawProb,
+          awayProb: m.prediction.awayProb,
+          homeRank: m.home.rank,
+          awayRank: m.away.rank,
+          homeForm: m.home.form,
+          awayForm: m.away.form,
+          league: m.league.name,
+          round: m.round,
+        });
+
+        return {
+          id: m.id,
+          sport: "football" as const,
+          teamA: {
+            name: m.home.name,
+            shortName: m.home.shortName,
+            rank: m.home.rank,
+            form: m.home.form,
+          },
+          teamB: {
+            name: m.away.name,
+            shortName: m.away.shortName,
+            rank: m.away.rank,
+            form: m.away.form,
+          },
+          competition: m.league.name,
+          round: m.round,
+          scheduledAt: m.scheduledAt,
+          probA: m.prediction.homeProb,
+          probB: m.prediction.awayProb,
+          probDraw: m.prediction.drawProb,
+          odds: m.odds ? { home: m.odds.home, draw: m.odds.draw, away: m.odds.away } : undefined,
+          matchScore: {
+            score: scoreResult.score,
+            label: scoreResult.label,
+            labelColor: scoreResult.labelColor,
+            labelBg: scoreResult.labelBg,
+            breakdown: scoreResult.breakdown,
+          },
+        };
+      })
+      .sort((a, b) => b.matchScore.score - a.matchScore.score);
+  }, [footData?.matches, minEloGap]);
+
+  // ── Basketball avec score 0-10 ──
+  const scoredBasketballMatches = useMemo<ScoredMultiSportMatch[]>(() => {
+    return (basketData ?? []).map((m) => {
+      const scoreResult = computeBasketballScore({
+        pHome: m.pHome,
+        edgeElo: m.edgeElo,
+        homeRecord: m.home.record,
+        awayRecord: m.away.record,
+        league: m.league,
+      });
+
+      return {
+        id: m.id,
+        sport: "basketball" as const,
+        teamA: {
+          name: m.home.name,
+          shortName: m.home.abbr || m.home.name,
+          record: m.home.record ?? undefined,
+        },
+        teamB: {
+          name: m.away.name,
+          shortName: m.away.abbr || m.away.name,
+          record: m.away.record ?? undefined,
+        },
+        competition: m.league,
+        scheduledAt: m.scheduledAt,
+        probA: m.pHome != null ? m.pHome * 100 : null,
+        probB: m.pAway != null ? m.pAway * 100 : null,
+        matchScore: {
+          score: scoreResult.score,
+          label: scoreResult.label,
+          labelColor: scoreResult.labelColor,
+          labelBg: scoreResult.labelBg,
+          breakdown: scoreResult.breakdown,
+        },
+      };
+    });
+  }, [basketData]);
+
+  // ── CS2 avec score 0-10 ──
+  const scoredCs2Matches = useMemo<ScoredMultiSportMatch[]>(() => {
+    return (cs2Data ?? []).map((m) => {
+      const scoreResult = computeCs2Score({
+        team1Rank: m.team1.rank,
+        team2Rank: m.team2.rank,
+        bestOf: m.bestOf,
+        tournament: m.tournament,
+      });
+
+      return {
+        id: m.id,
+        sport: "cs2" as const,
+        teamA: {
+          name: m.team1.name,
+          shortName: m.team1.name,
+          rank: m.team1.rank,
+        },
+        teamB: {
+          name: m.team2.name,
+          shortName: m.team2.name,
+          rank: m.team2.rank,
+        },
+        competition: m.tournament,
+        scheduledAt: m.scheduledAt,
+        matchScore: {
+          score: scoreResult.score,
+          label: scoreResult.label,
+          labelColor: scoreResult.labelColor,
+          labelBg: scoreResult.labelBg,
+          breakdown: scoreResult.breakdown,
+        },
+      };
+    });
+  }, [cs2Data]);
 
   // ── Football : ΔElo ≥ minEloGap ──
   const footballMatches = useMemo<MatchCard[]>(() => {
@@ -442,10 +582,11 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               ? "Aucun match avec fort écart Elo aujourd'hui"
               : `Données ${current.label} bientôt disponibles`}
         </div>
-      ) : current.key === "tennis" && viewMode === "grid" ? (
-        /* Tennis : vue redesign avec score 0-10 */
+      ) : viewMode === "grid" ? (
+        /* Vue cartes avec score 0-10 */
         <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto">
-          {scoredTennisMatches.map((match) => (
+          {/* Tennis : TopMatchCard specifique */}
+          {current.key === "tennis" && scoredTennisMatches.map((match) => (
             <TopMatchCard
               key={`tennis-${match.id}`}
               match={match}
@@ -458,40 +599,51 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               }}
             />
           ))}
-        </div>
-      ) : viewMode === "grid" ? (
-        <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
-          {current.matches.map((match) => (
-            <div
-              key={`${match.sport}-${match.id}`}
+          {/* Football : MultiSportMatchCard */}
+          {current.key === "football" && scoredFootballMatches.map((match) => (
+            <MultiSportMatchCard
+              key={`football-${match.id}`}
+              match={match}
               onClick={() => {
                 window.dispatchEvent(
                   new CustomEvent("open-match-detail", {
-                    detail: { sport: match.sport, matchId: match.id },
+                    detail: { sport: "football", matchId: match.id },
                   }),
                 );
               }}
-              className={cn(
-                "flex cursor-pointer items-center gap-3 rounded-xl border border-border/60 bg-card p-3",
-                "transition-all hover:border-emerald-500/40 hover:bg-slate-800/40",
-              )}
-            >
-              <span className="text-xl shrink-0">{SPORT_ICONS[match.sport]}</span>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-semibold truncate block">{match.matchName}</span>
-                <span className="text-xs text-muted-foreground">{match.detail1}</span>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="block text-xs text-muted-foreground">{match.detail2}</span>
-                <span className="text-xs font-mono text-zinc-500">
-                  {parisKickoff(match.scheduledAt)}
-                </span>
-              </div>
-            </div>
+            />
+          ))}
+          {/* Basketball : MultiSportMatchCard */}
+          {current.key === "basketball" && scoredBasketballMatches.map((match) => (
+            <MultiSportMatchCard
+              key={`basketball-${match.id}`}
+              match={match}
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent("open-match-detail", {
+                    detail: { sport: "basketball", matchId: match.id },
+                  }),
+                );
+              }}
+            />
+          ))}
+          {/* CS2 : MultiSportMatchCard */}
+          {current.key === "cs2" && scoredCs2Matches.map((match) => (
+            <MultiSportMatchCard
+              key={`cs2-${match.id}`}
+              match={match}
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent("open-match-detail", {
+                    detail: { sport: "cs2", matchId: match.id },
+                  }),
+                );
+              }}
+            />
           ))}
         </div>
       ) : (
-        /* Vue tableau */
+        /* Vue tableau avec score */
         <div className="overflow-x-auto rounded-xl border border-border/60">
           <table className="w-full text-sm">
             <thead>
@@ -500,75 +652,146 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
                 <th className="px-3 py-2.5 font-medium">Sport</th>
                 <th className="px-3 py-2.5 font-medium">Rencontre</th>
                 <th className="px-3 py-2.5 font-medium">Score</th>
-                <th className="px-3 py-2.5 font-medium text-right">Tournoi</th>
+                <th className="px-3 py-2.5 font-medium text-right">Competition</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {current.key === "tennis"
-                ? scoredTennisMatches.map((match) => (
-                    <tr
-                      key={`tennis-${match.id}`}
-                      onClick={() => {
-                        window.dispatchEvent(
-                          new CustomEvent("open-match-detail", {
-                            detail: { sport: "tennis", matchId: match.id },
-                          }),
-                        );
-                      }}
-                      className="cursor-pointer transition-all hover:bg-slate-800/40"
-                    >
-                      <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
-                        {parisKickoff(match.scheduledAt)}
-                      </td>
-                      <td className="px-3 py-2.5 text-lg">{SPORT_ICONS.tennis}</td>
-                      <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
-                        {match.playerA.shortName} vs {match.playerB.shortName}
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className={cn(
-                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                          match.matchScore.labelBg,
-                          match.matchScore.labelColor,
-                        )}>
-                          {match.matchScore.label} {match.matchScore.score.toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
-                        {match.tournament}
-                      </td>
-                    </tr>
-                  ))
-                : current.matches.map((match) => (
-                    <tr
-                      key={`${match.sport}-${match.id}`}
-                      onClick={() => {
-                        window.dispatchEvent(
-                          new CustomEvent("open-match-detail", {
-                            detail: { sport: match.sport, matchId: match.id },
-                          }),
-                        );
-                      }}
-                      className="cursor-pointer transition-all hover:bg-slate-800/40"
-                    >
-                      <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
-                        {new Date(match.scheduledAt).toLocaleTimeString("fr-FR", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="px-3 py-2.5 text-lg">{SPORT_ICONS[match.sport]}</td>
-                      <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
-                        {match.matchName}
-                      </td>
-                      <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                        {match.detail1}
-                      </td>
-                      <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
-                        {match.detail2}
-                      </td>
-                    </tr>
-                  ))
-              }
+              {/* Tennis */}
+              {current.key === "tennis" && scoredTennisMatches.map((match) => (
+                <tr
+                  key={`tennis-${match.id}`}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: "tennis", matchId: match.id },
+                      }),
+                    );
+                  }}
+                  className="cursor-pointer transition-all hover:bg-slate-800/40"
+                >
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                    {parisKickoff(match.scheduledAt)}
+                  </td>
+                  <td className="px-3 py-2.5 text-lg">{SPORT_ICONS.tennis}</td>
+                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                    {match.playerA.shortName} vs {match.playerB.shortName}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      match.matchScore.labelBg,
+                      match.matchScore.labelColor,
+                    )}>
+                      {match.matchScore.label} {match.matchScore.score.toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                    {match.tournament}
+                  </td>
+                </tr>
+              ))}
+              {/* Football */}
+              {current.key === "football" && scoredFootballMatches.map((match) => (
+                <tr
+                  key={`football-${match.id}`}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: "football", matchId: match.id },
+                      }),
+                    );
+                  }}
+                  className="cursor-pointer transition-all hover:bg-slate-800/40"
+                >
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                    {parisKickoff(match.scheduledAt)}
+                  </td>
+                  <td className="px-3 py-2.5 text-lg">{SPORT_ICONS.football}</td>
+                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                    {match.teamA.shortName} vs {match.teamB.shortName}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      match.matchScore.labelBg,
+                      match.matchScore.labelColor,
+                    )}>
+                      {match.matchScore.label} {match.matchScore.score.toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                    {match.competition}
+                  </td>
+                </tr>
+              ))}
+              {/* Basketball */}
+              {current.key === "basketball" && scoredBasketballMatches.map((match) => (
+                <tr
+                  key={`basketball-${match.id}`}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: "basketball", matchId: match.id },
+                      }),
+                    );
+                  }}
+                  className="cursor-pointer transition-all hover:bg-slate-800/40"
+                >
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                    {parisKickoff(match.scheduledAt)}
+                  </td>
+                  <td className="px-3 py-2.5 text-lg">{SPORT_ICONS.basketball}</td>
+                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                    {match.teamA.shortName} vs {match.teamB.shortName}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      match.matchScore.labelBg,
+                      match.matchScore.labelColor,
+                    )}>
+                      {match.matchScore.label} {match.matchScore.score.toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                    {match.competition}
+                  </td>
+                </tr>
+              ))}
+              {/* CS2 */}
+              {current.key === "cs2" && scoredCs2Matches.map((match) => (
+                <tr
+                  key={`cs2-${match.id}`}
+                  onClick={() => {
+                    window.dispatchEvent(
+                      new CustomEvent("open-match-detail", {
+                        detail: { sport: "cs2", matchId: match.id },
+                      }),
+                    );
+                  }}
+                  className="cursor-pointer transition-all hover:bg-slate-800/40"
+                >
+                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                    {parisKickoff(match.scheduledAt)}
+                  </td>
+                  <td className="px-3 py-2.5 text-lg">{SPORT_ICONS.cs2}</td>
+                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                    {match.teamA.shortName} vs {match.teamB.shortName}
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <span className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      match.matchScore.labelBg,
+                      match.matchScore.labelColor,
+                    )}>
+                      {match.matchScore.label} {match.matchScore.score.toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                    {match.competition}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

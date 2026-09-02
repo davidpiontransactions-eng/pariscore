@@ -255,3 +255,218 @@ export function rankTopMatches<T>(
     .sort((a, b) => b.matchScore.score - a.matchScore.score)
     .slice(0, limit);
 }
+
+// ---------------------------------------------------------------------------
+// Football scoring
+// ---------------------------------------------------------------------------
+
+export interface FootballScoreInput {
+  homeProb: number;        // 0-100
+  drawProb: number;        // 0-100
+  awayProb: number;        // 0-100
+  homeRank: number;
+  awayRank: number;
+  homeForm?: ("W" | "D" | "L")[];
+  awayForm?: ("W" | "D" | "L")[];
+  league: string;
+  round: string;
+}
+
+/** Closeness pour football : 1.0 = 33-33-33, 0.0 = favori dominant. */
+function footballCloseness(homeProb: number, awayProb: number): number {
+  const pHome = homeProb / 100;
+  const pAway = awayProb / 100;
+  // Plus les probs sont proches de 1/3 chacune, mieux c'est
+  const balance = 1 - Math.abs(pHome - pAway);
+  return balance;
+}
+
+/** Importance du championnat ( Premier League > Ligue 2 > National). */
+function leagueImportance(league: string): number {
+  const norm = league.toLowerCase();
+  // Top 5 leagues
+  if (/premier league|la liga|bundesliga|serie a|ligue 1/i.test(norm)) return 1.0;
+  // Europa league / Conference
+  if (/europa|conference|champions/i.test(norm)) return 0.9;
+  // Liga boxeux / top 10
+  if (/eredivisie|primeira liga|super lig|championship/i.test(norm)) return 0.7;
+  // Ligue 2 / Serie B / 2. bundesliga
+  if (/ligue 2|serie b|2\. bundesliga|la liga 2/i.test(norm)) return 0.6;
+  // National / lower
+  return 0.4;
+}
+
+/** Forme W/D/L → score 0-1 (victoires + 0.5*nuls). */
+function footballFormScore(
+  form: ("W" | "D" | "L")[] | undefined | null,
+): number {
+  if (!form || form.length === 0) return 0.5;
+  let pts = 0;
+  for (const r of form) {
+    if (r === "W") pts += 1;
+    else if (r === "D") pts += 0.5;
+  }
+  return pts / form.length;
+}
+
+/**
+ * Score composite pour un match football (0-10).
+ */
+export function computeFootballScore(input: FootballScoreInput): MatchScoreResult {
+  const sCloseness = footballCloseness(input.homeProb, input.awayProb);
+  const sLeague = leagueImportance(input.league);
+  const sRank = starPower(input.homeRank, input.awayRank);
+  const sForm = (footballFormScore(input.homeForm) + footballFormScore(input.awayForm)) / 2;
+
+  const raw =
+    3.0 * sCloseness +
+    3.0 * sLeague +
+    2.5 * sRank +
+    2.0 * sForm;
+
+  const score = Math.tanh(raw / 10) * 10;
+  const rounded = Math.round(score * 10) / 10;
+  const { label, color, bg } = getLabel(rounded);
+
+  return {
+    score: rounded,
+    raw,
+    breakdown: {
+      closeness: sCloseness,
+      tournamentImp: sLeague,
+      eloQuality: 0.5,  // placeholder (pas d'Elo football)
+      starPower: sRank,
+      form: sForm,
+      rivalry: 0.3,
+    },
+    label,
+    labelColor: color,
+    labelBg: bg,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Basketball scoring
+// ---------------------------------------------------------------------------
+
+export interface BasketballScoreInput {
+  pHome: number | null;    // 0-1 probability home win
+  edgeElo: number | null;  // elo differential
+  homeRecord?: string | null;  // "45-20"
+  awayRecord?: string | null;
+  league: string;
+}
+
+/** Record "45-20" → win%. */
+function recordWinPct(record: string | null | undefined): number {
+  if (!record) return 0.5;
+  const m = record.match(/(\d+)-(\d+)/);
+  if (!m) return 0.5;
+  const wins = parseInt(m[1], 10);
+  const losses = parseInt(m[2], 10);
+  const total = wins + losses;
+  return total > 0 ? wins / total : 0.5;
+}
+
+/**
+ * Score composite pour un match basketball (0-10).
+ */
+export function computeBasketballScore(input: BasketballScoreInput): MatchScoreResult {
+  const probHome = input.pHome ?? 0.5;
+  const sCloseness = 1 - Math.abs(probHome - 0.5) * 2;
+
+  // League importance (NBA > WNBA > Euroleague > others)
+  const norm = input.league.toLowerCase();
+  let sLeague = 0.5;
+  if (/nba/i.test(norm)) sLeague = 1.0;
+  else if (/wnba/i.test(norm)) sLeague = 0.8;
+  else if (/euroleague|euroleague/i.test(norm)) sLeague = 0.7;
+
+  // Team quality based on win%
+  const homePct = recordWinPct(input.homeRecord);
+  const awayPct = recordWinPct(input.awayRecord);
+  const sQuality = (homePct + awayPct) / 2;
+
+  const raw =
+    3.0 * sCloseness +
+    2.5 * sLeague +
+    3.0 * sQuality +
+    1.5 * 0.5;  // form placeholder
+
+  const score = Math.tanh(raw / 10) * 10;
+  const rounded = Math.round(score * 10) / 10;
+  const { label, color, bg } = getLabel(rounded);
+
+  return {
+    score: rounded,
+    raw,
+    breakdown: {
+      closeness: sCloseness,
+      tournamentImp: sLeague,
+      eloQuality: sQuality,
+      starPower: 0.5,
+      form: 0.5,
+      rivalry: 0.3,
+    },
+    label,
+    labelColor: color,
+    labelBg: bg,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// CS2 scoring
+// ---------------------------------------------------------------------------
+
+export interface Cs2ScoreInput {
+  team1Rank: number | null;
+  team2Rank: number | null;
+  bestOf: number | null;   // 1, 3, ou 5
+  tournament: string;
+}
+
+/**
+ * Score composite pour un match CS2 (0-10).
+ */
+export function computeCs2Score(input: Cs2ScoreInput): MatchScoreResult {
+  const rank1 = input.team1Rank ?? 50;
+  const rank2 = input.team2Rank ?? 50;
+  const sRank = starPower(rank1, rank2);
+
+  // BO5 > BO3 > BO1
+  const bo = input.bestOf ?? 3;
+  const sFormat = bo >= 5 ? 1.0 : bo >= 3 ? 0.7 : 0.4;
+
+  // Tournament importance
+  const norm = input.tournament.toLowerCase();
+  let sTournament = 0.5;
+  if (/major|champions/i.test(norm)) sTournament = 1.0;
+  else if (/league|blast|iem/i.test(norm)) sTournament = 0.8;
+  else if (/minor|esl one/i.test(norm)) sTournament = 0.6;
+
+  const raw =
+    2.5 * sRank +
+    2.5 * sFormat +
+    3.0 * sTournament +
+    2.0 * 0.5;  // form placeholder
+
+  const score = Math.tanh(raw / 10) * 10;
+  const rounded = Math.round(score * 10) / 10;
+  const { label, color, bg } = getLabel(rounded);
+
+  return {
+    score: rounded,
+    raw,
+    breakdown: {
+      closeness: 0.5,
+      tournamentImp: sTournament,
+      eloQuality: sRank,
+      starPower: sRank,
+      form: 0.5,
+      rivalry: 0.3,
+    },
+    label,
+    labelColor: color,
+    labelBg: bg,
+  };
+}
