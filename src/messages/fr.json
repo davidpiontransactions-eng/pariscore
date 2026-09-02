@@ -852,6 +852,33 @@
       }
     }
   },
+  "dashboard": {
+    "title": "Mon tableau de bord",
+    "subtitle": "Vue d'ensemble de ton activité",
+    "followedPlayers": "Joueurs suivis",
+    "followedTeams": "Équipes suivies",
+    "followedLeagues": "Ligues suivies",
+    "totalFollows": "Total suivis",
+    "recentPredictions": "Prédictions récentes",
+    "viewAll": "Tout voir",
+    "noData": "Aucune donnée pour le moment"
+  },
+  "predictions": {
+    "title": "Mes prédictions",
+    "subtitle": "Historique et performance de tes prédictions",
+    "history": "Historique",
+    "performance": "Performance",
+    "winRate": "Taux de réussite",
+    "totalBets": "Paris totaux",
+    "profit": "Profit",
+    "noPredictions": "Aucune prédiction pour le moment",
+    "stake": "Mise",
+    "odds": "Cote",
+    "result": "Résultat",
+    "won": "Gagné",
+    "lost": "Perdu",
+    "pending": "En cours"
+  },
   "favorites": {
     "title": "Mes favoris",
     "follows": "follows",

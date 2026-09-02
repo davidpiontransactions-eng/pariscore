@@ -852,6 +852,33 @@
       }
     }
   },
+  "dashboard": {
+    "title": "My Dashboard",
+    "subtitle": "Overview of your activity",
+    "followedPlayers": "Followed Players",
+    "followedTeams": "Followed Teams",
+    "followedLeagues": "Followed Leagues",
+    "totalFollows": "Total Follows",
+    "recentPredictions": "Recent Predictions",
+    "viewAll": "View All",
+    "noData": "No data yet"
+  },
+  "predictions": {
+    "title": "My Predictions",
+    "subtitle": "History and performance of your predictions",
+    "history": "History",
+    "performance": "Performance",
+    "winRate": "Win Rate",
+    "totalBets": "Total Bets",
+    "profit": "Profit",
+    "noPredictions": "No predictions yet",
+    "stake": "Stake",
+    "odds": "Odds",
+    "result": "Result",
+    "won": "Won",
+    "lost": "Lost",
+    "pending": "Pending"
+  },
   "favorites": {
     "title": "My Favorites",
     "follows": "follows",
