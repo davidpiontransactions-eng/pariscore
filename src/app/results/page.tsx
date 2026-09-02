@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { SportsSidebar } from "@/components/layout/sports-sidebar";
