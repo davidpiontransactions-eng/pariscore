@@ -10,7 +10,6 @@ import SearchModal, { useSearchModal } from "@/components/layout/search-modal";
 import { NotificationsDropdown } from "@/components/layout/notifications-dropdown";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
-import type { SportTabId } from "@/types/sports-sidebar";
 
 /**
  * SiteHeader — Barre du haut unifiée à 2 niveaux.
@@ -24,11 +23,14 @@ import type { SportTabId } from "@/types/sports-sidebar";
 export function SiteHeader() {
   const { open, onOpenChange } = useSearchModal();
   const activeSport = useSportsSidebarStore((s) => s.selectedSportId);
-  const setMode = useSportsSidebarStore((s) => s.setMode);
+
+  const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma", "cycling", "f1", "baseball", "cs2"]);
 
   const handleSportChange = useCallback(
     (sport: string) => {
-      useSportsSidebarStore.getState().syncSportFromTab(sport);
+      if (VALID_SPORTS.has(sport)) {
+        useSportsSidebarStore.getState().syncSportFromTab(sport);
+      }
     },
     [],
   );

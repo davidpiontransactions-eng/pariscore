@@ -61,7 +61,10 @@ export function SportTabs({
 }: SportTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showMore, setShowMore] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 768px)").matches;
+  });
 
   // Détection responsive
   useEffect(() => {

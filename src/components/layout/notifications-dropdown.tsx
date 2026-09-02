@@ -161,13 +161,13 @@ export function NotificationsDropdown() {
               <span className="text-xs text-muted-foreground">
                 {emailActive ? t("emailSubscribed") : t("emailUnsubscribed")}
               </span>
-              <ToggleSwitch
-                checked={emailActive}
-                ariaLabel={t("emailToggle")}
-                onToggle={() =>
-                  emailActive ? email.unsubscribe() : undefined
-                }
-              />
+              {emailActive && (
+                <ToggleSwitch
+                  checked={emailActive}
+                  ariaLabel={t("emailToggle")}
+                  onToggle={() => email.unsubscribe()}
+                />
+              )}
             </div>
             {!emailActive && (
               <form

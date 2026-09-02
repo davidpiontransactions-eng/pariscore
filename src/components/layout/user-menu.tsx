@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -26,6 +27,7 @@ export function UserMenu() {
   const t = useTranslations("UserMenu");
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [locale, setLocale] = useState<string>("fr");
 
@@ -71,9 +73,11 @@ export function UserMenu() {
             <User className="h-4 w-4" />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-medium">Utilisateur</span>
+            <span className="text-sm font-medium">
+              {session?.user?.name ?? t("defaultName", { defaultValue: "Utilisateur" })}
+            </span>
             <span className="text-xs text-muted-foreground">
-              utilisateur@email.com
+              {session?.user?.email ?? ""}
             </span>
           </div>
         </div>
@@ -86,7 +90,10 @@ export function UserMenu() {
           <MenuItem
             icon={<User className="h-4 w-4" />}
             label={t("profile")}
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              router.push("/settings");
+              setOpen(false);
+            }}
           />
 
           {/* Paramètres */}
@@ -132,7 +139,10 @@ export function UserMenu() {
             icon={<LogOut className="h-4 w-4" />}
             label={t("logout")}
             variant="destructive"
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              signOut({ callbackUrl: "/" });
+              setOpen(false);
+            }}
           />
         </nav>
       </PopoverContent>

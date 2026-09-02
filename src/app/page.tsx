@@ -6,8 +6,6 @@ import {
   Trophy,
   Code,
   HelpCircle,
-  Activity,
-  CircleDot,
   Star,
   Timer,
   Sparkles,
@@ -28,7 +26,6 @@ import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 import {
   SportsSidebar,
-  SportsSidebarDrawer,
   SportsSidebarUrlSync,
 } from "@/components/layout/sports-sidebar";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
@@ -144,7 +141,21 @@ class PageErrorBoundary extends Component<
     }
   }
   render() {
-    if (this.state.error) return <div />;
+    if (this.state.error) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-bg-deep p-8">
+          <div className="text-center">
+            <p className="text-sm text-red-400">Une erreur est survenue.</p>
+            <button
+              onClick={() => this.setState({ error: null })}
+              className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-500"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }

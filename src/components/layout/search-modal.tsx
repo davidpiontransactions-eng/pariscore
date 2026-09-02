@@ -170,7 +170,6 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
         const selected = flatResults[activeIdx]
         if (selected) {
           // TODO: naviguer vers le détail du résultat
-          console.log("Sélection :", selected)
           onOpenChange(false)
         }
       }
@@ -278,7 +277,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
                             )}
                             onMouseEnter={() => setActiveIdx(idx)}
                             onClick={() => {
-                              console.log("Sélection :", item)
+                              // TODO: naviguer vers le détail du résultat
                               onOpenChange(false)
                             }}
                           >
