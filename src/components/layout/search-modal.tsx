@@ -196,7 +196,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
         {open && (
           /* Overlay */
           <motion.div
-            className="fixed inset-0 z-[100] flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-start justify-center bg-black/70 pt-[15vh] backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -209,7 +209,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
             {/* Modale */}
             <motion.div
               className={cn(
-                "w-full max-w-lg overflow-hidden rounded-xl border border-border/60 bg-[#1a1d2e] shadow-2xl",
+                "w-full max-w-lg overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#12162a] via-[#161b2e] to-[#12162a] shadow-2xl shadow-black/40",
               )}
               initial={{ opacity: 0, scale: 0.96, y: -8 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -219,8 +219,8 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
               onKeyDown={handleKeyDown}
             >
               {/* Champ de recherche */}
-              <div className="flex items-center gap-3 border-b border-border/60 px-4 py-3">
-                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">
+                <Search className="h-4 w-4 shrink-0 text-emerald-400" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -240,7 +240,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
                     <X className="h-4 w-4" />
                   </button>
                 )}
-                <kbd className="pointer-events-none hidden rounded border border-border/60 bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
+                <kbd className="pointer-events-none hidden rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 sm:inline">
                   Esc
                 </kbd>
               </div>
@@ -270,10 +270,10 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
                             key={item.id}
                             data-search-item
                             className={cn(
-                              "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm transition-colors",
+                              "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-all",
                               isActive
-                                ? "bg-accent text-foreground"
-                                : "text-foreground/80 hover:bg-accent/50",
+                                ? "bg-emerald-500/10 text-foreground shadow-sm"
+                                : "text-foreground/80 hover:bg-white/[0.04]",
                             )}
                             onMouseEnter={() => setActiveIdx(idx)}
                             onClick={() => {
@@ -299,18 +299,18 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
               </div>
 
               {/* Barre de statut */}
-              <div className="flex items-center justify-between border-t border-border/60 px-4 py-2 text-[11px] text-muted-foreground">
+              <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2 text-[11px] text-zinc-500">
                 <span>
                   {flatResults.length} résultat{flatResults.length !== 1 ? "s" : ""}
                 </span>
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1">
-                    <kbd className="rounded border border-border/60 bg-muted px-1 py-0.5 text-[10px]">↑</kbd>
-                    <kbd className="rounded border border-border/60 bg-muted px-1 py-0.5 text-[10px]">↓</kbd>
+                    <kbd className="rounded-md border border-white/[0.08] bg-white/[0.04] px-1 py-0.5 text-[10px]">↑</kbd>
+                    <kbd className="rounded-md border border-white/[0.08] bg-white/[0.04] px-1 py-0.5 text-[10px]">↓</kbd>
                     naviguer
                   </span>
                   <span className="flex items-center gap-1">
-                    <kbd className="rounded border border-border/60 bg-muted px-1 py-0.5 text-[10px]">↵</kbd>
+                    <kbd className="rounded-md border border-white/[0.08] bg-white/[0.04] px-1 py-0.5 text-[10px]">↵</kbd>
                     ouvrir
                   </span>
                 </div>

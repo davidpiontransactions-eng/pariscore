@@ -153,8 +153,8 @@ export function SportTabs({
     <div
       className={cn(
         "sticky top-0 z-40",
-        "h-9 bg-[#0e121e]/95 backdrop-blur-md",
-        "border-b border-slate-800/60",
+        "h-10 bg-gradient-to-r from-[#0c1020] via-[#111a2e] to-[#0c1020]",
+        "border-b border-white/[0.04]",
         className
       )}
       role="tablist"
