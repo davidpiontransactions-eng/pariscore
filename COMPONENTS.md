@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 170 components total (football: 11, leagues: 6, tennis: 54, basketball: 18, etc.).
+> extract pass. 190 components total (football: 14, leagues: 6, tennis: 60, basketball: 17, shared: 10, mobile: 7, dashboard: 3, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -282,6 +282,41 @@ Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, don
 | calculators-grid | calculators-grid.tsx | Grille des 17 calculateurs (Kelly, EV, arbitrage, Monte Carlo, plan de mise…) |
 
 ---
+
+## Shared (`src/components/shared/`) — 10 components
+
+| Component | File | Role |
+|-----------|------|------|
+| odds-sparkline | odds-sparkline.tsx | Sparkline SVG pour mouvement de cotes (dataA[], dataB?) |
+| mini-probability-curve | mini-probability-curve.tsx | Courbe de probabilité compacte (Recharts AreaChart, 60px) |
+| confidence-ring | confidence-ring.tsx | Double arc animé (probabilité + confiance modèle) |
+| match-activity-heatmap | match-activity-heatmap.tsx | Grille 3x2 zones pour activité football (xG par zone) |
+| odds-history-timeline | odds-history-timeline.tsx | Timeline dual AreaChart pour historique cotes A/B |
+| follow-button | follow-button.tsx | Bouton coeur de suivi (sm/md/lg, aria-label, useFollowStore) |
+| follow-notification-bridge | follow-notification-bridge.tsx | Bridge follow → push notifications (cooldown 24h) |
+| flashscore-match-list | flashscore-match-list.tsx | Liste style Flashscore avec pull-to-refresh natif |
+| strategy-filter-dropdown | strategy-filter-dropdown.tsx | Filtre par stratégie de pari |
+| time-range-filter | time-range-filter.tsx | Filtre par fenêtre horaire |
+
+## Mobile (`src/components/mobile/`) — 7 components
+
+| Component | File | Role |
+|-----------|------|------|
+| mobile-match-detail | mobile-match-detail.tsx | DrawerDetail auto (BottomSheet mobile / Dialog desktop), header fixe, tabs |
+| swipeable-tabs | swipeable-tabs.tsx | Onglets avec swipe horizontal natif, indicateur animé |
+| pull-to-refresh | pull-to-refresh.tsx | Wrapper pull-to-refresh rubber band, spinner animé |
+| match-card-skeleton | match-card-skeleton.tsx | Skeleton réutilisable 4 variants (tennis/football/basket/generic) |
+| stats-disclosure | stats-disclosure.tsx | Disclosure progressif 3 niveaux, AnimatePresence framer-motion |
+| prediction-share-card | prediction-share-card.tsx | Carte partageable (canvas natif, share API, download PNG) |
+| service-worker-update | service-worker-update.tsx | Banner MAJ PWA discret, skipWaiting + reload |
+
+## Dashboard (`src/components/dashboard/`) — 3 components
+
+| Component | File | Role |
+|-----------|------|------|
+| personal-dashboard | personal-dashboard.tsx | Dashboard personnel avec 4 KPIs (win rate, profit, série) + résumé follows |
+| personalized-feed | personalized-feed.tsx | Feed "Pour toi" 3 sections (joueurs, équipes, ligues suivis) |
+| prediction-history | prediction-history.tsx | Historique paris avec stats (win rate, profit, ROI, CLV) + liste détaillée |
 
 ## Conventions
 
