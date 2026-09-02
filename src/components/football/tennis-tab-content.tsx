@@ -1000,7 +1000,7 @@ return [...matches, ...synthetic];
         )}
 
         {isLoading ? (
-          <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
             {[0, 1, 2, 3].map((i) => <MatchCardSkeleton key={i} />)}
           </div>
         ) : (
@@ -1014,7 +1014,7 @@ return [...matches, ...synthetic];
                 {valueBetCount} value bet{valueBetCount > 1 ? "s" : ""} détecté{valueBetCount > 1 ? "s" : ""} — trié{valueBetCount > 1 ? "s" : ""} par edge décroissant
               </button>
             )}
-            <div className={cn("grid grid-cols-1 gap-5", terminalMode ? "lg:grid-cols-3" : "lg:grid-cols-2")}>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               {restForGrid.map((match, idx) => {
                 const isSelected = selectedIdSet.has(match.id);
                 return (
