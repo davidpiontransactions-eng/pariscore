@@ -11,13 +11,6 @@ import {
   Sparkles,
   BarChart3,
 } from "lucide-react";
-import {
-  TennisPicto,
-  FootballPicto,
-  MmaPicto,
-  CyclingPicto,
-  RugbyPicto,
-} from "@/components/ui/sport-pictograms";
 import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
 import { openAboutDialog } from "@/components/about-dialog";
@@ -285,14 +278,6 @@ function HomeInner() {
     }
   }, [storeSportId]);
 
-  const SPORT_CARDS = [
-    { id: "tennis" as const, label: "Tennis", icon: TennisPicto, accentIcon: "text-emerald-400 bg-emerald-500/15", matchCount: stats.tennis.matchCount, valueCount: stats.tennis.valueCount, accent: "border-emerald-500/30 hover:border-emerald-500/60", accentBg: "bg-emerald-500/10", accentText: "text-emerald-400" },
-    { id: "football" as const, label: "Football", icon: FootballPicto, accentIcon: "text-sky-400 bg-sky-500/15", matchCount: stats.football.matchCount, valueCount: stats.football.valueCount, accent: "border-sky-500/30 hover:border-sky-500/60", accentBg: "bg-sky-500/10", accentText: "text-sky-400" },
-    { id: "mma" as const, label: "MMA", icon: MmaPicto, accentIcon: "text-red-400 bg-red-500/15", matchCount: 0, valueCount: 0, accent: "border-red-500/30 hover:border-red-500/60", accentBg: "bg-red-500/10", accentText: "text-red-400" },
-    { id: "cycling" as const, label: "Cycling", icon: CyclingPicto, accentIcon: "text-amber-400 bg-amber-500/15", matchCount: 0, valueCount: 0, accent: "border-amber-500/30 hover:border-amber-500/60", accentBg: "bg-amber-500/10", accentText: "text-amber-400" },
-    { id: "rugby" as const, label: "Rugby", icon: RugbyPicto, accentIcon: "text-teal-400 bg-teal-500/15", matchCount: 0, valueCount: 0, accent: "border-teal-500/30 hover:border-teal-500/60", accentBg: "bg-teal-500/10", accentText: "text-teal-400" },
-  ];
-
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
@@ -311,33 +296,6 @@ function HomeInner() {
           {/* Feature Cards — bento grid avec images sportives */}
           <div className="mt-5">
             <FeatureCards />
-          </div>
-
-          {/* Sport Trend Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-            {SPORT_CARDS.map((sport) => (
-              <button
-                key={sport.id}
-                type="button"
-                onClick={() => handleTabChange(sport.id)}
-                className={`flex flex-col items-start gap-1.5 rounded-xl border bg-zinc-900/60 p-4 text-left transition-all duration-200 hover:bg-zinc-800/60 hover:scale-[1.02] ${sport.accent} ${activeTab === sport.id ? "ring-1 ring-white/20" : ""} ${sport.id === "tennis" ? "md:col-span-2" : ""}`}
-              >
-                <div className="flex items-center gap-2.5 w-full">
-                  <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", sport.accentIcon)}><sport.icon className="h-4 w-4" /></span>
-                  <span className="text-sm font-semibold text-white">{sport.label}</span>
-                </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-zinc-400">
-                    <span className="font-medium text-zinc-200">{sport.matchCount}</span> matchs
-                  </span>
-                  <span className={`font-semibold ${sport.accentText}`}>
-                    <span className={`inline-flex items-center justify-center rounded-full ${sport.accentBg} px-1.5 py-0.5 text-[11px]`}>
-                      {sport.valueCount} values
-                    </span>
-                  </span>
-                </div>
-              </button>
-            ))}
           </div>
 
           {/* Ancres de navigation rapide */}
