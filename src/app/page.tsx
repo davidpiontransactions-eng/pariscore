@@ -1,13 +1,10 @@
 "use client";
 
 import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   Trophy,
-  Wallet,
   Code,
-  FlaskConical,
   HelpCircle,
   Activity,
   CircleDot,
@@ -15,7 +12,6 @@ import {
   Timer,
   Sparkles,
   BarChart3,
-  Settings,
 } from "lucide-react";
 import {
   TennisPicto,
@@ -28,17 +24,7 @@ import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openApiDocsDialog } from "@/components/api-docs-dialog";
-import { openPaperTradingDialog } from "@/components/paper-trading-dialog";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageToggle } from "@/components/language-toggle";
-import { PushToggle } from "@/components/push-toggle";
-import { EmailToggle } from "@/components/email-toggle";
-import { TerminalToggle } from "@/components/terminal-toggle";
-import { ValueBetScannerIndicator } from "@/components/value-bet-scanner-indicator";
-import { Button } from "@/components/ui/button";
-import { openBankrollDialog } from "@/components/bankroll-dialog";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
-import { AutoHideHeader } from "@/components/layout/auto-hide-header";
 
 import {
   SportsSidebar,
@@ -299,87 +285,7 @@ function HomeInner() {
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
-        {/* Header */}
-        <AutoHideHeader className="bg-bg-deep/80 backdrop-blur-md">
-          <div className="mx-auto flex min-h-14 max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-1 px-4 py-1.5 sm:px-6">
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => handleTabChange("home")}
-                className="-my-2 flex items-center gap-2.5 rounded-lg px-1 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                  <Trophy className="h-4 w-4" aria-hidden />
-                </div>
-                <span className="text-sm font-bold tracking-tight text-white">
-                  {t("appName")}
-                </span>
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <SportsSidebarDrawer activeSport={activeTab} onSportChange={handleTabChange} />
-              <LanguageToggle />
-              <PushToggle />
-              <EmailToggle />
-              <TerminalToggle />
-              <ValueBetScannerIndicator />
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="gap-1.5 text-xs text-zinc-300 hover:text-white"
-              >
-                <Link href="/bankroll" title="Bet Manager — gestion de bankroll et de paris">
-                  <BarChart3 className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Bet Manager</span>
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="gap-1.5 text-xs text-zinc-300 hover:text-white"
-              >
-                <Link href="/ligues" title="Championnats — stats ligues, fixtures et cotes">
-                  <Trophy className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="hidden sm:inline">Championnats</span>
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={openBankrollDialog}
-                className="gap-1.5 text-xs text-zinc-300 hover:text-white"
-              >
-                <Wallet className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{tBankroll("trigger")}</span>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={openPaperTradingDialog}
-                className="gap-1.5 text-xs text-purple-400 hover:text-purple-300"
-                title={tPaper("subtitle")}
-              >
-                <FlaskConical className="h-3.5 w-3.5" />
-                <span className="hidden md:inline">{tPaper("trigger")}</span>
-              </Button>
-              <ThemeToggle />
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-                className="gap-1.5 text-xs text-zinc-300 hover:text-white"
-              >
-                <Link href="/settings" title="Paramètres et debug">
-                  <Settings className="h-3.5 w-3.5" />
-                  <span className="hidden md:inline">Réglages</span>
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </AutoHideHeader>
+        {/* Ancien header supprimé — maintenant dans SiteHeader (layout.tsx) */}
 
         {/* Filtre latéral multi-sports (1xBet) : sync URL + aside desktop */}
         <SportsSidebarUrlSync />

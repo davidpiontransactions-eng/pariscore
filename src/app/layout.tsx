@@ -19,6 +19,7 @@ import { ServiceWorkerUpdate } from "@/components/mobile/service-worker-update";
 import { FollowNotificationBridge } from "@/components/shared/follow-notification-bridge";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AppMotionConfig } from "@/components/motion-config";
+import { SiteHeader } from "@/components/layout/site-header";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
@@ -185,6 +186,7 @@ export default async function RootLayout({
               <PHProvider>
                 <SentryErrorBoundary>
                   <AppMotionConfig>
+                    <SiteHeader />
                     <main id="main">
                       {children}
                     </main>
