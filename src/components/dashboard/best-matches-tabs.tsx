@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { LayoutGrid, Table, SlidersHorizontal, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDashboardData } from "@/components/dashboard/dashboard-data-provider";

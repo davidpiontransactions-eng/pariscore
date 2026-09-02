@@ -85,10 +85,10 @@ export function MultiSportMatchCard({ match, onClick, className }: MultiSportMat
   const isTop = matchScore.label === "TOP MATCH";
   const icon = SPORT_ICONS[sport] ?? "🏟️";
 
-  // Formater la forme (W/L ou record)
+  // Formater la forme (W/D/L ou record)
   const formatForm = (form?: string[]): string => {
     if (!form || form.length === 0) return "";
-    return form.slice(0, 5).map((f) => f === "W" ? "●" : f === "L" ? "○" : f).join(" ");
+    return form.slice(0, 5).map((f) => f === "W" ? "●" : f === "L" ? "○" : f === "D" ? "—" : f).join(" ");
   };
 
   const formA = formatForm(teamA.form);

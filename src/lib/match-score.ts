@@ -70,11 +70,12 @@ function countWins(form: ("W" | "L")[] | undefined | null): number {
 }
 
 /**
- * Closeness : 1.0 = coinflip parfait (50-50), 0.0 = blowout.
+ * Closeness : 1.0 = 50-50, 0.0 = favori dominant.
  * Formule : 1 - |P(A) - 0.5| * 2
+ * Clamp: protege contre les probas hors 0-100.
  */
 function closeness(probA: number): number {
-  const p = probA / 100; // normaliser 0-100 → 0-1
+  const p = Math.min(1, Math.max(0, probA / 100)); // clamp 0-1
   return 1 - Math.abs(p - 0.5) * 2;
 }
 
@@ -272,13 +273,18 @@ export interface FootballScoreInput {
   round: string;
 }
 
-/** Closeness pour football : 1.0 = 33-33-33, 0.0 = favori dominant. */
-function footballCloseness(homeProb: number, awayProb: number): number {
-  const pHome = homeProb / 100;
-  const pAway = awayProb / 100;
-  // Plus les probs sont proches de 1/3 chacune, mieux c'est
-  const balance = 1 - Math.abs(pHome - pAway);
-  return balance;
+/**
+ * Closeness pour football : 1.0 = 33-33-33, 0.0 = favori dominant.
+ * Utilise la distance euclidienne de l'equilibre parfait (1/3, 1/3, 1/3).
+ */
+function footballCloseness(homeProb: number, drawProb: number, awayProb: number): number {
+  const pH = homeProb / 100;
+  const pD = drawProb / 100;
+  const pA = awayProb / 100;
+  // Distance euclidienne de l'equilibre parfait (1/3, 1/3, 1/3)
+  const dist = Math.sqrt((pH - 1/3)**2 + (pD - 1/3)**2 + (pA - 1/3)**2);
+  // Normaliser: max dist ~0.816 → 0, 0 → 1
+  return Math.max(0, 1 - dist * 3);
 }
 
 /** Importance du championnat ( Premier League > Ligue 2 > National). */
@@ -313,7 +319,7 @@ function footballFormScore(
  * Score composite pour un match football (0-10).
  */
 export function computeFootballScore(input: FootballScoreInput): MatchScoreResult {
-  const sCloseness = footballCloseness(input.homeProb, input.awayProb);
+  const sCloseness = footballCloseness(input.homeProb, input.drawProb, input.awayProb);
   const sLeague = leagueImportance(input.league);
   const sRank = starPower(input.homeRank, input.awayRank);
   const sForm = (footballFormScore(input.homeForm) + footballFormScore(input.awayForm)) / 2;
