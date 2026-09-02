@@ -55,7 +55,7 @@ import { useSportsTree } from "@/hooks/use-sports-tree";
 import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
 import { TennisStrategyTop5Widget } from "@/components/tennis/tennis-strategy-top5-widget";
 import { MomentumSparkline } from "@/components/football/momentum-sparkline";
-import { AthleteHeader } from "@/components/athlete-header/athlete-header";
+
 
 import {
   TennisPicto,
@@ -1212,7 +1212,7 @@ export function SportsSidebarContent({
   const hasAnyMatch = tree.some((s) => s.totalMatches > 0);
 
   return (
-    <div className="flex h-full w-full flex-col bg-[#0e121e] text-slate-200">
+    <div className="flex h-full w-full flex-col overflow-y-auto bg-[#0e121e] text-slate-200">
       {/* Header sidebar premium — gradient + live counter */}
       <div className="border-b border-slate-800/60 bg-gradient-to-b from-[#0e121e] via-[#0e121e] to-transparent">
         <div className="flex items-center justify-between px-3 py-3">
@@ -1236,7 +1236,7 @@ export function SportsSidebarContent({
                 <span className="text-[10px] font-bold tabular-nums text-red-300">{liveCount}</span>
               </div>
             )}
-            <AthleteHeader sport={activeSport} maxAthletes={3} onAthleteSelect={() => {}} />
+
           </div>
         </div>
       </div>
