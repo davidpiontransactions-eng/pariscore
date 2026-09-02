@@ -1,5 +1,6 @@
 import type { BSDFootballMatch } from "@/lib/bsd-football-fetcher";
 import { lookupClubLogo } from "@/lib/club-logos";
+import { resolveLeagueLogo } from "@/lib/league-logos";
 import { matchForm, scoreFormMatch, expectedMatchCorners } from "@/lib/football-form";
 import { matchXg } from "@/lib/football-xg";
 import { betminesCornerMarket } from "@/lib/betmines";
@@ -45,6 +46,7 @@ export type StrategySideTeam = {
   teamName: string;
   shortName: string;
   logo: string;
+  rank?: number | null;
 };
 
 /** Stats d'affichage xG/buts (source Understat, contexte Home/Away). */
@@ -64,6 +66,12 @@ export type MatchDisplayStats = {
 export type StrategyMatchEntry = {
   matchId: string;
   league: string;
+  /** ID BSD de la ligue (ex: 6 = Ligue 1, 1 = Premier League). Null si inconnu. */
+  leagueId?: number | null;
+  /** Pays de la ligue (ex: "France", "England"). */
+  leagueCountry?: string | null;
+  /** URL du logo de la ligue (BSD CDN ou seed statique). */
+  leagueLogo?: string | null;
   kickoff: string;
   home: StrategySideTeam;
   away: StrategySideTeam;
@@ -73,6 +81,8 @@ export type StrategyMatchEntry = {
   pick: Side | null;
   /** Stats xG/buts L5/L10 Home/Away (null si ligue non couverte par Understat). */
   stats?: MatchDisplayStats | null;
+  /** Résumé forme W/D/L des 5 derniers (home + away) pour le form heatmap. */
+  formSummary?: { home: string; away: string } | null;
 };
 
 export type StrategyTop5 = {
@@ -149,6 +159,12 @@ function aggForm(form: TeamForm[]): TeamFormAgg {
     else losses++;
   }
   return { n: form.length, wins, draws, losses, gf, ga, corners };
+}
+
+/** Convertit un tableau de TeamForm (chronologique) en string W/D/L pour le form heatmap. */
+function formToWDL(form: TeamForm[] | null): string {
+  if (!form || form.length === 0) return "";
+  return form.map((f) => (f.gf > f.ga ? "W" : f.gf === f.ga ? "D" : "L")).join("");
 }
 
 function ppg(a: TeamFormAgg): number {
@@ -231,6 +247,21 @@ function formFor(store: FormStore, match: BSDFootballMatch): { home: TeamFormAgg
   return { home, away };
 }
 
+/** Retourne la forme brute (5 derniers matchs) pour le heatmap chronologique. */
+function rawFormFor(store: FormStore, match: BSDFootballMatch): { home: TeamForm[]; away: TeamForm[] } | null {
+  const homeRec = store.get(teamKey(match.home_team_obj?.id, match.home_team));
+  const awayRec = store.get(teamKey(match.away_team_obj?.id, match.away_team));
+  if (!homeRec || !awayRec) return null;
+  const homeExact = homeRec.home;
+  const homeAll = homeRec.all;
+  const awayExact = awayRec.home;
+  const awayAll = awayRec.away;
+  const homeRaw = homeExact.length >= MIN_PLAYED ? recentForm(homeExact) : homeAll.length >= MIN_PLAYED ? recentForm(homeAll) : null;
+  const awayRaw = awayExact.length >= MIN_PLAYED ? recentForm(awayExact) : awayAll.length >= MIN_PLAYED ? recentForm(awayAll) : null;
+  if (!homeRaw || !awayRaw) return null;
+  return { home: homeRaw, away: awayRaw };
+}
+
 function teamRow(match: BSDFootballMatch, side: Side): StrategySideTeam {
   const obj = side === "home" ? match.home_team_obj : match.away_team_obj;
   const name = side === "home" ? match.home_team : match.away_team;
@@ -245,6 +276,8 @@ function teamRow(match: BSDFootballMatch, side: Side): StrategySideTeam {
 type ScoredMatch = {
   fixture: BSDFootballMatch;
   form: { home: TeamFormAgg; away: TeamFormAgg } | null;
+  /** Forme brute (5 derniers matchs) pour le form heatmap chronologique. */
+  rawForm?: { home: TeamForm[]; away: TeamForm[] } | null;
   value: number;
   pick: Side | null;
 };
@@ -337,6 +370,8 @@ function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: n
       const edge = 0.5 - fairOver;
       return edge > 0 ? { value: edge * 100, pick: "home" } : null;
     }
+    default:
+      return null;
   }
 }
 
@@ -673,15 +708,27 @@ export function computeStrategyTop5Matches(
     const higher = HIGHER_BETTER[key];
     const list = scores[key];
     list.sort((a, b) => (higher ? b.value - a.value : a.value - b.value));
-    strategies[key] = list.slice(0, opts.limit ?? 5).map((s) => ({
-      matchId: String(s.fixture.id),
-      league: s.fixture.league?.name ?? "",
-      kickoff: s.fixture.event_date,
+    strategies[key] = list.slice(0, opts.limit ?? 5).map((s) => {
+      const league = s.fixture.league ?? {};
+      const leagueId = league.id ?? null;
+      const leagueCountry = league.country ?? null;
+      const leagueLogo = resolveLeagueLogo(league.name ?? "", leagueId);
+      return ({
+        matchId: String(s.fixture.id),
+        league: s.fixture.league?.name ?? "",
+        leagueId,
+        leagueCountry,
+        leagueLogo,
+        kickoff: s.fixture.event_date,
       home: teamRow(s.fixture, "home"),
       away: teamRow(s.fixture, "away"),
       value: Math.round(s.value * 100) / 100,
       pick: s.pick,
       stats: xgByFixture.get(String(s.fixture.id)) ?? null,
+      formSummary: (() => {
+        const rf = rawFormFor(store, s.fixture);
+        return rf ? { home: formToWDL(rf.home), away: formToWDL(rf.away) } : null;
+      })(),
     }));
   }
 

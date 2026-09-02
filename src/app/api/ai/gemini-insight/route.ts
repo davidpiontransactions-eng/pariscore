@@ -56,7 +56,7 @@ Réponds UNIQUEMENT avec le JSON, pas de markdown, pas de texte autour.`;
 }
 
 /** Appelle le LLM configuré (Gemini cloud ou serveur local) via le client unifié. */
-async function callLlm(prompt: string): Promise<CachedGeminiInsight & { provider: "gemini" | "local" }> {
+async function callLlm(prompt: string): Promise<CachedGeminiInsight & { provider: "gemini" | "local" | "orcarouter" | "openrouter" | "nvidia" | "groq" }> {
   const result = await generateText({
     prompt,
     temperature: 0.4,

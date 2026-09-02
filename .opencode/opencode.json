@@ -4,12 +4,25 @@
   "tools": { "bash": false },
   "plugin": ["./.opencode/plugins/pariscore-superpowers"],
   "provider": {
+    "orcarouter": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OrcaRouter (free DeepSeek V4)",
+      "options": {
+        "baseURL": "https://api.orcarouter.ai/v1",
+        "apiKey": "${env:ORCA_API_KEY}"
+      },
+      "models": {
+        "deepseek-v4-pro": { "name": "DeepSeek V4 Pro (auto-router)", "limit": { "context": 131072, "output": 32768 } },
+        "deepseek-v4-flash": { "name": "DeepSeek V4 Flash (free)", "limit": { "context": 131072, "output": 32768 } },
+        "deepseek-v4-pro-0813": { "name": "DeepSeek V4 Pro 0813", "limit": { "context": 131072, "output": 32768 } }
+      }
+    },
     "bailian-token-plan-personal": {
       "npm": "@ai-sdk/anthropic",
       "name": "Alibaba Cloud Model Studio 150826",
       "options": {
         "baseURL": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1",
-        "apiKey": "sk-sp-H.HDYHM.zEtS.MEUCIQD6lbZRs9oDKg4FxEDw5jkClyx4D4SLJuG_hOiftGOS4gIgKGKG8PN62Xk0Cn-HEqTrOAkkqQ2imPKRn8BLdLOJpkc"
+        "apiKey": "${env:ALIBABA_API_KEY}"
       },
       "models": {
         "qwen3.8-max": {
@@ -85,10 +98,17 @@
     "groq": {
       "npm": "@ai-sdk/groq",
       "name": "Groq (LPU ultra-rapide)",
+      "options": {
+        "apiKey": "${env:GROQ_API_KEY}"
+      },
       "models": {
         "openai/gpt-oss-120b": { "name": "GPT-OSS 120B", "limit": { "context": 131072, "output": 65536 } },
         "openai/gpt-oss-20b": { "name": "GPT-OSS 20B", "limit": { "context": 131072, "output": 65536 } },
         "qwen/qwen3.6-27b": { "name": "Qwen 3.6 27B", "limit": { "context": 131072, "output": 16384 } },
+        "qwen/qwen3.8-27b": { "name": "Qwen 3.8 27B", "limit": { "context": 131072, "output": 16384 } },
+        "meta-llama/llama-4-scout-17b-16e-instruct": { "name": "Llama 4 Scout 17B", "limit": { "context": 131072, "output": 8192 } },
+        "meta-llama/llama-3.3-70b-versatile": { "name": "Llama 3.3 70B", "limit": { "context": 131072, "output": 8192 } },
+        "mistralai/devstral-small": { "name": "Devstral Small (code)", "limit": { "context": 131072, "output": 8192 } },
         "groq/compound": { "name": "Groq Compound", "limit": { "context": 131072, "output": 8192 } },
         "groq/compound-mini": { "name": "Groq Compound Mini", "limit": { "context": 131072, "output": 8192 } }
       }
@@ -110,19 +130,25 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "OpenRouter (free models)",
       "options": {
-        "baseURL": "https://openrouter.ai/api/v1"
+        "baseURL": "https://openrouter.ai/api/v1",
+        "apiKey": "${env:OPENROUTER_API_KEY}"
       },
       "models": {
         "nvidia/nemotron-3-super-120b-a12b:free": { "name": "Nemotron 3 Super 120B (free)", "limit": { "context": 262144, "output": 262144 } },
+        "nvidia/nemotron-3-nano-30b-a3b:free": { "name": "Nemotron 3 Nano 30B (free)", "limit": { "context": 262144, "output": 131072 } },
+        "nvidia/nemotron-nano-12b-v2-vl:free": { "name": "Nemotron Nano 12B v2 VL (free, vision)", "limit": { "context": 131072, "output": 131072 } },
         "openai/gpt-oss-20b:free": { "name": "GPT-OSS 20B (free)", "limit": { "context": 131072, "output": 32768 } },
-        "cohere/north-mini-code:free": { "name": "Cohere North Mini Code (free)", "limit": { "context": 262144, "output": 65536 } },
         "google/gemma-4-26b-a4b-it:free": { "name": "Gemma 4 26B (free)", "limit": { "context": 262144, "output": 32768 } },
         "google/gemma-4-31b-it:free": { "name": "Gemma 4 31B (free)", "limit": { "context": 262144, "output": 32768 } },
+        "cohere/north-mini-code:free": { "name": "Cohere North Mini Code (free)", "limit": { "context": 262144, "output": 65536 } },
         "poolside/laguna-s-2.1:free": { "name": "Poolside Laguna S (code, free)", "limit": { "context": 262144, "output": 32768 } },
         "poolside/laguna-xs-2.1:free": { "name": "Poolside Laguna XS (code, free)", "limit": { "context": 262144, "output": 32768 } },
         "inclusionai/ling-3.0-flash:free": { "name": "Ling 3.0 Flash (free)", "limit": { "context": 262144, "output": 32768 } },
-        "nvidia/nemotron-3-nano-30b-a3b:free": { "name": "Nemotron 3 Nano 30B (free)", "limit": { "context": 262144, "output": 131072 } },
-        "nvidia/nemotron-nano-12b-v2-vl:free": { "name": "Nemotron Nano 12B v2 VL (free)", "limit": { "context": 131072, "output": 131072 } }
+        "deepseek/deepseek-v4:free": { "name": "DeepSeek V4 (free)", "limit": { "context": 131072, "output": 32768 } },
+        "qwen/qwen3.6-72b:free": { "name": "Qwen 3.6 72B (free)", "limit": { "context": 131072, "output": 32768 } },
+        "meta-llama/llama-4-scout:free": { "name": "Llama 4 Scout (free)", "limit": { "context": 131072, "output": 32768 } },
+        "microsoft/phi-4-reasoning-plus:free": { "name": "Phi-4 Reasoning Plus (free)", "limit": { "context": 131072, "output": 32768 } },
+        "mistralai/devstral-small:free": { "name": "Devstral Small (code, free)", "limit": { "context": 262144, "output": 32768 } }
       }
     },
     "huggingface": {
@@ -208,7 +234,7 @@
       "name": "NVIDIA NIM",
       "options": {
         "baseURL": "https://integrate.api.nvidia.com/v1",
-        "apiKey": "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"
+        "apiKey": "${env:NIM_API_KEY}"
       },
       "models": {
         "deepseek-ai/deepseek-v4-flash-0731": { "name": "DeepSeek V4 Flash 0731" },

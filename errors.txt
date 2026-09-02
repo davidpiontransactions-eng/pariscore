@@ -1,0 +1,1 @@
+src/lib/football-strategy-top5.ts(732,7): error TS1005: ';' expected.

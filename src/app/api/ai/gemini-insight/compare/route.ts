@@ -104,10 +104,10 @@ class GeminiUpstreamError extends AppError {
 /** Appelle le LLM configuré (Gemini cloud ou serveur local) via le client unifié. */
 async function callGeminiCompare(prompt: string): Promise<{
   insight: GeminiCompareInsight;
-  provider: "gemini" | "local";
+  provider: "gemini" | "local" | "orcarouter" | "openrouter" | "nvidia" | "groq";
 }> {
   let rawText: string;
-  let provider: "gemini" | "local";
+  let provider: "gemini" | "local" | "orcarouter" | "openrouter" | "nvidia" | "groq";
   try {
     const result = await generateText({
       prompt,

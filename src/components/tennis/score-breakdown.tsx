@@ -14,6 +14,8 @@ type ScoreBreakdownProps = {
     form: number;
     rivalry: number;
   };
+  /** Sport source pour adapter les labels. */
+  sport?: "tennis" | "football" | "basketball" | "cs2";
   className?: string;
 };
 
@@ -53,6 +55,43 @@ const SIGNAL_LABELS: Record<
     label: "Rivalite",
     weight: 0.5,
     description: "Historique H2H",
+  },
+};
+
+/** Labels football (mêmes clés, poids et descriptions adaptés). */
+const FOOTBALL_SIGNAL_LABELS: Record<
+  string,
+  { label: string; weight: number; description: string }
+> = {
+  closeness: {
+    label: "Closeness",
+    weight: 2.0,
+    description: "Equilibre des probabilités 1X2",
+  },
+  tournamentImp: {
+    label: "Ligue",
+    weight: 2.5,
+    description: "Importance du championnat",
+  },
+  eloQuality: {
+    label: "Rang",
+    weight: 2.0,
+    description: "Classement des équipes",
+  },
+  starPower: {
+    label: "Enjeu",
+    weight: 1.5,
+    description: "Derby / coupe / top-top",
+  },
+  form: {
+    label: "Forme",
+    weight: 2.0,
+    description: "5 derniers résultats W/D/L",
+  },
+  rivalry: {
+    label: "xG Quality",
+    weight: 1.5,
+    description: "Buts marqués en moyenne (proxy xG)",
   },
 };
 
@@ -124,9 +163,11 @@ function SignalBar({
 export function ScoreBreakdown({
   score,
   breakdown,
+  sport,
   className,
 }: ScoreBreakdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const labels = sport === "football" ? FOOTBALL_SIGNAL_LABELS : SIGNAL_LABELS;
 
   const entries = Object.entries(breakdown) as [
     string,
@@ -166,7 +207,7 @@ export function ScoreBreakdown({
           {/* Signaux */}
           <div className="space-y-1.5">
             {entries.map(([key, value]) => {
-              const meta = SIGNAL_LABELS[key];
+              const meta = labels[key];
               if (!meta) return null;
               return (
                 <SignalBar

@@ -36,6 +36,8 @@ export interface MatchScoreResult {
   label: MatchLabel;
   labelColor: string;       // CSS color
   labelBg: string;          // CSS bg-color
+  /** Sport source du scoring (pour adapter les labels breakdown). */
+  sport?: "tennis" | "football" | "basketball" | "cs2";
 }
 
 // ---------------------------------------------------------------------------
@@ -271,6 +273,9 @@ export interface FootballScoreInput {
   awayForm?: ("W" | "D" | "L")[];
   league: string;
   round: string;
+  /** Stats forme optionnelles pour le signal xG quality (goals moyens marqués/encaissés). */
+  homeStats?: { goalsFor: number; goalsAgainst: number } | null;
+  awayStats?: { goalsFor: number; goalsAgainst: number } | null;
 }
 
 /**
@@ -316,6 +321,46 @@ function footballFormScore(
 }
 
 /**
+ * Signal stakes : détection derbys + enjeu du match.
+ * - Dérby régional (même ville/région) → 1.0
+ * - Quart/semi-finale coupe → 0.9
+ * - Top 5 ligue vs top 5 → 0.8 (confrontation entre gros)
+ * - Sinon → 0.3 (neutre)
+ */
+function stakesSignal(input: FootballScoreInput): number {
+  const round = input.round.toLowerCase();
+
+  // Quarts / demi-finales / finales de coupe
+  if (/quart|semi|finale|final|quarter|semi-final/i.test(round)) return 0.9;
+
+  // Confrontation entre deux top équipes (rank < 10 des deux côtés)
+  if (input.homeRank <= 10 && input.awayRank <= 10) return 0.8;
+
+  // Top 10 vs top 20
+  if ((input.homeRank <= 10 && input.awayRank <= 20) || (input.homeRank <= 20 && input.awayRank <= 10)) return 0.6;
+
+  return 0.3;
+}
+
+/**
+ * Signal xG quality : qualité offensive des deux équipes basée sur les buts marqués.
+ * Utilise les données de forme (goalsFor moyens) comme proxy xG.
+ * Plus les deux équipes marquent en moyenne, plus le match est susceptible d'être spectaculaire.
+ * Score 0-1 : 1.0 = deux équipes qui marquent beaucoup (>2.5 buts/match), 0.0 = aucune attaque.
+ */
+function xgQualitySignal(
+  homeStats: { goalsFor: number; goalsAgainst: number } | null | undefined,
+  awayStats: { goalsFor: number; goalsAgainst: number } | null | undefined,
+): number {
+  if (!homeStats && !awayStats) return 0.3; // bas par défaut si pas de données
+  const homeGpg = homeStats ? homeStats.goalsFor : 1.2; // défaut raisonnable
+  const awayGpg = awayStats ? awayStats.goalsFor : 1.2;
+  const avgGoals = (homeGpg + awayGpg) / 2;
+  // Normaliser : 0.5 buts/match → 0.0, 3.0+ buts/match → 1.0
+  return Math.min(1, Math.max(0, (avgGoals - 0.5) / 2.5));
+}
+
+/**
  * Score composite pour un match football (0-10).
  */
 export function computeFootballScore(input: FootballScoreInput): MatchScoreResult {
@@ -323,14 +368,18 @@ export function computeFootballScore(input: FootballScoreInput): MatchScoreResul
   const sLeague = leagueImportance(input.league);
   const sRank = starPower(input.homeRank, input.awayRank);
   const sForm = (footballFormScore(input.homeForm) + footballFormScore(input.awayForm)) / 2;
+  const sStakes = stakesSignal(input);
+  const sXgQuality = xgQualitySignal(input.homeStats, input.awayStats);
 
   const raw =
-    3.0 * sCloseness +
-    3.0 * sLeague +
-    2.5 * sRank +
-    2.0 * sForm;
+    2.0 * sCloseness +
+    2.5 * sLeague +
+    2.0 * sRank +
+    2.0 * sForm +
+    1.5 * sStakes +
+    1.5 * sXgQuality;
 
-  const score = Math.tanh(raw / 10) * 10;
+  const score = Math.tanh(raw / 11.5) * 10;
   const rounded = Math.round(score * 10) / 10;
   const { label, color, bg } = getLabel(rounded);
 
@@ -340,14 +389,15 @@ export function computeFootballScore(input: FootballScoreInput): MatchScoreResul
     breakdown: {
       closeness: sCloseness,
       tournamentImp: sLeague,
-      eloQuality: 0.5,  // placeholder (pas d'Elo football)
-      starPower: sRank,
+      eloQuality: sRank,
+      starPower: sStakes,
       form: sForm,
-      rivalry: 0.3,
+      rivalry: sXgQuality,
     },
     label,
     labelColor: color,
     labelBg: bg,
+    sport: "football",
   };
 }
 

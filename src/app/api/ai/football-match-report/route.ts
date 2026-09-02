@@ -80,7 +80,7 @@ function extractJson(raw: string): string {
   return raw.trim();
 }
 
-async function callLlm(prompt: string): Promise<FootballAIReport & { provider: "gemini" | "local" }> {
+async function callLlm(prompt: string): Promise<FootballAIReport & { provider: "gemini" | "local" | "orcarouter" | "openrouter" | "nvidia" | "groq" }> {
   const result = await generateText({
     prompt,
     temperature: 0.5,
