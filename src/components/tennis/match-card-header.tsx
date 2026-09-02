@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { SetScoreline } from "./set-scoreline";
 import { CurrentGameScore } from "./current-game-score";
 import { ServerIndicator } from "./server-indicator";
+import { FollowButton } from "@/components/shared/follow-button";
 
 type Props = {
   match: TennisMatch;
@@ -118,6 +119,13 @@ export function MatchCardHeader({
             )}
           />
         </button>
+        <FollowButton
+          id={`match:tennis:${match.id}`}
+          name={`${match.playerA.shortName} vs ${match.playerB.shortName}`}
+          category="match"
+          sport="tennis"
+          size="sm"
+        />
       </div>
       </header>
     </>

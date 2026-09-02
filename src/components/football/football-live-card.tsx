@@ -11,6 +11,7 @@ import { parisKickoff } from "@/lib/football-time";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 import { CORNER_OVER_MIN_PROB } from "@/lib/football-predictions";
 import { WatchButton } from "@/components/shared/watch-button";
+import { FollowButton } from "@/components/shared/follow-button";
 
 // ─── Sparkline xG Live ───────────────────────────────────────────────────
 
@@ -538,16 +539,25 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
 
         {/* Odds */}
         {match.odds && (
-          <div className="mt-3 flex justify-center gap-3 border-t border-border/40 pt-3 text-xs">
-            <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-              1 {match.odds.home.toFixed(2)}
-            </span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">
-              N {match.odds.draw.toFixed(2)}
-            </span>
-            <span className="font-semibold text-rose-600 dark:text-rose-400">
-              2 {match.odds.away.toFixed(2)}
-            </span>
+          <div className="mt-3 flex items-center justify-between border-t border-border/40 pt-3 text-xs">
+            <div className="flex gap-3">
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                1 {match.odds.home.toFixed(2)}
+              </span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                N {match.odds.draw.toFixed(2)}
+              </span>
+              <span className="font-semibold text-rose-600 dark:text-rose-400">
+                2 {match.odds.away.toFixed(2)}
+              </span>
+            </div>
+            <FollowButton
+              id={`match:football:${match.id}`}
+              name={`${match.home.name} vs ${match.away.name}`}
+              category="match"
+              sport="football"
+              size="sm"
+            />
           </div>
         )}
 

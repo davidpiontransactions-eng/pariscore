@@ -15,6 +15,8 @@ import { ApiDocsDialog } from "@/components/api-docs-dialog";
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { BetSlip } from "@/components/bet-slip";
 import { ServiceWorkerRegister } from "@/components/sw-register";
+import { ServiceWorkerUpdate } from "@/components/mobile/service-worker-update";
+import { FollowNotificationBridge } from "@/components/shared/follow-notification-bridge";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AbTestDebugBadge } from "@/components/ab-test-debug";
 import { AppMotionConfig } from "@/components/motion-config";
@@ -200,6 +202,8 @@ export default async function RootLayout({
                     <BetSlip />
                     <Toaster />
                     <ServiceWorkerRegister />
+                    <ServiceWorkerUpdate />
+                    <FollowNotificationBridge />
                     {/* Dev-only floating A/B test badge — returns null in
                         production builds (see AbTestDebugBadge). */}
                     <AbTestDebugBadge />
