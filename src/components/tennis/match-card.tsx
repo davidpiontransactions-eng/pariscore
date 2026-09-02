@@ -38,6 +38,7 @@ import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useMomentumDR } from "@/hooks/use-momentum-dr";
 import { useTennisHighlights } from "@/hooks/use-tennis-highlights";
 import { Badge } from "@/components/ui/badge";
+import { FollowButton } from "@/components/shared/follow-button";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
 // des stats enrichies. Identique à player-matcher.ts:normalize et db.ts.
