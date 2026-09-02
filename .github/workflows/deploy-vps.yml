@@ -1,22 +1,35 @@
-name: Deploy VPS
+name: Deploy VPS v2
 
-# Déploiement automatique sur le VPS Production après chaque push sur main.
+# Déploiement automatique v2 sur le VPS Production après chaque push sur main.
 #
-# Réutilise le même runner que scripts/deploy.bat (scripts/update_vps.sh) :
-#   - git fetch + reset --hard origin/main sur le VPS
-#   - npm install (si deps changées) + next build (si src/app/next.config/tsconfig changés)
-#   - pm2 restart pariscore / pariscore-next
-#   - health check + notification Discord optionnelle
+# Améliorations vs v1:
+#   - Pre-deploy: lint + typecheck + tests E2E
+#   - Database backup avant schema changes
+#   - Health check sur les 2 ports (3000 legacy + 3005 Next.js)
+#   - Deploy locking (flock) — évite les deploys concurrents
+#   - Rollback automatique si health check échoue
+#   - Smoke test post-deploy
+#   - Version tagging (deploy-YYYYMMDD-HHMMSS)
+#   - Failure notifications Discord
 #
-# Prérequis (secrets GitHub — Settings → Secrets and variables → Actions) :
-#   VPS_HOST     ex: 51.75.21.239
-#   VPS_USER     ex: ubuntu
-#   VPS_SSH_KEY  clé privée SSH (la clé publique doit être dans ~/.ssh/authorized_keys du VPS)
+# Prérequis (secrets GitHub):
+#   VPS_HOST, VPS_USER, VPS_SSH_KEY, DISCORD_DEPLOY_WEBHOOK_URL
 
 on:
   push:
     branches: [main]
-  workflow_dispatch: {}  # déclenchement manuel possible
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip E2E tests'
+        required: false
+        default: 'false'
+        type: boolean
+      skip_lint:
+        description: 'Skip lint/typecheck'
+        required: false
+        default: 'false'
+        type: boolean
 
 concurrency:
   group: vps-deploy
@@ -24,12 +37,20 @@ concurrency:
 
 jobs:
   deploy:
-    name: Déploiement VPS
+    name: Deploy VPS v2
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
 
       - name: Setup SSH host key
         run: |
@@ -43,20 +64,62 @@ jobs:
           known_hosts: unnecessary
           if_key_exists: replace
 
-      - name: Lancer update_vps.sh sur le VPS
+      - name: Pre-deploy checks (lint + typecheck)
+        if: ${{ github.event.inputs.skip_lint != 'true' }}
+        run: |
+          echo "Running ESLint..."
+          npx next lint --dir src
+          echo "Running TypeScript check..."
+          npx tsc --noEmit
+          echo "Pre-deploy checks passed"
+
+      - name: Pre-deploy tests (E2E)
+        if: ${{ github.event.inputs.skip_tests != 'true' }}
+        run: |
+          echo "Running Playwright tests..."
+          npx playwright install chromium
+          npx playwright test tests/personal-pages.spec.ts --reporter=line
+          echo "E2E tests passed"
+
+      - name: Deploy to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
+          SKIP_TESTS: ${{ github.event.inputs.skip_tests || 'false' }}
+          SKIP_LINT: ${{ github.event.inputs.skip_lint || 'false' }}
         run: |
           set -e
-          # Streaming du runner (scripts/update_vps.sh) vers le VPS, puis exécution.
-          # Supprime les \r (CRLF) pour éviter "$'\r': command not found" sur bash.
+          # Build deploy flags
+          DEPLOY_FLAGS=""
+          if [ "$SKIP_TESTS" = "true" ]; then DEPLOY_FLAGS="$DEPLOY_FLAGS SKIP_TESTS=1"; fi
+          if [ "$SKIP_LINT" = "true" ]; then DEPLOY_FLAGS="$DEPLOY_FLAGS SKIP_LINT=1"; fi
+
+          echo "Streaming deploy-v2.sh to VPS..."
           ssh -o BatchMode=yes -o ConnectTimeout=20 -o StrictHostKeyChecking=accept-new \
             "${VPS_USER}@${VPS_HOST}" \
-            "cat > /tmp/update_vps.raw && tr -d '\r' < /tmp/update_vps.raw > /tmp/update_vps.sh && chmod +x /tmp/update_vps.sh && bash /tmp/update_vps.sh" \
-            < scripts/update_vps.sh
+            "cat > /tmp/deploy-v2.raw && tr -d '\r' < /tmp/deploy-v2.raw > /tmp/deploy-v2.sh && chmod +x /tmp/deploy-v2.sh && rm -f /tmp/deploy-v2.log && { nohup env $DEPLOY_FLAGS bash /tmp/deploy-v2.sh >/tmp/deploy-v2.log 2>&1 </dev/null & } && echo LAUNCHED" \
+            < scripts/deploy-v2.sh
 
-      - name: Notification Discord (optionnelle)
+          echo "Waiting for deploy completion (max 7 min)..."
+          ssh -o BatchMode=yes -o ConnectTimeout=20 \
+            "${VPS_USER}@${VPS_HOST}" \
+            "i=0; while [ \$i -lt 420 ]; do if grep -q VPS_DEPLOY_OK /tmp/deploy-v2.log 2>/dev/null; then exit 0; fi; if grep -qE 'ERR:|syntax error|Rolled back' /tmp/deploy-v2.log 2>/dev/null; then exit 2; fi; i=\$((i+1)); sleep 1; done; exit 3"
+
+          RC=$?
+          if [ $RC -eq 2 ]; then
+            echo "Deploy FAILED. Last 25 lines:"
+            ssh "${VPS_USER}@${VPS_HOST}" "tail -n 25 /tmp/deploy-v2.log"
+            exit 1
+          elif [ $RC -eq 3 ]; then
+            echo "Deploy TIMEOUT. Last 15 lines:"
+            ssh "${VPS_USER}@${VPS_HOST}" "tail -n 15 /tmp/deploy-v2.log"
+            exit 1
+          fi
+
+          echo "Deploy OK. Last 20 lines:"
+          ssh "${VPS_USER}@${VPS_HOST}" "tail -n 20 /tmp/deploy-v2.log"
+
+      - name: Notification Discord
         if: always()
         env:
           DISCORD_DEPLOY_WEBHOOK_URL: ${{ secrets.DISCORD_DEPLOY_WEBHOOK_URL }}
@@ -64,6 +127,6 @@ jobs:
           if [ -n "$DISCORD_DEPLOY_WEBHOOK_URL" ]; then
             STATUS="${{ job.status }}"
             curl -s -H "Content-Type: application/json" -X POST \
-              -d "{\"content\":\"GitHub Actions déploiement VPS: **${STATUS}**\"}" \
+              -d "{\"content\":\"GitHub Actions deploy v2: **${STATUS}**\nCommit: \`${GITHUB_SHA::7}\`\nAuthor: ${GITHUB_ACTOR}\"}" \
               "$DISCORD_DEPLOY_WEBHOOK_URL" || true
           fi
