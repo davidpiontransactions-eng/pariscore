@@ -851,5 +851,16 @@
         "desc": "Public v1 endpoints to integrate PariScore signals."
       }
     }
+  },
+  "favorites": {
+    "title": "My Favorites",
+    "follows": "follows",
+    "clearAll": "Clear all",
+    "emptyTitle": "No favorites yet",
+    "emptyDescription": "Start following players, teams, or leagues from match cards.",
+    "players": "My players",
+    "teams": "My teams",
+    "leagues": "My leagues",
+    "matches": "My matches"
   }
 }

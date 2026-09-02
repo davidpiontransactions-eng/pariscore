@@ -851,5 +851,16 @@
         "desc": "Endpoints publics v1 pour intégrer les signaux PariScore."
       }
     }
+  },
+  "favorites": {
+    "title": "Mes favoris",
+    "follows": "follows",
+    "clearAll": "Tout effacer",
+    "emptyTitle": "Aucun favori",
+    "emptyDescription": "Commencez à suivre des joueurs, équipes ou ligues depuis les cartes de match.",
+    "players": "Mes joueurs",
+    "teams": "Mes équipes",
+    "leagues": "Mes ligues",
+    "matches": "Mes matchs"
   }
 }
