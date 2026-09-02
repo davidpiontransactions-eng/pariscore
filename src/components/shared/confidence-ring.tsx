@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -29,6 +29,8 @@ type Props = {
  * - Arc principal (épais) = probabilité de victoire
  * - Arc extérieur (fin, opacité réduite) = confiance du modèle
  * - Plus la confiance est haute, plus l'arc extérieur est complet
+ *
+ * Performance: useMemo pour les calculs SVG (évite les re-calculs à chaque render)
  */
 export function ConfidenceRing({
   value,
@@ -46,51 +48,32 @@ export function ConfidenceRing({
   const fromRef = useRef(animate ? 0 : value);
   const confFromRef = useRef(animate ? 0 : confidence * 100);
 
-  useEffect(() => {
-    if (!animate) {
-      setProgress(value);
-      setConfProgress(confidence * 100);
-      return;
-    }
-    let raf = 0;
-    const start = performance.now();
-    const from = fromRef.current;
-    const confFrom = confFromRef.current;
-    const to = value;
-    const confTo = confidence * 100;
+  // useMemo pour les calculs SVG (évite les re-calculs à chaque render)
+  const svgProps = useMemo(() => {
+    const radius = (size - stroke) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const dashOffset = circumference * (1 - progress / 100);
 
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / durationMs);
-      const eased = 1 - Math.pow(1 - t, 3);
-      const next = from + (to - from) * eased;
-      const confNext = confFrom + (confTo - confFrom) * eased;
-      fromRef.current = next;
-      confFromRef.current = confNext;
-      setProgress(next);
-      setConfProgress(confNext);
-      if (t < 1) {
-        raf = requestAnimationFrame(tick);
-      } else {
-        fromRef.current = to;
-        confFromRef.current = confTo;
-      }
+    // Confiance: arc extérieur plus fin
+    const confStroke = Math.max(2, stroke * 0.4);
+    const confRadius = radius + stroke / 2 + confStroke / 2 + 1;
+    const confCircumference = 2 * Math.PI * confRadius;
+    const confDashOffset = confCircumference * (1 - confProgress / 100);
+
+    // Couleur de la confiance: vert si > 0.7, amber si > 0.4, rouge sinon
+    const confColor = confidence > 0.7 ? "#00e676" : confidence > 0.4 ? "#fbbf24" : "#ff3856";
+
+    return {
+      radius,
+      circumference,
+      dashOffset,
+      confStroke,
+      confRadius,
+      confCircumference,
+      confDashOffset,
+      confColor,
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, confidence, animate, durationMs]);
-
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - progress / 100);
-
-  // Confiance: arc extérieur plus fin
-  const confStroke = Math.max(2, stroke * 0.4);
-  const confRadius = radius + stroke / 2 + confStroke / 2 + 1;
-  const confCircumference = 2 * Math.PI * confRadius;
-  const confDashOffset = confCircumference * (1 - confProgress / 100);
-
-  // Couleur de la confiance: vert si > 0.7, amber si > 0.4, rouge sinon
-  const confColor = confidence > 0.7 ? "#00e676" : confidence > 0.4 ? "#fbbf24" : "#ff3856";
+  }, [size, stroke, progress, confProgress, confidence]);
 
   return (
     <div
@@ -109,24 +92,24 @@ export function ConfidenceRing({
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={confRadius}
+          r={svgProps.confRadius}
           fill="none"
           stroke={trackColor ?? "currentColor"}
           strokeOpacity={0.06}
-          strokeWidth={confStroke}
+          strokeWidth={svgProps.confStroke}
         />
 
         {/* Arc confiance (extérieur) */}
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={confRadius}
+          r={svgProps.confRadius}
           fill="none"
-          stroke={confColor}
-          strokeWidth={confStroke}
+          stroke={svgProps.confColor}
+          strokeWidth={svgProps.confStroke}
           strokeLinecap="round"
-          strokeDasharray={confCircumference}
-          strokeDashoffset={confDashOffset}
+          strokeDasharray={svgProps.confCircumference}
+          strokeDashoffset={svgProps.confDashOffset}
           style={{
             transition: animate
               ? `stroke-dashoffset ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`
@@ -138,7 +121,7 @@ export function ConfidenceRing({
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={svgProps.radius}
           fill="none"
           stroke={trackColor ?? "currentColor"}
           strokeOpacity={trackColor ? 1 : 0.12}
@@ -149,13 +132,13 @@ export function ConfidenceRing({
         <circle
           cx={size / 2}
           cy={size / 2}
-          r={radius}
+          r={svgProps.radius}
           fill="none"
           stroke={color}
           strokeWidth={stroke}
           strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
+          strokeDasharray={svgProps.circumference}
+          strokeDashoffset={svgProps.dashOffset}
           style={{
             transition: animate
               ? `stroke-dashoffset ${durationMs}ms cubic-bezier(0.22, 1, 0.36, 1)`
