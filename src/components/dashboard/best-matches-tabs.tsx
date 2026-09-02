@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { estimateFootballEloGap } from "@/lib/elo-utils";
 import { parisKickoff } from "@/lib/football-time";
+import { computeMatchScore } from "@/lib/match-score";
+import { TopMatchCard, type TopMatchData } from "@/components/tennis/top-match-card";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,6 +29,9 @@ type MatchCard = {
   detail2: string;
   scheduledAt: string;
 };
+
+/** Match tennis avec score 0-10 pour l'affichage "Meilleurs matchs". */
+type ScoredTennisMatch = TopMatchData;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -114,6 +119,68 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
         };
       })
       .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+  }, [tennisData?.matches, minEloGap, minSps]);
+
+  // ── Tennis avec score 0-10 pour "Meilleurs matchs" ──
+  const scoredTennisMatches = useMemo<ScoredTennisMatch[]>(() => {
+    const matches = tennisData?.matches ?? [];
+    return matches
+      .filter((m) => {
+        const eloGap = Math.abs(m.playerA.elo - m.playerB.elo);
+        const maxSps = Math.max(m.playerA.sps ?? 0, m.playerB.sps ?? 0);
+        return eloGap >= minEloGap || maxSps >= minSps;
+      })
+      .map((m) => {
+        const scoreResult = computeMatchScore({
+          probA: m.probA ?? 50,
+          eloA: m.playerA.elo ?? 1500,
+          eloB: m.playerB.elo ?? 1500,
+          rankA: m.playerA.rank ?? 999,
+          rankB: m.playerB.rank ?? 999,
+          formA: m.playerA.form,
+          formB: m.playerB.form,
+          tournament: m.tournament,
+          round: m.round,
+          h2hHistory: m.h2hHistory,
+          playerAId: m.playerA.id,
+        });
+
+        return {
+          id: m.id,
+          playerA: {
+            name: m.playerA.name,
+            shortName: m.playerA.shortName,
+            rank: m.playerA.rank,
+            elo: m.playerA.elo,
+            country: m.playerA.country,
+            form: m.playerA.form,
+            sps: m.playerA.sps,
+          },
+          playerB: {
+            name: m.playerB.name,
+            shortName: m.playerB.shortName,
+            rank: m.playerB.rank,
+            elo: m.playerB.elo,
+            country: m.playerB.country,
+            form: m.playerB.form,
+            sps: m.playerB.sps,
+          },
+          tournament: m.tournament,
+          round: m.round,
+          scheduledAt: m.scheduledAt,
+          probA: m.probA ?? 50,
+          probB: m.probB ?? 50,
+          odds: m.odds,
+          matchScore: {
+            score: scoreResult.score,
+            label: scoreResult.label,
+            labelColor: scoreResult.labelColor,
+            labelBg: scoreResult.labelBg,
+            breakdown: scoreResult.breakdown,
+          },
+        };
+      })
+      .sort((a, b) => b.matchScore.score - a.matchScore.score);
   }, [tennisData?.matches, minEloGap, minSps]);
 
   // ── Football : ΔElo ≥ minEloGap ──
@@ -375,6 +442,23 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
               ? "Aucun match avec fort écart Elo aujourd'hui"
               : `Données ${current.label} bientôt disponibles`}
         </div>
+      ) : current.key === "tennis" && viewMode === "grid" ? (
+        /* Tennis : vue redesign avec score 0-10 */
+        <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto">
+          {scoredTennisMatches.map((match) => (
+            <TopMatchCard
+              key={`tennis-${match.id}`}
+              match={match}
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent("open-match-detail", {
+                    detail: { sport: "tennis", matchId: match.id },
+                  }),
+                );
+              }}
+            />
+          ))}
+        </div>
       ) : viewMode === "grid" ? (
         <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
           {current.matches.map((match) => (
@@ -415,41 +499,76 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
                 <th className="px-3 py-2.5 font-medium">Heure</th>
                 <th className="px-3 py-2.5 font-medium">Sport</th>
                 <th className="px-3 py-2.5 font-medium">Rencontre</th>
-                <th className="px-3 py-2.5 font-medium">ΔElo / SPS</th>
+                <th className="px-3 py-2.5 font-medium">Score</th>
                 <th className="px-3 py-2.5 font-medium text-right">Tournoi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30">
-              {current.matches.map((match) => (
-                <tr
-                  key={`${match.sport}-${match.id}`}
-                  onClick={() => {
-                    window.dispatchEvent(
-                      new CustomEvent("open-match-detail", {
-                        detail: { sport: match.sport, matchId: match.id },
-                      }),
-                    );
-                  }}
-                  className="cursor-pointer transition-all hover:bg-slate-800/40"
-                >
-                  <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
-                    {new Date(match.scheduledAt).toLocaleTimeString("fr-FR", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </td>
-                  <td className="px-3 py-2.5 text-lg">{SPORT_ICONS[match.sport]}</td>
-                  <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
-                    {match.matchName}
-                  </td>
-                  <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                    {match.detail1}
-                  </td>
-                  <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
-                    {match.detail2}
-                  </td>
-                </tr>
-              ))}
+              {current.key === "tennis"
+                ? scoredTennisMatches.map((match) => (
+                    <tr
+                      key={`tennis-${match.id}`}
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent("open-match-detail", {
+                            detail: { sport: "tennis", matchId: match.id },
+                          }),
+                        );
+                      }}
+                      className="cursor-pointer transition-all hover:bg-slate-800/40"
+                    >
+                      <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                        {parisKickoff(match.scheduledAt)}
+                      </td>
+                      <td className="px-3 py-2.5 text-lg">{SPORT_ICONS.tennis}</td>
+                      <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                        {match.playerA.shortName} vs {match.playerB.shortName}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <span className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                          match.matchScore.labelBg,
+                          match.matchScore.labelColor,
+                        )}>
+                          {match.matchScore.label} {match.matchScore.score.toFixed(1)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                        {match.tournament}
+                      </td>
+                    </tr>
+                  ))
+                : current.matches.map((match) => (
+                    <tr
+                      key={`${match.sport}-${match.id}`}
+                      onClick={() => {
+                        window.dispatchEvent(
+                          new CustomEvent("open-match-detail", {
+                            detail: { sport: match.sport, matchId: match.id },
+                          }),
+                        );
+                      }}
+                      className="cursor-pointer transition-all hover:bg-slate-800/40"
+                    >
+                      <td className="px-3 py-2.5 font-mono text-xs tabular-nums whitespace-nowrap">
+                        {new Date(match.scheduledAt).toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="px-3 py-2.5 text-lg">{SPORT_ICONS[match.sport]}</td>
+                      <td className="px-3 py-2.5 max-w-[200px] truncate font-medium">
+                        {match.matchName}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                        {match.detail1}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-xs text-muted-foreground">
+                        {match.detail2}
+                      </td>
+                    </tr>
+                  ))
+              }
             </tbody>
           </table>
         </div>

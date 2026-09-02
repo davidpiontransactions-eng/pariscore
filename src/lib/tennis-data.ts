@@ -146,6 +146,26 @@ export type TennisMatch = {
     source: string;
     weights: { dr: number; aces: number; servePts: number; form: number; momentum: number };
   };
+  /**
+   * Score composite "Meilleurs matchs du jour" (0-10).
+   * Calcule par computeMatchScore() — signaux: closeness, tournament,
+   * elo, star power, form, rivalry. Trendh compression tanh.
+   */
+  matchScore?: {
+    score: number;        // 0-10
+    raw: number;          // avant compression
+    label: "TOP MATCH" | "FEATURED" | "INTERESTING" | "STANDARD";
+    labelColor: string;   // CSS class
+    labelBg: string;      // CSS class
+    breakdown: {
+      closeness: number;
+      tournamentImp: number;
+      eloQuality: number;
+      starPower: number;
+      form: number;
+      rivalry: number;
+    };
+  };
 };
 
 export type BookmakerOdd = {
