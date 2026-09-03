@@ -7,7 +7,7 @@
  * (modèle 1xbet.com) présents dans tous les onglets sport.
  */
 
-export type MatchViewMode = "live" | "prematch" | "today";
+export type MatchViewMode = "live" | "prematch" | "today" | "rankings";
 
 /** Valeurs de fenêtre horaire sérialisables (sidebar / URL). */
 export type TimeFilterKey =

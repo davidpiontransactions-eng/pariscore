@@ -45,6 +45,7 @@ import { MatchViewTabs } from "@/components/shared/match-view-tabs";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { MatchEmptyState } from "@/components/shared/match-empty-state";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { FootballRankingsEnhanced } from "./football-rankings-enhanced";
 import {
   filterByStartWindow,
   filterByToday,
@@ -444,6 +445,15 @@ export function FootballTabContent() {
             error={error?.message ?? null}
             onRetry={() => mutate()}
           />
+        </div>
+      ) : mode === "rankings" ? (
+        /* ── Sous-onglet Classements ────────────────────────────────── */
+        <div
+          role="tabpanel"
+          id={`${tabsId}-panel-rankings`}
+          aria-labelledby={`${tabsId}-rankings`}
+        >
+          <FootballRankingsEnhanced />
         </div>
       ) : (
         <>

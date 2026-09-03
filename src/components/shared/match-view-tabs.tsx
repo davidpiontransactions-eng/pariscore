@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useId, useRef } from "react";
-import { Radio, CalendarClock } from "lucide-react";
+import { Radio, CalendarClock, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { MatchViewMode } from "@/lib/match-view";
@@ -71,6 +71,15 @@ export function MatchViewTabs({
       ref: prematchRef,
       icon: CalendarClock,
       activeCls: "bg-sky-500",
+    },
+    {
+      id: "rankings",
+      label: t("rankings", { defaultValue: "Classements" }),
+      aria: t("rankingsAria", { defaultValue: "Classements" }),
+      count: 0,
+      ref: useRef<HTMLButtonElement>(null),
+      icon: BarChart3,
+      activeCls: "bg-violet-500",
     },
   ];
 

@@ -1395,7 +1395,6 @@ export function SportsSidebarContent({
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-1 p-1.5">
           {/* Top5 foot retiré — remplacé par le Top10 central (football-tab-content). */}
-          {activeSport === "football" && <FootballLeagueRankingsWidget />}
           {activeSport === "tennis" && <TennisStrategyTop5Widget />}
           <QuickLinksBlock tree={tree} onFallbackSport={handleSportSelect} />
           <MyTeamsBlock followedTeamIds={followedTeamIds} onToggleFollow={toggleFollowedTeam} tree={tree} />
