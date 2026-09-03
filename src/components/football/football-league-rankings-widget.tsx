@@ -121,17 +121,17 @@ function PlayersPanel({
         </p>
       )}
       {isLoading ? (
-        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-400">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
           Chargement…
         </div>
       ) : error ? (
-        <div className="flex items-start gap-1.5 px-2.5 py-3 text-[11px] leading-snug text-slate-500">
+        <div className="flex items-start gap-1.5 px-2.5 py-3 text-[11px] leading-snug text-slate-400">
           <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
           {(error as Error).message}
         </div>
       ) : !rows?.length ? (
-        <p className="py-2 text-[11px] text-slate-500">Aucune donnée joueur pour cette saison.</p>
+        <p className="py-2 text-[11px] text-slate-400">Aucune donnée joueur pour cette saison.</p>
       ) : (
         <>
           <ol className="space-y-px">
@@ -166,7 +166,7 @@ function PlayersPanel({
                       {r.name}
                     </span>
                   </span>
-                  <span className="block truncate pl-[24px] text-[8px] leading-tight text-slate-500">
+                  <span className="block truncate pl-[24px] text-[8px] leading-tight text-slate-400">
                     {r.team}
                   </span>
                 </span>
@@ -332,7 +332,7 @@ export function FootballLeagueRankingsWidget() {
   return (
     <section aria-label="Classements championnat" className="border-b border-slate-800/80 pb-2">
       <div className="flex items-center justify-between pr-2.5">
-        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Classements
         </h2>
         {/* Vue : équipes ou joueurs */}
@@ -348,10 +348,10 @@ export function FootballLeagueRankingsWidget() {
               onClick={() => setView(v.key)}
               aria-pressed={view === v.key}
               className={cn(
-                "px-1.5 py-0.5 text-[9px] font-semibold transition-colors",
+                "px-1.5 py-0.5 text-[9px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 view === v.key
                   ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-transparent text-slate-500 hover:text-slate-300",
+                  : "bg-transparent text-slate-400 hover:text-slate-300",
               )}
             >
               {v.label}
@@ -400,10 +400,10 @@ export function FootballLeagueRankingsWidget() {
               onClick={() => setScope(s.key)}
               aria-pressed={scope === s.key}
               className={cn(
-                "px-1.5 py-0.5 text-[9px] font-semibold transition-colors",
+                "px-1.5 py-0.5 text-[9px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 scope === s.key
                   ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-transparent text-slate-500 hover:text-slate-300",
+                  : "bg-transparent text-slate-400 hover:text-slate-300",
               )}
             >
               {s.label}
@@ -427,7 +427,7 @@ export function FootballLeagueRankingsWidget() {
                   "px-1.5 py-0.5 font-mono text-[9px] font-bold transition-colors",
                   formKey === f.key
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-500 hover:text-slate-300",
+                    : "bg-transparent text-slate-400 hover:text-slate-300",
                 )}
               >
                 {f.label}
@@ -439,7 +439,7 @@ export function FootballLeagueRankingsWidget() {
         {/* Filtre saison — segmenté sur les saisons disponibles */}
         {sortedSeasons.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
               Saison
             </span>
             <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Saison">
@@ -454,7 +454,7 @@ export function FootballLeagueRankingsWidget() {
                     "px-1.5 py-0.5 font-mono text-[9px] font-bold transition-colors",
                     effectiveSeason === s
                       ? "bg-emerald-500/20 text-emerald-300"
-                      : "bg-transparent text-slate-500 hover:text-slate-300",
+                      : "bg-transparent text-slate-400 hover:text-slate-300",
                   )}
                 >
                   {s.slice(2)}
@@ -496,19 +496,19 @@ export function FootballLeagueRankingsWidget() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-400">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
           Chargement…
         </div>
       ) : error || !isReady ? (
-        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-slate-500">
+        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-slate-400">
           <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
           Classements indisponibles.
         </div>
       ) : (
         <div className="px-2.5">
           {!rawRows?.length ? (
-            <p className="py-2 text-[11px] text-slate-500">
+            <p className="py-2 text-[11px] text-slate-400">
               {market === "xgFor" || market === "xgAgainst"
                 ? "xG indisponible pour cette ligue (couverture Understat limitée)."
                 : "Pas de données pour cette saison."}
@@ -554,7 +554,7 @@ export function FootballLeagueRankingsWidget() {
                         <td className="w-[104px] truncate py-0.5 text-[10px] text-slate-300">
                           {teamName}
                         </td>
-                        <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-500">
+                        <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
                           {row.gp}
                         </td>
                         {isXgRows(rawRows) ? (
