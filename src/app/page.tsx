@@ -306,16 +306,6 @@ function HomeInner() {
     };
   }, [tennisData?.matches, footData?.matches]);
 
-  const handleTabChange = useCallback((tab: string) => {
-    // Ignore les ids inconnus (protection) ; "home"/vues nav ne touchent pas
-    // au store : l'arbre latéral garde le dernier sport, l'URL ?sport= reste stable.
-    if (!VIEW_TABS.has(tab) && !SPORT_IDS.has(tab)) return;
-    setActiveTab(tab as SportTab);
-    if (SPORT_IDS.has(tab)) {
-      useSportsSidebarStore.getState().syncSportFromTab(tab);
-    }
-  }, []);
-
   // Sidebar (store) → onglet central : un clic sport/ligue dans le filtre
   // latéral bascule la grille. Le store reste source de vérité URL-partageable.
   const storeSportId = useSportsSidebarStore((s) => s.selectedSportId);
