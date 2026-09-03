@@ -93,7 +93,7 @@ export function SiteHeader() {
               <span className="text-xl font-black tracking-tight text-white leading-none">
                 PARI<span className="text-emerald-400">SCORE</span>
               </span>
-              <span className="text-[10px] font-medium tracking-[0.25em] text-zinc-500 leading-none mt-1">
+              <span className="text-[10px] font-medium tracking-[0.25em] text-zinc-400 leading-none mt-1">
                 MULTISPORT DATA & PRÉDICTIONS
               </span>
             </div>
@@ -105,9 +105,9 @@ export function SiteHeader() {
               type="button"
               onClick={() => onOpenChange(true)}
               className={cn(
-                "group hidden items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-xs text-zinc-500 transition-all w-full",
+                "group hidden items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-xs text-zinc-400 transition-all w-full",
                 "hover:border-emerald-500/20 hover:bg-white/[0.05] hover:text-zinc-300 hover:shadow-lg hover:shadow-emerald-500/5",
-                "sm:flex",
+                "sm:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               )}
               aria-label="Rechercher (Ctrl+K)"
             >

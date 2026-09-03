@@ -1451,7 +1451,7 @@ function CollapsedSidebar({
         type="button"
         onClick={toggleCollapsed}
         aria-label="Expand sidebar"
-        className="mb-3 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800/80 hover:text-white"
+        className="mb-3 rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <PanelLeftOpen className="h-4 w-4" />
       </button>
