@@ -98,10 +98,39 @@ export const useFollowStore = create<FollowState & FollowActions>()(
 
       toggle: (entry) => {
         const { isFollowed, add, remove } = get();
-        if (isFollowed(entry.id)) {
+        const wasFollowed = isFollowed(entry.id);
+
+        // Optimistic update : mettre à jour l'UI immédiatement
+        if (wasFollowed) {
           remove(entry.id);
         } else {
           add(entry);
+        }
+
+        // Sync backend en arrière-plan (fire-and-forget)
+        if (typeof window !== "undefined") {
+          const userId = localStorage.getItem("pariscore-user-id");
+          if (userId) {
+            fetch("/api/v1/follows", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                entityId: entry.id,
+                category: entry.category,
+                name: entry.name,
+                sport: entry.sport,
+                notifications: entry.notifications,
+              }),
+            }).catch(() => {
+              // En cas d'erreur, rollback optimistic update
+              if (wasFollowed) {
+                add(entry);
+              } else {
+                remove(entry.id);
+              }
+            });
+          }
         }
       },
 
