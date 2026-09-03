@@ -1044,7 +1044,7 @@ return [...matches, ...synthetic];
           </>
         )}
 
-        {!isLoading && subFiltered.length === 0 && !error && (
+        {!isLoading && featuredForMarquee.length + restForGrid.length === 0 && !error && (
           <div className="mt-16 flex flex-col items-center justify-center gap-3 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
               <Trophy className="h-5 w-5 text-muted-foreground" />
@@ -1052,7 +1052,33 @@ return [...matches, ...synthetic];
             <p className="text-sm font-medium">
               {subTab === "live" ? tTennis("noLiveMatches") : t("noMatchTitle")}
             </p>
-            <p className="text-xs text-muted-foreground">{t("noMatchHint")}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("noMatchHint")}
+              {selectedCountryId && (
+                <span className="mt-1 block text-emerald-400">
+                  Filtre actif : {selectedCountryId} —{" "}
+                  <button
+                    type="button"
+                    onClick={() => useSportsSidebarStore.getState().selectCountry(null)}
+                    className="underline underline-offset-2 hover:text-emerald-300"
+                  >
+                    réinitialiser
+                  </button>
+                </span>
+              )}
+              {timeKey !== "all" && (
+                <span className="mt-1 block text-emerald-400">
+                  Fenêtre horaire : {timeKey} —{" "}
+                  <button
+                    type="button"
+                    onClick={() => setTimeKey("all")}
+                    className="underline underline-offset-2 hover:text-emerald-300"
+                  >
+                    réinitialiser
+                  </button>
+                </span>
+              )}
+            </p>
           </div>
         )}
         </>

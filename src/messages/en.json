@@ -1,4 +1,7 @@
 {
+  "footer": {
+    "responsible": "Gamble responsibly. 18+"
+  },
   "common": {
     "appName": "PariScore",
     "tabName": "Tennis Prematch",
@@ -891,5 +894,41 @@
     "teams": "My teams",
     "leagues": "My leagues",
     "matches": "My matches"
+  },
+  "Notifications": {
+    "ariaLabel": "Notifications ({count})",
+    "title": "Notifications",
+    "valueBets": "Value Bets",
+    "alertsCount": "{count, plural, =0 {No alerts} one {1 alert} other {{count} alerts}}",
+    "configure": "Configure",
+    "push": "Push notifications",
+    "pushEnabled": "Enabled",
+    "pushDisabled": "Disabled",
+    "pushToggle": "Toggle push notifications",
+    "pushUnsupported": "Push notifications not supported by this browser",
+    "pushDenied": "Push notifications blocked — allow them in browser settings",
+    "email": "Email",
+    "emailSubscribed": "Subscribed",
+    "emailUnsubscribed": "Not subscribed",
+    "emailToggle": "Toggle email alerts",
+    "emailPlaceholder": "Your email",
+    "subscribe": "Subscribe",
+    "emailSubscribing": "Subscribing…",
+    "digest": "Daily digest",
+    "digestEnabled": "Enabled",
+    "digestDisabled": "Disabled",
+    "digestToggle": "Toggle daily digest",
+    "fullSettings": "All settings"
+  },
+  "UserMenu": {
+    "openMenu": "Open user menu",
+    "defaultName": "User",
+    "defaultEmail": "guest",
+    "profile": "My profile",
+    "settings": "Settings",
+    "language": "Language",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "logout": "Logout"
   }
 }
