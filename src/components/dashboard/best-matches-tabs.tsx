@@ -428,7 +428,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
           type="button"
           onClick={() => setShowFilters((v) => !v)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             showFilters
               ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
               : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",

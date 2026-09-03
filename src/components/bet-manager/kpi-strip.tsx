@@ -41,7 +41,7 @@ function Kpi({
 }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] p-3 transition-colors hover:border-white/10">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
         <Icon className="h-3 w-3" />
         {label}
       </div>
@@ -55,7 +55,7 @@ function Kpi({
       >
         {value}
       </div>
-      {sub ? <div className="text-[11px] text-zinc-500">{sub}</div> : null}
+      {sub ? <div className="text-[11px] text-zinc-400">{sub}</div> : null}
     </div>
   );
 }
@@ -82,11 +82,11 @@ export function KpiStrip({ stats, currency }: { stats: BankrollStats; currency: 
           )}
         >
           {fmt(stats.current, 0)}
-          <span className="ml-1 text-base font-medium text-zinc-500">{currency}</span>
+          <span className="ml-1 text-base font-medium text-zinc-400">{currency}</span>
         </div>
         <div className="mt-2 flex items-center gap-2 text-xs">
           <Delta value={stats.profit} />
-          <span className="text-zinc-500">vs {fmt(stats.initial, 0)} {currency} initial</span>
+          <span className="text-zinc-400">vs {fmt(stats.initial, 0)} {currency} initial</span>
         </div>
       </div>
 
