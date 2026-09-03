@@ -91,7 +91,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
       <p className="mb-6 text-sm text-zinc-400">L&apos;API des matchs CS2 ne répond pas pour le moment.</p>
       <button
         onClick={onRetry}
-        className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/20"
+        className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <RefreshCw className="h-4 w-4" /> Réessayer
       </button>

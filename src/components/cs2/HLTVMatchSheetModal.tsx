@@ -99,7 +99,7 @@ function VetoList({ order, t1Name, t2Name }: { order: VetoStep[]; t1Name: string
               key={s.step}
               className="flex items-center gap-2 rounded-md bg-amber-500/10 px-3 py-1.5 text-xs text-amber-300"
             >
-              <span className="w-5 shrink-0 font-mono text-zinc-500">{s.step}.</span>
+              <span className="w-5 shrink-0 font-mono text-zinc-400">{s.step}.</span>
               <span className="text-zinc-400">Map décisive :</span>
               <span className="font-bold">{s.map}</span>
             </div>
@@ -115,7 +115,7 @@ function VetoList({ order, t1Name, t2Name }: { order: VetoStep[]; t1Name: string
               isPick ? "bg-[#00E676]/10 text-[#00E676]" : "bg-red-500/5 text-red-300/80",
             )}
           >
-            <span className="w-5 shrink-0 font-mono text-zinc-500">{s.step}.</span>
+            <span className="w-5 shrink-0 font-mono text-zinc-400">{s.step}.</span>
             <span className="font-semibold">{actor}</span>
             <span className="text-zinc-400">{vetoActionLabel(s.action)}</span>
             <span className="font-bold">{s.map}</span>
@@ -145,13 +145,13 @@ function Mr12Row({ winners, t1Name, t2Name }: { winners: ("t1" | "t2")[]; t1Name
     ));
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-[11px] text-zinc-500">
+      <div className="flex items-center justify-between text-[11px] text-zinc-400">
         <span>{t1Name} (CT)</span>
         <span>1ère mi-temps</span>
         <span>{t2Name} (T)</span>
       </div>
       <div className="flex flex-wrap gap-1">{renderCells(half1, 0)}</div>
-      <div className="flex items-center justify-between text-[11px] text-zinc-500">
+      <div className="flex items-center justify-between text-[11px] text-zinc-400">
         <span>{t1Name} (T)</span>
         <span>2ème mi-temps</span>
         <span>{t2Name} (CT)</span>
@@ -215,7 +215,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
           </DialogTitle>
           {match && (
             <div>
-              <div className="mb-2 flex items-center justify-center gap-2 text-[11px] text-zinc-500">
+              <div className="mb-2 flex items-center justify-center gap-2 text-[11px] text-zinc-400">
                 {match.tournament_logo ? (
                   <img src={match.tournament_logo} alt="" className="h-4 w-4 object-contain" loading="lazy" />
                 ) : (
@@ -240,7 +240,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                   <div className="text-right">
                     <p className="text-base font-bold text-white">{dT1}</p>
                     {match.team1.hltv_rank ? (
-                      <p className="text-[11px] text-zinc-500">HLTV #{match.team1.hltv_rank}</p>
+                      <p className="text-[11px] text-zinc-400">HLTV #{match.team1.hltv_rank}</p>
                     ) : null}
                   </div>
                   <TeamLogoImage name={dT1} logo={match.team1.logo} logo_local={match.team1.logo_local} country={match.team1.country} size="lg" />
@@ -257,7 +257,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                     <span className="text-sm font-bold text-zinc-600">VS</span>
                   )}
                   {isLive && match.current_map && (
-                    <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-zinc-500">
+                    <p className="mt-1 flex items-center justify-center gap-1 text-[11px] text-zinc-400">
                       <MapIcon className="h-3 w-3" /> {match.current_map}
                     </p>
                   )}
@@ -268,7 +268,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                   <div>
                     <p className="text-base font-bold text-white">{dT2}</p>
                     {match.team2.hltv_rank ? (
-                      <p className="text-[11px] text-zinc-500">HLTV #{match.team2.hltv_rank}</p>
+                      <p className="text-[11px] text-zinc-400">HLTV #{match.team2.hltv_rank}</p>
                     ) : null}
                   </div>
                 </div>
@@ -279,7 +279,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
 
         {isLoading && !enrichment ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
           </div>
         ) : (
           <Tabs defaultValue="apercu" className="mt-2">
@@ -312,7 +312,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                       : ""}
                   </p>
                 ) : (
-                  <p className="text-xs text-zinc-500">Données veto indisponibles.</p>
+                  <p className="text-xs text-zinc-400">Données veto indisponibles.</p>
                 )}
               </section>
 
@@ -322,7 +322,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                   <h3 className="mb-2 text-sm font-semibold text-white">🧠 Marchés prédictifs</h3>
                   <div className="space-y-3">
                     <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-                      <p className="mb-2 text-[11px] uppercase tracking-wide text-zinc-500">Vainqueur du match</p>
+                      <p className="mb-2 text-[11px] uppercase tracking-wide text-zinc-400">Vainqueur du match</p>
                       <div className="flex h-2 overflow-hidden rounded-full bg-white/5">
                         <div className="bg-orange-500/80" style={{ width: `${prediction.winProb1 * 100}%` }} />
                         <div className="bg-blue-500/80" style={{ width: `${prediction.winProb2 * 100}%` }} />
@@ -340,7 +340,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                       {prediction.mapWinnerMarkets.map((m) => (
                         <div key={m.map} className="rounded-lg border border-white/5 bg-white/[0.02] p-2.5">
-                          <p className="mb-1 text-[11px] uppercase tracking-wide text-zinc-500">Vainqueur {m.map}</p>
+                          <p className="mb-1 text-[11px] uppercase tracking-wide text-zinc-400">Vainqueur {m.map}</p>
                           <div className="flex h-1.5 overflow-hidden rounded-full bg-white/5">
                             <div className="bg-orange-500/80" style={{ width: `${m.team1 * 100}%` }} />
                             <div className="bg-blue-500/80" style={{ width: `${m.team2 * 100}%` }} />
@@ -356,11 +356,11 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
 
                     {/* Over/Under par map */}
                     <div className="space-y-1.5">
-                      <p className="text-[11px] uppercase tracking-wide text-zinc-500">Over/Under rounds (≥65% confiance)</p>
+                      <p className="text-[11px] uppercase tracking-wide text-zinc-400">Over/Under rounds (≥65% confiance)</p>
                       {prediction.predictedMaps.slice(0, 5).map((m) => (
                         <div key={m.map} className="flex items-center justify-between rounded-md bg-white/[0.02] px-3 py-1.5 text-xs">
                           <span className="text-zinc-300">{m.map}</span>
-                          <span className="text-zinc-500">moy. {m.expectedRounds} rounds</span>
+                          <span className="text-zinc-400">moy. {m.expectedRounds} rounds</span>
                           {m.overSignal ? (
                             <span
                               className={cn(
@@ -381,7 +381,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                     {/* Handicap rounds (map la plus probable) */}
                     {prediction.predictedMaps[0] && (
                       <div className="rounded-md bg-white/[0.02] px-3 py-1.5 text-xs">
-                        <span className="text-zinc-500">
+                        <span className="text-zinc-400">
                           Handicap rounds {prediction.predictedMaps[0].map} :{" "}
                         </span>
                         <span className="font-semibold text-zinc-300">
@@ -401,7 +401,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                             <span className="font-semibold text-zinc-300">
                               {h.side === "team1" ? dT1 : dT2} {h.line}
                             </span>
-                            <span className="ml-2 text-zinc-500">{pct(h.prob)}</span>
+                            <span className="ml-2 text-zinc-400">{pct(h.prob)}</span>
                           </div>
                         ))}
                       </div>
@@ -480,7 +480,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                         <span className={cn("h-2.5 w-2.5 rounded-full", side === "t1" ? "bg-orange-500" : "bg-blue-500")} />
                         {displayTeamName(team.name)}
                         {team.roster_strength != null && (
-                          <span className="text-[11px] font-normal text-zinc-500">
+                          <span className="text-[11px] font-normal text-zinc-400">
                             force {team.roster_strength}/100
                           </span>
                         )}
@@ -491,27 +491,27 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
                             <div key={i} className="flex items-center gap-3 rounded-md border border-white/5 bg-white/[0.02] px-3 py-2 text-xs">
                               <span className="w-5 font-mono text-zinc-600">{i + 1}</span>
                               <span className="flex-1 font-medium text-zinc-200">{p.name}</span>
-                              <span className="w-14 text-right text-[11px] text-zinc-500">{roleFromRating(p.rating)}</span>
+                              <span className="w-14 text-right text-[11px] text-zinc-400">{roleFromRating(p.rating)}</span>
                               <span className="w-14 text-right font-mono text-zinc-300">
                                 {p.rating != null ? p.rating.toFixed(2) : "—"}
                               </span>
-                              <span className="hidden w-16 text-right text-zinc-500 sm:block">
+                              <span className="hidden w-16 text-right text-zinc-400 sm:block">
                                 ADR {p.adr != null ? p.adr.toFixed(0) : "—"}
                               </span>
-                              <span className="hidden w-16 text-right text-zinc-500 sm:block">
+                              <span className="hidden w-16 text-right text-zinc-400 sm:block">
                                 KAST {p.kast != null ? p.kast.toFixed(0) : "—"}%
                               </span>
                             </div>
                           ))
                         ) : (
-                          <p className="text-xs text-zinc-500">Roster indisponible.</p>
+                          <p className="text-xs text-zinc-400">Roster indisponible.</p>
                         )}
                       </div>
                     </section>
                   ))}
                 </>
               ) : (
-                <p className="text-xs text-zinc-500">Chargement des rosters…</p>
+                <p className="text-xs text-zinc-400">Chargement des rosters…</p>
               )}
             </TabsContent>
 
@@ -520,7 +520,7 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
               {enrichment ? (
                 <CS2MapPoolAnalytics enrichment={enrichment} />
               ) : (
-                <p className="text-xs text-zinc-500">Chargement du map pool…</p>
+                <p className="text-xs text-zinc-400">Chargement du map pool…</p>
               )}
             </TabsContent>
           </Tabs>

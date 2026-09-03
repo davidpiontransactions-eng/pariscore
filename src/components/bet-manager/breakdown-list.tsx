@@ -40,7 +40,7 @@ export function BreakdownList({
                   <span
                     className={cn(
                       "shrink-0 font-mono text-xs font-semibold",
-                      g.profit > 0 ? "text-emerald-400" : g.profit < 0 ? "text-red-400" : "text-zinc-500"
+                      g.profit > 0 ? "text-emerald-400" : g.profit < 0 ? "text-red-400" : "text-zinc-400"
                     )}
                   >
                     {g.profit > 0 ? "+" : ""}

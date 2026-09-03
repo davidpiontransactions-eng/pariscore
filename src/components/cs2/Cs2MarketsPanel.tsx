@@ -108,7 +108,7 @@ export function Cs2MarketsPanel({
   }
   if (error || !data || data.error) {
     return (
-      <p className="rounded-md bg-white/[0.02] px-3 py-2 text-xs text-zinc-500">
+      <p className="rounded-md bg-white/[0.02] px-3 py-2 text-xs text-zinc-400">
         Marchés prédictifs indisponibles{data?.error ? ` (${data.error})` : ""}.
       </p>
     );
@@ -119,7 +119,7 @@ export function Cs2MarketsPanel({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-wide text-zinc-500">
+        <p className="text-[11px] uppercase tracking-wide text-zinc-400">
           Marchés calibrés · BO{data.bestOf} · map probable : {data.topMap}
         </p>
         <span className="text-[11px] text-zinc-600" title="Gate : proba ≥65% + EV ≥4% + backtest OK">
@@ -134,16 +134,16 @@ export function Cs2MarketsPanel({
         >
           <div className="min-w-0">
             <p className="text-xs font-semibold text-zinc-200">{MARKET_LABELS[m.market] ?? m.market}</p>
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-zinc-400">
               proba {pct(m.pModel)}
               {m.ev != null && (
-                <span className={cn("ml-2 font-mono", m.ev >= 4 ? "text-[#00E676]" : "text-zinc-500")}>
+                <span className={cn("ml-2 font-mono", m.ev >= 4 ? "text-[#00E676]" : "text-zinc-400")}>
                   EV {m.ev >= 0 ? "+" : ""}
                   {m.ev.toFixed(1)}%
                 </span>
               )}
               {m.kelly != null && m.kelly > 0 && (
-                <span className="ml-2 font-mono text-zinc-500">Kelly {(m.kelly * 100).toFixed(0)}%</span>
+                <span className="ml-2 font-mono text-zinc-400">Kelly {(m.kelly * 100).toFixed(0)}%</span>
               )}
             </p>
           </div>

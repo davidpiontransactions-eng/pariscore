@@ -416,7 +416,7 @@ function CalcCard({ calc }: { calc: CalcDef }) {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">{calc.title}</h3>
-            <p className="text-[11px] leading-tight text-zinc-500">{calc.desc}</p>
+            <p className="text-[11px] leading-tight text-zinc-400">{calc.desc}</p>
           </div>
         </div>
         <span
@@ -435,7 +435,7 @@ function CalcCard({ calc }: { calc: CalcDef }) {
         {calc.fields.map((f) =>
           f.type === "oddslist" ? (
             <div key={f.key} className="space-y-1">
-              <Label className="text-[10px] text-zinc-500">{f.label}</Label>
+              <Label className="text-[10px] text-zinc-400">{f.label}</Label>
               <Textarea
                 className="h-16 resize-none border-white/10 bg-white/5 font-mono text-xs text-zinc-200"
                 value={vals[f.key] ?? ""}
@@ -444,7 +444,7 @@ function CalcCard({ calc }: { calc: CalcDef }) {
             </div>
           ) : (
             <div key={f.key} className="space-y-1">
-              <Label className="text-[10px] text-zinc-500">{f.label}</Label>
+              <Label className="text-[10px] text-zinc-400">{f.label}</Label>
               <Input
                 className="h-8 border-white/10 bg-white/5 font-mono text-xs text-zinc-100"
                 inputMode={f.type === "number" ? "decimal" : undefined}
@@ -458,7 +458,7 @@ function CalcCard({ calc }: { calc: CalcDef }) {
         <div className="mt-2 space-y-1.5 border-t border-white/5 pt-2.5">
           {results.map((r) => (
             <div key={r.label} className="flex items-baseline justify-between gap-2 text-xs">
-              <span className="text-zinc-500">{r.label}</span>
+              <span className="text-zinc-400">{r.label}</span>
               <span
                 className={cn(
                   "font-mono font-semibold",
@@ -489,7 +489,7 @@ export function CalculatorsGrid({ bets, initial }: { bets: Bet[]; initial: numbe
           </div>
           <div>
             <h3 className="text-sm font-semibold text-zinc-100">Plan de mise</h3>
-            <p className="text-[11px] text-zinc-500">Compare les stratégies sur ton historique réel</p>
+            <p className="text-[11px] text-zinc-400">Compare les stratégies sur ton historique réel</p>
           </div>
           <span className="ml-auto rounded bg-purple-500/10 px-1.5 py-0.5 font-mono text-[9px] uppercase text-purple-400">
             Expert

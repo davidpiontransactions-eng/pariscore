@@ -36,7 +36,7 @@ function ProbBar({ prob, color }: { prob: number; color: string }) {
 function StatCell({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-2">
-      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{label}</div>
       <div className={`font-mono text-sm font-bold tabular-nums ${accent ? "text-amber-300" : "text-slate-100"}`}>
         {value}
       </div>
@@ -79,7 +79,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
     <div className="grid gap-3 lg:grid-cols-2">
       {/* Moneyline */}
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Vainqueur du match (Moneyline 1-2)
         </h4>
         <div className="mt-3 space-y-3">
@@ -88,7 +88,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
               <span className="font-semibold text-slate-200">Domicile</span>
               <span className="font-mono tabular-nums">
                 <b className="text-white">{fmtPct(moneyline.homeProb)}</b>
-                <span className="ml-2 text-slate-500">{moneyline.homeAmerican}</span>
+                <span className="ml-2 text-slate-400">{moneyline.homeAmerican}</span>
               </span>
             </div>
             <ProbBar prob={moneyline.homeProb} color="bg-sky-500" />
@@ -98,7 +98,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
               <span className="font-semibold text-slate-200">Extérieur</span>
               <span className="font-mono tabular-nums">
                 <b className="text-white">{fmtPct(moneyline.awayProb)}</b>
-                <span className="ml-2 text-slate-500">{moneyline.awayAmerican}</span>
+                <span className="ml-2 text-slate-400">{moneyline.awayAmerican}</span>
               </span>
             </div>
             <ProbBar prob={moneyline.awayProb} color="bg-rose-500" />
@@ -114,7 +114,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
       {/* Total */}
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Over / Under Total Runs
           </h4>
           {total.recommendation ? (
@@ -129,7 +129,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
         </div>
         <div className="mt-3 flex items-center gap-4">
           <div className="rounded-lg bg-slate-900 px-4 py-2.5 text-center">
-            <div className="text-[11px] font-bold uppercase text-slate-500">Ligne</div>
+            <div className="text-[11px] font-bold uppercase text-slate-400">Ligne</div>
             <div className="font-mono text-2xl font-bold tabular-nums text-amber-300">
               {total.line.toFixed(1)}
             </div>
@@ -168,20 +168,20 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
 
       {/* First 5 */}
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4 lg:col-span-2">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           First 5 Innings (100 % duel des partants)
         </h4>
         <div className="mt-3 grid gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5">
-            <div className="text-[11px] font-bold uppercase text-slate-500">F5 Vainqueur</div>
+            <div className="text-[11px] font-bold uppercase text-slate-400">F5 Vainqueur</div>
             <div className="mt-1 font-mono text-sm tabular-nums">
               <span className="font-bold text-sky-300">{fmtPct(firstFive.homeWinProb)}</span>
-              <span className="mx-1.5 text-slate-500">/</span>
+              <span className="mx-1.5 text-slate-400">/</span>
               <span className="font-bold text-rose-300">{fmtPct(firstFive.awayWinProb)}</span>
             </div>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5">
-            <div className="text-[11px] font-bold uppercase text-slate-500">F5 Ligne O/U</div>
+            <div className="text-[11px] font-bold uppercase text-slate-400">F5 Ligne O/U</div>
             <div className="mt-1 font-mono text-sm tabular-nums">
               <b className="text-amber-300">{firstFive.totalLine.toFixed(1)}</b>
               <span className="ml-2 text-slate-400">
@@ -191,7 +191,7 @@ function VerdictSection({ prediction }: { prediction: BaseballPrediction }) {
             </div>
           </div>
           <div className="rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2.5">
-            <div className="text-[11px] font-bold uppercase text-slate-500">F5 Total attendu</div>
+            <div className="text-[11px] font-bold uppercase text-slate-400">F5 Total attendu</div>
             <div className="mt-1 font-mono text-sm font-bold tabular-nums text-white">
               {fmtNum(firstFive.expectedTotal)} runs
             </div>
@@ -207,7 +207,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
   return (
     <div className="space-y-3">
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Loi Pythagoricienne de Bill James
         </h4>
         <p className="mt-2 font-mono text-xs text-slate-400">
@@ -221,7 +221,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Simulation Monte Carlo — matrice d&apos;espérance de points
         </h4>
         <p className="mt-2 text-xs leading-relaxed text-slate-400">
@@ -239,7 +239,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
       </section>
 
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Fusion du modèle
         </h4>
         <ul className="mt-2 list-inside list-disc space-y-1 text-xs leading-relaxed text-slate-400">
@@ -256,7 +256,7 @@ function EngineSection({ prediction }: { prediction: BaseballPrediction }) {
             F5 : simulation isolée des 5 premières manches — confrontation directe des deux
             partants.
           </li>
-          <li className="font-mono text-[11px] text-slate-500">
+          <li className="font-mono text-[11px] text-slate-400">
             seed={prediction.seed} · model={prediction.modelVersion} · itérations=
             {monteCarlo.iterations}
           </li>
@@ -292,13 +292,13 @@ function ContextSection({
   return (
     <div className="space-y-3">
       <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Attaque & Platoon Splits (OPS vs main de lancer)
         </h4>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[480px] text-left text-xs">
             <thead>
-              <tr className="text-[11px] uppercase tracking-wider text-slate-500">
+              <tr className="text-[11px] uppercase tracking-wider text-slate-400">
                 <th className="pb-2 font-bold">Équipe</th>
                 <th className="pb-2 font-bold">wOBA</th>
                 <th className="pb-2 font-bold">wRC+</th>
@@ -334,14 +334,14 @@ function ContextSection({
             </tbody>
           </table>
         </div>
-        <p className="mt-2 text-[11px] text-slate-500">
+        <p className="mt-2 text-[11px] text-slate-400">
           ◀ SP = main de lancer du partant adverse — alignement évalué en platoon split.
         </p>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Park Factor ({homeTeam.name})
           </h4>
           <div className="mt-3 flex items-center gap-3">
@@ -355,7 +355,7 @@ function ContextSection({
                   style={{ left: `${Math.min(100, Math.max(0, ((homeParkFactor - 85) / 35) * 100))}%` }}
                 />
               </div>
-              <div className="mt-1 flex justify-between text-[11px] text-slate-500">
+              <div className="mt-1 flex justify-between text-[11px] text-slate-400">
                 <span>85 (Under)</span>
                 <span>100</span>
                 <span>120 (Over)</span>
@@ -378,7 +378,7 @@ function ContextSection({
         </div>
 
         <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Fatigue Bullpen (IP 3 derniers jours)
           </h4>
           <div className="mt-3 space-y-3">
@@ -405,7 +405,7 @@ function ContextSection({
               </div>
             ))}
           </div>
-          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+          <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
             Indice = IP 3j / moyenne ligue (12,0) + ajustement ERA. Un bullpen surchargé dégrade
             les taux K/9 et majore les hits attendus dans la phase 2 du Monte Carlo.
           </p>
@@ -418,12 +418,12 @@ function ContextSection({
 function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
   return (
     <section className="rounded-xl border border-slate-800 bg-[#11161f] p-4">
-      <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+      <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
         Calibration — prédiction vs résultat
       </h4>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Over / Under {cal.predictedTotalLine.toFixed(1)}
           </div>
           <div className="mt-2 flex items-center gap-2">
@@ -440,7 +440,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
               {cal.overUnderHit === true ? "✓ Gagné" : cal.overUnderHit === false ? "✗ Perdu" : "Push"}
             </span>
           </div>
-          <div className="mt-1 font-mono text-[11px] text-slate-500">
+          <div className="mt-1 font-mono text-[11px] text-slate-400">
             Prédiction : Over {fmtPct(cal.predictedOverProb)} · Under {fmtPct(cal.predictedUnderProb)}
             {cal.predictedRecommendation && (
               <span className="ml-1 text-amber-300">
@@ -450,13 +450,13 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
           </div>
         </div>
         <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
             Moneyline
           </div>
           <div className="mt-2 flex items-center gap-2">
             <span className="font-mono text-sm tabular-nums text-slate-300">
               Score : <b className="text-white">{cal.actualAwayRuns} - {cal.actualHomeRuns}</b>
-              <span className="ml-1 text-[11px] text-slate-500">
+              <span className="ml-1 text-[11px] text-slate-400">
                 ({cal.moneylineWinner === "home" ? "Domicile" : "Extérieur"} gagne)
               </span>
             </span>
@@ -470,7 +470,7 @@ function CalibrationBlock({ cal }: { cal: CalibrationResult }) {
               </span>
             )}
           </div>
-          <div className="mt-1 font-mono text-[11px] text-slate-500">
+          <div className="mt-1 font-mono text-[11px] text-slate-400">
             P(domicile) prédite : {fmtPct(cal.predictedHomeWinProb)}
           </div>
         </div>
@@ -520,7 +520,7 @@ export function BaseballMatchAnalysisModal({
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-semibold text-white">
                   {detail.awayTeam.city} {detail.awayTeam.name}{" "}
-                  <span className="text-slate-500">@</span> {detail.homeTeam.city}{" "}
+                  <span className="text-slate-400">@</span> {detail.homeTeam.city}{" "}
                   {detail.homeTeam.name}
                 </div>
                 <div className="font-mono text-[11px] text-slate-400">
@@ -612,14 +612,14 @@ export function BaseballMatchAnalysisModal({
                   {detail.awayPitcher ? (
                     <PitcherFullPanel pitcher={detail.awayPitcher} side="away" />
                   ) : (
-                    <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4 text-sm italic text-slate-500">
+                    <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4 text-sm italic text-slate-400">
                       Partant extérieur non annoncé.
                     </div>
                   )}
                   {detail.homePitcher ? (
                     <PitcherFullPanel pitcher={detail.homePitcher} side="home" />
                   ) : (
-                    <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4 text-sm italic text-slate-500">
+                    <div className="rounded-xl border border-slate-800 bg-[#11161f] p-4 text-sm italic text-slate-400">
                       Partant domicile non annoncé.
                     </div>
                   )}

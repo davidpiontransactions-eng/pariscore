@@ -30,14 +30,14 @@ function LeagueTab({
   );
 
   if (sorted.length === 0) {
-    return <p className="px-1 py-0.5 text-[9px] text-slate-500">Aucune donnée par championnat.</p>;
+    return <p className="px-1 py-0.5 text-[9px] text-slate-400">Aucune donnée par championnat.</p>;
   }
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-[9px]">
         <thead>
-          <tr className="border-b border-slate-800 text-left text-slate-500">
+          <tr className="border-b border-slate-800 text-left text-slate-400">
             <th className="px-1 py-0.5 font-medium">Ligue</th>
             <th className="px-1 py-0.5 text-right font-medium">N</th>
             <th className="px-1 py-0.5 text-right font-medium">WR%</th>
@@ -108,7 +108,7 @@ export function Top5BacktestStrip({
         className="flex w-full items-center gap-1 rounded border border-slate-800 bg-slate-900/60 px-1.5 py-1 text-left text-[9px] text-slate-400 transition-colors hover:border-slate-700"
       >
         <FlaskConical className="h-2.5 w-2.5 shrink-0 text-emerald-400" aria-hidden />
-        <span className="font-bold uppercase tracking-wider text-slate-500">Backtest</span>
+        <span className="font-bold uppercase tracking-wider text-slate-400">Backtest</span>
         <span className="tabular-nums">
           {stats.n} picks · WR{" "}
           <span className={cn("font-bold", (stats.winRatePct ?? 0) >= 50 ? "text-emerald-300" : "text-amber-300")}>
@@ -145,7 +145,7 @@ export function Top5BacktestStrip({
 
             <TabsContent value="recents" className="mt-0">
               {picks.length === 0 ? (
-                <p className="px-1 py-0.5 text-[9px] text-slate-500">Aucun pick réglé pour cette stratégie.</p>
+                <p className="px-1 py-0.5 text-[9px] text-slate-400">Aucun pick réglé pour cette stratégie.</p>
               ) : (
                 <ul className="space-y-px">
                   {picks.map((e) => (

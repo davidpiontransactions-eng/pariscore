@@ -118,7 +118,7 @@ function EditorialLine({ m }: { m: UpcomingMatch }) {
   if (!summary) return null;
   return (
     <p
-      className="mt-1 line-clamp-1 text-[11px] italic leading-snug text-slate-500"
+      className="mt-1 line-clamp-1 text-[11px] italic leading-snug text-slate-400"
       title={`${summary.text} — ${summary.source}`}
     >
       📰 {summary.text}

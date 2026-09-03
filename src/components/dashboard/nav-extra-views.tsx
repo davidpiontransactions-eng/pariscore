@@ -158,7 +158,7 @@ function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
             key={`s${i}`}
             className={cn(
               "text-center font-mono text-xs tabular-nums",
-              mine > other ? "font-bold text-white" : "text-zinc-500",
+              mine > other ? "font-bold text-white" : "text-zinc-400",
             )}
           >
             {mine}
@@ -196,7 +196,7 @@ function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
           </span>
           Set {(m.current_set ?? Math.max(sets.length - 1, 0)) + 1}
         </span>
-        <span className="flex items-center gap-1 font-mono text-[10px] tabular-nums text-zinc-500">
+        <span className="flex items-center gap-1 font-mono text-[10px] tabular-nums text-zinc-400">
           {m.oddsA != null && <span className="rounded bg-zinc-800 px-1 py-px">{m.oddsA.toFixed(2)}</span>}
           {m.oddsB != null && <span className="rounded bg-zinc-800 px-1 py-px">{m.oddsB.toFixed(2)}</span>}
         </span>
@@ -246,7 +246,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
       desc={`${total} match${total > 1 ? "s" : ""} en cours · actualisation toutes les 30 s`}
     >
       {total === 0 ? (
-        <p className="rounded-xl border border-white/5 bg-zinc-900/60 p-4 text-sm text-zinc-500">
+        <p className="rounded-xl border border-white/5 bg-zinc-900/60 p-4 text-sm text-zinc-400">
           Aucun match en direct pour l'instant. Les rencontres apparaissent ici dès le coup d'envoi.
         </p>
       ) : (
@@ -275,7 +275,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
                   </li>
                 ))}
                 {footMatches.length > 12 && (
-                  <li className="px-3 text-[11px] text-zinc-500">+ {footMatches.length - 12} autres…</li>
+                  <li className="px-3 text-[11px] text-zinc-400">+ {footMatches.length - 12} autres…</li>
                 )}
               </ul>
             </div>
@@ -323,7 +323,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
                       </section>
                     ))}
                     {tennisMatches.length > TENNIS_LIVE_MAX && (
-                      <p className="text-[11px] text-zinc-500">
+                      <p className="text-[11px] text-zinc-400">
                         + {tennisMatches.length - TENNIS_LIVE_MAX} autres matchs…
                       </p>
                     )}
@@ -395,9 +395,9 @@ export function ValueNavView() {
       desc="Écarts entre probabilités du modèle et cotes dévigées des bookmakers."
     >
       {tennisLoading ? (
-        <p className="py-4 text-sm text-zinc-500">Analyse des marchés en cours…</p>
+        <p className="py-4 text-sm text-zinc-400">Analyse des marchés en cours…</p>
       ) : rows.length === 0 ? (
-        <p className="py-4 text-sm text-zinc-500">
+        <p className="py-4 text-sm text-zinc-400">
           Aucun value bet détecté pour le moment. Reviens plus tard — le scanner tourne en continu.
         </p>
       ) : (
@@ -490,7 +490,7 @@ export function ProfilNavView() {
       desc="Personnalise l'affichage et accède à tes outils."
     >
       <div className="rounded-xl border border-white/5 bg-zinc-900/60 p-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500">Préférences</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Préférences</h3>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <ThemeToggle />
           <LanguageToggle />
@@ -499,7 +499,7 @@ export function ProfilNavView() {
         </div>
       </div>
 
-      <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-zinc-500">Mes outils</h3>
+      <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-zinc-400">Mes outils</h3>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {shortcuts.map((s) => {
           const Icon = s.icon;
@@ -528,7 +528,7 @@ export function ProfilNavView() {
       <button
         type="button"
         onClick={openPrivacyDialog}
-        className="mt-3 text-xs font-medium text-zinc-500 underline underline-offset-2 transition-colors hover:text-zinc-300"
+        className="mt-3 text-xs font-medium text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-300"
       >
         Gérer mes cookies
       </button>

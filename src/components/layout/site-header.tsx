@@ -125,7 +125,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => onOpenChange(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/[0.06] hover:text-white hover:shadow-lg hover:shadow-black/20 sm:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/[0.06] hover:text-white hover:shadow-lg hover:shadow-black/20 sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Rechercher"
             >
               <Search className="h-5 w-5" />

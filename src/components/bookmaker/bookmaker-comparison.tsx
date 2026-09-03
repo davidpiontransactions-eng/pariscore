@@ -141,8 +141,8 @@ export function BookmakerComparison({
       <TableCaption>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span>{t("fair_value")}: {fairValue >= 0 ? `+${fairValue}` : fairValue}%</span>
-          <span className="text-xs text-slate-500">·</span>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-slate-400">·</span>
+          <span className="text-xs text-slate-400">
             Marge bookmaker : <span className="tabular-nums text-slate-400">{margin.toFixed(1)}%</span>
           </span>
         </div>

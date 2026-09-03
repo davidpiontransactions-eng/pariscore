@@ -703,9 +703,9 @@ return [...matches, ...synthetic];
             >
               ← Retour
             </button>
-            <ChevronRight className="h-3 w-3 text-slate-500" />
+            <ChevronRight className="h-3 w-3 text-slate-400" />
             <span className="font-medium text-slate-300">Tennis</span>
-            <ChevronRight className="h-3 w-3 text-slate-500" />
+            <ChevronRight className="h-3 w-3 text-slate-400" />
             <span className="font-semibold text-emerald-400 capitalize">{selectedCountryId}</span>
           </div>
         </div>

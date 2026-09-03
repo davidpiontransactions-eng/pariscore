@@ -137,7 +137,7 @@ function CompetitionSelector({
             <span
               className={cn(
                 "rounded-full px-1.5 py-0.5 text-[11px] font-black tabular-nums",
-                c.upcomingCount > 0 ? "bg-teal-500/20 text-teal-300" : "bg-slate-700/40 text-slate-500"
+                c.upcomingCount > 0 ? "bg-teal-500/20 text-teal-300" : "bg-slate-700/40 text-slate-400"
               )}
             >
               {c.upcomingCount}

@@ -9,7 +9,7 @@ function ChartTooltip({ active, payload, label }: any) {
   const p = payload[0].payload as CapitalPoint;
   return (
     <div className="rounded-lg border border-white/10 bg-[#0d1117] px-3 py-2 shadow-xl">
-      <div className="text-[10px] uppercase tracking-widest text-zinc-500">
+      <div className="text-[10px] uppercase tracking-widest text-zinc-400">
         {p.key === "start" ? "Départ" : p.key}
       </div>
       <div className="font-mono text-sm font-semibold text-white">
@@ -37,7 +37,7 @@ export function CapitalChart({ curve, currency }: { curve: CapitalPoint[]; curre
         <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
           Évolution du capital
         </h3>
-        <span className="font-mono text-[11px] text-zinc-500">{currency}</span>
+        <span className="font-mono text-[11px] text-zinc-400">{currency}</span>
       </div>
       <div className="h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">

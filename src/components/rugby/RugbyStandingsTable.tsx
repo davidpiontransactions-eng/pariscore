@@ -32,7 +32,7 @@ export function RugbyStandingsTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
-            <tr className="border-b border-white/8 text-[11px] uppercase tracking-wider text-slate-500">
+            <tr className="border-b border-white/8 text-[11px] uppercase tracking-wider text-slate-400">
               <th scope="col" className="px-3 py-3 text-left font-bold">#</th>
               <th scope="col" className="px-3 py-3 text-left font-bold">Équipe</th>
               <th scope="col" className="px-2 py-3 text-center font-bold">J</th>
@@ -54,13 +54,13 @@ export function RugbyStandingsTable({
                   key={row.teamId}
                   className="border-b border-white/4 transition-colors last:border-0 hover:bg-white/[0.03]"
                 >
-                  <td className="px-3 py-2.5 font-bold tabular-nums text-slate-500">{i + 1}</td>
+                  <td className="px-3 py-2.5 font-bold tabular-nums text-slate-400">{i + 1}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2.5">
                       <RugbyTeamLogo src={row.logo} name={row.name} size={26} />
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-slate-100">{row.name}</p>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-slate-400">
                           Att {row.attack.toFixed(2)} · Déf {row.defence.toFixed(2)}
                         </p>
                       </div>
@@ -96,7 +96,7 @@ export function RugbyStandingsTable({
         </table>
       </div>
       {simulatedRuns > 0 && (
-        <p className="border-t border-white/5 px-4 py-2.5 text-[11px] text-slate-500">
+        <p className="border-t border-white/5 px-4 py-2.5 text-[11px] text-slate-400">
           Chances de titre estimées par simulation Monte Carlo ({simulatedRuns.toLocaleString("fr-FR")} itérations).
         </p>
       )}

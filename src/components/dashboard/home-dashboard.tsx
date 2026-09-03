@@ -123,7 +123,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
       </div>
 
       {/* Onboarding 3 étapes */}
-      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-zinc-500">
+      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-zinc-400">
         {t("howItWorks")}
       </h3>
       <ol className="mt-2 grid gap-3 sm:grid-cols-3">
@@ -148,7 +148,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
       </ol>
 
       {/* Raccourcis produits */}
-      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-zinc-500">
+      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-zinc-400">
         {t("goFurther")}
       </h3>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">

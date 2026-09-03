@@ -74,7 +74,7 @@ function ConsensusBar({
   return (
     <div className="space-y-2.5">
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-[11px] text-slate-500">
+        <div className="flex items-center justify-between text-[11px] text-slate-400">
           <span className="truncate max-w-[40%]" title={homeTeam}>{hShort}</span>
           <span className="flex items-center gap-1 font-mono tabular-nums text-slate-400">
             <TrendingUp className="h-3 w-3 text-amber-400" />{domLabel}
@@ -86,13 +86,13 @@ function ConsensusBar({
           <div className="bg-slate-600 transition-all" style={{ width: `${consensus.drawPct}%` }} />
           <div className="bg-rose-500 transition-all" style={{ width: `${consensus.awayWinPct}%` }} />
         </div>
-        <div className="flex justify-between text-[11px] tabular-nums text-slate-500">
+        <div className="flex justify-between text-[11px] tabular-nums text-slate-400">
           <span>{consensus.homeWinPct}%</span>
           <span>{consensus.drawPct}%</span>
           <span>{consensus.awayWinPct}%</span>
         </div>
       </div>
-      <div className="flex gap-3 text-[11px] text-slate-500">
+      <div className="flex gap-3 text-[11px] text-slate-400">
         <span>O 2.5 : <strong className="text-slate-300">{consensus.over25Pct}%</strong></span>
         <span>BTTS : <strong className="text-slate-300">{consensus.bttsYesPct}%</strong></span>
       </div>
@@ -136,7 +136,7 @@ function SourceCard({
       </p>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-500">Pronostic :</span>
+          <span className="text-[11px] text-slate-400">Pronostic :</span>
           <span className={cn(
             "rounded-full px-2 py-0.5 text-[11px] font-semibold",
             isHomeWin && "bg-sky-500/10 text-sky-400",
@@ -147,7 +147,7 @@ function SourceCard({
           </span>
         </div>
         {p.exactScore && (
-          <div className="text-[11px] text-slate-500">
+          <div className="text-[11px] text-slate-400">
             Score predit : <span className="font-mono font-semibold text-slate-300">{p.exactScore}</span>
           </div>
         )}

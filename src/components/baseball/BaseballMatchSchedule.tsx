@@ -42,7 +42,7 @@ export function BaseballMatchSchedule({
         <p className="text-sm font-semibold text-slate-200">
           Aucun match ce jour ({date})
         </p>
-        <p className="max-w-md text-xs text-slate-500">
+        <p className="max-w-md text-xs text-slate-400">
           {degraded
             ? "La MLB StatsAPI est momentanément injoignable — le mode dégradé affiche les ligues curées (KBO, NPB, CPBL, LMB, LIDOM, LVBP)."
             : "Aucune rencontre ce jour pour cette ligue (hors-saison, journée de repos ou reset du calendrier). Naviguez avec les flèches pour explorer la semaine, ou passez à une autre ligue."}

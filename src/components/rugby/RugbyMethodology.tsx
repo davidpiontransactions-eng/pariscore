@@ -81,7 +81,7 @@ export function RugbyMethodology() {
               </div>
             ))}
           </div>
-          <p className="mt-4 border-t border-white/5 pt-3 text-[11px] text-slate-500">
+          <p className="mt-4 border-t border-white/5 pt-3 text-[11px] text-slate-400">
             Les probabilités sont des estimations statistiques, pas des garanties. Jouez de manière
             responsable.
           </p>

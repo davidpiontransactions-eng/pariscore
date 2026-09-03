@@ -226,7 +226,7 @@ export const MatchRow = memo(function MatchRow({
           {isLive ? (
             <LiveBadge minute={match.minute} compact={compact} />
           ) : isFinished ? (
-            <span className={cn("font-semibold text-zinc-500", compact ? "text-[10px]" : "text-[11px]")}>
+            <span className={cn("font-semibold text-zinc-400", compact ? "text-[10px]" : "text-[11px]")}>
               {match.status}
             </span>
           ) : match.kickoff ? (
@@ -247,7 +247,7 @@ export const MatchRow = memo(function MatchRow({
             />
           ) : null}
           {match.homeRank != null && (
-            <span className="text-[9px] font-bold text-zinc-500 tabular-nums">{match.homeRank}</span>
+            <span className="text-[9px] font-bold text-zinc-400 tabular-nums">{match.homeRank}</span>
           )}
           <span
             className={cn(
@@ -283,7 +283,7 @@ export const MatchRow = memo(function MatchRow({
             {match.awayName}
           </span>
           {match.awayRank != null && (
-            <span className="text-[9px] font-bold text-zinc-500 tabular-nums">{match.awayRank}</span>
+            <span className="text-[9px] font-bold text-zinc-400 tabular-nums">{match.awayRank}</span>
           )}
           {match.awayLogo ? (
             <img
@@ -316,7 +316,7 @@ export const MatchRow = memo(function MatchRow({
             <span
               className={cn(
                 "tabular-nums font-semibold",
-                compact ? "text-[9px] text-zinc-500" : "text-[10px] text-zinc-400",
+                compact ? "text-[9px] text-zinc-400" : "text-[10px] text-zinc-400",
               )}
             >
               {match.confidence}%

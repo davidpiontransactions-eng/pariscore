@@ -243,7 +243,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
                     <X className="h-4 w-4" />
                   </button>
                 )}
-                <kbd className="pointer-events-none hidden rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 sm:inline">
+                <kbd className="pointer-events-none hidden rounded-md border border-white/[0.08] bg-white/[0.04] px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 sm:inline">
                   Esc
                 </kbd>
               </div>
@@ -302,7 +302,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
               </div>
 
               {/* Barre de statut */}
-              <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2 text-[11px] text-zinc-500">
+              <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2 text-[11px] text-zinc-400">
                 <span>
                   {flatResults.length} résultat{flatResults.length !== 1 ? "s" : ""}
                 </span>

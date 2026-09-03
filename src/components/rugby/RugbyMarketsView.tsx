@@ -52,7 +52,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
       <Card className="overflow-hidden">
         <div className="border-b border-white/5 px-4 py-3">
           <h3 className="text-sm font-extrabold text-white">Marchés par match</h3>
-          <p className="mt-0.5 text-[11px] text-slate-500">
+          <p className="mt-0.5 text-[11px] text-slate-400">
             Spread, total et score probable pour chaque fixture à venir.
           </p>
         </div>
@@ -60,7 +60,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] text-left text-xs">
               <thead>
-                <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-400">
                   <th className="px-4 py-2.5">Date</th>
                   <th className="px-3 py-2.5">Match</th>
                   <th className="px-3 py-2.5">Spread</th>
@@ -87,7 +87,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                     >
                       <td className="whitespace-nowrap px-4 py-3 text-slate-400">
                         <span className="block font-semibold text-slate-300">{fmtDate(match.date)}</span>
-                        <span className="text-[11px] text-slate-500">{fmtTime(match.date)}</span>
+                        <span className="text-[11px] text-slate-400">{fmtTime(match.date)}</span>
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                         <span className="inline-flex rounded-lg bg-[#0b0e14] px-2 py-1 font-bold tabular-nums text-slate-200 ring-1 ring-white/8">
                           Domicile {fmtHandicap(p.handicap.line)}
                         </span>
-                        <span className="mt-1.5 block text-[11px] font-semibold tabular-nums text-slate-500">
+                        <span className="mt-1.5 block text-[11px] font-semibold tabular-nums text-slate-400">
                           Domicile {homePct}% · Extérieur {awayPct}%
                         </span>
                       </td>
@@ -115,7 +115,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
                         <span className="inline-flex rounded-lg bg-[#0b0e14] px-2 py-1 font-bold tabular-nums text-slate-200 ring-1 ring-white/8">
                           {ou ? ou.line.toFixed(1) : "—"}
                         </span>
-                        <span className="mt-1.5 block text-[11px] font-semibold tabular-nums text-slate-500">
+                        <span className="mt-1.5 block text-[11px] font-semibold tabular-nums text-slate-400">
                           {ou ? `O ${pct(ou.over)} / U ${pct(ou.under)}` : "—"}
                         </span>
                       </td>
@@ -141,7 +141,7 @@ export function RugbyMarketsView({ slug }: { slug: string }) {
             </table>
           </div>
         ) : (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">
+          <p className="px-4 py-8 text-center text-sm text-slate-400">
             Aucune fixture à venir — revenez bientôt.
           </p>
         )}
@@ -166,12 +166,12 @@ function BacktestPanel({ bt }: { bt: ReturnType<typeof useRugbyBacktest>["data"]
     <Card>
       <div className="border-b border-white/5 px-4 py-3">
         <h3 className="text-sm font-extrabold text-white">Couverture du spread — backtest</h3>
-        <p className="mt-0.5 text-[11px] text-slate-500">
+        <p className="mt-0.5 text-[11px] text-slate-400">
           Ligne enregistrée au moment de la prédiction, résultat réel ensuite. Push exclus (lignes 0.5).
         </p>
       </div>
       {collecting ? (
-        <p className="px-4 py-6 text-sm text-slate-500">
+        <p className="px-4 py-6 text-sm text-slate-400">
           Collecte des données en cours : le backtest démarre à la première prédiction enregistrée,
           puis se règle quand le match est terminé. Revenez après quelques journées.
         </p>
@@ -179,7 +179,7 @@ function BacktestPanel({ bt }: { bt: ReturnType<typeof useRugbyBacktest>["data"]
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-left text-xs">
             <thead>
-              <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-500">
+              <tr className="border-b border-white/5 text-[11px] font-black uppercase tracking-wider text-slate-400">
                 <th className="px-4 py-2.5">Probabilité domicile</th>
                 <th className="px-3 py-2.5 text-right">Matchs réglés</th>
                 <th className="px-3 py-2.5 text-right">Couverture domicile</th>

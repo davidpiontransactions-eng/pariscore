@@ -233,7 +233,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
           <button
             type="button"
             onClick={() => onOpen(game.id)}
-            className="ml-auto rounded-lg bg-amber-400 px-3.5 py-1.5 text-xs font-bold text-amber-950 transition-colors hover:bg-amber-300"
+            className="ml-auto rounded-lg bg-amber-400 px-3.5 py-1.5 text-xs font-bold text-amber-950 transition-colors hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Analyse complète →
           </button>

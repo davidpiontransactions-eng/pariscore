@@ -68,11 +68,11 @@ export function BetManagerNav({ bankrolls, activeId, onSelect, onCreate }: Props
               >
                 <PiggyBank className="h-3.5 w-3.5 text-emerald-400" />
                 <span className="max-w-32 truncate">{active?.name ?? "—"}</span>
-                <ChevronDown className="h-3 w-3 text-zinc-500" />
+                <ChevronDown className="h-3 w-3 text-zinc-400" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-white/10 bg-[#101420] text-zinc-100">
-              <DropdownMenuLabel className="text-[11px] uppercase tracking-widest text-zinc-500">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-widest text-zinc-400">
                 Bankrolls
               </DropdownMenuLabel>
               {bankrolls.map((b) => (
@@ -86,7 +86,7 @@ export function BetManagerNav({ bankrolls, activeId, onSelect, onCreate }: Props
                 >
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="truncate">{b.name}</span>
-                    <span className="font-mono text-xs text-zinc-500">
+                    <span className="font-mono text-xs text-zinc-400">
                       {b.initial.toLocaleString("fr-FR")} € · {b._count.bets} paris
                     </span>
                   </span>

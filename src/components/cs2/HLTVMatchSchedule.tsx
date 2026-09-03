@@ -98,7 +98,7 @@ function MatchRow({ match, index, onSelect }: { match: Cs2Match; index: number; 
         ) : (
           <div className="flex flex-col items-start gap-0.5">
             <span className="flex items-center gap-1 text-xs font-medium tabular-nums text-zinc-300">
-              <Clock className="h-3 w-3 text-zinc-500" />
+              <Clock className="h-3 w-3 text-zinc-400" />
               {match.scheduled ? TIME_FMT.format(new Date(match.scheduled)) : "—"}
             </span>
             {match.best_of ? (
@@ -197,7 +197,7 @@ export function HLTVMatchSchedule({ matches, onSelectMatch }: Props) {
     <div className="space-y-6">
       {groups.map(([dateKey, list]) => (
         <section key={dateKey}>
-          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+          <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-zinc-400">
             {dateKey === "date-inconnue" ? "Matchs du Jour" : dateHeaderLabel(dateKey)}
           </h2>
           <div className="space-y-1.5">

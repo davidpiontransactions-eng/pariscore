@@ -92,7 +92,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
       className="mb-4 rounded-lg border border-slate-800/80 bg-slate-900/40 p-3"
     >
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Top 10 matchs
           {selectedCount > 0 && (
             <span
@@ -160,7 +160,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   timeWin === w.key
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-500 hover:text-slate-300",
+                    : "bg-transparent text-slate-400 hover:text-slate-300",
                 )}
               >
                 {w.label}
@@ -178,7 +178,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   winKey === k
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-500 hover:text-slate-300",
+                    : "bg-transparent text-slate-400 hover:text-slate-300",
                 )}
               >
                 {k.replace("l", "L")}
@@ -189,7 +189,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 px-1 py-3 text-xs text-slate-500">
+        <div className="flex items-center gap-2 px-1 py-3 text-xs text-slate-400">
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           Calcul du Top 10…
         </div>
@@ -199,7 +199,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           Top 10 indisponible ({(error as Error).message})
         </div>
       ) : rows.length === 0 && forced.length === 0 ? (
-        <p className="px-1 py-3 text-xs text-slate-500">
+        <p className="px-1 py-3 text-xs text-slate-400">
           Aucun match qualifié pour cette stratégie{league ? ` en ${league}` : ""}.
         </p>
       ) : (

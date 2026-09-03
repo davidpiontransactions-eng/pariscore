@@ -96,7 +96,7 @@ function MatchRow({ entry, def }: { entry: TennisTop5Entry; def: TennisTop5Def }
     <li>
       <div className="rounded px-0.5 py-1 transition-colors hover:bg-slate-800/60">
         <div className="flex items-center gap-1.5">
-          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-500">
+          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-400">
             <span className="text-[8px] leading-tight">{parisDateShort(entry.scheduledAt)}</span>
             <span className="text-[9px] leading-tight">{parisKickoff(entry.scheduledAt)}</span>
           </span>
@@ -116,7 +116,7 @@ function MatchRow({ entry, def }: { entry: TennisTop5Entry; def: TennisTop5Def }
           </span>
         </div>
         <div className="mt-0.5 flex items-center justify-between pl-[46px] text-[8.5px] leading-none">
-          <span className="truncate text-slate-500" title={`${entry.tournament} · ${entry.round}`}>
+          <span className="truncate text-slate-400" title={`${entry.tournament} · ${entry.round}`}>
             {entry.tournament}
           </span>
           {probPct != null && (
@@ -151,7 +151,7 @@ export function TennisStrategyTop5Widget() {
   return (
     <section aria-label="Top 5 matchs tennis par métrique" className="border-b border-slate-800/80 pb-2">
       <div className="flex items-center pr-2.5">
-        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Top 5 matchs tennis
         </h2>
         {/* Filtre temporel des matchs listés */}
@@ -167,7 +167,7 @@ export function TennisStrategyTop5Widget() {
                 "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                 timeWin === w.key
                   ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-transparent text-slate-500 hover:text-slate-300",
+                  : "bg-transparent text-slate-400 hover:text-slate-300",
               )}
             >
               {w.label}
@@ -228,12 +228,12 @@ export function TennisStrategyTop5Widget() {
       </div>
 
       {isLoading && !isReady ? (
-        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-400">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
           Calcul en cours…
         </div>
       ) : error || !isReady ? (
-        <div className="flex flex-col gap-1.5 px-2.5 py-3 text-[11px] text-slate-500">
+        <div className="flex flex-col gap-1.5 px-2.5 py-3 text-[11px] text-slate-400">
           <div className="flex items-center gap-1.5">
             <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
             <span>
@@ -262,11 +262,11 @@ export function TennisStrategyTop5Widget() {
           </p>
         </>
       ) : rawCount > 0 ? (
-        <p className="px-2.5 py-3 text-[11px] text-slate-500">
+        <p className="px-2.5 py-3 text-[11px] text-slate-400">
           Aucun match dans cette période.
         </p>
       ) : (
-        <p className="px-2.5 py-3 text-[11px] leading-snug text-slate-500">
+        <p className="px-2.5 py-3 text-[11px] leading-snug text-slate-400">
           {meta?.dataUnavailable
             ? "Stats joueurs indisponibles."
             : `Aucun duel complet (${meta?.playersInLeaderboard ?? 0} joueurs suivis) — ajuste la surface ou la période.`}

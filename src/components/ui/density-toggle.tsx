@@ -58,7 +58,7 @@ export function DensityToggle({ className }: { className?: string }) {
           "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-all duration-200",
           density === "compact"
             ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
-            : "text-zinc-500 hover:text-zinc-300",
+            : "text-zinc-400 hover:text-zinc-300",
         )}
         title="Mode compact — densité maximale (style Forebet/Bet365)"
       >
@@ -72,7 +72,7 @@ export function DensityToggle({ className }: { className?: string }) {
           "flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-medium transition-all duration-200",
           density === "confort"
             ? "bg-emerald-500/20 text-emerald-400 shadow-sm"
-            : "text-zinc-500 hover:text-zinc-300",
+            : "text-zinc-400 hover:text-zinc-300",
         )}
         title="Mode confort — cards aérées (style Sofascore)"
       >

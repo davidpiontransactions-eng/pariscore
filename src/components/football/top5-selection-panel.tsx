@@ -65,7 +65,7 @@ export function Top5SelectionPanel({
       )}
     >
       {variant === "inline" && (
-        <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">
           Sélection Top 5 ({list.length})
         </h2>
       )}
@@ -100,12 +100,12 @@ export function Top5SelectionPanel({
                 type="button"
                 onClick={() => remove(matchId)}
                 aria-label={`Retirer ${entry.home.shortName} contre ${entry.away.shortName} de la sélection`}
-                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
               </button>
 
-              <div className="flex items-center gap-1 pr-5 text-[8.5px] text-slate-500">
+              <div className="flex items-center gap-1 pr-5 text-[8.5px] text-slate-400">
                 <span className="font-mono tabular-nums">{formatKickoff(entry.kickoff)}</span>
                 <span aria-hidden>·</span>
                 <span className="truncate">

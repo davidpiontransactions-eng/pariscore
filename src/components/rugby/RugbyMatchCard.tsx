@@ -62,7 +62,7 @@ export function RugbyMatchCard({
       <div className="p-4 pl-5">
         {/* Ligne 1 : heure + compétition + verdict */}
         <div className="mb-3 flex items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-teal-400" aria-hidden />
             {fmtTime(match.date)}
             {match.venue && <span className="hidden truncate text-slate-600 sm:inline">· {match.venue}</span>}
@@ -86,7 +86,7 @@ export function RugbyMatchCard({
               </p>
               <div className="mt-0.5 flex items-center gap-1.5">
                 {prediction && (
-                  <span className="text-[11px] font-semibold tabular-nums text-slate-500">
+                  <span className="text-[11px] font-semibold tabular-nums text-slate-400">
                     Elo {Math.round(prediction.homeElo)}
                   </span>
                 )}
@@ -107,7 +107,7 @@ export function RugbyMatchCard({
               </span>
             </div>
             {prediction && (
-              <span className="mt-1 text-[11px] font-semibold text-slate-500">
+              <span className="mt-1 text-[11px] font-semibold text-slate-400">
                 score attendu
               </span>
             )}
@@ -127,7 +127,7 @@ export function RugbyMatchCard({
               <div className="mt-0.5 flex items-center justify-end gap-1.5">
                 <FormBadges form={match.form.away} />
                 {prediction && (
-                  <span className="text-[11px] font-semibold tabular-nums text-slate-500">
+                  <span className="text-[11px] font-semibold tabular-nums text-slate-400">
                     Elo {Math.round(prediction.awayElo)}
                   </span>
                 )}
@@ -142,7 +142,7 @@ export function RugbyMatchCard({
           <div className="mt-3.5">
             <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold tabular-nums">
               <span className="text-teal-300">{pct(prediction.homeWinProb)}</span>
-              <span className="text-slate-500">nul {pct(prediction.drawProb)}</span>
+              <span className="text-slate-400">nul {pct(prediction.drawProb)}</span>
               <span className="text-sky-300">{pct(prediction.awayWinProb)}</span>
             </div>
             <ProbBar
@@ -203,7 +203,7 @@ function MarketChip({
           : "bg-[#0b0e14] text-slate-400 ring-white/8"
       )}
     >
-      <span className="uppercase tracking-wide text-slate-500">{label}</span>
+      <span className="uppercase tracking-wide text-slate-400">{label}</span>
       <span className="tabular-nums font-bold">{value}</span>
     </span>
   );

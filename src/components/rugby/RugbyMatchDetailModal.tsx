@@ -66,9 +66,9 @@ export function RugbyMatchDetailModal({
               <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                 <TeamBlock rating={detail.homeRating} name={detail.match.home.name} logo={detail.match.home.logo} align="left" />
                 <div className="text-center">
-                  <p className="text-[11px] font-semibold text-slate-500">{fmtDateLong(detail.match.date)}</p>
+                  <p className="text-[11px] font-semibold text-slate-400">{fmtDateLong(detail.match.date)}</p>
                   <p className="text-lg font-black text-white">{fmtTime(detail.match.date)}</p>
-                  {detail.match.venue && <p className="mt-1 max-w-[160px] truncate text-[11px] text-slate-500">{detail.match.venue}</p>}
+                  {detail.match.venue && <p className="mt-1 max-w-[160px] truncate text-[11px] text-slate-400">{detail.match.venue}</p>}
                 </div>
                 <TeamBlock rating={detail.awayRating} name={detail.match.away.name} logo={detail.match.away.logo} align="right" />
               </div>
@@ -132,7 +132,7 @@ function VerdictBanner({ prediction, homeName, awayName }: { prediction: RugbyPr
       </div>
       <div className="text-right">
         <p className="text-2xl font-black tabular-nums text-teal-300">{pct(prediction.confidence)}</p>
-        <p className="text-[11px] uppercase tracking-wide text-slate-500">confiance</p>
+        <p className="text-[11px] uppercase tracking-wide text-slate-400">confiance</p>
       </div>
     </Card>
   );
@@ -144,7 +144,7 @@ function ProbSection({ prediction }: { prediction: RugbyPrediction }) {
       <h4 className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Probabilités 1X2</h4>
       <div className="mb-2 flex items-center justify-between text-sm font-bold tabular-nums">
         <span className="text-teal-300">{pct(prediction.homeWinProb)}</span>
-        <span className="text-slate-500">{pct(prediction.drawProb)}</span>
+        <span className="text-slate-400">{pct(prediction.drawProb)}</span>
         <span className="text-sky-300">{pct(prediction.awayWinProb)}</span>
       </div>
       <ProbBar homePct={prediction.homeWinProb} awayPct={prediction.awayWinProb} drawPct={prediction.drawProb} className="h-2.5" />
@@ -193,7 +193,7 @@ function MarketsSection({ prediction }: { prediction: RugbyPrediction }) {
               <div key={b.label}>
                 <div className="mb-1 flex items-center justify-between text-[11px] tabular-nums">
                   <span className="font-semibold text-slate-400">Gagne de {b.label}</span>
-                  <span className="text-slate-500">
+                  <span className="text-slate-400">
                     <span className="text-teal-300">{h}%</span> / <span className="text-sky-300">{a}%</span>
                   </span>
                 </div>
@@ -243,7 +243,7 @@ function ComparisonSection({
         {rows.map((r) => (
           <div key={r.label} className="grid grid-cols-[1fr_auto_1fr] items-center text-xs tabular-nums">
             <span className="font-semibold text-slate-200">{r.home}</span>
-            <span className="px-3 text-[11px] uppercase tracking-wide text-slate-500">{r.label}</span>
+            <span className="px-3 text-[11px] uppercase tracking-wide text-slate-400">{r.label}</span>
             <span className="text-right font-semibold text-slate-200">{r.away}</span>
           </div>
         ))}
@@ -259,7 +259,7 @@ function H2HSection({ h2h, homeId }: { h2h: { date: string; home: { id: string; 
       <div className="space-y-2">
         {h2h.map((m, i) => (
           <div key={i} className="flex items-center justify-between rounded-lg bg-[#0b0e14] px-3 py-2 text-xs ring-1 ring-white/5">
-            <span className="w-20 shrink-0 truncate text-[11px] text-slate-500">{fmtDateLong(m.date)}</span>
+            <span className="w-20 shrink-0 truncate text-[11px] text-slate-400">{fmtDateLong(m.date)}</span>
             <span className="min-w-0 flex-1 truncate text-center font-semibold text-slate-200">
               {m.home.name} <span className="text-teal-300">{m.homeScore ?? "–"}</span> – <span className="text-sky-300">{m.awayScore ?? "–"}</span> {m.away.name}
             </span>
@@ -287,17 +287,17 @@ function TryScorersSection({ scorers }: { scorers: { playerName: string; teamNam
                   </span>
                 )}
               </p>
-              <p className="text-[11px] text-slate-500">{s.teamName} · {s.position}</p>
+              <p className="text-[11px] text-slate-400">{s.teamName} · {s.position}</p>
             </div>
             <div className="flex shrink-0 items-center gap-3 tabular-nums">
-              <span className="text-[11px] text-slate-500">{s.expectedTries.toFixed(2)} ess.</span>
+              <span className="text-[11px] text-slate-400">{s.expectedTries.toFixed(2)} ess.</span>
               <span className="w-14 text-right font-bold text-teal-300">{pct(s.anytimeProb)}</span>
-              <span className="w-14 text-right text-[11px] text-slate-500">1er {pct(s.firstTryProb)}</span>
+              <span className="w-14 text-right text-[11px] text-slate-400">1er {pct(s.firstTryProb)}</span>
             </div>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[11px] text-slate-500">
+      <p className="mt-3 text-[11px] text-slate-400">
         Probabilité &quot;anytime&quot; de marquer au moins un essai, et probabilité d&apos;ouvrir le score (1er essai).
         Le top 3 est la sélection à valeur du modèle.
       </p>
@@ -309,7 +309,7 @@ function StatBox({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-[#0b0e14] px-2 py-2.5 ring-1 ring-white/5">
       <p className="text-base font-black tabular-nums text-white">{value}</p>
-      <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-400">{label}</p>
     </div>
   );
 }

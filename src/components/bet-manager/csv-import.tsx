@@ -80,7 +80,7 @@ export function CsvImport({ onImport }: Props) {
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
           />
-          <div className="flex items-center justify-between text-[11px] text-zinc-500">
+          <div className="flex items-center justify-between text-[11px] text-zinc-400">
             <span>
               Colonnes : placedAt, sport, match, pick, stake, odds, status, payout, bookmaker…
             </span>

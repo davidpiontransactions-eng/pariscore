@@ -97,7 +97,7 @@ function MiniStat({
           <CountUp value={value} />
           {suffix && <span className="ml-0.5 text-sm font-semibold opacity-60">{suffix}</span>}
         </span>
-        <span className="mt-0.5 text-[11px] text-zinc-500">{label}</span>
+        <span className="mt-0.5 text-[11px] text-zinc-400">{label}</span>
       </div>
     </div>
   );
@@ -351,7 +351,7 @@ export function HeroSection({
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
                   <Target className="h-4 w-4 text-emerald-400" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-500">
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400">
                   Scanner actif
                 </span>
               </div>

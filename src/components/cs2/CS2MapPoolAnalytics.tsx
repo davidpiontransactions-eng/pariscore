@@ -14,7 +14,7 @@ import {
 function trendIcon(trend: "rising" | "declining" | "stable" | null | undefined) {
   if (trend === "rising") return <TrendingUp className="h-3.5 w-3.5 text-[#00E676]" />;
   if (trend === "declining") return <TrendingDown className="h-3.5 w-3.5 text-red-400" />;
-  if (trend === "stable") return <Minus className="h-3.5 w-3.5 text-zinc-500" />;
+  if (trend === "stable") return <Minus className="h-3.5 w-3.5 text-zinc-400" />;
   return null;
 }
 
@@ -75,7 +75,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
                     </div>
                   </div>
                   <WinrateBars t1={wr1} t2={wr2} />
-                  <div className="mt-1.5 flex items-center justify-between text-[11px] text-zinc-500">
+                  <div className="mt-1.5 flex items-center justify-between text-[11px] text-zinc-400">
                     <span>
                       {t1Name} {m1?.wr_6m != null ? `· 6m ${formatCS2Winrate(m1.wr_6m)}` : ""}
                       {m1?.map_rank_3m ? ` · #${m1.map_rank_3m}` : ""}
@@ -91,7 +91,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
             })}
           </div>
         ) : (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-400">
             Données map pool indisponibles pour ce duel (équipes absentes des fichiers HLTV).
           </p>
         )}
@@ -126,7 +126,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
             </div>
           </div>
           {pistol && (
-            <p className="mt-2 text-[11px] text-zinc-500">
+            <p className="mt-2 text-[11px] text-zinc-400">
               Pistol index : ΔCT {pistol.ct_delta}pp · ΔT {pistol.t_delta}pp
               {pistol.trade_signal ? ` — ${pistol.trade_signal}` : ""}
             </p>
@@ -141,12 +141,12 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
           <div className="mb-3 flex items-center gap-3">
             <div className="flex-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-center">
               <p className="text-lg font-bold text-orange-400">{h2h.t1wins}</p>
-              <p className="text-[11px] uppercase tracking-wide text-zinc-500">{t1Name}</p>
+              <p className="text-[11px] uppercase tracking-wide text-zinc-400">{t1Name}</p>
             </div>
-            <span className="text-xs font-semibold text-zinc-500">vs</span>
+            <span className="text-xs font-semibold text-zinc-400">vs</span>
             <div className="flex-1 rounded-lg border border-white/5 bg-white/[0.02] p-3 text-center">
               <p className="text-lg font-bold text-blue-400">{h2h.t2wins}</p>
-              <p className="text-[11px] uppercase tracking-wide text-zinc-500">{t2Name}</p>
+              <p className="text-[11px] uppercase tracking-wide text-zinc-400">{t2Name}</p>
             </div>
           </div>
 
@@ -159,7 +159,7 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
                   "flex h-5 w-5 items-center justify-center rounded text-[11px] font-bold",
                   r === "T1" && "bg-orange-500/20 text-orange-400",
                   r === "T2" && "bg-blue-500/20 text-blue-400",
-                  r === "N" && "bg-white/5 text-zinc-500",
+                  r === "N" && "bg-white/5 text-zinc-400",
                 )}
               >
                 {r === "T1" ? "W" : r === "T2" ? "W" : "–"}
@@ -176,13 +176,13 @@ export function CS2MapPoolAnalytics({ enrichment }: { enrichment: Cs2Enrichment 
                   key={i}
                   className="flex items-center justify-between rounded-md border border-white/5 bg-white/[0.02] px-3 py-1.5 text-[11px]"
                 >
-                  <span className="w-16 shrink-0 text-zinc-500">{h2hDateLabel(d.date)}</span>
+                  <span className="w-16 shrink-0 text-zinc-400">{h2hDateLabel(d.date)}</span>
                   <span
                     className={cn(
                       "w-8 text-center font-bold",
                       d.winner === "T1" && "text-orange-400",
                       d.winner === "T2" && "text-blue-400",
-                      d.winner === "N" && "text-zinc-500",
+                      d.winner === "N" && "text-zinc-400",
                     )}
                   >
                     {d.winner === "T1" ? abbrevTeamName(t1.name) : d.winner === "T2" ? abbrevTeamName(t2.name) : "N"}

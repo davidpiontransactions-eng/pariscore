@@ -52,7 +52,7 @@ export function ResponsibleGamblingBanner() {
       <button
         type="button"
         onClick={dismiss}
-        className="ml-2 shrink-0 rounded p-0.5 text-slate-500 transition-colors hover:text-slate-300"
+        className="ml-2 shrink-0 rounded p-0.5 text-slate-400 transition-colors hover:text-slate-300"
         aria-label="Fermer le rappel"
       >
         <X className="h-3 w-3" />
