@@ -15,6 +15,7 @@ import { useTranslations } from "next-intl";
 import { openPrivacyDialog } from "@/components/privacy-dialog";
 import { openAboutDialog } from "@/components/about-dialog";
 import { openApiDocsDialog } from "@/components/api-docs-dialog";
+import { PullToRefresh } from "@/components/mobile/pull-to-refresh";
 import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 import {
@@ -281,6 +282,8 @@ function HomeInner() {
     }
   }, [storeSportId]);
 
+  const { refetch } = useDashboardData();
+
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
@@ -291,6 +294,12 @@ function HomeInner() {
         <div className="flex w-full flex-1 items-start">
           <SportsSidebar activeSport={activeTab} onSportChange={handleTabChange} />
           <div className="flex min-w-0 flex-1 flex-col">
+            <PullToRefresh
+              onRefresh={async () => {
+                await refetch();
+              }}
+              className="flex-1"
+            >
 
         {/* Hero Dashboard Section (refonte 2026-08-25 — cf. .context/design-refonte-2026-08-25.md) */}
         <section className="sport-ambient max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
@@ -390,6 +399,7 @@ function HomeInner() {
           <UpcomingTenMatchesTable id="section-upcoming" />
           <AIInsightCard id="section-gemini" />
         </section>
+            </PullToRefresh>
           </div>
         {/* Panneau des matchs sélectionnés Top5 — rail droit (desktop) */}
         <aside
