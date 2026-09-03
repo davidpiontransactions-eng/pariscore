@@ -51,7 +51,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
               aria-current={isActive ? "page" : undefined}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-colors duration-200",
+                "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isActive
                   ? "text-white"
                   : "text-zinc-500 hover:text-zinc-300"

@@ -185,7 +185,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
                 type="button"
                 onClick={() => setBetOn("A")}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border p-3 text-left transition-colors",
+                  "flex items-center gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isA ? "border-emerald-500 bg-emerald-500/5" : "border-border/60 hover:bg-muted/40"
                 )}
               >
@@ -206,7 +206,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
                 type="button"
                 onClick={() => setBetOn("B")}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border p-3 text-left transition-colors",
+                  "flex items-center gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   !isA ? "border-emerald-500 bg-emerald-500/5" : "border-border/60 hover:bg-muted/40"
                 )}
               >

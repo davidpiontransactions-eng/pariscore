@@ -215,7 +215,7 @@ function LiveLineToggle({ sportId }: { sportId: string }) {
               {opt.label}
               <span
                 aria-live="polite"
-                className="font-mono text-[10px] tabular-nums text-slate-500"
+                className="font-mono text-[10px] tabular-nums text-slate-400"
               >
                 {opt.count > 0 ? `(${opt.count})` : "(—)"}
               </span>
@@ -249,7 +249,7 @@ function SearchBar() {
     <div className="relative">
       <Search
         aria-hidden
-        className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500"
+        className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
       />
       <input
         type="search"
@@ -259,7 +259,7 @@ function SearchBar() {
         aria-label={t("searchPlaceholder")}
         className={cn(
           "h-8 w-full rounded-md border border-slate-700/60 bg-slate-900 pl-8 pr-7 text-xs text-slate-200",
-          "placeholder:text-slate-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "placeholder:text-slate-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         )}
       />
       {searchQuery ? (
@@ -267,7 +267,7 @@ function SearchBar() {
           type="button"
           onClick={() => setSearchQuery("")}
           aria-label={t("searchClear")}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-500 hover:text-slate-200"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-200"
         >
           <X aria-hidden className="h-3.5 w-3.5" />
         </button>
@@ -521,7 +521,7 @@ function MatchRow({
         </span>
       ) : cells.length && hideOdds ? (
         <span className="flex shrink-0 items-center gap-0.5" role="presentation" onClick={(e) => e.stopPropagation()}>
-          <span className="rounded-md border border-slate-700/40 bg-slate-800/50 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-slate-500">—</span>
+          <span className="rounded-md border border-slate-700/40 bg-slate-800/50 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-slate-400">—</span>
         </span>
       ) : (
         <span />
@@ -586,7 +586,7 @@ function LeagueRow({
             onClick={onToggle}
             aria-expanded={expanded}
             aria-label={t(expanded ? "collapseAria" : "expandAria", { name: league.name })}
-            className="-ml-1 rounded p-0.5 text-slate-500 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="-ml-1 rounded p-0.5 text-slate-400 hover:text-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronRight
               aria-hidden
@@ -680,7 +680,7 @@ function CountryBlock({
       >
         <ChevronRight
           aria-hidden
-          className={cn("h-3 w-3 shrink-0 text-slate-500 transition-transform", expanded && "rotate-90")}
+          className={cn("h-3 w-3 shrink-0 text-slate-400 transition-transform", expanded && "rotate-90")}
         />
         <CountryFlag code={country.countryCode} name={country.name} />
         <span
@@ -793,7 +793,7 @@ function SportBlock({
         )}
         <ChevronRight
           aria-hidden
-          className={cn("h-3.5 w-3.5 shrink-0 text-slate-500 transition-transform", expanded && "rotate-90")}
+          className={cn("h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform", expanded && "rotate-90")}
         />
       </button>
       {expanded ? (
@@ -945,7 +945,7 @@ function MyTeamsBlock({
                 type="button"
                 onClick={() => onToggleFollow(teamId)}
                 aria-label="Unfollow team"
-                className="p-0.5 text-slate-500 hover:text-red-400"
+                className="p-0.5 text-slate-400 hover:text-red-400"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -1260,7 +1260,7 @@ export function SportsSidebarContent({
               "shrink-0 rounded-md p-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hideOdds
                 ? "text-emerald-400 hover:text-emerald-300"
-                : "text-slate-500 hover:text-slate-300",
+                : "text-slate-400 hover:text-slate-300",
             )}
           >
             {hideOdds ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
@@ -1278,7 +1278,7 @@ export function SportsSidebarContent({
                   "shrink-0 rounded-md p-1.5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   showStatFilters
                     ? "text-emerald-400 hover:text-emerald-300"
-                    : "text-slate-500 hover:text-slate-300",
+                    : "text-slate-400 hover:text-slate-300",
                 )}
               >
                 <Filter className="h-3.5 w-3.5" />
@@ -1553,7 +1553,7 @@ export function SportsSidebar({
               type="button"
               onClick={toggleCollapsed}
               aria-label="Collapse sidebar"
-              className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
+              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-800/80 hover:text-slate-200"
             >
               <PanelLeftClose className="h-3.5 w-3.5" />
             </button>
