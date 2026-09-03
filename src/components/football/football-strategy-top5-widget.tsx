@@ -113,8 +113,8 @@ function StatsLine({
   const cell = (s: SideFormStats | null, label: string, pick: (v: SideFormStats) => number) =>
     s ? (
       <span title={`${label} (${s.gp} matchs)`} className="tabular-nums">
-        <span className="text-slate-500">{label}</span>{" "}
-        <span className={cn(s.gp >= 3 ? "text-slate-300" : "text-slate-500 italic")}>
+        <span className="text-slate-400">{label}</span>{" "}
+        <span className={cn(s.gp >= 3 ? "text-slate-300" : "text-slate-400 italic")}>
           {fmt1(pick(s))}
         </span>
       </span>
@@ -131,7 +131,7 @@ function StatsLine({
           <span
             className={cn(
               "font-semibold uppercase",
-              entry.pick === side ? "text-emerald-400" : "text-slate-500",
+              entry.pick === side ? "text-emerald-400" : "text-slate-400",
             )}
           >
             {side === "home" ? "D" : "E"}
@@ -192,7 +192,7 @@ export function MatchRow({
           >
             {selected ? "✓" : ""}
           </span>
-          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-500">
+          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-400">
             <span className="text-[8px] leading-tight">{parisDateShort(entry.kickoff)}</span>
             <span className="text-[9px] leading-tight">{parisKickoff(entry.kickoff)}</span>
           </span>
@@ -254,7 +254,7 @@ export function FootballStrategyTop5Widget() {
   return (
     <section aria-label="Top 5 matchs par stratégie" className="border-b border-slate-800/80 pb-2">
       <div className="flex items-center pr-2.5">
-        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Top 5 matchs
           {selCount > 0 && (
             <span
@@ -279,7 +279,7 @@ export function FootballStrategyTop5Widget() {
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   timeWin === w.key
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-500 hover:text-slate-300",
+                    : "bg-transparent text-slate-400 hover:text-slate-300",
                 )}
               >
                 {w.label}
@@ -297,7 +297,7 @@ export function FootballStrategyTop5Widget() {
                 "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                 winKey === k
                   ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-transparent text-slate-500 hover:text-slate-300",
+                  : "bg-transparent text-slate-400 hover:text-slate-300",
               )}
             >
               {k.replace("l", "L")}
@@ -340,18 +340,18 @@ export function FootballStrategyTop5Widget() {
       {/* Les cards de sélection s'affichent dans le panneau droit (Top5SelectionPanel). */}
 
       {isLoading ? (
-        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-500">
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-400">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
           Calcul en cours…
         </div>
       ) : error || !isReady ? (
-        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-slate-500">
+        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-slate-400">
           <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
           Données insuffisantes.
         </div>
       ) : hasData ? (
         <div className="px-2">
-          <p className="px-0.5 pb-1 text-[10px] text-slate-500">
+          <p className="px-0.5 pb-1 text-[10px] text-slate-400">
             xG/buts/encaissés moyens D=E par côté ({winKey === "l5" ? "5" : "10"} derniers dom/ext) · clic sur un match pour le sélectionner
           </p>
           <ul className="space-y-0.5">
@@ -371,11 +371,11 @@ export function FootballStrategyTop5Widget() {
           </p>
         </div>
       ) : rawRows.length > 0 ? (
-        <p className="px-2.5 py-3 text-[11px] text-slate-500">
+        <p className="px-2.5 py-3 text-[11px] text-slate-400">
           Aucun match dans cette période.
         </p>
       ) : (
-        <p className="px-2.5 py-3 text-[11px] text-slate-500">
+        <p className="px-2.5 py-3 text-[11px] text-slate-400">
           Pas de match qualifié (forme L{win} home/away exigée).
         </p>
       )}

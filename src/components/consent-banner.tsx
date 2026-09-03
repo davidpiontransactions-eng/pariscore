@@ -51,7 +51,7 @@ export function ConsentBanner() {
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
             aria-label={t("showDetails")}
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
           </button>

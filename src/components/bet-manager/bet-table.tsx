@@ -48,7 +48,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
     <div className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
       <table className="w-full min-w-[760px] text-left text-xs">
         <thead>
-          <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-zinc-500">
+          <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-zinc-400">
             <th className="px-3 py-2.5 font-semibold">Date</th>
             <th className="px-3 py-2.5 font-semibold">Pari</th>
             <th className="px-3 py-2.5 font-semibold">Marché</th>
@@ -74,12 +74,12 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                   key={b.id}
                   className="group border-b border-white/[0.03] transition-colors hover:bg-white/[0.02]"
                 >
-                  <td className="px-3 py-2.5 font-mono text-[11px] text-zinc-500">
+                  <td className="px-3 py-2.5 font-mono text-[11px] text-zinc-400">
                     {b.placedAt.slice(0, 10)}
                   </td>
                   <td className="max-w-56 px-3 py-2.5">
                     <div className="truncate font-medium text-zinc-200">{b.matchLabel || b.pick || "—"}</div>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-zinc-500">
+                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-zinc-400">
                       <span className="uppercase">{b.sport}</span>
                       {b.bookmaker ? <span>· {b.bookmaker}</span> : null}
                       {b.tipster ? <span>· {b.tipster}</span> : null}
@@ -104,7 +104,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           ? "text-emerald-400"
                           : profit < 0
                             ? "text-red-400"
-                            : "text-zinc-500"
+                            : "text-zinc-400"
                     )}
                   >
                     {profit === null ? "—" : `${profit > 0 ? "+" : ""}${fmt(profit)} €`}
@@ -149,7 +149,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-zinc-500 hover:bg-white/10"
+                            className="h-6 w-6 text-zinc-400 hover:bg-white/10"
                             title="Remboursé (void)"
                             aria-label="Rembourser"
                             onClick={() => onSettle(b.id, "void")}
@@ -163,14 +163,14 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-zinc-500 hover:bg-white/10"
+                            className="h-6 w-6 text-zinc-400 hover:bg-white/10"
                             aria-label="Actions"
                           >
                             <MoreHorizontal className="h-3.5 w-3.5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border-white/10 bg-[#101420] text-zinc-100">
-                          <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-zinc-500">
+                          <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-zinc-400">
                             Actions
                           </DropdownMenuLabel>
                           {b.status === "pending" ? (
