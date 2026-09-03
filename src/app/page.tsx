@@ -213,6 +213,16 @@ function HomeInner() {
   // Real data hooks
   const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
 
+  const handleTabChange = useCallback((tab: string) => {
+    // Ignore les ids inconnus (protection) ; "home"/vues nav ne touchent pas
+    // au store : l'arbre latéral garde le dernier sport, l'URL ?sport= reste stable.
+    if (!VIEW_TABS.has(tab) && !SPORT_IDS.has(tab)) return;
+    setActiveTab(tab as SportTab);
+    if (SPORT_IDS.has(tab)) {
+      useSportsSidebarStore.getState().syncSportFromTab(tab);
+    }
+  }, []);
+
   // ── Swipe mobile pour changer de sport ──
   const SPORT_ORDER: SportTab[] = ["tennis", "football", "basketball", "mma", "f1", "baseball"];
   const touchStartX = useRef(0);
