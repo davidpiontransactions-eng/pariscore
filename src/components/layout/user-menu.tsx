@@ -9,6 +9,7 @@ import {
   Moon,
   Sun,
   Languages,
+  BarChart3,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
@@ -84,6 +85,16 @@ export function UserMenu() {
 
         {/* Navigation du menu */}
         <nav className="p-1">
+          {/* Dashboard */}
+          <MenuItem
+            icon={<BarChart3 className="h-4 w-4" />}
+            label="Dashboard"
+            onClick={() => {
+              router.push("/dashboard");
+              setOpen(false);
+            }}
+          />
+
           {/* Profil */}
           <MenuItem
             icon={<User className="h-4 w-4" />}
