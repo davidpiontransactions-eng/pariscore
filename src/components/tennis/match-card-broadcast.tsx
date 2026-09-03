@@ -62,7 +62,7 @@ import { cn } from "@/lib/utils";
 import { type TennisMatch, type Player } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import type { PlayerStats } from "@/lib/tennis-stats/types";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/hooks/use-favorites-adapter";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useBetSlip } from "@/hooks/use-bet-slip";
 import { useToast } from "@/hooks/use-toast";

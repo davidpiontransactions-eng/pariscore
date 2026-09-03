@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StrategyFilterDropdown } from "@/components/shared/strategy-filter-dropdown";
 import type { StrategyFilter } from "@/lib/match-view";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/hooks/use-favorites-adapter";
 import type { FootballMatch } from "@/lib/football-data";
 import { FootballLeagueBar } from "./football-filters";
 import { TopTeamsPresetsBar, type TopTeamPreset, applyPresetFilter } from "./top-teams-presets-bar";

@@ -42,7 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useOnexLiveOdds } from "@/hooks/use-onex-live-odds";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/hooks/use-favorites-adapter";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useMatchFilter, type FilterKey, type SortKey } from "@/hooks/use-match-filter";
 import { useMatchCuration } from "@/hooks/use-match-curation";

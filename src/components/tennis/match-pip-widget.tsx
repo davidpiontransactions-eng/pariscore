@@ -12,7 +12,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useLiveStream } from "@/hooks/use-live-stream";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/hooks/use-favorites-adapter";
 import { usePlayerStats } from "@/hooks/use-player-stats";
 import { useBetNotify } from "@/hooks/use-bet-notify";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";

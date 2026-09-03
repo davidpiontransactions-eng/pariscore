@@ -28,7 +28,7 @@ import { MatchCardDetail } from "./match-card-detail";
 
 import { type TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
-import { useFavorites } from "@/hooks/use-favorites";
+import { useFavorites } from "@/hooks/use-favorites-adapter";
 import { useTerminalMode } from "@/hooks/use-terminal-mode";
 import { useEloSparkline } from "@/hooks/use-elo-sparkline";
 import { useEmailAlerts } from "@/hooks/use-email-alerts";
