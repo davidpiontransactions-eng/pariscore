@@ -38,6 +38,8 @@ import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-mat
 import { HeroSection } from "@/components/dashboard/hero-stats";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
+import { PersonalDashboard } from "@/components/dashboard/personal-dashboard";
+import { PersonalizedFeed } from "@/components/dashboard/personalized-feed";
 import { Top5SelectionPanel } from "@/components/football/top5-selection-panel";
 import {
   LiveNavView,
@@ -350,7 +352,20 @@ function HomeInner() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         >
-        {activeTab === "home" && <HomeDashboard onSportSelect={handleTabChange} />}
+        {activeTab === "home" && (
+          <>
+            <HomeDashboard onSportSelect={handleTabChange} />
+            <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 mt-6">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <PersonalDashboard />
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold">Pour toi</h3>
+                  <PersonalizedFeed />
+                </div>
+              </div>
+            </div>
+          </>
+        )}
         {activeTab === "live" && <LiveNavView onSportSelect={handleTabChange} />}
         {activeTab === "value" && <ValueNavView />}
         {activeTab === "favoris" && (
