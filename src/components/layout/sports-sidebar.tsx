@@ -335,7 +335,7 @@ function CountBadge({ n, live }: { n: number; live?: boolean }) {
     <span
       className={cn(
         "rounded-full px-1.5 py-0.5 font-mono text-[11px] leading-none tabular-nums",
-        live ? "bg-red-500/15 text-red-300" : "bg-slate-800 text-white/60",
+        live ? "bg-red-500/15 text-red-300 animate-pulse" : "bg-slate-800 text-white/60",
       )}
     >
       {n}
