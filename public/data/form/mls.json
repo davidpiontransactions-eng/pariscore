@@ -4,7 +4,7 @@
     "leagueId": "mls",
     "leagueName": "Usa",
     "season": "2026/27",
-    "lastUpdated": "2026-09-02T08:57:06.195337Z",
+    "lastUpdated": "2026-09-03T09:05:46.094622Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,15 @@
     "partial": false
   },
   "home": [
+    {
+      "teamName": "Chicago Fire",
+      "gp": 8,
+      "w": 6,
+      "d": 0,
+      "l": 2,
+      "gf": 16,
+      "ga": 9
+    },
     {
       "teamName": "Cincinnati",
       "gp": 8,
@@ -47,18 +56,27 @@
       "l": 0,
       "gf": 20,
       "ga": 8
-    },
-    {
-      "teamName": "Chicago Fire",
-      "gp": 8,
-      "w": 6,
-      "d": 0,
-      "l": 2,
-      "gf": 16,
-      "ga": 9
     }
   ],
   "away": [
+    {
+      "teamName": "Vancouver",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 16,
+      "ga": 10
+    },
+    {
+      "teamName": "Inter Miami",
+      "gp": 8,
+      "w": 6,
+      "d": 1,
+      "l": 1,
+      "gf": 21,
+      "ga": 15
+    },
     {
       "teamName": "Houston Dynamo",
       "gp": 8,
@@ -82,24 +100,6 @@
       "gp": 8,
       "w": 5,
       "d": 1,
-      "l": 2,
-      "gf": 16,
-      "ga": 10
-    },
-    {
-      "teamName": "Inter Miami",
-      "gp": 8,
-      "w": 6,
-      "d": 1,
-      "l": 1,
-      "gf": 21,
-      "ga": 15
-    },
-    {
-      "teamName": "Vancouver",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
       "l": 2,
       "gf": 16,
       "ga": 10

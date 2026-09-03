@@ -4,7 +4,7 @@
     "leagueId": "laliga",
     "leagueName": "Spain",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-02T08:55:58.541205Z",
+    "lastUpdated": "2026-09-03T09:04:42.916338Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 23,
     "window": 8,
@@ -12,69 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "Fc Barcelona",
-      "gp": 5,
-      "w": 5,
-      "d": 0,
-      "l": 0,
-      "gf": 16,
-      "ga": 4
-    },
-    {
-      "teamName": "Athletic Bilbao",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
-      "teamName": "Elche",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Espanyol",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 6
-    },
-    {
-      "teamName": "Levante",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 13,
-      "ga": 5
-    },
-    {
-      "teamName": "Celta Vigo",
-      "gp": 5,
-      "w": 1,
-      "d": 0,
-      "l": 4,
-      "gf": 6,
-      "ga": 10
-    },
-    {
-      "teamName": "Valencia",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
-      "ga": 5
-    },
     {
       "teamName": "Girona",
       "gp": 5,
@@ -85,15 +22,6 @@
       "ga": 6
     },
     {
-      "teamName": "Racing",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 5,
-      "ga": 4
-    },
-    {
       "teamName": "Real Oviedo",
       "gp": 5,
       "w": 1,
@@ -101,24 +29,6 @@
       "l": 2,
       "gf": 3,
       "ga": 4
-    },
-    {
-      "teamName": "Real Madrid",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 0,
-      "gf": 16,
-      "ga": 4
-    },
-    {
-      "teamName": "Atletico Madrid",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 6
     },
     {
       "teamName": "Deportivo",
@@ -130,22 +40,31 @@
       "ga": 2
     },
     {
-      "teamName": "Mallorca",
+      "teamName": "Real Madrid",
       "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 8,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 16,
       "ga": 4
     },
     {
-      "teamName": "Alaves",
+      "teamName": "Espanyol",
       "gp": 5,
-      "w": 3,
-      "d": 1,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 6
+    },
+    {
+      "teamName": "Osasuna",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
       "l": 1,
-      "gf": 8,
-      "ga": 5
+      "gf": 5,
+      "ga": 4
     },
     {
       "teamName": "Malaga",
@@ -157,15 +76,6 @@
       "ga": 1
     },
     {
-      "teamName": "Real Sociedad",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 12,
-      "ga": 9
-    },
-    {
       "teamName": "Real Betis",
       "gp": 5,
       "w": 2,
@@ -175,13 +85,31 @@
       "ga": 4
     },
     {
-      "teamName": "Osasuna",
+      "teamName": "Elche",
       "gp": 5,
       "w": 2,
       "d": 2,
-      "l": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 9
+    },
+    {
+      "teamName": "Racing",
+      "gp": 2,
+      "w": 1,
+      "d": 1,
+      "l": 0,
       "gf": 5,
       "ga": 4
+    },
+    {
+      "teamName": "Levante",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 0,
+      "gf": 13,
+      "ga": 5
     },
     {
       "teamName": "Villarreal",
@@ -193,6 +121,42 @@
       "ga": 6
     },
     {
+      "teamName": "Sevilla Fc",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 7
+    },
+    {
+      "teamName": "Atletico Madrid",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 9,
+      "ga": 6
+    },
+    {
+      "teamName": "Valencia",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 4,
+      "ga": 5
+    },
+    {
+      "teamName": "Celta Vigo",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 6,
+      "ga": 10
+    },
+    {
       "teamName": "Getafe",
       "gp": 5,
       "w": 4,
@@ -200,6 +164,33 @@
       "l": 2,
       "gf": 6,
       "ga": 4
+    },
+    {
+      "teamName": "Mallorca",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 8,
+      "ga": 4
+    },
+    {
+      "teamName": "Real Sociedad",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 12,
+      "ga": 9
+    },
+    {
+      "teamName": "Alaves",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 8,
+      "ga": 5
     },
     {
       "teamName": "Rayo Vallecano",
@@ -211,72 +202,7 @@
       "ga": 4
     },
     {
-      "teamName": "Sevilla Fc",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
-      "ga": 7
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Fc Barcelona",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 2,
-      "gf": 11,
-      "ga": 4
-    },
-    {
       "teamName": "Athletic Bilbao",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Elche",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 10
-    },
-    {
-      "teamName": "Espanyol",
-      "gp": 5,
-      "w": 0,
-      "d": 1,
-      "l": 4,
-      "gf": 5,
-      "ga": 10
-    },
-    {
-      "teamName": "Levante",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 3,
-      "gf": 3,
-      "ga": 10
-    },
-    {
-      "teamName": "Celta Vigo",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 5
-    },
-    {
-      "teamName": "Valencia",
       "gp": 5,
       "w": 2,
       "d": 0,
@@ -285,6 +211,17 @@
       "ga": 7
     },
     {
+      "teamName": "Fc Barcelona",
+      "gp": 5,
+      "w": 5,
+      "d": 0,
+      "l": 0,
+      "gf": 16,
+      "ga": 4
+    }
+  ],
+  "away": [
+    {
       "teamName": "Girona",
       "gp": 5,
       "w": 0,
@@ -292,15 +229,6 @@
       "l": 2,
       "gf": 4,
       "ga": 6
-    },
-    {
-      "teamName": "Racing",
-      "gp": 1,
-      "w": 0,
-      "d": 0,
-      "l": 1,
-      "gf": 0,
-      "ga": 1
     },
     {
       "teamName": "Real Oviedo",
@@ -312,24 +240,6 @@
       "ga": 12
     },
     {
-      "teamName": "Real Madrid",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 5
-    },
-    {
-      "teamName": "Atletico Madrid",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 9,
-      "ga": 9
-    },
-    {
       "teamName": "Deportivo",
       "gp": 1,
       "w": 0,
@@ -339,48 +249,21 @@
       "ga": 1
     },
     {
-      "teamName": "Mallorca",
+      "teamName": "Real Madrid",
       "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 4,
-      "ga": 10
-    },
-    {
-      "teamName": "Alaves",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 9
-    },
-    {
-      "teamName": "Malaga",
-      "gp": 2,
-      "w": 0,
+      "w": 3,
       "d": 0,
       "l": 2,
-      "gf": 0,
-      "ga": 6
+      "gf": 7,
+      "ga": 5
     },
     {
-      "teamName": "Real Sociedad",
+      "teamName": "Espanyol",
       "gp": 5,
       "w": 0,
       "d": 1,
       "l": 4,
       "gf": 5,
-      "ga": 11
-    },
-    {
-      "teamName": "Real Betis",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
       "ga": 10
     },
     {
@@ -393,6 +276,51 @@
       "ga": 7
     },
     {
+      "teamName": "Malaga",
+      "gp": 2,
+      "w": 0,
+      "d": 0,
+      "l": 2,
+      "gf": 0,
+      "ga": 6
+    },
+    {
+      "teamName": "Real Betis",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 10
+    },
+    {
+      "teamName": "Elche",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 3,
+      "gf": 6,
+      "ga": 10
+    },
+    {
+      "teamName": "Racing",
+      "gp": 1,
+      "w": 0,
+      "d": 0,
+      "l": 1,
+      "gf": 0,
+      "ga": 1
+    },
+    {
+      "teamName": "Levante",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 3,
+      "gf": 3,
+      "ga": 10
+    },
+    {
       "teamName": "Villarreal",
       "gp": 5,
       "w": 0,
@@ -400,6 +328,42 @@
       "l": 2,
       "gf": 6,
       "ga": 8
+    },
+    {
+      "teamName": "Sevilla Fc",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 7,
+      "ga": 9
+    },
+    {
+      "teamName": "Atletico Madrid",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Valencia",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Celta Vigo",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
+      "ga": 5
     },
     {
       "teamName": "Getafe",
@@ -411,6 +375,33 @@
       "ga": 6
     },
     {
+      "teamName": "Mallorca",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 4,
+      "ga": 10
+    },
+    {
+      "teamName": "Real Sociedad",
+      "gp": 5,
+      "w": 0,
+      "d": 1,
+      "l": 4,
+      "gf": 5,
+      "ga": 11
+    },
+    {
+      "teamName": "Alaves",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 9
+    },
+    {
       "teamName": "Rayo Vallecano",
       "gp": 5,
       "w": 1,
@@ -420,13 +411,22 @@
       "ga": 11
     },
     {
-      "teamName": "Sevilla Fc",
+      "teamName": "Athletic Bilbao",
       "gp": 5,
       "w": 2,
       "d": 0,
-      "l": 2,
-      "gf": 7,
+      "l": 3,
+      "gf": 6,
       "ga": 9
+    },
+    {
+      "teamName": "Fc Barcelona",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 2,
+      "gf": 11,
+      "ga": 4
     }
   ]
 }

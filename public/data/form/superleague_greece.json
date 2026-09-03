@@ -4,7 +4,7 @@
     "leagueId": "superleague_greece",
     "leagueName": "Greece",
     "season": "2026/27",
-    "lastUpdated": "2026-09-02T08:56:34.683257Z",
+    "lastUpdated": "2026-09-03T09:05:16.642030Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,7 +13,7 @@
   },
   "home": [
     {
-      "teamName": "Paok",
+      "teamName": "Aek Athens",
       "gp": 1,
       "w": 1,
       "d": 0,
@@ -22,25 +22,7 @@
       "ga": 0
     },
     {
-      "teamName": "Panetolikos",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 5,
-      "ga": 1
-    },
-    {
-      "teamName": "Ofi Crete",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 2,
-      "ga": 0
-    },
-    {
-      "teamName": "Aek Athens",
+      "teamName": "Paok",
       "gp": 1,
       "w": 1,
       "d": 0,
@@ -56,9 +38,45 @@
       "l": 0,
       "gf": 2,
       "ga": 1
+    },
+    {
+      "teamName": "Ofi Crete",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 0
+    },
+    {
+      "teamName": "Panetolikos",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 5,
+      "ga": 1
     }
   ],
   "away": [
+    {
+      "teamName": "Aek Athens",
+      "gp": 1,
+      "w": 0,
+      "d": 1,
+      "l": 0,
+      "gf": 1,
+      "ga": 1
+    },
+    {
+      "teamName": "Olympiakos",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 1,
+      "ga": 0
+    },
     {
       "teamName": "Paok",
       "gp": 1,
@@ -85,24 +103,6 @@
       "l": 0,
       "gf": 3,
       "ga": 2
-    },
-    {
-      "teamName": "Olympiakos",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 1,
-      "ga": 0
-    },
-    {
-      "teamName": "Aek Athens",
-      "gp": 1,
-      "w": 0,
-      "d": 1,
-      "l": 0,
-      "gf": 1,
-      "ga": 1
     }
   ]
 }
