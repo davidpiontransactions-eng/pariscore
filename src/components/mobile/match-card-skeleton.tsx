@@ -1,186 +1,174 @@
-"use client";
-
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 /**
- * T25 — MatchCardSkeleton
+ * MatchCardSkeleton
  *
- * Skeleton de match card réutilisable avec variants par sport.
- * Pattern FotMob/Flashscore : skeleton qui reflète la forme réelle du composant.
- *
- * Variants :
- * - "tennis" : 2 joueurs, score, cote
- * - "football" : 2 équipes, score, xG
- * - "basket" : 2 équipes, score, quarters
- * - "generic" : layout neutre
+ * Skeleton amélioré pour les cartes de match.
+ * Pattern shimmer animé avec placeholders réalistes.
  *
  * Usage :
- * <MatchCardSkeleton variant="tennis" />
- * <MatchCardSkeleton variant="football" count={3} />
+ * <MatchCardSkeleton />
+ * <MatchCardSkeleton variant="compact" />
  */
 
-type Variant = "tennis" | "football" | "basket" | "generic";
-
 type Props = {
-  variant?: Variant;
-  /** Nombre de skeletons à afficher */
-  count?: number;
+  variant?: "default" | "compact" | "live";
   className?: string;
 };
 
-function TennisSkeleton() {
+function Shimmer({ className }: { className?: string }) {
   return (
     <div
-      className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3"
-      aria-busy="true"
-      aria-label="Chargement du match"
-      role="status"
-    >
-      {/* Tournament badge */}
+      className={cn(
+        "relative overflow-hidden rounded bg-white/5",
+        "after:absolute after:inset-0 after:-translate-x-full after:animate-[shimmer_1.5s_infinite] after:bg-gradient-to-r after:from-transparent after:via-white/10 after:to-transparent",
+        className
+      )}
+    />
+  );
+}
+
+export function MatchCardSkeleton({ variant = "default", className }: Props) {
+  if (variant === "compact") {
+    return (
+      <div className={cn("flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-3", className)}>
+        <Shimmer className="h-8 w-8 rounded-full" />
+        <div className="flex-1 space-y-1.5">
+          <Shimmer className="h-3 w-3/4" />
+          <Shimmer className="h-2.5 w-1/2" />
+        </div>
+        <Shimmer className="h-6 w-12 rounded" />
+      </div>
+    );
+  }
+
+  if (variant === "live") {
+    return (
+      <div className={cn("rounded-2xl border border-rose-500/20 bg-white/[0.02] p-4", className)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+            <Shimmer className="h-3 w-20" />
+          </div>
+          <Shimmer className="h-4 w-12" />
+        </div>
+        <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="space-y-2">
+            <Shimmer className="h-4 w-full" />
+            <Shimmer className="h-3 w-2/3" />
+          </div>
+          <div className="space-y-1">
+            <Shimmer className="h-6 w-16 rounded" />
+          </div>
+          <div className="space-y-2 text-right">
+            <Shimmer className="h-4 w-full" />
+            <Shimmer className="h-3 w-2/3 ml-auto" />
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Shimmer className="h-8 flex-1 rounded-lg" />
+          <Shimmer className="h-8 flex-1 rounded-lg" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("rounded-2xl border border-white/5 bg-white/[0.02] p-4", className)}>
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <Skeleton className="h-3 w-24 rounded-full" />
-        <Skeleton className="h-3 w-16 rounded-full" />
+        <div className="flex items-center gap-2">
+          <Shimmer className="h-4 w-4 rounded" />
+          <Shimmer className="h-3 w-24" />
+        </div>
+        <Shimmer className="h-5 w-5 rounded-full" />
       </div>
 
-      {/* Players + Score */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1 space-y-1.5">
-          <Skeleton className="h-3.5 w-32 rounded-full" />
-          <Skeleton className="h-3.5 w-28 rounded-full" />
+      {/* Players */}
+      <div className="mt-4 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="space-y-2">
+          <Shimmer className="h-4 w-full" />
+          <Shimmer className="h-3 w-2/3" />
+          <Shimmer className="h-2 w-1/2" />
         </div>
-        <div className="flex flex-col items-center gap-1 px-3">
-          <Skeleton className="h-4 w-6 rounded" />
-          <Skeleton className="h-4 w-6 rounded" />
+        <div className="space-y-1">
+          <Shimmer className="h-5 w-10 rounded" />
+          <Shimmer className="h-2 w-8 mx-auto" />
         </div>
-        <div className="flex-1 space-y-1.5 text-right">
-          <Skeleton className="h-3.5 w-28 rounded-full ml-auto" />
-          <Skeleton className="h-3.5 w-32 rounded-full ml-auto" />
+        <div className="space-y-2 text-right">
+          <Shimmer className="h-4 w-full" />
+          <Shimmer className="h-3 w-2/3 ml-auto" />
+          <Shimmer className="h-2 w-1/2 ml-auto" />
         </div>
       </div>
 
       {/* Odds */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/20">
-        <Skeleton className="h-3 w-12 rounded-full" />
-        <Skeleton className="h-3 w-10 rounded-full" />
-        <Skeleton className="h-3 w-10 rounded-full" />
-        <Skeleton className="h-3 w-10 rounded-full" />
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <Shimmer className="h-10 rounded-lg" />
+        <Shimmer className="h-10 rounded-lg" />
+        <Shimmer className="h-10 rounded-lg" />
+      </div>
+
+      {/* Footer */}
+      <div className="mt-3 flex items-center justify-between">
+        <Shimmer className="h-2.5 w-32" />
+        <Shimmer className="h-2.5 w-20" />
       </div>
     </div>
   );
 }
 
-function FootballSkeleton() {
+/**
+ * MatchListSkeleton
+ *
+ * Skeleton pour une liste de matchs.
+ */
+export function MatchListSkeleton({
+  count = 4,
+  variant = "default",
+  className,
+}: {
+  count?: number;
+  variant?: "default" | "compact" | "live";
+  className?: string;
+}) {
   return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3" aria-busy="true">
-      {/* League + time */}
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-3 w-20 rounded-full" />
-        <Skeleton className="h-3 w-12 rounded-full" />
-      </div>
-
-      {/* Teams + Score */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-5 w-5 rounded-full" />
-            <Skeleton className="h-3.5 w-24 rounded-full" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-5 w-5 rounded-full" />
-            <Skeleton className="h-3.5 w-20 rounded-full" />
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1 px-3">
-          <Skeleton className="h-4 w-5 rounded" />
-          <Skeleton className="h-4 w-5 rounded" />
-        </div>
-        <div className="flex-1 space-y-1.5">
-          <Skeleton className="h-3 w-16 rounded-full ml-auto" />
-          <Skeleton className="h-3 w-14 rounded-full ml-auto" />
-        </div>
-      </div>
-
-      {/* xG bar */}
-      <div className="pt-1 border-t border-border/20">
-        <Skeleton className="h-2 w-full rounded-full" />
-      </div>
-    </div>
-  );
-}
-
-function BasketSkeleton() {
-  return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3" aria-busy="true">
-      {/* League */}
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-3 w-20 rounded-full" />
-        <Skeleton className="h-3 w-16 rounded-full" />
-      </div>
-
-      {/* Teams + Score */}
-      <div className="flex items-center justify-between">
-        <div className="flex-1 space-y-1.5">
-          <Skeleton className="h-3.5 w-28 rounded-full" />
-          <Skeleton className="h-3.5 w-24 rounded-full" />
-        </div>
-        <div className="flex flex-col items-center gap-1 px-3">
-          <Skeleton className="h-4 w-8 rounded" />
-          <Skeleton className="h-4 w-8 rounded" />
-        </div>
-        <div className="flex-1 space-y-1.5">
-          <Skeleton className="h-3 w-20 rounded-full ml-auto" />
-          <Skeleton className="h-3 w-16 rounded-full ml-auto" />
-        </div>
-      </div>
-
-      {/* Quarter scores */}
-      <div className="flex items-center justify-between pt-1 border-t border-border/20">
-        <Skeleton className="h-3 w-8 rounded" />
-        <Skeleton className="h-3 w-8 rounded" />
-        <Skeleton className="h-3 w-8 rounded" />
-        <Skeleton className="h-3 w-8 rounded" />
-      </div>
-    </div>
-  );
-}
-
-function GenericSkeleton() {
-  return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3" aria-busy="true">
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-3 w-24 rounded-full" />
-        <Skeleton className="h-3 w-12 rounded-full" />
-      </div>
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-32 rounded-full" />
-        <Skeleton className="h-4 w-6 rounded" />
-        <Skeleton className="h-4 w-28 rounded-full" />
-      </div>
-      <div className="flex items-center justify-between pt-1 border-t border-border/20">
-        <Skeleton className="h-3 w-10 rounded-full" />
-        <Skeleton className="h-3 w-10 rounded-full" />
-        <Skeleton className="h-3 w-10 rounded-full" />
-      </div>
-    </div>
-  );
-}
-
-const SKELETONS: Record<Variant, React.FC> = {
-  tennis: TennisSkeleton,
-  football: FootballSkeleton,
-  basket: BasketSkeleton,
-  generic: GenericSkeleton,
-};
-
-export function MatchCardSkeleton({ variant = "generic", count = 1, className }: Props) {
-  const Component = SKELETONS[variant];
-
-  return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-4", className)}>
       {Array.from({ length: count }).map((_, i) => (
-        <Component key={i} />
+        <MatchCardSkeleton key={i} variant={variant} />
       ))}
+    </div>
+  );
+}
+
+/**
+ * TabContentSkeleton
+ *
+ * Skeleton pour le contenu d'un onglet sport.
+ */
+export function TabContentSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cn("space-y-6", className)}>
+      {/* Header skeleton */}
+      <div className="space-y-3">
+        <Shimmer className="h-8 w-48" />
+        <Shimmer className="h-4 w-96" />
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+            <Shimmer className="h-3 w-16 mb-2" />
+            <Shimmer className="h-6 w-12" />
+          </div>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <MatchListSkeleton count={4} />
+      </div>
     </div>
   );
 }
