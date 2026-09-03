@@ -184,16 +184,16 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
                 aria-label={`Ligne Over/Under ${quick.totalLine.toFixed(1)}, Over à ${fmtPct(quick.overProb)}, Under à ${fmtPct(quick.underProb)}`}
               >
                 O/U <span className="font-bold text-amber-300">{quick.totalLine.toFixed(1)}</span>
-                <span className="mx-1 text-slate-500">·</span>
+                <span className="mx-1 text-slate-400">·</span>
                 Over <span className="font-bold text-emerald-400">{fmtPct(quick.overProb)}</span>
-                <span className="mx-1 text-slate-500">·</span>
+                <span className="mx-1 text-slate-400">·</span>
                 Under <span className="font-bold text-rose-400">{fmtPct(quick.underProb)}</span>
               </span>
               <span
                 className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 font-mono text-[11px] tabular-nums text-slate-200"
                 aria-label={`Total attendu ${fmtNum(quick.expectedTotal)} runs`}
               >
-                Total {fmtNum(quick.expectedTotal)} <span className="text-slate-500">attendu</span>
+                Total {fmtNum(quick.expectedTotal)} <span className="text-slate-400">attendu</span>
               </span>
               {quick.homeWinProb >= 0.51 || quick.homeWinProb <= 0.49 ? (
                 <span
@@ -204,7 +204,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
                   <span className="font-bold text-sky-300">
                     {quick.homeWinProb > 0.5 ? homeTeam.city : awayTeam.city}
                   </span>
-                  <span className="mx-1 text-slate-500">·</span>
+                  <span className="mx-1 text-slate-400">·</span>
                   {fmtPct(quick.homeWinProb > 0.5 ? quick.homeWinProb : 1 - quick.homeWinProb)}
                 </span>
               ) : null}
@@ -218,7 +218,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
                 </span>
               ) : (
                 <span
-                  className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500"
+                  className="rounded-md border border-slate-700 bg-slate-800/70 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400"
                   aria-label="Confiance insuffisante, sous le seuil de 65 %"
                 >
                   Sous seuil 65 %
@@ -226,7 +226,7 @@ export function BaseballMatchCard({ match, onOpen }: BaseballMatchCardProps) {
               )}
             </>
           ) : (
-            <span className="text-[11px] italic text-slate-500">
+            <span className="text-[11px] italic text-slate-400">
               {game.status === "final" ? "Match terminé" : "Cotes indisponibles — partants incomplets"}
             </span>
           )}

@@ -185,7 +185,7 @@ export function F1TabContent() {
                   key={t}
                   onClick={() => setTeamFilter(t)}
                   className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition",
+                  "rounded-lg px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     teamFilter === t
                       ? "bg-red-500/20 text-red-300"
                       : "bg-white/5 text-white/60 hover:bg-white/10"
