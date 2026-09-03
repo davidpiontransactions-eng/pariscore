@@ -947,7 +947,7 @@ export function FootballMatchCard({
 
 export function FootballMatchCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-border/70 bg-card p-4">
+    <div className="rounded-2xl border border-border/70 bg-card p-4" aria-busy="true">
       <div className="mb-3 flex items-center justify-between">
         <Skeleton className="h-3 w-32" />
         <Skeleton className="h-3 w-16" />

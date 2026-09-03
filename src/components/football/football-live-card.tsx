@@ -272,6 +272,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
           alt=""
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.07] dark:opacity-[0.05]"
+          loading="lazy"
           onError={(e) => {
             e.currentTarget.style.display = "none";
           }}
@@ -312,6 +313,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                   src={match.home.logo}
                   alt={match.home.name}
                   className="h-7 w-7 object-contain"
+                  loading="lazy"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}
@@ -349,6 +351,7 @@ export function FootballLiveCard({ match, onOpenDetail }: { match: FootballMatch
                   src={match.away.logo}
                   alt={match.away.name}
                   className="h-7 w-7 object-contain"
+                  loading="lazy"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}

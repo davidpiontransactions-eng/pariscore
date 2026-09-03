@@ -89,6 +89,7 @@ function TeamSelect({
                   src={selected.logo}
                   alt=""
                   className="h-4 w-4 object-contain"
+                  loading="lazy"
                 />
               )}
               {selected.abbr}
@@ -107,6 +108,7 @@ function TeamSelect({
                   src={team.logo}
                   alt=""
                   className="h-4 w-4 object-contain"
+                  loading="lazy"
                 />
               )}
               {team.name}

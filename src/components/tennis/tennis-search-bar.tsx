@@ -194,6 +194,7 @@ function PlayerItem({
           src={player.photoUrl}
           alt={player.name || "Joueur"}
           className="h-6 w-6 shrink-0 rounded-full object-cover"
+          loading="lazy"
         />
       ) : (
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted">

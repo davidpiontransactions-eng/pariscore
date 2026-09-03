@@ -205,7 +205,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         <>
           {/* Loading */}
           {isLoading && (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
               {Array.from({ length: 6 }).map((_, i) => (
                 <BasketballMatchCardSkeleton key={`sk-${i}`} />
               ))}

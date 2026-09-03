@@ -72,7 +72,7 @@ function TennisSkeleton() {
 
 function FootballSkeleton() {
   return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3">
+    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3" aria-busy="true">
       {/* League + time */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-20 rounded-full" />
@@ -111,7 +111,7 @@ function FootballSkeleton() {
 
 function BasketSkeleton() {
   return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3">
+    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3" aria-busy="true">
       {/* League */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-20 rounded-full" />
@@ -147,7 +147,7 @@ function BasketSkeleton() {
 
 function GenericSkeleton() {
   return (
-    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3">
+    <div className="rounded-lg border border-border/30 bg-card/50 p-3 space-y-3" aria-busy="true">
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-24 rounded-full" />
         <Skeleton className="h-3 w-12 rounded-full" />

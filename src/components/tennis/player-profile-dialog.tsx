@@ -108,6 +108,7 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
                   src={player.photoUrl}
                   alt={playerName || "Joueur"}
                   className="h-16 w-16 rounded-full object-cover ring-2 ring-border"
+                  loading="lazy"
                 />
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-bold text-muted-foreground">

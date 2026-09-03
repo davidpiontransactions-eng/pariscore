@@ -569,7 +569,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
 
       {/* Content */}
       {current.loading ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2" aria-busy="true">
           {Array.from({ length: 4 }).map((_, i) => (
             <MatchCardSkeleton key={i} />
           ))}

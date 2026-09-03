@@ -190,6 +190,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                   src={match.league.logo}
                   alt=""
                   className="h-4 w-4 shrink-0 object-contain brightness-125"
+                  loading="lazy"
                   onError={(e) => { e.currentTarget.style.display = "none"; }}
                 />
               ) : (

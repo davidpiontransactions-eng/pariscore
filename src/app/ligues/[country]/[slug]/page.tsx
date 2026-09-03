@@ -68,6 +68,7 @@ export default function LeagueDetailPage() {
                 src={league.logoUrl}
                 alt=""
                 className="h-12 w-12 shrink-0 object-contain"
+                loading="lazy"
               />
             ) : (
               <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">

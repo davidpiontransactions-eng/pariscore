@@ -92,6 +92,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
                 alt={driver.name}
                 className="h-14 w-14 rounded-full object-cover ring-2"
                 style={{ boxShadow: `0 0 0 2px ${teamColor}40` }}
+                loading="lazy"
               />
             ) : (
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-sm font-bold uppercase text-white/60">
@@ -103,6 +104,7 @@ export function F1DriverCard({ driver, index = 0 }: Props) {
                 src={driver.logo}
                 alt={driver.team}
                 className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-[#1A1A2E] p-0.5 ring-1 ring-white/10"
+                loading="lazy"
               />
             )}
           </div>
