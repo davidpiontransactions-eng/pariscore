@@ -24,6 +24,8 @@ import { FootballPressReviewWidget } from "@/components/football/FootballPressRe
 import { AIMatchReport } from "./AIMatchReport";
 import { WatchButton } from "@/components/shared/watch-button";
 import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
+import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
+import { useOddsHistory } from "@/hooks/use-odds-history";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
 
@@ -134,6 +136,13 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   const betsResult = useMemo(
     () => (view && !view.live ? computePredictiveBets(view) : null),
     [view],
+  );
+
+  // Historique odds pour le timeline (collecté côté client via localStorage)
+  const oddsHistory = useOddsHistory(
+    view ? String(view.id) : "",
+    view?.odds?.home ?? null,
+    view?.odds?.away ?? null,
   );
 
   // Fetch lazy uniquement à l'ouverture du dialog (ou changement de match).
@@ -419,6 +428,21 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     <BetTile key={i} bet={bet} />
                   ))}
                 </div>
+              </section>
+            )}
+
+            {/* Historique des odds — timeline */}
+            {view && !view.live && oddsHistory.length >= 2 && (
+              <section className="rounded-2xl border border-border/60 bg-card p-3.5">
+                <OddsHistoryTimeline
+                  data={oddsHistory.map((o) => ({
+                    time: new Date(o.ts).toISOString(),
+                    oddsA: o.a,
+                    oddsB: o.b,
+                  }))}
+                  player1Name={view.home.shortName}
+                  player2Name={view.away.shortName}
+                />
               </section>
             )}
 
