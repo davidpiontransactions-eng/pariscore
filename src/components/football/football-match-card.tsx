@@ -23,6 +23,8 @@ import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { WatchButton } from "@/components/shared/watch-button";
 import { mostLikelyScore, bestEdgeMarket } from "@/lib/football-correct-score";
 import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
+import { OddsSparkline } from "@/components/shared/odds-sparkline";
+import { useOddsHistory } from "@/hooks/use-odds-history";
 
 const dayCache = new Map<string, string>();
 
@@ -122,6 +124,13 @@ export function FootballMatchCard({
   const metrics = p.metricStats;
   const [showRankings, setShowRankings] = useState(false);
   const [showMarkets, setShowMarkets] = useState(false);
+
+  // Historique odds pour sparkline (collecté côté client via localStorage)
+  const oddsHistory = useOddsHistory(
+    String(match.id),
+    match.odds?.home ?? null,
+    match.odds?.away ?? null,
+  );
 
   // Collect prediction badges for the "Prédictions Clés" section
   const predictionBadges = useMemo(() => {
@@ -349,12 +358,21 @@ export function FootballMatchCard({
               <span className="text-sm font-bold text-muted-foreground">VS</span>
             )}
             {match.odds && (
-              <div className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                 <span className="tabular-nums">{match.odds.home.toFixed(2)}</span>
                 <span className="text-muted-foreground/40">/</span>
                 <span className="tabular-nums">{match.odds.draw.toFixed(2)}</span>
                 <span className="text-muted-foreground/40">/</span>
                 <span className="tabular-nums">{match.odds.away.toFixed(2)}</span>
+                {oddsHistory.length >= 2 && (
+                  <OddsSparkline
+                    dataA={oddsHistory.map((o) => o.a)}
+                    dataB={oddsHistory.map((o) => o.b)}
+                    width={60}
+                    height={20}
+                    className="ml-1 opacity-70"
+                  />
+                )}
               </div>
             )}
           </div>
