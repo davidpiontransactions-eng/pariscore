@@ -1460,7 +1460,7 @@ function CollapsedSidebar({
       <button
         type="button"
         onClick={() => onSportChange("home")}
-        className={`mb-1 rounded-lg p-2 transition-colors ${
+        className={`mb-1 rounded-lg p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
           activeSport === "home"
             ? "bg-emerald-500/15 text-emerald-400"
             : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
@@ -1476,7 +1476,7 @@ function CollapsedSidebar({
           <button
             type="button"
             onClick={() => onSportChange("football")}
-            className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-500/10"
+            className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title={`${liveCount} matchs live`}
           >
             <Radio className="h-4 w-4" />
@@ -1500,7 +1500,7 @@ function CollapsedSidebar({
             key={sport.id}
             type="button"
             onClick={() => onSportChange(sport.id as SportTabId)}
-            className={`relative mb-1 rounded-lg p-2 transition-colors ${
+            className={`relative mb-1 rounded-lg p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               isActive ? colors.bg + " " + colors.text : "text-slate-400 hover:bg-slate-800/80 hover:text-white"
             }`}
             title={sport.name}
