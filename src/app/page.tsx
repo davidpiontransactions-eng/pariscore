@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense } from "react";
+import { useState, Component, type ReactNode, useCallback, useMemo, useEffect, lazy, Suspense, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
   Trophy,
@@ -213,6 +213,41 @@ function HomeInner() {
   // Real data hooks
   const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
 
+  // ── Swipe mobile pour changer de sport ──
+  const SPORT_ORDER: SportTab[] = ["tennis", "football", "basketball", "mma", "f1", "baseball"];
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+      const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+
+      // Swipe horizontal uniquement (pas si vertical > horizontal)
+      if (Math.abs(deltaX) < 60 || Math.abs(deltaY) > Math.abs(deltaX)) return;
+
+      // Uniquement sur les tabs sport (pas home, live, etc.)
+      if (!SPORT_IDS.has(activeTab)) return;
+
+      const currentIdx = SPORT_ORDER.indexOf(activeTab as SportTab);
+      if (currentIdx === -1) return;
+
+      if (deltaX < 0 && currentIdx < SPORT_ORDER.length - 1) {
+        // Swipe gauche → sport suivant
+        handleTabChange(SPORT_ORDER[currentIdx + 1]);
+      } else if (deltaX > 0 && currentIdx > 0) {
+        // Swipe droite → sport précédent
+        handleTabChange(SPORT_ORDER[currentIdx - 1]);
+      }
+    },
+    [activeTab, handleTabChange, SPORT_ORDER]
+  );
+
   // ── Dialog de détail global (I5) ──
   // Le tableau "10 prochains matchs" émet window CustomEvent("open-match-detail")
   // avec { sport, matchId }. On résout l'objet match complet depuis les données
@@ -360,6 +395,8 @@ function HomeInner() {
           initial={reduceMotion ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
         {activeTab === "home" && (
           <>
