@@ -17,8 +17,26 @@ model User {
   email     String   @unique
   name      String?
   bets      UserBet[]
+  follows   Follow[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ─── User Follows (players, teams, leagues, matches) ─────────────────────────
+
+model Follow {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityId      String   // "player:djokovic-novak", "team:football:psg", etc.
+  category      String   // "player" | "team" | "league" | "match"
+  name          String
+  sport         String?
+  notifications Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, entityId])
+  @@index([userId, category])
 }
 
 // ─── Sports Data ─────────────────────────────────────────────────────────────
