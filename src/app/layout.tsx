@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Archivo } from "next/font/google";
+import { Geist, Geist_Mono, Archivo, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "next-themes";
@@ -20,6 +20,7 @@ import { FollowNotificationBridge } from "@/components/shared/follow-notificatio
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AppMotionConfig } from "@/components/motion-config";
 import { SiteHeader } from "@/components/layout/site-header";
+import { ResponsibleGamblingBanner } from "@/components/shared/responsible-gambling-banner";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 
@@ -77,6 +78,14 @@ const archivoDisplay = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   axes: ["wdth"],
+});
+
+// Font display UI — Space Grotesk variable (wght 300-700). Mood dashboard/
+// analytics, utilisee pour les headers de section et gros titres UI (pas les
+// scores — ceux-ci restent Archivo broadcast).
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -167,7 +176,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${archivoDisplay.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} ${archivoDisplay.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground`}
       >
         <a
           href="#main"
@@ -175,6 +184,7 @@ export default async function RootLayout({
         >
           Aller au contenu principal
         </a>
+
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -190,6 +200,7 @@ export default async function RootLayout({
                     <main id="main">
                       {children}
                     </main>
+                    <ResponsibleGamblingBanner />
                     <PrivacyDialog />
                     <BankrollDialog />
                     <PaperTradingDialog />

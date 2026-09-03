@@ -720,16 +720,17 @@ export function computeStrategyTop5Matches(
         leagueCountry,
         leagueLogo,
         kickoff: s.fixture.event_date,
-      home: teamRow(s.fixture, "home"),
-      away: teamRow(s.fixture, "away"),
-      value: Math.round(s.value * 100) / 100,
-      pick: s.pick,
-      stats: xgByFixture.get(String(s.fixture.id)) ?? null,
-      formSummary: (() => {
-        const rf = rawFormFor(store, s.fixture);
-        return rf ? { home: formToWDL(rf.home), away: formToWDL(rf.away) } : null;
-      })(),
-    }));
+        home: teamRow(s.fixture, "home"),
+        away: teamRow(s.fixture, "away"),
+        value: Math.round(s.value * 100) / 100,
+        pick: s.pick,
+        stats: xgByFixture.get(String(s.fixture.id)) ?? null,
+        formSummary: (() => {
+          const rf = rawFormFor(store, s.fixture);
+          return rf ? { home: formToWDL(rf.home), away: formToWDL(rf.away) } : null;
+        })(),
+      });
+    });
   }
 
   return { window: FORM_WINDOW, minPlayed: MIN_PLAYED, strategies };

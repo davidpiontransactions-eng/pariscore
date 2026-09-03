@@ -287,7 +287,7 @@ export function CyclingTabContent() {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <Bike className="h-5 w-5 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium">Chargement...</p>
+          <p className="text-sm font-medium">Chargement…</p>
         </div>
       )}
     </div>

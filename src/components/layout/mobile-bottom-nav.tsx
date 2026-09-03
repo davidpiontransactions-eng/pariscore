@@ -35,7 +35,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0e17]/90 backdrop-blur-md border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0e17]/90 backdrop-blur-md border-t border-white/10 pb-[env(safe-area-inset-bottom)] mobile-bottom-nav"
       role="navigation"
       aria-label="Navigation principale"
     >

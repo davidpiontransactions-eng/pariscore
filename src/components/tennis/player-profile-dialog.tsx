@@ -106,7 +106,7 @@ export function PlayerProfileDialog({ player, matches, open, onOpenChange }: Pro
               {player?.photoUrl ? (
                 <img
                   src={player.photoUrl}
-                  alt=""
+                  alt={playerName || "Joueur"}
                   className="h-16 w-16 rounded-full object-cover ring-2 ring-border"
                 />
               ) : (

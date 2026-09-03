@@ -278,7 +278,7 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
               </button>
             )}
         {selectedOption && <h3 className="mb-2 text-sm font-semibold tracking-tight">{selectedOption.label}</h3>}
-        {loading && <div className="flex items-center gap-2 py-4 text-sm text-purple-400"><Loader2 className="h-4 w-4 animate-spin" /> Analyse en cours...</div>}
+        {loading && <div className="flex items-center gap-2 py-4 text-sm text-purple-400"><Loader2 className="h-4 w-4 animate-spin" /> Analyse en cours…</div>}
         {error && !loading && <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">{error}</div>}
         {!loading && !error && <>
           <p className="text-sm leading-relaxed text-muted-foreground">{display.analysis}</p>

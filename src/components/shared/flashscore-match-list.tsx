@@ -467,7 +467,7 @@ export function FlashscoreMatchList({
               )}
               <div
                 ref={scrollRef}
-                className="max-h-[calc(100vh-280px)] overflow-y-auto"
+                className="max-h-[calc(100vh-280px)] overflow-y-auto scrollable-list"
                 onTouchStart={onRefresh ? handleTouchStart : undefined}
                 onTouchMove={onRefresh ? handleTouchMove : undefined}
                 onTouchEnd={onRefresh ? handleTouchEnd : undefined}

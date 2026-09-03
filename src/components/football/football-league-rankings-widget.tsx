@@ -148,7 +148,7 @@ function PlayersPanel({
                     {r.photo ? (
                       <img
                         src={r.photo}
-                        alt=""
+                        alt={r.name || "Joueur"}
                         loading="lazy"
                         width={18}
                         height={18}

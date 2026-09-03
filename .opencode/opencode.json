@@ -2,8 +2,98 @@
   "$schema": "https://opencode.ai/config.json",
   "shell": "cmd",
   "tools": { "bash": false },
-  "plugin": ["./.opencode/plugins/pariscore-superpowers"],
+  "plugin": ["./.opencode/plugins/pariscore-superpowers", "./.opencode/node_modules/ecc-universal/.opencode"],
   "provider": {
+    "gemini": {
+      "npm": "@ai-sdk/google-vertexai",
+      "name": "Google Gemini",
+      "options": {
+        "baseURL": "https://generativelanguage.googleapis.com/v1beta/models",
+        "apiKey": "${env:GOOGLE_GENERATIVE_AI_API_KEY}"
+      },
+      "models": {
+        "gemini-1.5-flash": {
+          "name": "Gemini 1.5 Flash",
+          "limit": {
+            "context": 1048576,
+            "output": 8192
+          }
+        },
+        "gemini-1.5-flash-8b": {
+          "name": "Gemini 1.5 Flash 8B",
+          "limit": {
+            "context": 1048576,
+            "output": 8192
+          }
+        },
+        "gemini-1.5-pro": {
+          "name": "Gemini 1.5 Pro",
+          "limit": {
+            "context": 1048576,
+            "output": 8192
+          }
+        },
+        "gemini-1.5-pro-latest": {
+          "name": "Gemini 1.5 Pro Latest",
+          "limit": {
+            "context": 1048576,
+            "output": 8192
+          }
+        },
+        "gemini-1.5-flash-8b-expensive": {
+          "name": "Gemini 1.5 Flash 8B (expensive)",
+          "limit": {
+            "context": 1048576,
+            "output": 32768
+          }
+        }
+      }
+    },
+    "modelscope": {
+      "npm": "@ai-sdk/modelscope",
+      "name": "ModelScope (modelscope.cn)",
+      "options": {
+        "baseURL": "https://api.modelscope.cn/v1",
+        "apiKey": "${env:MODELSCOPE_API_KEY}"
+      },
+      "models": {
+        "qwen3.7-flash": {
+          "name": "Qwen3.7 Flash",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen3.7-max": {
+          "name": "Qwen3.7 Max",
+          "limit": {
+            "context": 983616,
+            "output": 131072
+          }
+        },
+        "qwen3.6-flash": {
+          "name": "Qwen3.6 Flash",
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen3.6-72b": {
+          "name": "Qwen3.6 72B",
+          "limit": {
+            "context": 131072,
+            "output": 32768
+          }
+        },
+        "qwen3.6-27b": {
+          "name": "Qwen3.6 27B",
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          }
+        }
+      }
+    },
     "orcarouter": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "OrcaRouter (free DeepSeek V4)",

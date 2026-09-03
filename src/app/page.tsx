@@ -124,8 +124,7 @@ class PageErrorBoundary extends Component<
     return { error };
   }
   componentDidCatch(error: Error, info: { componentStack?: string }) {
-    console.error("[PariScore CRASH]", error.message, error.stack);
-    if (typeof window !== "undefined") {
+    if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
       (window as any).__PARISCORE_CRASH = {
         error: error.message,
         stack: error.stack,
@@ -136,12 +135,14 @@ class PageErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-bg-deep p-8">
+        <div className="flex min-h-screen items-center justify-center bg-bg-deep p-8" role="alert">
           <div className="text-center">
             <p className="text-sm text-red-400">Une erreur est survenue.</p>
             <button
+              type="button"
               onClick={() => this.setState({ error: null })}
               className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-500"
+              aria-label="Réessayer le chargement"
             >
               Réessayer
             </button>

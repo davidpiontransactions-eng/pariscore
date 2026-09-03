@@ -192,7 +192,7 @@ function PlayerItem({
       {player.photoUrl ? (
         <img
           src={player.photoUrl}
-          alt=""
+          alt={player.name || "Joueur"}
           className="h-6 w-6 shrink-0 rounded-full object-cover"
         />
       ) : (

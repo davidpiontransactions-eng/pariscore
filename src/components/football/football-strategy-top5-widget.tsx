@@ -78,7 +78,7 @@ function TeamName({
         {side.logo ? (
           <img
             src={side.logo}
-            alt=""
+            alt={side.shortName || "Logo équipe"}
             loading="lazy"
             className="h-2 w-2 rounded-full object-contain"
             onError={(e) => {

@@ -70,6 +70,10 @@ export function BookmakerComparison({
     onSelectOdds(bookmaker, odd);
   };
 
+  // Marge bookmaker = somme des probabilités implicites - 100%
+  const totalImplied = odds.reduce((sum, o) => sum + oddToProbability(o.odd), 0);
+  const margin = totalImplied - 100;
+
   return (
     <Table responsive>
       <TableHeader>
@@ -137,7 +141,10 @@ export function BookmakerComparison({
       <TableCaption>
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span>{t("fair_value")}: {fairValue >= 0 ? `+${fairValue}` : fairValue}%</span>
-          <span>{t("model")}</span>
+          <span className="text-xs text-slate-500">·</span>
+          <span className="text-xs text-slate-500">
+            Marge bookmaker : <span className="tabular-nums text-slate-400">{margin.toFixed(1)}%</span>
+          </span>
         </div>
         {selected && (
           <div className="mt-2 flex items-center gap-2 text-xs">

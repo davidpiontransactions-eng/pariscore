@@ -55,6 +55,14 @@ When skills request actions, use Cline equivalents:
 - Always use CMD syntax on Windows (never bash)
 - Use `oc_bash` not `bash` in OpenCode
 
+## ECC Bridge (instruction-only, pas de hooks sous Cline)
+
+ECC (affaan-m/ECC) n'a pas d'adapter Cline. Appliquer sa boucle en manuel :
+`plan -> test -> implement -> review -> verify -> remember -> improve`.
+Skill : `.cline/skills/ecc-bridge` (junction vers `.agents/tools/ecc-bridge`).
+Prompts : `.github/prompts/plan|tdd|security-review.prompt.md`.
+Scan sécu : `npx -y ecc-agentshield@1.4.0 scan` (ou `bun run ecc:scan`).
+
 ## User Instructions
 
 User instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence over skills.

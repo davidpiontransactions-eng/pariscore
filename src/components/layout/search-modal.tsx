@@ -229,7 +229,10 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
                   placeholder={t("search.placeholder", {
                     defaultValue: "Rechercher un match, équipe, ligue…",
                   })}
-                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  aria-label={t("search.placeholder", {
+                    defaultValue: "Rechercher un match, équipe, ligue…",
+                  })}
+                  className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 {query && (
                   <button

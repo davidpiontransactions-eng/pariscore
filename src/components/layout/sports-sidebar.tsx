@@ -501,7 +501,7 @@ function MatchRow({
         {match.awayName ? ` – ${match.awayName}` : ""}
       </button>
       {cells.length && !hideOdds ? (
-        <span className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+        <span className="flex shrink-0 items-center gap-0.5" role="presentation" onClick={(e) => e.stopPropagation()}>
           {cells.map((c, i) => (
             <button
               key={c.label}
@@ -509,7 +509,7 @@ function MatchRow({
               aria-label={`${c.label} ${c.value}`}
               onClick={() => openDetail(c.label)}
               className={cn(
-                "rounded-md border px-1.5 py-0.5 font-mono text-[11px] tabular-nums transition-all duration-150",
+                "rounded-md border px-1.5 py-0.5 font-mono text-[11px] tabular-nums transition-colors duration-150",
                 i === bestCellIndex(cells) && hasOdds
                   ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
                   : "border-slate-700/40 bg-slate-800/50 text-white/60 hover:border-emerald-500/30 hover:bg-emerald-500/15 hover:text-emerald-300",
@@ -521,7 +521,7 @@ function MatchRow({
           ))}
         </span>
       ) : cells.length && hideOdds ? (
-        <span className="flex shrink-0 items-center gap-0.5" onClick={(e) => e.stopPropagation()}>
+        <span className="flex shrink-0 items-center gap-0.5" role="presentation" onClick={(e) => e.stopPropagation()}>
           <span className="rounded-md border border-slate-700/40 bg-slate-800/50 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-slate-500">—</span>
         </span>
       ) : (
@@ -1212,7 +1212,7 @@ export function SportsSidebarContent({
   const hasAnyMatch = tree.some((s) => s.totalMatches > 0);
 
   return (
-    <div className="flex h-full w-full flex-col overflow-y-auto bg-[#0e121e] text-slate-200">
+    <div className="flex h-full w-full flex-col overflow-y-auto scrollable-list bg-[#0e121e] text-slate-200">
       {/* Header sidebar premium — gradient + live counter */}
       <div className="border-b border-slate-800/60 bg-gradient-to-b from-[#0e121e] via-[#0e121e] to-transparent">
         <div className="flex items-center justify-between px-3 py-3">

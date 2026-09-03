@@ -106,7 +106,7 @@ export default function MatchScenarioSimulator({
             id="surface-select"
             value={surface}
             onChange={(e) => setSurface(e.target.value as Surface)}
-            className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+            className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-accent/50 focus-visible:ring-1 focus-visible:ring-accent/20"
           >
             {SURFACES.map((s) => (
               <option key={s} value={s}>
@@ -128,7 +128,7 @@ export default function MatchScenarioSimulator({
             id="fatigue-select"
             value={fatigueMod}
             onChange={(e) => setFatigueMod(Number(e.target.value))}
-            className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+            className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-accent/50 focus-visible:ring-1 focus-visible:ring-accent/20"
           >
             {FATIGUE_OPTIONS.map((o) => (
               <option key={o.label} value={o.mod}>
@@ -150,7 +150,7 @@ export default function MatchScenarioSimulator({
             id="condition-select"
             value={injuryMod}
             onChange={(e) => setInjuryMod(Number(e.target.value))}
-            className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-accent/50 focus:ring-1 focus:ring-accent/20"
+            className="w-full rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-accent/50 focus-visible:ring-1 focus-visible:ring-accent/20"
           >
             {CONDITION_OPTIONS.map((o) => (
               <option key={o.label} value={o.mod}>

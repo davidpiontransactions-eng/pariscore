@@ -293,7 +293,7 @@ export function AthleteCardSkeleton({ variant = "grid" }: { variant?: "grid" | "
   if (variant === "list") {
     return (
       <div className="flex items-start gap-2 animate-pulse" aria-busy="true" role="status">
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">Loading…</span>
         <div className="h-10 w-10 rounded-md bg-muted flex-shrink-0 mt-1" />
         <div className="flex-1 space-y-1.5">
           <div className="h-3 w-24 rounded bg-muted" />
@@ -306,7 +306,7 @@ export function AthleteCardSkeleton({ variant = "grid" }: { variant?: "grid" | "
 
   return (
     <div className="animate-pulse rounded-xl border border-border/50 p-3" aria-busy="true" role="status">
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">Loading…</span>
       <div className="h-20 w-20 rounded-2xl bg-muted mb-2" />
       <div className="h-3 w-20 rounded bg-muted mb-1" />
       <div className="h-2.5 w-16 rounded bg-muted mb-0.5" />

@@ -13,7 +13,37 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  reactStrictMode: false,
+  reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://app.posthog.com https://browser.sentry-cdn.com",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' https: data: blob:",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' https://app.posthog.com https://sentry.io https://*.sentry.io wss:",
+              "frame-ancestors 'none",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
+        ],
+      },
+    ];
+  },
   // better-sqlite3 est un module natif (binding C++) utilisé par la couche
   // tennis-stats pour lire pariscore.db. Il doit rester externe au bundle
   // server de Next.js — sinon le build standalone échoue à le résoudre.

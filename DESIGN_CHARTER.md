@@ -282,3 +282,274 @@ Il détecte automatiquement :
 - `font-family: '...'` hors variables `--font-*`
 - `transition: all`
 - `!important` non justifié (todo list)
+
+---
+
+## 13. Motion Policy (Phase 19 — 2026-09-03)
+
+### 13.1 Règle d'or : Functional vs Decorative
+
+> **Chaque animation doit répondre à la question : "Qu'est-ce qu'elle COMMUNIQUE ?"**
+> Si la réponse est "rien" → supprimer ou gate `prefers-reduced-motion`.
+
+### 13.2 Classification des animations existantes
+
+| Animation | Keyframe | Catégorie | Justification |
+|---|---|---|---|
+| `glow-pulse` | `box-shadow` pulsation | **Fonctionnelle** ✅ | Indique l'état "LIVE" — information vitale |
+| `shimmer` | `translateX` skeleton | **Fonctionnelle** ✅ | Feedback de chargement — l'utilisateur sait qu'on attend |
+| `pulse-soft` | `opacity` pulsation | **Fonctionnelle** ✅ | Indique un état actif/sélectionné |
+| `tab-fade-in` | `opacity + translateY` | **Fonctionnelle** ✅ | Transition d'onglet — guide l'œil vers le nouveau contenu |
+| `aurora-drift` | `translate3d + scale` | **Décorative** ⚠️ | Ambiance visuelle — garder mais gate reduced-motion |
+| `grid-pan` | `background-position` | **Décorative** ⚠️ | Pattern ambiant — garder mais gate reduced-motion |
+| `bounce-soft` | `translateY` | **Limite** ⚠️ | Utiliser uniquement sur les CTA/boutons d'action |
+
+### 13.3 Règles
+
+1. **Fonctionnel** = peut être gardé même avec `prefers-reduced-motion: reduce` (avec `0.01ms` fallback)
+2. **Décoratif** = DOIT être désactivé quand `prefers-reduced-motion: reduce` (déjà fait dans globals.css)
+3. **bounce-soft** = réservé aux éléments cliquables (boutons, CTA). Jamais sur du contenu statique.
+4. **Nouvelles animations** : justifier la catégorie "Fonctionnelle" avant d'ajouter un `@keyframes`
+5. **Durée max** : 500ms pour les animations fonctionnelles. 26s pour les ambient (aurora/grid).
+
+### 13.4 Gate reduced-motion
+
+Toute animation décorative AJOUTÉE doit être incluse dans le bloc :
+```css
+@media (prefers-reduced-motion: reduce) {
+  .sport-ambient::after,
+  .sport-ambient::before,
+  .nouvelle-animation-decorative {
+    animation: none;
+  }
+}
+```
+
+---
+
+## 14. Anti-Sameness Strategy (Phase 20 — 2026-09-03)
+
+### 14.1 Identité Visuelle Pariscore — Notre ADN
+
+> **Pariscore = Dark Navy + Vert Néon + Glass + Ambient Patterns.**
+> Ce cocktail visuel EST notre identité. Pas de rebrand, pas de tendance qui le remplace.
+
+| Élément | Valeur | Rôle |
+|---|---|---|
+| Fond | `#0a0e17` → `#1A1A2E` | immersion nocturne, contraste fort |
+| Accent | `#00e676` vert néon | signal fort, action, confiance |
+| Glass | blur + translucent | profondeur, hiérarchie spatiale |
+| Ambient | dot pattern + aurora | texture vivante sans surcharge |
+| Typo | Geist (body) + Archivo (scores) | neutralité + caractère broadcast |
+
+### 14.2 Trend Filter — Checklist d'Évaluation
+
+Avant d'adopter TENDANCE, chaque ajout doit répondre :
+
+```
+1. Est-ce que ça aide les parieurs à prendre des décisions ?    → Sinon : SKIP
+2. Est-ce que ça améliore la lisibilité des données/scores ?    → Sinon : SKIP
+3. Est-ce que ça renforce l'identité dark+vert+glass ?           → Sinon : SKIP
+4. Est-ce que ça casse la performance mobile ?                   → Sinon : OK
+5. Est-ce que c'est accessible (contraste, keyboard, motion) ?   → Sinon : FIX d'abord
+```
+
+### 14.3 Tendances Refusées — Anti-Patterns
+
+| Tendance | Raison du refus |
+|---|---|
+| **Y2K / Chrome / Iridescent** | Inadapté au gambling sérieux — décalé |
+| **Neo-Brutalism** | Bordures épaisses = mauvaise lisibilité des odds |
+| **3D lourd (WebGL)** | Coût performance démesuré pour un site data-driven |
+| **Hyper-Maximalism** | Surcharge cognitive = mauvaise UX pour les paris |
+| **Stock photos** | On est data-driven, pas lifestyle |
+
+### 14.4 Tendances Adoptées — avec modération
+
+| Tendance | Application Pariscore | Limite |
+|---|---|---|
+| **Variable Fonts** | Scores broadcast (Archivo) + Geist variable | Pas de typo "fun" |
+| **Glassmorphism** | Déjà en place (3 niveaux) | Pas de glass sur glass |
+| **Micro-Interactions** | Feedback utilitaire (hover, focus, live pulse) | Pas de bounce décoratif |
+| **Scroll Reveal** | Révéler les sections au scroll | Pas d'animation sur CHAQUE élément |
+| **Bold Colors** | Gradients par sport (subtil) | Pas de rainbow partout |
+| **Accessibility** | Built-in, pas widget overlay | Jamais accessiBe/UserWay |
+
+### 14.5 Règle "One Bold Move"
+
+> **Max 1 tendance "bold" par page.** Si la page a déjà du glass + animation + gradient, pas de +.
+> Exemple : Dashboard = Glass (bold) + Scroll Reveal (modéré) = OK.
+> Dashboard = Glass + Gradient + Animation + Cursor custom = OVERDESIGN → Simplifier.
+
+---
+
+## 15. Sport Gradients (Phase 17 — 2026-09-03)
+
+> **Principe** : chaque sport a une couleur dominante utilisée en gradient subtil sur les headers/sections.
+
+| Sport | Token CSS | Gradient CSS | Usage |
+|---|---|---|---|
+| Football | `--sport-football` | `#00e676 → 30% opacity → #0a0e17` | Headers, badges, accents |
+| Tennis | `--sport-tennis` | `#29b6f6 → 30% opacity → #0a0e17` | Onglet tennis, cards match |
+| MMA | `--sport-mma` | `#f59e0b → 30% opacity → #0a0e17` | Onglet MMA, fight cards |
+| F1 | `--sport-f1` | `#ef4444 → 30% opacity → #0a0e17` | Onglet F1, race cards |
+| Basketball | `--sport-basketball` | `#f97316 → 30% opacity → #0a0e17` | Onglet basketball |
+
+### Classes utilitaires
+
+| Classe | Description |
+|---|---|
+| `.gradient-sport-football` | Gradient vert football |
+| `.gradient-sport-tennis` | Gradient bleu tennis |
+| `.gradient-sport-mma` | Gradient ambre MMA |
+| `.gradient-sport-f1` | Gradient rouge F1 |
+| `.gradient-sport-basketball` | Gradient orange basketball |
+
+### Règles
+
+1. **Angle standard** : `135deg` (haut-gauche → bas-droite)
+2. **3 stops max** : couleur dominante → 30% opacity → fond deep
+3. **Usage** : backgrounds de sections, pas de texte
+4. **Pas de gradient sur texte** sauf `.bg-clip-text` existant (hero title)
+
+---
+
+## 16. Liquid Glass Token (Phase 18 — 2026-09-03)
+
+> **Inspiré Apple Liquid Glass** : glass plus blur (40-60px), saturé (1.5-1.8x), ombre inset subtile.
+
+### Tokens CSS
+
+| Token | Valeur | Usage |
+|---|---|---|
+| `--glass-liquid-bg` | `rgba(255,255,255,0.04)` | Fond glass léger |
+| `--glass-liquid-border` | `rgba(255,255,255,0.08)` | Bordure glass |
+| `--glass-liquid-shadow` | `0 8px 32px rgba(0,0,0,0.12) + inset 0 1px 0 rgba(255,255,255,0.05)` | Ombre + highlight inset |
+| `--glass-liquid-blur` | `blur(40px) saturate(1.5)` | Flou + saturation |
+
+### Classes utilitaires
+
+| Classe | Description |
+|---|---|
+| `.glass-liquid` | Glass standard (40px blur) |
+| `.glass-liquid-elevated` | Glass surélevé (60px blur, ombre forte) |
+
+### Différence avec glass existant
+
+| Aspect | Glass classique | Liquid Glass |
+|---|---|---|
+| Blur | 6-20px | 40-60px |
+| Saturation | 1x | 1.5-1.8x |
+| Inset highlight | Non | Oui (`inset 0 1px 0 rgba(255,255,255,0.05)`) |
+| Usage | Modales, overlays | Hero sections, feature cards |
+
+---
+
+## 17. Glassmorphism Raffiné (Phase 4 — 2026-09-03)
+
+> **Amélioration** : border glow subtil au focus-visible pour renforcer l'accessibilité keyboard.
+
+### Classe
+
+| Classe | Description |
+|---|---|
+| `.glass-focus` | Ajoute border emerald glow au `focus-visible` |
+
+### Utilisation
+
+```tsx
+// Avant
+<div className="glass-liquid">
+
+// Après — avec feedback keyboard
+<div className="glass-liquid glass-focus" tabIndex={0}>
+```
+
+### Règles
+
+1. **Uniquement `focus-visible`** — pas de glow au click souris
+2. **Couleur** : emerald (`rgba(0,230,118,0.4)`) — cohérent avec l'accent Pariscore
+3. **Reset** : `:focus-visible:not(:focus-visible)` restaure le style glass de base
+4. **Usage** : cartes interactives, boutons glass, panneaux navigables au clavier
+
+---
+
+## 18. Variable Fonts Avancé (Phase 3 — 2026-09-03)
+
+> **Extension** : Space Grotesk ajouté comme font display UI pour les headers de section.
+
+### Fonts disponibles
+
+| Rôle | Variable CSS | Famille | Axes | Usage |
+|---|---|---|---|---|
+| Body | `--font-sans` | Geist | — | Texte principal |
+| Mono | `--font-mono` | Geist Mono | — | Odds, stats, code |
+| Display Score | `--font-display` | Archivo | `wdth` (62-125) | Scores broadcast, grands chiffres |
+| **Display UI** | `--font-display-ui` | **Space Grotesk** | `wght` (300-700) | Headers de section, gros titres UI |
+
+### Classes utilitaires
+
+| Classe | Description |
+|---|---|
+| `.score-hero` | Score broadcast (Archivo wdth 118, weight 800) |
+| `.score-hero-weight` | Score avec weight shift au hover (800→900) |
+| `.score-hover` | Score interactif avec weight + color shift |
+| `.font-display-ui` | Space Grotesk pour headers UI |
+
+### Règles
+
+1. **Archivo** = scores et numéros uniquement. Jamais pour du texte body.
+2. **Space Grotesk** = headers de section, titres UI. Mood dashboard/analytics.
+3. **Geist** = reste du body. Ne pas mélanger.
+
+---
+
+## 19. Dark Mode — Accent ≤ 5% (Phase 7 — 2026-09-03)
+
+> **Règle d'or** : `#00e676` apparaît UNIQUEMENT sur les signaux. Tout le chrome = slate translucide.
+
+### Sémantique accent
+
+| Élément | Couleur | Raison |
+|---|---|---|
+| Value bet, win, confiance haute | `#00e676` | Signal positif |
+| Live pulse | `#00e676` | État actif |
+| CTA primaire | `#00e676` | Action principale |
+| Bordures neutres | `rgba(148,163,184,0.12)` | Chrome |
+| Icônes neutres | `rgba(148,163,184,0.7)` | Chrome |
+| Boutons secondaires | `rgba(148,163,184,0.7)` | Chrome |
+
+### Classes utilitaires
+
+| Classe | Description |
+|---|---|
+| `.chrome-neutral` | Style neutre slate pour chrome |
+| `.signal-accent` | Réservé aux éléments signalants |
+| `.signal-accent-glow` | Glow vert sur éléments signal |
+
+### Audit
+
+Compter la surface de pixels `#00e676` sur la homepage. Objectif : **≤ 5%** de la surface totale.
+
+---
+
+## 20. Mobile-First Refinements (Phase 21 — 2026-09-03)
+
+> **Safe areas + touch targets** pour PWA Capacitor (Android/iOS).
+
+### Tokens / Classes
+
+| Classe | Description |
+|---|---|
+| `.mobile-safe-top` | `padding-top: env(safe-area-inset-top)` |
+| `.mobile-safe-bottom` | `padding-bottom: env(safe-area-inset-bottom)` |
+| `.mobile-safe-x` | `padding-left/right: env(safe-area-inset-left/right)` |
+| `.touch-target` | Min 44x44pt (Apple HIG / Material Design 3) |
+| `.mobile-bottom-nav` | Bottom nav avec safe area auto |
+
+### Règles
+
+1. **Touch targets** : minimum 44x44pt sur tous les éléments interactifs
+2. **Safe areas** : utiliser `env(safe-area-inset-*)` pour les PWA standalone
+3. **Bottom nav** : toujours inclure `mobile-bottom-nav` pour le padding home indicator
+4. **Tap highlight** : `-webkit-tap-highlight-color: transparent` sur tous les boutons/liens

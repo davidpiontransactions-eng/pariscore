@@ -6,6 +6,7 @@ This project uses **bd** (beads) for issue tracking. Run `bd prime` for full wor
 Do NOT narrate each step (*"Let me check…"*, *"Now I'll…"*, *"The X returned Y, so…"*).
 State intent in one short line, run your tool calls, then give a tight result summary.
 Full rules in [`.opencode/instructions/communication.md`](./.opencode/instructions/communication.md).
+ECC harness (OpenCode plugin beta) : [`.opencode/instructions/ecc.md`](./.opencode/instructions/ecc.md).
 
 ## Tone & Verbosity
 

@@ -150,7 +150,7 @@ export function CyclingStageCard({
                         {rider.photo ? (
                           <img
                             src={rider.photo}
-                            alt=""
+                            alt={rider.name || "Coureur"}
                             className="h-4 w-4 shrink-0 rounded-full object-cover"
                           />
                         ) : null}

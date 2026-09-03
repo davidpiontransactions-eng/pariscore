@@ -14,6 +14,7 @@
     "test": "node scripts/run-bun.js test",
     "qa:node": "node scripts/qa-node-check.js",
     "qa:press-review": "bun run scripts/qa-press-review.ts",
+    "ecc:scan": "npx -y ecc-agentshield@1.4.0 scan",
     "deploy:force-rebuild": "echo 'force rebuild'",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",

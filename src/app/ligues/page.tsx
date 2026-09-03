@@ -75,7 +75,7 @@ export default function LeaguesIndexPage() {
         <p className="mt-1 text-xs text-muted-foreground">
           {data
             ? `${data.total} compétitions · stats buts, cartons, corners, BTTS et cotes`
-            : "Chargement..."}
+            : "Chargement…"}
         </p>
       </div>
 

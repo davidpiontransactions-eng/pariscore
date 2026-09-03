@@ -40,7 +40,7 @@ export default function LeagueStatsPage() {
         </Link>
         <div>
           <h1 className="text-xl font-bold tracking-tight">
-            {data?.league.name ?? "Chargement..."}
+            {data?.league.name ?? "Chargement…"}
           </h1>
           <p className="text-xs text-muted-foreground">
             {data?.league.country} · Saison {data?.league.season}
