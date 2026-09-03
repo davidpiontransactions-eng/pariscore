@@ -204,8 +204,10 @@
   "matchTabs": {
     "live": "Live",
     "prematch": "Pre-match",
+    "rankings": "Classements & Résultats",
     "liveAria": "{n} matchs en direct",
     "prematchAria": "{n} matchs à venir",
+    "rankingsAria": "Classements et résultats des championnats",
     "tabsAriaLabel": "Filtrer par statut de match",
     "emptyLive": "Aucun match en direct pour le moment",
     "emptyLiveHint": "Les matchs en direct apparaissent ici dès leur coup d'envoi",

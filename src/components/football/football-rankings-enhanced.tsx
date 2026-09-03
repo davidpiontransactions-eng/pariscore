@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Loader2, AlertCircle, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Home, Plane, Percent } from "lucide-react";
+import { Loader2, AlertCircle, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Home, Plane, Percent, Shield, Plane as PlaneIcon, Equal } from "lucide-react";
 import { useFootballLeagueRankings } from "@/hooks/use-football-rankings";
 import type { FdRankRow, XgRankRow } from "@/hooks/use-football-rankings";
 import {
@@ -82,6 +82,100 @@ function TrendArrow({ value }: { value: number }) {
   if (value > 0) return <TrendingUp className="h-3 w-3 text-emerald-400" />;
   if (value < 0) return <TrendingDown className="h-3 w-3 text-red-400" />;
   return <Minus className="h-3 w-3 text-zinc-500" />;
+}
+
+// ─── FORM TRAJECTORY ARROW ────────────────────────────────────────────────────
+// Innovation P0: Flèche de trajectoire de forme (↗ ↘ →)
+// Source: WhoScored + recherche académique sur les tendances visuelles
+
+type FormTrajectory = "up" | "down" | "stable";
+
+function FormTrajectoryArrow({ form }: { form: FormDotResult[] }) {
+  const reducedMotion = useReducedMotion();
+  
+  // Calculer la trajectoire basée sur les 6 derniers matchs
+  const trajectory = useMemo((): FormTrajectory => {
+    if (form.length < 2) return "stable";
+    const recent = form.slice(-3); // 3 derniers
+    const older = form.slice(0, 3); // 3 premiers
+    
+    const recentScore = recent.reduce((acc, r) => acc + (r === "W" ? 3 : r === "D" ? 1 : 0), 0);
+    const olderScore = older.reduce((acc, r) => acc + (r === "W" ? 3 : r === "D" ? 1 : 0), 0);
+    
+    if (recentScore > olderScore + 2) return "up";
+    if (recentScore < olderScore - 2) return "down";
+    return "stable";
+  }, [form]);
+
+  return (
+    <motion.div
+      initial={reducedMotion ? {} : { scale: 0, rotate: -180 }}
+      animate={{ scale: 1, rotate: 0 }}
+      className={cn(
+        "inline-flex items-center justify-center w-5 h-5 rounded-full",
+        trajectory === "up" && "bg-emerald-500/20",
+        trajectory === "down" && "bg-red-500/20",
+        trajectory === "stable" && "bg-zinc-500/20"
+      )}
+    >
+      {trajectory === "up" && <span className="text-emerald-400 text-xs font-bold">↗</span>}
+      {trajectory === "down" && <span className="text-red-400 text-xs font-bold">↘</span>}
+      {trajectory === "stable" && <span className="text-zinc-500 text-xs font-bold">→</span>}
+    </motion.div>
+  );
+}
+
+// ─── HOME FORTRESS BADGES ─────────────────────────────────────────────────────
+// Innovation P0: Badges Fortress/Travelers/Balanced
+// Source: Transfermarkt form + SoccerStats home advantage
+
+type BadgeType = "fortress" | "travelers" | "balanced" | "dependent";
+
+function HomeFortressBadge({ homePPG, awayPPG }: { homePPG: number; awayPPG: number }) {
+  const reducedMotion = useReducedMotion();
+  const diff = homePPG - awayPPG;
+  
+  const badge = useMemo((): { type: BadgeType; label: string; icon: string; color: string } => {
+    if (homePPG > 2.0 && diff > 0.5) return { type: "fortress", label: "Forteresse", icon: "🏰", color: "text-emerald-400 bg-emerald-500/10" };
+    if (awayPPG > 1.5 && diff < -0.3) return { type: "travelers", label: "Voyageurs", icon: "✈️", color: "text-sky-400 bg-sky-500/10" };
+    if (Math.abs(diff) < 0.3) return { type: "balanced", label: "Équilibré", icon: "⚖️", color: "text-zinc-400 bg-zinc-500/10" };
+    return { type: "dependent", label: "Dépendant", icon: "⚠️", color: "text-amber-400 bg-amber-500/10" };
+  }, [homePPG, awayPPG, diff]);
+
+  return (
+    <motion.div
+      initial={reducedMotion ? {} : { scale: 0 }}
+      animate={{ scale: 1 }}
+      className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium", badge.color)}
+      title={badge.label}
+    >
+      <span>{badge.icon}</span>
+      <span className="hidden sm:inline">{badge.label}</span>
+    </motion.div>
+  );
+}
+
+// ─── PPG DELTA HEATMAP ────────────────────────────────────────────────────────
+// Innovation P0: Gradient vert/rouge dans les cellules
+// Source: Tufte data-ink + Cleveland position encoding
+
+function PPGHeatCell({ value, max, invert = false }: { value: number; max: number; invert?: boolean }) {
+  const intensity = max > 0 ? Math.min(1, Math.abs(value) / max) : 0;
+  const isGood = invert ? intensity < 0.5 : intensity > 0.5;
+  
+  // Gradient: red (bad) → dark (neutral) → green (good)
+  const bgColor = isGood 
+    ? `rgba(0, 230, 118, ${Math.round(intensity * 15)})` 
+    : `rgba(239, 68, 68, ${Math.round((1 - intensity) * 15)})`;
+
+  return (
+    <span
+      className="inline-flex items-center justify-center rounded px-2 py-0.5 text-xs font-mono tabular-nums"
+      style={{ backgroundColor: bgColor }}
+    >
+      {value.toFixed(2)}
+    </span>
+  );
 }
 
 // ─── DIVERGING PPG BAR (SoccerStats style) ────────────────────────────────────
@@ -495,21 +589,24 @@ export function FootballRankingsEnhanced() {
                   </span>
                 </td>
 
-                {/* Team */}
+                {/* Team + Badge */}
                 <td className="px-2 py-2">
-                  <span className="font-medium text-zinc-200">{row.team}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-zinc-200">{row.team}</span>
+                    <HomeFortressBadge homePPG={row.ppg} awayPPG={Math.max(0, row.ppg - (row.gd > 0 ? 0.3 : -0.2))} />
+                  </div>
                 </td>
 
                 {viewMode === "comparison" ? (
                   <>
                     <td className="px-2 py-2 text-center">
-                      <span className="text-emerald-400 font-mono text-xs">{row.ppg.toFixed(2)}</span>
+                      <PPGHeatCell value={row.ppg} max={3} />
                     </td>
                     <td className="px-2 py-2">
                       <DivergingPPGBar homePPG={row.ppg} awayPPG={Math.max(0, row.ppg - (row.gd > 0 ? 0.3 : -0.2))} />
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <span className="text-sky-400 font-mono text-xs">{Math.max(0, row.ppg - (row.gd > 0 ? 0.3 : -0.2)).toFixed(2)}</span>
+                      <PPGHeatCell value={Math.max(0, row.ppg - (row.gd > 0 ? 0.3 : -0.2))} max={3} invert />
                     </td>
                     <td className="px-2 py-2 text-center">
                       <TrendArrow value={row.gd} />
@@ -564,10 +661,13 @@ export function FootballRankingsEnhanced() {
                   </>
                 )}
 
-                {/* Form dots */}
+                {/* Form dots + trajectory */}
                 {showForm && (
                   <td className="px-2 py-2">
-                    <FormDots form={row.form} />
+                    <div className="flex items-center gap-1.5">
+                      <FormDots form={row.form} />
+                      <FormTrajectoryArrow form={row.form} />
+                    </div>
                   </td>
                 )}
               </motion.tr>

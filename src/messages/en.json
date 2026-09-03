@@ -204,8 +204,10 @@
   "matchTabs": {
     "live": "Live",
     "prematch": "Pre-match",
+    "rankings": "Rankings & Results",
     "liveAria": "{n} live matches",
     "prematchAria": "{n} upcoming matches",
+    "rankingsAria": "Championship rankings and results",
     "tabsAriaLabel": "Filter by match status",
     "emptyLive": "No live matches right now",
     "emptyLiveHint": "Live matches appear here as soon as they kick off",
