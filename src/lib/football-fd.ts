@@ -133,3 +133,55 @@ export function fdTeamStats(
   const file = readFd(slug);
   return file?.seasons?.[season]?.teams?.[team] ?? null;
 }
+
+/** Type pour une ligne de classement complet (toutes colonnes). */
+export type FdStandingRow = {
+  team: string;
+  gp: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  points: number;
+  gf: number;
+  ga: number;
+  gd: number;
+  ppg: number;
+  gfPg: number;
+  gaPg: number;
+};
+
+/**
+ * Classement complet d'un championnat (toutes colonnes W/D/L/GF/GA/GD/PTS).
+ * Utilisé par FootballRankingsEnhanced pour afficher le tableau complet.
+ */
+export function fdStandings(
+  slug: string,
+  season: string,
+  scope: FdScope = "overall",
+): FdStandingRow[] | null {
+  const file = readFd(slug);
+  const seasonData = file?.seasons?.[season];
+  if (!seasonData) return null;
+
+  const rows: FdStandingRow[] = [];
+  for (const [team, stats] of Object.entries(seasonData.teams)) {
+    const ctx = stats[scope] ?? stats.overall;
+    if (ctx.gp === 0) continue;
+    rows.push({
+      team,
+      gp: ctx.gp,
+      wins: ctx.wins,
+      draws: ctx.draws,
+      losses: ctx.losses,
+      points: ctx.points,
+      gf: ctx.goalsFor,
+      ga: ctx.goalsAgainst,
+      gd: ctx.goalsFor - ctx.goalsAgainst,
+      ppg: ctx.ppm,
+      gfPg: ctx.gfPg,
+      gaPg: ctx.gaPg,
+    });
+  }
+  rows.sort((a, b) => b.points - a.points || b.gd - a.gd || b.gf - a.gf);
+  return rows;
+}

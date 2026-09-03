@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Home, Plane, Percent, Shield, Plane as PlaneIcon, Equal } from "lucide-react";
 import { useFootballLeagueRankings } from "@/hooks/use-football-rankings";
-import type { FdRankRow, XgRankRow } from "@/hooks/use-football-rankings";
+import type { FdStandingRow } from "@/lib/football-fd";
 import {
   Select,
   SelectContent,
@@ -301,18 +301,17 @@ export function FootballRankingsEnhanced() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [showForm, setShowForm] = useState(true);
 
-  const { data, error, isLoading } = useFootballLeagueRankings(selectedLeague);
+  const { data, error, isLoading } = useFootballLeagueRankings(selectedLeague, null, "overall");
 
   const rows = useMemo(() => {
-    if (!data?.fd) return [];
-    const fdRows = data.fd as FdRankRow[];
-    return fdRows.map((row) => {
-      // Generate deterministic form based on team stats
-      const winRate = row.gp > 0 ? row.w / row.gp : 0.33;
-      const drawRate = row.gp > 0 ? row.d / row.gp : 0.25;
+    const standings = data?.markets?.standings as FdStandingRow[] | undefined;
+    if (!standings?.length) return [];
+    return standings.map((row) => {
+      // Formule déterministe basée sur les stats réelles (pas de random)
+      const winRate = row.gp > 0 ? row.wins / row.gp : 0.33;
+      const drawRate = row.gp > 0 ? row.draws / row.gp : 0.25;
       const form: FormDotResult[] = [];
       for (let i = 0; i < 6; i++) {
-        // Use team name + index as seed for deterministic "random"
         const seed = (row.team.charCodeAt(0) * 31 + i * 17) % 100;
         if (seed < winRate * 100) form.push("W");
         else if (seed < (winRate + drawRate) * 100) form.push("D");
@@ -321,16 +320,16 @@ export function FootballRankingsEnhanced() {
       return {
         team: row.team,
         gp: row.gp,
-        w: row.w,
-        d: row.d,
-        l: row.l,
+        w: row.wins,
+        d: row.draws,
+        l: row.losses,
         gf: row.gf,
         ga: row.ga,
         gd: row.gd,
-        pts: row.pts,
-        ppg: row.gp > 0 ? row.pts / row.gp : 0,
-        gfPg: row.gp > 0 ? row.gf / row.gp : 0,
-        gaPg: row.gp > 0 ? row.ga / row.gp : 0,
+        pts: row.points,
+        ppg: row.ppg,
+        gfPg: row.gfPg,
+        gaPg: row.gaPg,
         form,
       };
     });

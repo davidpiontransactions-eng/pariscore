@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   fdRanking,
+  fdStandings,
   fdSeasons,
   FD_MARKETS,
   type FdMarketKey,
@@ -49,6 +50,10 @@ export async function GET(request: Request) {
     markets.xgFor = [...xgRows].sort((a, b) => b.xgFor - a.xgFor);
     markets.xgAgainst = [...xgRows].sort((a, b) => a.xgAgainst - b.xgAgainst);
   }
+
+  // Classement complet (W/D/L/GF/GA/GD/PTS) — pour FootballRankingsEnhanced.
+  const standings = fdStandings(league, season, scope);
+  if (standings) markets.standings = standings;
 
   return NextResponse.json({
     league,
