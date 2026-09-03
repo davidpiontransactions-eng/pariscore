@@ -1,26 +1,25 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 /**
- * GET /api/v1/follows
+ * GET /api/v1/follows?userId=xxx
  *
- * Récupère tous les follows de l'utilisateur connecté.
- * Retourne un tableau de follows au format UseFollowStore.
+ * Récupère tous les follows d'un utilisateur.
+ * Retourne un objet { follows: Record<string, FollowEntry> }.
  */
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
+
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
   const follows = await prisma.follow.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
 
-  // Convertir au format UseFollowStore (Record<string, FollowEntry>)
   const followsRecord: Record<string, unknown> = {};
   for (const f of follows) {
     followsRecord[f.entityId] = {
@@ -39,40 +38,32 @@ export async function GET() {
 /**
  * POST /api/v1/follows
  *
- * Ajoute ou supprime un follow.
- * Body: { entityId, category, name, sport?, notifications? }
+ * Toggle un follow (ajoute si absent, retire si présent).
+ * Body: { userId, entityId, category, name, sport?, notifications? }
  */
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const body = await request.json();
-  const { entityId, category, name, sport, notifications } = body;
+  const { userId, entityId, category, name, sport, notifications } = body;
 
-  if (!entityId || !category || !name) {
+  if (!userId || !entityId || !category || !name) {
     return NextResponse.json(
-      { error: "Missing required fields: entityId, category, name" },
+      { error: "Missing required fields: userId, entityId, category, name" },
       { status: 400 }
     );
   }
 
-  // Toggle : si existe déjà → supprimer, sinon → créer
   const existing = await prisma.follow.findUnique({
-    where: { userId_entityId: { userId: session.user.id, entityId } },
+    where: { userId_entityId: { userId, entityId } },
   });
 
   if (existing) {
-    await prisma.follow.delete({
-      where: { id: existing.id },
-    });
+    await prisma.follow.delete({ where: { id: existing.id } });
     return NextResponse.json({ action: "removed", entityId });
   }
 
   const follow = await prisma.follow.create({
     data: {
-      userId: session.user.id,
+      userId,
       entityId,
       category,
       name,
@@ -85,19 +76,19 @@ export async function POST(request: Request) {
 }
 
 /**
- * DELETE /api/v1/follows
+ * DELETE /api/v1/follows?userId=xxx
  *
- * Supprime tous les follows de l'utilisateur.
+ * Supprime tous les follows d'un utilisateur.
  */
-export async function DELETE() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get("userId");
+
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
-  await prisma.follow.deleteMany({
-    where: { userId: session.user.id },
-  });
+  await prisma.follow.deleteMany({ where: { userId } });
 
   return NextResponse.json({ action: "cleared" });
 }
