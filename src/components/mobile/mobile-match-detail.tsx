@@ -66,6 +66,7 @@ export function MobileMatchDetail({ match, open, onOpenChange, children }: Props
               {isMobile && (
                 <button
                   onClick={() => onOpenChange(false)}
+                  aria-label="Retour"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/50 text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />

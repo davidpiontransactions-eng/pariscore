@@ -121,6 +121,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                             size="icon"
                             className="h-6 w-6 text-emerald-400 hover:bg-emerald-500/10"
                             title="Gagné"
+                            aria-label="Marquer gagné"
                             onClick={() => onSettle(b.id, "won")}
                           >
                             <Check className="h-3.5 w-3.5" />
@@ -130,6 +131,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                             size="icon"
                             className="h-6 w-6 text-red-400 hover:bg-red-500/10"
                             title="Perdu"
+                            aria-label="Marquer perdu"
                             onClick={() => onSettle(b.id, "lost")}
                           >
                             <X className="h-3.5 w-3.5" />
@@ -139,6 +141,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                             size="icon"
                             className="h-6 w-6 text-zinc-400 hover:bg-white/10"
                             title="Cashout"
+                            aria-label="Cashout"
                             onClick={() => onSettle(b.id, "cashout")}
                           >
                             <Banknote className="h-3.5 w-3.5" />
@@ -148,6 +151,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                             size="icon"
                             className="h-6 w-6 text-zinc-500 hover:bg-white/10"
                             title="Remboursé (void)"
+                            aria-label="Rembourser"
                             onClick={() => onSettle(b.id, "void")}
                           >
                             <RotateCcw className="h-3.5 w-3.5" />
@@ -160,6 +164,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 text-zinc-500 hover:bg-white/10"
+                            aria-label="Actions"
                           >
                             <MoreHorizontal className="h-3.5 w-3.5" />
                           </Button>

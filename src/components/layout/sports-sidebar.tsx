@@ -13,7 +13,6 @@ import {
   ListFilter,
   Radio,
   Search,
-  Target,
   Trophy,
   X,
   PanelLeftClose,
