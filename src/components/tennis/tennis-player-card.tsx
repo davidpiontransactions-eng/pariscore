@@ -156,6 +156,7 @@ export const TennisPlayerCard = memo(function TennisPlayerCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: rank * 0.04 }}
       onClick={onClick}
+      data-tennis-player={rank}
       className={cn(
         "group relative flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3",
         "hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-200",
