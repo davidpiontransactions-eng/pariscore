@@ -6,12 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { useFibaScoreboard } from "@/hooks/use-fiba-scoreboard";
 import { FibaGameCard } from "./fiba-game-card";
 import { FibaStandings } from "./fiba-standings";
+import { FibaLeaderboard } from "./fiba-leaderboard";
+import { FibaPlayerCard } from "./fiba-player-card";
+import { FibaMvpRace } from "./fiba-mvp-race";
+import { FibaPlayerComparison } from "./fiba-player-comparison";
 import { PredictionPanel } from "./prediction-panel";
 import { BacktestPanel } from "./backtest-panel";
 import { FibaErrorBoundary } from "./fiba-error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { predictMatch } from "@/lib/predictions/fiba-predictions";
 import { useFibaStats } from "@/hooks/use-fiba-stats";
+import { useFibaPlayers } from "@/hooks/use-fiba-players";
 import type { FibaMatch } from "@/app/api/fiba/scoreboard/route";
 
 type FibaScoreboardProps = {
@@ -19,7 +24,7 @@ type FibaScoreboardProps = {
   onMatchClick?: (match: FibaMatch) => void;
 };
 
-type TabView = "live" | "schedule" | "standings" | "backtest";
+type TabView = "live" | "schedule" | "standings" | "players" | "backtest";
 
 function ScoreboardSkeleton() {
   return (
@@ -51,13 +56,17 @@ function ScoreboardSkeleton() {
 export function FibaScoreboard({ className, onMatchClick }: FibaScoreboardProps) {
   const [activeTab, setActiveTab] = useState<TabView>("live");
   const [selectedMatch, setSelectedMatch] = useState<FibaMatch | null>(null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const { matches, liveMatches, preMatches, postMatches, isLoading, error } = useFibaScoreboard();
   const { statsByAbbr } = useFibaStats();
+  const { players } = useFibaPlayers();
+  const selectedPlayer = selectedPlayerId ? players.find((p) => p.playerId === selectedPlayerId) ?? null : null;
 
   const tabs = useMemo(() => [
     { id: "live" as const, label: "En direct", count: liveMatches.length },
     { id: "schedule" as const, label: "Calendrier", count: preMatches.length },
     { id: "standings" as const, label: "Classements", count: 0 },
+    { id: "players" as const, label: "Players", count: 0 },
     { id: "backtest" as const, label: "Backtest & Value", count: 0 },
   ], [liveMatches.length, preMatches.length]);
 
@@ -132,6 +141,19 @@ export function FibaScoreboard({ className, onMatchClick }: FibaScoreboardProps)
         <ScoreboardSkeleton />
       ) : activeTab === "standings" ? (
         <FibaStandings />
+      ) : activeTab === "players" ? (
+        selectedPlayer ? (
+          <FibaPlayerCard
+            player={selectedPlayer}
+            onBack={() => setSelectedPlayerId(null)}
+          />
+        ) : (
+          <div className="space-y-4">
+            <FibaMvpRace onPlayerClick={(p) => setSelectedPlayerId(p.playerId)} />
+            <FibaLeaderboard onPlayerClick={(p) => setSelectedPlayerId(p.playerId)} />
+            <FibaPlayerComparison />
+          </div>
+        )
       ) : activeTab === "backtest" ? (
         <BacktestPanel />
       ) : grouped.length === 0 ? (

@@ -1,6 +1,10 @@
 export { FibaScoreboard } from "./fiba-scoreboard";
 export { FibaGameCard } from "./fiba-game-card";
 export { FibaStandings } from "./fiba-standings";
+export { FibaLeaderboard } from "./fiba-leaderboard";
+export { FibaPlayerCard } from "./fiba-player-card";
+export { FibaMvpRace } from "./fiba-mvp-race";
+export { FibaPlayerComparison } from "./fiba-player-comparison";
 export { WinProbabilityBar } from "./win-probability-bar";
 export { ShapWaterfall } from "./shap-waterfall";
 export { PredictionPanel } from "./prediction-panel";
