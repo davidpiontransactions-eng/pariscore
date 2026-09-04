@@ -17,6 +17,7 @@ import { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Zap, BarChart3, Trophy, Target, TrendingUp, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BentoTile } from "@/components/ui/bento-grid";
 
 interface Feature {
   icon: React.ComponentType<{ className?: string }>;
@@ -94,7 +95,7 @@ export function FeatureCards() {
       variants={containerVariants}
       className="grid grid-cols-1 gap-3 sm:grid-cols-3"
     >
-      {FEATURES.map((f) => {
+      {FEATURES.map((f, i) => {
         const Icon = f.icon;
         return (
           <motion.div
@@ -104,6 +105,8 @@ export function FeatureCards() {
               "group relative overflow-hidden rounded-xl border bg-zinc-900/40 transition-all duration-300",
               "hover:border-border/60 hover:bg-zinc-800/50",
               f.accentBorder,
+              /* Première card = tile large (2 cols) sur desktop */
+              i === 0 && "sm:col-span-2",
             )}
           >
             {/* Image décorative en fond — opacity très basse + gradient */}
