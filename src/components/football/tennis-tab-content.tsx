@@ -490,8 +490,10 @@ return [...matches, ...synthetic];
   const setSubTabSynced = useCallback((tab: TennisSubTab) => {
     setSubTab(tab);
     // Écrire dans le store pour que la sidebar reflète le changement
+    // rankings/tournaments/list ne sont pas des modes sidebar → on ignore
     if (tab === "live") setModeTennis("tennis", "live");
-    else setModeTennis("tennis", "prematch");
+    else if (tab === "today") setModeTennis("tennis", "prematch");
+    // rankings, tournaments, list: pas de sync sidebar (modes internes)
   }, [setModeTennis]);
 
   // Sync subTab from URL ?view=live|prematch on mount (independent of sidebar treeStatus)
