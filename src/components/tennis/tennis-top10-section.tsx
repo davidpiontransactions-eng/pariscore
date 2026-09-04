@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertCircle, BarChart3, TrendingUp, Zap, Target, Brain, Flame, Trophy, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTennisTop10 } from "@/hooks/use-tennis-top10";
+import { useTennisTop10, type TennisTop10Metric, type TennisTop10Surface, type TennisTop10Period } from "@/hooks/use-tennis-top10";
 import { TennisPlayerCard } from "./tennis-player-card";
+import { TennisPlayerModal } from "./tennis-player-modal";
 import {
   Select,
   SelectContent,
@@ -58,10 +59,41 @@ export function TennisTop10Section() {
   const [metric, setMetric] = useState("surfaceElo");
   const [surface, setSurface] = useState("all");
   const [period, setPeriod] = useState("52w");
+  const [selectedEntry, setSelectedEntry] = useState<number | null>(null);
 
   const { entries, meta, error, isLoading } = useTennisTop10(metric, surface, period);
 
   const currentMetric = METRICS.find((m) => m.key === metric);
+
+  // Backtest data
+  const [backtest, setBacktest] = useState<Record<string, { winRate?: number | null; roi?: number | null }>>({});
+
+  // Fetch backtest on mount
+  const fetchBacktest = useCallback(async () => {
+    try {
+      const res = await fetch("/api/tennis/top5/backtest");
+      if (!res.ok) return;
+      const data = await res.json();
+      const map: Record<string, { winRate?: number | null; roi?: number | null }> = {};
+      for (const strat of Object.values(data.strategies ?? {}) as Record<string, { winRatePct?: number | null; roi?: { roiPct?: number | null } }>[]) {
+        for (const [key, stats] of Object.entries(strat)) {
+          if (stats && typeof stats === "object") {
+            map[key] = {
+              winRate: (stats as { winRatePct?: number | null }).winRatePct ?? null,
+              roi: (stats as { roi?: { roiPct?: number | null } }).roi?.roiPct ?? null,
+            };
+          }
+        }
+      }
+      setBacktest(map);
+    } catch {}
+  }, []);
+
+  // Fetch once on mount
+  useState(() => { fetchBacktest(); });
+
+  const closeModal = useCallback(() => setSelectedEntry(null), []);
+  const selectedPlayer = selectedEntry != null ? entries.find((e) => e.rank === selectedEntry) : null;
 
   return (
     <div className="space-y-4">
@@ -142,9 +174,25 @@ export function TennisTop10Section() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {entries.map((entry) => (
-            <TennisPlayerCard key={entry.rank} entry={entry} />
+            <TennisPlayerCard
+              key={entry.rank}
+              entry={entry}
+              onClick={() => setSelectedEntry(entry.rank)}
+              backtest={backtest[entry.player.name]}
+            />
           ))}
         </div>
+      )}
+
+      {/* Player Detail Modal */}
+      {selectedPlayer && (
+        <TennisPlayerModal
+          player={selectedPlayer.player}
+          metricValue={selectedPlayer.metricValue}
+          metricLabel={selectedPlayer.metricLabel}
+          insight={selectedPlayer.insight}
+          onClose={closeModal}
+        />
       )}
 
       {/* Legend */}

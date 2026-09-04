@@ -104,16 +104,50 @@ function InsightTag({ insight }: { insight: string }) {
   );
 }
 
+// ─── VALUE BADGE ──────────────────────────────────────────────────────────────
+
+function ValueBadge({ isValue }: { isValue: boolean }) {
+  if (!isValue) return null;
+  return (
+    <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400">
+      <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse" />
+      VALUE
+    </span>
+  );
+}
+
+// ─── BACKTEST MINI ────────────────────────────────────────────────────────────
+
+function BacktestMini({ winRate, roi }: { winRate?: number | null; roi?: number | null }) {
+  if (winRate == null && roi == null) return null;
+  return (
+    <div className="flex items-center gap-1.5 text-[9px] text-zinc-500">
+      {winRate != null && (
+        <span className={cn("font-mono", winRate >= 55 ? "text-emerald-400" : winRate >= 45 ? "text-zinc-400" : "text-red-400")}>
+          WR {winRate.toFixed(0)}%
+        </span>
+      )}
+      {roi != null && (
+        <span className={cn("font-mono", roi > 0 ? "text-emerald-400" : "text-red-400")}>
+          ROI {roi > 0 ? "+" : ""}{roi.toFixed(1)}%
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN CARD ────────────────────────────────────────────────────────────────
 
 export const TennisPlayerCard = memo(function TennisPlayerCard({
   entry,
   onClick,
+  backtest,
 }: {
   entry: TennisTop10Entry;
   onClick?: () => void;
+  backtest?: { winRate?: number | null; roi?: number | null };
 }) {
-  const { rank, player, metricValue, metricLabel, insight } = entry;
+  const { rank, player, metricValue, metricLabel, insight, isValue } = entry;
   const flag = player.country ? getFlagAssets(player.country) : null;
 
   return (
@@ -164,10 +198,12 @@ export const TennisPlayerCard = memo(function TennisPlayerCard({
           {player.wtaRank && (
             <span className="text-[9px] font-mono text-pink-400/70">WTA#{player.wtaRank}</span>
           )}
+          <ValueBadge isValue={isValue} />
         </div>
         <div className="mt-0.5 flex items-center gap-2">
           <MomentumBar score={player.momentumScore} />
           <FormBars form={player.form} />
+          <BacktestMini winRate={backtest?.winRate} roi={backtest?.roi} />
         </div>
       </div>
 
