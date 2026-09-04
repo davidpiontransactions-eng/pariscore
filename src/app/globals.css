@@ -760,6 +760,29 @@
   display: none;
 }
 
+/* ── Animated sheen drift (navbar only) ──────────────────────────────── */
+@keyframes lg-sheen-drift {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.liquid-glass--animated::after {
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.12) 40%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.12) 60%,
+    transparent 80%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: lg-sheen-drift 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass--animated::after { animation: none; }
+}
+
 .text-destructive-foreground { color: var(--color-destructive-foreground); }
 /* Charter Design Tokens (DESIGN_CHARTER.md v1.0) */
 /* --accent: #00e676; --bg: #0b0e17; --font-head: "Poppins"; --font-body: "Inter" */
