@@ -42,6 +42,7 @@ import { FollowButton } from "@/components/shared/follow-button";
 import { OddsSparkline } from "@/components/shared/odds-sparkline";
 import { MiniProbabilityCurve } from "@/components/shared/mini-probability-curve";
 import { useOddsHistory } from "@/hooks/use-odds-history";
+import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 // Normalisation de nom (NFD → strip diacritics → lowercase) pour la lookup
 // des stats enrichies. Identique à player-matcher.ts:normalize et db.ts.
@@ -281,6 +282,7 @@ export function MatchCard({
   };
 
   return (
+    <LiquidGlass tier="clear" sport="tennis">
     <article
       className={cn(
         "group relative overflow-hidden rounded-xl border border-border/70 bg-card text-card-foreground",
@@ -770,6 +772,7 @@ export function MatchCard({
         />
       )}
     </article>
+    </LiquidGlass>
   );
 }
 

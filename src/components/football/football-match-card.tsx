@@ -25,6 +25,7 @@ import { mostLikelyScore, bestEdgeMarket } from "@/lib/football-correct-score";
 import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
 import { OddsSparkline } from "@/components/shared/odds-sparkline";
 import { useOddsHistory } from "@/hooks/use-odds-history";
+import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 const dayCache = new Map<string, string>();
 
@@ -243,6 +244,7 @@ export function FootballMatchCard({
     : null;
 
   return (
+    <LiquidGlass tier="clear" sport="football">
     <article className="group relative max-w-full overflow-hidden rounded-2xl border border-border/70 bg-card transition-all hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/5">
       {/* Bannière ligue en fond (overlay sombre) */}
       <div className="relative h-36 overflow-hidden sm:h-44">
@@ -960,6 +962,7 @@ export function FootballMatchCard({
         </div>
       </div>
     </article>
+    </LiquidGlass>
   );
 }
 
