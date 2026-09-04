@@ -453,7 +453,7 @@ function HomeInner() {
         {/* Panneau des matchs sélectionnés Top5 — rail droit (desktop) */}
         <aside
           aria-label="Matchs sélectionnés"
-          className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-slate-800 bg-[#0b0f19]/40 xl:block"
+          className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-slate-800 bg-[#0b0f19]/40"
         >
           <Top5SelectionPanel variant="rail" />
         </aside>
