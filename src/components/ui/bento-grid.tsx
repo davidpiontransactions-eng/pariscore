@@ -99,7 +99,7 @@ export function BentoTile({
         "transition-all duration-[var(--bento-transition)]",
 
         /* Variant */
-        variant === "glass" && "liquid-glass--clear",
+        variant === "glass" && "glass-liquid",
         variant === "solid" && "bg-card border border-border",
         variant === "accent" && "bg-accent/10 border border-accent/20",
 
