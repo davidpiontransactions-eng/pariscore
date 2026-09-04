@@ -23,7 +23,7 @@ export function BacktestPanel({ className }: BacktestPanelProps) {
         {/* Main metrics */}
         <div className="grid grid-cols-4 gap-3 mb-4">
           <MetricCard
-            label="Accuracy"
+            label="Précision"
             value={`${Math.round(summary.accuracy * 100)}%`}
             detail={`${summary.correctPredictions}/${summary.totalMatches}`}
             color={summary.accuracy > 0.6 ? "emerald" : summary.accuracy > 0.5 ? "yellow" : "red"}
@@ -31,19 +31,19 @@ export function BacktestPanel({ className }: BacktestPanelProps) {
           <MetricCard
             label="Brier Score"
             value={summary.avgBrierScore.toFixed(3)}
-            detail="lower = better"
+            detail="plus bas = mieux"
             color={summary.avgBrierScore < 0.2 ? "emerald" : summary.avgBrierScore < 0.25 ? "yellow" : "red"}
           />
           <MetricCard
             label="ROI Moyen"
             value={`${(summary.roi * 100).toFixed(1)}%`}
-            detail="if flat betting"
+            detail="mise plate"
             color={summary.roi > 0 ? "emerald" : "red"}
           />
           <MetricCard
             label="Confiance"
             value={`${Math.round(summary.avgConfidence * 100)}%`}
-            detail="avg confidence"
+            detail="moyenne"
             color="blue"
           />
         </div>
@@ -61,7 +61,7 @@ export function BacktestPanel({ className }: BacktestPanelProps) {
               accuracy={summary.byConfidence.high.accuracy}
             />
             <ConfidenceBucket
-              label="Moyenne (40-70%)"
+              label="Moyenne (40–70%)"
               total={summary.byConfidence.medium.total}
               correct={summary.byConfidence.medium.correct}
               accuracy={summary.byConfidence.medium.accuracy}
@@ -88,7 +88,7 @@ export function BacktestPanel({ className }: BacktestPanelProps) {
               accuracy={summary.byEdge.strong.accuracy}
             />
             <ConfidenceBucket
-              label="Modéré (5-15%)"
+              label="Modéré (5–15%)"
               total={summary.byEdge.moderate.total}
               correct={summary.byEdge.moderate.correct}
               accuracy={summary.byEdge.moderate.accuracy}

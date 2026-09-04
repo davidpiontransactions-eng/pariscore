@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import useSWR from "swr";
 import type { FibaTeamStats } from "@/app/api/fiba/stats/route";
 
@@ -28,14 +29,19 @@ export function useFibaStats() {
     REFRESH_OPTS,
   );
 
-  // Index par abbr pour lookup rapide
-  const statsByAbbr = new Map<string, FibaTeamStats>();
-  for (const team of data?.teams ?? []) {
-    statsByAbbr.set(team.abbr, team);
-  }
+  const teams = data?.teams ?? [];
+
+  // Index par abbr pour lookup rapide — memoïsé pour stabilité
+  const statsByAbbr = useMemo(() => {
+    const map = new Map<string, FibaTeamStats>();
+    for (const team of teams) {
+      map.set(team.abbr, team);
+    }
+    return map;
+  }, [teams]);
 
   return {
-    teams: data?.teams ?? [],
+    teams,
     statsByAbbr,
     isLoading,
     error,

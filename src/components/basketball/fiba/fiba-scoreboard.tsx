@@ -63,7 +63,7 @@ export function FibaScoreboard({ className, onMatchClick }: FibaScoreboardProps)
 
   const displayedMatches = useMemo(() => {
     switch (activeTab) {
-      case "live": return [...liveMatches, ...postMatches];
+      case "live": return liveMatches;
       case "schedule": return [...preMatches, ...postMatches];
       default: return [];
     }

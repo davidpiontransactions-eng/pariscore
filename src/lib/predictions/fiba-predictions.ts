@@ -143,7 +143,8 @@ export function fourFactorsWinProbability(
   const awayNet = away.ORtg - away.DRtg;
   
   // Probabilité basée sur la différence de performance
-  const diff = (homeScore - awayScore) + (homeNet - awayNet) * 0.1 + HOME_ADVANTAGE / 100;
+  // HOME_ADVANTAGE / 1000 car le diff est en unités de score (0-1) et la sigmoid est sensible
+  const diff = (homeScore - awayScore) + (homeNet - awayNet) * 0.1 + HOME_ADVANTAGE / 1000;
   
   // Transformation en probabilité (sigmoid)
   const pHome = 1 / (1 + Math.exp(-diff * 10));
@@ -372,8 +373,10 @@ export function hybridPredict(
   };
   const fourFactors = fourFactorsWinProbability(homeFourFactors, awayFourFactors);
 
-  // 3. PIR Model (simplifié)
-  const pir = pirWinProbability(homeFeatures.trueShooting ?? 0.55, awayFeatures.trueShooting ?? 0.55);
+  // 3. PIR Model — simulation de PIR basée sur ORtg/DRtg (pas trueShooting)
+  const homePIR = ((homeFeatures.offensiveRating ?? 105) - (homeFeatures.defensiveRating ?? 100)) / 100;
+  const awayPIR = ((awayFeatures.offensiveRating ?? 105) - (awayFeatures.defensiveRating ?? 100)) / 100;
+  const pir = pirWinProbability(homePIR, awayPIR);
 
   // 4. XGBoost + SHAP Model
   const xgboost = xgboostPredict(homeFeatures, awayFeatures);

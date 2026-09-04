@@ -10,6 +10,28 @@
 
 import { predictMatch } from "./fiba-predictions";
 
+/** Hash déterministe basé sur les noms d'équipes pour seed le RNG */
+function deterministicSeed(home: string, away: string): number {
+  let hash = 0;
+  const str = `${home}-${away}`;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash + char) | 0;
+  }
+  return Math.abs(hash);
+}
+
+/** Mulberry32 — PRNG déterministe basé sur un seed */
+function mulberry32(seed: number): () => number {
+  let t = seed;
+  return () => {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export type OddsSource = {
   name: string;
   timestamp: string;
@@ -53,7 +75,9 @@ export function simulateMarketOdds(
   });
 
   const modelHomeProb = prediction.blendedPHome;
-  const modelAwayProb = 1 - modelHomeProb;
+
+  // RNG déterministe pour des cotes stables entre les refreshes
+  const rng = mulberry32(deterministicSeed(homeTeam, awayTeam));
 
   // Simuler différents bookmakers avec leurs marges
   const bookmakers = [
@@ -65,8 +89,8 @@ export function simulateMarketOdds(
   ];
 
   const sources: OddsSource[] = bookmakers.map((bk) => {
-    // Ajouter du bruit réaliste
-    const noise = (Math.random() - 0.5) * bk.noise;
+    // Ajouter du bruit réaliste (déterministe)
+    const noise = (rng() - 0.5) * bk.noise;
     const adjustedHomeProb = Math.max(0.1, Math.min(0.9, modelHomeProb + noise));
     
     // Calculer les cotes avec vig
