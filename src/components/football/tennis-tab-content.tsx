@@ -479,21 +479,28 @@ return [...matches, ...synthetic];
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
 
   // Sync modes.tennis (store sidebar) → subTab (local state)
+  // Ne pas override si l'utilisateur a manuellement sélectionné un sous-onglet interne
   const modesTennis = useSportsSidebarStore((s) => s.modes["tennis"]);
   const setModeTennis = useSportsSidebarStore((s) => s.setMode);
+  const [userPickedInternalTab, setUserPickedInternalTab] = useState(false);
   useEffect(() => {
+    if (userPickedInternalTab) return;
     if (modesTennis === "live") setSubTab("live");
     else if (modesTennis === "prematch" || modesTennis === "today") setSubTab("today");
-  }, [modesTennis]);
+  }, [modesTennis, userPickedInternalTab]);
 
   // Sync subTab → modes.tennis (quand l'utilisateur change localement)
   const setSubTabSynced = useCallback((tab: TennisSubTab) => {
     setSubTab(tab);
-    // Écrire dans le store pour que la sidebar reflète le changement
-    // rankings/tournaments/list ne sont pas des modes sidebar → on ignore
-    if (tab === "live") setModeTennis("tennis", "live");
-    else if (tab === "today") setModeTennis("tennis", "prematch");
-    // rankings, tournaments, list: pas de sync sidebar (modes internes)
+    // Marquer les onglets internes pour bloquer le reset par le store
+    if (tab === "rankings" || tab === "tournaments" || tab === "list") {
+      setUserPickedInternalTab(true);
+    } else {
+      setUserPickedInternalTab(false);
+      // Écrire dans le store pour que la sidebar reflète le changement
+      if (tab === "live") setModeTennis("tennis", "live");
+      else if (tab === "today") setModeTennis("tennis", "prematch");
+    }
   }, [setModeTennis]);
 
   // Sync subTab from URL ?view=live|prematch on mount (independent of sidebar treeStatus)
