@@ -55,6 +55,46 @@ const FORM_COLORS: Record<FormDotResult, string> = {
   L: "bg-red-500",
 };
 
+// ─── FORM SPARKLINE (mini SVG trend) ──────────────────────────────────────────
+
+function FormSparkline({ form }: { form: FormDotResult[] }) {
+  // Convert W/D/L to numeric: W=3, D=1, L=0
+  const values = form.map((r) => (r === "W" ? 3 : r === "D" ? 1 : 0));
+  const max = 3;
+  const w = 48;
+  const h = 16;
+  const step = w / Math.max(values.length - 1, 1);
+
+  const points = values.map((v, i) => {
+    const x = i * step;
+    const y = h - (v / max) * h;
+    return `${x},${y}`;
+  }).join(" ");
+
+  // Area fill
+  const areaPoints = `0,${h} ${points} ${w},${h}`;
+
+  return (
+    <svg width={w} height={h} className="shrink-0" aria-hidden>
+      <defs>
+        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#00e676" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#00e676" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={areaPoints} fill="url(#sparkGrad)" />
+      <polyline
+        points={points}
+        fill="none"
+        stroke="#00e676"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 // ─── ZONE CHUNKING (Miller's Law) ─────────────────────────────────────────────
 
 type ZoneId = "title" | "europa" | "mid" | "relegation";
@@ -723,11 +763,12 @@ export function FootballRankingsEnhanced() {
                   </>
                 )}
 
-                {/* Form dots + trajectory */}
+                {/* Form dots + sparkline + trajectory */}
                 {showForm && (
                   <td className="px-2 py-2">
                     <div className="flex items-center gap-1.5">
                       <FormDots form={row.form} />
+                      <FormSparkline form={row.form} />
                       <FormTrajectoryArrow form={row.form} />
                     </div>
                   </td>
