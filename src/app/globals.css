@@ -219,6 +219,18 @@
   --sidebar-text: #e8eaed;
   --sidebar-text-muted: #94a3b8;
   --sidebar-accent-color: #00e676;
+  /* Bento Grid tokens */
+  --bento-gap: 16px;
+  --bento-radius: 20px;
+  --bento-radius-sm: 16px;
+  --bento-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --bento-tile-sm: 100px;
+  --bento-tile-md: 216px;
+  --bento-tile-lg: 432px;
+  --bento-tile-xl: 648px;
+  --bento-surface: rgba(255, 255, 255, 0.03);
+  --bento-surface-hover: rgba(255, 255, 255, 0.06);
+  --bento-border: rgba(255, 255, 255, 0.06);
 }
 
 @layer base {
