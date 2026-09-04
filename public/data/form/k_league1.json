@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-09-03T09:05:43.342995Z",
+    "lastUpdated": "2026-09-04T08:58:59.483747Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,13 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Jeju Utd",
+      "teamName": "Seoul",
       "gp": 8,
-      "w": 3,
-      "d": 4,
-      "l": 1,
+      "w": 4,
+      "d": 2,
+      "l": 2,
       "gf": 12,
-      "ga": 8
+      "ga": 9
     },
     {
       "teamName": "Daejeon Citizen",
@@ -31,22 +31,13 @@
       "ga": 9
     },
     {
-      "teamName": "Seoul",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 12,
-      "ga": 9
-    },
-    {
-      "teamName": "Bucheon Fc",
+      "teamName": "Jeju Utd",
       "gp": 8,
       "w": 3,
-      "d": 3,
-      "l": 2,
+      "d": 4,
+      "l": 1,
       "gf": 12,
-      "ga": 9
+      "ga": 8
     },
     {
       "teamName": "Jeonbuk",
@@ -56,17 +47,26 @@
       "l": 2,
       "gf": 11,
       "ga": 7
+    },
+    {
+      "teamName": "Bucheon Fc",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 12,
+      "ga": 9
     }
   ],
   "away": [
     {
-      "teamName": "Jeju Utd",
+      "teamName": "Incheon Utd",
       "gp": 8,
-      "w": 5,
-      "d": 1,
+      "w": 4,
+      "d": 2,
       "l": 2,
-      "gf": 11,
-      "ga": 6
+      "gf": 12,
+      "ga": 8
     },
     {
       "teamName": "Anyang",
@@ -87,13 +87,13 @@
       "ga": 12
     },
     {
-      "teamName": "Incheon Utd",
+      "teamName": "Jeju Utd",
       "gp": 8,
-      "w": 4,
-      "d": 2,
+      "w": 5,
+      "d": 1,
       "l": 2,
-      "gf": 12,
-      "ga": 8
+      "gf": 11,
+      "ga": 6
     },
     {
       "teamName": "Seoul",
