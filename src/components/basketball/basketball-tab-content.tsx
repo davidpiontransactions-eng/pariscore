@@ -148,40 +148,25 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         <h2 className="text-lg font-bold">Basket</h2>
         <div className="flex items-center gap-2">
           {/* Toggle Matchs / H2H / FIBA */}
-          <div className="flex rounded-md bg-muted p-0.5">
-            <button
-              onClick={() => setPageView("matchs")}
-              className={cn(
-                "rounded px-3 py-1 text-xs font-medium transition-colors",
-                pageView === "matchs"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Matchs
-            </button>
-            <button
-              onClick={() => setPageView("h2h")}
-              className={cn(
-                "rounded px-3 py-1 text-xs font-medium transition-colors",
-                pageView === "h2h"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              H2H
-            </button>
-            <button
-              onClick={() => setPageView("fiba")}
-              className={cn(
-                "rounded px-3 py-1 text-xs font-medium transition-colors",
-                pageView === "fiba"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              FIBA WC
-            </button>
+          <div className="flex rounded-lg bg-white/[0.06] p-0.5">
+            {([
+              { id: "matchs" as const, label: "Matchs" },
+              { id: "h2h" as const, label: "H2H" },
+              { id: "fiba" as const, label: "FIBA WC" },
+            ]).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setPageView(tab.id)}
+                className={cn(
+                  "rounded-md px-3 py-1 text-xs font-medium transition-all duration-150",
+                  pageView === tab.id
+                    ? "bg-primary/20 text-primary shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",
+                )}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
           {pageView === "matchs" && (
             <MatchViewTabs

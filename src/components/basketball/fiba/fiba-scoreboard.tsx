@@ -104,21 +104,21 @@ export function FibaScoreboard({ className, onMatchClick }: FibaScoreboardProps)
         </div>
 
         {/* Tabs */}
-        <div className="flex rounded-lg bg-muted p-0.5">
+        <div className="flex rounded-lg bg-white/[0.06] p-0.5">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-all duration-150",
                 activeTab === tab.id
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-primary/20 text-primary shadow-sm"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]",
               )}
             >
               {tab.label}
               {tab.count > 0 && (
-                <span className="ml-0.5 rounded-full bg-muted-foreground/20 px-1 py-0 text-[9px] tabular-nums">
+                <span className="ml-0.5 rounded-full bg-primary/15 px-1 py-0 text-[9px] text-primary tabular-nums">
                   {tab.count}
                 </span>
               )}
