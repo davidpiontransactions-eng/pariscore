@@ -1,5 +1,33 @@
+"use client"
+
 import * as React from "react"
+import {
+  motion,
+  useReducedMotion,
+  type Variants,
+} from "framer-motion"
 import { cn } from "@/lib/utils"
+
+/* ------------------------------------------------------------------ */
+/*  Animation variants                                                 */
+/* ------------------------------------------------------------------ */
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
+}
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+}
 
 /* ------------------------------------------------------------------ */
 /*  BentoGrid — CSS Grid container with responsive column presets      */
@@ -15,10 +43,11 @@ export function BentoGrid({
   rows = "auto",
   className,
   children,
-  ...props
 }: BentoGridProps) {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
-    <div
+    <motion.div
       className={cn(
         "grid gap-[var(--bento-gap)]",
         cols === 2 && "grid-cols-1 sm:grid-cols-2",
@@ -28,10 +57,12 @@ export function BentoGrid({
         rows === "auto" && "auto-rows-min",
         className
       )}
-      {...props}
+      variants={prefersReducedMotion ? undefined : containerVariants}
+      initial={prefersReducedMotion ? undefined : "hidden"}
+      animate="show"
     >
       {children}
-    </div>
+    </motion.div>
   )
 }
 
@@ -51,10 +82,11 @@ export function BentoTile({
   interactive = false,
   className,
   children,
-  ...props
 }: BentoTileProps) {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
-    <div
+    <motion.div
       className={cn(
         /* Grid spanning */
         size === "hero" && "md:col-span-2 md:row-span-2",
@@ -72,14 +104,20 @@ export function BentoTile({
         variant === "accent" && "bg-accent/10 border border-accent/20",
 
         /* Interactive */
-        interactive &&
-          "cursor-pointer hover:scale-[1.02] hover:shadow-2xl hover:border-white/10",
+        interactive && "cursor-pointer",
 
         className
       )}
-      {...props}
+      variants={prefersReducedMotion ? undefined : itemVariants}
+      whileInView={prefersReducedMotion ? undefined : "show"}
+      viewport={{ once: true, amount: 0.2 }}
+      whileHover={
+        interactive && !prefersReducedMotion
+          ? { scale: 1.02, boxShadow: "0 20px 40px rgba(0,0,0,0.15)" }
+          : undefined
+      }
     >
       {children}
-    </div>
+    </motion.div>
   )
 }
