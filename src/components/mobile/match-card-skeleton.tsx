@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  */
 
 type Props = {
-  variant?: "default" | "compact" | "live";
+  variant?: "default" | "compact" | "live" | "football";
   className?: string;
 };
 

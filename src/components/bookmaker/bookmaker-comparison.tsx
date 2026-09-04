@@ -75,7 +75,7 @@ export function BookmakerComparison({
   const margin = totalImplied - 100;
 
   return (
-    <Table responsive>
+    <Table>
       <TableHeader>
         <TableRow>
           <TableCell className="text-sm font-semibold text-muted-foreground">

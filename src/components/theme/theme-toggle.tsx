@@ -7,7 +7,6 @@ import {
   Moon,
   Sun,
   Box,
-  LightVertical,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

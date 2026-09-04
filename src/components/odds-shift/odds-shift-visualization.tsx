@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { ChevronUp, ChevronDown, Equal, XCircle, CheckCircle, TrendingUp, TrendingDown } from "lucide-react";
-import { useOddsLiveState } from "@/hooks/use-live-matches";
+
 
 type OddsShiftProps = {
   /** Current probability percentage (0-100) */

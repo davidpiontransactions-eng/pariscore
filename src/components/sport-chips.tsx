@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
-import { Tab, X, Check, MoreHorizontal } from "lucide-react";
+import { X, Check, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type SportChipProps = {

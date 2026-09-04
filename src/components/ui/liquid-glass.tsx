@@ -56,23 +56,23 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(
     // Feature flag PostHog — rollout 0% par défaut, safety net
     if (!flagEnabled) {
       return (
-        <Component ref={ref} className={className} {...props}>
+        <div ref={ref} className={className} {...(props as React.HTMLAttributes<HTMLDivElement>)}>
           {children}
-        </Component>
+        </div>
       );
     }
 
     // Ne pas render si glass off
     if (effectiveTier === "off") {
       return (
-        <Component ref={ref} className={className} {...props}>
+        <div ref={ref} className={className} {...(props as React.HTMLAttributes<HTMLDivElement>)}>
           {children}
-        </Component>
+        </div>
       );
     }
 
     return (
-      <Component
+      <div
         ref={ref}
         className={cn(
           // Base glass class
@@ -84,10 +84,10 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(
           // Classe externe
           className
         )}
-        {...props}
+        {...(props as React.HTMLAttributes<HTMLDivElement>)}
       >
         {children}
-      </Component>
+      </div>
     );
   }
 );

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { FC } from "react";
+import type { FC } from "react";
+import { useTranslations } from "next-intl";
 
 type StatTooltipProps = {
   /** Stat name to display in tooltip */
@@ -11,7 +12,7 @@ type StatTooltipProps = {
   /** Brief explanation/description */
   description: string;
   /** Optional icon component */
-  icon?: FC<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string }>;
   /** Delay in milliseconds before tooltip appears (default: 300) */
   delay?: number;
   /** Whether tooltip follows cursor or stays positioned */
@@ -87,10 +88,10 @@ export function StatTooltip({
             "shadow-sm",
             followCursor ? "pointer-events-none" : ""
           )}
-          style={followCursor
+          style={followCursor && cursorPos
             ? {
-                left: cursorPos?.x + 12 + "px",
-                top: cursorPos?.y + 12 + "px",
+                left: (cursorPos.x ?? 0) + 12 + "px",
+                top: (cursorPos.y ?? 0) + 12 + "px",
               }
             : undefined}
         >

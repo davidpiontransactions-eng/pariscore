@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertCircle, BarChart3, TrendingUp, Zap, Target, Brain, Flame, Trophy, Cpu, Calendar, Clock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTennisTop10, type TennisTop10Metric, type TennisTop10Surface, type TennisTop10Period } from "@/hooks/use-tennis-top10";
+import { useTennisTop10 } from "@/hooks/use-tennis-top10";
 import { TennisPlayerModal } from "./tennis-player-modal";
 import {
   Select,
