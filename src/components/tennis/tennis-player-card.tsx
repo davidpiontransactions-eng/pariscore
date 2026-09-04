@@ -1,7 +1,7 @@
 "use client";
 
-import { memo, useReducedMotion } from "react";
-import { motion } from "framer-motion";
+import { memo } from "react";
+import { useReducedMotion, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getFlagAssets } from "@/lib/flag-utils";
 import type { TennisTop10Entry } from "@/lib/tennis-top10";
