@@ -6,9 +6,13 @@ import { rateLimits } from "@/lib/api/rate-limit";
  * API Route pour les joueuses FIBA Women's WC 2026.
  *
  * Sources:
- * - FIBA.basketball (stats officielles - scraping HTML)
+ * - FIBA.basketball (stats officielles - données statiques extraites de la page stats)
  * - ESPN FIBA API (standings pour team win%)
  * - Calculs serveur (PIR, efficiency, composite score)
+ *
+ * NOTE: La page FIBA utilise Next.js SPA côté client. Le fetch serveur retourne
+ * uniquement le shell HTML. Les données statiques ci-dessous sont extraites
+ * manuellement de la page stats et mises à jour après chaque phase du tournoi.
  *
  * GET /api/fiba/players
  *   ?phase=group|quarter|semi|final
@@ -17,7 +21,58 @@ import { rateLimits } from "@/lib/api/rate-limit";
  *   &position=G|F|C
  */
 
-const FIBA_STATS_URL = "https://www.fiba.basketball/en/events/fiba-womens-basketball-world-cup-2026/stats";
+/**
+ * Données statiques extraites de https://www.fiba.basketball/en/events/fiba-womens-basketball-world-cup-2026/stats
+ * Dernière mise à jour: 2026-09-04 (Phase de groupe)
+ * Format: [rank, name, team, gp, mpg, ppg, pts, fgm, fga, fgPct, tpm, tpa, tpPct, ftm, fta, ftPct]
+ */
+const FIBA_PLAYER_DATA: Array<[number, string, string, number, number, number, number, number, number, number, number, number, number, number, number, number]> = [
+  [1, "Emma Meesseman", "BEL", 1, 31.4, 27, 27, 12, 21, 57.1, 1, 3, 33.3, 2, 2, 100],
+  [2, "Saki Hayashi", "JPN", 1, 23.4, 27, 27, 9, 17, 52.9, 9, 15, 60, 0, 0, 0],
+  [3, "Jihyun Park", "KOR", 1, 29.3, 27, 27, 7, 15, 46.7, 3, 6, 50, 10, 11, 90.9],
+  [4, "Julie Vanloo", "BEL", 1, 25.4, 22, 22, 8, 14, 57.1, 6, 11, 54.5, 0, 0, 0],
+  [5, "Aminata Sangare", "MLI", 1, 24.4, 22, 22, 9, 10, 90, 0, 1, 0, 4, 6, 66.7],
+  [6, "Djeneba N'Diaye", "MLI", 1, 33.4, 22, 22, 8, 13, 61.5, 5, 8, 62.5, 1, 2, 50],
+  [7, "Amy Okonkwo", "NGR", 1, 30.1, 22, 22, 8, 15, 53.3, 4, 8, 50, 2, 2, 100],
+  [8, "Sika Kone", "MLI", 1, 34.1, 21, 21, 10, 19, 52.6, 0, 1, 0, 1, 1, 100],
+  [9, "Leeseul Kang", "KOR", 1, 29.5, 20, 20, 7, 13, 53.8, 6, 11, 54.5, 0, 0, 0],
+  [10, "Steph Talbot", "AUS", 1, 33.3, 19, 19, 7, 9, 77.8, 4, 6, 66.7, 1, 3, 33.3],
+  [11, "Isaem Choi", "KOR", 1, 22.8, 19, 19, 7, 10, 70, 4, 4, 100, 1, 2, 50],
+  [12, "Kokoro Tanaka", "JPN", 1, 20, 18, 18, 7, 12, 58.3, 1, 1, 0, 3, 4, 75],
+  [13, "Awa Fam", "ESP", 1, 24.6, 17, 17, 6, 9, 66.7, 3, 4, 75, 2, 2, 100],
+  [14, "Haeran Lee", "KOR", 1, 29.6, 17, 17, 8, 13, 61.5, 0, 1, 0, 1, 1, 100],
+  [15, "Kennedy Burke", "TUR", 1, 28.8, 17, 17, 5, 17, 29.4, 2, 10, 20, 5, 6, 83.3],
+  [16, "Murjanatu Musa", "NGR", 1, 20, 15, 15, 7, 16, 43.8, 0, 0, 0, 1, 1, 100],
+  [17, "Maki Takada", "JPN", 1, 20.5, 14, 14, 6, 7, 85.7, 2, 1, 0, 0, 0, 0],
+  [18, "Alima Dembele", "MLI", 1, 30.8, 14, 14, 5, 11, 45.5, 2, 4, 50, 2, 2, 100],
+  [19, "Arella Guirantes", "PUR", 1, 34.3, 14, 14, 5, 18, 27.8, 1, 4, 25, 3, 4, 75],
+  [20, "Caitlin Clark", "USA", 1, 25.3, 14, 14, 4, 9, 44.4, 3, 7, 42.9, 3, 4, 75],
+  [21, "Rhyne Howard", "USA", 1, 18.2, 14, 14, 5, 12, 41.7, 4, 11, 36.4, 0, 0, 0],
+  [22, "Paige Bueckers", "USA", 1, 20.3, 14, 14, 6, 9, 66.7, 1, 2, 50, 1, 1, 100],
+  [23, "Xinyu Luo", "CHN", 1, 30.7, 13, 13, 4, 10, 40, 2, 4, 50, 3, 5, 60],
+  [24, "Ziyu Zhang", "CHN", 1, 18, 13, 13, 2, 4, 50, 0, 0, 0, 9, 10, 90],
+  [25, "Maria Conde", "ESP", 1, 22.4, 13, 13, 4, 9, 44.4, 4, 9, 44.4, 1, 2, 50],
+  [26, "Leonie Fiebich", "GER", 1, 27.8, 13, 13, 4, 13, 30.8, 2, 7, 28.6, 3, 5, 60],
+  [27, "Iyana Martin", "ESP", 1, 20.3, 12, 12, 5, 6, 83.3, 2, 1, 0, 0, 0, 0],
+  [28, "Jackie Young", "USA", 1, 16.9, 12, 12, 5, 11, 45.5, 1, 3, 33.3, 1, 1, 100],
+  [29, "Ezi Magbegor", "AUS", 1, 25.5, 11, 11, 5, 11, 45.5, 1, 2, 50, 0, 0, 0],
+  [30, "Kyara Linskens", "BEL", 1, 21, 11, 11, 4, 10, 40, 0, 2, 0, 3, 4, 75],
+  [31, "Xu Han", "CHN", 1, 23.1, 11, 11, 5, 14, 35.7, 1, 3, 33.3, 0, 0, 0],
+  [32, "Norika Konno", "JPN", 1, 18.5, 11, 11, 4, 5, 80, 2, 2, 100, 1, 2, 50],
+  [33, "Ezinne Kalu", "NGR", 1, 28.8, 11, 11, 5, 8, 62.5, 0, 3, 0, 1, 3, 33.3],
+  [34, "Trinity San Antonio", "PUR", 1, 28.2, 11, 11, 5, 9, 55.6, 1, 1, 0, 0, 0, 0],
+  [35, "Imani McGee-Stafford", "PUR", 1, 27.5, 11, 11, 4, 17, 23.5, 0, 1, 0, 3, 5, 60],
+  [36, "Sevgi Uzun", "TUR", 1, 32.9, 11, 11, 4, 9, 44.4, 2, 4, 50, 1, 2, 50],
+  [37, "Alanna Smith", "AUS", 1, 12.2, 10, 10, 4, 5, 80, 1, 2, 50, 1, 3, 33.3],
+  [38, "Jade Melbourne", "AUS", 1, 23.4, 10, 10, 3, 7, 42.9, 1, 4, 25, 3, 3, 100],
+  [39, "Raquel Carrera", "ESP", 1, 26.7, 10, 10, 3, 5, 60, 1, 1, 100, 3, 6, 50],
+  [40, "Nyara Sabally", "GER", 1, 17.2, 10, 10, 3, 14, 21.4, 0, 3, 0, 4, 5, 80],
+  [41, "Mai Yamamoto", "JPN", 1, 22.7, 10, 10, 3, 7, 42.9, 3, 7, 42.9, 1, 2, 50],
+  [42, "Victoria Macaulay", "NGR", 1, 15.9, 10, 10, 4, 5, 80, 2, 2, 100, 0, 0, 0],
+  [43, "Elif Bayram", "TUR", 1, 25.5, 10, 10, 5, 7, 71.4, 0, 0, 0, 0, 1, 0],
+  [44, "Tilbe Senyurek Arslan", "TUR", 1, 10.7, 10, 10, 4, 5, 80, 2, 3, 66.7, 0, 0, 0],
+  [45, "Derin Erdogan", "TUR", 1, 16.9, 10, 10, 4, 6, 66.7, 2, 2, 100, 0, 0, 0],
+];
 
 type ESPNPlayerStats = {
   athlete: {
@@ -170,123 +225,7 @@ async function getTeamWinPcts(): Promise<Record<string, number>> {
   }
 }
 
-/**
- * Fetch player stats from FIBA official website.
- * Scrapes the stats page and parses the text output.
- *
- * Format observé (text extraction):
- * 1.Emma Meesseman (BEL)131.4272712-2157.11-333.32-2100
- * → rank=1, name="Emma Meesseman", team="BEL", gp=13, mpg=1.4, ppg=27, pts=27, fg="12-21", fg%=57.1, tp="1-3", tp%=33.3, ft="2-2", ft%=100
- *
- * Le texte concatène sans espaces entre certaines colonnes.
- * On match: "NUM.NAME (TEAM)" puis extraction séquentielle des chiffres.
- */
-async function fetchFibaPlayerStats(): Promise<Array<{
-  rank: number;
-  name: string;
-  team: string;
-  position: string;
-  gp: number;
-  mpg: number;
-  ppg: number;
-  tpg: number;
-  fgMade: number;
-  fgAttempted: number;
-  fgPct: number;
-  threeMade: number;
-  threeAttempted: number;
-  threePct: number;
-  ftMade: number;
-  ftAttempted: number;
-  ftPct: number;
-}>> {
-  try {
-    const res = await fetch(FIBA_STATS_URL, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-      },
-      next: { revalidate: 300 },
-    });
 
-    if (!res.ok) return [];
-
-    const text = await res.text();
-    const players: Array<{
-      rank: number; name: string; team: string; position: string;
-      gp: number; mpg: number; ppg: number; tpg: number;
-      fgMade: number; fgAttempted: number; fgPct: number;
-      threeMade: number; threeAttempted: number; threePct: number;
-      ftMade: number; ftAttempted: number; ftPct: number;
-    }> = [];
-
-    // Étape 1: Trouver chaque ligne joueur dans le texte
-    // Pattern: DIGIT.DIGITS.NOM EQUIPE(NOM EQUIPE)GPMPGPPGPTSFGMPG-FGAPGFG%...
-    // Le texte brut ressemble à: "1.Emma Meesseman (BEL)131.4272712-2157.11-333.32-2100"
-    const teamCodes = ["AUS", "BEL", "CHN", "CZE", "FRA", "GER", "HUN", "ITA", "JPN", "KOR", "MLI", "NGR", "PUR", "ESP", "TUR", "USA"];
-
-    // Trouver tous les segments qui contiennent "(TEAMCODE)" dans le texte
-    for (const tc of teamCodes) {
-      const escapedTc = tc;
-      const regex = new RegExp(
-        `(\\d+)\\.([A-Za-zÀ-ÿ\\s''\\-\\.]+?)\\s*\\(${escapedTc}\\)(\\d+)(\\d+\\.?\\d*)(\\d+\\.?\\d*)(\\d+)(\\d+)-(\\d+)(\\d+\\.?\\d*)(\\d+)-(\\d+)(\\d+\\.?\\d*)(\\d+)-(\\d+)(\\d+\\.?\\d*)`,
-        "g"
-      );
-
-      let match;
-      while ((match = regex.exec(text)) !== null) {
-        const [, rank, name, gp, mpg, ppg, , fgMade, fgAttempted, fgPct, threeMade, threeAttempted, threePct, ftMade, ftAttempted, ftPct] = match;
-
-        players.push({
-          rank: parseInt(rank),
-          name: name.trim(),
-          team: tc,
-          position: "UTIL",
-          gp: parseInt(gp),
-          mpg: parseFloat(mpg),
-          ppg: parseFloat(ppg),
-          tpg: 0,
-          fgMade: parseInt(fgMade),
-          fgAttempted: parseInt(fgAttempted),
-          fgPct: parseFloat(fgPct),
-          threeMade: parseInt(threeMade),
-          threeAttempted: parseInt(threeAttempted),
-          threePct: parseFloat(threePct),
-          ftMade: parseInt(ftMade),
-          ftAttempted: parseInt(ftAttempted),
-          ftPct: parseFloat(ftPct),
-        });
-      }
-    }
-
-    // Si le regex détaillé ne marche pas, fallback sur pattern simplifié
-    if (players.length === 0) {
-      // Pattern: NUM.NAME (TEAM)NUM.NUM.NUM.NUM
-      const fallbackRegex = /(\d+)\.([A-Za-zÀ-ÿ\s''\-\.]+?)\s*\(([A-Z]{3})\)(\d+)(\d+\.?\d*)(\d+\.?\d*)(\d+)/g;
-      let match;
-      while ((match = fallbackRegex.exec(text)) !== null) {
-        const [, rank, name, team, gp, mpg, ppg, pts] = match;
-        players.push({
-          rank: parseInt(rank),
-          name: name.trim(),
-          team,
-          position: "UTIL",
-          gp: parseInt(gp),
-          mpg: parseFloat(mpg),
-          ppg: parseFloat(ppg),
-          tpg: parseInt(pts),
-          fgMade: 0, fgAttempted: 0, fgPct: 0,
-          threeMade: 0, threeAttempted: 0, threePct: 0,
-          ftMade: 0, ftAttempted: 0, ftPct: 0,
-        });
-      }
-    }
-
-    return players;
-  } catch {
-    return [];
-  }
-}
 
 /** GET /api/fiba/players */
 export async function GET(request: NextRequest) {
@@ -316,10 +255,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [fibaStats, teamWinPcts] = await Promise.all([
-      fetchFibaPlayerStats(),
-      getTeamWinPcts(),
-    ]);
+    const teamWinPcts = await getTeamWinPcts();
 
     // Map team abbreviations to colors
     const teamColors: Record<string, string> = {
@@ -330,78 +266,77 @@ export async function GET(request: NextRequest) {
     };
 
     // Convert FIBA stats to our format
-    const players: FibaPlayer[] = fibaStats.map((stat) => {
-      const teamAbbr = stat.team;
+    const players: FibaPlayer[] = FIBA_PLAYER_DATA.map((stat) => {
+      const [rank, name, team, gp, mpg, ppg, pts, fgm, fga, fgPct, tpm, tpa, tpPct, ftm, fta, ftPct] = stat;
+      const teamAbbr = team;
       const teamWinPct = teamWinPcts[teamAbbr] ?? 0.5;
       const teamColor = teamColors[teamAbbr] ?? "666666";
 
       // Estimate RPG, APG, STL, BLK from available data
-      // FIBA page only shows PPG, FG%, 3P%, FT%
-      // We'll estimate other stats based on position and PPG
-      const estRpg = stat.ppg > 20 ? 6 : stat.ppg > 15 ? 5 : stat.ppg > 10 ? 4 : 3;
-      const estApg = stat.ppg > 15 ? 5 : stat.ppg > 10 ? 4 : 3;
+      const estRpg = ppg > 20 ? 6 : ppg > 15 ? 5 : ppg > 10 ? 4 : 3;
+      const estApg = ppg > 15 ? 5 : ppg > 10 ? 4 : 3;
       const estStl = 1.2;
-      const estBlk = stat.ppg > 15 ? 0.8 : 0.5;
+      const estBlk = ppg > 15 ? 0.8 : 0.5;
       const estTov = 2.5;
 
       const pir = calculatePIR({
-        points: stat.ppg * stat.gp,
-        rebounds: estRpg * stat.gp,
-        assists: estApg * stat.gp,
-        steals: estStl * stat.gp,
-        blocks: estBlk * stat.gp,
-        turnovers: estTov * stat.gp,
-        fouls: 2 * stat.gp,
-        fgMade: stat.fgMade * stat.gp,
-        fgAttempted: stat.fgAttempted * stat.gp,
-        ftMade: stat.ftMade * stat.gp,
-        ftAttempted: stat.ftAttempted * stat.gp,
+        points: pts,
+        rebounds: estRpg * gp,
+        assists: estApg * gp,
+        steals: estStl * gp,
+        blocks: estBlk * gp,
+        turnovers: estTov * gp,
+        fouls: 2 * gp,
+        fgMade: fgm,
+        fgAttempted: fga,
+        ftMade: ftm,
+        ftAttempted: fta,
       });
 
-      const efficiency = stat.mpg > 0
-        ? ((stat.ppg + estRpg + estApg + estStl + estBlk) / stat.mpg) * 40
+      const efficiency = mpg > 0
+        ? ((ppg + estRpg + estApg + estStl + estBlk) / mpg) * 40
         : 0;
 
       const composite = calculateComposite(
-        { pir, gamesPlayed: stat.gp, ppg: stat.ppg, rpg: estRpg, apg: estApg },
+        { pir, gamesPlayed: gp, ppg, rpg: estRpg, apg: estApg },
         teamWinPct,
       );
 
       const mvpScore = calculateMvpScore({
         composite,
-        ppg: stat.ppg,
-        gamesPlayed: stat.gp,
+        ppg,
+        gamesPlayed: gp,
         teamWinPct,
       });
 
       return {
-        playerId: `${stat.name.replace(/\s/g, "-").toLowerCase()}-${teamAbbr}`,
-        name: stat.name,
+        playerId: `${name.replace(/\s/g, "-").toLowerCase()}-${teamAbbr}`,
+        name,
         team: teamAbbr,
         teamAbbr,
         teamColor,
-        position: stat.position,
+        position: "UTIL",
         jersey: "",
         headshot: "",
-        gamesPlayed: stat.gp,
-        minutes: Math.round(stat.mpg),
-        points: stat.ppg,
+        gamesPlayed: gp,
+        minutes: Math.round(mpg),
+        points: ppg,
         rebounds: Math.round(estRpg * 10) / 10,
         assists: Math.round(estApg * 10) / 10,
         steals: Math.round(estStl * 10) / 10,
         blocks: Math.round(estBlk * 10) / 10,
         turnovers: Math.round(estTov * 10) / 10,
-        fgMade: stat.fgMade * stat.gp,
-        fgAttempted: stat.fgAttempted * stat.gp,
-        threeMade: stat.threeMade * stat.gp,
-        threeAttempted: stat.threeAttempted * stat.gp,
-        ftMade: stat.ftMade * stat.gp,
-        ftAttempted: stat.ftAttempted * stat.gp,
-        ppg: stat.ppg,
+        fgMade: fgm,
+        fgAttempted: fga,
+        threeMade: tpm,
+        threeAttempted: tpa,
+        ftMade: ftm,
+        ftAttempted: fta,
+        ppg,
         rpg: Math.round(estRpg * 10) / 10,
         apg: Math.round(estApg * 10) / 10,
-        fgPct: stat.fgPct,
-        threePct: stat.threePct,
+        fgPct,
+        threePct: tpPct,
         pir: Math.round(pir * 10) / 10,
         efficiency: Math.round(efficiency * 10) / 10,
         composite: Math.round(composite * 10) / 10,
