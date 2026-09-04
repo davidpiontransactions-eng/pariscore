@@ -168,12 +168,14 @@ export const TennisPlayerModal = memo(function TennisPlayerModal({
   metricValue,
   metricLabel,
   insight,
+  scorecard,
   onClose,
 }: {
   player: TennisTop10Player;
   metricValue: number;
   metricLabel: string;
   insight: string;
+  scorecard?: number;
   onClose: () => void;
 }) {
   const flag = player.country ? getFlagAssets(player.country) : null;
@@ -217,6 +219,16 @@ export const TennisPlayerModal = memo(function TennisPlayerModal({
                   {player.wtaRank && <span className="text-pink-400/70">WTA #{player.wtaRank}</span>}
                   <span>Elo {player.elo}</span>
                   {player.surfaceElo && <span>Surface {player.surfaceElo}</span>}
+                  {scorecard != null && (
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded font-bold text-[10px]",
+                      scorecard >= 70 ? "bg-emerald-500/20 text-emerald-400" :
+                      scorecard >= 50 ? "bg-white/[0.06] text-zinc-300" :
+                      "bg-white/[0.04] text-zinc-500"
+                    )}>
+                      Score {scorecard}/100
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
