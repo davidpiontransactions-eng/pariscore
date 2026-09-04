@@ -196,3 +196,172 @@ Les classes `.glass-sm/md/heavy/liquid/elevated` sont définies dans `globals.cs
 2. **Migrer vers les classes CSS glass**: Remplacer les `backdrop-blur-*` Tailwind par les classes `.glass-sm/md/heavy/liquid` existantes dans `globals.css`.
 3. **Centraliser les backgrounds**: Utiliser les tokens `--glass-bg` / `--glass-bg-strong` au lieu de `bg-black/60` hardcodé.
 4. **Garder le scope**: Ne toucher que aux 34 occurrences dans `src/`. Les 14 hors scope sont hors périmètre.
+
+---
+
+## Task 2 — Refactor Tokens globals.css (2026-09-04)
+
+**Status**: DONE
+**Commit**: `ed7f3653` — `feat(css): refactor liquid glass tokens with 4-tier ladder system`
+**Fichier**: `src/app/globals.css` — 139 insertions, 15 suppressions
+
+### Ce qui a changé
+
+Remplacement de la section "Phase 18 — Liquid Glass Token" (4 variables CSS + 2 classes) par un système 4-tier complet :
+
+| Tier | Ce qu'il fait | Gate |
+|------|---------------|------|
+| **Tier 0** | `--lg-blur-sm/md/lg/xl` + `--lg-sat-sm/md/lg` — backdrop-filter de base | aucun |
+| **Tier 1** | `--lg-noise-opacity` + SVG fractalNoise inline — texture grain | `prefers-reduced-transparency` |
+| **Tier 2** | `--lg-lens-angle` + `--lg-lens-spread` — gradient incident géométrique | `prefers-reduced-motion` |
+| **Sport tints** | `--lg-tint-tennis/football/mma/...` via `color-mix` — teintes par sport | aucun |
+| **FPS guard** | Réduit blur/saturate sur `prefers-reduced-motion: reduce` | `prefers-reduced-motion` |
+
+### Tokens créés (toutes `:root`, préfixe `--lg-*`)
+
+- **Blur**: `--lg-blur-sm` (8px), `--lg-blur-md` (20px), `--lg-blur-lg` (40px), `--lg-blur-xl` (60px)
+- **Saturation**: `--lg-sat-sm` (1.2), `--lg-sat-md` (1.5), `--lg-sat-lg` (1.8)
+- **Noise**: `--lg-noise-opacity` (0.03 → 0), `--lg-noise-url` (SVG fractalNoise data URI)
+- **Lens**: `--lg-lens-angle` (135deg → 0deg), `--lg-lens-spread` (120% → 100%)
+- **Couleurs**: `--lg-bg`, `--lg-bg-elevated`, `--lg-border`, `--lg-border-elevated`, `--lg-shadow`, `--lg-shadow-elevated`
+- **Sport tints**: 8 teintes `--lg-tint-*` (12% de la couleur sport, transparent)
+
+### Classes créées
+
+- `.glass-liquid` — Tier 0 (blur+sat) + Tier 1 (`::before` noise) + Tier 2 (`::after` lens)
+- `.glass-liquid-elevated` — idem, valeurs plus fortes
+- `.glass-tennis`, `.glass-football`, etc. — sport accent tints
+
+### Accessibilité
+
+- `prefers-reduced-transparency: reduce` → `--lg-noise-opacity: 0` (supprime texture)
+- `prefers-reduced-motion: reduce` → lens angle=0, spread=100% + blur réduit (FPS guard)
+- `.glass-focus` (Phase 4) préservé intact
+
+### Build
+
+`bun run build` → OK (0 erreurs, warnings pré-existants cyclingService.js uniquement)
+
+---
+
+## Task 3 — Composant LiquidGlass wrapper + hooks (2026-09-04)
+
+**Status**: DONE
+**Commit**: `fd4818b1` — `feat(ui): add LiquidGlass wrapper component with FPS guard and tier detection`
+
+### Fichiers créés
+
+1. **`src/hooks/use-fps-guard.ts`** — FPS auto-degrade hook
+   - Mesure les frames par seconde via `requestAnimationFrame`
+   - Désactive le glass si FPS < 30 pendant 3 secondes
+   - Applique la classe `.glass-off` sur `<html>`
+   - Court-circuite si `prefers-reduced-motion: reduce`
+
+2. **`src/hooks/use-liquid-glass.ts`** — Browser capability detection
+   - Détecte `backdrop-filter` support via `CSS.supports()`
+   - Détecte `prefers-reduced-motion` et `prefers-reduced-transparency`
+   - Détecte SVG refraction (Tier 1) via `data-lg-refraction` attribute
+   - Retourne le tier maximal: `off | tier0 | tier1 | tier2`
+
+3. **`src/components/ui/liquid-glass.tsx`** — React wrapper component
+   - `forwardRef` pattern pour refs
+   - Props: `tier`, `elevated`, `sport`, `noSheen`, `as`, `className`
+   - Importe `cn` depuis `@/lib/utils`
+   - Utilise `useLiquidGlass()` pour la détection auto du tier
+
+### Fichier modifié
+
+4. **`src/app/globals.css`** — Ajout après `.glass-focus` :
+   ```css
+   .lg-no-sheen::after {
+     display: none;
+   }
+   ```
+
+### Build
+
+`bun run build` → OK (0 erreurs)
+`eslint` → OK (0 erreurs sur les 3 fichiers)
+
+---
+
+## Task 4 — Appliquer Glass sur la Navbar (2026-09-04)
+
+**Status**: DONE
+**Commit**: `e81c9edf` — `feat(layout): apply liquid glass to navbar and sport tabs`
+
+### Fichiers modifiés
+
+1. **`src/components/layout/site-header.tsx`** — Lignes 10, 36-40
+   - Import ajouté: `import { LiquidGlass } from "@/components/ui/liquid-glass";`
+   - 2 divs gradient (`bg-gradient-to-br` + `bg-gradient-to-r`) remplacés par `<LiquidGlass tier="tier2" elevated className="absolute inset-0" />`
+   - Grid pattern, athlete image, bottom glow, contenu Niveau 1 conservés intacts
+
+2. **`src/components/layout/sport-tabs.tsx`** — Lignes 7, 160-168
+   - Import ajouté: `import { LiquidGlass } from "@/components/ui/liquid-glass";`
+   - `<div className="sticky top-0 z-40 h-10 bg-gradient-to-r ...">` remplacé par `<LiquidGlass tier="tier1" noSheen className="sticky top-0 z-40 h-10 ...">`
+   - Fermeture `</div>` → `</LiquidGlass>` à la fin du composant
+   - z-index `z-40` maintenu, sticky behavior préservé
+
+### API utilisée (composant réel)
+
+- `tier`: `"tier1"` (sport tabs, noSheen) / `"tier2"` (navbar, elevated)
+- `elevated`: boolean (navbar uniquement)
+- `noSheen`: boolean (sport tabs — masque le ::after lens gradient)
+
+### Build
+
+`bun run build` → OK (✓ Compiled successfully in 65s)
+`typecheck` → OK (0 erreurs sur les 2 fichiers)
+
+---
+
+## Task 5 — Appliquer Glass sur Mobile Bottom Nav (2026-09-04)
+
+**Status**: DONE
+**Commit**: `0fd09445` — `feat(layout): apply liquid glass to mobile bottom nav`
+
+### Fichier modifié
+
+1. **`src/components/layout/mobile-bottom-nav.tsx`** — Lignes 8, 38-43
+   - Import ajouté: `import { LiquidGlass } from "@/components/ui/liquid-glass";`
+   - `<nav className="... bg-[#0a0e17]/90 backdrop-blur-md ...">` remplacé par `<LiquidGlass tier="regular" as="nav" className="...">`
+   - `bg-[#0a0e17]/90 backdrop-blur-md` supprimé (géré par LiquidGlass)
+   - `role="navigation"` et `aria-label="Navigation principale"` conservés
+   - Fermeture `</nav>` → `</LiquidGlass>`
+
+### API utilisée
+
+- `tier`: `"regular"` (bottom nav — glass standard, ni elevated ni sport-tinted)
+- `as`: `"nav"` (rendu un `<nav>` pour sémantique HTML)
+- `className`: positionnement fixe + border + safe-area padding
+
+### Build
+
+`bun run build` → OK (warnings pré-existants cyclingService.js uniquement)
+
+---
+
+## Task 6 — Appliquer Glass sur Sports Sidebar (2026-09-04)
+
+**Status**: DONE
+**Commit**: (pending) — `feat(layout): apply liquid glass to sports sidebar`
+
+### Fichier modifié
+
+1. **`src/components/layout/sports-sidebar.tsx`** — Lignes 27, 1591-1600
+   - Import ajouté: `import { LiquidGlass } from "@/components/ui/liquid-glass";`
+   - `<SheetContent className="... bg-[#0e121e]/95 backdrop-blur-xl">` → className nettoyée (suppression `bg-[#0e121e]/95 backdrop-blur-xl`)
+   - `<div className="h-full pt-10">` wrapper interne remplacé par `<LiquidGlass tier="elevated" className="h-full pt-10">`
+   - Fermeture `</div>` → `</LiquidGlass>`
+   - Contenu `SportsSidebarContent` et props (`activeSport`, `onSportChange`, `onNavigate`) intacts
+
+### API utilisée
+
+- `tier`: `"elevated"` — glass renforcé (blur 60px, saturate 1.8) pour panneau latéral
+- La className conserve `h-full pt-10` pour le layout interne
+- Le border `border-slate-800/60` reste sur SheetContent (pas dans LiquidGlass)
+
+### Build
+
+`bun run build` → OK (Compiled successfully in 85s)

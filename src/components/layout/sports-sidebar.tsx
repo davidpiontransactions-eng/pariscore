@@ -24,6 +24,7 @@ import { getFlagEmoji, getFlagUrl } from "@/lib/flag-utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { LiquidGlass } from "@/components/ui/liquid-glass";
 import { TIME_RANGE_OPTIONS, type MatchViewMode } from "@/lib/match-view";
 import {
   applyTimeFilter,
@@ -1587,16 +1588,16 @@ export function SportsSidebarDrawer({
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-[19rem] max-w-[85vw] border-slate-800/60 bg-[#0e121e]/95 p-0 backdrop-blur-xl"
+        className="w-[19rem] max-w-[85vw] border-slate-800/60 p-0"
       >
         <SheetTitle className="sr-only">{t("title")}</SheetTitle>
-        <div className="h-full pt-10">
+        <LiquidGlass tier="elevated" className="h-full pt-10">
           <SportsSidebarContent
             activeSport={activeSport}
             onSportChange={onSportChange}
             onNavigate={() => setOpen(false)}
           />
-        </div>
+        </LiquidGlass>
       </SheetContent>
     </Sheet>
   );
