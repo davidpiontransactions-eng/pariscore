@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, AlertCircle, BarChart3, TrendingUp, Zap, Target, Brain, Flame, Trophy, Robot } from "lucide-react";
+import { Loader2, AlertCircle, BarChart3, TrendingUp, Zap, Target, Brain, Flame, Trophy, Cpu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTennisTop10 } from "@/hooks/use-tennis-top10";
 import { TennisPlayerCard } from "./tennis-player-card";
@@ -25,7 +25,7 @@ const METRICS = [
   { key: "completeness", label: "Completude", icon: Brain, emoji: "🧩" },
   { key: "pressure", label: "Pression", icon: TrendingUp, emoji: "💪" },
   { key: "gagnant", label: "Modele", icon: Trophy, emoji: "🎯" },
-  { key: "mlWinner", label: "ML v2.0", icon: Robot, emoji: "🤖" },
+  { key: "mlWinner", label: "ML v2.0", icon: Cpu, emoji: "🤖" },
 ] as const;
 
 const SURFACES = [
