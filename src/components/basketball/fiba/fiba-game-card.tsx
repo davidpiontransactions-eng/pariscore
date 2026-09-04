@@ -8,6 +8,7 @@ import { predictMatch } from "@/lib/predictions/fiba-predictions";
 import { useFibaStats } from "@/hooks/use-fiba-stats";
 import { useFibaOdds } from "@/hooks/use-fiba-odds";
 import { calculateValue } from "@/lib/predictions/fiba-odds";
+import { FibaPredictiveBets } from "./fiba-predictive-bets";
 import type { FibaMatch } from "@/app/api/fiba/scoreboard/route";
 
 type FibaGameCardProps = {
@@ -237,6 +238,14 @@ export function FibaGameCard({ match, onClick, className }: FibaGameCardProps) {
           )}
         </div>
       )}
+
+      {/* Predictive Bets (prematch & live) */}
+      <FibaPredictiveBets
+        match={match}
+        prediction={prediction}
+        homeStats={statsByAbbr.get(match.home.abbr)}
+        awayStats={statsByAbbr.get(match.away.abbr)}
+      />
 
       {/* Venue (pre-match) */}
       {isPre && match.venue && (
