@@ -38,7 +38,7 @@ export function SiteHeader() {
     <>
       <AutoHideHeader className="relative overflow-hidden">
         {/* Liquid Glass background — tier2 elevated pour la navbar */}
-        <LiquidGlass tier="tier2" elevated className="absolute inset-0 liquid-glass--animated"><></></LiquidGlass>
+        <LiquidGlass tier="tier2" elevated className="absolute inset-0 bg-[#060a14] liquid-glass--animated"><></></LiquidGlass>
 
         {/* Subtle grid pattern */}
         <div
