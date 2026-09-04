@@ -11,6 +11,7 @@ import SearchModal, { useSearchModal } from "@/components/layout/search-modal";
 import { NotificationsDropdown } from "@/components/layout/notifications-dropdown";
 import { UserMenu } from "@/components/layout/user-menu";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma", "cycling", "f1", "baseball", "cs2"]);
 
@@ -36,10 +37,9 @@ export function SiteHeader() {
   return (
     <>
       <AutoHideHeader className="relative overflow-hidden">
-        {/* Gradient background — multi-layer */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#060a14] via-[#0c1220] to-[#0a0f1a]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/8 via-transparent to-sky-500/5" />
-        
+        {/* Liquid Glass background — tier2 elevated pour la navbar */}
+        <LiquidGlass tier="tier2" elevated className="absolute inset-0" />
+
         {/* Subtle grid pattern */}
         <div
           className="absolute inset-0 opacity-[0.02]"

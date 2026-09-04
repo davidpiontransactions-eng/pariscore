@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFootballMatches } from "@/hooks/use-football-matches";
+import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 // ─── Définition d'un onglet sport ────────────────────────────────────────────
 type SportTab = {
@@ -150,10 +151,12 @@ export function SportTabs({
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
-    <div
+    <LiquidGlass
+      tier="tier1"
+      noSheen
       className={cn(
         "sticky top-0 z-40",
-        "h-10 bg-gradient-to-r from-[#0c1020] via-[#111a2e] to-[#0c1020]",
+        "h-10",
         "border-b border-white/[0.04]",
         className
       )}
@@ -287,6 +290,6 @@ export function SportTabs({
           aria-hidden="true"
         />
       </div>
-    </div>
+    </LiquidGlass>
   );
 }
