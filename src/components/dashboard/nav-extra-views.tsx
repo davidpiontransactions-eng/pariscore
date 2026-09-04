@@ -48,7 +48,7 @@ function ViewShell({
   children: React.ReactNode;
 }) {
   return (
-    <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6">
+    <section className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 pt-6">
       <div className="flex items-center gap-2.5">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400" aria-hidden>
           <Icon className="h-4.5 w-4.5" />
