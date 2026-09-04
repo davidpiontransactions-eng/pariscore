@@ -26,6 +26,25 @@ import { getTop5PlayerStats } from "./tennis-top5-stats";
 
 export type { TennisTop5Key as TennisTop10Key, Top5Surface as Top10Surface, Top5Period as Top10Period };
 
+/** Prochain match d'un joueur */
+export interface TennisTop10NextMatch {
+  id: string;
+  opponent: string;
+  opponentShort: string;
+  tournament: string;
+  round: string;
+  scheduledAt: string;
+  surface?: string;
+  /** Côte décimale du joueur (null si non dispo) */
+  odds?: number | null;
+  /** Côte décimale de l'adversaire */
+  opponentOdds?: number | null;
+  /** Probabilité implicite du marché (0-100) */
+  marketProb?: number;
+  /** Edge = prob modèle - prob marché (positif = value) */
+  edge?: number;
+}
+
 export interface TennisTop10Player {
   name: string;
   shortName: string;
@@ -44,6 +63,8 @@ export interface TennisTop10Player {
   returnWonPct?: number;
   tiebreaksWonPct?: number;
   decidingSetsWonPct?: number;
+  /** Prochain match à venir (null si pas de match planifié) */
+  nextMatch?: TennisTop10NextMatch | null;
 }
 
 export interface TennisTop10Entry {
@@ -134,6 +155,83 @@ function generateInsight(
   // Priorité 4 : fallback
   if (isTop) return "🏆 Top de la métrique";
   return `📊 Classé #${allValues.indexOf(metricValue) + 1}`;
+}
+
+// ─── MATCH LINKING ────────────────────────────────────────────────────────────
+
+/**
+ * Lie chaque joueur du Top 10 à son prochain match à venir.
+ *
+ * Approche : normalized name matching (substring + accent strip)
+ * contre les matchs prematch BSD. Pour chaque joueur, on prend le
+ * match le plus proche dans le futur.
+ */
+export function linkPlayersToMatches(
+  entries: TennisTop10Entry[],
+  matches: TennisMatch[],
+): TennisTop10Entry[] {
+  const now = new Date();
+
+  // Indexer les matchs par joueur (normalized name → match[])
+  const matchByPlayer = new Map<string, TennisMatch[]>();
+  for (const m of matches) {
+    if (!m?.playerA?.name || !m?.playerB?.name) continue;
+    // Seulement les matchs à venir ou live
+    const kickoff = new Date(m.scheduledAt);
+    if (kickoff.getTime() < now.getTime() - 30 * 60 * 1000) continue; // -30min grace
+
+    for (const side of ["A", "B"] as const) {
+      const p = side === "A" ? m.playerA : m.playerB;
+      const key = normPlayerName(p.name);
+      if (!key) continue;
+      const prev = matchByPlayer.get(key) ?? [];
+      prev.push(m);
+      matchByPlayer.set(key, prev);
+    }
+  }
+
+  return entries.map((entry) => {
+    const key = normPlayerName(entry.player.name);
+    const playerMatches = matchByPlayer.get(key);
+    if (!playerMatches || playerMatches.length === 0) {
+      return { ...entry, player: { ...entry.player, nextMatch: null } };
+    }
+
+    // Trier par date croissante, prendre le premier (prochain match)
+    playerMatches.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+    const m = playerMatches[0];
+
+    const isPlayerA = normPlayerName(m.playerA.name) === key;
+    const opponent = isPlayerA ? m.playerB : m.playerA;
+    const playerOdds = isPlayerA ? m.odds?.decimalA : m.odds?.decimalB;
+    const oppOdds = isPlayerA ? m.odds?.decimalB : m.odds?.decimalA;
+
+    // Probabilité implicite du marché (dévigotée)
+    let marketProb: number | undefined;
+    let edge: number | undefined;
+    if (playerOdds && playerOdds > 0 && oppOdds && oppOdds > 0) {
+      const rawProbA = 1 / playerOdds;
+      const rawProbB = 1 / oppOdds;
+      const totalVig = rawProbA + rawProbB;
+      marketProb = Math.round((rawProbA / totalVig) * 100);
+    }
+
+    const nextMatch: TennisTop10NextMatch = {
+      id: m.id,
+      opponent: opponent.name,
+      opponentShort: opponent.shortName || opponent.name.split(" ").pop() || opponent.name,
+      tournament: m.tournament,
+      round: m.round,
+      scheduledAt: m.scheduledAt,
+      surface: m.stats?.surface,
+      odds: playerOdds,
+      opponentOdds: oppOdds,
+      marketProb,
+      edge,
+    };
+
+    return { ...entry, player: { ...entry.player, nextMatch } };
+  });
 }
 
 // ─── BUILDER ──────────────────────────────────────────────────────────────────

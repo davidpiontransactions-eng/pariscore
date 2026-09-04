@@ -16,6 +16,7 @@ import { getOfficialLeaderboard } from "@/lib/tennis-stats/official-leaderboard"
 import { getTop5PlayerStats } from "@/lib/tennis-top5-stats";
 import {
   buildTennisTop10,
+  linkPlayersToMatches,
   type TennisTop10Payload,
 } from "@/lib/tennis-top10";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
@@ -149,7 +150,10 @@ export async function GET(req: NextRequest) {
     const matches = surface === "all" ? allMatches : allMatches.filter((m) => surfaceToKey(m.stats?.surface) === surface);
 
     // Construire le top 10
-    const entries = buildTennisTop10(matches, lb.byPlayer, metric);
+    const rawEntries = buildTennisTop10(matches, lb.byPlayer, metric);
+
+    // Lier chaque joueur à son prochain match à venir
+    const entries = linkPlayersToMatches(rawEntries, allMatches);
 
     const payload: TennisTop10Payload = {
       entries,
