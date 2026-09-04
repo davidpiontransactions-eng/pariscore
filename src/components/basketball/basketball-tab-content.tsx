@@ -211,7 +211,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
         <>
           {/* Loading */}
           {isLoading && (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-2" aria-busy="true">
               {Array.from({ length: 6 }).map((_, i) => (
                 <BasketballMatchCardSkeleton key={`sk-${i}`} />
               ))}
@@ -225,7 +225,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
 
           {/* Match cards */}
           {!isLoading && filteredMatches.length > 0 && (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-2">
               {filteredMatches.map((match) => (
                 <BasketballMatchCard
                   key={match.id}

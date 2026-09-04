@@ -490,7 +490,7 @@ export function FootballTabContent() {
                     <Skeleton className="h-2 w-2 rounded-full" />
                     <Skeleton className="h-4 w-24" />
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2" aria-busy="true">
                     {[0, 1].map((i) => (
                       <FootballLiveCardSkeleton key={`live-sk-${i}`} />
                     ))}
@@ -504,7 +504,7 @@ export function FootballTabContent() {
                       EN DIRECT ({liveMatches.length})
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2">
                     {liveMatches.map((m) => (
                       <FootballLiveCard key={m.id} match={m} onOpenDetail={openDetail} />
                     ))}
