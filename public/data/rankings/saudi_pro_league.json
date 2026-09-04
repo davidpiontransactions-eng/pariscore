@@ -4,7 +4,7 @@
     "leagueId": "saudi_pro_league",
     "leagueName": "Saudiarabia",
     "season": "2026-27",
-    "lastUpdated": "2026-09-03T08:50:27.869422Z",
+    "lastUpdated": "2026-09-04T08:45:51.881416Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -42,37 +42,37 @@
       {
         "rank": 5,
         "teamId": "",
+        "teamName": "Neom",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
+        "teamId": "",
         "teamName": "Al Ittihad",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Quadisiya",
         "value": 1.5,
         "played": 2
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": 1.5,
-        "played": 2
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Al Feiha",
-        "value": 1.5,
-        "played": 2
-      },
-      {
-        "rank": 6,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 1.5,
         "played": 2
+      },
+      {
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Al Feiha",
+        "value": 1.33,
+        "played": 3
       },
       {
         "rank": 10,
@@ -92,13 +92,6 @@
         "rank": 12,
         "teamId": "",
         "teamName": "Abha",
-        "value": 0.5,
-        "played": 2
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Al Diraiyah",
         "value": 0.5,
         "played": 2
       },
@@ -136,6 +129,13 @@
         "teamName": "Al Khaleej",
         "value": 0.5,
         "played": 2
+      },
+      {
+        "rank": 18,
+        "teamId": "",
+        "teamName": "Al Diraiyah",
+        "value": 0.33,
+        "played": 3
       }
     ],
     "pts": [
@@ -161,7 +161,14 @@
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Neom",
+        "value": 6.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Al Ittihad",
         "value": 4.0,
@@ -170,40 +177,33 @@
       {
         "rank": 5,
         "teamId": "",
+        "teamName": "Al Feiha",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
+        "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Quadisiya",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": 3.0,
-        "played": 2
-      },
-      {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Ittifaq",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Al Feiha",
-        "value": 3.0,
-        "played": 2
-      },
-      {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 3.0,
@@ -220,13 +220,6 @@
         "rank": 12,
         "teamId": "",
         "teamName": "Abha",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Al Diraiyah",
         "value": 1.0,
         "played": 2
       },
@@ -257,6 +250,13 @@
         "teamName": "Al Faisaly",
         "value": 1.0,
         "played": 2
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Al Diraiyah",
+        "value": 1.0,
+        "played": 3
       },
       {
         "rank": 12,
@@ -296,49 +296,49 @@
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Neom",
+        "value": 5.0,
+        "played": 3
+      },
+      {
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Al Feiha",
+        "value": 5.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Ittihad",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 4.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Al Shabab",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Al Quadisiya",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Al Feiha",
-        "value": 3.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Abha",
         "value": 2.0,
@@ -348,13 +348,6 @@
         "rank": 12,
         "teamId": "",
         "teamName": "Al Riyadh",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Al Diraiyah",
         "value": 1.0,
         "played": 2
       },
@@ -371,6 +364,13 @@
         "teamName": "Al Faisaly",
         "value": 1.0,
         "played": 2
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Al Diraiyah",
+        "value": 1.0,
+        "played": 3
       },
       {
         "rank": 12,
@@ -440,65 +440,58 @@
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Al Diraiyah",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 5,
-        "teamId": "",
         "teamName": "Al Hazm",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Kholood",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Neom",
+        "value": 3.0,
+        "played": 3
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Ittihad",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": 3.0,
-        "played": 2
-      },
-      {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Abha",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Faisaly",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 15,
+        "rank": 13,
         "teamId": "",
-        "teamName": "Al Feiha",
-        "value": 5.0,
-        "played": 2
+        "teamName": "Al Diraiyah",
+        "value": 4.0,
+        "played": 3
       },
       {
         "rank": 15,
@@ -508,11 +501,18 @@
         "played": 2
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Al Shabab",
         "value": 6.0,
         "played": 2
+      },
+      {
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Al Feiha",
+        "value": 7.0,
+        "played": 3
       },
       {
         "rank": 18,
@@ -554,93 +554,93 @@
       {
         "rank": 5,
         "teamId": "",
+        "teamName": "Neom",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Al Ittihad",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Al Quadisiya",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Taawon",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": -1.0,
-        "played": 2
-      },
-      {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Abha",
         "value": -1.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Al Diraiyah",
-        "value": -1.0,
-        "played": 2
-      },
-      {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Al Hazm",
         "value": -1.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Al Fateh",
         "value": -1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Al Feiha",
+        "value": -2.0,
+        "played": 3
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Al Ittifaq",
         "value": -2.0,
         "played": 3
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Al Feiha",
-        "value": -2.0,
-        "played": 2
-      },
-      {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Al Shabab",
         "value": -2.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Al Faisaly",
         "value": -2.0,
         "played": 2
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": -3.0,
         "played": 2
+      },
+      {
+        "rank": 16,
+        "teamId": "",
+        "teamName": "Al Diraiyah",
+        "value": -3.0,
+        "played": 3
       },
       {
         "rank": 18,
@@ -673,49 +673,49 @@
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Neom",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Al Ittihad",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Al Feiha",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Al Quadisiya",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Al Ittifaq",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Al Feiha",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 1.0,
@@ -732,13 +732,6 @@
         "rank": 11,
         "teamId": "",
         "teamName": "Abha",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 11,
-        "teamId": "",
-        "teamName": "Al Diraiyah",
         "value": 0.0,
         "played": 2
       },
@@ -769,6 +762,13 @@
         "teamName": "Al Faisaly",
         "value": 0.0,
         "played": 2
+      },
+      {
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Al Diraiyah",
+        "value": 0.0,
+        "played": 3
       },
       {
         "rank": 11,
@@ -796,14 +796,14 @@
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Abha",
+        "teamName": "Al Feiha",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 2,
         "teamId": "",
-        "teamName": "Al Diraiyah",
+        "teamName": "Abha",
         "value": 1.0,
         "played": 2
       },
@@ -838,68 +838,68 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Al Diraiyah",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Al Khaleej",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Hilal",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Nassr",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Kholood",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Neom",
+        "value": 0.0,
+        "played": 3
+      },
+      {
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Quadisiya",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Neom",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Ittifaq",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Al Feiha",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 0.0,
@@ -952,21 +952,21 @@
       {
         "rank": 7,
         "teamId": "",
-        "teamName": "Al Quadisiya",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 7,
-        "teamId": "",
         "teamName": "Neom",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 7,
         "teamId": "",
         "teamName": "Al Feiha",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Al Quadisiya",
         "value": 1.0,
         "played": 2
       },
@@ -981,13 +981,6 @@
         "rank": 7,
         "teamId": "",
         "teamName": "Abha",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 7,
-        "teamId": "",
-        "teamName": "Al Diraiyah",
         "value": 1.0,
         "played": 2
       },
@@ -1027,9 +1020,16 @@
         "played": 2
       },
       {
-        "rank": 18,
+        "rank": 17,
         "teamId": "",
         "teamName": "Al Ittifaq",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Al Diraiyah",
         "value": 2.0,
         "played": 3
       }
@@ -1037,6 +1037,13 @@
   },
   "away": {
     "ppg": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 3.0,
+        "played": 3
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -1048,13 +1055,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Al Nassr",
-        "value": 3.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
         "value": 3.0,
         "played": 2
       },
@@ -1096,6 +1096,13 @@
       {
         "rank": 9,
         "teamId": "",
+        "teamName": "Al Kholood",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 9,
+        "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 1.0,
         "played": 3
@@ -1103,23 +1110,16 @@
       {
         "rank": 9,
         "teamId": "",
-        "teamName": "Al Kholood",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 9,
-        "teamId": "",
         "teamName": "Al Shabab",
         "value": 1.0,
         "played": 2
+      },
+      {
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": 0.67,
+        "played": 3
       },
       {
         "rank": 13,
@@ -1168,26 +1168,26 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 9.0,
+        "played": 3
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Al Hilal",
         "value": 6.0,
         "played": 2
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Al Nassr",
         "value": 6.0,
         "played": 2
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
-        "value": 6.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Al Diraiyah",
         "value": 6.0,
@@ -1224,30 +1224,30 @@
       {
         "rank": 6,
         "teamId": "",
+        "teamName": "Al Kholood",
+        "value": 3.0,
+        "played": 3
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Al Kholood",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Shabab",
         "value": 2.0,
         "played": 2
+      },
+      {
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": 2.0,
+        "played": 3
       },
       {
         "rank": 13,
@@ -1303,19 +1303,19 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 7.0,
+        "played": 3
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Al Nassr",
         "value": 7.0,
         "played": 2
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
-        "value": 5.0,
-        "played": 2
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 5.0,
@@ -1336,42 +1336,42 @@
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Al Kholood",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Taawon",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Faisaly",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Neom",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Al Ahli Jeddah",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Al Kholood",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 9,
+        "rank": 10,
         "teamId": "",
         "teamName": "Abha",
         "value": 2.0,
@@ -1394,16 +1394,16 @@
       {
         "rank": 13,
         "teamId": "",
-        "teamName": "Al Khaleej",
+        "teamName": "Al Shabab",
         "value": 1.0,
         "played": 2
       },
       {
         "rank": 13,
         "teamId": "",
-        "teamName": "Al Shabab",
+        "teamName": "Al Khaleej",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 13,
@@ -1445,14 +1445,14 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Al Hilal",
+        "teamName": "Al Quadisiya",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Al Quadisiya",
+        "teamName": "Al Hilal",
         "value": 1.0,
         "played": 2
       },
@@ -1466,47 +1466,47 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 4,
-        "teamId": "",
         "teamName": "Al Shabab",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Nassr",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Al Kholood",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Al Feiha",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 10,
         "teamId": "",
         "teamName": "Al Hazm",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Al Kholood",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Al Fateh",
         "value": 4.0,
@@ -1559,19 +1559,19 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 6.0,
+        "played": 3
+      },
+      {
+        "rank": 3,
+        "teamId": "",
         "teamName": "Al Nassr",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
-        "value": 4.0,
-        "played": 2
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Al Diraiyah",
         "value": 4.0,
@@ -1610,14 +1610,7 @@
         "teamId": "",
         "teamName": "Al Kholood",
         "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 0.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 8,
@@ -1627,28 +1620,35 @@
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 11,
         "teamId": "",
         "teamName": "Al Feiha",
         "value": -1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": -2.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Al Taawon",
         "value": -2.0,
         "played": 2
       },
       {
-        "rank": 15,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": -3.0,
+        "played": 3
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Al Fateh",
         "value": -3.0,
@@ -1680,26 +1680,26 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 3.0,
+        "played": 3
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Al Hilal",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Al Nassr",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Al Diraiyah",
         "value": 2.0,
@@ -1745,14 +1745,7 @@
         "teamId": "",
         "teamName": "Al Kholood",
         "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 0.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 10,
@@ -1760,6 +1753,13 @@
         "teamName": "Al Shabab",
         "value": 0.0,
         "played": 2
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": 0.0,
+        "played": 3
       },
       {
         "rank": 10,
@@ -1809,22 +1809,22 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Al Kholood",
-        "value": 2.0,
-        "played": 2
+        "value": 3.0,
+        "played": 3
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Al Shabab",
         "value": 2.0,
         "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": 2.0,
+        "played": 3
       },
       {
         "rank": 4,
@@ -1857,6 +1857,13 @@
       {
         "rank": 8,
         "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 0.0,
+        "played": 3
+      },
+      {
+        "rank": 8,
+        "teamId": "",
         "teamName": "Al Hilal",
         "value": 0.0,
         "played": 2
@@ -1865,13 +1872,6 @@
         "rank": 8,
         "teamId": "",
         "teamName": "Al Nassr",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
         "value": 0.0,
         "played": 2
       },
@@ -1936,6 +1936,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Al Quadisiya",
+        "value": 0.0,
+        "played": 3
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Al Hilal",
         "value": 0.0,
         "played": 2
@@ -1944,13 +1951,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Al Nassr",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Al Quadisiya",
         "value": 0.0,
         "played": 2
       },
@@ -1980,14 +1980,7 @@
         "teamId": "",
         "teamName": "Al Kholood",
         "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Al Khaleej",
-        "value": 0.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 1,
@@ -1997,35 +1990,42 @@
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Neom",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Al Hazm",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Al Khaleej",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Al Feiha",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Al Riyadh",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Al Fateh",
         "value": 1.0,

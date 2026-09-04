@@ -4,7 +4,7 @@
     "leagueId": "ligue1",
     "leagueName": "France",
     "season": "2026-27",
-    "lastUpdated": "2026-09-03T08:50:04.656055Z",
+    "lastUpdated": "2026-09-04T08:45:28.208333Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -128,7 +128,7 @@
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
-        "played": 1
+        "played": 2
       }
     ],
     "pts": [
@@ -256,7 +256,7 @@
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
-        "played": 1
+        "played": 2
       }
     ],
     "gf": [
@@ -384,7 +384,7 @@
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
-        "played": 1
+        "played": 2
       }
     ],
     "ga": [
@@ -494,18 +494,18 @@
         "played": 1
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Toulouse",
-        "value": 2.0,
-        "played": 1
-      },
-      {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 3.0,
         "played": 1
+      },
+      {
+        "rank": 16,
+        "teamId": "",
+        "teamName": "Toulouse",
+        "value": 3.0,
+        "played": 2
       },
       {
         "rank": 18,
@@ -636,11 +636,11 @@
         "played": 1
       },
       {
-        "rank": 16,
+        "rank": 18,
         "teamId": "",
         "teamName": "Toulouse",
-        "value": -2.0,
-        "played": 1
+        "value": -3.0,
+        "played": 2
       }
     ],
     "w": [
@@ -768,7 +768,7 @@
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
-        "played": 1
+        "played": 2
       }
     ],
     "d": [
@@ -896,7 +896,7 @@
         "teamId": "",
         "teamName": "Toulouse",
         "value": 0.0,
-        "played": 1
+        "played": 2
       }
     ],
     "l": [
@@ -1020,11 +1020,11 @@
         "played": 1
       },
       {
-        "rank": 14,
+        "rank": 18,
         "teamId": "",
         "teamName": "Toulouse",
-        "value": 1.0,
-        "played": 1
+        "value": 2.0,
+        "played": 2
       }
     ]
   },
@@ -1033,14 +1033,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Angers",
+        "teamName": "Lille",
         "value": 3.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Lille",
+        "teamName": "Angers",
         "value": 3.0,
         "played": 1
       },
@@ -1154,33 +1154,33 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lille",
+        "value": 6.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Angers",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lille",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Lyon",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Troyes",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Monaco",
         "value": 3.0,
@@ -1289,54 +1289,54 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Lille",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Angers",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Lille",
-        "value": 2.0,
-        "played": 1
-      },
-      {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Lyon",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Troyes",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Brest",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Toulouse",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Le Mans",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Auxerre",
         "value": 2.0,
@@ -1412,7 +1412,7 @@
         "teamId": "",
         "teamName": "Lille",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 1,
@@ -1538,19 +1538,19 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lille",
+        "value": 3.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Angers",
         "value": 2.0,
         "played": 1
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lille",
-        "value": 2.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Lyon",
         "value": 2.0,
@@ -1666,33 +1666,33 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Lille",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Angers",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Lille",
-        "value": 1.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Lyon",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Troyes",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
         "teamName": "Monaco",
         "value": 1.0,
@@ -1836,14 +1836,14 @@
       {
         "rank": 7,
         "teamId": "",
-        "teamName": "Angers",
+        "teamName": "Lille",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 7,
         "teamId": "",
-        "teamName": "Lille",
+        "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
@@ -1922,14 +1922,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Angers",
+        "teamName": "Lille",
         "value": 0.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Lille",
+        "teamName": "Angers",
         "value": 0.0,
         "played": 1
       },
