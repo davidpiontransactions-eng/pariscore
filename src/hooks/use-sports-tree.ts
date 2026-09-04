@@ -81,15 +81,28 @@ async function loadCs2(): Promise<SportNode> {
 
 async function loadBasketball(): Promise<SportNode> {
   try {
-    const [nbaJson, wnbaJson] = await Promise.all([
-      getJson("/api/nba/matches"),
-      getJson("/api/wnba/matches"),
+    const [nbaJson, wnbaJson, fibaJson] = await Promise.all([
+      getJson("/api/nba/matches").catch(() => ({ matches: [] })),
+      getJson("/api/wnba/matches").catch(() => ({ matches: [] })),
+      getJson("/api/fiba/scoreboard").catch(() => ({ matches: [] })),
     ]);
     const nbaRaw = basketballToRaw("NBA", nbaJson?.matches ?? []);
     const wnbaRaw = basketballToRaw("WNBA", wnbaJson?.matches ?? []);
-    const node = groupRawMatches("basketball", [...nbaRaw, ...wnbaRaw]);
+    // Normaliser les matchs FIBA pour le sidebar
+    const fibaRaw = (fibaJson?.matches ?? []).map((m: any, i: number) => ({
+      id: `fiba-${m.id ?? i}`,
+      homeName: m.home?.name ?? m.home?.abbr ?? "TBD",
+      awayName: m.away?.name ?? m.away?.abbr ?? "TBD",
+      scheduledAt: m.date ?? null,
+      isLive: m.status === "in",
+      leagueId: "fiba-wc",
+      leagueName: "FIBA WC",
+      countryName: "International",
+      countryCode: "INT",
+    }));
+    const node = groupRawMatches("basketball", [...nbaRaw, ...wnbaRaw, ...fibaRaw]);
 
-    // Toujours inclure la structure ligue NBA/WNBA même hors saison
+    // Toujours inclure la structure ligue NBA/WNBA/FIBA même hors saison
     if (node.countries.length === 0) {
       return {
         ...node,
@@ -105,6 +118,33 @@ async function loadBasketball(): Promise<SportNode> {
           },
         ],
       };
+    }
+    // Ajouter FIBA WC si pas déjà présent
+    const hasFiba = node.countries.some((c) =>
+      c.leagues.some((l) => l.id === "basketball:fiba-wc"),
+    );
+    if (!hasFiba && fibaRaw.length > 0) {
+      node.countries.push({
+        id: "basketball:international",
+        name: "International",
+        countryCode: "INT",
+        leagues: [
+          {
+            id: "basketball:fiba-wc",
+            name: "FIBA WC",
+            matchCount: fibaRaw.length,
+            sportId: "basketball" as const,
+            matches: fibaRaw.map((m: any) => ({
+              id: m.id,
+              homeName: m.homeName,
+              awayName: m.awayName,
+              scheduledAt: m.scheduledAt,
+              isLive: m.isLive,
+              edgePct: undefined,
+            })),
+          },
+        ],
+      });
     }
     return node;
   } catch {

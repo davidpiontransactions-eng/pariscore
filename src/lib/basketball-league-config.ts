@@ -224,6 +224,24 @@ export const LEAGUE_CONFIGS: Record<BasketballLeagueId, LeagueConfig> = {
     sdTotal: 14.5,
     leagueAvgPf: 79.0,
   },
+  fiba: {
+    id: "fiba",
+    label: "FIBA Women's WC",
+    shortLabel: "FIBA",
+    country: "International",
+    countryCode: "INT",
+    season: "2026",
+    espnKey: "fiba",
+    paceBaseline: 72.0, // Plus lent que NBA (40 min vs 48 min)
+    threePointLine: 6.75, // Ligne FIBA standard
+    quarterMinutes: 10, // Quarts de 10 min (FIBA)
+    foulLimit: 5, // Limite FIBA (5 fautes = disqualification)
+    usesFibaRules: true,
+    hcaPoints: 2.5, // Home court advantage réduit en tournoi neutre
+    sdMargin: 12.5, // Plus grande variance (tournoi knockout)
+    sdTotal: 17.0,
+    leagueAvgPf: 78.0, // Moyenne FIBA Women's (plus bas que NBA)
+  },
 };
 
 /** Normalise le pace d'une ligue FIBA vers l'échelle NBA (107.4 baseline). */

@@ -4,7 +4,7 @@
  * Source : basketballService.js (NBA/WNBA) + euroleague_api (EuroLeague/EuroCup).
  */
 
-export type BasketballLeagueId = "nba" | "wnba" | "euroleague" | "eurocup" | "lnb" | "acb" | "lba" | "bsl" | "bbl" | "aba" | "greek";
+export type BasketballLeagueId = "nba" | "wnba" | "euroleague" | "eurocup" | "lnb" | "acb" | "lba" | "bsl" | "bbl" | "aba" | "greek" | "fiba";
 
 export type BasketballLeagueInfo = {
   id: BasketballLeagueId;

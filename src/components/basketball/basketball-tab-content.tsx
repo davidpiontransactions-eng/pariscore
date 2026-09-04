@@ -24,6 +24,11 @@ const BasketballH2H = dynamic(
   { ssr: false },
 );
 
+const FibaScoreboard = dynamic(
+  () => import("./fiba/fiba-scoreboard").then((m) => m.FibaScoreboard),
+  { ssr: false },
+);
+
 type BasketballTabContentProps = {
   className?: string;
 };
@@ -41,7 +46,7 @@ type UnifiedMatch = {
   edgeElo: number | null;
 };
 
-type PageView = "matchs" | "h2h";
+type PageView = "matchs" | "h2h" | "fiba";
 
 export function BasketballTabContent({ className }: BasketballTabContentProps) {
   const [pageView, setPageView] = useState<PageView>("matchs");
@@ -142,7 +147,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">Basket</h2>
         <div className="flex items-center gap-2">
-          {/* Toggle Matchs / H2H */}
+          {/* Toggle Matchs / H2H / FIBA */}
           <div className="flex rounded-md bg-muted p-0.5">
             <button
               onClick={() => setPageView("matchs")}
@@ -165,6 +170,17 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
               )}
             >
               H2H
+            </button>
+            <button
+              onClick={() => setPageView("fiba")}
+              className={cn(
+                "rounded px-3 py-1 text-xs font-medium transition-colors",
+                pageView === "fiba"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              FIBA WC
             </button>
           </div>
           {pageView === "matchs" && (
@@ -198,6 +214,11 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       {/* Vue H2H */}
       {pageView === "h2h" && (
         <BasketballH2H defaultLeague="nba" />
+      )}
+
+      {/* Vue FIBA Women's World Cup */}
+      {pageView === "fiba" && (
+        <FibaScoreboard />
       )}
 
       {/* Vue Matchs */}
