@@ -50,6 +50,7 @@ import {
 } from "@/components/dashboard/nav-extra-views";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import { FeatureCards } from "@/components/dashboard/feature-cards";
+import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
 import type { BasketballMatch } from "@/lib/basketball-data";
@@ -336,14 +337,19 @@ function HomeInner() {
               className="flex-1"
             >
 
-        {/* Hero Dashboard Section (refonte 2026-08-25 — cf. .context/design-refonte-2026-08-25.md) */}
+        {/* Hero Dashboard Section — Bento Grid layout */}
         <section className="sport-ambient max-w-6xl mx-auto w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
-          <HeroSection totalValueBets={stats.totalValueBets} />
+          <BentoGrid cols={4}>
+            {/* Hero tile — 2×2 */}
+            <BentoTile size="hero" variant="glass">
+              <HeroSection totalValueBets={stats.totalValueBets} />
+            </BentoTile>
 
-          {/* Feature Cards — bento grid avec images sportives */}
-          <div className="mt-5">
-            <FeatureCards />
-          </div>
+            {/* Feature Cards — tiles variées */}
+            <BentoTile size="wide" variant="glass">
+              <FeatureCards />
+            </BentoTile>
+          </BentoGrid>
 
           {/* Ancres de navigation rapide */}
           <div className="mt-4 flex items-center gap-3 text-xs text-zinc-500 overflow-x-auto pb-1 scrollbar-none">
@@ -386,10 +392,6 @@ function HomeInner() {
             </button>
           </div>
         </section>
-
-
-
-        {/* Content — entrée douce au changement de sport */}
         <motion.div
           key={activeTab}
           initial={reduceMotion ? false : { opacity: 0, y: 8 }}
@@ -429,12 +431,22 @@ function HomeInner() {
         {activeTab === "rugby" && <RugbyTabContent />}
         </motion.div>
 
-        {/* Sections déplacées : Meilleurs Matchs + Prochains Matchs + Gemini */}
-        <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8 space-y-6">
-          <Top5SelectionPanel variant="inline" />
-          <BestMatchesTabs id="section-best-matches" />
-          <UpcomingTenMatchesTable id="section-upcoming" />
-          <AIInsightCard id="section-gemini" />
+        {/* Sections déplacées — Bento Grid layout */}
+        <section className="max-w-6xl mx-auto w-full px-4 sm:px-6 pt-8">
+          <BentoGrid cols={4}>
+            <BentoTile size="wide" variant="glass">
+              <Top5SelectionPanel variant="inline" />
+            </BentoTile>
+            <BentoTile size="wide" variant="glass">
+              <BestMatchesTabs id="section-best-matches" />
+            </BentoTile>
+            <BentoTile size="wide" variant="glass">
+              <UpcomingTenMatchesTable id="section-upcoming" />
+            </BentoTile>
+            <BentoTile size="standard" variant="glass">
+              <AIInsightCard id="section-gemini" />
+            </BentoTile>
+          </BentoGrid>
         </section>
             </PullToRefresh>
           </div>
