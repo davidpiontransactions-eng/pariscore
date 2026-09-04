@@ -66,6 +66,7 @@ import {
 import { BetDialog } from "@/components/bet-dialog";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { cn } from "@/lib/utils";
+import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 
 /** Simple deterministic color from a string. Used for synthetic live-match cards. */
 function hashColor(s: string): string {
@@ -720,7 +721,10 @@ return [...matches, ...synthetic];
           </div>
         </div>
       )}
-      {/* Hero */}
+      {/* Bento Grid — grille principale avec 4 colonnes responsive */}
+      <BentoGrid cols={2} className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      {/* Hero — Bento Grid : tile hero (2×2) */}
+      <BentoTile size="hero" variant="solid">
       <section className="border-b border-border/60 bg-gradient-to-b from-muted/40 to-background">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -933,10 +937,12 @@ return [...matches, ...synthetic];
           )}
         </div>
       </section>
+      </BentoTile>
 
       {/* R8 — Section "À la une" : carrousel horizontal des tournois phares
           de la semaine (ex S29 : Kitzbühel, Estoril, Hambourg). Disparaît
           automatiquement si la semaine n'a pas de marquee configuré. */}
+      <BentoTile size="wide" variant="glass">
       <FeaturedMatchesMarquee
         featured={featuredForMarquee}
         marquee={curation.marquee}
@@ -945,8 +951,10 @@ return [...matches, ...synthetic];
         onOpenDetail={openDetail}
         onBetClick={openBet}
       />
+      </BentoTile>
 
-      {/* Phase 7 — Sous-onglets Live / Aujourd'hui / Tournois */}
+      {/* Phase 7 — Sous-onglets Live / Aujourd'hui / Tournois — Bento Grid : tile standard (1×1) */}
+      <BentoTile size="standard" variant="glass">
       <div className="mx-auto w-full max-w-6xl px-4 pt-4 sm:px-6">
         <TennisSubTabs
           activeSubTab={subTab}
@@ -962,8 +970,10 @@ return [...matches, ...synthetic];
           </div>
         )}
       </div>
+      </BentoTile>
 
-      {/* Match list / Tournaments list / Flashscore list / Top 10 Rankings */}
+      {/* Match list / Tournaments list / Flashscore list / Top 10 Rankings — Bento Grid : tile wide (2×1) */}
+      <BentoTile size="wide" variant="glass">
       <main className="w-full flex-1 px-4 py-6 sm:px-6">
       {subTab === "rankings" ? (
         <div className="mx-auto max-w-4xl">
@@ -1098,6 +1108,8 @@ return [...matches, ...synthetic];
         </>
       )}
       </main>
+      </BentoTile>
+      </BentoGrid>
 
       <Suspense fallback={null}>
         <MatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
