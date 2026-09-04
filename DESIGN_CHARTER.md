@@ -504,7 +504,126 @@ Avant d'adopter TENDANCE, chaque ajout doit répondre :
 
 ---
 
-## 19. Dark Mode — Accent ≤ 5% (Phase 7 — 2026-09-03)
+## 19. Liquid Glass System (Phase 22 — 2026-09-04)
+
+> **Système unifié de glassmorphism** avec détection automatique capability, feature flag PostHog, et accessibilité intégrée.
+
+### 19.1 4-Tier Ladder
+
+| Tier | Nom | Effet | Gate | Usage |
+|------|-----|-------|------|-------|
+| **Tier 0** | Blur | `backdrop-filter: blur(8-60px) saturate(1.2-1.8)` | aucun | Base de tout le système |
+| **Tier 1** | Noise | SVG fractalNoise texture via `::before` | `prefers-reduced-transparency` | Texture grain subtil |
+| **Tier 2** | Lens | Gradient incident géométrique via `::after` | `prefers-reduced-motion` | Sheen animée, reflet directionnel |
+| **Tier 3** | Opaque | `liquid-glass--clear` — glass sans opacité réduite | aucun | Modales, dialogues, sheets |
+
+### 19.2 CSS Token Naming Convention (`--lg-*`)
+
+| Catégorie | Tokens | Valeurs |
+|-----------|--------|---------|
+| Blur | `--lg-blur-sm/md/lg/xl` | 8px, 20px, 40px, 60px |
+| Saturation | `--lg-sat-sm/md/lg` | 1.2, 1.5, 1.8 |
+| Noise | `--lg-noise-opacity`, `--lg-noise-url` | 0.03→0, SVG data URI |
+| Lens | `--lg-lens-angle`, `--lg-lens-spread` | 135deg→0deg, 120%→100% |
+| Couleurs | `--lg-bg`, `--lg-bg-elevated`, `--lg-border`, `--lg-border-elevated` | rgba values |
+| Shadows | `--lg-shadow`, `--lg-shadow-elevated` | box-shadow values |
+| Sport tints | `--lg-tint-tennis/football/mma/basketball/baseball/f1/hockey/rugby` | 12% sport color, transparent |
+
+### 19.3 Component Usage
+
+```tsx
+import { LiquidGlass } from "@/components/ui/liquid-glass";
+
+// Navbar (Tier 2, elevated, animated sheen)
+<LiquidGlass tier="tier2" elevated className="absolute inset-0">
+  {children}
+</LiquidGlass>
+
+// Sport tabs (Tier 1, no lens)
+<LiquidGlass tier="tier1" noSheen className="sticky top-0 z-40">
+  {children}
+</LiquidGlass>
+
+// Bottom nav (regular, rendered as <nav>)
+<LiquidGlass tier="regular" as="nav" className="...">
+  {children}
+</LiquidGlass>
+
+// Match card (clear, sport-tinted)
+<LiquidGlass tier="clear" sport="tennis">
+  {children}
+</LiquidGlass>
+
+// Sidebar (elevated)
+<LiquidGlass tier="elevated" className="h-full pt-10">
+  {children}
+</LiquidGlass>
+```
+
+**Props**:
+- `tier`: `"regular" | "elevated" | "clear" | "tier0" | "tier1" | "tier2"`
+- `sport`: `"football" | "tennis" | "mma" | "basketball" | "baseball" | "f1" | "hockey" | "rugby"` — applies `--lg-tint-*` accent
+- `elevated`: boolean — uses stronger blur/saturation tokens
+- `noSheen`: boolean — hides `::after` lens gradient
+- `as`: string — render as any HTML element (preserves semantics)
+- `className`: string — merged with glass classes via `cn()`
+
+**CSS-only alternative** (no React import needed):
+```tsx
+// Apply liquid-glass--clear class directly on existing elements
+<div className="liquid-glass--clear">...</div>
+```
+
+### 19.4 Sport Accent Tints
+
+Each sport maps to a CSS `color-mix()` tint at 12% opacity:
+
+| Sport | Token | Base Color |
+|-------|-------|------------|
+| Football | `--lg-tint-football` | `#00e676` (vert néon) |
+| Tennis | `--lg-tint-tennis` | `#29b6f6` (bleu) |
+| MMA | `--lg-tint-mma` | `#f59e0b` (ambre) |
+| Basketball | `--lg-tint-basketball` | `#f97316` (orange) |
+| Baseball | `--lg-tint-baseball` | `#ef4444` (rouge) |
+| F1 | `--lg-tint-f1` | `#ef4444` (rouge) |
+| Hockey | `--lg-tint-hockey` | `#8b5cf6` (violet) |
+| Rugby | `--lg-tint-rugby` | `#14b8a6` (teal) |
+
+### 19.5 Accessibility Gates
+
+| Gate | Condition | Effect |
+|------|-----------|--------|
+| **Reduced transparency** | `prefers-reduced-transparency: reduce` | `--lg-noise-opacity: 0` — disables noise texture |
+| **Reduced motion** | `prefers-reduced-motion: reduce` | Lens angle=0, spread=100%, sheen animation off, blur reduced |
+| **FPS guard** | FPS < 30 for 3s | Adds `.glass-off` class on `<html>`, disables all glass |
+| **Keyboard focus** | `.glass-focus` class | Emerald border glow on `focus-visible` |
+
+### 19.6 Feature Flag
+
+**Flag name**: `liquid-glass-v1` (PostHog)
+
+| Flag State | Behavior |
+|------------|----------|
+| `false` / `undefined` (default) | `<LiquidGlass>` renders plain `<div>` — no glass effects |
+| `true` | Full glass system active per tier/sport props |
+
+**Rollout**: PostHog dashboard → Feature Flags → `liquid-glass-v1` → set percentage.
+**Kill switch**: Disable flag → all components revert to plain divs instantly.
+
+### 19.7 SVG Refraction (Chromium)
+
+Two SVG filters rendered in `<body>` via `<LiquidGlassFilter />`:
+
+| Filter ID | Target | Parameters |
+|-----------|--------|------------|
+| `#lg-refract` | Navbar, sidebar (macro) | baseFrequency 0.008, scale 0.45, 3 octaves |
+| `#lg-refract-sm` | Cards (small) | baseFrequency 0.012, scale 0.30, 2 octaves |
+
+Activated via `data-lg-refraction` attribute on `<html>`. Firefox/Safari fall back to standard blur.
+
+---
+
+## 20. Dark Mode — Accent ≤ 5% (Phase 7 — 2026-09-03)
 
 > **Règle d'or** : `#00e676` apparaît UNIQUEMENT sur les signaux. Tout le chrome = slate translucide.
 
@@ -533,7 +652,7 @@ Compter la surface de pixels `#00e676` sur la homepage. Objectif : **≤ 5%** de
 
 ---
 
-## 20. Mobile-First Refinements (Phase 21 — 2026-09-03)
+## 21. Mobile-First Refinements (Phase 21 — 2026-09-03)
 
 > **Safe areas + touch targets** pour PWA Capacitor (Android/iOS).
 

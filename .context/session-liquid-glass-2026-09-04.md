@@ -342,6 +342,31 @@ Remplacement de la section "Phase 18 — Liquid Glass Token" (4 variables CSS + 
 
 ---
 
+## Task 11 — Micro-interactions : Sheen animée navbar (2026-09-04)
+
+**Status**: DONE
+**Commit**: `cf007384` — `feat(ux): add animated sheen drift to liquid glass navbar`
+
+### Fichiers modifiés
+
+1. **`src/app/globals.css`** — Ajout après `.lg-no-sheen::after` :
+   - `@keyframes lg-sheen-drift` — déplacement du background de -200% à +200% sur 8s
+   - `.liquid-glass--animated::after` — gradient linéaire `110deg` (transparent → blanc 12% → blanc 25% → blanc 12% → transparent) avec `background-size: 200% 100%` et animation `lg-sheen-drift 8s ease-in-out infinite`
+   - `@media (prefers-reduced-motion: reduce)` — désactive l'animation pour l'accessibilité
+
+2. **`src/components/layout/site-header.tsx`** — Ligne 39 :
+   - Classe `liquid-glass--animated` ajoutée au wrapper `<LiquidGlass tier="tier2" elevated>` de la navbar
+
+### Effet visuel
+
+Un reflet blanc subtil dérive de gauche à droite sur le `::after` pseudo-élément du glass, créant un effet de sheen animé continu sur la navbar. Respecte `prefers-reduced-motion`.
+
+### Build
+
+`bun run build` → OK (warnings pré-existants cyclingService.js uniquement)
+
+---
+
 ## Task 6 — Appliquer Glass sur Sports Sidebar (2026-09-04)
 
 **Status**: DONE
@@ -433,3 +458,121 @@ Remplacement de la section "Phase 18 — Liquid Glass Token" (4 variables CSS + 
 ### Build
 
 `bun run build` → OK (Compiled successfully in ~3min, 97 static pages generated)
+
+---
+
+## Task 9 — SVG Refraction Filter (Chromium) (2026-09-04)
+
+**Status**: DONE
+**Commit**: `6ff8fea1` — `feat(svg): add liquid glass refraction filter with Chromium gate`
+
+### Fichiers créés
+
+1. **`src/components/ui/liquid-glass-filter.tsx`** — SVG refraction filters
+   - `"use client"` — rendu dans le body, côté client
+   - 2 filtres SVG invisibles (`width="0" height="0"`, `aria-hidden="true"`) :
+     - `#lg-refract` — macro refraction (navbar, sidebar) : feTurbulence baseFrequency 0.008, scale 0.45, 3 octaves
+     - `#lg-refract-sm` — small refraction (cards) : feTurbulence baseFrequency 0.012, scale 0.30, 2 octaves
+   - Chaque filtre : `feTurbulence → feGaussianBlur → feDisplacementMap`
+   - Les IDs matchent le CSS gate dans `globals.css` : `html[data-lg-refraction] .liquid-glass { backdrop-filter: url("#lg-refract") }`
+
+### Fichiers modifiés
+
+2. **`src/app/layout.tsx`** — Lignes 11, 89
+   - Import ajouté : `import { LiquidGlassFilter } from "@/components/ui/liquid-glass-filter";`
+   - `<LiquidGlassFilter />` ajouté comme premier child dans `<body>`, avant le skip-to-content link
+
+### Build
+
+`bun run build` → OK (`.next/standalone/server.js` créé)
+`typecheck` → 0 nouvelles erreurs (toutes les erreurs pré-existantes dans d'autres fichiers)
+
+---
+
+## Task 10 — Feature Flag PostHog (2026-09-04)
+
+**Status**: DONE
+**Commit**: `71d605c1` — `feat(flags): add PostHog feature flag for liquid glass rollout`
+
+### Fichier modifié
+
+1. **`src/components/ui/liquid-glass.tsx`** — 11 insertions
+   - Import ajouté: `import { useFeatureFlagEnabled } from "posthog-js/react";`
+   - Hook ajouté: `const flagEnabled = useFeatureFlagEnabled("liquid-glass-v1");`
+   - Early return si flag désactivé: rendu sans classes glass (div/plain avec children)
+
+### Comportement
+
+| État flag | Rendu |
+|-----------|-------|
+| `false` / `undefined` (défaut) | `<Component ref={ref} className={className} {...props}>{children}</Component>` — aucun style glass |
+| `true` | Comportement normal: glass-liquid classes appliquées selon tier |
+
+### Safety net
+
+- Rollout 0% par défaut dans PostHog
+- Permet d'activer le glass progressivement (1% → 10% → 50% → 100%)
+- Kill switch instantané: désactiver le flag → tous les composants redeviennent des divs nus
+
+### Build
+
+`bun run build` → OK (erreurs pré-existantes uniquement, aucune nouvelle erreur liée à cette PR)
+
+---
+
+## Final Summary — Liquid Glass Session (2026-09-04)
+
+**Status**: COMPLETE (Tasks 1-12)
+**Feature flag**: `liquid-glass-v1`
+**Rollout**: PostHog dashboard → Feature Flags → `liquid-glass-v1` → set percentage (default 0%)
+
+### Commits
+
+| # | Hash | Message |
+|---|------|---------|
+| 1 | `5f10fc51` | `docs(context): add liquid glass session inventory` |
+| 2 | `7af0642d` | `feat(css): refactor liquid glass tokens with 4-tier ladder system` |
+| 3 | `fd4818b1` | `feat(ui): add LiquidGlass wrapper component with FPS guard and tier detection` |
+| 4 | `e81c9edf` | `feat(layout): apply liquid glass to navbar and sport tabs` |
+| 5 | `0fd09445` | `feat(layout): apply liquid glass to mobile bottom nav` |
+| 6 | `f0a38e65` | `feat(layout): apply liquid glass to sports sidebar` |
+| 7 | `cc38468a` | `feat(cards): apply liquid glass to tennis and football match cards` |
+| 8 | `9982e245` | `feat(modals): apply liquid glass to dialog, sheet, and search modal` |
+| 9 | `6ff8fea1` | `feat(svg): add liquid glass refraction filter with Chromium gate` |
+| 10 | `de3851ee` | `docs(context): add Task 7 match cards liquid glass to session log` |
+| 11 | `cf007384` | `feat(ux): add animated sheen drift to liquid glass navbar` |
+| 12 | `71d605c1` | `feat(flags): add PostHog feature flag for liquid glass rollout` |
+
+### Files Created
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/use-fps-guard.ts` | FPS auto-degrade (disables glass if <30fps for 3s) |
+| `src/hooks/use-liquid-glass.ts` | Browser capability detection + tier routing |
+| `src/components/ui/liquid-glass.tsx` | React wrapper component (forwardRef, tier/sport/elevated props) |
+| `src/components/ui/liquid-glass-filter.tsx` | SVG refraction filters (#lg-refract, #lg-refract-sm) |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/app/globals.css` | 4-tier token system, glass classes, sheen animation, accessibility gates |
+| `src/app/layout.tsx` | LiquidGlassFilter mount in body |
+| `src/components/layout/site-header.tsx` | LiquidGlass tier2 + animated sheen |
+| `src/components/layout/sport-tabs.tsx` | LiquidGlass tier1 noSheen |
+| `src/components/layout/mobile-bottom-nav.tsx` | LiquidGlass tier="regular" as="nav" |
+| `src/components/layout/sports-sidebar.tsx` | LiquidGlass tier="elevated" |
+| `src/components/ui/dialog.tsx` | liquid-glass--clear on Content |
+| `src/components/ui/sheet.tsx` | liquid-glass--clear on Content |
+| `src/components/layout/search-modal.tsx` | liquid-glass--clear on overlay |
+| `src/components/tennis/match-card.tsx` | LiquidGlass tier="clear" sport="tennis" |
+| `src/components/football/football-match-card.tsx` | LiquidGlass tier="clear" sport="football" |
+
+### Known Issues / Limitations
+
+1. **CSS class duplication** — `globals.css` defines `.glass-sm/md/heavy` classes that are not used by any component (legacy from pre-Liquid Glass era). Low priority cleanup.
+2. **SVG refraction Chromium-only** — `#lg-refract` filter uses `backdrop-filter: url()` which is Chromium-only. Firefox/Safari fall back to standard blur gracefully.
+3. **Task 6 (sidebar) commit pending** — `f0a38e65` shows in git log but session log status was marked pending. Verified committed.
+4. **Build pre-existing errors** — Google Fonts unreachable (no network) + `cyclingService.js` warnings. Not introduced by this session.
+5. **FPS guard threshold** — Fixed at 30fps / 3s window. May need tuning for low-end mobile devices.
+6. **Sport tints limited to 8 sports** — football, tennis, mma, basketball, baseball, f1, hockey, rugby. New sports need token additions.
