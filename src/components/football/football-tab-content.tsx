@@ -16,6 +16,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -249,10 +250,11 @@ export function FootballTabContent() {
   }, [selectedMatchIds, matches, mode, setMode]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+    <BentoGrid cols={4} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
       {/* Breadcrumb contextuel — sport > pays > ligue */}
       {(selectedCountryId || selectedLeague) && (
-        <div className="mb-4 flex items-center gap-1.5 text-xs">
+        <BentoTile size="wide" variant="glass">
+        <div className="flex items-center gap-1.5 text-xs">
           <button
             type="button"
             onClick={() => {
@@ -282,9 +284,11 @@ export function FootballTabContent() {
             </>
           )}
         </div>
+        </BentoTile>
       )}
       {/* View mode toggle + refresh */}
-      <div className="mb-4 flex items-center justify-between">
+      <BentoTile size="wide" variant="glass">
+      <div className="flex items-center justify-between">
         <div className="flex rounded-lg border border-border/60 bg-muted/30 p-1">
           <button
             onClick={() => setViewMode("cards")}
@@ -322,9 +326,11 @@ export function FootballTabContent() {
           Actualiser
         </button>
       </div>
+      </BentoTile>
 
       {/* Barre d'outils AI Pricing — filtres NL, tri edge, combiné, fiabilité */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <BentoTile size="wide" variant="glass">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => setAIFilterDialogOpen(true)}
@@ -400,6 +406,7 @@ export function FootballTabContent() {
           Fiabilité
         </button>
       </div>
+      </BentoTile>
 
       {/* Panneaux AI Pricing (conditionnels) */}
       {showBacktest && <ReliabilityScore state={backtestState} className="mb-6" />}
@@ -413,6 +420,7 @@ export function FootballTabContent() {
       )}
 
       {/* Sous-onglets Live | Pre-match (modèle 1xbet) */}
+      <BentoTile size="hero" variant="glass">
       {data?.degraded && !error && (
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
@@ -605,6 +613,8 @@ export function FootballTabContent() {
         </>
       )}
 
+      </BentoTile>
+
       {/* Dialog momentum — une seule instance, lazy-loadée */}
       <Suspense fallback={null}>
         <FootballMatchDetailDialog match={detailMatch} open={detailOpen} onOpenChange={setDetailOpen} />
@@ -620,6 +630,6 @@ export function FootballTabContent() {
         }}
       />
       <BetSlipGeneratorDialog open={betSlipOpen} onOpenChange={setBetSlipOpen} matches={prematchMatches} />
-    </div>
+    </BentoGrid>
   );
 }
