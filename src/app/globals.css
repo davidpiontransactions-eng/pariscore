@@ -593,30 +593,154 @@
   background: linear-gradient(135deg, var(--sport-basketball, #f97316) 0%, rgba(249,115,22,0.3) 50%, var(--bg-deep, #0a0e17) 100%);
 }
 
-/* ── Phase 18 — Liquid Glass Token (Apple-inspired) ─────────────────────── */
+/* ── Phase 18 — Liquid Glass Tokens (4-tier ladder) ──────────────────────
+   Tier 0 : blur + saturate (backdrop-filter de base)
+   Tier 1 : noise warp via CSS gate (texture superposée, gated par reduced-transparency)
+   Tier 2 : geometric lens (déformation géométrique, gated par reduced-motion)
+   Sport accent tints : teintes par sport (--lg-tint-*)
+   FPS guard fallback : fallback pour appareils basse performance
+   Gates : reduced-motion / reduced-transparency (accessibilité)
+   ──────────────────────────────────────────────────────────────────────── */
 
 :root {
-  --glass-liquid-bg: rgba(255, 255, 255, 0.04);
-  --glass-liquid-border: rgba(255, 255, 255, 0.08);
-  --glass-liquid-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --glass-liquid-blur: blur(40px) saturate(1.5);
+  /* ── Tier 0 — blur + saturate ── */
+  --lg-blur-sm: blur(8px);
+  --lg-blur-md: blur(20px);
+  --lg-blur-lg: blur(40px);
+  --lg-blur-xl: blur(60px);
+  --lg-sat-sm: saturate(1.2);
+  --lg-sat-md: saturate(1.5);
+  --lg-sat-lg: saturate(1.8);
+
+  /* ── Tier 1 — noise warp (texture grain) ── */
+  --lg-noise-opacity: 0.03;
+  --lg-noise-url: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+
+  /* ── Tier 2 — geometric lens ── */
+  --lg-lens-angle: 135deg;
+  --lg-lens-spread: 120%;
+
+  /* ── Couleurs glass ── */
+  --lg-bg: rgba(255, 255, 255, 0.04);
+  --lg-bg-elevated: rgba(255, 255, 255, 0.06);
+  --lg-border: rgba(255, 255, 255, 0.08);
+  --lg-border-elevated: rgba(255, 255, 255, 0.10);
+  --lg-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --lg-shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* ── Sport accent tints ── */
+  --lg-tint-tennis: color-mix(in oklch, var(--sport-tennis, #10B981) 12%, transparent);
+  --lg-tint-football: color-mix(in oklch, var(--sport-football, #0EA5E9) 12%, transparent);
+  --lg-tint-mma: color-mix(in oklch, var(--sport-mma, #EF4444) 12%, transparent);
+  --lg-tint-cycling: color-mix(in oklch, var(--sport-cycling, #F59E0B) 12%, transparent);
+  --lg-tint-f1: color-mix(in oklch, var(--sport-f1, #DC2626) 12%, transparent);
+  --lg-tint-cs2: color-mix(in oklch, var(--sport-cs2, #F97316) 12%, transparent);
+  --lg-tint-basketball: color-mix(in oklch, var(--sport-basketball, #0EA5E9) 12%, transparent);
+  --lg-tint-rugby: color-mix(in oklch, var(--sport-rugby, #14B8A6) 12%, transparent);
 }
 
+/* ── Tier 1 gate : noise si pas reduced-transparency ── */
+@media (prefers-reduced-transparency: no-preference) {
+  :root {
+    --lg-noise-opacity: 0.03;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --lg-noise-opacity: 0;
+  }
+}
+
+/* ── Tier 2 gate : lens si pas reduced-motion ── */
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --lg-lens-angle: 135deg;
+    --lg-lens-spread: 120%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lg-lens-angle: 0deg;
+    --lg-lens-spread: 100%;
+  }
+}
+
+/* ── FPS guard fallback (appareils basse perf) ── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --lg-blur-sm: blur(4px);
+    --lg-blur-md: blur(8px);
+    --lg-blur-lg: blur(16px);
+    --lg-blur-xl: blur(24px);
+    --lg-sat-sm: saturate(1);
+    --lg-sat-md: saturate(1.1);
+    --lg-sat-lg: saturate(1.2);
+  }
+}
+
+/* ── Classes Tier 0 — base glass ── */
 .glass-liquid {
-  background: var(--glass-liquid-bg);
-  border: 1px solid var(--glass-liquid-border);
-  box-shadow: var(--glass-liquid-shadow);
-  backdrop-filter: var(--glass-liquid-blur);
-  -webkit-backdrop-filter: var(--glass-liquid-blur);
+  background: var(--lg-bg);
+  border: 1px solid var(--lg-border);
+  box-shadow: var(--lg-shadow);
+  backdrop-filter: var(--lg-blur-lg) var(--lg-sat-md);
+  -webkit-backdrop-filter: var(--lg-blur-lg) var(--lg-sat-md);
 }
 
 .glass-liquid-elevated {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(60px) saturate(1.8);
-  -webkit-backdrop-filter: blur(60px) saturate(1.8);
+  background: var(--lg-bg-elevated);
+  border: 1px solid var(--lg-border-elevated);
+  box-shadow: var(--lg-shadow-elevated);
+  backdrop-filter: var(--lg-blur-xl) var(--lg-sat-lg);
+  -webkit-backdrop-filter: var(--lg-blur-xl) var(--lg-sat-lg);
 }
+
+/* ── Classes Tier 1 — noise warp overlay ── */
+.glass-liquid::before,
+.glass-liquid-elevated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--lg-noise-url);
+  background-size: 128px 128px;
+  opacity: var(--lg-noise-opacity);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Classes Tier 2 — geometric lens (gradient incident) ── */
+.glass-liquid::after,
+.glass-liquid-elevated::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    var(--lg-lens-angle),
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent var(--lg-lens-spread)
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Positions relatives nécessaires pour les pseudo-elements */
+.glass-liquid,
+.glass-liquid-elevated {
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Sport accent tints (appliquer via classe) ── */
+.glass-tennis  { background: var(--lg-tint-tennis); }
+.glass-football { background: var(--lg-tint-football); }
+.glass-mma     { background: var(--lg-tint-mma); }
+.glass-cycling { background: var(--lg-tint-cycling); }
+.glass-f1      { background: var(--lg-tint-f1); }
+.glass-cs2     { background: var(--lg-tint-cs2); }
+.glass-basketball { background: var(--lg-tint-basketball); }
+.glass-rugby   { background: var(--lg-tint-rugby); }
 
 /* ── Phase 4 — Glassmorphism Raffiné : border glow au focus ─────────────── */
 
