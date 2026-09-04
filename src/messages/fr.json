@@ -189,6 +189,8 @@
     "subTabTournamentsAria": "Tournois ATP/WTA/ITF",
     "subTabList": "Liste",
     "subTabListAria": "Liste Flashscore des matchs",
+    "subTabRankings": "Top 10",
+    "subTabRankingsAria": "Top 10 joueurs par metrique",
     "subTabsAriaLabel": "Sous-onglets tennis",
     "noLiveMatches": "Aucun match en direct",
     "noTournaments": "Aucun tournoi disponible",
