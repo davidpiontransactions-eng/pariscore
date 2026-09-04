@@ -17,6 +17,7 @@ import { BetSlip } from "@/components/bet-slip";
 import { ServiceWorkerRegister } from "@/components/sw-register";
 import { ServiceWorkerUpdate } from "@/components/mobile/service-worker-update";
 import { FollowNotificationBridge } from "@/components/shared/follow-notification-bridge";
+import { LiquidGlassFilter } from "@/components/ui/liquid-glass-filter";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AppMotionConfig } from "@/components/motion-config";
 import { SiteHeader } from "@/components/layout/site-header";
@@ -178,6 +179,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${archivoDisplay.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground`}
       >
+        <LiquidGlassFilter />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
