@@ -1,10 +1,10 @@
 "use client";
 
-import { Radio, Calendar, Trophy, List } from "lucide-react";
+import { Radio, Calendar, Trophy, List, BarChart3 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
-export type TennisSubTab = "live" | "today" | "tournaments" | "list";
+export type TennisSubTab = "live" | "today" | "tournaments" | "list" | "rankings";
 
 type Props = {
   activeSubTab: TennisSubTab;
@@ -74,6 +74,14 @@ export function TennisSubTabs({
       count: 0,
       accent: "bg-violet-500",
       ariaLabel: t("subTabListAria"),
+    },
+    {
+      id: "rankings",
+      label: t("subTabRankings", { defaultValue: "Top 10" }),
+      icon: BarChart3,
+      count: 0,
+      accent: "bg-emerald-500",
+      ariaLabel: t("subTabRankingsAria", { defaultValue: "Top 10 joueurs par metrique" }),
     },
   ];
 

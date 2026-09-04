@@ -10,6 +10,7 @@ import { MatchCard } from "@/components/tennis/match-card";
 import { MatchCardBroadcast } from "@/components/tennis/match-card-broadcast";
 import { FeaturedMatchesMarquee } from "@/components/tennis/featured-matches-marquee";
 import { TennisSubTabs, type TennisSubTab } from "@/components/tennis/tennis-sub-tabs";
+import { TennisTop10Section } from "@/components/tennis/tennis-top10-section";
 import { TimeRangeFilter } from "@/components/shared/time-range-filter";
 import { StrategyFilterDropdown } from "@/components/shared/strategy-filter-dropdown";
 import {
@@ -953,9 +954,13 @@ return [...matches, ...synthetic];
         )}
       </div>
 
-      {/* Match list / Tournaments list / Flashscore list */}
+      {/* Match list / Tournaments list / Flashscore list / Top 10 Rankings */}
       <main className="w-full flex-1 px-4 py-6 sm:px-6">
-      {subTab === "tournaments" ? (
+      {subTab === "rankings" ? (
+        <div className="mx-auto max-w-4xl">
+          <TennisTop10Section />
+        </div>
+      ) : subTab === "tournaments" ? (
         <TournamentsList />
       ) : subTab === "list" ? (
         <FlashscoreTennisList
