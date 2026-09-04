@@ -5,6 +5,7 @@ import { PersonalDashboard } from "@/components/dashboard/personal-dashboard";
 import { PersonalizedFeed } from "@/components/dashboard/personalized-feed";
 import { SessionReminder } from "@/components/shared/session-reminder";
 import { usePaperTrading } from "@/hooks/use-paper-trading";
+import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 
 /**
  * Page Dashboard personnel.
@@ -38,19 +39,19 @@ export default function DashboardPage() {
         <SessionReminder betsPlaced={pendingBets} />
       </div>
 
-      {/* Dashboard Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Colonne gauche : KPIs */}
-        <div>
+      {/* Dashboard Grid — Bento layout */}
+      <BentoGrid cols={4}>
+        {/* KPIs — tile large */}
+        <BentoTile size="wide" variant="glass">
           <PersonalDashboard />
-        </div>
+        </BentoTile>
 
-        {/* Colonne droite : Feed personnalisé */}
-        <div>
+        {/* Feed personnalisé — tile standard */}
+        <BentoTile size="standard" variant="glass">
           <h3 className="mb-3 text-sm font-semibold">Pour toi</h3>
           <PersonalizedFeed />
-        </div>
-      </div>
+        </BentoTile>
+      </BentoGrid>
     </div>
   );
 }
