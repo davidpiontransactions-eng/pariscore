@@ -172,7 +172,14 @@ async function getTeamWinPcts(): Promise<Record<string, number>> {
 
 /**
  * Fetch player stats from FIBA official website.
- * Scrapes the stats page and parses the HTML table.
+ * Scrapes the stats page and parses the text output.
+ *
+ * Format observé (text extraction):
+ * 1.Emma Meesseman (BEL)131.4272712-2157.11-333.32-2100
+ * → rank=1, name="Emma Meesseman", team="BEL", gp=13, mpg=1.4, ppg=27, pts=27, fg="12-21", fg%=57.1, tp="1-3", tp%=33.3, ft="2-2", ft%=100
+ *
+ * Le texte concatène sans espaces entre certaines colonnes.
+ * On match: "NUM.NAME (TEAM)" puis extraction séquentielle des chiffres.
  */
 async function fetchFibaPlayerStats(): Promise<Array<{
   rank: number;
@@ -204,90 +211,74 @@ async function fetchFibaPlayerStats(): Promise<Array<{
 
     if (!res.ok) return [];
 
-    const html = await res.text();
-
-    // Parse player data from FIBA stats page
-    // Pattern: #.Name (TEAM) GP MPG PPG PTS FGM-FGA FG% 3PM-3PA 3P% FTM-FTA FT%
+    const text = await res.text();
     const players: Array<{
-      rank: number;
-      name: string;
-      team: string;
-      position: string;
-      gp: number;
-      mpg: number;
-      ppg: number;
-      tpg: number;
-      fgMade: number;
-      fgAttempted: number;
-      fgPct: number;
-      threeMade: number;
-      threeAttempted: number;
-      threePct: number;
-      ftMade: number;
-      ftAttempted: number;
-      ftPct: number;
+      rank: number; name: string; team: string; position: string;
+      gp: number; mpg: number; ppg: number; tpg: number;
+      fgMade: number; fgAttempted: number; fgPct: number;
+      threeMade: number; threeAttempted: number; threePct: number;
+      ftMade: number; ftAttempted: number; ftPct: number;
     }> = [];
 
-    // Extract player rows from the HTML
-    // Look for patterns like "1.Emma Meesseman (BEL)131.4272712-2157.11-333.32-2100"
-    const playerRegex = /(\d+)\.([A-Za-z\s''-]+)\s*\(([A-Z]{3})\)(\d+)(\d+\.?\d*)(\d+\.?\d*)(\d+)(\d+)-(\d+)(\d+\.?\d*)(\d+)-(\d+)(\d+\.?\d*)(\d+)-(\d+)(\d+\.?\d*)/g;
+    // Étape 1: Trouver chaque ligne joueur dans le texte
+    // Pattern: DIGIT.DIGITS.NOM EQUIPE(NOM EQUIPE)GPMPGPPGPTSFGMPG-FGAPGFG%...
+    // Le texte brut ressemble à: "1.Emma Meesseman (BEL)131.4272712-2157.11-333.32-2100"
+    const teamCodes = ["AUS", "BEL", "CHN", "CZE", "FRA", "GER", "HUN", "ITA", "JPN", "KOR", "MLI", "NGR", "PUR", "ESP", "TUR", "USA"];
 
-    let match;
-    while ((match = playerRegex.exec(html)) !== null) {
-      const [, rank, name, team, gp, mpg, ppg, tpg, fgMade, fgAttempted, fgPct, threeMade, threeAttempted, threePct, ftMade, ftAttempted, ftPct] = match;
-      players.push({
-        rank: parseInt(rank),
-        name: name.trim(),
-        team,
-        position: "UTIL",
-        gp: parseInt(gp),
-        mpg: parseFloat(mpg),
-        ppg: parseFloat(ppg),
-        tpg: parseInt(tpg),
-        fgMade: parseInt(fgMade),
-        fgAttempted: parseInt(fgAttempted),
-        fgPct: parseFloat(fgPct),
-        threeMade: parseInt(threeMade),
-        threeAttempted: parseInt(threeAttempted),
-        threePct: parseFloat(threePct),
-        ftMade: parseInt(ftMade),
-        ftAttempted: parseInt(ftAttempted),
-        ftPct: parseFloat(ftPct),
-      });
+    // Trouver tous les segments qui contiennent "(TEAMCODE)" dans le texte
+    for (const tc of teamCodes) {
+      const escapedTc = tc;
+      const regex = new RegExp(
+        `(\\d+)\\.([A-Za-zÀ-ÿ\\s''\\-\\.]+?)\\s*\\(${escapedTc}\\)(\\d+)(\\d+\\.?\\d*)(\\d+\\.?\\d*)(\\d+)(\\d+)-(\\d+)(\\d+\\.?\\d*)(\\d+)-(\\d+)(\\d+\\.?\\d*)(\\d+)-(\\d+)(\\d+\\.?\\d*)`,
+        "g"
+      );
+
+      let match;
+      while ((match = regex.exec(text)) !== null) {
+        const [, rank, name, gp, mpg, ppg, , fgMade, fgAttempted, fgPct, threeMade, threeAttempted, threePct, ftMade, ftAttempted, ftPct] = match;
+
+        players.push({
+          rank: parseInt(rank),
+          name: name.trim(),
+          team: tc,
+          position: "UTIL",
+          gp: parseInt(gp),
+          mpg: parseFloat(mpg),
+          ppg: parseFloat(ppg),
+          tpg: 0,
+          fgMade: parseInt(fgMade),
+          fgAttempted: parseInt(fgAttempted),
+          fgPct: parseFloat(fgPct),
+          threeMade: parseInt(threeMade),
+          threeAttempted: parseInt(threeAttempted),
+          threePct: parseFloat(threePct),
+          ftMade: parseInt(ftMade),
+          ftAttempted: parseInt(ftAttempted),
+          ftPct: parseFloat(ftPct),
+        });
+      }
     }
 
-    // If regex didn't work, try simpler extraction
+    // Si le regex détaillé ne marche pas, fallback sur pattern simplifié
     if (players.length === 0) {
-      // Try to find player names and stats in a simpler format
-      const simpleRegex = /(\d+)\.\s*([A-Za-z\s''-]+?)\s*\(([A-Z]{3})\)/g;
-      while ((match = simpleRegex.exec(html)) !== null) {
-        const [, rank, name, team] = match;
-        // Try to find stats after the name
-        const statsStart = match.index + match[0].length;
-        const statsSubstring = html.substring(statsStart, statsStart + 100);
-        const statsMatch = statsSubstring.match(/(\d+)(\d+\.?\d*)(\d+\.?\d*)(\d+)/);
-
-        if (statsMatch) {
-          players.push({
-            rank: parseInt(rank),
-            name: name.trim(),
-            team,
-            position: "UTIL",
-            gp: parseInt(statsMatch[1]),
-            mpg: parseFloat(statsMatch[2]),
-            ppg: parseFloat(statsMatch[3]),
-            tpg: parseInt(statsMatch[4]),
-            fgMade: 0,
-            fgAttempted: 0,
-            fgPct: 0,
-            threeMade: 0,
-            threeAttempted: 0,
-            threePct: 0,
-            ftMade: 0,
-            ftAttempted: 0,
-            ftPct: 0,
-          });
-        }
+      // Pattern: NUM.NAME (TEAM)NUM.NUM.NUM.NUM
+      const fallbackRegex = /(\d+)\.([A-Za-zÀ-ÿ\s''\-\.]+?)\s*\(([A-Z]{3})\)(\d+)(\d+\.?\d*)(\d+\.?\d*)(\d+)/g;
+      let match;
+      while ((match = fallbackRegex.exec(text)) !== null) {
+        const [, rank, name, team, gp, mpg, ppg, pts] = match;
+        players.push({
+          rank: parseInt(rank),
+          name: name.trim(),
+          team,
+          position: "UTIL",
+          gp: parseInt(gp),
+          mpg: parseFloat(mpg),
+          ppg: parseFloat(ppg),
+          tpg: parseInt(pts),
+          fgMade: 0, fgAttempted: 0, fgPct: 0,
+          threeMade: 0, threeAttempted: 0, threePct: 0,
+          ftMade: 0, ftAttempted: 0, ftPct: 0,
+        });
       }
     }
 
