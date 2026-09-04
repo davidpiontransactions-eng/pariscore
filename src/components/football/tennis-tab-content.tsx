@@ -477,9 +477,6 @@ return [...matches, ...synthetic];
 
   // Phase 7 — sous-onglets Live / Aujourd'hui / Tournois
   const [subTab, setSubTab] = useState<TennisSubTab>("today");
-  useEffect(() => {
-    console.log("[TennisTabContent] subTab changed to:", subTab);
-  }, [subTab]);
 
   // Sync modes.tennis (store sidebar) → subTab (local state)
   // Ne pas override si l'utilisateur a manuellement sélectionné un sous-onglet interne
@@ -667,7 +664,6 @@ return [...matches, ...synthetic];
   }, [subTab, liveMatchList, liveStates, restForGrid]);
 
   const handleSubTabChange = (tab: TennisSubTab) => {
-    console.log("[TennisTabContent] handleSubTabChange:", tab);
     setSubTabSynced(tab);
     track("sub_tab_click", { tab });
   };
