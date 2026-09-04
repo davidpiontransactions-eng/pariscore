@@ -18,11 +18,12 @@ import {
   buildTennisTop10,
   type TennisTop10Payload,
 } from "@/lib/tennis-top10";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 
 /**
  * Top 10 joueurs tennis par métrique (zone centrale, refonte du top5 sidebar).
  *
- * Réutilise les mêmes sources que top5 mais retourne des JOUEURS enrichis
+ * Mêmes sources que top5 mais retourne des JOUEURS enrichis
  * (photo, pays, classement, momentum, forme) au lieu de matchs à venir.
  */
 
@@ -32,39 +33,16 @@ const PREMATCH_TTL_MS = 5 * 60_000;
 type CachedPrematch = { matches: TennisMatch[]; source: string };
 type Top10CacheEntry = { key: string; payload: TennisTop10Payload };
 
-// Caches partagés avec top5 (même globalThis)
-function getPrematchCache(): { getEntry(): { data: CachedPrematch } | null; set(data: CachedPrematch): void } {
-  const g = globalThis as unknown as { __tennisPrematchCache?: { getEntry(): { data: CachedPrematch } | null; set(data: CachedPrematch): void } };
-  if (!g.__tennisPrematchCache) {
-    let stored: CachedPrematch | null = null;
-    g.__tennisPrematchCache = {
-      getEntry: () => stored ? { data: stored } : null,
-      set: (data: CachedPrematch) => { stored = data; },
-    };
-  }
-  return g.__tennisPrematchCache;
-}
-
-function getTop10Cache(): { getEntry(): Top10CacheEntry | null; set(data: Top10CacheEntry): void } {
-  const g = globalThis as unknown as { __tennisTop10Cache?: { getEntry(): Top10CacheEntry | null; set(data: Top10CacheEntry): void } };
-  if (!g.__tennisTop10Cache) {
-    let stored: Top10CacheEntry | null = null;
-    g.__tennisTop10Cache = {
-      getEntry: () => stored,
-      set: (data: Top10CacheEntry) => { stored = data; },
-    };
-  }
-  return g.__tennisTop10Cache;
-}
+const prematchCache = createTtlCache<CachedPrematch>("__tennisTop10PrematchCache");
+const top10Cache = createTtlCache<Top10CacheEntry>("__tennisTop10Cache");
 
 function isTop10Key(v: string | null): v is TennisTop5Key {
   return !!v && TENNIS_TOP5_METRICS.some((d: TennisTop5Def) => d.key === v);
 }
 
 async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: string }> {
-  const cache = getPrematchCache();
-  const cached = cache.getEntry();
-  if (cached && Date.now() - (cached as unknown as { ts?: number }).ts < PREMATCH_TTL_MS) {
+  const cached = prematchCache.getEntry();
+  if (cached && isFresh(cached, PREMATCH_TTL_MS)) {
     return cached.data;
   }
   const bsdKey = process.env.BSD_API_KEY;
@@ -74,8 +52,7 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
     const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
     const matches = await fetchBSDMatches();
     const data = { matches, source: "bsd" };
-    cache.set(data);
-    (cache as unknown as { ts?: number }).ts = Date.now();
+    prematchCache.set(data);
     return data;
   } catch (err) {
     console.error("[tennis-top10] BSD failed:", (err as Error).message);
@@ -147,10 +124,9 @@ export async function GET(req: NextRequest) {
     const cacheKey = `${metric}:${surface}:${period}`;
 
     // Cache check
-    const cache = getTop10Cache();
-    const cached = cache.getEntry();
-    if (cached && cached.key === cacheKey && Date.now() - (cached as unknown as { ts?: number }).ts < CACHE_TTL_MS) {
-      return NextResponse.json({ ...cached.payload, meta: { ...cached.payload.meta, cached: true } });
+    const cached = top10Cache.getEntry();
+    if (cached && isFresh(cached, CACHE_TTL_MS) && cached.data.key === cacheKey) {
+      return NextResponse.json({ ...cached.data.payload, meta: { ...cached.data.payload.meta, cached: true } });
     }
 
     const def = TENNIS_TOP5_METRICS.find((d) => d.key === metric)!;
@@ -186,8 +162,7 @@ export async function GET(req: NextRequest) {
       },
     };
 
-    cache.set({ key: cacheKey, payload });
-    (cache as unknown as { ts?: number }).ts = Date.now();
+    top10Cache.set({ key: cacheKey, payload });
 
     return NextResponse.json(payload);
   } catch (err) {
