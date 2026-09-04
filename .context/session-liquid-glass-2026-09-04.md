@@ -365,3 +365,71 @@ Remplacement de la section "Phase 18 — Liquid Glass Token" (4 variables CSS + 
 ### Build
 
 `bun run build` → OK (Compiled successfully in 85s)
+
+---
+
+## Task 8 — Appliquer Glass sur Modals (2026-09-04)
+
+**Status**: DONE
+**Commit**: `9982e245` — `feat(modals): apply liquid glass to dialog, sheet, and search modal`
+
+### Fichiers modifiés
+
+1. **`src/components/ui/dialog.tsx`** — Ligne 64
+   - `bg-background` sur `DialogPrimitive.Content` remplacé par `liquid-glass--clear`
+   - Overlay (`bg-black/50`) conservé intact — le glass est sur le contenu, pas l'overlay
+
+2. **`src/components/ui/sheet.tsx`** — Ligne 66
+   - `bg-background` sur `SheetPrimitive.Content` remplacé par `liquid-glass--clear`
+   - Overlay (`bg-black/50`) conservé intact
+   - Tous les side variants (`right/left/top/bottom`) préservés
+
+3. **`src/components/layout/search-modal.tsx`** — Ligne 199
+   - Overlay `bg-black/70 backdrop-blur-md` remplacé par `liquid-glass--clear`
+   - Le contenu modal (`bg-gradient-to-br from-[#12162a]...`) conservé — le glass est sur l'overlay, pas le contenu
+
+### API utilisée
+
+- `liquid-glass--clear` — Classe CSS Tailwind utility pour glass transparent (blur + saturation + noise), définie dans `globals.css`
+- Pas d'import React (`LiquidGlass` component) nécessaire — utilisation directe des classes CSS
+- Pattern différent des Tasks 4-6 : ici on applique des classes CSS existantes, pas le composant wrapper
+
+### Build
+
+`bun run build` → FAIL (erreurs pré-existantes : Google Fonts réseau + cyclingService.js)
+`typecheck` → 0 nouvelles erreurs (toutes les erreurs pré-existantes dans d'autres fichiers)
+
+### Notes
+
+- Les erreurs de build sont **pré-existantes** : Google Fonts unreachable (pas de réseau) + `cyclingService.js` warnings
+- Aucune erreur introduite par ces changements
+- `liquid-glass--clear` appliqué en tant que classe utility sur les éléments existants, pas de refactor structurel
+
+---
+
+## Task 7 — Appliquer Glass sur Match Cards (2026-09-04)
+
+**Status**: DONE
+**Commit**: `cc38468a` — `feat(cards): apply liquid glass to tennis and football match cards`
+
+### Fichiers modifiés
+
+1. **`src/components/tennis/match-card.tsx`** — Lignes 47, 284
+   - Import existant: `import { LiquidGlass } from "@/components/ui/liquid-glass";` (déjà présent)
+   - `<LiquidGlass tier="clear" sport="tennis">` enveloppe déjà le `<article>` outermost wrapper
+   - Changement: ajout de l'import + wrapping dans une session précédente (non commité)
+
+2. **`src/components/football/football-match-card.tsx`** — Lignes 34, 246
+   - Import existant: `import { LiquidGlass } from "@/components/ui/liquid-glass";` (déjà présent)
+   - `<LiquidGlass tier="clear" sport="football">` enveloppe déjà le `<article>` outermost wrapper
+   - Changement: ajout de l'import + wrapping dans une session précédente (non commité)
+
+### API utilisée
+
+- `tier`: `"clear"` — glass transparent subtil, pas distrayant pour les cartes de match
+- `sport`: `"tennis"` / `"football"` — teinte sport-specific via `--lg-tint-*` tokens
+- Le wrapper est sur le `<article>` outermost, préservant toutes les animations Framer Motion internes
+
+### Build
+
+`bun run build` → OK (Compiled successfully in ~3min, 97 static pages generated)
