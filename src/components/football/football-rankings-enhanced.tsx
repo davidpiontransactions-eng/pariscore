@@ -55,6 +55,45 @@ const FORM_COLORS: Record<FormDotResult, string> = {
   L: "bg-red-500",
 };
 
+// ─── ZONE CHUNKING (Miller's Law) ─────────────────────────────────────────────
+
+type ZoneId = "title" | "europa" | "mid" | "relegation";
+const ZONE_DEFS: { id: ZoneId; label: string; color: string; maxRank: number }[] = [
+  { id: "title", label: "Lutte au titre", color: "bg-emerald-500", maxRank: 4 },
+  { id: "europa", label: "Europe", color: "bg-sky-500", maxRank: 7 },
+  { id: "mid", label: "Milieu de tableau", color: "bg-zinc-500", maxRank: 14 },
+  { id: "relegation", label: "Relégation", color: "bg-red-500", maxRank: 99 },
+];
+
+function getZone(rank: number): ZoneId {
+  return ZONE_DEFS.find((z) => rank <= z.maxRank)?.id ?? "relegation";
+}
+
+function getZoneLabel(rank: number): string {
+  return ZONE_DEFS.find((z) => rank <= z.maxRank)?.label ?? "";
+}
+
+function getZoneColor(rank: number): string {
+  return ZONE_DEFS.find((z) => rank <= z.maxRank)?.color ?? "bg-zinc-500";
+}
+
+// ─── POINTS BAR (Cleveland encoding) ──────────────────────────────────────────
+
+function PointsBar({ pts, maxPts }: { pts: number; maxPts: number }) {
+  const pct = maxPts > 0 ? (pts / maxPts) * 100 : 0;
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className="h-full rounded-full bg-emerald-500/60 transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className="text-sm font-bold text-zinc-200 tabular-nums">{pts}</span>
+    </div>
+  );
+}
+
 function FormDots({ form }: { form: FormDotResult[] }) {
   const reducedMotion = useReducedMotion();
   return (
@@ -66,11 +105,16 @@ function FormDots({ form }: { form: FormDotResult[] }) {
           animate={{ scale: 1 }}
           transition={{ delay: i * 0.05 }}
           className={cn(
-            "h-3 w-3 rounded-sm",
-            FORM_COLORS[result]
+            "h-3 w-3 rounded-sm flex items-center justify-center text-[7px] font-bold leading-none",
+            FORM_COLORS[result],
+            result === "W" && "text-white",
+            result === "D" && "text-white/80",
+            result === "L" && "text-white/80"
           )}
           title={result === "W" ? "Victoire" : result === "D" ? "Nul" : "Défaite"}
-        />
+        >
+          {result}
+        </motion.div>
       ))}
     </div>
   );
@@ -365,6 +409,7 @@ export function FootballRankingsEnhanced() {
   const maxPPG = useMemo(() => Math.max(...rows.map((r) => r.ppg), 0), [rows]);
   const maxGF = useMemo(() => Math.max(...rows.map((r) => r.gfPg), 0), [rows]);
   const maxGA = useMemo(() => Math.max(...rows.map((r) => r.gaPg), 0), [rows]);
+  const maxPts = useMemo(() => Math.max(...rows.map((r) => r.pts), 0), [rows]);
 
   // League summary stats
   const leagueStats = useMemo(() => {
@@ -479,8 +524,8 @@ export function FootballRankingsEnhanced() {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-white/[0.06] bg-white/[0.02]">
-              <th className="px-2 py-2.5 text-left font-semibold text-zinc-400 w-8">#</th>
-              <th className="px-2 py-2.5 text-left font-semibold text-zinc-400">Équipe</th>
+              <th className="px-2 py-2.5 text-left font-semibold text-zinc-400 w-8 sticky left-0 bg-[#0b0e17] z-10">#</th>
+              <th className="px-2 py-2.5 text-left font-semibold text-zinc-400 sticky left-8 bg-[#0b0e17] z-10">Équipe</th>
               {viewMode === "comparison" ? (
                 <>
                   <th className="px-2 py-2.5 text-center font-semibold text-zinc-400 w-16">PPG Dom</th>
@@ -562,19 +607,37 @@ export function FootballRankingsEnhanced() {
             </tr>
           </thead>
           <tbody>
-            {sortedRows.map((row, idx) => (
-              <motion.tr
-                key={row.team}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.03 }}
-                className={cn(
-                  "border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors",
-                  idx < 3 && "bg-emerald-500/[0.03]"
+            {sortedRows.map((row, idx) => {
+              const prevZone = idx > 0 ? getZone(idx) : null;
+              const curZone = getZone(idx + 1);
+              const showZoneSep = idx === 0 || (prevZone !== curZone && idx > 0);
+              return (
+                <motion.tr
+                  key={row.team}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className={cn(
+                    "border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors",
+                    idx < 3 && "bg-emerald-500/[0.03]"
+                  )}
+                >
+                {/* Zone separator row */}
+                {showZoneSep && idx > 0 && (
+                  <>
+                    <td colSpan={20} className="px-0 py-0">
+                      <div className="flex items-center gap-2 py-1">
+                        <div className={cn("h-0.5 w-1 rounded-full", getZoneColor(idx + 1))} />
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500">
+                          {getZoneLabel(idx + 1)}
+                        </span>
+                        <div className="h-px flex-1 bg-white/[0.06]" />
+                      </div>
+                    </td>
+                  </>
                 )}
-              >
                 {/* Rank */}
-                <td className="px-2 py-2 text-center">
+                <td className="px-2 py-2 text-center sticky left-0 bg-[#0b0e17] z-10">
                   <span
                     className={cn(
                       "inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold",
@@ -589,7 +652,7 @@ export function FootballRankingsEnhanced() {
                 </td>
 
                 {/* Team + Badge */}
-                <td className="px-2 py-2">
+                <td className="px-2 py-2 sticky left-8 bg-[#0b0e17] z-10">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-zinc-200">{row.team}</span>
                     <HomeFortressBadge homePPG={row.ppg} awayPPG={Math.max(0, row.ppg - (row.gd > 0 ? 0.3 : -0.2))} />
@@ -652,7 +715,7 @@ export function FootballRankingsEnhanced() {
                       <StatCell value={row.gaPg} max={maxGA} format={(v) => v.toFixed(2)} invert />
                     </td>
                     <td className="px-2 py-2 text-center">
-                      <span className="text-sm font-bold text-zinc-200">{row.pts}</span>
+                      <PointsBar pts={row.pts} maxPts={maxPts} />
                     </td>
                     <td className="px-2 py-2 text-center">
                       <span className="text-emerald-400 font-bold font-mono">{row.ppg.toFixed(2)}</span>
@@ -670,7 +733,8 @@ export function FootballRankingsEnhanced() {
                   </td>
                 )}
               </motion.tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
