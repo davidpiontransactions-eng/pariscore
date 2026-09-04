@@ -2,9 +2,10 @@
 
 import { memo } from "react";
 import { useReducedMotion, motion } from "framer-motion";
+import { Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getFlagAssets } from "@/lib/flag-utils";
-import type { TennisTop10Entry } from "@/lib/tennis-top10";
+import type { TennisTop10Entry, TennisTop10NextMatch } from "@/lib/tennis-top10";
 
 // ─── FORM SPARKLINE (mini SVG barres W/L) ─────────────────────────────────────
 
@@ -136,6 +137,43 @@ function BacktestMini({ winRate, roi }: { winRate?: number | null; roi?: number 
   );
 }
 
+// ─── NEXT MATCH ROW ───────────────────────────────────────────────────────────
+
+function NextMatchRow({ match }: { match: TennisTop10NextMatch | null | undefined }) {
+  if (!match) return null;
+
+  const date = new Date(match.scheduledAt);
+  const day = date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  const time = date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-white/[0.03] px-2 py-1 text-[10px]">
+      <Calendar className="h-3 w-3 text-zinc-500 shrink-0" />
+      <span className="text-zinc-400 truncate">{match.round} · {match.tournament}</span>
+      <span className="text-zinc-500">·</span>
+      <span className="text-zinc-300 font-medium">vs {match.opponentShort}</span>
+      <span className="text-zinc-500">·</span>
+      <span className="text-zinc-400">{day} {time}</span>
+      {match.odds != null && (
+        <>
+          <span className="text-zinc-500">·</span>
+          <span className={cn(
+            "font-mono font-semibold",
+            match.marketProb != null && match.marketProb >= 60 ? "text-emerald-400" :
+            match.marketProb != null && match.marketProb <= 40 ? "text-red-400" :
+            "text-zinc-300"
+          )}>
+            {match.odds.toFixed(2)}
+          </span>
+          {match.marketProb != null && (
+            <span className="text-zinc-500">({match.marketProb}%)</span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN CARD ────────────────────────────────────────────────────────────────
 
 export const TennisPlayerCard = memo(function TennisPlayerCard({
@@ -206,6 +244,7 @@ export const TennisPlayerCard = memo(function TennisPlayerCard({
           <FormBars form={player.form} />
           <BacktestMini winRate={backtest?.winRate} roi={backtest?.roi} />
         </div>
+        <NextMatchRow match={player.nextMatch} />
       </div>
 
       {/* Metric + Insight */}

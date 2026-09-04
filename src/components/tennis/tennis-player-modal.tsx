@@ -261,6 +261,46 @@ export const TennisPlayerModal = memo(function TennisPlayerModal({
             <p className="text-[10px] text-zinc-500 uppercase mb-2">Forme recente (6 derniers)</p>
             <FormTimeline form={player.form} />
           </div>
+
+          {/* Next Match */}
+          {player.nextMatch && (
+            <div className="mt-3 rounded-xl border border-emerald-500/10 bg-emerald-500/[0.03] p-3">
+              <p className="text-[10px] text-emerald-400 uppercase mb-2 font-medium">Prochain match</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-zinc-100">
+                    vs {player.nextMatch.opponent}
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    {player.nextMatch.round} · {player.nextMatch.tournament}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {new Date(player.nextMatch.scheduledAt).toLocaleDateString("fr-FR", {
+                      weekday: "long", day: "numeric", month: "long", year: "numeric"
+                    })} à{" "}
+                    {new Date(player.nextMatch.scheduledAt).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit", minute: "2-digit"
+                    })}
+                  </p>
+                </div>
+                {player.nextMatch.odds != null && (
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-zinc-100 font-mono">{player.nextMatch.odds.toFixed(2)}</p>
+                    {player.nextMatch.marketProb != null && (
+                      <p className={cn(
+                        "text-xs font-medium",
+                        player.nextMatch.marketProb >= 60 ? "text-emerald-400" :
+                        player.nextMatch.marketProb <= 40 ? "text-red-400" :
+                        "text-zinc-400"
+                      )}>
+                        {player.nextMatch.marketProb}% implicite
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>
