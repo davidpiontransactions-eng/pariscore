@@ -76,7 +76,7 @@ export function OddsShiftVisualization({
       baseball: "#f59e0b",
       rugby: "#14b8a6",
     };
-    return sportColors[sport] || "currentColor";
+    return sportColors[sport ?? ""] || "currentColor";
   };
 
   const sportColor = getSportColor(sport);

@@ -363,7 +363,7 @@ export function buildTennisTop10(
   }
 
   // 2. Construire les entries avec métrique
-  const entries: Array<{ key: string; player: TennisTop10Player; metricValue: number }> = [];
+  const entries: Array<{ key: string; player: TennisTop10Player; metricValue: number; scorecard: number }> = [];
 
   for (const [key, stats] of playerStats) {
     const lbRow = lbByPlayer.get(key);
@@ -465,5 +465,6 @@ export function buildTennisTop10(
     metricLabel: metricDef?.label ?? metric,
     insight: generateInsight(e.player, metric, e.metricValue, allValues),
     isValue: false, // sera calculé côté client si cotes disponibles
+    scorecard: e.scorecard,
   }));
 }

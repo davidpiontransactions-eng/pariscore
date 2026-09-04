@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Chart, ChartData, ChartConfiguration } from "chart.js";
-import { Area } from "chartjs-plugin-annotation";
+import annotationPlugin from "chartjs-plugin-annotation";
 import { useTranslations } from "next-intl";
 
 /**
@@ -40,8 +40,8 @@ function generateSimulationData(
   count: number,
   avgEdge: number = 0.03, // 3% edge moyenne
   variance: number = 0.05 // 5% variance
-) {
-  const data = [];
+): Array<{ day: number; cumulativePnL: number; confidence: string; winRate: string }> {
+  const data: Array<{ day: number; cumulativePnL: number; confidence: string; winRate: string }> = [];
   let cumulative = 0;
 
   for (let i = 0; i < count; i++) {
@@ -183,7 +183,7 @@ export function ValueBetTimeline({
             padding: 8,
             callbacks: {
               label: function (context) {
-                const point = context.parsedY;
+                const point = context.parsed.y ?? 0;
                 const day = context.dataIndex + 1;
                 const confidence = context.dataset.label === t("simulation10")
                   ? avg10.avgConfidence
@@ -208,12 +208,15 @@ export function ValueBetTimeline({
               text: t("cumulative_pnl"),
             },
             ticks: {
-              callback: (value: number) => (value >= 0 ? `+${value}` : value.toString()),
+              callback: (value: string | number) => {
+                const num = Number(value);
+                return num >= 0 ? `+${num}` : num.toString();
+              },
             },
           },
         },
       },
-      plugins: [Area],
+      plugins: [annotationPlugin],
     });
   }, [simulationCount]);
 

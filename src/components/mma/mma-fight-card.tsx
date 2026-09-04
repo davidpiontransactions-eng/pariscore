@@ -104,10 +104,9 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             {/* Confidence ring + form timeline for fighter A */}
             {fight.confidence_a != null && (
               <ConfidenceRing
-                prob={probA}
+                value={probA}
                 confidence={fight.confidence_a}
                 color="#00E676"
-                size="sm"
               />
             )}
             {fight.form_a && fight.form_a.length > 0 && (
@@ -164,10 +163,9 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
             {/* Confidence ring + form timeline for fighter B */}
             {fight.confidence_b != null && (
               <ConfidenceRing
-                prob={probB}
+                value={probB}
                 confidence={fight.confidence_b}
                 color="#FF6B6B"
-                size="sm"
               />
             )}
             {fight.form_b && fight.form_b.length > 0 && (

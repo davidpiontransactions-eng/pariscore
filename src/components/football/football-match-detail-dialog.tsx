@@ -141,8 +141,8 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   // Historique odds pour le timeline (collecté côté client via localStorage)
   const oddsHistory = useOddsHistory(
     view ? String(view.id) : "",
-    view?.odds?.home ?? null,
-    view?.odds?.away ?? null,
+    view?.odds?.home ?? undefined,
+    view?.odds?.away ?? undefined,
   );
 
   // Fetch lazy uniquement à l'ouverture du dialog (ou changement de match).

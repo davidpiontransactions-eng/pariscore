@@ -15,15 +15,12 @@ type SportTint =
   | "basketball"
   | "rugby";
 
-interface LiquidGlassProps {
+interface LiquidGlassProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   tier?: LgTier;
   elevated?: boolean;
   sport?: SportTint;
   noSheen?: boolean;
-  className?: string;
-  as?: React.ElementType;
-  [key: string]: unknown;
 }
 
 /**
@@ -44,7 +41,6 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(
       sport,
       noSheen = false,
       className,
-      as: Component = "div",
       ...props
     },
     ref

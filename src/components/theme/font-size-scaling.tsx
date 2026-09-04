@@ -37,7 +37,7 @@ export function FontSizeScaling({ showPresets = true }: FontSizeScalingProps) {
   // Appliquer la taille de police sélectionnée
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty("--font-size-base", FONT_SIZE_PRESETS[selectedPreset]);
+    root.style.setProperty("--font-size-base", String(FONT_SIZE_PRESETS[selectedPreset]));
   }, [selectedPreset]);
 
   return (

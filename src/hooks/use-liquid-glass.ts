@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export type LgTier = "off" | "tier0" | "tier1" | "tier2";
+export type LgTier = "off" | "tier0" | "tier1" | "tier2" | "clear" | "regular" | "elevated";
 
 interface LgCapabilities {
   tier: LgTier;

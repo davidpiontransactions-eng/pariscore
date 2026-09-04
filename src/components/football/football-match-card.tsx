@@ -129,8 +129,8 @@ export function FootballMatchCard({
   // Historique odds pour sparkline (collecté côté client via localStorage)
   const oddsHistory = useOddsHistory(
     String(match.id),
-    match.odds?.home ?? null,
-    match.odds?.away ?? null,
+    match.odds?.home ?? undefined,
+    match.odds?.away ?? undefined,
   );
 
   // Collect prediction badges for the "Prédictions Clés" section
@@ -425,25 +425,19 @@ export function FootballMatchCard({
         {/* Prediction rings */}
         <div className="mt-3 flex items-center justify-center gap-2 sm:gap-3">
           <ConfidenceRing
-            prob={p.homeProb}
+            value={p.homeProb}
             confidence={confidence}
             color="#10b981"
-            size="sm"
-            label="1"
           />
           <ConfidenceRing
-            prob={p.drawProb}
+            value={p.drawProb}
             confidence={confidence}
             color="#f59e0b"
-            size="sm"
-            label="N"
           />
           <ConfidenceRing
-            prob={p.awayProb}
+            value={p.awayProb}
             confidence={confidence}
             color="#ef4444"
-            size="sm"
-            label="2"
           />
         </div>
 

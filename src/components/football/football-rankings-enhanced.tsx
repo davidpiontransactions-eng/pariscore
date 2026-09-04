@@ -496,7 +496,7 @@ export function FootballRankingsEnhanced() {
         <div className="flex items-center gap-3">
           {league && (
             <div className="flex items-center gap-2">
-              <span className="text-lg">{getFlagAssets(league.cc).flag}</span>
+              <span className="text-lg">{getFlagAssets(league.cc).emoji}</span>
               <div>
                 <h3 className="text-base font-bold text-zinc-100">{league.label}</h3>
                 <p className="text-[10px] text-zinc-500">Classement Home/Away</p>
@@ -511,7 +511,7 @@ export function FootballRankingsEnhanced() {
           <SelectContent>
             {LEAGUES.map((l) => (
               <SelectItem key={l.slug} value={l.slug} className="text-xs">
-                {getFlagAssets(l.cc).flag} {l.label}
+                {getFlagAssets(l.cc).emoji} {l.label}
               </SelectItem>
             ))}
           </SelectContent>

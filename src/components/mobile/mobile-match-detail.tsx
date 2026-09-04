@@ -126,7 +126,9 @@ export function MobileMatchDetail({ match, open, onOpenChange, children }: Props
             activeTab={activeTab}
             onTabChange={setActiveTab}
             className="border-b border-border/30"
-          />
+          >
+            {[]}
+          </SwipeableTabs>
         </div>
 
         {/* Scrollable content */}

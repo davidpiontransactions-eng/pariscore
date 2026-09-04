@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     Object.entries(FD_MARKETS).map(([k, v]) => [k, v.higherBetter]),
   );
 
-  const markets: Partial<Record<FdMarketKey | "xgFor" | "xgAgainst", unknown>> = {};
+  const markets: Partial<Record<FdMarketKey | "xgFor" | "xgAgainst" | "standings", unknown>> = {};
   for (const key of Object.keys(FD_MARKETS) as FdMarketKey[]) {
     const rows = fdRanking(league, season, key, scope);
     if (rows) markets[key] = rows;

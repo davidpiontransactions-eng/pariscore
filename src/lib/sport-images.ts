@@ -308,7 +308,7 @@ export function getSportAthletes(sport: SportId): AthleteInfo[] {
 export function getSportAthleteImage(sport: SportId, index: number): string {
   const athletes = getSportAthletes(sport);
   if (!athletes[index]) return "";
-  return athletes[index].imageUrl;
+  return athletes[index].imageUrl ?? "";
 }
 
 /** Nom d'athlète par sport et index. */

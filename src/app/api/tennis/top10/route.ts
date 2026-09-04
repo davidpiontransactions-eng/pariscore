@@ -69,7 +69,7 @@ function mergedLeaderboard(
   let players = 0;
   let unavailable = true;
 
-  const mergeRows = (rows: { player: string; [k: string]: unknown }[]) => {
+  const mergeRows = (rows: { player: string; }[]) => {
     for (const row of rows) {
       const key = normPlayerName(row.player);
       if (!key) continue;

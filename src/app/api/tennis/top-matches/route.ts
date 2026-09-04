@@ -136,7 +136,7 @@ export async function GET(request: Request) {
           label: result.label,
           labelColor: result.labelColor,
           labelBg: result.labelBg,
-          breakdown: result.breakdown,
+          breakdown: result.breakdown as unknown as Record<string, number>,
         },
       });
     }
@@ -153,6 +153,6 @@ export async function GET(request: Request) {
       totalAvailable: scored.length,
     });
   } catch (err) {
-    return apiErrorHandler(err);
+    return apiErrorHandler(err, "tennis/top-matches");
   }
 }

@@ -118,11 +118,9 @@ export function CyclingStageCard({
         {confidenceScore != null && (
           <div className="mt-4 flex items-center justify-center border-t border-border/40 pt-3.5">
             <ConfidenceRing
-              prob={top3[0]?.prob ?? 0}
+              value={top3[0]?.prob ?? 0}
               confidence={confidenceScore}
               color="#f59e0b"
-              size="sm"
-              label="Confiance IA"
             />
           </div>
         )}

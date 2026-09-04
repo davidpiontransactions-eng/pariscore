@@ -167,6 +167,7 @@ export function settleFootballPick(
       return { status: won ? "won" : "lost", odds: clo ?? null, closingOdds: clo ?? null, score: `${hs}-${as}` };
     }
   }
+  return { status: "void" as const, odds: null, closingOdds: null };
 }
 
 function pickDesc(key: StrategyTop5Key, e: StrategyMatchEntry): string {
@@ -196,6 +197,7 @@ function pickDesc(key: StrategyTop5Key, e: StrategyMatchEntry): string {
     case "edgeOU25":
       return e.pick === "home" ? "Over 2,5" : "Under 2,5";
   }
+  return "?";
 }
 
 /** Transforme un top 5 calculé en entrées de store, settlées via resultMap. */

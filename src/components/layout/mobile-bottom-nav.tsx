@@ -37,7 +37,6 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
   return (
     <LiquidGlass
       tier="regular"
-      as="nav"
       className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 pb-[env(safe-area-inset-bottom)] mobile-bottom-nav"
       role="navigation"
       aria-label="Navigation principale"

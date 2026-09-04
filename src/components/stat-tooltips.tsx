@@ -12,7 +12,7 @@ type StatTooltipProps = {
   /** Brief explanation/description */
   description: string;
   /** Optional icon component */
-  icon?: React.ComponentType<{ className?: string }>;
+  Icon?: React.ComponentType<{ className?: string }>;
   /** Delay in milliseconds before tooltip appears (default: 300) */
   delay?: number;
   /** Whether tooltip follows cursor or stays positioned */
@@ -32,7 +32,7 @@ type StatTooltipProps = {
 export function StatTooltip({
   name,
   description,
-  icon,
+  Icon,
   delay = 300,
   followCursor = false,
 }: StatTooltipProps) {
@@ -57,7 +57,7 @@ export function StatTooltip({
   };
 
   // Update cursor position
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
     setCursorPos({ x: e.clientX, y: e.clientY });
   };
 
@@ -72,7 +72,7 @@ export function StatTooltip({
       >
         {/* Stat display element */}
         <span className="relative flex items-center gap-1.5">
-          {icon && <icon className="h-3.5 w-3.5" />}
+          {Icon && <Icon className="h-3.5 w-3.5" />}
           <span className="font-medium text-muted-foreground truncate">
             {name}
           </span>
@@ -96,8 +96,8 @@ export function StatTooltip({
             : undefined}
         >
           <div className="flex items-start gap-2">
-            {icon && (
-              <icon className="h-3 w-3 mt-0.5 flex-shrink-0" />
+            {Icon && (
+              <Icon className="h-3 w-3 mt-0.5 flex-shrink-0" />
             )}
             <div>
               <p className="font-medium">{name}</p>

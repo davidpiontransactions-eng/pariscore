@@ -123,11 +123,9 @@ export function FootballBankerWidget({
           {/* Ring de confiance + pick */}
           <div className="flex shrink-0 items-center justify-center gap-4">
             <ConfidenceRing
-              prob={b.score}
+              value={b.score}
               confidence={pickConfidence(b.score)}
               color={homeColor}
-              size="lg"
-              label="Confiance"
             />
             <div className="text-center sm:text-left">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Pick fort</p>

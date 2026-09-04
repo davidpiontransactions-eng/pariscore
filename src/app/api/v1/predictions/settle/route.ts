@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function settleOne(matchId: string, homeScore: number, awayScore: number) {
+async function settleOne(matchId: string, homeScore: number, awayScore: number): Promise<{ matchId: string; homeScore: number; awayScore: number; settled: number; message: string }> {
   const updated = await prisma.predictionLog.updateMany({
     where: {
       matchId,
@@ -91,8 +91,8 @@ async function settleOne(matchId: string, homeScore: number, awayScore: number) 
   };
 }
 
-async function settleBatch(settlements: SettlementRequest[]) {
-  const results = [];
+async function settleBatch(settlements: SettlementRequest[]): Promise<{ total: number; settled: number; results: Array<{ matchId: string; success: boolean; error?: string; settled?: number; homeScore?: number; awayScore?: number; message?: string }> }> {
+  const results: Array<{ matchId: string; success: boolean; error?: string; settled?: number; homeScore?: number; awayScore?: number; message?: string }> = [];
 
   for (const s of settlements) {
     try {

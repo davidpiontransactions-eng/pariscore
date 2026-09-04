@@ -44,7 +44,7 @@ function generateHeatmapData(
   days: number,
   startDate: Date,
 ): Array<{ date: Date; profit: number; isProfitable: boolean }> {
-  const data = [];
+  const data: Array<{ date: Date; profit: number; isProfitable: boolean }> = [];
   const timeDiff = days * 24 * 60 * 60 * 1000; // ms par journée
   let currentDate = new Date(startDate.getTime());
 
@@ -124,7 +124,7 @@ export function BankrollHeatmap({
   // Calculer les couleurs pour chaque jour
   const dayColors = useMemo(() =>
     heatData.map((day) => (day.isProfitable ? "emerald" : "destructive")),
-  [], [heatData]);
+    [heatData]);
 
   // Gestion du drag pour sélection de période
   const handleMouseDown = useCallback(
@@ -250,7 +250,7 @@ export function BankrollHeatmap({
 
           return (
             <div
-              key={day.date}
+              key={day.date.toISOString()}
               className={cn(
                 "absolute top-0 bottom-0 min-w-[1px]",
                 `left-${dayX}px`,
@@ -277,12 +277,12 @@ export function BankrollHeatmap({
           <div
             className={cn(
               "absolute inset-0 rounded-full opacity-50",
-              "bg-emerald-500/20" || "bg-destructive-500/20",
+              "bg-emerald-500/20",
               "animate-pulse-subtle",
             )}
             style={{
               left: `${selectedStartIdx * dayWidth}px`,
-              width: `${Math.abs(selectedEndIdx - dragStart ?? 0) + 1} * dayWidth}px`,
+              width: `${(Math.abs(selectedEndIdx - (dragStart ?? 0)) + 1) * dayWidth}px`,
             }}
           />
         )}
