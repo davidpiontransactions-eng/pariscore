@@ -196,7 +196,7 @@ export default function SearchModal({ open, onOpenChange, trigger }: SearchModal
         {open && (
           /* Overlay */
           <motion.div
-            className="fixed inset-0 z-[100] flex items-start justify-center bg-black/70 pt-[15vh] backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex items-start justify-center liquid-glass--clear pt-[15vh]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
