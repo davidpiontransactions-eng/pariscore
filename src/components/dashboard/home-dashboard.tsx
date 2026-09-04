@@ -92,7 +92,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
   };
 
   return (
-    <section aria-label={t("ariaLabel")} className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 pt-6">
+    <section aria-label={t("ariaLabel")} className="w-full px-4 sm:px-6 pt-6">
       {/* Panneau bienvenue */}
       <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-br from-zinc-900/80 to-zinc-900/40 p-5 sm:p-6">
         <h2 className="text-lg font-bold tracking-tight text-white sm:text-xl">

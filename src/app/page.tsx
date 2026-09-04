@@ -338,7 +338,7 @@ function HomeInner() {
             >
 
         {/* Hero Dashboard Section — Bento Grid layout */}
-        <section className="sport-ambient max-w-screen-2xl mx-auto w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
+        <section className="sport-ambient w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
           <BentoGrid cols={4}>
             {/* Hero tile — 2×2 */}
             <BentoTile size="hero" variant="glass">
@@ -403,7 +403,7 @@ function HomeInner() {
         {activeTab === "home" && (
           <>
             <HomeDashboard onSportSelect={handleTabChange} />
-            <div className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 mt-6">
+            <div className="w-full px-4 sm:px-6 mt-6">
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <PersonalDashboard />
                 <div>
@@ -432,7 +432,7 @@ function HomeInner() {
         </motion.div>
 
         {/* Sections déplacées — Bento Grid layout */}
-        <section className="max-w-screen-2xl mx-auto w-full px-4 sm:px-6 pt-8">
+        <section className="w-full px-4 sm:px-6 pt-8">
           <BentoGrid cols={4}>
             <BentoTile size="wide" variant="glass">
               <Top5SelectionPanel variant="inline" />
@@ -461,7 +461,7 @@ function HomeInner() {
 
         {/* Footer — toujours visible, padding bottom pour la bottom nav mobile */}
         <footer className="block mt-auto border-t border-white/10 bg-zinc-900/20 pb-20 md:pb-6">
-          <div className="mx-auto max-w-screen-2xl px-4 py-6 sm:px-6">
+          <div className="px-4 py-6 sm:px-6">
             <div className="flex flex-col items-start justify-between gap-3 text-xs text-zinc-500 sm:flex-row sm:items-center">
               <p>
                 <span className="font-semibold text-zinc-300">
