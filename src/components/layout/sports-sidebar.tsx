@@ -52,7 +52,6 @@ import {
 } from "@/stores/use-sports-sidebar-store";
 import { useSportsTree } from "@/hooks/use-sports-tree";
 import { FootballLeagueRankingsWidget } from "@/components/football/football-league-rankings-widget";
-import { TennisStrategyTop5Widget } from "@/components/tennis/tennis-strategy-top5-widget";
 import { MomentumSparkline } from "@/components/football/momentum-sparkline";
 
 
@@ -1394,8 +1393,7 @@ export function SportsSidebarContent({
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-1 p-1.5">
-          {/* Top5 foot retiré — remplacé par le Top10 central (football-tab-content). */}
-          {activeSport === "tennis" && <TennisStrategyTop5Widget />}
+          {/* Top5 tennis retiré — remplacé par le Top10 central (tennis-tab-content). */}
           <QuickLinksBlock tree={tree} onFallbackSport={handleSportSelect} />
           <MyTeamsBlock followedTeamIds={followedTeamIds} onToggleFollow={toggleFollowedTeam} tree={tree} />
           <FavoritesBlock tree={tree} onLeagueSelect={handleLeagueSelect} />
