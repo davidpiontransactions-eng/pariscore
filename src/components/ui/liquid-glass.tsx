@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, type ReactNode } from "react";
+import { useFeatureFlagEnabled } from "posthog-js/react";
 import { cn } from "@/lib/utils";
 import { useLiquidGlass, type LgTier } from "@/hooks/use-liquid-glass";
 
@@ -48,8 +49,18 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(
     },
     ref
   ) {
+    const flagEnabled = useFeatureFlagEnabled("liquid-glass-v1");
     const caps = useLiquidGlass();
     const effectiveTier = tierOverride ?? caps.tier;
+
+    // Feature flag PostHog — rollout 0% par défaut, safety net
+    if (!flagEnabled) {
+      return (
+        <Component ref={ref} className={className} {...props}>
+          {children}
+        </Component>
+      );
+    }
 
     // Ne pas render si glass off
     if (effectiveTier === "off") {
