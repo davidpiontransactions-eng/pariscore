@@ -9,10 +9,7 @@ const CACHE_TTL_MS = 5 * 60_000;
 const STALE_GRACE_MS = 60 * 60_000;
 const PAST_GRACE_MS = 30 * 60_000;
 
-// The cache stores the API payload shape directly. `createTtlCache` already
-// wraps the value in `{ data, at }`, so we must NOT add our own `{ data, at }`
-// wrapper here (that caused bug A9: `cached.data` was the inner object instead
-// of the matches array, crashing client-side with "matches is not iterable").
+/* ─── Types ─── */
 type CachedPayload = { matches: unknown[]; source: string };
 const cache = createTtlCache<CachedPayload>("__tennisPrematchCache");
 
@@ -23,6 +20,9 @@ function filterStale(matches: { scheduledAt: string }[]): typeof matches {
     return !Number.isFinite(ms) || ms >= cutoff;
   });
 }
+
+/* ─── US Open Fallback ─── */
+import { fetchUsOpenTodayMatches } from "@/lib/usopen-fetcher";
 
 /**
  * Re-date le mock local (tennis-data.ts) sur la journée courante pour le
@@ -38,19 +38,13 @@ function mockForToday(): TennisMatch[] {
   }));
 }
 
-/**
- * 1 retry sur erreurs transitoires (429 / 5xx) avant de basculer sur la
- * source suivante — évite un fallback prématuré sur un pic de rate-limit.
- * Les erreurs BSD sont des AppError (`statusCode`) ; les Error nus du
- * fallback Odds API n'exposent rien → non retentées (comportement voulu).
- */
+/* ─── Retry & US Open ─── */
 async function fetchWithTransientRetry<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (err) {
     const status =
-      (err as { statusCode?: number })?.statusCode ??
-      (err as { status?: number })?.status;
+      (err as { statusCode?: number })?.statusCode ?? (err as { status?: number })?.status;
     const code = (err as { code?: string })?.code;
     const transient =
       code === "BSD_RATE_LIMIT" || (typeof status === "number" && status >= 500 && status < 600);
@@ -60,6 +54,7 @@ async function fetchWithTransientRetry<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
+/* ─── GET ─── */
 export async function GET() {
   try {
     const now = Date.now();
@@ -77,6 +72,7 @@ export async function GET() {
     const bsdEnabled = process.env.BSD_TENNIS_ENABLED === "true";
     const oddsKey = process.env.ODDS_API_KEY;
 
+    /* 1️⃣ Essayer BSD d'abord */
     if (bsdKey && bsdEnabled) {
       try {
         const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
@@ -92,6 +88,7 @@ export async function GET() {
       }
     }
 
+    /* 2️⃣ Essayer Odds API ensuite */
     if (oddsKey) {
       try {
         const { fetchRealMatches } = await import("@/lib/real-matches");
@@ -107,8 +104,27 @@ export async function GET() {
       }
     }
 
-    // Stale-while-error : cache périmé dispo → servi tel quel (source distincte
-    // pour que l'UI affiche le bandeau « données en cache »).
+    /* 3️⃣ Fallback US Open (quand BSD/Odds n'ont pas les matchs d'aujourd'hui) */
+    try {
+      const usopenMatches = await fetchUsOpenTodayMatches();
+      if (usopenMatches && usopenMatches.length > 0) {
+        console.log(
+          "[prematch] US Open fallback:",
+          usopenMatches.length,
+          "matches found for",
+        );
+        cache.set({ matches: usopenMatches, source: "usopen" });
+        return NextResponse.json({
+          matches: usopenMatches,
+          source: "usopen",
+          updatedAt: new Date(now).toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("[prematch] US Open fallback failed:", (err as Error).message);
+    }
+
+    /* 4️⃣ Stale-while-error : cache périmé dispo → servi tel quel */
     if (cached && Date.now() - cached.at < STALE_GRACE_MS) {
       console.warn(
         `[prematch] Sources KO, serving stale cache (age=${Math.round((Date.now() - cached.at) / 1000)}s)`,
@@ -120,8 +136,8 @@ export async function GET() {
       });
     }
 
-    // En production : ne JAMAIS servir de faux matchs — liste vide honnête.
-    // En dev : dernier recours = mock re-daté pour que l'onglet reste exploitable.
+    /* 5️⃣ Production : ne JAMAIS servir de faux matchs — liste vide honnête.
+      Dédev : mock re-daté pour que l'onglet reste exploitable. */
     if (process.env.NODE_ENV === "production") {
       console.error("[prematch] ALL SOURCES FAILED in production — returning empty matches");
       return NextResponse.json({

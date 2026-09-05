@@ -23,10 +23,6 @@ interface SearchModalProps {
   trigger?: React.ReactNode
 }
 
-/* ------------------------------------------------------------------ */
-/*  Données de démonstration                                           */
-/* ------------------------------------------------------------------ */
-
 const DEMO_RESULTS: SearchResult[] = [
   { id: "m1", name: "PSG vs Olympique Lyonnais", subtitle: "Ligue 1 — Aujourd'hui", icon: "match" },
   { id: "m2", name: "Real Madrid vs FC Barcelone", subtitle: "La Liga — Demain", icon: "match" },

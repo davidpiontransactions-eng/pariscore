@@ -51,7 +51,31 @@ export interface TopMatchResponse {
   generated_at: string;
 }
 
-export type SportType = 'football' | 'tennis' | 'basket' | 'nba' | 'wnba' | 'f1' | 'cs2' | 'mma' | 'cycling';
+export type SportType =
+  | "football"
+  | "tennis"
+  | "basket"
+  | "nba"
+  | "wnba"
+  | "f1"
+  | "cs2"
+  | "mma"
+  | "cycling"
+  | "fiba";
+
+/** Valeurs SportType en tant que chaîne (pour utilisation runtime). */
+export const SPORT_TYPES: SportType[] = [
+  "football",
+  "tennis",
+  "basket",
+  "nba",
+  "wnba",
+  "f1",
+  "cs2",
+  "mma",
+  "cycling",
+  "fiba",
+];
 
 export interface SportAdapter {
   sport: SportType;

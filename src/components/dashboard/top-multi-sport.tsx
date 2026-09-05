@@ -51,18 +51,7 @@ interface TopMatchResponse {
   generated_at: string;
 }
 
-type SportType = "all" | "football" | "tennis" | "basket" | "f1" | "cs2" | "mma" | "cycling";
 
-const SPORT_TABS: { id: SportType; label: string; icon: string }[] = [
-  { id: "all", label: "Tous", icon: "🔥" },
-  { id: "football", label: "Football", icon: "⚽" },
-  { id: "tennis", label: "Tennis", icon: "🎾" },
-  { id: "basket", label: "Basket", icon: "🏀" },
-  { id: "f1", label: "F1", icon: "🏎️" },
-  { id: "cs2", label: "CS2", icon: "🎮" },
-  { id: "mma", label: "MMA", icon: "🥊" },
-  { id: "cycling", label: "Cycling", icon: "🚴" },
-];
 
 const CACHE_MS = 60_000;
 const POLL_MS = 120_000;
@@ -306,7 +295,6 @@ function LeagueCard({
 
 /* ─── Main Component ─── */
 export function TopMultiSport() {
-  const [sport, setSport] = useState<SportType>("all");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [groups, setGroups] = useState<TopLeague[]>([]);
@@ -316,8 +304,8 @@ export function TopMultiSport() {
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(
-    async (s: SportType, skipCache = false) => {
-      const key = s;
+    async (skipCache = false) => {
+      const key = "all";
       if (!skipCache) {
         const cached = cacheRef.current.get(key);
         if (cached && Date.now() - cached.ts < CACHE_MS) {
@@ -327,7 +315,7 @@ export function TopMultiSport() {
         }
       }
       try {
-        const res = await fetch(`/api/v1/top-matches/all?sport=${s}&limit=10`);
+        const res = await fetch(`/api/v1/top-matches/all?limit=10`);
         const data: TopMatchResponse = await res.json();
         cacheRef.current.set(key, { data, ts: Date.now() });
         setGroups(data.groups);
@@ -371,18 +359,12 @@ export function TopMultiSport() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [sport, fetchData]);
-
-  const handleSportChange = (s: SportType) => {
-    setSport(s);
-    setLoading(true);
-    cacheRef.current.delete(s);
-  };
+  }, [fetchData]);
 
   const handleRefresh = () => {
     setSpinning(true);
-    cacheRef.current.delete(sport);
-    fetchData(sport, true);
+    cacheRef.current.delete("all");
+    fetchData(true);
     setTimeout(() => setSpinning(false), 500);
   };
 

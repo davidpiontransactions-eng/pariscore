@@ -1,5 +1,6 @@
 // Agrégateur — fetch parallèle de tous les adapters sport
 import type { SportType, TopLeague } from './types';
+import { SPORT_TYPES } from './types';
 import { footballAdapter } from './football';
 import { tennisAdapter } from './tennis';
 import { nbaAdapter } from './nba';
@@ -21,17 +22,7 @@ const adapters = {
   cycling: cyclingAdapter,
   fiba: fibaAdapter,
 
-const ALL_SPORTS = [
-  "football",
-  "tennis",
-  "nba",
-  "wnba",
-  "f1",
-  "cs2",
-  "mma",
-  "cycling",
-  "fiba",
-] as const;
+const ALL_SPORTS = SPORT_TYPES;
 
 export async function fetchTopMatches(
   sport: SportType | 'all',
