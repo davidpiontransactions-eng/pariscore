@@ -63,6 +63,9 @@ export const footballAdapter: SportAdapter = {
         },
         kickoff: m.scheduledAt || '',
         status: m.status === 'finished' ? 'finished' : m.isLive ? 'live' : 'scheduled',
+        score: m.isLive && m.live
+          ? `${m.live.homeScore ?? 0} - ${m.live.awayScore ?? 0}`
+          : undefined,
         odds: m.odds
           ? {
               home: m.odds.home != null ? String(m.odds.home) : undefined,

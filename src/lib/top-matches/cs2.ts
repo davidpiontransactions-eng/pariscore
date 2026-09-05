@@ -20,14 +20,22 @@ export const cs2Adapter: SportAdapter = {
       const ko = new Date(m.scheduledAt || m.date || 0).getTime();
       return m.isLive || m.status === 'live' || ko >= now - 30 * 60_000;
     });
-    const matches = filtered.slice(0, limit).map((m: any) => ({
-      id: String(m.id || ''),
-      home: { name: m.team1?.name || m.team1 || 'Team 1' },
-      away: { name: m.team2?.name || m.team2 || 'Team 2' },
-      kickoff: m.scheduledAt || m.date || '',
-      status: m.status === 'live' ? 'live' : 'scheduled',
-      badge: m.isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
-    }));
+    const matches = filtered.slice(0, limit).map((m: any) => {
+      // Score maps (CS2 : maps gagnés par équipe)
+      const ms = m.maps_score;
+      const score = (ms && (ms.team1 != null || ms.team2 != null))
+        ? `${ms.team1 ?? 0} - ${ms.team2 ?? 0}`
+        : undefined;
+      return {
+        id: String(m.id || ''),
+        home: { name: m.team1?.name || m.team1 || 'Team 1', logo: m.team1?.logo || m.team1?.logo_local },
+        away: { name: m.team2?.name || m.team2 || 'Team 2', logo: m.team2?.logo || m.team2?.logo_local },
+        kickoff: m.scheduledAt || m.scheduled || m.date || '',
+        status: m.status === 'live' ? 'live' : 'scheduled',
+        score,
+        badge: m.isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
+      };
+    });
 
     return matches.length
       ? [{ league: 'CS2', leagueIcon: '🎮', leagueColor: '#F59E0B', sport: 'cs2', matches }]
