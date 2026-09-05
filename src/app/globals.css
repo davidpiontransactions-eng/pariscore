@@ -92,133 +92,134 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --sport-tennis: #10B981;
-  --sport-football: #0EA5E9;
+  --background: #F0ECF8;
+  --foreground: #1A1145;
+  --sport-tennis: #7B3FA0;
+  --sport-football: #7B3FA0;
   --sport-mma: #EF4444;
-  --sport-cycling: #F59E0B;
-  --surface-dark: #0F0F1A;
-  --surface-card: #1A1A2E;
-  --confidence-high: #22C55E;
-  --confidence-mid: #F59E0B;
+  --sport-cycling: #7B3FA0;
+  --surface-dark: #EDE8F5;
+  --surface-card: #FFFFFF;
+  --confidence-high: #4CAF50;
+  --confidence-mid: #FF6D00;
   --confidence-low: #EF4444;
-  --edge-positive: #10B981;
+  --edge-positive: #FF6D00;
   --edge-negative: #EF4444;
-  --live-pulse: #EF4444;
-  --ai-insight: #A855F7;
-  --sport-f1: #DC2626;
-  --sport-cs2: #F97316;
-  --sport-basketball: #0EA5E9;
-  --sport-rugby: #14B8A6;
-  --bg-deep: #0a0e17;
-  --glass-bg: rgba(15, 23, 42, 0.55);
-  --glass-bg-strong: rgba(11, 18, 32, 0.78);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --live-pulse: #4CAF50;
+  --ai-insight: #7B3FA0;
+  --sport-f1: #EF4444;
+  --sport-cs2: #FF6D00;
+  --sport-basketball: #7B3FA0;
+  --sport-rugby: #7B3FA0;
+  --bg-deep: #F0ECF8;
+  --glass-bg: rgba(240, 236, 248, 0.85);
+  --glass-bg-strong: rgba(240, 236, 248, 0.95);
+  --glass-border: rgba(123, 63, 160, 0.12);
+  --card: #FFFFFF;
+  --card-foreground: #1A1145;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1145;
+  --primary: #7B3FA0;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EDE8F5;
+  --secondary-foreground: #1A1145;
+  --muted: #EDE8F5;
+  --muted-foreground: #6B5B8D;
+  --accent: #FF6D00;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  /* Sidebar 1xBet design tokens */
-  --sidebar-surface: #0e121e;
-  --sidebar-surface-elevated: #131722;
-  --sidebar-hover: rgba(255,255,255,0.04);
-  --sidebar-active: rgba(0,230,118,0.08);
-  --sidebar-active-border: #00e676;
-  --sidebar-live-pulse: rgba(255,56,86,0.15);
-  --sidebar-text: #e8eaed;
-  --sidebar-text-muted: #94a3b8;
-  --sidebar-accent-color: #00e676;
+  --border: #E0D8F0;
+  --input: #E0D8F0;
+  --ring: #7B3FA0;
+  --chart-1: #7B3FA0;
+  --chart-2: #FF6D00;
+  --chart-3: #4CAF50;
+  --chart-4: #E0D8F0;
+  --chart-5: #1A1145;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A1145;
+  --sidebar-primary: #7B3FA0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EDE8F5;
+  --sidebar-accent-foreground: #1A1145;
+  --sidebar-border: #E0D8F0;
+  --sidebar-ring: #7B3FA0;
+  /* Sidebar tokens — light theme */
+  --sidebar-surface: #FFFFFF;
+  --sidebar-surface-elevated: #F8F5FC;
+  --sidebar-hover: rgba(123, 63, 160, 0.06);
+  --sidebar-active: rgba(123, 63, 160, 0.10);
+  --sidebar-active-border: #7B3FA0;
+  --sidebar-live-pulse: rgba(76, 175, 80, 0.15);
+  --sidebar-text: #1A1145;
+  --sidebar-text-muted: #6B5B8D;
+  --sidebar-accent-color: #7B3FA0;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --sport-tennis: #10B981;
-  --sport-football: #0EA5E9;
+  --background: #F0ECF8;
+  --foreground: #1A1145;
+  --sport-tennis: #7B3FA0;
+  --sport-football: #7B3FA0;
   --sport-mma: #EF4444;
-  --sport-cycling: #F59E0B;
-  --surface-dark: #0F0F1A;
-  --surface-card: #1A1A2E;
-  --confidence-high: #22C55E;
-  --confidence-mid: #F59E0B;
+  --sport-cycling: #7B3FA0;
+  --surface-dark: #EDE8F5;
+  --surface-card: #FFFFFF;
+  --confidence-high: #4CAF50;
+  --confidence-mid: #FF6D00;
   --confidence-low: #EF4444;
-  --edge-positive: #10B981;
+  --edge-positive: #FF6D00;
   --edge-negative: #EF4444;
-  --live-pulse: #EF4444;
-  --ai-insight: #A855F7;
-  --sport-f1: #DC2626;
-  --sport-cs2: #F97316;
-  --sport-basketball: #0EA5E9;
-  --sport-rugby: #14B8A6;
-  --bg-deep: #0a0e17;
-  --glass-bg: rgba(15, 23, 42, 0.55);
-  --glass-bg-strong: rgba(11, 18, 32, 0.78);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.77 0.19 162);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.77 0.19 162);
-  --accent-foreground: oklch(0.145 0 0);
+  --live-pulse: #4CAF50;
+  --ai-insight: #7B3FA0;
+  --sport-f1: #EF4444;
+  --sport-cs2: #FF6D00;
+  --sport-basketball: #7B3FA0;
+  --sport-rugby: #7B3FA0;
+  --bg-deep: #F0ECF8;
+  --glass-bg: rgba(240, 236, 248, 0.85);
+  --glass-bg-strong: rgba(240, 236, 248, 0.95);
+  --glass-border: rgba(123, 63, 160, 0.12);
+  --card: #FFFFFF;
+  --card-foreground: #1A1145;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1145;
+  --primary: #7B3FA0;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EDE8F5;
+  --secondary-foreground: #1A1145;
+  --muted: #EDE8F5;
+  --muted-foreground: #6B5B8D;
+  --accent: #FF6D00;
+  --accent-foreground: #FFFFFF;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.77 0.19 162);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-  /* Sidebar 1xBet design tokens */
-  --sidebar-surface: #0e121e;
-  --sidebar-surface-elevated: #131722;
-  --sidebar-hover: rgba(255,255,255,0.04);
-  --sidebar-active: rgba(0,230,118,0.08);
-  --sidebar-active-border: #00e676;
-  --sidebar-live-pulse: rgba(255,56,86,0.15);
-  --sidebar-text: #e8eaed;
-  --sidebar-text-muted: #94a3b8;
-  --sidebar-accent-color: #00e676;
+  --border: #E0D8F0;
+  --input: #E0D8F0;
+  --ring: #7B3FA0;
+  --chart-1: #7B3FA0;
+  --chart-2: #FF6D00;
+  --chart-3: #4CAF50;
+  --chart-4: #E0D8F0;
+  --chart-5: #1A1145;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A1145;
+  --sidebar-primary: #7B3FA0;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EDE8F5;
+  --sidebar-accent-foreground: #1A1145;
+  --sidebar-border: #E0D8F0;
+  --sidebar-ring: #7B3FA0;
+  /* Sidebar tokens — light theme */
+  --sidebar-surface: #FFFFFF;
+  --sidebar-surface-elevated: #F8F5FC;
+  --sidebar-hover: rgba(123, 63, 160, 0.06);
+  --sidebar-active: rgba(123, 63, 160, 0.10);
+  --sidebar-active-border: #7B3FA0;
+  --sidebar-live-pulse: rgba(76, 175, 80, 0.15);
+  --sidebar-text: #1A1145;
+  --sidebar-text-muted: #6B5B8D;
+  --sidebar-accent-color: #7B3FA0;
+}
   /* Bento Grid tokens */
   --bento-gap: 16px;
   --bento-radius: 20px;
@@ -259,13 +260,12 @@
     text-wrap: pretty;
   }
   ::selection {
-    background: color-mix(in oklch, var(--edge-positive) 28%, transparent);
+    background: color-mix(in oklch, var(--primary) 28%, transparent);
     color: var(--foreground);
   }
   html {
-    caret-color: var(--edge-positive);
-    /* Scrollbars/inputs natifs en sombre (guideline Vercel — dark mode) */
-    color-scheme: dark;
+    caret-color: var(--primary);
+    color-scheme: light;
   }
   /* Toucher mobile : pas de double-tap zoom delay, pas de flash gris au tap */
   button,
@@ -413,10 +413,10 @@
 .sport-ambient[data-sport="f1"]::after { --sport-tennis: var(--sport-f1); }
 .sport-ambient[data-sport="rugby"]::before,
 .sport-ambient[data-sport="rugby"]::after { --sport-tennis: var(--sport-rugby); }
-/* Accueil : ambiance neutre (accent charte) plutôt que le vert tennis par défaut */
+/* Accueil : ambiance neutre (accent charte) plutôt que le violet par défaut */
 .sport-ambient[data-sport="home"]::before,
 .sport-ambient[data-sport="home"]::after {
-  --sport-tennis: color-mix(in srgb, var(--accent, #00e676) 55%, transparent);
+  --sport-tennis: color-mix(in srgb, var(--primary, #7B3FA0) 40%, transparent);
 }
 
 /* Glass system — tokens de la chartre, classes utilitaires */
@@ -499,7 +499,7 @@
 }
 .score-hover:hover {
   font-variation-settings: "wdth" 118, "wght" 900;
-  color: var(--edge-positive, #00e676);
+  color: var(--primary, #7B3FA0);
 }
 
 /* Tab content fade-in animation */
@@ -520,8 +520,8 @@
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(0, 230, 118, 0.08),
-              0 8px 24px -12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 20px rgba(123, 63, 160, 0.08),
+              0 8px 24px -12px rgba(0, 0, 0, 0.15);
 }
 @media (prefers-reduced-motion: reduce) {
   .card-hover:hover { transform: none; }
@@ -529,8 +529,8 @@
 
 /* Button glow — feedback visuel sur les CTA au hover */
 .btn-glow:hover {
-  box-shadow: 0 0 15px rgba(0, 230, 118, 0.25),
-              0 0 30px rgba(0, 230, 118, 0.1);
+  box-shadow: 0 0 15px rgba(123, 63, 160, 0.25),
+              0 0 30px rgba(123, 63, 160, 0.1);
 }
 
 /* Badge scale — micro-feedback sur les badges interactifs */
@@ -572,32 +572,32 @@
 
 /* Signal accent — RÉSERVÉ aux éléments signalants */
 .signal-accent {
-  color: var(--edge-positive, #00e676);
+  color: var(--primary, #7B3FA0);
 }
 .signal-accent-glow {
-  box-shadow: 0 0 8px rgba(0, 230, 118, 0.2);
+  box-shadow: 0 0 8px rgba(123, 63, 160, 0.2);
 }
 
 /* ── Phase 17 — Dopamine Design : gradients par sport ───────────────────── */
 
-/* Football (vert dominant) */
+/* Football (violet dominant) */
 .gradient-sport-football {
-  background: linear-gradient(135deg, var(--sport-football, #00e676) 0%, rgba(0,230,118,0.3) 50%, var(--bg-deep, #0a0e17) 100%);
+  background: linear-gradient(135deg, var(--sport-football, #7B3FA0) 0%, rgba(123,63,160,0.3) 50%, var(--bg-deep, #F0ECF8) 100%);
 }
 
-/* Tennis (bleu dominant) */
+/* Tennis (violet dominant) */
 .gradient-sport-tennis {
-  background: linear-gradient(135deg, var(--sport-tennis, #29b6f6) 0%, rgba(41,182,246,0.3) 50%, var(--bg-deep, #0a0e17) 100%);
+  background: linear-gradient(135deg, var(--sport-tennis, #7B3FA0) 0%, rgba(123,63,160,0.3) 50%, var(--bg-deep, #F0ECF8) 100%);
 }
 
-/* MMA / Combat (ambre dominant) */
+/* MMA / Combat (rouge dominant) */
 .gradient-sport-mma {
-  background: linear-gradient(135deg, var(--sport-mma, #f59e0b) 0%, rgba(245,158,11,0.3) 50%, var(--bg-deep, #0a0e17) 100%);
+  background: linear-gradient(135deg, var(--sport-mma, #ef4444) 0%, rgba(239,68,68,0.3) 50%, var(--bg-deep, #F0ECF8) 100%);
 }
 
 /* F1 (rouge dominant) */
 .gradient-sport-f1 {
-  background: linear-gradient(135deg, var(--sport-f1, #ef4444) 0%, rgba(239,68,68,0.3) 50%, var(--bg-deep, #0a0e17) 100%);
+  background: linear-gradient(135deg, var(--sport-f1, #ef4444) 0%, rgba(239,68,68,0.3) 50%, var(--bg-deep, #F0ECF8) 100%);
 }
 
 /* Basketball (orange dominant) */
@@ -757,9 +757,9 @@
 /* ── Phase 4 — Glassmorphism Raffiné : border glow au focus ─────────────── */
 
 .glass-focus:focus-visible {
-  border-color: rgba(0, 230, 118, 0.4);
-  box-shadow: 0 0 0 1px rgba(0, 230, 118, 0.2),
-              0 0 12px rgba(0, 230, 118, 0.08);
+  border-color: rgba(123, 63, 160, 0.4);
+  box-shadow: 0 0 0 1px rgba(123, 63, 160, 0.2),
+              0 0 12px rgba(123, 63, 160, 0.08);
 }
 
 .glass-focus:focus-visible:not(:focus-visible) {
