@@ -50,6 +50,7 @@ import {
 } from "@/components/dashboard/nav-extra-views";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import { FeatureCards } from "@/components/dashboard/feature-cards";
+import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
 import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
@@ -336,6 +337,11 @@ function HomeInner() {
               }}
               className="flex-1"
             >
+
+        {/* Top Multi-Sport — matchs top du jour */}
+        <section className="w-full px-4 sm:px-6 pt-6">
+          <TopMultiSport />
+        </section>
 
         {/* Hero Dashboard Section — Bento Grid layout */}
         <section className="sport-ambient w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
