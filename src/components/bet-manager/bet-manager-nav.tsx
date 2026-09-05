@@ -47,8 +47,8 @@ export function BetManagerNav({ bankrolls, activeId, onSelect, onCreate }: Props
                   "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
                   "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   isActive
-                    ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/30"
-                    : "text-zinc-400 hover:bg-white/5 hover:text-white"
+                    ? "bg-[#7B3FA0]/10 text-[#7B3FA0] ring-1 ring-emerald-500/30"
+                    : "text-[#6B5B8D] hover:bg-white/5 hover:text-white"
                 )}
               >
                 <tab.icon className="h-3.5 w-3.5" />
@@ -68,11 +68,11 @@ export function BetManagerNav({ bankrolls, activeId, onSelect, onCreate }: Props
               >
                 <PiggyBank className="h-3.5 w-3.5 text-emerald-400" />
                 <span className="max-w-32 truncate">{active?.name ?? "—"}</span>
-                <ChevronDown className="h-3 w-3 text-zinc-400" />
+                <ChevronDown className="h-3 w-3 text-[#6B5B8D]" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-white/10 bg-[#101420] text-zinc-100">
-              <DropdownMenuLabel className="text-[11px] uppercase tracking-widest text-zinc-400">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-widest text-[#6B5B8D]">
                 Bankrolls
               </DropdownMenuLabel>
               {bankrolls.map((b) => (
@@ -86,7 +86,7 @@ export function BetManagerNav({ bankrolls, activeId, onSelect, onCreate }: Props
                 >
                   <span className="flex w-full items-center justify-between gap-2">
                     <span className="truncate">{b.name}</span>
-                    <span className="font-mono text-xs text-zinc-400">
+                    <span className="font-mono text-xs text-[#6B5B8D]">
                       {b.initial.toLocaleString("fr-FR")} € · {b._count.bets} paris
                     </span>
                   </span>

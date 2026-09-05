@@ -156,7 +156,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
       <DialogContent className="w-[95vw] max-w-md p-0">
         <DialogHeader className="border-b border-border/60 px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <Trophy className="h-4 w-4 text-emerald-600" />
+            <Trophy className="h-4 w-4 text-[#7B3FA0]" />
             {t("title")}
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -186,7 +186,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
                 onClick={() => setBetOn("A")}
                 className={cn(
                   "flex items-center gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  isA ? "border-emerald-500 bg-emerald-500/5" : "border-border/60 hover:bg-muted/40"
+                  isA ? "border-[#7B3FA0] bg-[#7B3FA0]/5" : "border-border/60 hover:bg-muted/40"
                 )}
               >
                 <RadioGroupItem value="A" id="bet-a" className="sr-only" />
@@ -200,14 +200,14 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
                     {t("odds")} {match.odds?.decimalA.toFixed(2) ?? (100 / match.probA).toFixed(2)} · {match.probA}%
                   </div>
                 </div>
-                {isA && <Check className="h-4 w-4 text-emerald-600" />}
+                {isA && <Check className="h-4 w-4 text-[#7B3FA0]" />}
               </button>
               <button
                 type="button"
                 onClick={() => setBetOn("B")}
                 className={cn(
                   "flex items-center gap-2 rounded-lg border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  !isA ? "border-emerald-500 bg-emerald-500/5" : "border-border/60 hover:bg-muted/40"
+                  !isA ? "border-[#7B3FA0] bg-[#7B3FA0]/5" : "border-border/60 hover:bg-muted/40"
                 )}
               >
                 <RadioGroupItem value="B" id="bet-b" className="sr-only" />
@@ -221,7 +221,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
                     {t("odds")} {match.odds?.decimalB.toFixed(2) ?? (100 / match.probB).toFixed(2)} · {match.probB}%
                   </div>
                 </div>
-                {!isA && <Check className="h-4 w-4 text-emerald-600" />}
+                {!isA && <Check className="h-4 w-4 text-[#7B3FA0]" />}
               </button>
             </RadioGroup>
           </div>
@@ -255,11 +255,11 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
           </div>
 
           {/* Potential payout */}
-          <div className="flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
-            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+          <div className="flex items-center justify-between rounded-lg border border-[#7B3FA0]/30 bg-[#7B3FA0]/5 px-3 py-2">
+            <span className="text-xs font-semibold text-[#7B3FA0]">
               {t("potentialPayout")}
             </span>
-            <span className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="font-mono text-sm font-bold text-[#7B3FA0] dark:text-emerald-400">
               {potentialPayout.toFixed(2)} €
             </span>
           </div>
@@ -274,7 +274,7 @@ export function BetDialog({ match, open, onOpenChange }: Props) {
               size="sm"
               onClick={handleAddToSlip}
               disabled={isFull}
-              className="border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 dark:text-emerald-300"
+              className="border-[#7B3FA0]/40 text-[#7B3FA0] hover:bg-[#7B3FA0]/10"
             >
               <Plus className="mr-1.5 h-3 w-3" />
               {tSlip("addToSlip")}

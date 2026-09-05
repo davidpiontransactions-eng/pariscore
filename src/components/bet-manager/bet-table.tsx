@@ -20,9 +20,9 @@ const fmt = (n: number) =>
 
 const STATUS_META: Record<BetStatus, { label: string; className: string }> = {
   pending: { label: "En attente", className: "border-amber-500/30 bg-amber-500/10 text-amber-400" },
-  won: { label: "Gagné", className: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  won: { label: "Gagné", className: "border-[#7B3FA0]/30 bg-[#7B3FA0]/10 text-[#7B3FA0]" },
   lost: { label: "Perdu", className: "border-red-500/30 bg-red-500/10 text-red-400" },
-  void: { label: "Remboursé", className: "border-zinc-500/30 bg-zinc-500/10 text-zinc-400" },
+  void: { label: "Remboursé", className: "border-[#E0D8F0] bg-[#EDE8F5] text-[#6B5B8D]" },
   cashout: { label: "Cashout", className: "border-sky-500/30 bg-sky-500/10 text-sky-400" },
 };
 
@@ -48,7 +48,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
     <div className="overflow-x-auto rounded-xl border border-white/5 bg-white/[0.03]">
       <table className="w-full min-w-[760px] text-left text-xs">
         <thead>
-          <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-zinc-400">
+          <tr className="border-b border-white/5 text-[10px] uppercase tracking-widest text-[#6B5B8D]">
             <th className="px-3 py-2.5 font-semibold">Date</th>
             <th className="px-3 py-2.5 font-semibold">Pari</th>
             <th className="px-3 py-2.5 font-semibold">Marché</th>
@@ -74,12 +74,12 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                   key={b.id}
                   className="group border-b border-white/[0.03] transition-colors hover:bg-white/[0.02]"
                 >
-                  <td className="px-3 py-2.5 font-mono text-[11px] text-zinc-400">
+                  <td className="px-3 py-2.5 font-mono text-[11px] text-[#6B5B8D]">
                     {b.placedAt.slice(0, 10)}
                   </td>
                   <td className="max-w-56 px-3 py-2.5">
                     <div className="truncate font-medium text-zinc-200">{b.matchLabel || b.pick || "—"}</div>
-                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-zinc-400">
+                    <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-[#6B5B8D]">
                       <span className="uppercase">{b.sport}</span>
                       {b.bookmaker ? <span>· {b.bookmaker}</span> : null}
                       {b.tipster ? <span>· {b.tipster}</span> : null}
@@ -91,10 +91,10 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
-                    <div className="truncate text-zinc-400">{b.pick || b.market || "—"}</div>
+                    <div className="truncate text-[#6B5B8D]">{b.pick || b.market || "—"}</div>
                   </td>
-                  <td className="px-3 py-2.5 text-right font-mono text-zinc-300">{fmt(b.odds)}</td>
-                  <td className="px-3 py-2.5 text-right font-mono text-zinc-300">{fmt(b.stake)} €</td>
+                  <td className="px-3 py-2.5 text-right font-mono text-[#7B3FA0]">{fmt(b.odds)}</td>
+                  <td className="px-3 py-2.5 text-right font-mono text-[#7B3FA0]">{fmt(b.stake)} €</td>
                   <td
                     className={cn(
                       "px-3 py-2.5 text-right font-mono font-semibold",
@@ -104,7 +104,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           ? "text-emerald-400"
                           : profit < 0
                             ? "text-red-400"
-                            : "text-zinc-400"
+                            : "text-[#6B5B8D]"
                     )}
                   >
                     {profit === null ? "—" : `${profit > 0 ? "+" : ""}${fmt(profit)} €`}
@@ -139,7 +139,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-zinc-400 hover:bg-white/10"
+                            className="h-6 w-6 text-[#6B5B8D] hover:bg-white/10"
                             title="Cashout"
                             aria-label="Cashout"
                             onClick={() => onSettle(b.id, "cashout")}
@@ -149,7 +149,7 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-zinc-400 hover:bg-white/10"
+                            className="h-6 w-6 text-[#6B5B8D] hover:bg-white/10"
                             title="Remboursé (void)"
                             aria-label="Rembourser"
                             onClick={() => onSettle(b.id, "void")}
@@ -163,14 +163,14 @@ export function BetTable({ bets, onSettle, onDelete }: Props) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-zinc-400 hover:bg-white/10"
+                            className="h-6 w-6 text-[#6B5B8D] hover:bg-white/10"
                             aria-label="Actions"
                           >
                             <MoreHorizontal className="h-3.5 w-3.5" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="border-white/10 bg-[#101420] text-zinc-100">
-                          <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-zinc-400">
+                          <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-[#6B5B8D]">
                             Actions
                           </DropdownMenuLabel>
                           {b.status === "pending" ? (

@@ -101,7 +101,7 @@ export function EmailToggle() {
                   <Mail className="h-4 w-4" />
                 )}
                 {subscribed && (
-                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[#7B3FA0] ring-2 ring-background" />
                 )}
               </Button>
             </PopoverTrigger>

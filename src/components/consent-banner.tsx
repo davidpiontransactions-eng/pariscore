@@ -28,7 +28,7 @@ export function ConsentBanner() {
       <div className="rounded-2xl border border-border/70 bg-card/95 shadow-2xl backdrop-blur-md">
         {/* Header */}
         <div className="flex items-start gap-3 p-4 sm:p-5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600/10 text-emerald-600 dark:text-emerald-400">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7B3FA0]/10 text-[#7B3FA0]">
             <Cookie className="h-4 w-4" />
           </div>
           <div className="flex-1">
@@ -40,7 +40,7 @@ export function ConsentBanner() {
               <button
                 type="button"
                 onClick={openPrivacyDialog}
-                className="font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-400"
+                className="text-[#7B3FA0] underline underline-offset-2 hover:text-[#6B5B8D]"
               >
                 {t("privacyLink")}
               </button>
@@ -103,7 +103,7 @@ export function ConsentBanner() {
           <Button
             size="sm"
             onClick={acceptAll}
-            className="order-2 bg-emerald-600 text-xs hover:bg-emerald-700 sm:order-3"
+            className="order-2 bg-[#7B3FA0] text-xs hover:bg-[#6B5B8D] sm:order-3"
           >
             <Check className="mr-1.5 h-3 w-3" />
             {t("acceptAll")}
@@ -139,7 +139,7 @@ function ConsentCategory({
             </span>
           )}
           {recommended && (
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <span className="rounded bg-[#7B3FA0]/10 px-1.5 py-0.5 text-[11px] uppercase tracking-wider text-[#7B3FA0]">
               recommandé
             </span>
           )}

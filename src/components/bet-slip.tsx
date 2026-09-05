@@ -129,17 +129,17 @@ export function BetSlip() {
         aria-label={t("expand")}
         className={cn(
           "fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full",
-          "border border-emerald-500/40 bg-background px-4 py-2.5 shadow-lg",
+          "border border-[#7B3FA0]/40 bg-background px-4 py-2.5 shadow-lg",
           "text-sm font-semibold text-foreground",
-          "transition hover:-translate-y-0.5 hover:shadow-xl hover:border-emerald-500",
+          "transition hover:-translate-y-0.5 hover:shadow-xl hover:border-[#7B3FA0]",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         )}
       >
-        <Ticket className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+        <Ticket className="h-4 w-4 text-[#7B3FA0]" />
         <span>{t("title")}</span>
         <Badge
           variant="default"
-          className="ml-0.5 bg-emerald-600 px-1.5 py-0 text-[11px] font-bold leading-5 text-white tabular-nums"
+          className="ml-0.5 bg-[#7B3FA0] px-1.5 py-0 text-[11px] font-bold leading-5 text-white tabular-nums"
         >
           {count}
         </Badge>
@@ -159,7 +159,7 @@ export function BetSlip() {
       {/* Header */}
       <header className="flex items-center justify-between gap-2 border-b border-border/60 bg-muted/30 px-4 py-3">
         <div className="flex items-center gap-2">
-          <Ticket className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <Ticket className="h-4 w-4 text-[#7B3FA0]" />
           <h2 className="text-sm font-bold tracking-tight">{t("title")}</h2>
           <Badge
             variant="secondary"
@@ -244,7 +244,7 @@ export function BetSlip() {
             <span className="text-emerald-700 dark:text-emerald-300">
               {t("potentialPayout")}
             </span>
-            <span className="font-mono font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+            <span className="font-mono font-bold tabular-nums text-[#7B3FA0]">
               {totalPayout.toFixed(2)} €
             </span>
           </div>
@@ -254,7 +254,7 @@ export function BetSlip() {
               className={cn(
                 "font-mono font-semibold tabular-nums",
                 totalProfit > 0
-                  ? "text-emerald-600 dark:text-emerald-400"
+                  ? "text-[#7B3FA0]"
                   : totalProfit < 0
                     ? "text-rose-600 dark:text-rose-400"
                     : "text-muted-foreground",
@@ -269,7 +269,7 @@ export function BetSlip() {
           type="button"
           onClick={handlePlace}
           disabled={count === 0 || placing}
-          className="w-full bg-emerald-600 hover:bg-emerald-700"
+          className="w-full bg-[#7B3FA0] hover:bg-[#6B5B8D]"
           size="sm"
         >
           {placing ? (

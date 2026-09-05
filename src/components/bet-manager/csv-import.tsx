@@ -56,11 +56,11 @@ export function CsvImport({ onImport }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 border-white/10 text-xs text-zinc-300 hover:bg-white/5">
+        <Button variant="outline" size="sm" className="gap-1.5 border-white/10 text-xs text-[#7B3FA0] hover:bg-white/5">
           <FileUp className="h-3.5 w-3.5 text-sky-400" /> Import CSV
         </Button>
       </DialogTrigger>
-      <DialogContent className="border-white/10 bg-[#0d1117] text-zinc-100 sm:max-w-lg">
+      <DialogContent className="border-white/10 bg-white text-[#1A1145] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-base">Import CSV de paris</DialogTitle>
         </DialogHeader>
@@ -80,7 +80,7 @@ export function CsvImport({ onImport }: Props) {
             value={csv}
             onChange={(e) => setCsv(e.target.value)}
           />
-          <div className="flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="flex items-center justify-between text-[11px] text-[#6B5B8D]">
             <span>
               Colonnes : placedAt, sport, match, pick, stake, odds, status, payout, bookmaker…
             </span>
@@ -92,10 +92,10 @@ export function CsvImport({ onImport }: Props) {
           </div>
         </div>
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" size="sm" className="text-zinc-400" onClick={() => setOpen(false)}>
+          <Button variant="ghost" size="sm" className="text-[#6B5B8D]" onClick={() => setOpen(false)}>
             Annuler
           </Button>
-          <Button size="sm" className="gap-1.5 bg-emerald-500 text-emerald-950 hover:bg-emerald-400" onClick={submit} disabled={busy || detected === 0}>
+          <Button size="sm" className="gap-1.5 bg-[#7B3FA0] text-white hover:bg-[#6B5B8D]" onClick={submit} disabled={busy || detected === 0}>
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileUp className="h-3.5 w-3.5" />}
             Importer {detected > 0 ? `${detected}` : ""}
           </Button>

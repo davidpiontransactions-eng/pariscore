@@ -41,7 +41,7 @@ function Kpi({
 }) {
   return (
     <div className="flex flex-col gap-1.5 rounded-xl border border-white/5 bg-white/[0.03] p-3 transition-colors hover:border-white/10">
-      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-zinc-400">
+      <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#6B5B8D]">
         <Icon className="h-3 w-3" />
         {label}
       </div>
@@ -55,7 +55,7 @@ function Kpi({
       >
         {value}
       </div>
-      {sub ? <div className="text-[11px] text-zinc-400">{sub}</div> : null}
+      {sub ? <div className="text-[11px] text-[#6B5B8D]">{sub}</div> : null}
     </div>
   );
 }
@@ -71,7 +71,7 @@ export function KpiStrip({ stats, currency }: { stats: BankrollStats; currency: 
     >
       {/* Signature — le capital */}
       <div className="relative col-span-2 overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.08] to-transparent p-4 sm:col-span-1 lg:col-span-2">
-        <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-emerald-500/10 blur-2xl" />
+        <div className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-[#7B3FA0]/10 blur-2xl" />
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-emerald-400/80">
           <Wallet className="h-3 w-3" /> Capital actuel
         </div>
@@ -82,11 +82,11 @@ export function KpiStrip({ stats, currency }: { stats: BankrollStats; currency: 
           )}
         >
           {fmt(stats.current, 0)}
-          <span className="ml-1 text-base font-medium text-zinc-400">{currency}</span>
+          <span className="ml-1 text-base font-medium text-[#6B5B8D]">{currency}</span>
         </div>
         <div className="mt-2 flex items-center gap-2 text-xs">
           <Delta value={stats.profit} />
-          <span className="text-zinc-400">vs {fmt(stats.initial, 0)} {currency} initial</span>
+          <span className="text-[#6B5B8D]">vs {fmt(stats.initial, 0)} {currency} initial</span>
         </div>
       </div>
 
