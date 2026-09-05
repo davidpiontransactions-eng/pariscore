@@ -8,6 +8,7 @@ import { f1Adapter } from './f1';
 import { cs2Adapter } from './cs2';
 import { mmaAdapter } from './mma';
 import { cyclingAdapter } from './cycling';
+import { fibaAdapter } from './fiba';
 
 const adapters = {
   football: footballAdapter,
@@ -18,9 +19,19 @@ const adapters = {
   cs2: cs2Adapter,
   mma: mmaAdapter,
   cycling: cyclingAdapter,
-};
+  fiba: fibaAdapter,
 
-const ALL_SPORTS = Object.keys(adapters) as SportType[];
+const ALL_SPORTS = [
+  "football",
+  "tennis",
+  "nba",
+  "wnba",
+  "f1",
+  "cs2",
+  "mma",
+  "cycling",
+  "fiba",
+] as const;
 
 export async function fetchTopMatches(
   sport: SportType | 'all',
