@@ -328,86 +328,6 @@ export function FootballTabContent() {
       </div>
       </BentoTile>
 
-      {/* Barre d'outils AI Pricing — filtres NL, tri edge, combiné, fiabilité */}
-      <BentoTile size="wide" variant="glass">
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setAIFilterDialogOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-violet-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <Sparkles className="h-3.5 w-3.5" aria-hidden />
-          Filtre IA
-        </button>
-
-        {aiPresets.map((p) => (
-          <span key={p.id} className="inline-flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={() => setActiveAIFilterId(activeAIFilterId === p.id ? null : p.id)}
-              title={p.description}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                activeAIFilterId === p.id
-                  ? "border-violet-500 bg-violet-500/15 text-violet-300"
-                  : "border-border bg-background text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {p.label}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                removeAIPreset(p.id);
-                if (activeAIFilterId === p.id) setActiveAIFilterId(null);
-              }}
-              className="rounded-full p-0.5 text-muted-foreground hover:text-rose-400"
-              aria-label={`Supprimer le filtre ${p.label}`}
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        ))}
-
-        <button
-          type="button"
-          onClick={() => setSortByEdge((v) => !v)}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            sortByEdge
-              ? "border-emerald-500 bg-emerald-500/15 text-emerald-400"
-              : "border-border bg-background text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <TrendingUp className="h-3.5 w-3.5" aria-hidden />
-          Trier par Edge
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setBetSlipOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <TicketPercent className="h-3.5 w-3.5" aria-hidden />
-          Combiné
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowBacktest((v) => !v)}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            showBacktest
-              ? "border-emerald-500 bg-emerald-500/15 text-emerald-400"
-              : "border-border bg-background text-muted-foreground hover:text-foreground",
-          )}
-        >
-          <Gauge className="h-3.5 w-3.5" aria-hidden />
-          Fiabilité
-        </button>
-      </div>
-      </BentoTile>
-
       {/* Panneaux AI Pricing (conditionnels) */}
       {showBacktest && <ReliabilityScore state={backtestState} className="mb-6" />}
       {activeAIFilter && (
@@ -520,6 +440,7 @@ export function FootballTabContent() {
               role="tabpanel"
               id={`${tabsId}-panel-prematch`}
               aria-labelledby={`${tabsId}-prematch`}
+              className="w-full md:col-span-4"
             >
               {/* Top 10 par stratégie — global ou par championnat (remplace le Top5 sidebar) */}
               {!isLoading && prematchMatches.length > 0 && (
