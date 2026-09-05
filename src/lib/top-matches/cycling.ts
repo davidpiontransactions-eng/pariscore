@@ -5,7 +5,7 @@ export const cyclingAdapter: SportAdapter = {
   sport: 'cycling',
 
   async fetch(limit) {
-    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
     const res = await fetch(`${base}/api/cycling`, {
       next: { revalidate: 60 },
     });

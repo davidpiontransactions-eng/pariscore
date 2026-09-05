@@ -5,7 +5,7 @@ export const mmaAdapter: SportAdapter = {
   sport: 'mma',
 
   async fetch(limit) {
-    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
     const res = await fetch(`${base}/api/mma/fights`, {
       next: { revalidate: 60 },
     });

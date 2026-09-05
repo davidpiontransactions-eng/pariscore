@@ -5,7 +5,7 @@ export const f1Adapter: SportAdapter = {
   sport: 'f1',
 
   async fetch(limit) {
-    const base = process.env.NEXT_PUBLIC_API_URL || '';
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
     const res = await fetch(`${base}/api/f1`, {
       next: { revalidate: 60 },
     });
