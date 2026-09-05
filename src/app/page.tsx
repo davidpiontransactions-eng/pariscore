@@ -148,7 +148,7 @@ class PageErrorBoundary extends Component<
             <button
               type="button"
               onClick={() => this.setState({ error: null })}
-              className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-500"
+              className="mt-3 rounded-lg bg-[#7B3FA0] px-4 py-2 text-xs font-medium text-white hover:bg-[#6A3590]"
               aria-label="Réessayer le chargement"
             >
               Réessayer
@@ -374,8 +374,8 @@ function HomeInner() {
           </BentoGrid>
 
           {/* Ancres de navigation rapide */}
-          <div className="mt-4 flex items-center gap-3 text-xs text-zinc-500 overflow-x-auto pb-1 scrollbar-none">
-            <span className="shrink-0 font-medium text-zinc-400">Aller à :</span>
+          <div className="mt-4 flex items-center gap-3 text-xs text-[#6B5B8D] overflow-x-auto pb-1 scrollbar-none">
+            <span className="shrink-0 font-medium text-[#1A1145]">Aller à :</span>
             <button
               type="button"
               onClick={() => scrollToSection("section-best-matches", "best-matches")}
@@ -475,18 +475,18 @@ function HomeInner() {
         {/* Panneau des matchs sélectionnés Top5 — rail droit (desktop) */}
         <aside
           aria-label="Matchs sélectionnés"
-          className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-slate-800 bg-[#0b0f19]/40"
+          className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-l border-[#E0D8F0] bg-white/80"
         >
           <Top5SelectionPanel variant="rail" />
         </aside>
         </div>
 
         {/* Footer — toujours visible, padding bottom pour la bottom nav mobile */}
-        <footer className="block mt-auto border-t border-white/10 bg-zinc-900/20 pb-20 md:pb-6">
+        <footer className="block mt-auto border-t border-[#E0D8F0] bg-white/50 pb-20 md:pb-6">
           <div className="px-4 py-6 sm:px-6">
-            <div className="flex flex-col items-start justify-between gap-3 text-xs text-zinc-500 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start justify-between gap-3 text-xs text-[#6B5B8D] sm:flex-row sm:items-center">
               <p>
-                <span className="font-semibold text-zinc-300">
+                <span className="font-semibold text-[#1A1145]">
                   {t("appName")}
                 </span>{" "}
                 · {t("footerCopyright")} · © 2026
@@ -495,31 +495,31 @@ function HomeInner() {
                 <button
                   type="button"
                   onClick={openPrivacyDialog}
-                  className="font-medium underline underline-offset-2 transition-colors hover:text-zinc-300"
+                  className="font-medium underline underline-offset-2 transition-colors hover:text-[#1A1145]"
                 >
                   {tPrivacy("footer.manageCookies")}
                 </button>
-                <span className="text-zinc-700">·</span>
+                <span className="text-[#E0D8F0]">·</span>
                 <button
                   type="button"
                   onClick={openAboutDialog}
-                  className="inline-flex items-center gap-1 font-medium underline underline-offset-2 transition-colors hover:text-zinc-300"
+                  className="inline-flex items-center gap-1 font-medium underline underline-offset-2 transition-colors hover:text-[#1A1145]"
                 >
                   <HelpCircle className="h-3 w-3" />
                   {tAbout("trigger")}
                 </button>
-                <span className="text-zinc-700">·</span>
+                <span className="text-[#E0D8F0]">·</span>
                 <button
                   type="button"
                   onClick={openApiDocsDialog}
-                  className="inline-flex items-center gap-1 font-medium underline underline-offset-2 transition-colors hover:text-zinc-300"
+                  className="inline-flex items-center gap-1 font-medium underline underline-offset-2 transition-colors hover:text-[#1A1145]"
                 >
                   <Code className="h-3 w-3" />
                   {tApiDocs("trigger")}
                 </button>
               </div>
             </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-zinc-600/80">
+            <p className="mt-3 text-[11px] leading-relaxed text-[#6B5B8D]/70">
               {t("footerWarning")}
             </p>
           </div>
