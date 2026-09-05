@@ -10,10 +10,8 @@ export const f1Adapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
     const gpName = data.next_gp?.name || data.nextGP?.name || 'Grand Prix';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bets: any[] = (data.value_bets || data.valueBets || []).slice(0, limit).map((b: any, i: number) => ({
       id: `f1-bet-${i}`,
       home: { name: b.driver || b.selection || 'Pilote' },

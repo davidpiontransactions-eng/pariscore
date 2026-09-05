@@ -10,13 +10,9 @@ export const mmaAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
-    // L'API retourne un tableau d'événements, chaque événement a un tableau de fights
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const events: any[] = Array.isArray(data) ? data : [];
     const matches: ReturnType<typeof mmaAdapter.fetch> extends Promise<infer R> ? R extends Promise<infer T> ? T extends (infer U)[] ? U[] : never : never : never[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const flat: any[] = [];
     for (const ev of events) {
       for (const f of ev.fights || []) {

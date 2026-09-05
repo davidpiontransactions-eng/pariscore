@@ -237,10 +237,18 @@ export function TopMultiSport() {
     []
   );
 
+  // Filtrer les matchs finis
+  const filteredGroups = groups
+    .map((g) => ({
+      ...g,
+      matches: g.matches.filter((m) => m.status !== "finished"),
+    }))
+    .filter((g) => g.matches.length > 0);
+
   // Initial fetch + polling
   useEffect(() => {
     setLoading(true);
-    fetchData("all");
+    fetchData(sport);
     pollRef.current = setInterval(() => fetchData(sport), POLL_MS);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
@@ -249,6 +257,7 @@ export function TopMultiSport() {
 
   const handleSportChange = (s: SportType) => {
     setSport(s);
+    setLoading(true);
     cacheRef.current.delete(s);
   };
 
@@ -259,7 +268,7 @@ export function TopMultiSport() {
     setTimeout(() => setSpinning(false), 500);
   };
 
-  const totalMatches = groups.reduce((sum, g) => sum + g.matches.length, 0);
+  const totalMatches = filteredGroups.reduce((sum, g) => sum + g.matches.length, 0);
 
   return (
     <div className="w-full bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-5 mb-6 border border-zinc-200 dark:border-zinc-800">
@@ -304,11 +313,11 @@ export function TopMultiSport() {
       {/* Content */}
       {loading ? (
         <div className="text-center py-10 text-zinc-400 text-sm">Chargement...</div>
-      ) : groups.length === 0 ? (
+      ) : filteredGroups.length === 0 ? (
         <div className="text-center py-10 text-zinc-400 text-sm">Aucun match top disponible.</div>
       ) : (
         <div className="flex flex-col gap-4">
-          {groups.map((g, i) => (
+          {filteredGroups.map((g, i) => (
             <LeagueCard key={`${g.league}-${i}`} group={g} />
           ))}
         </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import { type ReactNode, useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useInView, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";

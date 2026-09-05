@@ -10,9 +10,7 @@ export const cyclingAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const bets: any[] = (data.bets || []).slice(0, limit).map((b: any, i: number) => ({
       id: `cycling-bet-${i}`,
       home: { name: b.selection || b.label || `Rider ${i + 1}` },

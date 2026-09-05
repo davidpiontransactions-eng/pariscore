@@ -30,9 +30,7 @@ export const footballAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const matches: any[] = (data.matches || []).slice(0, limit * 3);
 
     const byLeague = new Map<string, TopMatch[]>();

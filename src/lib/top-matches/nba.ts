@@ -10,9 +10,7 @@ export const nbaAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const raw: any[] = data.matches || (Array.isArray(data) ? data : []);
     const matches = raw.slice(0, limit).map((m: any) => ({
       id: String(m.id || ''),
