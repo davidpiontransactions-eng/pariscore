@@ -220,7 +220,7 @@ function HomeInner() {
   const prematchMatches = useMemo(() => {
     if (!footballMatches?.matches) return [];
     return footballMatches.matches.filter(
-      (m: any) => m.status === "scheduled" || m.status === "prematch",
+      (m: any) => !m.live,
     );
   }, [footballMatches]);
 
