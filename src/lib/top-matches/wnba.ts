@@ -4,7 +4,7 @@ import type { SportAdapter, TopLeague } from './types';
 export const wnbaAdapter: SportAdapter = {
   sport: 'wnba',
 
-  async fetch(limit) {
+  async fetch(limit, _timeframe) {
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
     const res = await fetch(`${base}/api/wnba/matches`, {
       next: { revalidate: 60 },
@@ -31,7 +31,7 @@ export const wnbaAdapter: SportAdapter = {
         logo: m.awayLogo || m.away?.logo || '',
       },
       kickoff: m.kickoff || m.date || m.scheduledAt || '',
-      status: m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled',
+      status: (m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled') as const,
       score: m.score || undefined,
       odds: m.odds
         ? {

@@ -21,6 +21,7 @@ const adapters = {
   mma: mmaAdapter,
   cycling: cyclingAdapter,
   fiba: fibaAdapter,
+};
 
 const ALL_SPORTS = SPORT_TYPES;
 

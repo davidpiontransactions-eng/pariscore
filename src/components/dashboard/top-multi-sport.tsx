@@ -382,14 +382,12 @@ export function TopMultiSport() {
             <span className="text-xs text-[#7B3FA0] font-mono">{totalMatches} matchs</span>
           )}
         </div>
-        {/* Refresh */}
-          <button
-            onClick={handleRefresh}
-            className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#7B3FA0] hover:bg-[#EDE8F5] transition-colors"
-          >
-            <RefreshCw className={cn("w-4 h-4", spinning && "animate-spin")} />
-          </button>
-        </div>
+        <button
+          onClick={handleRefresh}
+          className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#7B3FA0] hover:bg-[#EDE8F5] transition-colors"
+        >
+          <RefreshCw className={cn("w-4 h-4", spinning && "animate-spin")} />
+        </button>
       </div>
 
       {/* Time filters */}

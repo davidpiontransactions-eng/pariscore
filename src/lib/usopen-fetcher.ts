@@ -63,8 +63,7 @@ export async function fetchUsOpenMatches(): Promise<UsOpenMatch[]> {
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         Accept: "text/html,application/xhtml+xml,application/xml",
       },
-      // Timeout after 10 seconds
-      timeout: 10000,
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!res.ok) {
@@ -96,8 +95,8 @@ export async function fetchUsOpenMatches(): Promise<UsOpenMatch[]> {
       const playerMatches = section.match(/[A-Z][a-z]+ [A-Z][a-z]+(?: \([^)]*\))?/g) || [];
 
       if (playerMatches.length >= 2) {
-        const playerA = playerMatches[0].replace(/[0-9\[\]]/g, "").trim();
-        const playerB = playerMatches[1].replace(/[0-9\[\]]/g, "").trim();
+        const playerA = playerMatches[0]!.replace(/[0-9\[\]]/g, "").trim();
+        const playerB = playerMatches[1]!.replace(/[0-9\[\]]/g, "").trim();
 
         if (playerA && playerB && playerA !== playerB) {
           // Determine gender from context or default to men

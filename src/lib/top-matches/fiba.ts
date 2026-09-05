@@ -1,8 +1,6 @@
 // Adapter FIBA — normalise les matches FIBA Women's WC → format TopLeague
-import type { SportAdapter, TopLeague, TopMatch, BasketballMatchUI } from './types';
+import type { SportAdapter, TopLeague, TopMatch } from './types';
 import { hybridPredict } from '@/lib/predictions/fiba-predictions';
-import { LEAGUE_CONFIGS, getLeagueConfig } from '@/lib/basketball-league-config';
-import { countryFlag } from './types';
 
 const FIBA_TEAMS = [
   "USA", "CHN", "AUS", "FRA", "ESP", "BEL", "CAN", "SRB",
@@ -10,7 +8,7 @@ const FIBA_TEAMS = [
 ];
 
 function randomElement(arr: string[]): string {
-  return arr[Math.floor(Math.random() * arr.length)];
+  return arr[Math.floor(Math.random() * arr.length)]!;
 }
 
 function generateRandomMatch(): TopMatch {
@@ -20,7 +18,6 @@ function generateRandomMatch(): TopMatch {
     away = randomElement(FIBA_TEAMS);
   } while (away === home);
 
-  const config = getLeagueConfig("fiba" as any);
   const prediction = hybridPredict(home, away);
   const pHome = prediction.blendedPHome;
 
@@ -54,7 +51,6 @@ export const fibaAdapter: SportAdapter = {
   sport: 'fiba',
 
   async fetch(limit) {
-    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
     const matches: TopMatch[] = [];
 
     for (let i = 0; i < limit; i++) {

@@ -1,10 +1,10 @@
 // Adapter MMA — normalise /api/mma/fights → format TopLeague
-import type { SportAdapter, TopLeague } from './types';
+import type { SportAdapter, TopLeague, TopMatch } from './types';
 
 export const mmaAdapter: SportAdapter = {
   sport: 'mma',
 
-  async fetch(limit) {
+  async fetch(limit, _timeframe) {
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005';
     const res = await fetch(`${base}/api/mma/fights`, {
       next: { revalidate: 60 },
@@ -12,7 +12,7 @@ export const mmaAdapter: SportAdapter = {
     if (!res.ok) return [];
     const data: any = await res.json();
     const events: any[] = Array.isArray(data) ? data : [];
-    const matches: ReturnType<typeof mmaAdapter.fetch> extends Promise<infer R> ? R extends Promise<infer T> ? T extends (infer U)[] ? U[] : never : never : never[] = [];
+    const matches: TopMatch[] = [];
     const flat: any[] = [];
     for (const ev of events) {
       for (const f of ev.fights || []) {
@@ -26,7 +26,7 @@ export const mmaAdapter: SportAdapter = {
         home: { name: f.fighter_a || 'Fighter A' },
         away: { name: f.fighter_b || 'Fighter B' },
         kickoff: f.commence_time || '',
-        status: f.status === 'live' ? 'live' : 'scheduled',
+        status: (f.status === 'live' ? 'live' : 'scheduled') as const,
         odds: f.prob_a != null
           ? { home: String(f.prob_a), away: String(f.prob_b) }
           : undefined,
