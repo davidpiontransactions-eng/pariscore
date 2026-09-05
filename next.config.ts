@@ -14,12 +14,6 @@ const nextConfig: NextConfig = {
   
   // ─── Stabilisation Turbopack ─────────────────────────────────────────
   experimental: {
-    // Désactiver Turbopack en prod (webpack plus stable pour standalone)
-    turbo: process.env.NODE_ENV === "production" ? false : {
-      resolveAlias: {
-        "better-sqlite3": false,
-      },
-    },
     // Optimisation imports lourds
     optimizePackageImports: [
       "lucide-react",
