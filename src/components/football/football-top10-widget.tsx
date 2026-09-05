@@ -89,14 +89,15 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   return (
     <section
       aria-label="Top 10 matchs par stratégie"
-      className="mb-4 rounded-lg border border-slate-800/80 bg-slate-900/40 p-3"
+      className="mb-4 rounded-2xl border border-[#E0D8F0] p-5"
+      style={{ background: "#F0ECF8" }}
     >
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <h2 className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1A1145]">
           Top 10 matchs
           {selectedCount > 0 && (
             <span
-              className="ml-1.5 inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-px align-middle font-mono text-[9px] font-bold text-emerald-300"
+              className="ml-1.5 inline-flex items-center rounded-full bg-[#FF6D00]/15 px-1.5 py-px align-middle font-mono text-[9px] font-bold text-[#FF6D00]"
               title="Matchs sélectionnés (panneau de droite)"
             >
               {selectedCount}
@@ -112,11 +113,11 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Championnat du Top 10"
-            className="h-7 w-52 rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
+            className="h-7 w-52 rounded-lg border-[#E0D8F0] bg-white text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
           >
             <SelectValue placeholder="Toutes les ligues" />
           </SelectTrigger>
-          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
             <SelectItem value="__all__" className="text-xs">
               🌍 Toutes les ligues
             </SelectItem>
@@ -133,11 +134,11 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 10"
-            className="h-7 w-56 rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
+            className="h-7 w-56 rounded-lg border-[#E0D8F0] bg-white text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>
-          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
             {STRATEGIES.map((s) => (
               <SelectItem key={s.key} value={s.key} className="text-xs">
                 <span aria-hidden>{s.emoji}</span> {s.label}
@@ -148,7 +149,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
 
         {/* Filtre temporel + fenêtre de forme L5/L10 */}
         <div className="flex shrink-0 items-center gap-1">
-          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Période des matchs">
+          <div className="flex overflow-hidden rounded border border-[#E0D8F0]" role="group" aria-label="Période des matchs">
             {TIME_WINDOWS.map((w) => (
               <button
                 key={w.key}
@@ -159,15 +160,15 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                 className={cn(
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   timeWin === w.key
-                    ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-400 hover:text-slate-300",
+                    ? "bg-[#7B3FA0]/15 text-[#7B3FA0]"
+                    : "bg-transparent text-[#7B3FA0]/60 hover:text-[#7B3FA0]",
                 )}
               >
                 {w.label}
               </button>
             ))}
           </div>
-          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
+          <div className="flex overflow-hidden rounded border border-[#E0D8F0]" role="group" aria-label="Fenêtre de forme">
             {(["l5", "l10"] as WindowKey[]).map((k) => (
               <button
                 key={k}
@@ -177,8 +178,8 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                 className={cn(
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   winKey === k
-                    ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-400 hover:text-slate-300",
+                    ? "bg-[#7B3FA0]/15 text-[#7B3FA0]"
+                    : "bg-transparent text-[#7B3FA0]/60 hover:text-[#7B3FA0]",
                 )}
               >
                 {k.replace("l", "L")}
@@ -189,17 +190,17 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 px-1 py-3 text-xs text-slate-400">
+        <div className="flex items-center gap-2 px-1 py-3 text-xs text-[#7B3FA0]">
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           Calcul du Top 10…
         </div>
       ) : error ? (
-        <div className="flex items-center gap-2 px-1 py-3 text-xs text-rose-400">
+        <div className="flex items-center gap-2 px-1 py-3 text-xs text-[#E53935]">
           <AlertCircle className="h-3.5 w-3.5" aria-hidden />
           Top 10 indisponible ({(error as Error).message})
         </div>
       ) : rows.length === 0 && forced.length === 0 ? (
-        <p className="px-1 py-3 text-xs text-slate-400">
+        <p className="px-1 py-3 text-xs text-[#7B3FA0]">
           Aucun match qualifié pour cette stratégie{league ? ` en ${league}` : ""}.
         </p>
       ) : (

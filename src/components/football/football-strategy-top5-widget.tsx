@@ -71,7 +71,7 @@ function TeamName({
     <span
       className={cn(
         "inline-flex min-w-0 items-center gap-1 truncate text-[10px] font-medium",
-        highlight ? "text-emerald-300" : "text-slate-300",
+        highlight ? "text-[#FF6D00]" : "text-[#1A1145]",
       )}
     >
       <span className={cn("h-2 w-2 shrink-0 rounded-full object-contain", bg)} aria-hidden>
@@ -113,14 +113,14 @@ function StatsLine({
   const cell = (s: SideFormStats | null, label: string, pick: (v: SideFormStats) => number) =>
     s ? (
       <span title={`${label} (${s.gp} matchs)`} className="tabular-nums">
-        <span className="text-slate-400">{label}</span>{" "}
-        <span className={cn(s.gp >= 3 ? "text-slate-300" : "text-slate-400 italic")}>
+        <span className="text-[#7B3FA0]">{label}</span>{" "}
+        <span className={cn(s.gp >= 3 ? "text-[#1A1145]" : "text-[#7B3FA0] italic")}>
           {fmt1(pick(s))}
         </span>
       </span>
     ) : (
-      <span className="tabular-nums text-slate-600">
-        <span className="text-slate-600">{label}</span> –
+      <span className="tabular-nums text-[#7B3FA0]/50">
+        <span className="text-[#7B3FA0]/50">{label}</span> –
       </span>
     );
 
@@ -131,7 +131,7 @@ function StatsLine({
           <span
             className={cn(
               "font-semibold uppercase",
-              entry.pick === side ? "text-emerald-400" : "text-slate-400",
+              entry.pick === side ? "text-[#FF6D00]" : "text-[#7B3FA0]",
             )}
           >
             {side === "home" ? "D" : "E"}
@@ -175,11 +175,11 @@ export function MatchRow({
         aria-pressed={selected}
         title={selected ? "Retirer de la sélection" : "Ajouter à la sélection"}
         className={cn(
-          "w-full rounded px-0.5 py-1 text-left transition-colors",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "w-full rounded-lg px-2 py-1.5 text-left transition-colors border",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7B3FA0]",
           selected
-            ? "bg-emerald-500/10 ring-1 ring-emerald-500/40 hover:bg-emerald-500/15"
-            : "hover:bg-slate-800/60",
+            ? "bg-[#FF6D00]/10 border-[#FF6D00]/40 hover:bg-[#FF6D00]/15"
+            : "bg-white border-[#E0D8F0] hover:bg-[#F8F5FC]",
         )}
       >
         <div className="flex items-center gap-1.5">
@@ -187,42 +187,42 @@ export function MatchRow({
             aria-hidden
             className={cn(
               "flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border",
-              selected ? "border-emerald-400 bg-emerald-500/30 text-emerald-300" : "border-slate-600",
+              selected ? "border-[#FF6D00] bg-[#FF6D00]/30 text-white" : "border-[#E0D8F0]",
             )}
           >
             {selected ? "✓" : ""}
           </span>
-          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-slate-400">
+          <span className="flex w-9 shrink-0 flex-col items-center font-mono tabular-nums text-[#7B3FA0]">
             <span className="text-[8px] leading-tight">{parisDateShort(entry.kickoff)}</span>
             <span className="text-[9px] leading-tight">{parisKickoff(entry.kickoff)}</span>
           </span>
           <div className="min-w-0 flex-1">
             <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
-            <div className="px-1 text-[8px] text-slate-600">vs</div>
+            <div className="px-1 text-[8px] text-[#7B3FA0]/60">vs</div>
             <TeamName side={entry.away} highlight={away.highlight} bg="bg-slate-700" />
           </div>
           <span
             className={cn(
-              "shrink-0 rounded px-1 py-0.5 font-mono text-[9px] tabular-nums",
-              entry.pick ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-800 text-slate-400",
+              "shrink-0 rounded px-1.5 py-0.5 font-mono text-[9px] tabular-nums font-bold",
+              entry.pick ? "bg-[#FF6D00] text-white" : "bg-[#EDE8F5] text-[#1A1145]",
             )}
           >
             {def.format(entry.value)}
           </span>
         </div>
         {badge && (
-          <span className="mt-1 inline-flex items-center rounded-full bg-emerald-500/20 px-1.5 py-px text-[8.5px] font-bold uppercase tracking-wide text-emerald-300">
+          <span className="mt-1 inline-flex items-center rounded-full bg-[#FF6D00]/15 px-1.5 py-px text-[8.5px] font-bold uppercase tracking-wide text-[#FF6D00]">
             {badge}
           </span>
         )}
         {/* Probabilité de réussite du modèle pour ce match */}
         <p className="mt-0.5 pl-[19px] text-[8.5px] leading-none">
           {probPct != null ? (
-            <span className="font-medium tabular-nums text-emerald-400">
+            <span className="font-medium tabular-nums text-[#FF6D00]">
               Réussite estimée&nbsp;: {probPct}&nbsp;%
             </span>
           ) : (
-            <span className="text-slate-600">Métrique de forme (non probabiliste)</span>
+            <span className="text-[#7B3FA0]/60">Métrique de forme (non probabiliste)</span>
           )}
         </p>
         <StatsLine entry={entry} winKey={winKey} />
