@@ -127,12 +127,14 @@ export function useLiveMatches(): UseLiveMatchesResult {
     }
   }, [stream.connectionStatus]);
 
-  // Polling REST — fallback uniquement si SSE inactif (Firefox/Safari anciens,
-  // ou serveur SSE HS). Code identique au comportement pré-R8.
+  // Polling REST — source principale fiable (tous navigateurs, pas de SSE needed).
+  // Le SSE est une amélioration <1s mais le polling est toujours disponible (8s).
+  // On lance toujours le polling en premier, et le SSE améliore la latence
+  // sans remplacer les données polling.
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sseActive) return; // SSE prend le relais, on arrête le polling
 
+    // 1. Démarrer le polling en premier (toujours, indépendamment de SSE)
     const poll = async () => {
       const t0 = Date.now();
       try {
@@ -145,9 +147,7 @@ export function useLiveMatches(): UseLiveMatchesResult {
         setLatency(Date.now() - t0);
         setConnectionStatus("connected");
 
-        // v6ka : construction identity-stable via le builder partagé (SSE + polling).
-        // Un poll sans changement de score réutilise les objets → pas de re-render
-        // de la grille memoïsée à chaque tick 8s (cf. live-state-builder.ts).
+        // Construction identity-stable des états live
         const raw: RawLiveMatch[] = data.matches;
         const cache = buildLiveStates(raw, data.updatedAt, prevCacheRef.current);
         prevCacheRef.current = cache;
@@ -158,15 +158,39 @@ export function useLiveMatches(): UseLiveMatchesResult {
       }
     };
 
-    Promise.resolve().then(() => setConnectionStatus("connecting"));
+    // 2. Puis initialiser SSE comme amélioration optionnelle (pas de remplacement)
+    if (typeof window.EventSource !== "undefined") {
+      const unsub = subscribeLiveStream(
+        (payload) => {
+          // SSE: uniquement mettre à jour si polling n'a pas déjà de données
+          // (liveMatchList.length === 0 signifie pas encore de données polling)
+          if (liveMatchList.length === 0) {
+            const latencyMs = Math.max(0, Date.now() - (payload.at ? new Date(payload.at).getTime() : Date.now()));
+            const cache = buildLiveStates(payload.matches, payload.at ? new Date(payload.at).toISOString() : undefined, prevCacheRef.current);
+            prevCacheRef.current = cache;
+            setLatency(latencyMs);
+            setConnectionStatus("connected");
+            setLiveStates(cache.states);
+            setLiveMatchList(Array.from(cache.list.values()));
+          }
+        },
+        (status) => {
+          setConnectionStatus(status);
+        },
+      );
+      // Ne pas return unsub ici - on veut que SSE tourne en parallèle
+    }
+
+    // 3. Lancer le polling immédiatement
     poll();
 
+    // 4. Intervalle de polling toujours actif
     pollRef.current = setInterval(poll, POLL_INTERVAL_MS);
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [sseActive]);
+  }, []);  // Empty deps: polling s'exécute toujours, pas de dépendance SSE
 
   // Si SSE actif, on retourne les données du stream. Sinon, les states locaux
   // du polling fallback. Les 2 chemins exposent la même interface.
