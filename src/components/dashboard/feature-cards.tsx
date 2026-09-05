@@ -102,8 +102,8 @@ export function FeatureCards() {
             key={f.title}
             variants={cardVariants}
             className={cn(
-              "group relative overflow-hidden rounded-xl border bg-zinc-900/40 transition-all duration-300",
-              "hover:border-border/60 hover:bg-zinc-800/50",
+              "group relative overflow-hidden rounded-xl border bg-[#F5F3FA] transition-all duration-300",
+              "hover:border-border/60 hover:bg-[#EDE8F5]",
               f.accentBorder,
               /* Première card = tile large (2 cols) sur desktop */
               i === 0 && "sm:col-span-2",
@@ -123,7 +123,7 @@ export function FeatureCards() {
 
             {/* Contenu */}
             <div className="relative p-4 sm:p-5">
-              <div className={cn("mb-3 inline-flex items-center justify-center rounded-lg bg-zinc-800/80 p-2", f.accent)}>
+              <div className={cn("mb-3 inline-flex items-center justify-center rounded-lg bg-[#EDE8F5] p-2", f.accent)}>
                 <Icon className="h-4 w-4" />
               </div>
               <h3 className="text-sm font-semibold text-white">{f.title}</h3>

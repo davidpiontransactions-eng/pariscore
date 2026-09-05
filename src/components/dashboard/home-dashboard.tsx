@@ -98,7 +98,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
         <h2 className="text-lg font-bold tracking-tight text-white sm:text-xl">
           {t("welcome")}
         </h2>
-        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#6B5B8D]">
           {t("intro")}
         </p>
 
@@ -114,7 +114,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
           <button
             type="button"
             onClick={scrollToUpcoming}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-zinc-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[#E0D8F0] bg-[#F5F3FA] px-4 py-2.5 text-sm font-medium text-[#7B3FA0] transition-colors hover:border-[#7B3FA0] hover:text-[#1A1145] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Timer className="h-4 w-4" aria-hidden />
             {t("ctaUpcoming")}
@@ -123,7 +123,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
       </div>
 
       {/* Onboarding 3 étapes */}
-      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-zinc-400">
+      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-[#6B5B8D]">
         {t("howItWorks")}
       </h3>
       <ol className="mt-2 grid gap-3 sm:grid-cols-3">
@@ -132,7 +132,7 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
           return (
             <li
               key={step.key}
-              className="rounded-xl border border-white/5 bg-zinc-900/60 p-4"
+              className="rounded-xl border border-white/5 bg-[#F5F3FA] p-4"
             >
               <span
                 className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${step.accent}`}
@@ -141,14 +141,14 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
                 <Icon className="h-4 w-4" />
               </span>
               <p className="mt-2.5 text-sm font-semibold text-white">{t(`steps.${step.key}.title`)}</p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-400">{t(`steps.${step.key}.desc`)}</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#6B5B8D]">{t(`steps.${step.key}.desc`)}</p>
             </li>
           );
         })}
       </ol>
 
       {/* Raccourcis produits */}
-      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-zinc-400">
+      <h3 className="mt-6 text-xs font-bold uppercase tracking-wider text-[#6B5B8D]">
         {t("goFurther")}
       </h3>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -164,13 +164,13 @@ export function HomeDashboard({ onSportSelect }: HomeDashboardProps) {
               </span>
               <span className="min-w-0">
                 <span className="block text-sm font-semibold text-white">{t(`features.${f.key}.label`)}</span>
-                <span className="mt-0.5 block text-xs leading-relaxed text-zinc-400">
+                <span className="mt-0.5 block text-xs leading-relaxed text-[#6B5B8D]">
                   {t(`features.${f.key}.desc`)}
                 </span>
               </span>
             </>
           );
-          const cls = `flex min-h-[44px] items-start gap-3 rounded-xl border bg-zinc-900/60 p-4 text-left transition-colors ${f.tile}`;
+          const cls = `flex min-h-[44px] items-start gap-3 rounded-xl border bg-[#F5F3FA] p-4 text-left transition-colors ${f.tile}`;
           return f.href ? (
             <Link key={f.key} href={f.href} className={cls}>
               {inner}

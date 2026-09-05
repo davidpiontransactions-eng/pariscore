@@ -75,14 +75,14 @@ function MiniStat({
   tone?: "neon" | "zinc" | "sky" | "amber";
 }) {
   const toneClass = {
-    neon: "text-emerald-400",
+    neon: "text-[#7B3FA0]",
     zinc: "text-zinc-100",
     sky: "text-sky-400",
     amber: "text-amber-400",
   }[tone];
   const iconBg = {
-    neon: "bg-emerald-500/10 text-emerald-400",
-    zinc: "bg-zinc-500/10 text-zinc-400",
+    neon: "bg-[#7B3FA0]/10 text-[#7B3FA0]",
+    zinc: "bg-[#EDE8F5] text-[#6B5B8D]",
     sky: "bg-sky-500/10 text-sky-400",
     amber: "bg-amber-500/10 text-amber-400",
   }[tone];
@@ -215,10 +215,10 @@ export function HeroSection({
             {/* Badge LIVE animé */}
             <motion.div variants={itemVariants} className="flex items-center gap-2.5">
               <span className="relative inline-flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7B3FA0] opacity-50" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#7B3FA0]" />
               </span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-400">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#7B3FA0]">
                 Analyse en direct
               </span>
               <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300/80">
@@ -249,7 +249,7 @@ export function HeroSection({
               <p className="text-sm leading-relaxed text-zinc-400 sm:text-base">
                 <span className="font-semibold text-zinc-200">Value bets</span> détectés en temps réel, 
                 probabilités calculées sur{" "}
-                <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
+                <span className="inline-flex items-center gap-1 font-semibold text-[#7B3FA0]">
                   <Trophy className="h-3.5 w-3.5" />
                   {totalLeagues.toLocaleString("fr-FR")} championnats
                 </span>{" "}
@@ -295,7 +295,7 @@ export function HeroSection({
                 icon={Radio}
                 label="LIVE"
                 count={totalLiveMatches}
-                color="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-500/50"
+                color="border-emerald-500/30 text-[#7B3FA0] hover:bg-emerald-500/10 hover:border-emerald-500/50"
                 href="#live"
               />
               <QuickLink
@@ -323,17 +323,17 @@ export function HeroSection({
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(0,230,118,0.08),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-emerald-400">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#7B3FA0]">
                     Bet du jour
                   </span>
-                  <ArrowUpRight className="h-3.5 w-3.5 text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100" />
+                  <ArrowUpRight className="h-3.5 w-3.5 text-[#7B3FA0] opacity-0 transition-opacity group-hover:opacity-100" />
                 </div>
 
                 <p className="mt-2 text-sm font-semibold text-white">{highlightedBet.match}</p>
                 <p className="mt-0.5 truncate text-xs text-zinc-400">{highlightedBet.label}</p>
 
                 <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-emerald-400 tabular-nums">
+                  <span className="text-2xl font-bold tracking-tight text-[#7B3FA0] tabular-nums">
                     {highlightedBet.odds.toFixed(2)}
                   </span>
                   <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">
@@ -349,7 +349,7 @@ export function HeroSection({
             >
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                  <Target className="h-4 w-4 text-emerald-400" />
+                  <Target className="h-4 w-4 text-[#7B3FA0]" />
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-zinc-400">
                   Scanner actif
@@ -360,10 +360,10 @@ export function HeroSection({
               </p>
               <div className="mt-3 flex items-center gap-1.5">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#7B3FA0] opacity-40" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#7B3FA0]" />
                 </span>
-                <span className="text-[10px] text-emerald-400">En temps réel</span>
+                <span className="text-[10px] text-[#7B3FA0]">En temps réel</span>
               </div>
             </motion.div>
           )}

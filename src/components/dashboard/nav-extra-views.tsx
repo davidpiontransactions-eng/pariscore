@@ -55,7 +55,7 @@ function ViewShell({
         </span>
         <div>
           <h2 className="text-lg font-bold tracking-tight text-white">{title}</h2>
-          <p className="text-xs text-zinc-400">{desc}</p>
+          <p className="text-xs text-[#6B5B8D]">{desc}</p>
         </div>
       </div>
       <div className="mt-4">{children}</div>
@@ -158,7 +158,7 @@ function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
             key={`s${i}`}
             className={cn(
               "text-center font-mono text-xs tabular-nums",
-              mine > other ? "font-bold text-white" : "text-zinc-400",
+              mine > other ? "font-bold text-white" : "text-[#6B5B8D]",
             )}
           >
             {mine}
@@ -186,7 +186,7 @@ function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
   );
 
   return (
-    <article className="rounded-xl border border-white/5 bg-zinc-900/60 p-3 transition-colors hover:border-emerald-500/30">
+    <article className="rounded-xl border border-white/5 bg-[#F5F3FA] p-3 transition-colors hover:border-emerald-500/30">
       {/* Statut + cotes */}
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-300">
@@ -196,9 +196,9 @@ function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
           </span>
           Set {(m.current_set ?? Math.max(sets.length - 1, 0)) + 1}
         </span>
-        <span className="flex items-center gap-1 font-mono text-[10px] tabular-nums text-zinc-400">
-          {m.oddsA != null && <span className="rounded bg-zinc-800 px-1 py-px">{m.oddsA.toFixed(2)}</span>}
-          {m.oddsB != null && <span className="rounded bg-zinc-800 px-1 py-px">{m.oddsB.toFixed(2)}</span>}
+        <span className="flex items-center gap-1 font-mono text-[10px] tabular-nums text-[#6B5B8D]">
+          {m.oddsA != null && <span className="rounded bg-[#EDE8F5] px-1 py-px">{m.oddsA.toFixed(2)}</span>}
+          {m.oddsB != null && <span className="rounded bg-[#EDE8F5] px-1 py-px">{m.oddsB.toFixed(2)}</span>}
         </span>
       </div>
 
@@ -210,7 +210,7 @@ function TennisLiveMatchCard({ m }: { m: LiveTennis }) {
 
       {/* Barre de probabilité live */}
       {probA != null && (
-        <div className="mt-2 flex h-1 overflow-hidden rounded-full bg-zinc-800" role="img" aria-label={`Probabilité ${probA}% / ${100 - probA}%`}>
+        <div className="mt-2 flex h-1 overflow-hidden rounded-full bg-[#EDE8F5]" role="img" aria-label={`Probabilité ${probA}% / ${100 - probA}%`}>
           <span className="bg-emerald-500/90" style={{ width: `${probA}%` }} />
           <span className="flex-1 bg-sky-500/50" />
         </div>
@@ -246,7 +246,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
       desc={`${total} match${total > 1 ? "s" : ""} en cours · actualisation toutes les 30 s`}
     >
       {total === 0 ? (
-        <p className="rounded-xl border border-white/5 bg-zinc-900/60 p-4 text-sm text-zinc-400">
+        <p className="rounded-xl border border-white/5 bg-[#F5F3FA] p-4 text-sm text-[#6B5B8D]">
           Aucun match en direct pour l'instant. Les rencontres apparaissent ici dès le coup d'envoi.
         </p>
       ) : (
@@ -261,7 +261,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
                 {footMatches.slice(0, 12).map((m) => (
                   <li
                     key={m.id}
-                    className="flex items-center gap-2.5 rounded-lg border border-white/5 bg-zinc-900/60 px-3 py-2"
+                    className="flex items-center gap-2.5 rounded-lg border border-white/5 bg-[#F5F3FA] px-3 py-2"
                   >
                     <span className="w-9 shrink-0 rounded bg-red-500/15 px-1 py-0.5 text-center font-mono text-[10px] font-bold tabular-nums text-red-300">
                       {m.live?.status === "HT" ? "MT" : `${m.live?.minute ?? ""}'`}
@@ -275,7 +275,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
                   </li>
                 ))}
                 {footMatches.length > 12 && (
-                  <li className="px-3 text-[11px] text-zinc-400">+ {footMatches.length - 12} autres…</li>
+                  <li className="px-3 text-[11px] text-[#6B5B8D]">+ {footMatches.length - 12} autres…</li>
                 )}
               </ul>
             </div>
@@ -306,10 +306,10 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
                       <section key={tournament}>
                         <header className="mb-1.5 flex items-center gap-2">
                           <Trophy className="h-3.5 w-3.5 shrink-0 text-amber-300/80" aria-hidden />
-                          <h4 className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-300">
+                          <h4 className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-wide text-[#7B3FA0]">
                             {tournament}
                           </h4>
-                          <span className="shrink-0 rounded-full bg-zinc-800 px-1.5 py-px font-mono text-[9px] font-bold tabular-nums text-zinc-400">
+                          <span className="shrink-0 rounded-full bg-[#EDE8F5] px-1.5 py-px font-mono text-[9px] font-bold tabular-nums text-[#6B5B8D]">
                             {matches.length}
                           </span>
                         </header>
@@ -323,7 +323,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
                       </section>
                     ))}
                     {tennisMatches.length > TENNIS_LIVE_MAX && (
-                      <p className="text-[11px] text-zinc-400">
+                      <p className="text-[11px] text-[#6B5B8D]">
                         + {tennisMatches.length - TENNIS_LIVE_MAX} autres matchs…
                       </p>
                     )}
@@ -345,7 +345,7 @@ export function LiveNavView({ onSportSelect }: ViewProps) {
             key={s.id}
             type="button"
             onClick={() => onSportSelect(s.id)}
-            className="inline-flex min-h-[44px] items-center rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E0D8F0] bg-[#F5F3FA] px-4 py-2.5 text-sm font-medium text-[#7B3FA0] transition-colors hover:border-emerald-500/50 hover:text-[#7B3FA0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {s.label}
           </button>
@@ -395,9 +395,9 @@ export function ValueNavView() {
       desc="Écarts entre probabilités du modèle et cotes dévigées des bookmakers."
     >
       {tennisLoading ? (
-        <p className="py-4 text-sm text-zinc-400">Analyse des marchés en cours…</p>
+        <p className="py-4 text-sm text-[#6B5B8D]">Analyse des marchés en cours…</p>
       ) : rows.length === 0 ? (
-        <p className="py-4 text-sm text-zinc-400">
+        <p className="py-4 text-sm text-[#6B5B8D]">
           Aucun value bet détecté pour le moment. Reviens plus tard — le scanner tourne en continu.
         </p>
       ) : (
@@ -405,11 +405,11 @@ export function ValueNavView() {
           {rows.map((r) => (
             <li
               key={`${r.id}-${r.bookmaker}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-zinc-900/60 p-3"
+              className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-[#F5F3FA] p-3"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-white">{r.title}</p>
-                <p className="truncate text-xs text-zinc-400">
+                <p className="truncate text-xs text-[#6B5B8D]">
                   {r.tournament} · {r.bookmaker} · joue {r.side === "A" ? r.title.split(" vs ")[0] : r.title.split(" vs ")[1]}
                 </p>
               </div>
@@ -436,23 +436,23 @@ export function FavorisNavView({ onOpenDrawer }: { onOpenDrawer: () => void }) {
       desc="Tes ligues suivies et ta sélection de matchs en cours."
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-white/5 bg-zinc-900/60 p-4">
+        <div className="rounded-xl border border-white/5 bg-[#F5F3FA] p-4">
           <p className="text-sm font-semibold text-white">
             {favoriteLeagueIds.length > 0
               ? `${favoriteLeagueIds.length} ligue${favoriteLeagueIds.length > 1 ? "s" : ""} favorite${favoriteLeagueIds.length > 1 ? "s" : ""}`
               : "Aucune ligue favorite"}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+          <p className="mt-1 text-xs leading-relaxed text-[#6B5B8D]">
             Étoile une ligue dans l'arborescence du filtre latéral pour la retrouver ici.
           </p>
         </div>
-        <div className="rounded-xl border border-white/5 bg-zinc-900/60 p-4">
+        <div className="rounded-xl border border-white/5 bg-[#F5F3FA] p-4">
           <p className="text-sm font-semibold text-white">
             {selectedMatchIds.length > 0
               ? `${selectedMatchIds.length} match${selectedMatchIds.length > 1 ? "s" : ""} sélectionné${selectedMatchIds.length > 1 ? "s" : ""}`
               : "Aucune sélection de matchs"}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+          <p className="mt-1 text-xs leading-relaxed text-[#6B5B8D]">
             Clique des matchs dans le filtre latéral pour concentrer la grille dessus.
           </p>
         </div>
@@ -460,7 +460,7 @@ export function FavorisNavView({ onOpenDrawer }: { onOpenDrawer: () => void }) {
       <button
         type="button"
         onClick={onOpenDrawer}
-        className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-emerald-500/50 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="mt-3 inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-[#E0D8F0] bg-[#F5F3FA] px-4 py-2.5 text-sm font-medium text-[#7B3FA0] transition-colors hover:border-emerald-500/50 hover:text-[#7B3FA0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ListFilter className="h-4 w-4" aria-hidden />
         Ouvrir le filtre latéral
@@ -480,7 +480,7 @@ export function ProfilNavView() {
     { href: null, onClick: () => openBankrollDialog(), icon: Wallet, label: tBankroll("trigger"), accent: "text-purple-400 bg-purple-500/10" },
     { href: null, onClick: () => openPaperTradingDialog(), icon: FlaskConical, label: "Paper Trading", accent: "text-amber-400 bg-amber-500/10" },
     { href: null, onClick: () => openApiDocsDialog(), icon: Code, label: "API & Docs", accent: "text-teal-400 bg-teal-500/10" },
-    { href: null, onClick: () => openAboutDialog(), icon: User, label: tAbout("trigger"), accent: "text-zinc-300 bg-zinc-800" },
+    { href: null, onClick: () => openAboutDialog(), icon: User, label: tAbout("trigger"), accent: "text-[#7B3FA0] bg-[#EDE8F5]" },
   ];
 
   return (
@@ -489,8 +489,8 @@ export function ProfilNavView() {
       title="Profil & préférences"
       desc="Personnalise l'affichage et accède à tes outils."
     >
-      <div className="rounded-xl border border-white/5 bg-zinc-900/60 p-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Préférences</h3>
+      <div className="rounded-xl border border-white/5 bg-[#F5F3FA] p-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-[#6B5B8D]">Préférences</h3>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <ThemeToggle />
           <LanguageToggle />
@@ -499,7 +499,7 @@ export function ProfilNavView() {
         </div>
       </div>
 
-      <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-zinc-400">Mes outils</h3>
+      <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-[#6B5B8D]">Mes outils</h3>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {shortcuts.map((s) => {
           const Icon = s.icon;
@@ -512,7 +512,7 @@ export function ProfilNavView() {
             </>
           );
           const cls =
-            "flex min-h-[44px] items-center gap-3 rounded-xl border border-white/5 bg-zinc-900/60 p-3.5 text-left transition-colors hover:border-emerald-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+            "flex min-h-[44px] items-center gap-3 rounded-xl border border-white/5 bg-[#F5F3FA] p-3.5 text-left transition-colors hover:border-emerald-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
           return s.href ? (
             <Link key={s.label} href={s.href} className={cls}>
               {inner}
@@ -528,7 +528,7 @@ export function ProfilNavView() {
       <button
         type="button"
         onClick={openPrivacyDialog}
-        className="mt-3 text-xs font-medium text-zinc-400 underline underline-offset-2 transition-colors hover:text-zinc-300"
+        className="mt-3 text-xs font-medium text-[#6B5B8D] underline underline-offset-2 transition-colors hover:text-[#7B3FA0]"
       >
         Gérer mes cookies
       </button>
