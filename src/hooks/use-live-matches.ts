@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLiveStream } from "@/hooks/use-live-stream";
+import { subscribeLiveStream } from "@/lib/live-stream-client";
 import {
   buildLiveStates,
   emptyLiveStateCache,
