@@ -38,14 +38,14 @@ export function SiteHeader() {
     <>
       <AutoHideHeader className="relative overflow-hidden">
         {/* Liquid Glass background — tier2 elevated pour la navbar */}
-        <LiquidGlass tier="tier2" elevated className="absolute inset-0 bg-[#060a14] liquid-glass--animated"><></></LiquidGlass>
+        <LiquidGlass tier="tier2" elevated className="absolute inset-0 bg-white liquid-glass--animated"><></></LiquidGlass>
 
         {/* Subtle grid pattern */}
         <div
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute inset-0 opacity-[0.015]"
           style={{
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
+              "linear-gradient(rgba(123,63,160,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(123,63,160,0.1) 1px, transparent 1px)",
             backgroundSize: "32px 32px",
           }}
         />
@@ -60,18 +60,18 @@ export function SiteHeader() {
             priority
           />
           {/* Fade gradient to blend with header */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#060a14] via-[#060a14]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent" />
         </div>
 
         {/* Bottom glow line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
 
         {/* Content — Niveau 1 (56px) */}
         <div className="relative mx-auto flex h-[56px] max-w-7xl items-center justify-between gap-x-4 px-4 sm:px-6">
           {/* Gauche : Logo Shield */}
           <Link
             href="/"
-            className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition-all hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/50"
+            className="group flex items-center gap-3 rounded-lg px-1 py-1.5 transition-all hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/50"
             aria-label="PariScore — Accueil"
           >
             {/* Shield logo SVG */}
@@ -81,19 +81,19 @@ export function SiteHeader() {
                 alt="PariScore Shield"
                 width={48}
                 height={48}
-                className="h-[48px] w-[48px] transition-all group-hover:drop-shadow-[0_0_12px_rgba(0,230,118,0.5)]"
+                className="h-[48px] w-[48px] transition-all group-hover:drop-shadow-[0_0_12px_rgba(123,63,160,0.3)]"
                 priority
               />
               {/* Glow effect on hover */}
-              <div className="absolute inset-0 rounded-full bg-emerald-500/0 transition-all group-hover:bg-emerald-500/10" />
+              <div className="absolute inset-0 rounded-full bg-purple-500/0 transition-all group-hover:bg-purple-500/10" />
             </div>
             
             {/* Texte logo */}
             <div className="flex flex-col">
-              <span className="text-xl font-black tracking-tight text-white leading-none">
-                PARI<span className="text-emerald-400">SCORE</span>
+              <span className="text-xl font-black tracking-tight text-[#1A1145] leading-none">
+                PARI<span className="text-[#7B3FA0]">SCORE</span>
               </span>
-              <span className="text-[10px] font-medium tracking-[0.25em] text-zinc-400 leading-none mt-1">
+              <span className="text-[10px] font-medium tracking-[0.25em] text-[#6B5B8D] leading-none mt-1">
                 MULTISPORT DATA & PRÉDICTIONS
               </span>
             </div>
@@ -105,15 +105,15 @@ export function SiteHeader() {
               type="button"
               onClick={() => onOpenChange(true)}
               className={cn(
-                "group hidden items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-2.5 text-xs text-zinc-400 transition-all w-full",
-                "hover:border-emerald-500/20 hover:bg-white/[0.05] hover:text-zinc-300 hover:shadow-lg hover:shadow-emerald-500/5",
+                "group hidden items-center gap-2.5 rounded-xl border border-[#E0D8F0] bg-white px-4 py-2.5 text-xs text-[#6B5B8D] transition-all w-full",
+                "hover:border-[#7B3FA0]/30 hover:bg-[#F8F5FC] hover:text-[#1A1145] hover:shadow-lg hover:shadow-purple-500/5",
                 "sm:flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               )}
               aria-label="Rechercher (Ctrl+K)"
             >
-              <Search className="h-4 w-4 shrink-0 text-zinc-500 transition-colors group-hover:text-emerald-400" />
+              <Search className="h-4 w-4 shrink-0 text-[#6B5B8D] transition-colors group-hover:text-[#7B3FA0]" />
               <span className="flex-1 text-left">Rechercher un match, équipe, ligue...</span>
-              <kbd className="ml-auto rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-zinc-600 transition-colors group-hover:border-emerald-500/20 group-hover:text-zinc-500">
+              <kbd className="ml-auto rounded-md border border-[#E0D8F0] bg-[#F8F5FC] px-2 py-1 text-[10px] font-medium text-[#6B5B8D] transition-colors group-hover:border-[#7B3FA0]/30 group-hover:text-[#1A1145]">
                 ⌘K
               </kbd>
             </button>
@@ -125,7 +125,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => onOpenChange(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/[0.06] hover:text-white hover:shadow-lg hover:shadow-black/20 sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-[#6B5B8D] transition-all hover:bg-[#F8F5FC] hover:text-[#1A1145] hover:shadow-lg hover:shadow-purple-500/5 sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Rechercher"
             >
               <Search className="h-5 w-5" />
@@ -140,7 +140,7 @@ export function SiteHeader() {
             {/* Réglages */}
             <Link
               href="/settings"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-zinc-400 transition-all hover:bg-white/[0.06] hover:text-white hover:shadow-lg hover:shadow-black/20"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-[#6B5B8D] transition-all hover:bg-[#F8F5FC] hover:text-[#1A1145] hover:shadow-lg hover:shadow-purple-500/5"
               aria-label="Paramètres"
               title="Paramètres"
             >
