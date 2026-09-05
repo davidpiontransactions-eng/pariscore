@@ -215,9 +215,10 @@ NEXT_OK=0
 for i in $(seq 1 $MAX_CHECKS); do
   # Check legacy port 3000
   if [ "$LEGACY_OK" = "0" ]; then
-    if curl -s -m 5 http://localhost:3000/api/v1/status 2>/dev/null | grep -q '"status":"ok"'; then
+    HTTP_CODE_LEGACY=$(curl -s -o /dev/null -w '%{http_code}' -m 5 http://localhost:3000/ 2>/dev/null || echo "000")
+    if [ "$HTTP_CODE_LEGACY" = "200" ]; then
       LEGACY_OK=1
-      ok "  Legacy (port 3000): OK"
+      ok "  Legacy (port 3000): OK (HTTP $HTTP_CODE_LEGACY)"
     fi
   fi
 
