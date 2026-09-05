@@ -51,6 +51,8 @@ import {
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
 import { FeatureCards } from "@/components/dashboard/feature-cards";
 import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
+import { FootballTop10Widget } from "@/components/football/football-top10-widget";
+import { useFootballMatches } from "@/hooks/use-football-matches";
 import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { FootballMatch } from "@/lib/football-data";
@@ -214,6 +216,13 @@ function HomeInner() {
 
   // Real data hooks
   const { tennisData, footData, tennisLoading, footLoading } = useDashboardData();
+  const { data: footballMatches, isLoading: footballLoading } = useFootballMatches();
+  const prematchMatches = useMemo(() => {
+    if (!footballMatches?.matches) return [];
+    return footballMatches.matches.filter(
+      (m: any) => m.status === "scheduled" || m.status === "prematch",
+    );
+  }, [footballMatches]);
 
   const handleTabChange = useCallback((tab: string) => {
     // Ignore les ids inconnus (protection) ; "home"/vues nav ne touchent pas
@@ -342,6 +351,13 @@ function HomeInner() {
         <section className="w-full px-4 sm:px-6 pt-6">
           <TopMultiSport />
         </section>
+
+        {/* Top 10 matchs par stratégie — football */}
+        {!footballLoading && prematchMatches.length > 0 && (
+          <section className="w-full px-4 sm:px-6 pt-4">
+            <FootballTop10Widget matches={prematchMatches} />
+          </section>
+        )}
 
         {/* Hero Dashboard Section — Bento Grid layout */}
         <section className="sport-ambient w-full px-4 sm:px-6 pt-6" data-sport={activeTab}>
