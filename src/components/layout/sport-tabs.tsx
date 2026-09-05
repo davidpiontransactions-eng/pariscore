@@ -188,10 +188,10 @@ export function SportTabs({
                   "relative flex h-full items-center gap-1.5 px-3",
                   "text-xs font-medium whitespace-nowrap",
                   "transition-colors duration-150",
-                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400/50",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FA0]/50",
                   isActive
-                    ? "text-emerald-400"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "text-[#7B3FA0]"
+                    : "text-[#6B5B8D] hover:text-[#1A1145]"
                 )}
               >
                 <span className="text-sm leading-none">{tab.emoji}</span>
@@ -202,7 +202,7 @@ export function SportTabs({
                 {isActive && (
                   <motion.div
                     layoutId="sport-tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#7B3FA0]"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -219,10 +219,10 @@ export function SportTabs({
                   "flex h-full items-center gap-1 px-3",
                   "text-xs font-medium whitespace-nowrap",
                   "transition-colors duration-150",
-                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-400/50",
+                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FA0]/50",
                   overflowActive
-                    ? "text-emerald-400"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "text-[#7B3FA0]"
+                    : "text-[#6B5B8D] hover:text-[#1A1145]"
                 )}
                 aria-expanded={showMore}
                 aria-haspopup="true"
@@ -242,7 +242,7 @@ export function SportTabs({
                   className={cn(
                     "absolute right-0 top-full z-50 mt-1",
                     "min-w-[140px] rounded-lg",
-                    "border border-slate-700/80 bg-[#0e121e] shadow-xl shadow-black/30",
+                    "border border-[#E0D8F0] bg-white shadow-xl shadow-black/10",
                     "py-1"
                   )}
                   role="menu"
@@ -264,8 +264,8 @@ export function SportTabs({
                           "text-xs font-medium",
                           "transition-colors duration-100",
                           isActive
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : "text-slate-300 hover:bg-slate-800/60 hover:text-slate-100"
+                            ? "bg-[#7B3FA0]/10 text-[#7B3FA0]"
+                            : "text-[#1A1145] hover:bg-[#EDE8F5] hover:text-[#1A1145]"
                         )}
                       >
                         <span className="text-sm">{tab.emoji}</span>

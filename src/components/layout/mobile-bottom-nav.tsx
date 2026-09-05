@@ -15,11 +15,11 @@ type TabDef = {
 };
 
 const TABS: TabDef[] = [
-  { id: "home", label: "Accueil", icon: Home, accent: "bg-emerald-600" },
-  { id: "live", label: "Live", icon: Radio, accent: "bg-red-500" },
-  { id: "value", label: "Value", icon: Gem, accent: "bg-emerald-500" },
-  { id: "favoris", label: "Favoris", icon: Star, accent: "bg-amber-500" },
-  { id: "profil", label: "Profil", icon: User, accent: "bg-sky-500" },
+  { id: "home", label: "Accueil", icon: Home, accent: "bg-[#7B3FA0]" },
+  { id: "live", label: "Live", icon: Radio, accent: "bg-[#4CAF50]" },
+  { id: "value", label: "Value", icon: Gem, accent: "bg-[#FF6D00]" },
+  { id: "favoris", label: "Favoris", icon: Star, accent: "bg-[#FF6D00]" },
+  { id: "profil", label: "Profil", icon: User, accent: "bg-[#7B3FA0]" },
 ] as const;
 
 type MobileBottomNavProps = {
@@ -37,7 +37,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
   return (
     <LiquidGlass
       tier="regular"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 pb-[env(safe-area-inset-bottom)] mobile-bottom-nav"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#E0D8F0] pb-[env(safe-area-inset-bottom)] mobile-bottom-nav"
       role="navigation"
       aria-label="Navigation principale"
     >
@@ -55,8 +55,8 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
               className={cn(
                 "relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full py-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 isActive
-                  ? "text-white"
-                  : "text-zinc-400 hover:text-zinc-300"
+                  ? "text-[#1A1145]"
+                  : "text-[#6B5B8D] hover:text-[#1A1145]"
               )}
             >
               {/* Accent bar at top of tab */}
