@@ -9,11 +9,38 @@ const nextConfig: NextConfig = {
   // (le VPS reverse-proxy accède à next dev sur le même host mais via un
   // nom de domaine différent → sinon Next.js bloque les chunks JS/HMR).
   allowedDevOrigins: ["pariscore.fr"],
-  /* config options here */
+  compress: true,
+  reactStrictMode: true,
+  
+  // ─── Stabilisation Turbopack ─────────────────────────────────────────
+  experimental: {
+    // Désactiver Turbopack en prod (webpack plus stable pour standalone)
+    turbo: process.env.NODE_ENV === "production" ? false : {
+      resolveAlias: {
+        "better-sqlite3": false,
+      },
+    },
+    // Optimisation imports lourds
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "framer-motion",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@tanstack/react-query",
+      "date-fns",
+      "zod",
+    ],
+    // Optimisation CSS (Tailwind v4)
+    cssChunking: "loose",
+    workerThreads: true,
+  },
+  
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: process.env.NODE_ENV !== "production",
   },
   reactStrictMode: true,
+  compress: true,
   async headers() {
     return [
       {
