@@ -84,7 +84,7 @@ log "[3/9] Pre-deploy quality gates..."
 # Lint (skip if SKIP_LINT=1)
 if [ "${SKIP_LINT:-0}" != "1" ]; then
   log "  Running ESLint..."
-  if ! npx next lint 2>&1 | tail -5 | tee -a "$LOG_FILE"; then
+  if ! npx eslint src/ 2>&1 | tail -5 | tee -a "$LOG_FILE"; then
     err "ESLint failed — deploy aborted"
     exit 1
   fi
