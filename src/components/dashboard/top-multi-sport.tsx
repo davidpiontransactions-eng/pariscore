@@ -65,9 +65,10 @@ const SPORT_TABS: { id: SportType; label: string; icon: string }[] = [
 const CACHE_MS = 60_000;
 const POLL_MS = 120_000;
 
-type TimeFilter = "1h" | "2h" | "4h" | "8h" | "today" | "tomorrow" | "all";
+type TimeFilter = "live" | "1h" | "2h" | "4h" | "8h" | "today" | "tomorrow" | "all";
 
-const TIME_FILTERS: { id: TimeFilter; label: string }[] = [
+const TIME_FILTERS: { id: TimeFilter; label: string; icon?: string }[] = [
+  { id: "live", label: "Live", icon: "🔴" },
   { id: "1h", label: "1h" },
   { id: "2h", label: "2h" },
   { id: "4h", label: "4h" },
@@ -79,7 +80,8 @@ const TIME_FILTERS: { id: TimeFilter; label: string }[] = [
 
 function isInTimeWindow(iso: string, filter: TimeFilter, status?: string): boolean {
   if (filter === "all") return true;
-  // Les matchs live terminés sont toujours exclus, les live en cours toujours inclus
+  if (filter === "live") return status === "live";
+  // Les matchs live restent visibles quelle que soit la fenêtre temps
   if (status === "live") return true;
   const now = new Date();
   const kickoff = new Date(iso);
@@ -429,10 +431,13 @@ export function TopMultiSport() {
             className={cn(
               "px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors",
               timeFilter === tf.id
-                ? "bg-[#FF6D00] text-white"
+                ? tf.id === "live"
+                  ? "bg-[#4CAF50] text-white"
+                  : "bg-[#FF6D00] text-white"
                 : "bg-white text-[#7B3FA0] hover:bg-[#EDE8F5]"
             )}
           >
+            {tf.icon && <span className="mr-1">{tf.icon}</span>}
             {tf.label}
           </button>
         ))}

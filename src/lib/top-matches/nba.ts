@@ -12,7 +12,15 @@ export const nbaAdapter: SportAdapter = {
     if (!res.ok) return [];
     const data: any = await res.json();
     const raw: any[] = data.matches || (Array.isArray(data) ? data : []);
-    const matches = raw.slice(0, limit).map((m: any) => ({
+    // Filtrer matchs futurs/live, exclure terminés et passés
+    const now = Date.now();
+    const filtered = raw.filter((m: any) => {
+      const st = m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled';
+      if (st === 'finished') return false;
+      const ko = new Date(m.kickoff || m.date || m.scheduledAt || 0).getTime();
+      return st === 'live' || ko >= now - 30 * 60_000;
+    });
+    const matches = filtered.slice(0, limit).map((m: any) => ({
       id: String(m.id || ''),
       home: {
         name: m.homeTeam || m.home?.name || 'Home',

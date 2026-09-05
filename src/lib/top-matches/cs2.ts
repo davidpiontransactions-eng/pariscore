@@ -13,7 +13,14 @@ export const cs2Adapter: SportAdapter = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
     const raw: any[] = data.matches || (Array.isArray(data) ? data : []);
-    const matches = raw.slice(0, limit).map((m: any) => ({
+    // Filtrer matchs futurs/live
+    const now = Date.now();
+    const filtered = raw.filter((m: any) => {
+      if (m.status === 'finished') return false;
+      const ko = new Date(m.scheduledAt || m.date || 0).getTime();
+      return m.isLive || m.status === 'live' || ko >= now - 30 * 60_000;
+    });
+    const matches = filtered.slice(0, limit).map((m: any) => ({
       id: String(m.id || ''),
       home: { name: m.team1?.name || m.team1 || 'Team 1' },
       away: { name: m.team2?.name || m.team2 || 'Team 2' },

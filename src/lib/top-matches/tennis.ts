@@ -25,10 +25,20 @@ export const tennisAdapter: SportAdapter = {
     });
     if (!res.ok) return [];
     const data: any = await res.json();
-    const matches: any[] = (data.matches || []).slice(0, limit * 3);
+    const matches: any[] = data.matches || [];
+
+    // Filtrer matchs futurs/live uniquement
+    const now = Date.now();
+    const future = matches.filter((m: any) => {
+      if (m.status === 'finished') return false;
+      const ko = new Date(m.scheduledAt || 0).getTime();
+      return m.status === 'live' || ko >= now - 30 * 60_000;
+    });
+    future.sort((a: any, b: any) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
+    const sliced = future.slice(0, limit * 3);
 
     const byTourney = new Map<string, TopMatch[]>();
-    for (const m of matches) {
+    for (const m of sliced) {
       const tourney = m.tournament || 'Autre';
       if (!byTourney.has(tourney)) byTourney.set(tourney, []);
       if (byTourney.get(tourney)!.length >= limit) continue;

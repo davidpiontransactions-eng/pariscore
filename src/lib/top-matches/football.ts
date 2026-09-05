@@ -31,10 +31,22 @@ export const footballAdapter: SportAdapter = {
     });
     if (!res.ok) return [];
     const data: any = await res.json();
-    const matches: any[] = (data.matches || []).slice(0, limit * 3);
+    const matches: any[] = data.matches || [];
+
+    // Filtrer : only scheduled/live, exclude finished & past kickoff
+    const now = Date.now();
+    const future = matches.filter((m: any) => {
+      if (m.status === 'finished') return false;
+      const ko = new Date(m.scheduledAt || 0).getTime();
+      // Garder live en cours + scheduled dans le futur (marge 30min pour les retards)
+      return m.isLive || ko >= now - 30 * 60_000;
+    });
+    // Trier par kickoff croissant (prochains d'abord)
+    future.sort((a: any, b: any) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
+    const sliced = future.slice(0, limit * 3);
 
     const byLeague = new Map<string, TopMatch[]>();
-    for (const m of matches) {
+    for (const m of sliced) {
       const league = m.league?.name || 'Autre';
       if (!byLeague.has(league)) byLeague.set(league, []);
       if (byLeague.get(league)!.length >= limit) continue;
