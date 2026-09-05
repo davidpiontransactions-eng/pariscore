@@ -1,4 +1,4 @@
-// Adapter football — normalise /api/v1/top-matches → format TopLeague
+// Adapter football — normalise /api/football/matches → format TopLeague
 import type { SportAdapter, TopLeague, TopMatch } from './types';
 
 const LEAGUE_COLORS: Record<string, string> = {
@@ -24,49 +24,40 @@ function getLeagueColor(name: string): string {
 export const footballAdapter: SportAdapter = {
   sport: 'football',
 
-  async fetch(limit, timeframe) {
+  async fetch(limit) {
     const base = process.env.NEXT_PUBLIC_API_URL || '';
-    const res = await fetch(`${base}/api/v1/top-matches?timeframe=${timeframe}&limit=${limit}`, {
+    const res = await fetch(`${base}/api/football/matches`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    const data = await res.json();
-    const matches: any[] = data.matches || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const data: any = await res.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const matches: any[] = (data.matches || []).slice(0, limit * 3);
 
-    // Grouper par ligue
     const byLeague = new Map<string, TopMatch[]>();
     for (const m of matches) {
-      const league = m.league || m.competition || 'Autre';
+      const league = m.league?.name || 'Autre';
       if (!byLeague.has(league)) byLeague.set(league, []);
+      if (byLeague.get(league)!.length >= limit) continue;
       byLeague.get(league)!.push({
-        id: String(m.id || m.match_id || ''),
+        id: String(m.id || ''),
         home: {
-          name: m.homeTeam || m.home?.name || 'Home',
-          logo: m.homeLogo || m.home?.logo || '',
-          rank: m.homeRank,
+          name: m.home?.name || m.home?.shortName || 'Home',
+          logo: m.home?.logo || '',
         },
         away: {
-          name: m.awayTeam || m.away?.name || 'Away',
-          logo: m.awayLogo || m.away?.logo || '',
-          rank: m.awayRank,
+          name: m.away?.name || m.away?.shortName || 'Away',
+          logo: m.away?.logo || '',
         },
-        kickoff: m.kickoff || m.date || m.start_time || '',
-        status: m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled',
-        score: m.score || undefined,
+        kickoff: m.scheduledAt || '',
+        status: m.status === 'finished' ? 'finished' : m.isLive ? 'live' : 'scheduled',
         odds: m.odds
           ? {
-              home: String(m.odds.home || m.odds[0] || ''),
-              draw: String(m.odds.draw || m.odds[1] || ''),
-              away: String(m.odds.away || m.odds[2] || ''),
-              best: m.topPick?.label?.includes('Home')
-                ? 'home'
-                : m.topPick?.label?.includes('Away')
-                  ? 'away'
-                  : undefined,
+              home: m.odds.home != null ? String(m.odds.home) : undefined,
+              draw: m.odds.draw != null ? String(m.odds.draw) : undefined,
+              away: m.odds.away != null ? String(m.odds.away) : undefined,
             }
-          : undefined,
-        badge: m.topPick
-          ? { label: m.topPick.label, color: '#00c853' }
           : undefined,
       });
     }
