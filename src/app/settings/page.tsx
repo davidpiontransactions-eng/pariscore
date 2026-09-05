@@ -36,7 +36,7 @@ export default function SettingsPage() {
     { href: null, onClick: () => openBankrollDialog(), icon: Wallet, label: "Bankroll", accent: "text-purple-400 bg-purple-500/10" },
     { href: null, onClick: () => openPaperTradingDialog(), icon: FlaskConical, label: "Paper Trading", accent: "text-amber-400 bg-amber-500/10" },
     { href: null, onClick: () => openApiDocsDialog(), icon: Code, label: "API & Docs", accent: "text-teal-400 bg-teal-500/10" },
-    { href: null, onClick: () => openAboutDialog(), icon: User, label: t("trigger"), accent: "text-zinc-300 bg-zinc-800" },
+    { href: null, onClick: () => openAboutDialog(), icon: User, label: t("trigger"), accent: "text-[#6B5B8D] bg-[#EDE8F5]" },
   ];
 
   return (
@@ -47,7 +47,7 @@ export default function SettingsPage() {
       </p>
 
       {/* Préférences */}
-      <section className="mt-6 rounded-xl border border-white/5 bg-zinc-900/60 p-4">
+      <section className="mt-6 rounded-xl border border-[#E0D8F0] bg-[#F5F3FA] p-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
           Préférences
         </h2>
@@ -60,7 +60,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Affichage */}
-      <section className="mt-4 rounded-xl border border-white/5 bg-zinc-900/60 p-4">
+      <section className="mt-4 rounded-xl border border-[#E0D8F0] bg-[#F5F3FA] p-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
           Affichage
         </h2>
@@ -90,7 +90,7 @@ export default function SettingsPage() {
               </>
             );
             const cls =
-              "flex min-h-[44px] items-center gap-3 rounded-xl border border-white/5 bg-zinc-900/60 p-3.5 text-left transition-colors hover:border-emerald-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+              "flex min-h-[44px] items-center gap-3 rounded-xl border border-[#E0D8F0] bg-[#F5F3FA] p-3.5 text-left transition-colors hover:border-emerald-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
             return s.href ? (
               <Link key={s.label} href={s.href} className={cls}>
                 {inner}
@@ -105,7 +105,7 @@ export default function SettingsPage() {
       </section>
 
       {/* Debug */}
-      <section className="mt-4 rounded-xl border border-white/5 bg-zinc-900/60 p-4">
+      <section className="mt-4 rounded-xl border border-[#E0D8F0] bg-[#F5F3FA] p-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
           Debug &amp; Expérimentation
         </h2>
@@ -123,7 +123,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={openPrivacyDialog}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-white/5 bg-zinc-900/60 px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-emerald-500/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-[#E0D8F0] bg-[#F5F3FA] px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:border-emerald-500/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Shield className="h-4 w-4" />
             Gérer mes cookies

@@ -50,7 +50,7 @@ function FormMomentumSparkline({ values, trend }: { values: number[]; trend: "up
   }));
 
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  const trendClass = trend === "up" ? "text-emerald-500" : trend === "down" ? "text-rose-500" : "text-muted-foreground";
+  const trendClass = trend === "up" ? "text-[#7B3FA0]" : trend === "down" ? "text-rose-500" : "text-muted-foreground";
 
   return (
     <svg width={W} height={H} className={"shrink-0 " + trendClass} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Tendance: ${trend}`}>
@@ -290,7 +290,7 @@ export function FootballMatchCard({
           {p.xpDiff != null && (
             <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums ${
               p.xpDiff > 0
-                ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                ? "bg-[#7B3FA0]/15 text-emerald-400 border border-emerald-500/30"
                 : p.xpDiff < 0
                   ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                   : "bg-muted/40 text-muted-foreground border border-border/40"
@@ -460,7 +460,7 @@ export function FootballMatchCard({
               {/* Edge / Value (Phase 3) — meilleur écart modèle vs cote */}
               {edgeMarket && edgeMarket.edge != null && edgeMarket.edge > 0 && (
                 <span
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-400"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-emerald-500/40 bg-[#7B3FA0]/15 px-2 py-0.5 text-xs font-semibold text-emerald-400"
                   title={`Edge sur le marché « ${edgeMarket.market} » : modèle ${edgeMarket.modelProb.toFixed(0)}% vs implicite ${edgeMarket.impliedProb?.toFixed(0)}%`}
                 >
                   <TrendingUp className="h-3 w-3 shrink-0" aria-hidden />
@@ -481,7 +481,7 @@ export function FootballMatchCard({
                       badge.isTop
                         ? "border-amber-500/50 bg-amber-500/15 text-amber-400 shadow-sm shadow-amber-500/10"
                         : isBest
-                          ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
+                          ? "border-emerald-500/40 bg-[#7B3FA0]/20 text-emerald-400"
                           : "border-border/60 bg-muted/50 text-muted-foreground hover:border-border/80 hover:bg-muted"
                     }`}
                   >
@@ -544,7 +544,7 @@ export function FootballMatchCard({
                 p.refereeCardRisk.label === "élevé"
                   ? "border-red-500/40 bg-red-500/10 text-red-400"
                   : p.refereeCardRisk.label === "faible"
-                    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                    ? "border-emerald-500/40 bg-[#7B3FA0]/10 text-emerald-400"
                     : "border-amber-500/40 bg-amber-500/10 text-amber-400"
               }`}>
                 <Shield className="h-2.5 w-2.5" />
@@ -554,7 +554,7 @@ export function FootballMatchCard({
             {p.setPieceEdge != null && (
               <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium border ${
                 p.setPieceEdge > 0.05
-                  ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+                  ? "border-emerald-500/40 bg-[#7B3FA0]/10 text-emerald-400"
                   : p.setPieceEdge < -0.05
                     ? "border-rose-500/40 bg-rose-500/10 text-rose-400"
                     : "border-border/60 bg-muted/50 text-muted-foreground"
@@ -576,7 +576,7 @@ export function FootballMatchCard({
             </div>
             {/* Home team */}
             <div className="grid grid-cols-3 gap-1.5">
-              <div className="flex flex-col items-center rounded-lg bg-emerald-500/5 px-1.5 py-1.5 text-center">
+              <div className="flex flex-col items-center rounded-lg bg-[#7B3FA0]/5 px-1.5 py-1.5 text-center">
                 {match.home.topScorer ? (
                   <>
                     <PlayerAvatar name={match.home.topScorer.name} photoUrl={match.home.topScorer.photoUrl} color="#10b981" size="sm" sport="football" />
@@ -678,7 +678,7 @@ export function FootballMatchCard({
               {p.xGd != null && (
                 <span className={`rounded-md px-1.5 py-0.5 text-xs font-bold tabular-nums ${
                   p.xGd > 0.05
-                    ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                    ? "bg-[#7B3FA0]/15 text-emerald-400 border border-emerald-500/30"
                     : p.xGd < -0.05
                       ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
                       : "bg-muted/40 text-muted-foreground border border-border/40"
@@ -706,7 +706,7 @@ export function FootballMatchCard({
               <div className="mt-1 text-center">
                 <span className={`text-xs font-medium ${
                   p.xGd > 0.05
-                    ? "text-emerald-500"
+                    ? "text-[#7B3FA0]"
                     : p.xGd < -0.05
                       ? "text-rose-500"
                       : "text-muted-foreground"
@@ -755,7 +755,7 @@ export function FootballMatchCard({
                             style={{ width: `${homePct}%` }}
                           />
                           <div
-                            className="h-full bg-slate-600 transition-all duration-300"
+                            className="h-full bg-[#7B3FA0] transition-all duration-300"
                             style={{ width: `${awayPct}%` }}
                           />
                         </div>
@@ -767,7 +767,7 @@ export function FootballMatchCard({
                       {seasonStat && (
                         <div className="flex items-center gap-2 pl-[80px] text-xs text-muted-foreground/60">
                           <span className="inline-flex items-center gap-0.5">
-                            <Home className="h-2.5 w-2.5 text-emerald-500/60" />
+                            <Home className="h-2.5 w-2.5 text-[#7B3FA0]/60" />
                             <span className="tabular-nums">{seasonStat.homeAvg.toFixed(1)}/m</span>
                             {/* Badge rang uniquement pour un rang réel (jamais simulé) — cf. computeTeamSeasonStats : null = indisponible */}
                             {seasonStat.homeRank != null && seasonStat.homeRankTotal > 0 && (
@@ -828,7 +828,7 @@ export function FootballMatchCard({
                                   initial={{ width: 0 }}
                                   animate={{ width: `${homePct}%` }}
                                   transition={{ duration: 0.6, ease: "easeOut" }}
-                                  className={`h-full ${homeDom ? "bg-emerald-500" : "bg-slate-500"} relative`}
+                                  className={`h-full ${homeDom ? "bg-[#7B3FA0]" : "bg-slate-500"} relative`}
                                 >
                                   <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white/90 tabular-nums">
                                     {homePct > 25 ? `${homePct}%` : ""}
@@ -838,7 +838,7 @@ export function FootballMatchCard({
                                   initial={{ width: 0 }}
                                   animate={{ width: `${awayPct}%` }}
                                   transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                                  className={`h-full ${!homeDom ? "bg-rose-500" : "bg-slate-600"} relative`}
+                                  className={`h-full ${!homeDom ? "bg-rose-500" : "bg-[#7B3FA0]"} relative`}
                                 >
                                   <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white/90 tabular-nums">
                                     {awayPct > 25 ? `${awayPct}%` : ""}
@@ -847,7 +847,7 @@ export function FootballMatchCard({
                               </div>
                               <span className="w-8 shrink-0 text-left text-xs tabular-nums text-muted-foreground">
                                 {homeDom ? (
-                                  <Home className="inline-block h-3 w-3 text-emerald-500/70" />
+                                  <Home className="inline-block h-3 w-3 text-[#7B3FA0]/70" />
                                 ) : (
                                   <PlaneTakeoff className="inline-block h-3 w-3 text-rose-500/70" />
                                 )}
@@ -881,7 +881,7 @@ export function FootballMatchCard({
             <div className="overflow-hidden rounded-lg border border-border/40">
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 border-b border-border/40 bg-muted/30 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 <span className="flex items-center gap-1 truncate">
-                  <Home className="h-3 w-3 shrink-0 text-emerald-500" />
+                  <Home className="h-3 w-3 shrink-0 text-[#7B3FA0]" />
                   <span className="truncate">{match.home.shortName || match.home.name}</span>
                 </span>
                 <span className="text-xs text-muted-foreground/40">vs</span>

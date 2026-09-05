@@ -197,9 +197,9 @@ export function MatchRow({
             <span className="text-[9px] leading-tight">{parisKickoff(entry.kickoff)}</span>
           </span>
           <div className="min-w-0 flex-1">
-            <TeamName side={entry.home} highlight={home.highlight} bg="bg-slate-700" />
+            <TeamName side={entry.home} highlight={home.highlight} bg="bg-[#EDE8F5]" />
             <div className="px-1 text-[8px] text-[#7B3FA0]/60">vs</div>
-            <TeamName side={entry.away} highlight={away.highlight} bg="bg-slate-700" />
+            <TeamName side={entry.away} highlight={away.highlight} bg="bg-[#EDE8F5]" />
           </div>
           <span
             className={cn(
@@ -252,7 +252,7 @@ export function FootballStrategyTop5Widget() {
   };
 
   return (
-    <section aria-label="Top 5 matchs par stratégie" className="border-b border-slate-800/80 pb-2">
+    <section aria-label="Top 5 matchs par stratégie" className="border-b border-[#E0D8F0]/80 pb-2">
       <div className="flex items-center pr-2.5">
         <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
           Top 5 matchs
@@ -267,7 +267,7 @@ export function FootballStrategyTop5Widget() {
         </h2>
         {/* Filtre temporel + bascule fenêtre L5/L10 (stats xG/buts) */}
         <div className="flex shrink-0 items-center gap-1">
-          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Période des matchs">
+          <div className="flex overflow-hidden rounded border border-[#E0D8F0]/60" role="group" aria-label="Période des matchs">
             {TIME_WINDOWS.map((w) => (
               <button
                 key={w.key}
@@ -286,7 +286,7 @@ export function FootballStrategyTop5Widget() {
               </button>
             ))}
           </div>
-          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
+          <div className="flex overflow-hidden rounded border border-[#E0D8F0]/60" role="group" aria-label="Fenêtre de forme">
           {(["l5", "l10"] as WindowKey[]).map((k) => (
             <button
               key={k}
@@ -313,11 +313,11 @@ export function FootballStrategyTop5Widget() {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 5 matchs"
-            className="h-8 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
+            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-emerald-500"
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>
-          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
             {STRATEGIES.map((s) => (
               <SelectItem key={s.key} value={s.key} className="text-xs">
                 <span aria-hidden>{s.emoji}</span> {s.label}

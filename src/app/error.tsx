@@ -46,7 +46,7 @@ export default function Error({
         )}
       </div>
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button onClick={reset} className="bg-emerald-600 hover:bg-emerald-700">
+        <Button onClick={reset} className="bg-[#7B3FA0] hover:bg-[#6B5B8D]">
           <RefreshCw className="mr-2 h-4 w-4" />
           {t("error.retry")}
         </Button>

@@ -85,7 +85,16 @@ export function countryFlag(input: string): string {
     'paraguay': 'PY', 'bolivia': 'BO', 'ecuador': 'EC', 'romania': 'RO',
     'hungary': 'HU', 'bulgaria': 'BG', 'slovakia': 'SK', 'slovenia': 'SI',
     'ireland': 'IE', 'iceland': 'IS', 'cyprus': 'CY', 'israel': 'IL',
-    'south africa': 'ZA', 'india': 'IN', 'canada': 'CA', 'new zealand': 'NZ',
+    'south africa': 'ZA', 'india': 'IN', 'canada': 'CA',     'new zealand': 'NZ',
+    'vietnam': 'VN',
+    'scotland': 'GB',
+    'wales': 'GB',
+    'usa': 'US',
+    'united states': 'US',
+    'south korea': 'KR',
+    'czech republic': 'CZ',
+    'czechia': 'CZ',
+    'south africa': 'ZA',
   };
   const code = MAP[input.toLowerCase()];
   if (!code) return '';

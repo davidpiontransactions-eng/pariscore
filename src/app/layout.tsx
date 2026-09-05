@@ -182,7 +182,7 @@ export default async function RootLayout({
         <LiquidGlassFilter />
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-emerald-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-[#7B3FA0] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
         >
           Aller au contenu principal
         </a>

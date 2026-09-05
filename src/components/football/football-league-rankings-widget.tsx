@@ -116,31 +116,31 @@ function PlayersPanel({
   return (
     <div className="px-2.5">
       {scopeNote && (
-        <p className="pb-1 text-[8.5px] leading-tight text-slate-600">
+        <p className="pb-1 text-[8.5px] leading-tight text-[#6B5B8D]">
           Joueurs : Global uniquement (source Understat — split Dom/Ext non couvert).
         </p>
       )}
       {isLoading ? (
-        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-400">
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-[#6B5B8D]">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
           Chargement…
         </div>
       ) : error ? (
-        <div className="flex items-start gap-1.5 px-2.5 py-3 text-[11px] leading-snug text-slate-400">
+        <div className="flex items-start gap-1.5 px-2.5 py-3 text-[11px] leading-snug text-[#6B5B8D]">
           <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
           {(error as Error).message}
         </div>
       ) : !rows?.length ? (
-        <p className="py-2 text-[11px] text-slate-400">Aucune donnée joueur pour cette saison.</p>
+        <p className="py-2 text-[11px] text-[#6B5B8D]">Aucune donnée joueur pour cette saison.</p>
       ) : (
         <>
           <ol className="space-y-px">
             {rows.map((r: PlayerRow, i) => (
               <li
                 key={r.name}
-                className="flex items-center gap-1.5 rounded px-0.5 py-0.5 hover:bg-slate-800/60"
+                className="flex items-center gap-1.5 rounded px-0.5 py-0.5 hover:bg-[#EDE8F5]"
               >
-                <span className="w-4 shrink-0 text-right font-mono text-[9px] tabular-nums text-slate-600">
+                <span className="w-4 shrink-0 text-right font-mono text-[9px] tabular-nums text-[#6B5B8D]">
                   {i + 1}
                 </span>
                 <span className="min-w-0 flex-1">
@@ -152,26 +152,26 @@ function PlayersPanel({
                         loading="lazy"
                         width={18}
                         height={18}
-                        className="h-[18px] w-[18px] shrink-0 rounded-full bg-slate-800 object-cover"
+                        className="h-[18px] w-[18px] shrink-0 rounded-full bg-[#EDE8F5] object-cover"
                       />
                     ) : (
                       <span
                         aria-hidden
-                        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-slate-800 text-[8px] font-bold text-slate-400"
+                        className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-[#EDE8F5] text-[8px] font-bold text-[#6B5B8D]"
                       >
                         {r.name.slice(0, 1).toUpperCase()}
                       </span>
                     )}
-                    <span className="truncate text-[10px] leading-tight text-slate-300">
+                    <span className="truncate text-[10px] leading-tight text-[#7B3FA0]">
                       {r.name}
                     </span>
                   </span>
-                  <span className="block truncate pl-[24px] text-[8px] leading-tight text-slate-400">
+                  <span className="block truncate pl-[24px] text-[8px] leading-tight text-[#6B5B8D]">
                     {r.team}
                   </span>
                 </span>
                 <span
-                  className="shrink-0 font-mono text-[8px] tabular-nums text-slate-600"
+                  className="shrink-0 font-mono text-[8px] tabular-nums text-[#6B5B8D]"
                   title="Matchs joués"
                 >
                   {r.games}j
@@ -191,7 +191,7 @@ function PlayersPanel({
               </li>
             ))}
           </ol>
-          <p className="pt-1 text-[8px] leading-tight text-slate-600">
+          <p className="pt-1 text-[8px] leading-tight text-[#6B5B8D]">
             {kind === "scorers" ? "Buts" : "Passes décisives"} · moyenne / match · source Understat · top 10
           </p>
         </>
@@ -330,13 +330,13 @@ export function FootballLeagueRankingsWidget() {
   );
 
   return (
-    <section aria-label="Classements championnat" className="border-b border-slate-800/80 pb-2">
+    <section aria-label="Classements championnat" className="border-b border-[#E0D8F0]/80 pb-2">
       <div className="flex items-center justify-between pr-2.5">
-        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <h2 className="px-2.5 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-[#6B5B8D]">
           Classements
         </h2>
         {/* Vue : équipes ou joueurs */}
-        <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Vue">
+        <div className="flex overflow-hidden rounded border border-[#E0D8F0]/60" role="group" aria-label="Vue">
           {([
             { key: "teams", label: "Équipes" },
             { key: "scorers", label: "Buteurs" },
@@ -351,7 +351,7 @@ export function FootballLeagueRankingsWidget() {
                 "px-1.5 py-0.5 text-[9px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 view === v.key
                   ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-transparent text-slate-400 hover:text-slate-300",
+                  : "bg-transparent text-[#6B5B8D] hover:text-[#7B3FA0]",
               )}
             >
               {v.label}
@@ -365,11 +365,11 @@ export function FootballLeagueRankingsWidget() {
           <SelectTrigger
             size="sm"
             aria-label="Championnat"
-            className="h-8 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
+            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
           >
             <SelectValue placeholder="Choisir un championnat…" />
           </SelectTrigger>
-          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
             {LEAGUES.map((l) => {
               const flag = getFlagAssets(l.cc);
               return (
@@ -392,7 +392,7 @@ export function FootballLeagueRankingsWidget() {
         </Select>
         {view === "teams" && (
         <div className="flex items-center justify-between gap-1">
-          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Contexte">
+          <div className="flex overflow-hidden rounded border border-[#E0D8F0]/60" role="group" aria-label="Contexte">
           {SCOPES.map((s) => (
             <button
               key={s.key}
@@ -403,7 +403,7 @@ export function FootballLeagueRankingsWidget() {
                 "px-1.5 py-0.5 text-[9px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 scope === s.key
                   ? "bg-emerald-500/20 text-emerald-300"
-                  : "bg-transparent text-slate-400 hover:text-slate-300",
+                  : "bg-transparent text-[#6B5B8D] hover:text-[#7B3FA0]",
               )}
             >
               {s.label}
@@ -411,7 +411,7 @@ export function FootballLeagueRankingsWidget() {
           ))}
           </div>
           {/* Fenêtre de forme : N derniers matchs (toutes saisons) ou saison entière */}
-          <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Fenêtre de forme">
+          <div className="flex overflow-hidden rounded border border-[#E0D8F0]/60" role="group" aria-label="Fenêtre de forme">
             {FORM_WINDOWS.map((f) => (
               <button
                 key={f.key}
@@ -427,7 +427,7 @@ export function FootballLeagueRankingsWidget() {
                   "px-1.5 py-0.5 font-mono text-[9px] font-bold transition-colors",
                   formKey === f.key
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : "bg-transparent text-slate-400 hover:text-slate-300",
+                    : "bg-transparent text-[#6B5B8D] hover:text-[#7B3FA0]",
                 )}
               >
                 {f.label}
@@ -439,10 +439,10 @@ export function FootballLeagueRankingsWidget() {
         {/* Filtre saison — segmenté sur les saisons disponibles */}
         {sortedSeasons.length > 0 && (
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="text-[9px] font-semibold uppercase tracking-wider text-[#6B5B8D]">
               Saison
             </span>
-            <div className="flex overflow-hidden rounded border border-slate-700/60" role="group" aria-label="Saison">
+            <div className="flex overflow-hidden rounded border border-[#E0D8F0]/60" role="group" aria-label="Saison">
               {sortedSeasons.map((s) => (
                 <button
                   key={s}
@@ -454,7 +454,7 @@ export function FootballLeagueRankingsWidget() {
                     "px-1.5 py-0.5 font-mono text-[9px] font-bold transition-colors",
                     effectiveSeason === s
                       ? "bg-emerald-500/20 text-emerald-300"
-                      : "bg-transparent text-slate-400 hover:text-slate-300",
+                      : "bg-transparent text-[#6B5B8D] hover:text-[#7B3FA0]",
                   )}
                 >
                   {s.slice(2)}
@@ -462,7 +462,7 @@ export function FootballLeagueRankingsWidget() {
               ))}
             </div>
             {formKey !== "full" && prevSeason && (
-              <span className="text-[8.5px] leading-tight text-slate-600">
+              <span className="text-[8.5px] leading-tight text-[#6B5B8D]">
                 + complément {prevSeason} si besoin
               </span>
             )}
@@ -478,11 +478,11 @@ export function FootballLeagueRankingsWidget() {
           <SelectTrigger
             size="sm"
             aria-label="Marché statistique"
-            className="h-8 w-full rounded-lg border-slate-700/80 bg-slate-900/90 text-xs font-medium text-slate-200 focus:ring-1 focus:ring-emerald-500"
+            className="h-8 w-full rounded-lg border-[#E0D8F0]/80 bg-white/90 text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
           >
             <SelectValue placeholder="Choisir un marché…" />
           </SelectTrigger>
-          <SelectContent className="border-slate-800 bg-slate-900 text-slate-200">
+          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
             {MARKETS.map((m) => (
               <SelectItem key={m.key} value={m.key} className="text-xs">
                 {m.title}
@@ -496,19 +496,19 @@ export function FootballLeagueRankingsWidget() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-slate-400">
+        <div className="flex items-center justify-center gap-1.5 px-2.5 py-4 text-[11px] text-[#6B5B8D]">
           <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
           Chargement…
         </div>
       ) : error || !isReady ? (
-        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-slate-400">
+        <div className="flex items-center gap-1.5 px-2.5 py-3 text-[11px] text-[#6B5B8D]">
           <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
           Classements indisponibles.
         </div>
       ) : (
         <div className="px-2.5">
           {!rawRows?.length ? (
-            <p className="py-2 text-[11px] text-slate-400">
+            <p className="py-2 text-[11px] text-[#6B5B8D]">
               {market === "xgFor" || market === "xgAgainst"
                 ? "xG indisponible pour cette ligue (couverture Understat limitée)."
                 : "Pas de données pour cette saison."}
@@ -521,7 +521,7 @@ export function FootballLeagueRankingsWidget() {
             >
               <table className="border-collapse text-[9px]">
                 <thead>
-                  <tr className="text-slate-600">
+                  <tr className="text-[#6B5B8D]">
                     <th scope="col" className="w-4 py-0.5 pr-1 text-right font-medium">#</th>
                     <th scope="col" className="w-[104px] py-0.5 text-left font-medium">Équipe</th>
                     <th scope="col" className="py-0.5 px-0.5 text-right font-medium" title="Matchs joués">J</th>
@@ -546,23 +546,23 @@ export function FootballLeagueRankingsWidget() {
                     return (
                       <tr
                         key={teamName}
-                        className="border-t border-slate-800/50 hover:bg-slate-800/60"
+                        className="border-t border-[#E0D8F0]/50 hover:bg-[#EDE8F5]"
                       >
-                        <td className="py-0.5 pr-1 text-right font-mono tabular-nums text-slate-600">
+                        <td className="py-0.5 pr-1 text-right font-mono tabular-nums text-[#6B5B8D]">
                           {i + 1}
                         </td>
-                        <td className="w-[104px] truncate py-0.5 text-[10px] text-slate-300">
+                        <td className="w-[104px] truncate py-0.5 text-[10px] text-[#7B3FA0]">
                           {teamName}
                         </td>
-                        <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
+                        <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-[#6B5B8D]">
                           {row.gp}
                         </td>
                         {isXgRows(rawRows) ? (
                           <>
-                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-300">
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-[#7B3FA0]">
                               {num1((row as XgRankRow).xgFor)}
                             </td>
-                            <td className="rounded bg-slate-800 py-0.5 text-right font-mono tabular-nums text-slate-200">
+                            <td className="rounded bg-[#EDE8F5] py-0.5 text-right font-mono tabular-nums text-[#1A1145]">
                               {def.fmt(
                                 market === "xgAgainst"
                                   ? (row as XgRankRow).xgAgainst
@@ -572,14 +572,14 @@ export function FootballLeagueRankingsWidget() {
                           </>
                         ) : (
                           <>
-                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-[#6B5B8D]">
                               {num1(st?.ppm)}
                             </td>
-                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-slate-400">
+                            <td className="py-0.5 px-0.5 text-right font-mono tabular-nums text-[#6B5B8D]">
                               {num1(st?.gfPg)}
                             </td>
                             {/* Colonne de tri = métrique active (toujours visible) */}
-                            <td className="rounded bg-slate-800 py-0.5 text-right font-mono tabular-nums text-slate-200">
+                            <td className="rounded bg-[#EDE8F5] py-0.5 text-right font-mono tabular-nums text-[#1A1145]">
                               {def.fmt((row as FdRankRow).value)}
                             </td>
                           </>
@@ -591,7 +591,7 @@ export function FootballLeagueRankingsWidget() {
               </table>
             </div>
           )}
-          <p className="pt-1 text-[8px] leading-tight text-slate-600">
+          <p className="pt-1 text-[8px] leading-tight text-[#6B5B8D]">
             {formKey === "full" ? (
               <>Source : football-data.co.uk{xgKeys.has(market) ? " · xG : Understat" : ""} · classement complet trié par {def.short}</>
             ) : (
