@@ -1,4 +1,4 @@
-// Adapter Cycling — normalise /api/cycling → format TopLeague
+// Adapter Cycling — normalise /api/cycling → format TopLeague (stage bets)
 import type { SportAdapter, TopLeague } from './types';
 
 export const cyclingAdapter: SportAdapter = {
@@ -13,18 +13,26 @@ export const cyclingAdapter: SportAdapter = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw: any[] = data.riders || data.standings || (Array.isArray(data) ? data : []);
-    const matches = raw.slice(0, limit).map((m: any, i: number) => ({
-      id: String(m.id || i),
-      home: { name: m.name || m.rider || `Rider ${i + 1}`, rank: m.rank || i + 1 },
-      away: { name: m.team || m.teamName || '' },
-      kickoff: '',
+    const bets: any[] = (data.bets || []).slice(0, limit).map((b: any, i: number) => ({
+      id: `cycling-bet-${i}`,
+      home: { name: b.selection || b.label || `Rider ${i + 1}` },
+      away: { name: b.type || 'Stage Winner' },
+      kickoff: data.date || '',
       status: 'scheduled' as const,
-      metric: m.points != null ? { label: 'Points', value: m.points } : undefined,
+      metric: b.prob != null
+        ? { label: 'Prob', value: `${(b.prob * 100).toFixed(1)}%` }
+        : undefined,
+      badge: b.edge && b.edge > 0
+        ? { label: `Edge ${b.edge.toFixed(1)}%`, color: '#059669' }
+        : undefined,
     }));
 
-    return matches.length
-      ? [{ league: '🚴 Cycling', leagueIcon: '🚴', leagueColor: '#059669', sport: 'cycling', matches }]
+    const stageLabel = data.race
+      ? `${data.race} — ${data.route || ''} (Stage ${data.stage || '?'})`
+      : '🚴 Cycling';
+
+    return bets.length
+      ? [{ league: stageLabel, leagueIcon: '🚴', leagueColor: '#059669', sport: 'cycling', matches: bets }]
       : [];
   },
 };

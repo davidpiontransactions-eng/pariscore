@@ -12,15 +12,33 @@ export const mmaAdapter: SportAdapter = {
     if (!res.ok) return [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await res.json();
+    // L'API retourne un tableau d'événements, chaque événement a un tableau de fights
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw: any[] = data.fights || data.matches || (Array.isArray(data) ? data : []);
-    const matches = raw.slice(0, limit).map((m: any) => ({
-      id: String(m.id || ''),
-      home: { name: m.fighter1 || m.fighterA || m.home?.name || 'Fighter 1' },
-      away: { name: m.fighter2 || m.fighterB || m.away?.name || 'Fighter 2' },
-      kickoff: m.scheduledAt || m.date || '',
-      status: m.status === 'live' ? 'live' : 'scheduled',
-    }));
+    const events: any[] = Array.isArray(data) ? data : [];
+    const matches: ReturnType<typeof mmaAdapter.fetch> extends Promise<infer R> ? R extends Promise<infer T> ? T extends (infer U)[] ? U[] : never : never : never[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const flat: any[] = [];
+    for (const ev of events) {
+      for (const f of ev.fights || []) {
+        flat.push({ ...f, event_name: ev.event_name });
+      }
+    }
+
+    for (const f of flat.slice(0, limit)) {
+      matches.push({
+        id: String(f.id || f.fighter_a + f.fighter_b),
+        home: { name: f.fighter_a || 'Fighter A' },
+        away: { name: f.fighter_b || 'Fighter B' },
+        kickoff: f.commence_time || '',
+        status: f.status === 'live' ? 'live' : 'scheduled',
+        odds: f.prob_a != null
+          ? { home: String(f.prob_a), away: String(f.prob_b) }
+          : undefined,
+        badge: f.event_name
+          ? { label: f.event_name, color: '#DC2626' }
+          : undefined,
+      });
+    }
 
     return matches.length
       ? [{ league: 'MMA / UFC', leagueIcon: '🥊', leagueColor: '#DC2626', sport: 'mma', matches }]

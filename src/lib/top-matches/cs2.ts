@@ -16,8 +16,8 @@ export const cs2Adapter: SportAdapter = {
     const raw: any[] = data.matches || (Array.isArray(data) ? data : []);
     const matches = raw.slice(0, limit).map((m: any) => ({
       id: String(m.id || ''),
-      home: { name: m.team1 || m.home?.name || 'Team 1' },
-      away: { name: m.team2 || m.away?.name || 'Team 2' },
+      home: { name: m.team1?.name || m.team1 || 'Team 1' },
+      away: { name: m.team2?.name || m.team2 || 'Team 2' },
       kickoff: m.scheduledAt || m.date || '',
       status: m.status === 'live' ? 'live' : 'scheduled',
       badge: m.isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
