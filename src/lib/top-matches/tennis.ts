@@ -68,11 +68,15 @@ export const tennisAdapter: SportAdapter = {
 
     const groups: TopLeague[] = [];
     for (const [tourney, tourneyMatches] of byTourney) {
+      // Extraire le pays du nom du tournoi (ex: "Shanghai, China" → "China")
+      const parts = tourney.split(',').map((s: string) => s.trim());
+      const country = parts.length > 1 ? parts[parts.length - 1] : undefined;
       groups.push({
         league: tourney,
         leagueIcon: '🎾',
         leagueColor: getSurfaceColor(tourney),
         sport: 'tennis',
+        country,
         matches: tourneyMatches,
       });
     }

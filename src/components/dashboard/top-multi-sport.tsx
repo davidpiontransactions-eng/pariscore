@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { RefreshCw, Star } from "lucide-react";
+import { countryFlag } from "@/lib/top-matches/types";
 
 /* ─── Types ─── */
 interface TopTeam {
@@ -41,6 +42,8 @@ interface TopLeague {
   leagueIcon: string;
   leagueColor: string;
   sport: string;
+  country?: string;
+  countryCode?: string;
   matches: TopMatch[];
 }
 interface TopMatchResponse {
@@ -48,14 +51,13 @@ interface TopMatchResponse {
   generated_at: string;
 }
 
-type SportType = "all" | "football" | "tennis" | "nba" | "wnba" | "f1" | "cs2" | "mma" | "cycling";
+type SportType = "all" | "football" | "tennis" | "basket" | "f1" | "cs2" | "mma" | "cycling";
 
 const SPORT_TABS: { id: SportType; label: string; icon: string }[] = [
   { id: "all", label: "Tous", icon: "🔥" },
   { id: "football", label: "Football", icon: "⚽" },
   { id: "tennis", label: "Tennis", icon: "🎾" },
-  { id: "nba", label: "NBA", icon: "🏀" },
-  { id: "wnba", label: "WNBA", icon: "🏀" },
+  { id: "basket", label: "Basket", icon: "🏀" },
   { id: "f1", label: "F1", icon: "🏎️" },
   { id: "cs2", label: "CS2", icon: "🎮" },
   { id: "mma", label: "MMA", icon: "🥊" },
@@ -270,6 +272,7 @@ function LeagueCard({
   favorites: Set<string>;
   onToggleFavorite: (id: string) => void;
 }) {
+  const flag = group.country ? countryFlag(group.country) : '';
   return (
     <div className="rounded-xl overflow-hidden shadow-sm border border-[#E0D8F0] bg-white">
       {/* Header */}
@@ -279,6 +282,9 @@ function LeagueCard({
       >
         <span>{group.leagueIcon}</span>
         <span>{group.league}</span>
+        {flag && (
+          <span className="text-[11px] ml-1 opacity-90">{flag} {group.country}</span>
+        )}
         <div className="ml-auto flex gap-6 text-[11px] font-semibold opacity-80">
           <span className="text-white">1</span>
           <span className="text-white">N</span>

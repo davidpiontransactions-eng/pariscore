@@ -1,5 +1,6 @@
 // Adapter football — normalise /api/football/matches → format TopLeague
 import type { SportAdapter, TopLeague, TopMatch } from './types';
+import { countryFlag } from './types';
 
 const LEAGUE_COLORS: Record<string, string> = {
   'champions league': '#6C3CB4',
@@ -45,12 +46,12 @@ export const footballAdapter: SportAdapter = {
     future.sort((a: any, b: any) => new Date(a.scheduledAt || 0).getTime() - new Date(b.scheduledAt || 0).getTime());
     const sliced = future.slice(0, limit * 3);
 
-    const byLeague = new Map<string, TopMatch[]>();
+    const byLeague = new Map<string, { matches: TopMatch[]; country?: string }>();
     for (const m of sliced) {
       const league = m.league?.name || 'Autre';
-      if (!byLeague.has(league)) byLeague.set(league, []);
-      if (byLeague.get(league)!.length >= limit) continue;
-      byLeague.get(league)!.push({
+      if (!byLeague.has(league)) byLeague.set(league, { matches: [], country: m.league?.country });
+      if (byLeague.get(league)!.matches.length >= limit) continue;
+      byLeague.get(league)!.matches.push({
         id: String(m.id || ''),
         home: {
           name: m.home?.name || m.home?.shortName || 'Home',
@@ -73,13 +74,14 @@ export const footballAdapter: SportAdapter = {
     }
 
     const groups: TopLeague[] = [];
-    for (const [league, leagueMatches] of byLeague) {
+    for (const [league, data] of byLeague) {
       groups.push({
         league,
         leagueIcon: '⚽',
         leagueColor: getLeagueColor(league),
         sport: 'football',
-        matches: leagueMatches,
+        country: data.country,
+        matches: data.matches,
       });
     }
     return groups;

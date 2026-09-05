@@ -27,9 +27,17 @@ export async function fetchTopMatches(
   limit: number,
   timeframe: string,
 ): Promise<TopLeague[]> {
-  const sports = sport === 'all' ? ALL_SPORTS : [sport];
+  // "basket" regroupe NBA + WNBA
+  let sports: string[];
+  if (sport === 'all') {
+    sports = ALL_SPORTS;
+  } else if (sport === 'basket') {
+    sports = ['nba', 'wnba'];
+  } else {
+    sports = [sport];
+  }
   const results = await Promise.allSettled(
-    sports.map((s) => adapters[s].fetch(limit, timeframe)),
+    sports.map((s) => adapters[s as SportType].fetch(limit, timeframe)),
   );
   const groups: TopLeague[] = [];
   for (const r of results) {

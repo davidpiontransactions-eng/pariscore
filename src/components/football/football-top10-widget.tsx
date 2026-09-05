@@ -89,7 +89,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   return (
     <section
       aria-label="Top 10 matchs par stratégie"
-      className="mb-4 rounded-2xl border border-[#E0D8F0] p-5"
+      className="mb-4 w-full rounded-2xl border border-[#E0D8F0] p-5"
       style={{ background: "#F0ECF8" }}
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
