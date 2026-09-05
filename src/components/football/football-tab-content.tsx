@@ -4,10 +4,7 @@ import { useState, useMemo, useId, useCallback, useEffect, useRef, lazy, Suspens
 import { useTranslations } from "next-intl";
 import {
   Trophy,
-  RefreshCw,
   AlertCircle,
-  LayoutGrid,
-  List,
   Sparkles,
   TicketPercent,
   Gauge,
@@ -67,7 +64,7 @@ type FootFilter = StrategyFilter;
 
 export function FootballTabContent() {
   const t = useTranslations("common");
-  const { data, error, isLoading, isValidating, mutate } = useFootballMatches();
+  const { data, error, isLoading, mutate } = useFootballMatches();
   const { favorites, toggle: toggleFavorite } = useFavorites();
 
   // Ligue / fenêtre horaire / mode Live-Pre-match : source de vérité unique =
@@ -286,47 +283,6 @@ export function FootballTabContent() {
         </div>
         </BentoTile>
       )}
-      {/* View mode toggle + refresh */}
-      <BentoTile size="wide" variant="glass">
-      <div className="flex items-center justify-between">
-        <div className="flex rounded-lg border border-border/60 bg-muted/30 p-1">
-          <button
-            onClick={() => setViewMode("cards")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              viewMode === "cards"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <LayoutGrid className="h-3.5 w-3.5" />
-            Cartes
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              viewMode === "list"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <List className="h-3.5 w-3.5" />
-            Liste
-          </button>
-        </div>
-        <button
-          onClick={() => mutate()}
-          disabled={isValidating}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-        >
-          <RefreshCw className={cn("h-3 w-3", isValidating && "animate-spin")} />
-          Actualiser
-        </button>
-      </div>
-      </BentoTile>
 
       {/* Panneaux AI Pricing (conditionnels) */}
       {showBacktest && <ReliabilityScore state={backtestState} className="mb-6" />}
