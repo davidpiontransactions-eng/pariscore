@@ -166,16 +166,18 @@ export function HeroSection({
   const showBet = highlightedBet && totalValueBets > 0;
 
   return (
-    <motion.section
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
+    <section
       className={cn(
         "relative overflow-hidden rounded-2xl border border-white/[0.06]",
         "bg-gradient-to-b from-[#0c1220] via-[#0f1628] to-[#0c1220]",
         className,
       )}
     >
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
       {/* Grid pattern */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
@@ -369,6 +371,6 @@ export function HeroSection({
           )}
         </div>
       </div>
-    </motion.section>
+    </div></section>
   );
 }
