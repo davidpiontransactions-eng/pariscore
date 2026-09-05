@@ -31,8 +31,6 @@ const nextConfig: NextConfig = {
       "date-fns",
       "zod",
     ],
-    // Optimisation CSS (Tailwind v4)
-    cssChunking: "loose",
     workerThreads: true,
   },
   
