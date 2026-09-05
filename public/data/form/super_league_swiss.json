@@ -4,7 +4,7 @@
     "leagueId": "super_league_swiss",
     "leagueName": "Switzerland",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-04T08:58:37.277423Z",
+    "lastUpdated": "2026-09-05T08:29:38.663737Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 12,
     "window": 8,
@@ -13,12 +13,12 @@
   },
   "home": [
     {
-      "teamName": "St. Gallen",
+      "teamName": "Bsc Young Boys",
       "gp": 5,
-      "w": 2,
+      "w": 3,
       "d": 2,
-      "l": 1,
-      "gf": 10,
+      "l": 0,
+      "gf": 16,
       "ga": 9
     },
     {
@@ -31,13 +31,22 @@
       "ga": 9
     },
     {
-      "teamName": "Thun",
+      "teamName": "Grasshopper",
       "gp": 5,
-      "w": 3,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 6,
+      "ga": 10
+    },
+    {
+      "teamName": "Fc Basel",
+      "gp": 5,
+      "w": 2,
       "d": 1,
       "l": 1,
-      "gf": 13,
-      "ga": 9
+      "gf": 9,
+      "ga": 8
     },
     {
       "teamName": "Lugano",
@@ -49,39 +58,21 @@
       "ga": 3
     },
     {
-      "teamName": "Grasshopper",
+      "teamName": "St. Gallen",
       "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 10
-    },
-    {
-      "teamName": "Servette",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 12,
-      "ga": 5
-    },
-    {
-      "teamName": "Bsc Young Boys",
-      "gp": 5,
-      "w": 3,
+      "w": 2,
       "d": 2,
-      "l": 0,
-      "gf": 16,
+      "l": 1,
+      "gf": 10,
       "ga": 9
     },
     {
-      "teamName": "Luzern",
+      "teamName": "Fc Zurich",
       "gp": 5,
-      "w": 3,
+      "w": 2,
       "d": 0,
-      "l": 2,
-      "gf": 9,
+      "l": 3,
+      "gf": 6,
       "ga": 8
     },
     {
@@ -94,22 +85,31 @@
       "ga": 12
     },
     {
-      "teamName": "Fc Basel",
+      "teamName": "Luzern",
       "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 1,
+      "w": 3,
+      "d": 0,
+      "l": 2,
       "gf": 9,
       "ga": 8
     },
     {
-      "teamName": "Fc Zurich",
+      "teamName": "Servette",
       "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 3,
-      "gf": 6,
-      "ga": 8
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 12,
+      "ga": 5
+    },
+    {
+      "teamName": "Thun",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 13,
+      "ga": 9
     },
     {
       "teamName": "Sion",
@@ -123,13 +123,13 @@
   ],
   "away": [
     {
-      "teamName": "St. Gallen",
+      "teamName": "Bsc Young Boys",
       "gp": 5,
-      "w": 2,
+      "w": 3,
       "d": 2,
-      "l": 0,
-      "gf": 11,
-      "ga": 6
+      "l": 1,
+      "gf": 16,
+      "ga": 8
     },
     {
       "teamName": "Lausanne Sport",
@@ -141,24 +141,6 @@
       "ga": 6
     },
     {
-      "teamName": "Thun",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 12,
-      "ga": 11
-    },
-    {
-      "teamName": "Lugano",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 9,
-      "ga": 5
-    },
-    {
       "teamName": "Grasshopper",
       "gp": 5,
       "w": 1,
@@ -166,42 +148,6 @@
       "l": 3,
       "gf": 6,
       "ga": 11
-    },
-    {
-      "teamName": "Servette",
-      "gp": 5,
-      "w": 1,
-      "d": 3,
-      "l": 1,
-      "gf": 9,
-      "ga": 8
-    },
-    {
-      "teamName": "Bsc Young Boys",
-      "gp": 5,
-      "w": 3,
-      "d": 2,
-      "l": 1,
-      "gf": 16,
-      "ga": 8
-    },
-    {
-      "teamName": "Luzern",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 10,
-      "ga": 6
-    },
-    {
-      "teamName": "Winterthur",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 4,
-      "gf": 7,
-      "ga": 14
     },
     {
       "teamName": "Fc Basel",
@@ -213,6 +159,24 @@
       "ga": 9
     },
     {
+      "teamName": "Lugano",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 9,
+      "ga": 5
+    },
+    {
+      "teamName": "St. Gallen",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 0,
+      "gf": 11,
+      "ga": 6
+    },
+    {
       "teamName": "Fc Zurich",
       "gp": 5,
       "w": 1,
@@ -220,6 +184,42 @@
       "l": 4,
       "gf": 4,
       "ga": 10
+    },
+    {
+      "teamName": "Winterthur",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 4,
+      "gf": 7,
+      "ga": 14
+    },
+    {
+      "teamName": "Luzern",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 1,
+      "gf": 10,
+      "ga": 6
+    },
+    {
+      "teamName": "Servette",
+      "gp": 5,
+      "w": 1,
+      "d": 3,
+      "l": 1,
+      "gf": 9,
+      "ga": 8
+    },
+    {
+      "teamName": "Thun",
+      "gp": 5,
+      "w": 3,
+      "d": 0,
+      "l": 2,
+      "gf": 12,
+      "ga": 11
     },
     {
       "teamName": "Sion",

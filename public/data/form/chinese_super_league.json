@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-09-04T08:58:54.354628Z",
+    "lastUpdated": "2026-09-05T08:29:58.138710Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,24 +13,6 @@
   },
   "home": [
     {
-      "teamName": "Shandong T.",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 21,
-      "ga": 13
-    },
-    {
-      "teamName": "Beijing Guoan",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 18,
-      "ga": 9
-    },
-    {
       "teamName": "Qingdao West C.",
       "gp": 8,
       "w": 4,
@@ -38,6 +20,15 @@
       "l": 0,
       "gf": 13,
       "ga": 6
+    },
+    {
+      "teamName": "Zhejiang",
+      "gp": 8,
+      "w": 5,
+      "d": 1,
+      "l": 2,
+      "gf": 21,
+      "ga": 15
     },
     {
       "teamName": "Yunnan Yukun",
@@ -49,43 +40,25 @@
       "ga": 12
     },
     {
-      "teamName": "Zhejiang",
+      "teamName": "Beijing Guoan",
       "gp": 8,
       "w": 5,
-      "d": 1,
-      "l": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 18,
+      "ga": 9
+    },
+    {
+      "teamName": "Shandong T.",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
       "gf": 21,
-      "ga": 15
+      "ga": 13
     }
   ],
   "away": [
-    {
-      "teamName": "Henan Sl",
-      "gp": 8,
-      "w": 3,
-      "d": 2,
-      "l": 3,
-      "gf": 13,
-      "ga": 17
-    },
-    {
-      "teamName": "Beijing Guoan",
-      "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 18,
-      "ga": 11
-    },
-    {
-      "teamName": "Chengdu",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 11,
-      "ga": 10
-    },
     {
       "teamName": "Qingdao West C.",
       "gp": 8,
@@ -103,6 +76,33 @@
       "l": 2,
       "gf": 15,
       "ga": 12
+    },
+    {
+      "teamName": "Henan Sl",
+      "gp": 8,
+      "w": 3,
+      "d": 2,
+      "l": 3,
+      "gf": 13,
+      "ga": 17
+    },
+    {
+      "teamName": "Chengdu",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 11,
+      "ga": 10
+    },
+    {
+      "teamName": "Beijing Guoan",
+      "gp": 8,
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 18,
+      "ga": 11
     }
   ]
 }

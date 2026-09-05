@@ -4,7 +4,7 @@
     "leagueId": "j1_league",
     "leagueName": "Japan",
     "season": "2026/27",
-    "lastUpdated": "2026-09-04T08:58:56.928595Z",
+    "lastUpdated": "2026-09-05T08:30:00.949110Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -20,24 +20,6 @@
       "l": 0,
       "gf": 5,
       "ga": 1
-    },
-    {
-      "teamName": "Machida Zelvia",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 5,
-      "ga": 2
-    },
-    {
-      "teamName": "Kashima Antlers",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 5,
-      "ga": 3
     },
     {
       "teamName": "S. Hiroshima",
@@ -56,27 +38,27 @@
       "l": 0,
       "gf": 6,
       "ga": 3
-    }
-  ],
-  "away": [
+    },
     {
       "teamName": "Machida Zelvia",
-      "gp": 3,
+      "gp": 2,
       "w": 2,
-      "d": 1,
+      "d": 0,
       "l": 0,
-      "gf": 10,
+      "gf": 5,
       "ga": 2
     },
     {
       "teamName": "Kashima Antlers",
-      "gp": 3,
+      "gp": 2,
       "w": 2,
       "d": 0,
-      "l": 1,
-      "gf": 8,
-      "ga": 7
-    },
+      "l": 0,
+      "gf": 5,
+      "ga": 3
+    }
+  ],
+  "away": [
     {
       "teamName": "Vissel Kobe",
       "gp": 3,
@@ -103,6 +85,24 @@
       "l": 0,
       "gf": 6,
       "ga": 3
+    },
+    {
+      "teamName": "Machida Zelvia",
+      "gp": 3,
+      "w": 2,
+      "d": 1,
+      "l": 0,
+      "gf": 10,
+      "ga": 2
+    },
+    {
+      "teamName": "Kashima Antlers",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 8,
+      "ga": 7
     }
   ]
 }
