@@ -31,7 +31,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: process.env.NODE_ENV !== "production",
   },
-  compress: true,
   async headers() {
     return [
       {
