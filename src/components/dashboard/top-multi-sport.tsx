@@ -354,8 +354,8 @@ export function TopMultiSport() {
   // Initial fetch + polling
   useEffect(() => {
     setLoading(true);
-    fetchData(sport);
-    pollRef.current = setInterval(() => fetchData(sport), POLL_MS);
+    fetchData();
+    pollRef.current = setInterval(() => fetchData(), POLL_MS);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
@@ -382,25 +382,7 @@ export function TopMultiSport() {
             <span className="text-xs text-[#7B3FA0] font-mono">{totalMatches} matchs</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {/* Sport tabs */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-none">
-            {SPORT_TABS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleSportChange(t.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors",
-                  sport === t.id
-                    ? "bg-[#7B3FA0] text-white"
-                    : "bg-white text-[#7B3FA0] hover:bg-[#EDE8F5]"
-                )}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
-          </div>
-          {/* Refresh */}
+        {/* Refresh */}
           <button
             onClick={handleRefresh}
             className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#7B3FA0] hover:bg-[#EDE8F5] transition-colors"
