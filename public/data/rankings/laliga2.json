@@ -4,7 +4,7 @@
     "leagueId": "laliga2",
     "leagueName": "Spain2",
     "season": "2026-27",
-    "lastUpdated": "2026-09-04T08:45:35.268761Z",
+    "lastUpdated": "2026-09-05T06:53:38.631997Z",
     "source": "soccerstats.com",
     "teamCount": 22,
     "partial": false
@@ -35,13 +35,6 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Las Palmas",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
-        "teamId": "",
         "teamName": "Leganes",
         "value": 3.0,
         "played": 1
@@ -54,21 +47,28 @@
         "played": 1
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Girona",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 6,
         "teamId": "",
         "teamName": "Burgos",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 6,
+        "teamId": "",
+        "teamName": "Las Palmas",
+        "value": 2.0,
+        "played": 2
+      },
+      {
+        "rank": 6,
         "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 2.0,
@@ -184,75 +184,75 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Las Palmas",
+        "value": 4.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Almeria",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Granada",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Las Palmas",
-        "value": 3.0,
-        "played": 1
-      },
-      {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Leganes",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Sabadell",
         "value": 3.0,
         "played": 1
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Tenerife",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Cordoba",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 5,
+        "rank": 6,
         "teamId": "",
         "teamName": "Eibar",
         "value": 3.0,
@@ -368,14 +368,14 @@
       {
         "rank": 8,
         "teamId": "",
-        "teamName": "Granada",
+        "teamName": "Las Palmas",
         "value": 2.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 8,
         "teamId": "",
-        "teamName": "Las Palmas",
+        "teamName": "Granada",
         "value": 2.0,
         "played": 1
       },
@@ -533,7 +533,7 @@
         "teamId": "",
         "teamName": "Las Palmas",
         "value": 1.0,
-        "played": 1
+        "played": 2
       },
       {
         "rank": 9,
@@ -673,6 +673,13 @@
       {
         "rank": 6,
         "teamId": "",
+        "teamName": "Las Palmas",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 6,
+        "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 1.0,
         "played": 2
@@ -683,13 +690,6 @@
         "teamName": "Celta Vigo B",
         "value": 1.0,
         "played": 2
-      },
-      {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Las Palmas",
-        "value": 1.0,
-        "played": 1
       },
       {
         "rank": 6,
@@ -808,6 +808,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Las Palmas",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 1.0,
         "played": 2
@@ -839,13 +846,6 @@
         "teamName": "Celta Vigo B",
         "value": 1.0,
         "played": 2
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Las Palmas",
-        "value": 1.0,
-        "played": 1
       },
       {
         "rank": 2,
@@ -964,6 +964,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Las Palmas",
+        "value": 1.0,
+        "played": 2
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 1.0,
         "played": 2
@@ -990,105 +997,98 @@
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Mallorca",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Fc Andorra",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Almeria",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Granada",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Las Palmas",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Leganes",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Sabadell",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Tenerife",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Cordoba",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Eibar",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 0.0,
         "played": 0
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 0.0,
         "played": 1
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Albacete",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Ceuta",
         "value": 0.0,
@@ -1120,6 +1120,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Las Palmas",
+        "value": 0.0,
+        "played": 2
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Sporting Gijon",
         "value": 0.0,
         "played": 2
@@ -1135,13 +1142,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Granada",
-        "value": 0.0,
-        "played": 1
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Las Palmas",
         "value": 0.0,
         "played": 1
       },
@@ -1304,11 +1304,11 @@
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 8,
         "teamId": "",
         "teamName": "Leganes",
-        "value": 2.0,
-        "played": 2
+        "value": 1.67,
+        "played": 3
       },
       {
         "rank": 9,
@@ -1420,21 +1420,21 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Leganes",
+        "value": 5.0,
+        "played": 3
+      },
+      {
+        "rank": 3,
+        "teamId": "",
         "teamName": "Granada",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Sociedad B",
-        "value": 4.0,
-        "played": 2
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Leganes",
         "value": 4.0,
         "played": 2
       },
@@ -1606,7 +1606,7 @@
         "teamId": "",
         "teamName": "Leganes",
         "value": 2.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 6,
@@ -1767,14 +1767,14 @@
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "Granada",
+        "teamName": "Leganes",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 6,
         "teamId": "",
-        "teamName": "Leganes",
+        "teamName": "Granada",
         "value": 1.0,
         "played": 2
       },
@@ -1902,14 +1902,14 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Real Sociedad B",
+        "teamName": "Leganes",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Leganes",
+        "teamName": "Real Sociedad B",
         "value": 1.0,
         "played": 2
       },
@@ -2044,6 +2044,13 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Leganes",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Granada",
         "value": 1.0,
         "played": 2
@@ -2052,13 +2059,6 @@
         "rank": 2,
         "teamId": "",
         "teamName": "Real Sociedad B",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Leganes",
         "value": 1.0,
         "played": 2
       },
@@ -2193,47 +2193,47 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leganes",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Sabadell",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Granada",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Real Sociedad B",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 2,
-        "teamId": "",
-        "teamName": "Leganes",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Cadiz",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Celta Vigo B",
         "value": 1.0,
         "played": 1
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Valladolid",
         "value": 1.0,
@@ -2356,6 +2356,13 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Leganes",
+        "value": 0.0,
+        "played": 3
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Granada",
         "value": 0.0,
         "played": 2
@@ -2364,13 +2371,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Real Sociedad B",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Leganes",
         "value": 0.0,
         "played": 2
       },
