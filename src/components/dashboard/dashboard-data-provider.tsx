@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode, useCallback } from "react";
 import { usePrematchMatches } from "@/hooks/use-prematch-matches";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 
@@ -11,15 +11,20 @@ type DashboardData = {
   footLoading: boolean;
   tennisError: ReturnType<typeof usePrematchMatches>["error"];
   footError: ReturnType<typeof useFootballMatches>["error"];
+  refetch: () => Promise<void>;
 };
 
 const Ctx = createContext<DashboardData | null>(null);
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
-  const { data: tennisData, isLoading: tennisLoading, error: tennisError } =
+  const { data: tennisData, isLoading: tennisLoading, error: tennisError, refetch: refetchTennis } =
     usePrematchMatches();
-  const { data: footData, isLoading: footLoading, error: footError } =
+  const { data: footData, isLoading: footLoading, error: footError, refetch: refetchFoot } =
     useFootballMatches();
+
+  const refetch = useCallback(async () => {
+    await Promise.all([refetchTennis(), refetchFoot()]);
+  }, [refetchTennis, refetchFoot]);
 
   return (
     <Ctx.Provider
@@ -30,6 +35,7 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
         footLoading,
         tennisError,
         footError,
+        refetch,
       }}
     >
       {children}
