@@ -17,9 +17,9 @@ type DashboardData = {
 const Ctx = createContext<DashboardData | null>(null);
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
-  const { data: tennisData, isLoading: tennisLoading, error: tennisError, refetch: refetchTennis } =
+  const { data: tennisData, isLoading: tennisLoading, error: tennisError, mutate: refetchTennis } =
     usePrematchMatches();
-  const { data: footData, isLoading: footLoading, error: footError, refetch: refetchFoot } =
+  const { data: footData, isLoading: footLoading, error: footError, mutate: refetchFoot } =
     useFootballMatches();
 
   const refetch = useCallback(async () => {
