@@ -182,7 +182,7 @@ function OddsBox({ value, best }: { value: string; best?: boolean }) {
 /* ─── League Card ─── */
 function LeagueCard({ group }: { group: TopLeague }) {
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-800">
+    <div className="rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
       {/* Header */}
       <div
         className="flex items-center px-4 py-2.5 text-white font-bold text-sm gap-2"
@@ -271,7 +271,7 @@ export function TopMultiSport() {
   const totalMatches = filteredGroups.reduce((sum, g) => sum + g.matches.length, 0);
 
   return (
-    <div className="w-full bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-5 mb-6 border border-zinc-200 dark:border-zinc-800">
+    <div className="w-full bg-white dark:bg-zinc-900 rounded-2xl p-5 mb-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
