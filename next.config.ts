@@ -114,6 +114,7 @@ const nextConfig: NextConfig = {
     ],
     // Formats modernes pour PWA légère
     formats: ["image/avif", "image/webp"],
+    unoptimized: true, // éviter bugs chargement images derrière reverse proxy
   },
 };
 

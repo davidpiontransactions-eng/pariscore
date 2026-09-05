@@ -55,7 +55,9 @@ export function SiteHeader() {
           <Image
             src="/sports-athlete-header.svg"
             alt=""
-            fill
+            width={400}
+            height={60}
+            style={{ maxWidth: '400px', maxHeight: '60px' }}
             className="object-cover object-right opacity-80"
             priority
           />
@@ -81,6 +83,7 @@ export function SiteHeader() {
                 alt="PariScore Shield"
                 width={48}
                 height={48}
+                style={{ maxWidth: '48px', maxHeight: '48px' }}
                 className="h-[48px] w-[48px] transition-all group-hover:drop-shadow-[0_0_12px_rgba(123,63,160,0.3)]"
                 priority
               />
