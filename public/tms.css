@@ -1,0 +1,112 @@
+/* ═══ TOP MULTI-SPORT — Sports Bet Style (Behance-inspired) ═══ */
+.tms-container {
+  width: 100%;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  background: #f5f5f5;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+.tms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.tms-title-row { display: flex; align-items: center; gap: 10px; }
+.tms-title { font-size: 20px; font-weight: 800; color: #1a1a2e; margin: 0; letter-spacing: -0.3px; }
+.tms-count { font-size: 12px; color: #888; font-family: var(--font-mono, monospace); }
+
+/* Controls */
+.tms-controls { display: flex; align-items: center; gap: 8px; }
+.tms-sport-tabs {
+  display: flex; gap: 4px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.tms-sport-tabs::-webkit-scrollbar { display: none; }
+.tms-tab {
+  padding: 7px 14px; border: none; border-radius: 20px;
+  background: #e8e8e8; color: #666; font-size: 12px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+}
+.tms-tab:hover { background: #ddd; }
+.tms-tab.active { background: #7B2FBE; color: #fff; }
+.tms-refresh {
+  width: 34px; height: 34px; border: none; border-radius: 50%;
+  background: #e8e8e8; color: #555; font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.tms-refresh:hover { background: #ddd; }
+.tms-refresh.tms-spinning { animation: tms-spin 0.5s ease; }
+@keyframes tms-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* League card */
+.tms-league-card {
+  border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.tms-league-header {
+  display: flex; align-items: center; padding: 10px 16px;
+  color: #fff; font-weight: 700; font-size: 13px; gap: 8px;
+}
+.tms-league-cols {
+  margin-left: auto; display: flex; gap: 24px;
+  font-size: 11px; font-weight: 600; opacity: 0.85;
+}
+
+/* Match row */
+.tms-match-row {
+  display: flex; align-items: center; padding: 10px 16px;
+  background: #fff; border-bottom: 1px solid #eee;
+  cursor: pointer; transition: background 0.15s;
+}
+.tms-match-row:last-child { border-bottom: none; }
+.tms-match-row:hover { background: #fafafa; }
+.tms-match-time {
+  width: 52px; font-size: 12px; font-weight: 600; color: #1a1a2e;
+  text-align: center; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.tms-date { font-size: 10px; color: #999; font-weight: 400; }
+
+/* Teams */
+.tms-match-teams { flex: 1; display: flex; flex-direction: column; gap: 4px; margin-left: 10px; }
+.tms-team { display: flex; align-items: center; gap: 8px; }
+.tms-team-logo { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+.tms-team-name { font-size: 13px; font-weight: 600; color: #1a1a2e; }
+
+/* Odds */
+.tms-match-odds { display: flex; gap: 6px; flex-shrink: 0; }
+.tms-odds-box {
+  padding: 6px 12px; border-radius: 6px; background: #f5f5f5;
+  font-size: 13px; font-weight: 700; min-width: 52px;
+  text-align: center; color: #333;
+}
+.tms-odds--best { background: #00c853; color: #fff; }
+
+/* Metric */
+.tms-metric { flex-shrink: 0; text-align: right; min-width: 70px; }
+.tms-metric-value { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+.tms-metric-label { font-size: 10px; color: #888; }
+
+/* Badge */
+.tms-badge {
+  padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700;
+  color: #fff; flex-shrink: 0; margin-left: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* Empty / loading */
+.tms-loading, .tms-empty { text-align: center; padding: 30px; color: #999; font-size: 13px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .tms-container { padding: 14px 12px; }
+  .tms-header { flex-direction: column; align-items: flex-start; }
+  .tms-match-row { flex-wrap: wrap; gap: 8px; }
+  .tms-match-odds { width: 100%; justify-content: flex-end; }
+  .tms-league-cols { display: none; }
+}

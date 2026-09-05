@@ -13497,6 +13497,36 @@ function psSetLang(v) {
   <div style="text-align:center;margin-top:9px;font-size:12px;color:var(--text3);font-family:var(--font-body);font-weight:600;text-transform:uppercase;letter-spacing:.4px;" data-i18n="home.cta_tagline">Cotes live · Modèle Poisson · Edge dévigé</div>
 </div>
 
+<link rel="stylesheet" href="/tms.css">
+<script src="/tms.js" defer></script>
+<!-- ═══ TOP MULTI-SPORT — Pleine largeur (Behance style) ═══ -->
+<div id="top-multi-sport" class="tms-container">
+  <div class="tms-header">
+    <div class="tms-title-row">
+      <h2 class="tms-title">Top Matchs du Jour</h2>
+      <span class="tms-count" id="tms-count"></span>
+    </div>
+    <div class="tms-controls">
+      <div class="tms-sport-tabs" id="tms-sport-tabs">
+        <button class="tms-tab active" data-sport="all" onclick="tmsSwitchSport('all',this)">Tous</button>
+        <button class="tms-tab" data-sport="football" onclick="tmsSwitchSport('football',this)">⚽ Football</button>
+        <button class="tms-tab" data-sport="tennis" onclick="tmsSwitchSport('tennis',this)">🎾 Tennis</button>
+        <button class="tms-tab" data-sport="nba" onclick="tmsSwitchSport('nba',this)">🏀 NBA</button>
+        <button class="tms-tab" data-sport="wnba" onclick="tmsSwitchSport('wnba',this)">🏀 WNBA</button>
+        <button class="tms-tab" data-sport="f1" onclick="tmsSwitchSport('f1',this)">🏎️ F1</button>
+        <button class="tms-tab" data-sport="cs2" onclick="tmsSwitchSport('cs2',this)">🎮 CS2</button>
+        <button class="tms-tab" data-sport="mma" onclick="tmsSwitchSport('mma',this)">🥊 MMA</button>
+        <button class="tms-tab" data-sport="cycling" onclick="tmsSwitchSport('cycling',this)">🚴 Cycling</button>
+      </div>
+      <button class="tms-refresh" id="tms-refresh" onclick="tmsRefresh()" title="Rafraîchir">⟳</button>
+    </div>
+  </div>
+  <div class="tms-leagues" id="tms-leagues">
+    <div class="tms-loading">Chargement...</div>
+  </div>
+  <div class="tms-empty" id="tms-empty" style="display:none;">Aucun match top disponible.</div>
+</div>
+
 <!-- HERO -->
 <section style="background: radial-gradient(ellipse 80% 40% at 60% 50%, var(--accent-bg) 0%, transparent 60%);">
   <div class="hero">
