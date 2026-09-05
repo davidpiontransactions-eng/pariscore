@@ -32,11 +32,11 @@ type ApiResponse = {
 
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-2xl border border-white/10 bg-[#1A1A2E] p-5" aria-busy="true">
-      <div className="mx-auto mb-3 h-14 w-14 rounded-full bg-white/10" />
-      <div className="mx-auto mb-2 h-4 w-32 rounded bg-white/10" />
-      <div className="mx-auto mb-1 h-3 w-24 rounded bg-white/10" />
-      <div className="mx-auto h-3 w-36 rounded bg-white/10" />
+    <div className="animate-pulse rounded-2xl border border-[#E0D8F0] bg-white p-5" aria-busy="true">
+      <div className="mx-auto mb-3 h-14 w-14 rounded-full bg-[#EDE8F5]" />
+      <div className="mx-auto mb-2 h-4 w-32 rounded bg-[#EDE8F5]" />
+      <div className="mx-auto mb-1 h-3 w-24 rounded bg-[#EDE8F5]" />
+      <div className="mx-auto h-3 w-36 rounded bg-[#EDE8F5]" />
     </div>
   );
 }
@@ -45,15 +45,15 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <AlertCircle className="mb-4 h-12 w-12 text-red-400" />
-      <p className="mb-1 text-lg font-semibold text-white">
+      <p className="mb-1 text-lg font-semibold text-[#1A1145]">
         Données MMA indisponibles
       </p>
-      <p className="mb-6 text-sm text-zinc-400">
+      <p className="mb-6 text-sm text-[#6B5B8D]">
         L'API des cotes MMA ne répond pas pour le moment.
       </p>
       <button
         onClick={onRetry}
-        className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/20"
+        className="flex items-center gap-2 rounded-xl border border-red-300 bg-red-50 px-5 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-100"
       >
         <RefreshCw className="h-4 w-4" />
         Réessayer
@@ -65,11 +65,11 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <Swords className="mb-4 h-12 w-12 text-zinc-600" />
-      <p className="text-lg font-semibold text-white">
+      <Swords className="mb-4 h-12 w-12 text-[#6B5B8D]" />
+      <p className="text-lg font-semibold text-[#1A1145]">
         Aucun combat à venir
       </p>
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-[#6B5B8D]">
         Revenez plus tard pour les prochains événements UFC/MMA.
       </p>
     </div>
@@ -89,26 +89,26 @@ function EventSection({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mb-4 overflow-hidden rounded-2xl border border-white/10 bg-[#1A1A2E]/60"
+      className="mb-4 overflow-hidden rounded-2xl border border-[#E0D8F0] bg-[#F8F5FC]"
     >
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-white/5"
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition hover:bg-[#EDE8F5]"
       >
         <div className="flex items-center gap-3">
-          <Calendar className="h-4 w-4 text-zinc-400" />
+          <Calendar className="h-4 w-4 text-[#6B5B8D]" />
           <div>
-            <span className="font-semibold text-white">
+            <span className="font-semibold text-[#1A1145]">
               {event.event_name}
             </span>
-            <span className="ml-3 text-sm text-zinc-400">
+            <span className="ml-3 text-sm text-[#6B5B8D]">
               {event.fights.length} combat{event.fights.length > 1 ? "s" : ""}
             </span>
           </div>
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-zinc-400 transition-transform duration-200",
+            "h-4 w-4 text-[#6B5B8D] transition-transform duration-200",
             open && "rotate-180"
           )}
         />
@@ -274,7 +274,7 @@ export function MmaTabContent() {
       )}
 
       {data?.source && (
-        <p className="text-center text-xs text-zinc-600">
+        <p className="text-center text-xs text-[#6B5B8D]">
           Source: {data.source.replace("odds-api+ml", "The Odds API + ML")}
         </p>
       )}

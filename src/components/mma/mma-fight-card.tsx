@@ -69,11 +69,11 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: (index ?? 0) * 0.05, ease: "easeOut" }}
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-white/10",
-        "bg-[#1A1A2E] text-white shadow-lg",
+        "group relative overflow-hidden rounded-2xl border border-[#E0D8F0]",
+        "bg-white text-[#1A1145] shadow-lg",
         "transition-all duration-300",
-        "hover:border-[#00E676]/60 hover:shadow-[0_0_20px_rgba(0,230,118,0.15)]",
-        "focus-within:ring-2 focus-within:ring-[#00E676]/50 focus-within:ring-offset-2 focus-within:ring-offset-[#1A1A2E]"
+        "hover:border-[#7B3FA0]/60 hover:shadow-[0_0_20px_rgba(123,63,160,0.15)]",
+        "focus-within:ring-2 focus-within:ring-[#7B3FA0]/50 focus-within:ring-offset-2 focus-within:ring-offset-white"
       )}
     >
       {/* Inner glow overlay on hover */}
@@ -81,7 +81,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
         className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 0%, rgba(0,230,118,0.06) 0%, transparent 70%)",
+            "radial-gradient(ellipse at 50% 0%, rgba(123,63,160,0.06) 0%, transparent 70%)",
         }}
         aria-hidden
       />
@@ -106,13 +106,13 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
               <ConfidenceRing
                 value={probA}
                 confidence={fight.confidence_a}
-                color="#00E676"
+                color="#7B3FA0"
               />
             )}
             {fight.form_a && fight.form_a.length > 0 && (
               <FormTimeline
                 form={fight.form_a}
-                color="#00E676"
+                color="#7B3FA0"
                 size="sm"
                 ariaLabel={`Forme récente de ${fight.fighter_a}`}
               />
@@ -125,24 +125,24 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
               value={probA}
               size={80}
               stroke={6}
-              color="#00E676"
-              trackColor="rgba(255,255,255,0.08)"
+              color="#7B3FA0"
+              trackColor="rgba(224,216,240,0.5)"
             >
-              <span className="text-lg font-bold tabular-nums text-white">
+              <span className="text-lg font-bold tabular-nums text-[#1A1145]">
                 {probA}%
               </span>
             </ProbabilityRing>
-            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/40">
+            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#6B5B8D]">
               VS
             </span>
             <ProbabilityRing
               value={probB}
               size={80}
               stroke={6}
-              color="#FF6B6B"
-              trackColor="rgba(255,255,255,0.08)"
+              color="#4DABF7"
+              trackColor="rgba(224,216,240,0.5)"
             >
-              <span className="text-lg font-bold tabular-nums text-white">
+              <span className="text-lg font-bold tabular-nums text-[#1A1145]">
                 {probB}%
               </span>
             </ProbabilityRing>
@@ -165,13 +165,13 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
               <ConfidenceRing
                 value={probB}
                 confidence={fight.confidence_b}
-                color="#FF6B6B"
+                color="#4DABF7"
               />
             )}
             {fight.form_b && fight.form_b.length > 0 && (
               <FormTimeline
                 form={fight.form_b}
-                color="#FF6B6B"
+                color="#4DABF7"
                 size="sm"
                 ariaLabel={`Forme récente de ${fight.fighter_b}`}
               />
@@ -180,7 +180,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
         </div>
 
         {/* Event name + weight class */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-white/50">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-[#6B5B8D]">
           {fight.event_name && (
             <span className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
@@ -203,7 +203,7 @@ export function MmaFightCard({ fight, index = 0 }: Props) {
         </div>
 
         {/* Commence time */}
-        <div className="mt-2 text-center text-[11px] font-medium text-white/40">
+        <div className="mt-2 text-center text-[11px] font-medium text-[#6B5B8D]">
           <Calendar className="mr-1.5 inline-block h-3 w-3 align-text-top" />
           {formatCommenceTime(fight.commence_time)}
         </div>

@@ -32,8 +32,8 @@ export function MmaFilters({ weightClass, onWeightClassChange }: Props) {
             className={cn(
               "rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider transition-all duration-200",
               isActive
-                ? "bg-[#00E676] text-black shadow-md"
-                : "bg-white/10 text-white/70 hover:bg-white/20 hover:text-white"
+                ? "bg-[#7B3FA0] text-white shadow-md"
+                : "bg-[#EDE8F5] text-[#6B5B8D] hover:bg-[#E0D8F0] hover:text-[#1A1145]"
             )}
           >
             {wc.label}
