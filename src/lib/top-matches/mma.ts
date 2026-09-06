@@ -21,12 +21,21 @@ export const mmaAdapter: SportAdapter = {
     }
 
     for (const f of flat.slice(0, limit)) {
+      const isLive = f.status === 'live';
+      const liveScore = isLive
+        ? {
+            current: f.round_status ?? undefined,
+            round: f.current_round ?? f.round ?? undefined,
+            roundClock: f.time_remaining ?? f.clock ?? undefined,
+          }
+        : undefined;
       matches.push({
         id: String(f.id || f.fighter_a + f.fighter_b),
         home: { name: f.fighter_a || 'Fighter A' },
         away: { name: f.fighter_b || 'Fighter B' },
         kickoff: f.commence_time || '',
-        status: (f.status === 'live' ? 'live' : 'scheduled') as 'live' | 'scheduled',
+        status: (isLive ? 'live' : 'scheduled') as 'live' | 'scheduled',
+        liveScore,
         odds: f.prob_a != null
           ? { home: String(f.prob_a), away: String(f.prob_b) }
           : undefined,

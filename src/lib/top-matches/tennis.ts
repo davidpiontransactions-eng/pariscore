@@ -42,6 +42,15 @@ export const tennisAdapter: SportAdapter = {
       const tourney = m.tournament || 'Autre';
       if (!byTourney.has(tourney)) byTourney.set(tourney, []);
       if (byTourney.get(tourney)!.length >= limit) continue;
+      const isLive = m.status === 'live';
+      const liveScore = isLive
+        ? {
+            current: m.liveScore ?? m.score ?? undefined,
+            sets: m.live?.sets ?? m.sets ?? undefined,
+            gameScore: m.live?.gameScore ?? m.gameScore ?? undefined,
+            serving: m.live?.serving ?? m.serving ?? undefined,
+          }
+        : undefined;
       byTourney.get(tourney)!.push({
         id: String(m.id || ''),
         home: {
@@ -53,7 +62,9 @@ export const tennisAdapter: SportAdapter = {
           rank: m.playerB?.rank,
         },
         kickoff: m.scheduledAt || '',
-        status: m.status === 'live' ? 'live' : m.status === 'finished' ? 'finished' : 'scheduled',
+        status: isLive ? 'live' : m.status === 'finished' ? 'finished' : 'scheduled',
+        score: liveScore?.current,
+        liveScore,
         odds: m.odds
           ? {
               home: m.odds.playerA != null ? String(m.odds.playerA) : undefined,

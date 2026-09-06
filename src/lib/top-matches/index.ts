@@ -11,7 +11,7 @@ import { mmaAdapter } from './mma';
 import { cyclingAdapter } from './cycling';
 import { fibaAdapter } from './fiba';
 
-const adapters = {
+const adapters: Record<string, { sport: SportType; fetch(limit: number, timeframe: string): Promise<TopLeague[]> }> = {
   football: footballAdapter,
   tennis: tennisAdapter,
   nba: nbaAdapter,
@@ -24,6 +24,16 @@ const adapters = {
 };
 
 const ALL_SPORTS = SPORT_TYPES;
+
+/** Filtrer les groupes pour ne garder que les matchs live */
+function onlyLive(groups: TopLeague[]): TopLeague[] {
+  return groups
+    .map((g) => ({
+      ...g,
+      matches: g.matches.filter((m) => m.status === 'live'),
+    }))
+    .filter((g) => g.matches.length > 0);
+}
 
 export async function fetchTopMatches(
   sport: SportType | 'all',
@@ -40,11 +50,15 @@ export async function fetchTopMatches(
     sports = [sport];
   }
   const results = await Promise.allSettled(
-    sports.map((s) => adapters[s as SportType].fetch(limit, timeframe)),
+    sports.map((s) => adapters[s]?.fetch(limit, timeframe) ?? Promise.resolve([])),
   );
-  const groups: TopLeague[] = [];
+  let groups: TopLeague[] = [];
   for (const r of results) {
     if (r.status === 'fulfilled') groups.push(...r.value);
+  }
+  // Si timeframe=live, filtrer côté serveur pour ne garder que les matchs live
+  if (timeframe === 'live') {
+    groups = onlyLive(groups);
   }
   return groups;
 }

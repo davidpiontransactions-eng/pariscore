@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { RefreshCw, Star } from "lucide-react";
-import { countryFlag } from "@/lib/top-matches/types";
+import { countryFlag, type LiveMatchScore } from "@/lib/top-matches/types";
+import { LiveScoreBadge } from "./live-score-badge";
 
 /* ─── Types ─── */
 interface TopTeam {
@@ -33,6 +34,7 @@ interface TopMatch {
   kickoff: string;
   status: "scheduled" | "live" | "finished";
   score?: string;
+  liveScore?: LiveMatchScore;
   odds?: TopOdds;
   metric?: TopMetric;
   badge?: TopBadge;
@@ -54,7 +56,8 @@ interface TopMatchResponse {
 
 
 const CACHE_MS = 60_000;
-const POLL_MS = 120_000;
+const POLL_NORMAL_MS = 120_000;
+const POLL_LIVE_MS = 20_000;
 
 type TimeFilter = "live" | "1h" | "2h" | "4h" | "8h" | "today" | "tomorrow" | "all";
 
@@ -105,10 +108,12 @@ function formatDate(iso: string): string {
 /* ─── Match Row ─── */
 function MatchRow({
   match,
+  sport,
   isFavorite,
   onToggleFavorite,
 }: {
   match: TopMatch;
+  sport: string;
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
 }) {
@@ -119,17 +124,14 @@ function MatchRow({
       isLive && "bg-[#4CAF50]/5"
     )}>
       {/* Time / Live indicator */}
-      <div className="w-14 text-center shrink-0">
+      <div className="w-16 text-center shrink-0">
         {isLive ? (
-          <div className="flex flex-col items-center">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#4CAF50] text-white text-[9px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              LIVE
-            </span>
-            {match.score && (
-              <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{match.score}</span>
-            )}
-          </div>
+          <LiveScoreBadge
+            sport={sport}
+            liveScore={match.liveScore || {}}
+            homeName={match.home.name}
+            awayName={match.away.name}
+          />
         ) : (
           <>
             <div className="text-sm font-semibold text-[#1A1145]">
@@ -285,6 +287,7 @@ function LeagueCard({
         <MatchRow
           key={m.id}
           match={m}
+          sport={group.sport}
           isFavorite={favorites.has(m.id)}
           onToggleFavorite={onToggleFavorite}
         />
@@ -337,9 +340,9 @@ export function TopMultiSport() {
     }))
     .filter((g) => g.matches.length > 0);
 
-  // Favoris : tous les matchs favoris à travers les groupes
+  // Favoris : tous les matchs favoris à travers les groupes (avec sport)
   const favoriteMatches = groups
-    .flatMap((g) => g.matches.filter((m) => favorites.has(m.id)))
+    .flatMap((g) => g.matches.filter((m) => favorites.has(m.id)).map((m) => ({ ...m, sport: g.sport })))
     .filter((m) => m.status !== "finished");
 
   const toggleFavorite = (matchId: string) => {
@@ -351,15 +354,16 @@ export function TopMultiSport() {
     });
   };
 
-  // Initial fetch + polling
+  // Initial fetch + polling (rapide quand filtre live actif)
   useEffect(() => {
     setLoading(true);
     fetchData();
-    pollRef.current = setInterval(() => fetchData(), POLL_MS);
+    const pollMs = timeFilter === "live" ? POLL_LIVE_MS : POLL_NORMAL_MS;
+    pollRef.current = setInterval(() => fetchData(), pollMs);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchData]);
+  }, [fetchData, timeFilter]);
 
   const handleRefresh = () => {
     setSpinning(true);
@@ -434,6 +438,7 @@ export function TopMultiSport() {
               <MatchRow
                 key={m.id}
                 match={m}
+                sport={m.sport}
                 isFavorite
                 onToggleFavorite={toggleFavorite}
               />

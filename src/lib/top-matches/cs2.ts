@@ -26,14 +26,24 @@ export const cs2Adapter: SportAdapter = {
       const score = (ms && (ms.team1 != null || ms.team2 != null))
         ? `${ms.team1 ?? 0} - ${ms.team2 ?? 0}`
         : undefined;
+      const isLive = m.isLive || m.status === 'live';
+      const liveScore = isLive
+        ? {
+            current: score,
+            maps: score,
+            rounds: m.current_map?.rounds ?? m.round_score ?? undefined,
+            currentMap: m.current_map?.name ?? m.map_name ?? undefined,
+          }
+        : undefined;
       return {
         id: String(m.id || ''),
         home: { name: m.team1?.name || m.team1 || 'Team 1', logo: m.team1?.logo || m.team1?.logo_local },
         away: { name: m.team2?.name || m.team2 || 'Team 2', logo: m.team2?.logo || m.team2?.logo_local },
         kickoff: m.scheduledAt || m.scheduled || m.date || '',
-        status: (m.status === 'live' ? 'live' : 'scheduled') as 'live' | 'scheduled',
+        status: (isLive ? 'live' : 'scheduled') as 'live' | 'scheduled',
         score,
-        badge: m.isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
+        liveScore,
+        badge: isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
       };
     });
 

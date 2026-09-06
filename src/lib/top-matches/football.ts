@@ -51,6 +51,14 @@ export const footballAdapter: SportAdapter = {
       const league = m.league?.name || 'Autre';
       if (!byLeague.has(league)) byLeague.set(league, { matches: [], country: m.league?.country });
       if (byLeague.get(league)!.matches.length >= limit) continue;
+      const isLive = m.isLive || m.status === 'live';
+      const liveScore = isLive && m.live
+        ? {
+            current: `${m.live.homeScore ?? 0} - ${m.live.awayScore ?? 0}`,
+            minute: m.live.minute ?? m.live.clock ?? undefined,
+            halfTime: m.live.halfTime ?? m.live.ht ?? undefined,
+          }
+        : undefined;
       byLeague.get(league)!.matches.push({
         id: String(m.id || ''),
         home: {
@@ -62,10 +70,9 @@ export const footballAdapter: SportAdapter = {
           logo: m.away?.logo || '',
         },
         kickoff: m.scheduledAt || '',
-        status: m.status === 'finished' ? 'finished' : m.isLive ? 'live' : 'scheduled',
-        score: m.isLive && m.live
-          ? `${m.live.homeScore ?? 0} - ${m.live.awayScore ?? 0}`
-          : undefined,
+        status: m.status === 'finished' ? 'finished' : isLive ? 'live' : 'scheduled',
+        score: liveScore?.current,
+        liveScore,
         odds: m.odds
           ? {
               home: m.odds.home != null ? String(m.odds.home) : undefined,

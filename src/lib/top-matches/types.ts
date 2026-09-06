@@ -24,6 +24,38 @@ export interface TopBadge {
   color: string;
 }
 
+/** Score live structuré par sport */
+export interface LiveMatchScore {
+  /** Score actuel ex: "2 - 1" */
+  current?: string;
+  /** Football : minute de jeu */
+  minute?: number;
+  /** Football : mi-temps (1, 2, HT, ET) */
+  halfTime?: string;
+  /** Tennis : sets [6-4, 3-6, 4-2] */
+  sets?: string[];
+  /** Tennis : jeux du set en cours ex: "30-15" ou "4-3" */
+  gameScore?: string;
+  /** Tennis : joueur au service */
+  serving?: string;
+  /** Basketball : score par quart [25-22, 18-20] */
+  quarters?: string[];
+  /** Basketball : chrono restant quart en cours */
+  clock?: string;
+  /** Basketball : quart en cours (Q1-Q4, OT) */
+  period?: string;
+  /** CS2 : score cartes BO3/BO5 */
+  maps?: string;
+  /** CS2 : rounds map en cours ex: "11-9" */
+  rounds?: string;
+  /** CS2 : map en cours */
+  currentMap?: string;
+  /** MMA : round en cours */
+  round?: number;
+  /** MMA : chrono round */
+  roundClock?: string;
+}
+
 export interface TopMatch {
   id: string;
   home: TopTeam;
@@ -31,6 +63,8 @@ export interface TopMatch {
   kickoff: string;
   status: 'scheduled' | 'live' | 'finished';
   score?: string;
+  /** Score live structuré (peuplé quand status=live) */
+  liveScore?: LiveMatchScore;
   odds?: TopOdds;
   metric?: TopMetric;
   badge?: TopBadge;
