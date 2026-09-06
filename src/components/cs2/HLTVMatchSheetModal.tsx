@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { hltvStars, canonMapName, type Cs2Match } from "@/lib/cs2/types";
 import { displayTeamName } from "@/lib/cs2/format";
 import { TeamLogoImage } from "./TeamLogoImage";
+import { Cs2HltvStatsPanel } from "./Cs2HltvStatsPanel";
 import { useCs2Enrichment } from "@/hooks/use-cs2-enrichment";
 import { buildCs2Prediction, buildCs2TeamModels } from "@/lib/cs2/predict-adapter";
 import {
@@ -283,10 +284,11 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
           </div>
         ) : (
           <Tabs defaultValue="apercu" className="mt-2">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="apercu">Aperçu</TabsTrigger>
               <TabsTrigger value="rosters">Rosters</TabsTrigger>
               <TabsTrigger value="mappool">Map Pool &amp; H2H</TabsTrigger>
+              <TabsTrigger value="hltv">Stats HLTV</TabsTrigger>
             </TabsList>
 
             {/* ── Aperçu : veto + marchés + MR12 ── */}
@@ -522,6 +524,11 @@ export function HLTVMatchSheetModal({ match, open, onOpenChange }: Props) {
               ) : (
                 <p className="text-xs text-zinc-400">Chargement du map pool…</p>
               )}
+            </TabsContent>
+
+            {/* ── Stats HLTV ── */}
+            <TabsContent value="hltv" className="pt-4">
+              <Cs2HltvStatsPanel />
             </TabsContent>
           </Tabs>
         )}

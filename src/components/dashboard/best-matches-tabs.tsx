@@ -26,7 +26,7 @@ import { MultiSportMatchCard, type MultiSportMatchData } from "@/components/tenn
 
 type SportTab = "tennis" | "football" | "basketball" | "cs2" | "darts";
 
-type BestMatchesTabsProps = { className?: string; id?: string };
+type BestMatchesTabsProps = { className?: string; id?: string; sport?: string };
 
 type MatchCard = {
   id: string;
@@ -76,8 +76,13 @@ function MatchCardSkeleton() {
 // Component
 // ---------------------------------------------------------------------------
 
-export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
+export function BestMatchesTabs({ className, id, sport }: BestMatchesTabsProps) {
   const [activeTab, setActiveTab] = useState<SportTab>("tennis");
+
+  // Si un sport est imposé par la navigation parente, forcer l'onglet actif
+  const effectiveTab: SportTab = (sport && ["tennis", "football", "basketball", "cs2"].includes(sport))
+    ? (sport as SportTab)
+    : activeTab;
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [showFilters, setShowFilters] = useState(false);
   // Filtres avancés — seuils ajustables par l'utilisateur
@@ -402,7 +407,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
   // pouvoir montrer l'état d'erreur). Darts est un onglet désactivé séparé.
   const tabs = allTabs.filter((t) => t.matches.length > 0 || t.loading || !!t.error);
 
-  const current = tabs.find((t) => t.key === activeTab) ?? tabs[0];
+  const current = tabs.find((t) => t.key === effectiveTab) ?? tabs[0];
 
   // Tous les sports en erreur ou vide : etat vide au lieu d'un crash page blanche.
   if (!current) {
@@ -499,6 +504,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
 
       {/* Tab bar + view toggle */}
       <div className="flex items-center justify-between gap-2">
+        {!sport && (
         <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none flex-1">
         {tabs.map((tab) => (
           <button
@@ -507,7 +513,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             onClick={() => setActiveTab(tab.key)}
             className={cn(
               "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              activeTab === tab.key
+              effectiveTab === tab.key
                 ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
                 : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
@@ -535,6 +541,7 @@ export function BestMatchesTabs({ className, id }: BestMatchesTabsProps) {
             </span>
           </button>
         </div>
+        )}
 
         {/* View toggle */}
         <div className="flex shrink-0 rounded-lg border border-border/60 bg-muted/30 p-0.5">

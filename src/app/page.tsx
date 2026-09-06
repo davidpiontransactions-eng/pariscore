@@ -460,7 +460,7 @@ function HomeInner() {
               <Top5SelectionPanel variant="inline" />
             </BentoTile>
             <BentoTile size="wide" variant="glass">
-              <BestMatchesTabs id="section-best-matches" />
+              <BestMatchesTabs id="section-best-matches" sport={activeTab} />
             </BentoTile>
             <BentoTile size="wide" variant="glass">
               <UpcomingTenMatchesTable id="section-upcoming" />
