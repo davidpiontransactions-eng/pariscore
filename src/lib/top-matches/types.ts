@@ -67,7 +67,6 @@ export type SportType =
 export const SPORT_TYPES: SportType[] = [
   "football",
   "tennis",
-  "basket",
   "nba",
   "wnba",
   "f1",
