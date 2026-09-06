@@ -15,6 +15,38 @@ import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma", "cycling", "f1", "baseball", "cs2"]);
 
+/* ─── Mode Toggle (Prematch / Live) ─── */
+function ModeInlineToggle() {
+  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
+  const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
+  return (
+    <div className="flex gap-1 rounded-lg bg-white/5 p-0.5">
+      <button
+        onClick={() => setHeaderMode("prematch")}
+        className={cn(
+          "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
+          headerMode === "prematch"
+            ? "bg-[#7B3FA0] text-white shadow-sm"
+            : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
+        )}
+      >
+        📅 Prematch
+      </button>
+      <button
+        onClick={() => setHeaderMode("live")}
+        className={cn(
+          "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
+          headerMode === "live"
+            ? "bg-rose-500 text-white shadow-sm"
+            : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
+        )}
+      >
+        🔴 Live
+      </button>
+    </div>
+  );
+}
+
 /**
  * SiteHeader — Barre du haut unifiée à 2 niveaux, style gradient modern.
  *
@@ -124,6 +156,9 @@ export function SiteHeader() {
 
           {/* Droite : Actions */}
           <div className="flex items-center gap-2">
+            {/* Mode toggle (Prematch / Live) */}
+            <ModeInlineToggle />
+
             {/* Icône recherche (mobile) */}
             <button
               type="button"
