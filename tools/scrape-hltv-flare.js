@@ -151,11 +151,12 @@ async function resolveTeamId(teamName) {
 
   // Chercher le lien vers la page de l'équipe avec le bon nom
   const nameLC = teamName.toLowerCase();
-  const regex = new RegExp(`/stats/teams/(\\d+)/[^\"]*"[^>]*>[\\s\\S]*?<span[^>]*>([^<]+<\\/span>`, 'g');
+  // Pattern: <a href="/stats/teams/ID/slug">TeamName</a>
+  const teamLinkRegex = /\/stats\/teams\/(\d+)\/[^"]+">([^<]+)<\/a>/g;
   let match;
-  while ((match = regex.exec(html)) !== null) {
-    const spanText = match[2].replace(/<\/span>/, '').trim().toLowerCase();
-    if (spanText === nameLC || spanText.includes(nameLC)) {
+  while ((match = teamLinkRegex.exec(html)) !== null) {
+    const linkText = match[2].trim().toLowerCase();
+    if (linkText === nameLC || linkText.includes(nameLC)) {
       const id = parseInt(match[1]);
       console.log(`  → id=${id} (${match[2].trim()})`);
       return id;
@@ -163,7 +164,7 @@ async function resolveTeamId(teamName) {
   }
 
   // Fallback: première équipe trouvée dans les résultats
-  const fallback = html.match(/\/stats\/teams\/(\d+)\/[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)/);
+  const fallback = html.match(/\/stats\/teams\/(\d+)\/[^"]+">([^<]+)/);
   if (fallback) {
     const id = parseInt(fallback[1]);
     console.log(`  → id=${id} (fallback: ${fallback[2].trim()})`);
