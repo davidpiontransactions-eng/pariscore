@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Settings, Search } from "lucide-react";
@@ -17,15 +17,14 @@ const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma"
 
 /* ─── Mode Toggle (Prematch / Live) ─── */
 function ModeInlineToggle() {
-  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
-  const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
+  const [mode, setMode] = useState<"prematch" | "live">("prematch");
   return (
     <div className="flex gap-1 rounded-lg bg-white/5 p-0.5">
       <button
-        onClick={() => setHeaderMode("prematch")}
+        onClick={() => setMode("prematch")}
         className={cn(
           "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
-          headerMode === "prematch"
+          mode === "prematch"
             ? "bg-[#7B3FA0] text-white shadow-sm"
             : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
         )}
@@ -33,10 +32,10 @@ function ModeInlineToggle() {
         📅 Prematch
       </button>
       <button
-        onClick={() => setHeaderMode("live")}
+        onClick={() => setMode("live")}
         className={cn(
           "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
-          headerMode === "live"
+          mode === "live"
             ? "bg-rose-500 text-white shadow-sm"
             : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
         )}
