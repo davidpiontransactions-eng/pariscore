@@ -24,8 +24,6 @@ const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma"
 export function SiteHeader() {
   const { open, onOpenChange } = useSearchModal();
   const activeSport = useSportsSidebarStore((s) => s.selectedSportId);
-  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
-  const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
 
   const handleSportChange = useCallback(
     (sport: string) => {
@@ -126,33 +124,7 @@ export function SiteHeader() {
 
           {/* Droite : Actions */}
           <div className="flex items-center gap-2">
-            {/* Mode toggle (Prematch / Live) — inline pour éviter Turbopack tree-shake */}
-            <div className="flex items-center gap-0.5 rounded-lg border border-[#E0D8F0] bg-white p-0.5" id="mode-toggle-header">
-              <button
-                type="button"
-                onClick={() => setHeaderMode("prematch")}
-                className={cn(
-                  "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
-                  headerMode === "prematch"
-                    ? "bg-[#7B3FA0] text-white shadow-sm"
-                    : "text-[#6B5B8D] hover:text-[#1A1145]"
-                )}
-              >
-                📅 Prematch
-              </button>
-              <button
-                type="button"
-                onClick={() => setHeaderMode("live")}
-                className={cn(
-                  "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
-                  headerMode === "live"
-                    ? "bg-rose-500 text-white shadow-sm"
-                    : "text-[#6B5B8D] hover:text-[#1A1145]"
-                )}
-              >
-                🔴 Live
-              </button>
-            </div>
+            <div id="test-header" className="text-red-500 font-bold text-xs">TEST</div>
 
             {/* Notifications */}
             <NotificationsDropdown />
