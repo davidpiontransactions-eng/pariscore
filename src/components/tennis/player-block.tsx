@@ -10,6 +10,8 @@ import type { Player } from "@/lib/tennis-data";
 type PlayerBlockProps = {
   /** Joueur (nom, photo, couleur, surface). */
   player: Player;
+  /** Surface du match (pour le badge de surface). */
+  surface?: "Dur" | "Terre battue" | "Gazon";
   /** Alignement du bloc : `left` ou `right` (inverse le flex row sur sm+). */
   align: "left" | "right";
   /** Marque l'avatar comme image LCP prioritaire. */
@@ -45,17 +47,17 @@ export function PlayerBlock({
   isContender = false,
   showSurfaceBadge = true,
   children,
+  surface: surfaceProp,
 }: PlayerBlockProps) {
   // Extraire la surface du joueur depuis les métadonnées
   const surface = useMemo(() => {
-    if (!player.surface) return "Dur";
-    const s = player.surface.toString();
+    const s = (surfaceProp || "Dur").toString();
     if (s.toLowerCase().includes("clay") || s.toLowerCase().includes("terre"))
       return "Terre battue";
     if (s.toLowerCase().includes("grass") || s.toLowerCase().includes("gazon"))
       return "Gazon";
     return "Dur";
-  }, [player.surface]);
+  }, [surfaceProp]);
 
   // Calculer le differential Elo et l'ajustement de probabilité
   // Ces valeurs seraient fournies par le système d'Elo surfacique
