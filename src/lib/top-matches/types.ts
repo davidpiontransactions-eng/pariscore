@@ -115,6 +115,41 @@ export interface SportAdapter {
   fetch(limit: number, timeframe: string): Promise<TopLeague[]>;
 }
 
+/* ─── Normalisation des statuts live ─── */
+
+/** Statuts source API considérés comme "en cours" par sport */
+const LIVE_STATUS_PATTERNS: Record<string, RegExp[]> = {
+  football: [/^live$/i, /^in_play$/i, /^1h$/i, /^2h$/i, /^ht$/i, /^et$/i, /^pen$/i, /^extra_time$/i, /^half[_\s-]?time$/i],
+  tennis:   [/^live$/i, /^set[1-5]$/i, /^break$/i, /^tiebreak$/i, /^in_play$/i, /^match[_\s-]?point$/i],
+  nba:      [/^live$/i, /^is_live$/i, /^in_play$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],
+  wnba:     [/^live$/i, /^is_live$/i, /^in_play$/i, /^q[1-4]$/i, /^ot$/i, /^halftime$/i, /^half[_\s-]?time$/i],
+  cs2:      [/^live$/i, /^in_progress$/i, /^map[_\s-]?in[_\s-]?progress$/i, /^ongoing$/i],
+  mma:      [/^live$/i, /^in_progress$/i, /^round[1-5]$/i, /^fight[_\s-]?in[_\s-]?progress$/i],
+  fiba:     [/^live$/i, /^in_play$/i, /^q[1-4]$/i, /^ot$/i],
+  cycling:  [], // value bets uniquement
+  f1:       [], // value bets uniquement
+};
+
+/**
+ * Vérifie si un statut brut (depuis l'API source) est un statut "live".
+ * Compare via regex pour couvrir toutes les variantes (IN_PLAY, Q1, SET2, etc.)
+ */
+export function isLiveStatus(rawStatus: string | undefined | null, sport: string): boolean {
+  if (!rawStatus) return false;
+  const patterns = LIVE_STATUS_PATTERNS[sport.toLowerCase()];
+  if (!patterns) return rawStatus.toLowerCase() === 'live';
+  return patterns.some((re) => re.test(rawStatus));
+}
+
+/**
+ * Détermine si un match est "imminent" (début dans < 30 min, statut scheduled).
+ */
+export function isImminent(kickoff: string, status: string): boolean {
+  if (status !== 'scheduled' || !kickoff) return false;
+  const ms = new Date(kickoff).getTime() - Date.now();
+  return ms > 0 && ms < 30 * 60_000;
+}
+
 /** Convert country name or ISO code to flag emoji */
 export function countryFlag(input: string): string {
   if (!input) return '';

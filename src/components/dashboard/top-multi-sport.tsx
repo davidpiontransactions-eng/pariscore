@@ -72,9 +72,19 @@ const TIME_FILTERS: { id: TimeFilter; label: string; icon?: string }[] = [
   { id: "all", label: "Tous" },
 ];
 
-function isInTimeWindow(iso: string, filter: TimeFilter, status?: string): boolean {
+function isInTimeWindow(iso: string, filter: TimeFilter, status?: string, badgeLabel?: string): boolean {
   if (filter === "all") return true;
-  if (filter === "live") return status === "live";
+  // Filtre live : matchs en cours + imminents (< 30 min)
+  if (filter === "live") {
+    if (status === "live") return true;
+    if (badgeLabel === "Imminent") return true;
+    // Vérifier imminent côté client (sécurité)
+    if (status === "scheduled" && iso) {
+      const ms = new Date(iso).getTime() - Date.now();
+      if (ms > 0 && ms < 30 * 60_000) return true;
+    }
+    return false;
+  }
   // Les matchs live restent visibles quelle que soit la fenêtre temps
   if (status === "live") return true;
   const now = new Date();
@@ -338,7 +348,7 @@ export function TopMultiSport() {
     .map((g) => ({
       ...g,
       matches: g.matches.filter(
-        (m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status)
+        (m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status, m.badge?.label)
       ),
     }))
     .filter((g) => g.matches.length > 0);

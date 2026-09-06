@@ -1,5 +1,6 @@
 // Adapter tennis — normalise /api/tennis/prematch → format TopLeague
 import type { SportAdapter, TopLeague, TopMatch } from './types';
+import { isLiveStatus, isImminent } from './types';
 
 const SURFACE_COLORS: Record<string, string> = {
   clay: '#E65100',
@@ -42,7 +43,8 @@ export const tennisAdapter: SportAdapter = {
       const tourney = m.tournament || 'Autre';
       if (!byTourney.has(tourney)) byTourney.set(tourney, []);
       if (byTourney.get(tourney)!.length >= limit) continue;
-      const isLive = m.status === 'live';
+      const isLive = isLiveStatus(m.status, 'tennis');
+      const imminent = !isLive && isImminent(m.scheduledAt, m.status);
       const liveScore = isLive
         ? {
             current: m.liveScore ?? m.score ?? undefined,
@@ -71,7 +73,9 @@ export const tennisAdapter: SportAdapter = {
               away: m.odds.playerB != null ? String(m.odds.playerB) : undefined,
             }
           : undefined,
-        badge: m.tournamentCategory
+        badge: imminent
+          ? { label: 'Imminent', color: '#FF9800' }
+          : m.tournamentCategory
           ? { label: m.tournamentCategory, color: '#7B2FBE' }
           : undefined,
       });

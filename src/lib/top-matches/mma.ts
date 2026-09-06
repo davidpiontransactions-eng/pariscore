@@ -1,5 +1,6 @@
 // Adapter MMA — normalise /api/mma/fights → format TopLeague
 import type { SportAdapter, TopLeague, TopMatch } from './types';
+import { isLiveStatus, isImminent } from './types';
 
 export const mmaAdapter: SportAdapter = {
   sport: 'mma',
@@ -21,7 +22,8 @@ export const mmaAdapter: SportAdapter = {
     }
 
     for (const f of flat.slice(0, limit)) {
-      const isLive = f.status === 'live';
+      const isLive = isLiveStatus(f.status, 'mma');
+      const imminent = !isLive && isImminent(f.commence_time, f.status);
       const liveScore = isLive
         ? {
             current: f.round_status ?? undefined,
@@ -39,7 +41,9 @@ export const mmaAdapter: SportAdapter = {
         odds: f.prob_a != null
           ? { home: String(f.prob_a), away: String(f.prob_b) }
           : undefined,
-        badge: f.event_name
+        badge: imminent
+          ? { label: 'Imminent', color: '#FF9800' }
+          : f.event_name
           ? { label: f.event_name, color: '#DC2626' }
           : undefined,
       });

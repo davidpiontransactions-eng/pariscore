@@ -1,6 +1,6 @@
 // Agrégateur — fetch parallèle de tous les adapters sport
 import type { SportType, TopLeague } from './types';
-import { SPORT_TYPES } from './types';
+import { SPORT_TYPES, isImminent } from './types';
 import { footballAdapter } from './football';
 import { tennisAdapter } from './tennis';
 import { nbaAdapter } from './nba';
@@ -25,12 +25,22 @@ const adapters: Record<string, { sport: SportType; fetch(limit: number, timefram
 
 const ALL_SPORTS = SPORT_TYPES;
 
-/** Filtrer les groupes pour ne garder que les matchs live */
+/**
+ * Filtrer les groupes pour ne garder que les matchs live ou imminent.
+ * Un match est considéré "visible live" si :
+ *   - status === 'live' (en cours)
+ *   - badge.label === 'Imminent' (début dans < 30 min)
+ */
 function onlyLive(groups: TopLeague[]): TopLeague[] {
   return groups
     .map((g) => ({
       ...g,
-      matches: g.matches.filter((m) => m.status === 'live'),
+      matches: g.matches.filter(
+        (m) =>
+          m.status === 'live' ||
+          m.badge?.label === 'Imminent' ||
+          isImminent(m.kickoff, m.status),
+      ),
     }))
     .filter((g) => g.matches.length > 0);
 }

@@ -1,5 +1,6 @@
 // Adapter NBA — normalise /api/nba/matches → format TopLeague
 import type { SportAdapter, TopLeague } from './types';
+import { isLiveStatus, isImminent } from './types';
 
 export const nbaAdapter: SportAdapter = {
   sport: 'nba',
@@ -15,13 +16,14 @@ export const nbaAdapter: SportAdapter = {
     // Filtrer matchs futurs/live, exclure terminés et passés
     const now = Date.now();
     const filtered = raw.filter((m: any) => {
-      const st = m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled';
+      const st = m.status === 'FT' ? 'finished' : (m.is_live || isLiveStatus(m.status, 'nba')) ? 'live' : 'scheduled';
       if (st === 'finished') return false;
       const ko = new Date(m.kickoff || m.date || m.scheduledAt || 0).getTime();
       return st === 'live' || ko >= now - 30 * 60_000;
     });
     const matches = filtered.slice(0, limit).map((m: any) => {
-      const isLive = m.is_live || m.status === 'live';
+      const isLive = m.is_live || isLiveStatus(m.status, 'nba');
+      const imminent = !isLive && isImminent(m.kickoff || m.date || m.scheduledAt, m.status);
       const liveScore = isLive
         ? {
             current: m.score || undefined,
@@ -49,6 +51,11 @@ export const nbaAdapter: SportAdapter = {
               home: String(m.odds.home || ''),
               away: String(m.odds.away || ''),
             }
+          : undefined,
+        badge: imminent
+          ? { label: 'Imminent', color: '#FF9800' }
+          : isLive
+          ? { label: 'LIVE', color: '#f44336' }
           : undefined,
       };
     });

@@ -1,5 +1,6 @@
 // Adapter CS2 — normalise /api/cs2/matches → format TopLeague
 import type { SportAdapter, TopLeague } from './types';
+import { isLiveStatus, isImminent } from './types';
 
 export const cs2Adapter: SportAdapter = {
   sport: 'cs2',
@@ -18,7 +19,7 @@ export const cs2Adapter: SportAdapter = {
     const filtered = raw.filter((m: any) => {
       if (m.status === 'finished') return false;
       const ko = new Date(m.scheduledAt || m.date || 0).getTime();
-      return m.isLive || m.status === 'live' || ko >= now - 30 * 60_000;
+      return m.isLive || isLiveStatus(m.status, 'cs2') || ko >= now - 30 * 60_000;
     });
     const matches = filtered.slice(0, limit).map((m: any) => {
       // Score maps (CS2 : maps gagnés par équipe)
@@ -29,7 +30,8 @@ export const cs2Adapter: SportAdapter = {
       const score = (t1 != null || t2 != null)
         ? `${typeof t1 === 'object' ? JSON.stringify(t1) : t1 ?? 0} - ${typeof t2 === 'object' ? JSON.stringify(t2) : t2 ?? 0}`
         : undefined;
-      const isLive = m.isLive || m.status === 'live';
+      const isLive = m.isLive || isLiveStatus(m.status, 'cs2');
+      const imminent = !isLive && isImminent(m.scheduledAt || m.date, m.status);
       // Sécuriser rounds : peut être un objet
       const rawRounds = m.current_map?.rounds ?? m.round_score;
       const rounds = rawRounds != null
@@ -56,7 +58,11 @@ export const cs2Adapter: SportAdapter = {
         status: (isLive ? 'live' : 'scheduled') as 'live' | 'scheduled',
         score,
         liveScore,
-        badge: isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
+        badge: imminent
+          ? { label: 'Imminent', color: '#FF9800' }
+          : isLive
+          ? { label: 'LIVE', color: '#f44336' }
+          : undefined,
       };
     });
 

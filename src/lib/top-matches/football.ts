@@ -1,6 +1,6 @@
 // Adapter football — normalise /api/football/matches → format TopLeague
 import type { SportAdapter, TopLeague, TopMatch } from './types';
-import { countryFlag } from './types';
+import { countryFlag, isLiveStatus, isImminent } from './types';
 
 const LEAGUE_COLORS: Record<string, string> = {
   'champions league': '#6C3CB4',
@@ -51,7 +51,8 @@ export const footballAdapter: SportAdapter = {
       const league = m.league?.name || 'Autre';
       if (!byLeague.has(league)) byLeague.set(league, { matches: [], country: m.league?.country });
       if (byLeague.get(league)!.matches.length >= limit) continue;
-      const isLive = m.isLive || m.status === 'live';
+      const isLive = m.isLive || isLiveStatus(m.status, 'football');
+      const imminent = !isLive && isImminent(m.scheduledAt, m.status);
       const liveScore = isLive && m.live
         ? {
             current: `${m.live.homeScore ?? 0} - ${m.live.awayScore ?? 0}`,
@@ -79,6 +80,11 @@ export const footballAdapter: SportAdapter = {
               draw: m.odds.draw != null ? String(m.odds.draw) : undefined,
               away: m.odds.away != null ? String(m.odds.away) : undefined,
             }
+          : undefined,
+        badge: imminent
+          ? { label: 'Imminent', color: '#FF9800' }
+          : isLive
+          ? { label: 'LIVE', color: '#f44336' }
           : undefined,
       });
     }
