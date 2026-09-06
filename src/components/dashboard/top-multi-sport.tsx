@@ -144,8 +144,8 @@ function MatchRow({
 
       {/* Teams */}
       <div className="flex-1 ml-3 flex flex-col gap-1 min-w-0">
-        <TeamLine team={match.home} score={match.score?.split("-")[0]} isLive={isLive} />
-        <TeamLine team={match.away} score={match.score?.split("-")[1]} />
+        <TeamLine team={match.home} score={typeof match.score === 'string' ? match.score.split("-")[0] : undefined} isLive={isLive} />
+        <TeamLine team={match.away} score={typeof match.score === 'string' ? match.score.split("-")[1] : undefined} />
       </div>
 
       {/* Odds */}
@@ -217,19 +217,21 @@ function TeamLine({
   score?: string;
   isLive?: boolean;
 }) {
+  // Sécuriser score : peut être un objet si le split échoue
+  const safeScore = typeof score === 'string' ? score : score != null ? String(score) : null;
   return (
     <div className="flex items-center gap-2">
-      {team.logo && (
+      {team.logo && typeof team.logo === 'string' && (
         <img src={team.logo} alt="" className="w-5 h-5 rounded-full border border-[#E0D8F0] object-cover" />
       )}
       <span className="text-[13px] font-semibold text-[#1A1145] truncate">
-        {team.name}
+        {typeof team.name === 'string' ? team.name : String(team.name ?? '')}
         {team.rank != null && (
           <span className="text-[#7B3FA0] text-[10px] ml-1">#{team.rank}</span>
         )}
       </span>
-      {score != null && (
-        <span className="text-[#7B3FA0] text-[11px]">{score}</span>
+      {safeScore != null && (
+        <span className="text-[#7B3FA0] text-[11px]">{safeScore}</span>
       )}
       {isLive && (
         <span className="text-[#4CAF50] text-[10px] font-bold">LIVE</span>
@@ -239,6 +241,7 @@ function TeamLine({
 }
 
 function OddsBox({ value, best }: { value: string; best?: boolean }) {
+  const safeValue = typeof value === 'string' ? value : value != null ? String(value) : '';
   return (
     <span
       className={cn(
@@ -248,7 +251,7 @@ function OddsBox({ value, best }: { value: string; best?: boolean }) {
           : "bg-[#EDE8F5] text-[#1A1145]"
       )}
     >
-      {value}
+      {safeValue}
     </span>
   );
 }

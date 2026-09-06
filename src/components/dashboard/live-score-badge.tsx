@@ -22,11 +22,12 @@ function LivePulse({ className }: { className?: string }) {
 
 /** Football : minute + score + mi-temps */
 function FootballScore({ current, minute, halfTime }: Pick<LiveMatchScore, "current" | "minute" | "halfTime">) {
+  const display = typeof current === 'string' ? current : current != null ? String(current) : null;
   return (
     <div className="flex flex-col items-center">
       <LivePulse />
-      {current && (
-        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{current}</span>
+      {display && (
+        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{display}</span>
       )}
       <div className="flex items-center gap-1 text-[9px] text-[#4CAF50] font-semibold">
         {minute != null && <span>{minute}&apos;</span>}
@@ -38,19 +39,22 @@ function FootballScore({ current, minute, halfTime }: Pick<LiveMatchScore, "curr
 
 /** Tennis : sets + jeux + serveur */
 function TennisScore({ current, sets, gameScore, serving }: Pick<LiveMatchScore, "current" | "sets" | "gameScore" | "serving">) {
+  const safeSets = Array.isArray(sets) ? sets.map(String) : [];
+  const safeGame = typeof gameScore === 'string' ? gameScore : gameScore != null ? String(gameScore) : null;
+  const safeServing = typeof serving === 'string' ? serving : serving != null ? String(serving) : null;
   return (
     <div className="flex flex-col items-center">
       <LivePulse />
-      {sets && sets.length > 0 && (
+      {safeSets.length > 0 && (
         <span className="text-[10px] text-[#1A1145] font-bold mt-0.5 tabular-nums">
-          {sets.join(" | ")}
+          {safeSets.join(" | ")}
         </span>
       )}
-      {gameScore && (
-        <span className="text-[10px] text-[#4CAF50] font-semibold">{gameScore}</span>
+      {safeGame && (
+        <span className="text-[10px] text-[#4CAF50] font-semibold">{safeGame}</span>
       )}
-      {serving && (
-        <span className="text-[8px] text-[#7B3FA0] opacity-80">🎾 {serving}</span>
+      {safeServing && (
+        <span className="text-[8px] text-[#7B3FA0] opacity-80">🎾 {safeServing}</span>
       )}
     </div>
   );
@@ -58,15 +62,18 @@ function TennisScore({ current, sets, gameScore, serving }: Pick<LiveMatchScore,
 
 /** Basketball : quart-temps + chrono + score */
 function BasketballScore({ current, quarters, clock, period }: Pick<LiveMatchScore, "current" | "quarters" | "clock" | "period">) {
+  const display = typeof current === 'string' ? current : current != null ? String(current) : null;
+  const safePeriod = typeof period === 'string' ? period : period != null ? String(period) : null;
+  const safeClock = typeof clock === 'string' ? clock : clock != null ? String(clock) : null;
   return (
     <div className="flex flex-col items-center">
       <LivePulse />
-      {current && (
-        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{current}</span>
+      {display && (
+        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{display}</span>
       )}
       <div className="flex items-center gap-1 text-[9px] text-[#4CAF50] font-semibold">
-        {period && <span>{period}</span>}
-        {clock && <span className="tabular-nums">{clock}</span>}
+        {safePeriod && <span>{safePeriod}</span>}
+        {safeClock && <span className="tabular-nums">{safeClock}</span>}
       </div>
     </div>
   );
@@ -74,15 +81,18 @@ function BasketballScore({ current, quarters, clock, period }: Pick<LiveMatchSco
 
 /** CS2 : cartes BO + rounds map en cours */
 function CS2Score({ maps, rounds, currentMap }: Pick<LiveMatchScore, "maps" | "rounds" | "currentMap">) {
+  const safeMaps = typeof maps === 'string' ? maps : maps != null ? String(maps) : null;
+  const safeRounds = typeof rounds === 'string' ? rounds : rounds != null ? String(rounds) : null;
+  const safeMap = typeof currentMap === 'string' ? currentMap : currentMap != null ? String(currentMap) : null;
   return (
     <div className="flex flex-col items-center">
       <LivePulse />
-      {maps && (
-        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{maps}</span>
+      {safeMaps && (
+        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{safeMaps}</span>
       )}
       <div className="flex items-center gap-1 text-[9px] text-[#4CAF50] font-semibold">
-        {currentMap && <span>{currentMap}</span>}
-        {rounds && <span className="tabular-nums">{rounds}</span>}
+        {safeMap && <span>{safeMap}</span>}
+        {safeRounds && <span className="tabular-nums">{safeRounds}</span>}
       </div>
     </div>
   );
@@ -90,14 +100,16 @@ function CS2Score({ maps, rounds, currentMap }: Pick<LiveMatchScore, "maps" | "r
 
 /** MMA : round + chrono */
 function MMAScore({ round, roundClock }: Pick<LiveMatchScore, "round" | "roundClock">) {
+  const safeRound = typeof round === 'number' ? round : round != null ? Number(round) : null;
+  const safeClock = typeof roundClock === 'string' ? roundClock : roundClock != null ? String(roundClock) : null;
   return (
     <div className="flex flex-col items-center">
       <LivePulse />
-      {round && (
-        <span className="text-[10px] font-extrabold text-[#1A1145] mt-0.5">R{round}</span>
+      {safeRound != null && !isNaN(safeRound) && (
+        <span className="text-[10px] font-extrabold text-[#1A1145] mt-0.5">R{safeRound}</span>
       )}
-      {roundClock && (
-        <span className="text-[9px] text-[#4CAF50] font-semibold tabular-nums">{roundClock}</span>
+      {safeClock && (
+        <span className="text-[9px] text-[#4CAF50] font-semibold tabular-nums">{safeClock}</span>
       )}
     </div>
   );
@@ -106,13 +118,20 @@ function MMAScore({ round, roundClock }: Pick<LiveMatchScore, "round" | "roundCl
 export function LiveScoreBadge({ sport, liveScore, homeName, awayName }: LiveScoreBadgeProps) {
   if (!liveScore) return <LivePulse />;
 
-  const s = sport.toLowerCase();
+  const s = typeof sport === 'string' ? sport.toLowerCase() : '';
+
+  // Sécuriser current : peut être un objet
+  const safeCurrent = typeof liveScore.current === 'string'
+    ? liveScore.current
+    : liveScore.current != null
+    ? String(liveScore.current)
+    : null;
 
   // Score courant par défaut
-  const defaultDisplay = liveScore.current ? (
+  const defaultDisplay = safeCurrent ? (
     <div className="flex flex-col items-center">
       <LivePulse />
-      <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{liveScore.current}</span>
+      <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{safeCurrent}</span>
     </div>
   ) : (
     <LivePulse />

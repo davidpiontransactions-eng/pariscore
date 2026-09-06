@@ -22,23 +22,36 @@ export const cs2Adapter: SportAdapter = {
     });
     const matches = filtered.slice(0, limit).map((m: any) => {
       // Score maps (CS2 : maps gagnés par équipe)
+      // Sécuriser : team1/team2 peuvent être des objets
       const ms = m.maps_score;
-      const score = (ms && (ms.team1 != null || ms.team2 != null))
-        ? `${ms.team1 ?? 0} - ${ms.team2 ?? 0}`
+      const t1 = ms?.team1;
+      const t2 = ms?.team2;
+      const score = (t1 != null || t2 != null)
+        ? `${typeof t1 === 'object' ? JSON.stringify(t1) : t1 ?? 0} - ${typeof t2 === 'object' ? JSON.stringify(t2) : t2 ?? 0}`
         : undefined;
       const isLive = m.isLive || m.status === 'live';
+      // Sécuriser rounds : peut être un objet
+      const rawRounds = m.current_map?.rounds ?? m.round_score;
+      const rounds = rawRounds != null
+        ? (typeof rawRounds === 'object' ? JSON.stringify(rawRounds) : String(rawRounds))
+        : undefined;
       const liveScore = isLive
         ? {
             current: score,
             maps: score,
-            rounds: m.current_map?.rounds ?? m.round_score ?? undefined,
+            rounds,
             currentMap: m.current_map?.name ?? m.map_name ?? undefined,
           }
         : undefined;
+      // Sécuriser noms d'équipe : team1/team2 peuvent être des objets
+      const t1Name = m.team1?.name ?? (typeof m.team1 === 'string' ? m.team1 : undefined) ?? 'Team 1';
+      const t2Name = m.team2?.name ?? (typeof m.team2 === 'string' ? m.team2 : undefined) ?? 'Team 2';
+      const t1Logo = m.team1?.logo ?? m.team1?.logo_local;
+      const t2Logo = m.team2?.logo ?? m.team2?.logo_local;
       return {
         id: String(m.id || ''),
-        home: { name: m.team1?.name || m.team1 || 'Team 1', logo: m.team1?.logo || m.team1?.logo_local },
-        away: { name: m.team2?.name || m.team2 || 'Team 2', logo: m.team2?.logo || m.team2?.logo_local },
+        home: { name: t1Name, logo: typeof t1Logo === 'string' ? t1Logo : undefined },
+        away: { name: t2Name, logo: typeof t2Logo === 'string' ? t2Logo : undefined },
         kickoff: m.scheduledAt || m.scheduled || m.date || '',
         status: (isLive ? 'live' : 'scheduled') as 'live' | 'scheduled',
         score,
