@@ -118,7 +118,9 @@ export function MatchCard({
   // Best odds (P3 — Bet Action Hub)
   const bestOddA = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalA > max.decimalA ? o : max)) : null;
   const bestOddB = match.allOdds?.length ? match.allOdds.reduce((max, o) => (o.decimalB > max.decimalB ? o : max)) : null;
-  const { playerA, playerB, stats, modelUpdatedAt } = match;
+  const { playerA, playerB, stats: rawStats, modelUpdatedAt } = match;
+  // stats peut être undefined à runtime (bbc-usopen-fetcher, etc.) → fallback
+  const stats = rawStats ?? { form: "-", eloGap: 0, surface: "Hard" as const, h2h: "0-0", ic: [0, 100] as [number, number], confidence: 0 };
 
   // Highlights TennisTV — dernier match joué de chaque joueur (chip YouTube
   // dans le PlayerBlock). Skip pour les cartes sans noms réels.

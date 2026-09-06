@@ -102,7 +102,7 @@ export function TournamentDrawView({
           <h2 className="text-lg font-bold tracking-tight">{draw.name}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <SurfaceBadge surface={draw.surface} />
+          <SurfaceBadge surface={draw?.surface ?? "Hard"} />
           {draw.category && (
             <span className="inline-flex items-center rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[11px] font-bold uppercase leading-none text-muted-foreground">
               {draw.category}

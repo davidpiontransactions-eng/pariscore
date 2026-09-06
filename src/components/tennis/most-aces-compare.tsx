@@ -58,7 +58,7 @@ export function MostAcesCompare({ match, liveState, serveStatsA, serveStatsB, cl
   // absent — le guard d'affichage est en dessous.
   const predictions: Prediction | null = useMemo(() => {
     if (!prematch || !liveState) return prematch ?? null;
-    const modelSurface = toModelSurface(match.stats.surface);
+    const modelSurface = toModelSurface(match.stats?.surface ?? "Hard");
     const liveCtx = buildLiveContext(liveState);
     const result = predictMostAces(
       serveStatsA ?? { acesPct: null, servePtsWonPct: null, returnPtsWonPct: null },

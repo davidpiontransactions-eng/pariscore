@@ -129,12 +129,14 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     match ? { id: match.playerA.id, name: match.playerA.name } : null,
     match ? { id: match.playerB.id, name: match.playerB.name } : null,
     match?.tournament ?? null,
-    match?.stats.surface ?? null,
+    match?.stats?.surface ?? null,
   );
 
   if (!match) return null;
 
-  const { playerA, playerB, probA, probB, stats, allOdds, h2hHistory } = match;
+  const { playerA, playerB, probA, probB, stats: rawStats, allOdds, h2hHistory } = match;
+  // stats peut être undefined à runtime → fallback
+  const stats = rawStats ?? { form: "-", eloGap: 0, surface: "Hard" as const, h2h: "0-0", ic: [0, 100] as [number, number], confidence: 0 };
 
   const h2hData = bsdH2h?.h2h ?? null;
   const h2hDisplay = h2hData
@@ -171,9 +173,10 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     : Object.entries(
         (h2hHistory ?? []).reduce(
           (acc, h) => {
-            if (!acc[h.surface]) acc[h.surface] = { a: 0, b: 0 };
-            if (h.winnerId === playerA.id) acc[h.surface].a++;
-            else acc[h.surface].b++;
+            const s = h?.surface ?? "Hard";
+            if (!acc[s]) acc[s] = { a: 0, b: 0 };
+            if (h.winnerId === playerA.id) acc[s].a++;
+            else acc[s].b++;
             return acc;
           },
           {} as Record<string, { a: number; b: number }>
@@ -787,10 +790,10 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                                 {formatInTimeZone(h.date, locale, "month_year", browserTz)}
                               </span>
                               <span className="text-muted-foreground">·</span>
-                              <span className="font-medium">{h.tournament}</span>
+                              <span className="font-medium">{h?.tournament}</span>
                               <span className="text-muted-foreground">·</span>
                               <span className="text-[11px] uppercase text-muted-foreground">
-                                {h.surface}
+                                {h?.surface ?? "Hard"}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">

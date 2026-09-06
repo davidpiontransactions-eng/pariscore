@@ -119,7 +119,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
   // valeurs (et au passage le bet #3). Coût O(1), recalcul à chaque maj.
   const setAndGames = useMemo(() => {
     if (!liveState) return null;
-    const surface = toModelSurface(match.stats.surface);
+    const surface = toModelSurface(match.stats?.surface ?? "Hard");
     const liveCtx = buildLiveContext(liveState);
 
     // Bet #3 : Over games match.
@@ -146,7 +146,7 @@ function PipBetPanelImpl({ match, liveState, serveStatsA, serveStatsB }: Props) 
   }, [
     liveState?.scoreA.games,
     liveState?.scoreB.games,
-    match.stats.surface,
+    match.stats?.surface ?? "Hard",
     match.playerA.elo,
     match.playerB.elo,
     serveStatsA,

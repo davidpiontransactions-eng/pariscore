@@ -201,15 +201,14 @@ export async function GET(
       return NextResponse.json(cached.data);
     }
 
-    const db = getDb();
-    if (!db) {
-      return NextResponse.json(
-        { error: "DB_UNAVAILABLE", message: "Base de données non disponible" },
-        { status: 503 },
-      );
-    }
-
+    let db: BSD | null = null;
     try {
+      db = getDb();
+      if (!db) {
+        console.error(`[us-open-draw] DB unavailable for slug=${slug}`);
+        return NextResponse.json([], { status: 200 });
+      }
+
       // Slugs US Open qui ont un bracket tnnslive.com
       const hasBracket = slug === "us-open" || slug === "us-open-women";
 
@@ -279,15 +278,14 @@ export async function GET(
 
       cache.set(data);
       return NextResponse.json(data);
+    } catch (e) {
+      console.error(`[us-open-draw] upstream failed for slug=${slug}:`, e);
+      return NextResponse.json([], { status: 200 });
     } finally {
-      db.close();
+      db?.close();
     }
   } catch (err) {
-    return apiErrorHandler(err, "tennis/tournament/draw", () =>
-      NextResponse.json(
-        { error: "INTERNAL_ERROR", message: "Erreur interne" },
-        { status: 500 },
-      ),
-    );
+    console.error(`[us-open-draw] unexpected error:`, err);
+    return NextResponse.json([], { status: 200 });
   }
 }

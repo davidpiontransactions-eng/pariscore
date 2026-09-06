@@ -72,12 +72,14 @@ export async function GET(
       return NextResponse.json(cached.data);
     }
 
-    const db = getDb();
-    if (!db) {
-      return NextResponse.json({ error: "DB_UNAVAILABLE" }, { status: 503 });
-    }
-
+    let db: BSD | null = null;
     try {
+      db = getDb();
+      if (!db) {
+        console.error(`[contenders-matches] DB unavailable for slug=${slug}`);
+        return NextResponse.json({ slug, year, contenders: [] }, { status: 200 });
+      }
+
       // Top 10 prétendants
       const top10 = db.prepare(
         `SELECT player_name, player_seed, player_country, prob_win
@@ -146,12 +148,14 @@ export async function GET(
       const data = { slug, year, contenders };
       cache.set(data);
       return NextResponse.json(data);
+    } catch (e) {
+      console.error(`[contenders-matches] upstream failed for slug=${slug}:`, e);
+      return NextResponse.json({ slug, year, contenders: [] }, { status: 200 });
     } finally {
-      db.close();
+      db?.close();
     }
   } catch (err) {
-    return apiErrorHandler(err, "tennis/contenders-matches", () =>
-      NextResponse.json({ error: "INTERNAL_ERROR" }, { status: 500 }),
-    );
+    console.error(`[contenders-matches] unexpected error:`, err);
+    return NextResponse.json({ contenders: [] }, { status: 200 });
   }
 }

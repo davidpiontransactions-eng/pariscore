@@ -120,7 +120,7 @@ export function LastMatchesList({
             <span className="truncate text-muted-foreground sm:row-start-1 sm:col-start-5">
               {m.tournament}
               <span className="mx-1" aria-hidden="true">·</span>
-              {m.surface}
+              {m?.surface ?? "Hard"}
               <span className="mx-1" aria-hidden="true">·</span>
               {m.round}
             </span>

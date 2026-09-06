@@ -64,7 +64,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          if (response && response.status === 200 && response.type === "basic") {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
           }
@@ -82,7 +82,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response.ok) {
+          if (response && response.status === 200 && response.type === "basic") {
             const clone = response.clone();
             caches.open(API_CACHE).then((cache) => cache.put(request, clone));
           }
@@ -99,7 +99,7 @@ self.addEventListener("fetch", (event) => {
       if (cached) return cached;
       return fetch(request)
         .then((response) => {
-          if (response.ok && request.type === "basic") {
+          if (response && response.status === 200 && response.type === "basic") {
             const clone = response.clone();
             caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
           }

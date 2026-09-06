@@ -336,7 +336,6 @@ function HomeInner() {
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
         {/* Mode Toggle — Prematch / Live */}
-        <div id="mode-test-plain" className="text-red-500 font-bold text-center py-2">MODE TOGGLE PLAIN TEST</div>
         <ModeToggle />
 
         {/* Ancien header supprimé — maintenant dans SiteHeader (layout.tsx) */}

@@ -127,7 +127,9 @@ export const MatchCardBroadcast = memo(function MatchCardBroadcast({
   const fav = isFavorite(match.id);
   const top20 = useTop20Contenders();
 
-  const { playerA, playerB, stats } = match;
+  const { playerA, playerB, stats: rawStats } = match;
+  // stats peut être undefined à runtime (bbc-usopen-fetcher, etc.) → fallback
+  const stats = rawStats ?? { form: "-", eloGap: 0, surface: "Hard" as const, h2h: "0-0", ic: [0, 100] as [number, number], confidence: 0 };
   const isSynthetic = match.synthetic === true;
   const isLive = liveState?.isLive === true;
   const probA = isLive ? Math.round(liveState!.liveProbA) : match.probA;

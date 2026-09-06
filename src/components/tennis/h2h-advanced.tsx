@@ -213,7 +213,7 @@ function RecentMatchRow({
 
       {/* Surface badge */}
       <span className="inline-flex items-center rounded border border-border/60 bg-muted/30 px-1.5 py-0.5 text-[11px] font-bold uppercase text-muted-foreground">
-        {normalizeSurface(match.surface)}
+        {normalizeSurface(match?.surface ?? "Hard")}
       </span>
 
       {/* Score */}
@@ -269,7 +269,7 @@ export function H2HAdvanced({
   // Build a lookup from normalised surface → breakdown
   const surfaceMap = new Map<string, SurfaceBreakdown>();
   bySurface?.forEach((s) => {
-    surfaceMap.set(normalizeSurface(s.surface), s);
+    surfaceMap.set(normalizeSurface(s?.surface ?? "Hard"), s);
   });
 
   const hasRecentMatches = recentMatches && recentMatches.length > 0;

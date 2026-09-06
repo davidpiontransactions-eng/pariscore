@@ -96,7 +96,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
       return { ...prematch, setOver75: 50, setUnder125: 50 };
     }
     // (Reset mémoïsations Markov géré dans adjustLambdaLive — couche modèle.)
-    const modelSurface = toModelSurface(match.stats.surface);
+    const modelSurface = toModelSurface(match.stats?.surface ?? "Hard");
     const liveCtx = buildLiveContext(liveState);
     const result = predictTotalGames(
       serveStatsA ?? { servePtsWonPct: null, returnPtsWonPct: null },
@@ -126,7 +126,7 @@ export function PredictiveBets({ match, liveState, serveStatsA, serveStatsB, cla
     liveState?.liveProbA,
     liveState?.liveProbB,
     liveState?.server,
-    match.stats.surface,
+    match.stats?.surface ?? "Hard",
     match.playerA.elo,
     match.playerB.elo,
     serveStatsA,

@@ -132,7 +132,7 @@ export function MatchPipWidget() {
   // terre/gazon. On prend la surface du 1er match (les matchs d'un même widget
   // sont quasi toujours sur la même surface — même tournoi). Si mixte, on
   // pourrait faire un call par surface, mais overkill pour un MVP.
-  const widgetSurface = liveFavoriteMatches[0]?.match.stats.surface || "Dur";
+  const widgetSurface = liveFavoriteMatches[0]?.match?.stats?.surface || "Dur";
   const { data: playerStatsMap } = usePlayerStats(allNames, widgetSurface);
 
   // Notifications natives feu tricolore ✅. Le hook gère l'anti-spam
