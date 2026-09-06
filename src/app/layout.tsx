@@ -202,8 +202,9 @@ export default async function RootLayout({
               <PHProvider>
                 <SentryErrorBoundary>
                   <AppMotionConfig>
+                    <div id="layout-test-before" style={{background:'red',color:'white',padding:'4px',textAlign:'center'}}>BEFORE HEADER</div>
                     <SiteHeader />
-                    <div id="layout-test" style={{background:'red',color:'white',padding:'4px',textAlign:'center'}}>LAYOUT TEST DIV</div>
+                    <div id="layout-test-after" style={{background:'blue',color:'white',padding:'4px',textAlign:'center'}}>AFTER HEADER</div>
                     <ModeToggle />
                     <main id="main">
                       {children}
