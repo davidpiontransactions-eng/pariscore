@@ -166,8 +166,8 @@ export function useLiveMatches(): UseLiveMatchesResult {
           // SSE: uniquement mettre à jour si polling n'a pas déjà de données
           // (liveMatchList.length === 0 signifie pas encore de données polling)
           if (liveMatchList.length === 0) {
-            const latencyMs = Math.max(0, Date.now() - (payload.at ? new Date(payload.at).getTime() : Date.now()));
-            const cache = buildLiveStates(payload.matches, payload.at ? new Date(payload.at).toISOString() : undefined, prevCacheRef.current);
+            const latencyMs = Math.max(0, Date.now() - (payload.kind === "snapshot" ? new Date(payload.at).getTime() : Date.now()));
+            const cache = buildLiveStates(payload.matches, payload.kind === "snapshot" ? new Date(payload.at).toISOString() : undefined, prevCacheRef.current);
             prevCacheRef.current = cache;
             setLatency(latencyMs);
             setConnectionStatus("connected");
