@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Settings, Search } from "lucide-react";
@@ -15,37 +15,6 @@ import { LiquidGlass } from "@/components/ui/liquid-glass";
 
 const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma", "cycling", "f1", "baseball", "cs2"]);
 
-/* ─── Mode Toggle (Prematch / Live) ─── */
-function ModeInlineToggle() {
-  const [mode, setMode] = useState<"prematch" | "live">("prematch");
-  return (
-    <div className="flex gap-1 rounded-lg bg-white/5 p-0.5">
-      <button
-        onClick={() => setMode("prematch")}
-        className={cn(
-          "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
-          mode === "prematch"
-            ? "bg-[#7B3FA0] text-white shadow-sm"
-            : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
-        )}
-      >
-        📅 Prematch
-      </button>
-      <button
-        onClick={() => setMode("live")}
-        className={cn(
-          "px-3 py-1 text-xs font-semibold rounded-md transition-colors",
-          mode === "live"
-            ? "bg-rose-500 text-white shadow-sm"
-            : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
-        )}
-      >
-        🔴 Live
-      </button>
-    </div>
-  );
-}
-
 /**
  * SiteHeader — Barre du haut unifiée à 2 niveaux, style gradient modern.
  *
@@ -55,6 +24,8 @@ function ModeInlineToggle() {
 export function SiteHeader() {
   const { open, onOpenChange } = useSearchModal();
   const activeSport = useSportsSidebarStore((s) => s.selectedSportId);
+  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
+  const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
 
   const handleSportChange = useCallback(
     (sport: string) => {
@@ -155,18 +126,33 @@ export function SiteHeader() {
 
           {/* Droite : Actions */}
           <div className="flex items-center gap-2">
-            {/* Mode toggle (Prematch / Live) */}
-            <ModeInlineToggle />
-
-            {/* Icône recherche (mobile) */}
-            <button
-              type="button"
-              onClick={() => onOpenChange(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-[#6B5B8D] transition-all hover:bg-[#F8F5FC] hover:text-[#1A1145] hover:shadow-lg hover:shadow-purple-500/5 sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              aria-label="Rechercher"
-            >
-              <Search className="h-5 w-5" />
-            </button>
+            {/* Mode toggle (Prematch / Live) — inline pour éviter Turbopack tree-shake */}
+            <div className="hidden sm:flex items-center gap-0.5 rounded-lg border border-[#E0D8F0] bg-white p-0.5">
+              <button
+                type="button"
+                onClick={() => setHeaderMode("prematch")}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
+                  headerMode === "prematch"
+                    ? "bg-[#7B3FA0] text-white shadow-sm"
+                    : "text-[#6B5B8D] hover:text-[#1A1145]"
+                )}
+              >
+                📅 Prematch
+              </button>
+              <button
+                type="button"
+                onClick={() => setHeaderMode("live")}
+                className={cn(
+                  "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all",
+                  headerMode === "live"
+                    ? "bg-rose-500 text-white shadow-sm"
+                    : "text-[#6B5B8D] hover:text-[#1A1145]"
+                )}
+              >
+                🔴 Live
+              </button>
+            </div>
 
             {/* Notifications */}
             <NotificationsDropdown />
@@ -186,7 +172,7 @@ export function SiteHeader() {
           </div>
         </div>
 
-        {/* Niveau 2 — Onglets sport + bouton mode (40px) */}
+        {/* Niveau 2 — Onglets sport (40px) */}
         <div className="relative">
           {/* Top separator with glow */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
