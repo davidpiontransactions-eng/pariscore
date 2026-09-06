@@ -227,6 +227,7 @@ export function SiteHeader() {
 
       {/* Sous-barre : Prematch / Live — sticky sous le header */}
       <div className="sticky top-[96px] z-40 flex items-center justify-center h-9 border-b border-purple-500/20 bg-white/80 backdrop-blur-sm">
+        <div data-testid="mode-toggle-test" className="text-red-500 font-bold">TEST MODE TOGGLE</div>
         <ModeInlineToggle />
       </div>
 
