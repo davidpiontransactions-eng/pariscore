@@ -190,10 +190,11 @@ export function SiteHeader() {
           {/* Top separator with glow */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
           <SportTabs activeSport={activeSport ?? "football"} onSportChange={handleSportChange} />
-          {/* Sous-barre : Prematch / Live */}
-          <div className="flex items-center justify-center border-b border-white/[0.04] h-9">
-            <ModeToggle />
-          </div>
+        </div>
+
+        {/* Sous-barre : Prematch / Live */}
+        <div className="flex items-center justify-center h-9 border-b border-purple-500/20 bg-white/80">
+          <ModeToggle />
         </div>
       </AutoHideHeader>
 
