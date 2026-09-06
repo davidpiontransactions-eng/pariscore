@@ -56,6 +56,8 @@ interface SportsSidebarState {
   teamsCustomized: boolean;
   /** Sidebar réduite en mode icônes (style 1xBet collapsed). */
   collapsed: boolean;
+  /** Mode sélectionné dans la sous-barre header (Prematch / Live). */
+  headerMode: "prematch" | "live";
 
   setSearchQuery: (query: string) => void;
   setTimeFilter: (filter: TimeFilterKey) => void;
@@ -72,6 +74,7 @@ interface SportsSidebarState {
   syncSportFromTab: (sportId: string) => void;
   setMode: (sportId: string, mode: MatchViewMode) => void;
   setTreeStatus: (status: "all" | "live" | "prematch") => void;
+  setHeaderMode: (mode: "prematch" | "live") => void;
   setDrawerOpen: (open: boolean) => void;
   clearFilters: () => void;
   /** Ajoute/retire un match de la sélection (multi-sélection sidebar). */
@@ -110,6 +113,7 @@ const DEFAULTS = {
   followedTeamIds: [] as string[],
   teamsCustomized: false,
   collapsed: false,
+  headerMode: "prematch" as "prematch" | "live",
 };
 
 const DEFAULT_NAMED_SETS: Record<string, string[]> = {
@@ -211,6 +215,8 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
 
       setTreeStatus: (treeStatus) => set({ treeStatus }),
 
+      setHeaderMode: (headerMode) => set({ headerMode }),
+
       setDrawerOpen: (drawerOpen) => set({ drawerOpen }),
 
       clearFilters: () => set({ ...DEFAULTS, selectedCountryId: null }),
@@ -278,6 +284,7 @@ export const useSportsSidebarStore = create<SportsSidebarState>()(
         followedTeamIds: s.followedTeamIds,
         teamsCustomized: s.teamsCustomized,
         collapsed: s.collapsed,
+        headerMode: s.headerMode,
       }),
     },
   ),

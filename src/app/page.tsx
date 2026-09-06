@@ -179,6 +179,7 @@ function HomeInner() {
 
   // La landing affiche la vue Accueil (dashboard neutre) — pas de sport imposé.
   const [activeTab, setActiveTab] = useState<SportTab>("home");
+  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
   const reduceMotion = useReducedMotion();
 
   // Pills navigation active state
@@ -347,15 +348,16 @@ function HomeInner() {
               className="flex-1"
             >
 
-        {/* Top Multi-Sport — matchs top du jour */}
+        {/* Calendrier des matchs — filtré par sport + mode */}
         <section className="w-full px-4 sm:px-6 pt-6">
-          <TopMultiSport activeSport={
-            ["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab
-          } />
+          <TopMultiSport
+            activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
+            mode={headerMode}
+          />
         </section>
 
-        {/* Top 10 matchs par stratégie — football */}
-        {!footballLoading && prematchMatches.length > 0 && (
+        {/* Top 10 matchs par stratégie — football uniquement en mode prematch */}
+        {activeTab === "football" && headerMode === "prematch" && !footballLoading && prematchMatches.length > 0 && (
           <section className="w-full px-4 sm:px-6 pt-4">
             <FootballTop10Widget matches={prematchMatches} />
           </section>
@@ -468,7 +470,7 @@ function HomeInner() {
               <UpcomingTenMatchesTable id="section-upcoming" />
             </BentoTile>
             <BentoTile size="standard" variant="glass">
-              <AIInsightCard id="section-gemini" />
+              <AIInsightCard id="section-gemini" activeSport={activeTab === "home" ? undefined : activeTab} />
             </BentoTile>
           </BentoGrid>
         </section>

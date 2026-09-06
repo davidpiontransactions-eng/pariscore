@@ -310,7 +310,7 @@ function LeagueCard({
 }
 
 /* ─── Main Component ─── */
-export function TopMultiSport({ activeSport = "all" }: { activeSport?: string }) {
+export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { activeSport?: string; mode?: "prematch" | "live" }) {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [groups, setGroups] = useState<TopLeague[]>([]);
@@ -322,7 +322,8 @@ export function TopMultiSport({ activeSport = "all" }: { activeSport?: string })
   const fetchData = useCallback(
     async (skipCache = false) => {
       const sportParam = activeSport !== "all" ? activeSport : "all";
-      const key = `top-${sportParam}`;
+      const timeframe = mode === "live" ? "live" : "today";
+      const key = `top-${sportParam}-${timeframe}`;
       if (!skipCache) {
         const cached = cacheRef.current.get(key);
         if (cached && Date.now() - cached.ts < CACHE_MS) {
@@ -332,7 +333,7 @@ export function TopMultiSport({ activeSport = "all" }: { activeSport?: string })
         }
       }
       try {
-        const res = await fetch(`/api/v1/top-matches/all?sport=${sportParam}&limit=10`);
+        const res = await fetch(`/api/v1/top-matches/all?sport=${sportParam}&timeframe=${timeframe}&limit=10`);
         const data: TopMatchResponse = await res.json();
         cacheRef.current.set(key, { data, ts: Date.now() });
         setGroups(data.groups);
@@ -341,7 +342,7 @@ export function TopMultiSport({ activeSport = "all" }: { activeSport?: string })
       }
       setLoading(false);
     },
-    [activeSport]
+    [activeSport, mode]
   );
 
   // Filtrer les matchs finis + time filter + safety filtre sport
@@ -378,7 +379,7 @@ export function TopMultiSport({ activeSport = "all" }: { activeSport?: string })
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchData, timeFilter, activeSport]);
+  }, [fetchData, timeFilter, activeSport, mode]);
 
   const handleRefresh = () => {
     setSpinning(true);
@@ -396,7 +397,7 @@ export function TopMultiSport({ activeSport = "all" }: { activeSport?: string })
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-extrabold text-[#1A1145] tracking-tight">
-            Top Matchs du Jour
+            Calendrier des matchs
           </h2>
           {totalMatches > 0 && (
             <span className="text-xs text-[#7B3FA0] font-mono">{totalMatches} matchs</span>

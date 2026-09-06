@@ -17,6 +17,7 @@ type Factor = {
 export type AIInsightCardProps = {
   className?: string;
   id?: string;
+  activeSport?: string;
 };
 
 type GeminiResponse = {
@@ -46,7 +47,7 @@ const DEMO: GeminiResponse = {
     { label: "Comment ça marche", value: "Sélection → Analyse" },
     { label: "Cache intelligent", value: "12h (cross-utilisateur)" },
     { label: "Modèle", value: "Gemini 2.0 Flash" },
-    { label: "Sports couverts", value: "Tennis + Football" },
+    { label: "Filtrage", value: "Par sport actif" },
   ],
   edge: 0,
   confidence: 3,
@@ -75,7 +76,7 @@ function renderStars(rating: number, max = 5): React.ReactNode {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AIInsightCard({ className, id }: AIInsightCardProps) {
+export function AIInsightCard({ className, id, activeSport }: AIInsightCardProps) {
   const { tennisData } = useDashboardData();
   const { footData } = useDashboardData();
 
@@ -90,21 +91,34 @@ export function AIInsightCard({ className, id }: AIInsightCardProps) {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Build match options list
+  // Réinitialiser la sélection quand le sport change
+  const prevSportRef = useRef(activeSport);
+  if (prevSportRef.current !== activeSport) {
+    prevSportRef.current = activeSport;
+    setSelectedMatchId("");
+    setInsight(null);
+    setError(null);
+  }
+
+  // Build match options list — filtré par sport actif
   const matchOptions = useMemo<MatchOption[]>(() => {
     const opts: MatchOption[] = [];
     for (const m of tennisData?.matches ?? []) {
-      opts.push({ id: m.id, sport: "tennis",
-        label: `🎾 ${m.playerA.shortName} vs ${m.playerB.shortName} (${m.tournament})`,
-        scheduledAt: m.scheduledAt });
+      if (!activeSport || activeSport === "tennis") {
+        opts.push({ id: m.id, sport: "tennis",
+          label: `🎾 ${m.playerA.shortName} vs ${m.playerB.shortName} (${m.tournament})`,
+          scheduledAt: m.scheduledAt });
+      }
     }
     for (const m of footData?.matches ?? []) {
-      opts.push({ id: m.id, sport: "football",
-        label: `⚽ ${m.home.shortName} vs ${m.away.shortName} (${m.league.name})`,
-        scheduledAt: m.scheduledAt });
+      if (!activeSport || activeSport === "football") {
+        opts.push({ id: m.id, sport: "football",
+          label: `⚽ ${m.home.shortName} vs ${m.away.shortName} (${m.league.name})`,
+          scheduledAt: m.scheduledAt });
+      }
     }
     return opts.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
-  }, [tennisData?.matches, footData?.matches]);
+  }, [tennisData?.matches, footData?.matches, activeSport]);
 
   // Trigger Gemini
   const handleSelect = useCallback(async (matchId: string) => {
