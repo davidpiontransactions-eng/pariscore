@@ -87,6 +87,7 @@ function ModeToggle() {
  * Niveau 2 (40px) : Onglets sport scrollables
  */
 export function SiteHeader() {
+  console.log("[SiteHeader] rendering");
   const { open, onOpenChange } = useSearchModal();
   const activeSport = useSportsSidebarStore((s) => s.selectedSportId);
 
