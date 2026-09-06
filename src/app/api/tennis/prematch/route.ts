@@ -23,6 +23,7 @@ function filterStale(matches: { scheduledAt: string }[]): typeof matches {
 
 /* ─── US Open Fallback ─── */
 import { fetchUsOpenTodayMatches } from "@/lib/usopen-fetcher";
+import { fetchBBCUsOpenTodayAndTomorrow } from "@/lib/bbc-usopen-fetcher";
 
 /**
  * Re-date le mock local (tennis-data.ts) sur la journée courante pour le
@@ -78,23 +79,29 @@ export async function GET() {
         const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
         const bsdMatches = filterStale(await fetchWithTransientRetry(fetchBSDMatches));
 
-        // 1b. Merge US Open (pas en fallback — en complément, BSD n'a pas les données US Open)
+        // 1b. Merge US Open — BBC (Men+Women) en priorité, puis usopen.org JSON (Men)
         let matches = bsdMatches;
         try {
-          const usopenMatches = await fetchUsOpenTodayMatches();
+          const [bbcUsOpen, jsonUsOpen] = await Promise.all([
+            fetchBBCUsOpenTodayAndTomorrow().catch(() => []),
+            fetchUsOpenTodayMatches().catch(() => []),
+          ]);
+          // BBC en priorité (plus complet), compléter avec JSON si besoin
+          const usopenMatches = bbcUsOpen.length > 0 ? bbcUsOpen : jsonUsOpen;
           if (usopenMatches && usopenMatches.length > 0) {
-            // Dédup par paire de joueurs
             const bsdPairs = new Set(
               bsdMatches.map((m: any) =>
                 [m.playerA?.name || m.player1?.name, m.playerB?.name || m.player2?.name].sort().join("|")
               )
             );
             const newUsOpen = usopenMatches.filter((m: any) => {
-              const pair = [m.playerA, m.playerB].sort().join("|");
+              const nameA = m.playerA?.name || m.playerA;
+              const nameB = m.playerB?.name || m.playerB;
+              const pair = [nameA, nameB].sort().join("|");
               return !bsdPairs.has(pair);
             });
             if (newUsOpen.length > 0) {
-              console.log("[prematch] US Open merge:", newUsOpen.length, "additional matches");
+              console.log("[prematch] US Open merge:", newUsOpen.length, "matches (BBC:", bbcUsOpen.length, ", JSON:", jsonUsOpen.length, ")");
               matches = [...bsdMatches, ...newUsOpen];
             }
           }
@@ -119,10 +126,14 @@ export async function GET() {
         const { fetchRealMatches } = await import("@/lib/real-matches");
         const oddsMatches = filterStale(await fetchWithTransientRetry(() => fetchRealMatches(oddsKey)));
 
-        // 2b. Merge US Open
+        // 2b. Merge US Open — BBC en priorité
         let matches = oddsMatches;
         try {
-          const usopenMatches = await fetchUsOpenTodayMatches();
+          const [bbcUsOpen, jsonUsOpen] = await Promise.all([
+            fetchBBCUsOpenTodayAndTomorrow().catch(() => []),
+            fetchUsOpenTodayMatches().catch(() => []),
+          ]);
+          const usopenMatches = bbcUsOpen.length > 0 ? bbcUsOpen : jsonUsOpen;
           if (usopenMatches && usopenMatches.length > 0) {
             const oddsPairs = new Set(
               oddsMatches.map((m: any) =>
@@ -130,7 +141,9 @@ export async function GET() {
               )
             );
             const newUsOpen = usopenMatches.filter((m: any) => {
-              const pair = [m.playerA, m.playerB].sort().join("|");
+              const nameA = m.playerA?.name || m.playerA;
+              const nameB = m.playerB?.name || m.playerB;
+              const pair = [nameA, nameB].sort().join("|");
               return !oddsPairs.has(pair);
             });
             if (newUsOpen.length > 0) {
