@@ -56,12 +56,15 @@ async function fetchWithTransientRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /* ─── GET ─── */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const now = Date.now();
+    const url = new URL(request.url);
+    const forceRefresh = url.searchParams.get("force") === "1";
 
+    // Cache: toujours lire pour le stale-while-error, ignorer si force=1
     const cached = cache.getEntry();
-    if (cached && isFresh(cached, CACHE_TTL_MS)) {
+    if (!forceRefresh && cached && isFresh(cached, CACHE_TTL_MS)) {
       return NextResponse.json({
         matches: cached.data.matches,
         source: cached.data.source,
