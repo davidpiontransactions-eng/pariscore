@@ -46,7 +46,8 @@ export async function GET(req: NextRequest) {
         },
       },
     );
-  } catch {
+  } catch (err) {
+    console.error("[top-matches/all]", sport, (err as Error).message);
     return NextResponse.json({
       groups: [],
       generated_at: new Date().toISOString(),
