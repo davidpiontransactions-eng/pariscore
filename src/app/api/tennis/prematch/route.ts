@@ -76,11 +76,36 @@ export async function GET() {
     if (bsdKey && bsdEnabled) {
       try {
         const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
-        const matches = filterStale(await fetchWithTransientRetry(fetchBSDMatches));
-        cache.set({ matches, source: "bsd" });
+        const bsdMatches = filterStale(await fetchWithTransientRetry(fetchBSDMatches));
+
+        // 1b. Merge US Open (pas en fallback — en complément, BSD n'a pas les données US Open)
+        let matches = bsdMatches;
+        try {
+          const usopenMatches = await fetchUsOpenTodayMatches();
+          if (usopenMatches && usopenMatches.length > 0) {
+            // Dédup par paire de joueurs
+            const bsdPairs = new Set(
+              bsdMatches.map((m: any) =>
+                [m.playerA?.name || m.player1?.name, m.playerB?.name || m.player2?.name].sort().join("|")
+              )
+            );
+            const newUsOpen = usopenMatches.filter((m: any) => {
+              const pair = [m.playerA, m.playerB].sort().join("|");
+              return !bsdPairs.has(pair);
+            });
+            if (newUsOpen.length > 0) {
+              console.log("[prematch] US Open merge:", newUsOpen.length, "additional matches");
+              matches = [...bsdMatches, ...newUsOpen];
+            }
+          }
+        } catch (err) {
+          console.error("[prematch] US Open merge failed (non-blocking):", (err as Error).message);
+        }
+
+        cache.set({ matches, source: "bsd+usopen" });
         return NextResponse.json({
           matches,
-          source: "bsd",
+          source: "bsd+usopen",
           updatedAt: new Date(now).toISOString(),
         });
       } catch (err) {
@@ -92,11 +117,35 @@ export async function GET() {
     if (oddsKey) {
       try {
         const { fetchRealMatches } = await import("@/lib/real-matches");
-        const matches = filterStale(await fetchWithTransientRetry(() => fetchRealMatches(oddsKey)));
-        cache.set({ matches, source: "odds-api" });
+        const oddsMatches = filterStale(await fetchWithTransientRetry(() => fetchRealMatches(oddsKey)));
+
+        // 2b. Merge US Open
+        let matches = oddsMatches;
+        try {
+          const usopenMatches = await fetchUsOpenTodayMatches();
+          if (usopenMatches && usopenMatches.length > 0) {
+            const oddsPairs = new Set(
+              oddsMatches.map((m: any) =>
+                [m.playerA?.name || m.player1?.name, m.playerB?.name || m.player2?.name].sort().join("|")
+              )
+            );
+            const newUsOpen = usopenMatches.filter((m: any) => {
+              const pair = [m.playerA, m.playerB].sort().join("|");
+              return !oddsPairs.has(pair);
+            });
+            if (newUsOpen.length > 0) {
+              console.log("[prematch] US Open merge:", newUsOpen.length, "additional matches");
+              matches = [...oddsMatches, ...newUsOpen];
+            }
+          }
+        } catch (err) {
+          console.error("[prematch] US Open merge failed (non-blocking):", (err as Error).message);
+        }
+
+        cache.set({ matches, source: "odds-api+usopen" });
         return NextResponse.json({
           matches,
-          source: "odds-api",
+          source: "odds-api+usopen",
           updatedAt: new Date(now).toISOString(),
         });
       } catch (err) {
@@ -104,7 +153,7 @@ export async function GET() {
       }
     }
 
-    /* 3️⃣ Fallback US Open (quand BSD/Odds n'ont pas les matchs d'aujourd'hui) */
+    /* 3️⃣ US Open seul (si BSD/Odds KO) */
     try {
       const usopenMatches = await fetchUsOpenTodayMatches();
       if (usopenMatches && usopenMatches.length > 0) {

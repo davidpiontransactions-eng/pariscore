@@ -405,7 +405,13 @@ export function BestMatchesTabs({ className, id, sport }: BestMatchesTabsProps) 
   ];
   // Affiche un sport s'il a des données, charge, ou est en erreur (pour
   // pouvoir montrer l'état d'erreur). Darts est un onglet désactivé séparé.
-  const tabs = allTabs.filter((t) => t.matches.length > 0 || t.loading || !!t.error);
+  // Quand un sport est imposé (sport prop), toujours inclure son onglet
+  // même vide — évite le fallback sur tabs[0] (tennis) qui casse le filtre.
+  let tabs = allTabs.filter((t) => t.matches.length > 0 || t.loading || !!t.error);
+  if (sport && !tabs.find((t) => t.key === effectiveTab)) {
+    const forced = allTabs.find((t) => t.key === effectiveTab);
+    if (forced) tabs = [forced, ...tabs];
+  }
 
   const current = tabs.find((t) => t.key === effectiveTab) ?? tabs[0];
 
