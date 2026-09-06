@@ -247,7 +247,7 @@ export function FootballTabContent() {
   }, [selectedMatchIds, matches, mode, setMode]);
 
   return (
-    <BentoGrid cols={4} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6">
+    <BentoGrid cols={4} className="mx-auto w-full flex-1 px-4 py-6 sm:px-6">
       {/* Breadcrumb contextuel — sport > pays > ligue */}
       {(selectedCountryId || selectedLeague) && (
         <BentoTile size="wide" variant="glass">
@@ -296,7 +296,7 @@ export function FootballTabContent() {
       )}
 
       {/* Sous-onglets Live | Pre-match (modèle 1xbet) */}
-      <BentoTile size="hero" variant="glass">
+      <BentoTile size="hero" variant="glass" className="md:col-span-4">
       {data?.degraded && !error && (
         <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />

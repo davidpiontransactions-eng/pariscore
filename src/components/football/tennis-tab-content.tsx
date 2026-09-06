@@ -722,7 +722,7 @@ return [...matches, ...synthetic];
         </div>
       )}
       {/* Bento Grid — grille principale avec 4 colonnes responsive */}
-      <BentoGrid cols={2} className="mx-auto w-full max-w-6xl px-4 sm:px-6">
+      <BentoGrid cols={2} className="mx-auto w-full px-4 sm:px-6">
       {/* Hero — Bento Grid : tile hero (2×2) */}
       <BentoTile size="hero" variant="solid">
       <section className="border-b border-border/60 bg-gradient-to-b from-muted/40 to-background">
