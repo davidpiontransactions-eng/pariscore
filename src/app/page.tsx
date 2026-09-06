@@ -23,6 +23,7 @@ import {
   SportsSidebarUrlSync,
 } from "@/components/layout/sports-sidebar";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
+import { ModeToggle } from "@/components/layout/mode-toggle";
 import type { SportTabId } from "@/types/sports-sidebar";
 import { TennisTabContent } from "@/components/football/tennis-tab-content";
 import { motion, useReducedMotion } from "framer-motion";
@@ -334,6 +335,9 @@ function HomeInner() {
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
+        {/* Mode Toggle — Prematch / Live */}
+        <ModeToggle />
+
         {/* Ancien header supprimé — maintenant dans SiteHeader (layout.tsx) */}
 
         {/* Filtre latéral multi-sports (1xBet) : sync URL + aside desktop */}
