@@ -1,0 +1,13 @@
+[eval]:1
+const c=require('/home/ubuntu/pariscore/src/lib/tennis-elo/abstract-cache.json'); const p=c.players; const names=Object.keys(p).map(k= ('+p[k].tour+')'); console.log('Total players:', names.length); console.log('ATP:', names.filter(n=; console.log('WTA:', names.filter(n=; const wta=names.filter(n=; console.log('First 10 WTA:', wta.slice(0,10))
+                                                                                                                                                     ^
+
+SyntaxError: missing ) after argument list
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
+Node.js v20.20.2

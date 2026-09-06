@@ -1,0 +1,4 @@
+▲ Next.js 16.1.3 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...

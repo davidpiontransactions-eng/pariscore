@@ -1,0 +1,18 @@
+=========================================================
+  PARISCORE DEPLOY - 28/08/2026 18:48:13,52
+=========================================================
+[1/3] --no-commit: skip git (deploy already-pushed code
+[2/3] stream scripts\update_vps.sh to VPS + async launch...
+LAUNCHED
+[3/3] waiting VPS_DEPLOY_OK on the VPS itself - 1 ssh connection, 1s steps, max 210 steps, fail-fast on ERR:...
+
+--- last 15 log lines ---
+[1/6] git fetch + reset --hard origin/main...
+Already up to date (8dcf8a090c3d7db12c3bd676a744991182b672ce). Nothing to deploy.
+--- VPS_DEPLOY_OK ---
+build_ran: 0
+pm2: unchanged
+
+=========================================================
+  DEPLOY COMPLETE
+=========================================================

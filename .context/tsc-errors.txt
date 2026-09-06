@@ -1,0 +1,79 @@
+src/app/api/football/rankings/route.ts(56,26): error TS2339: Property 'standings' does not exist on type 'Partial<Record<"xgFor" | "xgAgainst" | FdMarketKey, unknown>>'.
+src/app/api/tennis/top-matches/route.ts(139,11): error TS2322: Type 'SignalBreakdown' is not assignable to type 'Record<string, number>'.
+src/app/api/tennis/top-matches/route.ts(156,12): error TS2554: Expected 2-3 arguments, but got 1.
+src/app/api/tennis/top10/route.ts(112,17): error TS2345: Argument of type 'LeaderboardRow[]' is not assignable to parameter of type '{ [k: string]: unknown; player: string; }[]'.
+src/app/api/v1/follows/route.ts(18,32): error TS2339: Property 'follow' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/v1/follows/route.ts(55,33): error TS2339: Property 'follow' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/v1/follows/route.ts(60,18): error TS2339: Property 'follow' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/v1/follows/route.ts(64,31): error TS2339: Property 'follow' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/v1/follows/route.ts(91,16): error TS2339: Property 'follow' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/api/v1/predictions/settle/route.ts(100,20): error TS2345: Argument of type '{ success: boolean; matchId: string; homeScore: number; awayScore: number; settled: number; message: string; }' is not assignable to parameter of type 'never'.
+src/app/api/v1/predictions/settle/route.ts(102,20): error TS2345: Argument of type '{ matchId: string; success: boolean; error: string; }' is not assignable to parameter of type 'never'.
+src/app/api/v1/predictions/settle/route.ts(110,60): error TS2339: Property 'settled' does not exist on type 'never'.
+src/app/page.tsx(321,11): error TS2339: Property 'refetch' does not exist on type 'DashboardData'.
+src/components/bankroll/bankroll-heatmap.tsx(63,17): error TS2345: Argument of type '{ date: Date; profit: number; isProfitable: boolean; }' is not assignable to parameter of type 'never'.
+src/components/bankroll/bankroll-heatmap.tsx(101,24): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/bankroll-heatmap.tsx(107,22): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/bankroll-heatmap.tsx(116,20): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/bankroll-heatmap.tsx(125,21): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/bankroll-heatmap.tsx(168,23): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/bankroll-heatmap.tsx(172,26): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/bankroll-heatmap.tsx(280,15): error TS2872: This kind of expression is always truthy.
+src/components/bankroll/bankroll-heatmap.tsx(285,34): error TS2869: Right operand of ?? is unreachable because the left operand is never nullish.
+src/components/bankroll/bankroll-heatmap.tsx(285,51): error TS18047: 'dragStart' is possibly 'null'.
+src/components/bankroll/value-bet-timeline.tsx(5,54): error TS2307: Cannot find module 'chart.js' or its corresponding type declarations.
+src/components/bankroll/value-bet-timeline.tsx(6,22): error TS2307: Cannot find module 'chartjs-plugin-annotation' or its corresponding type declarations.
+src/components/bankroll/value-bet-timeline.tsx(57,15): error TS2345: Argument of type '{ day: number; cumulativePnL: number; confidence: string; winRate: string; }' is not assignable to parameter of type 'never'.
+src/components/bankroll/value-bet-timeline.tsx(61,39): error TS2339: Property 'cumulativePnL' does not exist on type 'never'.
+src/components/bankroll/value-bet-timeline.tsx(88,18): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/value-bet-timeline.tsx(89,18): error TS2304: Cannot find name 'useMemo'.
+src/components/bankroll/value-bet-timeline.tsx(90,19): error TS2304: Cannot find name 'useMemo'.
+src/components/bookmaker/bookmaker-comparison.tsx(78,12): error TS2322: Type '{ children: Element[]; responsive: true; }' is not assignable to type 'IntrinsicAttributes & ClassAttributes<HTMLTableElement> & TableHTMLAttributes<HTMLTableElement>'.
+src/components/cycling/cycling-stage-card.tsx(124,15): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/football/football-banker.tsx(129,15): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/football/football-match-card.tsx(132,5): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number | undefined'.
+src/components/football/football-match-card.tsx(431,13): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/football/football-match-card.tsx(438,13): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/football/football-match-card.tsx(445,13): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/football/football-match-detail-dialog.tsx(144,5): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number | undefined'.
+src/components/football/football-rankings-enhanced.tsx(499,67): error TS2339: Property 'flag' does not exist on type '{ url: string; emoji: string; }'.
+src/components/football/football-rankings-enhanced.tsx(514,38): error TS2339: Property 'flag' does not exist on type '{ url: string; emoji: string; }'.
+src/components/football/football-tab-content.tsx(572,44): error TS2322: Type '"football"' is not assignable to type '"default" | "live" | "compact" | undefined'.
+src/components/mma/mma-fight-card.tsx(110,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/mma/mma-fight-card.tsx(170,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/components/mobile/mobile-match-detail.tsx(119,12): error TS2741: Property 'children' is missing in type '{ tabs: { id: string; label: string; }[]; activeTab: string; onTabChange: Dispatch<SetStateAction<string>>; className: string; }' but required in type 'Props'.
+src/components/odds-shift/odds-shift-visualization.tsx(7,10): error TS2305: Module '"@/hooks/use-live-matches"' has no exported member 'useOddsLiveState'.
+src/components/odds-shift/odds-shift-visualization.tsx(79,24): error TS2538: Type 'undefined' cannot be used as an index type.
+src/components/sport-chips.tsx(6,10): error TS2305: Module '"lucide-react"' has no exported member 'Tab'.
+src/components/stat-tooltips.tsx(41,13): error TS2304: Cannot find name 'useTranslations'.
+src/components/stat-tooltips.tsx(68,9): error TS2322: Type '((e: MouseEvent) => void) | undefined' is not assignable to type 'MouseEventHandler<HTMLButtonElement> | undefined'.
+src/components/stat-tooltips.tsx(74,20): error TS2339: Property 'icon' does not exist on type 'JSX.IntrinsicElements'.
+src/components/stat-tooltips.tsx(92,23): error TS18048: 'cursorPos.x' is possibly 'undefined'.
+src/components/stat-tooltips.tsx(93,22): error TS18048: 'cursorPos.y' is possibly 'undefined'.
+src/components/stat-tooltips.tsx(99,15): error TS2339: Property 'icon' does not exist on type 'JSX.IntrinsicElements'.
+src/components/tennis/player-block.tsx(51,17): error TS2339: Property 'surface' does not exist on type 'Player'.
+src/components/tennis/player-block.tsx(52,22): error TS2339: Property 'surface' does not exist on type 'Player'.
+src/components/tennis/player-block.tsx(58,14): error TS2339: Property 'surface' does not exist on type 'Player'.
+src/components/tennis/tennis-top10-section.tsx(7,31): error TS2305: Module '"@/hooks/use-tennis-top10"' has no exported member 'TennisTop10Metric'.
+src/components/tennis/tennis-top10-section.tsx(7,55): error TS2305: Module '"@/hooks/use-tennis-top10"' has no exported member 'TennisTop10Surface'.
+src/components/tennis/tennis-top10-section.tsx(7,80): error TS2305: Module '"@/hooks/use-tennis-top10"' has no exported member 'TennisTop10Period'.
+src/components/theme/font-size-scaling.tsx(6,21): error TS2305: Module '"lucide-react"' has no exported member 'TextSize'.
+src/components/theme/font-size-scaling.tsx(40,48): error TS2345: Argument of type 'number' is not assignable to parameter of type 'string'.
+src/components/theme/theme-toggle.tsx(10,3): error TS2724: '"lucide-react"' has no exported member named 'LightVertical'. Did you mean 'FlipVertical'?
+src/components/ui/liquid-glass.tsx(59,10): error TS2604: JSX element type 'Component' does not have any construct or call signatures.
+src/components/ui/liquid-glass.tsx(59,10): error TS2786: 'Component' cannot be used as a JSX component.
+src/components/ui/liquid-glass.tsx(68,10): error TS2604: JSX element type 'Component' does not have any construct or call signatures.
+src/components/ui/liquid-glass.tsx(68,10): error TS2786: 'Component' cannot be used as a JSX component.
+src/components/ui/liquid-glass.tsx(75,8): error TS2604: JSX element type 'Component' does not have any construct or call signatures.
+src/components/ui/liquid-glass.tsx(75,8): error TS2786: 'Component' cannot be used as a JSX component.
+src/components/ui/liquid-glass.tsx(81,11): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'ClassValue'.
+src/lib/api/validation.ts(47,31): error TS2339: Property 'errors' does not exist on type 'ZodError<T>'.
+src/lib/sport-images.ts(311,3): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+src/lib/tennis-top10.ts(347,55): error TS2339: Property 'eloA' does not exist on type 'TennisMatch'.
+src/lib/tennis-top10.ts(347,74): error TS2339: Property 'eloB' does not exist on type 'TennisMatch'.
+src/lib/tennis-top10.ts(348,69): error TS2339: Property 'dbEloSurfaceA' does not exist on type 'TennisMatch'.
+src/lib/tennis-top10.ts(348,96): error TS2339: Property 'dbEloSurfaceB' does not exist on type 'TennisMatch'.
+src/lib/tennis-top10.ts(449,7): error TS2353: Object literal may only specify known properties, and 'scorecard' does not exist in type '{ key: string; player: TennisTop10Player; metricValue: number; }'.
+src/lib/tennis-top10.ts(461,3): error TS2322: Type '{ rank: number; player: TennisTop10Player; metricValue: number; metricLabel: string; insight: string; isValue: false; }[]' is not assignable to type 'TennisTop10Entry[]'.
+src/lib/top5-backtest/football.ts(112,4): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.
+src/lib/top5-backtest/football.ts(172,65): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.

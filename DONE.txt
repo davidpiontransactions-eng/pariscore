@@ -1,0 +1,31 @@
+DONE
+
+## Match Story Scrollytelling Page - Implementation Complete
+
+### Files Created (11):
+
+1. **`src/app/match/[id]/story/page.tsx`** - Page route fetching match data from `/api/tennis/bsd/matches/[id]`
+2. **`src/app/match/[id]/story/layout.tsx`** - Layout with ProgressBar at top (CSS scroll-driven)
+3. **`src/components/scrollytelling/match-story.tsx`** - Main 5-step container: Hero→Step1→Step2→Step3→Step4→Step5→CTA
+4. **`src/components/scrollytelling/story-step.tsx`** - IntersectionObserver step component
+5. **`src/components/scrollytelling/win-prob-chart.tsx`** - GSAP ScrollTrigger pinned chart with scrub
+6. **`src/components/scrollytelling/match-hero.tsx`** - Hero section (score/teams/date/surface)
+7. **`src/components/scrollytelling/recent-form.tsx`** - 5 derniers matchs with results
+8. **`src/components/scrollytelling/head-to-head.tsx`** - H2H history pattern reveal
+9. **`src/components/scrollytelling/key-players.tsx`** - Comparative player stats
+10. **`src/components/scrollytelling/prediction-reveal.tsx`** - Animated win probability counters
+11. **`src/components/scrollytelling/recommendation.tsx`** - Kelly criterion + suggested stake
+
+### Key Features:
+- **5-step structure** with `StoryStep` + IntersectionObserver visibility tracking
+- **GSAP ScrollTrigger** only on pinned WinProbChart (`pin: true`, `scrub: 0.5`)
+- **CSS scroll-driven** ProgressBar (`animation-timeline: scroll(root)`)
+- **`prefers-reduced-motion`** respected across all components
+- **Text titles + descriptions** on each step (accessibility)
+- **No scroll trap** - steps animate in/out naturally
+- **Data flow**: Page → `useParams` → `MatchStory` → fetches from `/api/tennis/bsd/matches/[id]` + H2H + predictions
+- **Typecheck**: 0 errors in new files
+
+### GSAP Usage:
+- `WinProbChart`: `gsap.timeline` with `ScrollTrigger` pin + scrub
+- Other steps: simple CSS reveals + `AnimatedCounter` IntersectionObserver triggers

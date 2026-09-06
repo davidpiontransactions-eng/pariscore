@@ -344,8 +344,8 @@ export function buildTennisTop10(
 
       // Elo depuis abstract cache (source principale) ou match (fallback)
       const abstract = lookupAbstractElo(p.name, m.stats?.surface);
-      const elo = abstract?.elo ?? (side === "A" ? (m.eloA ?? 1500) : (m.eloB ?? 1500));
-      const surfaceElo = abstract?.surfaceElo ?? (side === "A" ? (m.dbEloSurfaceA ?? elo) : (m.dbEloSurfaceB ?? elo));
+      const elo = abstract?.elo ?? (p.elo ?? 1500);
+      const surfaceElo = abstract?.surfaceElo ?? (p.dbEloSurface ?? elo);
       const form = p.form ?? [];
 
       const prev = playerStats.get(key);

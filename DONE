@@ -1,0 +1,15 @@
+Season Rewind files implemented (all 11 exist):
+
+1. src/app/rewind/[season]/page.tsx - Route page
+2. src/app/rewind/[season]/layout.tsx - Layout with ProgressBar + ChapterNav
+3. src/components/scrollytelling/season-rewind.tsx - Main container orchestrating chapters
+4. src/components/scrollytelling/chapter-nav.tsx - Fixed sidebar navigation
+5. src/components/scrollytelling/rewind-hero.tsx - Hero section with counters
+6. src/components/scrollytelling/win-rate-chart.tsx - GSAP ScrollTrigger line chart
+7. src/components/scrollytelling/top-predictions-reveal.tsx - GSAP staggered prediction cards
+8. src/components/scrollytelling/worst-misses.tsx - CSS-colored miss analysis
+9. src/components/scrollytelling/roi-by-sport.tsx - ROI progress bars by sport
+10. src/components/scrollytelling/model-timeline.tsx - Timeline cards with impact levels
+11. src/components/scrollytelling/user-heatmap.tsx - Canvas heatmap of user activity
+
+All files: French comments, prefers-reduced-motion honored, GSAP where specified, CSS scroll-driven elsewhere, ProgressBar top, ChapterNav fixed sidebar, illustrative simulated data.

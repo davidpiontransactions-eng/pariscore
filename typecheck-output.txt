@@ -1,0 +1,76 @@
+src/components/dashboard/nav-extra-views.tsx(244,6): error TS17008: JSX element 'ViewShell' has no corresponding closing tag.
+src/components/dashboard/nav-extra-views.tsx(280,18): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(280,19): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(340,8): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(358,7): error TS17002: Expected corresponding JSX closing tag for 'p'.
+src/components/dashboard/nav-extra-views.tsx(359,4): error TS1005: ':' expected.
+src/components/dashboard/nav-extra-views.tsx(360,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(364,3): error TS1109: Expression expected.
+src/components/dashboard/nav-extra-views.tsx(366,28): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(367,5): error TS1109: Expression expected.
+src/components/dashboard/nav-extra-views.tsx(367,20): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(367,114): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(369,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(369,23): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(369,68): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(373,9): error TS1109: Expression expected.
+src/components/dashboard/nav-extra-views.tsx(376,14): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(377,21): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(377,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(378,21): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(378,70): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(379,32): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(380,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(381,29): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(389,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(390,7): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(391,5): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(392,29): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(393,3): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(429,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(432,64): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(432,70): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(432,77): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(433,3): error TS1109: Expression expected.
+src/components/dashboard/nav-extra-views.tsx(433,56): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(434,55): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(474,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(478,3): error TS1109: Expression expected.
+src/components/dashboard/nav-extra-views.tsx(482,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(482,62): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(482,167): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(483,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(483,60): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(483,155): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(484,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(484,32): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(484,142): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(485,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(485,32): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(485,145): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(486,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(486,32): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(486,127): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(487,11): error TS1005: '}' expected.
+src/components/dashboard/nav-extra-views.tsx(487,32): error TS1382: Unexpected token. Did you mean `{'>'}` or `&gt;`?
+src/components/dashboard/nav-extra-views.tsx(487,127): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(541,1): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/dashboard/nav-extra-views.tsx(542,1): error TS1005: '</' expected.
+src/components/football/tennis-tab-content.tsx(1066,17): error TS1128: Declaration or statement expected.
+src/components/football/tennis-tab-content.tsx(1066,18): error TS1005: '}' expected.
+src/components/football/tennis-tab-content.tsx(1067,15): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/football/tennis-tab-content.tsx(1067,17): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/scrollytelling/chapter-nav.tsx(69,27): error TS1145: '{' or JSX element expected.
+src/components/scrollytelling/chapter-nav.tsx(69,29): error TS1003: Identifier expected.
+src/components/scrollytelling/chapter-nav.tsx(74,29): error TS1005: ';' expected.
+src/components/scrollytelling/chapter-nav.tsx(74,30): error TS1005: ',' expected.
+src/components/scrollytelling/chapter-nav.tsx(74,42): error TS1005: ',' expected.
+src/components/scrollytelling/chapter-nav.tsx(76,25): error TS1005: ',' expected.
+src/components/scrollytelling/chapter-nav.tsx(77,15): error TS1005: ',' expected.
+src/components/scrollytelling/chapter-nav.tsx(77,17): error TS17002: Expected corresponding JSX closing tag for 'nav'.
+src/components/scrollytelling/chapter-nav.tsx(79,11): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/scrollytelling/chapter-nav.tsx(79,13): error TS1381: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?
+src/components/scrollytelling/chapter-nav.tsx(80,11): error TS17002: Expected corresponding JSX closing tag for 'div'.
+src/components/scrollytelling/chapter-nav.tsx(81,9): error TS17002: Expected corresponding JSX closing tag for 'aside'.
+src/components/scrollytelling/chapter-nav.tsx(82,5): error TS1005: ')' expected.
+src/components/scrollytelling/chapter-nav.tsx(83,3): error TS1109: Expression expected.

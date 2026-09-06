@@ -2,3 +2,161 @@
 - Environments: .env
 
   Creating an optimized production build ...
+✓ Compiled successfully in 63s
+  Skipping validation of types
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/98) ...
+  Generating static pages using 11 workers (24/98) 
+  Generating static pages using 11 workers (48/98) 
+  Generating static pages using 11 workers (73/98) 
+✓ Generating static pages using 11 workers (98/98) in 940.3ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /admin/predictions
+├ ƒ /api
+├ ƒ /api/ai/football-match-report
+├ ƒ /api/ai/football-nl-filter
+├ ƒ /api/ai/gemini-cron
+├ ƒ /api/ai/gemini-insight
+├ ƒ /api/ai/gemini-insight/compare
+├ ƒ /api/ai/llm-status
+├ ƒ /api/ai/press-review-cron
+├ ƒ /api/baseball/logos/sync
+├ ƒ /api/baseball/match/[id]
+├ ƒ /api/baseball/schedule
+├ ƒ /api/basketball/odds
+├ ƒ /api/cs2/enrich
+├ ƒ /api/cs2/markets
+├ ƒ /api/cs2/matches
+├ ƒ /api/cs2/veto/[id]
+├ ƒ /api/cycling
+├ ƒ /api/email/digest
+├ ƒ /api/email/subscribe
+├ ƒ /api/email/test
+├ ƒ /api/email/unsubscribe
+├ ƒ /api/euroleague/matches
+├ ƒ /api/f1
+├ ƒ /api/fiba/odds
+├ ƒ /api/fiba/players
+├ ƒ /api/fiba/scoreboard
+├ ƒ /api/fiba/standings
+├ ƒ /api/fiba/stats
+├ ƒ /api/football/live
+├ ƒ /api/football/matches
+├ ƒ /api/football/matches/[id]/stats
+├ ƒ /api/football/players
+├ ƒ /api/football/prematch
+├ ƒ /api/football/rankings
+├ ƒ /api/football/top5
+├ ƒ /api/football/top5/backtest
+├ ƒ /api/mma/fights
+├ ƒ /api/nba/matches
+├ ƒ /api/push/digest
+├ ƒ /api/push/subscribe
+├ ƒ /api/push/test
+├ ƒ /api/rugby/backtest
+├ ƒ /api/rugby/competitions
+├ ƒ /api/rugby/match
+├ ƒ /api/rugby/power
+├ ƒ /api/rugby/predictions
+├ ƒ /api/rugby/standings
+├ ƒ /api/rugby/sync
+├ ƒ /api/stream/resolve
+├ ƒ /api/tennis/backtest
+├ ƒ /api/tennis/bsd/matches
+├ ƒ /api/tennis/bsd/matches/[id]
+├ ƒ /api/tennis/bsd/matches/[id]/h2h
+├ ƒ /api/tennis/bsd/matches/[id]/odds
+├ ƒ /api/tennis/bsd/matches/[id]/point-by-point
+├ ƒ /api/tennis/bsd/players
+├ ƒ /api/tennis/bsd/players/[id]
+├ ƒ /api/tennis/bsd/predictions
+├ ƒ /api/tennis/bsd/predictions/[id]
+├ ƒ /api/tennis/bsd/rankings
+├ ƒ /api/tennis/bsd/tournaments
+├ ƒ /api/tennis/bsd/tournaments/[id]
+├ ƒ /api/tennis/elo-history
+├ ƒ /api/tennis/live
+├ ƒ /api/tennis/live-stream
+├ ƒ /api/tennis/player-stats
+├ ƒ /api/tennis/prematch
+├ ƒ /api/tennis/search
+├ ƒ /api/tennis/stats-leaderboard
+├ ƒ /api/tennis/top-matches
+├ ƒ /api/tennis/top10
+├ ƒ /api/tennis/top5
+├ ƒ /api/tennis/top5/backtest
+├ ƒ /api/tennis/tournament-stats
+├ ƒ /api/tennis/tournament/[slug]/contenders-matches
+├ ƒ /api/tennis/tournament/[slug]/draw
+├ ƒ /api/tennis/tournaments
+├ ƒ /api/v1/basketball/h2h
+├ ƒ /api/v1/basketball/h2h/players
+├ ƒ /api/v1/basketball/h2h/teams
+├ ƒ /api/v1/bm/auto-settle
+├ ƒ /api/v1/bm/bankrolls
+├ ƒ /api/v1/bm/bankrolls/[id]
+├ ƒ /api/v1/bm/bets
+├ ƒ /api/v1/bm/bets/[id]
+├ ƒ /api/v1/bm/import/csv
+├ ƒ /api/v1/bm/import/local-storage
+├ ƒ /api/v1/editorial
+├ ƒ /api/v1/follows
+├ ƒ /api/v1/football/press-review
+├ ƒ /api/v1/last-match-highlights
+├ ƒ /api/v1/leagues-stats
+├ ƒ /api/v1/leagues-stats/[country]/[slug]
+├ ƒ /api/v1/leagues/[league_id]/stats
+├ ƒ /api/v1/leagues/bundesliga2/history
+├ ƒ /api/v1/multi-matches
+├ ƒ /api/v1/oddalerts/live/game/[smid]
+├ ƒ /api/v1/oddalerts/live/games
+├ ƒ /api/v1/odds/live
+├ ƒ /api/v1/predictions/accuracy
+├ ƒ /api/v1/predictions/alerts
+├ ƒ /api/v1/predictions/compare
+├ ƒ /api/v1/predictions/compute
+├ ƒ /api/v1/predictions/drift
+├ ƒ /api/v1/predictions/health
+├ ƒ /api/v1/predictions/settle
+├ ƒ /api/v1/previous-match-highlights
+├ ƒ /api/v1/tennis/press-review
+├ ƒ /api/v1/tennistv-highlights
+├ ƒ /api/v2/matches
+├ ƒ /api/v2/matches/live
+├ ƒ /api/v2/predictions
+├ ƒ /api/wnba/matches
+├ ƒ /bankroll
+├ ƒ /bankroll/bets
+├ ƒ /bankroll/bets/new
+├ ƒ /bankroll/tools
+├ ƒ /cache/cs2-teams/[file]
+├ ƒ /dashboard
+├ ƒ /favorites
+├ ○ /icon.png
+├ ƒ /league/[league_id]/stats
+├ ƒ /ligues
+├ ƒ /ligues/[country]/[slug]
+├ ƒ /predictions
+├ ƒ /results
+├ ƒ /rugby
+├ ƒ /setpoint
+├ ƒ /settings
+├ ○ /sitemap.xml
+├ ƒ /tennis/player/[slug]
+├ ƒ /tennis/stats
+└ ƒ /tennis/tournament/[slug]
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+[postbuild] Copiés vers standalone:
+  ✓ .next\standalone\.next\static
+  ✓ .next\standalone\public
+  ✓ .next\standalone\src\lib\tennis-elo\abstract-cache.json
+  ✓ .next\standalone\src\lib\tennis-dr\dr-cache.json
+[postbuild] OK

@@ -1,0 +1,13 @@
+[eval]:1
+const fs=require('fs'); const c=JSON.parse(fs.readFileSync('/home/ubuntu/pariscore/src/lib/tennis-elo/abstract-cache.json','utf8')); const p=c.players; const keys=Object.keys(p); console.log('Total:', keys.length); let atp=0,wta=0; keys.forEach(k===='ATP')atp++;if(p[k].tour==='WTA')wta++}); console.log('ATP:',atp,'WTA:',wta); const wtaNames=keys.filter(k===='WTA').map(k=; console.log('WTA sample:',wtaNames.slice(0,10))
+                                                                                                                                                                                                                                                         ^
+
+SyntaxError: Unexpected token '='
+    at makeContextifyScript (node:internal/vm:185:14)
+    at node:internal/process/execution:107:22
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3
+
+Node.js v20.20.2

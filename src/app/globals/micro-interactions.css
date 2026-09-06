@@ -1,0 +1,110 @@
+// Micro-interactions Global CSS — PariScore 2026
+// Toutes les animations sont CSS-native (pas de dépendance JS).
+// Respecte prefers-reduced-motion via @media queries.
+// Toutes les keyframes utilisent animation-timeline: scroll() ou view-timeline.
+// Fallbacks @supports pour navigateurs non-supportés.
+
+/* ---------- Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+  }
+}
+
+/* ---------- Animation Timeline : scroll() ---------- */
+@supports (animation-timeline: scroll()) {
+  .live-bar {
+    animation-timeline: scroll();
+    animation-duration: 1ms; /* Firefox: fallback time-based */
+    will-change: width;
+  }
+
+  .odds-pulse {
+    animation: pulse 2s ease-out infinite;
+    will-change: transform;
+  }
+
+  .odds-pulse:hover {
+    animation-iteration-count: 1; /* Pas d'infini sur hover en reduced-motion */
+  }
+}
+
+/* ---------- Animation Timeline : view() (Safari 16+ experimental) ---------- */
+@supports (animation-timeline: view()) {
+  .reveal {
+    view-timeline-name: --reveal;
+    animation-timeline: --reveal;
+  }
+}
+
+/* ---------- Pulse Keyframe (odds flash) ---------- */
+@keyframes pulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- Grow Keyframe (live score ticker) ---------- */
+@keyframes grow {
+  from { width: 0%; opacity: 0; }
+  to   { width: 100%; opacity: 1; }
+}
+
+/* ---------- Scale Up/Down (hover cards) ---------- */
+@keyframes card-lift {
+  from { transform: translateY(0) scale(1); }
+  to   { transform: translateY(-4px) scale(1.02); }
+}
+
+/* ---------- Confetti Keyframe ---------- */
+@keyframes mi-confetti-keyframes {
+  0%   { transform: rotate(0deg) scale(1); opacity: 1; }
+  33%  { transform: rotate(120deg) scale(1.2); opacity: 0.8; }
+  66%  { transform: rotate(240deg) scale(1.1); opacity: 0.6; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.4; }
+}
+
+/* ---------- Status Badge Animation ---------- */
+.status-badge {
+  transition: transform var(--mi-badge-transition-duration, 0.2s) var(--mi-animation-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.status-badge:hover {
+  transform: translateY(-2px) scale(var(--mi-transform-scale-up, 1.05));
+}
+
+/* ---------- Filter Toggle Hover ---------- */
+.filter-toggle {
+  transition: transform var(--mi-filter-hover-transition, 0.15s) var(--mi-animation-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.filter-toggle:hover {
+  transform: translateY(-2px);
+}
+
+/* ---------- Confetti Confetti Class ---------- */
+.mi-confetti {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: #00e676;
+  animation: mi-confetti-keyframes 3s cubic-bezier(0.4, 0, 0.2, 1) 1 both;
+  will-change: transform, opacity;
+}
+
+/* ---------- Utility Classes ---------- */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s var(--mi-animation-easing, cubic-bezier(0.4, 0, 0.2, 1)),
+              transform 0.6s var(--mi-animation-easing, cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
