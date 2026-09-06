@@ -14,6 +14,8 @@ const VALID_SPORTS = [
   'cs2',
   'mma',
   'cycling',
+  'baseball',
+  'rugby',
 ];
 
 export async function GET(req: NextRequest) {

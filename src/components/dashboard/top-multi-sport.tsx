@@ -310,7 +310,7 @@ function LeagueCard({
 }
 
 /* ─── Main Component ─── */
-export function TopMultiSport() {
+export function TopMultiSport({ activeSport = "all" }: { activeSport?: string }) {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [groups, setGroups] = useState<TopLeague[]>([]);
@@ -321,7 +321,8 @@ export function TopMultiSport() {
 
   const fetchData = useCallback(
     async (skipCache = false) => {
-      const key = "all";
+      const sportParam = activeSport !== "all" ? activeSport : "all";
+      const key = `top-${sportParam}`;
       if (!skipCache) {
         const cached = cacheRef.current.get(key);
         if (cached && Date.now() - cached.ts < CACHE_MS) {
@@ -331,7 +332,7 @@ export function TopMultiSport() {
         }
       }
       try {
-        const res = await fetch(`/api/v1/top-matches/all?limit=10`);
+        const res = await fetch(`/api/v1/top-matches/all?sport=${sportParam}&limit=10`);
         const data: TopMatchResponse = await res.json();
         cacheRef.current.set(key, { data, ts: Date.now() });
         setGroups(data.groups);
@@ -340,10 +341,10 @@ export function TopMultiSport() {
       }
       setLoading(false);
     },
-    []
+    [activeSport]
   );
 
-  // Filtrer les matchs finis + time filter
+  // Filtrer les matchs finis + time filter + safety filtre sport
   const filteredGroups = groups
     .map((g) => ({
       ...g,
@@ -351,7 +352,8 @@ export function TopMultiSport() {
         (m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status, m.badge?.label)
       ),
     }))
-    .filter((g) => g.matches.length > 0);
+    .filter((g) => g.matches.length > 0)
+    .filter((g) => activeSport === "all" || g.sport === activeSport);
 
   // Favoris : tous les matchs favoris à travers les groupes (avec sport)
   const favoriteMatches = groups
@@ -376,11 +378,12 @@ export function TopMultiSport() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchData, timeFilter]);
+  }, [fetchData, timeFilter, activeSport]);
 
   const handleRefresh = () => {
     setSpinning(true);
-    cacheRef.current.delete("all");
+    const sportParam = activeSport !== "all" ? activeSport : "all";
+    cacheRef.current.delete(`top-${sportParam}`);
     fetchData(true);
     setTimeout(() => setSpinning(false), 500);
   };

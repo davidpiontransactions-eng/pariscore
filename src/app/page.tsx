@@ -349,7 +349,9 @@ function HomeInner() {
 
         {/* Top Multi-Sport — matchs top du jour */}
         <section className="w-full px-4 sm:px-6 pt-6">
-          <TopMultiSport />
+          <TopMultiSport activeSport={
+            ["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab
+          } />
         </section>
 
         {/* Top 10 matchs par stratégie — football */}

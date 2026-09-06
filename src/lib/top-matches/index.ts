@@ -10,6 +10,8 @@ import { cs2Adapter } from './cs2';
 import { mmaAdapter } from './mma';
 import { cyclingAdapter } from './cycling';
 import { fibaAdapter } from './fiba';
+import { baseballAdapter } from './baseball';
+import { rugbyAdapter } from './rugby';
 
 const adapters: Record<string, { sport: SportType; fetch(limit: number, timeframe: string): Promise<TopLeague[]> }> = {
   football: footballAdapter,
@@ -21,6 +23,8 @@ const adapters: Record<string, { sport: SportType; fetch(limit: number, timefram
   mma: mmaAdapter,
   cycling: cyclingAdapter,
   fiba: fibaAdapter,
+  baseball: baseballAdapter,
+  rugby: rugbyAdapter,
 };
 
 const ALL_SPORTS = SPORT_TYPES;
