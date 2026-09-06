@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 
 // ─── Définition d'un onglet sport ────────────────────────────────────────────
 type SportTab = {
@@ -51,6 +52,38 @@ function LiveBadge({ count }: { count: number }) {
     >
       {count > 99 ? "99+" : count}
     </span>
+  );
+}
+
+// ─── Mode Toggle inline (Prematch / Live) ───────────────────────────────────
+function ModeInlineToggle() {
+  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
+  const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
+  return (
+    <div className="flex gap-1 ml-auto pr-3 shrink-0">
+      <button
+        onClick={() => setHeaderMode("prematch")}
+        className={cn(
+          "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
+          headerMode === "prematch"
+            ? "bg-[#7B3FA0] text-white shadow-sm"
+            : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
+        )}
+      >
+        📅 Prematch
+      </button>
+      <button
+        onClick={() => setHeaderMode("live")}
+        className={cn(
+          "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
+          headerMode === "live"
+            ? "bg-rose-500 text-white shadow-sm"
+            : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
+        )}
+      >
+        🔴 Live
+      </button>
+    </div>
   );
 }
 
@@ -289,6 +322,9 @@ export function SportTabs({
           )}
           aria-hidden="true"
         />
+
+        {/* Mode toggle (Prematch / Live) — à droite des onglets */}
+        <ModeInlineToggle />
       </div>
     </LiquidGlass>
   );
