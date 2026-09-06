@@ -115,6 +115,10 @@ export function SportTabs({
   const { liveMatchList: tennisLive } = useLiveMatches();
   const { data: footballData } = useFootballMatches();
 
+  // Mode header (Prematch / Live)
+  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
+  const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
+
   const liveCounts = useMemo(() => {
     const counts: Record<string, number> = {
       football: 0,
@@ -323,8 +327,37 @@ export function SportTabs({
           aria-hidden="true"
         />
 
-        {/* Mode toggle (Prematch / Live) — à droite des onglets */}
-        <ModeInlineToggle />
+        {/* Mode toggle inline */}
+        <div id="mode-toggle-inline" className="flex gap-1 ml-auto pr-3 shrink-0">
+          <button
+            onClick={() => {
+              console.log("[ModeInline] click prematch");
+              setHeaderMode("prematch");
+            }}
+            className={cn(
+              "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
+              headerMode === "prematch"
+                ? "bg-[#7B3FA0] text-white shadow-sm"
+                : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
+            )}
+          >
+            📅 Prematch
+          </button>
+          <button
+            onClick={() => {
+              console.log("[ModeInline] click live");
+              setHeaderMode("live");
+            }}
+            className={cn(
+              "px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors",
+              headerMode === "live"
+                ? "bg-rose-500 text-white shadow-sm"
+                : "text-[#6B5B8D] hover:text-[#1A1145] hover:bg-white/10"
+            )}
+          >
+            🔴 Live
+          </button>
+        </div>
       </div>
     </LiquidGlass>
   );
