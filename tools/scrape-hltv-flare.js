@@ -144,33 +144,86 @@ function loadTeams() {
 
 async function resolveTeamId(teamName) {
   const slug = teamName.toLowerCase().replace(/\s+/g, '-');
-  // Direct URL pattern
-  const url = `https://www.hltv.org/stats/teams?team=&name=${encodeURIComponent(teamName)}`;
+  // Essayer l'URL directe d'abord (plus fiable)
+  const directUrl = `https://www.hltv.org/stats/teams?team=&name=${encodeURIComponent(teamName)}`;
   console.log(`  Recherche ID pour "${teamName}"...`);
-  const html = await flareGet(url);
-  const result = parseTeamSearch(html);
-  if (result) {
-    console.log(`  → id=${result.id}`);
-    return result.id;
+  const html = await flareGet(directUrl);
+
+  // Chercher le lien vers la page de l'équipe avec le bon nom
+  const nameLC = teamName.toLowerCase();
+  const regex = new RegExp(`/stats/teams/(\\d+)/[^\"]*"[^>]*>[\\s\\S]*?<span[^>]*>([^<]+<\\/span>`, 'g');
+  let match;
+  while ((match = regex.exec(html)) !== null) {
+    const spanText = match[2].replace(/<\/span>/, '').trim().toLowerCase();
+    if (spanText === nameLC || spanText.includes(nameLC)) {
+      const id = parseInt(match[1]);
+      console.log(`  → id=${id} (${match[2].trim()})`);
+      return id;
+    }
   }
-  // Try direct slug URL
-  const slugUrl = `https://www.hltv.org/stats/teams?team=&name=${slug}`;
-  const html2 = await flareGet(slugUrl);
-  const result2 = parseTeamSearch(html2);
-  if (result2) {
-    console.log(`  → id=${result2.id}`);
-    return result2.id;
+
+  // Fallback: première équipe trouvée dans les résultats
+  const fallback = html.match(/\/stats\/teams\/(\d+)\/[^"]*"[^>]*>[\s\S]*?<span[^>]*>([^<]+)/);
+  if (fallback) {
+    const id = parseInt(fallback[1]);
+    console.log(`  → id=${id} (fallback: ${fallback[2].trim()})`);
+    return id;
   }
   return null;
 }
 
 async function scrapeTeamStats(teamId, teamName) {
-  const url = `https://www.hltv.org/stats/teams/${teamId}/${teamName.toLowerCase().replace(/\s+/g, '-')}`;
-  console.log(`  Fetching stats: ${url}`);
+  const slug = teamName.toLowerCase().replace(/\s+/g, '-');
+  // URL maps : page dédiée avec winrate par carte
+  const url = `https://www.hltv.org/stats/teams/maps/${teamId}/${slug}`;
+  console.log(`  Fetching maps: ${url}`);
   const html = await flareGet(url);
-  const stats = parseTeamPage(html, teamName);
-  console.log(`  → overview: ${stats.overview ? 'OK' : 'N/A'}, maps: ${Object.keys(stats.mapStats).length}`);
-  return stats;
+
+  const mapStats = {};
+  // Pattern: <div class="map-pool-map-name">MapName - XX.X%</div>
+  const mapRegex = /class="map-pool-map-name">(\w[\w\s]*)\s*-\s*([\d.]+)%<\/div>/g;
+  let match;
+  while ((match = mapRegex.exec(html)) !== null) {
+    const rawName = match[1].trim();
+    const wr = parseFloat(match[2]);
+    // Normaliser le nom (Cobblestone n'est plus actif, skip)
+    const canon = ACTIVE_MAPS.find(m => m.toLowerCase() === rawName.toLowerCase());
+    if (canon) {
+      mapStats[canon] = {
+        wins: 0,  // non disponible sur cette page
+        draws: 0,
+        losses: 0,
+        winRate: wr,
+        totalRounds: 0,
+      };
+    }
+  }
+
+  // Overview sur la page principale
+  const mainUrl = `https://www.hltv.org/stats/teams/${teamId}/${slug}`;
+  console.log(`  Fetching overview: ${mainUrl}`);
+  const mainHtml = await flareGet(mainUrl);
+
+  const overviewRegex = /class="large-strong"[^>]*>([\d,\.]+)/g;
+  const nums = [];
+  let m;
+  while ((m = overviewRegex.exec(mainHtml)) !== null) {
+    nums.push(parseFloat(m[1].replace(/,/g, '')));
+  }
+  const wdlStr = mainHtml.match(/class="large-strong"[^>]*>\s*(\d+)\s*\/\s*(\d+)\s*\/\s*(\d+)/);
+  const overview = nums.length >= 6 ? {
+    mapsPlayed: nums[0],
+    wins: wdlStr ? parseInt(wdlStr[1]) : null,
+    draws: wdlStr ? parseInt(wdlStr[2]) : null,
+    losses: wdlStr ? parseInt(wdlStr[3]) : null,
+    totalKills: nums[2],
+    totalDeaths: nums[3],
+    roundsPlayed: nums[4],
+    kdRatio: nums[5],
+  } : null;
+
+  console.log(`  → overview: ${overview ? 'OK' : 'N/A'}, maps: ${Object.keys(mapStats).length}`);
+  return { overview, mapStats };
 }
 
 function buildMapPool(teams) {
