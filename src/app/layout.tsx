@@ -21,6 +21,7 @@ import { LiquidGlassFilter } from "@/components/ui/liquid-glass-filter";
 import { SentryErrorBoundary } from "@/components/sentry-error-boundary";
 import { AppMotionConfig } from "@/components/motion-config";
 import { SiteHeader } from "@/components/layout/site-header";
+import { ModeToggle } from "@/components/layout/mode-toggle";
 import { ResponsibleGamblingBanner } from "@/components/shared/responsible-gambling-banner";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -202,6 +203,7 @@ export default async function RootLayout({
                 <SentryErrorBoundary>
                   <AppMotionConfig>
                     <SiteHeader />
+                    <ModeToggle />
                     <main id="main">
                       {children}
                     </main>

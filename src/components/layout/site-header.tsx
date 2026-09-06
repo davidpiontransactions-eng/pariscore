@@ -124,8 +124,6 @@ export function SiteHeader() {
 
           {/* Droite : Actions */}
           <div className="flex items-center gap-2">
-            <div id="test-header" className="text-red-500 font-bold text-xs">TEST</div>
-
             {/* Notifications */}
             <NotificationsDropdown />
 
