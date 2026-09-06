@@ -127,7 +127,7 @@ export function SiteHeader() {
           {/* Droite : Actions */}
           <div className="flex items-center gap-2">
             {/* Mode toggle (Prematch / Live) — inline pour éviter Turbopack tree-shake */}
-            <div className="hidden sm:flex items-center gap-0.5 rounded-lg border border-[#E0D8F0] bg-white p-0.5">
+            <div className="flex items-center gap-0.5 rounded-lg border border-[#E0D8F0] bg-white p-0.5" id="mode-toggle-header">
               <button
                 type="button"
                 onClick={() => setHeaderMode("prematch")}
