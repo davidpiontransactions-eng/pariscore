@@ -203,6 +203,7 @@ export default async function RootLayout({
                 <SentryErrorBoundary>
                   <AppMotionConfig>
                     <SiteHeader />
+                    <div id="layout-test" style={{background:'red',color:'white',padding:'4px',textAlign:'center'}}>LAYOUT TEST DIV</div>
                     <ModeToggle />
                     <main id="main">
                       {children}
