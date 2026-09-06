@@ -31,7 +31,7 @@ export const nbaAdapter: SportAdapter = {
         logo: m.awayLogo || m.away?.logo || '',
       },
       kickoff: m.kickoff || m.date || m.scheduledAt || '',
-      status: (m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled') as const,
+      status: (m.status === 'FT' ? 'finished' : m.is_live ? 'live' : 'scheduled') as 'scheduled' | 'live' | 'finished',
       score: m.score || undefined,
       odds: m.odds
         ? {

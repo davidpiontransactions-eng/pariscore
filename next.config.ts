@@ -25,7 +25,10 @@ const nextConfig: NextConfig = {
       "date-fns",
       "zod",
     ],
-    workerThreads: true,
+    // workerThreads désactivé : avec Turbopack + génération statique, Next.js a
+    // besoin de structuredClone du graphe de modules entre workers, ce qui
+    // échoue sur les fonctions internes (DataCloneError: ()=>null could not be
+    // cloned) → build interrompu en prod. Le parallélisme par défaut suffit.
   },
   
   typescript: {

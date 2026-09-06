@@ -71,6 +71,10 @@
     "DeepSeek-Reasonix",
     "pariscore-design-fix",
     "frontend",
-    "mini-services"
+    "mini-services",
+    "tests",
+    "**/*.spec.ts",
+    "tools",
+    "tmp"
   ]
 }

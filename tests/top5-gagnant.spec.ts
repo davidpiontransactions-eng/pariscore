@@ -75,7 +75,7 @@ describe("top5 gagnant — foot", () => {
     const res = computeStrategyTop5Matches(finished, [fixture()]);
     const entries = res.strategies.gagnant;
     expect(entries.length).toBe(1);
-    expect(["home", "away"]).toContain(entries[0].pick);
+    expect(["home", "away"]).toContain(entries[0].pick ?? "");
     expect(entries[0].value).toBeGreaterThan(40);
     expect(entries[0].value).toBeLessThan(86);
   });

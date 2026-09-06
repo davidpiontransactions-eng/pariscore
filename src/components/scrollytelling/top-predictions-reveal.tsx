@@ -49,13 +49,13 @@ export function TopPredictionsReveal({ predictions }: TopPredictionsRevealProps 
   ];
 
   // CSS scroll-driven animation for prediction cards
-  const cardStyle: React.CSSProperties = reducedMotion
+  const cardStyle = reducedMotion
     ? { opacity: 1, transform: "none" }
     : {
         animation: "reveal-up linear both",
         "animation-timeline": "view()",
         "animation-range": "entry 0% entry 50%",
-      };
+      } as React.CSSProperties;
 
   return (
     <div

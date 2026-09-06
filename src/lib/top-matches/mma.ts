@@ -26,7 +26,7 @@ export const mmaAdapter: SportAdapter = {
         home: { name: f.fighter_a || 'Fighter A' },
         away: { name: f.fighter_b || 'Fighter B' },
         kickoff: f.commence_time || '',
-        status: (f.status === 'live' ? 'live' : 'scheduled') as const,
+        status: (f.status === 'live' ? 'live' : 'scheduled') as 'live' | 'scheduled',
         odds: f.prob_a != null
           ? { home: String(f.prob_a), away: String(f.prob_b) }
           : undefined,

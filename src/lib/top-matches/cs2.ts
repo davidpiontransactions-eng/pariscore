@@ -31,7 +31,7 @@ export const cs2Adapter: SportAdapter = {
         home: { name: m.team1?.name || m.team1 || 'Team 1', logo: m.team1?.logo || m.team1?.logo_local },
         away: { name: m.team2?.name || m.team2 || 'Team 2', logo: m.team2?.logo || m.team2?.logo_local },
         kickoff: m.scheduledAt || m.scheduled || m.date || '',
-        status: (m.status === 'live' ? 'live' : 'scheduled') as const,
+        status: (m.status === 'live' ? 'live' : 'scheduled') as 'live' | 'scheduled',
         score,
         badge: m.isLive ? { label: 'LIVE', color: '#f44336' } : undefined,
       };

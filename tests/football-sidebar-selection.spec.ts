@@ -53,8 +53,8 @@ test.describe("Football: Sélection sidebar → partie droite", () => {
       // @ts-ignore: Ignore TypeScript errors for accessing store in test
       window.useSportsSidebarStore?.getState()?.selectSport("football");
     });
-    // Wait for football tab to become active (look for the active tab indicator)
-    await page.locator('button:has-text("Football")').filter({ hasClass: "ring-1 ring-white/20" }).first().waitFor({ state: "visible", timeout: 5000 });
+    // Wait for football tab to become visible (Playwright has no hasClass filter)
+    await page.locator('button:has-text("Football")').first().waitFor({ state: "visible", timeout: 5000 });
     
     await openFootballMatches(page);
     await expect(sidebarMatchButtons(page).first()).toBeVisible({ timeout: 15000 });
@@ -95,7 +95,7 @@ test.describe("Football: Sélection sidebar → partie droite", () => {
     
     // Aussi vérifier le texte pour voir si on voit "Aucun match trouvé" ou similaire
     const mainText = await mainContent.textContent();
-    console.log(`Main content text (first 200): ${mainText.substring(0, 200)}`);
+    console.log(`Main content text (first 200): ${(mainText ?? "").substring(0, 200)}`);
     
     if (articleCount > 0) {
       const texts = await articles.allTextContents();
@@ -108,7 +108,7 @@ test.describe("Football: Sélection sidebar → partie droite", () => {
       console.log("BUG: Components are rendered but not as article elements");
       await page.screenshot({ path: 'test-results/football-selection-no-articles.png', fullPage: true });
       throw new Error("Football match selection renders components but not as article elements");
-    } else if (mainText.includes("Aucun match trouvé") || mainText.includes("No matches found")) {
+    } else if (mainText?.includes("Aucun match trouvé") || mainText?.includes("No matches found")) {
       // Aucun match trouvé - problème de données ou de filtrage
       console.log("BUG: No matches found - data or filtering issue");
       await page.screenshot({ path: 'test-results/football-selection-no-matches.png', fullPage: true });

@@ -1,8 +1,11 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Trophy, RefreshCw, Home } from "lucide-react";
-import { Button } from "@/components/ui/button";
+// NOTE build : ce fichier DOIT exister. S'il est supprimé, Next.js prerend le
+// /_global-error par défaut, qui plante en prerender statique dans ce projet
+// (TypeError: Cannot read properties of null (reading 'useContext'), digest
+// 3255200895 — reproductible sur build propre, Turbopack + Bun). La version
+// custom ci-dessous (HTML brut, zéro hook next-intl, zéro import UI) passe le
+// prerender. Ne pas ré-ajouter useTranslations/Button/lucide ici.
 
 export default function GlobalError({
   error,

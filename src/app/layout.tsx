@@ -157,7 +157,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
-  const messages = await getMessages();
+  // Fallback ?? {} : au prerender statique des routes système (/_not-found,
+  // /_global-error), getMessages() peut renvoyer undefined — le guard de
+  // src/i18n/request.ts gère la locale, celui-ci gère les messages.
+  const messages = (await getMessages()) ?? {};
 
   return (
     <html lang={locale} suppressHydrationWarning>
