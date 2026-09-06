@@ -9,11 +9,13 @@ import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
  * ajoutés au JSX de SiteHeader ne sont pas rendus côté client.
  */
 export function ModeToggle() {
+  console.log("[ModeToggle] rendering");
   const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
   const setHeaderMode = useSportsSidebarStore((s) => s.setHeaderMode);
 
   return (
-    <div className="flex items-center justify-center h-9 border-b border-purple-500/20 bg-white/80 backdrop-blur-sm sticky top-[96px] z-40">
+    <div id="mode-toggle-bar" className="flex items-center justify-center h-9 border-b border-purple-500/20 bg-white/80 backdrop-blur-sm sticky top-[96px] z-40">
+      <div className="text-red-500 font-bold text-xs">MODE TOGGLE TEST</div>
       <div className="flex items-center gap-0.5 rounded-lg border border-[#E0D8F0] bg-white p-0.5">
         <button
           type="button"
