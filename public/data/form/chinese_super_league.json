@@ -4,7 +4,7 @@
     "leagueId": "chinese_super_league",
     "leagueName": "China",
     "season": "2026/27",
-    "lastUpdated": "2026-09-05T08:29:58.138710Z",
+    "lastUpdated": "2026-09-06T08:47:20.322481Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,15 +12,6 @@
     "partial": false
   },
   "home": [
-    {
-      "teamName": "Qingdao West C.",
-      "gp": 8,
-      "w": 4,
-      "d": 4,
-      "l": 0,
-      "gf": 13,
-      "ga": 6
-    },
     {
       "teamName": "Zhejiang",
       "gp": 8,
@@ -40,15 +31,6 @@
       "ga": 12
     },
     {
-      "teamName": "Beijing Guoan",
-      "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 18,
-      "ga": 9
-    },
-    {
       "teamName": "Shandong T.",
       "gp": 8,
       "w": 5,
@@ -56,16 +38,34 @@
       "l": 1,
       "gf": 21,
       "ga": 13
+    },
+    {
+      "teamName": "Qingdao West C.",
+      "gp": 8,
+      "w": 4,
+      "d": 4,
+      "l": 0,
+      "gf": 13,
+      "ga": 6
+    },
+    {
+      "teamName": "Beijing Guoan",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 18,
+      "ga": 9
     }
   ],
   "away": [
     {
-      "teamName": "Qingdao West C.",
+      "teamName": "Chengdu",
       "gp": 8,
-      "w": 3,
-      "d": 4,
-      "l": 1,
-      "gf": 10,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 11,
       "ga": 10
     },
     {
@@ -78,6 +78,15 @@
       "ga": 12
     },
     {
+      "teamName": "Qingdao West C.",
+      "gp": 8,
+      "w": 3,
+      "d": 4,
+      "l": 1,
+      "gf": 11,
+      "ga": 11
+    },
+    {
       "teamName": "Henan Sl",
       "gp": 8,
       "w": 3,
@@ -87,21 +96,12 @@
       "ga": 17
     },
     {
-      "teamName": "Chengdu",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 11,
-      "ga": 10
-    },
-    {
       "teamName": "Beijing Guoan",
       "gp": 8,
-      "w": 4,
-      "d": 4,
+      "w": 3,
+      "d": 5,
       "l": 0,
-      "gf": 18,
+      "gf": 17,
       "ga": 11
     }
   ]

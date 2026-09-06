@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-09-05T08:30:03.784599Z",
+    "lastUpdated": "2026-09-06T08:47:26.031443Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,15 @@
     "partial": false
   },
   "home": [
+    {
+      "teamName": "Seoul",
+      "gp": 8,
+      "w": 5,
+      "d": 2,
+      "l": 1,
+      "gf": 11,
+      "ga": 6
+    },
     {
       "teamName": "Jeju Utd",
       "gp": 8,
@@ -22,31 +31,22 @@
       "ga": 8
     },
     {
+      "teamName": "Gangwon",
+      "gp": 8,
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 10,
+      "ga": 8
+    },
+    {
       "teamName": "Jeonbuk",
       "gp": 8,
       "w": 4,
       "d": 2,
       "l": 2,
-      "gf": 11,
-      "ga": 7
-    },
-    {
-      "teamName": "Bucheon Fc",
-      "gp": 8,
-      "w": 3,
-      "d": 3,
-      "l": 2,
-      "gf": 12,
-      "ga": 9
-    },
-    {
-      "teamName": "Seoul",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 12,
-      "ga": 9
+      "gf": 10,
+      "ga": 5
     },
     {
       "teamName": "Daejeon Citizen",
@@ -60,13 +60,13 @@
   ],
   "away": [
     {
-      "teamName": "Anyang",
+      "teamName": "Seoul",
       "gp": 8,
-      "w": 4,
+      "w": 5,
       "d": 2,
-      "l": 2,
-      "gf": 13,
-      "ga": 11
+      "l": 1,
+      "gf": 19,
+      "ga": 6
     },
     {
       "teamName": "Jeju Utd",
@@ -78,30 +78,30 @@
       "ga": 6
     },
     {
-      "teamName": "Seoul",
+      "teamName": "Gangwon",
       "gp": 8,
-      "w": 5,
-      "d": 2,
-      "l": 1,
-      "gf": 19,
-      "ga": 6
+      "w": 3,
+      "d": 3,
+      "l": 2,
+      "gf": 8,
+      "ga": 9
     },
     {
-      "teamName": "Pohang Steelers",
-      "gp": 8,
-      "w": 4,
-      "d": 1,
-      "l": 3,
-      "gf": 12,
-      "ga": 12
-    },
-    {
-      "teamName": "Incheon Utd",
+      "teamName": "Anyang",
       "gp": 8,
       "w": 4,
       "d": 2,
       "l": 2,
-      "gf": 12,
+      "gf": 13,
+      "ga": 11
+    },
+    {
+      "teamName": "Incheon Utd",
+      "gp": 8,
+      "w": 3,
+      "d": 2,
+      "l": 3,
+      "gf": 10,
       "ga": 8
     }
   ]
