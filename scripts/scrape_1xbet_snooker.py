@@ -228,7 +228,7 @@ def scrape_snooker_page(session: StealthySession, base_url: str, path: str, dela
     print(f"[1xBet] Scraping {url}")
 
     try:
-        resp = session.get(url, timeout=30)
+        resp = session.fetch(url, timeout=30000)
         if not resp or resp.status_code != 200:
             print(f"[1xBet] HTTP {resp.status_code if resp else 'None'} for {url}", file=sys.stderr)
             return []
@@ -298,6 +298,7 @@ def main():
     print(f"[1xBet] ⚠️  VPN possible selon votre région")
 
     session = StealthySession()
+    session.start()
     all_matches = []
     scraped_at = datetime.now(timezone.utc).isoformat()
 
@@ -309,7 +310,7 @@ def main():
         # Sous-pages tournois (optionnel)
         if args.subpages and matches:
             # Re-fetch pour obtenir les slugs
-            resp = session.get(f"{base_url}{SNOOKER_LINE_URL}", timeout=30)
+            resp = session.fetch(f"{base_url}{SNOOKER_LINE_URL}", timeout=30000)
             if resp and resp.status_code == 200:
                 nuxt = extract_nuxt(resp.text)
                 if nuxt:
