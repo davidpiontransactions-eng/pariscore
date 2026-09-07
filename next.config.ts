@@ -67,7 +67,7 @@ const nextConfig: NextConfig = {
   // better-sqlite3 est un module natif (binding C++) utilisé par la couche
   // tennis-stats pour lire pariscore.db. Il doit rester externe au bundle
   // server de Next.js — sinon le build standalone échoue à le résoudre.
-  serverExternalPackages: ["better-sqlite3", "bun:sqlite", "pariscore-services"],
+  serverExternalPackages: ["better-sqlite3", "pariscore-services"],
 
   // Caches des leaderboards officiels ATP/WTA (scripts/scrape-tour-leaderboards.py).
   // lus par src/lib/tennis-stats/official-leaderboard.ts via fs.readFileSync.

@@ -24,10 +24,11 @@ function getDb(): BSD | null {
   const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db");
   if (!fs.existsSync(dbPath)) return null;
   try {
-    // Bun 1.3+ supporte bun:sqlite nativement (pas de NAPI crash).
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Database } = require("bun:sqlite") as { Database: new (path: string, opts?: Record<string, unknown>) => BSD };
-    return new Database(dbPath, { readonly: true });
+    // Accès direct à Bun.sqlite via globalThis (pas de require/import = pas de Turbopack resolution)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const BunSqlite = (globalThis as any).Bun?.sqlite;
+    if (!BunSqlite) return null;
+    return new BunSqlite.Database(dbPath, { readonly: true }) as unknown as BSD;
   } catch {
     return null;
   }
