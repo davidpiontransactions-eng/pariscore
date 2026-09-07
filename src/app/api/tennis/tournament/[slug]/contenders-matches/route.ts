@@ -21,14 +21,13 @@ type BSD = {
 };
 
 function getDb(): BSD | null {
+  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db");
+  if (!fs.existsSync(dbPath)) return null;
   try {
-    const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db");
-    if (!fs.existsSync(dbPath)) return null;
+    // Bun 1.3+ supporte bun:sqlite nativement (pas de NAPI crash).
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Database = require("better-sqlite3") as unknown as {
-      new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
-    };
-    return new Database(dbPath, { readonly: true, fileMustExist: true });
+    const { Database } = require("bun:sqlite") as { Database: new (path: string, opts?: Record<string, unknown>) => BSD };
+    return new Database(dbPath, { readonly: true });
   } catch {
     return null;
   }
