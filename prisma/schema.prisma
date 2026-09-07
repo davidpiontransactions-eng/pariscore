@@ -379,3 +379,227 @@ model PredictionLog {
   @@index([settled, createdAt])
   @@index([modelVersionId])
 }
+
+// ─── Snooker ─────────────────────────────────────────────────────────────────
+
+model SnookerPlayer {
+  id            String   @id // clé slug, ex: "ronnie-osullivan"
+  name          String
+  nationality   String?
+  photoUrl      String?
+  ranking       Int?     // classement mondial actuel
+  eloRating     Float    @default(1500)
+  eloHard       Float?   // Elo surface fast (table rapide)
+  winPct        Float?   // % victoires carrière
+  centuryRate   Float?   // centuries par match (rolling 20)
+  break50Rate   Float?   // breaks 50+ par match (rolling 20)
+  deciderWinPct Float?   // % victoires en manche décisive
+  avgBreak      Float?   // break moyen (rolling 20)
+  safetyPct     Float?   // % réussite défense (si dispo)
+  longPotPct    Float?   // % longs pots (si dispo)
+  formLast10    String?  // "WWLWWLWWWL" — 10 derniers résultats
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  matchesAsA    SnookerMatch[] @relation("SnookerMatchPlayerA")
+  matchesAsB    SnookerMatch[] @relation("SnookerMatchPlayerB")
+  eloHistory    SnookerEloHistory[]
+
+  @@index([eloRating(sort: Desc)])
+}
+
+model SnookerMatch {
+  id            String   @id
+  playerAId     String
+  playerA       SnookerPlayer @relation("SnookerMatchPlayerA", fields: [playerAId], references: [id])
+  playerBId     String
+  playerB       SnookerPlayer @relation("SnookerMatchPlayerB", fields: [playerBId], references: [id])
+  tournament    String
+  round         String?  // "Last 128", "QF", "SF", "F"
+  bestOf        Int      @default(9)  // best of 7, 9, 11, etc.
+  scoreA        Int      @default(0)
+  scoreB        Int      @default(0)
+  winnerId      String?
+  scheduledAt   DateTime
+  status        String   @default("scheduled") // scheduled | live | finished
+  source        String   @default("cuetracker") // cuetracker | wst | manual
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  frames        SnookerFrame[]
+  predictions   SnookerPrediction[]
+  odds          SnookerOdds[]
+
+  @@index([scheduledAt])
+  @@index([playerAId, scheduledAt])
+  @@index([tournament, scheduledAt])
+}
+
+model SnookerFrame {
+  id          String   @id @default(cuid())
+  matchId     String
+  match       SnookerMatch @relation(fields: [matchId], references: [id])
+  frameNumber Int
+  scoreA      Int
+  scoreB      Int
+  winnerId    String?  // player qui a gagné la frame
+  centuryA    Int      @default(0) // nombre de centuries du joueur A
+  centuryB    Int      @default(0)
+  highestBreakA Int?   // plus haut break du joueur A
+  highestBreakB Int?
+  createdAt   DateTime @default(now())
+
+  breaks      SnookerBreak[]
+
+  @@unique([matchId, frameNumber])
+}
+
+model SnookerBreak {
+  id          String   @id @default(cuid())
+  frameId     String
+  frame       SnookerFrame @relation(fields: [frameId], references: [id])
+  playerId    String
+  points      Int      // valeur du break (ex: 137)
+  isCentury   Boolean  @default(false)
+  visitOrder  Int      // ordre de la visite (1er, 2e, etc.)
+  createdAt   DateTime @default(now())
+
+  @@index([frameId])
+  @@index([playerId, points(sort: Desc)])
+}
+
+model SnookerEloHistory {
+  id          String   @id @default(cuid())
+  playerId    String
+  player      SnookerPlayer @relation(fields: [playerId], references: [id])
+  eloBefore   Float
+  eloAfter    Float
+  matchId     String
+  opponentElo Float
+  kFactor     Float    @default(32)
+  expected    Float    // probabilité attendue avant le match
+  actual      Float    // 1 = victoire, 0 = défaite
+  date        DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([playerId, date])
+}
+
+model SnookerPrediction {
+  id          String   @id @default(cuid())
+  matchId     String
+  match       SnookerMatch @relation(fields: [matchId], references: [id])
+  probA       Float    // probabilité victoire joueur A
+  probB       Float    // probabilité victoire joueur B
+  model       String   @default("elo+xgboost")
+  eloDiff     Float?   // différence Elo avant le match
+  edge        Float?   // avantage potentiel vs cotes marché
+  confidence  Int      @default(3) // 1-5
+  bet         String?  // "match_winner_a" | "match_winner_b" | "over_X.5_frames" | null
+  betOdds     Float?   // cote du bet proposé
+  kellyStake  Float?   // mise Kelly optimale
+  createdAt   DateTime @default(now())
+
+  @@index([matchId])
+  @@index([createdAt(sort: Desc)])
+}
+
+model SnookerOdds {
+  id          String   @id @default(cuid())
+  matchId     String
+  match       SnookerMatch @relation(fields: [matchId], references: [id])
+  bookmaker   String   // "1xbet", "bet365", etc.
+  market      String   // "match_winner" | "frame_handicap" | "total_frames" | "century_yes"
+  outcome     String   // "A" | "B" | "over" | "under" | "yes" | "no"
+  odds        Float
+  impliedProb Float    // 1/odds * 100
+  scrapedAt   DateTime @default(now())
+
+  @@index([matchId, bookmaker, market])
+  @@index([scrapedAt])
+}
+
+// ─── BetExplorer: Dropping Odds & Streaks ────────────────────────────────────
+
+model OddsSnapshot {
+  id          String   @id @default(cuid())
+  matchId     String   // identifiant match externe (ex: "football:psg-om:2026-09-07")
+  sport       String   @default("football")
+  league      String?
+  homeTeam    String
+  awayTeam    String
+  bookmaker   String   // "Bet365", "Pinnacle", "Bwin", "1xbet"
+  market      String   // "1X2" | "OU25" | "AH05" | "BTTS"
+  outcome     String   // "H" | "D" | "A" | "O" | "U" | "Yes" | "No"
+  odds        Float
+  impliedProb Float    // 1/odds * 100
+  source      String   // "betexplorer" | "oddsportal" | "football-data"
+  scrapedAt   DateTime @default(now())
+
+  @@index([matchId, bookmaker, market, scrapedAt])
+  @@index([scrapedAt])
+  @@index([matchId, market])
+  @@map("odds_snapshots")
+}
+
+model OddsMovement {
+  id          String   @id @default(cuid())
+  matchId     String
+  sport       String   @default("football")
+  bookmaker   String
+  market      String   // "1X2" | "OU25" | "AH05"
+  outcome     String   // "H" | "D" | "A" | "O" | "U"
+  openingOdds Float
+  closingOdds Float
+  movement    Float    // opening - closing (positif = raccourcissement)
+  dropPct     Float    // movement / opening * 100
+  direction   String   // "SHORTENING" | "DRIFTING" | "STABLE"
+  computedAt  DateTime @default(now())
+
+  @@unique([matchId, bookmaker, market, outcome])
+  @@index([direction, dropPct])
+  @@map("odds_movements")
+}
+
+model DroppingOdds {
+  id          String   @id @default(cuid())
+  matchId     String
+  sport       String   @default("football")
+  league      String?
+  homeTeam    String
+  awayTeam    String
+  market      String   // "1X2" | "OU25"
+  outcome     String   // "H" | "D" | "A" | "O" | "U"
+  dropPct     Float    // % de bookmakers en baisse
+  avgMovement Float    // mouvement moyen
+  bestOdds    Float    // meilleure cote actuelle
+  bookmakers  Int      // nombre de bookmakers avec drop
+  totalBooks  Int      // nombre total de bookmakers
+  scheduledAt DateTime?
+  scrapedAt   DateTime @default(now())
+
+  @@index([dropPct(sort: Desc)])
+  @@index([scrapedAt])
+  @@index([matchId])
+  @@map("dropping_odds")
+}
+
+model TeamStreak {
+  id          String   @id @default(cuid())
+  teamName    String   // nom de l'équipe
+  sport       String   @default("football")
+  league      String?
+  streakType  String   // "WIN" | "LOSS" | "BTTS" | "OVER25" | "UNDER25" | "CLEAN_SHEET" | "SCORED" | "CONCEDED" | "UNBEATEN"
+  count       Int      // longueur actuelle de la série
+  startDate   DateTime // début de la série
+  endDate     DateTime // fin de la série (ou now si active)
+  isActive    Boolean  @default(true)
+  venue       String?  // null=overall, "HOME", "AWAY"
+  windowSize  Int      @default(10) // sur les N derniers matchs
+  computedAt  DateTime @default(now())
+
+  @@unique([teamName, sport, streakType, venue, isActive])
+  @@index([teamName, isActive])
+  @@index([streakType, count])
+  @@map("team_streaks")
+}
