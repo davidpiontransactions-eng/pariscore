@@ -94,6 +94,10 @@ if [ "$NEED_BUILD" = "1" ]; then
   # Sync .env → standalone (.env vars lues au runtime par Next.js standalone ;
   # les vars ajoutées après le build ne seraient pas copiées sans ce step).
   cp -f .env .next/standalone/.env 2>/dev/null || true
+  # Mise à jour des aliases nginx pour pointer vers le standalone
+  sudo sed -i 's|alias /home/ubuntu/pariscore/.next/static/;|alias /opt/pariscorebis/.next/standalone/.next/static/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
+  sudo sed -i 's|alias /home/ubuntu/pariscore/public/;|alias /opt/pariscorebis/.next/standalone/public/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
+  sudo nginx -t 2>/dev/null && sudo systemctl reload nginx 2>/dev/null || true
 else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"
 fi
