@@ -18,7 +18,7 @@ const CACHE_TTL_FOUND_MS = 30 * 60 * 1000; // 30 min
 const CACHE_TTL_NOT_FOUND_MS = 5 * 60 * 1000; // 5 min (anti-hammering des négatifs)
 const FETCH_TIMEOUT_MS = 12000;
 
-export type LiveTvSport = "football" | "tennis" | "basketball" | "mma";
+export type LiveTvSport = "football" | "tennis" | "basketball" | "mma" | "snooker";
 
 /** Mapping sport PariScore → section sport LiveTV (getSportLink). */
 export const LIVETV_SPORT_CATEGORY: Record<LiveTvSport, number> = {
@@ -26,6 +26,7 @@ export const LIVETV_SPORT_CATEGORY: Record<LiveTvSport, number> = {
   tennis: 4,
   basketball: 3,
   mma: 6, // "Boxing / Wrestling" (couvre MMA)
+  snooker: 7, // "Snooker / Pool"
 };
 
 function getBaseUrl(): string {

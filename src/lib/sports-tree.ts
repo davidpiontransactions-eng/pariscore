@@ -36,6 +36,7 @@ export const SPORT_META: Record<SportTabId, { name: string; icon: string }> = {
   f1: { name: "Formule 1", icon: "Flag" },
   baseball: { name: "Baseball", icon: "Volleyball" },
   rugby: { name: "Rugby", icon: "Shield" },
+  snooker: { name: "Snooker", icon: "Target" },
 };
 
 // ---------------------------------------------------------------------------

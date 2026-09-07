@@ -108,4 +108,5 @@ export type SportTabId =
   | "cycling"
   | "f1"
   | "baseball"
-  | "rugby";
+  | "rugby"
+  | "snooker";

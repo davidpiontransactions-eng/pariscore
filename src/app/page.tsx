@@ -35,6 +35,7 @@ import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
 import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
 import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
+import { SnookerCalendar } from "@/components/snooker/snooker-calendar";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { MultisportCalendar } from "@/components/dashboard/multisport-calendar";
@@ -96,6 +97,7 @@ type SportTab =
   | "f1"
   | "baseball"
   | "rugby"
+  | "snooker"
   /** Vues nav mobile (bottom nav) — pas des sports : jamais synchronisées au store. */
   | "live"
   | "value"
@@ -113,6 +115,7 @@ const SPORT_IDS: ReadonlySet<string> = new Set<SportTab>([
   "f1",
   "baseball",
   "rugby",
+  "snooker",
 ]);
 
 /** Vues nav (bottom nav mobile) + accueil : gérées par la page, hors store sport. */
@@ -238,7 +241,7 @@ function HomeInner() {
   }, []);
 
   // ── Swipe mobile pour changer de sport ──
-  const SPORT_ORDER: SportTab[] = ["tennis", "football", "basketball", "mma", "f1", "baseball"];
+  const SPORT_ORDER: SportTab[] = ["tennis", "football", "basketball", "mma", "f1", "baseball", "snooker"];
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
@@ -460,6 +463,7 @@ function HomeInner() {
         {activeTab === "f1" && <F1TabContent />}
         {activeTab === "baseball" && <BaseballTabContent />}
         {activeTab === "rugby" && <RugbyTabContent />}
+        {activeTab === "snooker" && <SnookerCalendar />}
         </motion.div>
 
         {/* Sections déplacées — Bento Grid layout */}
