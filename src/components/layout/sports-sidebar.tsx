@@ -479,7 +479,12 @@ function MatchRow({
       )}
     >
       {match.isLive ? (
-        <span aria-hidden className="ml-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-red-500" />
+        <span aria-hidden className="ml-1 flex items-center gap-1 shrink-0">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+          {match.liveMinute ? (
+            <span className="font-mono text-[10px] tabular-nums text-red-500 font-bold">{match.liveMinute}&apos;</span>
+          ) : null}
+        </span>
       ) : (
         <span className="ml-1 w-8 shrink-0 font-mono text-[11px] tabular-nums text-[#1A1145]/50">
           {formatKickoff(match.scheduledAt)}
@@ -499,6 +504,20 @@ function MatchRow({
         {match.homeName}
         {match.awayName ? ` – ${match.awayName}` : ""}
       </button>
+      {/* Live stats: pressure bar + edge badge */}
+      {match.isLive && match.pressure && (
+        <span className="shrink-0 flex items-center gap-0.5" title={`Pression: ${match.pressure.homePct}% - ${match.pressure.awayPct}%`}>
+          <span className="h-1 w-6 rounded-full bg-[#E0D8F0]/40 overflow-hidden flex">
+            <span className="h-full bg-[#1565C0] rounded-l-full" style={{ width: `${match.pressure.homePct}%` }} />
+            <span className="h-full bg-[#E65100] rounded-r-full" style={{ width: `${match.pressure.awayPct}%` }} />
+          </span>
+        </span>
+      )}
+      {match.edgePct != null && match.edgePct > 0 && (
+        <span className="shrink-0 px-1 py-0 rounded text-[9px] font-bold text-emerald-600 bg-emerald-500/10" title={`Edge: +${match.edgePct.toFixed(1)}%`}>
+          +{match.edgePct.toFixed(1)}
+        </span>
+      )}
       {cells.length && !hideOdds ? (
         <span className="flex shrink-0 items-center gap-0.5" role="presentation" onClick={(e) => e.stopPropagation()}>
           {cells.map((c, i) => (
