@@ -280,6 +280,7 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
   const meta = SPORT_META[sportId];
   const countryMap = new Map<string, CountryNode>();
   let liveMatches = 0;
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   for (const raw of raws) {
     if (raw.isLive) liveMatches++;
@@ -357,12 +358,17 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
     return bc - ac || a.name.localeCompare(b.name);
   });
 
+  const todayMatches = raws.filter(
+    (r) => r.scheduledAt && r.scheduledAt.slice(0, 10) === todayStr,
+  ).length;
+
   return {
     id: sportId,
     name: meta.name,
     icon: meta.icon,
     totalMatches: raws.length,
     liveMatches,
+    todayMatches,
     countries,
   };
 }
@@ -422,7 +428,7 @@ export function applyStatusFilter(
 /** Nœud vide (sport indisponible : API en erreur / aucune donnée). */
 export function emptySportNode(sportId: SportTabId): SportNode {
   const meta = SPORT_META[sportId];
-  return { id: sportId, name: meta.name, icon: meta.icon, totalMatches: 0, liveMatches: 0, countries: [] };
+  return { id: sportId, name: meta.name, icon: meta.icon, totalMatches: 0, liveMatches: 0, todayMatches: 0, countries: [] };
 }
 
 // ---------------------------------------------------------------------------
@@ -989,12 +995,23 @@ export function sortSportsTreeChronological(sports: SportNode[]): SportNode[] {
       return bc - ac || a.name.localeCompare(b.name);
     });
 
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let todayMatches = 0;
+    for (const [, cData] of sportMap.get(sData.id)?.countries ?? []) {
+      for (const [, lData] of cData.leagues) {
+        todayMatches += lData.matches.filter(
+          (m) => m.scheduledAt && m.scheduledAt.slice(0, 10) === todayStr,
+        ).length;
+      }
+    }
+
     result.push({
       id: sData.id,
       name: sData.name,
       icon: sData.icon,
       totalMatches,
       liveMatches,
+      todayMatches,
       countries,
     });
   }

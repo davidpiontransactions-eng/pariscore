@@ -83,6 +83,8 @@ export interface SportNode {
   totalMatches: number;
   /** Nombre de matchs en direct (badge rouge). */
   liveMatches: number;
+  /** Nombre de matchs programmés aujourd'hui. */
+  todayMatches: number;
   countries: CountryNode[];
   /**
    * Vrai quand l'endpoint du sport a échoué (ex. /api/tennis/prematch → 503)

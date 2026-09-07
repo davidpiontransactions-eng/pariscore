@@ -329,12 +329,14 @@ function TimePills() {
 // Briques partagées
 // ---------------------------------------------------------------------------
 
-function CountBadge({ n, live }: { n: number; live?: boolean }) {
+function CountBadge({ n, live, today }: { n: number; live?: boolean; today?: boolean }) {
   return (
     <span
       className={cn(
         "rounded-full px-1.5 py-0.5 font-mono text-[11px] leading-none tabular-nums",
-        live ? "bg-red-500/15 text-red-300 animate-pulse" : "bg-[#EDE8F5] text-[#6B5B8D]",
+        live ? "bg-red-500/15 text-red-300 animate-pulse"
+          : today ? "bg-emerald-500/15 text-emerald-300"
+          : "bg-[#EDE8F5] text-[#6B5B8D]",
       )}
     >
       {n}
@@ -800,6 +802,7 @@ function SportBlock({
           {sportLabel}
         </span>
         {sport.liveMatches > 0 ? <CountBadge n={sport.liveMatches} live /> : null}
+        {sport.todayMatches > 0 && sport.liveMatches === 0 ? <CountBadge n={sport.todayMatches} today /> : null}
         {sport.degraded && sport.totalMatches === 0 ? (
           <span
             title="Données indisponibles (API sport en erreur)"
