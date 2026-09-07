@@ -72,6 +72,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error("[football-top5] fetch failed:", (err as Error).message);
-    return NextResponse.json({ error: "football top5 unavailable" }, { status: 503 });
+    return NextResponse.json({
+      matches: [],
+      meta: { source: "fallback", computedAt: new Date().toISOString(), error: (err as Error).message },
+    }, { status: 200 });
   }
 }
