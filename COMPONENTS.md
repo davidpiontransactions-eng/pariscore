@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 190 components total (football: 14, leagues: 6, tennis: 60, basketball: 17, shared: 10, mobile: 7, dashboard: 3, etc.).
+> extract pass. 194 components total (football: 14, leagues: 6, tennis: 60, basketball: 17, shared: 10, mobile: 7, dashboard: 3, betting: 4, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -306,6 +306,15 @@ Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, don
 | flashscore-match-list | flashscore-match-list.tsx | Liste style Flashscore avec pull-to-refresh natif |
 | strategy-filter-dropdown | strategy-filter-dropdown.tsx | Filtre par stratégie de pari |
 | time-range-filter | time-range-filter.tsx | Filtre par fenêtre horaire |
+
+## Betting (`src/components/betting/`) — 4 components
+
+| Component | File | Role |
+|-----------|------|------|
+| dropping-odds-widget | dropping-odds-widget.tsx | Widget des dropping odds avec badge couleur (rouge ≥15%, ambre ≥10%, vert <10%) |
+| team-streaks-widget | team-streaks-widget.tsx | Séquences équipes groupées (WIN/LOSS/BTTS/OVER25/…) avec labels FR et couleurs |
+| streak-badge | streak-badge.tsx | Badge inline compact pour listes de matchs (emoji + ×count, masqué si count < 2) |
+| odds-trend-indicator | odds-trend-indicator.tsx | Indicateur mouvement cotes (ouverture → clôture, % variation, flèche direction) |
 
 ## Mobile (`src/components/mobile/`) — 7 components
 
