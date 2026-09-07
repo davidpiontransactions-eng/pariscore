@@ -104,12 +104,12 @@ export function FlashscoreTennisList({
     const map = new Map<string, { league: FlashscoreLeague; matches: FlashscoreMatchRow[] }>();
 
     for (const m of matches) {
-      const tournamentId = m.tournament.replace(/\s+/g, "_").toLowerCase();
+      const tournamentId = (m.tournament ?? "unknown").replace(/\s+/g, "_").toLowerCase();
       if (!map.has(tournamentId)) {
         map.set(tournamentId, {
           league: {
             id: tournamentId,
-            name: m.tournament,
+            name: m.tournament ?? "Inconnu",
             country: m.playerA.country ?? m.playerB.country ?? null,
           },
           matches: [],
@@ -144,7 +144,7 @@ export function FlashscoreTennisList({
     // Pré-calculer la map de priorité (évite O(n²) via .find() dans le comparateur)
     const priorityMap = new Map<string, number>();
     for (const m of matches) {
-      priorityMap.set(m.tournament.replace(/\s+/g, "_").toLowerCase(), m.tournamentPriority ?? 10);
+      priorityMap.set((m.tournament ?? "unknown").replace(/\s+/g, "_").toLowerCase(), m.tournamentPriority ?? 10);
     }
 
     // Trier par priorité tournoi

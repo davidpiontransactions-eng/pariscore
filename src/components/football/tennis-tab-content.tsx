@@ -447,8 +447,8 @@ return [...matches, ...synthetic];
       const target = selectedTournament.name.toLowerCase().trim();
       list = list.filter(
         (m) =>
-          m.tournament.toLowerCase().trim() === target ||
-          m.tournament.toLowerCase().includes(target),
+          (m.tournament ?? "").toLowerCase().trim() === target ||
+          (m.tournament ?? "").toLowerCase().includes(target),
       );
     }
     // Filtre par catégorie de tournoi sélectionnée dans la sidebar
@@ -462,7 +462,7 @@ return [...matches, ...synthetic];
         (m) =>
           selectedSet.has(m.id) ||
           m.tournamentCategory?.toLowerCase().replace(/\s+/g, "-") === target ||
-          m.tournament.toLowerCase().replace(/\s+/g, "-") === target,
+          (m.tournament ?? "").toLowerCase().replace(/\s+/g, "-") === target,
       );
     }
     // Sélection sidebar : ne montrer que les matchs choisis. Vide = pas de filtre.
