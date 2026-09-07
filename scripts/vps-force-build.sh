@@ -14,7 +14,7 @@ npm run build 2>&1 | tail -n 5 || { echo "ERR: build"; exit 1; }
 npx prisma db push --skip-generate 2>&1 | tail -n 1 || true
 npx prisma generate >/dev/null 2>&1 || true
 cp -f .env .next/standalone/.env 2>/dev/null || true
-pm2 restart pariscore-next --update-env
+pm2 startOrRestart /opt/pariscorebis/ecosystem.config.js --only pariscore-next --update-env
 sleep 4
 curl -s -o /dev/null -w "local top5 HTTP %{http_code}\n" "http://localhost:3000/api/tennis/top5?metric=surfaceElo"
 curl -s "http://localhost:3000/api/tennis/top5?metric=serveDominance" | head -c 150; echo

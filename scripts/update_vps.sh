@@ -103,7 +103,7 @@ echo "[5/6] PM2 restart..."
 pm2 restart "$PM2_LEGACY" --update-env 2>&1 || echo "  warn: pm2 restart $PM2_LEGACY échec"
 # Next.js only if a build ran.
 if [ "$BUILD_RAN" = "1" ]; then
-  pm2 restart "$PM2_NEXT" --update-env 2>&1 || echo "  warn: pm2 restart $PM2_NEXT échec"
+  pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
   # Cron re-registration (only after full build — crons depend on Next.js code).
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env 2>/dev/null || true
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env 2>/dev/null || true

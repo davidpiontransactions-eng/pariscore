@@ -164,7 +164,7 @@ if [ "$NEED_BUILD" = "1" ]; then
     err "Next.js build failed — attempting rollback..."
     if [ -n "$PREV_COMMIT" ]; then
       git reset --hard "$PREV_COMMIT" -q
-      pm2 restart "$PM2_NEXT" --update-env 2>/dev/null || true
+      pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>/dev/null || true
       ok "Rolled back to $PREV_COMMIT"
     fi
     exit 1
@@ -174,7 +174,7 @@ if [ "$NEED_BUILD" = "1" ]; then
     err ".next/standalone/server.js missing after build — attempting rollback..."
     if [ -n "$PREV_COMMIT" ]; then
       git reset --hard "$PREV_COMMIT" -q
-      pm2 restart "$PM2_NEXT" --update-env 2>/dev/null || true
+      pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>/dev/null || true
       ok "Rolled back to $PREV_COMMIT"
     fi
     exit 1
@@ -195,7 +195,7 @@ log "[7/9] PM2 restart..."
 pm2 restart "$PM2_LEGACY" --update-env 2>&1 | tail -3 | tee -a "$LOG_FILE" || echo "  warn: pm2 restart $PM2_LEGACY failed"
 
 if [ "$BUILD_RAN" = "1" ]; then
-  pm2 restart "$PM2_NEXT" --update-env 2>&1 | tail -3 | tee -a "$LOG_FILE" || echo "  warn: pm2 restart $PM2_NEXT failed"
+  pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
   # Re-register cron jobs
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env 2>/dev/null || true
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env 2>/dev/null || true
@@ -246,7 +246,7 @@ if [ "$HEALTH_OK" = "0" ]; then
   if [ -n "$PREV_COMMIT" ]; then
     git reset --hard "$PREV_COMMIT" -q
     pm2 restart "$PM2_LEGACY" --update-env 2>/dev/null || true
-    [ "$BUILD_RAN" = "1" ] && pm2 restart "$PM2_NEXT" --update-env 2>/dev/null || true
+    [ "$BUILD_RAN" = "1" ] && pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>/dev/null || true
     ok "Rolled back to $PREV_COMMIT"
   fi
   exit 1
