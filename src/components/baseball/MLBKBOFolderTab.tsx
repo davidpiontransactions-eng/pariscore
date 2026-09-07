@@ -41,7 +41,7 @@ export function MLBKBOFolderTab() {
   // Live / Pre-match : status MLB StatsAPI "live" vs "scheduled" (les matchs
   // "final" sont exclus). Filtre horaire de début sur le pre-match.
   // Mode Live/Pre-match : store sidebar (source de vérité unique).
-  const mode = useSportsSidebarStore((s) => s.modes.baseball ?? "live");
+  const mode = useSportsSidebarStore((s) => s.modes.baseball ?? "prematch");
   const setMode = useCallback(
     (m: MatchViewMode) => useSportsSidebarStore.getState().setMode("baseball", m),
     [],
@@ -179,9 +179,9 @@ export function MLBKBOFolderTab() {
         <h2 className="text-sm font-bold text-white">
           ⚾ Calendrier <span className="text-amber-200">{dayLabel(date)}</span>
         </h2>
-        {data && (
+          {data && (
           <span className="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-white/60">
-            {data.matches.length} match{data.matches.length > 1 ? "s" : ""} ·{" "}
+            {matchList.length} match{matchList.length > 1 ? "s" : ""} ·{" "}
             {data.degraded ? "mode dégradé (API MLB KO)" : "API live OK"}
           </span>
         )}

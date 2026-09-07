@@ -85,12 +85,14 @@ export function filterByToday<T>(
   getScheduledAt: (match: T) => string | null | undefined,
   now: Date = new Date(),
 ): T[] {
-  const day = now.toDateString();
+  const PARIS_TZ = "Europe/Paris";
+  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: PARIS_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+  const day = fmt.format(now);
   return items.filter((match) => {
     const raw = getScheduledAt(match);
     if (!raw) return false;
     const ts = new Date(raw).getTime();
-    return Number.isFinite(ts) && new Date(ts).toDateString() === day;
+    return Number.isFinite(ts) && fmt.format(new Date(ts)) === day;
   });
 }
 
@@ -103,14 +105,16 @@ export function filterByTomorrow<T>(
   getScheduledAt: (match: T) => string | null | undefined,
   now: Date = new Date(),
 ): T[] {
+  const PARIS_TZ = "Europe/Paris";
+  const fmt = new Intl.DateTimeFormat("fr-CA", { timeZone: PARIS_TZ, year: "numeric", month: "2-digit", day: "2-digit" });
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
-  const day = tomorrow.toDateString();
+  const day = fmt.format(tomorrow);
   return items.filter((match) => {
     const raw = getScheduledAt(match);
     if (!raw) return false;
     const ts = new Date(raw).getTime();
-    return Number.isFinite(ts) && new Date(ts).toDateString() === day;
+    return Number.isFinite(ts) && fmt.format(new Date(ts)) === day;
   });
 }
 
