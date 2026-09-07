@@ -2,7 +2,8 @@
 
 **Date**: 2026-09-07  
 **Statut**: ✅ RÉSOLU  
-**Commit**: `ba640377` — `fix(frontend): guards .map() + CSP + API routes (basketball/euroleague/cs2)`
+**Commit**: `a49f37ff` — `fix(api): football/top5 503 → 200 fallback + rapport mission`
+**Commit précédent**: `ba640377` — `fix(frontend): guards .map() + CSP + API routes (basketball/euroleague/cs2)`
 
 ---
 
@@ -41,19 +42,21 @@
 | `/api/v1/top-matches/all?sport=basketball` | 400 | `"basketball"` absent de `VALID_SPORTS` + `SportType` | Ajouté `"basketball"` aux deux + mapping `basketball → ['nba', 'wnba']` |
 | `/api/euroleague/matches?league=euroleague` | 404 | Route existante mais build standalone partiel / deploiement partiel | Vérifié : route `src/app/api/euroleague/matches/route.ts` OK — 404 = build VPS stale |
 | `/api/cs2/matches` | 503 | `cs2Service.getCs2Matches()` lance erreur → catch manquant avant fix | Try/catch retourne `200 + { matches: [] }` au lieu de `503` |
+| `/api/football/top5?limit=10` | 503 | `fetchBSDRaw()` lance erreur → catch retourne 503 au lieu de fallback | Catch retourne `200 + { matches: [] }` au lieu de `503` (même pattern que CS2) |
 | CSP `frame-ancestors` | Warning | `'none"` manquait la quote fermante dans `next.config.ts` | Corrigé : `'none"` → `'none'` |
 
 ---
 
 ## 3. Correctifs appliqués
 
-### Fichiers modifiés (7)
+### Fichiers modifiés (8)
 
 | Fichier | Changement |
 |---------|------------|
 | `src/components/basketball/basketball-tab-content.tsx` | `(nbaWnbaMatches ?? [])`, `(euroMatches ?? [])`, `(cupMatches ?? [])` sur tous les `.map()` et `.find()` |
 | `src/components/dashboard/top-multi-sport.tsx` | `(groups ?? [])`, `(g.matches ?? [])`, `data.groups ?? []` sur `.map()`, `.flatMap()`, `.reduce()`, `.filter()` |
 | `src/app/api/cs2/matches/route.ts` | `Array.isArray(matches) ? matches : []` + catch retourne `200` au lieu de `503` |
+| `src/app/api/football/top5/route.ts` | Catch retourne `200 + { matches: [], meta: { source: "fallback" } }` au lieu de `503` |
 | `src/app/api/v1/top-matches/all/route.ts` | Ajout `'basketball'` dans `VALID_SPORTS` |
 | `src/lib/top-matches/types.ts` | Ajout `"basketball"` au type `SportType` |
 | `src/lib/top-matches/index.ts` | Mapping `sport === 'basketball' → ['nba', 'wnba']` |
@@ -77,6 +80,7 @@
 curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3005/api/cs2/matches' → 200
 curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3005/api/euroleague/matches?league=euroleague' → 200
 curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3005/api/v1/top-matches/all?sport=basketball&timeframe=live&limit=10' → 200
+curl -s -o /dev/null -w '%{http_code}' 'http://localhost:3005/api/football/top5?limit=10' → 200
 curl -s -o /dev/null -w '%{http_code}' 'https://pariscore.fr/' → 200
 ```
 
@@ -86,13 +90,14 @@ curl -s -o /dev/null -w '%{http_code}' 'https://pariscore.fr/' → 200
 CS2: source=fallback, matches=0, error="BSD_API_KEY not configured" (200 au lieu de 503)
 EuroLeague: games=0 (euroleague_api non installé — attendu)
 TopMatches: groups=0 (NBA adapter → upstream down — gracieux)
+FootballTop5: source=fallback, matches=0 (BSD_API_KEY not configured — 200 au lieu de 503)
 Homepage: 200
 ```
 
 ### PM2 Status
 
 ```
-pariscore-next: online, PID 1897993, uptime 0s (restart successful)
+pariscore-next: online, PID 1902133, uptime 0s (restart successful)
 ```
 
 ---
