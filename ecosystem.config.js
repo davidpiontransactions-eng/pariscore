@@ -47,6 +47,26 @@
 module.exports = {
   apps: [
     {
+      // === Next.js standalone (App Router) ===
+      name: 'pariscore-next',
+      script: '/home/ubuntu/.bun/bin/bun',
+      args: '.next/standalone/server.js',
+      cwd: '/opt/pariscorebis',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3005,
+      },
+      error_file: 'logs/pariscore-next.err.log',
+      out_file: 'logs/pariscore-next.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Serveur HTTP principal ===
       name: 'pariscore',
       script: 'server.js',
