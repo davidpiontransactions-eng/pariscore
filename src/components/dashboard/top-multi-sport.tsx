@@ -399,7 +399,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         const res = await fetch(`/api/v1/top-matches/all?sport=${sportParam}&timeframe=${timeframe}&limit=10`);
         const data: TopMatchResponse = await res.json();
         cacheRef.current.set(key, { data, ts: Date.now() });
-        setGroups(data.groups);
+        setGroups(data.groups ?? []);
       } catch {
         setGroups([]);
       }
@@ -409,10 +409,10 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   );
 
   // Filtrer les matchs finis + time filter + sport filter
-  const filteredGroups = groups
+  const filteredGroups = (groups ?? [])
     .map((g) => ({
       ...g,
-      matches: g.matches.filter(
+      matches: (g.matches ?? []).filter(
         (m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status, m.badge?.label)
       ),
     }))
@@ -424,14 +424,14 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
     });
 
   // Compteur de matchs par sport (avant filtre sport)
-  const sportCounts = groups
-    .flatMap((g) => g.matches.filter((m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status, m.badge?.label)).map((m) => g.sport))
+  const sportCounts = (groups ?? [])
+    .flatMap((g) => (g.matches ?? []).filter((m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status, m.badge?.label)).map((m) => g.sport))
     .reduce((acc, sport) => { acc[sport] = (acc[sport] || 0) + 1; return acc; }, {} as Record<string, number>);
   sportCounts.all = Object.values(sportCounts).reduce((a, b) => a + b, 0);
 
   // Favoris : tous les matchs favoris à travers les groupes (avec sport)
-  const favoriteMatches = groups
-    .flatMap((g) => g.matches.filter((m) => favorites.has(m.id)).map((m) => ({ ...m, sport: g.sport })))
+  const favoriteMatches = (groups ?? [])
+    .flatMap((g) => (g.matches ?? []).filter((m) => favorites.has(m.id)).map((m) => ({ ...m, sport: g.sport })))
     .filter((m) => m.status !== "finished");
 
   const toggleFavorite = (matchId: string) => {
@@ -462,7 +462,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
     setTimeout(() => setSpinning(false), 500);
   };
 
-  const totalMatches = filteredGroups.reduce((sum, g) => sum + g.matches.length, 0);
+  const totalMatches = filteredGroups.reduce((sum, g) => sum + (g.matches ?? []).length, 0);
 
   return (
     <div className="w-full rounded-2xl p-5 mb-6 border border-[#E0D8F0] shadow-sm" style={{ background: "#F0ECF8" }}>

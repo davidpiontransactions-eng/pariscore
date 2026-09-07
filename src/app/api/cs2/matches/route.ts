@@ -30,9 +30,12 @@ export async function GET() {
 
     const matches = await cs2Service.getCs2Matches(key);
 
+    // Sécuriser : s'assurer que matches est un tableau
+    const safeMatches = Array.isArray(matches) ? matches : [];
+
     // Moteur logos : hits cache → URL locale immédiate ; misses → file de fond.
     const teamSpecs: { name: string; remoteUrl?: string | null }[] = [];
-    for (const m of matches as { team1?: unknown; team2?: unknown }[]) {
+    for (const m of safeMatches) {
       const t1 = m.team1 as { name?: string; logo?: string | null } | undefined;
       const t2 = m.team2 as { name?: string; logo?: string | null } | undefined;
       if (t1?.name) teamSpecs.push({ name: t1.name, remoteUrl: t1.logo });
@@ -40,10 +43,7 @@ export async function GET() {
     }
     warmMatchesLogos(teamSpecs);
 
-    for (const m of matches as {
-      team1?: { name?: string; logo?: string | null; logo_local?: string | null };
-      team2?: { name?: string; logo?: string | null; logo_local?: string | null };
-    }[]) {
+    for (const m of safeMatches) {
       if (m.team1?.name) {
         m.team1.logo_local = resolveLogoForPayload(m.team1.name, m.team1.logo);
         if (m.team1.logo_local) m.team1.logo = m.team1.logo_local;
@@ -53,17 +53,16 @@ export async function GET() {
         if (m.team2.logo_local) m.team2.logo = m.team2.logo_local;
       }
     }
-    // Les misses lancés en tâche de fond s'écrivent peu après la réponse — la
-    // série de polling suivante (/api/cs2/matches toutes les 2 min) les servira.
     void flushLogoQueue();
 
-    const payload = { matches, source: "bsd", cache: cs2Service._getCacheStatus?.() ?? "unknown" };
+    const payload = { matches: safeMatches, source: "bsd", cache: cs2Service._getCacheStatus?.() ?? "unknown" };
     cache.set(payload);
     return NextResponse.json(payload);
   } catch (err) {
+    // Retourner 200 avec tableau vide au lieu de 503 pour éviter les crashes frontend
     return NextResponse.json(
-      { error: "cs2 data unavailable", details: (err as Error).message },
-      { status: 503 }
+      { matches: [], source: "fallback", error: (err as Error).message },
+      { status: 200 }
     );
   }
 }

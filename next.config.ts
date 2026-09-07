@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' https: data: blob:",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://app.posthog.com https://sentry.io https://*.sentry.io wss:",
-              "frame-ancestors 'none",
+              "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
             ].join("; "),

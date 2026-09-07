@@ -69,7 +69,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
   const allMatches = useMemo(() => {
     const matches: UnifiedMatch[] = [];
     if (selectedLeagues.includes("nba") || selectedLeagues.includes("wnba")) {
-      matches.push(...nbaWnbaMatches.map((m) => ({
+      matches.push(...(nbaWnbaMatches ?? []).map((m) => ({
         id: m.id,
         league: m.league,
         scheduledAt: m.scheduledAt,
@@ -82,7 +82,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       })));
     }
     if (selectedLeagues.includes("euroleague")) {
-      matches.push(...euroMatches.map((m) => ({
+      matches.push(...(euroMatches ?? []).map((m) => ({
         id: String(m.id),
         league: "EuroLeague",
         scheduledAt: m.startTime,
@@ -95,7 +95,7 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       })));
     }
     if (selectedLeagues.includes("eurocup")) {
-      matches.push(...cupMatches.map((m) => ({
+      matches.push(...(cupMatches ?? []).map((m) => ({
         id: String(m.id),
         league: "EuroCup",
         scheduledAt: m.startTime,
@@ -132,9 +132,9 @@ export function BasketballTabContent({ className }: BasketballTabContentProps) {
       const { sport, matchId } = evt.detail ?? {};
       if (sport !== "basketball" || !matchId) return;
       // Chercher d'abord dans NBA/WNBA (données complètes), puis EuroLeague/EuroCup
-      const match = nbaWnbaMatches.find((m) => m.id === matchId)
-        ?? euroMatches.find((m) => String(m.id) === matchId) as unknown as BasketballMatch | undefined
-        ?? cupMatches.find((m) => String(m.id) === matchId) as unknown as BasketballMatch | undefined;
+      const match = (nbaWnbaMatches ?? []).find((m) => m.id === matchId)
+        ?? (euroMatches ?? []).find((m) => String(m.id) === matchId) as unknown as BasketballMatch | undefined
+        ?? (cupMatches ?? []).find((m) => String(m.id) === matchId) as unknown as BasketballMatch | undefined;
       if (match) setDetailMatch(match);
     };
     window.addEventListener("open-match-detail", handler);

@@ -8,6 +8,7 @@ const VALID_SPORTS = [
   'football',
   'tennis',
   'basket',
+  'basketball',
   'nba',
   'wnba',
   'f1',

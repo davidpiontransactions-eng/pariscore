@@ -54,11 +54,11 @@ export async function fetchTopMatches(
   limit: number,
   timeframe: string,
 ): Promise<TopLeague[]> {
-  // "basket" regroupe NBA + WNBA
+  // "basket" / "basketball" regroupe NBA + WNBA
   let sports: string[];
   if (sport === 'all') {
     sports = ALL_SPORTS;
-  } else if (sport === 'basket') {
+  } else if (sport === 'basket' || sport === 'basketball') {
     sports = ['nba', 'wnba'];
   } else {
     sports = [sport];

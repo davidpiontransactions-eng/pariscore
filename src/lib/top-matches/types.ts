@@ -93,6 +93,7 @@ export type SportType =
   | "football"
   | "tennis"
   | "basket"
+  | "basketball"
   | "nba"
   | "wnba"
   | "f1"
