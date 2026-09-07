@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { TennisMatch } from "@/lib/tennis-data";
 import type { LiveMatchState } from "@/hooks/use-live-matches";
 import { useBrowserTimeZone } from "@/lib/tennis-format";
+import { WatchButton } from "@/components/shared/watch-button";
 import {
   FlashscoreMatchList,
   FlashscoreSkeleton,
@@ -136,6 +137,15 @@ export function FlashscoreTennisList({
         server,
         scoreDisplay: formatTennisScore(ls, isLive),
         oddsDisplay: formatTennisOdds(m),
+        extras: isLive ? (
+          <WatchButton
+            sport="tennis"
+            home={m.playerA.name}
+            away={m.playerB.name}
+            label="Stream"
+            variant="dark"
+          />
+        ) : undefined,
       };
 
       map.get(tournamentId)!.matches.push(row);
