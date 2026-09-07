@@ -603,3 +603,29 @@ model TeamStreak {
   @@index([streakType, count])
   @@map("team_streaks")
 }
+
+// ─── Multisport Calendar ─────────────────────────────────────────────────────
+
+model MultisportEvent {
+  id          String   @id @default(cuid())
+  sport       String   // "football", "tennis", "basketball", etc.
+  country     String?
+  league      String?
+  homeTeam    String
+  awayTeam    String
+  eventTime   DateTime?
+  status      String   @default("scheduled") // scheduled | live | finished
+  scoreHome   Int?
+  scoreAway   Int?
+  oddsHome    Float?
+  oddsDraw    Float?
+  oddsAway    Float?
+  source      String   @default("betexplorer")
+  sourceUrl   String?
+  scrapedAt   DateTime @default(now())
+
+  @@unique([sport, homeTeam, awayTeam, scrapedAt])
+  @@index([sport, eventTime])
+  @@index([sport, status])
+  @@map("multisport_events")
+}
