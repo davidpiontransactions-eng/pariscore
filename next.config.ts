@@ -33,15 +33,16 @@ const nextConfig: NextConfig = {
   
   typescript: {
     ignoreBuildErrors: process.env.NODE_ENV !== "production",
-  },
-  async headers() {
-    return [
+    },
+        async headers() {
+        return [
       {
         source: "/(.*)",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
@@ -60,6 +61,21 @@ const nextConfig: NextConfig = {
               "form-action 'self'",
             ].join("; "),
           },
+        ],
+      },
+      {
+        // Chunks CSS/JS : cache unilatéral immutable (hash dans le nom → busting automatique)
+        source: "/_next/static/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        // Service worker PWA : jamais en cache navigateur
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
         ],
       },
     ];
