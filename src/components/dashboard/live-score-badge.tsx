@@ -98,6 +98,42 @@ function CS2Score({ maps, rounds, currentMap }: Pick<LiveMatchScore, "maps" | "r
   );
 }
 
+/** Baseball : score + inning + outs */
+function BaseballScore({ current, clock, period }: Pick<LiveMatchScore, "current" | "clock" | "period">) {
+  const display = typeof current === 'string' ? current : current != null ? String(current) : null;
+  const safePeriod = typeof period === 'string' ? period : period != null ? String(period) : null;
+  const safeClock = typeof clock === 'string' ? clock : clock != null ? String(clock) : null;
+  return (
+    <div className="flex flex-col items-center">
+      <LivePulse />
+      {display && (
+        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{display}</span>
+      )}
+      <div className="flex items-center gap-1 text-[9px] text-[#4CAF50] font-semibold">
+        {safePeriod && <span>{safePeriod}</span>}
+        {safeClock && <span className="tabular-nums">{safeClock}</span>}
+      </div>
+    </div>
+  );
+}
+
+/** Rugby : score + mi-temps */
+function RugbyScore({ current, halfTime }: Pick<LiveMatchScore, "current" | "halfTime">) {
+  const display = typeof current === 'string' ? current : current != null ? String(current) : null;
+  const safeHT = typeof halfTime === 'string' ? halfTime : halfTime != null ? String(halfTime) : null;
+  return (
+    <div className="flex flex-col items-center">
+      <LivePulse />
+      {display && (
+        <span className="text-sm font-extrabold text-[#1A1145] mt-0.5 tabular-nums">{display}</span>
+      )}
+      <div className="flex items-center gap-1 text-[9px] text-[#4CAF50] font-semibold">
+        {safeHT && <span>{safeHT}</span>}
+      </div>
+    </div>
+  );
+}
+
 /** MMA : round + chrono */
 function MMAScore({ round, roundClock }: Pick<LiveMatchScore, "round" | "roundClock">) {
   const safeRound = typeof round === 'number' ? round : round != null ? Number(round) : null;
@@ -148,6 +184,12 @@ export function LiveScoreBadge({ sport, liveScore, homeName, awayName }: LiveSco
   }
   if (s === "cs2") {
     return <CS2Score {...liveScore} />;
+  }
+  if (s === "baseball") {
+    return <BaseballScore {...liveScore} />;
+  }
+  if (s === "rugby") {
+    return <RugbyScore {...liveScore} />;
   }
   if (s === "mma") {
     return <MMAScore {...liveScore} />;

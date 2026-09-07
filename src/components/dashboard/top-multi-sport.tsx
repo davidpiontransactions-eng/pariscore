@@ -38,6 +38,8 @@ interface TopMatch {
   odds?: TopOdds;
   metric?: TopMetric;
   badge?: TopBadge;
+  round?: string;
+  surface?: string;
 }
 interface TopLeague {
   league: string;
@@ -70,6 +72,22 @@ const TIME_FILTERS: { id: TimeFilter; label: string; icon?: string }[] = [
   { id: "today", label: "Auj." },
   { id: "tomorrow", label: "Dem." },
   { id: "all", label: "Tous" },
+];
+
+type SportFilter = "all" | "football" | "tennis" | "nba" | "fiba" | "cs2" | "mma" | "baseball" | "rugby" | "f1" | "cycling";
+
+const SPORT_FILTERS: { id: SportFilter; icon: string; label: string }[] = [
+  { id: "all", icon: "🏅", label: "Tous" },
+  { id: "football", icon: "⚽", label: "Football" },
+  { id: "tennis", icon: "🎾", label: "Tennis" },
+  { id: "nba", icon: "🏀", label: "NBA" },
+  { id: "fiba", icon: "🏀", label: "FIBA" },
+  { id: "cs2", icon: "🎮", label: "CS2" },
+  { id: "mma", icon: "🥊", label: "MMA" },
+  { id: "baseball", icon: "⚾", label: "Baseball" },
+  { id: "rugby", icon: "🏉", label: "Rugby" },
+  { id: "f1", icon: "🏎️", label: "F1" },
+  { id: "cycling", icon: "🚴", label: "Cyclisme" },
 ];
 
 function isInTimeWindow(iso: string, filter: TimeFilter, status?: string, badgeLabel?: string): boolean {
@@ -114,6 +132,22 @@ function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
 }
+function formatDayHeader(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400_000);
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return "Demain";
+  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+}
+function getDayKey(iso: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 /* ─── Match Row ─── */
 function MatchRow({
@@ -152,10 +186,27 @@ function MatchRow({
         )}
       </div>
 
-      {/* Teams */}
+      {/* Teams + Round */}
       <div className="flex-1 ml-3 flex flex-col gap-1 min-w-0">
         <TeamLine team={match.home} score={typeof match.score === 'string' ? match.score.split("-")[0] : undefined} isLive={isLive} />
         <TeamLine team={match.away} score={typeof match.score === 'string' ? match.score.split("-")[1] : undefined} />
+        {(match.round || match.surface) && (
+          <div className="flex items-center gap-1.5 mt-0.5">
+            {match.round && (
+              <span className="text-[9px] text-[#7B3FA0] font-medium truncate">{match.round}</span>
+            )}
+            {match.surface && (
+              <span className={cn(
+                "text-[8px] px-1.5 py-0 rounded font-bold uppercase",
+                match.surface.toLowerCase().includes('clay') ? "bg-[#E65100]/10 text-[#E65100]" :
+                match.surface.toLowerCase().includes('grass') ? "bg-[#2E7D32]/10 text-[#2E7D32]" :
+                "bg-[#1565C0]/10 text-[#1565C0]"
+              )}>
+                {match.surface}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Odds */}
@@ -277,6 +328,8 @@ function LeagueCard({
   onToggleFavorite: (id: string) => void;
 }) {
   const flag = group.country ? countryFlag(group.country) : '';
+  const liveCount = group.matches.filter((m) => m.status === 'live').length;
+  const scheduledCount = group.matches.filter((m) => m.status === 'scheduled').length;
   return (
     <div className="rounded-xl overflow-hidden shadow-sm border border-[#E0D8F0] bg-white">
       {/* Header */}
@@ -289,10 +342,19 @@ function LeagueCard({
         {flag && (
           <span className="text-[11px] ml-1 opacity-90">{flag} {group.country}</span>
         )}
-        <div className="ml-auto flex gap-6 text-[11px] font-semibold opacity-80">
-          <span className="text-white">1</span>
-          <span className="text-white">N</span>
-          <span className="text-white">2</span>
+        <div className="ml-auto flex items-center gap-2">
+          {liveCount > 0 && (
+            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 text-[9px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              {liveCount}
+            </span>
+          )}
+          <span className="text-[10px] opacity-70">{group.matches.length} matchs</span>
+          <div className="flex gap-4 text-[11px] font-semibold opacity-80">
+            <span className="text-white">1</span>
+            <span className="text-white">N</span>
+            <span className="text-white">2</span>
+          </div>
         </div>
       </div>
       {/* Matches */}
@@ -312,6 +374,7 @@ function LeagueCard({
 /* ─── Main Component ─── */
 export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { activeSport?: string; mode?: "prematch" | "live" }) {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [sportFilter, setSportFilter] = useState<SportFilter>("all");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [groups, setGroups] = useState<TopLeague[]>([]);
   const [loading, setLoading] = useState(true);
@@ -345,7 +408,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
     [activeSport, mode]
   );
 
-  // Filtrer les matchs finis + time filter + safety filtre sport
+  // Filtrer les matchs finis + time filter + sport filter
   const filteredGroups = groups
     .map((g) => ({
       ...g,
@@ -354,7 +417,17 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
       ),
     }))
     .filter((g) => g.matches.length > 0)
-    .filter((g) => activeSport === "all" || g.sport === activeSport);
+    .filter((g) => {
+      if (activeSport !== "all" && g.sport !== activeSport) return false;
+      if (sportFilter !== "all" && g.sport !== sportFilter) return false;
+      return true;
+    });
+
+  // Compteur de matchs par sport (avant filtre sport)
+  const sportCounts = groups
+    .flatMap((g) => g.matches.filter((m) => m.status !== "finished" && isInTimeWindow(m.kickoff, timeFilter, m.status, m.badge?.label)).map((m) => g.sport))
+    .reduce((acc, sport) => { acc[sport] = (acc[sport] || 0) + 1; return acc; }, {} as Record<string, number>);
+  sportCounts.all = Object.values(sportCounts).reduce((a, b) => a + b, 0);
 
   // Favoris : tous les matchs favoris à travers les groupes (avec sport)
   const favoriteMatches = groups
@@ -412,7 +485,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
       </div>
 
       {/* Time filters */}
-      <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-none">
+      <div className="flex gap-1 mb-3 overflow-x-auto scrollbar-none">
         {TIME_FILTERS.map((tf) => (
           <button
             key={tf.id}
@@ -430,6 +503,39 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
             {tf.label}
           </button>
         ))}
+      </div>
+
+      {/* Sport filters */}
+      <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-none">
+        {SPORT_FILTERS.map((sf) => {
+          const count = sportCounts[sf.id] || 0;
+          if (sf.id !== "all" && count === 0) return null;
+          return (
+            <button
+              key={sf.id}
+              onClick={() => setSportFilter(sf.id)}
+              className={cn(
+                "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors",
+                sportFilter === sf.id
+                  ? "bg-[#1A1145] text-white"
+                  : "bg-white text-[#7B3FA0] hover:bg-[#EDE8F5] border border-[#E0D8F0]"
+              )}
+            >
+              <span>{sf.icon}</span>
+              <span>{sf.label}</span>
+              {count > 0 && (
+                <span className={cn(
+                  "ml-0.5 px-1.5 py-0 rounded-full text-[9px] font-bold",
+                  sportFilter === sf.id
+                    ? "bg-white/20 text-white"
+                    : "bg-[#EDE8F5] text-[#7B3FA0]"
+                )}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Favoris section */}
@@ -469,7 +575,71 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         <div className="text-center py-10 text-[#7B3FA0] text-sm">Chargement...</div>
       ) : filteredGroups.length === 0 ? (
         <div className="text-center py-10 text-[#7B3FA0] text-sm">Aucun match top disponible.</div>
+      ) : timeFilter === "all" ? (
+        /* Regroupement par jour quand filtre "Tous" */
+        <div className="flex flex-col gap-4">
+          {(() => {
+            // Aplatir tous les matchs avec leur league, trier par kickoff
+            const allMatches = filteredGroups.flatMap((g) =>
+              g.matches.map((m) => ({ ...m, league: g.league, leagueIcon: g.leagueIcon, leagueColor: g.leagueColor, sport: g.sport, country: g.country }))
+            ).sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+            // Regrouper par jour
+            const byDay = new Map<string, typeof allMatches>();
+            for (const m of allMatches) {
+              const key = getDayKey(m.kickoff);
+              if (!byDay.has(key)) byDay.set(key, []);
+              byDay.get(key)!.push(m);
+            }
+            return Array.from(byDay.entries()).map(([dayKey, dayMatches]) => (
+              <div key={dayKey}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-extrabold text-[#1A1145]">{formatDayHeader(dayMatches[0].kickoff)}</span>
+                  <span className="text-[10px] text-[#7B3FA0] font-mono">{dayMatches.length}</span>
+                  <div className="flex-1 h-px bg-[#E0D8F0]" />
+                </div>
+                <div className="flex flex-col gap-3">
+                  {(() => {
+                    // Regrouper par ligue dans ce jour
+                    const byLeague = new Map<string, typeof dayMatches>();
+                    for (const m of dayMatches) {
+                      const key = m.league;
+                      if (!byLeague.has(key)) byLeague.set(key, []);
+                      byLeague.get(key)!.push(m);
+                    }
+                    return Array.from(byLeague.entries()).map(([league, leagueMatches]) => (
+                      <div key={league} className="rounded-xl overflow-hidden shadow-sm border border-[#E0D8F0] bg-white">
+                        <div
+                          className="flex items-center px-3 py-2 text-white font-bold text-[11px] gap-1.5"
+                          style={{ background: leagueMatches[0].leagueColor }}
+                        >
+                          <span>{leagueMatches[0].leagueIcon}</span>
+                          <span>{league}</span>
+                          {leagueMatches[0].country && (
+                            <span className="text-[10px] ml-1 opacity-80">
+                              {countryFlag(leagueMatches[0].country)} {leagueMatches[0].country}
+                            </span>
+                          )}
+                          <span className="ml-auto text-[10px] opacity-70">{leagueMatches.length} matchs</span>
+                        </div>
+                        {leagueMatches.map((m) => (
+                          <MatchRow
+                            key={m.id}
+                            match={m}
+                            sport={m.sport}
+                            isFavorite={favorites.has(m.id)}
+                            onToggleFavorite={toggleFavorite}
+                          />
+                        ))}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+            ));
+          })()}
+        </div>
       ) : (
+        /* Affichage classique (filtré) */
         <div className="flex flex-col gap-4">
           {filteredGroups.map((g, i) => (
             <LeagueCard

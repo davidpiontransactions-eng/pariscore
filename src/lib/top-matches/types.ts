@@ -68,6 +68,10 @@ export interface TopMatch {
   odds?: TopOdds;
   metric?: TopMetric;
   badge?: TopBadge;
+  /** Tour de la compétition (ex: "Quart de finale", "SF", "R32") */
+  round?: string;
+  /** Surface / terrain (tennis: clay/hard/grass, foot: pelouse synthétique) */
+  surface?: string;
 }
 
 export interface TopLeague {

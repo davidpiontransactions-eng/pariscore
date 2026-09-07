@@ -67,6 +67,8 @@ export const tennisAdapter: SportAdapter = {
         status: isLive ? 'live' : m.status === 'finished' ? 'finished' : 'scheduled',
         score: liveScore?.current,
         liveScore,
+        round: m.round || m.roundName || undefined,
+        surface: m.surface || m.tournamentSurface || undefined,
         odds: m.odds
           ? {
               home: m.odds.playerA != null ? String(m.odds.playerA) : undefined,
