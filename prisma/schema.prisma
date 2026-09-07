@@ -629,3 +629,40 @@ model MultisportEvent {
   @@index([sport, status])
   @@map("multisport_events")
 }
+
+// ─── BeSoccer Scraped Data ─────────────────────────────────────────────────
+
+model Lineup {
+  id          String   @id @default(cuid())
+  matchId     String
+  teamId      String   // "home" | "away" (ou nom d'équipe normalisé)
+  player      String
+  position    String   // "GK", "DEF", "MID", "FWD" (schéma normalisé)
+  isProbable  Boolean  // true = probable, false = officiel
+  rating      Float?   // note de forme (ex: 7.2)
+  isAbsence   Boolean  @default(false)
+  scrapedAt   DateTime @default(now())
+
+  @@index([matchId, teamId, isProbable])
+  @@map("lineups")
+}
+
+model BeSoccerAnalysis {
+  id                String   @id @default(cuid())
+  matchId           String   @unique
+  homeTeam          String?
+  awayTeam          String?
+  h2hStats          String?  // JSON : historique H2H (résultats, scores)
+  refereeName       String?
+  refereeYellowAvg  Float?   // cartons jaunes moyens par match
+  refereeRedAvg     Float?   // cartons rouges moyens par match
+  stadium           String?
+  weather           String?  // condition météo (ex: "Ensoleillé", "Pluie légère")
+  predictions       String?  // JSON : probabilités BeSoccer (1X2, over/under)
+  lineupsRaw        String?  // JSON brut des compos (backup)
+  scrapedAt         DateTime @default(now())
+
+  @@index([matchId])
+  @@index([homeTeam, awayTeam])
+  @@map("besoccer_analyses")
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeStrategyTop5Matches, type StrategyTop5 } from "@/lib/football-strategy-top5";
+import { emptyStrategyTop5, readFixturesCache, writeFixturesCache } from "@/lib/football-top5-cache";
 import type { BSDFootballMatch } from "@/lib/bsd-football-fetcher";
 
 const CACHE_TTL = 30 * 60_000;
@@ -65,6 +66,8 @@ export async function GET(request: NextRequest) {
 
     const data: StrategyTop5 = computeStrategyTop5Matches(finished, fixtures, { limit, league });
     cacheByKey.set(cacheKey, { at: Date.now(), data });
+    // Snapshot disque pour le fallback hors-ligne (best-effort).
+    writeFixturesCache(finished, fixtures);
 
     return NextResponse.json({
       ...data,
@@ -72,7 +75,19 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     console.error("[football-top5] fetch failed:", (err as Error).message);
+    // Fallback 1 : re-scorer le dernier snapshot disque (TTL 6h).
+    const snap = readFixturesCache();
+    if (snap) {
+      const replayed = computeStrategyTop5Matches(snap.finished, snap.fixtures, { limit, league });
+      return NextResponse.json({
+        ...replayed,
+        meta: { source: "cache-fallback", computedAt: new Date(snap.at).toISOString(), error: (err as Error).message },
+      });
+    }
+    // Fallback 2 : shape vide COMPLÈTE (toutes les stratégies à []).
+    // Le hook client lit data.strategies[key] — une shape partielle = tableau vide silencieux.
     return NextResponse.json({
+      ...emptyStrategyTop5(),
       matches: [],
       meta: { source: "fallback", computedAt: new Date().toISOString(), error: (err as Error).message },
     }, { status: 200 });
