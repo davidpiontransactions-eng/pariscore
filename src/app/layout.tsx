@@ -178,6 +178,17 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(webAppJsonLd) }}
         />
+        {/* ChunkLoadError guard : si un hash mismatch survient après rebuild,
+            le navigateur reçoit un 404 sur les anciens chunks → error TS → on
+            force un hard reload pour récupérer le nouveau HTML + bons hashes.
+            Ne relance qu'une seule fois pour éviter les boucles infinies. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var r=0;window.addEventListener("error",function(e){
+              if((e.message&&(e.message.indexOf("ChunkLoadError")>-1||e.message.indexOf("Loading chunk")>-1))&&r<1)
+              {r=1;window.location.reload()}})})()`,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${archivoDisplay.variable} ${spaceGrotesk.variable} antialiased bg-background text-foreground`}
