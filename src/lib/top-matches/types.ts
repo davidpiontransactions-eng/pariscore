@@ -72,6 +72,16 @@ export interface TopMatch {
   round?: string;
   /** Surface / terrain (tennis: clay/hard/grass, foot: pelouse synthétique) */
   surface?: string;
+  /** Probabilité favori en % (calculée par le modèle) */
+  probPct?: number;
+  /** Valeur attendue EV = Pwin * cote - 1 */
+  ev?: number | null;
+  /** Trend : écart prob modèle vs marché */
+  trend?: number | null;
+  /** Label de confiance ("Très Forte", "Confiance Élevée", "Valeur / Risque") */
+  confLabel?: string;
+  /** Niveau de confiance 1-3 */
+  confLevel?: 1 | 2 | 3;
 }
 
 export interface TopLeague {

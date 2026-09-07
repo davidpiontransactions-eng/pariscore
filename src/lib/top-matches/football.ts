@@ -1,6 +1,16 @@
 // Adapter football — normalise /api/football/matches → format TopLeague
 import type { SportAdapter, TopLeague, TopMatch } from './types';
 import { countryFlag, isLiveStatus, isImminent } from './types';
+import { computeMatchProb } from '@/lib/football-analytics';
+
+/** Estimation basée sur le ranking mondial FIFA/API pour calculer la force relative */
+function teamStrength(name: string, rank?: number | null): number {
+  if (rank && rank > 0) return Math.max(10, 100 - rank * 0.6);
+  // Fallback heuristique : les grands championnats ont des équipes plus fortes
+  const elite = ['Man City', 'Bayern', 'Real Madrid', 'Barcelona', 'PSG', 'Inter', 'Milan', 'Arsenal', 'Liverpool', 'Juventus'];
+  if (elite.includes(name)) return 85;
+  return 55;
+}
 
 const LEAGUE_COLORS: Record<string, string> = {
   'champions league': '#6C3CB4',
@@ -31,7 +41,7 @@ export const footballAdapter: SportAdapter = {
       next: { revalidate: 60 },
     });
     if (!res.ok) return [];
-    const data: any = await res.json();
+    const data = await res.json() as { matches?: any[] };
     const matches: any[] = data.matches || [];
 
     // Filtrer : only scheduled/live, exclude finished & past kickoff
@@ -60,6 +70,15 @@ export const footballAdapter: SportAdapter = {
             halfTime: m.live.halfTime ?? m.live.ht ?? undefined,
           }
         : undefined;
+      // Cotes numériques (brutes avant conversion string)
+      const oddsNum = {
+        home: m.odds?.home != null ? parseFloat(String(m.odds.home)) : undefined,
+        draw: m.odds?.draw != null ? parseFloat(String(m.odds.draw)) : undefined,
+        away: m.odds?.away != null ? parseFloat(String(m.odds.away)) : undefined,
+      };
+      const hStrength = teamStrength(m.home?.name || '', m.home?.rank);
+      const aStrength = teamStrength(m.away?.name || '', m.away?.rank);
+      const prob = computeMatchProb(oddsNum.home, oddsNum.draw, oddsNum.away, hStrength, aStrength);
       byLeague.get(league)!.matches.push({
         id: String(m.id || ''),
         home: {
@@ -76,11 +95,16 @@ export const footballAdapter: SportAdapter = {
         liveScore,
         odds: m.odds
           ? {
-              home: m.odds.home != null ? String(m.odds.home) : undefined,
-              draw: m.odds.draw != null ? String(m.odds.draw) : undefined,
-              away: m.odds.away != null ? String(m.odds.away) : undefined,
+              home: oddsNum.home != null ? String(oddsNum.home) : undefined,
+              draw: oddsNum.draw != null ? String(oddsNum.draw) : undefined,
+              away: oddsNum.away != null ? String(oddsNum.away) : undefined,
             }
           : undefined,
+        probPct: prob.probPct,
+        ev: prob.ev,
+        trend: prob.trend,
+        confLabel: prob.confidenceLabel,
+        confLevel: prob.confidence,
         badge: imminent
           ? { label: 'Imminent', color: '#FF9800' }
           : isLive

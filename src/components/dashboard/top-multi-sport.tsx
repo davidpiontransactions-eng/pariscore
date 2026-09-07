@@ -2,76 +2,34 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { RefreshCw, Star } from "lucide-react";
+import { RefreshCw, Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { countryFlag, type LiveMatchScore } from "@/lib/top-matches/types";
-import { LiveScoreBadge } from "./live-score-badge";
 
-/* ─── Types ─── */
-interface TopTeam {
-  name: string;
-  logo?: string;
-  rank?: number;
-}
-interface TopOdds {
-  home?: string;
-  draw?: string;
-  away?: string;
-  best?: "home" | "draw" | "away";
-}
-interface TopMetric {
-  label: string;
-  value: number | string;
-  max?: number;
-}
-interface TopBadge {
-  label: string;
-  color: string;
-}
+/* ─── Types (local mirror) ─── */
+interface TopTeam { name: string; logo?: string; rank?: number; }
+interface TopOdds { home?: string; draw?: string; away?: string; best?: 'home' | 'draw' | 'away'; }
+interface TopBadge { label: string; color: string; }
 interface TopMatch {
-  id: string;
-  home: TopTeam;
-  away: TopTeam;
-  kickoff: string;
-  status: "scheduled" | "live" | "finished";
-  score?: string;
-  liveScore?: LiveMatchScore;
-  odds?: TopOdds;
-  metric?: TopMetric;
-  badge?: TopBadge;
-  round?: string;
-  surface?: string;
+  id: string; home: TopTeam; away: TopTeam; kickoff: string;
+  status: 'scheduled' | 'live' | 'finished';
+  score?: string; liveScore?: LiveMatchScore;
+  odds?: TopOdds; badge?: TopBadge;
+  round?: string; surface?: string;
+  probPct?: number; ev?: number | null; trend?: number | null;
+  confLabel?: string; confLevel?: 1 | 2 | 3;
 }
-interface TopLeague {
-  league: string;
-  leagueIcon: string;
-  leagueColor: string;
-  sport: string;
-  country?: string;
-  countryCode?: string;
-  matches: TopMatch[];
-}
-interface TopMatchResponse {
-  groups: TopLeague[];
-  generated_at: string;
-}
-
-
+interface TopLeague { league: string; leagueIcon: string; leagueColor: string; sport: string; country?: string; matches: TopMatch[]; }
+interface TopMatchResponse { groups: TopLeague[]; generated_at: string; }
 
 const CACHE_MS = 60_000;
 const POLL_NORMAL_MS = 120_000;
 const POLL_LIVE_MS = 20_000;
 
-type TimeFilter = "live" | "1h" | "2h" | "4h" | "8h" | "today" | "tomorrow" | "all";
-
+type TimeFilter = 'live' | '1h' | '2h' | '4h' | '8h' | 'today' | 'tomorrow' | 'all';
 const TIME_FILTERS: { id: TimeFilter; label: string; icon?: string }[] = [
-  { id: "live", label: "Live", icon: "🔴" },
-  { id: "1h", label: "1h" },
-  { id: "2h", label: "2h" },
-  { id: "4h", label: "4h" },
-  { id: "8h", label: "8h" },
-  { id: "today", label: "Auj." },
-  { id: "tomorrow", label: "Dem." },
-  { id: "all", label: "Tous" },
+  { id: 'live', label: 'Live', icon: '🔴' }, { id: '1h', label: '1h' }, { id: '2h', label: '2h' },
+  { id: '4h', label: '4h' }, { id: '8h', label: '8h' }, { id: 'today', label: 'Auj.' },
+  { id: 'tomorrow', label: 'Dem.' }, { id: 'all', label: 'Tous' },
 ];
 
 type SportFilter = "all" | "football" | "tennis" | "nba" | "fiba" | "cs2" | "mma" | "baseball" | "rugby" | "f1" | "cycling";
@@ -123,14 +81,18 @@ function isInTimeWindow(iso: string, filter: TimeFilter, status?: string, badgeL
 
 /* ─── Helpers ─── */
 function formatTime(iso: string): string {
-  if (!iso) return "--:--";
+  if (!iso) return "--";
   const d = new Date(iso);
-  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 }
 function formatDate(iso: string): string {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+  const weekday = d.toLocaleDateString("fr-FR", { weekday: "short", timeZone: "UTC" }).replace(".", "");
+  const day = d.getUTCDate();
+  const month = d.toLocaleDateString("fr-FR", { month: "short", timeZone: "UTC" }).replace(".", "");
+  const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
+  return `${weekday}. ${day} ${month} · ${time}`;
 }
 function formatDayHeader(iso: string): string {
   if (!iso) return "";
@@ -150,222 +112,169 @@ function getDayKey(iso: string): string {
 }
 
 /* ─── Match Row ─── */
-function MatchRow({
-  match,
-  sport,
-  isFavorite,
-  onToggleFavorite,
-}: {
-  match: TopMatch;
-  sport: string;
-  isFavorite?: boolean;
-  onToggleFavorite?: (id: string) => void;
+/* ─── Match Row (dark Behance) ─── */
+function MatchRow({ match, sport, isFavorite, onToggleFavorite }: {
+  match: TopMatch; sport: string; isFavorite?: boolean; onToggleFavorite?: (id: string) => void;
 }) {
-  const isLive = match.status === "live";
+  const isLive = match.status === 'live';
   return (
-    <div className={cn(
-      "flex items-center px-4 py-2.5 bg-white border-b border-[#EDE8F5] last:border-b-0 hover:bg-[#F8F5FC] transition-colors group",
-      isLive && "bg-[#4CAF50]/5"
-    )}>
-      {/* Time / Live indicator */}
-      <div className="w-16 text-center shrink-0">
+    <div className={cn("flex items-center px-4 py-3 border-b border-slate-800/50 last:border-b-0 hover:bg-slate-800/40 transition-colors group", isLive && "bg-emerald-500/5")}>
+      <div className="w-20 text-center shrink-0">
         {isLive ? (
-          <LiveScoreBadge
-            sport={sport}
-            liveScore={match.liveScore || {}}
-            homeName={match.home.name}
-            awayName={match.away.name}
-          />
+          <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Live
+          </span>
         ) : (
           <>
-            <div className="text-sm font-semibold text-[#1A1145]">
-              {formatTime(match.kickoff)}
-            </div>
-            <div className="text-[10px] text-[#7B3FA0]">{formatDate(match.kickoff)}</div>
+            <div className="text-sm font-bold text-white">{formatTime(match.kickoff)}</div>
+            <div className="text-[10px] text-slate-400 font-medium">{formatDate(match.kickoff)}</div>
           </>
         )}
       </div>
-
-      {/* Teams + Round */}
-      <div className="flex-1 ml-3 flex flex-col gap-1 min-w-0">
-        <TeamLine team={match.home} score={typeof match.score === 'string' ? match.score.split("-")[0] : undefined} isLive={isLive} />
-        <TeamLine team={match.away} score={typeof match.score === 'string' ? match.score.split("-")[1] : undefined} />
+      <div className="flex-1 ml-3 flex flex-col gap-1.5 min-w-0">
+        <div className="flex items-center gap-2">
+          <TeamLogoFallback name={match.home.name} logo={match.home.logo} size="sm" />
+          <span className="text-sm font-semibold text-white truncate">{match.home.name}</span>
+          {!isLive && match.score && <span className="text-slate-400 text-xs font-mono ml-auto">{match.score.split('-')[0]}</span>}
+          {isLive && match.liveScore?.current && <span className="text-emerald-400 text-sm font-bold ml-auto">{match.liveScore.current}</span>}
+        </div>
+        <div className="flex items-center gap-2">
+          <TeamLogoFallback name={match.away.name} logo={match.away.logo} size="sm" />
+          <span className="text-sm font-semibold text-white truncate">{match.away.name}</span>
+          {!isLive && match.score && <span className="text-slate-400 text-xs font-mono ml-auto">{match.score.split('-')[1]}</span>}
+        </div>
         {(match.round || match.surface) && (
           <div className="flex items-center gap-1.5 mt-0.5">
-            {match.round && (
-              <span className="text-[9px] text-[#7B3FA0] font-medium truncate">{match.round}</span>
-            )}
+            {match.round && <span className="text-[9px] text-cyan-400/70 font-medium truncate">{match.round}</span>}
             {match.surface && (
-              <span className={cn(
-                "text-[8px] px-1.5 py-0 rounded font-bold uppercase",
-                match.surface.toLowerCase().includes('clay') ? "bg-[#E65100]/10 text-[#E65100]" :
-                match.surface.toLowerCase().includes('grass') ? "bg-[#2E7D32]/10 text-[#2E7D32]" :
-                "bg-[#1565C0]/10 text-[#1565C0]"
-              )}>
-                {match.surface}
-              </span>
+              <span className={cn("text-[8px] px-1.5 py-0.5 rounded font-bold uppercase",
+                match.surface.toLowerCase().includes('clay') ? 'bg-orange-500/15 text-orange-400' :
+                match.surface.toLowerCase().includes('grass') ? 'bg-green-500/15 text-green-400' :
+                'bg-blue-500/15 text-blue-400'
+              )}>{match.surface}</span>
             )}
           </div>
         )}
       </div>
-
-      {/* Odds */}
       {match.odds && (
         <div className="flex gap-1.5 shrink-0 ml-2">
-          {match.odds.home != null && (
-            <OddsBox value={match.odds.home} best={match.odds.best === "home"} />
-          )}
-          {match.odds.draw != null && (
-            <OddsBox value={match.odds.draw} best={match.odds.best === "draw"} />
-          )}
-          {match.odds.away != null && (
-            <OddsBox value={match.odds.away} best={match.odds.best === "away"} />
-          )}
+          {match.odds.home != null && <OddsButton value={match.odds.home} best={match.odds.best === 'home'} />}
+          {match.odds.draw != null && <OddsButton value={match.odds.draw} best={match.odds.best === 'draw'} />}
+          {match.odds.away != null && <OddsButton value={match.odds.away} best={match.odds.best === 'away'} />}
         </div>
       )}
-
-      {/* Metric */}
-      {match.metric && (
-        <div className="text-right shrink-0 ml-2 min-w-[60px]">
-          <div className="text-sm font-bold text-[#1A1145]">
-            {match.metric.value}{match.metric.max ? `/${match.metric.max}` : ""}
-          </div>
-          <div className="text-[10px] text-[#7B3FA0]">{match.metric.label}</div>
-        </div>
-      )}
-
-      {/* Badge */}
+      <ProbBadge pct={match.probPct} confLabel={match.confLabel} />
+      <div className="flex items-center shrink-0 ml-2">
+        <EvBadge ev={match.ev} />
+        <TrendBadge trend={match.trend} />
+      </div>
       {match.badge && (
-        <span
-          className="ml-2 shrink-0 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wide"
-          style={{ background: match.badge.color }}
-        >
-          {match.badge.label}
-        </span>
+        <span className="ml-2 shrink-0 px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-wide"
+          style={{ background: match.badge.color }}>{match.badge.label}</span>
       )}
-
-      {/* Favorite toggle */}
-      <button
-        onClick={() => onToggleFavorite?.(match.id)}
-        className="ml-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-[#7B3FA0] hover:text-[#FF6D00]"
-        title={isFavorite ? "Retirer des favoris" : "Ajouter aux favoris"}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill={isFavorite ? "#FF6D00" : "none"}
-          stroke="currentColor"
-          strokeWidth={2}
-          className="w-4 h-4"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
-          />
-        </svg>
+      <button onClick={() => onToggleFavorite?.(match.id)}
+        className="ml-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-amber-400"
+        title={isFavorite ? 'Retirer' : 'Ajouter'}>
+        <Star className="w-4 h-4" fill={isFavorite ? '#f59e0b' : 'none'} strokeWidth={2} />
       </button>
     </div>
   );
 }
 
-function TeamLine({
-  team,
-  score,
-  isLive,
-}: {
-  team: TopTeam;
-  score?: string;
-  isLive?: boolean;
-}) {
-  // Sécuriser score : peut être un objet si le split échoue
-  const safeScore = typeof score === 'string' ? score : score != null ? String(score) : null;
+/* ─── Sous-composants Behance ─── */
+
+function TeamLogoFallback({ name, logo, size = 'md' }: { name: string; logo?: string; size?: 'sm' | 'md' }) {
+  const [error, setError] = useState(false);
+  const initials = (name || '?').slice(0, 2).toUpperCase();
+  const px = size === 'sm' ? 16 : 24;
+  const fs = size === 'sm' ? 7 : 10;
+  const gradients = [
+    ['#6366f1','#4338ca'], ['#00e676','#00c853'], ['#ff6d00','#e65100'],
+    ['#0ea5e9','#0284c7'], ['#f59e0b','#d97706'], ['#ec4899','#db2777'],
+    ['#8b5cf6','#7c3aed'], ['#14b8a6','#0d9488'],
+  ];
+  const [c1, c2] = gradients[name.length % gradients.length];
+  if (error || !logo) return (
+    <svg width={px} height={px} viewBox="0 0 24 24" className={`${size === 'sm' ? 'w-4 h-4' : 'w-6 h-6'} shrink-0`}>
+      <defs><linearGradient id={`g-${name.length}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={c1} /><stop offset="100%" stopColor={c2} /></linearGradient></defs>
+      <circle cx="12" cy="12" r="12" fill={`url(#g-${name.length})`} />
+      <text x="12" y="12" textAnchor="middle" dominantBaseline="central" fill="white" fontSize={fs} fontWeight="bold" fontFamily="system-ui">{initials}</text>
+    </svg>
+  );
+  return (<img src={logo} alt="" className={`${size === 'sm' ? 'w-4 h-4' : 'w-6 h-6'} rounded-full border border-slate-700/50 object-cover shrink-0`} onError={() => setError(true)} />);
+}
+
+function OddsButton({ value, best }: { value: string; best?: boolean }) {
+  const v = typeof value === 'string' ? value : value != null ? String(value) : '';
   return (
-    <div className="flex items-center gap-2">
-      {team.logo && typeof team.logo === 'string' && (
-        <img src={team.logo} alt="" className="w-5 h-5 rounded-full border border-[#E0D8F0] object-cover" />
-      )}
-      <span className="text-[13px] font-semibold text-[#1A1145] truncate">
-        {typeof team.name === 'string' ? team.name : String(team.name ?? '')}
-        {team.rank != null && (
-          <span className="text-[#7B3FA0] text-[10px] ml-1">#{team.rank}</span>
-        )}
-      </span>
-      {safeScore != null && (
-        <span className="text-[#7B3FA0] text-[11px]">{safeScore}</span>
-      )}
-      {isLive && (
-        <span className="text-[#4CAF50] text-[10px] font-bold">LIVE</span>
-      )}
+    <button className={cn(
+      "px-2.5 py-1 rounded-md text-xs font-bold min-w-[44px] text-center transition-all duration-150 cursor-pointer",
+      "border border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-400/50 active:scale-95",
+      best ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/60" : "bg-emerald-500/10 text-emerald-400"
+    )}>{v}</button>
+  );
+}
+
+function ProbBadge({ pct, confLabel }: { pct?: number; confLabel?: string }) {
+  if (pct == null) return null;
+  let color: string, bg: string;
+  if (pct >= 78) { color = 'text-emerald-400'; bg = 'bg-emerald-500/15 border-emerald-500/30'; }
+  else if (pct >= 65) { color = 'text-cyan-400'; bg = 'bg-cyan-500/15 border-cyan-500/30'; }
+  else { color = 'text-amber-400'; bg = 'bg-amber-500/15 border-amber-500/30'; }
+  return (
+    <div className={`shrink-0 ml-2 px-2.5 py-1 rounded-lg border ${bg} ${color} text-center min-w-[72px]`}>
+      <div className="text-sm font-bold leading-tight">{pct}%</div>
+      <div className="text-[8px] font-semibold uppercase tracking-wider opacity-80">{confLabel || 'Confiance'}</div>
     </div>
   );
 }
 
-function OddsBox({ value, best }: { value: string; best?: boolean }) {
-  const safeValue = typeof value === 'string' ? value : value != null ? String(value) : '';
+function TrendBadge({ trend }: { trend?: number | null }) {
+  if (trend == null) return <Minus className="w-3 h-3 text-slate-600 shrink-0 ml-2" />;
+  const isPos = trend > 0;
   return (
-    <span
-      className={cn(
-        "px-2.5 py-1 rounded-md text-xs font-bold min-w-[44px] text-center",
-        best
-          ? "bg-[#FF6D00] text-white"
-          : "bg-[#EDE8F5] text-[#1A1145]"
-      )}
-    >
-      {safeValue}
+    <span className={`flex items-center gap-0.5 shrink-0 ml-2 text-[11px] font-bold ${isPos ? 'text-emerald-400' : 'text-red-400'}`}>
+      {isPos ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+      {isPos ? '+' : ''}{(trend * 100).toFixed(1)}%
     </span>
   );
 }
 
-/* ─── League Card ─── */
-function LeagueCard({
-  group,
-  favorites,
-  onToggleFavorite,
-}: {
-  group: TopLeague;
-  favorites: Set<string>;
-  onToggleFavorite: (id: string) => void;
+function EvBadge({ ev }: { ev?: number | null }) {
+  if (ev == null) return <span className="text-slate-600 text-xs ml-2 shrink-0">—</span>;
+  const isPos = ev > 0;
+  return (
+    <span className={`shrink-0 ml-2 text-xs font-bold px-2 py-0.5 rounded ${isPos ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}`}>
+      {isPos ? '+' : ''}{ev.toFixed(2)}
+    </span>
+  );
+}
+
+/* ─── League Card (dark glassmorphism) ─── */
+function LeagueCard({ group, favorites, onToggleFavorite }: {
+  group: TopLeague; favorites: Set<string>; onToggleFavorite: (id: string) => void;
 }) {
   const flag = group.country ? countryFlag(group.country) : '';
-  const liveCount = group.matches.filter((m) => m.status === 'live').length;
-  const scheduledCount = group.matches.filter((m) => m.status === 'scheduled').length;
+  const liveCount = group.matches.filter(m => m.status === 'live').length;
   return (
-    <div className="rounded-xl overflow-hidden shadow-sm border border-[#E0D8F0] bg-white">
-      {/* Header */}
-      <div
-        className="flex items-center px-4 py-2.5 text-white font-bold text-sm gap-2"
-        style={{ background: group.leagueColor }}
-      >
+    <div className="rounded-2xl overflow-hidden border border-slate-700/50 bg-slate-900/80 backdrop-blur-sm shadow-2xl">
+      <div className="flex items-center px-4 py-3 text-white font-bold text-sm gap-2"
+        style={{ background: `linear-gradient(135deg, ${group.leagueColor}dd 0%, ${group.leagueColor}44 100%)` }}>
         <span>{group.leagueIcon}</span>
-        <span>{group.league}</span>
-        {flag && (
-          <span className="text-[11px] ml-1 opacity-90">{flag} {group.country}</span>
-        )}
+        <span className="drop-shadow-sm">{group.league}</span>
+        {flag && <span className="text-xs opacity-80 ml-1">{flag} {group.country}</span>}
         <div className="ml-auto flex items-center gap-2">
           {liveCount > 0 && (
-            <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/20 text-[9px] font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              {liveCount}
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/30 text-[10px] font-bold text-white">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> {liveCount} live
             </span>
           )}
-          <span className="text-[10px] opacity-70">{group.matches.length} matchs</span>
-          <div className="flex gap-4 text-[11px] font-semibold opacity-80">
-            <span className="text-white">1</span>
-            <span className="text-white">N</span>
-            <span className="text-white">2</span>
-          </div>
+          <span className="text-[10px] text-white/60">{group.matches.length} matchs</span>
         </div>
       </div>
-      {/* Matches */}
-      {group.matches.map((m) => (
-        <MatchRow
-          key={m.id}
-          match={m}
-          sport={group.sport}
-          isFavorite={favorites.has(m.id)}
-          onToggleFavorite={onToggleFavorite}
-        />
+      {group.matches.map(m => (
+        <MatchRow key={m.id} match={m} sport={group.sport}
+          isFavorite={favorites.has(m.id)} onToggleFavorite={onToggleFavorite} />
       ))}
     </div>
   );
@@ -465,20 +374,20 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   const totalMatches = filteredGroups.reduce((sum, g) => sum + (g.matches ?? []).length, 0);
 
   return (
-    <div className="w-full rounded-2xl p-5 mb-6 border border-[#E0D8F0] shadow-sm" style={{ background: "#F0ECF8" }}>
+    <div className="w-full rounded-2xl p-5 mb-6 border border-slate-800 bg-slate-900/60 backdrop-blur-sm shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg font-extrabold text-[#1A1145] tracking-tight">
+          <h2 className="text-lg font-extrabold text-white tracking-tight">
             Calendrier des matchs
           </h2>
           {totalMatches > 0 && (
-            <span className="text-xs text-[#7B3FA0] font-mono">{totalMatches} matchs</span>
+            <span className="text-xs text-slate-400 font-mono">{totalMatches} matchs</span>
           )}
         </div>
         <button
           onClick={handleRefresh}
-          className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#7B3FA0] hover:bg-[#EDE8F5] transition-colors"
+          className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
         >
           <RefreshCw className={cn("w-4 h-4", spinning && "animate-spin")} />
         </button>
@@ -494,9 +403,9 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               "px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors",
               timeFilter === tf.id
                 ? tf.id === "live"
-                  ? "bg-[#4CAF50] text-white"
-                  : "bg-[#FF6D00] text-white"
-                : "bg-white text-[#7B3FA0] hover:bg-[#EDE8F5]"
+                  ? "bg-red-500/30 text-red-300 border border-red-500/40"
+                  : "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                : "bg-slate-800/80 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-slate-200"
             )}
           >
             {tf.icon && <span className="mr-1">{tf.icon}</span>}
@@ -517,8 +426,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               className={cn(
                 "flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors",
                 sportFilter === sf.id
-                  ? "bg-[#1A1145] text-white"
-                  : "bg-white text-[#7B3FA0] hover:bg-[#EDE8F5] border border-[#E0D8F0]"
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                  : "bg-slate-800/80 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-slate-200"
               )}
             >
               <span>{sf.icon}</span>
@@ -528,7 +437,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
                   "ml-0.5 px-1.5 py-0 rounded-full text-[9px] font-bold",
                   sportFilter === sf.id
                     ? "bg-white/20 text-white"
-                    : "bg-[#EDE8F5] text-[#7B3FA0]"
+                    : "bg-slate-700 text-slate-300"
                 )}>
                   {count}
                 </span>
@@ -541,7 +450,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
       {/* Favoris section */}
       {favoriteMatches.length > 0 && (
         <div className="mb-4">
-          <h3 className="text-sm font-extrabold text-[#1A1145] mb-2 flex items-center gap-2">
+          <h3 className="text-sm font-extrabold text-white mb-2 flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -556,7 +465,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
             </svg>
             Favoris matchs
           </h3>
-          <div className="rounded-xl overflow-hidden shadow-sm border border-[#E0D8F0] bg-white">
+          <div className="rounded-xl overflow-hidden border border-slate-700/50 bg-slate-900/80 backdrop-blur-sm">
             {favoriteMatches.map((m) => (
               <MatchRow
                 key={m.id}
@@ -572,9 +481,9 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
 
       {/* Content */}
       {loading ? (
-        <div className="text-center py-10 text-[#7B3FA0] text-sm">Chargement...</div>
+        <div className="text-center py-10 text-slate-400 text-sm">Chargement...</div>
       ) : filteredGroups.length === 0 ? (
-        <div className="text-center py-10 text-[#7B3FA0] text-sm">Aucun match top disponible.</div>
+        <div className="text-center py-10 text-slate-400 text-sm">Aucun match top disponible.</div>
       ) : timeFilter === "all" ? (
         /* Regroupement par jour quand filtre "Tous" */
         <div className="flex flex-col gap-4">
@@ -593,9 +502,9 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
             return Array.from(byDay.entries()).map(([dayKey, dayMatches]) => (
               <div key={dayKey}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-extrabold text-[#1A1145]">{formatDayHeader(dayMatches[0].kickoff)}</span>
-                  <span className="text-[10px] text-[#7B3FA0] font-mono">{dayMatches.length}</span>
-                  <div className="flex-1 h-px bg-[#E0D8F0]" />
+                  <span className="text-xs font-extrabold text-white">{formatDayHeader(dayMatches[0].kickoff)}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">{dayMatches.length}</span>
+                  <div className="flex-1 h-px bg-slate-700" />
                 </div>
                 <div className="flex flex-col gap-3">
                   {(() => {
