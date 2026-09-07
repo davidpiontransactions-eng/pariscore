@@ -82,7 +82,7 @@ export function SnookerLiveTracker({ frames, bestOf, playerAName, playerBName, i
               key={i}
               frameNum={i + 1}
               winner={frame?.winner}
-              isActive={isLive && currentFrame === i + 1}
+              isActive={!!isLive && currentFrame === i + 1}
             />
           );
         })}

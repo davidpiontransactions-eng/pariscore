@@ -35,7 +35,7 @@ import { CyclingTabContent } from "@/components/cycling/cycling-tab-content";
 import { F1TabContent } from "@/components/f1/f1-tab-content";
 import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
 import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
-import { SnookerCalendar } from "@/components/snooker/snooker-calendar";
+import { SnookerTabContent } from "@/components/snooker/snooker-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
 import { MultisportCalendar } from "@/components/dashboard/multisport-calendar";
@@ -463,7 +463,7 @@ function HomeInner() {
         {activeTab === "f1" && <F1TabContent />}
         {activeTab === "baseball" && <BaseballTabContent />}
         {activeTab === "rugby" && <RugbyTabContent />}
-        {activeTab === "snooker" && <SnookerCalendar />}
+        {activeTab === "snooker" && <SnookerTabContent />}
         </motion.div>
 
         {/* Sections déplacées — Bento Grid layout */}

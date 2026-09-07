@@ -130,18 +130,27 @@ export function SnookerCalendar({ className }: { className?: string }) {
     );
   }
 
-  if (!data || data.matches.length === 0) {
+  if (!data) {
     return (
       <section className={cn("space-y-3", className)}>
         <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Snooker — Calendrier
         </h3>
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          {data?.message ?? "Aucun match snooker disponible"}
-          <br />
-          <span className="mt-2 inline-block text-xs text-muted-foreground/60">
-            Scrappez les données : python scripts/scrape_1xbet_snooker.py
-          </span>
+          <div className="text-[12px] text-emerald-400 mb-2">📡 Données en cours de chargement...</div>
+          <p className="text-xs text-zinc-500">
+            {"Aucun match snooker disponible — lancez le scraper : node scripts/scrape_flashscore_snooker.mjs"}
+          </p>
+          <div className="mt-3">
+            <a
+              href="https://github.com/davidpiontransactions-eng/pariscore/tree/main/scripts"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-emerald-400/60 hover:text-emerald-400 text-[10px]"
+            >
+              Scripts de scraping
+            </a>
+          </div>
         </div>
       </section>
     );
@@ -287,7 +296,7 @@ export function SnookerCalendar({ className }: { className?: string }) {
 
       {/* Footer : source + dernière MAJ */}
       <div className="flex items-center justify-between text-[11px] text-muted-foreground/50">
-        <span>Source: {data.scraped_at ? `1xbet (${new Date(data.scraped_at).toLocaleString("fr-FR")})` : "1xbet"}</span>
+        <span>Données source: FlashScore (odds à venir) {data.scraped_at ? `· ${new Date(data.scraped_at).toLocaleString("fr-FR")}` : ""}</span>
         <span>{data.total} matchs au total</span>
       </div>
     </section>
