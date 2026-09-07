@@ -37,6 +37,7 @@ import { BaseballTabContent } from "@/components/baseball/baseball-tab-content";
 import { RugbyTabContent } from "@/components/rugby/rugby-tab-content";
 import { BestMatchesTabs } from "@/components/dashboard/best-matches-tabs";
 import { UpcomingTenMatchesTable } from "@/components/dashboard/upcoming-ten-matches-table";
+import { MultisportCalendar } from "@/components/dashboard/multisport-calendar";
 import { HeroSection } from "@/components/dashboard/hero-stats";
 import { AIInsightCard } from "@/components/ai/ai-insight-card";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
@@ -472,6 +473,9 @@ function HomeInner() {
             </BentoTile>
             <BentoTile size="wide" variant="glass">
               <UpcomingTenMatchesTable id="section-upcoming" />
+            </BentoTile>
+            <BentoTile size="wide" variant="glass">
+              <MultisportCalendar />
             </BentoTile>
             <BentoTile size="standard" variant="glass">
               <AIInsightCard id="section-gemini" activeSport={activeTab === "home" ? undefined : activeTab} />
