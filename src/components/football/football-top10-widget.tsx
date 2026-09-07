@@ -16,6 +16,32 @@ import {
 } from "@/components/ui/select";
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-widget";
+import { TopStrategiesTable, type StrategyTableRow } from "./top-strategies-table";
+import { computeMatchPicks, type MatchPick } from "@/lib/services/football-analytics";
+
+/** Convertit les entrees StrategyMatchEntry en lignes pour TopStrategiesTable. */
+function toTableRows(entries: StrategyMatchEntry[]): StrategyTableRow[] {
+  return entries.map((e) => ({
+    matchId: e.matchId,
+    league: e.league,
+    leagueLogo: e.leagueLogo,
+    kickoff: e.kickoff,
+    home: { teamName: e.home.teamName, logo: e.home.logo },
+    away: { teamName: e.away.teamName, logo: e.away.logo },
+    value: e.value,
+    trend: "flat" as const,
+  }));
+}
+
+/** Calcule les picks ≥60% pour les entrees (lambda estime). */
+function computePicksForRows(entries: StrategyMatchEntry[]): Record<string, MatchPick[]> {
+  const result: Record<string, MatchPick[]> = {};
+  for (const e of entries) {
+    const picks = computeMatchPicks({ lambdaHome: 1.4, lambdaAway: 1.2, xgTotal: 2.8 });
+    if (picks.length > 0) result[e.matchId] = picks;
+  }
+  return result;
+}
 
 const TOP_N = 10;
 /** Seuil minimal de probabilité du modèle pour l'inclusion forcée d'un match sélectionné. */
@@ -89,11 +115,11 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   return (
     <section
       aria-label="Top 10 matchs par stratégie"
-      className="mb-4 w-full rounded-2xl border border-[#E0D8F0] p-5"
-      style={{ background: "#F0ECF8" }}
+      className="mb-4 w-full rounded-2xl border border-slate-700/50 p-5"
+      style={{ background: "#0f172a" }}
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-sm font-extrabold uppercase tracking-wider text-[#1A1145]">
+        <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-100">
           Top 10 matchs
           {selectedCount > 0 && (
             <span
@@ -204,30 +230,33 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           Aucun match qualifié pour cette stratégie{league ? ` en ${league}` : ""}.
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 md:grid-cols-2">
-          {/* Inclusions forcées (≥60 %, sélection) en tête avec badge */}
-          {forced.map((entry) => (
-            <MatchRow
-              key={`forced-${entry.matchId}`}
-              entry={entry}
-              def={def}
-              winKey={winKey}
-              selected
-              onToggle={() => toggleSelect(entry)}
-              badge="★ Sélection"
-            />
-          ))}
-          {rows.map((entry) => (
-            <MatchRow
-              key={entry.matchId}
-              entry={entry}
-              def={def}
-              winKey={winKey}
-              selected={!!selectedItems[entry.matchId]}
-              onToggle={() => toggleSelect(entry)}
-            />
-          ))}
-        </ul>
+        <div className="space-y-4">
+          {/* Tableau stratégies Behance */}
+          <TopStrategiesTable
+            rows={toTableRows(rows)}
+            strategy={active}
+            picksByMatch={computePicksForRows(rows)}
+          />
+          {/* Sélections forcées (≥60%) */}
+          {forced.length > 0 && (
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+              <div className="mb-2 text-xs font-semibold text-emerald-400">★ Sélections forcées (≥60%)</div>
+              <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 md:grid-cols-2">
+                {forced.map((entry) => (
+                  <MatchRow
+                    key={`forced-${entry.matchId}`}
+                    entry={entry}
+                    def={def}
+                    winKey={winKey}
+                    selected
+                    onToggle={() => toggleSelect(entry)}
+                    badge="★ Sélection"
+                  />
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       )}
     </section>
   );

@@ -119,10 +119,13 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | LiveDecisionMomentumWidget | LiveDecisionMomentumWidget.tsx | Widget live : indice de pression [-100,+100], alerte but imminent, marchés live |
 | live-stats-breakdown | live-stats-breakdown.tsx | Stats live bilatérales (jauges possession/attaques/att. dangereuses) + surbrillance seuils funnel In-Play + probabilités live projetées |
+| lineup-pitch | lineup-pitch.tsx | Terrain tactique interactif (compos probables/officiels, schéma, notes, absences) |
+| match-conditions-widget | match-conditions-widget.tsx | Widget conditions match (arbitre, sévérité cartons, stade, météo) |
 | MatchPredictiveCard | MatchPredictiveCard.tsx | Carte analyse prédictive ML (badge tendance, résumé, 3 paris, zéro lien externe) |
 | momentum-chart | momentum-chart.tsx | Graphique momentum football (ticker d'événements agrégés inclus) |
 | pressure-duo-donuts | pressure-duo-donuts.tsx | Donuts pression LIVE vs ATTENDUE (baseline pré-match) + détection d'anomalie (outsider/favori) |
 | tennis-tab-content | tennis-tab-content.tsx | Contenu de l'onglet tennis _(vit ici, pas dans tennis/)_ |
+| top-strategies-table | top-strategies-table.tsx | Tableau Top stratégies (badges confiance ≥70/60, cotes, EV, tendance) |
 | top-teams-presets-bar | top-teams-presets-bar.tsx | Barre de 10 filtres rapides prédictifs (1X2, DC, Over/Under, PPG, Corners…) |
 
 ## Leagues (`src/components/leagues/`) — 6 components
