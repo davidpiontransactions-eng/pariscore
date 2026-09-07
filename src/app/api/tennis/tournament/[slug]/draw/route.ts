@@ -7,7 +7,6 @@
 
 import path from "node:path";
 import fs from "node:fs";
-import { Database } from "bun:sqlite";
 import { NextResponse } from "next/server";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
@@ -61,8 +60,11 @@ function getDb(): BSD | null {
   try {
     const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), "pariscore.db");
     if (!fs.existsSync(dbPath)) return null;
-    const db = new Database(dbPath, { readonly: true });
-    return db as unknown as BSD;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const Database = require("better-sqlite3") as unknown as {
+      new (file: string, opts?: { readonly?: boolean; fileMustExist?: boolean }): BSD;
+    };
+    return new Database(dbPath, { readonly: true, fileMustExist: true });
   } catch {
     return null;
   }
