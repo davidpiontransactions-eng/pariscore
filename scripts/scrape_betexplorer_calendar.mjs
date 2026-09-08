@@ -97,6 +97,10 @@ async function scrapeSport(page, sport) {
 
         if (!home || !away) continue;
 
+        // Skip rows where betexplorer shows scores instead of team names
+        // Score pattern: "3:1", "(1:0, 2:1)", starts with digit
+        if (/^\d/.test(home) || /^\d/.test(away) || home.includes(':') || away.includes(':')) continue;
+
         // Odds
         const oddsEls = row.querySelectorAll(
           '[class*="odd"], [class*="coeff"], [class*="price"], a[href*="odds"]'
