@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useSportsTree } from "@/hooks/use-sports-tree";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import type { SportNode, TreeMatchSummary } from "@/types/sports-sidebar";
 
 // ---------------------------------------------------------------------------
@@ -110,7 +111,11 @@ function extractTodayMatches(sport: SportNode): CalendarMatch[] {
 export function MultisportCalendar({ className }: { className?: string }) {
   const { data: treeData, isValidating } = useSportsTree();
   const { liveStates } = useLiveMatches();
-  const [sportFilter, setSportFilter] = useState<SportFilter>("all");
+
+  // Sync with sidebar/headerbar store
+  const selectedSportId = useSportsSidebarStore((s) => s.selectedSportId);
+  const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
+  const selectSport = useSportsSidebarStore((s) => s.selectSport);
 
   const allMatches = useMemo<CalendarMatch[]>(() => {
     if (!treeData) return [];
@@ -124,9 +129,19 @@ export function MultisportCalendar({ className }: { className?: string }) {
   }, [treeData]);
 
   const filtered = useMemo(() => {
-    if (sportFilter === "all") return allMatches;
-    return allMatches.filter((m) => m.sport === sportFilter);
-  }, [allMatches, sportFilter]);
+    let result = allMatches;
+    // Filtre sport depuis la sidebar
+    if (selectedSportId) {
+      result = result.filter((m) => m.sport === selectedSportId);
+    }
+    // Filtre live/prematch depuis mode-toggle header
+    if (headerMode === "live") {
+      result = result.filter((m) => liveStates[m.id]?.isLive ?? m.isLive);
+    } else if (headerMode === "prematch") {
+      result = result.filter((m) => !(liveStates[m.id]?.isLive ?? m.isLive));
+    }
+    return result;
+  }, [allMatches, selectedSportId, headerMode, liveStates]);
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -161,14 +176,15 @@ export function MultisportCalendar({ className }: { className?: string }) {
           {SPORT_TABS.map((tab) => {
             const count = tab.key === "all" ? allMatches.length : (sportCounts[tab.key] ?? 0);
             if (tab.key !== "all" && count === 0) return null;
+            const isActive = tab.key === "all" ? !selectedSportId : selectedSportId === tab.key;
             return (
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setSportFilter(tab.key)}
+                onClick={() => selectSport(tab.key === "all" ? null : tab.key)}
                 className={cn(
                   "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors whitespace-nowrap",
-                  sportFilter === tab.key
+                  isActive
                     ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30"
                     : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
@@ -187,7 +203,9 @@ export function MultisportCalendar({ className }: { className?: string }) {
 
       {filtered.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl border border-dashed border-border p-8 text-sm text-muted-foreground">
-          Aucun match aujourd&apos;hui
+          Aucun match{" "}
+          {headerMode === "live" ? "en direct" : "&agrave; venir"}{" "}
+          {selectedSportId ? `en ${selectedSportId}` : "aujourd'hui"}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border/60">
