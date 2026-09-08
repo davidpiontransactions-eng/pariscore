@@ -339,8 +339,8 @@ function HomeInner() {
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
-        {/* Mode Toggle — Prematch / Live */}
-        <ModeToggle />
+        {/* Mode Toggle — Prematch / Live (masqué sur football : filtre FotMob) */}
+        {activeTab !== "football" && <ModeToggle />}
 
         {/* Ancien header supprimé — maintenant dans SiteHeader (layout.tsx) */}
 

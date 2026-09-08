@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { RefreshCw, Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { countryFlag, type LiveMatchScore } from "@/lib/top-matches/types";
 import { FotmobCalendarTable, type FotmobCalMatch } from "@/components/football/fotmob-calendar-table";
+import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
+import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob-filter";
 
 /* ─── Types (local mirror) ─── */
 interface TopTeam { name: string; logo?: string; rank?: number; }
@@ -293,13 +295,15 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   // l'onglet actif est football — remplace les top-picks (vides hors edges).
   const [calMatches, setCalMatches] = useState<FotmobCalMatch[]>([]);
   const [calLoading, setCalLoading] = useState(false);
-  const fetchCal = useCallback(async () => {
+  // Filtres barre FotMob (remplacent pills masquées en mode foot).
+  const [calDate, setCalDate] = useState<string>(() => parisTodayKey());
+  const [calLiveOnly, setCalLiveOnly] = useState(false);
+  const [calHours, setCalHours] = useState<number | null>(null);
+  const [calQuery, setCalQuery] = useState("");
+  const fetchCal = useCallback(async (key?: string) => {
     setCalLoading(true);
     try {
-      const today = new Intl.DateTimeFormat("fr-CA", {
-        timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit",
-      }).format(new Date());
-      const res = await fetch(`/api/football/calendar?date=${today}`);
+      const res = await fetch(`/api/football/calendar?date=${key ?? parisTodayKey()}`);
       const data = await res.json();
       setCalMatches(Array.isArray(data.matches) ? data.matches : []);
     } catch {
@@ -375,29 +379,41 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   useEffect(() => {
     setLoading(true);
     fetchData();
-    if (activeSport === "football") fetchCal();
+    if (activeSport === "football") fetchCal(calDate);
     const pollMs = timeFilter === "live" ? POLL_LIVE_MS : POLL_NORMAL_MS;
-    pollRef.current = setInterval(() => fetchData(), pollMs);
+    pollRef.current = setInterval(() => {
+      fetchData();
+      if (activeSport === "football") fetchCal(calDate);
+    }, pollMs);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [fetchData, fetchCal, timeFilter, activeSport, mode]);
+  }, [fetchData, fetchCal, timeFilter, activeSport, mode, calDate]);
 
   const handleRefresh = () => {
     setSpinning(true);
     const sportParam = activeSport !== "all" ? activeSport : "all";
     cacheRef.current.delete(`top-${sportParam}`);
     fetchData(true);
-    if (activeSport === "football") fetchCal();
+    if (activeSport === "football") fetchCal(calDate);
     setTimeout(() => setSpinning(false), 500);
   };
 
-  // Calendrier foot filtré par les pills horaires (live toujours visible).
+  // Calendrier foot filtré par la barre FotMob (tous : live + prematch).
   const calStatus = (m: FotmobCalMatch): string =>
     m.live && (m.live.status === "LIVE" || m.live.status === "HT") ? "live" : "scheduled";
-  const filteredCal = (calMatches ?? []).filter((m) =>
-    isInTimeWindow(m.scheduledAt, timeFilter, calStatus(m))
-  );
+  const filteredCal = useMemo(() => {
+    const q = calQuery.trim().toLowerCase();
+    let list = calMatches ?? [];
+    if (calLiveOnly) list = list.filter((m) => calStatus(m) === "live");
+    list = filterByKickoffWindow(list, calHours);
+    if (q) {
+      list = list.filter(
+        (m) => m.home.name.toLowerCase().includes(q) || m.away.name.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [calMatches, calLiveOnly, calHours, calQuery]);
 
   const totalMatches = filteredGroups.reduce((sum, g) => sum + (g.matches ?? []).length, 0);
   const headerCount = activeSport === "football" ? filteredCal.length : totalMatches;
@@ -422,7 +438,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         </button>
       </div>
 
-      {/* Time filters */}
+      {/* Time filters (masqués en mode calendrier foot : barre FotMob) */}
+      {activeSport !== "football" && (
       <div className="flex gap-1 mb-3 overflow-x-auto scrollbar-none">
         {TIME_FILTERS.map((tf) => (
           <button
@@ -442,8 +459,10 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
           </button>
         ))}
       </div>
+      )}
 
-      {/* Sport filters */}
+      {/* Sport filters (masqués en mode calendrier foot : barre FotMob) */}
+      {activeSport !== "football" && (
       <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-none">
         {SPORT_FILTERS.map((sf) => {
           const count = sportCounts[sf.id] || 0;
@@ -475,6 +494,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
           );
         })}
       </div>
+      )}
 
       {/* Favoris section */}
       {favoriteMatches.length > 0 && (
@@ -513,7 +533,24 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
         calLoading && calMatches.length === 0 ? (
           <div className="text-center py-10 text-slate-400 text-sm">Chargement...</div>
         ) : (
-          <FotmobCalendarTable matches={filteredCal} />
+          <>
+            <FotmobFilterBar
+              dateKey={calDate}
+              todayKey={parisTodayKey()}
+              onPrevDay={() => setCalDate((k) => shiftDateKey(k, -1))}
+              onNextDay={() => setCalDate((k) => shiftDateKey(k, 1))}
+              onPickDate={setCalDate}
+              liveOnly={calLiveOnly}
+              onToggleLive={() => setCalLiveOnly((v) => !v)}
+              hours={calHours}
+              onHours={setCalHours}
+              query={calQuery}
+              onQuery={setCalQuery}
+            />
+            <div className="mt-2">
+              <FotmobCalendarTable matches={filteredCal} />
+            </div>
+          </>
         )
       ) : loading ? (
         <div className="text-center py-10 text-slate-400 text-sm">Chargement...</div>
