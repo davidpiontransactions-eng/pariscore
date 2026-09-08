@@ -240,7 +240,7 @@ export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) 
       if (al !== bl) return bl - al;
       return a.name.localeCompare(b.name);
     });
-  }, [matches]);
+  }, [rest]);
 
   const sectionKeys = [
     ...(followed.length > 0 ? ["__suivis"] : []),
