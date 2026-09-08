@@ -1,5 +1,6 @@
 import type { Prediction } from "@/lib/football-data";
 import type { BSDFootballMatch } from "@/lib/bsd-football-fetcher";
+import { lambdaTotalFromOver25 } from "@/lib/football-live-thresholds";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -271,7 +272,7 @@ export function computeTeamSeasonStats(
 // ─── xG Metrics ──────────────────────────────────────────────────────────────
 
 /** Moyenne de xG par match dans le top 5 européen (saison 2024-25). */
-const LEAGUE_AVG_XG = 1.45;
+const LEAGUE_AVG_XG = 2.65;
 
 /**
  * Calcule le xGa moyen (expected goals average) pour les deux équipes
@@ -297,10 +298,11 @@ export function computeXGa(
   }
 
   // Priorité 2 : heuristique over25Prob → λ attendu
-  // P(over 2.5) = p ⇒ λ ≈ -ln(1-p) ajusté pour 90 minutes
+  // Inversion Poisson correcte (P(X≥3) = p) via bisection partagée —
+  // l'ancienne formule -ln(1-p) inversait P(X≥1) et sous-estimait λ ×4.
   if (over25Prob != null && over25Prob > 0 && over25Prob < 100) {
     const p = over25Prob / 100;
-    const lambda = -Math.log(Math.max(0.01, 1 - p)) * 1.2;
+    const lambda = lambdaTotalFromOver25(p);
     const home = clamp(Math.round((lambda * 0.55) * 100) / 100, 0.2, 4.0);
     const away = clamp(Math.round((lambda * 0.45) * 100) / 100, 0.2, 4.0);
     return { home, away, total: Math.round((home + away) * 100) / 100 };

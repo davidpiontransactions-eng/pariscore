@@ -383,18 +383,17 @@ describe("computeXGa", () => {
     expect(result.away).toBe(0.2);
   });
 
-  test("with over25Prob=70 uses Poisson heuristic (~1.75 total λ)", () => {
+  test("with over25Prob=70 uses Poisson inversion (~3.6 total λ)", () => {
     const result = computeXGa(null, null, 70);
-    // λ = -ln(1-0.7) * 1.2 ≈ -ln(0.3) * 1.2 ≈ 1.204 * 1.2 ≈ 1.445
-    // home = 0.79, away = 0.65 → total ≈ 1.45
-    expect(result.total).toBeGreaterThan(1.0);
-    expect(result.total).toBeLessThan(2.5);
+    // P(X≥3) = 0.7 ⇒ λ ≈ 3.62 (bisection) ; home ≈ 1.99, away ≈ 1.63
+    expect(result.total).toBeGreaterThan(3.3);
+    expect(result.total).toBeLessThan(3.9);
     expect(result.home).toBeGreaterThan(result.away);
   });
 
   test("fallback to league average when no data available", () => {
     const result = computeXGa(null, null, undefined);
-    expect(result.total).toBeCloseTo(1.45, 1);
+    expect(result.total).toBeCloseTo(2.65, 1);
     expect(result.home).toBeGreaterThan(result.away);
   });
 
@@ -402,6 +401,13 @@ describe("computeXGa", () => {
     const result = computeXGa(0, 0, 65);
     // Falls through to heuristic because home+away = 0
     expect(result.total).toBeGreaterThan(0);
+  });
+
+  test("over25Prob=39 → inversion Poisson correcte (λ total ≈ 2.25)", () => {
+    // P(X≥3) = 0.39 ⇒ λ ≈ 2.25 (l'ancienne formule rendait 0.6)
+    const result = computeXGa(null, null, 39);
+    expect(result.total).toBeGreaterThan(1.8);
+    expect(result.total).toBeLessThan(2.7);
   });
 });
 

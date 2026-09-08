@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   Dialog,
   DialogContent,
@@ -311,7 +311,32 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             )}
 
         {/* ---------- CORPS : PRÉMATCH → comparatif + 3 paris ---------- */}
-        {view && !view.live && (          <div className="mt-4 space-y-4">
+        {view && !view.live && (          <div
+            className="mt-4 space-y-4 text-[#222222]"
+            /* Thème clair FotMob : surcharge locale des tokens (inline > .dark).
+               Les sections existantes (comparatif, paris, marchés) basculent
+               en cartes blanches / texte sombre sans toucher leurs classes. */
+            style={
+              {
+                "--background": "#fafafa",
+                "--foreground": "#222222",
+                "--card": "#ffffff",
+                "--card-foreground": "#222222",
+                "--popover": "#ffffff",
+                "--popover-foreground": "#222222",
+                "--muted": "#f5f5f5",
+                "--muted-foreground": "#717171",
+                "--border": "#f0f0f0",
+                "--input": "#f0f0f0",
+                "--primary": "#00985f",
+                "--primary-foreground": "#ffffff",
+                "--secondary": "#f5f5f5",
+                "--secondary-foreground": "#222222",
+                "--ring": "#00985f",
+                colorScheme: "light",
+              } as CSSProperties
+            }
+          >
             {/* Panneau comparatif Équipe 1 (dom) vs Équipe 2 (ext) */}
             <section className="rounded-2xl border border-border/60 bg-card p-3.5">
               <header className="mb-3 flex items-center justify-between gap-2">

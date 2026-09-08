@@ -272,8 +272,9 @@ export const RED_CARD_OWN_DAMP = 0.7;
 /**
  * λ_total sur 90 min calibré sur P(O2.5) d'un Poisson de même λ
  * (P(O2.5) = 1 − e^−λ(1 + λ + λ²/2)) — recherche par bisection.
+ * Exporté pour `computeXGa` (même inversion, source unique).
  */
-function lambdaTotalFromOver25(p: number): number {
+export function lambdaTotalFromOver25(p: number): number {
   const target = Math.max(0.01, Math.min(0.99, p));
   let lo = 0.05;
   let hi = 8;
