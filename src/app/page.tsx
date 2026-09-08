@@ -479,7 +479,7 @@ function HomeInner() {
               <UpcomingTenMatchesTable id="section-upcoming" />
             </BentoTile>
             <BentoTile size="wide" variant="glass">
-              <MultisportCalendar />
+              <MultisportCalendar activeTab={activeTab} />
             </BentoTile>
             <BentoTile size="standard" variant="glass">
               <AIInsightCard id="section-gemini" activeSport={activeTab === "home" ? undefined : activeTab} />

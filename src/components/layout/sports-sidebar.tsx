@@ -1146,7 +1146,7 @@ export function SportsSidebarContent({
 
     // Merge live-only tennis matches into the tree (SWR cache stale 5 min).
     // Without this, matches that just went live don't appear in the sidebar.
-    const merged = base.map((sport) => {
+    const mergedAll = base.map((sport) => {
       if (sport.id !== "tennis" || liveMatchList.length === 0) return sport;
       const existingIds = new Set(
         sport.countries.flatMap((c) => c.leagues.flatMap((l) => l.matches?.map((m) => m.id) ?? [])),
@@ -1189,6 +1189,12 @@ export function SportsSidebarContent({
       };
     });
 
+// Filtrer l'arbre par sport actif : la sidebar ne montre que les ligues
+    // et matchs du sport sélectionné dans les onglets (sauf home/vues nav).
+    const NAV_VIEWS = new Set(["home", "live", "value", "favoris", "profil"]);
+    const merged = activeSport && !NAV_VIEWS.has(activeSport)
+      ? mergedAll.filter((s) => s.id === activeSport)
+      : mergedAll;
     let filtered = filterTreeByQuery(
       applyStatusFilter(applyTimeFilter(merged, timeFilter), treeStatus),
       searchQuery,

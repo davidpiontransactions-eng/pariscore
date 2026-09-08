@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import useSWR from "swr";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
@@ -28,6 +29,23 @@ type CalendarMatch = {
   countryName: string;
   edgePct?: number;
   odds?: { home: number; draw?: number; away: number };
+  /** Indique si une dropping odds est détectée sur ce match */
+  droppingOdds?: boolean;
+};
+
+/** Données brutes depuis /api/v1/calendar/matches */
+type CalendarApiMatch = {
+  id: string;
+  sport: string;
+  league: string;
+  country: string;
+  homeTeam: string;
+  awayTeam: string;
+  scheduledAt: string;
+  status: "scheduled" | "live" | "finished";
+  score?: { home: number; away: number };
+  odds?: { home: number; draw?: number; away: number };
+  edge?: number;
 };
 
 const SPORT_TABS: { key: SportFilter; label: string }[] = [
@@ -41,6 +59,12 @@ const SPORT_TABS: { key: SportFilter; label: string }[] = [
   { key: "mma", label: "MMA" },
   { key: "rugby", label: "Rugby" },
 ];
+
+/** Clé spéciale pour l'onglet "Dropping Odds" */
+const DROPPING_ODDS_KEY = "__dropping_odds__" as SportFilter;
+
+/** Vues non-sport (accueil, nav mobile) : pas de filtre sport via onglet. */
+const NAV_VIEWS = new Set(["home", "live", "value", "favoris", "profil"]);
 
 const SPORT_ICONS: Record<string, string> = {
   football: "⚽",
@@ -76,13 +100,20 @@ function formatHour(iso: string): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export function MultisportCalendar({ className }: { className?: string }) {
+export function MultisportCalendar({
+  className,
+  activeTab,
+}: {
+  className?: string;
+  /** Onglet central actif : filtre les matchs par sport (home = tous). */
+  activeTab?: string;
+}) {
   const selectedSportId = useSportsSidebarStore((s) => s.selectedSportId);
   const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
   const selectSport = useSportsSidebarStore((s) => s.selectSport);
 
   // Fetch scraped calendar data via SWR (refresh every 60s to catch new scrapes)
-  const { data: apiData, isValidating } = useSWR<{
+  const { data: apiData, isValidating: isValidatingLegacy } = useSWR<{
     scraped_at: string;
     source: string;
     total: number;
@@ -104,50 +135,117 @@ export function MultisportCalendar({ className }: { className?: string }) {
     onError: () => {},
   });
 
+  // Source secondaire : route /api/v1/calendar/matches (agrège BSD + Flashscore + BetExplorer)
+  const { data: calendarData, isValidating: isValidatingCalendar } = useSWR<CalendarApiMatch[]>(
+    "/api/v1/calendar/matches",
+    {
+      refreshInterval: 60_000,
+      revalidateOnFocus: true,
+      dedupingInterval: 30_000,
+      onError: () => {},
+    },
+  );
+
+  const isValidating = isValidatingLegacy || isValidatingCalendar;
+
   const allMatches = useMemo<CalendarMatch[]>(() => {
-    if (!apiData?.matches) return [];
-    const matches: CalendarMatch[] = (apiData.matches as Array<{
-      sport: string;
-      country: string;
-      league: string;
-      time: string;
-      home: string;
-      away: string;
-      odds: number[];
-      score: string | null;
-      isLive: boolean;
-    }>).map((m, i) => ({
-      id: `${m.sport}-${i}-${m.home}-${m.away}`,
-      sport: m.sport,
-      sportIcon: SPORT_ICONS[m.sport] ?? "🏆",
-      homeName: m.home,
-      awayName: m.away,
-      homePhoto: resolvePlayerPhoto(m.home),
-      awayPhoto: resolvePlayerPhoto(m.away),
-      scheduledAt: m.time && /^\d{2}:\d{2}$/.test(m.time)
-        ? (() => {
-            const d = new Date();
-            const [h, min] = m.time.split(":").map(Number);
-            d.setHours(h, min, 0, 0);
-            return d.toISOString();
-          })()
-        : new Date().toISOString(),
-      isLive: m.isLive,
-      leagueName: m.league,
-      countryName: m.country,
-      edgePct: undefined,
-      odds: m.odds && m.odds.length >= 2
-        ? { home: m.odds[0], draw: m.odds[1], away: m.odds[2] ?? m.odds[1] }
-        : undefined,
-    }));
+    // Clé de dédup par noms d'équipes normalisés
+    const normalize = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]/g, "");
+    const matchMap = new Map<string, CalendarMatch>();
+
+    // 1) Source legacy : /api/v1/multisport-calendar
+    if (apiData?.matches) {
+      const legacyRaw = apiData.matches as Array<{
+        sport: string;
+        country: string;
+        league: string;
+        time: string;
+        home: string;
+        away: string;
+        odds: number[];
+        score: string | null;
+        isLive: boolean;
+      }>;
+      for (const m of legacyRaw) {
+        const key = `${normalize(m.home)}-${normalize(m.away)}`;
+        matchMap.set(key, {
+          id: `${m.sport}-${m.home}-${m.away}`,
+          sport: m.sport,
+          sportIcon: SPORT_ICONS[m.sport] ?? "🏆",
+          homeName: m.home,
+          awayName: m.away,
+          homePhoto: resolvePlayerPhoto(m.home),
+          awayPhoto: resolvePlayerPhoto(m.away),
+          scheduledAt: m.time && /^\d{2}:\d{2}$/.test(m.time)
+            ? (() => {
+                const d = new Date();
+                const [h, min] = m.time.split(":").map(Number);
+                d.setHours(h, min, 0, 0);
+                return d.toISOString();
+              })()
+            : new Date().toISOString(),
+          isLive: m.isLive,
+          leagueName: m.league,
+          countryName: m.country,
+          edgePct: undefined,
+          odds: m.odds && m.odds.length >= 2
+            ? { home: m.odds[0], draw: m.odds[1], away: m.odds[2] ?? m.odds[1] }
+            : undefined,
+        });
+      }
+    }
+
+    // 2) Source secondaire : /api/v1/calendar/matches — fusionne ou ajoute
+    if (calendarData) {
+      for (const m of calendarData) {
+        const key = `${normalize(m.homeTeam)}-${normalize(m.awayTeam)}`;
+        const existing = matchMap.get(key);
+        if (existing) {
+          // Enrichir l'existant avec les données manquantes
+          existing.odds = existing.odds ?? m.odds;
+          existing.edgePct = existing.edgePct ?? m.edge;
+          if (m.status === "live") existing.isLive = true;
+        } else {
+          matchMap.set(key, {
+            id: m.id,
+            sport: m.sport,
+            sportIcon: SPORT_ICONS[m.sport] ?? "🏆",
+            homeName: m.homeTeam,
+            awayName: m.awayTeam,
+            homePhoto: resolvePlayerPhoto(m.homeTeam),
+            awayPhoto: resolvePlayerPhoto(m.awayTeam),
+            scheduledAt: m.scheduledAt || new Date().toISOString(),
+            isLive: m.status === "live",
+            leagueName: m.league,
+            countryName: m.country,
+            edgePct: m.edge,
+            odds: m.odds,
+          });
+        }
+      }
+    }
+
+    const matches = Array.from(matchMap.values());
+
+    // Détection dropping odds : un match a des cotes si edge > 0
+    // (signal que le modèle détecte une valeur significative)
+    for (const m of matches) {
+      m.droppingOdds = (m.edgePct ?? 0) > 0;
+    }
+
     return matches.sort((a, b) => (a.isLive === b.isLive ? 0 : a.isLive ? -1 : 1));
-  }, [apiData]);
+  }, [apiData, calendarData]);
+
+  // L'onglet central prime : sur un sport précis, on ne montre que ce sport.
+  // Sinon (home/vues nav) on utilise la sélection sidebar.
+  const effectiveSport =
+    activeTab && !NAV_VIEWS.has(activeTab) ? activeTab : (selectedSportId as SportFilter | null);
 
   const filtered = useMemo(() => {
     let result = allMatches;
-    // Filtre sport depuis la sidebar
-    if (selectedSportId) {
-      result = result.filter((m) => m.sport === selectedSportId);
+    // Filtre sport depuis la sidebar / onglet
+    if (effectiveSport && effectiveSport !== DROPPING_ODDS_KEY) {
+      result = result.filter((m) => m.sport === effectiveSport);
     }
     // Filtre live/prematch depuis mode-toggle header
     if (headerMode === "live") {
@@ -155,8 +253,12 @@ export function MultisportCalendar({ className }: { className?: string }) {
     } else if (headerMode === "prematch") {
       result = result.filter((m) => !m.isLive);
     }
+    // Filtre dropping odds : afficher uniquement les matchs avec dropping odds
+    if (effectiveSport === DROPPING_ODDS_KEY) {
+      result = result.filter((m) => m.droppingOdds);
+    }
     return result;
-  }, [allMatches, selectedSportId, headerMode]);
+  }, [allMatches, effectiveSport, headerMode]);
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -165,6 +267,11 @@ export function MultisportCalendar({ className }: { className?: string }) {
     }
     return counts;
   }, [allMatches]);
+
+  const droppingOddsCount = useMemo(
+    () => allMatches.filter((m) => m.droppingOdds).length,
+    [allMatches],
+  );
 
   if (isValidating && allMatches.length === 0) {
     return (
@@ -191,7 +298,7 @@ export function MultisportCalendar({ className }: { className?: string }) {
           {SPORT_TABS.map((tab) => {
             const count = tab.key === "all" ? allMatches.length : (sportCounts[tab.key] ?? 0);
             if (tab.key !== "all" && count === 0) return null;
-            const isActive = tab.key === "all" ? !selectedSportId : selectedSportId === tab.key;
+            const isActive = tab.key === "all" ? !effectiveSport : effectiveSport === tab.key;
             return (
               <button
                 key={tab.key}
@@ -213,14 +320,32 @@ export function MultisportCalendar({ className }: { className?: string }) {
               </button>
             );
           })}
+          {/* Onglet Dropping Odds */}
+          {droppingOddsCount > 0 && selectedSportId !== DROPPING_ODDS_KEY && (
+            <button
+              type="button"
+              onClick={() => selectSport(DROPPING_ODDS_KEY)}
+              className={cn(
+                "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors whitespace-nowrap",
+                effectiveSport === DROPPING_ODDS_KEY
+                  ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              📉 Dropping
+              <span className="ml-1 inline-flex items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold text-amber-300">
+                {droppingOddsCount}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
       {filtered.length === 0 ? (
         <div className="flex items-center justify-center rounded-xl border border-dashed border-border p-8 text-sm text-muted-foreground">
           Aucun match{" "}
-          {headerMode === "live" ? "en direct" : "&agrave; venir"}{" "}
-          {selectedSportId ? `en ${selectedSportId}` : "aujourd'hui"}
+          {headerMode === "live" ? "en direct" : "à venir"}{" "}
+          {effectiveSport && effectiveSport !== DROPPING_ODDS_KEY ? `en ${effectiveSport}` : "aujourd'hui"}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border/60">
@@ -300,20 +425,27 @@ export function MultisportCalendar({ className }: { className?: string }) {
                       )}
                     </td>
                     <td className="px-3 py-2.5 text-right">
-                      {m.edgePct != null ? (
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold font-mono tabular-nums",
-                            m.edgePct > 0
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : "bg-red-500/15 text-red-400",
-                          )}
-                        >
-                          {m.edgePct > 0 ? "+" : ""}{m.edgePct}%
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/50">—</span>
-                      )}
+                      <div className="flex items-center justify-end gap-1.5">
+                        {m.droppingOdds && (
+                          <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px] shrink-0">
+                            📉 Drop
+                          </Badge>
+                        )}
+                        {m.edgePct != null ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold font-mono tabular-nums",
+                              m.edgePct > 0
+                                ? "bg-emerald-500/15 text-emerald-400"
+                                : "bg-red-500/15 text-red-400",
+                            )}
+                          >
+                            {m.edgePct > 0 ? "+" : ""}{m.edgePct}%
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/50">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
