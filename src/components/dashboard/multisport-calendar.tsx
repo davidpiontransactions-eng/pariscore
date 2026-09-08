@@ -1,14 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import useSWR from "swr";
 import { cn } from "@/lib/utils";
-import { useSportsTree } from "@/hooks/use-sports-tree";
-import { useLiveMatches } from "@/hooks/use-live-matches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
-import type { SportNode, TreeMatchSummary } from "@/types/sports-sidebar";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,80 +72,76 @@ function formatHour(iso: string): string {
   }
 }
 
-function todayStr(): string {
-  // Use Paris local date, not UTC — les matchs à 1h du mat sont du jour
-  // précédent en UTC mais encore aujourd'hui pour l'utilisateur français.
-  const fmt = new Intl.DateTimeFormat("fr-CA", {
-    timeZone: "Europe/Paris",
-    year: "numeric", month: "2-digit", day: "2-digit",
-  });
-  return fmt.format(new Date()); // YYYY-MM-DD
-}
-
-/** Convertit un ISO UTC en date Paris (YYYY-MM-DD) pour comparaison. */
-function parisDateOf(iso: string): string {
-  const fmt = new Intl.DateTimeFormat("fr-CA", {
-    timeZone: "Europe/Paris",
-    year: "numeric", month: "2-digit", day: "2-digit",
-  });
-  return fmt.format(new Date(iso));
-}
-
-/** Extraire tous les matchs d'un SportNode pour aujourd'hui. */
-function extractTodayMatches(sport: SportNode): CalendarMatch[] {
-  const today = todayStr();
-  const matches: CalendarMatch[] = [];
-
-  for (const country of sport.countries) {
-    for (const league of country.leagues) {
-      for (const m of (league.matches ?? []) as TreeMatchSummary[]) {
-        if (m.scheduledAt && parisDateOf(m.scheduledAt) === today) {
-          matches.push({
-            id: m.id,
-            sport: sport.id,
-            sportIcon: SPORT_ICONS[sport.id] ?? "🏆",
-            homeName: m.homeName,
-            awayName: m.awayName,
-            homePhoto: resolvePlayerPhoto(m.homeName),
-            awayPhoto: resolvePlayerPhoto(m.awayName),
-            scheduledAt: m.scheduledAt,
-            isLive: m.isLive ?? false,
-            leagueName: league.name,
-            countryName: country.name,
-            edgePct: m.edgePct ?? undefined,
-            odds: m.odds,
-          });
-        }
-      }
-    }
-  }
-
-  return matches;
-}
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function MultisportCalendar({ className }: { className?: string }) {
-  const { data: treeData, isValidating } = useSportsTree();
-  const { liveStates } = useLiveMatches();
-
-  // Sync with sidebar/headerbar store
   const selectedSportId = useSportsSidebarStore((s) => s.selectedSportId);
   const headerMode = useSportsSidebarStore((s) => s.headerMode ?? "prematch");
   const selectSport = useSportsSidebarStore((s) => s.selectSport);
 
+  // Fetch scraped calendar data via SWR (refresh every 60s to catch new scrapes)
+  const { data: apiData, isValidating } = useSWR<{
+    scraped_at: string;
+    source: string;
+    total: number;
+    matches: Array<{
+      sport: string;
+      country: string;
+      league: string;
+      time: string;
+      home: string;
+      away: string;
+      odds: number[];
+      score: string | null;
+      isLive: boolean;
+    }>;
+  }>("/api/v1/multisport-calendar", {
+    refreshInterval: 60_000,
+    revalidateOnFocus: true,
+    dedupingInterval: 30_000,
+    onError: () => {},
+  });
+
   const allMatches = useMemo<CalendarMatch[]>(() => {
-    if (!treeData) return [];
-    const matches: CalendarMatch[] = [];
-    for (const sport of treeData) {
-      matches.push(...extractTodayMatches(sport));
-    }
-    return matches.sort(
-      (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
-    );
-  }, [treeData]);
+    if (!apiData?.matches) return [];
+    const matches: CalendarMatch[] = (apiData.matches as Array<{
+      sport: string;
+      country: string;
+      league: string;
+      time: string;
+      home: string;
+      away: string;
+      odds: number[];
+      score: string | null;
+      isLive: boolean;
+    }>).map((m, i) => ({
+      id: `${m.sport}-${i}-${m.home}-${m.away}`,
+      sport: m.sport,
+      sportIcon: SPORT_ICONS[m.sport] ?? "🏆",
+      homeName: m.home,
+      awayName: m.away,
+      homePhoto: resolvePlayerPhoto(m.home),
+      awayPhoto: resolvePlayerPhoto(m.away),
+      scheduledAt: m.time && /^\d{2}:\d{2}$/.test(m.time)
+        ? (() => {
+            const d = new Date();
+            const [h, min] = m.time.split(":").map(Number);
+            d.setHours(h, min, 0, 0);
+            return d.toISOString();
+          })()
+        : new Date().toISOString(),
+      isLive: m.isLive,
+      leagueName: m.league,
+      countryName: m.country,
+      edgePct: undefined,
+      odds: m.odds && m.odds.length >= 2
+        ? { home: m.odds[0], draw: m.odds[1], away: m.odds[2] ?? m.odds[1] }
+        : undefined,
+    }));
+    return matches.sort((a, b) => (a.isLive === b.isLive ? 0 : a.isLive ? -1 : 1));
+  }, [apiData]);
 
   const filtered = useMemo(() => {
     let result = allMatches;
@@ -157,12 +151,12 @@ export function MultisportCalendar({ className }: { className?: string }) {
     }
     // Filtre live/prematch depuis mode-toggle header
     if (headerMode === "live") {
-      result = result.filter((m) => liveStates[m.id]?.isLive ?? m.isLive);
+      result = result.filter((m) => m.isLive);
     } else if (headerMode === "prematch") {
-      result = result.filter((m) => !(liveStates[m.id]?.isLive ?? m.isLive));
+      result = result.filter((m) => !m.isLive);
     }
     return result;
-  }, [allMatches, selectedSportId, headerMode, liveStates]);
+  }, [allMatches, selectedSportId, headerMode]);
 
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -241,7 +235,7 @@ export function MultisportCalendar({ className }: { className?: string }) {
             </thead>
             <tbody className="divide-y divide-border/30">
               {filtered.map((m) => {
-                const isLive = liveStates[m.id]?.isLive ?? m.isLive;
+                const isLive = m.isLive;
                 return (
                   <tr
                     key={`${m.sport}-${m.id}`}
