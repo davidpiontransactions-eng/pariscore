@@ -40,42 +40,48 @@ export function SnookerTopPicksBanner() {
   if (picks.length === 0) return null; // pas de pick ≥ 65 % → bannière masquée
 
   return (
-    <section className="space-y-2">
+    <section className="space-y-3">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400">
           Top Picks du jour
         </h3>
-        <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+        <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 ring-1 ring-emerald-500/30">
           {picks.length} pick{picks.length > 1 ? "s" : ""} ≥ 65 %
         </span>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1">
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">
         {picks.map((p) => (
           <div
             key={p.matchId}
-            className="min-w-[230px] max-w-[230px] rounded-xl border border-zinc-800 bg-zinc-900/60 p-3"
+            className="group snap-start min-w-[240px] max-w-[240px] rounded-xl border border-zinc-800/60 bg-zinc-900/60 backdrop-blur-sm p-3.5 shrink-0 transition-all hover:border-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/10"
           >
-            <div className="mb-1 truncate text-[10px] uppercase tracking-wide text-zinc-500">
-              {p.tournament || "Snooker"}
-            </div>
-            <div className="truncate text-sm font-semibold text-zinc-100">{p.pickName}</div>
-            <div className="mb-2 truncate text-[10px] text-zinc-500">
-              {p.player1.name} vs {p.player2.name}
-            </div>
-            {/* Jauge de certitude */}
-            <div className="mb-1.5 h-1.5 rounded-full bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-emerald-500"
-                style={{ width: `${Math.round(p.prob * 100)}%` }}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                {Math.round(p.prob * 100)} % — {confLabel(p.confidence)}
-              </span>
-              {p.odds != null && (
-                <span className="font-mono text-[10px] text-amber-400">@{p.odds.toFixed(2)}</span>
-              )}
+            {/* Glass shine */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent opacity-0 group-hover:opacity-100 rounded-xl" />
+            <div className="relative z-10">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="truncate text-[10px] uppercase tracking-wider font-medium text-zinc-500">
+                  {p.tournament || "Snooker"}
+                </span>
+                {p.odds != null && (
+                  <span className="font-mono text-[10px] text-amber-400 font-semibold">@{p.odds.toFixed(2)}</span>
+                )}
+              </div>
+              <div className="truncate text-sm font-semibold text-zinc-100">{p.pickName}</div>
+              <div className="mb-2 truncate text-[10px] text-zinc-500">
+                {p.player1.name} vs {p.player2.name}
+              </div>
+              {/* Jauge de certitude néon */}
+              <div className="mb-1.5 h-2 rounded-full bg-zinc-800 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300 shadow-sm shadow-emerald-500/30"
+                  style={{ width: `${Math.round(p.prob * 100)}%` }}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400 ring-1 ring-emerald-500/30">
+                  {Math.round(p.prob * 100)} % — {confLabel(p.confidence)}
+                </span>
+              </div>
             </div>
           </div>
         ))}

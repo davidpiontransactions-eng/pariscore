@@ -95,6 +95,12 @@
                                         "type":  "http",
                                         "url":  "https://mcp.eu.ovhcloud.com/mcp"
                                     },
+                       "context-mode":  {
+                                           "command":  "context-mode"
+                                       },
+                       "camofox-browser":  {
+                                               "command":  "camofox-browser-mcp"
+                                           },
                        "ovhcloud-ssh":  {
                                             "command":  "node",
                                             "args":  [

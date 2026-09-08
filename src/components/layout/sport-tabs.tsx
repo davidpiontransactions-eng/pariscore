@@ -26,7 +26,7 @@ const SPORT_TABS: SportTab[] = [
   { id: "f1", label: "F1", emoji: "🏎️" },
   { id: "baseball", label: "Baseball", emoji: "⚾" },
   { id: "cs2", label: "CS2", emoji: "🎯" },
-{ id: "snooker", label: "Snooker", emoji: "🎱" },
+  { id: "snooker", label: "Snooker", emoji: "🎱" },
 ] as const;
 
 // Nombre d'onglets visibles sur mobile avant le menu "Plus"

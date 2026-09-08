@@ -33,9 +33,9 @@ type BetsResponse = { mode: string; total: number; matches: BetMatch[] };
 const fetcher = (url: string) => fetch(url).then((r) => r.json() as Promise<BetsResponse>);
 
 function probColor(p: number): string {
-  if (p >= 0.75) return "bg-emerald-500/15 text-emerald-400";
-  if (p >= 0.65) return "bg-amber-500/15 text-amber-400";
-  return "bg-zinc-800 text-zinc-400";
+  if (p >= 0.75) return "bg-emerald-500/15 text-emerald-400 ring-emerald-500/30";
+  if (p >= 0.65) return "bg-amber-500/15 text-amber-400 ring-amber-500/30";
+  return "bg-zinc-800/60 text-zinc-400 ring-zinc-700";
 }
 
 export function SnookerBetsPanel() {
@@ -51,17 +51,17 @@ export function SnookerBetsPanel() {
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400">
           Paris prédictifs {mode === "live" && <span className="text-red-400">● LIVE</span>}
         </h3>
-        <div className="flex rounded-lg border border-zinc-800 p-0.5 text-xs">
+        <div className="flex rounded-lg border border-zinc-800 p-0.5 text-xs bg-zinc-900/60 backdrop-blur-sm">
           {(["prematch", "live"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={cn(
                 "rounded-md px-3 py-1 transition-colors",
-                mode === m ? "bg-emerald-500/20 text-emerald-400" : "text-zinc-500 hover:text-zinc-300",
+                mode === m ? "bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/30" : "text-zinc-500 hover:text-zinc-300",
               )}
             >
               {m === "prematch" ? "Pre-match" : "Live"}
@@ -77,22 +77,22 @@ export function SnookerBetsPanel() {
           ))}
         </div>
       ) : matches.length === 0 ? (
-        <p className="text-sm text-muted-foreground/60">
+        <p className="text-sm text-zinc-500/60">
           Aucun pari ≥ 65 % détecté {mode === "live" ? "sur les matchs en cours" : "au programme"}.
         </p>
       ) : (
         <div className="space-y-2">
           {matches.map((m) => (
-            <div key={m.matchId} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
+            <div key={m.matchId} className="rounded-xl border border-zinc-800/60 bg-zinc-900/40 backdrop-blur-sm p-3.5 transition-all hover:border-emerald-500/30">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-medium">
+                  <div className="truncate text-sm font-medium text-zinc-100">
                     {m.playerA.name} <span className="text-zinc-500">vs</span> {m.playerB.name}
                   </div>
                   <div className="text-[10px] text-zinc-500">
                     Bo{m.bestOf}
                     {m.status === "live" && m.score !== "0-0" ? ` — ${m.score}` : ""} · Favori{" "}
-                    <span className="text-emerald-400">{m.favourite}</span>{" "}
+                    <span className="text-emerald-400 font-semibold">{m.favourite}</span>{" "}
                     <span className="font-mono">{Math.round(m.pFav * 100)} %</span>
                   </div>
                 </div>
@@ -100,7 +100,7 @@ export function SnookerBetsPanel() {
                   <span
                     className={cn(
                       "rounded-md px-2 py-0.5 font-mono text-[10px]",
-                      m.ev > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400",
+                      m.ev > 0 ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30" : "bg-red-500/15 text-red-400 ring-1 ring-red-500/30",
                     )}
                     title="Expected Value vs cote marché"
                   >
@@ -116,7 +116,7 @@ export function SnookerBetsPanel() {
                   m.bets.map((b) => (
                     <span
                       key={`${b.type}-${b.label}`}
-                      className={cn("rounded-md px-2 py-1 text-[11px] font-medium", probColor(b.prob))}
+                      className={cn("rounded-md px-2 py-1 text-[11px] font-medium ring-1", probColor(b.prob))}
                     >
                       {b.label} · {Math.round(b.prob * 100)} %
                     </span>

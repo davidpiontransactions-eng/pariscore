@@ -123,7 +123,7 @@ export function SnookerCalendar({ className }: { className?: string }) {
         <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Snooker — Calendrier
         </h3>
-        <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
           Erreur de chargement des données snooker
         </div>
       </section>
@@ -213,10 +213,10 @@ export function SnookerCalendar({ className }: { className?: string }) {
       )}
 
       {/* Tableau des matchs */}
-      <div className="overflow-x-auto rounded-xl border border-border/60">
+      <div className="overflow-x-auto rounded-xl border border-zinc-800/60 bg-zinc-900/40 backdrop-blur-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border/40 bg-muted/30 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
+            <tr className="border-b border-zinc-800/40 bg-zinc-900/60 text-left text-[11px] uppercase tracking-wider text-zinc-500">
               <th className="px-3 py-2.5 font-medium">Heure</th>
               <th className="px-3 py-2.5 font-medium">Tournoi</th>
               <th className="px-3 py-2.5 font-medium">Joueurs</th>
@@ -266,11 +266,11 @@ export function SnookerCalendar({ className }: { className?: string }) {
                   <td className="px-3 py-2.5 text-center">
                     {m.odds ? (
                       <div className="inline-flex items-center gap-1.5">
-                        <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-xs font-semibold text-emerald-300">
+                        <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-xs font-semibold text-emerald-300 ring-1 ring-emerald-500/20">
                           {m.odds.player1.toFixed(2)}
                         </span>
                         <span className="text-muted-foreground/40">/</span>
-                        <span className="rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-xs font-semibold text-sky-300">
+                        <span className="rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-xs font-semibold text-sky-300 ring-1 ring-sky-500/20">
                           {m.odds.player2.toFixed(2)}
                         </span>
                       </div>
@@ -295,7 +295,7 @@ export function SnookerCalendar({ className }: { className?: string }) {
       </div>
 
       {/* Footer : source + dernière MAJ */}
-      <div className="flex items-center justify-between text-[11px] text-muted-foreground/50">
+      <div className="flex items-center justify-between text-[11px] text-zinc-500/50">
         <span>Données source: FlashScore (odds à venir) {data.scraped_at ? `· ${new Date(data.scraped_at).toLocaleString("fr-FR")}` : ""}</span>
         <span>{data.total} matchs au total</span>
       </div>

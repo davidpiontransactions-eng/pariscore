@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
+import { LiquidGlass } from "@/components/ui/liquid-glass";
 import { SnookerCalendar } from "@/components/snooker/snooker-calendar";
 import { SnookerMatchCard } from "@/components/snooker/snooker-match-card";
 import { SnookerLiveTracker } from "@/components/snooker/snooker-live-tracker";
@@ -20,6 +21,8 @@ type ApiMatch = {
   tournament: string;
   player1: string;
   player2: string;
+  player1PhotoUrl?: string;
+  player2PhotoUrl?: string;
   scheduled_at: string | null;
   status: "scheduled" | "live" | "finished";
   scoreA: number;
@@ -89,17 +92,25 @@ export function SnookerTabContent() {
 
   return (
     <div className="space-y-6">
-      {/* Bannière carousel Top picks (prob >= 65 %) */}
-      <SnookerTopPicksBanner />
+      {/* Hero avec bannière carousel */}
+      <div className="relative overflow-hidden rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,230,118,0.08)_0%,_transparent_60%)]" />
+        <div className="relative z-10">
+          <SnookerTopPicksBanner />
+        </div>
+      </div>
 
-      {/* Top picks prédictifs détaillés (prob >= 65 %) — modèle Elo CueTracker × FlashScore */}
-      <SnookerTopPicks />
+      <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
+        <SnookerTopPicks />
+      </LiquidGlass>
 
-      {/* Grille paris prédictifs pre-match & live (handicap, O/U frames, century, race-to-X) */}
-      <SnookerBetsPanel />
+      <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
+        <SnookerBetsPanel />
+      </LiquidGlass>
 
-      {/* Calendrier (table — source FlashScore) */}
-      <SnookerCalendar />
+      <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
+        <SnookerCalendar />
+      </LiquidGlass>
 
       {/* Cartes matchs */}
       <section className="space-y-3">
@@ -113,9 +124,11 @@ export function SnookerTabContent() {
             ))}
           </div>
         ) : sorted.length === 0 ? (
-          <p className="text-sm text-muted-foreground/60">
-            Aucun match snooker actuellement — relancez le scraper FlashScore.
-          </p>
+          <LiquidGlass tier="tier2" className="rounded-xl border border-dashed border-zinc-800 p-6 text-center">
+            <p className="text-sm text-muted-foreground/60">
+              Aucun match snooker actuellement — relancez le scraper FlashScore.
+            </p>
+          </LiquidGlass>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {sorted.map((m) => (
@@ -123,8 +136,8 @@ export function SnookerTabContent() {
                 key={m.id}
                 match={{
                   id: m.id,
-                  playerA: { id: `p-a-${m.id}`, name: m.player1 },
-                  playerB: { id: `p-b-${m.id}`, name: m.player2 },
+                  playerA: { id: `p-a-${m.id}`, name: m.player1, photoUrl: m.player1PhotoUrl },
+                  playerB: { id: `p-b-${m.id}`, name: m.player2, photoUrl: m.player2PhotoUrl },
                   tournament: m.tournament || "Snooker",
                   bestOf: m.bestOf,
                   scoreA: m.scoreA,
@@ -146,8 +159,6 @@ export function SnookerTabContent() {
           </h3>
           <div className="space-y-4">
             {liveMatches.map((m) => {
-              // Frames approximées depuis les frames remportées (A puis B) — FlashScore
-              // ne fournit pas l'ordre réel des frames.
               const frames: Array<{
                 frameNumber: number;
                 winner: "A" | "B";
@@ -165,14 +176,15 @@ export function SnookerTabContent() {
                 frames.push({ frameNumber: frames.length + 1, winner: "B", scoreA: fa, scoreB: fb });
               }
               return (
-                <SnookerLiveTracker
-                  key={m.id}
-                  frames={frames}
-                  bestOf={m.bestOf}
-                  playerAName={m.player1}
-                  playerBName={m.player2}
-                  isLive
-                />
+                <LiquidGlass key={m.id} tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
+                  <SnookerLiveTracker
+                    frames={frames}
+                    bestOf={m.bestOf}
+                    playerAName={m.player1}
+                    playerBName={m.player2}
+                    isLive
+                  />
+                </LiquidGlass>
               );
             })}
           </div>
@@ -199,6 +211,7 @@ export function SnookerTabContent() {
                   centuryRate: p.centuryRate,
                   deciderWinPct: p.deciderWinPct,
                   avgBreak: p.avgBreak,
+                  photoUrl: p.photoUrl,
                 }}
               />
             ))}

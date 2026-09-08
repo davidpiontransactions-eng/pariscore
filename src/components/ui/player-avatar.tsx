@@ -15,8 +15,8 @@ type PlayerAvatarProps = {
   photoUrl?: string | null;
   /** Couleur principale (anneau lumineux, fond fallback). */
   color?: string;
-  /** Taille : sm=40px, md=56px, lg=72px, xl=96px. Défaut : `md`. */
-  size?: "sm" | "md" | "lg" | "xl";
+  /** Taille : xs=20px, sm=40px, md=56px, lg=72px, xl=96px. Défaut : `md`. */
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
   /** Code pays ISO pour badge drapeau (optionnel). */
   countryCode?: string | null;
   /** Sport pour la couleur de fallback. Défaut : `tennis`. */
@@ -30,6 +30,7 @@ type PlayerAvatarProps = {
 // ─── Taille map ──────────────────────────────────────────────────────────
 
 const SIZE_MAP = {
+  xs: { avatar: 20, ring: 22, flag: "sm" as const },
   sm: { avatar: 40, ring: 44, flag: "sm" as const },
   md: { avatar: 56, ring: 62, flag: "sm" as const },
   lg: { avatar: 72, ring: 80, flag: "md" as const },

@@ -25,6 +25,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { TIME_RANGE_OPTIONS, type MatchViewMode } from "@/lib/match-view";
 import {
   applyTimeFilter,
@@ -492,20 +494,35 @@ function MatchRow({
           {formatKickoff(match.scheduledAt)}
         </span>
       )}
+      <PlayerAvatar
+        name={match.homeName}
+        photoUrl={resolvePlayerPhoto(match.homeName)}
+        size="xs"
+        sport={league.sportId as any}
+        className="shrink-0 mr-0.5"
+      />
       <button
         type="button"
         onClick={() => {
           toggleSelection(match.id);
           openDetail();
         }}
-        title={isSelected ? t("selectionRemove") : t("selectionAdd")}
+        title={`${match.homeName} – ${match.awayName}`}
         aria-pressed={isSelected}
         className="min-w-0 flex-1 truncate rounded px-1 text-left transition-colors hover:text-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {isSelected ? "✓ " : ""}
-        {match.homeName}
-        {match.awayName ? ` – ${match.awayName}` : ""}
+        <span>{match.homeName}</span>
+        <span className="mx-0.5 text-[10px] opacity-50">–</span>
+        <span>{match.awayName}</span>
       </button>
+      <PlayerAvatar
+        name={match.awayName}
+        photoUrl={resolvePlayerPhoto(match.awayName)}
+        size="xs"
+        sport={league.sportId as any}
+        className="shrink-0 ml-0.5"
+      />
       {/* Live stats: pressure bar + edge badge */}
       {match.isLive && match.pressure && (
         <span className="shrink-0 flex items-center gap-0.5" title={`Pression: ${match.pressure.homePct}% - ${match.pressure.awayPct}%`}>

@@ -622,7 +622,18 @@ model MultisportEvent {
   oddsAway    Float?
   source      String   @default("betexplorer")
   sourceUrl   String?
-  scrapedAt   DateTime @default(now())
+  scrapedAt       DateTime  @default(now())
+  oddsHomeOpen    Float?
+  oddsDrawOpen    Float?
+  oddsAwayOpen    Float?
+  oddsHomeCurr    Float?
+  oddsDrawCurr    Float?
+  oddsAwayCurr    Float?
+  dropPercent     Float?
+  h2hSummary      String?
+  homeStreak      String?
+  awayStreak      String?
+  isPopular       Boolean   @default(false)
 
   @@unique([sport, homeTeam, awayTeam, scrapedAt])
   @@index([sport, eventTime])
