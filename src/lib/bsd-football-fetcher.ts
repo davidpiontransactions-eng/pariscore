@@ -1,5 +1,6 @@
 import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState, StandingContext, TeamStandingStats, MatchMetricStats, TeamMetricStats, MetricValue, MetricRankings, MetricRankingRow, TeamMetricCategory, GoalMetrics, CornerMetrics } from "@/lib/football-data";
 import { lookupClubLogo } from "@/lib/club-logos";
+import { normalizeTeamName } from "@/lib/normalize-team-name";
 import { enrichPrediction } from "./football-predictions";
 import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
 import {
@@ -405,6 +406,29 @@ function buildMatch(m: BSDFootballMatch): FootballMatch {
       ? { id: m.venue.id, name: m.venue.name, city: m.venue.city, country: m.venue.country }
       : null,
   };
+}
+
+/**
+ * Déduplique les matchs fusionnés live + prematch : un même fixture présent
+ * dans les deux flux BSD (ids différents) ne doit apparaître qu'une fois.
+ * Conserve la PREMIÈRE occurrence (les appelants étalent le live en premier).
+ * Clé = noms d'équipes normalisés ( convention `normalizeTeamName` ).
+ */
+export function dedupeFootballMatches<
+  T extends { id: string; home: { name: string }; away: { name: string } },
+>(matches: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const m of matches) {
+    const h = normalizeTeamName(m.home?.name ?? "");
+    const a = normalizeTeamName(m.away?.name ?? "");
+    if (!h || !a) { out.push(m); continue; } // noms vides : on ne déduplique pas
+    const key = h + "|" + a;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(m);
+  }
+  return out;
 }
 
 async function bsdFetch<T>(endpoint: string): Promise<T> {

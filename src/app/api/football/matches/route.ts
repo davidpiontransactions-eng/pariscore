@@ -25,7 +25,7 @@ export async function GET() {
   }
 
   try {
-    const { fetchBSDFootballPrematch, fetchBSDFootballLive } = await import("@/lib/bsd-football-fetcher");
+    const { fetchBSDFootballPrematch, fetchBSDFootballLive, dedupeFootballMatches } = await import("@/lib/bsd-football-fetcher");
     const { fetchOpenLigaDB2Bundesliga } = await import("@/lib/openligadb-fetcher");
     const [prematch, live, olb] = await Promise.all([
       fetchBSDFootballPrematch().catch(() => [] as never[]),
@@ -33,7 +33,8 @@ export async function GET() {
       // 2. Bundesliga — ligue absente de BSD, source gratuite OpenLigaDB.
       fetchOpenLigaDB2Bundesliga().catch(() => [] as never[]),
     ]);
-    const matches = [...live, ...prematch, ...olb];
+    // Déduplique live/prematch (même fixture, ids différents) — le live prime.
+    const matches = dedupeFootballMatches([...live, ...prematch, ...olb]);
     // BSD est LA source des grandes ligues (C1, PL, Ligue 1…). Si elle ne
     // renvoie rien (rate-limit 429, quota addon, panne), on le signale et on ne
     // fige pas le cache : l'onglet est « dégradé » mais doit pouvoir revenir.

@@ -38,14 +38,15 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { fetchBSDFootballPrematch, fetchBSDFootballLive } = await import("@/lib/bsd-football-fetcher");
+    const { fetchBSDFootballPrematch, fetchBSDFootballLive, dedupeFootballMatches } = await import("@/lib/bsd-football-fetcher");
     const { fetchOpenLigaDB2Bundesliga } = await import("@/lib/openligadb-fetcher");
     const [prematch, live, olb] = await Promise.all([
       fetchBSDFootballPrematch().catch(() => [] as never[]),
       fetchBSDFootballLive().catch(() => [] as never[]),
       fetchOpenLigaDB2Bundesliga().catch(() => [] as never[]),
     ]);
-    let matches = [...live, ...prematch, ...olb];
+    // Déduplique live/prematch (même fixture, ids différents) — le live prime.
+    let matches = dedupeFootballMatches([...live, ...prematch, ...olb]);
     const bsdOk = live.length > 0 || prematch.length > 0;
     const degraded = !bsdOk;
     const source = bsdOk ? "bsd+openligadb" : "openligadb";
