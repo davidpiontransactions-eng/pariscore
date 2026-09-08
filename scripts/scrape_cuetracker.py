@@ -583,7 +583,11 @@ def main():
 
     # 1. Statistiques matchs/frames (Won/All-time : played/wins, losses dérivées)
     base_players = scrape_player_stats(pages.get("matches", ""))
-    print(f"  → {len(base_players)} joueurs avec stats matchs")
+    if len(base_players) == 0:
+        soup = BeautifulSoup(pages.get("matches", "") or "", "html.parser")
+        print(f"  [debug] match html len={len(pages.get('matches','') or '')} tables={len(soup.find_all('table'))} tr={len(soup.find_all('tr'))}")
+    else:
+        print(f"  → {len(base_players)} joueurs avec stats matchs")
 
     # 2. Records en deciders (colonne Win-percentage)
     decider_map = scrape_deciders(pages.get("deciders", ""))
