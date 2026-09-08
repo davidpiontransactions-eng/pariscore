@@ -105,7 +105,7 @@ const FS_TO_CUE_ID: Record<string, string> = {
   "si x.": "si-xiaohan", "yang g.": "yu-yang",
   "lyu h.": "lyu-haotian", "clarke j.": "james-clarke",
   "hill a.": "aaron-hill", "davies l.": "liam-davies",
-  "brown j.": "jordan-brown", "brown o.": "oliver-brown",
+  "brown o.": "oliver-brown",
 };
 
 async function getPhotoForPlayer(name: string): Promise<string | undefined> {
