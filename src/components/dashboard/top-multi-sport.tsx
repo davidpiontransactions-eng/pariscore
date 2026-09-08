@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { RefreshCw, Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { countryFlag, type LiveMatchScore } from "@/lib/top-matches/types";
 import { FotmobCalendarTable, type FotmobCalMatch } from "@/components/football/fotmob-calendar-table";
+import { FootballMatchDetailDialog } from "@/components/football/football-match-detail-dialog";
+import type { FootballMatch } from "@/lib/football-data";
 import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
 import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob-filter";
 
@@ -300,6 +302,9 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   const [calLiveOnly, setCalLiveOnly] = useState(false);
   const [calHours, setCalHours] = useState<number | null>(null);
   const [calQuery, setCalQuery] = useState("");
+  // Match sélectionné (clic ligne calendrier → dialog d'analyse).
+  // Les objets API sont des FootballMatch complets (typés subset côté UI).
+  const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
   const fetchCal = useCallback(async (key?: string) => {
     setCalLoading(true);
     try {
@@ -548,7 +553,10 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               onQuery={setCalQuery}
             />
             <div className="mt-2">
-              <FotmobCalendarTable matches={filteredCal} />
+              <FotmobCalendarTable
+                matches={filteredCal}
+                onSelectMatch={(m) => setDetailMatch(m as unknown as FootballMatch)}
+              />
             </div>
           </>
         )
@@ -632,6 +640,12 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
           ))}
         </div>
       )}
+      {/* Détail match (analyse BeSoccer) — ouvert au clic d'une ligne calendrier */}
+      <FootballMatchDetailDialog
+        match={detailMatch}
+        open={detailMatch !== null}
+        onOpenChange={(o) => { if (!o) setDetailMatch(null); }}
+      />
     </div>
   );
 }

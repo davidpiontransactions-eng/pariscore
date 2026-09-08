@@ -91,8 +91,8 @@ function FotmobChevron({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-/* ─── Ligne match ─── */
-function FotmobMatchRow({ m }: { m: FotmobCalMatch }) {
+/* ─── Ligne match (clic → analyse, étoile isolée via stopPropagation) ─── */
+function FotmobMatchRow({ m, onSelect }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void }) {
   const st = m.live?.status ?? null;
   const live = isLiveStatus(st);
   const finished = st === "FT";
@@ -101,7 +101,12 @@ function FotmobMatchRow({ m }: { m: FotmobCalMatch }) {
   return (
     <div
       data-testid="livescores-match"
-      className="grid items-center gap-1 px-3 py-1.5 text-[13px]"
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      aria-label={onSelect ? label : undefined}
+      onClick={onSelect ? () => onSelect(m) : undefined}
+      onKeyDown={onSelect ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(m); } } : undefined}
+      className="grid items-center gap-1 px-3 py-1.5 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00985f]"
       style={{
         gridTemplateColumns: "1fr auto auto 1fr auto",
         backgroundColor: C.card,
@@ -150,12 +155,13 @@ function FotmobMatchRow({ m }: { m: FotmobCalMatch }) {
 
 /* ─── Section ligue ─── */
 function FotmobLeagueSection({
-  leagueName, country, logo, icon, matches, collapsed, onToggle,
+  leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch,
 }: {
   leagueName: string; country?: string | null; logo?: string | null;
   /** Icône custom à la place du logo (ex. étoile de la section « Suivis »). */
   icon?: ReactNode;
   matches: FotmobCalMatch[]; collapsed: boolean; onToggle: () => void;
+  onSelectMatch?: (m: FotmobCalMatch) => void;
 }) {
   const liveCount = matches.filter((m) => isLiveStatus(m.live?.status)).length;
   return (
@@ -198,7 +204,7 @@ function FotmobLeagueSection({
         style={{ transitionDuration: "300ms" }}
       >
         <div className="min-h-0 overflow-hidden">
-          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} />)}
+          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} />)}
         </div>
       </div>
     </div>
@@ -215,7 +221,13 @@ function FotmobStarIcon() {
 }
 
 /* ─── Tableau (Suivis épinglés + tri live d'abord, repli global) ─── */
-export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) {
+export function FotmobCalendarTable({
+  matches,
+  onSelectMatch,
+}: {
+  matches: FotmobCalMatch[];
+  onSelectMatch?: (m: FotmobCalMatch) => void;
+}) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const follows = useFollowStore((s) => s.follows);
   const followedIds = useMemo(
@@ -276,6 +288,7 @@ export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) 
             matches={followed}
             collapsed={collapsed.__suivis === true}
             onToggle={() => setCollapsed((p) => ({ ...p, __suivis: !(p.__suivis === true) }))}
+            onSelectMatch={onSelectMatch}
           />
         )}
         {groups.map((g) => (
@@ -285,6 +298,7 @@ export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) 
             matches={g.list}
             collapsed={collapsed[g.name] === true}
             onToggle={() => setCollapsed((p) => ({ ...p, [g.name]: !(p[g.name] === true) }))}
+            onSelectMatch={onSelectMatch}
           />
         ))}
       </div>

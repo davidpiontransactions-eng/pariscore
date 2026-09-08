@@ -24,6 +24,7 @@ import { FootballPressReviewWidget } from "@/components/football/FootballPressRe
 import { AIMatchReport } from "./AIMatchReport";
 import { WatchButton } from "@/components/shared/watch-button";
 import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
+import { BesoccerScoreMatrix } from "@/components/football/besoccer-score-matrix";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
 import { useOddsHistory } from "@/hooks/use-odds-history";
 
@@ -456,6 +457,22 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     awayTeam: view.away.name,
                     league: view.league.name,
                   }}
+                />
+              </section>
+            )}
+
+            {/* Heatmap scores exacts façon BeSoccer — matrice Poisson + marges */}
+            {view && !view.live && (
+              <section className="mt-2">
+                <BesoccerScoreMatrix
+                  homeName={view.home.name}
+                  homeLogo={view.home.logo}
+                  awayName={view.away.name}
+                  awayLogo={view.away.logo}
+                  homeOdds={view.odds?.home}
+                  drawOdds={view.odds?.draw}
+                  awayOdds={view.odds?.away}
+                  winProbPct={view.prediction.homeProb}
                 />
               </section>
             )}
