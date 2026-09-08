@@ -126,9 +126,19 @@ function getPhotoUrl(name: string): string | undefined {
   const key = name.toLowerCase().trim();
   // Exact match
   if (idx[key]) return idx[key];
-  // Partial match (ex: "Ronnie O'Sullivan" → "ronnie o'sullivan")
-  const partial = Object.keys(idx).find(k => key.includes(k) || k.includes(key));
-  return partial ? idx[partial] : undefined;
+  // Token match: "Ding J." → tokens ["ding", "j"] → match si tous dans "ding junhui"
+  const keyTokens = key.split(/\s+/).filter(Boolean);
+  if (keyTokens.length > 0) {
+    const partial = Object.keys(idx).find(k => {
+      const kTokens = k.split(/\s+/).filter(Boolean);
+      // Tous les tokens de la clé abrégée sont dans les tokens du nom complet
+      return keyTokens.every(kt => kTokens.some(kt2 => kt2.startsWith(kt) || kt2 === kt));
+    });
+    if (partial) return idx[partial];
+  }
+  // Partial match fallback
+  const partial2 = Object.keys(idx).find(k => key.includes(k) || k.includes(key));
+  return partial2 ? idx[partial2] : undefined;
 }
 
 function readData(): FlashScoreFile | null {
