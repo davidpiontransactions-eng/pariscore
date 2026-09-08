@@ -126,19 +126,22 @@ function getPhotoUrl(name: string): string | undefined {
   const key = name.toLowerCase().trim();
   // Exact match
   if (idx[key]) return idx[key];
-  // Token match: "Ding J." → tokens ["ding", "j"] → match si tous dans "ding junhui"
-  const keyTokens = key.split(/\s+/).filter(Boolean);
+  // Token match: "Selby M." → tokens ["selby", "m"] → match "mark selby"
+  const keyTokens = key.split(/\s+/).filter(Boolean).map(t => t.replace(/[^a-z0-9\u00c0-\u024f]/g, ''));
   if (keyTokens.length > 0) {
     const partial = Object.keys(idx).find(k => {
-      const kTokens = k.split(/\s+/).filter(Boolean);
-      // Tous les tokens de la clé abrégée sont dans les tokens du nom complet
-      return keyTokens.every(kt => kTokens.some(kt2 => kt2.startsWith(kt) || kt2 === kt));
+      const rawTokens = k.split(/\s+/).filter(Boolean);
+      // Premier token = nom, dernier token = prénom (format "firstname lastname")
+      const lastName = rawTokens[rawTokens.length - 1]?.toLowerCase();
+      const firstName = rawTokens[0]?.toLowerCase();
+      // Vérifie si le nom de famille matche (essentiel) + au moins un token prénom
+      const hasLastName = keyTokens.some(kt => lastName?.startsWith(kt) || kt?.startsWith(lastName));
+      const hasFirstName = keyTokens.some(kt => firstName?.startsWith(kt) || kt?.startsWith(firstName));
+      return hasLastName && (hasFirstName || rawTokens.length === 1);
     });
     if (partial) return idx[partial];
   }
-  // Partial match fallback
-  const partial2 = Object.keys(idx).find(k => key.includes(k) || k.includes(key));
-  return partial2 ? idx[partial2] : undefined;
+  return undefined;
 }
 
 function readData(): FlashScoreFile | null {
