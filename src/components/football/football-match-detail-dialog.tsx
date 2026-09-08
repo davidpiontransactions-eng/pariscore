@@ -26,6 +26,7 @@ import { WatchButton } from "@/components/shared/watch-button";
 import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
 import { FotmobMatchStats } from "@/components/football/fotmob-match-stats";
 import { BesoccerScoreMatrix } from "@/components/football/besoccer-score-matrix";
+import { BesoccerEloPanel } from "@/components/football/besoccer-elo-panel";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
 import { useOddsHistory } from "@/hooks/use-odds-history";
 
@@ -505,6 +506,21 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                   drawOdds={view.odds?.draw}
                   awayOdds={view.odds?.away}
                   winProbPct={view.prediction.homeProb}
+                />
+              </section>
+            )}
+
+            {/* Comparatif Win probability façon BeSoccer (barre 1X2) */}
+            {view && !view.live && (
+              <section className="mt-2">
+                <BesoccerEloPanel
+                  homeName={view.home.name}
+                  homeLogo={view.home.logo}
+                  awayName={view.away.name}
+                  awayLogo={view.away.logo}
+                  homeOdds={view.odds?.home}
+                  drawOdds={view.odds?.draw}
+                  awayOdds={view.odds?.away}
                 />
               </section>
             )}
