@@ -171,6 +171,11 @@ export default async function RootLayout({
         {/* Preconnect to PostHog (analytics, gated by consent) */}
         <link rel="preconnect" href="https://app.posthog.com" />
         <link rel="dns-prefetch" href="https://app.posthog.com" />
+        {/* Preconnect club/team logo CDNs (calendrier foot) */}
+        <link rel="preconnect" href="https://sports.bzzoiro.com" />
+        <link rel="dns-prefetch" href="https://sports.bzzoiro.com" />
+        <link rel="preconnect" href="https://api.dicebear.com" />
+        <link rel="dns-prefetch" href="https://api.dicebear.com" />
         {/* Canonical link is emitted by metadata.alternates.canonical — no
             manual <link rel="canonical"> here to avoid duplicate tags. */}
         {/* WebApplication structured data (JSON-LD) for SEO */}
