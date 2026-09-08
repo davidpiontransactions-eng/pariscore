@@ -37,6 +37,29 @@ export const BSD_LEAGUE_IDS: Record<string, number> = {
   denmark_superliga: 84, // BSD "Danish Superliga"
   norway_eliteserien: 54, // BSD "Eliteserien" (Norvège)
   saudi_pro_league: 17, // BSD "Saudi Pro League"
+  // ─── Nouvelles ligues BSD (vérifié 2026-09-09, /api/matches 505 matchs) ───
+  champions_league: 7,   // BSD "Champions League" (Europe) — C1
+  mls: 18,               // BSD "MLS" (USA)
+  liga_mx: 19,           // BSD "Liga MX Apertura" (Mexique)
+  caf_champions_league: 29, // BSD "CAF Champions League" (Afrique)
+  brasileirao_a: 9,      // BSD "Brasileirão Serie A" (Brésil)
+  brasileirao_b: 34,     // BSD "Brasileirão Serie B" (Brésil)
+  league_one: 86,        // BSD "League One" (Angleterre)
+  league_two: 87,        // BSD "League Two" (Angleterre)
+  national_league: 91,   // BSD "National League" (Angleterre)
+  veikkausliiga: 55,     // BSD "Veikkausliiga" (Finlande)
+  usl_championship: 57,  // BSD "USL Championship" (USA)
+  ekstraklasa: 25,       // BSD "Ekstraklasa" (Pologne)
+  liga_portugal_2: 88,   // BSD "Liga Portugal 2"
+  liga_3_portugal: 82,   // BSD "Liga 3" (Portugal)
+  nigeria_premier: 28,   // BSD "Nigeria Premier Football League"
+  parva_liga: 22,        // BSD "Parva Liga" (Bulgarie)
+  liga_f: 36,            // BSD "Liga F" (Espagne, femmes)
+  nwsl: 72,              // BSD "NWSL" (USA, femmes)
+  copa_colombia: 81,     // BSD "Copa Colombia"
+  copa_libertadores: 32, // BSD "Copa Libertadores" (Am. Sud)
+  copa_sudamericana: 33, // BSD "Copa Sudamericana" (Am. Sud)
+  npl_queensland: 70,    // BSD "NPL Queensland" (Australie)
 };
 
 /**
@@ -150,4 +173,27 @@ export const LEAGUE_INFO: Record<string, { name: string; country: string; sport:
   denmark_superliga: { name: "Superliga", country: "Denmark", sport: "football" },
   australia_a_league: { name: "A-League", country: "Australia", sport: "football" },
   norway_eliteserien: { name: "Eliteserien", country: "Norway", sport: "football" },
+  // Nouvelles ligues BSD 2026-09
+  champions_league: { name: "Champions League", country: "Europe", sport: "football" },
+  mls: { name: "MLS", country: "USA", sport: "football" },
+  liga_mx: { name: "Liga MX", country: "Mexico", sport: "football" },
+  caf_champions_league: { name: "CAF Champions League", country: "Africa", sport: "football" },
+  brasileirao_a: { name: "Brasileirão Série A", country: "Brazil", sport: "football" },
+  brasileirao_b: { name: "Brasileirão Série B", country: "Brazil", sport: "football" },
+  league_one: { name: "League One", country: "England", sport: "football" },
+  league_two: { name: "League Two", country: "England", sport: "football" },
+  national_league: { name: "National League", country: "England", sport: "football" },
+  veikkausliiga: { name: "Veikkausliiga", country: "Finland", sport: "football" },
+  usl_championship: { name: "USL Championship", country: "USA", sport: "football" },
+  ekstraklasa: { name: "Ekstraklasa", country: "Poland", sport: "football" },
+  liga_portugal_2: { name: "Liga Portugal 2", country: "Portugal", sport: "football" },
+  liga_3_portugal: { name: "Liga 3", country: "Portugal", sport: "football" },
+  nigeria_premier: { name: "Nigeria Premier League", country: "Nigeria", sport: "football" },
+  parva_liga: { name: "Parva Liga", country: "Bulgaria", sport: "football" },
+  liga_f: { name: "Liga F", country: "Spain", sport: "football" },
+  nwsl: { name: "NWSL", country: "USA", sport: "football" },
+  copa_colombia: { name: "Copa Colombia", country: "Colombia", sport: "football" },
+  copa_libertadores: { name: "Copa Libertadores", country: "South America", sport: "football" },
+  copa_sudamericana: { name: "Copa Sudamericana", country: "South America", sport: "football" },
+  npl_queensland: { name: "NPL Queensland", country: "Australia", sport: "football" },
 };
