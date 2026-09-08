@@ -119,6 +119,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | fotmob-calendar-table | fotmob-calendar-table.tsx | Tableau calendrier réplique FotMob clair (ligues, lignes, follow) |
 | fotmob-filter-bar | fotmob-filter-bar.tsx | Barre filtre FotMob clair (datepicker, En direct, Par heure, recherche) |
 | besoccer-score-matrix | besoccer-score-matrix.tsx | Heatmap scores exacts Poisson + marges, style BeSoccer |
+| fotmob-match-stats | fotmob-match-stats.tsx | Encarts match façon FotMob (top-3 stats, barres, stade) |
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | LiveDecisionMomentumWidget | LiveDecisionMomentumWidget.tsx | Widget live : indice de pression [-100,+100], alerte but imminent, marchés live |
 | live-stats-breakdown | live-stats-breakdown.tsx | Stats live bilatérales (jauges possession/attaques/att. dangereuses) + surbrillance seuils funnel In-Play + probabilités live projetées |

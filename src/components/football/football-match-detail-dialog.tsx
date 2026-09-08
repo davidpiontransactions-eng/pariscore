@@ -24,6 +24,7 @@ import { FootballPressReviewWidget } from "@/components/football/FootballPressRe
 import { AIMatchReport } from "./AIMatchReport";
 import { WatchButton } from "@/components/shared/watch-button";
 import { FootballPredictionMarkets } from "@/components/football/football-prediction-markets";
+import { FotmobMatchStats } from "@/components/football/fotmob-match-stats";
 import { BesoccerScoreMatrix } from "@/components/football/besoccer-score-matrix";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
 import { useOddsHistory } from "@/hooks/use-odds-history";
@@ -191,7 +192,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl border-[#f0f0f0] bg-[#fafafa] text-[#222222]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between gap-2">
             <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
@@ -302,9 +303,15 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
               </div>
             )}
 
+            {/* Encarts façon FotMob : meilleures stats + stade (live et prematch) */}
+            {view && (
+              <div className="mt-3">
+                <FotmobMatchStats match={view} />
+              </div>
+            )}
+
         {/* ---------- CORPS : PRÉMATCH → comparatif + 3 paris ---------- */}
-        {view && !view.live && (
-          <div className="mt-4 space-y-4">
+        {view && !view.live && (          <div className="mt-4 space-y-4">
             {/* Panneau comparatif Équipe 1 (dom) vs Équipe 2 (ext) */}
             <section className="rounded-2xl border border-border/60 bg-card p-3.5">
               <header className="mb-3 flex items-center justify-between gap-2">
