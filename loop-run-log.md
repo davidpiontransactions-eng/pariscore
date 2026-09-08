@@ -66,3 +66,9 @@ Hint: run 'bd where' to inspect the resolved workspace, or 'bd init' to create a
 Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
 Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
 Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Le processus ne peut pas acc‚der au fichier car ce fichier est utilis‚ par un autre processus.
+Error: no beads database found
+Hint: run 'bd where' to inspect the resolved workspace, or 'bd init' to create a new database
+      or set BEADS_DIR to point to your .beads directory

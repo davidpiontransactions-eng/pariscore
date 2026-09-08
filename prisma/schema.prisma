@@ -42,14 +42,15 @@ model Follow {
 // ─── Sports Data ─────────────────────────────────────────────────────────────
 
 model League {
-  id      String  @id
-  name    String
-  country String
-  logo    String?
-  tier    String?
-  sport   String  @default("football")
-  teams   Team[]
-  matches Match[]
+  id          String  @id
+  name        String
+  country     String
+  logo        String?
+  tier        String?
+  sport       String  @default("football")
+  bzzoiroId   Int?    // ID BSD v2
+  teams       Team[]
+  matches     Match[]
 }
 
 model Team {
@@ -59,6 +60,7 @@ model Team {
   country     String?
   logo        String?
   color       String?
+  bzzoiroId   Int?     // ID BSD v2
   leagueId    String?
   league      League?  @relation(fields: [leagueId], references: [id])
   homeMatches Match[]  @relation("homeMatches")
@@ -70,17 +72,20 @@ model Team {
 }
 
 model Match {
-  id          String   @id
-  sport       String   @default("football")
-  leagueId    String?
-  league      League?  @relation(fields: [leagueId], references: [id])
-  homeId      String
-  awayId      String
-  home        Team     @relation("homeMatches", fields: [homeId], references: [id])
-  away        Team     @relation("awayMatches", fields: [awayId], references: [id])
-  round       String?
-  scheduledAt DateTime
-  status      String   @default("scheduled")
+  id            String   @id
+  sport         String   @default("football")
+  bzzoiroId     Int?     // ID BSD v2
+  flashscoreId  String?  // ID Flashscore
+  pronosDataId  String?  // ID Pronos Data
+  leagueId      String?
+  league        League?  @relation(fields: [leagueId], references: [id])
+  homeId        String
+  awayId        String
+  home          Team     @relation("homeMatches", fields: [homeId], references: [id])
+  away          Team     @relation("awayMatches", fields: [awayId], references: [id])
+  round         String?
+  scheduledAt   DateTime
+  status        String   @default("scheduled")
   liveMinute     Int?
   liveHomeScore  Int?
   liveAwayScore  Int?
@@ -165,16 +170,18 @@ model TennisPlayerMatch {
 }
 
 model TennisMatch {
-  id          String   @id
-  playerAId   String
-  playerBId   String
-  playerA     Team     @relation("playerAMatches", fields: [playerAId], references: [id])
-  playerB     Team     @relation("playerBMatches", fields: [playerBId], references: [id])
-  tournament  String
-  surface     String?  // "hard", "clay", "grass"
-  scheduledAt DateTime
-  status      String   @default("scheduled")
-  round       String?
+  id            String   @id
+  bzzoiroId     Int?     // ID BSD Tennis v2
+  flashscoreId  String?  // ID Flashscore
+  playerAId     String
+  playerBId     String
+  playerA       Team     @relation("playerAMatches", fields: [playerAId], references: [id])
+  playerB       Team     @relation("playerBMatches", fields: [playerBId], references: [id])
+  tournament    String
+  surface       String?
+  scheduledAt   DateTime
+  status        String   @default("scheduled")
+  round         String?
 
   // Elo / Stats
   eloA      Float?
@@ -676,4 +683,33 @@ model BeSoccerAnalysis {
   @@index([matchId])
   @@index([homeTeam, awayTeam])
   @@map("besoccer_analyses")
+}
+
+// ─── Strategy Picks (Top 10 par stratégie) ──────────────────────────────────
+
+model StrategyPick {
+  id              String   @id @default(cuid())
+  matchId         String
+  sport           String   @default("football")
+  strategyType    String   // "bestTeam", "over15", "bttsYes", "edge1x2Home", etc.
+  homeTeam        String
+  awayTeam        String
+  league          String?
+  winProbability  Float    // P_win calculée (0-1)
+  expectedValue   Float    // EV = (P_win × cote) - 1
+  odds            Float    // cote marché
+  confidenceScore Int      @default(3) // 1-5
+  model           String   @default("ensemble") // "poisson", "dixon-coles", "elo", "ensemble"
+  pick            String   // "home" | "draw" | "away" | "over15" | "bttsYes" | etc.
+  edge            Float    @default(0) // difference prob implicite vs notre prob
+  kellyStake      Float?   // mise Kelly optimale
+  settled         Boolean  @default(false)
+  result          String?  // "W" | "L" | "V"
+  pickedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([sport, strategyType, pickedAt(sort: Desc)])
+  @@index([matchId])
+  @@index([winProbability(sort: Desc)])
+  @@map("strategy_picks")
 }
