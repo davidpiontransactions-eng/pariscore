@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { expectedScore, calculateEdge, kellyStake } from "../../../../../lib/snooker/elo";
+import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
 
 export const runtime = "nodejs";
 
@@ -77,25 +78,68 @@ type TopPick = {
   tournament: string;
   player1: PickPlayer;
   player2: PickPlayer;
-  /** Côté du pick : "A" (player1) ou "B" (player2). */
   pickSide: "A" | "B";
   pickName: string;
-  /** Probabilité modèle du favori (0..1) — toujours >= 0.65. */
   prob: number;
   probA: number;
   probB: number;
   odds?: number;
-  /** Edge = prob modèle − prob implicite marché (si cote dispo). */
   edge?: number;
-  /** Fraction de bankroll Kelly (si cote dispo). */
   kelly?: number;
-  /** Confiance 1-5 (prob + fiabilité de l'échantillon). */
   confidence: number;
+  scheduledAt?: string;
+  player1PhotoUrl?: string;
+  player2PhotoUrl?: string;
+  bets: Array<{ type: string; label: string; prob: number }>;
 };
 
 // ---------------------------------------------------------------------------
 // Constantes & helpers
 // ---------------------------------------------------------------------------
+// ─── Génération de 3 paris pré-match ───────────────────────────────────────
+function buildPickBets(probA: number, probB: number, eloA: number, eloB: number): Array<{ type: string; label: string; prob: number }> {
+  const favProb = Math.max(probA, probB);
+  const underdogProb = Math.min(probA, probB);
+  const eloDiff = Math.abs(eloA - eloB);
+  const bets: Array<{ type: string; label: string; prob: number }> = [];
+
+  // 1. Handicap frames (si favori large)
+  if (favProb >= 0.75) {
+    const pHandicap = 0.4 + (favProb - 0.5) * 0.5; // 0.40→0.65 selon prob
+    bets.push({ type: "handicap", label: "Handicap -2.5 frames", prob: Math.min(0.95, Math.max(0.5, pHandicap)) });
+  } else if (favProb >= 0.65) {
+    const pHandicap = 0.35 + (favProb - 0.5) * 0.4;
+    bets.push({ type: "handicap", label: "Handicap -1.5 frames", prob: Math.min(0.95, Math.max(0.5, pHandicap)) });
+  }
+
+  // 2. Total frames over/under
+  const isClose = favProb < 0.70;
+  if (isClose) {
+    const pOver = 0.45 + (0.70 - favProb) * 0.3; // ~0.45→0.51
+    bets.push({ type: "total_frames", label: "Over 8.5 frames", prob: Math.min(0.95, Math.max(0.5, pOver)) });
+  } else {
+    const pUnder = 0.35 + favProb * 0.25; // ~0.50→0.58
+    bets.push({ type: "total_frames", label: "Under 7.5 frames", prob: Math.min(0.95, Math.max(0.5, pUnder)) });
+  }
+
+  // 3. Century in match (si joueurs actifs + gros breakeurs)
+  const centuryProb = 0.25 + (eloDiff > 300 ? 0.15 : 0) + (favProb > 0.7 ? 0.10 : 0);
+  bets.push({ type: "century", label: "Century in match — Oui", prob: Math.min(0.95, Math.max(0.5, centuryProb)) });
+
+  return bets;
+}
+
+// ─── Parse l'heure FlashScore "11:00" → ISO string (date du scrape) ────────
+function parseTime(time: string, scrapedAt: string): string | undefined {
+  if (!time || time === "-" || time === "") return undefined;
+  try {
+    const [hours, minutes] = time.split(":").map(Number);
+    if (isNaN(hours) || isNaN(minutes)) return undefined;
+    const ref = new Date(scrapedAt);
+    const d = new Date(Date.UTC(ref.getFullYear(), ref.getMonth(), ref.getDate(), hours, minutes));
+    return d.toISOString();
+  } catch { return undefined; }
+}
 
 const MATCHES_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
 const PLAYERS_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
@@ -284,6 +328,8 @@ export async function GET() {
       return out;
     };
 
+    const scheduledAt = parseTime(m.time, matchesData.scraped_at);
+
     picks.push({
       matchId: m.id,
       tournament: m.tournament || "Snooker",
@@ -296,6 +342,8 @@ export async function GET() {
       probB,
       ...(odds !== undefined ? { odds, edge, kelly } : {}),
       confidence: toConfidence(prob, cueA.matches_played ?? 0, cueB.matches_played ?? 0),
+      scheduledAt,
+      bets: buildPickBets(probA, probB, eloA, eloB),
     });
   }
 
@@ -309,9 +357,35 @@ export async function GET() {
 
   const top = picks.slice(0, LIMIT);
 
+  // Enrichir avec photos Wikipedia (best-effort parallèle)
+  // On reconstitue les IDs CueTracker depuis le nom via l'index
+  const cueAIndex = new Map<string, CuePlayer>();
+  for (const p of playersData.players ?? []) {
+    const key = p.name.toLowerCase().trim();
+    cueAIndex.set(key, p);
+    // also store partial (lastname)
+    const parts = key.split(/\s+/);
+    if (parts.length >= 2) cueAIndex.set(parts[0], p);
+  }
+
+  const photoPromises = top.map(async (pick) => {
+    const keyA = pick.player1.name.toLowerCase().trim();
+    const keyB = pick.player2.name.toLowerCase().trim();
+    const p1 = cueAIndex.get(keyA) || cueAIndex.get(keyA.split(/\s+/)[0]);
+    const p2 = cueAIndex.get(keyB) || cueAIndex.get(keyB.split(/\s+/)[0]);
+    const [p1Photo, p2Photo] = await Promise.all([
+      p1 ? fetchPlayerPhoto(p1.id).catch(() => undefined) : Promise.resolve(undefined),
+      p2 ? fetchPlayerPhoto(p2.id).catch(() => undefined) : Promise.resolve(undefined),
+    ]);
+    if (p1Photo) pick.player1PhotoUrl = p1Photo;
+    if (p2Photo) pick.player2PhotoUrl = p2Photo;
+    return pick;
+  });
+  const enriched = await Promise.all(photoPromises);
+
   return NextResponse.json({
-    picks: top,
-    total: top.length,
+    picks: enriched,
+    total: enriched.length,
     minProb: MIN_PROB,
     generated_at: new Date().toISOString(),
     sources: {
