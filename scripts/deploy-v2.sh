@@ -4,7 +4,7 @@
 # Améliorations vs v1 :
 #   - Pre-deploy: lint + typecheck + tests E2E
 #   - Database backup avant schema changes
-#   - Health check sur les 2 ports (3000 legacy + 3005 Next.js)
+#   - Health check Next.js standalone (port 3000, instance unique)
 #   - Deploy locking (flock) — évite les deploys concurrents
 #   - Rollback automatique si health check échoue
 #   - Smoke test post-deploy (page título + API status)
@@ -106,7 +106,7 @@ fi
 # Tests E2E (skip if SKIP_TESTS=1)
 if [ "${SKIP_TESTS:-0}" != "1" ] && [ "$NEED_BUILD" = "1" ]; then
   log "  Running Playwright tests..."
-  PLAYWRIGHT_BASE_URL="http://localhost:3005" npx playwright test tests/personal-pages.spec.ts --reporter=line 2>&1 | tail -10 | tee -a "$LOG_FILE"
+  PLAYWRIGHT_BASE_URL="http://localhost:3000" npx playwright test tests/personal-pages.spec.ts --reporter=line 2>&1 | tail -10 | tee -a "$LOG_FILE"
   TEST_RC=$?
   if [ $TEST_RC -ne 0 ]; then
     err "Playwright tests failed (rc=$TEST_RC) — deploy aborted"
@@ -255,12 +255,12 @@ for i in $(seq 1 $MAX_CHECKS); do
     fi
   fi
 
-  # Check Next.js port 3005
+  # Check Next.js (port 3000 — instance unique servant tout le site)
   if [ "$NEXT_OK" = "0" ]; then
-    HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -m 5 http://localhost:3005/ 2>/dev/null || echo "000")
+    HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -m 5 http://localhost:3000/ 2>/dev/null || echo "000")
     if [ "$HTTP_CODE" = "200" ]; then
       NEXT_OK=1
-      ok "  Next.js (port 3005): OK (HTTP $HTTP_CODE)"
+      ok "  Next.js (port 3000): OK (HTTP $HTTP_CODE)"
     fi
   fi
 

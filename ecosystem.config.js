@@ -59,7 +59,9 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
-        PORT: 3005,
+        // PORT 3000 : l'instance Next standalone sert tout le site derrière
+        // nginx (location / → :3000). Ne pas déplacer (cf. incident 2026-09-08).
+        PORT: 3000,
       },
       error_file: 'logs/pariscore-next.err.log',
       out_file: 'logs/pariscore-next.out.log',
