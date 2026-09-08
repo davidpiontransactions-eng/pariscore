@@ -33,7 +33,27 @@
 | Nom joueur tronqué (100px) | match-card.tsx:85/119 | ✅ Porté à 120px |
 | Indentation cassée snooker tab | sport-tabs.tsx:29 | ✅ Fixé 2 espaces |
 
-## DESIGN BEHANCE VERIFICATION
+## QA AUDIT SERVER + DATA — 2026-09-08
+
+| API | Statut | Data |
+|-----|--------|------|
+| `/api/v1/snooker/matches` | ✅ | 17 matchs, 0 avec cotes (pas d'odds scrapés sur VPS — WAF) |
+| `/api/v1/snooker/predictions` | ✅ | 1 pick Ding 65.3%, pas d'edge/odds |
+| `/api/v1/snooker/players` | ✅ | 100 joueurs, 15 avec photos Unsplash |
+
+### Issues détectés
+
+| # | Bug | Gravité | Statut |
+|---|-----|---------|--------|
+| 1 | cuetracker scraper → 0 players (parsing HTML cassé) | ⚠️ Haut | Fix URLs lowercase + parsing à revoir |
+| 2 | FlashScore odds → 0/17 (WAF VPS bloque) | ⚠️ Moyen | FlareSolverr requis |
+| 3 | photoUrl matchs non résolue (noms FlashScore abrégés "Selby M." ≠ "mark selby") | 🔵 Faible | ✅ Token match: nom de famille + prénom initial |
+| 4 | Cron `$PATH` mal échappé (\\\\ au lieu de /usr/bin) | ⚠️ Moyen | ✅ Fixé avec PATH hardcodé /home/ubuntu/.bun/bin/ |
+
+### Cron installé VPS
+```
+30 4 * * * cd /home/ubuntu/pariscore && /home/ubuntu/.bun/bin/node scripts/scrape_flashscore_snooker.mjs >> .../snooker-scrape.log 2>&1 && python3 scripts/scrape_cuetracker.py >> .../snooker-scrape.log 2>&1
+```
 
 | Check | Status |
 |------|--------|
