@@ -116,6 +116,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | football-league-rankings-widget | football-league-rankings-widget.tsx | Widget sidebar « Classements championnat » (buts/m, PPM, O1.5/U3.5, BTTS, corners O6.5/O7.5, xG/xGA × global/dom/ext × saison) |
 | FootballPressReviewWidget | FootballPressReviewWidget.tsx | Widget « Revue de Presse & Pronostics Médias » (3+ sources, consensus 1X2/Over/BTTS) |
 | football-tab-content | football-tab-content.tsx | Contenu de l'onglet football |
+| fotmob-calendar-table | fotmob-calendar-table.tsx | Tableau calendrier réplique FotMob clair (ligues, lignes, follow) |
 | flashscore-football-list | flashscore-football-list.tsx | Liste style Flashscore |
 | LiveDecisionMomentumWidget | LiveDecisionMomentumWidget.tsx | Widget live : indice de pression [-100,+100], alerte but imminent, marchés live |
 | live-stats-breakdown | live-stats-breakdown.tsx | Stats live bilatérales (jauges possession/attaques/att. dangereuses) + surbrillance seuils funnel In-Play + probabilités live projetées |
