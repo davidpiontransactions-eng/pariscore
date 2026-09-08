@@ -569,10 +569,10 @@ def main():
     print("[cuetracker] Récupération des pages CueTracker...")
     pages = {}
     for key, url in {
-        "matches": f"{BASE_URL}/Statistics/Matches-and-Frames/Won/All-time",
-        "centuries": f"{BASE_URL}/Statistics/Centuries/Most-Made/All-time",
-        "max_break": f"{BASE_URL}/Statistics/Centuries/Players-Highest-Break/All-time",
-        "deciders": f"{BASE_URL}/Statistics/Matches-and-Frames/Deciders/All-time",
+        "matches": f"{BASE_URL}/statistics/matches-and-frames/won/all-time",
+        "centuries": f"{BASE_URL}/statistics/centuries/most-made/all-time",
+        "max_break": f"{BASE_URL}/statistics/centuries/players-highest-break/all-time",
+        "deciders": f"{BASE_URL}/statistics/matches-and-frames/deciders/all-time",
         "rankings": rankings_url(args.year),  # saison : août → N/N+1, sinon N-1/N
     }.items():
         html = fetch_page(url, args.dry_run)
