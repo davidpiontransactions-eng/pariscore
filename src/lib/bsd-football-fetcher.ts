@@ -498,7 +498,7 @@ export async function fetchBSDMatchStats(matchId: string): Promise<FootballMatch
 }
 
 export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {
-  const matches = await bsdFetch<BSDFootballMatch[]>("/matches/?status=notstarted&limit=100");
+  const matches = await bsdFetch<BSDFootballMatch[]>("/matches/?status=notstarted&limit=500");
   const result = matches.map(buildMatch);
   console.log(`[bsd-foot] Fetched ${result.length} prematch matches`);
 
