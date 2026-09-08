@@ -47,6 +47,7 @@ type ApiPlayer = {
   centuryRate?: number;
   deciderWinPct?: number;
   avgBreak?: number;
+  photoUrl?: string;
 };
 
 type PlayersResponse = {
