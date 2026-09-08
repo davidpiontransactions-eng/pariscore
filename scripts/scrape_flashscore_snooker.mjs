@@ -117,13 +117,50 @@ async function scrapeMatches(page, url, label) {
   return matches;
 }
 
+/** Récupère les cotes via FlareSolverr (contourne WAF Cloudflare sur VPS) */
+async function scrapeOddsViaFlareSolverr(matchId) {
+  const url = `https://www.flashscore.com/match/${matchId}/#/match-summary/match-odds/1x2-odds`;
+  const flareApi = process.env.FLARESOLVERR_URL || "http://localhost:8191/v1";
+  try {
+    const payload = {
+      cmd: "request.get",
+      url,
+      maxTimeout: 15000,
+      session: "snooker-odds",
+    };
+    const res = await fetch(flareApi, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const html = data?.solution?.response || data?.solution?.html || "";
+    if (!html) return null;
+
+    const odds = [];
+    const bookmakerRegex = /<span[^>]*class="bookmaker[^"]*"[^>]*>([^<]+)<\/span>/gi;
+    const oddsRegex = /<span[^>]*class="odds__odd[^"]*"[^>]*>([\d.]+)<\/span>/gi;
+    const bookmakers = [...html.matchAll(bookmakerRegex)].map(m => m[1].trim());
+    const oddValues = [...html.matchAll(oddsRegex)].map(m => parseFloat(m[1]));
+    for (let i = 0; i < bookmakers.length; i++) {
+      if (oddValues[i * 3] && oddValues[i * 3 + 2]) {
+        odds.push({ bookmaker: bookmakers[i], home: oddValues[i * 3], draw: oddValues[i * 3 + 1] ?? null, away: oddValues[i * 3 + 2] });
+      }
+    }
+    return odds.length > 0 ? odds : null;
+  } catch { return null; }
+}
+
+/** Scrape cotes d'un match: FlareSolverr first, Playwright fallback */
 async function scrapeOddsDetail(page, matchId) {
-  // Tenter de récupérer les cotes détaillées (bookmakers) pour un match
+  const fsOdds = await scrapeOddsViaFlareSolverr(matchId);
+  if (fsOdds) return fsOdds;
+  // Fallback Playwright
   try {
     const url = `https://www.flashscore.com/match/${matchId}/#/match-summary/match-odds/1x2-odds`;
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
     await page.waitForTimeout(2000);
-
     const odds = await page.evaluate(() => {
       const bookmakerOdds = [];
       const rows = document.querySelectorAll('[class*="ui-table__row"], [class*="odds__row"]');
@@ -137,11 +174,8 @@ async function scrapeOddsDetail(page, matchId) {
       }
       return bookmakerOdds;
     });
-
     return odds.length > 0 ? odds : null;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 async function main() {

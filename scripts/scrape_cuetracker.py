@@ -78,7 +78,7 @@ def rotate_headers():
             "en-GB,en;q=0.9",
             "fr-FR,fr;q=0.9,en;q=0.8",
         ]),
-        "Accept-Encoding": "gzip, deflate, br",
+        "Accept-Encoding": "gzip, deflate",
         "Referer": f"{BASE_URL}/",
         "Sec-Ch-Ua": '"Chromium";v="124", " Not;A=Brand";v="99", "Google Chrome";v="124"',
         "Connection": "keep-alive",
@@ -583,11 +583,7 @@ def main():
 
     # 1. Statistiques matchs/frames (Won/All-time : played/wins, losses dérivées)
     base_players = scrape_player_stats(pages.get("matches", ""))
-    if len(base_players) == 0:
-        soup = BeautifulSoup(pages.get("matches", "") or "", "html.parser")
-        print(f"  [debug] match html len={len(pages.get('matches','') or '')} tables={len(soup.find_all('table'))} tr={len(soup.find_all('tr'))}")
-    else:
-        print(f"  → {len(base_players)} joueurs avec stats matchs")
+    print(f"  → {len(base_players)} joueurs avec stats matchs")
 
     # 2. Records en deciders (colonne Win-percentage)
     decider_map = scrape_deciders(pages.get("deciders", ""))
