@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { useSportsTree } from "@/hooks/use-sports-tree";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
+import { resolvePlayerPhoto } from "@/lib/player-photos";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import type { SportNode, TreeMatchSummary } from "@/types/sports-sidebar";
 
@@ -20,6 +22,8 @@ type CalendarMatch = {
   sportIcon: string;
   homeName: string;
   awayName: string;
+  homePhoto?: string | null;
+  awayPhoto?: string | null;
   scheduledAt: string;
   isLive: boolean;
   leagueName: string;
@@ -89,6 +93,8 @@ function extractTodayMatches(sport: SportNode): CalendarMatch[] {
             sportIcon: SPORT_ICONS[sport.id] ?? "🏆",
             homeName: m.homeName,
             awayName: m.awayName,
+            homePhoto: resolvePlayerPhoto(m.homeName),
+            awayPhoto: resolvePlayerPhoto(m.awayName),
             scheduledAt: m.scheduledAt,
             isLive: m.isLive ?? false,
             leagueName: league.name,
@@ -213,8 +219,7 @@ export function MultisportCalendar({ className }: { className?: string }) {
             <thead>
               <tr className="border-b border-border/40 bg-muted/30 text-left text-[11px] uppercase tracking-wider text-muted-foreground">
                 <th className="px-3 py-2.5 font-medium">Heure</th>
-                <th className="px-3 py-2.5 font-medium">Sport</th>
-                <th className="px-3 py-2.5 font-medium">Rencontre</th>
+                <th className="px-3 py-2.5 font-medium">Match</th>
                 <th className="px-3 py-2.5 font-medium">Compétition</th>
                 <th className="px-3 py-2.5 font-medium text-right">Edge</th>
               </tr>
@@ -252,10 +257,31 @@ export function MultisportCalendar({ className }: { className?: string }) {
                         formatHour(m.scheduledAt)
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-lg">{m.sportIcon}</td>
-                    <td className="px-3 py-2.5 min-w-[180px]">
-                      <div className="font-medium text-slate-100 hover:text-emerald-400 transition-colors">
-                        {m.homeName} vs {m.awayName}
+                    <td className="px-3 py-2.5 min-w-[240px]">
+                      <div className="flex items-center gap-2">
+                        <PlayerAvatar
+                          name={m.homeName}
+                          photoUrl={m.homePhoto}
+                          size="sm"
+                          sport={m.sport as any}
+                          className="shrink-0"
+                        />
+                        <span className="flex-1 truncate font-medium text-right text-slate-100 text-xs">
+                          {m.homeName}
+                        </span>
+                        <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-1">
+                          VS
+                        </span>
+                        <span className="flex-1 truncate font-medium text-left text-slate-100 text-xs">
+                          {m.awayName}
+                        </span>
+                        <PlayerAvatar
+                          name={m.awayName}
+                          photoUrl={m.awayPhoto}
+                          size="sm"
+                          sport={m.sport as any}
+                          className="shrink-0"
+                        />
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-xs text-slate-400">
