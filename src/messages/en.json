@@ -218,6 +218,7 @@
     "emptyLiveHint": "Live matches appear here as soon as they kick off",
     "emptyPrematch": "No match in this window",
     "emptyPrematchHint": "Widen the time window or come back later",
+    "resetFilters": "Reset filters",
     "timeFilterLabel": "Start time",
     "timeAll": "All",
     "timeHour": "{hours}h",

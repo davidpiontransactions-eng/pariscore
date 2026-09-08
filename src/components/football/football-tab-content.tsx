@@ -130,6 +130,21 @@ export function FootballTabContent() {
   const selectedMatchIds = useSportsSidebarStore((s) => s.selectedMatchIds);
   const selectedCountryId = useSportsSidebarStore((s) => s.selectedCountryId);
   const clearCountry = useSportsSidebarStore((s) => s.selectCountry);
+  const clearMatchSelection = useSportsSidebarStore((s) => s.clearMatchSelection);
+
+  // Filtres actifs pouvant vider la vue Live (persistés localStorage/URL) :
+  // on propose un bouton de réinitialisation dans l'état vide.
+  const liveFiltersActive =
+    selectedLeague !== null ||
+    selectedCountryId !== null ||
+    timeKey !== "all" ||
+    selectedMatchIds.length > 0;
+  const resetLiveFilters = useCallback(() => {
+    setSelectedLeague(null);
+    clearCountry(null);
+    setTimeKey("all");
+    clearMatchSelection();
+  }, [setSelectedLeague, clearCountry, setTimeKey, clearMatchSelection]);
 
   const liveMatches = useMemo(() => {
     let list = matches.filter((m) => m.live && (m.live.status === "LIVE" || m.live.status === "HT"));
@@ -387,7 +402,10 @@ export function FootballTabContent() {
                   </div>
                 </>
               ) : (
-                <MatchEmptyState mode="live" />
+                <MatchEmptyState
+                  mode="live"
+                  onResetFilters={liveFiltersActive ? resetLiveFilters : undefined}
+                />
               )}
             </section>
           ) : (

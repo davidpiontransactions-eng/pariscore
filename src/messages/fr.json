@@ -218,6 +218,7 @@
     "emptyLiveHint": "Les matchs en direct apparaissent ici dès leur coup d'envoi",
     "emptyPrematch": "Aucun match dans cette fenêtre",
     "emptyPrematchHint": "Élargissez la fenêtre horaire ou revenez plus tard",
+    "resetFilters": "Réinitialiser les filtres",
     "timeFilterLabel": "Heure de début",
     "timeAll": "Toutes",
     "timeHour": "{hours}h",
