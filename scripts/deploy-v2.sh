@@ -186,6 +186,33 @@ if [ "$NEED_BUILD" = "1" ]; then
   npx prisma generate 2>&1 | tail -3 | tee -a "$LOG_FILE" || { err "prisma generate failed"; exit 1; }
   cp -f .env .next/standalone/.env 2>/dev/null || true
   ok "  Build + Prisma sync complete"
+
+  # --- Fix static asset permissions (chunks + public/) ---
+  log "  Fixing static asset permissions..."
+  find .next/standalone/.next -type f -exec chmod 644 {} \; 2>/dev/null || true
+  find .next/standalone/.next -type d -exec chmod 755 {} \; 2>/dev/null || true
+  find .next/standalone/public -type f -exec chmod 644 {} \; 2>/dev/null || true
+  find .next/standalone/public -type d -exec chmod 755 {} \; 2>/dev/null || true
+  chown -R ubuntu:ubuntu .next/standalone/ 2>/dev/null || true
+  ok "  Static assets permissions fixed"
+
+  # --- Symlink data directory inside standalone ---
+  log "  Ensuring data symlink in standalone..."
+  if [ ! -L .next/standalone/data ]; then
+    ln -sf "$(pwd)/data" .next/standalone/data 2>/dev/null || true
+  fi
+  ok "  Data symlink ensured"
+
+  # --- Fix Nginx CSP (remove double-quoting) ---
+  log "  Fixing Nginx CSP header..."
+  CSP_CONF="/etc/nginx/conf.d/csp-headers.conf"
+  if [ -f "$CSP_CONF" ]; then
+    sudo sed -i "s/frame-ancestors ''none''/frame-ancestors 'none'/g" "$CSP_CONF" 2>/dev/null || true
+    sudo sed -i "s/frame-ancestors .none./frame-ancestors 'none'/g" "$CSP_CONF" 2>/dev/null || true
+    ok "  Nginx CSP fixed"
+  else
+    log "  No CSP config file found at $CSP_CONF"
+  fi
 else
   log "[6/9] Next.js build SKIPPED (legacy-only deploy)"
 fi
@@ -204,6 +231,12 @@ if [ "$BUILD_RAN" = "1" ]; then
 fi
 pm2 save 2>/dev/null || true
 ok "  PM2 restart complete"
+
+# --- Nginx reload (apply CSP / permissions changes) ---
+log "  Reloading Nginx..."
+sudo nginx -t 2>&1 | tail -2 | tee -a "$LOG_FILE" || { err "Nginx config test failed"; exit 1; }
+sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null || true
+ok "  Nginx reloaded"
 
 # --- [8/9] Health check (both ports) ---
 log "[8/9] Health check..."
@@ -268,6 +301,35 @@ API_HTTP=$(curl -s -o /dev/null -w '%{http_code}' -m 10 https://pariscore.fr/api
 if [ "$API_HTTP" != "200" ]; then
   err "  Smoke test FAILED: API status returned HTTP $API_HTTP"
   SMOKE_OK=0
+fi
+
+# Check static assets (were returning 500)
+ASSETS_OK=1
+for asset in favicon.svg logo-header.svg sports-athlete-header.svg manifest.json icon-192.png icon-512.png; do
+  HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -m 5 "https://pariscore.fr/$asset" 2>/dev/null || echo "000")
+  if [ "$HTTP_CODE" != "200" ]; then
+    err "  Static asset FAILED: $asset → HTTP $HTTP_CODE"
+    ASSETS_OK=0
+  fi
+done
+if [ "$ASSETS_OK" = "1" ]; then
+  ok "  All static assets: OK"
+else
+  err "  Some static assets failed (see above)"
+  SMOKE_OK=0
+fi
+
+# Check CSP header is valid
+CSP_OK=1
+CSP_HEADER=$(curl -s -I -m 5 https://pariscore.fr/ 2>/dev/null | grep -i 'content-security-policy' | head -1)
+if echo "$CSP_HEADER" | grep -q "frame-ancestors ''none''" 2>/dev/null; then
+  err "  CSP header has invalid syntax: frame-ancestors ''none''"
+  CSP_OK=0
+  SMOKE_OK=0
+elif echo "$CSP_HEADER" | grep -q "frame-ancestors 'none'" 2>/dev/null; then
+  ok "  CSP header: valid"
+else
+  log "  CSP header: not found (may be served by Next.js, not Nginx)"
 fi
 
 if [ "$SMOKE_OK" = "0" ]; then
