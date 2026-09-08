@@ -5,56 +5,49 @@ import useSWR from "swr";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { CalendarDateNav, parisDateKey, parisDateFull } from "@/components/football/calendar-date-nav";
 import { parisKickoff } from "@/lib/football-time";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 
-// ─── Types ─────────
-type BSTeam = { id: string; name: string; shortName: string; logo: string; color: string };
-type BSLive = { homeScore: number; awayScore: number; minute: number; status: "LIVE" | "HT" | "FT" };
-type BSLeague = { id: number; name: string; country: string; logo?: string };
-type BSOdds = { home: number; draw: number; away: number };
+type BSTeam = { id: string; name: string; shortName?: string; logo?: string; color?: string };
+type BSLive = { homeScore?: number; awayScore?: number; minute?: number; status?: string };
+type BSLeague = { id?: number; name: string; country?: string; logo?: string };
+type BSOdds = { home?: number; draw?: number; away?: number };
 
 type BSTMatch = {
   id: string; scheduledAt: string; home: BSTeam; away: BSTeam;
   league?: BSLeague; competition?: string; odds?: BSOdds; live?: BSLive;
 };
 
-type LeagueGroup = { leagueId: string; leagueName: string; country: string; logo?: string; matches: BSTMatch[]; };
+type LeagueGroup = { leagueId: string; leagueName: string; country: string; logo?: string; matches: BSTMatch[] };
 
-type MatchFilter = "all" | "live" | "scheduled" | "finished";
-
-// ─── Helpers ─────────
 const BSD_TEAM_LOGO = "https://sports.bzzoiro.com/img/team/";
-const BSD_LEAGUE_LOGO = "https://sports.bzzoiro.com/img/league/";
 
-function getStatus(m: BSTMatch): "scheduled" | "LIVE" | "HT" | "FT" {
+function getStatus(m: BSTMatch): string {
   if (!m.live) return "scheduled";
-  return m.live.status || "scheduled";
+  const s = m.live.status || "scheduled";
+  if (s === "scheduled" || s === "notstarted") return "scheduled";
+  return s;
 }
-
-function isLive(m: BSTMatch): boolean {
-  const s = getStatus(m); return s === "LIVE" || s === "HT";
-}
-
+function isLive(m: BSTMatch): boolean { const s = getStatus(m); return s === "LIVE" || s === "HT"; }
 function getScoreText(m: BSTMatch): string {
-  return m.live?.homeScore != null && m.live?.awayScore != null
-    ? `${m.live.homeScore} - ${m.live.awayScore}` : "";
+  return m.live && m.live.homeScore != null && m.live.awayScore != null
+    ? m.live.homeScore + " - " + m.live.awayScore : "";
 }
-
 function getTimeText(m: BSTMatch): string {
   const s = getStatus(m);
-  if (s === "FT") return "FT";
+  if (s === "FT") return "Terminé";
   if (s === "HT") return "MT";
-  if (s === "LIVE") return `${m.live!.minute}'`;
+  if (s === "LIVE") return m.live && m.live.minute != null ? m.live.minute + "'" : "En direct";
   return parisKickoff(m.scheduledAt);
 }
-
-function teamLogoUrl(m: BSTMatch, side: "home" | "away"): string {
-// ══════════════════════════════════════════
-//  FotMob-style League Header
-// ══════════════════════════════════════════
+function teamLogoUrl(m: BSTMatch, side: string): string {
+  const t = side === "home" ? m.home : m.away;
+  if (t.logo) return t.logo;
+  if (t.id) return BSD_TEAM_LOGO + t.id + "/";
+  return "https://api.dicebear.com/9.x/initials/svg?seed=" + encodeURIComponent(t.name) + "&backgroundType=gradientLinear";
+}
 
 function FotMobLeagueHeader({
   league, matchCount, isCollapsed, onToggle,
@@ -64,35 +57,179 @@ function FotMobLeagueHeader({
   return (
     <div className="group relative flex items-center justify-between overflow-hidden h-11 bg-slate-800/60 border border-slate-700/40 rounded-lg">
       <button type="button" onClick={onToggle}
-        className="relative flex h-full w-full items-center gap-3 px-4 transition-colors hover:bg-slate-700/40 text-left"
-      >
+        className="relative flex h-full w-full items-center gap-3 px-4 transition-colors hover:bg-slate-700/40 text-left">
         <div className="shrink-0 text-lg">
-          {league.country ? countryFlag(league.country) : "🏆"}
+          {league.country ? countryFlag(league.country) : "Cup"}
         </div>
         <span className="text-xs font-medium md:text-sm text-slate-200 truncate">
-          {league.country ? `${league.country} - ${league.leagueName}` : league.leagueName}
+          {league.country ? league.country + " - " + league.leagueName : league.leagueName}
         </span>
       </button>
-      <div className="overflow-hidden transition-all duration-300 max-w-0 opacity-0 group-hover:max-w-[40px] group-hover:opacity-100">
+      <div className="hidden md:flex items-center gap-1 px-2">
         <span className="flex min-w-5 items-center justify-center rounded-xl px-1.5 py-0.5 text-[11px] font-medium text-white bg-slate-600">
           {matchCount}
         </span>
       </div>
       <button type="button" onClick={onToggle}
         className="relative flex h-full items-center rounded-sm px-3 transition-all hover:bg-slate-700/40"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"
-          className={cn("size-5 shrink-0 fill-current text-slate-400 transition-transform duration-300",
-            !isCollapsed ? "rotate-0" : "rotate-180")}>
-          <path d="M5.59613 11.0529L9.04513 7.59989C9.16849 7.47628 9.315 7.37822 9.4763 7.31131C9.6376 7.2444 9.81051 7.20996 9.98513 7.20996C10.1598 7.20996 10.3327 7.2444 10.494 7.31131C10.6553 7.37822 10.8018 7.47628 10.9251 7.59989L14.3781 11.0529C14.5644 11.2401 14.691 11.4783 14.7421 11.7374C14.7932 11.9964 14.7664 12.2649 14.6651 12.5087C14.5638 12.7526 14.3925 12.961 14.1729 13.1077C13.9533 13.2544 13.6952 13.3327 13.4311 13.3329H6.52513C6.26195 13.3306 6.00532 13.2505 5.78754 13.1027C5.56976 12.955 5.40056 12.746 5.30125 12.5023C5.20194 12.2586 5.17695 11.9909 5.22942 11.733C5.28189 11.4751 5.40948 11.2384 5.59613 11.0529Z"/>
-        </svg>
+        aria-label={isCollapsed ? "Déployer" : "Réduire"}>
+        <ChevronDown className={cn("size-5 shrink-0 fill-current text-slate-400 transition-transform duration-300", isCollapsed ? "" : "rotate-180")} />
       </button>
     </div>
   );
 }
-  const t = side === "home" ? m.home : m.away;
-  if (t.logo) return t.logo;
-  if (t.id) return `${BSD_TEAM_LOGO}${t.id}/`;
-  return `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(t.name)}&backgroundType=gradientLinear`;
+
+function MatchRow({ m }: { m: BSTMatch }) {
+  const live = isLive(m);
+  return (
+    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2 rounded-md hover:bg-slate-800/60 transition-colors">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        <img src={teamLogoUrl(m, "home")} alt="" width="20" height="20" loading="lazy"
+          className="size-5 shrink-0 rounded-full" />
+        <span className="truncate text-sm text-slate-200">{m.home.name}</span>
+      </div>
+      <div className="flex flex-col items-center w-14">
+        {live && <span className="text-[10px] font-bold uppercase text-emerald-400 animate-pulse">● Live</span>}
+        <span className="text-xs font-semibold text-slate-300">{getTimeText(m)}</span>
+        {getScoreText(m) ? <span className="text-xs font-bold text-white">{getScoreText(m)}</span> : null}
+      </div>
+      <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
+        <span className="truncate text-sm text-slate-200">{m.away.name}</span>
+        <img src={teamLogoUrl(m, "away")} alt="" width="20" height="20" loading="lazy"
+          className="size-5 shrink-0 rounded-full" />
+      </div>
+    </div>
+  );
 }
-placeholder
+
+type MatchFilter = "all" | "live" | "scheduled" | "finished";
+
+export function FootballCalendar() {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [filter, setFilter] = useState<MatchFilter>("all");
+  const [query, setQuery] = useState("");
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const dateKey = parisDateKey(selectedDate);
+
+  const { data, isValidating } = useSWR(
+    "/api/football/calendar?date=" + dateKey,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { refreshInterval: 60000, revalidateOnFocus: false }
+  );
+
+  const matches: BSTMatch[] = useMemo(() => (data as { matches?: BSTMatch[] })?.matches ?? [], [data]);
+
+  const filtered = useMemo(() => {
+    let out = matches;
+    if (filter === "live") out = out.filter(isLive);
+    else if (filter === "scheduled") out = out.filter((m) => getStatus(m) === "scheduled");
+    else if (filter === "finished") out = out.filter((m) => getStatus(m) === "FT");
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      out = out.filter((m) => m.home.name.toLowerCase().includes(q) || m.away.name.toLowerCase().includes(q));
+    }
+    return out;
+  }, [matches, filter, query]);
+
+  const groups = useMemo(() => {
+    const map: Record<string, LeagueGroup> = {};
+    for (const m of filtered) {
+      const key = m.league ? String(m.league.id ?? m.league.name) : "other";
+      if (!map[key]) {
+        map[key] = {
+          leagueId: key,
+          leagueName: m.league?.name || m.competition || "Autres ligues",
+          country: m.league?.country || "",
+          logo: m.league?.logo,
+          matches: [],
+        };
+      }
+      map[key].matches.push(m);
+    }
+    return Object.values(map).sort((a, b) => {
+      const al = a.matches.filter(isLive).length;
+      const bl = b.matches.filter(isLive).length;
+      if (al !== bl) return bl - al;
+      return a.leagueName.localeCompare(b.leagueName);
+    });
+  }, [filtered]);
+
+  const liveCount = matches.filter(isLive).length;
+  const scheduledCount = matches.filter((m) => getStatus(m) === "scheduled").length;
+  const counts: Record<MatchFilter, number> = {
+    all: matches.length, live: liveCount, scheduled: scheduledCount, finished: matches.length - liveCount - scheduledCount,
+  };
+  const filters: { key: MatchFilter; label: string }[] = [
+    { key: "all", label: "Tous" },
+    { key: "live", label: "● En direct" },
+    { key: "scheduled", label: "À venir" },
+    { key: "finished", label: "Terminés" },
+  ];
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <span className="inline-block size-2 rounded-full bg-emerald-400"></span>
+          Calendrier Football
+        </h2>
+        <CalendarDateNav selectedDate={selectedDate} onSelect={setSelectedDate} />
+        <p className="text-xs text-slate-400">{parisDateFull(selectedDate)}</p>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {filters.map((f) => (
+          <button key={f.key} type="button" onClick={() => setFilter(f.key)}
+            className={cn(
+              "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+              filter === f.key ? "bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30"
+                : "bg-slate-900/60 text-slate-400 border border-slate-700/40 hover:bg-slate-800"
+            )}>
+            {f.label} <span className="opacity-70">({counts[f.key]})</span>
+          </button>
+        ))}
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-slate-500" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher une équipe…" aria-label="Filtrer matchs"
+            className="pl-8 pr-3 py-1 text-xs rounded-full bg-slate-900/60 border border-slate-700/40 text-slate-300 placeholder:text-slate-600 w-48" />
+        </div>
+      </div>
+
+      {isValidating && groups.length === 0 ? (
+        <div className="mt-4 space-y-2">
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      ) : groups.length === 0 ? (
+        <div className="mt-8 text-center py-10">
+          <div className="text-5xl mb-2">🗓</div>
+          <p className="text-slate-400">Aucun match pour cette journée.</p>
+        </div>
+      ) : (
+        <div className="mt-4 space-y-1">
+          {groups.map((g) => {
+            const isCollapsed = collapsed[g.leagueId] === true;
+            return (
+              <section key={g.leagueId} data-testid="livescores-league"
+                className="mb-1 rounded-lg overflow-hidden border border-slate-800/40 bg-slate-950/50">
+                <FotMobLeagueHeader
+                  league={g}
+                  matchCount={g.matches.length}
+                  isCollapsed={isCollapsed}
+                  onToggle={() => setCollapsed((prev) => ({ ...prev, [g.leagueId]: !isCollapsed }))}
+                />
+                {!isCollapsed && (
+                  <div className="grid overflow-hidden">
+                    {g.matches.map((m) => <MatchRow key={m.id} m={m} />)}
+                  </div>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
