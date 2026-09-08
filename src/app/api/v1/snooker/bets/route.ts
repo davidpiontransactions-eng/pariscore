@@ -26,7 +26,7 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const MIN_PROB = 0.65;
+const MIN_PROB = 0.58;
 
 export async function GET(request: Request) {
   const isLive = new URL(request.url).searchParams.get("live") === "1";

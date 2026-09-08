@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 // ---------------------------------------------------------------------------
 // Grille de paris prédictifs snooker — pre-match (handicap, O/U frames,
 // century) & live (race to X, next frame, total frames, handicap in-play).
-// Données : /api/v1/snooker/bets[?live=1] — filtre serveur prob ≥ 65 %.
+// Données : /api/v1/snooker/bets[?live=1] — filtre serveur prob ≥ 58 %.
 // ---------------------------------------------------------------------------
 
 type Bet = { type: string; label: string; prob: number };
@@ -78,7 +78,7 @@ export function SnookerBetsPanel() {
         </div>
       ) : matches.length === 0 ? (
         <p className="text-sm text-zinc-500/60">
-          Aucun pari ≥ 65 % détecté {mode === "live" ? "sur les matchs en cours" : "au programme"}.
+          Aucun pari ≥ 58 % détecté {mode === "live" ? "sur les matchs en cours" : "au programme"}.
         </p>
       ) : (
         <div className="space-y-2">
@@ -111,7 +111,7 @@ export function SnookerBetsPanel() {
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {m.bets.length === 0 ? (
-                  <span className="text-[11px] text-zinc-600">Aucun angle ≥ 65 % sur ce match.</span>
+                  <span className="text-[11px] text-zinc-600">Aucun angle ≥ 58 % sur ce match.</span>
                 ) : (
                   m.bets.map((b) => (
                     <span

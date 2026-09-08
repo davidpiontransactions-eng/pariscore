@@ -4,7 +4,7 @@ import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
-// Bannière « Top 10 Daily Picks (≥ 65 %) » — carousel horizontal de cartes
+// Bannière « Top 10 Daily Picks (≥ 58 %) » — carousel horizontal de cartes
 // avec jauge de certitude, badge de confiance et cote recommandée.
 // Données : /api/v1/snooker/predictions (modèle Elo CueTracker × FlashScore).
 // ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ export function SnookerTopPicksBanner() {
           Top Picks du jour
         </h3>
         <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 ring-1 ring-emerald-500/30">
-          {picks.length} pick{picks.length > 1 ? "s" : ""} ≥ 65 %
+          {picks.length} pick{picks.length > 1 ? "s" : ""} ≥ 58 %
         </span>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none">

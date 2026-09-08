@@ -74,7 +74,7 @@ export function SnookerTopPicks({ className }: { className?: string }) {
         <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400">
           🎯 Top Picks — Modèle prédictif
           <span className="ml-2 text-xs font-normal text-zinc-500">
-            probabilité ≥ {Math.round((data?.minProb ?? 0.65) * 100)} %
+            probabilité ≥ {Math.round((data?.minProb ?? 0.58) * 100)} %
           </span>
         </h3>
         {picks.length > 0 && (
@@ -97,7 +97,7 @@ export function SnookerTopPicks({ className }: { className?: string }) {
       ) : picks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center">
           <p className="text-sm text-zinc-500/70">
-            Aucun pick ≥ {Math.round((data?.minProb ?? 0.65) * 100)} % actuellement — le modèle attend des
+            Aucun pick ≥ {Math.round((data?.minProb ?? 0.58) * 100)} % actuellement — le modèle attend des
             confrontations plus asymétriques.
           </p>
           {data?.message && <p className="mt-1 text-[11px] text-zinc-500/50">{data.message}</p>}

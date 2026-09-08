@@ -99,7 +99,7 @@ type TopPick = {
 
 const MATCHES_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
 const PLAYERS_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
-const MIN_PROB = 0.65;
+const MIN_PROB = 0.58;
 const LIMIT = 10;
 /** Seuil d'échantillon au-delà duquel les stats carrière sont considérées fiables. */
 const SHRINK_N = 20;
