@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
 
 export const runtime = "nodejs";
 
@@ -71,75 +72,54 @@ function parseFrames(raw: string | undefined): number {
 }
 
 const DATA_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
-const PLAYERS_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
 
-// ─── Photos libres de droit (Unsplash) par nom connu ──────────────────────
-const PLAYER_PHOTOS: Record<string, string> = {
-  "ronnie osullivan": "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=200&q=80",
-  "ronnie o'sullivan": "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=200&q=80",
-  "judd trump": "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=200&q=80",
-  "mark selby": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=200&q=80",
-  "neil robertson": "https://images.unsplash.com/photo-1508344929928-f9133fee5109?auto=format&fit=crop&w=200&q=80",
-  "john higgins": "https://images.unsplash.com/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=200&q=80",
-  "mark williams": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=200&q=80",
-  "shaun murphy": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=200&q=80",
-  "kyren wilson": "https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=200&q=80",
-  "ding junhui": "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=200&q=80",
-  "mark allen": "https://images.unsplash.com/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=200&q=80",
-  "jack lisowski": "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=200&q=80",
-  "barry hawkins": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=200&q=80",
-  "ali carter": "https://images.unsplash.com/photo-1529768167801-9173d94c2a42?auto=format&fit=crop&w=200&q=80",
-  "stuart bingham": "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=200&q=80",
-  "stephen maguire": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=200&q=80",
+// ─── Mapping FlashScore → CueTracker ID pour photos Wikipedia ────────────
+// FlashScore returns abbreviated names ("Selby M."). We map to CueTracker IDs.
+const FS_TO_CUE_ID: Record<string, string> = {
+  "osullivan r.": "ronnie-osullivan", "o'sullivan r.": "ronnie-osullivan",
+  "trump j.": "judd-trump", "selby m.": "mark-selby",
+  "robertson n.": "neil-robertson", "higgins j.": "john-higgins",
+  "williams m.": "mark-williams", "murphy s.": "shaun-murphy",
+  "wilson k.": "kyren-wilson", "ding j.": "ding-junhui",
+  "allen m.": "mark-allen", "lisowski j.": "jack-lisowski",
+  "hawkins b.": "barry-hawkins", "carter a.": "ali-carter",
+  "bingham s.": "stuart-bingham", "maguire s.": "stephen-maguire",
+  "zhou y.": "zhou-yuelong", "page j.": "jackson-page",
+  "saengkham n.": "noppon-saengkham", "pang j.": "pang-junxu",
+  "xiao g.": "xiao-guodong", "wu y.": "wu-yize",
+  "gilbert d.": "david-gilbert", "jones j.": "jamie-jones",
+  "ford t.": "tom-ford", "wilson g.": "gary-wilson",
+  "yuan s.": "yuan-sijun", "dale d.": "dominic-dale",
+  "dott g.": "graeme-dott", "holt m.": "michael-holt",
+  "gould m.": "martin-gould", "perry j.": "joe-perry",
+  "un-nooh t.": "thepchaiya-un-nooh", "vafaei h.": "hussain-vafaei",
+  "wakelin c.": "chris-wakelin", "white j.": "jimmy-white",
+  "milkins r.": "rob-milkins", "burden a.": "alfie-burden",
+  "higginson a.": "andrew-higginson", "carty a.": "ashley-carty",
+  "wells d.": "daniel-wells", "slessor e.": "elliott-slessor",
+  "odonnell m.": "martin-odonnell", "carrington s.": "stuart-carrington",
+  "pinhey h.": "haydon-pinhey", "brown j.": "jordan-brown",
+  "kowalski a.": "antoni-kowalski", "zizins a.": "artemijs-zizins",
+  "lei p.": "julian-lei", "muir r.": "ross-muir",
+  "xianbo w.": "wang-xinbo", "fan z.": "fan-zhengyi",
+  "si x.": "si-xiaohan", "yang g.": "yu-yang",
+  "lyu h.": "lyu-haotian", "clarke j.": "james-clarke",
+  "hill a.": "aaron-hill", "davies l.": "liam-davies",
+  "brown j.": "jordan-brown", "brown o.": "oliver-brown",
 };
 
-// ─── Cross-référence joueurs CueTracker pour photoUrl ─────────────────────
-type CuePlayer = { id: string; name: string; };
-type CueFile = { players: CuePlayer[] };
-let photoIndex: Record<string, string> | null = null;
-
-function buildPhotoIndex(): Record<string, string> {
-  if (photoIndex) return photoIndex;
-  photoIndex = {};
-  // 1) Depuis les noms connus
-  for (const [name, url] of Object.entries(PLAYER_PHOTOS)) {
-    photoIndex[name] = url;
-  }
-  // 2) Cross-référence fichiers CueTracker si dispo
-  try {
-    if (existsSync(PLAYERS_FILE)) {
-      const raw = readFileSync(PLAYERS_FILE, "utf-8");
-      const data = JSON.parse(raw) as CueFile;
-      for (const p of data.players ?? []) {
-        const key = p.name.toLowerCase().trim();
-        if (!photoIndex[key]) {
-          // Essayer une photo générique depuis l'id
-        }
-      }
-    }
-  } catch { /* ignore */ }
-  return photoIndex;
-}
-
-function getPhotoUrl(name: string): string | undefined {
-  const idx = buildPhotoIndex();
+async function getPhotoForPlayer(name: string): Promise<string | undefined> {
+  if (!name) return undefined;
   const key = name.toLowerCase().trim();
-  // Exact match
-  if (idx[key]) return idx[key];
-  // Token match: "Selby M." → tokens ["selby", "m"] → match "mark selby"
-  const keyTokens = key.split(/\s+/).filter(Boolean).map(t => t.replace(/[^a-z0-9\u00c0-\u024f]/g, ''));
-  if (keyTokens.length > 0) {
-    const partial = Object.keys(idx).find(k => {
-      const rawTokens = k.split(/\s+/).filter(Boolean);
-      // Premier token = nom, dernier token = prénom (format "firstname lastname")
-      const lastName = rawTokens[rawTokens.length - 1]?.toLowerCase();
-      const firstName = rawTokens[0]?.toLowerCase();
-      // Vérifie si le nom de famille matche (essentiel) + au moins un token prénom
-      const hasLastName = keyTokens.some(kt => lastName?.startsWith(kt) || kt?.startsWith(lastName));
-      const hasFirstName = keyTokens.some(kt => firstName?.startsWith(kt) || kt?.startsWith(firstName));
-      return hasLastName && (hasFirstName || rawTokens.length === 1);
-    });
-    if (partial) return idx[partial];
+  // 1) Direct match FullScore format
+  const cueId = FS_TO_CUE_ID[key];
+  if (cueId) return await fetchPlayerPhoto(cueId);
+  // 2) Lastname prefix: "Ding J." → cherche key commençant par "ding"
+  const tokens = key.split(/\s+/).filter(Boolean);
+  if (tokens.length >= 1) {
+    const lastName = tokens[0].toLowerCase();
+    const match = Object.entries(FS_TO_CUE_ID).find(([k]) => k.startsWith(lastName));
+    if (match) return await fetchPlayerPhoto(match[1]);
   }
   return undefined;
 }
@@ -154,7 +134,7 @@ function readData(): FlashScoreFile | null {
   }
 }
 
-function transformMatch(m: FlashScoreMatch, scrapedAt: string): SnookerMatch {
+async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<SnookerMatch> {
   let scheduledAt: string | null = null;
   if (m.time && m.time !== "-" && m.time !== "") {
     const today = new Date(scrapedAt);
@@ -185,8 +165,8 @@ function transformMatch(m: FlashScoreMatch, scrapedAt: string): SnookerMatch {
     league_id: "snooker",
     player1: m.home,
     player2: m.away,
-    player1PhotoUrl: getPhotoUrl(m.home),
-    player2PhotoUrl: getPhotoUrl(m.away),
+    player1PhotoUrl: await getPhotoForPlayer(m.home),
+    player2PhotoUrl: await getPhotoForPlayer(m.away),
     scheduled_at: scheduledAt,
     status,
     scoreA: parseFrames(m.scoreHome),
@@ -218,7 +198,7 @@ export async function GET(req: Request) {
     );
   }
 
-  let matches = data.matches.map((m) => transformMatch(m, data.scraped_at));
+  let matches = await Promise.all(data.matches.map((m) => transformMatch(m, data.scraped_at)));
 
   if (liveOnly) {
     matches = matches.filter((m) => m.status === "live");
