@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WatchButton } from "@/components/shared/watch-button";
+import { PlayerAvatar } from "@/components/ui/player-avatar";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -15,8 +16,12 @@ type SnookerMatch = {
   tournament: string;
   player1: string;
   player2: string;
+  player1PhotoUrl?: string;
+  player2PhotoUrl?: string;
   scheduled_at: string | null;
   status: string | null;
+  scoreA?: number;
+  scoreB?: number;
   odds?: { player1: number; player2: number };
 };
 
@@ -257,11 +262,17 @@ export function SnookerCalendar({ className }: { className?: string }) {
                   <td className="px-3 py-2.5 text-xs text-slate-400">
                     {m.tournament}
                   </td>
-                  <td className="px-3 py-2.5 min-w-[180px]">
-                    <div className="font-medium text-slate-100">
-                      {m.player1}
+                  <td className="px-3 py-2.5 min-w-[220px]">
+                    <div className="flex items-center gap-2">
+                      <PlayerAvatar name={m.player1} photoUrl={m.player1PhotoUrl} size="sm" sport="snooker" />
+                      <div>
+                        <div className="font-medium text-slate-100 text-sm">{m.player1}</div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1">
+                          <span>vs</span>
+                          <span>{m.player2}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-400">vs {m.player2}</div>
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     {m.odds ? (
