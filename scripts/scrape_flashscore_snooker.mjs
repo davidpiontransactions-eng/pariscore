@@ -117,62 +117,27 @@ async function scrapeMatches(page, url, label) {
   return matches;
 }
 
-/** Récupère les cotes via FlareSolverr (contourne WAF Cloudflare sur VPS) */
-async function scrapeOddsViaFlareSolverr(matchId) {
-  const url = `https://www.flashscore.com/match/${matchId}/#/match-summary/match-odds/1x2-odds`;
-  const flareApi = process.env.FLARESOLVERR_URL || "http://localhost:8191/v1";
-  try {
-    const payload = {
-      cmd: "request.get",
-      url,
-      maxTimeout: 15000,
-      session: "snooker-odds",
-    };
-    const res = await fetch(flareApi, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const html = data?.solution?.response || data?.solution?.html || "";
-    if (!html) return null;
-
-    const odds = [];
-    const bookmakerRegex = /<span[^>]*class="bookmaker[^"]*"[^>]*>([^<]+)<\/span>/gi;
-    const oddsRegex = /<span[^>]*class="odds__odd[^"]*"[^>]*>([\d.]+)<\/span>/gi;
-    const bookmakers = [...html.matchAll(bookmakerRegex)].map(m => m[1].trim());
-    const oddValues = [...html.matchAll(oddsRegex)].map(m => parseFloat(m[1]));
-    for (let i = 0; i < bookmakers.length; i++) {
-      if (oddValues[i * 3] && oddValues[i * 3 + 2]) {
-        odds.push({ bookmaker: bookmakers[i], home: oddValues[i * 3], draw: oddValues[i * 3 + 1] ?? null, away: oddValues[i * 3 + 2] });
-      }
-    }
-    return odds.length > 0 ? odds : null;
-  } catch { return null; }
-}
-
-/** Scrape cotes d'un match: FlareSolverr first, Playwright fallback */
+/** Scrape cotes: tente la page match, sinon accepte inline si dispo */
 async function scrapeOddsDetail(page, matchId) {
-  const fsOdds = await scrapeOddsViaFlareSolverr(matchId);
-  if (fsOdds) return fsOdds;
-  // Fallback Playwright
+  // Attempt to navigate to match odds page via Playwright (same session)
+  // Note: FlashScore WAF may block datacenter IPs even in Playwright
   try {
     const url = `https://www.flashscore.com/match/${matchId}/#/match-summary/match-odds/1x2-odds`;
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 20000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => null);
     await page.waitForTimeout(2000);
+
     const odds = await page.evaluate(() => {
-      const bookmakerOdds = [];
-      const rows = document.querySelectorAll('[class*="ui-table__row"], [class*="odds__row"]');
+      const result = [];
+      const rows = document.querySelectorAll('[class*="ui-table__row"],[class*="odds__row"],[class*="bettingTable"]');
       for (const row of rows) {
-        const name = row.querySelector('[class*="bookmaker"], [class*="participant"]')?.textContent?.trim() || "";
-        const oddEls = row.querySelectorAll('[class*="odds__odd"], [class*="event__odd"]');
-        const values = Array.from(oddEls).map((el) => parseFloat(el.textContent?.trim()) || null).filter(Boolean);
-        if (name && values.length >= 2) {
-          bookmakerOdds.push({ bookmaker: name, home: values[0], draw: values[1] ?? null, away: values[2] ?? values[1] ?? null });
+        const cells = row.querySelectorAll('td,div[class*="cell"]');
+        const name = cells[0]?.textContent?.trim() || "";
+        const vals = Array.from(cells).slice(1).map(c => parseFloat(c.textContent?.trim())).filter(v => !isNaN(v) && v > 1);
+        if (name && vals.length >= 2) {
+          result.push({ bookmaker: name, home: vals[0], draw: vals[1] ?? null, away: vals[2] ?? vals[1] ?? null });
         }
       }
-      return bookmakerOdds;
+      return result;
     });
     return odds.length > 0 ? odds : null;
   } catch { return null; }
