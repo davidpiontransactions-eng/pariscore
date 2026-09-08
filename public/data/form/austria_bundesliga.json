@@ -4,7 +4,7 @@
     "leagueId": "austria_bundesliga",
     "leagueName": "Austria",
     "season": "2026/27",
-    "lastUpdated": "2026-09-07T09:34:47.420424Z",
+    "lastUpdated": "2026-09-08T08:59:50.619630Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,13 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Rapid Wien",
+      "teamName": "Salzburg",
       "gp": 3,
       "w": 3,
       "d": 0,
       "l": 0,
-      "gf": 12,
-      "ga": 1
+      "gf": 10,
+      "ga": 2
     },
     {
       "teamName": "Grazer Ak",
@@ -31,13 +31,13 @@
       "ga": 1
     },
     {
-      "teamName": "Salzburg",
+      "teamName": "Rapid Wien",
       "gp": 3,
       "w": 3,
       "d": 0,
       "l": 0,
-      "gf": 10,
-      "ga": 2
+      "gf": 12,
+      "ga": 1
     },
     {
       "teamName": "Wolfsberger Ac",
@@ -60,13 +60,13 @@
   ],
   "away": [
     {
-      "teamName": "Tirol",
-      "gp": 3,
-      "w": 2,
+      "teamName": "Hartberg",
+      "gp": 2,
+      "w": 1,
       "d": 0,
       "l": 1,
-      "gf": 6,
-      "ga": 3
+      "gf": 2,
+      "ga": 2
     },
     {
       "teamName": "Salzburg",
@@ -78,6 +78,15 @@
       "ga": 1
     },
     {
+      "teamName": "Sturm Graz",
+      "gp": 3,
+      "w": 1,
+      "d": 1,
+      "l": 1,
+      "gf": 4,
+      "ga": 4
+    },
+    {
       "teamName": "Lask Linz",
       "gp": 2,
       "w": 2,
@@ -87,22 +96,13 @@
       "ga": 1
     },
     {
-      "teamName": "Hartberg",
-      "gp": 2,
-      "w": 1,
+      "teamName": "Tirol",
+      "gp": 3,
+      "w": 2,
       "d": 0,
       "l": 1,
-      "gf": 2,
-      "ga": 2
-    },
-    {
-      "teamName": "Sturm Graz",
-      "gp": 3,
-      "w": 1,
-      "d": 1,
-      "l": 1,
-      "gf": 4,
-      "ga": 4
+      "gf": 6,
+      "ga": 3
     }
   ]
 }

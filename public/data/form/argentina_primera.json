@@ -4,7 +4,7 @@
     "leagueId": "argentina_primera",
     "leagueName": "Argentina",
     "season": "2026/27",
-    "lastUpdated": "2026-09-07T09:34:44.627024Z",
+    "lastUpdated": "2026-09-08T08:59:47.798664Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -20,15 +20,6 @@
       "l": 0,
       "gf": 6,
       "ga": 3
-    },
-    {
-      "teamName": "Velez Sarsfield",
-      "gp": 4,
-      "w": 3,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
-      "ga": 1
     },
     {
       "teamName": "Newells",
@@ -49,6 +40,15 @@
       "ga": 3
     },
     {
+      "teamName": "Velez Sarsfield",
+      "gp": 4,
+      "w": 3,
+      "d": 1,
+      "l": 0,
+      "gf": 4,
+      "ga": 1
+    },
+    {
       "teamName": "Argentinos Jrs",
       "gp": 3,
       "w": 3,
@@ -59,24 +59,6 @@
     }
   ],
   "away": [
-    {
-      "teamName": "Instituto",
-      "gp": 4,
-      "w": 2,
-      "d": 1,
-      "l": 1,
-      "gf": 2,
-      "ga": 1
-    },
-    {
-      "teamName": "Independiente",
-      "gp": 4,
-      "w": 3,
-      "d": 0,
-      "l": 1,
-      "gf": 6,
-      "ga": 2
-    },
     {
       "teamName": "A. Tucuman",
       "gp": 4,
@@ -96,10 +78,28 @@
       "ga": 4
     },
     {
-      "teamName": "Argentinos Jrs",
-      "gp": 4,
+      "teamName": "Instituto",
+      "gp": 5,
       "w": 2,
       "d": 1,
+      "l": 2,
+      "gf": 4,
+      "ga": 4
+    },
+    {
+      "teamName": "Independiente",
+      "gp": 4,
+      "w": 3,
+      "d": 0,
+      "l": 1,
+      "gf": 6,
+      "ga": 2
+    },
+    {
+      "teamName": "Argentinos Jrs",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
       "l": 1,
       "gf": 5,
       "ga": 5
