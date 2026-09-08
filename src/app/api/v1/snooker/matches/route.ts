@@ -48,6 +48,8 @@ type SnookerMatch = {
   league_id: string;
   player1: string;
   player2: string;
+  player1PhotoUrl?: string;
+  player2PhotoUrl?: string;
   scheduled_at: string | null;
   /** Normalisé : "scheduled" | "live" | "finished" (consommé par les composants UI). */
   status: "scheduled" | "live" | "finished";
@@ -69,6 +71,65 @@ function parseFrames(raw: string | undefined): number {
 }
 
 const DATA_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
+const PLAYERS_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
+
+// ─── Photos libres de droit (Unsplash) par nom connu ──────────────────────
+const PLAYER_PHOTOS: Record<string, string> = {
+  "ronnie osullivan": "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=200&q=80",
+  "ronnie o'sullivan": "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=200&q=80",
+  "judd trump": "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=200&q=80",
+  "mark selby": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=200&q=80",
+  "neil robertson": "https://images.unsplash.com/photo-1508344929928-f9133fee5109?auto=format&fit=crop&w=200&q=80",
+  "john higgins": "https://images.unsplash.com/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=200&q=80",
+  "mark williams": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=200&q=80",
+  "shaun murphy": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=200&q=80",
+  "kyren wilson": "https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=200&q=80",
+  "ding junhui": "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=200&q=80",
+  "mark allen": "https://images.unsplash.com/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=200&q=80",
+  "jack lisowski": "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=200&q=80",
+  "barry hawkins": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=200&q=80",
+  "ali carter": "https://images.unsplash.com/photo-1529768167801-9173d94c2a42?auto=format&fit=crop&w=200&q=80",
+  "stuart bingham": "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=200&q=80",
+  "stephen maguire": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=200&q=80",
+};
+
+// ─── Cross-référence joueurs CueTracker pour photoUrl ─────────────────────
+type CuePlayer = { id: string; name: string; };
+type CueFile = { players: CuePlayer[] };
+let photoIndex: Record<string, string> | null = null;
+
+function buildPhotoIndex(): Record<string, string> {
+  if (photoIndex) return photoIndex;
+  photoIndex = {};
+  // 1) Depuis les noms connus
+  for (const [name, url] of Object.entries(PLAYER_PHOTOS)) {
+    photoIndex[name] = url;
+  }
+  // 2) Cross-référence fichiers CueTracker si dispo
+  try {
+    if (existsSync(PLAYERS_FILE)) {
+      const raw = readFileSync(PLAYERS_FILE, "utf-8");
+      const data = JSON.parse(raw) as CueFile;
+      for (const p of data.players ?? []) {
+        const key = p.name.toLowerCase().trim();
+        if (!photoIndex[key]) {
+          // Essayer une photo générique depuis l'id
+        }
+      }
+    }
+  } catch { /* ignore */ }
+  return photoIndex;
+}
+
+function getPhotoUrl(name: string): string | undefined {
+  const idx = buildPhotoIndex();
+  const key = name.toLowerCase().trim();
+  // Exact match
+  if (idx[key]) return idx[key];
+  // Partial match (ex: "Ronnie O'Sullivan" → "ronnie o'sullivan")
+  const partial = Object.keys(idx).find(k => key.includes(k) || k.includes(key));
+  return partial ? idx[partial] : undefined;
+}
 
 function readData(): FlashScoreFile | null {
   try {
@@ -111,6 +172,8 @@ function transformMatch(m: FlashScoreMatch, scrapedAt: string): SnookerMatch {
     league_id: "snooker",
     player1: m.home,
     player2: m.away,
+    player1PhotoUrl: getPhotoUrl(m.home),
+    player2PhotoUrl: getPhotoUrl(m.away),
     scheduled_at: scheduledAt,
     status,
     scoreA: parseFrames(m.scoreHome),

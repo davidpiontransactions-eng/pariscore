@@ -13,7 +13,7 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { useSportsSidebarStore } from "@/stores/use-sports-sidebar-store";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
 
-const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma", "cycling", "f1", "baseball", "cs2"]);
+const VALID_SPORTS = new Set(["football", "tennis", "basketball", "rugby", "mma", "cycling", "f1", "baseball", "cs2", "snooker"]);
 
 /**
  * SiteHeader — Barre du haut unifiée à 2 niveaux, style gradient modern.

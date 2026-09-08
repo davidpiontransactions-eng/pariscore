@@ -75,7 +75,22 @@ function formatHour(iso: string): string {
 }
 
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  // Use Paris local date, not UTC — les matchs à 1h du mat sont du jour
+  // précédent en UTC mais encore aujourd'hui pour l'utilisateur français.
+  const fmt = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(new Date()); // YYYY-MM-DD
+}
+
+/** Convertit un ISO UTC en date Paris (YYYY-MM-DD) pour comparaison. */
+function parisDateOf(iso: string): string {
+  const fmt = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(new Date(iso));
 }
 
 /** Extraire tous les matchs d'un SportNode pour aujourd'hui. */
@@ -86,7 +101,7 @@ function extractTodayMatches(sport: SportNode): CalendarMatch[] {
   for (const country of sport.countries) {
     for (const league of country.leagues) {
       for (const m of (league.matches ?? []) as TreeMatchSummary[]) {
-        if (m.scheduledAt && m.scheduledAt.slice(0, 10) === today) {
+        if (m.scheduledAt && parisDateOf(m.scheduledAt) === today) {
           matches.push({
             id: m.id,
             sport: sport.id,

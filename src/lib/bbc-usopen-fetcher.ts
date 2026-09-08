@@ -12,10 +12,6 @@ import type { TennisMatch } from "@/lib/tennis-data";
 
 const BBC_BASE = "https://www.bbc.co.uk/sport/tennis/us-open/scores-and-schedule";
 
-function dateSlug(d: Date): string {
-  return d.toISOString().split("T")[0]; // YYYY-MM-DD
-}
-
 /* ─── Parse BBC HTML → matchs structurés ─── */
 
 interface RawMatch {
@@ -110,11 +106,38 @@ function parseBBCSchedule(html: string): RawMatch[] {
   return matches;
 }
 
+/* ─── Helper: NY date slug pour BBC ─── */
+function nyDateSlug(d: Date): string {
+  // BBC page uses New York local date (ET)
+  const fmt = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "America/New_York",
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(d); // YYYY-MM-DD
+}
+
+/* ─── Helper: ET time → UTC ISO ─── */
+function etTimeToUtcIso(dateStr: string, time: string): string {
+  // BBC donne les heures en US Eastern (ET). Septembre = EDT (UTC-4).
+  // On construit une date ET puis on convertit en UTC.
+  const [h, m] = time.split(":").map(Number);
+  // Date ET : on utilise America/New_York pour construire le timestamp
+  const etStr = `${dateStr}T${time}:00-04:00`; // EDT
+  const d = new Date(etStr);
+  if (!Number.isFinite(d.getTime())) {
+    // Fallback: EST (UTC-5)
+    const estStr = `${dateStr}T${time}:00-05:00`;
+    const d2 = new Date(estStr);
+    return Number.isFinite(d2.getTime()) ? d2.toISOString() : `${dateStr}T${time}:00Z`;
+  }
+  return d.toISOString();
+}
+
 /* ─── Normalisation → TennisMatch ─── */
 
-function toTennisMatch(m: RawMatch, date: string): TennisMatch {
+function toTennisMatch(m: RawMatch, dateSlugNY: string): TennisMatch {
   const time = m.estimatedTime || "12:00";
-  const scheduledAt = `${date}T${time}:00Z`;
+  const scheduledAt = etTimeToUtcIso(dateSlugNY, time);
   const gender = m.gender === "men" ? "M" : "F";
 
   const mkPlayer = (name: string, seed?: number) => ({
@@ -154,7 +177,7 @@ function toTennisMatch(m: RawMatch, date: string): TennisMatch {
 
 export async function fetchBBCUsOpenMatches(date?: Date): Promise<TennisMatch[]> {
   const targetDate = date || new Date();
-  const slug = dateSlug(targetDate);
+  const slug = nyDateSlug(targetDate);
   const url = `${BBC_BASE}/${slug}`;
 
   try {

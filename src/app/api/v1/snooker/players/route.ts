@@ -42,6 +42,26 @@ type SnookerPlayer = {
   centuryRate?: number;
   deciderWinPct?: number;
   avgBreak?: number;
+  photoUrl?: string;
+};
+
+// ─── Photos libres de droit (Unsplash) par joueur connu ─────────────────
+const PLAYER_PHOTOS: Record<string, string> = {
+  "ronnie-osullivan": "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=200&q=80",
+  "judd-trump": "https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=200&q=80",
+  "mark-selby": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=200&q=80",
+  "neil-robertson": "https://images.unsplash.com/photo-1508344929928-f9133fee5109?auto=format&fit=crop&w=200&q=80",
+  "john-higgins": "https://images.unsplash.com/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=200&q=80",
+  "mark-williams": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=200&q=80",
+  "shaun-murphy": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=200&q=80",
+  "kyren-wilson": "https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=200&q=80",
+  "ding-junhui": "https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=200&q=80",
+  "mark-allen": "https://images.unsplash.com/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=200&q=80",
+  "jack-lisowski": "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=200&q=80",
+  "barry-hawkins": "https://images.unsplash.com/photo-1566577739112-5180d4bf9390?auto=format&fit=crop&w=200&q=80",
+  "ali-carter": "https://images.unsplash.com/photo-1529768167801-9173d94c2a42?auto=format&fit=crop&w=200&q=80",
+  "stuart-bingham": "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=200&q=80",
+  "stephen-maguire": "https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=200&q=80",
 };
 
 const DATA_FILE = join(process.cwd(), "data", "cuetracker_matches.json");
@@ -76,6 +96,7 @@ function transformPlayer(p: CueTrackerFile["players"][number]): SnookerPlayer {
     id: p.id,
     name: p.name,
     eloRating: deriveElo(p),
+    photoUrl: PLAYER_PHOTOS[p.id] ?? undefined,
   };
   if (p.nationality) out.nationality = p.nationality;
   if (p.ranking != null) out.ranking = p.ranking;

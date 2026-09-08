@@ -29,7 +29,8 @@ export type SportId =
   | "cycling"
   | "f1"
   | "baseball"
-  | "rugby";
+  | "rugby"
+  | "snooker";
 
 // ─── URLs hero haute résolution par sport ─────────────────────────────────
 // Toutes ces URLs Unsplash sont libres de droit (photo credit dans README)
@@ -44,6 +45,7 @@ const SPORT_HERO: Record<SportId, string> = {
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=1200&q=80`,
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
   rugby: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=1200&q=80`,
+  snooker: `${UNSPLASH_BASE}/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=1200&q=80`,
 };
 
 // ─── URLs basse résolution + flou pour arrière-plans. ────────────────────
@@ -58,6 +60,7 @@ const SPORT_BG: Record<SportId, string> = {
   f1: `${UNSPLASH_BASE}/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=60&blur=20`,
   baseball: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
   rugby: `${UNSPLASH_BASE}/photo-1551958219-acbc608c6377?auto=format&fit=crop&w=800&q=60&blur=20`,
+  snooker: `${UNSPLASH_BASE}/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=800&q=60&blur=20`,
 };
 
 // ─── Couleurs accent par sport (fallbacks, badges, anneaux). ───────────────
@@ -72,7 +75,80 @@ const SPORT_ACCENT: Record<SportId, string> = {
   f1: "#dc2626",
   baseball: "#f59e0b",
   rugby: "#14b8a6",
+  snooker: "#00e676",
 };
+snooker: [
+    {
+      name: "Ronnie O'Sullivan",
+      nationality: "Anglaise",
+      position: "Droitier",
+      rating: 9.9,
+      imageUrl: `${UNSPLASH_BASE}/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Judd Trump",
+      nationality: "Anglaise",
+      position: "Droitier",
+      rating: 9.7,
+      imageUrl: `${UNSPLASH_BASE}/photo-1549719386-74dfcbf7dbed?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Mark Selby",
+      nationality: "Anglaise",
+      position: "Droitier",
+      rating: 9.5,
+      imageUrl: `${UNSPLASH_BASE}/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Neil Robertson",
+      nationality: "Australienne",
+      position: "Droitier",
+      rating: 9.4,
+      imageUrl: `${UNSPLASH_BASE}/photo-1508344929928-f9133fee5109?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "John Higgins",
+      nationality: "Ecossaise",
+      position: "Droitier",
+      rating: 9.3,
+      imageUrl: `${UNSPLASH_BASE}/photo-1431324155629-1a6deb1a0753?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Mark Williams",
+      nationality: "Galloise",
+      position: "Droitier",
+      rating: 9.2,
+      imageUrl: `${UNSPLASH_BASE}/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Shaun Murphy",
+      nationality: "Anglaise",
+      position: "Droitier",
+      rating: 9.1,
+      imageUrl: `${UNSPLASH_BASE}/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Kyren Wilson",
+      nationality: "Anglaise",
+      position: "Droitier",
+      rating: 9.0,
+      imageUrl: `${UNSPLASH_BASE}/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Ding Junhui",
+      nationality: "Chinoise",
+      position: "Droitier",
+      rating: 8.9,
+      imageUrl: `${UNSPLASH_BASE}/photo-1504450758481-7338eba7524a?auto=format&fit=crop&w=400&q=80`,
+    },
+    {
+      name: "Mark Allen",
+      nationality: "Irlandaise",
+      position: "Droitier",
+      rating: 8.8,
+      imageUrl: `${UNSPLASH_BASE}/photo-1511888613836-5277520f5902?auto=format&fit=crop&w=400&q=80`,
+    },
+  ],
 
 // ─── URLs images athlètes par sport ──────────────────────────────────────
 // Format: tableau d'objets AthleteInfo avec imageUrl en libre de droit

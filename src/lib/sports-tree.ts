@@ -271,6 +271,12 @@ function slug(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/** Formateur date Paris (YYYY-MM-DD) — singleton Intl. */
+const parisDateFmt = new Intl.DateTimeFormat("fr-CA", {
+  timeZone: "Europe/Paris",
+  year: "numeric", month: "2-digit", day: "2-digit",
+});
+
 function isValidDate(raw: string | null | undefined): raw is string {
   if (!raw) return false;
   return Number.isFinite(new Date(raw).getTime());
@@ -281,7 +287,7 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
   const meta = SPORT_META[sportId];
   const countryMap = new Map<string, CountryNode>();
   let liveMatches = 0;
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = parisDateFmt.format(new Date());
 
   for (const raw of raws) {
     if (raw.isLive) liveMatches++;
@@ -319,7 +325,6 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
       scheduledAt: raw.scheduledAt ?? "",
       isLive: raw.isLive,
       edgePct: edge,
-      // Live stats (P2 — funnel sliders, momentum sparkline)
       liveMinute: raw.liveMinute,
       pressure: raw.pressure,
       homeXg: raw.homeXg,
@@ -335,15 +340,11 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
   }
 
   const countries = Array.from(countryMap.values());
-  // Tennis : une ligue par tournoi mais le live se regroupe sous un seul
-  // bucket « Circuit » — cap relevé pour ne pas tronquer la liste (foot garde
-  // le cap standard de lisibilité).
   const level4Cap = sportId === "tennis" ? 60 : MAX_LEVEL4_MATCHES;
   for (const country of countries) {
     country.leagues.sort((a, b) => b.matchCount - a.matchCount || a.name.localeCompare(b.name));
     for (const league of country.leagues) {
       league.matches = pickLevel4(league.matches ?? [], level4Cap);
-      // Edge moyen de la ligue (P0-2) : moyenne des edges 1X2 calculables.
       const edges = (league.matches as TreeMatchSummary[])
         .map((m) => m.edgePct)
         .filter((e): e is number => Number.isFinite(e));
@@ -360,7 +361,7 @@ export function groupRawMatches(sportId: SportTabId, raws: RawTreeMatch[]): Spor
   });
 
   const todayMatches = raws.filter(
-    (r) => r.scheduledAt && r.scheduledAt.slice(0, 10) === todayStr,
+    (r) => r.scheduledAt && (r.scheduledAt.slice(0, 10) === todayStr || parisDateFmt.format(new Date(r.scheduledAt)) === todayStr),
   ).length;
 
   return {
@@ -996,12 +997,12 @@ export function sortSportsTreeChronological(sports: SportNode[]): SportNode[] {
       return bc - ac || a.name.localeCompare(b.name);
     });
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = parisDateFmt.format(new Date());
     let todayMatches = 0;
     for (const [, cData] of sportMap.get(sData.id)?.countries ?? []) {
       for (const [, lData] of cData.leagues) {
         todayMatches += lData.matches.filter(
-          (m) => m.scheduledAt && m.scheduledAt.slice(0, 10) === todayStr,
+          (m) => m.scheduledAt && (m.scheduledAt.slice(0, 10) === todayStr || parisDateFmt.format(new Date(m.scheduledAt)) === todayStr),
         ).length;
       }
     }
