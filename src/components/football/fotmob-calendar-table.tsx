@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useFollowStore } from "@/stores/use-follow-store";
+import { partitionFollowed, toFollowId } from "@/lib/fotmob-follow";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 import { parisKickoff } from "@/lib/football-time";
 import { cn } from "@/lib/utils";
@@ -46,7 +47,9 @@ function isLiveStatus(s?: string | null): boolean {
 
 /* ─── Étoile Suivre (SVG FotMob 28×16, câblée au useFollowStore) ─── */
 function FotmobFollowStar({ id, name }: { id: string; name: string }) {
-  const isFollowed = useFollowStore((s) => s.isFollowed(id));
+  // Lecture bi-forme (ids bruts legacy + conventionnels), écriture conventionnelle.
+  const convId = toFollowId(id);
+  const isFollowed = useFollowStore((s) => s.isFollowed(convId) || s.isFollowed(id));
   const toggle = useFollowStore((s) => s.toggle);
   return (
     <button
@@ -56,7 +59,7 @@ function FotmobFollowStar({ id, name }: { id: string; name: string }) {
       aria-pressed={isFollowed}
       onClick={(e) => {
         e.stopPropagation();
-        toggle({ id, category: "match", name, sport: "football", notifications: true });
+        toggle({ id: convId, category: "match", name, sport: "football", notifications: true });
       }}
       className="shrink-0 rounded-full transition-transform active:scale-95"
       style={{ backgroundColor: C.followBg }}
@@ -147,9 +150,11 @@ function FotmobMatchRow({ m }: { m: FotmobCalMatch }) {
 
 /* ─── Section ligue ─── */
 function FotmobLeagueSection({
-  leagueName, country, logo, matches, collapsed, onToggle,
+  leagueName, country, logo, icon, matches, collapsed, onToggle,
 }: {
   leagueName: string; country?: string | null; logo?: string | null;
+  /** Icône custom à la place du logo (ex. étoile de la section « Suivis »). */
+  icon?: ReactNode;
   matches: FotmobCalMatch[]; collapsed: boolean; onToggle: () => void;
 }) {
   const liveCount = matches.filter((m) => isLiveStatus(m.live?.status)).length;
@@ -161,11 +166,11 @@ function FotmobLeagueSection({
     >
       <div className="flex h-12 items-center justify-between overflow-hidden" style={{ backgroundColor: C.headerBg }}>
         <div className="flex h-full min-w-0 flex-1 items-center gap-3 px-4">
-          {logo ? (
+          {icon ?? (logo ? (
             <img src={logo} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0" />
           ) : (
             <span className="text-lg leading-none">{country ? countryFlag(country) : "🏆"}</span>
-          )}
+          ))}
           <span className="truncate text-[14px] font-medium" style={{ color: C.headerText }}>
             {country ? `${country} - ${leagueName}` : leagueName}
           </span>
@@ -200,12 +205,30 @@ function FotmobLeagueSection({
   );
 }
 
-/* ─── Tableau (tri live d'abord, repli global) ─── */
+/* ─── Étoile 24px du header « Suivis » (sample FotMob) ─── */
+function FotmobStarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="size-4 shrink-0 fill-current">
+      <path d="M12.004 17.914l4.848 2.916c.196.12.423.179.501.17.23-.01.453-.086.639-.22.186-.134.328-.32.408-.534.08-.215.095-.448.042-.67l-1.285-5.483 4.287-3.694c.174-.15.3-.347.361-.567.062-.22.057-.453-.014-.67-.071-.217-.205-.408-.385-.55-.18-.142-.398-.227-.627-.246l-5.643-.476-2.209-5.184a1.06 1.06 0 0 0-.43-.514 1.062 1.062 0 0 0-1.288 0c-.191.126-.341.305-.431.514l-3.284 5.17-5.644.476c-.23.017-.45.09-.631.231-.181.142-.316.333-.388.551-.071.217-.077.451-.015.672.062.22.19.417.364.566l4.289 3.682-1.285 5.483c-.053.222-.039.455.042.67.08.214.222.4.408.534.186.134.408.21.638.219.23.01.451-.05.647-.169l4.853-2.904Z" />
+    </svg>
+  );
+}
+
+/* ─── Tableau (Suivis épinglés + tri live d'abord, repli global) ─── */
 export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const follows = useFollowStore((s) => s.follows);
+  const followedIds = useMemo(
+    () => Object.values(follows).filter((e) => e.category === "match").map((e) => e.id),
+    [follows]
+  );
+  const { followed, rest } = useMemo(
+    () => partitionFollowed(matches, followedIds),
+    [matches, followedIds]
+  );
   const groups = useMemo(() => {
     const map = new Map<string, { name: string; country?: string | null; logo?: string | null; list: FotmobCalMatch[] }>();
-    for (const m of matches) {
+    for (const m of rest) {
       const key = m.league?.name ?? "Autres";
       const g = map.get(key) ?? { name: key, country: m.league?.country, logo: m.league?.logo, list: [] };
       g.list.push(m);
@@ -219,9 +242,13 @@ export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) 
     });
   }, [matches]);
 
-  const allCollapsed = groups.length > 0 && groups.every((g) => collapsed[g.name] === true);
+  const sectionKeys = [
+    ...(followed.length > 0 ? ["__suivis"] : []),
+    ...groups.map((g) => g.name),
+  ];
+  const allCollapsed = sectionKeys.length > 0 && sectionKeys.every((k) => collapsed[k] === true);
 
-  if (groups.length === 0) {
+  if (sectionKeys.length === 0) {
     return (
       <div className="py-10 text-center text-sm" style={{ color: C.time }}>
         Aucun match pour cette journée.
@@ -233,7 +260,7 @@ export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) 
       <div className="mb-2 flex justify-end">
         <button
           type="button" aria-expanded={!allCollapsed}
-          onClick={() => setCollapsed(allCollapsed ? {} : Object.fromEntries(groups.map((g) => [g.name, true])))}
+          onClick={() => setCollapsed(allCollapsed ? {} : Object.fromEntries(sectionKeys.map((k) => [k, true])))}
           className="text-xs font-medium underline underline-offset-2"
           style={{ color: C.time }}
         >
@@ -241,6 +268,16 @@ export function FotmobCalendarTable({ matches }: { matches: FotmobCalMatch[] }) 
         </button>
       </div>
       <div className="flex flex-col gap-2">
+        {followed.length > 0 && (
+          <FotmobLeagueSection
+            key="__suivis"
+            leagueName="Suivis"
+            icon={<FotmobStarIcon />}
+            matches={followed}
+            collapsed={collapsed.__suivis === true}
+            onToggle={() => setCollapsed((p) => ({ ...p, __suivis: !(p.__suivis === true) }))}
+          />
+        )}
         {groups.map((g) => (
           <FotmobLeagueSection
             key={g.name}
