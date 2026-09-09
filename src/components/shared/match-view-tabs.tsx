@@ -11,26 +11,23 @@ type Props = {
   onChange: (mode: MatchViewMode) => void;
   liveCount: number;
   prematchCount: number;
-  /**
-   * Base d'id partagée avec les tabpanels du parent : le panel du mode X
-   * doit porter l'id `${idBase}-panel-${X}` (lien aria-controls).
-   */
   idBase?: string;
   className?: string;
 };
 
-/**
- * MatchViewTabs — sous-onglets génériques Live | Pre-match (modèle 1xbet.com).
- *
- * Présentiel : le parent fournit `active` + les compteurs, et filtre ses
- * listes selon le mode actif. Utilisé par tous les onglets sport avec liste
- * de matchs (football, NBA, WNBA, CS2, MMA, baseball, rugby).
- *
- * Accessibilité : tablist conforme WAI-ARIA (roles tab/tablist,
- * aria-selected, tabindex itinérant, navigation clavier fléchée + Home/End,
- * activation au focus). Responsive : débordement horizontal scrollable sur
- * petit écran. Style : cohérent avec TennisSubTabs et SportTabs.
- */
+/* Teintes FotMob clair — identiques au calendrier */
+const C = {
+  bg: "#ffffff",
+  border: "#f0f0f0",
+  tabBg: "#f5f5f5",
+  tabActiveBg: "#ffffff",
+  text: "#222222",
+  muted: "#717171",
+  live: "#00985f",
+  prematch: "#717171",
+  rankings: "#717171",
+} as const;
+
 export function MatchViewTabs({
   active,
   onChange,
@@ -52,7 +49,7 @@ export function MatchViewTabs({
     count: number;
     ref: React.RefObject<HTMLButtonElement | null>;
     icon: typeof Radio;
-    activeCls: string;
+    badgeBg: string;
   }> = [
     {
       id: "live",
@@ -61,7 +58,7 @@ export function MatchViewTabs({
       count: liveCount,
       ref: liveRef,
       icon: Radio,
-      activeCls: "bg-emerald-500",
+      badgeBg: C.live,
     },
     {
       id: "prematch",
@@ -70,7 +67,7 @@ export function MatchViewTabs({
       count: prematchCount,
       ref: prematchRef,
       icon: CalendarClock,
-      activeCls: "bg-sky-500",
+      badgeBg: C.muted,
     },
     {
       id: "rankings",
@@ -79,7 +76,7 @@ export function MatchViewTabs({
       count: 0,
       ref: useRef<HTMLButtonElement>(null),
       icon: BarChart3,
-      activeCls: "bg-violet-500",
+      badgeBg: C.muted,
     },
   ];
 
@@ -110,9 +107,10 @@ export function MatchViewTabs({
       aria-label={t("tabsAriaLabel")}
       onKeyDown={onKeyDown}
       className={cn(
-        "flex w-full gap-1 overflow-x-auto scroll-snap-x rounded-lg border border-border/60 bg-muted/30 p-1",
+        "flex w-full gap-1 overflow-x-auto scroll-snap-x rounded-lg p-1",
         className,
       )}
+      style={{ background: C.tabBg, border: `1px solid ${C.border}` }}
     >
       {tabs.map((tab) => {
         const isActive = active === tab.id;
@@ -131,25 +129,28 @@ export function MatchViewTabs({
             onClick={() => activate(tab.id)}
             className={cn(
               "relative flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold transition-colors sm:text-sm",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-              isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1",
             )}
+            style={{
+              background: isActive ? C.tabActiveBg : "transparent",
+              color: isActive ? C.text : C.muted,
+              boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.08)" : undefined,
+              ...(isActive ? { ["--tw-ring-color" as string]: C.live } : {}),
+            }}
           >
             <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
             <span>{tab.label}</span>
-            {/* Compteur de matchs — toujours affiché (Live (12) / Pre-match (45)) */}
             <span
               aria-hidden
-              className={cn(
-                "ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[11px] font-bold tabular-nums",
-                tab.count > 0
-                  ? isActive
-                    ? `${tab.activeCls} text-white`
-                    : "bg-muted-foreground/30 text-muted-foreground"
-                  : "bg-muted-foreground/20 text-muted-foreground/70",
-              )}
+              className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[11px] font-bold tabular-nums"
+              style={{
+                background: tab.count > 0
+                  ? isActive ? tab.badgeBg : `${C.muted}30`
+                  : `${C.muted}20`,
+                color: tab.count > 0
+                  ? isActive ? "#ffffff" : C.muted
+                  : `${C.muted}70`,
+              }}
             >
               {tab.count > 99 ? "99+" : tab.count}
             </span>
