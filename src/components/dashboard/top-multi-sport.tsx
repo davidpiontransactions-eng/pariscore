@@ -12,6 +12,27 @@ import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob
 import { buildTopTags, topTagsForMatch } from "@/lib/top10-calendar-link";
 import { useFootballTopN } from "@/hooks/use-football-top5";
 
+/* ─── État filtres calendrier depuis l'URL (F2 : deep-link ?date=&h=&live=&top=&q=) ─── */
+function readCalUrl(): { date: string | null; hours: number | null; live: boolean; top: boolean; q: string } {
+  const fallback = { date: null as string | null, hours: null as number | null, live: false, top: false, q: "" };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const date = p.get("date");
+    const h = p.get("h");
+    const hours = h != null && ["1", "2", "4", "8", "16", "24"].includes(h) ? Number(h) : null;
+    return {
+      date: date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null,
+      hours,
+      live: p.get("live") === "1",
+      top: p.get("top") === "1",
+      q: p.get("q") ?? "",
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 /* ─── Types (local mirror) ─── */
 interface TopTeam { name: string; logo?: string; rank?: number; }
 interface TopOdds { home?: string; draw?: string; away?: string; best?: 'home' | 'draw' | 'away'; }
@@ -300,12 +321,37 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   const [calMatches, setCalMatches] = useState<FotmobCalMatch[]>([]);
   const [calLoading, setCalLoading] = useState(false);
   // Filtres barre FotMob (remplacent pills masquées en mode foot).
-  const [calDate, setCalDate] = useState<string>(() => parisTodayKey());
+  // État initial lu depuis l'URL (F2 : ?date=&h=&live=&top=&q=) — deep-link.
+  const [calDate, setCalDate] = useState<string>(() => readCalUrl().date ?? parisTodayKey());
   const [calLiveOnly, setCalLiveOnly] = useState(false);
   const [calHours, setCalHours] = useState<number | null>(null);
   const [calQuery, setCalQuery] = useState("");
   // Toggle "Top stratégies" : ne garde que les matchs corrélés au Top10.
   const [calTopOnly, setCalTopOnly] = useState(false);
+  // Hydrate les filtres depuis l'URL une fois au mount (F2).
+  useEffect(() => {
+    const s = readCalUrl();
+    if (s.date) setCalDate(s.date);
+    if (s.hours != null) setCalHours(s.hours);
+    if (s.live) setCalLiveOnly(true);
+    if (s.top) setCalTopOnly(true);
+    if (s.q) setCalQuery(s.q);
+  }, []);
+  // Miroir des filtres calendrier dans l'URL (replaceState — sans navigation).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const p = new URLSearchParams(window.location.search);
+      p.set("date", calDate);
+      if (calHours != null) p.set("h", String(calHours)); else p.delete("h");
+      if (calLiveOnly) p.set("live", "1"); else p.delete("live");
+      if (calTopOnly) p.set("top", "1"); else p.delete("top");
+      if (calQuery.trim()) p.set("q", calQuery.trim()); else p.delete("q");
+      window.history.replaceState(null, "", `?${p.toString()}`);
+    } catch {
+      // Navigation privée / iframe : filtres locaux uniquement.
+    }
+  }, [calDate, calHours, calLiveOnly, calTopOnly, calQuery]);
   // Match sélectionné (clic ligne calendrier → dialog d'analyse).
   // Les objets API sont des FootballMatch complets (typés subset côté UI).
   const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
@@ -575,11 +621,11 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               onToggleTop={() => setCalTopOnly((v) => !v)}
               topCount={topCalCount}
             />
-            {/* Chip résumé V1 : toujours visible, bureau + mobile. */}
+            {/* Chip résumé V1 + état vide explicite E3 : toujours visible, bureau + mobile. */}
             <p className="mt-1.5 text-[11px] tabular-nums" style={{ color: "#717171" }} aria-live="polite">
-              {filteredCal.length} match{filteredCal.length > 1 ? "s" : ""}
-              {calHours != null ? ` · ≤${calHours}h` : ""}
-              {calTopOnly ? " · ★ Top" : ""}
+              {filteredCal.length === 0
+                ? `Aucun match${calTopOnly ? " ★ Top" : ""}${calHours != null ? ` dans les ${calHours} prochaines heures` : " pour cette journée"} — élargissez la fenêtre ou désactivez les filtres.`
+                : `${filteredCal.length} match${filteredCal.length > 1 ? "s" : ""}${calHours != null ? ` · ≤${calHours}h` : ""}${calTopOnly ? " · ★ Top" : ""}`}
             </p>
             <div className="mt-2">
               <FotmobCalendarTable

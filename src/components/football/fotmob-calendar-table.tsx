@@ -302,6 +302,11 @@ export function FotmobCalendarTable({
     () => partitionFollowed(matches, followedIds),
     [matches, followedIds]
   );
+  // Section "★ Top du jour" épinglée (G7) : matchs à pill, avant les Suivis.
+  const topDay = useMemo(
+    () => (topTagsFor ? rest.filter((m) => (topTagsFor(m.id) ?? []).length > 0) : []),
+    [rest, topTagsFor]
+  );
   const groups = useMemo(() => {
     const map = new Map<string, { name: string; country?: string | null; logo?: string | null; list: FotmobCalMatch[] }>();
     for (const m of rest) {
@@ -319,6 +324,7 @@ export function FotmobCalendarTable({
   }, [rest]);
 
   const sectionKeys = [
+    ...(topDay.length > 0 ? ["__top"] : []),
     ...(followed.length > 0 ? ["__suivis"] : []),
     ...groups.map((g) => g.name),
   ];
@@ -344,6 +350,18 @@ export function FotmobCalendarTable({
         </button>
       </div>
       <div className="flex flex-col gap-2">
+        {topDay.length > 0 && (
+          <FotmobLeagueSection
+            key="__top"
+            leagueName="Top du jour"
+            icon={<span aria-hidden="true" className="text-sm leading-none">★</span>}
+            matches={topDay}
+            collapsed={collapsed.__top === true}
+            onToggle={() => setCollapsed((p) => ({ ...p, __top: !(p.__top === true) }))}
+            onSelectMatch={onSelectMatch}
+            topTagsFor={topTagsFor}
+          />
+        )}
         {followed.length > 0 && (
           <FotmobLeagueSection
             key="__suivis"
