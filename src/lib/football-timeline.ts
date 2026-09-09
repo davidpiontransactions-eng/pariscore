@@ -67,6 +67,10 @@ export interface MatchTimelineData {
     /** false → courbe lissée dérivée des totaux (pas de données par minute). */
     perMinute: boolean;
   };
+  /** Totaux boxscore (ESPN/BSD/API-Football) — fallback métriques du popup live. */
+  totals?: TimelineTotals;
+  /** xG cumulés par équipe (somme des buckets xG ou source directe) — fallback xG popup. */
+  xgTotals?: { home: number; away: number };
   source: "bsd" | "espn" | "bsd+espn" | "estimated";
   /**
    * true → courbe estimée sans aucune source minute (BSD + ESPN en panne).

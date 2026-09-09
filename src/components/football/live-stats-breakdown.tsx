@@ -18,6 +18,14 @@ import { FOT } from "./fotmob-theme";
 
 type Nullable = number | null | undefined;
 
+/** Totaux boxscore de la timeline (shape TimelineTotals — compat structurelle). */
+type TimelineTotalsShape = {
+  possession: { home: number; away: number };
+  corners: { home: number; away: number };
+  shots: { home: number; away: number };
+  sot: { home: number; away: number };
+};
+
 const num = (v: Nullable): number | null => (v != null && Number.isFinite(v) ? v : null);
 
 /** Jauge bilatérale (Possession / Attaques / Attaques dangereuses). */
@@ -104,6 +112,8 @@ export function LiveStatsBreakdown({
   prematch,
   homePressurePct,
   matchId,
+  timelineTotals,
+  timelineXg,
   className,
 }: {
   live: FootballLiveState;
@@ -115,8 +125,29 @@ export function LiveStatsBreakdown({
   homePressurePct?: Nullable;
   /** Id match BSD (ex. "bsd-123") — backtest funnel, 1 snapshot/min. */
   matchId?: string | null;
+  /** Totaux boxscore timeline (/stats) — fallback métriques quand BSD list manque. */
+  timelineTotals?: TimelineTotalsShape | null;
+  /** xG cumulés par équipe (timeline) — fallback xG quand BSD list n'en a pas. */
+  timelineXg?: { home: number; away: number } | null;
   className?: string;
 }) {
+  // Valeurs effectives : stats live BSD list, sinon totaux/xG de la timeline
+  // (/stats — boxscore ESPN ou fallback API-Football). Le funnel continue de
+  // lire `live` brut ; seuls l'affichage et la projection live sont enrichis.
+  const effHomeXg = num(live.homeXg) ?? num(timelineXg?.home);
+  const effAwayXg = num(live.awayXg) ?? num(timelineXg?.away);
+  const effHomeShots = num(live.homeShots) ?? num(timelineTotals?.shots.home);
+  const effAwayShots = num(live.awayShots) ?? num(timelineTotals?.shots.away);
+  const effHomeSot = num(live.homeShotsOnTarget) ?? num(timelineTotals?.sot.home);
+  const effAwaySot = num(live.awayShotsOnTarget) ?? num(timelineTotals?.sot.away);
+  const effHomeCorners = num(live.homeCorners) ?? num(timelineTotals?.corners.home);
+  const effAwayCorners = num(live.awayCorners) ?? num(timelineTotals?.corners.away);
+  // Possession : BSD met un fallback factice 50/50 quand la source ne fournit
+  // pas la stat (bsd-football-fetcher.ts). Si le match n'a AUCUNE stat live
+  // (ni tirs ni xG) et que la timeline porte une possession réelle → l'utiliser.
+  const tlPoss = num(timelineTotals?.possession.home);
+  const effPoss =
+    live.homeShots == null && live.homeXg == null && tlPoss != null ? tlPoss : live.homePossession;
   const funnel = useMemo(
     () =>
       evaluateLiveFunnel({
@@ -150,15 +181,17 @@ export function LiveStatsBreakdown({
         minute: live.minute,
         homeScore: live.homeScore,
         awayScore: live.awayScore,
-        homeXg: live.homeXg,
-        awayXg: live.awayXg,
+        // xG enrichi (timeline) : la projection live bénéficie du xG ESPN/AF
+        // quand le flux BSD list ne l'embarque pas.
+        homeXg: effHomeXg,
+        awayXg: effAwayXg,
         prematch: prematch ?? null,
         // Cartons rouges live → ajustement des taux (Cerveny 2016). Sans eux
         // la projection ignorait les exclusions (bug : 11v10 = 11v11).
         homeRedCards: live.homeRedCards,
         awayRedCards: live.awayRedCards,
       }),
-    [live.minute, live.homeScore, live.awayScore, live.homeXg, live.awayXg, live.homeRedCards, live.awayRedCards, prematch],
+    [live.minute, live.homeScore, live.awayScore, effHomeXg, effAwayXg, live.homeRedCards, live.awayRedCards, prematch],
   );
 
   // P3 backtest : 1 snapshot funnel/min vers KvStore (calibration des seuils).
@@ -206,7 +239,7 @@ export function LiveStatsBreakdown({
   const awayAtk = num(live.awayAttacks);
   const homeDang = num(live.homeDangerousAttacks);
   const awayDang = num(live.awayDangerousAttacks);
-  const awayPoss = 100 - live.homePossession;
+  const awayPoss = 100 - effPoss;
   // xG par tir = qualité des occasions (0 fetch — dérivé des métriques live).
   const xgPerShot = (xg: Nullable, shots: Nullable): number | null => {
     const x = num(xg);
@@ -214,8 +247,8 @@ export function LiveStatsBreakdown({
     if (x == null || s == null || s <= 0) return null;
     return Math.round((x / s) * 100) / 100;
   };
-  const xgPsHome = xgPerShot(live.homeXg, live.homeShots);
-  const xgPsAway = xgPerShot(live.awayXg, live.awayShots);
+  const xgPsHome = xgPerShot(effHomeXg, effHomeShots);
+  const xgPsAway = xgPerShot(effAwayXg, effAwayShots);
 
   return (
     <section className={cn("rounded-2xl border p-3", className)} aria-label="Stats live" style={{ backgroundColor: FOT.card, borderColor: FOT.border }}>
@@ -234,7 +267,7 @@ export function LiveStatsBreakdown({
 
       {/* 3 highlights en jauges bilatérales */}
       <div className="mb-2 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-        <BilateralGauge label="Possession" home={Math.round(live.homePossession)} away={Math.round(awayPoss)} unit="%" hot={hit("awayPossession")} />
+        <BilateralGauge label="Possession" home={Math.round(effPoss)} away={Math.round(awayPoss)} unit="%" hot={hit("awayPossession")} />
         {homeAtk != null && awayAtk != null && (
           <BilateralGauge label="Attaques" home={homeAtk} away={awayAtk} hot={hit("homeAttacks")} />
         )}
@@ -245,13 +278,17 @@ export function LiveStatsBreakdown({
 
       {/* Table de métriques avec surbrillance des seuils funnel */}
       <div className="space-y-0.5" role="table" aria-label={`Statistiques du match ${homeName} contre ${awayName}`}>
-        <StatRow label="xG" home={live.homeXg} away={live.awayXg} decimals={2} hot={hit("xgTotal")} />
-        <StatRow label="Tirs" home={live.homeShots} away={live.awayShots} hot={hit("homeShots")} />
+        <StatRow label="xG" home={effHomeXg} away={effAwayXg} decimals={2} hot={hit("xgTotal")} />
+        {/* xGA = xG concédés (symétrique du xG live : home xGA = xG adverse). */}
+        {(effHomeXg != null || effAwayXg != null) && (
+          <StatRow label="xGA" home={effAwayXg} away={effHomeXg} decimals={2} />
+        )}
+        <StatRow label="Tirs" home={effHomeShots} away={effAwayShots} hot={hit("homeShots")} />
         {(xgPsHome != null || xgPsAway != null) && (
           <StatRow label="xG / tir" home={xgPsHome} away={xgPsAway} decimals={2} />
         )}
-        <StatRow label="Tirs cadrés" home={live.homeShotsOnTarget} away={live.awayShotsOnTarget} hot={hit("totalSot") || hit("awaySot")} />
-        <StatRow label="Corners" home={live.homeCorners} away={live.awayCorners} hot={hit("totalCorners") || hit("homeCorners")} />
+        <StatRow label="Tirs cadrés" home={effHomeSot} away={effAwaySot} hot={hit("totalSot") || hit("awaySot")} />
+        <StatRow label="Corners" home={effHomeCorners} away={effAwayCorners} hot={hit("totalCorners") || hit("homeCorners")} />
         {(num(live.homeFouls) != null || num(live.awayFouls) != null) && <StatRow label="Fautes" home={live.homeFouls} away={live.awayFouls} />}
         {(num(live.homeYellowCards) != null || num(live.awayYellowCards) != null) && (
           <StatRow label="Cartons jaunes" home={live.homeYellowCards} away={live.awayYellowCards} hot={hit("yellowCards")} />
@@ -275,36 +312,42 @@ export function LiveStatsBreakdown({
           </span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 text-center">
-          {[
-            { label: "1X2", val: `${markets.homeWin}/${markets.draw}/${markets.awayWin}` },
-            { label: "O 1.5", val: `${markets.over15}%` },
-            { label: "O 2.5", val: `${markets.over25}%` },
-            { label: homeName, val: `${markets.homeWin}%` },
-            { label: "BTTS", val: `${markets.btts}%` },
-            { label: awayName, val: `${markets.awayWin}%` },
-            { label: "O 3.5", val: `${markets.over35}%` },
-            { label: "U 2.5", val: `${markets.under25}%` },
-            { label: "U 3.5", val: `${markets.under35}%` },
-          ].map((cell) => (
-            <div key={cell.label} className="rounded-lg px-1 py-1.5" style={{ backgroundColor: FOT.soft }}>
-              <p className="truncate text-[11px] uppercase tracking-wider" style={{ color: FOT.muted }}>{cell.label}</p>
-              <p className="text-[11px] font-bold tabular-nums" style={{ color: FOT.ink }}>{cell.val}</p>
-            </div>
-          ))}
+          {([
+            // Tri du plus fort au moins fort (demande 2026-09-09) — la cellule
+            // 1X2 composite reste ancrée en tête (résumé du match).
+            { label: "1X2", val: `${markets.homeWin}/${markets.draw}/${markets.awayWin}`, sort: Infinity },
+            { label: "O 1.5", val: `${markets.over15}%`, sort: markets.over15 },
+            { label: "O 2.5", val: `${markets.over25}%`, sort: markets.over25 },
+            { label: homeName, val: `${markets.homeWin}%`, sort: markets.homeWin },
+            { label: "BTTS", val: `${markets.btts}%`, sort: markets.btts },
+            { label: awayName, val: `${markets.awayWin}%`, sort: markets.awayWin },
+            { label: "O 3.5", val: `${markets.over35}%`, sort: markets.over35 },
+            { label: "U 2.5", val: `${markets.under25}%`, sort: markets.under25 },
+            { label: "U 3.5", val: `${markets.under35}%`, sort: markets.under35 },
+          ] as { label: string; val: string; sort: number }[])
+            .sort((a, b) => b.sort - a.sort)
+            .map((cell) => (
+              <div key={cell.label} className="rounded-lg px-1 py-1.5" style={{ backgroundColor: FOT.soft }}>
+                <p className="truncate text-[11px] uppercase tracking-wider" style={{ color: FOT.muted }}>{cell.label}</p>
+                <p className="text-[11px] font-bold tabular-nums" style={{ color: FOT.ink }}>{cell.val}</p>
+              </div>
+            ))}
         </div>
-        {/* Buts d'équipe — parité OddAlerts (déjà calculés, affichés P1). */}
+        {/* Buts d'équipe — parité OddAlerts, triées du plus fort au moins fort. */}
         <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-center sm:grid-cols-4">
-          {[
-            { label: `${homeName} 1+`, val: `${markets.o05Home}%` },
-            { label: `${homeName} 2+`, val: `${markets.o15Home}%` },
-            { label: `${awayName} 1+`, val: `${markets.o05Away}%` },
-            { label: `${awayName} 2+`, val: `${markets.o15Away}%` },
-          ].map((cell) => (
-            <div key={cell.label} className="rounded-lg px-1 py-1.5" style={{ backgroundColor: FOT.soft }}>
-              <p className="truncate text-[11px] uppercase tracking-wider" style={{ color: FOT.muted }}>{cell.label}</p>
-              <p className="text-[11px] font-bold tabular-nums" style={{ color: FOT.ink }}>{cell.val}</p>
-            </div>
-          ))}
+          {([
+            { label: `${homeName} 1+`, val: `${markets.o05Home}%`, sort: markets.o05Home },
+            { label: `${homeName} 2+`, val: `${markets.o15Home}%`, sort: markets.o15Home },
+            { label: `${awayName} 1+`, val: `${markets.o05Away}%`, sort: markets.o05Away },
+            { label: `${awayName} 2+`, val: `${markets.o15Away}%`, sort: markets.o15Away },
+          ] as { label: string; val: string; sort: number }[])
+            .sort((a, b) => b.sort - a.sort)
+            .map((cell) => (
+              <div key={cell.label} className="rounded-lg px-1 py-1.5" style={{ backgroundColor: FOT.soft }}>
+                <p className="truncate text-[11px] uppercase tracking-wider" style={{ color: FOT.muted }}>{cell.label}</p>
+                <p className="text-[11px] font-bold tabular-nums" style={{ color: FOT.ink }}>{cell.val}</p>
+              </div>
+            ))}
         </div>
       </div>
     </section>

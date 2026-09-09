@@ -201,18 +201,34 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
     }
     const matchId = encodeURIComponent(rawId);
 
-    fetch(`/api/football/matches/${matchId}/stats`, { signal: AbortSignal.timeout(15000) })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as StatsResponse;
-      })
-      .then((data) => {
-        if (!cancelled) setStats(data);
-      })
-      .catch((err: Error) => {
-        // Timeout réseau → message explicite au lieu d'un skeleton infini.
-        if (!cancelled) setError(err?.name === "TimeoutError" ? "délai dépassé" : err.message);
-      });
+    // Rafraîchissement silencieux : contrairement au chargement initial, une
+    // erreur en refresh garde les dernières données valides (pas d'erreur UI).
+    let hasData = false;
+    const loadStats = () => {
+      fetch(`/api/football/matches/${matchId}/stats`, { signal: AbortSignal.timeout(15000) })
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return (await res.json()) as StatsResponse;
+        })
+        .then((data) => {
+          if (!cancelled) {
+            hasData = true;
+            setStats(data);
+          }
+        })
+        .catch((err: Error) => {
+          // Timeout réseau → message explicite au lieu d'un skeleton infini.
+          if (!cancelled && !hasData) {
+            setError(err?.name === "TimeoutError" ? "délai dépassé" : err.message);
+          }
+        });
+    };
+    loadStats();
+
+    // Maj des metrics live (xG/xGA/tirs/corners/possession + momentum) toutes
+    // les 60 s tant que le dialog est ouvert sur un match live — sans rouvrir.
+    let statsTimer: ReturnType<typeof setInterval> | null = null;
+    if (match.live) statsTimer = setInterval(loadStats, 60_000);
 
     // Enrichissement best-effort : récupère les données BSD prematch réellement
     // (standingStats, metricStats, forme…) via /api/football/prematch.
@@ -229,6 +245,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
     return () => {
       cancelled = true;
+      if (statsTimer) clearInterval(statsTimer);
     };
   }, [open, match]);
 
@@ -663,6 +680,8 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
               awayName={view.away.shortName ?? "Extérieur"}
               prematch={{ homeProb: view.prediction.homeProb, drawProb: view.prediction.drawProb, awayProb: view.prediction.awayProb, over25Prob: view.prediction.over25Prob }}
               homePressurePct={!loading && !error && stats ? stats.pressure.homePct : null}
+              timelineTotals={stats?.totals ?? null}
+              timelineXg={stats?.xgTotals ?? null}
               matchId={view.id}
             />
           </div>

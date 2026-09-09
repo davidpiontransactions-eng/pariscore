@@ -267,6 +267,20 @@ export function buildPressureTimeline(input: PressureTimelineInput): MatchTimeli
     awayPct = 100 - homePct;
   }
 
+  // xG cumulés par équipe (somme des buckets) — exposé pour le fallback xG du
+  // popup live quand le flux BSD list n'embarque pas le xG (ligues faiblement
+  // couvertes). Retourné seulement si la somme est strictement positive.
+  let xgSumHome = 0;
+  let xgSumAway = 0;
+  for (const b of buckets) {
+    xgSumHome += howValue(b.xg?.home);
+    xgSumAway += howValue(b.xg?.away);
+  }
+  const xgTotals =
+    xgSumHome + xgSumAway > 0
+      ? { home: Math.round(xgSumHome * 100) / 100, away: Math.round(xgSumAway * 100) / 100 }
+      : undefined;
+
   return {
     momentum,
     events,
@@ -285,6 +299,9 @@ export function buildPressureTimeline(input: PressureTimelineInput): MatchTimeli
       dangerous: buckets.some((b) => howValue(b.danger?.home) + howValue(b.danger?.away) > 0),
       perMinute,
     },
+    // Passthrough des totaux boxscore + xG cumulés (undefined si absents).
+    totals: input.totals,
+    xgTotals,
     source,
   };
 }

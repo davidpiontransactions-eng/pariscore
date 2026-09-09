@@ -6,6 +6,7 @@ import {
 } from "@/lib/football-pressure-index";
 import { fetchBSDMatchStats, fetchBSDFootballMatchMeta } from "@/lib/bsd-football-fetcher";
 import { resolveESPNEvent, fetchESPNTimeline, leagueToEspnSlug } from "@/lib/espn-soccer-fetcher";
+import { fetchApiFootballMatchStats } from "@/lib/api-football-stats";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -163,47 +164,68 @@ export async function GET(
       source = "bsd";
     }
 
+    // 4) Fallback API-Football (gratuit) — quand BSD ET ESPN sont indisponibles.
+    //    Fournit les totaux boxscore (possession/tirs/SOT/corners) aux ligues
+    //    faiblement couvertes (ex. Veikkausliiga) : le popup remplace ses "—".
+    let afXg: { home: number | null; away: number | null } | null = null;
     if (!bsd && !espn) {
-      // Match connu mais sources minute en panne : courbe estimée (200) au
-      // lieu d'un 503 brut — le client affiche son bandeau "courbe estimée".
-      if (meta) {
-        const data = buildPressureTimeline({
-          buckets: [],
-          events: [],
-          totals: undefined,
-          source: "estimated",
-          finalMinute: meta.isLive && meta.currentMinute != null ? meta.currentMinute : undefined,
-        });
-        const stamped: MatchTimelineData & { updatedAt: string } = {
-          ...data,
-          degraded: true,
-          updatedAt: new Date().toISOString(),
-        };
-        cache.set(matchId, { data: stamped, at: Date.now() });
-        return NextResponse.json(stamped);
+      const af = await fetchApiFootballMatchStats({
+        homeTeam: meta?.homeTeam ?? "",
+        awayTeam: meta?.awayTeam ?? "",
+        date: meta?.date,
+      });
+      if (af) {
+        totals = af.totals;
+        if (af.homeXg != null || af.awayXg != null) {
+          afXg = { home: af.homeXg, away: af.awayXg };
+        }
+        console.info(`[football-stats] API-Football fallback utilisé pour ${matchId}`);
       }
-      throw new Error("aucune source de stats");
+    }
+
+    if (!bsd && !espn) {
+      // Sources minute en panne : courbe estimée (200) au lieu d'un 503 brut —
+      // le client affiche son bandeau "courbe estimée". (AUDIT-2026-09-09 :
+      // plus aucun throw — meta null ne bloque plus la réponse.)
+      const finalMinuteFallback =
+        meta && meta.isLive && meta.currentMinute != null ? meta.currentMinute : undefined;
+      const data = buildPressureTimeline({
+        buckets: [],
+        events: [],
+        totals,
+        source: "estimated",
+        finalMinute: finalMinuteFallback,
+      });
+      const stamped: MatchTimelineData & { updatedAt: string } = {
+        ...data,
+        // Totaux API-Football disponibles → réponse exploitable (non dégradée).
+        degraded: !(afXg || totals),
+        updatedAt: new Date().toISOString(),
+      };
+      if (afXg) stamped.xgTotals = { home: afXg.home ?? 0, away: afXg.away ?? 0 };
+      cache.set(matchId, { data: stamped, at: Date.now() });
+      return NextResponse.json(stamped);
     }
     // Anchor BSD seul (momentum sans buckets/events) : exploitable tel quel —
     // buildPressureTimeline le convertit en courbe par bucket.
     if (!buckets.length && !events.length && !espn && !(bsd?.momentum?.length)) {
-      if (meta) {
-        const data = buildPressureTimeline({
-          buckets,
-          events,
-          totals,
-          source: "estimated",
-          finalMinute: meta.isLive && meta.currentMinute != null ? meta.currentMinute : undefined,
-        });
-        const stamped: MatchTimelineData & { updatedAt: string } = {
-          ...data,
-          degraded: true,
-          updatedAt: new Date().toISOString(),
-        };
-        cache.set(matchId, { data: stamped, at: Date.now() });
-        return NextResponse.json(stamped);
-      }
-      throw new Error("données par-minute absentes");
+      // (AUDIT-2026-09-09) meta null ne déclenche plus de 503 : réponse 200
+      // dégradée, finalMinute tombe à undefined si la meta est absente.
+      const data = buildPressureTimeline({
+        buckets,
+        events,
+        totals,
+        source: "estimated",
+        finalMinute:
+          meta && meta.isLive && meta.currentMinute != null ? meta.currentMinute : undefined,
+      });
+      const stamped: MatchTimelineData & { updatedAt: string } = {
+        ...data,
+        degraded: true,
+        updatedAt: new Date().toISOString(),
+      };
+      cache.set(matchId, { data: stamped, at: Date.now() });
+      return NextResponse.json(stamped);
     }
 
     const data = buildPressureTimeline({
