@@ -49,6 +49,7 @@ model League {
   tier        String?
   sport       String  @default("football")
   bzzoiroId   Int?    // ID BSD v2
+  espnSlug    String? // Slug ESPN scoreboard (ex. "kor.1") — cf. BSD_TO_ESPN_SLUG (T2 SESSION-2026-09-09-POPUP-LIVE-FOOT)
   teams       Team[]
   matches     Match[]
 }
@@ -77,6 +78,7 @@ model Match {
   bzzoiroId     Int?     // ID BSD v2
   flashscoreId  String?  // ID Flashscore
   pronosDataId  String?  // ID Pronos Data
+  espnEventId   String?  // Event ESPN résolu (cache résolution scoreboard — T2 SESSION-2026-09-09-POPUP-LIVE-FOOT)
   leagueId      String?
   league        League?  @relation(fields: [leagueId], references: [id])
   homeId        String
