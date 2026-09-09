@@ -88,8 +88,10 @@ function filterForStrategy(
         .sort((a, b) => b.confidenceScore - a.confidenceScore)
         .slice(0, 10);
 
-    case "doubleChance":
-      // Double chance : toute victoire ou nul
+    case "doubleChance1X":
+    case "doubleChance2X":
+    case "doubleChance12":
+      // Double chance : toute victoire ou nul (selon variante)
       return picks
         .filter((p) => p.winProbability >= 0.55)
         .sort((a, b) => b.expectedValue - a.expectedValue)
@@ -229,7 +231,9 @@ export async function GET(request: Request) {
           }
           case "bestAttack":
           case "bestDefense":
-          case "doubleChance": {
+          case "doubleChance1X":
+          case "doubleChance2X":
+          case "doubleChance12": {
             const maxProb = Math.max(
               prob.models.ensemble.home,
               prob.models.ensemble.away,

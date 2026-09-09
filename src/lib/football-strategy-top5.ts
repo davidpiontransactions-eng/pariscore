@@ -17,7 +17,9 @@ import { dixonColesMarkets } from "@/lib/prediction/football/dixon-coles";
  *   - bestTeam     → PPG (pt/match) de la plus forte équipe du match   (plus haut = mieux)
  *   - bestAttack   → Expected Goals du match (λH + λA)                (plus haut = mieux)
  *   - bestDefense  → Équipe la plus étanche (λ encaissés le + bas)    (plus bas = mieux)
- *   - doubleChance → Taux de non-défaite (V+N) équipe la + sûre       (plus haut = mieux)
+ *   - doubleChance1X→ Taux de non-défaite domicile (V+N)              (plus haut = mieux)
+ *   - doubleChance2X→ Taux de non-défaite extérieur (V+N)            (plus haut = mieux)
+ *   - doubleChance12→ Taux de pas-de-nul (V+V)                       (plus haut = mieux)
  *   - over15       → P(≥ 2 buts) via Poisson sur λ                    (plus haut = mieux)
  *   - under35      → P(≤ 3 buts) via Poisson sur λ                    (plus haut = mieux)
  *   - bttsYes      → P(les 2 marquent) via Poisson sur λH, λA         (plus haut = mieux)
@@ -30,7 +32,9 @@ export type StrategyTop5Key =
   | "gagnant"
   | "bestAttack"
   | "bestDefense"
-  | "doubleChance"
+  | "doubleChance1X"
+  | "doubleChance2X"
+  | "doubleChance12"
   | "over15"
   | "under35"
   | "bttsYes"
@@ -100,7 +104,9 @@ const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
   gagnant: true,
   bestAttack: true,
   bestDefense: false,
-  doubleChance: true,
+  doubleChance1X: true,
+  doubleChance2X: true,
+  doubleChance12: true,
   over15: true,
   under35: true,
   bttsYes: true,
@@ -324,11 +330,20 @@ function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: n
       // Non distinguables par les cotes seules : on cède à la forme sinon null.
       return null;
     }
-    case "doubleChance": {
+    case "doubleChance1X": {
       if (!p) return null;
-      const homeDC = (p.home + p.draw) * 100;
-      const awayDC = (p.away + p.draw) * 100;
-      return { value: Math.max(homeDC, awayDC), pick: homeDC >= awayDC ? "home" : "away" };
+      const prob = (p.home + p.draw) * 100;
+      return { value: prob, pick: "home" };
+    }
+    case "doubleChance2X": {
+      if (!p) return null;
+      const prob = (p.away + p.draw) * 100;
+      return { value: prob, pick: "away" };
+    }
+    case "doubleChance12": {
+      if (!p) return null;
+      const prob = (p.home + p.away) * 100;
+      return { value: prob, pick: p.home >= p.away ? "home" : "away" };
     }
     case "over15": {
       const prob = impliedProb(m.odds_over_15, m.odds_under_15);
@@ -410,10 +425,21 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
       const aAgainst = a.ga / nA;
       return { value: Math.min(hAgainst, aAgainst), pick: hAgainst <= aAgainst ? "home" : "away" };
     }
-    case "doubleChance": {
-      const hRate = nonDefeatRate(h);
-      const aRate = nonDefeatRate(a);
-      return { value: Math.max(hRate, aRate), pick: hRate >= aRate ? "home" : "away" };
+    case "doubleChance1X": {
+      const rate = nonDefeatRate(h);
+      return { value: rate, pick: "home" };
+    }
+    case "doubleChance2X": {
+      const rate = nonDefeatRate(a);
+      return { value: rate, pick: "away" };
+    }
+    case "doubleChance12": {
+      // P(pas de nul) = 1 - drawRate moyen
+      const hD = h.n > 0 ? h.draws / h.n : 0;
+      const aD = a.n > 0 ? a.draws / a.n : 0;
+      const avgDraw = (hD + aD) / 2;
+      const noDrawProb = (1 - avgDraw) * 100;
+      return { value: noDrawProb, pick: null };
     }
     case "over15":
       return { value: poissonTailAt(lambdaTotal, 2) * 100, pick: null };
@@ -678,7 +704,9 @@ export function computeStrategyTop5Matches(
     "bestTeam",
     "bestTeam1x2",
     "gagnant",
-    "doubleChance",
+    "doubleChance1X",
+    "doubleChance2X",
+    "doubleChance12",
     "over15",
     "under35",
     "bttsYes",

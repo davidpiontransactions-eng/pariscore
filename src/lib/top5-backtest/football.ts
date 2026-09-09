@@ -123,9 +123,18 @@ export function settleFootballPick(
       const clo = pick === "home" ? m.odds_home : m.odds_away;
       return { status: won ? "won" : "lost", odds: clo ?? null, closingOdds: clo ?? null, score: `${hs}-${as}` };
     }
-    case "doubleChance": {
+    case "doubleChance1X": {
       if (!pick) return { status: "void", odds: null, closingOdds: null };
       const won = pick === "home" ? hs >= as : as >= hs;
+      return { status: won ? "won" : "lost", odds: null, closingOdds: null, score: `${hs}-${as}` };
+    }
+    case "doubleChance2X": {
+      if (!pick) return { status: "void", odds: null, closingOdds: null };
+      const won = pick === "away" ? as >= hs : hs >= as;
+      return { status: won ? "won" : "lost", odds: null, closingOdds: null, score: `${hs}-${as}` };
+    }
+    case "doubleChance12": {
+      const won = hs !== as;
       return { status: won ? "won" : "lost", odds: null, closingOdds: null, score: `${hs}-${as}` };
     }
     case "bestDefense": {
@@ -176,8 +185,12 @@ function pickDesc(key: StrategyTop5Key, e: StrategyMatchEntry): string {
     case "bestTeam":
     case "bestTeam1x2":
       return sideTeam ?? "?";
-    case "doubleChance":
-      return `DC ${sideTeam ?? "?"}`;
+    case "doubleChance1X":
+      return `DC 1X ${e.home.teamName ?? "?"}`;
+    case "doubleChance2X":
+      return `DC 2X ${e.away.teamName ?? "?"}`;
+    case "doubleChance12":
+      return "DC 12 (pas de nul)";
     case "bestDefense":
       return `${sideTeam ?? "?"} ≤1 enc`;
     case "bestAttack":

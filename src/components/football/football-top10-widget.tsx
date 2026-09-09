@@ -150,17 +150,16 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Championnat du Top 10"
-            className="h-7 w-52 rounded-lg text-xs font-medium"
-            style={{ borderColor: C.cardBorder, color: C.team }}
+            className="h-7 w-52 rounded-lg text-xs font-medium !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
           >
             <SelectValue placeholder="Toutes les ligues" />
           </SelectTrigger>
-          <SelectContent style={{ borderColor: C.cardBorder, color: C.team }}>
-            <SelectItem value="__all__" className="text-xs">
+          <SelectContent className="!bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]">
+            <SelectItem value="__all__" className="text-xs dark:!bg-white dark:!text-[#222]">
               Toutes les ligues
             </SelectItem>
             {leagues.map((l) => (
-              <SelectItem key={l} value={l} className="text-xs">
+              <SelectItem key={l} value={l} className="text-xs dark:!bg-white dark:!text-[#222]">
                 {l}
               </SelectItem>
             ))}
@@ -172,14 +171,13 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 10"
-            className="h-7 w-56 rounded-lg text-xs font-medium"
-            style={{ borderColor: C.cardBorder, color: C.team }}
+            className="h-7 w-56 rounded-lg text-xs font-medium !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>
-          <SelectContent style={{ borderColor: C.cardBorder, color: C.team }}>
+          <SelectContent className="!bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]">
             {STRATEGIES.map((s) => (
-              <SelectItem key={s.key} value={s.key} className="text-xs">
+              <SelectItem key={s.key} value={s.key} className="text-xs dark:!bg-white dark:!text-[#222]">
                 <span aria-hidden>{s.emoji}</span> {s.label}
               </SelectItem>
             ))}
