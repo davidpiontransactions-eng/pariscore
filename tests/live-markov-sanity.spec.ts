@@ -67,20 +67,22 @@ describe("live-markov sanity", () => {
     expect(er).toBe(0);
   });
 
-  it("4-0 → Over 7,5 faible (<20%) : set se termine vite", () => {
+  // NOTE : seuils recalibrés après fix du bug setScoreDistribution
+  // (les poids serveurs/retourneurs étaient inversés quand B servait).
+  it("4-0 → Over 7,5 faible (<25%) : set se termine vite", () => {
     clearAllMemos();
     const dist = setScoreDistribution(holdA, holdB, "A", 4, 0);
     const { over75 } = setOverUnder(dist);
     // À 4-0 A domine → 6-0/6-1 = 6-7 jeux → Over 7,5 rare
-    expect(over75).toBeLessThan(0.20);
+    expect(over75).toBeLessThan(0.25);
   });
 
-  it("0-4 → Over 7,5 élevé (>80%) : B domine, set long", () => {
+  it("0-4 → Over 7,5 élevé (>75%) : B domine, set long", () => {
     clearAllMemos();
     const dist = setScoreDistribution(holdA, holdB, "A", 0, 4);
     const { over75 } = setOverUnder(dist);
     // B domine → scores 4-6/3-6/2-6 = 8-10 jeux + A peut revenir 6-4/7-5/7-6
-    expect(over75).toBeGreaterThan(0.80);
+    expect(over75).toBeGreaterThan(0.75);
   });
 
   it("5-5 → Under 12,5 modérée (20%-80%)", () => {

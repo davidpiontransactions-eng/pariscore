@@ -237,7 +237,8 @@ export function setScoreDistribution(
   }
 
   // Récursion
-  const pi = serverFirst === "A" ? holdA : holdB;
+  // pAWinGame = probabilité que A gagne le jeu en cours (selon qui sert)
+  const pAWinGame = serverFirst === "A" ? holdA : 1 - holdB;
   const nextServer: Player = serverFirst === "A" ? "B" : "A";
 
   const distWinA = setScoreDistribution(holdA, holdB, nextServer, gamesA + 1, gamesB);
@@ -245,11 +246,11 @@ export function setScoreDistribution(
 
   // Combiner les distributions
   for (const [score, prob] of Object.entries(distWinA)) {
-    dist[score] = (dist[score] ?? 0) + pi * prob;
+    dist[score] = (dist[score] ?? 0) + pAWinGame * prob;
   }
 
   for (const [score, prob] of Object.entries(distWinB)) {
-    dist[score] = (dist[score] ?? 0) + (1 - pi) * prob;
+    dist[score] = (dist[score] ?? 0) + (1 - pAWinGame) * prob;
   }
 
   distMemo.set(key, dist);
