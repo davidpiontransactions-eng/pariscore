@@ -27,10 +27,11 @@ export function lookupLeagueLogo(name: string): string | undefined {
 
 /**
  * Résout un logo de ligue avec cascade de fallback :
- * 1. Seed statique (rapide, stable)
- * 2. BSD CDN dynamique (toujours disponible si leagueId connu)
+ * 1. BSD CDN dynamique (source vivante — le seed statique TheSportsDB
+ *    contient des URLs mortes en 404, constaté le 2026-09-09)
+ * 2. Seed statique (repli si leagueId inconnu)
  * 3. undefined (caller décide du fallback emoji)
  */
 export function resolveLeagueLogo(name: string, leagueId?: number | null): string | undefined {
-  return lookupLeagueLogo(name) ?? bsdLeagueLogoUrl(leagueId);
+  return bsdLeagueLogoUrl(leagueId) ?? lookupLeagueLogo(name);
 }

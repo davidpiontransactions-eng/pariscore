@@ -134,7 +134,18 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
               {/* Match */}
               <div className="flex min-w-0 items-center gap-2">
                 {row.leagueLogo && (
-                  <img src={row.leagueLogo} alt="" width={16} height={16} loading="lazy" className="h-4 w-4 shrink-0 rounded object-contain" />
+                  <img
+                    src={row.leagueLogo}
+                    alt=""
+                    width={16}
+                    height={16}
+                    loading="lazy"
+                    className="h-4 w-4 shrink-0 rounded object-contain"
+                    onError={(e) => {
+                      // URL morte (seed périmé) : masquer plutôt qu'icône cassée.
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
                 )}
                 <div className="min-w-0">
                   <div className="truncate font-medium" style={{ color: C.team }}>
