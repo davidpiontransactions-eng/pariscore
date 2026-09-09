@@ -77,7 +77,7 @@ fi
 
 BUILD_RAN=0
 if [ "$NEED_BUILD" = "1" ]; then
-  echo "[4/6] Next.js build..."
+  echo "[4/6] Next.js build... (start $(date -u +%H:%M:%S))"
   npm run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
   # Garde-fou (BUG-1) : un build Next ok ne garantit pas l'export standalone.
   # Si server.js est absent, pm2 crash en boucle (502) ; on STOPE le deploy
@@ -87,6 +87,7 @@ if [ "$NEED_BUILD" = "1" ]; then
     exit 1
   fi
   BUILD_RAN=1
+  echo "  build done ($(date -u +%H:%M:%S))"
   # Sync Prisma schema to the local SQLite DB (idempotent; no-op si inchangé).
   echo "[4b] Prisma schema sync (db push)..."
   npx prisma db push --skip-generate 2>&1 || { echo "ERR: prisma db push"; exit 1; }
@@ -103,8 +104,12 @@ else
 fi
 
 echo "[5/6] PM2 restart..."
-# Legacy always: it serves the legacy files we just pulled.
-pm2 restart "$PM2_LEGACY" --update-env 2>&1 || echo "  warn: pm2 restart $PM2_LEGACY échec"
+# Legacy only if the process still exists (legacy retired → no more noise).
+if pm2 describe "$PM2_LEGACY" >/dev/null 2>&1; then
+  pm2 restart "$PM2_LEGACY" --update-env 2>&1 || echo "  warn: pm2 restart $PM2_LEGACY échec"
+else
+  echo "  $PM2_LEGACY absent (legacy retiré) — skip"
+fi
 # Next.js only if a build ran.
 if [ "$BUILD_RAN" = "1" ]; then
   pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
@@ -130,12 +135,19 @@ for i in $(seq 1 $MAX_CHECKS); do
   fi
   echo "  health: waiting ($i/$MAX_CHECKS)..."; sleep 2
 done
+if [ "$HEALTH_OK" != "1" ]; then
+  echo "ERR: health check échec après $MAX_CHECKS tentatives — deploy en échec"
+  pm2 ls 2>/dev/null | tail -8 || true
+  pm2 logs "$PM2_NEXT" --lines 20 --nostream 2>/dev/null || true
+  exit 1
+fi
 [ "$HEALTH_OK" = "1" ] || echo "  warn: health check échec — vérifier pm2 logs"
 
 echo ""
 echo "--- VPS_DEPLOY_OK ---"
 echo "commit: $(git log --oneline -1)"
 echo "build_ran: $BUILD_RAN"
+echo "finished_at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 # [7] Discord notification (webhook from .env, never hardcoded).
 if [ "${SKIP_DISCORD:-0}" != "1" ]; then
