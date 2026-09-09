@@ -23,88 +23,156 @@ type Props = {
   picksByMatch?: Record<string, MatchPick[]>;
 };
 
+/* Teintes FotMob clair — identiques au calendrier (fotmob-calendar-table.tsx) */
+const C = {
+  card: "#ffffff",
+  cardBorder: "#f0f0f0",
+  rowSep: "#f5f5f5",
+  headerBg: "#f5f5f5",
+  headerText: "#000000",
+  team: "#222222",
+  time: "#717171",
+  live: "#00985f",
+  accent: "#00985f",
+  score: "#222222",
+} as const;
+
 function confidenceBand(prob: number): { label: string; cls: string } {
-  if (prob >= 0.7) return { label: "Confiance Élevée", cls: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" };
-  if (prob >= 0.6) return { label: "Confiance Moyenne", cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
-  return { label: "Faible", cls: "bg-slate-500/15 text-slate-400 border-slate-500/30" };
+  if (prob >= 0.7) return { label: "Élevée", cls: "bg-[#00985f]/10 text-[#00985f] border-[#00985f]/20" };
+  if (prob >= 0.6) return { label: "Moyenne", cls: "bg-[#FF6D00]/10 text-[#FF6D00] border-[#FF6D00]/20" };
+  return { label: "Faible", cls: "bg-[#f0f0f0] text-[#717171] border-[#e0e0e0]" };
 }
 
 function TrendIcon({ trend }: { trend?: "up" | "down" | "flat" }) {
-  if (trend === "up") return <ArrowUp className="h-3 w-3 text-emerald-400" />;
-  if (trend === "down") return <ArrowDown className="h-3 w-3 text-rose-400" />;
-  return <Minus className="h-3 w-3 text-slate-500" />;
+  if (trend === "up") return <ArrowUp className="h-3 w-3 text-[#00985f]" />;
+  if (trend === "down") return <ArrowDown className="h-3 w-3 text-[#EF4444]" />;
+  return <Minus className="h-3 w-3 text-[#717171]" />;
 }
 
 export function TopStrategiesTable({ rows, strategy, picksByMatch }: Props) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-6 text-center text-sm text-slate-400">
+      <div
+        className="rounded-2xl p-6 text-center text-sm"
+        style={{ background: C.card, border: `1px solid ${C.cardBorder}`, color: C.time }}
+      >
         Aucun match ne satisfait cette stratégie aujourd'hui.
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-700/50 bg-slate-900/50">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-slate-700/50 bg-slate-800/50 text-xs uppercase tracking-wider text-slate-400">
-          <tr>
-            <th className="px-4 py-3">Match</th>
-            <th className="px-4 py-3">Probabilite</th>
-            <th className="px-4 py-3">Cote</th>
-            <th className="px-4 py-3">EV</th>
-            <th className="px-4 py-3">Tendance</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-          {rows.map((row) => {
-            const picks = picksByMatch?.[row.matchId] ?? [];
-            const topPick = picks[0];
-            const band = topPick ? confidenceBand(topPick.prob) : null;
-            return (
-              <tr key={row.matchId} className="transition-colors hover:bg-slate-800/30">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    {row.leagueLogo && (
-                      <img src={row.leagueLogo} alt="" className="h-4 w-4 rounded object-contain" />
-                    )}
-                    <div>
-                      <div className="font-medium text-slate-100">
-                        {row.home.teamName} <span className="text-slate-500">vs</span> {row.away.teamName}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        {row.league} · {row.kickoff}
-                      </div>
-                    </div>
+    <div
+      className="overflow-hidden rounded-2xl"
+      style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
+    >
+      {/* Header — même style que FotmobLeagueSection header */}
+      <div
+        className="flex h-10 items-center px-4"
+        style={{ background: C.headerBg, borderBottom: `1px solid ${C.cardBorder}` }}
+      >
+        <span className="text-[13px] font-semibold" style={{ color: C.headerText }}>
+          Matchs par stratégie
+        </span>
+        <span
+          className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+          style={{ background: `${C.accent}15`, color: C.accent }}
+        >
+          {rows.length}
+        </span>
+      </div>
+
+      {/* Table — CSS Grid 5 colonnes comme le calendrier */}
+      <div className="w-full text-[13px]">
+        {/* Header colonnes */}
+        <div
+          className="grid items-center px-3 py-2 text-[11px] font-medium uppercase tracking-wider"
+          style={{
+            gridTemplateColumns: "1fr auto auto 1fr auto",
+            color: C.time,
+            borderBottom: `1px solid ${C.rowSep}`,
+          }}
+        >
+          <span>Match</span>
+          <span className="px-3">Prob.</span>
+          <span className="px-3">Cote</span>
+          <span className="px-3">EV</span>
+          <span className="w-7 text-center">→</span>
+        </div>
+
+        {/* Lignes */}
+        {rows.map((row, i) => {
+          const picks = picksByMatch?.[row.matchId] ?? [];
+          const topPick = picks[0];
+          const band = topPick ? confidenceBand(topPick.prob) : null;
+          return (
+            <div
+              key={row.matchId}
+              className="grid items-center px-3 py-2 transition-colors hover:bg-[#f8f8f8]"
+              style={{
+                gridTemplateColumns: "1fr auto auto 1fr auto",
+                borderBottom: i < rows.length - 1 ? `1px solid ${C.rowSep}` : undefined,
+              }}
+            >
+              {/* Col 1 : Match */}
+              <div className="flex items-center gap-2 min-w-0">
+                {row.leagueLogo && (
+                  <img src={row.leagueLogo} alt="" className="h-4 w-4 rounded object-contain shrink-0" />
+                )}
+                <div className="min-w-0">
+                  <div className="truncate font-medium" style={{ color: C.team }}>
+                    {row.home.teamName}{" "}
+                    <span style={{ color: C.time }}>vs</span>{" "}
+                    {row.away.teamName}
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  {band && (
-                    <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold", band.cls)}>
-                      {Math.round(topPick.prob * 100)}% · {band.label}
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 font-mono text-slate-300">
-                  {row.odds != null ? row.odds.toFixed(2) : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  {topPick?.ev != null ? (
-                    <span className={cn("font-mono text-xs", topPick.ev > 0 ? "text-emerald-400" : "text-rose-400")}>
-                      {topPick.ev > 0 ? "+" : ""}{(topPick.ev * 100).toFixed(1)}%
-                    </span>
-                  ) : (
-                    <span className="text-slate-600">—</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <TrendIcon trend={row.trend} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <div className="text-[11px] truncate" style={{ color: C.time }}>
+                    {row.league} · {row.kickoff}
+                  </div>
+                </div>
+              </div>
+
+              {/* Col 2 : Probabilité */}
+              <div className="px-3">
+                {band && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                      band.cls,
+                    )}
+                  >
+                    {Math.round(topPick.prob * 100)}%
+                  </span>
+                )}
+              </div>
+
+              {/* Col 3 : Cote */}
+              <div className="px-3 font-mono text-[13px]" style={{ color: C.score }}>
+                {row.odds != null ? row.odds.toFixed(2) : "—"}
+              </div>
+
+              {/* Col 4 : EV */}
+              <div className="px-3">
+                {topPick?.ev != null ? (
+                  <span
+                    className="font-mono text-[12px]"
+                    style={{ color: topPick.ev > 0 ? C.accent : "#EF4444" }}
+                  >
+                    {topPick.ev > 0 ? "+" : ""}
+                    {(topPick.ev * 100).toFixed(1)}%
+                  </span>
+                ) : (
+                  <span className="text-[12px]" style={{ color: C.time }}>—</span>
+                )}
+              </div>
+
+              {/* Col 5 : Tendance */}
+              <div className="w-7 flex justify-center">
+                <TrendIcon trend={row.trend} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

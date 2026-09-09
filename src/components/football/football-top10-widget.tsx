@@ -19,6 +19,18 @@ import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-w
 import { TopStrategiesTable, type StrategyTableRow } from "./top-strategies-table";
 import { computeMatchPicks, type MatchPick } from "@/lib/services/football-analytics";
 
+/* Teintes FotMob clair — identiques au calendrier */
+const C = {
+  card: "#ffffff",
+  cardBorder: "#f0f0f0",
+  headerBg: "#f5f5f5",
+  headerText: "#000000",
+  team: "#222222",
+  time: "#717171",
+  live: "#00985f",
+  accent: "#00985f",
+} as const;
+
 /** Convertit les entrees StrategyMatchEntry en lignes pour TopStrategiesTable. */
 function toTableRows(entries: StrategyMatchEntry[]): StrategyTableRow[] {
   return entries.map((e) => ({
@@ -57,12 +69,9 @@ const TIME_WINDOWS: { key: KickoffWindow; label: string }[] = [
  * Widget central « Top 10 matchs par stratégie » — global (Toutes les ligues)
  * ou par championnat via le sélecteur. Remplace le Top5 sidebar.
  *
- * Règle ≥60 % : un match présent dans la sélection du store dont la stratégie
- * probabiliste vaut ≥ 60 % est forcé en tête du top10 si le championnat
- * (ou le pool global) compte moins de 10 matchs qualifiés.
+ * Design : FotMob clair — même teintes que FotmobCalendarTable.
  */
 export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
-  // Toutes les ligues = null (top10 global) ; sinon nom de ligue exact.
   const [league, setLeague] = useState<string | null>(null);
   const [active, setActive] = useState<StrategyTop5Key>("bestTeam");
   const [winKey, setWinKey] = useState<WindowKey>("l5");
@@ -74,7 +83,6 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
 
-  // Championnats disponibles (dérivés des matchs pre-match affichés, triés).
   const leagues = useMemo(() => {
     const set = new Set<string>();
     for (const m of matches) {
@@ -89,17 +97,15 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     [rawRows, timeWin],
   );
 
-  // ── Règle ≥60 % : inclusion forcée des matchs sélectionnés ──
   const forced = useMemo(() => {
     if (rows.length >= TOP_N) return [];
     const inRows = new Set(rows.map((r) => r.matchId));
     const out: StrategyMatchEntry[] = [];
     for (const item of Object.values(selectedItems)) {
       const defSel = STRATEGIES.find((s) => s.key === item.strategy);
-      if (!defSel?.isProb) continue; // seulement les stratégies probabilistes
-      if (item.entry.value < MIN_PROB_PCT) continue; // seuil ≥60 %
-      if (inRows.has(item.entry.matchId)) continue; // déjà classé naturellement
-      // Vue par championnat : le match doit appartenir à la ligue affichée.
+      if (!defSel?.isProb) continue;
+      if (item.entry.value < MIN_PROB_PCT) continue;
+      if (inRows.has(item.entry.matchId)) continue;
       if (league && item.entry.league !== league) continue;
       out.push(item.entry);
     }
@@ -115,23 +121,28 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   return (
     <section
       aria-label="Top 10 matchs par stratégie"
-      className="mb-4 w-full rounded-2xl border border-slate-700/50 p-5"
-      style={{ background: "#0f172a" }}
+      className="w-full rounded-2xl p-4"
+      style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
     >
+      {/* Header — même style que FotmobLeagueSection */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="text-sm font-extrabold uppercase tracking-wider text-slate-100">
+        <h2
+          className="text-[13px] font-semibold"
+          style={{ color: C.headerText }}
+        >
           Top 10 matchs
           {selectedCount > 0 && (
             <span
-              className="ml-1.5 inline-flex items-center rounded-full bg-[#FF6D00]/15 px-1.5 py-px align-middle font-mono text-[9px] font-bold text-[#FF6D00]"
-              title="Matchs sélectionnés (panneau de droite)"
+              className="ml-1.5 inline-flex items-center rounded-full px-1.5 py-px align-middle font-mono text-[9px] font-bold"
+              style={{ background: `${C.accent}15`, color: C.accent }}
+              title="Matchs sélectionnés"
             >
               {selectedCount}
             </span>
           )}
         </h2>
 
-        {/* Sélecteur de championnat — global « Toutes les ligues » ou une ligue */}
+        {/* Sélecteur de championnat */}
         <Select
           value={league ?? "__all__"}
           onValueChange={(v) => setLeague(v === "__all__" ? null : v)}
@@ -139,13 +150,14 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Championnat du Top 10"
-            className="h-7 w-52 rounded-lg border-[#E0D8F0] bg-white text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
+            className="h-7 w-52 rounded-lg text-xs font-medium"
+            style={{ borderColor: C.cardBorder, color: C.team }}
           >
             <SelectValue placeholder="Toutes les ligues" />
           </SelectTrigger>
-          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
+          <SelectContent style={{ borderColor: C.cardBorder, color: C.team }}>
             <SelectItem value="__all__" className="text-xs">
-              🌍 Toutes les ligues
+              Toutes les ligues
             </SelectItem>
             {leagues.map((l) => (
               <SelectItem key={l} value={l} className="text-xs">
@@ -160,11 +172,12 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 10"
-            className="h-7 w-56 rounded-lg border-[#E0D8F0] bg-white text-xs font-medium text-[#1A1145] focus:ring-1 focus:ring-[#7B3FA0]"
+            className="h-7 w-56 rounded-lg text-xs font-medium"
+            style={{ borderColor: C.cardBorder, color: C.team }}
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>
-          <SelectContent className="border-[#E0D8F0] bg-white text-[#1A1145]">
+          <SelectContent style={{ borderColor: C.cardBorder, color: C.team }}>
             {STRATEGIES.map((s) => (
               <SelectItem key={s.key} value={s.key} className="text-xs">
                 <span aria-hidden>{s.emoji}</span> {s.label}
@@ -173,9 +186,14 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           </SelectContent>
         </Select>
 
-        {/* Filtre temporel + fenêtre de forme L5/L10 */}
+        {/* Filtre temporel + fenêtre de forme */}
         <div className="flex shrink-0 items-center gap-1">
-          <div className="flex overflow-hidden rounded border border-[#E0D8F0]" role="group" aria-label="Période des matchs">
+          <div
+            className="flex overflow-hidden rounded"
+            style={{ border: `1px solid ${C.cardBorder}` }}
+            role="group"
+            aria-label="Période des matchs"
+          >
             {TIME_WINDOWS.map((w) => (
               <button
                 key={w.key}
@@ -186,15 +204,20 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                 className={cn(
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   timeWin === w.key
-                    ? "bg-[#7B3FA0]/15 text-[#7B3FA0]"
-                    : "bg-transparent text-[#7B3FA0]/60 hover:text-[#7B3FA0]",
+                    ? "bg-[#00985f]/10 text-[#00985f]"
+                    : "bg-transparent text-[#717171] hover:text-[#222]",
                 )}
               >
                 {w.label}
               </button>
             ))}
           </div>
-          <div className="flex overflow-hidden rounded border border-[#E0D8F0]" role="group" aria-label="Fenêtre de forme">
+          <div
+            className="flex overflow-hidden rounded"
+            style={{ border: `1px solid ${C.cardBorder}` }}
+            role="group"
+            aria-label="Fenêtre de forme"
+          >
             {(["l5", "l10"] as WindowKey[]).map((k) => (
               <button
                 key={k}
@@ -204,8 +227,8 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                 className={cn(
                   "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
                   winKey === k
-                    ? "bg-[#7B3FA0]/15 text-[#7B3FA0]"
-                    : "bg-transparent text-[#7B3FA0]/60 hover:text-[#7B3FA0]",
+                    ? "bg-[#00985f]/10 text-[#00985f]"
+                    : "bg-transparent text-[#717171] hover:text-[#222]",
                 )}
               >
                 {k.replace("l", "L")}
@@ -216,22 +239,21 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 px-1 py-3 text-xs text-[#7B3FA0]">
+        <div className="flex items-center gap-2 px-1 py-3 text-xs" style={{ color: C.accent }}>
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           Calcul du Top 10…
         </div>
       ) : error ? (
-        <div className="flex items-center gap-2 px-1 py-3 text-xs text-[#E53935]">
+        <div className="flex items-center gap-2 px-1 py-3 text-xs text-[#EF4444]">
           <AlertCircle className="h-3.5 w-3.5" aria-hidden />
           Top 10 indisponible ({(error as Error).message})
         </div>
       ) : rows.length === 0 && forced.length === 0 ? (
-        <p className="px-1 py-3 text-xs text-[#7B3FA0]">
+        <p className="px-1 py-3 text-xs" style={{ color: C.time }}>
           Aucun match qualifié pour cette stratégie{league ? ` en ${league}` : ""}.
         </p>
       ) : (
-        <div className="space-y-4">
-          {/* Tableau stratégies Behance */}
+        <div className="space-y-3">
           <TopStrategiesTable
             rows={toTableRows(rows)}
             strategy={active}
@@ -239,8 +261,13 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           />
           {/* Sélections forcées (≥60%) */}
           {forced.length > 0 && (
-            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
-              <div className="mb-2 text-xs font-semibold text-emerald-400">★ Sélections forcées (≥60%)</div>
+            <div
+              className="rounded-xl p-3"
+              style={{ background: `${C.accent}08`, border: `1px solid ${C.accent}20` }}
+            >
+              <div className="mb-2 text-xs font-semibold" style={{ color: C.accent }}>
+                Sélections forcées (≥60%)
+              </div>
               <ul className="grid grid-cols-1 gap-x-4 gap-y-0.5 md:grid-cols-2">
                 {forced.map((entry) => (
                   <MatchRow
@@ -250,7 +277,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                     winKey={winKey}
                     selected
                     onToggle={() => toggleSelect(entry)}
-                    badge="★ Sélection"
+                    badge="Sélection"
                   />
                 ))}
               </ul>
