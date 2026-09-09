@@ -98,12 +98,18 @@ export type StrategyMatchEntry = {
     bttsYes: number | null;
     bttsNo: number | null;
   } | null;
+  /** Source de la valeur : forme L5 (« form ») ou cotes dé-vigées (« odds »). */
+  source?: "form" | "odds";
+  /** Repli « Nul probable » Dixon-Coles (hors classement gagnant). */
+  drawModal?: boolean;
 };
 
 export type StrategyTop5 = {
   window: number;
   minPlayed: number;
   strategies: Record<StrategyTop5Key, StrategyMatchEntry[]>;
+  /** Nuls modaux (max 3) — repli grisé quand `gagnant` est vide. */
+  drawModal: StrategyMatchEntry[];
 };
 
 const FORM_WINDOW = 5;
@@ -294,7 +300,32 @@ type ScoredMatch = {
   rawForm?: { home: TeamForm[]; away: TeamForm[] } | null;
   value: number;
   pick: Side | null;
+  /** Vrai si la valeur vient des cotes (repli), faux si de la forme L5. */
+  viaOdds?: boolean;
 };
+
+/** Cote de départage à égalité de valeur (null = pas de marché direct). */
+function tiebreakOdds(key: StrategyTop5Key, m: BSDFootballMatch): number | null {
+  const valid = (o: number | null | undefined): number | null =>
+    o != null && o > 1 ? o : null;
+  switch (key) {
+    case "bestTeam":
+    case "bestTeam1x2":
+    case "gagnant":
+    case "doubleChance1X":
+      return valid(m.odds_home);
+    case "doubleChance2X":
+      return valid(m.odds_away);
+    case "over15":
+      return valid(m.odds_over_15);
+    case "under35":
+      return valid(m.odds_under_35);
+    case "bttsYes":
+      return valid(m.odds_btts_yes);
+    default:
+      return null;
+  }
+}
 
 /**
  * Probabilités justes (de-vig) dérivées des cotes du book, si présentes.
@@ -459,6 +490,8 @@ export function computeStrategyTop5Matches(
 
   const scores = {} as Record<StrategyTop5Key, ScoredMatch[]>;
   for (const key of STRATEGY_TOP5_KEYS) scores[key] = [];
+  /** Nuls modaux Dixon-Coles — repli UI « Nul probable » (hors stratégies). */
+  const drawModalScores: ScoredMatch[] = [];
 
     for (const fixture of fixtures) {
     if (fixture.status !== "notstarted") continue;
@@ -512,13 +545,14 @@ export function computeStrategyTop5Matches(
       if (key === "bestTeam1x2") {
         const scored = scoreMatchByOdds("bestTeam", fixture);
         if (!scored) continue;
-        scores[key].push({ fixture, form, value: scored.value, pick: scored.pick });
+        scores[key].push({ fixture, form, value: scored.value, pick: scored.pick, viaOdds: true });
         continue;
       }
 
       // gagnant : Dixon-Coles 1997 sur λ forme L5 — vainqueur prédit = max
       // P(dom)/P(ext) ; match écarté si le nul est l'issue modale (pas de
       // gagnant fiable). Zéro dépendance cotes (classement confiance modèle).
+      // Les nuls modaux sont conservés à part pour le repli UI « Nul probable ».
       if (key === "gagnant") {
         if (!form) continue;
         const nHg = Math.max(form.home.n, 1);
@@ -527,7 +561,15 @@ export function computeStrategyTop5Matches(
         const lambdaAg = (form.away.gf / nAg + form.home.ga / nHg) / 2;
         const mk = dixonColesMarkets(lambdaHg, lambdaAg);
         const maxWin = Math.max(mk.homeWin, mk.awayWin);
-        if (mk.draw >= maxWin) continue;
+        if (mk.draw >= maxWin) {
+          drawModalScores.push({
+            fixture,
+            form,
+            value: maxWin, // Markets DC déjà en %
+            pick: mk.homeWin >= mk.awayWin ? "home" : "away",
+          });
+          continue;
+        }
         scores[key].push({
           fixture,
           form,
@@ -544,7 +586,7 @@ export function computeStrategyTop5Matches(
         // Pas de forme L5 exploitable : repli sur les cotes embarquées du fixture.
         const scored = scoreMatchByOdds(key, fixture);
         if (!scored) continue;
-        scores[key].push({ fixture, form: null, value: scored.value, pick: scored.pick });
+        scores[key].push({ fixture, form: null, value: scored.value, pick: scored.pick, viaOdds: true });
       }
     }
   }
@@ -583,48 +625,68 @@ export function computeStrategyTop5Matches(
     }
   }
 
+  const mapEntry = (s: ScoredMatch, drawModal = false): StrategyMatchEntry => {
+    const league = s.fixture.league ?? {};
+    const leagueId = league.id ?? null;
+    const leagueCountry = league.country ?? null;
+    const leagueLogo = resolveLeagueLogo(league.name ?? "", leagueId);
+    return {
+      matchId: String(s.fixture.id),
+      league: s.fixture.league?.name ?? "",
+      leagueId,
+      leagueCountry,
+      leagueLogo,
+      kickoff: s.fixture.event_date,
+      home: teamRow(s.fixture, "home"),
+      away: teamRow(s.fixture, "away"),
+      value: Math.round(s.value * 100) / 100,
+      pick: s.pick,
+      stats: xgByFixture.get(String(s.fixture.id)) ?? null,
+      formSummary: (() => {
+        const rf = rawFormFor(store, s.fixture);
+        return rf ? { home: formToWDL(rf.home), away: formToWDL(rf.away) } : null;
+      })(),
+      odds: {
+        home: s.fixture.odds_home ?? null,
+        draw: s.fixture.odds_draw ?? null,
+        away: s.fixture.odds_away ?? null,
+        over15: s.fixture.odds_over_15 ?? null,
+        under15: s.fixture.odds_under_15 ?? null,
+        over25: s.fixture.odds_over_25 ?? null,
+        under25: s.fixture.odds_under_25 ?? null,
+        over35: s.fixture.odds_over_35 ?? null,
+        under35: s.fixture.odds_under_35 ?? null,
+        bttsYes: s.fixture.odds_btts_yes ?? null,
+        bttsNo: s.fixture.odds_btts_no ?? null,
+      },
+      source: s.viaOdds ? "odds" : "form",
+      ...(drawModal ? { drawModal: true as const } : {}),
+    };
+  };
+
   const strategies = {} as Record<StrategyTop5Key, StrategyMatchEntry[]>;
   for (const key of STRATEGY_TOP5_KEYS) {
     const higher = HIGHER_BETTER[key];
     const list = scores[key];
-    list.sort((a, b) => (higher ? b.value - a.value : a.value - b.value));
-    strategies[key] = list.slice(0, opts.limit ?? 5).map((s) => {
-      const league = s.fixture.league ?? {};
-      const leagueId = league.id ?? null;
-      const leagueCountry = league.country ?? null;
-      const leagueLogo = resolveLeagueLogo(league.name ?? "", leagueId);
-      return ({
-        matchId: String(s.fixture.id),
-        league: s.fixture.league?.name ?? "",
-        leagueId,
-        leagueCountry,
-        leagueLogo,
-        kickoff: s.fixture.event_date,
-        home: teamRow(s.fixture, "home"),
-        away: teamRow(s.fixture, "away"),
-        value: Math.round(s.value * 100) / 100,
-        pick: s.pick,
-        stats: xgByFixture.get(String(s.fixture.id)) ?? null,
-        formSummary: (() => {
-          const rf = rawFormFor(store, s.fixture);
-          return rf ? { home: formToWDL(rf.home), away: formToWDL(rf.away) } : null;
-        })(),
-        odds: {
-          home: s.fixture.odds_home ?? null,
-          draw: s.fixture.odds_draw ?? null,
-          away: s.fixture.odds_away ?? null,
-          over15: s.fixture.odds_over_15 ?? null,
-          under15: s.fixture.odds_under_15 ?? null,
-          over25: s.fixture.odds_over_25 ?? null,
-          under25: s.fixture.odds_under_25 ?? null,
-          over35: s.fixture.odds_over_35 ?? null,
-          under35: s.fixture.odds_under_35 ?? null,
-          bttsYes: s.fixture.odds_btts_yes ?? null,
-          bttsNo: s.fixture.odds_btts_no ?? null,
-        },
-      });
+    list.sort((a, b) => {
+      const dv = higher ? b.value - a.value : a.value - b.value;
+      // Ex æquo (≈1e-9) : départage par la cote du marché direct (value ajoutée).
+      if (Math.abs(b.value - a.value) < 1e-9) {
+        const ob = tiebreakOdds(key, b.fixture) ?? 0;
+        const oa = tiebreakOdds(key, a.fixture) ?? 0;
+        if (ob !== oa) return ob - oa;
+      }
+      return dv;
     });
+    strategies[key] = list.slice(0, opts.limit ?? 5).map((s) => mapEntry(s));
   }
 
-  return { window: FORM_WINDOW, minPlayed: MIN_PLAYED, strategies };
+  // Repli « Nul probable » : 3 meilleurs nuls modaux (même filtre < 87 %).
+  const modal = drawModalScores
+    .filter((s) => s.value < MAX_PROB_PCT)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 3)
+    .map((s) => mapEntry(s, true));
+
+  return { window: FORM_WINDOW, minPlayed: MIN_PLAYED, strategies, drawModal: modal };
 }

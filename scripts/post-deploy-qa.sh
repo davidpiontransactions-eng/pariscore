@@ -29,6 +29,33 @@ SSH_KEY="${USERPROFILE:-$HOME}/.ssh/id_rsa_pariscore"
 SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=10"
 VPS_HOST="ubuntu@51.75.21.239"
 VPS_PATH="/home/ubuntu/.bun/bin:/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin"
+VPS_DIR="$HOME/pariscore"
+
+# ─── Résolution clé SSH (Git Bash Windows, Linux, ou exécution sur VPS) ───
+# Ordre : $SSH_KEY (env) → ~/.ssh/id_rsa_pariscore → %USERPROFILE% (Windows) → ~/.ssh/id_rsa
+if [ -z "${SSH_KEY:-}" ]; then
+  for _k in "$HOME/.ssh/id_rsa_pariscore" "${USERPROFILE:-}/.ssh/id_rsa_pariscore" "$HOME/.ssh/id_rsa"; do
+    if [ -f "${_k:-/nonexistent}" ]; then SSH_KEY="$_k"; break; fi
+  done
+  SSH_KEY="${SSH_KEY:-}"
+fi
+
+# ─── Mode local : script lancé directement sur le VPS (clé SSH absente,
+# repo présent) — les contrôles VPS tournent en local au lieu de boucler en SSH.
+LOCAL_MODE=0
+if [ ! -f "${SSH_KEY:-/nonexistent}" ] && [ -d "$VPS_DIR/.git" ]; then
+  LOCAL_MODE=1
+fi
+
+# Exécute une commande côté VPS (SSH) ou en local (mode local).
+# Usage : vps "commande..." — PATH enrichi + cd ~/pariscore dans les deux cas.
+vps() {
+  if [ "$LOCAL_MODE" = "1" ]; then
+    ( export PATH="$VPS_PATH:$PATH"; cd "$VPS_DIR" && eval "$1" )
+  else
+    ssh -i "$SSH_KEY" $SSH_OPTS $VPS_HOST "export PATH=\"$VPS_PATH\"; cd ~/pariscore && $1"
+  fi
+}
 
 # Couleurs (si terminal le supporte)
 if [ -t 1 ]; then
@@ -63,11 +90,18 @@ echo ""
 log_info "1/6 Vérification sync git local ↔ VPS"
 
 LOCAL_HEAD=$(git rev-parse --short HEAD 2>/dev/null || echo "inconnu")
-VPS_HEAD=$(ssh -i "$SSH_KEY" $SSH_OPTS $VPS_HOST \
-  "export PATH=\"$VPS_PATH\"; cd ~/pariscore && git rev-parse --short HEAD" 2>/dev/null || echo "SSH_FAILED")
+if [ "$LOCAL_MODE" = "1" ]; then
+  # Exécuté sur le VPS : le « local » est le repo VPS lui-même.
+  LOCAL_HEAD=$(git -C "$VPS_DIR" rev-parse --short HEAD 2>/dev/null || echo "inconnu")
+fi
+VPS_HEAD=$(vps "git rev-parse --short HEAD" 2>/dev/null || echo "SSH_FAILED")
 
 if [ "$VPS_HEAD" = "SSH_FAILED" ]; then
-  log_fail "SSH VPS inaccessible"
+  if [ "$LOCAL_MODE" = "1" ]; then
+    log_fail "Repo VPS inaccessible ($VPS_DIR)"
+  else
+    log_fail "SSH VPS inaccessible (clé: ${SSH_KEY:-absente} — export SSH_KEY=... pour forcer)"
+  fi
 elif [ "$LOCAL_HEAD" = "$VPS_HEAD" ]; then
   log_pass "Git sync OK (local=$LOCAL_HEAD, VPS=$VPS_HEAD)"
 else
@@ -77,11 +111,7 @@ fi
 # ─── 2. Vérification build récent sur VPS ─────────────────────
 log_info "2/6 Vérification build récent VPS"
 
-BUILD_INFO=$(ssh -i "$SSH_KEY" $SSH_OPTS $VPS_HOST \
-  "export PATH=\"$VPS_PATH\"; cd ~/pariscore && \
-   stat -c '%Y' .next/standalone/server.js 2>/dev/null && \
-   ls .next/standalone/.next/static/css/*.css 2>/dev/null | head -1 && \
-   ls .next/standalone/.next/static/chunks/*.js 2>/dev/null | wc -l" 2>/dev/null)
+BUILD_INFO=$(vps "stat -c '%Y' .next/standalone/server.js 2>/dev/null && ls .next/standalone/.next/static/css/*.css 2>/dev/null | head -1 && ls .next/standalone/.next/static/chunks/*.js 2>/dev/null | wc -l" 2>/dev/null)
 
 BUILD_TS=$(echo "$BUILD_INFO" | head -1)
 CSS_FILE=$(echo "$BUILD_INFO" | head -2 | tail -1)
@@ -107,8 +137,7 @@ fi
 # ─── 3. Vérification pm2 status ───────────────────────────────
 log_info "3/6 Vérification pm2 pariscore-next"
 
-PM2_STATUS=$(ssh -i "$SSH_KEY" $SSH_OPTS $VPS_HOST \
-  "export PATH=\"$VPS_PATH\"; pm2 list 2>&1 | grep pariscore-next" 2>/dev/null)
+PM2_STATUS=$(vps "pm2 list 2>&1 | grep pariscore-next" 2>/dev/null)
 
 if echo "$PM2_STATUS" | grep -q "online"; then
   UPTIME=$(echo "$PM2_STATUS" | awk '{print $8}')
@@ -197,7 +226,7 @@ if [ "$FAIL" -gt 0 ]; then
   echo -e "$FAILURES"
   echo ""
   echo "Actions recommandées :"
-  echo "  1. SSH dans VPS : ssh -i \$USERPROFILE/.ssh/id_rsa_pariscore ubuntu@51.75.21.239"
+  echo "  1. SSH dans VPS : ssh ubuntu@51.75.21.239 (clé: ~/.ssh/id_rsa_pariscore ou export SSH_KEY=...)"
   echo "  2. Vérifier build : cd ~/pariscore && bun run build"
   echo "  3. Vérifier assets : ls .next/standalone/.next/static/"
   echo "  4. Restart pm2 : pm2 restart pariscore-next"

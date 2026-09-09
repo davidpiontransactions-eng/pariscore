@@ -20,6 +20,12 @@ export type StrategyTableRow = {
   odds?: number | null;
   /** Libellé de la cote (ex. "1", "N", "Over 1,5"). */
   oddsLabel?: string | null;
+  /** Badge de source (ex. "forme"/"cotes" sur bestTeam). */
+  sourceLabel?: string | null;
+  /** Ligne atténuée (repli « Nul probable »). */
+  muted?: boolean;
+  /** Mention affichée sur les lignes atténuées. */
+  note?: string | null;
   trend?: "up" | "down" | "flat";
 };
 
@@ -116,7 +122,10 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
           return (
             <div
               key={`${strategy}-${row.matchId}`}
-              className="flex flex-col gap-1 px-3 py-2 transition-colors hover:bg-[#f8f8f8] md:grid md:items-center md:gap-0"
+              className={cn(
+                "flex flex-col gap-1 px-3 py-2 transition-colors hover:bg-[#f8f8f8] md:grid md:items-center md:gap-0",
+                row.muted && "opacity-60",
+              )}
               style={{
                 gridTemplateColumns: "minmax(0,1fr) auto minmax(90px,auto) 28px",
                 borderBottom: i < rows.length - 1 ? `1px solid ${C.rowSep}` : undefined,
@@ -125,7 +134,7 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
               {/* Match */}
               <div className="flex min-w-0 items-center gap-2">
                 {row.leagueLogo && (
-                  <img src={row.leagueLogo} alt="" className="h-4 w-4 shrink-0 rounded object-contain" />
+                  <img src={row.leagueLogo} alt="" width={16} height={16} loading="lazy" className="h-4 w-4 shrink-0 rounded object-contain" />
                 )}
                 <div className="min-w-0">
                   <div className="truncate font-medium" style={{ color: C.team }}>
@@ -140,7 +149,7 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
               </div>
 
               {/* Valeur — vraie valeur moteur, jamais un λ figé */}
-              <div className="px-0 md:px-3">
+              <div className="flex items-center gap-1.5 px-0 md:px-3">
                 {band ? (
                   <span
                     title={`Confiance ${band.label}`}
@@ -157,6 +166,23 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
                     style={{ color: C.team }}
                   >
                     {row.display}
+                  </span>
+                )}
+                {row.sourceLabel && (
+                  <span
+                    title={row.sourceLabel === "cotes" ? "Valeur dérivée des cotes (pas de forme L5)" : "Valeur dérivée de la forme L5"}
+                    className="inline-flex items-center rounded-full bg-[#f5f5f5] px-1.5 py-px text-[9px] font-medium"
+                    style={{ color: C.time }}
+                  >
+                    {row.sourceLabel}
+                  </span>
+                )}
+                {row.note && (
+                  <span
+                    className="inline-flex items-center rounded-full bg-[#f0f0f0] px-1.5 py-px text-[9px] font-medium"
+                    style={{ color: C.time }}
+                  >
+                    {row.note}
                   </span>
                 )}
               </div>

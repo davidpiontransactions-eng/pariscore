@@ -30,7 +30,7 @@ type FixturesCache = {
 export function emptyStrategyTop5(): StrategyTop5 {
   const strategies = {} as StrategyTop5["strategies"];
   for (const key of STRATEGY_TOP5_KEYS) strategies[key] = [];
-  return { window: 5, minPlayed: 2, strategies };
+  return { window: 5, minPlayed: 2, strategies, drawModal: [] };
 }
 
 /** Snapshot fixtures disque (null si absent ou TTL dépassé). */

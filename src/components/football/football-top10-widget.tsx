@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 import type { StrategyTop5Key, StrategyMatchEntry } from "@/lib/football-strategy-top5";
@@ -85,9 +85,14 @@ function toTableRows(
       value: e.value,
       display: def.format(e.value),
       probPct: def.isProb ? e.value : null,
+      // I3 : badge de source sur bestTeam (PPG forme vs proba cotes).
+      sourceLabel: active === "bestTeam" ? (e.source === "odds" ? "cotes" : "forme") : null,
       odds,
       oddsLabel,
       trend: "flat" as const,
+      // I5 : repli « Nul probable » affiché grisé.
+      muted: e.drawModal === true,
+      note: e.drawModal === true ? "Nul probable" : null,
     };
   });
 }
@@ -108,11 +113,55 @@ const TIME_WINDOWS: { key: KickoffWindow; label: string }[] = [
  *
  * Design : FotMob clair — même teintes que FotmobCalendarTable.
  */
+const STRAT_KEYS = new Set(STRATEGIES.map((s) => s.key));
+
+/** État initial lu depuis l'URL (?league=&strat=&win=&forme=) — deep-link/partage. */
+function readUrlState(): {
+  league: string | null;
+  active: StrategyTop5Key;
+  winKey: WindowKey;
+  timeWin: KickoffWindow;
+} {
+  const fallback = { league: null as string | null, active: "bestTeam" as StrategyTop5Key, winKey: "l5" as WindowKey, timeWin: "semaine" as KickoffWindow };
+  if (typeof window === "undefined") return fallback;
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const league = p.get("league");
+    const strat = p.get("strat");
+    const win = p.get("win");
+    const forme = p.get("forme");
+    return {
+      league: league && league !== "__all__" ? league : null,
+      active: strat && STRAT_KEYS.has(strat as StrategyTop5Key) ? (strat as StrategyTop5Key) : fallback.active,
+      winKey: forme === "l5" || forme === "l10" ? forme : fallback.winKey,
+      timeWin: win === "jour" || win === "48h" || win === "semaine" ? win : fallback.timeWin,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
-  const [league, setLeague] = useState<string | null>(null);
-  const [active, setActive] = useState<StrategyTop5Key>("bestTeam");
-  const [winKey, setWinKey] = useState<WindowKey>("l5");
-  const [timeWin, setTimeWin] = useState<KickoffWindow>("semaine");
+  const [league, setLeague] = useState<string | null>(() => readUrlState().league);
+  const [active, setActive] = useState<StrategyTop5Key>(() => readUrlState().active);
+  const [winKey, setWinKey] = useState<WindowKey>(() => readUrlState().winKey);
+  const [timeWin, setTimeWin] = useState<KickoffWindow>(() => readUrlState().timeWin);
+
+  // Miroir des filtres dans l'URL (replaceState — sans navigation).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const p = new URLSearchParams(window.location.search);
+      if (league) p.set("league", league); else p.delete("league");
+      p.set("strat", active);
+      p.set("win", timeWin);
+      p.set("forme", winKey);
+      const qs = p.toString();
+      window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+    } catch {
+      // Navigation privée / iframe : filtres locaux uniquement.
+    }
+  }, [league, active, timeWin, winKey]);
 
   const { data, matchesFor, isLoading, error } = useFootballTopN(TOP_N, league);
   const selectedItems = useTop5SelectionStore((s) => s.items);
@@ -144,6 +193,12 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     () => rawRows.filter((e) => isInKickoffWindow(e.kickoff, timeWin)),
     [rawRows, timeWin],
   );
+
+  // I5 : repli « Nul probable » quand gagnant est vide (max 3, fenêtre temporelle appliquée).
+  const drawModalRows = useMemo(() => {
+    if (active !== "gagnant" || rows.length > 0 || !data?.drawModal) return [];
+    return data.drawModal.filter((e) => isInKickoffWindow(e.kickoff, timeWin));
+  }, [active, rows.length, data, timeWin]);
 
   const forced = useMemo(() => {
     if (rows.length >= TOP_N) return [];
@@ -248,7 +303,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                 aria-pressed={timeWin === w.key}
                 title={`Matchs ${w.key === "jour" ? "du jour" : w.key === "48h" ? "sous 48 heures" : "de la semaine"}`}
                 className={cn(
-                  "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
+                  "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
                   timeWin === w.key
                     ? "bg-[#00985f]/10 text-[#00985f]"
                     : "bg-transparent text-[#717171] hover:text-[#222]",
@@ -271,7 +326,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
                 onClick={() => setWinKey(k)}
                 aria-pressed={winKey === k}
                 className={cn(
-                  "px-2 py-0.5 font-mono text-[10px] font-bold uppercase transition-colors",
+                  "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
                   winKey === k
                     ? "bg-[#00985f]/10 text-[#00985f]"
                     : "bg-transparent text-[#717171] hover:text-[#222]",
@@ -285,7 +340,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center gap-2 px-1 py-3 text-xs" style={{ color: C.accent }}>
+        <div role="status" aria-live="polite" className="flex items-center gap-2 px-1 py-3 text-xs" style={{ color: C.accent }}>
           <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           Calcul du Top 10…
         </div>
@@ -294,7 +349,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <AlertCircle className="h-3.5 w-3.5" aria-hidden />
           Top 10 indisponible ({(error as Error).message})
         </div>
-      ) : rows.length === 0 && forced.length === 0 ? (
+      ) : rows.length === 0 && forced.length === 0 && drawModalRows.length === 0 ? (
         <p className="px-1 py-3 text-xs" style={{ color: C.time }}>
           Aucun match qualifié pour cette stratégie{league ? ` en ${league}` : ""}.
         </p>
@@ -304,6 +359,18 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
             rows={toTableRows(rows, def, active)}
             strategy={active}
           />
+          {/* I5 : repli « Nul probable » grisé quand gagnant est vide */}
+          {drawModalRows.length > 0 && (
+            <div>
+              <div className="mb-1 px-1 text-[11px] font-medium" style={{ color: C.time }}>
+                Nul probable — pas de gagnant fiable
+              </div>
+              <TopStrategiesTable
+                rows={toTableRows(drawModalRows, def, active)}
+                strategy={active}
+              />
+            </div>
+          )}
           {/* Sélections forcées (≥60%) */}
           {forced.length > 0 && (
             <div
