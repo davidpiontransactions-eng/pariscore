@@ -91,14 +91,73 @@ function FotmobChevron({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+// ─── Pastille "Top Stratégie" (E pill) : visible bureau + mobile, sous les
+// noms (pas dans la grille 5 colonnes → pas de casse layout). Max 2 + "+n".
+export type TopStratTag = { key: string; label: string; emoji: string; value: string };
+
+const STRAT_SHORT: Record<string, { label: string; emoji: string }> = {
+  bestTeam: { label: "Meilleure équipe", emoji: "⭐" },
+  bestTeam1x2: { label: "Meilleure équipe 1X2", emoji: "🎯" },
+  gagnant: { label: "Gagnant", emoji: "🏆" },
+  bestAttack: { label: "Attaque", emoji: "⚡" },
+  bestDefense: { label: "Défense", emoji: "🧱" },
+  doubleChance1X: { label: "Double chance 1X", emoji: "🛡️" },
+  doubleChance2X: { label: "Double chance 2X", emoji: "🛡️" },
+  doubleChance12: { label: "Double chance 12", emoji: "⚡" },
+  over15: { label: "Over 1,5", emoji: "⚽" },
+  under35: { label: "Under 3,5", emoji: "❄️" },
+  bttsYes: { label: "BTTS", emoji: "🥅" },
+  over65Corners: { label: "Over 6,5 corners", emoji: "🚩" },
+};
+
+export function stratTag(key: string, value: number, isProb: boolean): TopStratTag {
+  const s = STRAT_SHORT[key] ?? { label: key, emoji: "★" };
+  return { key, label: s.label, emoji: s.emoji, value: isProb ? `${Math.round(value)}%` : String(value) };
+}
+
+function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: () => void }) {
+  if (tags.length === 0) return null;
+  const shown = tags.slice(0, 2);
+  const extra = tags.length - shown.length;
+  return (
+    <div className="flex flex-wrap items-center gap-1 px-3 pb-1.5" style={{ backgroundColor: C.card }}>
+      {shown.map((t) => (
+        <button
+          key={t.key}
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+          title={`Top 10 · ${t.label} · ${t.value} — voir l'analyse`}
+          aria-label={`Top 10 stratégie ${t.label}, ${t.value}, voir l'analyse`}
+          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-transform active:scale-95"
+          style={{ backgroundColor: "#00985f", color: "#ffffff" }}
+        >
+          <span aria-hidden="true">{t.emoji}</span>
+          <span>Top {t.label}</span>
+          <span className="font-mono tabular-nums opacity-90">{t.value}</span>
+        </button>
+      ))}
+      {extra > 0 && (
+        <span
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold tabular-nums"
+          style={{ backgroundColor: "#00985f1a", color: "#007a4c" }}
+          title={tags.slice(2).map((t) => `Top ${t.label} · ${t.value}`).join(" · ")}
+        >
+          +{extra}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /* ─── Ligne match (clic → analyse, étoile isolée via stopPropagation) ─── */
-function FotmobMatchRow({ m, onSelect }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void }) {
+function FotmobMatchRow({ m, onSelect, topTags }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void; topTags?: TopStratTag[] }) {
   const st = m.live?.status ?? null;
   const live = isLiveStatus(st);
   const finished = st === "FT";
   const showScore = (live || finished) && m.live?.homeScore != null && m.live?.awayScore != null;
   const label = `${m.home.name} - ${m.away.name}`;
   return (
+    <div style={{ backgroundColor: C.card, borderBottom: `1px solid ${C.rowSep}` }}>
     <div
       data-testid="livescores-match"
       role={onSelect ? "button" : undefined}
@@ -109,8 +168,6 @@ function FotmobMatchRow({ m, onSelect }: { m: FotmobCalMatch; onSelect?: (m: Fot
       className="grid items-center gap-1 px-3 py-1.5 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00985f]"
       style={{
         gridTemplateColumns: "1fr auto auto 1fr auto",
-        backgroundColor: C.card,
-        borderBottom: `1px solid ${C.rowSep}`,
       }}
     >
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
@@ -150,18 +207,22 @@ function FotmobMatchRow({ m, onSelect }: { m: FotmobCalMatch; onSelect?: (m: Fot
       </div>
       <FotmobFollowStar id={m.id} name={label} />
     </div>
+    <TopStratPills tags={topTags ?? []} onSelect={onSelect ? () => onSelect(m) : undefined} />
+    </div>
   );
 }
 
 /* ─── Section ligue ─── */
 function FotmobLeagueSection({
-  leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch,
+  leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, topTagsFor,
 }: {
   leagueName: string; country?: string | null; logo?: string | null;
   /** Icône custom à la place du logo (ex. étoile de la section « Suivis »). */
   icon?: ReactNode;
   matches: FotmobCalMatch[]; collapsed: boolean; onToggle: () => void;
   onSelectMatch?: (m: FotmobCalMatch) => void;
+  /** Tags Top stratégies par id match (E pill). */
+  topTagsFor?: (id: string) => TopStratTag[];
 }) {
   const liveCount = matches.filter((m) => isLiveStatus(m.live?.status)).length;
   return (
@@ -204,7 +265,7 @@ function FotmobLeagueSection({
         style={{ transitionDuration: "300ms" }}
       >
         <div className="min-h-0 overflow-hidden">
-          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} />)}
+          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} topTags={topTagsFor?.(m.id)} />)}
         </div>
       </div>
     </div>
@@ -224,9 +285,12 @@ function FotmobStarIcon() {
 export function FotmobCalendarTable({
   matches,
   onSelectMatch,
+  topTagsFor,
 }: {
   matches: FotmobCalMatch[];
   onSelectMatch?: (m: FotmobCalMatch) => void;
+  /** Tags Top stratégies par id match (E pill). */
+  topTagsFor?: (id: string) => TopStratTag[];
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const follows = useFollowStore((s) => s.follows);
@@ -289,6 +353,7 @@ export function FotmobCalendarTable({
             collapsed={collapsed.__suivis === true}
             onToggle={() => setCollapsed((p) => ({ ...p, __suivis: !(p.__suivis === true) }))}
             onSelectMatch={onSelectMatch}
+            topTagsFor={topTagsFor}
           />
         )}
         {groups.map((g) => (
@@ -299,6 +364,7 @@ export function FotmobCalendarTable({
             collapsed={collapsed[g.name] === true}
             onToggle={() => setCollapsed((p) => ({ ...p, [g.name]: !(p[g.name] === true) }))}
             onSelectMatch={onSelectMatch}
+            topTagsFor={topTagsFor}
           />
         ))}
       </div>

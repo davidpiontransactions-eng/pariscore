@@ -9,6 +9,8 @@ import { FootballMatchDetailDialog } from "@/components/football/football-match-
 import type { FootballMatch } from "@/lib/football-data";
 import { FotmobFilterBar } from "@/components/football/fotmob-filter-bar";
 import { filterByKickoffWindow, parisTodayKey, shiftDateKey } from "@/lib/fotmob-filter";
+import { buildTopTags, topTagsForMatch } from "@/lib/top10-calendar-link";
+import { useFootballTopN } from "@/hooks/use-football-top5";
 
 /* ─── Types (local mirror) ─── */
 interface TopTeam { name: string; logo?: string; rank?: number; }
@@ -302,6 +304,8 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   const [calLiveOnly, setCalLiveOnly] = useState(false);
   const [calHours, setCalHours] = useState<number | null>(null);
   const [calQuery, setCalQuery] = useState("");
+  // Toggle "Top stratégies" : ne garde que les matchs corrélés au Top10.
+  const [calTopOnly, setCalTopOnly] = useState(false);
   // Match sélectionné (clic ligne calendrier → dialog d'analyse).
   // Les objets API sont des FootballMatch complets (typés subset côté UI).
   const [detailMatch, setDetailMatch] = useState<FootballMatch | null>(null);
@@ -404,6 +408,20 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
     setTimeout(() => setSpinning(false), 500);
   };
 
+  // Corrélation Top10 (E pill) : 1 fetch SWR partagé avec le widget Top10
+  // (dedupe 20min → 0 requête extra si widget monté). Jointure id normalisé
+  // + repli noms normalisés (top10-calendar-link).
+  const { data: top10 } = useFootballTopN(10, null);
+  const topIdx = useMemo(() => buildTopTags(top10?.strategies), [top10]);
+  const topTagsFor = useCallback((id: string) => {
+    const m = calMatches.find((c) => c.id === id);
+    return m ? topTagsForMatch(topIdx, m) : [];
+  }, [calMatches, topIdx]);
+  const topCalCount = useMemo(
+    () => calMatches.filter((m) => topTagsForMatch(topIdx, m).length > 0).length,
+    [calMatches, topIdx],
+  );
+
   // Calendrier foot filtré par la barre FotMob (tous : live + prematch).
   const calStatus = (m: FotmobCalMatch): string =>
     m.live && (m.live.status === "LIVE" || m.live.status === "HT") ? "live" : "scheduled";
@@ -412,13 +430,14 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
     let list = calMatches ?? [];
     if (calLiveOnly) list = list.filter((m) => calStatus(m) === "live");
     list = filterByKickoffWindow(list, calHours);
+    if (calTopOnly) list = list.filter((m) => topTagsForMatch(topIdx, m).length > 0);
     if (q) {
       list = list.filter(
         (m) => m.home.name.toLowerCase().includes(q) || m.away.name.toLowerCase().includes(q)
       );
     }
     return list;
-  }, [calMatches, calLiveOnly, calHours, calQuery]);
+  }, [calMatches, calLiveOnly, calHours, calQuery, calTopOnly, topIdx]);
 
   const totalMatches = filteredGroups.reduce((sum, g) => sum + (g.matches ?? []).length, 0);
   const headerCount = activeSport === "football" ? filteredCal.length : totalMatches;
@@ -552,11 +571,21 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               query={calQuery}
               onQuery={setCalQuery}
               count={filteredCal.length}
+              topOnly={calTopOnly}
+              onToggleTop={() => setCalTopOnly((v) => !v)}
+              topCount={topCalCount}
             />
+            {/* Chip résumé V1 : toujours visible, bureau + mobile. */}
+            <p className="mt-1.5 text-[11px] tabular-nums" style={{ color: "#717171" }} aria-live="polite">
+              {filteredCal.length} match{filteredCal.length > 1 ? "s" : ""}
+              {calHours != null ? ` · ≤${calHours}h` : ""}
+              {calTopOnly ? " · ★ Top" : ""}
+            </p>
             <div className="mt-2">
               <FotmobCalendarTable
                 matches={filteredCal}
                 onSelectMatch={(m) => setDetailMatch(m as unknown as FootballMatch)}
+                topTagsFor={topTagsFor}
               />
             </div>
           </>
