@@ -67,7 +67,13 @@ export interface MatchTimelineData {
     /** false → courbe lissée dérivée des totaux (pas de données par minute). */
     perMinute: boolean;
   };
-  source: "bsd" | "espn" | "bsd+espn";
+  source: "bsd" | "espn" | "bsd+espn" | "estimated";
+  /**
+   * true → courbe estimée sans aucune source minute (BSD + ESPN en panne).
+   * Le client affiche la courbe lissée avec son bandeau "estimée" au lieu
+   * d'un bloc d'erreur — jamais de 503 brut sur un match connu.
+   */
+  degraded?: boolean;
   updatedAt?: string;
 }
 

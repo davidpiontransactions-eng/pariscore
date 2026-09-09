@@ -5,7 +5,8 @@ import {
   type PressureBucketInput,
 } from "@/lib/football-pressure-index";
 import { fetchBSDMatchStats, fetchBSDFootballMatchMeta } from "@/lib/bsd-football-fetcher";
-import { resolveESPNEvent, fetchESPNTimeline } from "@/lib/espn-soccer-fetcher";
+import { resolveESPNEvent, fetchESPNTimeline, leagueToEspnSlug } from "@/lib/espn-soccer-fetcher";
+import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/football/matches/[id]/stats
@@ -91,16 +92,48 @@ export async function GET(
     const meta = await fetchBSDFootballMatchMeta(matchId);
 
     // 3) ESPN public — buckets minute-par-minute + totaux + buts/buteurs.
+    // P2 : résolution ESPN cachée en DB (`Match.espnEventId`) — 1 scoreboard
+    // évité par ouverture popup. Best-effort : la DB ne bloque jamais la route.
     let espn: Awaited<ReturnType<typeof fetchESPNTimeline>> | null = null;
     let finalMinute: number | undefined;
     if (meta) {
       try {
-        const resolved = await resolveESPNEvent({
-          homeTeam: meta.homeTeam,
-          awayTeam: meta.awayTeam,
-          date: meta.date,
-          leagueId: meta.leagueId,
-        });
+        const bsdId = Number(matchId);
+        let resolved: Awaited<ReturnType<typeof resolveESPNEvent>> | null = null;
+        if (Number.isFinite(bsdId)) {
+          try {
+            const row = await prisma.match.findFirst({
+              where: { bzzoiroId: bsdId },
+              select: { id: true, espnEventId: true },
+            });
+            const slug = leagueToEspnSlug(meta.leagueId);
+            if (row?.espnEventId && slug) {
+              resolved = { eventId: row.espnEventId, slug, homeEspnName: meta.homeTeam, awayEspnName: meta.awayTeam };
+            }
+          } catch {
+            /* DB indisponible — on résout en live */
+          }
+        }
+        if (!resolved) {
+          resolved = await resolveESPNEvent({
+            homeTeam: meta.homeTeam,
+            awayTeam: meta.awayTeam,
+            date: meta.date,
+            leagueId: meta.leagueId,
+          });
+          // Mémorise la résolution (update seul — pas de création de ligne
+          // partielle, les Match/Team sont gérés par le pipeline d'ingestion).
+          if (resolved && Number.isFinite(bsdId)) {
+            try {
+              await prisma.match.updateMany({
+                where: { bzzoiroId: bsdId },
+                data: { espnEventId: resolved.eventId },
+              });
+            } catch {
+              /* best-effort silencieux */
+            }
+          }
+        }
         if (resolved) espn = await fetchESPNTimeline(resolved);
       } catch (e) {
         console.warn(`[football-stats] ESPN failed ${matchId}:`, (e as Error).message);
@@ -125,8 +158,48 @@ export async function GET(
       source = "bsd";
     }
 
-    if (!bsd && !espn) throw new Error("aucune source de stats");
-    if (!buckets.length && !events.length && !espn) throw new Error("données par-minute absentes");
+    if (!bsd && !espn) {
+      // Match connu mais sources minute en panne : courbe estimée (200) au
+      // lieu d'un 503 brut — le client affiche son bandeau "courbe estimée".
+      if (meta) {
+        const data = buildPressureTimeline({
+          buckets: [],
+          events: [],
+          totals: undefined,
+          source: "estimated",
+          finalMinute: meta.isLive && meta.currentMinute != null ? meta.currentMinute : undefined,
+        });
+        const stamped: MatchTimelineData & { updatedAt: string } = {
+          ...data,
+          degraded: true,
+          updatedAt: new Date().toISOString(),
+        };
+        cache.set(matchId, { data: stamped, at: Date.now() });
+        return NextResponse.json(stamped);
+      }
+      throw new Error("aucune source de stats");
+    }
+    // Anchor BSD seul (momentum sans buckets/events) : exploitable tel quel —
+    // buildPressureTimeline le convertit en courbe par bucket.
+    if (!buckets.length && !events.length && !espn && !(bsd?.momentum?.length)) {
+      if (meta) {
+        const data = buildPressureTimeline({
+          buckets,
+          events,
+          totals,
+          source: "estimated",
+          finalMinute: meta.isLive && meta.currentMinute != null ? meta.currentMinute : undefined,
+        });
+        const stamped: MatchTimelineData & { updatedAt: string } = {
+          ...data,
+          degraded: true,
+          updatedAt: new Date().toISOString(),
+        };
+        cache.set(matchId, { data: stamped, at: Date.now() });
+        return NextResponse.json(stamped);
+      }
+      throw new Error("données par-minute absentes");
+    }
 
     const data = buildPressureTimeline({
       buckets,

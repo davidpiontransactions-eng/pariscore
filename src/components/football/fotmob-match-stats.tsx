@@ -39,7 +39,8 @@ function buildRows(m: FootballMatch): StatRow[] {
     rows.push({ label, home: h, away: a, hpct: hp });
   };
   if (live) {
-    push("Possession de balle", `${live.homePossession}%`, `${100 - live.homePossession}%`, live.homePossession);
+    const poss = Math.max(0, Math.min(100, Math.round(live.homePossession)));
+    push("Possession de balle", `${poss}%`, `${100 - poss}%`, poss);
     const xgH = fmt(live.homeXg, 2);
     const xgA = fmt(live.awayXg, 2);
     push("Buts attendus (xG)", xgH, xgA,

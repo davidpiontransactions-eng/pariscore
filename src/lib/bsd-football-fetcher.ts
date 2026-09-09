@@ -357,15 +357,20 @@ function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
   const isLive = !["finished", "notstarted", "canceled", "postponed", "suspended"].includes(m.status);
   if (!isLive) return null;
   const ls = m.live_stats;
-  const num = (v: number | null | undefined): number | null =>
-    v != null && Number.isFinite(v) ? v : null;
+  // Coercition numérique : l'API renvoie parfois des chaînes ("12") ou des
+  // objets sur les ligues mineures — jamais de throw, null si inexploitable.
+  const num = (v: unknown): number | null => {
+    const n = typeof v === "number" ? v : Number(v);
+    return v != null && Number.isFinite(n) ? n : null;
+  };
+  const poss = num(ls?.home?.ball_possession);
   return {
-    homeScore: m.home_score ?? 0,
-    awayScore: m.away_score ?? 0,
-    minute: m.current_minute ?? 0,
+    homeScore: num(m.home_score) ?? 0,
+    awayScore: num(m.away_score) ?? 0,
+    minute: num(m.current_minute) ?? 0,
     status: m.status === "HT" || m.period === "HT" ? "HT" : "LIVE",
     period: m.period,
-    homePossession: ls?.home?.ball_possession ?? 50,
+    homePossession: poss ?? (ls?.away?.ball_possession != null ? 100 - (Number(ls.away.ball_possession) || 0) : 50),
     homeShots: num(ls?.home?.total_shots),
     awayShots: num(ls?.away?.total_shots),
     homeShotsOnTarget: num(ls?.home?.shots_on_target),

@@ -24,6 +24,24 @@ const BUCKET_MIN = 5;
 const MAX_MIN = 127;
 
 // ─── Mapping BSD league id → slug ESPN (socle repris de server.js ESPN_SOCCER_SLUG) ──
+// ATTENTION : deux espaces d'ids cohabitent (cf. league-mapping.ts). `meta.leagueId`
+// fourni par `fetchBSDFootballMatchMeta` est un VRAI id BSD (ex. K League 1 = 50,
+// pas 292). `BSD_TO_ESPN_SLUG` est donc la voie prioritaire ; `LEAGUE_SLUG`
+// (ids legacy ≈ API-Football) n'est qu'un repli historique.
+const BSD_TO_ESPN_SLUG: Record<number, string> = {
+  6: "fra.1", 89: "fra.2",
+  1: "eng.1", 12: "eng.2", 39: "eng.fa", 40: "eng.league_cup",
+  86: "eng.3", 87: "eng.4",
+  3: "esp.1", 38: "esp.2",
+  5: "ger.1", 4: "ita.1", 2: "por.1", 88: "por.1",
+  10: "ned.1", 11: "tur.1", 14: "bel.1",
+  13: "sco.1", 15: "sui.1", 26: "swe.1", 23: "rou.1",
+  54: "nor.1", 84: "den.1", 55: "fin.1", 25: "pol.1",
+  9: "bra.1", 34: "bra.2", 85: "arg.1", 80: "col.1",
+  18: "usa.1", 19: "mex.1",
+  49: "jpn.1", 50: "kor.1", 17: "sau.1",
+  7: "uefa.champions", 32: "conmebol.libertadores", 33: "conmebol.sudamericana",
+};
 const LEAGUE_SLUG: Record<number, string> = {
   61: "fra.1", 62: "fra.2",
   39: "eng.1", 40: "eng.2", 45: "eng.fa", 48: "eng.league_cup",
@@ -42,15 +60,46 @@ const LEAGUE_SLUG: Record<number, string> = {
 
 export function leagueToEspnSlug(leagueId: number | null | undefined): string | null {
   if (leagueId == null) return null;
-  return LEAGUE_SLUG[Number(leagueId)] ?? null;
+  const id = Number(leagueId);
+  // Voie prioritaire : vrai id BSD (cf. BSD_TO_ESPN_SLUG). Repli : ids legacy.
+  return BSD_TO_ESPN_SLUG[id] ?? LEAGUE_SLUG[id] ?? null;
 }
 
 // ─── Matching de noms (défensif, tolère "Man United" ↔ "Manchester United") ──
 const STOP = new Set(["fc", "cf", "club", "ac", "as", "de", "la", "el", "cd", "ud", "sc", "rc", "afc", "bk", "if", "sk", "fk"]);
 
+/**
+ * Alias canoniques KR/JP — les suffixes sponsor/ville varient selon la source
+ * ("Ulsan HD" ↔ "Ulsan Hyundai", "Jeonbuk Motors" ↔ "Jeonbuk Hyundai").
+ * Appliqués avant tokenisation pour fiabiliser `resolveESPNEvent` sans
+ * heuristique floue. P2 INNOVATIONS-2026-09-09.
+ */
+const TEAM_ALIASES: Record<string, string> = {
+  "ulsan hd": "ulsan", "ulsan hyundai": "ulsan",
+  "jeonbuk motors": "jeonbuk", "jeonbuk hyundai": "jeonbuk",
+  "suwon bluewings": "suwon", "suwon samsung": "suwon", "suwon fc": "suwon",
+  "incheon united": "incheon", "daegu fc": "daegu", "gangwon fc": "gangwon",
+  "gimcheon sangmu": "gimcheon", "jeju sk": "jeju", "jeju united": "jeju",
+  "pohang steelers": "pohang", "fc seoul": "seoul",
+  "kashima antlers": "kashima", "urawa reds": "urawa", "urawa red diamonds": "urawa",
+  "yokohama marinos": "yokohama", "yokohama f marinos": "yokohama",
+  "kawasaki frontale": "kawasaki", "cerezo osaka": "cerezo",
+  "gamba osaka": "gamba", "vissel kobe": "vissel",
+};
+
+function canonical(n: unknown): string {
+  let s = String(n || "").toLowerCase().trim();
+  for (const [alias, canon] of Object.entries(TEAM_ALIASES)) {
+    if (s === alias || s.startsWith(`${alias} `) || s.endsWith(` ${alias}`)) {
+      s = canon;
+      break;
+    }
+  }
+  return s;
+}
+
 function sig(n: unknown): string {
-  return String(n || "")
-    .toLowerCase()
+  return canonical(n)
     .replace(/[^a-z0-9 ]/g, " ")
     .split(" ")
     .filter((w) => w.length >= 2)
@@ -59,8 +108,7 @@ function sig(n: unknown): string {
 
 function sigKey(n: unknown): string {
   return (
-    String(n || "")
-      .toLowerCase()
+    canonical(n)
       .replace(/[^a-z0-9 ]/g, " ")
       .split(" ")
       .filter((w) => w.length >= 3 && !STOP.has(w))
@@ -77,7 +125,13 @@ function namesMatch(a: unknown, b: unknown): boolean {
   const aKey = sigKey(a);
   const bKey = sigKey(b);
   if (aKey && aKey === bKey) return true;
-  return (A.includes(B) || B.includes(A)) && Math.min(A.length, B.length) >= 5;
+  if ((A.includes(B) || B.includes(A)) && Math.min(A.length, B.length) >= 5) return true;
+  // Championnats mineurs (ex. K League : "Jeju SK" ↔ "Jeju United") : un token
+  // significatif commun (≥ 4 lettres) suffit — les suffixes (FC/SK/United…)
+  // varient selon la source.
+  const aToks = new Set(aKey.split(" ").filter((w) => w.length >= 4));
+  if (aToks.size === 0) return false;
+  return bKey.split(" ").some((w) => w.length >= 4 && aToks.has(w));
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

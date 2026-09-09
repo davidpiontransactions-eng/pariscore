@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { FOT } from "./fotmob-theme";
 import { Target, CornerDownRight, ChevronRight } from "lucide-react";
 import type { DangerousBucket, MatchEvent, MatchTimelineData } from "@/lib/football-timeline";
 
@@ -189,6 +190,8 @@ export function MomentumChart({
   });
 
   const sorted = [...momentum].sort((a, b) => a.minute - b.minute);
+  // P3 : but sélectionné au clic (détail buteur/score/xG sous le graphe).
+  const [selGoal, setSelGoal] = useState<number | null>(null);
   const homePath = toggles.momentum ? buildAreaPath(sorted, true) : "";
   const awayPath = toggles.momentum ? buildAreaPath(sorted, false) : "";
   const goals = (events ?? []).filter((e) => e.kind === "goal" && Number.isFinite(e.minute));
@@ -207,14 +210,20 @@ export function MomentumChart({
 
   if (sorted.length === 0) {
     return (
-      <div className={cn("flex h-[110px] items-center justify-center rounded-lg bg-muted/40 text-xs text-muted-foreground", className)}>
+      <div
+        className={cn("flex h-[110px] items-center justify-center rounded-2xl border text-xs", className)}
+        style={{ backgroundColor: FOT.card, borderColor: FOT.border, color: FOT.muted }}
+      >
         Momentum indisponible (match trop tôt)
       </div>
     );
   }
 
   return (
-    <div className={cn("w-full", className)}>
+    <div
+      className={cn("w-full rounded-2xl border p-3", className)}
+      style={{ backgroundColor: FOT.card, borderColor: FOT.border }}
+    >
       {/* Légende */}
       <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1">
@@ -322,17 +331,24 @@ export function MomentumChart({
             );
           })}
 
-        {/* Couche Buts & Buteurs : badges ⚽ */}
+        {/* Couche Buts & Buteurs : badges ⚽ cliquables → détail sous le graphe */}
         {canShowGoals &&
           goals.map((g, i) => {
             const x = minuteToX(g.minute);
             const home = g.side === "home";
             const color = home ? "#22c55e" : "#3b82f6";
+            const selected = selGoal === i;
             return (
-              <g key={`goal-${i}`}>
+              <g
+                key={`goal-${i}`}
+                onClick={() => setSelGoal(selected ? null : i)}
+                style={{ cursor: "pointer" }}
+                role="button"
+                aria-label={goalTitle(g)}
+              >
                 <title>{goalTitle(g)}</title>
-                <line x1={x} y1={0} x2={x} y2={H} stroke={color} strokeOpacity="0.4" strokeWidth="1" strokeDasharray="2 3" />
-                <circle cx={x} cy={home ? 10 : H - 10} r="7" fill={color} />
+                <line x1={x} y1={0} x2={x} y2={H} stroke={color} strokeOpacity={selected ? 0.9 : 0.4} strokeWidth={selected ? 2 : 1} strokeDasharray="2 3" />
+                <circle cx={x} cy={home ? 10 : H - 10} r={selected ? 9 : 7} fill={color} stroke={selected ? "#fff" : "none"} strokeWidth={selected ? 2 : 0} />
                 <text x={x} y={home ? 14 : H - 6} fontSize="9" fontWeight="bold" fill="#fff" textAnchor="middle">
                   {g.goalType === "own" ? "⊘" : "⚽"}
                 </text>
@@ -347,6 +363,31 @@ export function MomentumChart({
         <span>45&apos; HT</span>
         <span>90&apos;</span>
       </div>
+
+      {/* Détail du but sélectionné (P3) */}
+      {selGoal != null && goals[selGoal] && (() => {
+        const gg = goals[selGoal];
+        const home = gg.side === "home";
+        return (
+          <div
+            className="mt-1.5 flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px]"
+            style={{ backgroundColor: FOT.liveSoft, borderColor: `${FOT.live}55`, color: FOT.ink }}
+          >
+            <span aria-hidden="true">{gg.goalType === "own" ? "⊘" : "⚽"}</span>
+            <span className="font-bold tabular-nums">{Math.round(gg.minute)}&apos;</span>
+            <span className="font-semibold">{gg.scorer ?? (home ? homeName : awayName)}</span>
+            {gg.goalType !== "regular" && (
+              <span style={{ color: FOT.muted }}>({gg.goalType === "own" ? "csc" : "pén."})</span>
+            )}
+            {gg.score && (
+              <span className="ml-auto font-bold tabular-nums">{gg.score.home}-{gg.score.away}</span>
+            )}
+            {gg.xg != null && Number.isFinite(gg.xg) && (
+              <span className="tabular-nums" style={{ color: FOT.muted }}>xG {Number(gg.xg).toFixed(2)}</span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Ticker d'événements agrégés (Corner × 4 (6', 6', 9', 11')…) */}
       {events.length > 0 && <TickerRow events={events} homeName={homeName} awayName={awayName} />}

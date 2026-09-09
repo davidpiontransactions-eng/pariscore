@@ -71,7 +71,7 @@ export interface PressureTimelineInput {
   bsdMomentum?: { minute: number; value: number }[];
   /** Totaux match — utilisé pour la courbe lissée du fallback. */
   totals?: TimelineTotals;
-  source: "bsd" | "espn" | "bsd+espn";
+  source: "bsd" | "espn" | "bsd+espn" | "estimated";
   /** Minute courante (live) — clamp la longueur de la courbe. */
   finalMinute?: number;
 }

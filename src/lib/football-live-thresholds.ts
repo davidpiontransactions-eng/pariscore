@@ -81,6 +81,51 @@ export interface FunnelHit {
   met: boolean;
 }
 
+/**
+ * Snapshot funnel sérialisable pour le backtest des seuils (P3
+ * INNOVATIONS-2026-09-09) — 1 ligne par (match, minute) vers KvStore via
+ * POST /api/football/live-funnel-log. Compact : `m:"règle=1/0"`.
+ */
+export interface FunnelSnapshot {
+  matchId: string;
+  minute: number;
+  homeScore: number;
+  awayScore: number;
+  /** "xg" | "prematch" — source de la projection au moment du snapshot. */
+  source: LiveMarketsProjection["source"];
+  /** Règles déclenchées (met && value != null). */
+  signals: FunnelRuleId[];
+  /** Projection 1X2/O2.5/BTTS au moment du snapshot (backtest vs score final). */
+  markets: { homeWin: number; draw: number; awayWin: number; over25: number; btts: number };
+  at: string;
+}
+
+export function buildFunnelSnapshot(args: {
+  matchId: string;
+  minute: number;
+  homeScore: number;
+  awayScore: number;
+  funnel: FunnelHit[];
+  markets: LiveMarketsProjection;
+}): FunnelSnapshot {
+  return {
+    matchId: args.matchId,
+    minute: Math.round(args.minute),
+    homeScore: args.homeScore,
+    awayScore: args.awayScore,
+    source: args.markets.source,
+    signals: args.funnel.filter((f) => f.value != null && f.met).map((f) => f.rule),
+    markets: {
+      homeWin: args.markets.homeWin,
+      draw: args.markets.draw,
+      awayWin: args.markets.awayWin,
+      over25: args.markets.over25,
+      btts: args.markets.btts,
+    },
+    at: new Date().toISOString(),
+  };
+}
+
 const num = (v: number | null | undefined): number | null =>
   v != null && Number.isFinite(v) ? v : null;
 

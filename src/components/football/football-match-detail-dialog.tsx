@@ -10,17 +10,18 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, AlertCircle, TrendingUp, Activity } from "lucide-react";
+import { Trophy, AlertCircle, TrendingUp, Activity, Flame } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import { parisKickoff } from "@/lib/football-time";
 import type { MatchTimelineData } from "@/lib/football-timeline";
 import { useTeamAttackDefenseStats, findTeamADStats } from "@/hooks/use-team-attack-defense-stats";
 import { computeRadarData } from "@/lib/football-radar";
 import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/prediction/predictive-bets-engine";
-import { expectedPressureBaseline } from "@/lib/football-live-thresholds";
+import { expectedPressureBaseline, detectPressureAnomaly } from "@/lib/football-live-thresholds";
 import { MomentumChart } from "./momentum-chart";
 import { PressureDuoDonuts } from "./pressure-duo-donuts";
 import { LiveStatsBreakdown } from "./live-stats-breakdown";
+import { FOT } from "./fotmob-theme";
 import { EditorialInsight } from "@/components/ai/editorial-insight";
 import { FootballPressReviewWidget } from "@/components/football/FootballPressReviewWidget";
 import { AIMatchReport } from "./AIMatchReport";
@@ -312,6 +313,22 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                       Prématch · {parisKickoff(view.scheduledAt)}
                     </span>
                   )}
+                  {/* P3 : alerte surge — l'outsider domine en live vs son attendu. */}
+                  {!loading && !error && stats && (() => {
+                    const avg = expectedPressureBaseline(view.prediction.homeProb, view.prediction.drawProb);
+                    const anomaly = detectPressureAnomaly(stats.pressure.homePct, avg.homePct);
+                    if (anomaly.kind !== "underdog_surge") return null;
+                    return (
+                      <span
+                        className="mt-1 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                        style={{ backgroundColor: "#fff8e1", borderColor: "#f5c518", color: "#8a6d1b" }}
+                        title={`Pression live ${stats.pressure.homePct}% contre ${avg.homePct}% attendus`}
+                      >
+                        <Flame className="h-3 w-3 animate-pulse" aria-hidden="true" />
+                        Signal · outsider domine
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex flex-col items-center gap-1.5">
@@ -596,8 +613,11 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             )}
 
             {!loading && error && (
-              <div className="flex h-[110px] flex-col items-center justify-center gap-2 rounded-lg bg-muted/40 text-center text-xs text-muted-foreground">
-                <AlertCircle className="h-5 w-5 text-rose-400" />
+              <div
+                className="flex h-[110px] flex-col items-center justify-center gap-2 rounded-2xl border text-center text-xs"
+                style={{ backgroundColor: FOT.card, borderColor: FOT.border, color: FOT.muted }}
+              >
+                <AlertCircle className="h-5 w-5" style={{ color: "#e11d48" }} />
                 Momentum indisponible ({error})
               </div>
             )}
@@ -637,8 +657,9 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
               live={view.live}
               homeName={view.home.shortName ?? "Domicile"}
               awayName={view.away.shortName ?? "Extérieur"}
-              prematch={{ homeProb: view.prediction.homeProb, drawProb: view.prediction.drawProb }}
+              prematch={{ homeProb: view.prediction.homeProb, drawProb: view.prediction.drawProb, awayProb: view.prediction.awayProb, over25Prob: view.prediction.over25Prob }}
               homePressurePct={!loading && !error && stats ? stats.pressure.homePct : null}
+              matchId={view.id}
             />
           </div>
         )}

@@ -9,6 +9,7 @@ import { useMemo } from "react";
 import { Flame, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { detectPressureAnomaly } from "@/lib/football-live-thresholds";
+import { FOT } from "./fotmob-theme";
 
 const R = 42;
 const CIRC = 2 * Math.PI * R;
@@ -29,31 +30,31 @@ function Donut({
   const homeLen = Math.max(0, Math.min(100, homePct)) / 100 * CIRC;
   return (
     <figure className="flex flex-col items-center gap-1" role="img" aria-label={`${title} : ${homeName} ${homePct}%, ${awayName} ${awayPct}%`}>
-      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{title}</span>
+      <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: FOT.muted }}>{title}</span>
       <svg viewBox="0 0 110 110" className="h-24 w-24">
-        <circle cx="55" cy="55" r={R} fill="none" stroke="#3b82f6" strokeOpacity="0.75" strokeWidth="11" />
+        <circle cx="55" cy="55" r={R} fill="none" stroke={FOT.away} strokeOpacity="0.7" strokeWidth="11" />
         <circle
           cx="55"
           cy="55"
           r={R}
           fill="none"
-          stroke="#22c55e"
+          stroke={FOT.home}
           strokeWidth="11"
           strokeLinecap="butt"
           strokeDasharray={`${homeLen} ${CIRC - homeLen}`}
           transform="rotate(-90 55 55)"
         />
-        <text x="55" y="50" textAnchor="middle" fontSize="20" fontWeight="800" fill="#22c55e" className="tabular-nums">
+        <text x="55" y="50" textAnchor="middle" fontSize="20" fontWeight="800" fill={FOT.ink} className="tabular-nums">
           {homePct}
         </text>
-        <text x="55" y="68" textAnchor="middle" fontSize="12" fontWeight="700" fill="#3b82f6" className="tabular-nums">
+        <text x="55" y="68" textAnchor="middle" fontSize="12" fontWeight="700" fill={FOT.muted} className="tabular-nums">
           {awayPct}
         </text>
       </svg>
-      <figcaption className="flex gap-2 text-[11px] text-muted-foreground">
-        <span className="text-emerald-400">{homePct} {homeName}</span>
-        <span className="text-muted-foreground/30">|</span>
-        <span className="text-sky-400">{awayPct} {awayName}</span>
+      <figcaption className="flex gap-2 text-[11px]" style={{ color: FOT.muted }}>
+        <span className="font-semibold" style={{ color: FOT.ink }}>{homePct} {homeName}</span>
+        <span style={{ color: FOT.muted, opacity: 0.5 }}>|</span>
+        <span style={{ color: FOT.muted }}>{awayPct} {awayName}</span>
       </figcaption>
     </figure>
   );
@@ -80,8 +81,9 @@ export function PressureDuoDonuts({
   );
 
   return (
-    <section 
-      className={cn("rounded-2xl border border-slate-800 bg-slate-950/60 p-3", className)} 
+    <section
+      className={cn("rounded-2xl border p-3", className)}
+      style={{ backgroundColor: FOT.card, borderColor: FOT.border }}
       aria-label="Pression live vs attendue"
       title="Pression = pondération attacks (0.35) + dangerous attacks (0.40) + possession (0.15) + tirs (0.10) sur 10 minutes glissantes"
     >
@@ -95,15 +97,10 @@ export function PressureDuoDonuts({
         />
         {avg && (
           <>
-            <div className="flex flex-col items-center gap-1 text-[11px] text-muted-foreground">
+            <div className="flex flex-col items-center gap-1 text-[11px]" style={{ color: FOT.muted }}>
               <span>vs</span>
               {anomaly && (
-                <span
-                  className={cn(
-                    "tabular-nums font-bold",
-                    anomaly.delta >= 0 ? "text-emerald-400" : "text-sky-400",
-                  )}
-                >
+                <span className="tabular-nums font-bold" style={{ color: anomaly.delta >= 0 ? FOT.live : FOT.muted }}>
                   Δ {anomaly.delta > 0 ? "+" : ""}{anomaly.delta}
                 </span>
               )}
@@ -120,14 +117,14 @@ export function PressureDuoDonuts({
       </div>
 
       {anomaly?.kind === "underdog_surge" && (
-        <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-amber-300">
-          <Flame className="h-3.5 w-3.5 shrink-0 animate-pulse" aria-hidden="true" />
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold" style={{ borderColor: "#f5c518", backgroundColor: "#fff8e1", color: FOT.ink }}>
+          <Flame className="h-3.5 w-3.5 shrink-0 animate-pulse" aria-hidden="true" style={{ color: "#b7791f" }} />
           Anomalie : {homeName} domine {live.homePct}% en live contre {avg?.homePct}% attendu — signal live à surveiller
         </div>
       )}
       {anomaly?.kind === "favorite_domination" && (
-        <div className="mt-2 flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-300">
-          <Crown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <div className="mt-2 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold" style={{ borderColor: `${FOT.live}55`, backgroundColor: FOT.liveSoft, color: FOT.ink }}>
+          <Crown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" style={{ color: FOT.live }} />
           Domination confirmée : {live.homePct >= 50 ? homeName : awayName} verrouille le jeu ({Math.max(live.homePct, live.awayPct)}% de pression)
         </div>
       )}
