@@ -53,6 +53,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MatchPipWidget } from "@/components/tennis/match-pip-widget";
 import { MatchCardSkeleton } from "@/components/mobile/match-card-skeleton";
 import { FlashscoreTennisList } from "@/components/tennis/flashscore-tennis-list";
+import { TennisCalendarStrategyView } from "@/components/tennis/tennis-calendar-strategy-view";
 import { useEffect } from "react";
 import type { TennisMatch } from "@/lib/tennis-data";
 import {
@@ -598,6 +599,14 @@ return [...matches, ...synthetic];
     [liveMatchList],
   );
   const todayCount = matchesWithLive.length;
+
+  // Early-return : l'onglet "Stratégies" (calendar) rend une vue dédiée
+  // (Top 10 matchs par stratégie) — pas de grille de cartes ni de memos live.
+  if (subTab === "calendar") {
+    return <TennisCalendarStrategyView />;
+  }
+
+
 
   // Filtrage par sous-onglet — appliqué sur `filtered` (avec featured inclus
   // pour les compteurs), mais la grille principale n'affiche que `rest`.
