@@ -27,6 +27,7 @@ import { FootballPredictionMarkets } from "@/components/football/football-predic
 import { FotmobMatchStats } from "@/components/football/fotmob-match-stats";
 import { BesoccerScoreMatrix } from "@/components/football/besoccer-score-matrix";
 import { BesoccerEloPanel } from "@/components/football/besoccer-elo-panel";
+import { BesoccerTablePanel } from "@/components/football/besoccer-table-panel";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
 import { useOddsHistory } from "@/hooks/use-odds-history";
 
@@ -524,8 +525,19 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                 />
               </section>
             )}
+
+            {/* Table projection + expected probabilities (Poisson Monte Carlo) */}
+            {view && !view.live && view.league.id && (
+              <section className="mt-2">
+                <BesoccerTablePanel
+                  leagueId={view.league.id}
+                  homeName={view.home.name}
+                  awayName={view.away.name}
+                />
+              </section>
+            )}
           </div>
-        )}
+          )}
 
         {/* ---------- Corps : graphe momentum (live) ---------- */}
         {view && view.live && (
