@@ -551,6 +551,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
               onHours={setCalHours}
               query={calQuery}
               onQuery={setCalQuery}
+              count={filteredCal.length}
             />
             <div className="mt-2">
               <FotmobCalendarTable

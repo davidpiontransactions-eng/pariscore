@@ -13,13 +13,14 @@ const C = {
   live: "#00985f", liveDot: "#e11d48", circleBg: "#f0f0f0",
 } as const;
 
-const HOUR_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "Par heure" },
-  { value: "1", label: "1h" },
-  { value: "2", label: "2h" },
-  { value: "4", label: "4h" },
-  { value: "8", label: "8h" },
-  { value: "24", label: "24h" },
+const HOUR_OPTIONS: { value: string; label: string; hours: number | null }[] = [
+  { value: "all", label: "Par heure", hours: null },
+  { value: "1", label: "≤1h", hours: 1 },
+  { value: "2", label: "≤2h", hours: 2 },
+  { value: "4", label: "≤4h", hours: 4 },
+  { value: "8", label: "≤8h", hours: 8 },
+  { value: "16", label: "≤16h", hours: 16 },
+  { value: "24", label: "≤24h", hours: 24 },
 ];
 
 export type FotmobFilterBarProps = {
@@ -34,9 +35,14 @@ export type FotmobFilterBarProps = {
   onHours: (h: number | null) => void;
   query: string;
   onQuery: (q: string) => void;
+  /** Nombre de matchs après filtre (compteur affiché dans l'option active). */
+  count?: number;
 };
 
 export function FotmobFilterBar(p: FotmobFilterBarProps) {
+  const activeOpt = HOUR_OPTIONS.find((o) => o.hours === p.hours) ?? HOUR_OPTIONS[0];
+  const activeLabel =
+    p.hours != null && p.count != null ? `${activeOpt.label} (${p.count})` : activeOpt.label;
   return (
     <div className="flex flex-col gap-2">
       {/* Datepicker : hier / jour / demain */}
@@ -83,22 +89,35 @@ export function FotmobFilterBar(p: FotmobFilterBarProps) {
           />
           En direct
         </button>
+        {/* Pilule horaire : verte quand un filtre actif (même pattern que "En direct"). */}
         <div
           className="flex shrink-0 items-center gap-1 rounded-full border px-2 py-1.5"
-          style={{ backgroundColor: C.pillBg, borderColor: C.pillBorder }}
+          style={{
+            backgroundColor: p.hours != null ? C.live : C.pillBg,
+            borderColor: p.hours != null ? C.live : C.pillBorder,
+          }}
         >
           <select
             value={p.hours == null ? "all" : String(p.hours)}
-            onChange={(e) => p.onHours(e.target.value === "all" ? null : Number(e.target.value))}
-            aria-label="Fenêtre horaire"
-            className="bg-transparent text-xs font-medium outline-none"
-            style={{ color: C.text }}
+            onChange={(e) => {
+              const v = e.target.value === "all" ? null : Number(e.target.value);
+              p.onHours(v != null && v > 0 ? v : null);
+            }}
+            aria-label={p.hours != null ? `Matchs dans les ${p.hours} prochaines heures` : "Fenêtre horaire"}
+            className="bg-transparent text-xs font-bold outline-none"
+            style={{ color: p.hours != null ? "#ffffff" : C.text }}
           >
             {HOUR_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value} style={{ color: "#222222", backgroundColor: "#ffffff" }}>
+                {o.hours != null && o.hours === p.hours ? activeLabel : o.label}
+              </option>
             ))}
           </select>
-          <ChevronDown className="size-3" style={{ color: C.muted }} aria-hidden="true" />
+          <ChevronDown
+            className="size-3"
+            style={{ color: p.hours != null ? "#ffffff" : C.muted }}
+            aria-hidden="true"
+          />
         </div>
         <div
           className="flex min-w-0 flex-1 items-center gap-1.5 rounded-full border px-3 py-1.5"
