@@ -686,6 +686,23 @@ VPS (ubuntu@51.75.21.239) with Bun + pm2. Legacy also on Render.com via `render.
 Health check: `/api/v1/status`.
 **Deploy** : `deploy.bat "msg"` (racine) ou `scripts/deploy.bat "msg"` — point d'entrée unique. Stream `scripts/update_vps.sh` vers le VPS (toujours la dernière logique). Le runner est **smart** : skip `next build` si seuls des fichiers legacy ont changé (`pariscore.{html,app.js,js}`, `services/*.js`, `data/*.json`) → ~15-30s vs ~3min. Build complet uniquement si `src/`/`app/`/`next.config`/`package.json` changent. QA post-deploy optionnelle : `bash scripts/post-deploy-qa.sh`.
 
+**Deploy depuis un agent (Cline/runner 30s timeout) : `scripts/deploy-runner.ps1`** — unique point d'entrée agent, remplace la danse SSH manuelle (scp → tr → nohup → poll).
+```powershell
+# Cas 1 : code déjà committé + poussé (gates courus avant) → async, retour immédiat
+Start-Process powershell -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','scripts\deploy-runner.ps1','-Quick','-NoCommit','-Log','logs\deploy-run.log' -WindowStyle Hidden
+# puis poller logs\deploy-run.log (lecture courte) jusqu'à 'DEPLOY-OK' / 'DEPLOY-FAIL'
+
+# Cas 2 : une seule commande (humain, session interactive — gates lint+typecheck+test inclus, ~5-10 min)
+powershell -NoProfile -File scripts\deploy-runner.ps1 -Message "feat(scope): description"
+```
+- `-Quick` : skip gates (les avoir déjà passés à la main). `-NoCommit` : skip git (deploy du code déjà poussé, vérifie divergence origin).
+- `-Script scripts\deploy-v2.sh` pour l'ancien runner (backup/rollback Discord).
+- Remote log : `/tmp/pariscore-deploy.log` sur le VPS ; marqueur succès `VPS_DEPLOY_OK` ; toute ligne `ERR:` = échec (le script s'arrête immédiatement).
+- `update_vps.sh` : health check `OK` = requis (exit 1 sinon, plus de `VPS_DEPLOY_OK` en trompe-l'œil), restart pm2 legacy skippé si le process n'existe plus, timestamps de build ajoutés.
+- Pré-flight intégré : branche `main` obligatoire, refus si derrière origin, working tree sale sans `-Message` = erreur.
+- ⚠️ **Ne jamais** appeler `deploy.bat`/`deploy-v2.bat` depuis le runner Cline (échec `cmd /c` imbriqué + timeout 30s). En cas de nécessité humaine : lancer à la main dans un terminal.
+- Piège bun test connu : tout `*.test.ts` dans `src/**` DOIT importer `{ describe, expect, test } from "bun:test"` — les globals nus cassent le typecheck strict de `next build` sur le VPS (TS2593 → deploy bloqué). Convention : `src/lib/__tests__/*.test.ts`.
+
 ### Secrets
 - `.env` contains live API keys — **NEVER commit**
 - Git already ignores `.env`, `*.db`, `*.log`
