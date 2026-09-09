@@ -189,16 +189,19 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
   useEffect(() => {
     if (!open || !match) return;
     let cancelled = false;
-    const matchId = match.id.replace(/^bsd-/, "");
-    // Reset dans un microtask (callback) → conforme à set-state-in-effect.
-    Promise.resolve().then(() => {
-      if (cancelled) return;
-      setStats(null);
-      setPrematch(null);
-      setError(null);
-    });
+    const rawId = match.id.replace(/^bsd-/, "");
+    // Reset synchrone AVANT le fetch (MEDIUM AUDIT-2026-09-09) : le reset en
+    // microtask affichait 1 rendu des stats du match A sous l'en-tête du B.
+    setStats(null);
+    setPrematch(null);
+    setError(null);
+    if (!/^\d+$/.test(rawId)) {
+      setError("identifiant match invalide");
+      return;
+    }
+    const matchId = encodeURIComponent(rawId);
 
-    fetch(`/api/football/matches/${matchId}/stats`)
+    fetch(`/api/football/matches/${matchId}/stats`, { signal: AbortSignal.timeout(15000) })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return (await res.json()) as StatsResponse;
@@ -207,7 +210,8 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
         if (!cancelled) setStats(data);
       })
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
+        // Timeout réseau → message explicite au lieu d'un skeleton infini.
+        if (!cancelled) setError(err?.name === "TimeoutError" ? "délai dépassé" : err.message);
       });
 
     // Enrichissement best-effort : récupère les données BSD prematch réellement
@@ -295,7 +299,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <span className="text-center text-xs font-semibold leading-tight">{view.home.shortName}</span>
+                  <span className="text-center text-xs font-semibold leading-tight">{view.home.shortName ?? view.home.name}</span>
                 </div>
 
                 <div className="flex flex-col items-center">
@@ -339,7 +343,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                       <Trophy className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
-                  <span className="text-center text-xs font-semibold leading-tight">{view.away.shortName}</span>
+                  <span className="text-center text-xs font-semibold leading-tight">{view.away.shortName ?? view.away.name}</span>
                 </div>
               </div>
             )}

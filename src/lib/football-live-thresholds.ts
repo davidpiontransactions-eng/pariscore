@@ -333,9 +333,12 @@ export function lambdaTotalFromOver25(p: number): number {
 }
 
 /** Σ des multiplicateurs de phase sur les minutes restantes (minute+1 → 90). */
-function phaseSum(minute: number): number {
+function phaseSum(minute: number, stoppageExtra = 0): number {
   let s = 0;
-  for (let m = minute + 1; m <= 90; m++) s += phaseMultiplier(m);
+  const end = 90 + Math.max(0, Math.min(15, Math.round(stoppageExtra)));
+  for (let m = minute + 1; m <= end; m++) {
+    s += m <= 90 ? phaseMultiplier(m) : LAMBDA_PHASE_PROFILE.late;
+  }
   return s;
 }
 
@@ -348,8 +351,14 @@ function phaseSum(minute: number): number {
  * OddAlerts). Retourne des probabilités 0-100 arrondies.
  */
 export function projectLiveMarkets(input: LiveProjectionInput): LiveMarketsProjection {
-  const minute = Math.max(1, Math.min(90, Math.round(input.minute || 1)));
-  const remaining = Math.max(0, 90 - minute);
+  // Temps additionnel (MEDIUM AUDIT-2026-09-09) : 90+6 ≠ match terminé.
+  // Avant : clamp à 90 → `remaining=0` → marchés figés 100/0 alors que le jeu
+  // continue. Minute acceptée jusqu'à 130, plancher de 4 min restantes en LIVE.
+  const rawMinute = Math.round(input.minute || 1);
+  const minute = Math.max(1, Math.min(130, rawMinute));
+  // Temps additionnel : les minutes 90+ gardent ~6 min de jeu effectif.
+  const stoppageExtra = minute > 90 ? 6 : 0;
+  const remaining = Math.max(0, 90 + stoppageExtra - minute);
   const sh = Math.max(0, Math.floor(input.homeScore || 0));
   const sa = Math.max(0, Math.floor(input.awayScore || 0));
   const homeRed = Math.max(0, Math.min(4, Math.floor(input.homeRedCards || 0)));
@@ -372,7 +381,7 @@ export function projectLiveMarkets(input: LiveProjectionInput): LiveMarketsProje
     // Taux xG observé (buts/minute) × Σ phases sur les minutes restantes.
     const rateH = Math.max(0, Number(input.homeXg)) / minute;
     const rateA = Math.max(0, Number(input.awayXg)) / minute;
-    const S = phaseSum(minute);
+    const S = phaseSum(minute, stoppageExtra);
     // Plancher de fiabilité (xG quasi nul très tôt ≠ 0 but garanti) — même
     // logique que v1, appliqué par minute avec le même profil de phase.
     const floorH = ((LEAGUE_LAMBDA_90 * share * 0.45) / 90) * S;
@@ -387,14 +396,15 @@ export function projectLiveMarkets(input: LiveProjectionInput): LiveMarketsProje
       pm?.over25Prob != null && Number.isFinite(pm.over25Prob)
         ? lambdaTotalFromOver25(Math.max(1, Math.min(99, pm.over25Prob)) / 100)
         : LEAGUE_LAMBDA_90;
-    const S = phaseSum(minute);
+    const S = phaseSum(minute, stoppageExtra);
     lambdaHomeRem = ((lambdaTotal90 * share) / 90) * S * ownDampH * boostH;
     lambdaAwayRem = ((lambdaTotal90 * (1 - share)) / 90) * S * ownDampA * boostA;
     source = "prematch";
   }
 
   // Match terminé : le score courant décide (100/0, pas 99/1 — marché résolu).
-  if (remaining <= 0 || minute >= 90) {
+  // Seuil 120 (pas 90) : un input minute > 90 = temps additionnel en cours.
+  if (remaining <= 0 || minute >= 120) {
     const res =
       sh > sa
         ? { homeWin: 100, draw: 0, awayWin: 0 }

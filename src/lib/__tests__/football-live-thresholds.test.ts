@@ -150,6 +150,20 @@ describe("projectLiveMarkets", () => {
     expect(m.draw).toBeGreaterThanOrEqual(95);
   });
 
+  test("temps additionnel 90+4 : marchés non figés (MEDIUM AUDIT-2026-09-09)", () => {
+    const m = projectLiveMarkets({ minute: 94, homeScore: 1, awayScore: 0, prematch: { homeProb: 45, drawProb: 27 } });
+    expect(m.homeWin).toBeLessThan(100);
+    expect(m.draw).toBeGreaterThan(0);
+  });
+
+  test("carton rouge : 11v10 ≠ 11v11", () => {
+    const base = { minute: 61, homeScore: 0, awayScore: 1, prematch: { homeProb: 30, drawProb: 27, awayProb: 43 } };
+    const even = projectLiveMarkets(base);
+    const red = projectLiveMarkets({ ...base, awayRedCards: 1 });
+    expect(red.homeWin).toBeGreaterThan(even.homeWin);
+    expect(red.awayWin).toBeLessThan(even.awayWin);
+  });
+
   test("seuils funnel exposés et cohérents avec le rapport OddAlerts", () => {
     expect(LIVE_FUNNEL_THRESHOLDS.homePressure).toBe(65);
     expect(LIVE_FUNNEL_THRESHOLDS.pressureDiff).toBe(20);

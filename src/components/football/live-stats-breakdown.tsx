@@ -4,7 +4,7 @@
 // seuils du funnel In-Play (OddAlerts §5.5/§6.5) et probabilités live dans la
 // même vue (§6.7) : le signal pression est converti en marchés (1X2, O/U, BTTS).
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Activity, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { FootballLiveState } from "@/lib/football-data";
@@ -163,19 +163,26 @@ export function LiveStatsBreakdown({
 
   // P3 backtest : 1 snapshot funnel/min vers KvStore (calibration des seuils).
   // Best-effort silencieux — jamais de throw, jamais de boucle (60 s fixe).
+  // Deps scalaires + refs (LOW AUDIT-2026-09-09) : `funnel`/`markets` recréés
+  // à chaque render réarmaient l'intervalle → volume > 1/min. Skip si hidden.
+  const snapRef = useRef({ funnel, markets });
+  snapRef.current = { funnel, markets };
+  const snapMinute = Math.round(live.minute);
+  const snapHome = live.homeScore;
+  const snapAway = live.awayScore;
   useEffect(() => {
-    if (!matchId || Math.round(live.minute) < 1) return;
+    if (!matchId || snapMinute < 1) return;
     let stopped = false;
     const send = () => {
-      if (stopped) return;
+      if (stopped || document.hidden) return;
       try {
         const snap = buildFunnelSnapshot({
           matchId,
-          minute: live.minute,
-          homeScore: live.homeScore,
-          awayScore: live.awayScore,
-          funnel,
-          markets,
+          minute: snapMinute,
+          homeScore: snapHome,
+          awayScore: snapAway,
+          funnel: snapRef.current.funnel,
+          markets: snapRef.current.markets,
         });
         fetch("/api/football/live-funnel-log", {
           method: "POST",
@@ -193,7 +200,7 @@ export function LiveStatsBreakdown({
       stopped = true;
       clearInterval(t);
     };
-  }, [matchId, live.minute, live.homeScore, live.awayScore, funnel, markets]);
+  }, [matchId, snapMinute, snapHome, snapAway]);
 
   const homeAtk = num(live.homeAttacks);
   const awayAtk = num(live.awayAttacks);
@@ -245,11 +252,11 @@ export function LiveStatsBreakdown({
         )}
         <StatRow label="Tirs cadrés" home={live.homeShotsOnTarget} away={live.awayShotsOnTarget} hot={hit("totalSot") || hit("awaySot")} />
         <StatRow label="Corners" home={live.homeCorners} away={live.awayCorners} hot={hit("totalCorners") || hit("homeCorners")} />
-        {num(live.homeFouls) != null && <StatRow label="Fautes" home={live.homeFouls} away={live.awayFouls} />}
-        {num(live.homeYellowCards) != null && (
+        {(num(live.homeFouls) != null || num(live.awayFouls) != null) && <StatRow label="Fautes" home={live.homeFouls} away={live.awayFouls} />}
+        {(num(live.homeYellowCards) != null || num(live.awayYellowCards) != null) && (
           <StatRow label="Cartons jaunes" home={live.homeYellowCards} away={live.awayYellowCards} hot={hit("yellowCards")} />
         )}
-        {num(live.homeRedCards) != null && <StatRow label="Cartons rouges" home={live.homeRedCards} away={live.awayRedCards} />}
+        {(num(live.homeRedCards) != null || num(live.awayRedCards) != null) && <StatRow label="Cartons rouges" home={live.homeRedCards} away={live.awayRedCards} />}
       </div>
 
       {/* Probabilités live — le signal converti en marchés (OddAlerts §6.7) */}

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import type { FunnelSnapshot } from "@/lib/football-live-thresholds";
+import type { FunnelSnapshot, FunnelRuleId } from "@/lib/football-live-thresholds";
 
 /**
  * POST /api/football/live-funnel-log
@@ -9,9 +9,41 @@ import type { FunnelSnapshot } from "@/lib/football-live-thresholds";
  * envoie 1 snapshot/min (FunnelSnapshot) → KvStore `funnellog:{matchId}:{minute}`.
  * L'index `funnellog:index` (JSON ordonné) borne le volume à 1500 snapshots.
  * Comparer ensuite `markets` vs score final → calibration des seuils.
+ *
+ * Durcissement H3 (AUDIT-2026-09-09) : `signals` validés contre le vocabulaire,
+ * marchés clampés 0-100, rate-limit 1/30 s par (IP, match).
  */
 const INDEX_KEY = "funnellog:index";
 const MAX_SNAPS = 1500;
+const RATE_MS = 30_000;
+
+const FUNNEL_RULE_IDS: ReadonlySet<string> = new Set([
+  "homePressure", "pressureDiff", "awayPossession", "totalSot", "homeShots",
+  "awaySot", "totalCorners", "homeCorners", "yellowCards", "dangerousAttacks",
+  "homeAttacks", "xgTotal",
+]);
+
+const g = globalThis as unknown as { __funnelLogRate?: Map<string, number> };
+function rateLimited(ip: string, matchId: string): boolean {
+  if (!g.__funnelLogRate) g.__funnelLogRate = new Map();
+  const map = g.__funnelLogRate;
+  const now = Date.now();
+  // Évite la croissance : purge opportuniste des entrées expirées.
+  if (map.size > 2000) {
+    for (const [k, t] of map) if (now - t > RATE_MS) map.delete(k);
+  }
+  const key = `${ip}|${matchId}`;
+  const last = map.get(key);
+  if (last != null && now - last < RATE_MS) return true;
+  map.set(key, now);
+  return false;
+}
+
+const clamp100 = (v: unknown): number => {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+};
 
 function snapKey(s: FunnelSnapshot): string {
   const safeId = String(s.matchId || "unknown").replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 80);
@@ -24,19 +56,28 @@ export async function POST(req: Request) {
     if (!body || typeof body.matchId !== "string" || !body.matchId) {
       return NextResponse.json({ error: "matchId requis" }, { status: 400 });
     }
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (rateLimited(ip, body.matchId)) {
+      return NextResponse.json({ error: "trop de requêtes" }, { status: 429 });
+    }
+    const rawSignals = Array.isArray(body.signals) ? body.signals : [];
+    const signals = rawSignals.filter(
+      (s): s is FunnelRuleId => typeof s === "string" && FUNNEL_RULE_IDS.has(s),
+    );
     const snap: FunnelSnapshot = {
-      matchId: body.matchId,
+      matchId: body.matchId.slice(0, 80),
       minute: Math.max(0, Math.min(130, Math.round(Number(body.minute) || 0))),
-      homeScore: Math.max(0, Math.floor(Number(body.homeScore) || 0)),
-      awayScore: Math.max(0, Math.floor(Number(body.awayScore) || 0)),
+      homeScore: Math.max(0, Math.min(20, Math.floor(Number(body.homeScore) || 0))),
+      awayScore: Math.max(0, Math.min(20, Math.floor(Number(body.awayScore) || 0))),
       source: body.source === "xg" ? "xg" : "prematch",
-      signals: Array.isArray(body.signals) ? body.signals : [],
+      signals,
       markets: {
-        homeWin: Number(body.markets?.homeWin) || 0,
-        draw: Number(body.markets?.draw) || 0,
-        awayWin: Number(body.markets?.awayWin) || 0,
-        over25: Number(body.markets?.over25) || 0,
-        btts: Number(body.markets?.btts) || 0,
+        homeWin: clamp100(body.markets?.homeWin),
+        draw: clamp100(body.markets?.draw),
+        awayWin: clamp100(body.markets?.awayWin),
+        over25: clamp100(body.markets?.over25),
+        btts: clamp100(body.markets?.btts),
       },
       at: new Date().toISOString(),
     };

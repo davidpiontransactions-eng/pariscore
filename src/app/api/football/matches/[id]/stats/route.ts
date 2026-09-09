@@ -72,7 +72,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id: rawId } = await params;
+  // Validation stricte (MEDIUM AUDIT-2026-09-09) : l'id est interpolé dans
+  // l'URL BSD — `123/../../x` forgéait le path. Seuls les ids numériques.
   const matchId = rawId.replace(/^bsd-/, "");
+  if (!/^\d+$/.test(matchId)) {
+    return NextResponse.json({ error: "invalid match id" }, { status: 400 });
+  }
 
   const hit = cache.get(matchId);
   if (hit && Date.now() - hit.at < CACHE_TTL) {

@@ -353,9 +353,25 @@ function mapPrediction(m: BSDFootballMatch): Prediction {
   return { homeProb, drawProb, awayProb, bttsProb, over25Prob, model: "PariScore" };
 }
 
+/**
+ * Allowlist des statuts BSD considérés comme LIVE (H1 AUDIT-2026-09-09).
+ * Une denylist oubliait `cancelled` (2 L), `FT`, `AET`, `PEN`, `abandoned`…
+ * → matchs annulés affichés `LIVE 0'`. Source unique : mapLiveState, meta,
+ * filtres calendar.
+ */
+const BSD_LIVE_STATUSES = new Set([
+  "1h", "2h", "ht", "live", "inplay", "in_play", "playing", "firsthalf",
+  "secondhalf", "halftime", "pause",
+]);
+
+export function isBsdLiveStatus(status: unknown): boolean {
+  const s = String(status ?? "").trim().toLowerCase();
+  if (!s) return false;
+  return BSD_LIVE_STATUSES.has(s);
+}
+
 function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
-  const isLive = !["finished", "notstarted", "canceled", "postponed", "suspended"].includes(m.status);
-  if (!isLive) return null;
+  if (!isBsdLiveStatus(m.status)) return null;
   const ls = m.live_stats;
   // Coercition numérique : l'API renvoie parfois des chaînes ("12") ou des
   // objets sur les ligues mineures — jamais de throw, null si inexploitable.
@@ -363,14 +379,19 @@ function mapLiveState(m: BSDFootballMatch): FootballLiveState | null {
     const n = typeof v === "number" ? v : Number(v);
     return v != null && Number.isFinite(n) ? n : null;
   };
-  const poss = num(ls?.home?.ball_possession);
+  const possRaw = num(ls?.home?.ball_possession);
+  // Clamp 0-100 (AUDIT-2026-09-09) : BSD envoie parfois des valeurs hors
+  // borne → jauge `120 % / -20 %` + funnel faussé en aval.
+  const clamp100 = (v: number | null): number | null =>
+    v == null ? null : Math.max(0, Math.min(100, v));
+  const poss = clamp100(possRaw);
   return {
     homeScore: num(m.home_score) ?? 0,
     awayScore: num(m.away_score) ?? 0,
-    minute: num(m.current_minute) ?? 0,
+    minute: Math.max(0, Math.min(130, num(m.current_minute) ?? 0)),
     status: m.status === "HT" || m.period === "HT" ? "HT" : "LIVE",
     period: m.period,
-    homePossession: poss ?? (ls?.away?.ball_possession != null ? 100 - (Number(ls.away.ball_possession) || 0) : 50),
+    homePossession: poss ?? (ls?.away?.ball_possession != null ? 100 - (clamp100(num(ls.away.ball_possession)) ?? 50) : 50),
     homeShots: num(ls?.home?.total_shots),
     awayShots: num(ls?.away?.total_shots),
     homeShotsOnTarget: num(ls?.home?.shots_on_target),
@@ -910,7 +931,7 @@ export async function fetchBSDFootballMatchMeta(matchId: string): Promise<BSDFoo
     const m = await bsdFetchRaw<BSDFootballMatch>(`/v2/events/${matchId}/`);
     if (!m || !m.league) return null;
     const status = String(m.status || "");
-    const isLive = !["finished", "notstarted", "canceled", "postponed", "suspended"].includes(status);
+    const isLive = isBsdLiveStatus(status);
     return {
       id: m.id,
       homeTeam: m.home_team ?? "",

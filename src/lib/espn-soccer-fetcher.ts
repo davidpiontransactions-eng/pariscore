@@ -117,7 +117,8 @@ function sigKey(n: unknown): string {
   );
 }
 
-function namesMatch(a: unknown, b: unknown): boolean {
+/** Matching de noms d'équipes inter-sources (exporté pour tests). */
+export function namesMatch(a: unknown, b: unknown): boolean {
   const A = sig(a);
   const B = sig(b);
   if (!A || !B) return false;
@@ -126,12 +127,25 @@ function namesMatch(a: unknown, b: unknown): boolean {
   const bKey = sigKey(b);
   if (aKey && aKey === bKey) return true;
   if ((A.includes(B) || B.includes(A)) && Math.min(A.length, B.length) >= 5) return true;
-  // Championnats mineurs (ex. K League : "Jeju SK" ↔ "Jeju United") : un token
-  // significatif commun (≥ 4 lettres) suffit — les suffixes (FC/SK/United…)
-  // varient selon la source.
-  const aToks = new Set(aKey.split(" ").filter((w) => w.length >= 4));
-  if (aToks.size === 0) return false;
-  return bKey.split(" ").some((w) => w.length >= 4 && aToks.has(w));
+  // Anti faux positifs (H2 AUDIT-2026-09-09) : "Manchester United" ↔
+  // "Newcastle United" ne doivent plus matcher sur le seul `united`.
+  // Règle : ≥ 2 tokens communs → OK ; token unique → OK seulement s'il est
+  // distinctif (pas un générique de rivaux) ET que le nom court ressemble à
+  // une abréviation (≤ 14 car., ex. "Man United"). Les cas KR/JP à token
+  // unique passent par TEAM_ALIASES + égalité ci-dessus.
+  const CLUB_TOKEN_BLOCK = new Set([
+    "city", "athletic", "atletico", "real", "madrid", "milan",
+    "sporting", "deportivo", "olympique", "dynamo", "inter",
+  ]);
+  const aToks = aKey.split(" ").filter((w) => w.length >= 4);
+  if (aToks.length === 0) return false;
+  const bSet = new Set(bKey.split(" ").filter((w) => w.length >= 4));
+  const shared = [...new Set(aToks)].filter((w) => bSet.has(w));
+  if (shared.length >= 2) return true;
+  if (shared.length !== 1) return false;
+  const tok = shared[0];
+  if (CLUB_TOKEN_BLOCK.has(tok)) return false;
+  return Math.min(A.length, B.length) <= 14;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
