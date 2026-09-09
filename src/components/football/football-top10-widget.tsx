@@ -17,7 +17,6 @@ import {
 import { useTop5SelectionStore } from "@/stores/use-top5-selection-store";
 import { STRATEGIES, MatchRow, type WindowKey } from "./football-strategy-top5-widget";
 import { TopStrategiesTable, type StrategyTableRow } from "./top-strategies-table";
-import { computeMatchPicks, type MatchPick } from "@/lib/services/football-analytics";
 
 /* Teintes FotMob clair — identiques au calendrier */
 const C = {
@@ -31,28 +30,66 @@ const C = {
   accent: "#00985f",
 } as const;
 
-/** Convertit les entrees StrategyMatchEntry en lignes pour TopStrategiesTable. */
-function toTableRows(entries: StrategyMatchEntry[]): StrategyTableRow[] {
-  return entries.map((e) => ({
-    matchId: e.matchId,
-    league: e.league,
-    leagueLogo: e.leagueLogo,
-    kickoff: e.kickoff,
-    home: { teamName: e.home.teamName, logo: e.home.logo },
-    away: { teamName: e.away.teamName, logo: e.away.logo },
-    value: e.value,
-    trend: "flat" as const,
-  }));
+type StrategyDef = (typeof STRATEGIES)[number];
+
+/** Cote BSD pertinente pour la stratégie (null = pas de marché direct). */
+function strategyOdds(
+  entry: StrategyMatchEntry,
+  active: StrategyTop5Key,
+): { odds: number | null; oddsLabel: string | null } {
+  const o = entry.odds;
+  if (!o) return { odds: null, oddsLabel: null };
+  switch (active) {
+    case "bestTeam":
+    case "bestTeam1x2":
+    case "gagnant": {
+      if (entry.pick === "home") return { odds: o.home, oddsLabel: o.home != null ? "1" : null };
+      if (entry.pick === "away") return { odds: o.away, oddsLabel: o.away != null ? "2" : null };
+      if (o.home != null && o.away != null) {
+        return o.home <= o.away ? { odds: o.home, oddsLabel: "1" } : { odds: o.away, oddsLabel: "2" };
+      }
+      return { odds: o.home ?? o.away, oddsLabel: o.home != null ? "1" : "2" };
+    }
+    case "doubleChance1X":
+      return { odds: o.home, oddsLabel: o.home != null ? "1X" : null };
+    case "doubleChance2X":
+      return { odds: o.away, oddsLabel: o.away != null ? "2X" : null };
+    case "doubleChance12":
+      return { odds: null, oddsLabel: null };
+    case "over15":
+      return { odds: o.over15, oddsLabel: o.over15 != null ? "Over 1,5" : null };
+    case "under35":
+      return { odds: o.under35, oddsLabel: o.under35 != null ? "Under 3,5" : null };
+    case "bttsYes":
+      return { odds: o.bttsYes, oddsLabel: o.bttsYes != null ? "BTTS" : null };
+    default:
+      return { odds: null, oddsLabel: null };
+  }
 }
 
-/** Calcule les picks ≥60% pour les entrees (lambda estime). */
-function computePicksForRows(entries: StrategyMatchEntry[]): Record<string, MatchPick[]> {
-  const result: Record<string, MatchPick[]> = {};
-  for (const e of entries) {
-    const picks = computeMatchPicks({ lambdaHome: 1.4, lambdaAway: 1.2, xgTotal: 2.8 });
-    if (picks.length > 0) result[e.matchId] = picks;
-  }
-  return result;
+/** Convertit les entrees StrategyMatchEntry en lignes pour TopStrategiesTable. */
+function toTableRows(
+  entries: StrategyMatchEntry[],
+  def: StrategyDef,
+  active: StrategyTop5Key,
+): StrategyTableRow[] {
+  return entries.map((e) => {
+    const { odds, oddsLabel } = strategyOdds(e, active);
+    return {
+      matchId: e.matchId,
+      league: e.league,
+      leagueLogo: e.leagueLogo,
+      kickoff: e.kickoff,
+      home: { teamName: e.home.teamName, logo: e.home.logo },
+      away: { teamName: e.away.teamName, logo: e.away.logo },
+      value: e.value,
+      display: def.format(e.value),
+      probPct: def.isProb ? e.value : null,
+      odds,
+      oddsLabel,
+      trend: "flat" as const,
+    };
+  });
 }
 
 const TOP_N = 10;
@@ -77,19 +114,30 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   const [winKey, setWinKey] = useState<WindowKey>("l5");
   const [timeWin, setTimeWin] = useState<KickoffWindow>("semaine");
 
-  const { matchesFor, isLoading, error } = useFootballTopN(TOP_N, league);
+  const { data, matchesFor, isLoading, error } = useFootballTopN(TOP_N, league);
   const selectedItems = useTop5SelectionStore((s) => s.items);
   const toggleStore = useTop5SelectionStore((s) => s.toggle);
 
   const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
 
+  // Liste des ligues issue des données API (source BSD) — repli sur la prop
+  // matches si l'API est encore vide (chargement / fallback).
   const leagues = useMemo(() => {
     const set = new Set<string>();
-    for (const m of matches) {
-      if (m.league?.name) set.add(m.league.name);
+    if (data) {
+      for (const list of Object.values(data.strategies)) {
+        for (const e of list) {
+          if (e.league) set.add(e.league);
+        }
+      }
+    }
+    if (set.size === 0) {
+      for (const m of matches) {
+        if (m.league?.name) set.add(m.league.name);
+      }
     }
     return [...set].sort((a, b) => a.localeCompare(b));
-  }, [matches]);
+  }, [data, matches]);
 
   const rawRows = matchesFor(active);
   const rows = useMemo(
@@ -121,11 +169,11 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   return (
     <section
       aria-label="Top 10 matchs par stratégie"
-      className="w-full rounded-2xl p-4"
+      className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
       style={{ background: C.card, border: `1px solid ${C.cardBorder}` }}
     >
       {/* Header — même style que FotmobLeagueSection */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <h2
           className="text-[13px] font-semibold"
           style={{ color: C.headerText }}
@@ -150,7 +198,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Championnat du Top 10"
-            className="h-7 w-52 rounded-lg text-xs font-medium !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
+            className="h-9 w-full rounded-lg text-xs font-medium sm:h-7 sm:w-52 !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
           >
             <SelectValue placeholder="Toutes les ligues" />
           </SelectTrigger>
@@ -171,7 +219,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 10"
-            className="h-7 w-56 rounded-lg text-xs font-medium !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
+            className="h-9 w-full rounded-lg text-xs font-medium sm:h-7 sm:w-56 !bg-white !border-[#f0f0f0] !text-[#222] dark:!bg-white dark:!text-[#222]"
           >
             <SelectValue placeholder="Choisir une stratégie…" />
           </SelectTrigger>
@@ -253,9 +301,8 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
       ) : (
         <div className="space-y-3">
           <TopStrategiesTable
-            rows={toTableRows(rows)}
+            rows={toTableRows(rows, def, active)}
             strategy={active}
-            picksByMatch={computePicksForRows(rows)}
           />
           {/* Sélections forcées (≥60%) */}
           {forced.length > 0 && (

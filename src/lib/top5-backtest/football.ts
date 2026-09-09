@@ -157,24 +157,6 @@ export function settleFootballPick(
       const corners = num(lsH) + num(lsA);
       return { status: corners >= 7 ? "won" : "lost", odds: null, closingOdds: null, score: `${corners} cor` };
     }
-    case "edge1x2Home": {
-      // Pick = home → home win = won.
-      const won = hs > as;
-      return { status: won ? "won" : "lost", odds: m.odds_home ?? null, closingOdds: m.odds_home ?? null, score: `${hs}-${as}` };
-    }
-    case "drawValueLigue": {
-      // Pick = draw → draw = won.
-      const won = hs === as;
-      return { status: won ? "won" : "lost", odds: m.odds_draw ?? null, closingOdds: m.odds_draw ?? null, score: `${hs}-${as}` };
-    }
-    case "edgeOU25": {
-      // pick "home" = over 2.5, pick "away" = under 2.5.
-      if (!pick) return { status: "void", odds: null, closingOdds: null };
-      const isOver = pick === "home";
-      const won = isOver ? total > 2.5 : total <= 2.5;
-      const clo = isOver ? m.odds_over_25 : m.odds_under_25;
-      return { status: won ? "won" : "lost", odds: clo ?? null, closingOdds: clo ?? null, score: `${hs}-${as}` };
-    }
   }
   return { status: "void" as const, odds: null, closingOdds: null };
 }
@@ -203,12 +185,6 @@ function pickDesc(key: StrategyTop5Key, e: StrategyMatchEntry): string {
       return "BTTS oui";
     case "over65Corners":
       return "Over 6,5 corners";
-    case "edge1x2Home":
-      return `${e.home.teamName} (edge home)`;
-    case "drawValueLigue":
-      return "Draw (valeur ligue)";
-    case "edgeOU25":
-      return e.pick === "home" ? "Over 2,5" : "Under 2,5";
   }
   return "?";
 }

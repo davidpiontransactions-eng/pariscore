@@ -38,10 +38,7 @@ export type StrategyTop5Key =
   | "over15"
   | "under35"
   | "bttsYes"
-  | "over65Corners"
-  | "edge1x2Home"
-  | "drawValueLigue"
-  | "edgeOU25";
+  | "over65Corners";
 
 export type Side = "home" | "away";
 
@@ -87,6 +84,20 @@ export type StrategyMatchEntry = {
   stats?: MatchDisplayStats | null;
   /** Résumé forme W/D/L des 5 derniers (home + away) pour le form heatmap. */
   formSummary?: { home: string; away: string } | null;
+  /** Cotes BSD embarquées du fixture (null si absentes) — colonne Cote enrichie. */
+  odds?: {
+    home: number | null;
+    draw: number | null;
+    away: number | null;
+    over15: number | null;
+    under15: number | null;
+    over25: number | null;
+    under25: number | null;
+    over35: number | null;
+    under35: number | null;
+    bttsYes: number | null;
+    bttsNo: number | null;
+  } | null;
 };
 
 export type StrategyTop5 = {
@@ -111,9 +122,6 @@ const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
   under35: true,
   bttsYes: true,
   over65Corners: true,
-  edge1x2Home: true,
-  drawValueLigue: true,
-  edgeOU25: true,
 };
 
 /** Garde en mémoire la liste des stratégies (ordre stable de rendu). */
@@ -361,30 +369,6 @@ function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: n
     case "over65Corners":
       // Pas de cotes corners exposées sur les fixtures → indisponible.
       return null;
-    case "edge1x2Home": {
-      if (!p) return null;
-      const edge = p.home - (p.away + p.draw) / 2;
-      return edge > 0 ? { value: edge * 100, pick: "home" } : null;
-    }
-    case "drawValueLigue": {
-      if (!p) return null;
-      // Sans pool on ne peut pas comparer → retourne null (repli forme).
-      return null;
-    }
-    case "edgeOU25": {
-      if (m.odds_over_25 == null || m.odds_over_25 > 2.5) return null;
-      const oddsO = m.odds_over_25;
-      const oddsU = m.odds_under_25;
-      if (oddsO <= 1 || oddsU == null || oddsU <= 1) return null;
-      const io = 1 / oddsO;
-      const iu = 1 / oddsU;
-      const vig = io + iu;
-      if (vig <= 0) return null;
-      const fairOver = io / vig;
-      // Pas de Poisson sans forme : edge = 50% - fairOver (proxy grossier).
-      const edge = 0.5 - fairOver;
-      return edge > 0 ? { value: edge * 100, pick: "home" } : null;
-    }
     default:
       return null;
   }
@@ -449,49 +433,7 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
       return { value: poissonAtLeastOne(lambdaHome) * poissonAtLeastOne(lambdaAway) * 100, pick: null };
     case "over65Corners":
       return { value: poissonTailAt(lambdaCorners, 7) * 100, pick: null };
-    case "edge1x2Home": {
-      // Poisson home advantage : lambdaHome vs lambdaAway — home side si favorable.
-      const homeAdv = lambdaHome - lambdaAway;
-      return { value: Math.abs(homeAdv), pick: homeAdv >= 0 ? "home" : "away" };
-    }
-    case "drawValueLigue": {
-      // Sans odds on ne peut pas comparer au marché → retourne 0 (sera filtré par odds fallback).
-      return { value: 0, pick: null };
-    }
-    case "edgeOU25": {
-      const pOver = 1 - poissonTailAt(lambdaTotal, 3);
-      return { value: pOver * 100, pick: null };
-    }
   }
-}
-
-type LeaguePoolStats = {
-  n: number;
-  draws: number;
-  drawRate: number;
-  totalGoals: number;
-  goalsPerMatch: number;
-};
-
-function computeLeaguePoolStats(pool: BSDFootballMatch[]): Map<string, LeaguePoolStats> {
-  const map = new Map<string, LeaguePoolStats>();
-  for (const m of pool) {
-    if (m.home_score == null || m.away_score == null) continue;
-    const league = m.league?.name ?? "unknown";
-    let s = map.get(league);
-    if (!s) {
-      s = { n: 0, draws: 0, drawRate: 0, totalGoals: 0, goalsPerMatch: 0 };
-      map.set(league, s);
-    }
-    s.n++;
-    if (m.home_score === m.away_score) s.draws++;
-    s.totalGoals += m.home_score + m.away_score;
-  }
-  for (const s of map.values()) {
-    s.drawRate = s.n > 0 ? s.draws / s.n : 0;
-    s.goalsPerMatch = s.n > 0 ? s.totalGoals / s.n : 0;
-  }
-  return map;
 }
 
 /**
@@ -514,7 +456,6 @@ export function computeStrategyTop5Matches(
   opts: ComputeTop5Options = {},
 ): StrategyTop5 {
   const store = buildFormStore(finished);
-  const leaguePoolStats = computeLeaguePoolStats(finished);
 
   const scores = {} as Record<StrategyTop5Key, ScoredMatch[]>;
   for (const key of STRATEGY_TOP5_KEYS) scores[key] = [];
@@ -596,92 +537,6 @@ export function computeStrategyTop5Matches(
         continue;
       }
 
-      // edge1x2Home : avantage domicile Poisson — compare proba home dé-viggée
-      // au taux moyen de victoire à domicile du pool (walk-forward, pas d'enrichissement ligue).
-      if (key === "edge1x2Home") {
-        const oddsH = fixture.odds_home;
-        const oddsD = fixture.odds_draw;
-        const oddsA = fixture.odds_away;
-        if (oddsH == null || oddsD == null || oddsA == null || oddsH <= 1 || oddsD <= 1 || oddsA <= 1) continue;
-        const rawH = 1 / oddsH;
-        const rawD = 1 / oddsD;
-        const rawA = 1 / oddsA;
-        const vig = rawH + rawD + rawA;
-        if (vig <= 0) continue;
-        const fairHome = rawH / vig;
-        // Taux home moyen du pool (tous matchs finis, walk-forward safe).
-        let poolHomeWins = 0;
-        let poolTotal = 0;
-        for (const pm of finished) {
-          if (pm.home_score == null || pm.away_score == null) continue;
-          poolTotal++;
-          if (pm.home_score > pm.away_score) poolHomeWins++;
-        }
-        if (poolTotal === 0) continue;
-        const poolHomeRate = poolHomeWins / poolTotal;
-        const edge = fairHome - poolHomeRate;
-        if (edge > 0) {
-          scores[key].push({ fixture, form, value: edge * 100, pick: "home" });
-        }
-        continue;
-      }
-
-      // drawValueLigue : taux de nul de la ligue dans le pool vs marché dé-viggé.
-      // Pick draw si le taux ligue > marché de plus de 5%.
-      if (key === "drawValueLigue") {
-        const oddsH = fixture.odds_home;
-        const oddsD = fixture.odds_draw;
-        const oddsA = fixture.odds_away;
-        if (oddsH == null || oddsD == null || oddsA == null || oddsH <= 1 || oddsD <= 1 || oddsA <= 1) continue;
-        const rawH = 1 / oddsH;
-        const rawD = 1 / oddsD;
-        const rawA = 1 / oddsA;
-        const vig = rawH + rawD + rawA;
-        if (vig <= 0) continue;
-        const fairDraw = rawD / vig;
-        const league = fixture.league?.name ?? "unknown";
-        const lps = leaguePoolStats.get(league);
-        if (!lps || lps.n < 10) continue;
-        const diff = lps.drawRate - fairDraw;
-        if (diff > 0.05) {
-          scores[key].push({ fixture, form, value: diff * 100, pick: null });
-        }
-        continue;
-      }
-
-      // edgeOU25 : Poisson λ total vs marché O/U 2.5. Skip si odds_over_25 null ou > 2.5.
-      if (key === "edgeOU25") {
-        if (fixture.odds_over_25 == null || fixture.odds_over_25 > 2.5) continue;
-        const oddsO = fixture.odds_over_25;
-        const oddsU = fixture.odds_under_25;
-        if (oddsO <= 1 || oddsU == null || oddsU <= 1) continue;
-        const rawO = 1 / oddsO;
-        const rawU = 1 / oddsU;
-        const vig = rawO + rawU;
-        if (vig <= 0) continue;
-        const fairOver = rawO / vig;
-        // Poisson λ total depuis la forme BSD (pool-only).
-        if (form) {
-          const nH = Math.max(form.home.n, 1);
-          const nA = Math.max(form.away.n, 1);
-          const lambdaHome = (form.home.gf / nH + form.away.ga / nA) / 2;
-          const lambdaAway = (form.away.gf / nA + form.home.ga / nH) / 2;
-          const lambdaTotal = lambdaHome + lambdaAway;
-          const pOver = 1 - poissonTailAt(lambdaTotal, 3);
-          const edge = pOver - fairOver;
-          if (edge > 0) {
-            scores[key].push({ fixture, form, value: edge * 100, pick: "home" });
-          }
-        } else {
-          // Repli cotes : edge basé sur la cote seule (pas de Poisson sans forme).
-          const edge = 0.5 - fairOver;
-          if (edge > 0) {
-            scores[key].push({ fixture, form: null, value: edge * 100, pick: "home" });
-          }
-        }
-        continue;
-      }
-
       if (form) {
         const { value, pick } = scoreMatch(key, form);
         scores[key].push({ fixture, form, value, pick });
@@ -710,9 +565,6 @@ export function computeStrategyTop5Matches(
     "over15",
     "under35",
     "bttsYes",
-    "edge1x2Home",
-    "drawValueLigue",
-    "edgeOU25",
   ]);
   for (const key of STRATEGY_TOP5_KEYS) {
     if (!PROBABILISTIC_KEYS.has(key)) continue;
@@ -757,6 +609,19 @@ export function computeStrategyTop5Matches(
           const rf = rawFormFor(store, s.fixture);
           return rf ? { home: formToWDL(rf.home), away: formToWDL(rf.away) } : null;
         })(),
+        odds: {
+          home: s.fixture.odds_home ?? null,
+          draw: s.fixture.odds_draw ?? null,
+          away: s.fixture.odds_away ?? null,
+          over15: s.fixture.odds_over_15 ?? null,
+          under15: s.fixture.odds_under_15 ?? null,
+          over25: s.fixture.odds_over_25 ?? null,
+          under25: s.fixture.odds_under_25 ?? null,
+          over35: s.fixture.odds_over_35 ?? null,
+          under35: s.fixture.odds_under_35 ?? null,
+          bttsYes: s.fixture.odds_btts_yes ?? null,
+          bttsNo: s.fixture.odds_btts_no ?? null,
+        },
       });
     });
   }

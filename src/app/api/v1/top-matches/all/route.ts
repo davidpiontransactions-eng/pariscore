@@ -10,6 +10,23 @@ import {
 import { STRATEGY_TOP5_KEYS, type StrategyTop5Key } from "@/lib/football-strategy-top5";
 import { football, type FootballEvent } from "@/lib/api/bzzoiro-client";
 
+/**
+ * Clés de stratégies de cette route — pipeline indépendant du Top10
+ * (conserve les stratégies edge historiques même si le moteur Top10 ne les sert plus).
+ */
+type AllRouteStrategyKey =
+  | StrategyTop5Key
+  | "edge1x2Home"
+  | "drawValueLigue"
+  | "edgeOU25";
+
+const ALL_ROUTE_STRATEGY_KEYS: AllRouteStrategyKey[] = [
+  ...STRATEGY_TOP5_KEYS,
+  "edge1x2Home",
+  "drawValueLigue",
+  "edgeOU25",
+];
+
 // ─── Type de réponse ────────────────────────────────────────────────────────
 
 type StrategyEntry = {
@@ -62,7 +79,7 @@ const STRATEGY_LABELS: Record<string, string> = {
  */
 function filterForStrategy(
   picks: StrategyPick[],
-  strategy: StrategyTop5Key,
+  strategy: AllRouteStrategyKey,
 ): StrategyPick[] {
   switch (strategy) {
     case "bestTeam":
@@ -203,9 +220,9 @@ export async function GET(request: Request) {
 
       // Générer un pick pour chaque stratégie
       const strategiesToProcess =
-        strategyFilter && STRATEGY_TOP5_KEYS.includes(strategyFilter as StrategyTop5Key)
-          ? [strategyFilter as StrategyTop5Key]
-          : (STRATEGY_TOP5_KEYS as StrategyTop5Key[]);
+        strategyFilter && ALL_ROUTE_STRATEGY_KEYS.includes(strategyFilter as AllRouteStrategyKey)
+          ? [strategyFilter as AllRouteStrategyKey]
+          : ALL_ROUTE_STRATEGY_KEYS;
 
       for (const stratKey of strategiesToProcess) {
         // Déterminer le pick et la probabilité selon la stratégie
@@ -350,9 +367,9 @@ export async function GET(request: Request) {
 
     // Grouper par stratégie et appliquer les filtres
     const strategiesToProcess =
-      strategyFilter && STRATEGY_TOP5_KEYS.includes(strategyFilter as StrategyTop5Key)
-        ? [strategyFilter as StrategyTop5Key]
-        : (STRATEGY_TOP5_KEYS as StrategyTop5Key[]);
+      strategyFilter && ALL_ROUTE_STRATEGY_KEYS.includes(strategyFilter as AllRouteStrategyKey)
+        ? [strategyFilter as AllRouteStrategyKey]
+        : ALL_ROUTE_STRATEGY_KEYS;
 
     const result: StrategyEntry[] = strategiesToProcess.map((stratKey) => {
       const strategyPicks = allPicks.filter((p) => p.strategyType === stratKey);
