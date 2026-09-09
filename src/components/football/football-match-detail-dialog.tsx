@@ -14,6 +14,8 @@ import { Trophy, AlertCircle, TrendingUp, Activity } from "lucide-react";
 import type { FootballMatch } from "@/lib/football-data";
 import { parisKickoff } from "@/lib/football-time";
 import type { MatchTimelineData } from "@/lib/football-timeline";
+import { useTeamAttackDefenseStats, findTeamADStats } from "@/hooks/use-team-attack-defense-stats";
+import { computeRadarData } from "@/lib/football-radar";
 import { computePredictiveBets, type PredictiveBetsResult } from "@/lib/prediction/predictive-bets-engine";
 import { expectedPressureBaseline } from "@/lib/football-live-thresholds";
 import { MomentumChart } from "./momentum-chart";
@@ -29,6 +31,7 @@ import { BesoccerScoreMatrix } from "@/components/football/besoccer-score-matrix
 import { BesoccerEloPanel } from "@/components/football/besoccer-elo-panel";
 import { BesoccerTablePanel } from "@/components/football/besoccer-table-panel";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
+import { FootballRadarChart } from "@/components/football/football-radar-chart";
 import { useOddsHistory } from "@/hooks/use-odds-history";
 
 type StatsResponse = MatchTimelineData & { updatedAt?: string };
@@ -136,6 +139,38 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
   // Vue enrichie : le match prématch BSD (plus riche) si dispo, sinon le fallback.
   const view = prematch ?? match;
+
+  // Stats attaque/défense FBref pour le radar (chargées par ligue).
+  const leagueSlug = view?.league?.id ?? null;
+  const { data: adData } = useTeamAttackDefenseStats(leagueSlug);
+
+  // Radar chart data — 6 axes (Rating, Squad, GK, Defence, Midfield, Attack).
+  const radarData = useMemo(() => {
+    if (!view || !adData) return null;
+    const homeAD = findTeamADStats(view.home.name, adData);
+    const awayAD = findTeamADStats(view.away.name, adData);
+    const totalHome = view.prediction.standingStats?.home.rankTotal ?? 20;
+    const totalAway = view.prediction.standingStats?.away.rankTotal ?? 20;
+    return computeRadarData({
+      home: {
+        attack: homeAD?.attack ?? null,
+        defense: homeAD?.defense ?? null,
+        rank: view.prediction.standingStats?.home.rank ?? null,
+        totalTeams: totalHome,
+        homeProb: view.prediction.homeProb,
+        awayProb: view.prediction.awayProb,
+      },
+      away: {
+        attack: awayAD?.attack ?? null,
+        defense: awayAD?.defense ?? null,
+        rank: view.prediction.standingStats?.away.rank ?? null,
+        totalTeams: totalAway,
+        homeProb: view.prediction.homeProb,
+        awayProb: view.prediction.awayProb,
+      },
+      match: view,
+    });
+  }, [view, adData]);
   // 3 paris prédictifs — seulement si pas de live connu (prematch).
   const betsResult = useMemo(
     () => (view && !view.live ? computePredictiveBets(view) : null),
@@ -309,6 +344,16 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
             {view && (
               <div className="mt-3">
                 <FotmobMatchStats match={view} />
+              </div>
+            )}
+
+            {/* Radar chart 6 axes — home vs away (seulement si données dispo) */}
+            {radarData && !view?.live && (
+              <div className="mt-3 rounded-xl border border-[#f0f0f0] bg-white p-3">
+                <div className="mb-1 text-center text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#717171" }}>
+                  Comparaison équipes
+                </div>
+                <FootballRadarChart data={radarData} />
               </div>
             )}
 
