@@ -55,6 +55,9 @@
 - xG live Veikkausliiga : si BSD n'embarque pas `xgPerMinute` pour ce match, xG/xGA restent "—" (AF free n'expose pas d'xG) — la possession/tirs/SOT/corners, eux, seront alimentés par AF dès que la clé est présente dans `.env` du VPS.
 - Le tri affiche « HJK 100% » avant « BTTS 52% » etc. — la cellule 1X2 composite reste en première position par conception (résumé du match).
 
-### Suivi
-- Beads à clore après QA navigateur (playwright MCP) + commit conventionnel `feat(football): ...`.
+### Suivi — clôture (2026-09-09)
+- 4 beads **closes** : `pxs5` (totals+xgTotals), `0ryi` (fallback AF + fix 503), `fahw` (fallbacks popup + xGA), `poov` (tris probas).
+- Commits : `2b6f2c98` `feat(football): fallback stats API-Football + totaux timeline + xGA + tri probas popup` (7 fichiers, +422/−86) + traces docs ; push `origin/main` OK (`6f9e91af..fcbc89a1`).
+- Gates finaux : bun test timeline **4/4 pass** (`src/lib/__tests__/football-timeline-totals.test.ts`), `bunx tsc --noEmit` **0 erreur** (log `logs/typecheck-live2.log`), lint hooks OK (2 commits passés).
+- Reste manuel : QA navigateur sur un vrai match Veikkausliiga live + ajouter `API_FOOTBALL_KEY` dans `.env` local **et** secret VPS pour activer le fallback (sans clé : 200 dégradé, jamais 503).
 
