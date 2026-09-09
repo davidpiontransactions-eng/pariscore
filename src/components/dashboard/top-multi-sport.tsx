@@ -499,6 +499,17 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
           {headerCount > 0 && (
             <span className="text-xs text-slate-400 font-mono">{headerCount} matchs</span>
           )}
+          {activeSport === "football" && topCalCount > 0 && (
+            <span
+              className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
+              style={{ backgroundColor: "#00e67618", color: "#00e676" }}
+              title={`${topCalCount} matchs du jour identifiés Top stratégies`}
+              aria-label={`${topCalCount} matchs Top du jour`}
+            >
+              <Star className="size-3" fill="#00e676" style={{ color: "#00e676" }} aria-hidden="true" />
+              Top {topCalCount}
+            </span>
+          )}
         </div>
         <button
           onClick={handleRefresh}
