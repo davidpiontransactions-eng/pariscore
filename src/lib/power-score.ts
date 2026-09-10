@@ -3,13 +3,16 @@
  *
  * MÉTRIQUES ET PONDÉRATIONS (définies produit, stables) :
  *
- * Tennis (par joueur) :
+ * Tennis (par joueur) — pondérations calées sur la littérature prédictive
+ * (Kovalchik : Élo ; Barnett & Clarke : service/retour ; momentum/form) :
  *   - Élo surface  30 % — force fondamentale sur la surface (Kovalchik).
- *   - Forme L5     20 % — victoires / 5 derniers matchs.
- *   - Service      15 % — % jeux de service tenus (Barnett & Clarke).
- *   - Retour       10 % — % points de retour gagnés.
- *   - SPS          15 % — Surface PowerScore spécifique (player_surface_scores).
+ *   - Service      20 % — % jeux tenus, facteur n°1 (serve advantage).
+ *   - Forme L5     15 % — victoires / 5 derniers (momentum, bruité).
+ *   - Retour       15 % — % points de retour (breaks = swings).
+ *   - SPS          10 % — Surface PowerScore (redondant partiel avec Élo).
  *   - Fraîcheur    10 % — inverse de la charge (matchs 3 sets / 7 j).
+ * Pas de H2H direct : l'Élo l'absorbe déjà et l'historique par paire est
+ * trop clairsemé pour un score stable.
  *
  * Foot (par équipe) :
  *   - Forme        30 % — PPG 5 derniers / 3.
@@ -96,30 +99,30 @@ export function tennisPowerScore(input: TennisPowerInput): PowerScore {
       display: elo == null ? undefined : `${Math.round(elo)} Élo`,
     },
     {
-      key: "form",
-      label: "Forme (5 derniers)",
-      weight: 20,
-      value: form,
-      display: form == null ? undefined : `${Math.round(form)} %`,
-    },
-    {
       key: "serve",
       label: "Service (hold %)",
-      weight: 15,
+      weight: 20,
       value: input.holdPct ?? null,
       display: input.holdPct == null ? undefined : `${input.holdPct.toFixed(1)} %`,
     },
     {
+      key: "form",
+      label: "Forme (5 derniers)",
+      weight: 15,
+      value: form,
+      display: form == null ? undefined : `${Math.round(form)} %`,
+    },
+    {
       key: "return",
       label: "Retour (pts %)",
-      weight: 10,
+      weight: 15,
       value: input.returnPct ?? null,
       display: input.returnPct == null ? undefined : `${input.returnPct.toFixed(1)} %`,
     },
     {
       key: "sps",
       label: "SPS surface",
-      weight: 15,
+      weight: 10,
       value: input.sps ?? null,
       display: input.sps == null ? undefined : `${Math.round(input.sps)}/100`,
     },

@@ -39,6 +39,21 @@ describe("tennisPowerScore", () => {
     expect(ps.coverage).toBe(0);
   });
 
+  it("pondérations v2 : service > forme (Élo 30, service 20, forme/retour 15)", () => {
+    const ps = tennisPowerScore({
+      surfaceElo: 1800, // (1800-1400)/8 = 50
+      form: ["W", "W", "W", "L", "L"], // 60
+      holdPct: 80,
+      returnPct: 30,
+      sps: 70,
+      fatigueLoad: 0, // fraîcheur 100
+    });
+    // 50*.3 + 80*.2 + 60*.15 + 30*.15 + 70*.1 + 100*.1 = 61.5 → 62
+    expect(ps.score).toBe(62);
+    expect(ps.metrics.find((m) => m.key === "serve")!.weight).toBe(20);
+    expect(ps.metrics.find((m) => m.key === "form")!.weight).toBe(15);
+  });
+
   it("forme < 3 matchs → ignorée", () => {
     const ps = tennisPowerScore({ surfaceElo: 1800, form: ["W", "L"] });
     expect(ps.coverage).toBeCloseTo(0.3, 2);

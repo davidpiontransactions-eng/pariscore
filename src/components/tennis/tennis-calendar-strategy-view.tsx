@@ -33,11 +33,11 @@ export function TennisCalendarStrategyView() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6">
-      <TennisCalendarSection onTopPillSelect={handleTopPillSelect} />
-
       <div ref={topRef} className="scroll-mt-4">
         <TennisTop10MatchesWidget focused={focused} />
       </div>
+
+      <TennisCalendarSection onTopPillSelect={handleTopPillSelect} />
     </div>
   );
 }

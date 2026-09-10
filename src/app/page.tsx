@@ -55,6 +55,7 @@ import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/
 import { FeatureCards } from "@/components/dashboard/feature-cards";
 import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
 import { TennisCalendarSection } from "@/components/tennis/tennis-calendar-section";
+import { TennisTop10MatchesWidget } from "@/components/tennis/tennis-top10-matches-widget";
 import { FootballTop10Widget } from "@/components/football/football-top10-widget";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { BentoGrid, BentoTile } from "@/components/ui/bento-grid";
@@ -360,7 +361,10 @@ function HomeInner() {
         {/* Calendrier des matchs — filtré par sport + mode */}
         <section className="w-full px-4 sm:px-6 pt-6">
           {activeTab === "tennis" ? (
-            <TennisCalendarSection />
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+              <TennisTop10MatchesWidget />
+              <TennisCalendarSection />
+            </div>
           ) : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
