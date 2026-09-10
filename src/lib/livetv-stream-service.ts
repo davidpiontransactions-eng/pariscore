@@ -52,6 +52,8 @@ export type LiveTvStreamLink = {
   si: string;
   /** URL absolue de l'embed iframe `/export/webplayer.iframe.php?...` */
   embedUrl: string;
+  /** Faux si le host refuse l'enchâssement (XFO/CSP/451 constatés au resolve). */
+  embeddable: boolean;
 };
 
 export type LiveTvResolvedEvent = {
@@ -241,10 +243,45 @@ export async function getLiveTvStreams(
       ci,
       si,
       embedUrl: `${baseUrl}/export/webplayer.iframe.php?${params}`,
+      embeddable: await probeEmbeddable(`${baseUrl}/export/webplayer.iframe.php?${params}`, opts?.signal),
     });
   }
 
   return { event: { id: eventId, title, startTime, url: `${baseUrl}/enx/eventinfo/${eventId}_/` }, streams };
+}
+
+/**
+ * Sonde HEAD : l'embed est-il enchâssable ? Faux si 451/403, X-Frame-Options
+ * DENY/SAMEORIGIN, ou CSP frame-ancestors restrictif. Fail-open (vrai) en cas
+ * de doute — le client a son propre repli (timeout + lien externe).
+ */
+export async function probeEmbeddable(embedUrl: string, signal?: AbortSignal): Promise<boolean> {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const onAbort = () => ctrl.abort();
+    signal?.addEventListener("abort", onAbort, { once: true });
+    let res: Response;
+    try {
+      res = await fetch(embedUrl, { method: "HEAD", signal: ctrl.signal, redirect: "manual" });
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+    if (res.status === 451 || res.status === 403) return false;
+    const xfo = (res.headers.get("x-frame-options") || "").toLowerCase();
+    if (xfo.includes("deny") || xfo.includes("sameorigin")) return false;
+    const csp = (res.headers.get("content-security-policy") || "").toLowerCase();
+    const fa = csp.split(";").map((d) => d.trim()).find((d) => d.startsWith("frame-ancestors"));
+    if (fa) {
+      // 'self' = origine de l'embed, pas la nôtre → bloqué pour nous.
+      if (fa.includes("*") || fa.includes("pariscore.fr")) return true;
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 // ─── Étape 3 : scoring du matching ────────────────────────────────────────

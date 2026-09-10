@@ -116,6 +116,9 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
   }, [iframeSrc, iframeLoaded, iframeBlocked]);
 
   const streams = useMemo(() => result?.streams ?? [], [result]);
+  // Diagnostic serveur : embed refusé d'avance (XFO/CSP/451) → lien direct.
+  const activeBlocked =
+    streams[activeIndex] != null && streams[activeIndex].embeddable === false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,7 +214,7 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
 
               {/* Player iframe sandboxé */}
               <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
-                {iframeSrc && !iframeBlocked ? (
+                {iframeSrc && !iframeBlocked && !activeBlocked ? (
                   <iframe
                     key={iframeSrc}
                     src={iframeSrc}
@@ -228,7 +231,7 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
                     <Tv className="h-8 w-8 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
-                      {iframeBlocked
+                      {iframeBlocked || activeBlocked
                         ? "Le lecteur est bloqué par le diffuseur. Regardez directement sur LiveTV :"
                         : "La lecture du stream échoue sur ce canal."}
                     </p>
