@@ -31,6 +31,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const http = require('http');
 
 const BASE = 'https://www.tennisabstract.com/reports';
 const PAGES = [
@@ -44,6 +45,8 @@ const USER_AGENT =
 const HTTP_TIMEOUT_MS = 25000;
 const DELAY_MS = 1000;
 const RETRIES = 2;
+// FlareSolverr (VPS, port 8191) : repli si Cloudflare bloque l'IP datacenter.
+const FLARE_URL = process.env.FLARE_URL || 'http://127.0.0.1:8191/v1';
 
 const SCRIPT_DIR = path.dirname(__filename);
 const REPO_DIR = path.dirname(SCRIPT_DIR);
@@ -68,8 +71,18 @@ function fetchPage(file) {
       }, (res) => {
         let s = '';
         res.on('data', (d) => { s += d; });
-        res.on('end', () => {
+        res.on('end', async () => {
           if (res.statusCode === 200 && s.includes('id="reportable"')) return resolve(s);
+          // 403 Cloudflare (challenge JS, typique IP datacenter) → FlareSolverr.
+          if (res.statusCode === 403) {
+            try {
+              console.log(`[ta-mcp] 403 ${file} → repli FlareSolverr`);
+              const via = await fetchViaFlare(url);
+              if (via.includes('id="reportable"')) return resolve(via);
+            } catch (e) {
+              console.error(`[ta-mcp] flare KO ${file}: ${e.message}`);
+            }
+          }
           if (left > 0) return setTimeout(() => attempt(left - 1), 2000);
           reject(new Error(`HTTP ${res.statusCode} ${file}`));
         });
@@ -82,6 +95,49 @@ function fetchPage(file) {
     };
     attempt(RETRIES);
   });
+}
+
+/** Repli FlareSolverr : résout le challenge Cloudflare via Chromium (VPS). */
+function flareCmd(payload) {
+  const target = new URL(FLARE_URL);
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(payload);
+    const req = http.request({
+      host: target.hostname,
+      port: target.port || 80,
+      path: target.pathname,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+      timeout: 90000,
+    }, (res) => {
+      let s = '';
+      res.on('data', (d) => { s += d; });
+      res.on('end', () => {
+        try { resolve(JSON.parse(s)); }
+        catch (e) { reject(new Error(`flare parse: ${s.slice(0, 120)}`)); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(new Error('flare timeout')); });
+    req.write(body);
+    req.end();
+  });
+}
+
+async function fetchViaFlare(url) {
+  const session = `ta-mcp-${Date.now()}`;
+  try {
+    await flareCmd({ cmd: 'sessions.create', session });
+    for (let i = 0; i < 3; i++) {
+      const g = await flareCmd({ cmd: 'request.get', session, url, maxTimeout: 60000 });
+      const html = (g.solution || {}).response || '';
+      if (html.includes('id="reportable"')) return html;
+      await sleep(8000);
+    }
+    throw new Error('challenge non résolu après 3 essais');
+  } finally {
+    try { await flareCmd({ cmd: 'sessions.destroy', session }); } catch { /* ignore */ }
+  }
 }
 
 function pct(raw) {
