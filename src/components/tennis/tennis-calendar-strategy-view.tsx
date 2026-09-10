@@ -287,8 +287,8 @@ export function TennisCalendarStrategyView() {
   }, [calMatches, calDate, calLiveOnly, calHours, calTopOnly, topTagsFor, calQuery]);
 
   const topCount = useMemo(
-    () => calMatches.filter((m) => topTagsFor(m.id).length > 0).length,
-    [calMatches, topTagsFor],
+    () => filtered.filter((m) => topTagsFor(m.id).length > 0).length,
+    [filtered, topTagsFor],
   );
 
   // Clic ligne → popup détail (live ou prematch, comme le foot).
