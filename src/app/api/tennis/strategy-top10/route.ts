@@ -52,6 +52,33 @@ function isStratKey(v: string | null): v is TennisStrategyKey {
   return !!v && TENNIS_STRATEGY_DEFS.some((d) => d.key === v);
 }
 
+/** Clé nom de famille (Flashscore donne "Tiafoe F." vs "Frances Tiafoe"). */
+function lastNameKey(name: string | undefined): string {
+  if (!name) return "";
+  const clean = name.toLowerCase().replace(/[^a-zà-ÿ\s-]/gi, " ").trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  return parts.length > 1 ? parts[0] : clean;
+}
+
+/** Extra Flashscore (routine matinale data/flashscore-tennis.json, <26h). */
+function loadFlashscoreExtra(): TennisMatch[] {
+  try {
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+    const file = path.join(process.cwd(), "data", "flashscore-tennis.json");
+    const raw = JSON.parse(fs.readFileSync(file, "utf8")) as {
+      updatedAt?: string;
+      matches?: TennisMatch[];
+    };
+    if (!Array.isArray(raw.matches) || raw.matches.length === 0) return [];
+    const age = Date.now() - new Date(raw.updatedAt ?? 0).getTime();
+    if (!Number.isFinite(age) || age > 26 * 3600_000) return [];
+    return raw.matches.filter((m) => m?.playerA?.name && m?.playerB?.name);
+  } catch {
+    return [];
+  }
+}
+
 /** Extra Odds API (ATP+WTA, horizon multi-jours) — 6h TTL, stale en repli. */
 async function loadOddsExtra(): Promise<TennisMatch[]> {
   const oddsKey = process.env.ODDS_API_KEY;
@@ -87,6 +114,11 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
         [m.playerA?.name, m.playerB?.name].map((n) => (n ?? "").toLowerCase().trim()).sort().join("|"),
       ),
     );
+    const seenLast = new Set(
+      bsdMatches.map((m: TennisMatch) =>
+        [lastNameKey(m.playerA?.name), lastNameKey(m.playerB?.name)].sort().join("|"),
+      ),
+    );
     const cutoff = Date.now() - 30 * 60_000;
     const extra = oddsMatches.filter((m: TennisMatch) => {
       if (!m?.playerA?.name || !m?.playerB?.name) return false;
@@ -97,12 +129,25 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
       return true;
     });
     const matches = [...bsdMatches, ...extra];
-    if (extra.length > 0 || bsdMatches.length === 0) {
+    // Routine matinale Flashscore (fichier JSON) — dédupliquée nom de famille.
+    const fsExtra = loadFlashscoreExtra().filter((m: TennisMatch) => {
+      if (!Number.isFinite(Date.parse(m.scheduledAt)) || Date.parse(m.scheduledAt) < cutoff) return false;
+      const pairLast = [lastNameKey(m.playerA?.name), lastNameKey(m.playerB?.name)].sort().join("|");
+      if (seenLast.has(pairLast)) return false;
+      seenLast.add(pairLast);
+      return true;
+    });
+    const allMatches = [...matches, ...fsExtra];
+    if (extra.length > 0 || fsExtra.length > 0 || bsdMatches.length === 0) {
       console.log(
-        `[tennis-strategy-top10] prematch: bsd=${bsdMatches.length} odds-extra=${extra.length}`,
+        `[tennis-strategy-top10] prematch: bsd=${bsdMatches.length} odds-extra=${extra.length} flashscore-extra=${fsExtra.length}`,
       );
     }
-    const data = { matches, source: extra.length > 0 ? "bsd+odds" : "bsd" };
+    const data = {
+      matches: allMatches,
+      source:
+        fsExtra.length > 0 ? "bsd+odds+flashscore" : extra.length > 0 ? "bsd+odds" : "bsd",
+    };
     prematchCache.set(data);
     return data;
   } catch (err) {

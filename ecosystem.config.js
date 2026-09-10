@@ -352,8 +352,30 @@ module.exports = {
       time: true,
     },
     {
-      // === Cron job Backtest Top 5 (settle + snapshot quotidien) ===
-      // 1. Settle les picks du backtest Top 5 football dont la date est passée
+      // === Cron job Flashscore Tennis (routine matinale) ===
+      // Scrape le programme tennis Flashscore (feed interne J+0..J+7 :
+      // ATP/WTA/Challengers/ITF) → data/flashscore-tennis.json, fusionné
+      // (dédupliqué) dans /api/tennis/strategy-top10 pour enrichir le
+      // calendrier au-delà des ~2 j BSD. ~8 requêtes HTTP, cron-only.
+      // Si le x-fsign tourne : FLASH_XFSIGN (voir scripts/scrape-flashscore-tennis.js).
+      name: 'pariscore-cron-flashscore-tennis',
+      script: 'scripts/scrape-flashscore-tennis.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '15 6 * * *', // quotidien à 06:15 UTC (routine matinale)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-flashscore-tennis.err.log',
+      out_file: 'logs/cron-flashscore-tennis.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // === Cron job Backtest Top 5 (settle + snapshot quotidien) ===      // 1. Settle les picks du backtest Top 5 football dont la date est passée
       //    (résultats BSD) ; 2. Snapshot du top 5 du jour tel que rendu par le
       //    moteur prod → data/top5-backtest/football.json. Consommé par
       //    GET /api/football/top5/backtest (bandeau backtest du widget sidebar).
