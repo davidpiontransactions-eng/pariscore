@@ -11,6 +11,7 @@ import {
   type TennisStrategyTop10Result,
 } from "@/lib/tennis-strategy-top10";
 import { normPlayerName, type TennisTop5MetricRow } from "@/lib/tennis-top5";
+import { findPlayerElo, extractFormFromHistory } from "@/lib/player-matcher";
 import { getStatsLeaderboard, type LeaderboardRow } from "@/lib/tennis-stats/leaderboard";
 import { getOfficialLeaderboard } from "@/lib/tennis-stats/official-leaderboard";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
@@ -55,12 +56,95 @@ function isStratKey(v: string | null): v is TennisStrategyKey {
   return !!v && TENNIS_STRATEGY_DEFS.some((d) => d.key === v);
 }
 
-/** Clé nom de famille (Flashscore donne "Tiafoe F." vs "Frances Tiafoe"). */
-function lastNameKey(name: string | undefined): string {
-  if (!name) return "";
-  const clean = name.toLowerCase().replace(/[^a-zà-ÿ\s-]/gi, " ").trim();
-  const parts = clean.split(/\s+/).filter(Boolean);
-  return parts.length > 1 ? parts[0] : clean;
+/** Tokens significatifs d'un nom (initiales ignorées) : "Tiafoe F." → {tiafoe}. */
+function nameTokens(name: string | undefined): Set<string> {
+  const set = new Set<string>();
+  if (!name) return set;
+  for (const p of name.toLowerCase().replace(/[^a-zà-ÿ\s-]/gi, " ").split(/\s+/)) {
+    if (p.length > 1) set.add(p);
+  }
+  return set;
+}
+
+/** Doubles (noms avec "/") — le calendrier/predictions sont simples uniquement. */
+function isDoubles(a: string | undefined, b: string | undefined): boolean {
+  return (a ?? "").includes("/") || (b ?? "").includes("/");
+}
+
+/**
+ * Greffe les signaux BSD (Élo/forme/SPS + alias leaderboard) sur les matchs
+ * externes (noms courts "Tiafoe F.") pour les intégrer au Top10 par stratégie.
+ * `insufficientData` ne tombe que si les deux côtés sont résolus.
+ */
+function graftExternalSignals(
+  matches: TennisMatch[],
+  lbByPlayer: Map<string, TennisTop5MetricRow>,
+): void {
+  const idx: Array<{ toks: Set<string>; name: string }> = [];
+  for (const m of matches) {
+    if ((m as { model?: string }).model === "external") continue;
+    for (const p of [m.playerA, m.playerB]) {
+      if (p?.name) idx.push({ toks: nameTokens(p.name), name: p.name });
+    }
+  }
+  const findBsdName = (short: string | undefined): string | null => {
+    const t = nameTokens(short);
+    if (t.size === 0) return null;
+    for (const e of idx) {
+      for (const tok of t) if (e.toks.has(tok)) return e.name;
+    }
+    return null;
+  };
+  const byName = new Map<string, TennisMatch["playerA"]>();
+  for (const m of matches) {
+    if ((m as { model?: string }).model === "external") continue;
+    for (const p of [m.playerA, m.playerB]) {
+      if (p?.name && !byName.has(p.name)) byName.set(p.name, p);
+    }
+  }
+  for (const m of matches) {
+    if ((m as { model?: string }).model !== "external") continue;
+    let ok = true;
+    for (const side of ["playerA", "playerB"] as const) {
+      const p = m[side];
+      const full = findBsdName(p?.name);
+      const src = full ? byName.get(full) : undefined;
+      if (src) {
+        p.surfaceElo = src.surfaceElo ?? src.elo;
+        p.elo = src.elo;
+        p.eloKnown = true;
+        p.rank = src.rank;
+        p.form = src.form;
+        p.sps = src.sps;
+        // Alias leaderboard (serve/retour) sous le nom court.
+        const shortKey = normPlayerName(p.name);
+        if (shortKey) {
+          for (const [lbKey, row] of lbByPlayer) {
+            if (lbKey === shortKey) continue;
+            const lbToks = nameTokens(lbKey.replace(/_/g, " "));
+            let hit = false;
+            for (const tok of nameTokens(p.name)) {
+              if (lbToks.has(tok)) { hit = true; break; }
+            }
+            if (hit && !lbByPlayer.has(shortKey)) lbByPlayer.set(shortKey, row);
+            if (hit) break;
+          }
+        }
+      } else {
+        // Repli : elo-data.json (fuzzy "Sabalenka A." → Sabalenka : Élo + forme).
+        const hit = findPlayerElo(p?.name ?? "");
+        if (hit) {
+          p.surfaceElo = hit.surfaceElo;
+          p.elo = hit.elo;
+          p.eloKnown = true;
+          p.form = extractFormFromHistory(hit.history, 5);
+        } else {
+          ok = false;
+        }
+      }
+    }
+    if (ok) (m as { insufficientData?: boolean }).insufficientData = false;
+  }
 }
 
 /**
@@ -117,36 +201,40 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
       fetchBSDMatches(),
       loadOddsExtra(),
     ]);
-    const seen = new Set(
-      bsdMatches.map((m: TennisMatch) =>
-        [m.playerA?.name, m.playerB?.name].map((n) => (n ?? "").toLowerCase().trim()).sort().join("|"),
-      ),
-    );
-    const seenLast = new Set(
-      bsdMatches.map((m: TennisMatch) =>
-        [lastNameKey(m.playerA?.name), lastNameKey(m.playerB?.name)].sort().join("|"),
-      ),
-    );
+    // Paires acceptées (tokens) pour la dédupe inter-sources.
+    const acceptedPairs: Array<[Set<string>, Set<string>]> = bsdMatches.map((m: TennisMatch) => [
+      nameTokens(m.playerA?.name),
+      nameTokens(m.playerB?.name),
+    ]);
+    const isDupPair = (a: string | undefined, b: string | undefined): boolean =>
+      acceptedPairs.some(
+        ([pa, pb]) =>
+          ([...pa].some((t) => nameTokens(a).has(t)) && [...pb].some((t) => nameTokens(b).has(t))) ||
+          ([...pa].some((t) => nameTokens(b).has(t)) && [...pb].some((t) => nameTokens(a).has(t))),
+      );
+    const acceptPair = (a: string | undefined, b: string | undefined): void => {
+      acceptedPairs.push([nameTokens(a), nameTokens(b)]);
+    };
     const cutoff = Date.now() - 30 * 60_000;
     const extra = oddsMatches.filter((m: TennisMatch) => {
       if (!m?.playerA?.name || !m?.playerB?.name) return false;
+      if (isDoubles(m.playerA.name, m.playerB.name)) return false;
       if (Number.isFinite(Date.parse(m.scheduledAt)) && Date.parse(m.scheduledAt) < cutoff) return false;
-      const pair = [m.playerA.name, m.playerB.name].map((n) => n.toLowerCase().trim()).sort().join("|");
-      if (seen.has(pair)) return false;
-      seen.add(pair);
+      if (isDupPair(m.playerA.name, m.playerB.name)) return false;
+      acceptPair(m.playerA.name, m.playerB.name);
       return true;
     });
     const matches = [...bsdMatches, ...extra];
     // Routine matinale Flashscore (fichier JSON) — normalisée puis
-    // dédupliquée nom de famille.
+    // dédupliquée par chevauchement de tokens (noms courts "Tiafoe F.").
     const fsExtra = loadFlashscoreExtra()
       .map(normalizeExternalMatch)
       .filter((m): m is TennisMatch => m !== null)
       .filter((m: TennisMatch) => {
       if (!Number.isFinite(Date.parse(m.scheduledAt)) || Date.parse(m.scheduledAt) < cutoff) return false;
-      const pairLast = [lastNameKey(m.playerA?.name), lastNameKey(m.playerB?.name)].sort().join("|");
-      if (seenLast.has(pairLast)) return false;
-      seenLast.add(pairLast);
+      if (isDoubles(m.playerA?.name, m.playerB?.name)) return false;
+      if (isDupPair(m.playerA?.name, m.playerB?.name)) return false;
+      acceptPair(m.playerA?.name, m.playerB?.name);
       return true;
     });
     const allMatches = [...matches, ...fsExtra];
@@ -272,6 +360,9 @@ export async function GET(req: NextRequest) {
 
     // 2) Leaderboard fusionné (serve/return/pressure ATP+WTA)
     const { byPlayer: lbByPlayer } = mergedLeaderboard();
+
+    // 2b) Matchs externes → signaux BSD (intégration au Top10)
+    graftExternalSignals(windowed, lbByPlayer);
 
     // 3) Score via la lib pure (T1)
     const result = buildTennisStrategyTop10(windowed, lbByPlayer);
