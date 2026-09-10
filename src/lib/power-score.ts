@@ -66,6 +66,8 @@ export function combinePowerMetrics(metrics: PowerMetric[]): PowerScore {
 export type TennisPowerInput = {
   /** Élo surface (repli Élo global). */
   surfaceElo?: number | null;
+  /** Faux = Élo placeholder (1500 par défaut) → métrique exclue. */
+  eloKnown?: boolean | null;
   /** Forme : tableau W/L (5 derniers de préférence). */
   form?: ("W" | "L")[] | null;
   /** % jeux de service tenus (0-100). */
@@ -87,6 +89,7 @@ const formPct = (form: ("W" | "L")[] | null | undefined): number | null => {
 /** PowerScore d'un joueur de tennis (0-100 + détail). */
 export function tennisPowerScore(input: TennisPowerInput): PowerScore {
   const elo = input.surfaceElo;
+  const eloKnown = input.eloKnown !== false;
   const form = formPct(input.form);
   const freshness =
     input.fatigueLoad == null ? null : Math.max(0, 100 - input.fatigueLoad * 25);
@@ -95,8 +98,8 @@ export function tennisPowerScore(input: TennisPowerInput): PowerScore {
       key: "elo",
       label: "Élo surface",
       weight: 30,
-      value: elo == null ? null : clamp100((elo - 1400) / 8),
-      display: elo == null ? undefined : `${Math.round(elo)} Élo`,
+      value: !eloKnown || elo == null ? null : clamp100((elo - 1400) / 8),
+      display: !eloKnown || elo == null ? undefined : `${Math.round(elo)} Élo`,
     },
     {
       key: "serve",

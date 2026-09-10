@@ -412,6 +412,7 @@ function powerForSide(
   const servePt = servePointProb(lb, p.elo);
   return tennisPowerScore({
     surfaceElo: p.surfaceElo ?? p.elo,
+    eloKnown: p.eloKnown,
     form: p.form,
     holdPct: servePt == null ? null : gameWinProb(servePt) * 100,
     returnPct: lb?.returnPointsWonPct ?? null,
@@ -448,6 +449,8 @@ export function normalizeExternalMatch(m: {
     name,
     shortName: short || name,
     rank: 0,
+    // 1500 = placeholder typé ; eloKnown: false l'exclut du PowerScore
+    // et des stratégies (pas de signal fabriqué).
     elo: 1500,
     eloKnown: false,
     photoUrl: "",

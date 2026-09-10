@@ -143,6 +143,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     () =>
       tennisPowerScore({
         surfaceElo: match?.playerA.surfaceElo ?? match?.playerA.elo,
+        eloKnown: match?.playerA.eloKnown,
         form: match?.playerA.form,
         holdPct: null,
         returnPct: null,
@@ -155,6 +156,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     () =>
       tennisPowerScore({
         surfaceElo: match?.playerB.surfaceElo ?? match?.playerB.elo,
+        eloKnown: match?.playerB.eloKnown,
         form: match?.playerB.form,
         holdPct: null,
         returnPct: null,
@@ -469,6 +471,7 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     const full = side === "left" ? match.playerA : match.playerB;
                     const power = tennisPowerScore({
                       surfaceElo: full.surfaceElo ?? full.elo,
+                      eloKnown: full.eloKnown,
                       form: full.form,
                       holdPct: null,
                       returnPct: null,

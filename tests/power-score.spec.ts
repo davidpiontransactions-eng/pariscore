@@ -39,6 +39,14 @@ describe("tennisPowerScore", () => {
     expect(ps.coverage).toBe(0);
   });
 
+  it("eloKnown false → Élo exclu (pas de 1500 factice)", () => {
+    const ps = tennisPowerScore({ surfaceElo: 1500, eloKnown: false, form: ["W", "W", "W", "W", "W"] });
+    // Seule la forme compte → 100, couverture 0.15
+    expect(ps.score).toBe(100);
+    expect(ps.coverage).toBeCloseTo(0.15, 2);
+    expect(ps.metrics.find((m) => m.key === "elo")!.value).toBeNull();
+  });
+
   it("pondérations v2 : service > forme (Élo 30, service 20, forme/retour 15)", () => {
     const ps = tennisPowerScore({
       surfaceElo: 1800, // (1800-1400)/8 = 50
