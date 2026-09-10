@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   Dialog,
@@ -36,6 +37,8 @@ import { SurfaceBadge } from "./surface-badge";
 import { TournamentBadge } from "./tournament-badge";
 import { PlayerVsBlock } from "./player-vs-block";
 import { PowerScoreBar } from "@/components/shared/power-score-bar";
+import { TennisRadarChart } from "./tennis-radar-chart";
+import { TennisHeatmap } from "./tennis-heatmap";
 import { tennisPowerScore } from "@/lib/power-score";
 import { useEloHistory } from "@/hooks/use-elo-history";
 import { useBSDMatchDetail } from "@/hooks/use-bsd-match-detail";
@@ -132,6 +135,33 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
     match ? { id: match.playerB.id, name: match.playerB.name } : null,
     match?.tournament ?? null,
     match?.stats?.surface ?? null,
+  );
+
+  // PowerScore des deux joueurs (même moteur que les barres) — alimente le spider.
+  // Avant le early-return (règles des hooks).
+  const powerA = useMemo(
+    () =>
+      tennisPowerScore({
+        surfaceElo: match?.playerA.surfaceElo ?? match?.playerA.elo,
+        form: match?.playerA.form,
+        holdPct: null,
+        returnPct: null,
+        sps: match?.playerA.sps,
+        fatigueLoad: null,
+      }),
+    [match],
+  );
+  const powerB = useMemo(
+    () =>
+      tennisPowerScore({
+        surfaceElo: match?.playerB.surfaceElo ?? match?.playerB.elo,
+        form: match?.playerB.form,
+        holdPct: null,
+        returnPct: null,
+        sps: match?.playerB.sps,
+        fatigueLoad: null,
+      }),
+    [match],
   );
 
   if (!match) return null;
@@ -460,6 +490,28 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                     );
                   }}
                 />
+
+                {/* Spider comparatif 6 axes (mêmes signaux que le PowerScore) */}
+                {!(match.synthetic || match.insufficientData) && (
+                  <>
+                    <TennisRadarChart
+                      data={{
+                        powerA,
+                        powerB,
+                        nameA: playerA.shortName || playerA.name,
+                        nameB: playerB.shortName || playerB.name,
+                        colorA: playerA.color,
+                        colorB: playerB.color,
+                      }}
+                    />
+                    <TennisHeatmap
+                      powerA={powerA}
+                      powerB={powerB}
+                      nameA={playerA.shortName || playerA.name}
+                      nameB={playerB.shortName || playerB.name}
+                    />
+                  </>
+                )}
 
                 <ConfidenceInterval
                   icon={<Target className="h-4 w-4" />}

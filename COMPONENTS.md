@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 198 components total (football: 14, leagues: 6, tennis: 63, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.).
+> extract pass. 200 components total (football: 14, leagues: 6, tennis: 65, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -93,6 +93,8 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | stats-radar-chart | stats-radar-chart.tsx | Radar chart des stats (6 axes) |
 | surface-badge | surface-badge.tsx | Badge surface (Dur/Terre battue/Gazon) |
  | tennis-calendar-section | tennis-calendar-section.tsx | Section calendrier FotMob tennis (prematch+live, filtres, pills, popup) — home tennis + vue Stratégies |
+ | tennis-radar-chart | tennis-radar-chart.tsx | Spider 6 axes PowerScore (dégradés, badge duel, caption partielle) — popup détail |
+ | tennis-heatmap | tennis-heatmap.tsx | Heatmap 2 joueurs × 6 metrics (tri Power Index, vert/rouge absolus) — popup détail |
  | tennis-calendar-strategy-view | tennis-calendar-strategy-view.tsx | Vue sous-onglet "Stratégies" — TennisCalendarSection + Top 10 matchs par stratégie (deep-link ?strat=&win=, focus pill) |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |
 | tennis-strategy-top5-widget | tennis-strategy-top5-widget.tsx | Top 5 matchs par métrique (Élo surface, service, retour…) — filtres déroulants, miroir du widget foot sidebar |
