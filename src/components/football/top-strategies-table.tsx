@@ -26,6 +26,10 @@ export type StrategyTableRow = {
   muted?: boolean;
   /** Mention affichée sur les lignes atténuées. */
   note?: string | null;
+  /** Meilleur bet Over (ex. "Over 21,5 68 %", tennis, proba ≥ 60 %). */
+  overPick?: string | null;
+  /** Meilleur serveur / receveur (ex. "S Tiafoe 82 % · R Shelton 38 %"). */
+  serveEdge?: string | null;
   trend?: "up" | "down" | "flat";
 };
 
@@ -199,6 +203,24 @@ export function TopStrategiesTable({ rows, strategy, highlightId }: Props) {
                     style={{ color: C.time }}
                   >
                     {row.note}
+                  </span>
+                )}
+                {row.overPick && (
+                  <span
+                    title="Over 21,5 jeux — probabilité Markov ≥ 60 %"
+                    className="inline-flex items-center rounded-full bg-[#00985f]/10 px-1.5 py-px text-[9px] font-bold"
+                    style={{ color: "#00985f" }}
+                  >
+                    {row.overPick}
+                  </span>
+                )}
+                {row.serveEdge && (
+                  <span
+                    title="Meilleur serveur (hold %) et receveur (retour %)"
+                    className="inline-flex items-center rounded-full bg-[#f0f0f0] px-1.5 py-px text-[9px] font-medium tabular-nums"
+                    style={{ color: C.time }}
+                  >
+                    {row.serveEdge}
                   </span>
                 )}
               </div>

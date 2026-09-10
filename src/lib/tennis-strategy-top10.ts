@@ -68,6 +68,12 @@ export interface TennisStrategyEntry {
   value: number;
   /** Probabilité modèle (%) du côté pick — null si non pertinent. */
   probPick: number | null;
+  /** % jeux de service tenus A/B (null si leaderboard absent). */
+  serveA?: number | null;
+  serveB?: number | null;
+  /** % points de retour gagnés A/B (null si absent). */
+  retA?: number | null;
+  retB?: number | null;
 }
 
 export interface TennisStrategyDef {
@@ -503,6 +509,10 @@ export function buildTennisStrategyTop10(
         pick,
         value: Math.round(value * 100) / 100,
         probPick,
+        serveA: ctx.serveA != null ? gameWinProb(ctx.serveA) * 100 : null,
+        serveB: ctx.serveB != null ? gameWinProb(ctx.serveB) * 100 : null,
+        retA: ctx.lbA?.returnPointsWonPct ?? null,
+        retB: ctx.lbB?.returnPointsWonPct ?? null,
       });
     }
     entries.sort(

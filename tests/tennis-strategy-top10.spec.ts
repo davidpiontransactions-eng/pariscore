@@ -326,6 +326,16 @@ describe("T11 — robustesse", () => {
     }
   });
 
+  test("entries portent serveA/serveB/retA/retB (null si pas de leaderboard)", () => {
+    const result = buildTennisStrategyTop10([baseMatch(), baseMatch({ id: "m2" })], emptyLb);
+    for (const key of Object.keys(result.strategies) as Array<keyof typeof result.strategies>) {
+      for (const e of result.strategies[key]) {
+        expect(e).toHaveProperty("serveA");
+        expect(e).toHaveProperty("retB");
+      }
+    }
+  });
+
   test("synthétique ou insufficientData → strategies synthétiques exclues", () => {
     const m = baseMatch({ synthetic: true, probA: 75, probB: 25 });
     const result = buildTennisStrategyTop10([m], emptyLb);

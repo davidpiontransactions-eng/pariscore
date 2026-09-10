@@ -32,9 +32,30 @@ const C = {
 type WinKey = "all" | "today" | "tomorrow";
 
 /** Convertit les entrées tennis en lignes StrategyTableRow. */
-function toTableRows(entries: TennisStrategyEntry[], strat: TennisStrategyKey): StrategyTableRow[] {
+function toTableRows(
+  entries: TennisStrategyEntry[],
+  strat: TennisStrategyKey,
+  overMap: Map<string, number>,
+): StrategyTableRow[] {
   const def = TENNIS_STRATEGY_DEFS.find((d) => d.key === strat);
   return entries.map((e) => {
+    // Over 21,5 ≥ 60 % (moteur Markov) — meilleur bet total du match.
+    const over = overMap.get(e.matchId);
+    const overPick =
+      over != null && over >= 60 ? `Over 21,5 ${Math.round(over)} %` : null;
+    // Meilleur serveur / receveur (hold % / retour %).
+    const holdA = e.serveA ?? -1;
+    const holdB = e.serveB ?? -1;
+    const retA = e.retA ?? -1;
+    const retB = e.retB ?? -1;
+    const serveEdge =
+      holdA < 0 && holdB < 0
+        ? null
+        : `S ${holdA >= holdB ? e.playerA.shortName : e.playerB.shortName} ${Math.round(Math.max(holdA, holdB))} %`;
+    const returnEdge =
+      retA < 0 && retB < 0
+        ? null
+        : `R ${retA >= retB ? e.playerA.shortName : e.playerB.shortName} ${Math.round(Math.max(retA, retB))} %`;
     return {
       matchId: e.matchId,
       league: e.tournament,
@@ -50,6 +71,8 @@ function toTableRows(entries: TennisStrategyEntry[], strat: TennisStrategyKey): 
       sourceLabel: null,
       trend: "flat" as const,
       muted: false,
+      overPick,
+      serveEdge: [serveEdge, returnEdge].filter(Boolean).join(" · ") || null,
     };
   });
 }
@@ -83,6 +106,7 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const [win, setWin] = useState<WinKey>(initial.win);
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
+  const [overMap, setOverMap] = useState<Map<string, number>>(new Map());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
@@ -98,13 +122,27 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
     setIsLoading(true);
     setError(null);
     const qs = new URLSearchParams({ strat, win });
-    fetch(`/api/tennis/strategy-top10?${qs.toString()}`, { signal: ac.signal })
-      .then((r) => {
+    const qsOver = new URLSearchParams({ strat: "over215", win });
+    Promise.all([
+      fetch(`/api/tennis/strategy-top10?${qs.toString()}`, { signal: ac.signal }).then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<TennisStrategyTop10Result>;
-      })
-      .then((d) => {
+      }),
+      // Over 21,5 (Markov, seuil 60 %) pour le badge Over par match.
+      fetch(`/api/tennis/strategy-top10?${qsOver.toString()}`, { signal: ac.signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null),
+    ])
+      .then(([d, over]) => {
         setData(d);
+        const map = new Map<string, number>();
+        const list: TennisStrategyEntry[] | undefined = over?.strategies?.over215;
+        if (Array.isArray(list)) {
+          for (const e of list) {
+            if (typeof e.value === "number" && e.value >= 60) map.set(e.matchId, e.value);
+          }
+        }
+        setOverMap(map);
         onEntries?.(d.strategies[strat] ?? [], strat);
       })
       .catch((err) => {
@@ -130,8 +168,8 @@ export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const rows = useMemo(() => {
     if (!data?.strategies) return [];
     const entries = data.strategies[strat] ?? [];
-    return toTableRows(entries, strat);
-  }, [data, strat]);
+    return toTableRows(entries, strat, overMap);
+  }, [data, strat, overMap]);
 
   return (
     <section
