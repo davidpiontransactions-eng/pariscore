@@ -37,7 +37,8 @@ const C = {
 } as const;
 
 function teamLogo(name: string, logo?: string | null): string {
-  if (logo) return logo;
+  // Garde : un emoji (countryFlag abusé en logo) n'est pas une URL → fallback.
+  if (logo && /^(https?:|data:|blob:)/i.test(logo)) return logo;
   return (
     "https://api.dicebear.com/9.x/initials/svg?seed=" +
     encodeURIComponent(name) +
