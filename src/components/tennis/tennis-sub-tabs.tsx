@@ -1,6 +1,6 @@
 "use client";
 
-import { Radio, Calendar, Trophy, List, BarChart3 } from "lucide-react";
+import { Radio, Calendar, Trophy, List, BarChart3, Target } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -81,12 +81,12 @@ export function TennisSubTabs({
       icon: BarChart3,
       count: 0,
       accent: "bg-emerald-500",
-      ariaLabel: t("subTabRankingsAria", { defaultValue: "Top 10 joueurs par metrique" }),
+      ariaLabel: t("subTabRankingsAria", { defaultValue: "Top 10 joueurs par métrique" }),
     },
     {
       id: "calendar",
       label: t("subTabCalendar", { defaultValue: "Strategies" }),
-      icon: BarChart3,
+      icon: Target,
       count: 0,
       accent: "bg-violet-500",
       ariaLabel: t("subTabCalendarAria", { defaultValue: "Top 10 matchs par strategie de pari" }),
