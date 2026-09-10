@@ -600,14 +600,6 @@ return [...matches, ...synthetic];
   );
   const todayCount = matchesWithLive.length;
 
-  // Early-return : l'onglet "Stratégies" (calendar) rend une vue dédiée
-  // (Top 10 matchs par stratégie) — pas de grille de cartes ni de memos live.
-  if (subTab === "calendar") {
-    return <TennisCalendarStrategyView />;
-  }
-
-
-
   // Filtrage par sous-onglet — appliqué sur `filtered` (avec featured inclus
   // pour les compteurs), mais la grille principale n'affiche que `rest`.
   const subFiltered = useMemo(() => {
@@ -687,6 +679,12 @@ return [...matches, ...synthetic];
     mutate();
     track("manual_refresh");
   };
+
+  // Vue dédiée "Stratégies" (calendar) — placée APRÈS tous les hooks
+  // (un return avant les hooks casse React : "Rendered fewer hooks").
+  if (subTab === "calendar") {
+    return <TennisCalendarStrategyView />;
+  }
 
   return (
     <TennisErrorBoundary>
