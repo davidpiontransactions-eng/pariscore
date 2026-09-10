@@ -57,8 +57,33 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
   if (!bsdKey || !bsdEnabled) return { matches: [], source: "empty" };
   try {
     const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
-    const matches = await fetchBSDMatches();
-    const data = { matches, source: "bsd" };
+    // Enrichissement jours suivants : l'Odds API couvre ATP+WTA sur plusieurs
+    // jours (au-delà des ~2 j BSD). Fusion dédupliquée par paire de joueurs.
+    const oddsKey = process.env.ODDS_API_KEY;
+    const [bsdMatches, oddsMatches] = await Promise.all([
+      fetchBSDMatches(),
+      oddsKey
+        ? import("@/lib/real-matches")
+            .then((m) => m.fetchRealMatches(oddsKey))
+            .catch(() => [] as TennisMatch[])
+        : Promise.resolve([] as TennisMatch[]),
+    ]);
+    const seen = new Set(
+      bsdMatches.map((m: TennisMatch) =>
+        [m.playerA?.name, m.playerB?.name].map((n) => (n ?? "").toLowerCase().trim()).sort().join("|"),
+      ),
+    );
+    const cutoff = Date.now() - 30 * 60_000;
+    const extra = oddsMatches.filter((m: TennisMatch) => {
+      if (!m?.playerA?.name || !m?.playerB?.name) return false;
+      if (Number.isFinite(Date.parse(m.scheduledAt)) && Date.parse(m.scheduledAt) < cutoff) return false;
+      const pair = [m.playerA.name, m.playerB.name].map((n) => n.toLowerCase().trim()).sort().join("|");
+      if (seen.has(pair)) return false;
+      seen.add(pair);
+      return true;
+    });
+    const matches = [...bsdMatches, ...extra];
+    const data = { matches, source: extra.length > 0 ? "bsd+odds" : "bsd" };
     prematchCache.set(data);
     return data;
   } catch (err) {
