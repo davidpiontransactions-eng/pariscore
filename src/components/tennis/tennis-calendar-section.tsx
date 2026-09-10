@@ -280,6 +280,21 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
     [filtered, topTagsFor],
   );
 
+  // Pont vers demain quand aujourd'hui est vide (ex : tout le prematch est à J+1).
+  const tomorrowKey = useMemo(() => shiftDateKey(todayKey, 1), [todayKey]);
+  const tomorrowCount = useMemo(
+    () =>
+      calMatches.filter((m) => !isLiveRow(m) && parisDateKey(m.scheduledAt) === tomorrowKey)
+        .length,
+    [calMatches, tomorrowKey],
+  );
+  const showTomorrowCta =
+    !isLoading &&
+    !loadError &&
+    filtered.length === 0 &&
+    calDate === todayKey &&
+    tomorrowCount > 0;
+
   // Clic ligne → popup détail (live ou prematch, comme le foot).
   const handleSelectMatch = useCallback(
     (m: FotmobCalMatch) => {
@@ -359,9 +374,21 @@ export function TennisCalendarSection({ onTopPillSelect }: Props = {}) {
               Calendrier indisponible ({loadError})
             </div>
           ) : filtered.length === 0 ? (
-            <p className="py-3 text-xs" style={{ color: C.time }}>
-              Aucun match ce jour-là. Changez de date ou réinitialisez les filtres.
-            </p>
+            <div className="py-3">
+              <p className="text-xs" style={{ color: C.time }}>
+                Aucun match ce jour-là. Changez de date ou réinitialisez les filtres.
+              </p>
+              {showTomorrowCta && (
+                <button
+                  type="button"
+                  onClick={() => setCalDate(tomorrowKey)}
+                  className="mt-2 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition-transform active:scale-95"
+                  style={{ backgroundColor: C.accent, color: "#ffffff" }}
+                >
+                  Voir les matchs de demain ({tomorrowCount})
+                </button>
+              )}
+            </div>
           ) : (
             <FotmobCalendarTable
               matches={filtered}
