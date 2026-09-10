@@ -153,12 +153,13 @@ export async function GET(req: NextRequest) {
     const strat: TennisStrategyKey = isStratKey(stratParam) ? stratParam : "surfaceEloGap";
     const win = sp.get("win") ?? "all";
 
-    // Cache check
+    // Cache check (la clé inclut le mode all : payloads mono/multi incompatibles)
+    const cacheStrat = stratAll ? "all" : strat;
     const cached = strategyCache.getEntry();
     if (
       cached &&
       isFresh(cached, CACHE_TTL_MS) &&
-      cached.data.strat === strat &&
+      cached.data.strat === cacheStrat &&
       cached.data.win === win
     ) {
       return NextResponse.json({ ...cached.data.payload, cached: true });
@@ -189,7 +190,7 @@ export async function GET(req: NextRequest) {
       matches: result.matches,
     };
 
-    strategyCache.set({ strat: stratAll ? "all" : strat, win, payload });
+    strategyCache.set({ strat: cacheStrat, win, payload });
     return NextResponse.json(payload);
   } catch (err) {
     return apiErrorHandler(err, "tennis/strategy-top10");
