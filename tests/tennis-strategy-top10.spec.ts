@@ -231,6 +231,12 @@ describe("T8 — serveHold avec leaderboard", () => {
     const result = buildTennisStrategyTop10([m], lb);
     expect(result.strategies.serveHold.length).toBeGreaterThan(0);
     expect(result.strategies.serveHold[0].pick).toBe("A");
+    // Badges Over/serveur : serveA/retA alimentés (hold % + retour %).
+    const e = result.strategies.serveHold[0];
+    expect(e.serveA).not.toBeNull();
+    expect(e.serveA!).toBeGreaterThan(80);
+    expect(e.retA).toBe(40);
+    expect(e.retB).toBe(35);
   });
 
   test("hold < 80% → non éligible", () => {
