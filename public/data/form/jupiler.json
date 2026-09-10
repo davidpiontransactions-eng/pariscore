@@ -4,7 +4,7 @@
     "leagueId": "jupiler",
     "leagueName": "Belgium",
     "season": "2026/27",
-    "lastUpdated": "2026-09-09T09:05:16.154123Z",
+    "lastUpdated": "2026-09-10T09:04:04.117151Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,22 +13,13 @@
   },
   "home": [
     {
-      "teamName": "Anderlecht",
+      "teamName": "Gent",
       "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 3,
-      "ga": 1
-    },
-    {
-      "teamName": "Standard Liege",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
+      "w": 3,
+      "d": 0,
       "l": 0,
       "gf": 5,
-      "ga": 2
+      "ga": 1
     },
     {
       "teamName": "Zulte-Waregem",
@@ -49,24 +40,33 @@
       "ga": 2
     },
     {
-      "teamName": "Gent",
+      "teamName": "Standard Liege",
       "gp": 3,
-      "w": 3,
-      "d": 0,
+      "w": 2,
+      "d": 1,
       "l": 0,
       "gf": 5,
+      "ga": 2
+    },
+    {
+      "teamName": "Anderlecht",
+      "gp": 3,
+      "w": 2,
+      "d": 1,
+      "l": 0,
+      "gf": 3,
       "ga": 1
     }
   ],
   "away": [
     {
-      "teamName": "Zulte-Waregem",
+      "teamName": "Royale Union Sg",
       "gp": 3,
-      "w": 1,
-      "d": 2,
+      "w": 3,
+      "d": 0,
       "l": 0,
-      "gf": 4,
-      "ga": 2
+      "gf": 11,
+      "ga": 3
     },
     {
       "teamName": "Gent",
@@ -78,12 +78,12 @@
       "ga": 1
     },
     {
-      "teamName": "Club Brugge",
+      "teamName": "Zulte-Waregem",
       "gp": 3,
-      "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 5,
+      "w": 1,
+      "d": 2,
+      "l": 0,
+      "gf": 4,
       "ga": 2
     },
     {
@@ -96,13 +96,13 @@
       "ga": 1
     },
     {
-      "teamName": "Royale Union Sg",
+      "teamName": "Club Brugge",
       "gp": 3,
-      "w": 3,
+      "w": 2,
       "d": 0,
-      "l": 0,
-      "gf": 11,
-      "ga": 3
+      "l": 1,
+      "gf": 5,
+      "ga": 2
     }
   ]
 }

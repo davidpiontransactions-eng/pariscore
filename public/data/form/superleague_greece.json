@@ -4,7 +4,7 @@
     "leagueId": "superleague_greece",
     "leagueName": "Greece",
     "season": "2026/27",
-    "lastUpdated": "2026-09-09T09:05:22.396736Z",
+    "lastUpdated": "2026-09-10T09:04:10.062609Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,24 +13,6 @@
   },
   "home": [
     {
-      "teamName": "Ofi Crete",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 4,
-      "ga": 0
-    },
-    {
-      "teamName": "Aek Athens",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 9,
-      "ga": 0
-    },
-    {
       "teamName": "Panathinaikos",
       "gp": 1,
       "w": 1,
@@ -38,6 +20,15 @@
       "l": 0,
       "gf": 3,
       "ga": 1
+    },
+    {
+      "teamName": "Paok",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 4,
+      "ga": 0
     },
     {
       "teamName": "Panetolikos",
@@ -49,9 +40,18 @@
       "ga": 1
     },
     {
-      "teamName": "Paok",
-      "gp": 1,
-      "w": 1,
+      "teamName": "Aek Athens",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 9,
+      "ga": 0
+    },
+    {
+      "teamName": "Ofi Crete",
+      "gp": 2,
+      "w": 2,
       "d": 0,
       "l": 0,
       "gf": 4,
@@ -69,15 +69,6 @@
       "ga": 0
     },
     {
-      "teamName": "Olympiakos",
-      "gp": 2,
-      "w": 1,
-      "d": 1,
-      "l": 0,
-      "gf": 2,
-      "ga": 1
-    },
-    {
       "teamName": "Iraklis",
       "gp": 3,
       "w": 1,
@@ -87,13 +78,13 @@
       "ga": 5
     },
     {
-      "teamName": "Panetolikos",
-      "gp": 1,
+      "teamName": "Olympiakos",
+      "gp": 2,
       "w": 1,
-      "d": 0,
+      "d": 1,
       "l": 0,
       "gf": 2,
-      "ga": 0
+      "ga": 1
     },
     {
       "teamName": "Paok",
@@ -103,6 +94,15 @@
       "l": 1,
       "gf": 3,
       "ga": 4
+    },
+    {
+      "teamName": "Panetolikos",
+      "gp": 1,
+      "w": 1,
+      "d": 0,
+      "l": 0,
+      "gf": 2,
+      "ga": 0
     }
   ]
 }
