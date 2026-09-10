@@ -56,6 +56,10 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [iframeSrc, setIframeSrc] = useState<string | null>(null);
+  // Embeds tiers souvent bloqués (X-Frame-Options) sans erreur détectable :
+  // si aucun onLoad sous 12 s → repli lien externe automatique.
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeBlocked, setIframeBlocked] = useState(false);
 
   // Reset des états + déclenchement de la résolution à chaque ouverture.
   useEffect(() => {
@@ -65,6 +69,8 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
     setError(null);
     setActiveIndex(0);
     setIframeSrc(null);
+    setIframeLoaded(false);
+    setIframeBlocked(false);
 
     const t = setTimeout(() => {
       if (cancelled) return;
@@ -96,9 +102,18 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
     (index: number) => {
       setActiveIndex(index);
       setIframeSrc(result?.streams[index]?.embedUrl ?? null);
+      setIframeLoaded(false);
+      setIframeBlocked(false);
     },
     [result],
   );
+
+  // Détection embed bloqué : pas de onLoad sous 12 s → repli lien externe.
+  useEffect(() => {
+    if (!iframeSrc || iframeLoaded || iframeBlocked) return;
+    const t = setTimeout(() => setIframeBlocked(true), 12000);
+    return () => clearTimeout(t);
+  }, [iframeSrc, iframeLoaded, iframeBlocked]);
 
   const streams = useMemo(() => result?.streams ?? [], [result]);
 
@@ -150,6 +165,8 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
                   setResult(null);
                   setActiveIndex(0);
                   setIframeSrc(null);
+                  setIframeLoaded(false);
+                  setIframeBlocked(false);
                   setLoading(true);
                   resolveStream(sport, home, away)
                     .then((data) => {
@@ -194,7 +211,7 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
 
               {/* Player iframe sandboxé */}
               <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
-                {iframeSrc ? (
+                {iframeSrc && !iframeBlocked ? (
                   <iframe
                     key={iframeSrc}
                     src={iframeSrc}
@@ -205,10 +222,27 @@ export function StreamPlayerModal({ open, onOpenChange, sport, home, away, subti
                     allowFullScreen
                     loading="lazy"
                     referrerPolicy="origin-when-cross-origin"
+                    onLoad={() => setIframeLoaded(true)}
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
-                    La lecture du stream échoue sur ce canal.
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                    <Tv className="h-8 w-8 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      {iframeBlocked
+                        ? "Le lecteur est bloqué par le diffuseur. Regardez directement sur LiveTV :"
+                        : "La lecture du stream échoue sur ce canal."}
+                    </p>
+                    {result.event && (
+                      <a
+                        href={result.event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-600"
+                      >
+                        Voir sur LiveTV
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
