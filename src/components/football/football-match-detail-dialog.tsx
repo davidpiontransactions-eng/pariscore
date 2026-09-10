@@ -32,6 +32,8 @@ import { BesoccerScoreMatrix } from "@/components/football/besoccer-score-matrix
 import { BesoccerEloPanel } from "@/components/football/besoccer-elo-panel";
 import { BesoccerTablePanel } from "@/components/football/besoccer-table-panel";
 import { OddsHistoryTimeline } from "@/components/shared/odds-history-timeline";
+import { PowerScoreBar } from "@/components/shared/power-score-bar";
+import { footballPowerScore } from "@/lib/power-score";
 import { FootballRadarChart } from "@/components/football/football-radar-chart";
 import { useOddsHistory } from "@/hooks/use-odds-history";
 
@@ -140,6 +142,33 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
 
   // Vue enrichie : le match prématch BSD (plus riche) si dispo, sinon le fallback.
   const view = prematch ?? match;
+
+  // PowerScore 0-100 par équipe (moteur partagé) — affiché sous les noms.
+  // Forme (PPG L5) 30 % · Dom./Ext. 20 % · Attaque 20 % · Défense 15 % · H2H absent.
+  const powerScores = useMemo(() => {
+    if (!view) return null;
+    const side = (isHome: boolean) => {
+      const st = isHome
+        ? view.prediction.standingStats?.home
+        : view.prediction.standingStats?.away;
+      const form = resolveForm(isHome ? view.home.form : view.away.form, st);
+      const g = isHome
+        ? view.prediction.metricStats?.home.goals
+        : view.prediction.metricStats?.away.goals;
+      return footballPowerScore({
+        formPpg:
+          form.length > 0
+            ? (form.filter((f) => f === "W").length * 3 +
+                form.filter((f) => f === "D").length) /
+              form.length
+            : null,
+        venuePpg: st?.ppg ?? null,
+        scoredPg: g?.scoredPg.value ?? null,
+        concededPg: g?.concededPg.value ?? null,
+      });
+    };
+    return { home: side(true), away: side(false) };
+  }, [view]);
 
   // Stats attaque/défense FBref pour le radar (chargées par ligue).
   const leagueSlug = view?.league?.id ?? null;
@@ -317,6 +346,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     )}
                   </div>
                   <span className="text-center text-xs font-semibold leading-tight">{view.home.shortName ?? view.home.name}</span>
+                  {powerScores && <PowerScoreBar score={powerScores.home} />}
                 </div>
 
                 <div className="flex flex-col items-center">
@@ -361,6 +391,7 @@ export function FootballMatchDetailDialog({ match, open, onOpenChange }: Props) 
                     )}
                   </div>
                   <span className="text-center text-xs font-semibold leading-tight">{view.away.shortName ?? view.away.name}</span>
+                  {powerScores && <PowerScoreBar score={powerScores.away} />}
                 </div>
               </div>
             )}

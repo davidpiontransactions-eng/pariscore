@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 196 components total (football: 14, leagues: 6, tennis: 62, basketball: 17, shared: 10, mobile: 7, dashboard: 3, betting: 4, etc.).
+> extract pass. 197 components total (football: 14, leagues: 6, tennis: 62, basketball: 17, shared: 11, mobile: 7, dashboard: 3, betting: 4, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -317,6 +317,7 @@ Module de gestion de paris sportifs (pages `/bankroll*`, API `/api/v1/bm/*`, don
 | odds-history-timeline | odds-history-timeline.tsx | Timeline dual AreaChart pour historique cotes A/B |
 | follow-button | follow-button.tsx | Bouton coeur de suivi (sm/md/lg, aria-label, useFollowStore) |
 | follow-notification-bridge | follow-notification-bridge.tsx | Bridge follow → push notifications (cooldown 24h) |
+| power-score-bar | power-score-bar.tsx | PowerScore 0-100 : nombre + barre + tooltip metrics/pondérations (tennis + foot) |
 | flashscore-match-list | flashscore-match-list.tsx | Liste style Flashscore avec pull-to-refresh natif |
 | strategy-filter-dropdown | strategy-filter-dropdown.tsx | Filtre par stratégie de pari |
 | time-range-filter | time-range-filter.tsx | Filtre par fenêtre horaire |

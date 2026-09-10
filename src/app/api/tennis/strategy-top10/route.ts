@@ -34,9 +34,11 @@ type StrategyPayload = {
   strategies: Partial<Record<TennisStrategyKey, TennisStrategyTop10Result["strategies"][TennisStrategyKey]>>;
   matchesConsidered: number;
   computedAt: string;
-  strategy: TennisStrategyKey;
+  strategy: TennisStrategyKey | "all";
   window: string;
   availableStrategies: TennisStrategyKey[];
+  /** Tous les matchs considérés (calendrier FotMob). */
+  matches: TennisStrategyTop10Result["matches"];
 };
 type StrategyCacheEntry = { strat: string; win: string; payload: StrategyPayload };
 
@@ -146,6 +148,8 @@ export async function GET(req: NextRequest) {
   try {
     const sp = req.nextUrl.searchParams;
     const stratParam = sp.get("strat");
+    // strat=all : les 9 stratégies (pills calendrier). Sinon une seule.
+    const stratAll = stratParam === "all";
     const strat: TennisStrategyKey = isStratKey(stratParam) ? stratParam : "surfaceEloGap";
     const win = sp.get("win") ?? "all";
 
@@ -170,19 +174,22 @@ export async function GET(req: NextRequest) {
     // 3) Score via la lib pure (T1)
     const result = buildTennisStrategyTop10(windowed, lbByPlayer);
 
-    // 4) Ne retourner que la stratégie demandée + méta
-    const payload = {
-      strategies: { [strat]: result.strategies[strat] } as Partial<
+    // 4) Stratégie(s) demandée(s) + méta + matchs calendrier
+    const payload: StrategyPayload = {
+      strategies: (stratAll
+        ? result.strategies
+        : { [strat]: result.strategies[strat] }) as Partial<
         Record<TennisStrategyKey, TennisStrategyTop10Result["strategies"][TennisStrategyKey]>
       >,
       matchesConsidered: result.matchesConsidered,
       computedAt: result.computedAt,
-      strategy: strat,
+      strategy: stratAll ? "all" : strat,
       window: win,
       availableStrategies: TENNIS_STRATEGY_DEFS.map((d) => d.key),
+      matches: result.matches,
     };
 
-    strategyCache.set({ strat, win, payload });
+    strategyCache.set({ strat: stratAll ? "all" : strat, win, payload });
     return NextResponse.json(payload);
   } catch (err) {
     return apiErrorHandler(err, "tennis/strategy-top10");

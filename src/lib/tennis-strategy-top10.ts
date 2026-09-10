@@ -28,6 +28,7 @@ import {
   setScoreDistribution,
   setWinProb,
 } from "@/lib/prediction/live-markov";
+import { tennisPowerScore, type PowerScore } from "@/lib/power-score";
 
 // ─── Types publics ────────────────────────────────────────────────────────────
 
@@ -76,6 +77,26 @@ export interface TennisStrategyDef {
   /** Seuil d'éligibilité minimum (interprétation par clé). */
   threshold: number;
   format: (v: number) => string;
+}
+
+/** Match brut pour le calendrier FotMob (tous les matchs considérés). */
+export interface TennisCalendarPlayer {
+  name: string;
+  shortName: string;
+  country: string | null;
+}
+
+export interface TennisCalendarMatch {
+  matchId: string;
+  tournament: string;
+  round: string;
+  scheduledAt: string;
+  surface: string;
+  playerA: TennisCalendarPlayer;
+  playerB: TennisCalendarPlayer;
+  /** PowerScore 0-100 (+ détail) des deux joueurs. */
+  powerA: PowerScore;
+  powerB: PowerScore;
 }
 
 // ─── Définitions UI ───────────────────────────────────────────────────────────
@@ -367,6 +388,30 @@ export interface TennisStrategyTop10Result {
   strategies: Record<TennisStrategyKey, TennisStrategyEntry[]>;
   matchesConsidered: number;
   computedAt: string;
+  /** Tous les matchs considérés (calendrier FotMob) — indépendant des seuils. */
+  matches: TennisCalendarMatch[];
+}
+
+/**
+ * PowerScore d'un côté du match (calendrier + dialogs) — mêmes signaux
+ * que les stratégies (Élo, forme, service, retour, SPS, fatigue).
+ */
+function powerForSide(
+  m: TennisMatch,
+  side: TennisStrategySide,
+  lbByPlayer: LeaderboardByPlayer,
+): PowerScore {
+  const p = side === "A" ? m.playerA : m.playerB;
+  const lb = lbByPlayer.get(normPlayerName(p.name));
+  const servePt = servePointProb(lb, p.elo);
+  return tennisPowerScore({
+    surfaceElo: p.surfaceElo ?? p.elo,
+    form: p.form,
+    holdPct: servePt == null ? null : gameWinProb(servePt) * 100,
+    returnPct: lb?.returnPointsWonPct ?? null,
+    sps: p.sps,
+    fatigueLoad: fatigueLoad(m, side),
+  });
 }
 
 /**
@@ -415,7 +460,28 @@ export function buildTennisStrategyTop10(
     strategies[def.key] = entries.slice(0, limit);
   }
 
-  return { strategies, matchesConsidered: matches.length, computedAt: new Date().toISOString() };
+  const calMatches: TennisCalendarMatch[] = matches
+    .filter((m) => m?.playerA?.name && m?.playerB?.name)
+    .map((m) => ({
+      matchId: m.id,
+      tournament: m.tournament ?? "",
+      round: m.round ?? "",
+      scheduledAt: m.scheduledAt ?? "",
+      surface: m.stats?.surface ?? "Dur",
+      playerA: {
+        name: m.playerA.name,
+        shortName: m.playerA.shortName || m.playerA.name,
+        country: m.playerA.country ?? null,
+      },
+      playerB: {
+        name: m.playerB.name,
+        shortName: m.playerB.shortName || m.playerB.name,
+        country: m.playerB.country ?? null,
+      },
+      powerA: powerForSide(m, "A", lbByPlayer),
+      powerB: powerForSide(m, "B", lbByPlayer),
+    }));
+  return { strategies, matchesConsidered: matches.length, computedAt: new Date().toISOString(), matches: calMatches };
 }
 
 // ─── Export utilitaires (tests & route API) ───────────────────────────────────

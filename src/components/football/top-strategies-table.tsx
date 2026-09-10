@@ -32,6 +32,8 @@ export type StrategyTableRow = {
 type Props = {
   rows: StrategyTableRow[];
   strategy: StrategyTop5Key;
+  /** Ligne à surligner (match ciblé depuis une pill calendrier). */
+  highlightId?: string | null;
 };
 
 /* Teintes FotMob clair — identiques au calendrier (fotmob-calendar-table.tsx) */
@@ -67,7 +69,7 @@ function kickoffLabel(iso: string): string {
   return `${d} · ${h}`;
 }
 
-export function TopStrategiesTable({ rows, strategy }: Props) {
+export function TopStrategiesTable({ rows, strategy, highlightId }: Props) {
   if (rows.length === 0) {
     return (
       <div
@@ -119,9 +121,11 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
         {/* Lignes — carte empilée sur mobile, grille sur desktop */}
         {rows.map((row, i) => {
           const band = row.probPct != null ? confidenceBand(row.probPct) : null;
+          const highlighted = highlightId != null && row.matchId === highlightId;
           return (
             <div
               key={`${strategy}-${row.matchId}`}
+              data-match-id={row.matchId}
               className={cn(
                 "flex flex-col gap-1 px-3 py-2 transition-colors hover:bg-[#f8f8f8] md:grid md:items-center md:gap-0",
                 row.muted && "opacity-60",
@@ -129,6 +133,7 @@ export function TopStrategiesTable({ rows, strategy }: Props) {
               style={{
                 gridTemplateColumns: "minmax(0,1fr) auto minmax(90px,auto) 28px",
                 borderBottom: i < rows.length - 1 ? `1px solid ${C.rowSep}` : undefined,
+                backgroundColor: highlighted ? `${C.accent}14` : undefined,
               }}
             >
               {/* Match */}

@@ -68,18 +68,30 @@ function readInitialParams(): { strat: TennisStrategyKey; win: WinKey } {
   };
 }
 
+/** Focus externe (clic pill calendrier) : bascule la stratégie + surligne le match. */
+export type TopFocus = { matchId: string; strat: TennisStrategyKey; nonce: number };
+
 type Props = {
-  /** Remonte les matchs qualifiés (pour le calendrier synchronisé). */
-  onEntries?: (entries: TennisStrategyEntry[]) => void;
+  /** Remonte les matchs qualifiés + la stratégie active (pills calendrier). */
+  onEntries?: (entries: TennisStrategyEntry[], strat: TennisStrategyKey) => void;
+  focused?: TopFocus | null;
 };
 
-export function TennisTop10MatchesWidget({ onEntries }: Props = {}) {
+export function TennisTop10MatchesWidget({ onEntries, focused }: Props = {}) {
   const initial = useMemo(() => readInitialParams(), []);
   const [strat, setStrat] = useState<TennisStrategyKey>(initial.strat);
   const [win, setWin] = useState<WinKey>(initial.win);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+
+  // Focus externe : applique strat + highlight (dernier nonce gagne).
+  useEffect(() => {
+    if (!focused) return;
+    setStrat(focused.strat);
+    setHighlightId(focused.matchId);
+  }, [focused]);
 
   useEffect(() => {
     const ac = new AbortController();
@@ -93,7 +105,7 @@ export function TennisTop10MatchesWidget({ onEntries }: Props = {}) {
       })
       .then((d) => {
         setData(d);
-        onEntries?.(d.strategies[strat] ?? []);
+        onEntries?.(d.strategies[strat] ?? [], strat);
       })
       .catch((err) => {
         if ((err as Error).name !== "AbortError") setError(err as Error);
@@ -132,7 +144,13 @@ export function TennisTop10MatchesWidget({ onEntries }: Props = {}) {
           Top 10 matchs par stratégie
         </h2>
         <div className="flex items-center gap-2">
-          <Select value={strat} onValueChange={(v) => setStrat(v as TennisStrategyKey)}>
+          <Select
+            value={strat}
+            onValueChange={(v) => {
+              setStrat(v as TennisStrategyKey);
+              setHighlightId(null);
+            }}
+          >
             <SelectTrigger className="h-9 w-[200px] text-xs">
               <SelectValue placeholder="Stratégie" />
             </SelectTrigger>
@@ -193,6 +211,7 @@ export function TennisTop10MatchesWidget({ onEntries }: Props = {}) {
           <TopStrategiesTable
             rows={rows}
             strategy={strat as unknown as Parameters<typeof TopStrategiesTable>[0]["strategy"]}
+            highlightId={highlightId}
           />
         )}
       </div>

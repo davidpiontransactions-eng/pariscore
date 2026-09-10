@@ -6,6 +6,8 @@ import { partitionFollowed, toFollowId } from "@/lib/fotmob-follow";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
 import { parisKickoff } from "@/lib/football-time";
 import { cn } from "@/lib/utils";
+import { PowerScoreBar } from "@/components/shared/power-score-bar";
+import type { PowerScore } from "@/lib/power-score";
 
 /* ─── Types (miroir API /api/football/calendar) ─── */
 export type FotmobCalTeam = { name: string; logo?: string | null };
@@ -20,6 +22,8 @@ export type FotmobCalMatch = {
   league?: { name?: string; country?: string | null; logo?: string | null } | null;
   round?: string | null;
   live?: FotmobCalLive | null;
+  /** PowerScore 0-100 des deux côtés (affiché sous les noms si présent). */
+  power?: { home: PowerScore | null; away: PowerScore | null } | null;
 };
 
 /* ─── Teintes FotMob clair (mesurées getComputedStyle, cf. T1) ─── */
@@ -115,7 +119,7 @@ export function stratTag(key: string, value: number, isProb: boolean): TopStratT
   return { key, label: s.label, emoji: s.emoji, value: isProb ? `${Math.round(value)}%` : String(value) };
 }
 
-function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: () => void }) {
+function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: (tag: TopStratTag) => void }) {
   if (tags.length === 0) return null;
   const shown = tags.slice(0, 2);
   const extra = tags.length - shown.length;
@@ -125,7 +129,7 @@ function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: () 
         <button
           key={t.key}
           type="button"
-          onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+          onClick={(e) => { e.stopPropagation(); onSelect?.(t); }}
           title={`Top 10 · ${t.label} · ${t.value} — voir l'analyse`}
           aria-label={`Top 10 stratégie ${t.label}, ${t.value}, voir l'analyse`}
           className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-transform active:scale-95"
@@ -150,7 +154,7 @@ function TopStratPills({ tags, onSelect }: { tags: TopStratTag[]; onSelect?: () 
 }
 
 /* ─── Ligne match (clic → analyse, étoile isolée via stopPropagation) ─── */
-function FotmobMatchRow({ m, onSelect, topTags }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void; topTags?: TopStratTag[] }) {
+function FotmobMatchRow({ m, onSelect, topTags, onTopPillSelect }: { m: FotmobCalMatch; onSelect?: (m: FotmobCalMatch) => void; topTags?: TopStratTag[]; onTopPillSelect?: (tag: TopStratTag) => void }) {
   const st = m.live?.status ?? null;
   const live = isLiveStatus(st);
   const finished = st === "FT";
@@ -171,7 +175,10 @@ function FotmobMatchRow({ m, onSelect, topTags }: { m: FotmobCalMatch; onSelect?
       }}
     >
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
-        <span className="truncate text-right text-[14px]" style={{ color: C.team }}>{m.home.name}</span>
+        <span className="flex min-w-0 flex-col items-end">
+          <span className="truncate text-right text-[14px]" style={{ color: C.team }}>{m.home.name}</span>
+          {m.power?.home != null && <PowerScoreBar score={m.power.home} />}
+        </span>
         <img src={teamLogo(m.home.name, m.home.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
       </div>
       <span
@@ -203,18 +210,21 @@ function FotmobMatchRow({ m, onSelect, topTags }: { m: FotmobCalMatch; onSelect?
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
         <img src={teamLogo(m.away.name, m.away.logo)} alt="" width="22" height="22" loading="lazy" className="size-[22px] shrink-0" />
-        <span className="truncate text-[14px]" style={{ color: C.team }}>{m.away.name}</span>
+        <span className="flex min-w-0 flex-col items-start">
+          <span className="truncate text-[14px]" style={{ color: C.team }}>{m.away.name}</span>
+          {m.power?.away != null && <PowerScoreBar score={m.power.away} />}
+        </span>
       </div>
       <FotmobFollowStar id={m.id} name={label} />
     </div>
-    <TopStratPills tags={topTags ?? []} onSelect={onSelect ? () => onSelect(m) : undefined} />
+    <TopStratPills tags={topTags ?? []} onSelect={onTopPillSelect ?? (onSelect ? () => onSelect(m) : undefined)} />
     </div>
   );
 }
 
 /* ─── Section ligue ─── */
 function FotmobLeagueSection({
-  leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, topTagsFor,
+  leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, topTagsFor, onTopPillSelect,
 }: {
   leagueName: string; country?: string | null; logo?: string | null;
   /** Icône custom à la place du logo (ex. étoile de la section « Suivis »). */
@@ -223,6 +233,8 @@ function FotmobLeagueSection({
   onSelectMatch?: (m: FotmobCalMatch) => void;
   /** Tags Top stratégies par id match (E pill). */
   topTagsFor?: (id: string) => TopStratTag[];
+  /** Clic pill Top (si absent : la pill ouvre le détail comme la ligne). */
+  onTopPillSelect?: (m: FotmobCalMatch, tag: TopStratTag) => void;
 }) {
   const liveCount = matches.filter((m) => isLiveStatus(m.live?.status)).length;
   return (
@@ -265,7 +277,7 @@ function FotmobLeagueSection({
         style={{ transitionDuration: "300ms" }}
       >
         <div className="min-h-0 overflow-hidden">
-          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} topTags={topTagsFor?.(m.id)} />)}
+          {matches.map((m) => <FotmobMatchRow key={m.id} m={m} onSelect={onSelectMatch} topTags={topTagsFor?.(m.id)} onTopPillSelect={onTopPillSelect ? (tag) => onTopPillSelect(m, tag) : undefined} />)}
         </div>
       </div>
     </div>
@@ -286,11 +298,14 @@ export function FotmobCalendarTable({
   matches,
   onSelectMatch,
   topTagsFor,
+  onTopPillSelect,
 }: {
   matches: FotmobCalMatch[];
   onSelectMatch?: (m: FotmobCalMatch) => void;
   /** Tags Top stratégies par id match (E pill). */
   topTagsFor?: (id: string) => TopStratTag[];
+  /** Clic pill Top (si absent : la pill ouvre le détail comme la ligne). */
+  onTopPillSelect?: (m: FotmobCalMatch, tag: TopStratTag) => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const follows = useFollowStore((s) => s.follows);
@@ -360,6 +375,7 @@ export function FotmobCalendarTable({
             onToggle={() => setCollapsed((p) => ({ ...p, __top: !(p.__top === true) }))}
             onSelectMatch={onSelectMatch}
             topTagsFor={topTagsFor}
+            onTopPillSelect={onTopPillSelect}
           />
         )}
         {followed.length > 0 && (
@@ -372,6 +388,7 @@ export function FotmobCalendarTable({
             onToggle={() => setCollapsed((p) => ({ ...p, __suivis: !(p.__suivis === true) }))}
             onSelectMatch={onSelectMatch}
             topTagsFor={topTagsFor}
+            onTopPillSelect={onTopPillSelect}
           />
         )}
         {groups.map((g) => (
@@ -383,6 +400,7 @@ export function FotmobCalendarTable({
             onToggle={() => setCollapsed((p) => ({ ...p, [g.name]: !(p[g.name] === true) }))}
             onSelectMatch={onSelectMatch}
             topTagsFor={topTagsFor}
+            onTopPillSelect={onTopPillSelect}
           />
         ))}
       </div>

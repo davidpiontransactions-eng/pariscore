@@ -35,6 +35,8 @@ import { CountryFlag } from "./country-flag";
 import { SurfaceBadge } from "./surface-badge";
 import { TournamentBadge } from "./tournament-badge";
 import { PlayerVsBlock } from "./player-vs-block";
+import { PowerScoreBar } from "@/components/shared/power-score-bar";
+import { tennisPowerScore } from "@/lib/power-score";
 import { useEloHistory } from "@/hooks/use-elo-history";
 import { useBSDMatchDetail } from "@/hooks/use-bsd-match-detail";
 import { useLastMatchHighlights } from "@/hooks/use-last-match-highlights";
@@ -433,14 +435,30 @@ export function MatchDetailDialog({ match, open, onOpenChange }: Props) {
                   }}
                   probA={probA}
                   probB={probB}
-                  playerSlot={(p) => (
-                    <span className="text-[11px] text-muted-foreground">
-                      {match.synthetic || match.insufficientData
-                        ? "Données indisponibles"
-                        : `#${p.rank} · Elo ${p.elo?.toFixed(0) ?? "N/A"}`
-                      }
-                    </span>
-                  )}
+                  playerSlot={(p, side) => {
+                    const full = side === "left" ? match.playerA : match.playerB;
+                    const power = tennisPowerScore({
+                      surfaceElo: full.surfaceElo ?? full.elo,
+                      form: full.form,
+                      holdPct: null,
+                      returnPct: null,
+                      sps: full.sps,
+                      fatigueLoad: null,
+                    });
+                    return (
+                      <span className="flex flex-col items-center gap-1">
+                        <span className="text-[11px] text-muted-foreground">
+                          {match.synthetic || match.insufficientData
+                            ? "Données indisponibles"
+                            : `#${p.rank} · Elo ${p.elo?.toFixed(0) ?? "N/A"}`
+                          }
+                        </span>
+                        {!(match.synthetic || match.insufficientData) && (
+                          <PowerScoreBar score={power} size="md" />
+                        )}
+                      </span>
+                    );
+                  }}
                 />
 
                 <ConfidenceInterval

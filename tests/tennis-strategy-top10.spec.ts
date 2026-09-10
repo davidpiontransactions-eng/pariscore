@@ -332,3 +332,29 @@ describe("T11 — robustesse", () => {
     expect(result.strategies.underdogValue.length).toBe(0);
   });
 });
+
+describe("T12 — matchs calendrier (FotMob)", () => {
+  test("matches = tous les matchs considérés, indépendant des seuils", () => {
+    const result = buildTennisStrategyTop10(
+      [baseMatch(), baseMatch({ id: "m2" })],
+      emptyLb,
+    );
+    expect(result.matches.length).toBe(2);
+    expect(result.matches[0]).toMatchObject({
+      matchId: "m1",
+      tournament: "Roland-Garros",
+      round: "R16",
+      scheduledAt: "2026-09-10T14:00:00Z",
+    });
+    expect(result.matches[0].playerA).toMatchObject({
+      name: "Carlos Alcaraz",
+      shortName: "Alcaraz",
+      country: "ES",
+    });
+  });
+
+  test("matches vide → tableau vide mais présent", () => {
+    const result = buildTennisStrategyTop10([], emptyLb);
+    expect(result.matches).toEqual([]);
+  });
+});
