@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   buildTennisStrategyTop10,
   matchTotalGamesProbs,
+  normalizeExternalMatch,
   TENNIS_STRATEGY_DEFS,
   type LeaderboardByPlayer,
 } from "@/lib/tennis-strategy-top10";
@@ -356,5 +357,57 @@ describe("T12 — matchs calendrier (FotMob)", () => {
   test("matches vide → tableau vide mais présent", () => {
     const result = buildTennisStrategyTop10([], emptyLb);
     expect(result.matches).toEqual([]);
+  });
+});
+
+describe("T13 — matchs externes minimaux (Flashscore)", () => {
+  // Régression crash prod : items sans id/Élo/forme faisaient planter le
+  // calendrier (normId(undefined)). Le builder doit les accepter avec un id
+  // défini et les exclure des stratégies à seuils.
+  const rawScraper = {
+    matchId: "fs-abc123",
+    tournament: "US Open",
+    round: "",
+    scheduledAt: "2026-09-11T19:00:00.000Z",
+    surface: "Dur",
+    playerA: { name: "Tiafoe F.", shortName: "Tiafoe F.", country: "USA" },
+    playerB: { name: "Shelton B.", shortName: "Shelton B.", country: "USA" },
+  };
+
+  test("normalizeExternalMatch donne un id défini + insufficientData", () => {
+    const m = normalizeExternalMatch(rawScraper);
+    expect(m).not.toBeNull();
+    expect(m!.id).toBe("fs-abc123");
+    expect(m!.insufficientData).toBe(true);
+  });
+
+  test("normalizeExternalMatch rejette l'inexploitable", () => {
+    expect(normalizeExternalMatch({})).toBeNull();
+    expect(normalizeExternalMatch({ ...rawScraper, matchId: undefined })).toBeNull();
+  });
+  const minimal = (): TennisMatch =>
+    ({
+      id: "fs-abc123",
+      tournament: "US Open",
+      round: "",
+      scheduledAt: "2026-09-11T19:00:00.000Z",
+      playerA: { id: "tiafoe_f", name: "Tiafoe F.", shortName: "Tiafoe F.", country: "USA" },
+      playerB: { id: "shelton_b", name: "Shelton B.", shortName: "Shelton B.", country: "USA" },
+      insufficientData: true,
+    }) as unknown as TennisMatch;
+
+  test("pas de throw, matchId calendrier défini", () => {
+    const result = buildTennisStrategyTop10([minimal()], emptyLb);
+    expect(result.matches.length).toBe(1);
+    expect(result.matches[0].matchId).toBe("fs-abc123");
+    expect(typeof result.matches[0].matchId).toBe("string");
+  });
+
+  test("exclu des stratégies à seuils (pas d'Élo/forme)", () => {
+    const result = buildTennisStrategyTop10([minimal()], emptyLb);
+    expect(result.strategies.surfaceEloGap.length).toBe(0);
+    expect(result.strategies.momentum.length).toBe(0);
+    expect(result.strategies.underdogValue.length).toBe(0);
+    expect(result.strategies.favorite20.length).toBe(0);
   });
 });

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { apiErrorHandler } from "@/lib/api-error-handler";
 import type { TennisMatch } from "@/lib/tennis-data";
 import {
   TENNIS_STRATEGY_DEFS,
   buildTennisStrategyTop10,
+  normalizeExternalMatch,
   type TennisStrategyKey,
   type TennisStrategyTop10Result,
 } from "@/lib/tennis-strategy-top10";
@@ -60,11 +63,16 @@ function lastNameKey(name: string | undefined): string {
   return parts.length > 1 ? parts[0] : clean;
 }
 
+/**
+ * Normalise un match Flashscore (DTO scraper) en TennisMatch : `id` requis
+ * par le builder (entries, calendrier, pills), `insufficientData` pour que
+ * les stratégies à seuils l'ignorent sans crasher. Retourne null si inexploitable.
+ * (Implémentation : normalizeExternalMatch dans tennis-strategy-top10.)
+ */
+
 /** Extra Flashscore (routine matinale data/flashscore-tennis.json, <26h). */
 function loadFlashscoreExtra(): TennisMatch[] {
   try {
-    const fs = require("fs") as typeof import("fs");
-    const path = require("path") as typeof import("path");
     const file = path.join(process.cwd(), "data", "flashscore-tennis.json");
     const raw = JSON.parse(fs.readFileSync(file, "utf8")) as {
       updatedAt?: string;
@@ -129,8 +137,12 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
       return true;
     });
     const matches = [...bsdMatches, ...extra];
-    // Routine matinale Flashscore (fichier JSON) — dédupliquée nom de famille.
-    const fsExtra = loadFlashscoreExtra().filter((m: TennisMatch) => {
+    // Routine matinale Flashscore (fichier JSON) — normalisée puis
+    // dédupliquée nom de famille.
+    const fsExtra = loadFlashscoreExtra()
+      .map(normalizeExternalMatch)
+      .filter((m): m is TennisMatch => m !== null)
+      .filter((m: TennisMatch) => {
       if (!Number.isFinite(Date.parse(m.scheduledAt)) || Date.parse(m.scheduledAt) < cutoff) return false;
       const pairLast = [lastNameKey(m.playerA?.name), lastNameKey(m.playerB?.name)].sort().join("|");
       if (seenLast.has(pairLast)) return false;

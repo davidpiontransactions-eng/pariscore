@@ -415,6 +415,57 @@ function powerForSide(
 }
 
 /**
+ * Normalise un match externe (DTO scraper : `matchId`, pas d'Élo/forme)
+ * en TennisMatch : `id` requis par le builder (entries, calendrier, pills),
+ * `insufficientData` pour que les stratégies à seuils l'ignorent sans
+ * crasher. Retourne null si inexploitable.
+ */
+export function normalizeExternalMatch(m: {
+  matchId?: string;
+  tournament?: string;
+  round?: string;
+  scheduledAt?: string;
+  surface?: string;
+  playerA?: { name?: string; shortName?: string; country?: string | null };
+  playerB?: { name?: string; shortName?: string; country?: string | null };
+}): TennisMatch | null {
+  const nameA = m.playerA?.name;
+  const nameB = m.playerB?.name;
+  if (!m.matchId || !nameA || !nameB || !m.scheduledAt) return null;
+  const now = new Date().toISOString();
+  const player = (
+    name: string,
+    short: string | undefined,
+    country: string | null | undefined,
+  ): Player => ({
+    id: name.toLowerCase().replace(/\s+/g, "_"),
+    name,
+    shortName: short || name,
+    rank: 0,
+    elo: 1500,
+    eloKnown: false,
+    photoUrl: "",
+    color: "#999",
+    form: [],
+    country: country ?? undefined,
+  });
+  return {
+    id: m.matchId,
+    tournament: m.tournament ?? "",
+    round: m.round ?? "",
+    scheduledAt: m.scheduledAt,
+    playerA: player(nameA, m.playerA?.shortName, m.playerA?.country),
+    playerB: player(nameB, m.playerB?.shortName, m.playerB?.country),
+    probA: 50,
+    probB: 50,
+    stats: { form: "", eloGap: 0, surface: m.surface ?? "Dur", h2h: "—", ic: [0, 100], confidence: 0 },
+    model: "external",
+    modelUpdatedAt: now,
+    insufficientData: true,
+  } as TennisMatch;
+}
+
+/**
  * Construit le Top 10 matchs par stratégie. Un match n'entre dans une
  * stratégie que si `scoreStrategy` retourne une valeur (données complètes
  * et seuil respecté). Tri : value décroissante, puis proba modèle.
