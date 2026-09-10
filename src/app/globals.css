@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @source not "../android";
+/* Exclut les snapshots HTML des scrapers (ex : data/op_snooker.html contient
+   des classes bg-[url(&#x27;...)] échappées qui cassent le build Turbopack
+   "Module not found: Can't resolve '&#x27;/images/...'"). */
+@source not "../../data";
+@source not "../../.context";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));

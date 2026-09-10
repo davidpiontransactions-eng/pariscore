@@ -30,7 +30,15 @@ const CACHE_TTL_MS = 5 * 60_000;
 const PREMATCH_TTL_MS = 5 * 60_000;
 
 type CachedPrematch = { matches: TennisMatch[]; source: string };
-type StrategyCacheEntry = { strat: string; win: string; payload: TennisStrategyTop10Result };
+type StrategyPayload = {
+  strategies: Partial<Record<TennisStrategyKey, TennisStrategyTop10Result["strategies"][TennisStrategyKey]>>;
+  matchesConsidered: number;
+  computedAt: string;
+  strategy: TennisStrategyKey;
+  window: string;
+  availableStrategies: TennisStrategyKey[];
+};
+type StrategyCacheEntry = { strat: string; win: string; payload: StrategyPayload };
 
 const prematchCache = createTtlCache<CachedPrematch>("__tennisStrategyTop10PrematchCache");
 const strategyCache = createTtlCache<StrategyCacheEntry>("__tennisStrategyTop10Cache");
