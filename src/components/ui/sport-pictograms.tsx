@@ -142,3 +142,14 @@ export function RugbyPicto(props: PictoProps) {
     </Base>
   );
 }
+
+/** Snooker — bille n°8 (cercle + médaillon central). */
+export function SnookerPicto(props: PictoProps) {
+  return (
+    <Base {...props}>
+      <circle {...strokeProps} cx="12" cy="12" r="9" />
+      <circle {...strokeProps} cx="12" cy="12" r="3.4" />
+      <circle cx="12" cy="12" r="1.1" fill="currentColor" />
+    </Base>
+  );
+}

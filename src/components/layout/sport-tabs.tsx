@@ -1,36 +1,45 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import type { ComponentType } from "react";
 import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLiveMatches } from "@/hooks/use-live-matches";
 import { useFootballMatches } from "@/hooks/use-football-matches";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
+import {
+  FootballPicto,
+  TennisPicto,
+  BasketballPicto,
+  RugbyPicto,
+  MmaPicto,
+  CyclingPicto,
+  HelmetPicto,
+  BaseballPicto,
+  CrosshairPicto,
+  SnookerPicto,
+} from "@/components/ui/sport-pictograms";
 
 // ─── Définition d'un onglet sport ────────────────────────────────────────────
 type SportTab = {
   id: string;
   label: string;
-  emoji: string;
+  icon: ComponentType<{ className?: string }>;
 };
 
-// ─── Liste des sports supportés ──────────────────────────────────────────────
+// ─── Liste des sports supportés (pictos SVG originaux, pas d'emoji) ──────────
 const SPORT_TABS: SportTab[] = [
-  { id: "football", label: "Football", emoji: "⚽" },
-  { id: "tennis", label: "Tennis", emoji: "🎾" },
-  { id: "basketball", label: "Basketball", emoji: "🏀" },
-  { id: "rugby", label: "Rugby", emoji: "🏉" },
-  { id: "mma", label: "MMA", emoji: "🥊" },
-  { id: "cycling", label: "Cyclisme", emoji: "🚴" },
-  { id: "f1", label: "F1", emoji: "🏎️" },
-  { id: "baseball", label: "Baseball", emoji: "⚾" },
-  { id: "cs2", label: "CS2", emoji: "🎯" },
-  { id: "snooker", label: "Snooker", emoji: "🎱" },
+  { id: "football", label: "Football", icon: FootballPicto },
+  { id: "tennis", label: "Tennis", icon: TennisPicto },
+  { id: "basketball", label: "Basketball", icon: BasketballPicto },
+  { id: "rugby", label: "Rugby", icon: RugbyPicto },
+  { id: "mma", label: "MMA", icon: MmaPicto },
+  { id: "cycling", label: "Cyclisme", icon: CyclingPicto },
+  { id: "f1", label: "F1", icon: HelmetPicto },
+  { id: "baseball", label: "Baseball", icon: BaseballPicto },
+  { id: "cs2", label: "CS2", icon: CrosshairPicto },
+  { id: "snooker", label: "Snooker", icon: SnookerPicto },
 ] as const;
-
-// Nombre d'onglets visibles sur mobile avant le menu "Plus"
-const MOBILE_VISIBLE_COUNT = 6;
 
 // ─── Props du composant ──────────────────────────────────────────────────────
 type SportTabsProps = {
@@ -62,7 +71,6 @@ export function SportTabs({
   className,
 }: SportTabsProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showMore, setShowMore] = useState(false);
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia("(max-width: 768px)").matches;
@@ -94,6 +102,7 @@ export function SportTabs({
       f1: 0,
       baseball: 0,
       cs2: 0,
+      snooker: 0,
     };
 
     // Tennis live — le hook expose directement les matchs en cours
@@ -108,30 +117,6 @@ export function SportTabs({
 
     return counts;
   }, [tennisLive, footballData]);
-
-  // ─── Onglets visibles et menu "Plus" sur mobile ──────────────────────────
-  const visibleTabs = isMobile
-    ? SPORT_TABS.slice(0, MOBILE_VISIBLE_COUNT)
-    : SPORT_TABS;
-  const overflowTabs = isMobile
-    ? SPORT_TABS.slice(MOBILE_VISIBLE_COUNT)
-    : [];
-
-  const hasOverflow = overflowTabs.length > 0;
-  const overflowActive = hasOverflow && overflowTabs.some((t) => t.id === activeSport);
-
-  // Fermer le dropdown "Plus" si on clique ailleurs
-  const moreRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!showMore) return;
-    const handler = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setShowMore(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [showMore]);
 
   // ─── Scroll vers l'onglet actif (mobile) ─────────────────────────────────
   const scrollToTab = useCallback(
@@ -174,9 +159,10 @@ export function SportTabs({
             "md:mx-auto md:justify-center md:overflow-visible"
           )}
         >
-          {visibleTabs.map((tab) => {
+          {SPORT_TABS.map((tab) => {
             const isActive = activeSport === tab.id;
             const liveCount = liveCounts[tab.id] ?? 0;
+            const Icon = tab.icon;
 
             return (
               <button
@@ -184,9 +170,10 @@ export function SportTabs({
                 data-sport={tab.id}
                 role="tab"
                 aria-selected={isActive}
+                aria-label={tab.label}
                 onClick={() => onSportChange(tab.id)}
                 className={cn(
-                  "relative flex h-full items-center gap-1.5 px-3",
+                  "relative flex h-full shrink-0 items-center gap-1.5 px-3",
                   "text-xs font-medium whitespace-nowrap",
                   "transition-colors duration-150",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FA0]/50",
@@ -195,7 +182,7 @@ export function SportTabs({
                     : "text-[#6B5B8D] hover:text-[#1A1145]"
                 )}
               >
-                <span className="text-sm leading-none">{tab.emoji}</span>
+                <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{tab.label}</span>
                 <LiveBadge count={liveCount} />
 
@@ -210,82 +197,13 @@ export function SportTabs({
               </button>
             );
           })}
-
-          {/* Menu "Plus" pour les sports débordants sur mobile */}
-          {hasOverflow && (
-            <div ref={moreRef} className="relative">
-              <button
-                onClick={() => setShowMore((v) => !v)}
-                className={cn(
-                  "flex h-full items-center gap-1 px-3",
-                  "text-xs font-medium whitespace-nowrap",
-                  "transition-colors duration-150",
-                  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#7B3FA0]/50",
-                  overflowActive
-                    ? "text-[#7B3FA0]"
-                    : "text-[#6B5B8D] hover:text-[#1A1145]"
-                )}
-                aria-expanded={showMore}
-                aria-haspopup="true"
-              >
-                <span>Plus</span>
-                <ChevronDown
-                  className={cn(
-                    "h-3 w-3 transition-transform duration-150",
-                    showMore && "rotate-180"
-                  )}
-                />
-              </button>
-
-              {/* Dropdown */}
-              {showMore && (
-                <div
-                  className={cn(
-                    "absolute right-0 top-full z-50 mt-1",
-                    "min-w-[140px] rounded-lg",
-                    "border border-[#E0D8F0] bg-white shadow-xl shadow-black/10",
-                    "py-1"
-                  )}
-                  role="menu"
-                >
-                  {overflowTabs.map((tab) => {
-                    const isActive = activeSport === tab.id;
-                    const liveCount = liveCounts[tab.id] ?? 0;
-
-                    return (
-                      <button
-                        key={tab.id}
-                        role="menuitem"
-                        onClick={() => {
-                          onSportChange(tab.id);
-                          setShowMore(false);
-                        }}
-                        className={cn(
-                          "flex w-full items-center gap-2 px-3 py-1.5",
-                          "text-xs font-medium",
-                          "transition-colors duration-100",
-                          isActive
-                            ? "bg-[#7B3FA0]/10 text-[#7B3FA0]"
-                            : "text-[#1A1145] hover:bg-[#EDE8F5] hover:text-[#1A1145]"
-                        )}
-                      >
-                        <span className="text-sm">{tab.emoji}</span>
-                        <span>{tab.label}</span>
-                        <LiveBadge count={liveCount} />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Fade gradient sur le bord droit (mobile uniquement) */}
         <div
           className={cn(
             "pointer-events-none absolute right-0 top-0 h-full w-8",
-            "bg-gradient-to-l from-[#0e121e] to-transparent",
+            "bg-gradient-to-l from-white to-transparent",
             "md:hidden"
           )}
           aria-hidden="true"
