@@ -375,6 +375,28 @@ module.exports = {
       time: true,
     },
     {
+      // === Cron job TennisAbstract MCP (routine matinale serve/retour) ===
+      // Scrape les 4 leaderboards MCP (serve/return × hommes/dames, last52)
+      // et dérive SPW/RPW → data/ta-mcp.json, fallback leaderboard du moteur
+      // Top10 tennis (serveHold, over215 Markov, PowerScore, badges, radar).
+      // ~4 requêtes HTTP, cron-only.
+      name: 'pariscore-cron-ta-mcp',
+      script: 'scripts/scrape-tennisabstract-mcp.js',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 6 * * *', // quotidien à 06:30 UTC (après flashscore 06:15)
+      autorestart: false,         // cron-only, meurt après exécution
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: {
+        NODE_ENV: 'production',
+      },
+      error_file: 'logs/cron-ta-mcp.err.log',
+      out_file: 'logs/cron-ta-mcp.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // === Cron job Backtest Top 5 (settle + snapshot quotidien) ===      // 1. Settle les picks du backtest Top 5 football dont la date est passée
       //    (résultats BSD) ; 2. Snapshot du top 5 du jour tel que rendu par le
       //    moteur prod → data/top5-backtest/football.json. Consommé par

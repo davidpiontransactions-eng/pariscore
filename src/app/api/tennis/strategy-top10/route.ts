@@ -50,6 +50,8 @@ const prematchCache = createTtlCache<CachedPrematch>("__tennisStrategyTop10Prema
 /** Cache dédié Odds API : 2 crédits/appel sur 500/mois → 6h max (~8 crédits/j). */
 const oddsCache = createTtlCache<{ matches: TennisMatch[] }>("__tennisStrategyOddsCache");
 const ODDS_TTL_MS = 6 * 3600_000;
+/** Données MCP lentes (last52) : TTL 8 j. */
+const TA_TTL_MS = 8 * 24 * 3600_000;
 const strategyCache = createTtlCache<StrategyCacheEntry>("__tennisStrategyTop10Cache");
 
 function isStratKey(v: string | null): v is TennisStrategyKey {
@@ -360,6 +362,32 @@ export async function GET(req: NextRequest) {
 
     // 2) Leaderboard fusionné (serve/return/pressure ATP+WTA)
     const { byPlayer: lbByPlayer } = mergedLeaderboard();
+
+    // 2b) Fallback Tennis Abstract MCP (serve/retour dérivés, routine
+    // quotidienne data/ta-mcp.json) pour les clés absentes uniquement.
+    try {
+      const taFile = path.join(process.cwd(), "data", "ta-mcp.json");
+      const taRaw = JSON.parse(fs.readFileSync(taFile, "utf8")) as {
+        updatedAt?: string;
+        players?: Record<string, { serve?: number; return?: number }>;
+      };
+      const taAge = Date.now() - new Date(taRaw.updatedAt ?? 0).getTime();
+      if (taRaw.players && Number.isFinite(taAge) && taAge < TA_TTL_MS) {
+        let added = 0;
+        for (const [key, v] of Object.entries(taRaw.players)) {
+          if (lbByPlayer.has(key)) continue;
+          if (v.serve == null && v.return == null) continue;
+          lbByPlayer.set(key, {
+            servicePointsWonPct: v.serve ?? null,
+            returnPointsWonPct: v.return ?? null,
+          });
+          added += 1;
+        }
+        if (added > 0) console.log(`[tennis-strategy-top10] ta-mcp: +${added} joueurs`);
+      }
+    } catch {
+      /* optionnel : moteur inchangé sans le fichier */
+    }
 
     // 2b) Matchs externes → signaux BSD (intégration au Top10)
     graftExternalSignals(windowed, lbByPlayer);
