@@ -43,14 +43,33 @@ type StrategyPayload = {
 type StrategyCacheEntry = { strat: string; win: string; payload: StrategyPayload };
 
 const prematchCache = createTtlCache<CachedPrematch>("__tennisStrategyTop10PrematchCache");
+/** Cache dédié Odds API : 2 crédits/appel sur 500/mois → 6h max (~8 crédits/j). */
+const oddsCache = createTtlCache<{ matches: TennisMatch[] }>("__tennisStrategyOddsCache");
+const ODDS_TTL_MS = 6 * 3600_000;
 const strategyCache = createTtlCache<StrategyCacheEntry>("__tennisStrategyTop10Cache");
 
 function isStratKey(v: string | null): v is TennisStrategyKey {
   return !!v && TENNIS_STRATEGY_DEFS.some((d) => d.key === v);
 }
 
-async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: string }> {
-  const cached = prematchCache.getEntry();
+/** Extra Odds API (ATP+WTA, horizon multi-jours) — 6h TTL, stale en repli. */
+async function loadOddsExtra(): Promise<TennisMatch[]> {
+  const oddsKey = process.env.ODDS_API_KEY;
+  if (!oddsKey) return [];
+  const cached = oddsCache.getEntry();
+  if (cached && isFresh(cached, ODDS_TTL_MS)) return cached.data.matches;
+  try {
+    const { fetchRealMatches } = await import("@/lib/real-matches");
+    const matches = await fetchRealMatches(oddsKey);
+    oddsCache.set({ matches });
+    return matches;
+  } catch (err) {
+    console.warn("[tennis-strategy-top10] odds-extra failed:", (err as Error).message);
+    return cached?.data.matches ?? [];
+  }
+}
+
+async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: string }> {  const cached = prematchCache.getEntry();
   if (cached && isFresh(cached, PREMATCH_TTL_MS)) return cached.data;
   const bsdKey = process.env.BSD_API_KEY;
   const bsdEnabled = process.env.BSD_TENNIS_ENABLED === "true";
@@ -59,14 +78,9 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
     const { fetchBSDMatches } = await import("@/lib/bsd-fetcher");
     // Enrichissement jours suivants : l'Odds API couvre ATP+WTA sur plusieurs
     // jours (au-delà des ~2 j BSD). Fusion dédupliquée par paire de joueurs.
-    const oddsKey = process.env.ODDS_API_KEY;
     const [bsdMatches, oddsMatches] = await Promise.all([
       fetchBSDMatches(),
-      oddsKey
-        ? import("@/lib/real-matches")
-            .then((m) => m.fetchRealMatches(oddsKey))
-            .catch(() => [] as TennisMatch[])
-        : Promise.resolve([] as TennisMatch[]),
+      loadOddsExtra(),
     ]);
     const seen = new Set(
       bsdMatches.map((m: TennisMatch) =>
@@ -83,6 +97,11 @@ async function loadPrematchMatches(): Promise<{ matches: TennisMatch[]; source: 
       return true;
     });
     const matches = [...bsdMatches, ...extra];
+    if (extra.length > 0 || bsdMatches.length === 0) {
+      console.log(
+        `[tennis-strategy-top10] prematch: bsd=${bsdMatches.length} odds-extra=${extra.length}`,
+      );
+    }
     const data = { matches, source: extra.length > 0 ? "bsd+odds" : "bsd" };
     prematchCache.set(data);
     return data;
