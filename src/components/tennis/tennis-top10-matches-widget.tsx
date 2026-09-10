@@ -32,9 +32,9 @@ const C = {
 type WinKey = "all" | "today" | "tomorrow";
 
 /** Convertit les entrées tennis en lignes StrategyTableRow. */
-function toTableRows(entries: TennisStrategyEntry[]): StrategyTableRow[] {
+function toTableRows(entries: TennisStrategyEntry[], strat: TennisStrategyKey): StrategyTableRow[] {
+  const def = TENNIS_STRATEGY_DEFS.find((d) => d.key === strat);
   return entries.map((e) => {
-    const def = TENNIS_STRATEGY_DEFS.find((d) => d.key === d.key);
     return {
       matchId: e.matchId,
       league: e.tournament,
@@ -55,9 +55,28 @@ function toTableRows(entries: TennisStrategyEntry[]): StrategyTableRow[] {
 }
 
 
-export function TennisTop10MatchesWidget() {
-  const [strat, setStrat] = useState<TennisStrategyKey>("surfaceEloGap");
-  const [win, setWin] = useState<WinKey>("all");
+/** Lit strat/win depuis l'URL (?strat=&win=) pour le deep-link partageable. */
+function readInitialParams(): { strat: TennisStrategyKey; win: WinKey } {
+  const fallback = { strat: "surfaceEloGap" as TennisStrategyKey, win: "all" as WinKey };
+  if (typeof window === "undefined") return fallback;
+  const sp = new URLSearchParams(window.location.search);
+  const s = sp.get("strat");
+  const w = sp.get("win");
+  return {
+    strat: TENNIS_STRATEGY_DEFS.some((d) => d.key === s) ? (s as TennisStrategyKey) : fallback.strat,
+    win: w === "today" || w === "tomorrow" ? w : "all",
+  };
+}
+
+type Props = {
+  /** Remonte les matchs qualifiés (pour le calendrier synchronisé). */
+  onEntries?: (entries: TennisStrategyEntry[]) => void;
+};
+
+export function TennisTop10MatchesWidget({ onEntries }: Props = {}) {
+  const initial = useMemo(() => readInitialParams(), []);
+  const [strat, setStrat] = useState<TennisStrategyKey>(initial.strat);
+  const [win, setWin] = useState<WinKey>(initial.win);
   const [data, setData] = useState<TennisStrategyTop10Result | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -72,12 +91,23 @@ export function TennisTop10MatchesWidget() {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<TennisStrategyTop10Result>;
       })
-      .then((d) => setData(d))
+      .then((d) => {
+        setData(d);
+        onEntries?.(d.strategies[strat] ?? []);
+      })
       .catch((err) => {
         if ((err as Error).name !== "AbortError") setError(err as Error);
       })
       .finally(() => setIsLoading(false));
     return () => ac.abort();
+  }, [strat, win, onEntries]);
+
+  // Deep-link : reflète strat/win dans l'URL (partageable, comme le foot).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    sp.set("strat", strat);
+    sp.set("win", win);
+    window.history.replaceState(null, "", `${window.location.pathname}?${sp.toString()}`);
   }, [strat, win]);
 
   const activeDef = useMemo(
@@ -88,7 +118,7 @@ export function TennisTop10MatchesWidget() {
   const rows = useMemo(() => {
     if (!data?.strategies) return [];
     const entries = data.strategies[strat] ?? [];
-    return toTableRows(entries);
+    return toTableRows(entries, strat);
   }, [data, strat]);
 
   return (

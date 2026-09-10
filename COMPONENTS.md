@@ -7,7 +7,7 @@
 >
 > Generated 2026-07-24 from `src/components/`. **Regenerate** after adding/removing
 > components: `node scripts/regen-component-registry.mjs` (TODO) or re-run the
-> extract pass. 197 components total (football: 14, leagues: 6, tennis: 63, basketball: 17, shared: 10, mobile: 7, dashboard: 3, betting: 4, etc.).
+> extract pass. 196 components total (football: 14, leagues: 6, tennis: 62, basketball: 17, shared: 10, mobile: 7, dashboard: 3, betting: 4, etc.).
 
 ## ⚠️ Common hallucinations (these do NOT exist)
 
@@ -92,9 +92,7 @@ If absent, STOP searching — create it or ask. Do not retry with name variants.
 | stats-leaderboard | stats-leaderboard.tsx | Leaderboard stats joueurs type ATP (page `/tennis/stats`) |
 | stats-radar-chart | stats-radar-chart.tsx | Radar chart des stats (6 axes) |
 | surface-badge | surface-badge.tsx | Badge surface (Dur/Terre battue/Gazon) |
- | tennis-calendar-wrapper | tennis-calendar-wrapper.tsx | Wrapper calendrier tennis — mappe TennisMatch[] vers FotmobCalMatch[] (playerA/B → home/away, tournoi → ligue) |
- | tennis-calendar-strategy-view | tennis-calendar-strategy-view.tsx | Vue sous-onglet "Stratégies" — calendrier + Top 10 matchs par stratégie de pari |
- | tennis-calendar-strategy-view | tennis-calendar-strategy-view.tsx | Vue sous-onglet "Stratégies" — calendrier + Top 10 matchs par stratégie de pari |
+ | tennis-calendar-strategy-view | tennis-calendar-strategy-view.tsx | Vue sous-onglet "Stratégies" — calendrier FotMob des qualifiés + Top 10 matchs par stratégie (deep-link ?strat=&win=) |
 | tennis-search-bar | tennis-search-bar.tsx | Barre de recherche tennis (joueurs/tournois) |
 | tennis-strategy-top5-widget | tennis-strategy-top5-widget.tsx | Top 5 matchs par métrique (Élo surface, service, retour…) — filtres déroulants, miroir du widget foot sidebar |
  | tennis-strategy-top10-matches-widget | tennis-top10-matches-widget.tsx | Top 10 matchs tennis par stratégie de pari (Élo, momentum, service, fatigue, over/under…) — sélecteur stratégie + fenêtre, miroir du widget foot |
