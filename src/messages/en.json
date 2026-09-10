@@ -191,6 +191,8 @@
     "subTabListAria": "Flashscore match list",
     "subTabRankings": "Top 10",
     "subTabRankingsAria": "Top 10 players by metric",
+    "subTabCalendar": "Strategies",
+    "subTabCalendarAria": "Top 10 matches by betting strategy",
     "subTabsAriaLabel": "Tennis sub-tabs",
     "noLiveMatches": "No live matches",
     "noTournaments": "No tournaments available",
