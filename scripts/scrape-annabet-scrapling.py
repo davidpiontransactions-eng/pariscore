@@ -23,10 +23,10 @@ def get_fetcher():
     from scrapling.fetchers import StealthyFetcher
     return StealthyFetcher
 
-def fetch_html(StealthyFetcher, url, max_retries=3):
+def fetch_html(StealthyFetcher, url, max_retries=5):
     for attempt in range(max_retries):
         try:
-            page = StealthyFetcher.fetch(url, headless=True, wait_selector="body", timeout=30000)
+            page = StealthyFetcher.fetch(url, headless=True, wait_selector="body", timeout=60000)
             # Vérifier si c'est un 429
             if hasattr(page, 'status') and page.status == 429:
                 wait = (attempt + 1) * 10
@@ -222,7 +222,7 @@ def main():
                     print(f"[scrapling]   H2H error: {e}")
                     results.append({**match, "h2h": None, "error": str(e)})
 
-                time.sleep(6)
+                time.sleep(10)
 
             output["leagues"][league["id"]] = {"matches": results}
 
