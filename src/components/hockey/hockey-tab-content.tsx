@@ -388,21 +388,21 @@ export function HockeyTabContent() {
     fetch("/api/hockey/projections")
       .then((r) => r.ok ? r.json() : fetch("/data/hockeystats_nhl_projections.json").then((r2) => r2.json()))
       .then((data: ProjectionsData) => { setProjections(data); setLoadingProj(false); })
-      .catch(() => setLoadingProj(false));
+      .catch((e) => { console.error("[hockey] projections fetch failed:", e); setLoadingProj(false); });
   }, []);
 
   useEffect(() => {
     fetch("/api/hockey/standings")
       .then((r) => r.ok ? r.json() : null)
       .then((data: StandingsPayload | null) => { setStandings(data); setLoadingStand(false); })
-      .catch(() => setLoadingStand(false));
+      .catch((e) => { console.error("[hockey] standings fetch failed:", e); setLoadingStand(false); });
   }, []);
 
   useEffect(() => {
     fetch("/api/hockey/player-stats")
       .then((r) => r.ok ? r.json() : null)
       .then((data: PlayerStatsPayload | null) => { setPlayerStats(data); setLoadingPlayers(false); })
-      .catch(() => setLoadingPlayers(false));
+      .catch((e) => { console.error("[hockey] player-stats fetch failed:", e); setLoadingPlayers(false); });
   }, []);
 
   const westTeams = useMemo(() => projections?.conferences.west ?? [], [projections]);
@@ -564,11 +564,17 @@ export function HockeyTabContent() {
         </>
       )}
 
-      {/* Error */}
+      {/* Error — all leagues */}
+      {!loading && !standings && !projections && activeLeague === "nhl" && subView === "standings" && (
+        <div className="text-center text-white/50 text-sm py-10">
+          <Info className="w-5 h-5 mx-auto mb-2 text-white/30" />
+          Données NHL indisponibles — Lancez <code>scrape-hockeystats-projections.mjs</code>
+        </div>
+      )}
       {!loading && activeLeague !== "nhl" && !standings && (
         <div className="text-center text-white/50 text-sm py-10">
           <Info className="w-5 h-5 mx-auto mb-2 text-white/30" />
-          Donnees indisponibles. Lancez les scrapers.
+          Données indisponibles. Lancez les scrapers.
         </div>
       )}
 
