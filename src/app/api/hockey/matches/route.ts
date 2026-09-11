@@ -113,30 +113,38 @@ async function fetchBSDHockey(): Promise<unknown[]> {
 
 async function fetchAnnabetMock(): Promise<unknown[]> {
   try {
-    const matchPath = join(process.cwd(), "data", "annabet_hockey.json");
+    const matchPath = join(process.cwd(), "data", "annabet_hockey_prematch.json");
     if (existsSync(matchPath)) {
       const data = JSON.parse(readFileSync(matchPath, "utf8"));
-      if (data.matches && Array.isArray(data.matches)) {
-        return data.matches.map((m: Record<string, unknown>) => ({
-          id: m.id || "annabet-" + Math.random().toString(36).slice(2),
-          homeName: m.home || "Home",
-          awayName: m.away || "Away",
-          scheduledAt: m.date || null,
-          isLive: !!m.isLive,
-          leagueId: m.league || "hockey",
-          leagueName: m.league || "Hockey",
-          countryName: m.country || "International",
-          countryCode: m.countryCode || "INT",
-          oddsH: m.odds1,
-          oddsD: m.oddsX,
-          oddsA: m.odds2,
-          probH: m.probH,
-          probD: m.probX,
-          probA: m.prob2,
-          h2hUrl: m.h2hUrl || null,
-          source: "annabet",
-        }));
+      const matches: unknown[] = [];
+      // Structure: { leagues: { khl: { matches: [...] }, nhl: { matches: [...] }, ... } }
+      if (data.leagues && typeof data.leagues === "object") {
+        const leagues = data.leagues as Record<string, { matches?: Array<Record<string, unknown>> }>;
+        for (const [leagueId, league] of Object.entries(leagues)) {
+          if (league?.matches && Array.isArray(league.matches)) {
+            for (const m of league.matches) {
+              const odds = m.odds1X2 as Record<string, number> | undefined;
+              matches.push({
+                id: `annabet-${leagueId}-${m.team1Id ?? Math.random().toString(36).slice(2)}`,
+                homeName: m.team1Name || "Home",
+                awayName: m.team2Name || "Away",
+                scheduledAt: m.date || null,
+                isLive: false,
+                leagueId,
+                leagueName: leagueId.toUpperCase(),
+                countryName: "International",
+                countryCode: "INT",
+                oddsH: odds?.home ?? null,
+                oddsD: odds?.draw ?? null,
+                oddsA: odds?.away ?? null,
+                h2h: m.h2h || null,
+                source: "annabet",
+              });
+            }
+          }
+        }
       }
+      return matches;
     }
     return [];
   } catch (e) {
