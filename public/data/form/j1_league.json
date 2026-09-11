@@ -4,7 +4,7 @@
     "leagueId": "j1_league",
     "leagueName": "Japan",
     "season": "2026/27",
-    "lastUpdated": "2026-09-10T09:04:33.251594Z",
+    "lastUpdated": "2026-09-11T09:02:20.214453Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,24 +13,6 @@
   },
   "home": [
     {
-      "teamName": "K. Frontale",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 9,
-      "ga": 5
-    },
-    {
-      "teamName": "Fagiano Okayama",
-      "gp": 3,
-      "w": 2,
-      "d": 1,
-      "l": 0,
-      "gf": 4,
-      "ga": 2
-    },
-    {
       "teamName": "Cerezo Osaka",
       "gp": 4,
       "w": 3,
@@ -38,6 +20,24 @@
       "l": 0,
       "gf": 5,
       "ga": 1
+    },
+    {
+      "teamName": "S. Hiroshima",
+      "gp": 3,
+      "w": 2,
+      "d": 1,
+      "l": 0,
+      "gf": 7,
+      "ga": 1
+    },
+    {
+      "teamName": "K. Frontale",
+      "gp": 3,
+      "w": 2,
+      "d": 1,
+      "l": 0,
+      "gf": 9,
+      "ga": 5
     },
     {
       "teamName": "Vissel Kobe",
@@ -49,13 +49,13 @@
       "ga": 3
     },
     {
-      "teamName": "S. Hiroshima",
+      "teamName": "Fagiano Okayama",
       "gp": 3,
       "w": 2,
       "d": 1,
       "l": 0,
-      "gf": 7,
-      "ga": 1
+      "gf": 4,
+      "ga": 2
     }
   ],
   "away": [
@@ -66,15 +66,6 @@
       "d": 1,
       "l": 0,
       "gf": 13,
-      "ga": 3
-    },
-    {
-      "teamName": "Yokohama M.",
-      "gp": 3,
-      "w": 2,
-      "d": 0,
-      "l": 1,
-      "gf": 5,
       "ga": 3
     },
     {
@@ -94,6 +85,15 @@
       "l": 1,
       "gf": 3,
       "ga": 1
+    },
+    {
+      "teamName": "Yokohama M.",
+      "gp": 3,
+      "w": 2,
+      "d": 0,
+      "l": 1,
+      "gf": 5,
+      "ga": 3
     },
     {
       "teamName": "Kashima Antlers",
