@@ -95,6 +95,13 @@ if [ "$NEED_BUILD" = "1" ]; then
   # Sync .env → standalone (.env vars lues au runtime par Next.js standalone ;
   # les vars ajoutées après le build ne seraient pas copiées sans ce step).
   cp -f .env .next/standalone/.env 2>/dev/null || true
+  # Fix Windows→Linux : le package `debug` manque dans require-in-the-middle (Sentry)
+  # Le dossier existe déjà dans le standalone mais `debug` n'est pas copié.
+  DEBUG_FIX=$(find .next/standalone/.next/node_modules -maxdepth 1 -type d -name "require-in-the-middle-*" 2>/dev/null | head -1)
+  if [ -n "$DEBUG_FIX" ] && [ ! -d "$DEBUG_FIX/node_modules/debug" ]; then
+    echo "  [fix] installing missing debug in $DEBUG_FIX"
+    cd "$DEBUG_FIX" && bun add debug --no-save 2>/dev/null && cd -
+  fi
   # Mise à jour des aliases nginx pour pointer vers le standalone
   sudo sed -i 's|alias /home/ubuntu/pariscore/.next/static/;|alias /opt/pariscorebis/.next/standalone/.next/static/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
   sudo sed -i 's|alias /home/ubuntu/pariscore/public/;|alias /opt/pariscorebis/.next/standalone/public/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true

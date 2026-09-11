@@ -185,6 +185,12 @@ if [ "$NEED_BUILD" = "1" ]; then
   npx prisma db push --skip-generate 2>&1 | tail -3 | tee -a "$LOG_FILE" || { err "prisma db push failed"; exit 1; }
   npx prisma generate 2>&1 | tail -3 | tee -a "$LOG_FILE" || { err "prisma generate failed"; exit 1; }
   cp -f .env .next/standalone/.env 2>/dev/null || true
+  # Fix Windows→Linux : package `debug` manque dans require-in-the-middle (Sentry)
+  DEBUG_FIX=$(find .next/standalone/.next/node_modules -maxdepth 1 -type d -name "require-in-the-middle-*" 2>/dev/null | head -1)
+  if [ -n "$DEBUG_FIX" ] && [ ! -d "$DEBUG_FIX/node_modules/debug" ]; then
+    log "  [fix] installing missing debug in $DEBUG_FIX"
+    (cd "$DEBUG_FIX" && bun add debug --no-save 2>/dev/null) || true
+  fi
   ok "  Build + Prisma sync complete"
 
   # --- Fix static asset permissions (chunks + public/) ---
