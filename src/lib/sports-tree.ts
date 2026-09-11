@@ -25,7 +25,7 @@ import {
 
 export const MAX_LEVEL4_MATCHES = 8;
 
-export const SPORT_META: Record<SportTabId, { name: string; icon: string }> = {
+export const SPORT_META: Record<SportTabId, { name: string; icon: string }> & { [k in "hockey"]?: { name: string; icon: string } } = {
   home: { name: "Accueil", icon: "Home" },
   football: { name: "Football", icon: "Trophy" },
   tennis: { name: "Tennis", icon: "Activity" },
@@ -37,6 +37,7 @@ export const SPORT_META: Record<SportTabId, { name: string; icon: string }> = {
   baseball: { name: "Baseball", icon: "Volleyball" },
   rugby: { name: "Rugby", icon: "Shield" },
   snooker: { name: "Snooker", icon: "Target" },
+  hockey: { name: "Hockey", icon: "Puck" },
 };
 
 // ---------------------------------------------------------------------------
@@ -815,6 +816,16 @@ export function rugbySportNode(competitions: MinimalRugbyCompetition[] | undefin
     0,
   );
   return { ...emptySportNode("rugby"), totalMatches: total, countries };
+}
+
+// ---------------------------------------------------------------------------
+// Hockey — nœud minimal (données Annabet + SkipOdds)
+// ---------------------------------------------------------------------------
+
+export function hockeySportNode(matches: unknown[] | undefined | null): SportNode {
+  const list = Array.isArray(matches) ? matches : [];
+  const total = list.length;
+  return { ...emptySportNode("hockey"), totalMatches: total };
 }
 
 // ---------------------------------------------------------------------------

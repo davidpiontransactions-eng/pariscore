@@ -68,6 +68,7 @@ import {
   HelmetPicto,
   BaseballPicto,
   RugbyPicto,
+  HockeyPicto,
 } from "@/components/ui/sport-pictograms";
 
 /**
@@ -84,6 +85,7 @@ const SPORT_ICONS: Record<string, React.ComponentType<{ className?: string }>> =
   Flag: HelmetPicto,
   Volleyball: BaseballPicto,
   Shield: RugbyPicto,
+  Puck: HockeyPicto,
 };
 
 /** Couleurs de fond par sport pour les badges de la sidebar réduite. */
@@ -97,6 +99,7 @@ const SPORT_COLORS: Record<string, { bg: string; text: string }> = {
   f1: { bg: "bg-[#E53935]/15", text: "text-[#E53935]" },
   baseball: { bg: "bg-[#FF6D00]/15", text: "text-[#FF6D00]" },
   rugby: { bg: "bg-[#14B8A6]/15", text: "text-[#14B8A6]" },
+  hockey: { bg: "bg-[#0EA5E9]/15", text: "text-[#0EA5E9]" },
 };
 
 /** Favoris par défaut tant que l'utilisateur n'a pas personnalisé. */

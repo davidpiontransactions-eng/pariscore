@@ -11,6 +11,7 @@ import {
   f1ToRaw,
   footballToRaw,
   groupRawMatches,
+  hockeySportNode,
   mmaToRaw,
   rugbySportNode,
   sortSportsTree,
@@ -212,8 +213,17 @@ async function loadRugby(): Promise<SportNode> {
   }
 }
 
+async function loadHockey(): Promise<SportNode> {
+  try {
+    const json = await getJson("/api/hockey/matches");
+    return hockeySportNode(json?.matches ?? []);
+  } catch {
+    return emptySportNode("hockey");
+  }
+}
+
 async function buildTree(): Promise<SportNode[]> {
-  const [football, tennis, cs2, basketball, mma, cycling, f1, baseball, rugby] =
+  const [football, tennis, cs2, basketball, mma, cycling, f1, baseball, rugby, hockey] =
     await Promise.all([
       loadFootball(),
       loadTennis(),
@@ -224,6 +234,7 @@ async function buildTree(): Promise<SportNode[]> {
       loadF1(),
       loadBaseball(),
       loadRugby(),
+      loadHockey(),
     ]);
   return sortSportsTree([
     football,
@@ -235,6 +246,7 @@ async function buildTree(): Promise<SportNode[]> {
     f1,
     baseball,
     rugby,
+    hockey,
   ]);
 }
 
