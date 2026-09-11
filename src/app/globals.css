@@ -88,11 +88,6 @@
   --animate-aurora: aurora-drift 26s var(--ease-standard) infinite alternate;
   --animate-grid-pan: grid-pan 24s linear infinite;
   --animate-bounce-soft: bounce-soft 1.2s var(--ease-emphasized) infinite;
-  --color-sport-football: var(--sport-football);
-  --color-sport-tennis: var(--sport-tennis);
-  --color-sport-mma: var(--sport-mma);
-  --color-sport-f1: var(--sport-f1);
-  --color-sport-basketball: var(--sport-basketball);
 }
 
 :root {

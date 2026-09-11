@@ -54,7 +54,7 @@ export function FootballPicto(props: PictoProps) {
       <circle {...strokeProps} cx="12" cy="12" r="9" />
       <path
         {...strokeProps}
-        d="m12 7.2 3.6 2.6-1.4 4.2H9.8l-1.4-4.2L12 7.2Zm0-4.2v4.2M8.4 9.8 4 8.5m4.4 1.3 1.4 4.2-3 3.4m3-3.4h4.4l1.4 4.2m-1.4-4.2 3-3.4 4.4-1.3m-3 3.4-1.4-4.2"
+        d="m12 7.2 3.6 2.6-1.4 4.2H9.8l-1.4-4.2L12 7.2Zm0-4.2v4.2M8.4 9.8 4 8.5m4.4 1.3 1.4 4.2-3 3.4m3-3.4h4.4l1.4 4.2m-1.4-4.2 3-3.4h4.4l1.4 4.2m-1.4-4.2 3-3.4h4.4l1.4 4.2m-3 3.4-1.4-4.2"
       />
     </Base>
   );
@@ -77,7 +77,7 @@ export function MmaPicto(props: PictoProps) {
     <Base {...props}>
       <path
         {...strokeProps}
-        d="M8 10V5.5A1.5 1.5 0 0 1 9.5 4v0A1.5 1.5 0 0 1 11 5.5V9m0-4.5A1.5 1.5 0 0 1 12.5 3v0A1.5 1.5 0 0 1 14 4.5V9m0-3.5A1.5 1.5 0 0 1 15.5 4v0A1.5 1.5 0 0 1 17 5.5v5c0 3.6-2 6.5-5.5 6.5-2.3 0-4-1-5.2-2.7L4 11.5c-.5-.7-.3-1.6.4-2.1.6-.4 1.4-.3 2 .2L8 11V8.5"
+        d="M8 10V5.5A1.5 1.5 0 0 1 9.5 4v0A1.5 1.5 0 0 1 11 5.5V9m0-4.5A1.5 1.5 0 0 1 12.5 3v0A1.5 1.5 0 0 1 13 4.5V9m0-3.5A1.5 1.5 0 0 1 14 4.5V9m0-3.5A1.5 1.5 0 0 1 15.5 4v0A1.5 1.5 0 0 1 16 5.5v5c0 3.6-2 6.5-5.5 6.5-2.3 0-4-1-5.2-2.7L4 11.5c-.5-.7-.3-1.6.4-2.1 6-.4 1.4-.3 2 .2L8 11V8.5"
       />
       <path {...strokeProps} d="M8 16.5c2.5 1 5.5 1 8-.5" opacity=".6" />
     </Base>
@@ -136,7 +136,7 @@ export function RugbyPicto(props: PictoProps) {
     <Base {...props}>
       <path
         {...strokeProps}
-        d="M16.9 3.6c1.7-.5 3.1-.4 3.5 0s.5 1.8 0 3.5c-.7 2.7-2.4 6-5.2 8.8s-6.1 4.5-8.8 5.2c-1.7.5-3.1.4-3.5 0s-.4-1.8 0-3.5c.7-2.7 2.4-6 5.2-8.8s6.1-4.5 8.8-5.2Z"
+        d="M16.9 3.6c1.7-.5 3.1-.4 3.5 0s.5 1.8 0 3.5c-.7 2.7-2.4 6-5.2 8.8s-6.1 4.5-8.8 5.2c-1.7.5-3.1.4-3.5 0s-.5-1.8 0-3.5c.7-2.7 2.4-6 5.2-8.8s6.1-4.5 8.8-5.2Z"
       />
       <path {...strokeProps} d="m9.5 9.5 5 5m-4-3 -1.4 1.4m4-4 1.4-1.4m-3 3-1.4 1.4m4-4 1.4-1.4" />
     </Base>
@@ -150,6 +150,17 @@ export function SnookerPicto(props: PictoProps) {
       <circle {...strokeProps} cx="12" cy="12" r="9" />
       <circle {...strokeProps} cx="12" cy="12" r="3.4" />
       <circle cx="12" cy="12" r="1.1" fill="currentColor" />
+    </Base>
+  );
+}
+
+/** Hockey — patin + palet. */
+export function HockeyPicto(props: PictoProps) {
+  return (
+    <Base {...props}>
+      <path {...strokeProps} d="M12 3v5m0 12v5M4.93 4.93l2.83 2.83m8.38 8.38l2.83-2.83M15.06 15.06l-2.83-2.83m-8.38-8.38l2.83 2.83" />
+      <circle {...strokeProps} cx="12" cy="12" r="5" />
+      <circle {...strokeProps} cx="12" cy="12" r="1.5" fill="none" />
     </Base>
   );
 }
