@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { createTtlCache } from "@/lib/cached-route";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+
+const CACHE_TTL = 60 * 60_000; // 1h — données match-day
 
 type StatBlock = {
   oneXtwo?: {
@@ -71,8 +73,8 @@ function loadFromFile(): PrematchPayload | null {
 }
 
 export async function GET() {
-  const cached = cache.get();
-  if (cached) return NextResponse.json(cached);
+  const cached = cache.getEntry();
+  if (cached?.data && isFresh(cached, CACHE_TTL)) return NextResponse.json(cached.data);
 
   const data = loadFromFile();
   if (!data) {

@@ -420,5 +420,73 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       time: true,
     },
+    // ─── Hockey scrapers (Annabet + EliteProspects + Hockeystats) ──────────
+    {
+      // Scraper Annabet via scrapling (Camoufox) — KHL + NHL + Magnus
+      name: 'pariscore-cron-hockey-annabet',
+      script: 'python3',
+      args: 'scripts/scrape-annabet-scrapling.py',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 3 * * *', // quotidien à 03:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '1G',
+      env: { NODE_ENV: 'production' },
+      error_file: 'logs/cron-hockey-annabet.err.log',
+      out_file: 'logs/cron-hockey-annabet.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // EliteProspects standings + player stats (KHL, NHL, Magnus)
+      name: 'pariscore-cron-hockey-eliteprospects',
+      script: 'node',
+      args: 'scripts/scrape-eliteprospects-hockey.mjs',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '30 3 * * *', // quotidien à 03:30 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: { NODE_ENV: 'production' },
+      error_file: 'logs/cron-hockey-eliteprospects.err.log',
+      out_file: 'logs/cron-hockey-eliteprospects.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // Hockeystats projections NHL
+      name: 'pariscore-cron-hockey-projections',
+      script: 'node',
+      args: 'scripts/scrape-hockeystats-projections.mjs',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '0 4 * * *', // quotidien à 04:00 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: { NODE_ENV: 'production' },
+      error_file: 'logs/cron-hockey-projections.err.log',
+      out_file: 'logs/cron-hockey-projections.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
+      // Restart pariscore-next pour vider le cache in-memory après scrapers
+      name: 'pariscore-cron-hockey-restart',
+      script: 'pm2',
+      args: 'restart pariscore-next',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '10 4 * * *', // quotidien à 04:10 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '128M',
+      error_file: 'logs/cron-hockey-restart.err.log',
+      out_file: 'logs/cron-hockey-restart.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
   ],
 };

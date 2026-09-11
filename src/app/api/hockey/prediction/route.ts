@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { createTtlCache } from "@/lib/cached-route";
+import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+
+const CACHE_TTL = 60 * 60_000; // 1h — dérivé des données prematch
 import {
   predictHockeyMatch,
   estimateLambdas,
@@ -141,8 +143,8 @@ function findPlayers(
 // ─── GET /api/hockey/prediction ─────────────────────────────────────────────
 
 export async function GET() {
-  const cached = cache.get();
-  if (cached) return NextResponse.json(cached);
+  const cached = cache.getEntry();
+  if (cached?.data && isFresh(cached, CACHE_TTL)) return NextResponse.json(cached.data);
 
   // Charger les données source
   const prematch = loadJson<{ leagues: Record<string, { matches: MatchPrematch[] }> }>(

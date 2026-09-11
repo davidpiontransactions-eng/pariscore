@@ -44,9 +44,9 @@ function loadFromFile(): ProjectionsPayload | null {
 
 export async function GET() {
   // Cache frais → servir
-  const cached = cache.get();
-  if (cached) {
-    return NextResponse.json(cached);
+  const cached = cache.getEntry();
+  if (cached?.data && isFresh(cached, CACHE_TTL)) {
+    return NextResponse.json(cached.data);
   }
 
   // Charger depuis le fichier JSON scrapé
