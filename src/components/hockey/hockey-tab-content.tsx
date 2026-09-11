@@ -10,11 +10,12 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, TrendingUp, Flame, Info, BarChart3, Users, FileText } from "lucide-react";
+import { Trophy, TrendingUp, Flame, Info, BarChart3, Users, FileText, Calendar } from "lucide-react";
 import { HockeyProjectionGraph } from "./hockey-projection-graph";
 import { HockeyTopPlayers } from "./hockey-top-players";
 import { HockeyPrematchPopup } from "./hockey-prematch-popup";
 import { useHockeyPrematch, type MatchPrematch } from "@/hooks/use-hockey-prematch";
+import { useHockeyMatches, type HockeyMatch } from "@/hooks/use-hockey-matches";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ const LEAGUES: { id: LeagueId; label: string; flag: string }[] = [
   { id: "magnus", label: "Magnus", flag: "🇫🇷" },
 ];
 
-type SubView = "standings" | "projection" | "top10" | "prematch";
+type SubView = "standings" | "projection" | "top10" | "prematch" | "calendrier";
 
 const SEASON_LENGTHS: Record<LeagueId, number> = {
   nhl: 82,
@@ -310,6 +311,64 @@ function KhlSpotlight({ teams }: { teams: TeamStanding[] }) {
   );
 }
 
+// ─── Calendrier Hockey ──────────────────────────────────────────────────────
+
+function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyMatch[]; isLoading: boolean; activeLeague: LeagueId }) {
+  const filtered = useMemo(() => {
+    return matches.filter((m) => m.leagueId === activeLeague);
+  }, [matches, activeLeague]);
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-2">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="h-14 bg-white/5 rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  if (filtered.length === 0) {
+    return (
+      <div className="text-center text-white/50 text-sm py-10">
+        <Calendar className="w-5 h-5 mx-auto mb-2 text-white/30" />
+        Aucun match {activeLeague.toUpperCase()} à venir.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-white/40 mb-3">
+        {filtered.length} matchs {activeLeague.toUpperCase()} — Source: Annabet / BSD / SkipOdds
+      </p>
+      {filtered.map((m) => (
+        <div
+          key={m.id}
+          className="flex items-center justify-between px-4 py-3 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-lg transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-white/30 uppercase w-10">{m.leagueId}</span>
+            <span className="text-sm font-semibold text-white">{m.homeName}</span>
+            <span className="text-xs text-white/30">vs</span>
+            <span className="text-sm font-semibold text-white">{m.awayName}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {m.oddsH != null && (
+              <div className="flex gap-2 text-[10px]">
+                <span className="text-[#00e676]">{m.oddsH?.toFixed(2)}</span>
+                {m.oddsD != null && <span className="text-[#ffd93d]">{m.oddsD?.toFixed(2)}</span>}
+                <span className="text-[#5fbfff]">{m.oddsA?.toFixed(2)}</span>
+              </div>
+            )}
+            {m.isLive && <span className="text-[10px] text-red-400 font-bold">LIVE</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export function HockeyTabContent() {
@@ -322,6 +381,7 @@ export function HockeyTabContent() {
   const [loadingStand, setLoadingStand] = useState(true);
   const [loadingPlayers, setLoadingPlayers] = useState(true);
   const { prematch } = useHockeyPrematch();
+  const { data: matchesData, isLoading: loadingMatches } = useHockeyMatches();
   const [selectedMatch, setSelectedMatch] = useState<MatchPrematch | null>(null);
 
   useEffect(() => {
@@ -410,6 +470,12 @@ export function HockeyTabContent() {
               subView === "prematch" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
             )}>
             <FileText className="w-3.5 h-3.5" /> Pré-match
+          </button>
+          <button onClick={() => setSubView("calendrier")}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+              subView === "calendrier" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+            )}>
+            <Calendar className="w-3.5 h-3.5" /> Calendrier
           </button>
         </div>
       </div>
@@ -553,6 +619,11 @@ export function HockeyTabContent() {
             </div>
           )}
         </>
+      )}
+
+      {/* ─── CALENDRIER ────────────────────────────────────────────── */}
+      {!loading && subView === "calendrier" && (
+        <HockeyCalendar matches={matchesData?.matches ?? []} isLoading={loadingMatches} activeLeague={activeLeague} />
       )}
 
       {/* Prematch Popup */}

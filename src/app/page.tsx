@@ -368,7 +368,7 @@ function HomeInner() {
               <TennisTop10MatchesWidget />
               <TennisCalendarSection />
             </div>
-          ) : (
+          ) : activeTab === "hockey" ? null : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
               mode={headerMode}
@@ -480,6 +480,7 @@ function HomeInner() {
         </motion.div>
 
         {/* Sections déplacées — Bento Grid layout */}
+        {activeTab !== "hockey" && (
         <section className="w-full px-4 sm:px-6 pt-8">
           <BentoGrid cols={4}>
             <BentoTile size="wide" variant="glass">
@@ -499,6 +500,7 @@ function HomeInner() {
             </BentoTile>
           </BentoGrid>
         </section>
+        )}
             </PullToRefresh>
           </div>
         {/* Panneau des matchs sélectionnés Top5 — rail droit (desktop) */}
