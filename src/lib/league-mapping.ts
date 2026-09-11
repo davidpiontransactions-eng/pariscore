@@ -60,15 +60,38 @@ export const BSD_LEAGUE_IDS: Record<string, number> = {
   copa_libertadores: 32, // BSD "Copa Libertadores" (Am. Sud)
   copa_sudamericana: 33, // BSD "Copa Sudamericana" (Am. Sud)
   npl_queensland: 70,    // BSD "NPL Queensland" (Australie)
+  // ─── Nouvelles ligues BSD (vérifié 2026-09-11, /api/v2/leagues/ 94 ligues) ──
+  bundesliga2: 94,       // BSD "2. Bundesliga" (Allemagne) — migré depuis OpenLigaDB
+  europa_league: 8,      // BSD "Europa League" (Europe) — C2
+  conference_league: 83, // BSD "Conference League" (Europe) — C3
+  dfb_pokal: 43,         // BSD "DFB Pokal" (Allemagne, coupe)
+  coupe_de_france: 44,   // BSD "Coupe de France" (France, coupe)
+  copa_del_rey: 41,      // BSD "Copa del Rey" (Espagne, coupe)
+  copa_do_brasil: 35,    // BSD "Copa do Brasil" (Brésil, coupe)
+  chinese_super_league: 52, // BSD "Chinese Super League" (Chine)
+  world_cup_2026: 27,    // BSD "World Cup 2026" (International)
+  // ─── Qualifications + Nations League (vérifié 2026-09-11) ───────────────
+  wcq_uefa: 58,          // BSD "World Cup Qualification UEFA"
+  wcq_conmebol: 59,      // BSD "World Cup Qualification CONMEBOL"
+  wcq_caf: 60,           // BSD "World Cup Qualification CAF"
+  wcq_afc: 61,           // BSD "World Cup Qualification AFC"
+  wcq_concacaf: 62,      // BSD "World Cup Qualification CONCACAF"
+  uefa_nations_league: 64, // BSD "UEFA Nations League"
+  concacaf_nations_league: 65, // BSD "CONCACAF Nations League"
+  // ─── Coupes + ligues secondaires ───────────────────────────────────────
+  botola_pro: 53,        // BSD "Botola Pro" (Maroc)
+  taca_de_portugal: 92,  // BSD "Taça de Portugal" (Portugal, coupe)
+  taca_da_liga: 93,      // BSD "Taça da Liga" (Portugal, coupe)
+  campeonato_portugal: 95, // BSD "Campeonato de Portugal" (Portugal, D2)
+  puchar_polski: 46,     // BSD "Puchar Polski" (Pologne, coupe)
 };
 
 /**
  * Slugs internes SANS couverture BSD (vérifié 2026-09-08, include_inactive=true).
  * Ne JAMAIS filtrer les matchs BSD avec ces slugs (aucun événement) — utiliser
- * une source alternative (OpenLigaDB pour bundesliga2) ou le mock explicite.
+ * une source alternative (OpenLigaDB) ou le mock explicite.
  */
 export const BSD_UNCOVERED_LEAGUES: ReadonlySet<string> = new Set([
-  "bundesliga2",        // 2. Bundesliga — OpenLigaDB (api.openligadb.de, bl2)
   "serieb",             // Serie B (Italie)
   "russian_premier",    // Russian Premier League
   "scot_champ",         // Scottish Championship
@@ -196,4 +219,27 @@ export const LEAGUE_INFO: Record<string, { name: string; country: string; sport:
   copa_libertadores: { name: "Copa Libertadores", country: "South America", sport: "football" },
   copa_sudamericana: { name: "Copa Sudamericana", country: "South America", sport: "football" },
   npl_queensland: { name: "NPL Queensland", country: "Australia", sport: "football" },
+  // Nouvelles ligues BSD 2026-09-11
+  europa_league: { name: "Europa League", country: "Europe", sport: "football" },
+  conference_league: { name: "Conference League", country: "Europe", sport: "football" },
+  dfb_pokal: { name: "DFB Pokal", country: "Germany", sport: "football" },
+  coupe_de_france: { name: "Coupe de France", country: "France", sport: "football" },
+  copa_del_rey: { name: "Copa del Rey", country: "Spain", sport: "football" },
+  copa_do_brasil: { name: "Copa do Brasil", country: "Brazil", sport: "football" },
+  chinese_super_league: { name: "Chinese Super League", country: "China", sport: "football" },
+  world_cup_2026: { name: "World Cup 2026", country: "International", sport: "football" },
+  // Qualifications + Nations League
+  wcq_uefa: { name: "WC Qualification UEFA", country: "Europe", sport: "football" },
+  wcq_conmebol: { name: "WC Qualification CONMEBOL", country: "South America", sport: "football" },
+  wcq_caf: { name: "WC Qualification CAF", country: "Africa", sport: "football" },
+  wcq_afc: { name: "WC Qualification AFC", country: "Asia", sport: "football" },
+  wcq_concacaf: { name: "WC Qualification CONCACAF", country: "North America", sport: "football" },
+  uefa_nations_league: { name: "UEFA Nations League", country: "Europe", sport: "football" },
+  concacaf_nations_league: { name: "CONCACAF Nations League", country: "North America", sport: "football" },
+  // Coupes + ligues secondaires
+  botola_pro: { name: "Botola Pro", country: "Morocco", sport: "football" },
+  taca_de_portugal: { name: "Taça de Portugal", country: "Portugal", sport: "football" },
+  taca_da_liga: { name: "Taça da Liga", country: "Portugal", sport: "football" },
+  campeonato_portugal: { name: "Campeonato de Portugal", country: "Portugal", sport: "football" },
+  puchar_polski: { name: "Puchar Polski", country: "Poland", sport: "football" },
 };

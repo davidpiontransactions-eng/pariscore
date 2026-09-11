@@ -34,6 +34,8 @@ const LEAGUES = [
   { slug: "super_lig", label: "Süper Lig", cc: "TR" },
   { slug: "superleague_greece", label: "Super League GR", cc: "GR" },
   { slug: "scot_prem", label: "Écosse", cc: "GB-SCT" },
+  { slug: "europa_league", label: "Europa League", cc: "EU" },
+  { slug: "conference_league", label: "Conference League", cc: "EU" },
 ] as const;
 
 type ViewMode = "home" | "away" | "comparison" | "goals";
