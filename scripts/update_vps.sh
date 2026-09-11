@@ -102,12 +102,28 @@ if [ "$NEED_BUILD" = "1" ]; then
     echo "  [fix] installing missing debug in $DEBUG_FIX"
     cd "$DEBUG_FIX" && bun add debug --no-save 2>/dev/null && cd -
   fi
-  # Mise à jour des aliases nginx pour pointer vers le standalone
+  # Mise à jour des aliases nginx pour pointer vers le standalone OPT (dir prod pariscore-next).
   sudo sed -i 's|alias /home/ubuntu/pariscore/.next/static/;|alias /opt/pariscorebis/.next/standalone/.next/static/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
   sudo sed -i 's|alias /home/ubuntu/pariscore/public/;|alias /opt/pariscorebis/.next/standalone/public/;|g' /etc/nginx/sites-enabled/pariscore* 2>/dev/null || true
   sudo nginx -t 2>/dev/null && sudo systemctl reload nginx 2>/dev/null || true
 else
   echo "[4/6] Next.js build SKIPPED (legacy-only deploy — no src/app/next.config change)"
+fi
+
+echo "[4c] Sync code -> /opt/pariscorebis (dir prod pariscore-next)..."
+OPT_DIR="${OPT_DIR:-/opt/pariscorebis}"
+if [ -d "$OPT_DIR/.git" ]; then
+  git -C "$OPT_DIR" fetch --all -q || echo "  warn: fetch $OPT_DIR"
+  git -C "$OPT_DIR" reset --hard "$CURR" -q || { echo "ERR: reset $OPT_DIR"; exit 1; }
+  cp -f ecosystem.config.js "$OPT_DIR/ecosystem.config.js" 2>/dev/null || true
+  if [ "$BUILD_RAN" = "1" ]; then
+    rm -rf "$OPT_DIR/.next/standalone" || { echo "ERR: purge standalone OPT"; exit 1; }
+    cp -r .next/standalone "$OPT_DIR/.next/standalone" || { echo "ERR: copie build -> OPT"; exit 1; }
+    cp -f "$OPT_DIR/.env" "$OPT_DIR/.next/standalone/.env" 2>/dev/null || true
+  fi
+  echo "  OPT sync: $(git -C "$OPT_DIR" log --oneline -1)"
+else
+  echo "  $OPT_DIR sans .git — skip sync (pipeline tar manuel)"
 fi
 
 echo "[5/6] PM2 restart..."
@@ -119,7 +135,7 @@ else
 fi
 # Next.js only if a build ran.
 if [ "$BUILD_RAN" = "1" ]; then
-  pm2 startOrRestart ecosystem.config.js --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
+  pm2 startOrRestart "$OPT_DIR/ecosystem.config.js" --only pariscore-next --update-env 2>&1 | tail -5 || echo "  warn: pm2 startOrRestart pariscore-next échec"
   # Cron re-registration (only after full build — crons depend on Next.js code).
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-rg --update-env 2>/dev/null || true
   pm2 startOrRestart ecosystem.config.js --only pariscore-cron-match-stats --update-env 2>/dev/null || true
