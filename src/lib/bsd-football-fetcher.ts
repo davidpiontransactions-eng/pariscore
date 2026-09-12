@@ -3,7 +3,6 @@ import { lookupClubLogo } from "@/lib/club-logos";
 import { normalizeTeamName } from "@/lib/normalize-team-name";
 import { enrichPrediction } from "./football-predictions";
 import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
-import { getTeamFbrefAdvanced } from "./football-fbref-advanced";
 import {
   fetchHistoricalStandings,
   blendWithHistorical,
@@ -559,9 +558,11 @@ export async function fetchBSDFootballPrematch(): Promise<FootballMatch[]> {
     await Promise.all(
       leagueIds.map(async (lid) => {
         const derived = await fetchBSDLeagueData(lid);
-        matches.forEach((m, i) => {
-          if (m.league?.id === lid) attachDerivedData(derived, result[i]);
-        });
+        await Promise.all(
+          matches.map(async (m, i) => {
+            if (m.league?.id === lid) await attachDerivedData(derived, result[i]);
+          })
+        );
       })
     );
   } catch (e) {
@@ -920,40 +921,45 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
 }
 
 /** Convertit les stats FBref avancées en format standardisé pour le match. */
-function loadFbrefAdvancedForMatch(
+async function loadFbrefAdvancedForMatch(
   leagueSlug: string,
   homeTeam: string,
   awayTeam: string,
-): { home: FbrefTeamAdvancedStats | null; away: FbrefTeamAdvancedStats | null } {
-  const homeData = getTeamFbrefAdvanced(leagueSlug, homeTeam);
-  const awayData = getTeamFbrefAdvanced(leagueSlug, awayTeam);
+): Promise<{ home: FbrefTeamAdvancedStats | null; away: FbrefTeamAdvancedStats | null }> {
+  try {
+    const { getTeamFbrefAdvanced } = await import("./football-fbref-advanced");
+    const homeData = getTeamFbrefAdvanced(leagueSlug, homeTeam);
+    const awayData = getTeamFbrefAdvanced(leagueSlug, awayTeam);
 
-  const toStats = (
-    data: ReturnType<typeof getTeamFbrefAdvanced>,
-  ): FbrefTeamAdvancedStats | null => {
-    if (!data) return null;
-    const k = data.keeper;
-    const s = data.shooting;
-    return {
-      saves: k?.saves ?? 0,
-      savePct: k?.savePct ?? 0,
-      ga: k?.ga ?? 0,
-      sota: k?.sota ?? 0,
-      cs: k?.cs ?? 0,
-      csPct: k?.csPct ?? 0,
-      ga90: k?.ga90 ?? 0,
-      shots: s?.sh ?? 0,
-      shotsPer90: s?.sh90 ?? 0,
-      sot: s?.sot ?? 0,
-      sotPer90: s?.sot90 ?? 0,
+    const toStats = (
+      data: ReturnType<typeof getTeamFbrefAdvanced>,
+    ): FbrefTeamAdvancedStats | null => {
+      if (!data) return null;
+      const k = data.keeper;
+      const s = data.shooting;
+      return {
+        saves: k?.saves ?? 0,
+        savePct: k?.savePct ?? 0,
+        ga: k?.ga ?? 0,
+        sota: k?.sota ?? 0,
+        cs: k?.cs ?? 0,
+        csPct: k?.csPct ?? 0,
+        ga90: k?.ga90 ?? 0,
+        shots: s?.sh ?? 0,
+        shotsPer90: s?.sh90 ?? 0,
+        sot: s?.sot ?? 0,
+        sotPer90: s?.sot90 ?? 0,
+      };
     };
-  };
 
-  return { home: toStats(homeData), away: toStats(awayData) };
+    return { home: toStats(homeData), away: toStats(awayData) };
+  } catch {
+    return { home: null, away: null };
+  }
 }
 
 /** Rattache bilan Domicile/Extérieur + métriques + leaderboards au match (best-effort). */
-function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): void {
+async function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): Promise<void> {
   if (!data) return;
   const key = normTeamKey;
   const home = data.teams.get(key(fm.home.name));
@@ -963,7 +969,7 @@ function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): v
   // Charger les stats FBref avancées (keeper, shooting) si disponibles
   const leagueSlug = BSD_ID_TO_SLUG[fm.league?.id ?? -1];
   const fbrefAdvanced = leagueSlug
-    ? loadFbrefAdvancedForMatch(leagueSlug, fm.home.name, fm.away.name)
+    ? await loadFbrefAdvancedForMatch(leagueSlug, fm.home.name, fm.away.name)
     : undefined;
 
   // Enrichir metricStats avec les tirs FBref si les champs BSD sont null

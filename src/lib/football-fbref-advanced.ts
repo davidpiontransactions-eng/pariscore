@@ -5,10 +5,10 @@
  * Couvre Big 5 + Championship. Les données incluent saves, save%, CS, CS%, GA90, SoTA.
  *
  * Pas de PSxG (Post-Shot xG) dans soccerdata — à ajouter via FBref brut si besoin.
+ *
+ * IMPORTANT: Ce module utilise des APIs Node.js (fs, path).
+ * Il ne doit être importé que côté serveur (API routes, server components).
  */
-
-import { readFileSync } from "fs";
-import { join } from "path";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ export interface FbrefTeamAdvanced {
   standard: FbrefStandardStats | null;
 }
 
-// ── Cache ──────────────────────────────────────────────────────────────────
+// ── Cache global (server-only) ─────────────────────────────────────────────
 
 const cache = new Map<string, FbrefTeamAdvanced[]>();
 
@@ -93,7 +93,7 @@ function extractKeeper(rows: Record<string, unknown>[]): FbrefKeeperStats[] {
       cs: safeNum(r["Performance__CS"]),
       csPct: safeNum(r["Performance__CS%"]),
       pkAtt: safeNum(r["Penalty Kicks__PKatt"]),
-      pkA: safeNum(r["Penalty Kicks__PKA"]),
+      pkA: safeNum(r["Penalty Kicks__PKa"]),
       pkSv: safeNum(r["Penalty Kicks__PKsv"]),
     }));
 }
@@ -136,7 +136,7 @@ function extractStandard(rows: Record<string, unknown>[]): FbrefStandardStats[] 
     }));
 }
 
-// ── Chargeur principal ─────────────────────────────────────────────────────
+// ── Chargeur principal (server-only) ───────────────────────────────────────
 
 const LEAGUE_SLUG_MAP: Record<string, string> = {
   england: "en_premier_league",
@@ -164,13 +164,13 @@ export function loadFbrefAdvanced(
   if (!fbrefSlug) return [];
 
   try {
-    const dataDir = join(
-      process.cwd(),
-      "data",
-      "fbref_advanced",
-    );
-    const filePath = join(dataDir, `${fbrefSlug}_${season}.json`);
-    const raw = JSON.parse(readFileSync(filePath, "utf-8"));
+    // Dynamic import pour éviter les erreurs côté client
+    const fs = require("fs") as typeof import("fs");
+    const path = require("path") as typeof import("path");
+
+    const dataDir = path.join(process.cwd(), "data", "fbref_advanced");
+    const filePath = path.join(dataDir, `${fbrefSlug}_${season}.json`);
+    const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 
     const keeperRows = (raw.team_season_stats?.keeper ?? []) as Record<
       string,
