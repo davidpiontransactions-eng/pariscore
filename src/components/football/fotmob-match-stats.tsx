@@ -6,14 +6,15 @@ import { parisKickoff } from "@/lib/football-time";
 /* ─── Encarts façon FotMob : Meilleures statistiques + infos stade ───
    Carte blanche (page FotMob), texte #222/#717171.
    Live : possession, xG, tirs + barres (tirs cadrés, corners, fautes).
-   Prematch : xG (xGa) + buts marqués/encaissés pg. Ligne omise si vide. */
+   Prematch : xG (xGa), class. Home/Away, buts pg, tirs pg, dont SOT pg.
+   Lignes omises si vides. */
 
 const INK = "#222222";
 const MUTED = "#717171";
 const HOME_BAR = "#1a1a1a";
 const AWAY_BAR = "#bdbdbd";
 
-type StatRow = { label: string; home: string; away: string; hpct: number | null };
+type StatRow = { label: string; home: string; away: string; hpct: number | null; isRank?: boolean };
 
 function pct(home: number, away: number): number | null {
   const t = home + away;
@@ -31,12 +32,20 @@ function fmtMv(v: { value: number | null } | undefined, digits = 2): string | nu
   return fmt(v?.value ?? null, digits);
 }
 
+function formatRank(value: number | null, rankTotal: number): string | null {
+  if (value == null || rankTotal == null || rankTotal <= 0) return null;
+  return `${value}/${rankTotal}`;
+}
+
 function buildRows(m: FootballMatch): StatRow[] {
   const rows: StatRow[] = [];
   const live = m.live ?? null;
-  const push = (label: string, h: string | null, a: string | null, hp: number | null) => {
+  const standing = m.prediction?.standingStats ?? null;
+  const xga = m.prediction?.xGa;
+  const metric = m.prediction?.metricStats;
+  const push = (label: string, h: string | null, a: string | null, hp: number | null, isRank = false) => {
     if (h == null || a == null) return;
-    rows.push({ label, home: h, away: a, hpct: hp });
+    rows.push({ label, home: h, away: a, hpct: hp, isRank });
   };
   if (live) {
     const poss = Math.max(0, Math.min(100, Math.round(live.homePossession)));
@@ -63,19 +72,52 @@ function buildRows(m: FootballMatch): StatRow[] {
     push("Fautes", fH, fA,
       live.homeFouls != null && live.awayFouls != null ? pct(live.homeFouls, live.awayFouls) : null);
   } else {
-    const xga = m.prediction.xGa;
+    // Prematch: enriched with standing + metric + xGa
+    // 1) xG average (xGa) — depuis la prédiction BSD
     if (xga && xga.total > 0) {
       push("Buts attendus (xG)", xga.home.toFixed(2), xga.away.toFixed(2), pct(xga.home, xga.away));
     }
-    const gh = m.prediction.metricStats?.home.goals;
-    const ga = m.prediction.metricStats?.away.goals;
-    if (gh && ga) {
-      const sH = fmtMv(gh.scoredPg);
-      const sA = fmtMv(ga.scoredPg);
-      if (sH && sA) push("Buts marqués / match", sH, sA, null);
-      const cH = fmtMv(gh.concededPg);
-      const cA = fmtMv(ga.concededPg);
-      if (cH && cA) push("Buts encaissés / match", cH, cA, null);
+    // 2) Classements + PPG — depuis le standing BSD (rang / total équipes)
+    if (standing) {
+      const homeRank = formatRank(standing.home.rank, standing.home.rankTotal);
+      const awayRank = formatRank(standing.away.rank, standing.away.rankTotal);
+      if (homeRank && awayRank) {
+        push("Classement", homeRank, awayRank, null);
+      }
+      const ppgH = fmt(standing.home.ppg, 2);
+      const ppgA = fmt(standing.away.ppg, 2);
+      if (ppgH && ppgA) {
+        const ppgPct = pct(standing.home.ppg, standing.away.ppg);
+        push("Points / match", ppgH, ppgA, ppgPct);
+      }
+    }
+    // 3) Buts marqués / match — depuis metricStats (PG = goals per game)
+    if (metric) {
+      const gh = metric.home.goals;
+      const ga = metric.away.goals;
+      if (gh && ga) {
+        const sH = fmtMv(gh.scoredPg);
+        const sA = fmtMv(ga.scoredPg);
+        if (sH && sA) push("Buts marqués / match", sH, sA, null);
+        const cH = fmtMv(gh.concededPg);
+        const cA = fmtMv(ga.concededPg);
+        if (cH && cA) push("Buts encaissés / match", cH, cA, null);
+      }
+    }
+    // 4) Nouvelles metrics additionnelles
+    //   - Moyenne de tirs par match (value: null en source BSD prematch → affiché "—")
+    //   - Tirs cadrés moyens — value: null en source BSD prematch, affiché "—" si absent
+    if (metric) {
+      const sh = metric.home.shots;
+      const sa = metric.away.shots;
+      if (sh && sa && sh.total != null && sa.total != null && sh.total.value != null && sa.total.value != null) {
+        push("Tirs moyens / match", fmt(sh.total.value), fmt(sa.total.value), null);
+      }
+      const sot = metric.home.sot;
+      const soa = metric.away.sot;
+      if (sot && soa && sot.total != null && soa.total != null && sot.total.value != null && soa.total.value != null) {
+        push("Tirs cadrés moyens / match", fmt(sot.total.value), fmt(soa.total.value), null);
+      }
     }
   }
   return rows;
@@ -109,6 +151,7 @@ export function FotmobMatchStats({ match }: { match: FootballMatch }) {
                     <div className="h-full flex-1" style={{ backgroundColor: AWAY_BAR, opacity: 0.55 }} />
                   </div>
                 )}
+
               </div>
             ))}
           </div>
