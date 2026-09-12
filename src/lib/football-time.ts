@@ -74,8 +74,10 @@ export function parisDayLong(iso: string): string {
   return longDayFormatter.format(d);
 }
 
-/** Fenêtres temporelles du Top 5 sidebar : aujourd'hui (Paris), 48 h, 7 jours. */
-export type KickoffWindow = "jour" | "48h" | "semaine";
+/** Fenêtres temporelles du Top 5 sidebar : aujourd'hui (Paris), 48 h, 7 jours, ou bornes horaires. */
+export type KickoffWindow = "jour" | "48h" | "semaine" | "1h" | "2h" | "4h" | "8h";
+
+const WINDOW_HOURS: Record<string, number> = { "1h": 1, "2h": 2, "4h": 4, "8h": 8, "48h": 48, "semaine": 24 * 7 };
 
 /** Match à venir dans la fenêtre choisie ? Borne basse = maintenant. */
 export function isInKickoffWindow(iso: string, win: KickoffWindow): boolean {
@@ -84,6 +86,6 @@ export function isInKickoffWindow(iso: string, win: KickoffWindow): boolean {
   const now = Date.now();
   if (t < now) return false;
   if (win === "jour") return parisDayKey(new Date(t)) === parisDayKey(new Date());
-  const hours = win === "48h" ? 48 : 24 * 7;
-  return t <= now + hours * 3_600_000;
+  const hours = WINDOW_HOURS[win];
+  return hours != null && t <= now + hours * 3_600_000;
 }

@@ -1,16 +1,49 @@
 {
   "season": "2025-2026",
-  "started_at": "2026-05-14T13:29:28.549935+00:00",
+  "started_at": "2026-09-12T12:54:32.313014+00:00",
   "leagues": [
     {
       "league": "ENG-Premier League",
       "slug": "en_premier_league",
       "file": "en_premier_league_2025-2026.json",
-      "size_bytes": 73339,
+      "size_bytes": 74219,
       "status": "ok"
+    },
+    {
+      "league": "ESP-La Liga",
+      "slug": "es_la_liga",
+      "file": "es_la_liga_2025-2026.json",
+      "size_bytes": 73114,
+      "status": "ok"
+    },
+    {
+      "league": "GER-Bundesliga",
+      "slug": "de_bundesliga",
+      "file": "de_bundesliga_2025-2026.json",
+      "size_bytes": 66262,
+      "status": "ok"
+    },
+    {
+      "league": "ITA-Serie A",
+      "slug": "it_serie_a",
+      "file": "it_serie_a_2025-2026.json",
+      "size_bytes": 72663,
+      "status": "ok"
+    },
+    {
+      "league": "FRA-Ligue 1",
+      "slug": "fr_ligue_1",
+      "file": "fr_ligue_1_2025-2026.json",
+      "size_bytes": 65368,
+      "status": "ok"
+    },
+    {
+      "league": "ENG-Championship",
+      "slug": "en_championship",
+      "status": "failed"
     }
   ],
-  "finished_at": "2026-05-14T13:31:09.253012+00:00",
-  "successes": 1,
-  "total": 1
+  "finished_at": "2026-09-12T12:58:39.549938+00:00",
+  "successes": 5,
+  "total": 6
 }

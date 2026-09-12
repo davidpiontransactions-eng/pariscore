@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Loader2, AlertCircle } from "lucide-react";
 import type { StrategyTop5Key, StrategyMatchEntry } from "@/lib/football-strategy-top5";
@@ -101,10 +101,17 @@ const TOP_N = 10;
 /** Seuil minimal de probabilité du modèle pour l'inclusion forcée d'un match sélectionné. */
 const MIN_PROB_PCT = 60;
 
-const TIME_WINDOWS: { key: KickoffWindow; label: string }[] = [
-  { key: "jour", label: "Jour" },
-  { key: "48h", label: "48h" },
-  { key: "semaine", label: "Sem." },
+const TIME_WINDOWS: { key: KickoffWindow; label: string; title: string }[] = [
+  { key: "jour", label: "Jour", title: "Matchs du jour" },
+  { key: "48h", label: "48h", title: "Matchs sous 48 heures" },
+  { key: "semaine", label: "Sem.", title: "Matchs de la semaine" },
+];
+
+const HOUR_WINDOWS: { key: KickoffWindow; label: string }[] = [
+  { key: "1h", label: "≤1h" },
+  { key: "2h", label: "≤2h" },
+  { key: "4h", label: "≤4h" },
+  { key: "8h", label: "≤8h" },
 ];
 
 /**
@@ -134,7 +141,7 @@ function readUrlState(): {
       league: league && league !== "__all__" ? league : null,
       active: strat && STRAT_KEYS.has(strat as StrategyTop5Key) ? (strat as StrategyTop5Key) : fallback.active,
       winKey: forme === "l5" || forme === "l10" ? forme : fallback.winKey,
-      timeWin: win === "jour" || win === "48h" || win === "semaine" ? win : fallback.timeWin,
+      timeWin: (["jour", "48h", "semaine", "1h", "2h", "4h", "8h"] as string[]).includes(win ?? "") ? (win as KickoffWindow) : fallback.timeWin,
     };
   } catch {
     return fallback;
@@ -167,7 +174,12 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
   const selectedItems = useTop5SelectionStore((s) => s.items);
   const toggleStore = useTop5SelectionStore((s) => s.toggle);
 
-  const def = STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0];
+  const handleLeagueChange = useCallback((v: string) => setLeague(v === "__all__" ? null : v), []);
+  const handleStratChange = useCallback((v: string) => setActive(v as StrategyTop5Key), []);
+  const handleWinKeyChange = useCallback((k: WindowKey) => () => setWinKey(k), []);
+  const handleTimeWinChange = useCallback((w: KickoffWindow) => () => setTimeWin(w), []);
+
+  const def = useMemo(() => STRATEGIES.find((s) => s.key === active) ?? STRATEGIES[0], [active]);
 
   // Liste des ligues issue des données API (source BSD) — repli sur la prop
   // matches si l'API est encore vide (chargement / fallback).
@@ -215,7 +227,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
     return out;
   }, [rows, selectedItems, league]);
 
-  const selectedCount = Object.keys(selectedItems).length;
+  const selectedCount = useMemo(() => Object.keys(selectedItems).length, [selectedItems]);
 
   const toggleSelect = (entry: StrategyMatchEntry) => {
     toggleStore(entry, active);
@@ -248,7 +260,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
         {/* Sélecteur de championnat */}
         <Select
           value={league ?? "__all__"}
-          onValueChange={(v) => setLeague(v === "__all__" ? null : v)}
+          onValueChange={handleLeagueChange}
         >
           <SelectTrigger
             size="sm"
@@ -270,7 +282,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
         </Select>
 
         {/* Sélecteur de stratégie */}
-        <Select value={active} onValueChange={(v) => setActive(v as StrategyTop5Key)}>
+        <Select value={active} onValueChange={handleStratChange}>
           <SelectTrigger
             size="sm"
             aria-label="Stratégie du Top 10"
@@ -299,9 +311,33 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
               <button
                 key={w.key}
                 type="button"
-                onClick={() => setTimeWin(w.key)}
+                onClick={handleTimeWinChange(w.key)}
                 aria-pressed={timeWin === w.key}
-                title={`Matchs ${w.key === "jour" ? "du jour" : w.key === "48h" ? "sous 48 heures" : "de la semaine"}`}
+                title={w.title}
+                className={cn(
+                  "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
+                  timeWin === w.key
+                    ? "bg-[#00985f]/10 text-[#00985f]"
+                    : "bg-transparent text-[#717171] hover:text-[#222]",
+                )}
+              >
+                {w.label}
+              </button>
+            ))}
+          </div>
+          <div
+            className="flex overflow-hidden rounded"
+            style={{ border: `1px solid ${C.cardBorder}` }}
+            role="group"
+            aria-label="Horaires des matchs"
+          >
+            {HOUR_WINDOWS.map((w) => (
+              <button
+                key={w.key}
+                type="button"
+                onClick={handleTimeWinChange(w.key)}
+                aria-pressed={timeWin === w.key}
+                title={`Matchs dans les ${w.label}`}
                 className={cn(
                   "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
                   timeWin === w.key
@@ -323,7 +359,7 @@ export function FootballTop10Widget({ matches }: { matches: FootballMatch[] }) {
               <button
                 key={k}
                 type="button"
-                onClick={() => setWinKey(k)}
+                onClick={handleWinKeyChange(k)}
                 aria-pressed={winKey === k}
                 className={cn(
                   "min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5",
