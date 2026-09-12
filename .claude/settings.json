@@ -5,11 +5,20 @@
         "hooks": [
           {
             "command": "bash $HOME/.claude/skills/gstack/careful/bin/check-careful.sh",
-            "statusMessage": "Vérification commandes destructives...",
+            "statusMessage": "V\u00e9rification commandes destructives...",
             "type": "command"
           }
         ],
         "matcher": "Bash"
+      },
+      {
+        "matcher": "WebSearch|WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/David/ZCodeProject/pariscore/.hyperresearch/hook.js\""
+          }
+        ]
       }
     ],
     "SessionStart": [
