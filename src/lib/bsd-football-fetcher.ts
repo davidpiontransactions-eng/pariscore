@@ -798,6 +798,36 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
     return null;
   }
 
+  // Estimation home/away quand l'events scan BSD ne retourne rien
+  // (le paramètre league_id est ignoré par l'API BSD sur /events/ → 0 résultats).
+  // On split les totaux officiels en home/away ≈ 50/50 (début de saison OK).
+  for (const t of agg.values()) {
+    if (t.home.played === 0 && t.totals.played > 0) {
+      const hp = Math.ceil(t.totals.played / 2);
+      const ap = t.totals.played - hp;
+      const hgf = Math.round(t.totals.gf / 2);
+      const agf = t.totals.gf - hgf;
+      const hga = Math.round(t.totals.ga / 2);
+      const aga = t.totals.ga - hga;
+      const hpts = Math.round(t.totals.wins * 3 * (hp / t.totals.played)) + Math.round(t.totals.draws * (hp / t.totals.played));
+      const apts = t.totals.wins * 3 + t.totals.draws - hpts;
+      t.home = {
+        played: hp,
+        wins: Math.round(t.totals.wins * (hp / t.totals.played)),
+        draws: Math.round(t.totals.draws * (hp / t.totals.played)),
+        losses: hp - Math.round(t.totals.wins * (hp / t.totals.played)) - Math.round(t.totals.draws * (hp / t.totals.played)),
+        gf: hgf, ga: hga,
+      };
+      t.away = {
+        played: ap,
+        wins: t.totals.wins - t.home.wins,
+        draws: t.totals.draws - t.home.draws,
+        losses: ap - (t.totals.wins - t.home.wins) - (t.totals.draws - t.home.draws),
+        gf: agf, ga: aga,
+      };
+    }
+  }
+
   if (agg.size === 0) {
     standingsCache.set(leagueId, { at: Date.now(), data: null });
     return null;
