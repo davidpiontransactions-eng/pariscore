@@ -4,7 +4,7 @@
     "leagueId": "ligue2",
     "leagueName": "France2",
     "season": "2026-27",
-    "lastUpdated": "2026-09-11T08:49:37.516265Z",
+    "lastUpdated": "2026-09-12T07:05:32.684457Z",
     "source": "soccerstats.com",
     "teamCount": 18,
     "partial": false
@@ -28,13 +28,6 @@
       {
         "rank": 3,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 3,
-        "teamId": "",
         "teamName": "Annecy",
         "value": 2.0,
         "played": 2
@@ -47,18 +40,18 @@
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Reims",
         "value": 1.67,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 5,
         "teamId": "",
-        "teamName": "Nancy",
-        "value": 1.5,
-        "played": 2
+        "teamName": "Montpellier",
+        "value": 1.67,
+        "played": 3
       },
       {
         "rank": 7,
@@ -68,10 +61,31 @@
         "played": 2
       },
       {
-        "rank": 9,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Rodez Aveyron",
+        "value": 1.33,
+        "played": 3
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 1.33,
+        "played": 3
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Clermont",
+        "value": 1.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
+        "teamId": "",
+        "teamName": "Nancy",
+        "value": 1.0,
         "played": 3
       },
       {
@@ -84,7 +98,7 @@
       {
         "rank": 10,
         "teamId": "",
-        "teamName": "Clermont",
+        "teamName": "Dijon",
         "value": 1.0,
         "played": 3
       },
@@ -103,39 +117,25 @@
         "played": 3
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Grenoble",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Red Star",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 17,
+        "rank": 18,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 0.33,
         "played": 3
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": 0.0,
-        "played": 2
       }
     ],
     "pts": [
@@ -161,108 +161,108 @@
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 3,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
-        "value": 4.0,
-        "played": 2
+        "teamName": "Montpellier",
+        "value": 5.0,
+        "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Annecy",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Rodez Aveyron",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Clermont",
+        "value": 4.0,
+        "played": 4
+      },
+      {
+        "rank": 10,
         "teamId": "",
         "teamName": "Nancy",
         "value": 3.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Boulogne",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
-        "teamName": "Clermont",
+        "teamName": "Dijon",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Laval",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 10,
         "teamId": "",
         "teamName": "Nantes",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 14,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Grenoble",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 16,
         "teamId": "",
         "teamName": "Red Star",
         "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 18,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": 0.0,
         "played": 2
       }
     ],
@@ -293,7 +293,7 @@
         "teamId": "",
         "teamName": "Rodez Aveyron",
         "value": 5.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 4,
@@ -303,91 +303,91 @@
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Dijon",
+        "value": 5.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Annecy",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 7,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Nancy",
+        "value": 3.0,
+        "played": 3
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Laval",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 7,
+        "rank": 8,
         "teamId": "",
         "teamName": "Nantes",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 10,
+        "rank": 12,
         "teamId": "",
-        "teamName": "Nancy",
+        "teamName": "Montpellier",
         "value": 2.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 10,
+        "rank": 12,
         "teamId": "",
         "teamName": "Boulogne",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Clermont",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Grenoble",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Red Star",
         "value": 1.0,
@@ -398,14 +398,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Annecy",
+        "teamName": "Montpellier",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Nancy",
+        "teamName": "Annecy",
         "value": 1.0,
         "played": 2
       },
@@ -414,108 +414,108 @@
         "teamId": "",
         "teamName": "Clermont",
         "value": 1.0,
-        "played": 3
+        "played": 4
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Saint-Etienne",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Boulogne",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Grenoble",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Metz",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Rodez Aveyron",
-        "value": 3.0,
-        "played": 2
-      },
-      {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Nancy",
+        "value": 3.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Rodez Aveyron",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 12,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 12,
         "teamId": "",
         "teamName": "Red Star",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": 4.0,
-        "played": 2
-      },
-      {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Reims",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 16,
+        "rank": 15,
+        "teamId": "",
+        "teamName": "Dijon",
+        "value": 6.0,
+        "played": 3
+      },
+      {
+        "rank": 15,
         "teamId": "",
         "teamName": "Laval",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Nantes",
         "value": 6.0,
@@ -547,37 +547,51 @@
       {
         "rank": 3,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 3,
-        "teamId": "",
         "teamName": "Annecy",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Montpellier",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Rodez Aveyron",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 6,
+        "rank": 9,
+        "teamId": "",
+        "teamName": "Clermont",
+        "value": 0.0,
+        "played": 4
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Nancy",
-        "value": 1.0,
-        "played": 2
+        "value": 0.0,
+        "played": 3
       },
       {
         "rank": 9,
@@ -587,18 +601,11 @@
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 12,
         "teamId": "",
-        "teamName": "Clermont",
-        "value": 0.0,
+        "teamName": "Dijon",
+        "value": -1.0,
         "played": 3
-      },
-      {
-        "rank": 9,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 0.0,
-        "played": 2
       },
       {
         "rank": 12,
@@ -608,25 +615,18 @@
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Sochaux",
         "value": -2.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": -2.0,
         "played": 3
-      },
-      {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": -2.0,
-        "played": 2
       },
       {
         "rank": 16,
@@ -675,9 +675,9 @@
       {
         "rank": 3,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
+        "teamName": "Montpellier",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 3,
@@ -685,6 +685,13 @@
         "teamName": "Annecy",
         "value": 1.0,
         "played": 2
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Rodez Aveyron",
+        "value": 1.0,
+        "played": 3
       },
       {
         "rank": 3,
@@ -705,7 +712,14 @@
         "teamId": "",
         "teamName": "Nancy",
         "value": 1.0,
-        "played": 2
+        "played": 3
+      },
+      {
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Dijon",
+        "value": 1.0,
+        "played": 3
       },
       {
         "rank": 3,
@@ -729,51 +743,37 @@
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Clermont",
+        "value": 0.0,
+        "played": 4
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Boulogne",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Clermont",
-        "value": 0.0,
-        "played": 3
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 12,
+        "rank": 14,
         "teamId": "",
         "teamName": "Grenoble",
         "value": 0.0,
         "played": 2
       },
       {
-        "rank": 12,
+        "rank": 14,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 12,
+        "rank": 14,
         "teamId": "",
         "teamName": "Red Star",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 12,
-        "teamId": "",
-        "teamName": "Dijon",
         "value": 0.0,
         "played": 2
       }
@@ -782,14 +782,14 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Boulogne",
-        "value": 3.0,
-        "played": 3
+        "teamName": "Clermont",
+        "value": 4.0,
+        "played": 4
       },
       {
-        "rank": 1,
+        "rank": 2,
         "teamId": "",
-        "teamName": "Clermont",
+        "teamName": "Boulogne",
         "value": 3.0,
         "played": 3
       },
@@ -805,7 +805,7 @@
         "teamId": "",
         "teamName": "Montpellier",
         "value": 2.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 5,
@@ -817,16 +817,16 @@
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
+        "teamName": "Annecy",
         "value": 1.0,
         "played": 2
       },
       {
         "rank": 5,
         "teamId": "",
-        "teamName": "Annecy",
+        "teamName": "Rodez Aveyron",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 5,
@@ -875,7 +875,14 @@
         "teamId": "",
         "teamName": "Nancy",
         "value": 0.0,
-        "played": 2
+        "played": 3
+      },
+      {
+        "rank": 13,
+        "teamId": "",
+        "teamName": "Dijon",
+        "value": 0.0,
+        "played": 3
       },
       {
         "rank": 13,
@@ -897,13 +904,6 @@
         "teamName": "Nantes",
         "value": 0.0,
         "played": 3
-      },
-      {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": 0.0,
-        "played": 2
       }
     ],
     "l": [
@@ -931,9 +931,9 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
+        "teamName": "Montpellier",
         "value": 0.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 1,
@@ -952,86 +952,86 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Clermont",
+        "value": 0.0,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Boulogne",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 1,
+        "rank": 9,
         "teamId": "",
-        "teamName": "Clermont",
-        "value": 0.0,
+        "teamName": "Rodez Aveyron",
+        "value": 1.0,
         "played": 3
       },
       {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Montpellier",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 10,
-        "teamId": "",
-        "teamName": "Nancy",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Grenoble",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 10,
+        "rank": 9,
         "teamId": "",
         "teamName": "Red Star",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 15,
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Nancy",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 14,
+        "teamId": "",
+        "teamName": "Dijon",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Laval",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 14,
         "teamId": "",
         "teamName": "Nantes",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 15,
+        "rank": 14,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 2.0,
         "played": 3
-      },
-      {
-        "rank": 15,
-        "teamId": "",
-        "teamName": "Dijon",
-        "value": 2.0,
-        "played": 2
       }
     ]
   },
@@ -1047,37 +1047,44 @@
       {
         "rank": 2,
         "teamId": "",
+        "teamName": "Reims",
+        "value": 2.33,
+        "played": 3
+      },
+      {
+        "rank": 2,
+        "teamId": "",
         "teamName": "Red Star",
         "value": 2.33,
         "played": 3
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Annecy",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 3,
+        "rank": 4,
         "teamId": "",
         "teamName": "Montpellier",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 3,
+        "rank": 6,
         "teamId": "",
-        "teamName": "Reims",
-        "value": 2.0,
-        "played": 2
+        "teamName": "Grenoble",
+        "value": 1.5,
+        "played": 4
       },
       {
-        "rank": 3,
+        "rank": 7,
         "teamId": "",
         "teamName": "Pau Fc",
-        "value": 2.0,
-        "played": 2
+        "value": 1.33,
+        "played": 3
       },
       {
         "rank": 7,
@@ -1087,35 +1094,28 @@
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Dijon",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Rodez Aveyron",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Grenoble",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Metz",
         "value": 1.0,
@@ -1124,42 +1124,42 @@
       {
         "rank": 13,
         "teamId": "",
+        "teamName": "Boulogne",
+        "value": 0.67,
+        "played": 3
+      },
+      {
+        "rank": 14,
+        "teamId": "",
         "teamName": "Nantes",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Boulogne",
-        "value": 0.5,
-        "played": 2
-      },
-      {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Clermont",
         "value": 0.5,
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Laval",
-        "value": 0.5,
-        "played": 2
-      },
-      {
-        "rank": 18,
+        "rank": 17,
         "teamId": "",
         "teamName": "Guingamp",
+        "value": 0.33,
+        "played": 3
+      },
+      {
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Laval",
         "value": 0.33,
         "played": 3
       }
@@ -1168,77 +1168,77 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Reims",
+        "value": 7.0,
+        "played": 3
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Red Star",
         "value": 7.0,
         "played": 3
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Saint-Etienne",
         "value": 6.0,
         "played": 2
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Annecy",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 2,
+        "rank": 3,
         "teamId": "",
         "teamName": "Montpellier",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 3,
         "teamId": "",
-        "teamName": "Reims",
-        "value": 4.0,
-        "played": 2
+        "teamName": "Grenoble",
+        "value": 6.0,
+        "played": 4
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 4.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Nancy",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Dijon",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Rodez Aveyron",
-        "value": 3.0,
-        "played": 3
-      },
-      {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Grenoble",
         "value": 3.0,
         "played": 3
       },
@@ -1250,49 +1250,56 @@
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 12,
+        "teamId": "",
+        "teamName": "Boulogne",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 14,
         "teamId": "",
         "teamName": "Nantes",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Boulogne",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Clermont",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Laval",
         "value": 1.0,
-        "played": 2
+        "played": 3
       }
     ],
     "gf": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Reims",
+        "value": 6.0,
+        "played": 3
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -1303,91 +1310,84 @@
       {
         "rank": 1,
         "teamId": "",
+        "teamName": "Grenoble",
+        "value": 6.0,
+        "played": 4
+      },
+      {
+        "rank": 1,
+        "teamId": "",
         "teamName": "Rodez Aveyron",
         "value": 6.0,
         "played": 3
       },
       {
-        "rank": 3,
-        "teamId": "",
-        "teamName": "Grenoble",
-        "value": 5.0,
-        "played": 3
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Red Star",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Annecy",
         "value": 4.0,
         "played": 3
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Reims",
-        "value": 4.0,
-        "played": 2
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Nantes",
         "value": 4.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Laval",
+        "value": 4.0,
+        "played": 3
+      },
+      {
+        "rank": 9,
         "teamId": "",
         "teamName": "Montpellier",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 3.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Dijon",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 9,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 3.0,
         "played": 2
       },
       {
-        "rank": 13,
+        "rank": 14,
         "teamId": "",
         "teamName": "Clermont",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Laval",
         "value": 2.0,
         "played": 2
       },
@@ -1417,17 +1417,10 @@
         "teamId": "",
         "teamName": "Boulogne",
         "value": 0.0,
-        "played": 2
+        "played": 3
       }
     ],
     "ga": [
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Reims",
-        "value": 1.0,
-        "played": 2
-      },
       {
         "rank": 1,
         "teamId": "",
@@ -1454,38 +1447,45 @@
         "teamId": "",
         "teamName": "Boulogne",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 6,
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Reims",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Red Star",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 6,
+        "rank": 5,
         "teamId": "",
         "teamName": "Saint-Etienne",
         "value": 2.0,
         "played": 2
       },
       {
-        "rank": 6,
-        "teamId": "",
-        "teamName": "Pau Fc",
-        "value": 2.0,
-        "played": 2
-      },
-      {
-        "rank": 9,
+        "rank": 8,
         "teamId": "",
         "teamName": "Montpellier",
         "value": 3.0,
         "played": 3
       },
       {
-        "rank": 9,
+        "rank": 8,
+        "teamId": "",
+        "teamName": "Pau Fc",
+        "value": 3.0,
+        "played": 3
+      },
+      {
+        "rank": 8,
         "teamId": "",
         "teamName": "Dijon",
         "value": 3.0,
@@ -1506,44 +1506,44 @@
         "played": 2
       },
       {
-        "rank": 11,
-        "teamId": "",
-        "teamName": "Laval",
-        "value": 4.0,
-        "played": 2
-      },
-      {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Nantes",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 5.0,
         "played": 3
       },
       {
-        "rank": 14,
+        "rank": 13,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 5.0,
         "played": 2
       },
       {
-        "rank": 17,
+        "rank": 16,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
-        "value": 8.0,
+        "teamName": "Laval",
+        "value": 7.0,
         "played": 3
       },
       {
         "rank": 17,
         "teamId": "",
         "teamName": "Grenoble",
+        "value": 8.0,
+        "played": 4
+      },
+      {
+        "rank": 17,
+        "teamId": "",
+        "teamName": "Rodez Aveyron",
         "value": 8.0,
         "played": 3
       }
@@ -1552,15 +1552,15 @@
       {
         "rank": 1,
         "teamId": "",
-        "teamName": "Saint-Etienne",
+        "teamName": "Reims",
         "value": 4.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 2,
+        "rank": 1,
         "teamId": "",
-        "teamName": "Reims",
-        "value": 3.0,
+        "teamName": "Saint-Etienne",
+        "value": 4.0,
         "played": 2
       },
       {
@@ -1573,51 +1573,58 @@
       {
         "rank": 4,
         "teamId": "",
-        "teamName": "Pau Fc",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 5,
-        "teamId": "",
         "teamName": "Annecy",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Montpellier",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
+        "teamId": "",
+        "teamName": "Pau Fc",
+        "value": 0.0,
+        "played": 3
+      },
+      {
+        "rank": 4,
         "teamId": "",
         "teamName": "Nancy",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Dijon",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Sochaux",
         "value": 0.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 4,
         "teamId": "",
         "teamName": "Metz",
         "value": 0.0,
         "played": 2
+      },
+      {
+        "rank": 11,
+        "teamId": "",
+        "teamName": "Boulogne",
+        "value": -1.0,
+        "played": 3
       },
       {
         "rank": 11,
@@ -1627,11 +1634,11 @@
         "played": 2
       },
       {
-        "rank": 11,
+        "rank": 13,
         "teamId": "",
-        "teamName": "Boulogne",
-        "value": -1.0,
-        "played": 2
+        "teamName": "Grenoble",
+        "value": -2.0,
+        "played": 4
       },
       {
         "rank": 13,
@@ -1662,21 +1669,21 @@
         "played": 2
       },
       {
-        "rank": 13,
-        "teamId": "",
-        "teamName": "Laval",
-        "value": -2.0,
-        "played": 2
-      },
-      {
         "rank": 18,
         "teamId": "",
-        "teamName": "Grenoble",
+        "teamName": "Laval",
         "value": -3.0,
         "played": 3
       }
     ],
     "w": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Reims",
+        "value": 2.0,
+        "played": 3
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -1706,37 +1713,30 @@
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 1,
         "teamId": "",
-        "teamName": "Reims",
-        "value": 1.0,
-        "played": 2
+        "teamName": "Grenoble",
+        "value": 2.0,
+        "played": 4
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Nancy",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 5,
+        "rank": 7,
         "teamId": "",
         "teamName": "Rodez Aveyron",
-        "value": 1.0,
-        "played": 3
-      },
-      {
-        "rank": 5,
-        "teamId": "",
-        "teamName": "Grenoble",
         "value": 1.0,
         "played": 3
       },
@@ -1764,14 +1764,14 @@
       {
         "rank": 10,
         "teamId": "",
-        "teamName": "Nantes",
+        "teamName": "Boulogne",
         "value": 0.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 10,
         "teamId": "",
-        "teamName": "Boulogne",
+        "teamName": "Nantes",
         "value": 0.0,
         "played": 2
       },
@@ -1801,7 +1801,7 @@
         "teamId": "",
         "teamName": "Laval",
         "value": 0.0,
-        "played": 2
+        "played": 3
       }
     ],
     "d": [
@@ -1827,74 +1827,74 @@
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 3,
+        "teamId": "",
+        "teamName": "Boulogne",
+        "value": 2.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
+        "teamId": "",
+        "teamName": "Reims",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 5,
         "teamId": "",
         "teamName": "Red Star",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Reims",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Pau Fc",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Nancy",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Nantes",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 4,
-        "teamId": "",
-        "teamName": "Boulogne",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Guingamp",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Clermont",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 4,
+        "rank": 5,
         "teamId": "",
         "teamName": "Laval",
         "value": 1.0,
-        "played": 2
+        "played": 3
       },
       {
         "rank": 14,
@@ -1920,19 +1920,26 @@
       {
         "rank": 14,
         "teamId": "",
-        "teamName": "Rodez Aveyron",
+        "teamName": "Grenoble",
         "value": 0.0,
-        "played": 3
+        "played": 4
       },
       {
         "rank": 14,
         "teamId": "",
-        "teamName": "Grenoble",
+        "teamName": "Rodez Aveyron",
         "value": 0.0,
         "played": 3
       }
     ],
     "l": [
+      {
+        "rank": 1,
+        "teamId": "",
+        "teamName": "Reims",
+        "value": 0.0,
+        "played": 3
+      },
       {
         "rank": 1,
         "teamId": "",
@@ -1944,20 +1951,6 @@
         "rank": 1,
         "teamId": "",
         "teamName": "Saint-Etienne",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Reims",
-        "value": 0.0,
-        "played": 2
-      },
-      {
-        "rank": 1,
-        "teamId": "",
-        "teamName": "Pau Fc",
         "value": 0.0,
         "played": 2
       },
@@ -1983,79 +1976,86 @@
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Annecy",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Montpellier",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Pau Fc",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Nancy",
         "value": 1.0,
         "played": 3
       },
       {
-        "rank": 8,
+        "rank": 7,
+        "teamId": "",
+        "teamName": "Boulogne",
+        "value": 1.0,
+        "played": 3
+      },
+      {
+        "rank": 7,
         "teamId": "",
         "teamName": "Nantes",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 8,
-        "teamId": "",
-        "teamName": "Boulogne",
-        "value": 1.0,
-        "played": 2
-      },
-      {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Usl Dunkerque",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 7,
         "teamId": "",
         "teamName": "Clermont",
         "value": 1.0,
         "played": 2
       },
       {
-        "rank": 8,
+        "rank": 15,
         "teamId": "",
-        "teamName": "Laval",
-        "value": 1.0,
-        "played": 2
+        "teamName": "Grenoble",
+        "value": 2.0,
+        "played": 4
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
         "teamName": "Rodez Aveyron",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
-        "teamName": "Grenoble",
+        "teamName": "Guingamp",
         "value": 2.0,
         "played": 3
       },
       {
-        "rank": 16,
+        "rank": 15,
         "teamId": "",
-        "teamName": "Guingamp",
+        "teamName": "Laval",
         "value": 2.0,
         "played": 3
       }
