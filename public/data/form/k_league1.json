@@ -4,7 +4,7 @@
     "leagueId": "k_league1",
     "leagueName": "Southkorea",
     "season": "2026/27",
-    "lastUpdated": "2026-09-11T09:02:23.026387Z",
+    "lastUpdated": "2026-09-12T08:46:10.031502Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -13,24 +13,6 @@
   },
   "home": [
     {
-      "teamName": "Daejeon Citizen",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 15,
-      "ga": 11
-    },
-    {
-      "teamName": "Jeonbuk",
-      "gp": 8,
-      "w": 4,
-      "d": 2,
-      "l": 2,
-      "gf": 10,
-      "ga": 5
-    },
-    {
       "teamName": "Seoul",
       "gp": 8,
       "w": 5,
@@ -38,6 +20,15 @@
       "l": 1,
       "gf": 11,
       "ga": 6
+    },
+    {
+      "teamName": "Daejeon Citizen",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 15,
+      "ga": 11
     },
     {
       "teamName": "Ulsan",
@@ -56,17 +47,26 @@
       "l": 1,
       "gf": 12,
       "ga": 8
+    },
+    {
+      "teamName": "Jeonbuk",
+      "gp": 8,
+      "w": 4,
+      "d": 2,
+      "l": 2,
+      "gf": 10,
+      "ga": 5
     }
   ],
   "away": [
     {
-      "teamName": "Gangwon",
+      "teamName": "Incheon Utd",
       "gp": 8,
       "w": 3,
-      "d": 3,
-      "l": 2,
+      "d": 2,
+      "l": 3,
       "gf": 10,
-      "ga": 9
+      "ga": 8
     },
     {
       "teamName": "Seoul",
@@ -87,13 +87,13 @@
       "ga": 12
     },
     {
-      "teamName": "Incheon Utd",
+      "teamName": "Gangwon",
       "gp": 8,
       "w": 3,
-      "d": 2,
-      "l": 3,
+      "d": 3,
+      "l": 2,
       "gf": 10,
-      "ga": 8
+      "ga": 9
     },
     {
       "teamName": "Jeju Utd",

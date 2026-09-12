@@ -4,7 +4,7 @@
     "leagueId": "eredivisie",
     "leagueName": "Netherlands",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-11T09:01:42.877052Z",
+    "lastUpdated": "2026-09-12T08:45:30.103232Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 21,
     "window": 8,
@@ -13,138 +13,12 @@
   },
   "home": [
     {
-      "teamName": "Willem Ii",
-      "gp": 3,
-      "w": 0,
-      "d": 1,
-      "l": 2,
-      "gf": 3,
-      "ga": 9
-    },
-    {
-      "teamName": "Telstar",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 7,
-      "ga": 11
-    },
-    {
-      "teamName": "Go Ahead Eagles",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 14,
-      "ga": 6
-    },
-    {
-      "teamName": "Heracles Almelo",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 3,
-      "ga": 8
-    },
-    {
-      "teamName": "Heerenveen",
-      "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
-      "teamName": "Ajax Amsterdam",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 9,
-      "ga": 9
-    },
-    {
-      "teamName": "Nec Nijmegen",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 10
-    },
-    {
-      "teamName": "Excelsior",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 7,
-      "ga": 7
-    },
-    {
-      "teamName": "Utrecht",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 8,
-      "ga": 14
-    },
-    {
-      "teamName": "AZ Alkmaar",
-      "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 14,
-      "ga": 6
-    },
-    {
-      "teamName": "Feyenoord",
-      "gp": 5,
-      "w": 2,
-      "d": 3,
-      "l": 0,
-      "gf": 10,
-      "ga": 8
-    },
-    {
       "teamName": "Fc Volendam",
       "gp": 5,
       "w": 2,
       "d": 1,
       "l": 2,
       "gf": 6,
-      "ga": 7
-    },
-    {
-      "teamName": "Cambuur",
-      "gp": 3,
-      "w": 0,
-      "d": 0,
-      "l": 3,
-      "gf": 3,
-      "ga": 13
-    },
-    {
-      "teamName": "Nac Breda",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 7,
-      "ga": 8
-    },
-    {
-      "teamName": "PSV",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 0,
-      "gf": 17,
       "ga": 7
     },
     {
@@ -157,13 +31,13 @@
       "ga": 9
     },
     {
-      "teamName": "Ado Den Haag",
-      "gp": 2,
-      "w": 0,
-      "d": 0,
-      "l": 2,
-      "gf": 3,
-      "ga": 7
+      "teamName": "Pec Zwolle",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 5,
+      "ga": 8
     },
     {
       "teamName": "Sparta",
@@ -175,22 +49,40 @@
       "ga": 8
     },
     {
-      "teamName": "Twente",
+      "teamName": "Go Ahead Eagles",
       "gp": 5,
-      "w": 4,
+      "w": 3,
       "d": 1,
-      "l": 0,
-      "gf": 10,
-      "ga": 3
+      "l": 1,
+      "gf": 14,
+      "ga": 6
     },
     {
-      "teamName": "Pec Zwolle",
+      "teamName": "Ajax Amsterdam",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 9,
+      "ga": 9
+    },
+    {
+      "teamName": "Heracles Almelo",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 5,
+      "gf": 3,
       "ga": 8
+    },
+    {
+      "teamName": "Cambuur",
+      "gp": 3,
+      "w": 0,
+      "d": 0,
+      "l": 3,
+      "gf": 3,
+      "ga": 13
     },
     {
       "teamName": "Fortuna Sittard",
@@ -200,26 +92,161 @@
       "l": 2,
       "gf": 7,
       "ga": 9
-    }
-  ],
-  "away": [
+    },
+    {
+      "teamName": "Excelsior",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
     {
       "teamName": "Willem Ii",
-      "gp": 1,
+      "gp": 3,
+      "w": 0,
+      "d": 1,
+      "l": 2,
+      "gf": 3,
+      "ga": 9
+    },
+    {
+      "teamName": "PSV",
+      "gp": 5,
+      "w": 3,
+      "d": 1,
+      "l": 0,
+      "gf": 17,
+      "ga": 7
+    },
+    {
+      "teamName": "Feyenoord",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
+      "l": 0,
+      "gf": 10,
+      "ga": 8
+    },
+    {
+      "teamName": "Ado Den Haag",
+      "gp": 2,
       "w": 0,
       "d": 0,
-      "l": 1,
-      "gf": 1,
-      "ga": 4
+      "l": 2,
+      "gf": 3,
+      "ga": 7
     },
     {
       "teamName": "Telstar",
       "gp": 5,
-      "w": 2,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 7,
+      "ga": 11
+    },
+    {
+      "teamName": "AZ Alkmaar",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 13,
+      "ga": 5
+    },
+    {
+      "teamName": "Nac Breda",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 8
+    },
+    {
+      "teamName": "Utrecht",
+      "gp": 5,
+      "w": 1,
       "d": 1,
       "l": 2,
-      "gf": 6,
+      "gf": 8,
+      "ga": 14
+    },
+    {
+      "teamName": "Twente",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 10,
+      "ga": 3
+    },
+    {
+      "teamName": "Heerenveen",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 7,
+      "ga": 7
+    },
+    {
+      "teamName": "Nec Nijmegen",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 8,
+      "ga": 10
+    }
+  ],
+  "away": [
+    {
+      "teamName": "Fc Volendam",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 4,
       "ga": 8
+    },
+    {
+      "teamName": "Pec Zwolle",
+      "gp": 5,
+      "w": 1,
+      "d": 2,
+      "l": 2,
+      "gf": 7,
+      "ga": 11
+    },
+    {
+      "teamName": "Fc Groningen",
+      "gp": 5,
+      "w": 2,
+      "d": 0,
+      "l": 2,
+      "gf": 9,
+      "ga": 10
+    },
+    {
+      "teamName": "Sparta",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
+      "gf": 6,
+      "ga": 10
+    },
+    {
+      "teamName": "Ajax Amsterdam",
+      "gp": 5,
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 10,
+      "ga": 3
     },
     {
       "teamName": "Go Ahead Eagles",
@@ -240,31 +267,22 @@
       "ga": 16
     },
     {
-      "teamName": "Heerenveen",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 8,
-      "ga": 10
+      "teamName": "Cambuur",
+      "gp": 2,
+      "w": 0,
+      "d": 1,
+      "l": 1,
+      "gf": 3,
+      "ga": 5
     },
     {
-      "teamName": "Ajax Amsterdam",
+      "teamName": "Fortuna Sittard",
       "gp": 5,
       "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 10,
-      "ga": 3
-    },
-    {
-      "teamName": "Nec Nijmegen",
-      "gp": 5,
-      "w": 4,
       "d": 1,
-      "l": 0,
-      "gf": 13,
-      "ga": 6
+      "l": 1,
+      "gf": 10,
+      "ga": 10
     },
     {
       "teamName": "Excelsior",
@@ -276,49 +294,13 @@
       "ga": 5
     },
     {
-      "teamName": "Utrecht",
-      "gp": 5,
-      "w": 2,
-      "d": 2,
-      "l": 2,
-      "gf": 9,
-      "ga": 10
-    },
-    {
-      "teamName": "AZ Alkmaar",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 11,
-      "ga": 6
-    },
-    {
-      "teamName": "Fc Volendam",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 4,
-      "ga": 8
-    },
-    {
-      "teamName": "Cambuur",
+      "teamName": "Willem Ii",
       "gp": 2,
       "w": 0,
       "d": 1,
       "l": 1,
-      "gf": 3,
+      "gf": 2,
       "ga": 5
-    },
-    {
-      "teamName": "Nac Breda",
-      "gp": 5,
-      "w": 1,
-      "d": 2,
-      "l": 2,
-      "gf": 5,
-      "ga": 12
     },
     {
       "teamName": "PSV",
@@ -330,13 +312,13 @@
       "ga": 6
     },
     {
-      "teamName": "Fc Groningen",
+      "teamName": "Feyenoord",
       "gp": 5,
-      "w": 2,
-      "d": 0,
-      "l": 2,
-      "gf": 9,
-      "ga": 10
+      "w": 4,
+      "d": 1,
+      "l": 0,
+      "gf": 11,
+      "ga": 5
     },
     {
       "teamName": "Ado Den Haag",
@@ -348,12 +330,39 @@
       "ga": 7
     },
     {
-      "teamName": "Sparta",
+      "teamName": "Telstar",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 8
+    },
+    {
+      "teamName": "AZ Alkmaar",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 11,
+      "ga": 6
+    },
+    {
+      "teamName": "Nac Breda",
       "gp": 5,
       "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
+      "d": 2,
+      "l": 2,
+      "gf": 5,
+      "ga": 12
+    },
+    {
+      "teamName": "Utrecht",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 2,
+      "gf": 9,
       "ga": 10
     },
     {
@@ -366,31 +375,22 @@
       "ga": 7
     },
     {
-      "teamName": "Pec Zwolle",
+      "teamName": "Heerenveen",
       "gp": 5,
       "w": 1,
       "d": 2,
       "l": 2,
-      "gf": 7,
-      "ga": 11
+      "gf": 8,
+      "ga": 10
     },
     {
-      "teamName": "Feyenoord",
+      "teamName": "Nec Nijmegen",
       "gp": 5,
       "w": 4,
       "d": 1,
       "l": 0,
-      "gf": 11,
-      "ga": 5
-    },
-    {
-      "teamName": "Fortuna Sittard",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 10,
-      "ga": 10
+      "gf": 13,
+      "ga": 6
     }
   ]
 }
