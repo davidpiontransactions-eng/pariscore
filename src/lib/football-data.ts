@@ -262,6 +262,37 @@ export type Prediction = {
   /** Innovation 4: Indice de vulnérabilité sur coups de pied arrêtés.
    *  edge > 0.10 = avantage CPA domicile, < -0.10 = vulnérabilité. */
   setPieceEdge?: number;
+  /** Stats FBref avancées (keeper, shooting) — Big 5 + Championship uniquement. */
+  fbrefAdvanced?: {
+    home: FbrefTeamAdvancedStats | null;
+    away: FbrefTeamAdvancedStats | null;
+  };
+};
+
+/** Stats FBref avancées par équipe (keeper + shooting). */
+export type FbrefTeamAdvancedStats = {
+  /** Arrêts gardien (saves) — total saison. */
+  saves: number;
+  /** Taux d'arrêt (save%). */
+  savePct: number;
+  /** Buts encaissés (GA). */
+  ga: number;
+  /** Tirs cadrés encaissés (SoTA). */
+  sota: number;
+  /** Clean sheets. */
+  cs: number;
+  /** Taux clean sheets (%). */
+  csPct: number;
+  /** Buts encaissés par match (GA90). */
+  ga90: number;
+  /** Tirs totaux (shooting). */
+  shots: number;
+  /** Tirs totaux par match (Sh/90). */
+  shotsPer90: number;
+  /** Tirs cadrés (shooting). */
+  sot: number;
+  /** Tirs cadrés par match (SoT/90). */
+  sotPer90: number;
 };
 
 export type FootballLiveState = {

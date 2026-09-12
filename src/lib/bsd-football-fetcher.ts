@@ -1,8 +1,9 @@
-import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState, StandingContext, TeamStandingStats, MatchMetricStats, TeamMetricStats, MetricValue, MetricRankings, MetricRankingRow, TeamMetricCategory, GoalMetrics, CornerMetrics } from "@/lib/football-data";
+import type { FootballMatch, League, Team, Prediction, FootballMatchOdds, FootballLiveState, StandingContext, TeamStandingStats, MatchMetricStats, TeamMetricStats, MetricValue, MetricRankings, MetricRankingRow, TeamMetricCategory, GoalMetrics, CornerMetrics, FbrefTeamAdvancedStats } from "@/lib/football-data";
 import { lookupClubLogo } from "@/lib/club-logos";
 import { normalizeTeamName } from "@/lib/normalize-team-name";
 import { enrichPrediction } from "./football-predictions";
 import { BSD_ID_TO_SLUG } from "@/lib/league-mapping";
+import { getTeamFbrefAdvanced } from "./football-fbref-advanced";
 import {
   fetchHistoricalStandings,
   blendWithHistorical,
@@ -918,6 +919,39 @@ async function fetchBSDLeagueData(leagueId: number): Promise<LeagueDerivedData |
   return data;
 }
 
+/** Convertit les stats FBref avancées en format standardisé pour le match. */
+function loadFbrefAdvancedForMatch(
+  leagueSlug: string,
+  homeTeam: string,
+  awayTeam: string,
+): { home: FbrefTeamAdvancedStats | null; away: FbrefTeamAdvancedStats | null } {
+  const homeData = getTeamFbrefAdvanced(leagueSlug, homeTeam);
+  const awayData = getTeamFbrefAdvanced(leagueSlug, awayTeam);
+
+  const toStats = (
+    data: ReturnType<typeof getTeamFbrefAdvanced>,
+  ): FbrefTeamAdvancedStats | null => {
+    if (!data) return null;
+    const k = data.keeper;
+    const s = data.shooting;
+    return {
+      saves: k?.saves ?? 0,
+      savePct: k?.savePct ?? 0,
+      ga: k?.ga ?? 0,
+      sota: k?.sota ?? 0,
+      cs: k?.cs ?? 0,
+      csPct: k?.csPct ?? 0,
+      ga90: k?.ga90 ?? 0,
+      shots: s?.sh ?? 0,
+      shotsPer90: s?.sh90 ?? 0,
+      sot: s?.sot ?? 0,
+      sotPer90: s?.sot90 ?? 0,
+    };
+  };
+
+  return { home: toStats(homeData), away: toStats(awayData) };
+}
+
 /** Rattache bilan Domicile/Extérieur + métriques + leaderboards au match (best-effort). */
 function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): void {
   if (!data) return;
@@ -925,6 +959,37 @@ function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): v
   const home = data.teams.get(key(fm.home.name));
   const away = data.teams.get(key(fm.away.name));
   if (!home || !away) return;
+
+  // Charger les stats FBref avancées (keeper, shooting) si disponibles
+  const leagueSlug = BSD_ID_TO_SLUG[fm.league?.id ?? -1];
+  const fbrefAdvanced = leagueSlug
+    ? loadFbrefAdvancedForMatch(leagueSlug, fm.home.name, fm.away.name)
+    : undefined;
+
+  // Enrichir metricStats avec les tirs FBref si les champs BSD sont null
+  const homeMetrics = { ...home.stats.home };
+  const awayMetrics = { ...away.stats.away };
+  if (fbrefAdvanced?.home && homeMetrics.shots.for.value === null) {
+    homeMetrics.shots = {
+      ...homeMetrics.shots,
+      for: { value: fbrefAdvanced.home.shotsPer90, rank: null, rankTotal: 0 },
+    };
+    homeMetrics.sot = {
+      ...homeMetrics.sot,
+      for: { value: fbrefAdvanced.home.sotPer90, rank: null, rankTotal: 0 },
+    };
+  }
+  if (fbrefAdvanced?.away && awayMetrics.shots.for.value === null) {
+    awayMetrics.shots = {
+      ...awayMetrics.shots,
+      for: { value: fbrefAdvanced.away.shotsPer90, rank: null, rankTotal: 0 },
+    };
+    awayMetrics.sot = {
+      ...awayMetrics.sot,
+      for: { value: fbrefAdvanced.away.sotPer90, rank: null, rankTotal: 0 },
+    };
+  }
+
   fm.prediction = {
     ...fm.prediction,
     standingStats: {
@@ -933,8 +998,9 @@ function attachDerivedData(data: LeagueDerivedData | null, fm: FootballMatch): v
       historicalSeason: data.historicalSeason,
       asOf: data.computedAt,
     },
-    metricStats: { home: home.stats.home, away: away.stats.away, partial: data.partial },
+    metricStats: { home: homeMetrics, away: awayMetrics, partial: data.partial },
     metricRankings: data.rankings,
+    fbrefAdvanced,
   };
 }
 

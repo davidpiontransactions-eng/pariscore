@@ -2,6 +2,7 @@
 
 import type { FootballMatch } from "@/lib/football-data";
 import { parisKickoff } from "@/lib/football-time";
+import { computeAttackDefense, attackDefenseLabel, attackDefenseColor } from "@/lib/football-attack-defense";
 
 /* ─── Encarts façon FotMob : Meilleures statistiques + infos stade ───
    Carte blanche (page FotMob), texte #222/#717171.
@@ -118,6 +119,16 @@ function buildRows(m: FootballMatch): StatRow[] {
       if (sot && soa && sot.total != null && soa.total != null && sot.total.value != null && soa.total.value != null) {
         push("Tirs cadrés moyens / match", fmt(sot.total.value), fmt(soa.total.value), null);
       }
+    }
+    // 5) Scores Attaque/Défense composites
+    const ad = computeAttackDefense(m);
+    if (ad) {
+      const aLabelH = attackDefenseLabel(ad.home.attack);
+      const aLabelA = attackDefenseLabel(ad.away.attack);
+      push("Attaque", `${ad.home.attack} ${aLabelH}`, `${ad.away.attack} ${aLabelA}`, pct(ad.home.attack, ad.away.attack));
+      const dLabelH = attackDefenseLabel(ad.home.defense);
+      const dLabelA = attackDefenseLabel(ad.away.defense);
+      push("Défense", `${ad.home.defense} ${dLabelH}`, `${ad.away.defense} ${dLabelA}`, pct(ad.home.defense, ad.away.defense));
     }
   }
   return rows;

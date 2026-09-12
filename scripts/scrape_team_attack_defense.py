@@ -185,6 +185,8 @@ def parse_fbref_table(html: str, table_id: str) -> Dict[str, Dict[str, Optional[
 
         if entry:
             results[team] = entry
+    return results
+
 # ── FBref: Scrape des 4 tables par ligue ───────────────────────────────────
 
 def _build_fbref_url(comp_id: int, fbref_slug: str, season: str, suffix: str) -> str:
@@ -366,6 +368,11 @@ _SH_SOT_PATTERNS = ("Sh/90", "Shots/90", "Shots per 90")
 _SH_TOTAL_PATTERNS = ("Sh", "Shots", "Shots Total")
 _KP_CS_PATTERNS = ("CS", "Clean Sheets")
 _KP_CS_PCT_PATTERNS = ("CS%", "Clean Sheet Percentage", "CS %")
+_KP_SAVES_PATTERNS = ("Saves", "Save", "Sv")
+_KP_SAVE_PCT_PATTERNS = ("Save%", "Save Percentage", "Save %")
+_KP_PSXG_PATTERNS = ("PSxG", "Post-Shot Expected Goals")
+_KP_PSXG_MINUS_GA_PATTERNS = ("PSxG-SoTA", "PSxG-GA", "Goals Prevented")
+_KP_SOTA_PATTERNS = ("SoTA", "Shots on Target Against")
 _MISC_TKLW_PATTERNS = ("TklW", "Tackles Won")
 _MISC_TKL_PATTERNS = ("Tkl", "Tackles")
 _MISC_INT_PATTERNS = ("Int", "Interceptions")
@@ -411,6 +418,11 @@ def merge_team_data(
             "sh_total": _find_key(sh, *_SH_TOTAL_PATTERNS),
             "cs": _find_key(kp, *_KP_CS_PATTERNS),
             "cs_pct": _find_key(kp, *_KP_CS_PCT_PATTERNS),
+            "saves": _find_key(kp, *_KP_SAVES_PATTERNS),
+            "save_pct": _find_key(kp, *_KP_SAVE_PCT_PATTERNS),
+            "psxg": _find_key(kp, *_KP_PSXG_PATTERNS),
+            "psxg_minus_ga": _find_key(kp, *_KP_PSXG_MINUS_GA_PATTERNS),
+            "sota": _find_key(kp, *_KP_SOTA_PATTERNS),
             "tklw": _find_key(misc, *_MISC_TKLW_PATTERNS),
             "tkl": _find_key(misc, *_MISC_TKL_PATTERNS),
             "int_": _find_key(misc, *_MISC_INT_PATTERNS),
@@ -432,6 +444,11 @@ def compute_metrics(merged: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
         sh_p90 = d["sh_p90"]
         sh_total = d["sh_total"]
         cs_pct = d["cs_pct"]
+        saves = d["saves"]
+        save_pct = d["save_pct"]
+        psxg = d["psxg"]
+        psxg_minus_ga = d["psxg_minus_ga"]
+        sota = d["sota"]
         tklw = d["tklw"]
         tkl = d["tkl"]
         int_ = d["int_"]
@@ -448,6 +465,9 @@ def compute_metrics(merged: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
         conceded_per_game = round(ga / mp, 2) if ga is not None and mp and mp > 0 else None
         clean_sheet_pct = round(cs_pct, 1) if cs_pct is not None else None
         tackles_per_game = round(tklw / mp, 2) if tklw is not None and mp and mp > 0 else None
+        saves_per_game = round(saves / mp, 2) if saves is not None and mp and mp > 0 else None
+        goals_prevented = round(psxg_minus_ga, 2) if psxg_minus_ga is not None else None
+        psxg_per_game = round(psxg / mp, 2) if psxg is not None and mp and mp > 0 else None
 
         def_actions_sum = None
         if tkl is not None or int_ is not None or clr is not None:
@@ -471,10 +491,18 @@ def compute_metrics(merged: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "cleanSheetPct": clean_sheet_pct,
                 "tacklesPerGame": tackles_per_game,
                 "defActionsPerGame": def_actions_per_game,
+                "savesPerGame": saves_per_game,
+                "savePct": save_pct,
+                "goalsPrevented": goals_prevented,
+                "psxgPerGame": psxg_per_game,
                 "concededPerGameRank": None,
                 "cleanSheetPctRank": None,
                 "tacklesPerGameRank": None,
                 "defActionsPerGameRank": None,
+                "savesPerGameRank": None,
+                "savePctRank": None,
+                "goalsPreventedRank": None,
+                "psxgPerGameRank": None,
             },
         })
 
