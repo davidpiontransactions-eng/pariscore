@@ -1,21 +1,153 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LiquidGlass } from "@/components/ui/liquid-glass";
-import { SnookerCalendar } from "@/components/snooker/snooker-calendar";
 import { SnookerMatchCard } from "@/components/snooker/snooker-match-card";
 import { SnookerLiveTracker } from "@/components/snooker/snooker-live-tracker";
 import { SnookerPlayerCard } from "@/components/snooker/snooker-player-card";
-import { SnookerTopPicks } from "@/components/snooker/snooker-top-picks";
-import { SnookerTopPicksBanner } from "@/components/snooker/snooker-top-picks-banner";
 import { SnookerBetsPanel } from "@/components/snooker/snooker-bets-panel";
 
 // ---------------------------------------------------------------------------
-// Types consommés par les composants (miroir des réponses API)
+// Styles
 // ---------------------------------------------------------------------------
 
+type StrategyKey = "form" | "scoring" | "clutch" | "format" | "momentum" | "all";
+
+const STRATEGIES: { key: StrategyKey; label: string; desc: string }[] = [
+  { key: "form", label: "Forme", desc: "Elo + Win% + décideurs" },
+  { key: "scoring", label: "Scoring", desc: "Century rate + avg break" },
+  { key: "clutch", label: "Clutch", desc: "Décideurs gagnés" },
+  { key: "format", label: "Format", desc: "Long vs court" },
+  { key: "momentum", label: "Momentum", desc: "Élan récent" },
+  { key: "all", label: "Tous", desc: "Aucun filtre" },
+];
+
+// Scoring helpers — basé sur les données DB (Elo, WinPct, CenturyRate, DeciderWinPct, AvgBreak)
+function normalize(val: number, min: number, max: number): number {
+  if (max === min) return 50;
+  return Math.min(100, Math.max(0, ((val - min) / (max - min)) * 100));
+}
+
+// ─── Modèles prédictifs → probabilités (0-100%) ──────────────────────────
+
+/** Modèle Elo : probabilité attendue selon le rating */
+function eloWinProb(elo1: number, elo2: number): number {
+  const e1 = 1 / (1 + Math.pow(10, (elo2 - elo1) / 400));
+  return e1 * 100;
+}
+
+/** Modèle Forme : WinPct pondéré + décideurs */
+function formWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
+  const w1 = (p1.winPct ?? 0.5) * 100;
+  const w2 = (p2.winPct ?? 0.5) * 100;
+  const d1 = (p1.deciderWinPct ?? 0.5) * 100;
+  const d2 = (p2.deciderWinPct ?? 0.5) * 100;
+  const s1 = w1 * 0.7 + d1 * 0.3;
+  const s2 = w2 * 0.7 + d2 * 0.3;
+  return s1 / (s1 + s2) * 100;
+}
+
+/** Modèle Scoring : century rate + avg break */
+function scoringWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
+  const c1 = normalize(p1.centuryRate ?? 0, 0, 30);
+  const c2 = normalize(p2.centuryRate ?? 0, 0, 30);
+  const b1 = normalize(p1.avgBreak ?? 30, 20, 80);
+  const b2 = normalize(p2.avgBreak ?? 30, 20, 80);
+  const s1 = c1 * 0.55 + b1 * 0.45;
+  const s2 = c2 * 0.55 + b2 * 0.45;
+  return s1 / (s1 + s2) * 100;
+}
+
+/** Modèle Clutch : performance en décideurs */
+function clutchWinProb(p1: ApiPlayer, p2: ApiPlayer): number {
+  const d1 = (p1.deciderWinPct ?? 0.5) * 100;
+  const d2 = (p2.deciderWinPct ?? 0.5) * 100;
+  return d1 / (d1 + d2) * 100;
+}
+
+/** Modèle Cotes : probabilité implicite déviggée (marché 2-way snooker) */
+function oddsWinProb(odds1: number, odds2: number): number {
+  const margin = (1 / odds1) + (1 / odds2);
+  const p1 = (1 / odds1) / margin;
+  return p1 * 100;
+}
+
+// Résolution du joueur pour un match donné
+function resolvePlayers(m: ApiMatch, players: ApiPlayer[]): [ApiPlayer, ApiPlayer] {
+  const find = (name: string) =>
+    players.find((p) => p.name.toLowerCase() === name.toLowerCase()) ?? ({
+      id: "", name, eloRating: 1500, winPct: 0.5, centuryRate: 0, deciderWinPct: 0.5, avgBreak: 30,
+    } as ApiPlayer);
+  return [find(m.player1), find(m.player2)];
+}
+
+/** Score composite multi-modèle (pondéré) → probabilité finale % */
+function computeCompositeProb(
+  m: ApiMatch,
+  players: ApiPlayer[],
+  strategy: StrategyKey,
+): { prob1: number; prob2: number } | null {
+  const [p1, p2] = resolvePlayers(m, players);
+  const noDb = p1.id === "" && p2.id === "";
+
+  // Si pas de données DB et pas de cotes, retourner null
+  if (noDb && !m.odds) return null;
+
+  const probs: number[] = [];
+
+  // 1. Modèle Elo (si ratings > defaults)
+  if (p1.eloRating !== 1500 || p2.eloRating !== 1500) {
+    probs.push(eloWinProb(p1.eloRating, p2.eloRating));
+  }
+
+  // 2. Modèle Forme
+  if (p1.winPct !== 0.5 || p2.winPct !== 0.5) {
+    probs.push(formWinProb(p1, p2));
+  }
+
+  // 3. Modèle Scoring
+  if ((p1.centuryRate ?? 0) > 0 || (p2.centuryRate ?? 0) > 0) {
+    probs.push(scoringWinProb(p1, p2));
+  }
+
+  // 4. Modèle Clutch
+  if (p1.deciderWinPct !== 0.5 || p2.deciderWinPct !== 0.5) {
+    probs.push(clutchWinProb(p1, p2));
+  }
+
+  // 5. Modèle Cotes (toujours disponible si odds existent)
+  if (m.odds && m.odds.player1 > 0 && m.odds.player2 > 0) {
+    probs.push(oddsWinProb(m.odds.player1, m.odds.player2));
+  }
+
+  if (probs.length === 0) return null;
+
+  // Moyenne pondérée — boost selon la stratégie active
+  let weights = probs.map(() => 1);
+  if (strategy === "form" && probs.length >= 2) weights[1] = 2;     // double la forme
+  if (strategy === "scoring" && probs.length >= 3) weights[2] = 2;  // double le scoring
+  if (strategy === "clutch" && probs.length >= 4) weights[3] = 2;   // double le clutch
+
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  const prob1 = probs.reduce((sum, p, i) => sum + p * weights[i], 0) / totalWeight;
+
+  return { prob1: Math.round(prob1), prob2: 100 - Math.round(prob1) };
+}
+
+// ─── Bande de confiance ───────────────────────────────────────────────────
+
+function confidenceBand(probPct: number): { label: string; cls: string } | null {
+  if (probPct >= 70) return { label: "Élevée", cls: "bg-[#00985f]/10 text-[#00985f] border-[#00985f]/20" };
+  if (probPct >= 60) return { label: "Moyenne", cls: "bg-[#FF6D00]/10 text-[#FF6D00] border-[#FF6D00]/20" };
+  if (probPct >= 50) return { label: "Correcte", cls: "bg-[#2196F3]/10 text-[#2196F3] border-[#2196F3]/20" };
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// Types API
+// ---------------------------------------------------------------------------
 type ApiMatch = {
   id: string;
   tournament: string;
@@ -59,77 +191,366 @@ type PlayersResponse = {
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 // ---------------------------------------------------------------------------
-// Onglet Snooker
+// Composant principal
 // ---------------------------------------------------------------------------
-
 export function SnookerTabContent() {
-  const matchesRes = useSWR<MatchesResponse>(
-    "/api/v1/snooker/matches",
-    fetcher,
-    { refreshInterval: 300_000, revalidateOnFocus: true },
-  );
-  const playersRes = useSWR<PlayersResponse>(
-    "/api/v1/snooker/players",
-    fetcher,
-    { refreshInterval: 600_000, revalidateOnFocus: true },
-  );
+  const [activeStrategy, setActiveStrategy] = useState<StrategyKey>("all");
+
+  const matchesRes = useSWR<MatchesResponse>("/api/v1/snooker/matches", fetcher, {
+    refreshInterval: 300_000,
+    revalidateOnFocus: true,
+  });
+  const playersRes = useSWR<PlayersResponse>("/api/v1/snooker/players", fetcher, {
+    refreshInterval: 600_000,
+    revalidateOnFocus: true,
+  });
 
   const matches = useMemo(() => matchesRes.data?.matches ?? [], [matchesRes.data]);
   const players = useMemo(() => playersRes.data?.players ?? [], [playersRes.data]);
+  const liveMatches = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
 
-  // Tri : live d'abord, puis programmés, puis terminés ; par heure.
+  // Tri : live d'abord, puis programmés, puis terminés
   const sorted = useMemo(() => {
     const order: Record<ApiMatch["status"], number> = { live: 0, scheduled: 1, finished: 2 };
     return [...matches].sort((a, b) => {
       const o = order[a.status] - order[b.status];
       if (o !== 0) return o;
-      const ta = a.scheduled_at ?? "";
-      const tb = b.scheduled_at ?? "";
-      return ta.localeCompare(tb);
+      return (a.scheduled_at ?? "").localeCompare(b.scheduled_at ?? "");
     });
   }, [matches]);
 
-  const liveMatches = useMemo(() => matches.filter((m) => m.status === "live"), [matches]);
+  // Top 10 par stratégie — uniquement matchs avec proba ≥50%
+  const top10 = useMemo(() => {
+    const candidates = sorted.filter((m) => m.status !== "finished" && m.odds);
+
+    const scored = candidates.map((m) => {
+      const prob = computeCompositeProb(m, players, activeStrategy);
+      if (!prob) return null;
+      const favorite = prob.prob1 >= prob.prob2 ? m.player1 : m.player2;
+      const bestProb = Math.max(prob.prob1, prob.prob2);
+      if (bestProb < 50) return null; // filtre ≥50%
+      return { match: m, prob1: prob.prob1, prob2: prob.prob2, favorite, bestProb };
+    }).filter(Boolean) as Array<{ match: ApiMatch; prob1: number; prob2: number; favorite: string; bestProb: number }>;
+
+    scored.sort((a, b) => b.bestProb - a.bestProb);
+    return scored.slice(0, 10);
+  }, [sorted, activeStrategy, players]);
+
+  const hasData = !!matchesRes.data?.matches;
+  const isLoading = matchesRes.isLoading;
 
   return (
     <div className="space-y-6">
-      {/* Hero avec bannière carousel */}
-      <div className="relative overflow-hidden rounded-2xl border border-zinc-800/60 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(0,230,118,0.08)_0%,_transparent_60%)]" />
-        <div className="relative z-10">
-          <SnookerTopPicksBanner />
+      {/* ======== TOP 10 PAR STRATÉGIE — Style Oddsportal / Football ======== */}
+      <section
+        aria-label="Top 10 matchs par stratégie"
+        className="w-full min-w-0 rounded-2xl p-3 sm:p-4"
+        style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}
+      >
+        {/* En-tête + filtres */}
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+          <h2 className="text-[13px] font-semibold" style={{ color: "#000000" }}>
+            Top 10 — {STRATEGIES.find((s) => s.key === activeStrategy)?.label ?? "Tous"}
+          </h2>
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="flex overflow-hidden rounded" style={{ border: "1px solid #f0f0f0" }}>
+              {STRATEGIES.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setActiveStrategy(s.key)}
+                  className={`min-h-[44px] px-3 font-mono text-[10px] font-bold uppercase transition-colors sm:min-h-0 sm:px-2 sm:py-0.5 ${
+                    activeStrategy === s.key
+                      ? "bg-[#00985f]/10 text-[#00985f]"
+                      : "bg-transparent text-[#717171] hover:text-[#222]"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* Table container */}
+        <div className="overflow-hidden rounded-2xl" style={{ background: "#ffffff", border: "1px solid #f0f0f0" }}>
+          {/* Header bar */}
+          <div className="flex h-10 items-center px-4" style={{ background: "#f5f5f5", borderBottom: "1px solid #f0f0f0" }}>
+            <span className="text-[13px] font-semibold" style={{ color: "#000000" }}>
+              Matchs par stratégie
+            </span>
+            <span
+              className="ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ background: "#00985f15", color: "#00985f" }}
+            >
+              {top10.length}
+            </span>
+          </div>
+
+          {/* Column headers — desktop */}
+          <div
+            className="hidden items-center px-3 py-2 text-[11px] font-medium uppercase tracking-wider md:grid"
+            style={{
+              gridTemplateColumns: "minmax(0,1fr) minmax(90px,auto) 28px",
+              color: "#717171",
+              borderBottom: "1px solid #f5f5f5",
+            }}
+          >
+            <span>Match</span>
+            <span className="px-3">Valeur</span>
+            <span className="w-7 text-center">→</span>
+          </div>
+
+          {/* Loading / empty */}
+          {isLoading ? (
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : !hasData || top10.length === 0 ? (
+            <div className="text-center py-10 text-sm" style={{ color: "#717171" }}>
+              Aucun match pour cette stratégie.
+            </div>
+          ) : (
+            /* Match rows */
+            <div>
+              {top10.map((row, i) => {
+                const { match: m, prob1, prob2, favorite, bestProb } = row;
+                const band = confidenceBand(bestProb);
+                const datetime = m.scheduled_at
+                  ? new Intl.DateTimeFormat("fr-FR", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      timeZone: "Europe/Paris",
+                    }).format(new Date(m.scheduled_at))
+                  : "—";
+                const live = m.status === "live";
+
+                return (
+                  <div
+                    key={m.id}
+                    className={`flex flex-col gap-1 px-3 py-2 transition-colors md:grid md:items-center md:gap-0 hover:bg-[#f8f8f8]`}
+                    style={{
+                      gridTemplateColumns: "minmax(0,1fr) minmax(90px,auto) 28px",
+                      borderBottom: i < top10.length - 1 ? "1px solid #f5f5f5" : undefined,
+                    }}
+                  >
+                    {/* Col 1 — Match info */}
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#00985f]/10 text-[#00985f] text-[10px] font-extrabold shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-[13px] font-medium" style={{ color: "#222222" }}>
+                          {m.player1} <span style={{ color: "#717171" }}>vs</span> {m.player2}
+                        </div>
+                        <div className="truncate text-[11px]" style={{ color: "#717171" }}>
+                          {m.tournament || "Northern Ireland Open"} · {m.bestOf === 11 ? "Bo11" : `Bo${m.bestOf}`} ·{" "}
+                          {live ? (
+                            <span className="font-bold text-[#00985f]">
+                              LIVE {m.scoreA}-{m.scoreB}
+                            </span>
+                          ) : (
+                            datetime
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Col 2 — Probabilité du favori */}
+                    <div className="flex items-center gap-1.5 px-0 md:px-3">
+                      {band ? (
+                        <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold tabular-nums ${band.cls}`}>
+                          {favorite} {bestProb}%
+                        </span>
+                      ) : (
+                        <span
+                          className="inline-flex items-center rounded-full border border-[#e0e0e0] bg-[#f5f5f5] px-2 py-0.5 text-[11px] font-semibold tabular-nums"
+                          style={{ color: "#222222" }}
+                        >
+                          {favorite} {bestProb}%
+                        </span>
+                      )}
+                      <span className="text-[10px]" style={{ color: "#717171" }}>
+                        ({prob1}% / {prob2}%)
+                      </span>
+                    </div>
+
+                    {/* Col 3 — Trend arrow */}
+                    <div className="hidden w-7 justify-center md:flex">
+                      <svg className="h-3 w-3" style={{ color: "#717171" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ======== DÉFINITIONS DES STRATÉGIES ======== */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-6">
+        {STRATEGIES.filter((s) => s.key !== "all").map((s) => (
+          <div
+            key={s.key}
+            className="rounded-lg border px-3 py-2 text-center"
+            style={{
+              background: activeStrategy === s.key ? "#00985f12" : "#ffffff",
+              borderColor: activeStrategy === s.key ? "#00985f30" : "#f0f0f0",
+            }}
+          >
+            <div className="text-[11px] font-bold" style={{ color: activeStrategy === s.key ? "#00985f" : "#222" }}>
+              {s.label}
+            </div>
+            <div className="mt-0.5 text-[10px]" style={{ color: "#717171" }}>
+              {s.desc}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
-        <SnookerTopPicks />
-      </LiquidGlass>
-
+      {/* ======== PARIS ======== */}
       <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
         <SnookerBetsPanel />
       </LiquidGlass>
 
-      <LiquidGlass tier="tier2" className="rounded-xl border border-zinc-800/50 p-4">
-        <SnookerCalendar />
-      </LiquidGlass>
+      {/* ======== CALENDRIER COMPLET — Style Oddsportal ======== */}
+      <section>
+        {isLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : !hasData ? (
+          <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
+            Aucun match snooker disponible.
+          </div>
+        ) : sorted.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
+            Aucun match pour cette période.
+          </div>
+        ) : (
+          (() => {
+            const groups: Record<string, ApiMatch[]> = {};
+            for (const m of sorted) {
+              const d = m.scheduled_at
+                ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", timeZone: "Europe/Paris" }).format(new Date(m.scheduled_at))
+                : "À venir";
+              (groups[d] ??= []).push(m);
+            }
+            return Object.entries(groups).map(([dateLabel, dateMatches]) => (
+              <div key={dateLabel} className="w-full border border-black/10 bg-white text-black mb-4">
+                {/* En-tête date */}
+                <div className="flex items-center border-b border-black/10 bg-gray-100">
+                  <div className="flex-1 px-3 py-1.5 text-xs font-medium text-black">{dateLabel}</div>
+                  <div className="flex shrink-0">
+                    <div className="w-[60px] flex items-center justify-center border-l border-black/10 bg-gray-100 py-1.5 text-xs font-medium text-black">1</div>
+                    <div className="w-[60px] flex items-center justify-center border-l border-black/10 bg-gray-100 py-1.5 text-xs font-medium text-black">2</div>
+                  </div>
+                </div>
 
-      {/* Cartes matchs */}
+                {dateMatches.map((m) => {
+                  const timeStr = m.scheduled_at
+                    ? new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" }).format(new Date(m.scheduled_at))
+                    : "??:??";
+                  const live = m.status === "live";
+                  const finished = m.status === "finished";
+                  return (
+                    <div
+                      key={m.id}
+                      className="flex items-stretch border-b border-black/10 last:border-b-0 hover:bg-[#f9e9cc] transition-colors"
+                    >
+                      {/* Colonne joueurs */}
+                      <a
+                        href={`/snooker/h2h/${m.id}`}
+                        className="flex-1 flex items-center gap-3 px-3 py-2 min-w-0 group"
+                      >
+                        {/* Heure */}
+                        <div className="shrink-0 w-[48px] text-xs text-gray-500 tabular-nums">
+                          {live ? (
+                            <span className="inline-flex items-center gap-1">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="absolute inline-flex h-full w-full animate-pulse rounded-full bg-rose-500 opacity-75" />
+                                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+                              </span>
+                              <span className="text-[10px] font-bold uppercase text-rose-500">L</span>
+                            </span>
+                          ) : timeStr}
+                        </div>
+
+                        {/* Player 1 (gauche) */}
+                        <div className="flex-1 min-w-0 text-right">
+                          <span className={`text-[13px] truncate block ${finished && m.scoreA > m.scoreB ? "font-bold" : ""} group-hover:underline`}>
+                            {m.player1}
+                          </span>
+                        </div>
+
+                        {/* Séparateur */}
+                        <span className="shrink-0 text-xs font-bold text-gray-400">-</span>
+
+                        {/* Player 2 (droite) */}
+                        <div className="flex-1 min-w-0">
+                          <span className={`text-[13px] truncate block ${finished && m.scoreB > m.scoreA ? "font-bold" : ""} group-hover:underline`}>
+                            {m.player2}
+                          </span>
+                        </div>
+                      </a>
+
+                      {/* Score (si terminé, desktop) */}
+                      {finished && (
+                        <div className="hidden md:flex w-[56px] shrink-0 items-center justify-center border-l border-black/10 text-[11px] font-bold text-black">
+                          {m.scoreA}-{m.scoreB}
+                        </div>
+                      )}
+
+                      {/* Cotes */}
+                      <div className="flex shrink-0 items-center">
+                        <div className="w-[60px] flex items-center justify-center border-l border-black/10 py-1">
+                          <div className="w-[46px] h-[26px] flex items-center justify-center border border-black/15 bg-white text-xs font-bold cursor-pointer hover:border-orange-500 hover:bg-gray-100 transition-colors">
+                            {m.odds ? m.odds.player1.toFixed(2) : "—"}
+                          </div>
+                        </div>
+                        <div className="w-[60px] flex items-center justify-center border-l border-black/10 py-1">
+                          <div className="w-[46px] h-[26px] flex items-center justify-center border border-black/15 bg-white text-xs font-bold cursor-pointer hover:border-orange-500 hover:bg-gray-100 transition-colors">
+                            {m.odds ? m.odds.player2.toFixed(2) : "—"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ));
+          })()
+        )}
+      </section>
+
+      {/* ======== TOUTES LES CARTES MATCHS ======== */}
       <section className="space-y-3">
         <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Matchs — {matchesRes.data?.total ?? 0}
         </h3>
-        {!matchesRes.data && !matchesRes.error ? (
+        {isLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-14 w-full rounded-lg" />
             ))}
           </div>
+        ) : !hasData ? (
+          <div className="text-center py-10 text-slate-400 text-sm">
+            Aucun match top disponible.
+          </div>
         ) : sorted.length === 0 ? (
-          <LiquidGlass tier="tier2" className="rounded-xl border border-dashed border-zinc-800 p-6 text-center">
-            <p className="text-sm text-muted-foreground/60">
-              Aucun match snooker actuellement — relancez le scraper FlashScore.
-            </p>
-          </LiquidGlass>
+          <div className="text-center py-10 text-slate-400 text-sm">
+            Aucun match top disponible.
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {sorted.map((m) => (
@@ -152,20 +573,13 @@ export function SnookerTabContent() {
         )}
       </section>
 
-      {/* Tracker live frame par frame */}
+      {/* ======== LIVE TRACKER ======== */}
       {liveMatches.length > 0 && (
         <section className="space-y-3">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400">
-            En direct
-          </h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400">En direct</h3>
           <div className="space-y-4">
             {liveMatches.map((m) => {
-              const frames: Array<{
-                frameNumber: number;
-                winner: "A" | "B";
-                scoreA: number;
-                scoreB: number;
-              }> = [];
+              const frames: Array<{ frameNumber: number; winner: "A" | "B"; scoreA: number; scoreB: number }> = [];
               let fa = 0;
               let fb = 0;
               for (let i = 0; i < m.scoreA; i++) {
@@ -192,7 +606,7 @@ export function SnookerTabContent() {
         </section>
       )}
 
-      {/* Leaderboard joueurs */}
+      {/* ======== LEADERBOARD JOUEURS ======== */}
       {players.length > 0 && (
         <section className="space-y-3">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">

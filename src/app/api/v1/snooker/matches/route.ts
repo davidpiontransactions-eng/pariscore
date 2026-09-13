@@ -8,8 +8,10 @@ export const runtime = "nodejs";
 /**
  * /api/v1/snooker/matches
  *
- * Sert les matchs snooker scrapés depuis FlashScore.
- * Fichier source : data/odds_flashscore_snooker.json (généré par scripts/scrape_flashscore_snooker.mjs)
+ * Sert les matchs snooker scrapés depuis FlashScore + Oddsportal (Northern Ireland Open).
+ * Fichiers sources :
+ *   - data/odds_flashscore_snooker.json (généré par scripts/scrape_flashscore_snooker.mjs)
+ *   - data/oddsportal_nio.json (généré par scripts/scrape_oddsportal_nio.mjs)
  *
  * Query params:
  *   ?live=1        — filtre uniquement les matchs live/en cours
@@ -42,6 +44,31 @@ type FlashScoreFile = {
   matches: FlashScoreMatch[];
 };
 
+type OddsportalMatch = {
+  id: string;
+  home: string;
+  away: string;
+  time: string;
+  scoreHome: string;
+  scoreAway: string;
+  status: "scheduled" | "live" | "finished";
+  odds1: number | null;
+  odds2: number | null;
+  href: string;
+};
+
+type OddsportalFile = {
+  scraped_at: string;
+  sport: string;
+  source: string;
+  tournament: string;
+  matches_count: number;
+  live_count: number;
+  finished_count: number;
+  with_odds: number;
+  matches: OddsportalMatch[];
+};
+
 type SnookerMatch = {
   id: string;
   source: string;
@@ -72,6 +99,7 @@ function parseFrames(raw: string | undefined): number {
 }
 
 const DATA_FILE = join(process.cwd(), "data", "odds_flashscore_snooker.json");
+const ODDSPORTAL_FILE = join(process.cwd(), "data", "oddsportal_nio.json");
 
 // ─── Mapping FlashScore → CueTracker ID pour photos Wikipedia ────────────
 // FlashScore returns abbreviated names ("Selby M."). We map to CueTracker IDs.
@@ -106,6 +134,17 @@ const FS_TO_CUE_ID: Record<string, string> = {
   "lyu h.": "lyu-haotian", "clarke j.": "james-clarke",
   "hill a.": "aaron-hill", "davies l.": "liam-davies",
   "brown o.": "oliver-brown",
+  // NIO Oddsportal players
+  "baranowski m.": "mateusz-baranowski", "gong c.": "chenzhi-gong",
+  "benzey c.": "connor-benzey", "yang l.": "liu-yang",
+  "evans r.": "reanne-evans", "jiahao h.": "jiahao-huang",
+  "graham l.": "liam-graham", "xinbo w.": "wang-xinbo",
+  "boiko i.": "iulian-boiko", "zetao l.": "luo-zetao",
+  "davies l. j.": "liam-james-davies", "miah h.": "hammad-miah",
+  "quinn f.": "fergal-quinn", "burns i.": "ian-burns",
+  "fu m.": "marco-fu", "connolly j.": "james-connolly",
+  "hanyang z.": "zhang-hanyang", "el hareedy m.": "mohamed-elhareedy",
+  "xu yi chen": "xu-yi-chen", "awad m.": "mina-awad",
 };
 
 async function getPhotoForPlayer(name: string): Promise<string | undefined> {
@@ -129,6 +168,16 @@ function readData(): FlashScoreFile | null {
     if (!existsSync(DATA_FILE)) return null;
     const raw = readFileSync(DATA_FILE, "utf-8");
     return JSON.parse(raw) as FlashScoreFile;
+  } catch {
+    return null;
+  }
+}
+
+function readOddsportalData(): OddsportalFile | null {
+  try {
+    if (!existsSync(ODDSPORTAL_FILE)) return null;
+    const raw = readFileSync(ODDSPORTAL_FILE, "utf-8");
+    return JSON.parse(raw) as OddsportalFile;
   } catch {
     return null;
   }
@@ -176,15 +225,53 @@ async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<Sn
   };
 }
 
+async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, scrapedAt: string): Promise<SnookerMatch> {
+  // Construire scheduled_at depuis le champ time (ex: "14:00")
+  let scheduledAt: string | null = null;
+  if (m.time && /^\d{1,2}:\d{2}$/.test(m.time)) {
+    const today = new Date(scrapedAt);
+    const [hours, minutes] = m.time.split(":").map(Number);
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      scheduledAt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes).toISOString();
+    }
+  }
+
+  let odds: { player1: number; player2: number } | undefined;
+  if (m.odds1 && m.odds2) {
+    odds = { player1: m.odds1, player2: m.odds2 };
+  }
+
+  return {
+    id: `nio_${m.id}`,
+    source: "oddsportal",
+    tournament: tournament || "Northern Ireland Open",
+    league_id: "snooker",
+    player1: m.home,
+    player2: m.away,
+    player1PhotoUrl: await getPhotoForPlayer(m.home),
+    player2PhotoUrl: await getPhotoForPlayer(m.away),
+    scheduled_at: scheduledAt,
+    status: m.status,
+    scoreA: parseFrames(m.scoreHome),
+    scoreB: parseFrames(m.scoreAway),
+    bestOf: 7,
+    odds,
+  };
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const liveOnly = searchParams.get("live") === "1";
   const tournament = searchParams.get("tournament");
   const limit = Math.min(parseInt(searchParams.get("limit") ?? "100", 10) || 100, 500);
 
+  // Source 1 : FlashScore
   const data = readData();
 
-  if (!data) {
+  // Source 2 : Oddsportal Northern Ireland Open
+  const nioData = readOddsportalData();
+
+  if (!data && !nioData) {
     return NextResponse.json(
       {
         matches: [],
@@ -192,13 +279,39 @@ export async function GET(req: Request) {
         scraped_at: null,
         tournaments: [],
         message:
-          "Aucune donnée snooker disponible. Lancez le scraper : node scripts/scrape_flashscore_snooker.mjs",
+          "Aucune donnée snooker disponible. Lancez les scrapers : node scripts/scrape_flashscore_snooker.mjs && node scripts/scrape_oddsportal_nio.mjs",
       },
       { status: 200 },
     );
   }
 
-  let matches = await Promise.all(data.matches.map((m) => transformMatch(m, data.scraped_at)));
+  let matches: SnookerMatch[] = [];
+
+  // Transformer les matchs FlashScore
+  if (data) {
+    const fsMatches = await Promise.all(data.matches.map((m) => transformMatch(m, data.scraped_at)));
+    matches.push(...fsMatches);
+  }
+
+  // Transformer les matchs Oddsportal NIO
+  if (nioData) {
+    const nioMatches = await Promise.all(nioData.matches.map((m) => transformOddsportalMatch(m, nioData.tournament, nioData.scraped_at)));
+    matches.push(...nioMatches);
+  }
+
+  // Dédupliquer par nom de joueurs — prioriser Oddsportal (a les cotes)
+  const byKey = new Map<string, SnookerMatch>();
+  for (const m of matches) {
+    const key = `${m.player1.toLowerCase()}-${m.player2.toLowerCase()}`;
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, m);
+    } else if (m.source === "oddsportal" && m.odds) {
+      // Oddsportal a les cotes → écraser FlashScore
+      byKey.set(key, m);
+    }
+  }
+  matches = Array.from(byKey.values());
 
   if (liveOnly) {
     matches = matches.filter((m) => m.status === "live");
@@ -211,12 +324,15 @@ export async function GET(req: Request) {
 
   matches = matches.slice(0, limit);
 
+  // Collecter les tournois uniques
+  const tournaments = [...new Set(matches.map((m) => m.tournament).filter(Boolean))];
+  const scrapedAt = nioData?.scraped_at || data?.scraped_at || null;
+
   return NextResponse.json({
     matches,
     total: matches.length,
-    scraped_at: data.scraped_at,
-    source: data.source,
-    tournaments: data.tournaments,
-    with_odds: data.with_odds,
+    scraped_at: scrapedAt,
+    source: "flashscore+oddsportal",
+    tournaments,
   });
 }

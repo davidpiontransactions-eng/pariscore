@@ -1,8 +1,31 @@
-// ─── Service photos joueurs Snooker via Wikipedia Commons ─────────────────
+// ─── Service photos joueurs Snooker via Wikipedia Commons + WST CDN ──────
 // API gratuite, pas de clé, CC-BY-SA / domaine public
 // Fallback: undefined → PlayerAvatar affiche les initiales
 
 const WIKIPEDIA_API = "https://en.wikipedia.org/w/api.php";
+
+// Mapping CueTracker ID → URL directe photo (WST CDN ou Wikimedia Commons)
+// Utilisé quand le titre Wikipedia ne fonctionne pas ou n'existe pas
+const DIRECT_PHOTO_URLS: Record<string, string> = {
+  // Wikimedia Commons (CC BY-SA)
+  "reanne-evans": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Reanne_Evans_PHC_2017-1.jpg/200px-Reanne_Evans_PHC_2017-1.jpg",
+  "oliver-brown": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Oliver_Brown_PHC_2018.jpg/200px-Oliver_Brown_PHC_2018.jpg",
+  "hammad-miah": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Hammad_Miah_2025.jpg/200px-Hammad_Miah_2025.jpg",
+  "ross-muir": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Ross_Muir_PHC_2016-1.jpg/200px-Ross_Muir_PHC_2016-1.jpg",
+  "andrew-higginson": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Andrew_Higginson_at_Snooker_German_Masters_%28DerHexer%29_2013-01-30_04.jpg/200px-Andrew_Higginson_at_Snooker_German_Masters_%28DerHexer%29_2013-01-30_04.jpg",
+  "alfie-burden": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Alfie_Burden_PHC_2016.jpg/200px-Alfie_Burden_PHC_2016.jpg",
+  "antoni-kowalski": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Anton_Kazakov_Sheffield_2026.jpg/200px-Anton_Kazakov_Sheffield_2026.jpg",
+  "jimmy-white": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Jimmy_White_PHC_2016-4.JPG/200px-Jimmy_White_PHC_2016-4.JPG",
+  // Photos Wikipedia directes (évite rate limit API)
+  "mark-williams": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Mark_Williams_at_Snooker_German_Masters_%28Martin_Rulsch%29_2014-01-30_05_%28cropped%29.jpg/200px-Mark_Williams_at_Snooker_German_Masters_%28Martin_Rulsch%29_2014-01-30_05_%28cropped%29.jpg",
+  "marco-fu": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Marco_Fu_at_Snooker_German_Masters_%28Martin_Rulsch%29_2014-01-29_01.jpg/200px-Marco_Fu_at_Snooker_German_Masters_%28Martin_Rulsch%29_2014-01-29_01.jpg",
+  "stuart-carrington": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Stuart_Carrington_PHC_2016-1.jpg/200px-Stuart_Carrington_PHC_2016-1.jpg",
+  // WST CDN (headshots officiels)
+  "mateusz-baranowski": "https://images.gc.wstservices.co.uk/fit-in/400x600/1ca16fb0-6fe2-11f1-a724-8b5354163df3.png",
+  "chenzhi-gong": "https://images.gc.wstservices.co.uk/fit-in/400x600/7b816230-588b-11ef-a176-bf24d2006d98.png",
+  "liu-yang": "https://images.gc.wstservices.co.uk/fit-in/400x600/1cd68970-6fe2-11f1-9a07-21b596e7208f.png",
+  "luo-zetao": "https://images.gc.wstservices.co.uk/fit-in/400x600/1cafc790-6fe2-11f1-a0e6-3d8d1cf6cccd.png",
+};
 
 // Mapping CueTracker ID → titre page Wikipedia (underscores)
 const PLAYER_WIKI_TITLES: Record<string, string> = {
@@ -89,6 +112,22 @@ const PLAYER_WIKI_TITLES: Record<string, string> = {
   "paul-deaville": "Paul_Deaville",
   "chatchapong-nasa": "Chatchapong_Nasa",
   "mohamed-elsayed": "Mohamed_Elsayed_(snooker_player)",
+  // NIO Oddsportal players
+  "mateusz-baranowski": "Mateusz_Baranowski",
+  "chenzhi-gong": "Gong_Chenzhi",
+  "connor-benzey": "Connor_Benzey",
+  "liu-yang": "Liu_Yang_(snooker_player)",
+  "jiahao-huang": "Huang_Jiahao",
+  "liam-graham": "Liam_Graham",
+  "iulian-boiko": "Iulian_Boiko",
+  "luo-zetao": "Luo_Zetao",
+  "liam-james-davies": "Liam_James_Davies",
+  "fergal-quinn": "Fergal_Quinn",
+  "james-connolly": "James_Connolly",
+  "zhang-hanyang": "Zhang_Hanyang",
+  "mohamed-elhareedy": "Mohamed_Elhareedy",
+  "xu-yi-chen": "Xu_Yichen",
+  "mina-awad": "Mina_Awad",
 };
 
 // Cache LRU en mémoire (1h TTL, 100 entrées)
@@ -102,6 +141,11 @@ function cleanPhotoUrl(raw: string): string {
 }
 
 export async function fetchPlayerPhoto(cueId: string): Promise<string | undefined> {
+  // 1) URL directe (WST CDN / Wikimedia Commons connus)
+  const direct = DIRECT_PHOTO_URLS[cueId];
+  if (direct) return direct;
+
+  // 2) Wikipedia API
   const wikiTitle = PLAYER_WIKI_TITLES[cueId];
   if (!wikiTitle) return undefined;
   const cached = photoCache.get(wikiTitle);

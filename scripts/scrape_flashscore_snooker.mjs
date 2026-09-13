@@ -12,7 +12,7 @@
  * Sortie: data/odds_flashscore_snooker.json
  */
 
-import { chromium } from "playwright";
+import { chromium } from "file:///C:/Users/David/ZCodeProject/pariscore/node_modules/.bun/playwright@1.61.1/node_modules/playwright/index.mjs";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
 

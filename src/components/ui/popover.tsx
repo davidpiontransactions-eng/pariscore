@@ -12,9 +12,10 @@ function Popover({
 }
 
 function PopoverTrigger({
+  suppressHydrationWarning = true,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
-  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" suppressHydrationWarning={suppressHydrationWarning} {...props} />
 }
 
 function PopoverContent({

@@ -39,6 +39,9 @@
     "pm:graphify": "node scripts/pm-loop.js graphify",
     "scrape:on": "python scripts/scrape-ondemand.py",
     "scrape:hltv": "node tools/scrape-hltv-stats.js",
+    "snooker:scrape": "node scripts/scrape_flashscore_snooker.mjs && node scripts/scrape_oddsportal_nio.mjs",
+    "snooker:scrape:flash": "node scripts/scrape_flashscore_snooker.mjs",
+    "snooker:scrape:nio": "node scripts/scrape_oddsportal_nio.mjs",
     "postinstall": "node -e \"try{require('child_process').execSync('npm rebuild better-sqlite3 sharp',{stdio:'pipe',timeout:120000})}catch(e){process.exit(0)}\""
   },
   "dependencies": {

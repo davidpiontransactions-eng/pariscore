@@ -344,8 +344,8 @@ function HomeInner() {
   return (
     <PageErrorBoundary>
       <div className="min-h-screen flex flex-col bg-bg-deep pb-16 md:pb-0">
-        {/* Mode Toggle — Prematch / Live (masqué sur football : filtre FotMob) */}
-        {activeTab !== "football" && <ModeToggle />}
+        {/* Mode Toggle — Prematch / Live (masqué sur football : filtre FotMob, masqué sur snooker) */}
+        {activeTab !== "football" && activeTab !== "snooker" && <ModeToggle />}
 
         {/* Ancien header supprimé — maintenant dans SiteHeader (layout.tsx) */}
 
@@ -368,7 +368,7 @@ function HomeInner() {
               <TennisTop10MatchesWidget />
               <TennisCalendarSection />
             </div>
-          ) : activeTab === "hockey" ? null : (
+          ) : activeTab === "hockey" || activeTab === "snooker" ? null : (
             <TopMultiSport
               activeSport={["home","live","value","favoris","profil"].includes(activeTab) ? "all" : activeTab}
               mode={headerMode}
