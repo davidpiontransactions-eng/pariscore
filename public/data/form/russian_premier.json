@@ -4,7 +4,7 @@
     "leagueId": "russian_premier",
     "leagueName": "Russia",
     "season": "2025/26+2026/27",
-    "lastUpdated": "2026-09-12T08:46:00.499076Z",
+    "lastUpdated": "2026-09-13T09:40:50.617347Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 16,
     "window": 8,
@@ -13,39 +13,39 @@
   },
   "home": [
     {
-      "teamName": "Nizhny Novgorod",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 5,
-      "ga": 6
-    },
-    {
-      "teamName": "Krylya Sovetov",
+      "teamName": "Orenburg",
       "gp": 5,
       "w": 3,
-      "d": 2,
+      "d": 1,
+      "l": 1,
+      "gf": 6,
+      "ga": 4
+    },
+    {
+      "teamName": "Dinamo Moscow",
+      "gp": 5,
+      "w": 4,
+      "d": 1,
       "l": 0,
       "gf": 9,
       "ga": 3
     },
     {
-      "teamName": "Pfc Sochi",
+      "teamName": "Makhachkala",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 2,
-      "gf": 7,
-      "ga": 8
+      "gf": 4,
+      "ga": 5
     },
     {
-      "teamName": "Baltika",
+      "teamName": "Spartak Moscow",
       "gp": 5,
-      "w": 2,
+      "w": 3,
       "d": 1,
-      "l": 2,
-      "gf": 7,
+      "l": 1,
+      "gf": 9,
       "ga": 4
     },
     {
@@ -58,30 +58,30 @@
       "ga": 4
     },
     {
-      "teamName": "Dinamo Moscow",
+      "teamName": "Akhmat Grozny",
       "gp": 5,
-      "w": 4,
+      "w": 3,
       "d": 1,
+      "l": 1,
+      "gf": 6,
+      "ga": 2
+    },
+    {
+      "teamName": "Lokomotiv M.",
+      "gp": 5,
+      "w": 2,
+      "d": 3,
       "l": 0,
-      "gf": 10,
+      "gf": 8,
       "ga": 4
     },
     {
-      "teamName": "Akron",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 9
-    },
-    {
-      "teamName": "Makhachkala",
+      "teamName": "Baltika",
       "gp": 5,
       "w": 2,
-      "d": 0,
+      "d": 1,
       "l": 2,
-      "gf": 6,
+      "gf": 7,
       "ga": 4
     },
     {
@@ -96,47 +96,29 @@
     {
       "teamName": "Zenit",
       "gp": 5,
-      "w": 4,
-      "d": 1,
-      "l": 0,
-      "gf": 8,
-      "ga": 2
-    },
-    {
-      "teamName": "Akhmat Grozny",
-      "gp": 5,
       "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 6,
-      "ga": 2
+      "d": 0,
+      "l": 2,
+      "gf": 9,
+      "ga": 5
     },
     {
       "teamName": "Cska Moscow",
-      "gp": 5,
+      "gp": 6,
       "w": 3,
-      "d": 2,
-      "l": 0,
-      "gf": 7,
-      "ga": 4
-    },
-    {
-      "teamName": "Spartak Moscow",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 9,
-      "ga": 4
-    },
-    {
-      "teamName": "Lokomotiv M.",
-      "gp": 5,
-      "w": 2,
       "d": 3,
       "l": 0,
       "gf": 8,
-      "ga": 4
+      "ga": 5
+    },
+    {
+      "teamName": "Nizhny Novgorod",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 5,
+      "ga": 6
     },
     {
       "teamName": "Rubin Kazan",
@@ -148,51 +130,69 @@
       "ga": 2
     },
     {
-      "teamName": "Orenburg",
-      "gp": 5,
-      "w": 3,
-      "d": 1,
-      "l": 1,
-      "gf": 6,
-      "ga": 4
-    }
-  ],
-  "away": [
-    {
-      "teamName": "Nizhny Novgorod",
+      "teamName": "Pfc Sochi",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 2,
+      "gf": 7,
+      "ga": 8
+    },
+    {
+      "teamName": "Akron",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 3,
       "gf": 6,
-      "ga": 10
+      "ga": 9
     },
     {
       "teamName": "Krylya Sovetov",
       "gp": 5,
-      "w": 1,
-      "d": 3,
-      "l": 1,
-      "gf": 7,
-      "ga": 7
-    },
+      "w": 3,
+      "d": 2,
+      "l": 0,
+      "gf": 9,
+      "ga": 3
+    }
+  ],
+  "away": [
     {
-      "teamName": "Pfc Sochi",
+      "teamName": "Orenburg",
       "gp": 5,
       "w": 1,
-      "d": 0,
-      "l": 4,
-      "gf": 4,
-      "ga": 10
+      "d": 1,
+      "l": 3,
+      "gf": 3,
+      "ga": 8
     },
     {
-      "teamName": "Baltika",
+      "teamName": "Dinamo Moscow",
       "gp": 5,
       "w": 2,
       "d": 2,
+      "l": 1,
+      "gf": 9,
+      "ga": 6
+    },
+    {
+      "teamName": "Makhachkala",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
       "l": 2,
-      "gf": 8,
-      "ga": 4
+      "gf": 3,
+      "ga": 8
+    },
+    {
+      "teamName": "Spartak Moscow",
+      "gp": 5,
+      "w": 2,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 6
     },
     {
       "teamName": "Fc Krasnodar",
@@ -204,76 +204,13 @@
       "ga": 5
     },
     {
-      "teamName": "Dinamo Moscow",
+      "teamName": "Baltika",
       "gp": 5,
       "w": 2,
       "d": 2,
       "l": 1,
       "gf": 9,
-      "ga": 6
-    },
-    {
-      "teamName": "Akron",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 3,
-      "gf": 6,
-      "ga": 12
-    },
-    {
-      "teamName": "Makhachkala",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 2,
-      "gf": 3,
-      "ga": 8
-    },
-    {
-      "teamName": "Rostov",
-      "gp": 5,
-      "w": 2,
-      "d": 1,
-      "l": 2,
-      "gf": 6,
       "ga": 5
-    },
-    {
-      "teamName": "Zenit",
-      "gp": 5,
-      "w": 4,
-      "d": 0,
-      "l": 1,
-      "gf": 11,
-      "ga": 3
-    },
-    {
-      "teamName": "Akhmat Grozny",
-      "gp": 5,
-      "w": 0,
-      "d": 2,
-      "l": 2,
-      "gf": 4,
-      "ga": 9
-    },
-    {
-      "teamName": "Spartak Moscow",
-      "gp": 5,
-      "w": 3,
-      "d": 0,
-      "l": 2,
-      "gf": 7,
-      "ga": 6
-    },
-    {
-      "teamName": "Cska Moscow",
-      "gp": 5,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 4,
-      "ga": 6
     },
     {
       "teamName": "Lokomotiv M.",
@@ -285,22 +222,85 @@
       "ga": 9
     },
     {
-      "teamName": "Rubin Kazan",
+      "teamName": "Rostov",
       "gp": 5,
       "w": 2,
       "d": 1,
       "l": 2,
-      "gf": 3,
-      "ga": 4
+      "gf": 6,
+      "ga": 5
     },
     {
-      "teamName": "Orenburg",
+      "teamName": "Akhmat Grozny",
+      "gp": 5,
+      "w": 0,
+      "d": 2,
+      "l": 2,
+      "gf": 4,
+      "ga": 9
+    },
+    {
+      "teamName": "Zenit",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 11,
+      "ga": 3
+    },
+    {
+      "teamName": "Cska Moscow",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 4,
+      "ga": 6
+    },
+    {
+      "teamName": "Nizhny Novgorod",
+      "gp": 5,
+      "w": 1,
+      "d": 1,
+      "l": 2,
+      "gf": 6,
+      "ga": 10
+    },
+    {
+      "teamName": "Rubin Kazan",
+      "gp": 5,
+      "w": 1,
+      "d": 3,
+      "l": 0,
+      "gf": 6,
+      "ga": 5
+    },
+    {
+      "teamName": "Pfc Sochi",
+      "gp": 5,
+      "w": 1,
+      "d": 0,
+      "l": 4,
+      "gf": 4,
+      "ga": 10
+    },
+    {
+      "teamName": "Akron",
       "gp": 5,
       "w": 1,
       "d": 1,
       "l": 3,
-      "gf": 3,
-      "ga": 8
+      "gf": 6,
+      "ga": 12
+    },
+    {
+      "teamName": "Krylya Sovetov",
+      "gp": 5,
+      "w": 1,
+      "d": 3,
+      "l": 1,
+      "gf": 7,
+      "ga": 7
     }
   ]
 }
