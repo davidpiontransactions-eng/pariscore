@@ -68,17 +68,17 @@ if [ -n "$CHANGED" ]; then
 fi
 
 if [ "$NEED_INSTALL" = "1" ]; then
-  echo "[3/6] npm install (deps changed)..."
-  npm install --legacy-peer-deps --silent || { echo "ERR: npm install"; exit 1; }
-  npm rebuild better-sqlite3 2>&1 || echo "  warn: better-sqlite3 rebuild échec (non bloquant)"
+  echo "[3/6] bun install (deps changed)..."
+  bun install || { echo "ERR: bun install"; exit 1; }
+  bun run rebuild 2>&1 || echo "  warn: rebuild échec (non bloquant)"
 else
-  echo "[3/6] npm install SKIPPED (no deps changed)"
+  echo "[3/6] bun install SKIPPED (no deps changed)"
 fi
 
 BUILD_RAN=0
 if [ "$NEED_BUILD" = "1" ]; then
   echo "[4/6] Next.js build... (start $(date -u +%H:%M:%S))"
-  npm run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
+  bun run build 2>&1 || { echo "ERR: Next.js build failed — deploy aborted"; exit 1; }
   # Garde-fou (BUG-1) : un build Next ok ne garantit pas l'export standalone.
   # Si server.js est absent, pm2 crash en boucle (502) ; on STOPE le deploy
   # plutot que de conclure VPS_DEPLOY_OK / health OK en trompe-l'oeil.
