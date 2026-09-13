@@ -178,6 +178,9 @@ export type StandingContext = {
   asOf?: string;
 };
 
+/** Classement ligue — tableau de TeamStandingStats (un par équipe). */
+export type LeagueStandings = TeamStandingStats[];
+
 
 export type Team = {
   id: string;
