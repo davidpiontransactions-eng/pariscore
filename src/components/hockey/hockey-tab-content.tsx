@@ -10,12 +10,15 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, TrendingUp, Flame, Info, BarChart3, Users, FileText, Calendar } from "lucide-react";
+import { Trophy, TrendingUp, Flame, Info, BarChart3, Users, FileText, Calendar, Zap } from "lucide-react";
 import { HockeyProjectionGraph } from "./hockey-projection-graph";
 import { HockeyTopPlayers } from "./hockey-top-players";
 import { HockeyPrematchPopup } from "./hockey-prematch-popup";
+import { HockeyStrategies } from "./hockey-strategies";
 import { useHockeyPrematch, type MatchPrematch } from "@/hooks/use-hockey-prematch";
 import { useHockeyMatches, type HockeyMatch } from "@/hooks/use-hockey-matches";
+import { FOT } from "@/components/football/fotmob-theme";
+import { parisDayLabel, parisKickoff } from "@/lib/football-time";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -114,7 +117,7 @@ const LEAGUES: { id: LeagueId; label: string; flag: string }[] = [
   { id: "magnus", label: "Magnus", flag: "🇫🇷" },
 ];
 
-type SubView = "standings" | "projection" | "top10" | "prematch" | "calendrier";
+type SubView = "standings" | "projection" | "top10" | "prematch" | "calendrier" | "strategies";
 
 const SEASON_LENGTHS: Record<LeagueId, number> = {
   nhl: 82,
@@ -311,18 +314,34 @@ function KhlSpotlight({ teams }: { teams: TeamStanding[] }) {
   );
 }
 
-// ─── Calendrier Hockey ──────────────────────────────────────────────────────
+// ─── Calendrier Hockey — Teintes FotMob Light ──────────────────────────
 
 function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyMatch[]; isLoading: boolean; activeLeague: LeagueId }) {
   const filtered = useMemo(() => {
     return matches.filter((m) => m.leagueId === activeLeague);
   }, [matches, activeLeague]);
 
+  const grouped = useMemo(() => {
+    const dateGroups = new Map<string, HockeyMatch[]>();
+    const undated: HockeyMatch[] = [];
+    for (const m of filtered) {
+      if (!m.scheduledAt) { undated.push(m); continue; }
+      const label = parisDayLabel(m.scheduledAt);
+      const arr = dateGroups.get(label) ?? [];
+      arr.push(m);
+      dateGroups.set(label, arr);
+    }
+    const result = new Map<string, HockeyMatch[]>();
+    for (const [k, v] of dateGroups) result.set(k, v);
+    if (undated.length > 0) result.set("À venir", undated);
+    return result;
+  }, [filtered]);
+
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="h-14 bg-white/5 rounded-lg" />
+          <div key={i} className="h-14 rounded-lg" style={{ backgroundColor: FOT.soft }} />
         ))}
       </div>
     );
@@ -330,38 +349,51 @@ function HockeyCalendar({ matches, isLoading, activeLeague }: { matches: HockeyM
 
   if (filtered.length === 0) {
     return (
-      <div className="text-center text-white/50 text-sm py-10">
-        <Calendar className="w-5 h-5 mx-auto mb-2 text-white/30" />
+      <div className="text-center text-sm py-10" style={{ color: FOT.muted }}>
+        <Calendar className="w-5 h-5 mx-auto mb-2" style={{ color: FOT.muted }} />
         Aucun match {activeLeague.toUpperCase()} à venir.
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs text-white/40 mb-3">
+    <div className="space-y-4">
+      <p className="text-xs mb-3" style={{ color: FOT.muted }}>
         {filtered.length} matchs {activeLeague.toUpperCase()} — Source: Annabet / BSD / SkipOdds
       </p>
-      {filtered.map((m) => (
-        <div
-          key={m.id}
-          className="flex items-center justify-between px-4 py-3 bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 rounded-lg transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-white/30 uppercase w-10">{m.leagueId}</span>
-            <span className="text-sm font-semibold text-white">{m.homeName}</span>
-            <span className="text-xs text-white/30">vs</span>
-            <span className="text-sm font-semibold text-white">{m.awayName}</span>
+      {Array.from(grouped.entries()).map(([day, dayMatches]) => (
+        <div key={day} className="rounded-xl overflow-hidden" style={{ backgroundColor: FOT.card, border: `1px solid ${FOT.border}` }}>
+          <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: FOT.soft, color: FOT.ink }}>
+            {day}
           </div>
-          <div className="flex items-center gap-3">
-            {m.oddsH != null && (
-              <div className="flex gap-2 text-[10px]">
-                <span className="text-[#00e676]">{m.oddsH?.toFixed(2)}</span>
-                {m.oddsD != null && <span className="text-[#ffd93d]">{m.oddsD?.toFixed(2)}</span>}
-                <span className="text-[#5fbfff]">{m.oddsA?.toFixed(2)}</span>
+          <div className="divide-y" style={{ borderColor: FOT.border }}>
+            {dayMatches.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center justify-between px-4 py-3 hover:bg-[#f5f5f5] transition-colors"
+                style={{ backgroundColor: FOT.card }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs uppercase w-10 font-medium" style={{ color: FOT.muted }}>{m.leagueId}</span>
+                  <span className="text-sm font-semibold" style={{ color: FOT.ink }}>{m.homeName}</span>
+                  <span className="text-xs" style={{ color: FOT.muted }}>vs</span>
+                  <span className="text-sm font-semibold" style={{ color: FOT.ink }}>{m.awayName}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-mono tabular-nums" style={{ color: FOT.muted }}>
+                    {m.scheduledAt ? parisKickoff(m.scheduledAt) : ""}
+                  </span>
+                  {m.oddsH != null && (
+                    <div className="flex gap-2 text-[10px]">
+                      <span className="text-[#00e676]">{m.oddsH?.toFixed(2)}</span>
+                      {m.oddsD != null && <span className="text-[#ffd93d]">{m.oddsD?.toFixed(2)}</span>}
+                      <span className="text-[#5fbfff]">{m.oddsA?.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {m.isLive && <span className="text-[10px] text-red-500 font-bold">LIVE</span>}
+                </div>
               </div>
-            )}
-            {m.isLive && <span className="text-[10px] text-red-400 font-bold">LIVE</span>}
+            ))}
           </div>
         </div>
       ))}
@@ -476,6 +508,12 @@ export function HockeyTabContent() {
               subView === "calendrier" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
             )}>
             <Calendar className="w-3.5 h-3.5" /> Calendrier
+          </button>
+          <button onClick={() => setSubView("strategies")}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
+              subView === "strategies" ? "bg-white/10 text-white" : "text-white/40 hover:text-white/70"
+            )}>
+            <Zap className="w-3.5 h-3.5" /> Stratégies
           </button>
         </div>
       </div>
@@ -630,6 +668,16 @@ export function HockeyTabContent() {
       {/* ─── CALENDRIER ────────────────────────────────────────────── */}
       {!loading && subView === "calendrier" && (
         <HockeyCalendar matches={matchesData?.matches ?? []} isLoading={loadingMatches} activeLeague={activeLeague} />
+      )}
+
+      {/* ─── STRATÉGIES ──────────────────────────────────────── */}
+      {!loading && subView === "strategies" && (
+        <HockeyStrategies
+          matches={matchesData?.matches ?? []}
+          prematch={prematch}
+          playerStats={playerStats}
+          activeLeague={activeLeague}
+        />
       )}
 
       {/* Prematch Popup */}

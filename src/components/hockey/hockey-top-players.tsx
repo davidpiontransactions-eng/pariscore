@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Trophy, Target, Share2, Medal } from "lucide-react";
 
-type PlayerStat = {
+export type PlayerStat = {
   rank: number;
   name: string;
   position: string;

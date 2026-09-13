@@ -333,18 +333,71 @@ function extractSummaryTable(html) {
 
   const result = { overUnderLines: [] };
 
-  for (const row of rows) {
-    // Total Goals Under-Over lines
-    const lineMatch = row.match(/<span class="blue">([\d.]+)<\/span>\s*goals\s*avg\s*<b>(\d+)%-(\d+)%<\/b>\s*([\d.]+)-([\d.]+)/);
+  // Each line = 2 consecutive rows: perc row + odds row
+  let i = 0;
+  while (i < rows.length) {
+    const percRow = rows[i];
+    const lineMatch = percRow.match(/<span class="blue">([\d.]+)<\/span>\s*goals\s*avg\s*<b>(\d+)%-(\d+)%<\/b>\s*([\d.]+)-([\d.]+)/);
     if (lineMatch) {
+      // Parse 7 columns from perc row
+      const percCols = [...percRow.matchAll(/<td class="(?:perc|hdr)">(.*?)<\/td>/g)].map((m) => m[1].trim());
+      
+      const line = parseFloat(lineMatch[1]);
+      const underPct = parseInt(lineMatch[2]);
+      const overPct = parseInt(lineMatch[3]);
+      const underOdds = parseFloat(lineMatch[4]);
+      const overOdds = parseFloat(lineMatch[5]);
+
+      // Parse odds row if exists
+      let underOddsHome = null, underOddsAway = null, underOddsAll = null;
+      let overOddsHome = null, overOddsAway = null, overOddsAll = null;
+      if (i + 1 < rows.length) {
+        const oddsRow = rows[i + 1];
+        const oddsCols = [...oddsRow.matchAll(/<td class="odds">(.*?)<\/td>/g)].map((m) => m[1].trim());
+        // Odds cols: [underH, underA, underAll, empty, overH, overA, overAll]
+        if (oddsCols.length >= 7) {
+          const parseOdds = (s) => { const n = parseFloat(s); return isNaN(n) ? null : n; };
+          underOddsHome = parseOdds(oddsCols[0]);
+          underOddsAway = parseOdds(oddsCols[1]);
+          underOddsAll = parseOdds(oddsCols[2]);
+          overOddsHome = parseOdds(oddsCols[4]);
+          overOddsAway = parseOdds(oddsCols[5]);
+          overOddsAll = parseOdds(oddsCols[6]);
+        }
+      }
+
+      // Build home/away/all percentages from percCols
+      // percCols: [homeUnder, awayUnder, allUnder, lineCell, homeOver, awayOver, allOver]
+      const parsePerc = (s: string) => { const m = s.match(/(\d+)-(\d+)/); return m ? { under: parseInt(m[1]), over: parseInt(m[2]) } : null; };
+      
+      const homeUnderPct = percCols[0] ? parsePerc(percCols[0]) : null;
+      const awayUnderPct = percCols[1] ? parsePerc(percCols[1]) : null;
+      const allUnderPct = percCols[2] ? parsePerc(percCols[2]) : null;
+      const homeOverPct = percCols[4] ? parsePerc(percCols[4]) : null;
+      const awayOverPct = percCols[5] ? parsePerc(percCols[5]) : null;
+      const allOverPct = percCols[6] ? parsePerc(percCols[6]) : null;
+
       result.overUnderLines.push({
-        line: parseFloat(lineMatch[1]),
-        underPct: parseInt(lineMatch[2]),
-        overPct: parseInt(lineMatch[3]),
-        underOdds: parseFloat(lineMatch[4]),
-        overOdds: parseFloat(lineMatch[5]),
+        line,
+        underPct,
+        overPct,
+        underOdds,
+        overOdds,
+        underOddsHome,
+        underOddsAway,
+        underOddsAll,
+        overOddsHome,
+        overOddsAway,
+        overOddsAll,
+        homeUnderPct,
+        awayUnderPct,
+        allUnderPct,
+        homeOverPct,
+        awayOverPct,
+        allOverPct,
       });
     }
+    i += 2; // Skip to next line (2 rows per line)
   }
 
   return result;

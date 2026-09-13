@@ -128,7 +128,7 @@ async function fetchAnnabetMock(): Promise<unknown[]> {
                 id: `annabet-${leagueId}-${m.team1Id ?? Math.random().toString(36).slice(2)}`,
                 homeName: m.team1Name || "Home",
                 awayName: m.team2Name || "Away",
-                scheduledAt: m.date || null,
+                scheduledAt: m.date || new Date().toISOString(),
                 isLive: false,
                 leagueId,
                 leagueName: leagueId.toUpperCase(),

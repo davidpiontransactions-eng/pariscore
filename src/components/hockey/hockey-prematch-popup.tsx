@@ -55,7 +55,7 @@ type MatchData = {
     h2hStats: StatBlock | null;
     standings: Standing[];
   } | null;
-  summary?: { overUnderLines: { line: number; underPct: number; overPct: number; underOdds: number; overOdds: number }[] } | null;
+  summary?: { overUnderLines: { line: number; underPct: number; overPct: number; underOdds: number | null; overOdds: number | null }[] } | null;
 };
 
 type HockeyPrematchPopupProps = {

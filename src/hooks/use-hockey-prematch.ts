@@ -4,6 +4,26 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
+export type OverUnderLine = {
+  line: number;
+  underPct: number;
+  overPct: number;
+  underOdds: number | null;
+  overOdds: number | null;
+  underOddsHome: number | null;
+  underOddsAway: number | null;
+  underOddsAll: number | null;
+  overOddsHome: number | null;
+  overOddsAway: number | null;
+  overOddsAll: number | null;
+  homeUnderPct: { under: number; over: number } | null;
+  awayUnderPct: { under: number; over: number } | null;
+  allUnderPct: { under: number; over: number } | null;
+  homeOverPct: { under: number; over: number } | null;
+  awayOverPct: { under: number; over: number } | null;
+  allOverPct: { under: number; over: number } | null;
+};
+
 export type StatBlock = {
   oneXtwo?: {
     homeWins: number;
@@ -41,6 +61,7 @@ export type MatchPrematch = {
   team1Name: string;
   team2Id: number;
   team2Name: string;
+  date?: string;
   odds1X2?: { home: number; draw: number; away: number } | null;
   h2h?: {
     homeTeam: string;
@@ -51,7 +72,7 @@ export type MatchPrematch = {
     h2hStats: StatBlock | null;
     standings: Standing[];
   } | null;
-  summary?: { overUnderLines: { line: number; underPct: number; overPct: number; underOdds: number; overOdds: number }[] } | null;
+  summary?: { overUnderLines: OverUnderLine[] } | null;
   error?: string;
 };
 

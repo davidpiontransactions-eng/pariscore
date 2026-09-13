@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { readFileSync, existsSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
-const CACHE_TTL = 60 * 60_000; // 1h — données match-day
+const CACHE_TTL = 60 * 60_000;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const PROJECT_ROOT = join(__dirname, "..", "..", "..", "..", "..");
 
 type StatBlock = {
   oneXtwo?: {
@@ -27,11 +31,32 @@ type StatBlock = {
   goalAverage?: { home: number; away: number; total: number };
 };
 
+type OverUnderLine = {
+  line: number;
+  underPct: number;
+  overPct: number;
+  underOdds: number | null;
+  overOdds: number | null;
+  underOddsHome: number | null;
+  underOddsAway: number | null;
+  underOddsAll: number | null;
+  overOddsHome: number | null;
+  overOddsAway: number | null;
+  overOddsAll: number | null;
+  homeUnderPct: { under: number; over: number } | null;
+  awayUnderPct: { under: number; over: number } | null;
+  allUnderPct: { under: number; over: number } | null;
+  homeOverPct: { under: number; over: number } | null;
+  awayOverPct: { under: number; over: number } | null;
+  allOverPct: { under: number; over: number } | null;
+};
+
 type MatchPrematch = {
   team1Id: number;
   team1Name: string;
   team2Id: number;
   team2Name: string;
+  date?: string;
   odds1X2?: { home: number; draw: number; away: number } | null;
   h2h?: {
     homeTeam: string;
@@ -50,7 +75,7 @@ type MatchPrematch = {
       highlighted: boolean;
     }[];
   } | null;
-  summary?: { overUnderLines: { line: number; underPct: number; overPct: number; underOdds: number; overOdds: number }[] } | null;
+  summary?: { overUnderLines: OverUnderLine[] } | null;
   error?: string;
 };
 
@@ -64,7 +89,7 @@ const cache = createTtlCache<PrematchPayload>("__hockeyPrematch");
 
 function loadFromFile(): PrematchPayload | null {
   try {
-    const filePath = join(process.cwd(), "data", "annabet_hockey_prematch.json");
+    const filePath = join(PROJECT_ROOT, "data", "annabet_hockey_prematch.json");
     if (!existsSync(filePath)) return null;
     return JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
   } catch {
@@ -73,9 +98,7 @@ function loadFromFile(): PrematchPayload | null {
 }
 
 export async function GET() {
-  const cached = cache.getEntry();
-  if (cached?.data && isFresh(cached, CACHE_TTL)) return NextResponse.json(cached.data);
-
+  cache.invalidate();
   const data = loadFromFile();
   if (!data) {
     return NextResponse.json(

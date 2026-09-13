@@ -263,7 +263,8 @@
       "cycling": "Cycling",
       "f1": "Formula 1",
       "baseball": "Baseball",
-      "rugby": "Rugby"
+      "rugby": "Rugby",
+      "hockey": "Hockey"
     },
     "selectionAdd": "Add match to selection",
     "selectionRemove": "Remove match from selection",
