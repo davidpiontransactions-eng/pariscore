@@ -88,17 +88,9 @@ const cache = createTtlCache<PrematchPayload>("__hockeyPrematch");
 function loadFromFile(): PrematchPayload | null {
   try {
     const filePath = join(process.cwd(), "..", "..", "data", "annabet_hockey_prematch.json");
-    if (!existsSync(filePath)) {
-      console.error("[prematch] File not found:", filePath);
-      return null;
-    }
-    const raw = readFileSync(filePath, "utf8");
-    const parsed = JSON.parse(raw) as PrematchPayload;
-    const khl0 = parsed.leagues?.khl?.matches?.[0];
-    console.log("[prematch] loaded:", filePath, "date:", khl0?.date, "summary:", khl0?.summary ? "has data" : "null/missing");
-    return parsed;
-  } catch (err) {
-    console.error("[prematch] loadFromFile error:", err);
+    if (!existsSync(filePath)) return null;
+    return JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
+  } catch {
     return null;
   }
 }
