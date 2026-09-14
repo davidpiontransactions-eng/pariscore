@@ -87,7 +87,7 @@ const cache = createTtlCache<PrematchPayload>("__hockeyPrematch");
 
 function loadFromFile(): PrematchPayload | null {
   try {
-    const filePath = join(process.cwd(), "data", "annabet_hockey_prematch.json");
+    const filePath = join(process.cwd(), "..", "..", "data", "annabet_hockey_prematch.json");
     if (!existsSync(filePath)) {
       console.error("[prematch] File not found:", filePath);
       return null;
