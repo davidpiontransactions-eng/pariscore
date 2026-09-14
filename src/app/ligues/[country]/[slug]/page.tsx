@@ -19,7 +19,7 @@ import { StatCategoryPills, type StatCategory, CATEGORY_COLUMNS } from "@/compon
 import { StandingsTable, type StandingRow } from "@/components/leagues/league-stats-table";
 import { PlayerStatsFilters, type GameRange, type Position, type ScaleMode } from "@/components/leagues/player-stats-filters";
 import { PlayerStatsTable } from "@/components/leagues/player-stats-table";
-import { per90 } from "@/lib/football-understat-players";
+import { per90 } from "@/lib/football-understat-types";
 import type { LeagueDetail } from "@/lib/leagues-stats/types";
 
 const fetcher = async (url: string) => {
