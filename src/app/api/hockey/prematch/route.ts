@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server";
 import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 
 const CACHE_TTL = 60 * 60_000;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const PROJECT_ROOT = join(__dirname, "..", "..", "..", "..", "..");
 
 type StatBlock = {
   oneXtwo?: {
@@ -89,7 +85,7 @@ const cache = createTtlCache<PrematchPayload>("__hockeyPrematch");
 
 function loadFromFile(): PrematchPayload | null {
   try {
-    const filePath = join(PROJECT_ROOT, "data", "annabet_hockey_prematch.json");
+    const filePath = join(process.cwd(), "data", "annabet_hockey_prematch.json");
     if (!existsSync(filePath)) return null;
     return JSON.parse(readFileSync(filePath, "utf8")) as PrematchPayload;
   } catch {
