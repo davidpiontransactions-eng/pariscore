@@ -11,6 +11,7 @@ import { CalendarDateNav, parisDateKey, parisDateFull } from "@/components/footb
 import { parisKickoff } from "@/lib/football-time";
 import { FollowButton } from "@/components/shared/follow-button";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { bsdIdToLeagueUrl } from "@/lib/league-id-bridge";
 
 type BSTeam = { id: string; name: string; shortName?: string; logo?: string; color?: string };
 type BSLive = { homeScore?: number; awayScore?: number; minute?: number; status?: string };
@@ -269,7 +270,7 @@ export function FootballCalendar() {
                   liveCount={g.matches.filter(isLive).length}
                   isCollapsed={isCollapsed}
                   onToggle={() => setCollapsed((prev) => ({ ...prev, [g.leagueId]: !isCollapsed }))}
-                  leagueLink={`/ligues/football/${g.leagueId}`}
+                  leagueLink={bsdIdToLeagueUrl(Number(g.leagueId)) ?? undefined}
                 />
                 <div className={cn(
                   "grid transition-[grid-template-rows] ease-out motion-reduce:transition-none",

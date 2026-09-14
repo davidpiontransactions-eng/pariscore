@@ -172,3 +172,32 @@ export function hasSourceCoverage(
       return false;
   }
 }
+
+// ── Reverse lookup : BSD numeric ID → OddAlerts URL path ──
+
+const BSD_ID_TO_ODDALERTS: Record<number, string> = {};
+for (const [oddalertsKey, slug] of Object.entries(ODDALERTS_TO_SLUG)) {
+  const bsdId = BSD_LEAGUE_IDS[slug];
+  if (bsdId !== undefined) {
+    BSD_ID_TO_ODDALERTS[bsdId] = oddalertsKey;
+  }
+}
+
+/**
+ * Convertit un BSD league ID (numeric) en chemin OddAlerts "{country}/{slug}".
+ * Retourne null si le mapping n'existe pas.
+ *
+ * Exemple : bsdIdToOddalertsPath(1) → "england/premier-league"
+ */
+export function bsdIdToOddalertsPath(bsdId: number): string | null {
+  return BSD_ID_TO_ODDALERTS[bsdId] ?? null;
+}
+
+/**
+ * Convertit un BSD league ID en URL complète /ligues/{country}/{slug}.
+ * Retourne null si le mapping n'existe pas.
+ */
+export function bsdIdToLeagueUrl(bsdId: number): string | null {
+  const path = bsdIdToOddalertsPath(bsdId);
+  return path ? `/ligues/${path}` : null;
+}
