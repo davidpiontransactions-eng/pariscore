@@ -4,7 +4,7 @@
     "leagueId": "superleague_greece",
     "leagueName": "Greece",
     "season": "2026/27",
-    "lastUpdated": "2026-09-13T09:40:29.899259Z",
+    "lastUpdated": "2026-09-14T10:02:59.422360Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,6 +12,24 @@
     "partial": true
   },
   "home": [
+    {
+      "teamName": "Aek Athens",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 9,
+      "ga": 0
+    },
+    {
+      "teamName": "Paok",
+      "gp": 2,
+      "w": 2,
+      "d": 0,
+      "l": 0,
+      "gf": 6,
+      "ga": 0
+    },
     {
       "teamName": "Panetolikos",
       "gp": 2,
@@ -32,30 +50,12 @@
     },
     {
       "teamName": "Panathinaikos",
-      "gp": 2,
-      "w": 2,
-      "d": 0,
-      "l": 0,
-      "gf": 6,
-      "ga": 2
-    },
-    {
-      "teamName": "Aek Athens",
-      "gp": 2,
-      "w": 2,
+      "gp": 3,
+      "w": 3,
       "d": 0,
       "l": 0,
       "gf": 9,
-      "ga": 0
-    },
-    {
-      "teamName": "Paok",
-      "gp": 1,
-      "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 4,
-      "ga": 0
+      "ga": 2
     }
   ],
   "away": [
@@ -69,13 +69,13 @@
       "ga": 1
     },
     {
-      "teamName": "Panetolikos",
-      "gp": 1,
+      "teamName": "Iraklis",
+      "gp": 3,
       "w": 1,
-      "d": 0,
-      "l": 0,
-      "gf": 2,
-      "ga": 0
+      "d": 1,
+      "l": 1,
+      "gf": 3,
+      "ga": 5
     },
     {
       "teamName": "Ofi Crete",
@@ -87,6 +87,15 @@
       "ga": 2
     },
     {
+      "teamName": "Paok",
+      "gp": 2,
+      "w": 1,
+      "d": 0,
+      "l": 1,
+      "gf": 3,
+      "ga": 4
+    },
+    {
       "teamName": "Panathinaikos",
       "gp": 1,
       "w": 1,
@@ -94,15 +103,6 @@
       "l": 0,
       "gf": 2,
       "ga": 0
-    },
-    {
-      "teamName": "Iraklis",
-      "gp": 3,
-      "w": 1,
-      "d": 1,
-      "l": 1,
-      "gf": 3,
-      "ga": 5
     }
   ]
 }

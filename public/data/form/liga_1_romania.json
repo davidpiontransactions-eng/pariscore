@@ -4,7 +4,7 @@
     "leagueId": "liga_1_romania",
     "leagueName": "Romania",
     "season": "2026/27",
-    "lastUpdated": "2026-09-13T09:40:42.644232Z",
+    "lastUpdated": "2026-09-14T10:03:12.762789Z",
     "source": "soccerstats.com/formtable (cumulé 2 saisons)",
     "teamCount": 5,
     "window": 8,
@@ -12,15 +12,6 @@
     "partial": true
   },
   "home": [
-    {
-      "teamName": "U. Cluj",
-      "gp": 4,
-      "w": 3,
-      "d": 0,
-      "l": 1,
-      "gf": 8,
-      "ga": 6
-    },
     {
       "teamName": "Farul Constanta",
       "gp": 4,
@@ -40,6 +31,15 @@
       "ga": 3
     },
     {
+      "teamName": "Univ. Craiova",
+      "gp": 5,
+      "w": 4,
+      "d": 0,
+      "l": 1,
+      "gf": 15,
+      "ga": 2
+    },
+    {
       "teamName": "Rapid Bucharest",
       "gp": 5,
       "w": 3,
@@ -49,24 +49,24 @@
       "ga": 4
     },
     {
-      "teamName": "Univ. Craiova",
-      "gp": 5,
-      "w": 4,
+      "teamName": "U. Cluj",
+      "gp": 4,
+      "w": 3,
       "d": 0,
       "l": 1,
-      "gf": 15,
-      "ga": 2
+      "gf": 8,
+      "ga": 6
     }
   ],
   "away": [
     {
-      "teamName": "Din. Bucharest",
+      "teamName": "Sepsi Osk",
       "gp": 5,
-      "w": 2,
+      "w": 1,
       "d": 2,
-      "l": 1,
-      "gf": 6,
-      "ga": 4
+      "l": 2,
+      "gf": 2,
+      "ga": 7
     },
     {
       "teamName": "Petrolul",
@@ -78,21 +78,21 @@
       "ga": 8
     },
     {
-      "teamName": "Fcsb",
-      "gp": 4,
-      "w": 1,
-      "d": 1,
-      "l": 2,
-      "gf": 3,
-      "ga": 3
+      "teamName": "Din. Bucharest",
+      "gp": 5,
+      "w": 2,
+      "d": 2,
+      "l": 1,
+      "gf": 6,
+      "ga": 4
     },
     {
-      "teamName": "Sepsi Osk",
-      "gp": 5,
+      "teamName": "Univ. Craiova",
+      "gp": 4,
       "w": 1,
       "d": 2,
-      "l": 2,
-      "gf": 2,
+      "l": 1,
+      "gf": 4,
       "ga": 7
     },
     {
