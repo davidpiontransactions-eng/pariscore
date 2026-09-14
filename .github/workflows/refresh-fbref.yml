@@ -1,0 +1,74 @@
+name: Refresh FBref Advanced Stats
+
+# Daily auto-refresh of FBref team + player advanced stats via soccerdata.
+# Generates /data/fbref_advanced/*.json with team_season_stats + player_season_stats
+# (passing, possession, defense, misc), then commits back to main.
+#
+# Coverage: Big 5 + Championship (6 leagues).
+# Rate limit: FBref 10 req/min → soccerdata internal delays + 7s sleep between calls.
+#
+# Triggers:
+#   - schedule: 06:00 UTC daily (after xG + form refreshes)
+#   - workflow_dispatch: manual trigger
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: refresh-fbref
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scrape:
+    name: Scrape FBref advanced stats
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r scripts/requirements.txt
+
+      - name: Scrape FBref
+        run: |
+          mkdir -p data/fbref_advanced
+          python scripts/scrape_advanced_stats.py
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- data/fbref_advanced/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes — skipping commit"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Detected FBref changes:"
+            git diff --stat -- data/fbref_advanced/
+          fi
+
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/fbref_advanced/
+          git commit -m "chore(data): refresh fbref advanced stats [skip ci]"
+          git push

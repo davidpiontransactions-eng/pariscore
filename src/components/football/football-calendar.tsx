@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -51,24 +52,35 @@ function teamLogoUrl(m: BSTMatch, side: string): string {
 }
 
 function FotMobLeagueHeader({
-  league, matchCount, liveCount, isCollapsed, onToggle,
+  league, matchCount, liveCount, isCollapsed, onToggle, leagueLink,
 }: {
   league: LeagueGroup; matchCount: number; liveCount: number; isCollapsed: boolean; onToggle: () => void;
+  leagueLink?: string;
 }) {
+  const content = (
+    <>
+      <div className="shrink-0">
+        {league.logo ? (
+          <img src={league.logo} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0 rounded-full" />
+        ) : (
+          <span className="text-lg">{league.country ? countryFlag(league.country) : "🏆"}</span>
+        )}
+      </div>
+      <span className="text-xs font-medium md:text-sm text-slate-200 truncate">
+        {league.country ? league.country + " - " + league.leagueName : league.leagueName}
+      </span>
+    </>
+  );
+
   return (
     <div className="group relative flex items-center justify-between overflow-hidden h-12 bg-slate-800/60 border border-slate-700/40 rounded-lg">
       <button type="button" onClick={onToggle} aria-expanded={!isCollapsed}
         className="relative flex h-full w-full items-center gap-3 px-4 transition-colors hover:bg-slate-700/40 text-left">
-        <div className="shrink-0">
-          {league.logo ? (
-            <img src={league.logo} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0 rounded-full" />
-          ) : (
-            <span className="text-lg">{league.country ? countryFlag(league.country) : "🏆"}</span>
-          )}
-        </div>
-        <span className="text-xs font-medium md:text-sm text-slate-200 truncate">
-          {league.country ? league.country + " - " + league.leagueName : league.leagueName}
-        </span>
+        {leagueLink ? (
+          <Link href={leagueLink} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+            {content}
+          </Link>
+        ) : content}
       </button>
       <div className="flex items-center gap-1 px-2">
         <span className={cn(
@@ -257,6 +269,7 @@ export function FootballCalendar() {
                   liveCount={g.matches.filter(isLive).length}
                   isCollapsed={isCollapsed}
                   onToggle={() => setCollapsed((prev) => ({ ...prev, [g.leagueId]: !isCollapsed }))}
+                  leagueLink={`/ligues/football/${g.leagueId}`}
                 />
                 <div className={cn(
                   "grid transition-[grid-template-rows] ease-out motion-reduce:transition-none",

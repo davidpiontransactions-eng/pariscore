@@ -50,6 +50,13 @@ PREVIOUS_SEASON = 2025  # saison 2025/26
 
 MATCH_FIELDS = ["date", "h_a", "xG", "xGA", "scored", "missed", "result"]
 
+# Champs joueur extraits de getLeagueData → players key
+PLAYER_FIELDS = [
+    "id", "player_name", "xG", "xAG", "npxG", "shots", "key_passes",
+    "assists", "goals", "yellow", "red", "team_title", "position",
+    "apps", "time",
+]
+
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=30))
 def _fetch_league(understat_slug: str, season: int) -> Optional[Dict]:
@@ -57,6 +64,29 @@ def _fetch_league(understat_slug: str, season: int) -> Optional[Dict]:
     resp = requests.get(url, headers=HEADERS, timeout=30)
     resp.raise_for_status()
     return resp.json()
+
+
+def _extract_players(payload: Optional[Dict]) -> List[Dict]:
+    """Extrait les joueurs depuis la clé 'players' de getLeagueData."""
+    players_raw = []
+    if not payload:
+        return players_raw
+    for p in (payload.get("players") or []):
+        row = {}
+        for field in PLAYER_FIELDS:
+            val = p.get(field)
+            # Convertir les strings vides en None pour les stats numériques
+            if field in ("xG", "xAG", "npxG", "shots", "key_passes", "assists", "goals", "yellow", "red", "apps", "time"):
+                if val is None or val == "":
+                    val = None
+                else:
+                    try:
+                        val = float(val) if "." in str(val) else int(val)
+                    except (ValueError, TypeError):
+                        val = None
+            row[field] = val
+        players_raw.append(row)
+    return players_raw
 
 
 def _extract_teams(payload: Optional[Dict]) -> Dict[str, List[Dict]]:
@@ -113,9 +143,12 @@ def scrape_league(pariscore_slug: str, understat_slug: str) -> Optional[Dict]:
         print(f"[{pariscore_slug}] ERROR: aucune donnée", file=sys.stderr)
         return None
 
+    # Extraction joueurs (saison courante prioritaire, fallback précédente)
+    players = _extract_players(cur_payload or prev_payload)
+
     n_matches = sum(len(v) for v in teams.values())
     avg = n_matches / max(len(teams), 1)
-    print(f"[{pariscore_slug}] {len(teams)} équipes | {n_matches} matchs cumulés ({avg:.0f}/équipe)", file=sys.stderr)
+    print(f"[{pariscore_slug}] {len(teams)} équipes | {n_matches} matchs cumulés ({avg:.0f}/équipe) | {len(players)} joueurs", file=sys.stderr)
 
     season_label = "2025/26+2026/27" if cur_teams else "2025/26"
     return {
@@ -127,8 +160,10 @@ def scrape_league(pariscore_slug: str, understat_slug: str) -> Optional[Dict]:
             "lastUpdated": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "teamCount": len(teams),
             "currentSeasonMatches": sum(len(v) for v in cur_teams.values()),
+            "playerCount": len(players),
         },
         "teams": teams,
+        "players": players,
     }
 
 

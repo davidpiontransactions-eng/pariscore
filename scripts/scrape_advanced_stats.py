@@ -49,8 +49,11 @@ LEAGUES: list[tuple[str, str]] = [
 
 # soccerdata 1.9.0 FBref.read_team_season_stats supported stat_types (verified via inspect):
 #   ['standard', 'keeper', 'shooting', 'playing_time', 'misc']
-# passing/defense/possession exist only on read_player_season_stats — out of scope here.
-STAT_TYPES: list[str] = ['standard', 'shooting', 'keeper', 'playing_time', 'misc']
+TEAM_STAT_TYPES: list[str] = ['standard', 'shooting', 'keeper', 'playing_time', 'misc']
+
+# soccerdata 1.9.0 FBref.read_player_season_stats supported stat_types:
+#   ['standard', 'passing', 'possession', 'defense', 'misc', 'keeper']
+PLAYER_STAT_TYPES: list[str] = ['passing', 'possession', 'defense', 'misc']
 
 # 10 req/min FBref policy => 6.5s minimum between requests (safety margin).
 SLEEP_BETWEEN_CALLS_SEC = 7.0
@@ -94,9 +97,12 @@ def scrape_league(league: str, slug: str, season: str) -> dict[str, Any] | None:
             'source': 'fbref-soccerdata',
         },
         'team_season_stats': {},
+        'player_season_stats': {},
     }
     ok_count = 0
-    for stat in STAT_TYPES:
+
+    # --- Team stats ---
+    for stat in TEAM_STAT_TYPES:
         try:
             df = fbref.read_team_season_stats(stat_type=stat)
             records = safe_records(df)
@@ -106,6 +112,19 @@ def scrape_league(league: str, slug: str, season: str) -> dict[str, Any] | None:
         except Exception as e:
             print(f"  [FAIL]{stat}: {type(e).__name__}: {str(e)[:140]}", file=sys.stderr)
             out['team_season_stats'][stat] = []
+        time.sleep(SLEEP_BETWEEN_CALLS_SEC)
+
+    # --- Player stats (passing, possession, defense, misc) ---
+    for stat in PLAYER_STAT_TYPES:
+        try:
+            df = fbref.read_player_season_stats(stat_type=stat)
+            records = safe_records(df)
+            out['player_season_stats'][stat] = records
+            print(f"  [OK]player/{stat}: {len(records)} rows", flush=True)
+            ok_count += 1
+        except Exception as e:
+            print(f"  [FAIL]player/{stat}: {type(e).__name__}: {str(e)[:140]}", file=sys.stderr)
+            out['player_season_stats'][stat] = []
         time.sleep(SLEEP_BETWEEN_CALLS_SEC)
     if ok_count == 0:
         print(f"  ->all stat_types failed for {league}", file=sys.stderr)

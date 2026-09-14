@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { BSD_LEAGUE_IDS } from "@/lib/league-mapping";
+import { understatPlayers, type UnderstatPlayer as UnderstatPlayerData } from "@/lib/football-understat-players";
+import { fbrefPlayerStats, type FbrefStatType } from "@/lib/football-fbref-stats";
+import { resolveLeagueIds } from "@/lib/league-id-bridge";
 
 const CACHE_TTL = 6 * 60 * 60_000;
 
@@ -11,6 +14,14 @@ export type PlayerRow = {
   perMatch: number;
   /** Photo joueur BSD Image API (cut-out si dispo) — absente en fallback Understat. */
   photo?: string;
+  /** Enrichissements FBref/Understat */
+  xG?: number | null;
+  xAG?: number | null;
+  npxG?: number | null;
+  shots?: number | null;
+  keyPasses?: number | null;
+  touches?: number | null;
+  tackles?: number | null;
 };
 
 export type PlayersPayload = {
@@ -161,6 +172,139 @@ function topBy(
     .slice(0, top);
 }
 
+// ── Enrichissement FBref/Understat (T1.3) ──
+
+type EnrichIndex = {
+  understat: Map<string, UnderstatPlayerData>;
+  fbrefShots: Map<string, number>;
+  fbrefPassing: Map<string, { keyPasses: number; touches: number }>;
+  fbrefDefense: Map<string, { tackles: number }>;
+};
+
+function normalizeName(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildEnrichIndex(league: string, seasonYear: number): EnrichIndex {
+  const ids = resolveLeagueIds(league);
+  const idx: EnrichIndex = {
+    understat: new Map(),
+    fbrefShots: new Map(),
+    fbrefPassing: new Map(),
+    fbrefDefense: new Map(),
+  };
+
+  // Understat players
+  if (ids?.hasUnderstat) {
+    const up = understatPlayers(ids.slug);
+    if (up) {
+      for (const p of up) {
+        if (p.player_name) idx.understat.set(normalizeName(p.player_name), p);
+      }
+    }
+  }
+
+  // FBref player stats
+  const fbrefSeason = `${seasonYear}-${seasonYear + 1}`;
+  if (ids?.hasFbref) {
+    try {
+      const passing = fbrefPlayerStats(ids.slug, fbrefSeason, "passing");
+      if (passing) {
+        for (const r of passing) {
+          const name = normalizeName(String(r["Player"] ?? ""));
+          if (name) {
+            idx.fbrefPassing.set(name, {
+              keyPasses: Number(r["Key Passes"]) || 0,
+              touches: Number(r["Touches"]) || 0,
+            });
+          }
+        }
+      }
+    } catch { /* pas encore scrapé */ }
+    try {
+      const defense = fbrefPlayerStats(ids.slug, fbrefSeason, "defense");
+      if (defense) {
+        for (const r of defense) {
+          const name = normalizeName(String(r["Player"] ?? ""));
+          if (name) {
+            idx.fbrefDefense.set(name, {
+              tackles: Number(r["Tkl"]) || 0,
+            });
+          }
+        }
+      }
+    } catch { /* pas encore scrapé */ }
+  }
+
+  return idx;
+}
+
+function enrichRow(row: PlayerRow, idx: EnrichIndex): PlayerRow {
+  const n = normalizeName(row.name);
+  const up = idx.understat.get(n);
+  const fp = idx.fbrefPassing.get(n);
+  const fd = idx.fbrefDefense.get(n);
+  return {
+    ...row,
+    xG: up?.xG ?? null,
+    xAG: up?.xAG ?? null,
+    npxG: up?.npxG ?? null,
+    shots: up?.shots ?? null,
+    keyPasses: fp?.keyPasses ?? up?.key_passes ?? null,
+    touches: fp?.touches ?? null,
+    tackles: fd?.tackles ?? null,
+  };
+}
+
+async function enrichPlayersWithFbrefUnderstat(
+  league: string,
+  seasonYear: number,
+): Promise<PlayersPayload | null> {
+  const idx = buildEnrichIndex(league, seasonYear);
+  const hasAny = idx.understat.size > 0 || idx.fbrefPassing.size > 0 || idx.fbrefDefense.size;
+  if (!hasAny) return null;
+
+  // Construire les listes scorers/assisters depuis Understat index
+  const allPlayers = [...idx.understat.values()];
+  if (allPlayers.length === 0) return null;
+
+  const scorers: PlayerRow[] = allPlayers
+    .map((p) => enrichRow({
+      name: p.player_name ?? "",
+      team: p.team_title ?? "",
+      games: p.apps ?? 0,
+      total: p.goals ?? 0,
+      perMatch: (p.apps ?? 0) > 0 ? Math.round(((p.goals ?? 0) / (p.apps ?? 1)) * 100) / 100 : 0,
+    }, idx))
+    .filter((r) => r.name && r.games > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  const assisters: PlayerRow[] = allPlayers
+    .map((p) => enrichRow({
+      name: p.player_name ?? "",
+      team: p.team_title ?? "",
+      games: p.apps ?? 0,
+      total: p.assists ?? 0,
+      perMatch: (p.apps ?? 0) > 0 ? Math.round(((p.assists ?? 0) / (p.apps ?? 1)) * 100) / 100 : 0,
+    }, idx))
+    .filter((r) => r.name && r.games > 0)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10);
+
+  return {
+    league,
+    seasonYear,
+    source: "understat",
+    scorers,
+    assisters,
+  };
+}
+
 async function fetchUnderstatPlayers(
   league: string,
   seasonYear: number,
@@ -229,6 +373,21 @@ export async function GET(request: Request) {
       return NextResponse.json(payload);
     } catch (e) {
       errors.push(`understat:${(e as Error).message}`);
+    }
+  }
+
+  // 3) Enrichissement FBref/Understat player stats (shots, xG, touches, etc.)
+  //    Merge par nom d'équipe + nom de joueur (fuzzy match).
+  const ids = resolveLeagueIds(league);
+  if (ids) {
+    try {
+      const enrichPayload = await enrichPlayersWithFbrefUnderstat(league, seasonYear);
+      if (enrichPayload) {
+        cache.set(key, { payload: enrichPayload, at: Date.now() });
+        return NextResponse.json(enrichPayload);
+      }
+    } catch (e) {
+      errors.push(`enrich:${(e as Error).message}`);
     }
   }
 
