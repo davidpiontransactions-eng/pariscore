@@ -8,6 +8,7 @@ import { SnookerMatchCard } from "@/components/snooker/snooker-match-card";
 import { SnookerLiveTracker } from "@/components/snooker/snooker-live-tracker";
 import { SnookerPlayerCard } from "@/components/snooker/snooker-player-card";
 import { SnookerBetsPanel } from "@/components/snooker/snooker-bets-panel";
+import { probTotalFramesOver } from "@/lib/services/snooker-analytics";
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -550,7 +551,12 @@ export function SnookerTabContent() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {sorted.map((m) => (
+            {sorted.map((m) => {
+              // P_win depuis cotes (ou 0.5 si pas de cotes)
+              const pWin = m.odds
+                ? (1 / m.odds.player1) / ((1 / m.odds.player1) + (1 / m.odds.player2))
+                : 0.5;
+              return (
               <SnookerMatchCard
                 key={m.id}
                 match={{
@@ -563,9 +569,11 @@ export function SnookerTabContent() {
                   scoreB: m.scoreB,
                   status: m.status,
                   scheduledAt: m.scheduled_at ?? undefined,
+                  pWin,
                 }}
               />
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

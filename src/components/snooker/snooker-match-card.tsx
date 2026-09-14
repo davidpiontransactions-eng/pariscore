@@ -1,8 +1,10 @@
 "use client";
 
+import { Fragment } from "react";
 import { Badge } from "@/components/ui/badge";
 import { PlayerAvatar } from "@/components/ui/player-avatar";
 import { cn } from "@/lib/utils";
+import { probTotalFramesOver } from "@/lib/services/snooker-analytics";
 
 interface SnookerPlayer {
   id: string;
@@ -24,6 +26,7 @@ interface SnookerMatch {
   status: "scheduled" | "live" | "finished";
   probA?: number;
   probB?: number;
+  pWin?: number;
   edge?: number;
   scheduledAt?: string;
 }
@@ -147,6 +150,43 @@ export function SnookerMatchCard({ match }: { match: SnookerMatch }) {
             )}
           </div>
         )}
+
+        {/* Total De Manches — modèle prédictif */}
+        {match.pWin != null && match.status !== "finished" && (() => {
+          const pFrame = 0.5 + (match.pWin! - 0.5) / 2.2;
+          const lines: number[] = [];
+          const min = Math.max(3.5, Math.ceil(match.bestOf / 2) - 1.5);
+          const max = match.bestOf - 0.5;
+          for (let l = min; l <= max; l += 1) lines.push(l);
+          if (lines.length === 0) return null;
+          return (
+            <div className="mt-3 pt-3 border-t border-zinc-800/50">
+              <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                <span>🎯</span> Total De Manches
+              </div>
+              <div className="grid grid-cols-3 gap-x-2 gap-y-1">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-600">Ligne</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Plus de</span>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-zinc-600 text-center">Moins de</span>
+                {lines.map((line) => {
+                  const over = probTotalFramesOver(match.bestOf, pFrame, line);
+                  const under = 1 - over;
+                  return (
+                    <Fragment key={line}>
+                      <span className="font-mono text-[11px] text-zinc-300">{line}</span>
+                      <span className={cn("text-center font-mono text-[11px] font-semibold", over >= 0.6 ? "text-emerald-400" : over <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                        {Math.round(over * 100)} %
+                      </span>
+                      <span className={cn("text-center font-mono text-[11px] font-semibold", under >= 0.6 ? "text-emerald-400" : under <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                        {Math.round(under * 100)} %
+                      </span>
+                    </Fragment>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
