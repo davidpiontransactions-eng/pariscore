@@ -1,39 +1,9 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import type { UnderstatPlayer } from "./football-understat-types";
 
-/**
- * Stats joueur Understat (xG, xAG, npxG, shots, key_passes, assists) —
- * extrait par scripts/scrape_understat.py → public/data/xg/{slug}.json.
- *
- * La clé `players` contient la liste de tous les joueurs de la ligue avec
- * leurs stats agrégées sur la saison (via getLeagueData → players key).
- */
-
-export type UnderstatPlayer = {
-  id: number | null;
-  player_name: string | null;
-  xG: number | null;
-  xAG: number | null;
-  npxG: number | null;
-  shots: number | null;
-  key_passes: number | null;
-  assists: number | null;
-  goals: number | null;
-  yellow: number | null;
-  red: number | null;
-  team_title: string | null;
-  position: string | null;
-  apps: number | null;
-  time: number | null;
-  /** Photo joueur Understat (via ID). */
-  photo?: string | null;
-};
-
-/** Calcule la valeur per90 d'une stat. */
-export function per90(value: number | null, minutes: number | null): number | null {
-  if (value === null || minutes === null || minutes <= 0) return null;
-  return Math.round((value / minutes) * 90 * 100) / 100;
-}
+export type { UnderstatPlayer } from "./football-understat-types";
+export { per90 } from "./football-understat-types";
 
 type UnderstatFile = {
   meta: { leagueId: string; season: string; playerCount: number };
