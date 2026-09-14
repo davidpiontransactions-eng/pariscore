@@ -25,6 +25,7 @@ type BetMatch = {
   favourite: string;
   confidence: number;
   ev: number | null;
+  totalFramesLines: Array<{ line: number; over: number; under: number }>;
   bets: Bet[];
 };
 
@@ -123,6 +124,33 @@ export function SnookerBetsPanel() {
                   ))
                 )}
               </div>
+              {/* Total De Manches — modèle prédictif */}
+              {m.totalFramesLines && m.totalFramesLines.length > 0 && (
+                <div className="mt-3 rounded-lg border border-zinc-800/60 bg-zinc-950/40 p-2.5">
+                  <div className="mb-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                    <span>🎯</span> Total De Manches
+                  </div>
+                  <div className="space-y-1">
+                    {/* Header */}
+                    <div className="grid grid-cols-3 text-[9px] font-semibold uppercase tracking-wider text-zinc-600 px-1">
+                      <span>Ligne</span>
+                      <span className="text-center">Plus de</span>
+                      <span className="text-center">Moins de</span>
+                    </div>
+                    {m.totalFramesLines.map((l) => (
+                      <div key={l.line} className="grid grid-cols-3 items-center rounded-md bg-zinc-900/50 px-1 py-1 text-[11px]">
+                        <span className="font-mono text-zinc-300">{l.line}</span>
+                        <span className={cn("text-center font-mono font-semibold", l.over >= 0.6 ? "text-emerald-400" : l.over <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                          {Math.round(l.over * 100)} %
+                        </span>
+                        <span className={cn("text-center font-mono font-semibold", l.under >= 0.6 ? "text-emerald-400" : l.under <= 0.4 ? "text-red-400" : "text-zinc-400")}>
+                          {Math.round(l.under * 100)} %
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

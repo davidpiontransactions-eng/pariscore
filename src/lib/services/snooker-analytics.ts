@@ -187,6 +187,18 @@ export function probTotalFramesOver(bestOf: number, pFrame: number, line: number
   return Math.min(1, Math.max(0, 1 - cum));
 }
 
+/** Génère les lignes Over/Under pour Total de Manches (modèle prédictif, pas de bookmaker). */
+export function totalFramesLines(bestOf: number, pFrame: number): Array<{ line: number; over: number; under: number }> {
+  const lines: number[] = [];
+  const min = Math.max(3.5, Math.ceil(bestOf / 2) - 1.5);
+  const max = bestOf - 0.5;
+  for (let l = min; l <= max; l += 1) lines.push(l);
+  return lines.map((line) => {
+    const over = probTotalFramesOver(bestOf, pFrame, line);
+    return { line, over: Math.round(over * 1000) / 1000, under: Math.round((1 - over) * 1000) / 1000 };
+  });
+}
+
 /**
  * Génère les 3 paris pre-match d'un match (mission T3) :
  * 1. Handicap frame sécurisé (favori −X.5 si P_win ≥ 70 %)

@@ -21,6 +21,7 @@ import {
   expectedTotalFrames,
   probTotalFramesOver,
   winByMarginProb,
+  totalFramesLines,
 } from "@/lib/services/snooker-analytics";
 
 export const runtime = "nodejs";
@@ -98,6 +99,7 @@ export async function GET(request: Request) {
         favourite: pWin >= 0.5 ? m.playerA.name : m.playerB.name,
         confidence: confidenceLevel(pFav, playedA, playedB),
         ev: oddsFav ? round3(expectedValue(pFav, oddsFav)) : null,
+        totalFramesLines: totalFramesLines(m.bestOf || 9, pFrame),
         bets: bets.filter((b) => b.prob >= MIN_PROB),
         allBets: bets,
       };
