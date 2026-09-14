@@ -3,6 +3,8 @@ import { createTtlCache, isFresh } from "@/lib/cached-route";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
+export const dynamic = "force-dynamic";
+
 const CACHE_TTL = 60 * 60_000;
 
 type StatBlock = {
