@@ -1,0 +1,188 @@
+{
+  "scraped_at": "2026-09-14T15:07:12.761Z",
+  "sport": "snooker",
+  "source": "flashscore.com",
+  "live_only": false,
+  "matches_count": 16,
+  "live_count": 5,
+  "with_odds": 0,
+  "tournaments": [],
+  "matches": [
+    {
+      "id": "g_15_QwwfJ6GL",
+      "tournament": "",
+      "home": "Pengcheng Y.",
+      "away": "Yulu B.",
+      "scoreHome": "4",
+      "scoreAway": "1",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_KtznLSo9",
+      "tournament": "",
+      "home": "Ursenbacher A.",
+      "away": "Sykes O.",
+      "scoreHome": "0",
+      "scoreAway": "4",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_K0SqANf5",
+      "tournament": "",
+      "home": "Yang G.",
+      "away": "Channoi P.",
+      "scoreHome": "4",
+      "scoreAway": "0",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_UZRXBO8e",
+      "tournament": "",
+      "home": "Zizins A.",
+      "away": "Cheung K. W.",
+      "scoreHome": "3",
+      "scoreAway": "4",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_WM4PHEdE",
+      "tournament": "",
+      "home": "Nasa C.",
+      "away": "Gallagher D.",
+      "scoreHome": "4",
+      "scoreAway": "1",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_0vUa6ufU",
+      "tournament": "",
+      "home": "Nayyar S.",
+      "away": "Larkov M.",
+      "scoreHome": "1",
+      "scoreAway": "4",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_vNQTD5et",
+      "tournament": "",
+      "home": "Pullen L.",
+      "away": "Norris P.",
+      "scoreHome": "4",
+      "scoreAway": "0",
+      "time": "Finished",
+      "stage": "Finished",
+      "isLive": false
+    },
+    {
+      "id": "g_15_2NfE6TWF",
+      "tournament": "",
+      "home": "Wenwei L.",
+      "away": "Mann M.",
+      "scoreHome": "3",
+      "scoreAway": "2",
+      "time": "LiveFrame 6",
+      "stage": "LiveFrame 6",
+      "isLive": true
+    },
+    {
+      "id": "g_15_U9d68k23",
+      "tournament": "",
+      "home": "Emery D.",
+      "away": "Clarke J. R.",
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "time": "LiveFrame 1",
+      "stage": "LiveFrame 1",
+      "isLive": true
+    },
+    {
+      "id": "g_15_rNazxIRO",
+      "tournament": "",
+      "home": "Grace D.",
+      "away": "Haohui D.",
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "time": "LiveFrame 1",
+      "stage": "LiveFrame 1",
+      "isLive": true
+    },
+    {
+      "id": "g_15_M9OPDpvq",
+      "tournament": "",
+      "home": "Highfield L.",
+      "away": "O'Kane P.",
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "time": "LiveFrame 1",
+      "stage": "LiveFrame 1",
+      "isLive": true
+    },
+    {
+      "id": "g_15_KMqhaoPk",
+      "tournament": "",
+      "home": "Yuhao L.",
+      "away": "Hugill A.",
+      "scoreHome": "0",
+      "scoreAway": "0",
+      "time": "LiveFrame 1",
+      "stage": "LiveFrame 1",
+      "isLive": true
+    },
+    {
+      "id": "g_15_0tu8jHtI",
+      "tournament": "",
+      "home": "Crowley L.",
+      "away": "Carty A.",
+      "scoreHome": "-",
+      "scoreAway": "-",
+      "time": "20:00",
+      "stage": "",
+      "isLive": false
+    },
+    {
+      "id": "g_15_SQVi81PH",
+      "tournament": "",
+      "home": "Hallworth S.",
+      "away": "Thirapongpaiboon T.",
+      "scoreHome": "-",
+      "scoreAway": "-",
+      "time": "20:00",
+      "stage": "",
+      "isLive": false
+    },
+    {
+      "id": "g_15_4lIWFhRQ",
+      "tournament": "",
+      "home": "Nussle F.",
+      "away": "Yee N. O.",
+      "scoreHome": "-",
+      "scoreAway": "-",
+      "time": "20:00",
+      "stage": "",
+      "isLive": false
+    },
+    {
+      "id": "g_15_GAAI6llD",
+      "tournament": "",
+      "home": "Szubarczyk M.",
+      "away": "Leclercq J.",
+      "scoreHome": "-",
+      "scoreAway": "-",
+      "time": "20:00",
+      "stage": "",
+      "isLive": false
+    }
+  ]
+}

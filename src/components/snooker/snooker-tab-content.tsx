@@ -92,9 +92,6 @@ function computeCompositeProb(
   const [p1, p2] = resolvePlayers(m, players);
   const noDb = p1.id === "" && p2.id === "";
 
-  // Si pas de données DB et pas de cotes, retourner null
-  if (noDb && !m.odds) return null;
-
   const probs: number[] = [];
 
   // 1. Modèle Elo (si ratings > defaults)
@@ -221,7 +218,7 @@ export function SnookerTabContent() {
 
   // Top 10 par stratégie — uniquement matchs avec proba ≥50%
   const top10 = useMemo(() => {
-    const candidates = sorted.filter((m) => m.status !== "finished" && m.odds);
+    const candidates = sorted.filter((m) => m.status !== "finished");
 
     const scored = candidates.map((m) => {
       const prob = computeCompositeProb(m, players, activeStrategy);
