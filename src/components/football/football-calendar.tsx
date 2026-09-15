@@ -58,31 +58,33 @@ function FotMobLeagueHeader({
   league: LeagueGroup; matchCount: number; liveCount: number; isCollapsed: boolean; onToggle: () => void;
   leagueLink?: string;
 }) {
-  const content = (
-    <>
-      <div className="shrink-0">
-        {league.logo ? (
-          <img src={league.logo} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0 rounded-full" />
-        ) : (
-          <span className="text-lg">{league.country ? countryFlag(league.country) : "🏆"}</span>
-        )}
-      </div>
-      <span className="text-xs font-medium md:text-sm text-slate-200 truncate">
-        {league.country ? league.country + " - " + league.leagueName : league.leagueName}
-      </span>
-    </>
-  );
+  const leagueName = league.country ? league.country + " - " + league.leagueName : league.leagueName;
 
   return (
     <div className="group relative flex items-center justify-between overflow-hidden h-12 bg-slate-800/60 border border-slate-700/40 rounded-lg">
-      <button type="button" onClick={onToggle} aria-expanded={!isCollapsed}
-        className="relative flex h-full w-full items-center gap-3 px-4 transition-colors hover:bg-slate-700/40 text-left">
+      <div className="flex h-full flex-1 items-center gap-3 px-4">
+        {/* Logo */}
+        <div className="shrink-0">
+          {league.logo ? (
+            <img src={league.logo} alt="" width="20" height="20" loading="lazy" className="size-5 shrink-0 rounded-full" />
+          ) : (
+            <span className="text-lg">{league.country ? countryFlag(league.country) : "🏆"}</span>
+          )}
+        </div>
+        {/* Nom : lien vers page ligue */}
         {leagueLink ? (
-          <Link href={leagueLink} className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-            {content}
+          <Link
+            href={leagueLink}
+            className="text-xs font-medium md:text-sm text-slate-200 truncate hover:text-white hover:underline transition-colors"
+          >
+            {leagueName}
           </Link>
-        ) : content}
-      </button>
+        ) : (
+          <span className="text-xs font-medium md:text-sm text-slate-200 truncate">
+            {leagueName}
+          </span>
+        )}
+      </div>
       <div className="flex items-center gap-1 px-2">
         <span className={cn(
           "flex min-w-5 items-center justify-center rounded-xl px-1.5 py-0.5 text-[11px] font-medium text-white tabular-nums",
