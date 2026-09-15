@@ -69,26 +69,6 @@ module.exports = {
       time: true,
     },
     {
-      // === Serveur HTTP principal ===
-      name: 'pariscore',
-      script: 'server.js',
-      cwd: '/home/ubuntu/pariscore',
-      instances: 1,
-      exec_mode: 'fork',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      kill_timeout: 5000, // laisse le graceful shutdown terminer wal_checkpoint(TRUNCATE) avant SIGKILL
-      env: {
-        NODE_ENV: 'production',
-        PORT: 3000,
-      },
-      error_file: 'logs/pariscore.err.log',
-      out_file: 'logs/pariscore.out.log',
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-      time: true,
-    },
-    {
       // === Cron job Roland Garros prefetch ===
       // Toutes les 2h pile (00:00, 02:00, 04:00, ...). Process meurt après
       // exécution, PM2 le relance au prochain tick cron.
