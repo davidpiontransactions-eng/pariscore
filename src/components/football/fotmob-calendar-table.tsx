@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { useFollowStore } from "@/stores/use-follow-store";
 import { partitionFollowed, toFollowId } from "@/lib/fotmob-follow";
 import { countryFlag } from "@/lib/bsd-football-fetcher";
+import { bsdIdToLeagueUrl } from "@/lib/league-id-bridge";
 import { parisKickoff } from "@/lib/football-time";
 import { cn } from "@/lib/utils";
 import { PowerScoreBar } from "@/components/shared/power-score-bar";
@@ -19,7 +21,7 @@ export type FotmobCalMatch = {
   scheduledAt: string;
   home: FotmobCalTeam;
   away: FotmobCalTeam;
-  league?: { name?: string; country?: string | null; logo?: string | null } | null;
+  league?: { id?: string | number; name?: string; country?: string | null; logo?: string | null } | null;
   round?: string | null;
   live?: FotmobCalLive | null;
   /** PowerScore 0-100 des deux côtés (affiché sous les noms si présent). */
@@ -225,9 +227,9 @@ function FotmobMatchRow({ m, onSelect, topTags, onTopPillSelect }: { m: FotmobCa
 
 /* ─── Section ligue ─── */
 function FotmobLeagueSection({
-  leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, topTagsFor, onTopPillSelect,
+  leagueId, leagueName, country, logo, icon, matches, collapsed, onToggle, onSelectMatch, topTagsFor, onTopPillSelect,
 }: {
-  leagueName: string; country?: string | null; logo?: string | null;
+  leagueId?: string; leagueName: string; country?: string | null; logo?: string | null;
   /** Icône custom à la place du logo (ex. étoile de la section « Suivis »). */
   icon?: ReactNode;
   matches: FotmobCalMatch[]; collapsed: boolean; onToggle: () => void;
@@ -251,9 +253,23 @@ function FotmobLeagueSection({
           ) : (
             <span className="text-lg leading-none">{country ? countryFlag(country) : "🏆"}</span>
           ))}
-          <span className="truncate text-[14px] font-medium" style={{ color: C.headerText }}>
-            {country ? `${country} - ${leagueName}` : leagueName}
-          </span>
+          {(() => {
+            const leagueUrl = leagueId ? bsdIdToLeagueUrl(Number(leagueId)) : null;
+            const name = country ? `${country} - ${leagueName}` : leagueName;
+            return leagueUrl ? (
+              <Link
+                href={leagueUrl}
+                className="truncate text-[14px] font-medium rounded px-1 py-0.5 transition-all duration-200 cursor-pointer hover:text-white hover:bg-emerald-600/30 hover:shadow-[inset_0_-2px_0_0_#34d399]"
+                style={{ color: C.headerText }}
+              >
+                {name}
+              </Link>
+            ) : (
+              <span className="truncate text-[14px] font-medium" style={{ color: C.headerText }}>
+                {name}
+              </span>
+            );
+          })()}
         </div>
         <button
           type="button" onClick={onToggle}
@@ -324,10 +340,10 @@ export function FotmobCalendarTable({
     [rest, topTagsFor]
   );
   const groups = useMemo(() => {
-    const map = new Map<string, { name: string; country?: string | null; logo?: string | null; list: FotmobCalMatch[] }>();
+    const map = new Map<string, { id?: string | number; name: string; country?: string | null; logo?: string | null; list: FotmobCalMatch[] }>();
     for (const m of rest) {
       const key = m.league?.name ?? "Autres";
-      const g = map.get(key) ?? { name: key, country: m.league?.country, logo: m.league?.logo, list: [] };
+      const g = map.get(key) ?? { id: m.league?.id, name: key, country: m.league?.country, logo: m.league?.logo, list: [] };
       g.list.push(m);
       map.set(key, g);
     }
@@ -395,6 +411,7 @@ export function FotmobCalendarTable({
         {groups.map((g) => (
           <FotmobLeagueSection
             key={g.name}
+            leagueId={g.id ? String(g.id) : undefined}
             leagueName={g.name} country={g.country} logo={g.logo}
             matches={g.list}
             collapsed={collapsed[g.name] === true}
