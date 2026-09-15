@@ -125,6 +125,17 @@
         "PYTHONIOENCODING": "utf-8",
         "PYTHONDONTWRITEBYTECODE": "1"
       }
+    },
+    "patchright": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "C:/Users/David/ZCodeProject/pariscore/tools/patchright-enhanced/mcp-server.ts"
+      ],
+      "env": {
+        "BROWSER_EXECUTABLE_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "BROWSER_TIMEZONE": "Europe/Paris"
+      }
     }
   }
 }
