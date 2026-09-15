@@ -254,7 +254,7 @@ function FotmobLeagueSection({
             <span className="text-lg leading-none">{country ? countryFlag(country) : "🏆"}</span>
           ))}
           {(() => {
-            const leagueUrl = leagueId ? bsdIdToLeagueUrl(Number(leagueId)) : null;
+            const rawId = String(leagueId ?? ""); const numId = Number(rawId.replace("bsd-", "")); const leagueUrl = numId > 0 ? bsdIdToLeagueUrl(numId) : null;
             const name = country ? `${country} - ${leagueName}` : leagueName;
             return leagueUrl ? (
               <Link
