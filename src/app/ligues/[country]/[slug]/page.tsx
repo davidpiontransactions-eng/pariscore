@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { LeagueFixturesList } from "@/components/leagues/league-fixtures-list";
+import { LeagueStatGrid } from "@/components/leagues/league-stat-grid";
 import { LeagueTabNav, type LeagueTab } from "@/components/leagues/league-tab-nav";
 import { StatCategoryPills, type StatCategory, CATEGORY_COLUMNS } from "@/components/leagues/stat-category-pills";
 import { StandingsTable, type StandingRow } from "@/components/leagues/league-stats-table";
@@ -289,9 +290,7 @@ export default function LeagueDetailPage() {
                   return order.indexOf(a.id) - order.indexOf(b.id);
                 })
                 .map((section) => (
-                  <div key={section.id} className="text-xs text-muted-foreground">
-                    {/* LeagueStatGrid legacy — gardé pour compat */}
-                  </div>
+                  <LeagueStatGrid key={section.id} section={section} />
                 ))}
             </div>
           )}
