@@ -5,6 +5,7 @@
  * Sortie : data/annabet_hockey_prematch.json
  * Usage : node scripts/scrape-annabet-hockey-prematch.mjs [--league=khl] [--dry-run]
  */
+import http from 'node:http';
 import https from 'node:https';
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -13,6 +14,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'data', 'annabet_hockey_prematch.json');
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36';
+const FLARE_HOST = process.env.FLARE_HOST || 'localhost';
+const FLARE_PORT = process.env.FLARE_PORT || '8191';
+const HTTP_TIMEOUT = 30000;
 
 const LEAGUES = [
   { id: 'nhl', name: 'NHL', serieId: 6 },
@@ -22,24 +26,44 @@ const LEAGUES = [
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const PROXY_URL = process.env.SCRAPLING_PROXY_URL || process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
+function flareSolverrGet(url) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ cmd: 'request.get', url, maxTimeout: HTTP_TIMEOUT });
+    const opts = {
+      hostname: FLARE_HOST, port: parseInt(FLARE_PORT, 10), path: '/v1', method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
+      timeout: HTTP_TIMEOUT + 10000,
+    };
+    const req = http.request(opts, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+          if (json.status === 'ok' && json.solution?.response) resolve(json.solution.response);
+          else reject(new Error(`FlareSolverr: ${json.message || 'status ' + json.status}`));
+        } catch (e) { reject(new Error(`FlareSolverr parse: ${e.message}`)); }
+      });
+      res.on('error', reject);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => { req.destroy(); reject(new Error(`FlareSolverr timeout ${url}`)); });
+    req.write(body); req.end();
+  });
+}
 
 function fetchPage(url) {
-  // Si proxy configuré, utiliser via proxy HTTP(S)
-  if (PROXY_URL) {
-    return fetchViaProxy(url, PROXY_URL);
-  }
-  return fetchDirect(url);
+  // FlareSolverr d'abord (VPS derrière Cloudflare)
+  return flareSolverrGet(url).then((r) => {
+    if (typeof r === 'string') return r;
+    return fetchDirect(url);
+  }).catch(() => fetchDirect(url));
 }
 
 function fetchDirect(url) {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
-      headers: {
-        'User-Agent': UA,
-        Accept: 'text/html,application/xhtml+xml',
-        'Accept-Language': 'en-US,en;q=0.9',
-      },
+      headers: { 'User-Agent': UA, Accept: 'text/html,application/xhtml+xml', 'Accept-Language': 'en-US,en;q=0.9' },
       timeout: 25000,
     }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
@@ -54,39 +78,6 @@ function fetchDirect(url) {
     });
     req.on('timeout', () => { req.destroy(); reject(new Error('timeout ' + url)); });
     req.on('error', reject);
-  });
-}
-
-function fetchViaProxy(url, proxyUrl) {
-  return new Promise((resolve, reject) => {
-    const proxy = new URL(proxyUrl);
-    const target = new URL(url);
-
-    const req = https.request({
-      hostname: proxy.hostname,
-      port: proxy.port || 443,
-      path: url,
-      method: 'GET',
-      headers: {
-        'User-Agent': UA,
-        Accept: 'text/html,application/xhtml+xml',
-        Host: target.hostname,
-      },
-      timeout: 30000,
-    }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        res.resume();
-        const loc = res.headers.location.startsWith('http') ? res.headers.location : 'https://annabet.com' + res.headers.location;
-        return resolve(fetchPage(loc));
-      }
-      if (res.statusCode !== 200) { res.resume(); reject(new Error('HTTP ' + res.statusCode + ' via proxy')); return; }
-      let d = '';
-      res.on('data', (c) => (d += c));
-      res.on('end', () => resolve(d));
-    });
-    req.on('timeout', () => { req.destroy(); reject(new Error('proxy timeout ' + url)); });
-    req.on('error', reject);
-    req.end();
   });
 }
 
@@ -368,7 +359,7 @@ function extractSummaryTable(html) {
 
       // Build home/away/all percentages from percCols
       // percCols: [homeUnder, awayUnder, allUnder, lineCell, homeOver, awayOver, allOver]
-      const parsePerc = (s: string) => { const m = s.match(/(\d+)-(\d+)/); return m ? { under: parseInt(m[1]), over: parseInt(m[2]) } : null; };
+      const parsePerc = (s) => { const m = s.match(/(\d+)-(\d+)/); return m ? { under: parseInt(m[1]), over: parseInt(m[2]) } : null; };
       
       const homeUnderPct = percCols[0] ? parsePerc(percCols[0]) : null;
       const awayUnderPct = percCols[1] ? parsePerc(percCols[1]) : null;

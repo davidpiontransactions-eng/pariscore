@@ -419,6 +419,23 @@ module.exports = {
       time: true,
     },
     {
+      // Scraper Annabet prematch (H2H popup) — NHL + KHL + Magnus
+      name: 'pariscore-cron-hockey-prematch',
+      script: 'node',
+      args: 'scripts/scrape-annabet-hockey-prematch.mjs',
+      cwd: '/home/ubuntu/pariscore',
+      cron_restart: '15 3 * * *', // quotidien à 03:15 UTC
+      autorestart: false,
+      instances: 1,
+      exec_mode: 'fork',
+      max_memory_restart: '512M',
+      env: { NODE_ENV: 'production' },
+      error_file: 'logs/cron-hockey-prematch.err.log',
+      out_file: 'logs/cron-hockey-prematch.out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      time: true,
+    },
+    {
       // EliteProspects standings + player stats (KHL, NHL, Magnus)
       name: 'pariscore-cron-hockey-eliteprospects',
       script: 'node',
