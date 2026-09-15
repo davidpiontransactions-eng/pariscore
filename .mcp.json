@@ -257,6 +257,31 @@
       "args": [
         "notebooklm-mcp@latest"
       ]
+    },
+    "mem0": {
+      "type": "http",
+      "url": "https://mcp.mem0.ai/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MEM0_API_KEY}"
+      }
+    },
+    "snowflake": {
+      "command": "uvx",
+      "args": [
+        "--python=3.13",
+        "--from",
+        "mcp-snowflake-server-nsp",
+        "mcp_snowflake_server"
+      ],
+      "env": {
+        "SNOWFLAKE_ACCOUNT": "${SNOWFLAKE_ACCOUNT}",
+        "SNOWFLAKE_USER": "${SNOWFLAKE_USER}",
+        "SNOWFLAKE_PASSWORD": "${SNOWFLAKE_PASSWORD}",
+        "SNOWFLAKE_WAREHOUSE": "${SNOWFLAKE_WAREHOUSE}",
+        "SNOWFLAKE_DATABASE": "${SNOWFLAKE_DATABASE}",
+        "SNOWFLAKE_SCHEMA": "${SNOWFLAKE_SCHEMA}",
+        "SNOWFLAKE_ROLE": "${SNOWFLAKE_ROLE}"
+      }
     }
   }
 }
