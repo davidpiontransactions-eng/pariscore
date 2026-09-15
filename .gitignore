@@ -141,6 +141,9 @@ scrapy_project/.mcp-output/
 scrapy_project/.mcp-crawl-*.jsonl
 data/scrapy-tests/
 data/scrapling-tests/
+# Snooker (runtime — scrapé par cron VPS, ne pas committer)
+data/odds_flashscore_snooker.json
+data/oddsportal_nio.json
 data/betwatch_wom.json
 data/smarkets_tennis_wom.json
 # Rugby backtest store (runtime, machine-local — regenere par le moteur)

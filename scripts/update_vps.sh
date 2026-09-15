@@ -15,11 +15,24 @@ PM2_NEXT="${PM2_NEXT:-pariscore-next}"        # Next.js standalone
 
 cd "$DEPLOY_DIR" || { echo "ERR: deploy dir $DEPLOY_DIR introuvable"; exit 1; }
 
+# Préserver les données snooker scrapées par le cron VPS (hors git)
+SNOOKER_BACKUP=$(mktemp -d)
+for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json; do
+  [ -f "$f" ] && cp "$f" "$SNOOKER_BACKUP/" 2>/dev/null
+done
+
 PREV="$(git rev-parse HEAD 2>/dev/null || echo '')"
 
 echo "[1/6] git fetch + reset --hard origin/main..."
 git fetch --all -q || { echo "ERR: git fetch"; exit 1; }
 git reset --hard origin/main -q || { echo "ERR: git reset"; exit 1; }
+
+# Restaurer les données snooker scrapées par le cron VPS
+for f in data/odds_flashscore_snooker.json data/oddsportal_nio.json; do
+  [ -f "$SNOOKER_BACKUP/$(basename $f)" ] && cp "$SNOOKER_BACKUP/$(basename $f)" "$f" 2>/dev/null
+done
+rm -rf "$SNOOKER_BACKUP"
+
 CURR="$(git rev-parse HEAD)"
 
 # Nothing to deploy? Exit fast (idempotent re-run).
