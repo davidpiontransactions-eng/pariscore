@@ -53,7 +53,6 @@ import {
   ProfilNavView,
 } from "@/components/dashboard/nav-extra-views";
 import { DashboardDataProvider, useDashboardData } from "@/components/dashboard/dashboard-data-provider";
-import { FeatureCards } from "@/components/dashboard/feature-cards";
 import { TopMultiSport } from "@/components/dashboard/top-multi-sport";
 import { TennisCalendarSection } from "@/components/tennis/tennis-calendar-section";
 import { TennisTop10MatchesWidget } from "@/components/tennis/tennis-top10-matches-widget";
@@ -389,11 +388,6 @@ function HomeInner() {
             {/* Hero tile — 2×2 */}
             <BentoTile size="hero" variant="glass">
               <HeroSection totalValueBets={stats.totalValueBets} />
-            </BentoTile>
-
-            {/* Feature Cards — tiles variées */}
-            <BentoTile size="wide" variant="glass">
-              <FeatureCards />
             </BentoTile>
           </BentoGrid>
 
