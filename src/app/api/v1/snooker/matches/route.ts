@@ -238,9 +238,7 @@ async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, 
     if (!isNaN(hours) && !isNaN(minutes)) {
       scheduledAt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hours, minutes).toISOString();
     }
-  } else if (m.status === "scheduled" && /^\d{1,2}:\d{2}$.test(m.time)) {
-    // Heure non parsée mais match programmé → garder null
-  } else {
+  } else if (m.status === "live" || m.status === "finished") {
     // Live ou finished → utiliser scraped_at comme date de référence
     scheduledAt = baseDate.toISOString();
   }
