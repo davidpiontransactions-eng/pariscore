@@ -4,6 +4,7 @@ import { join } from "path";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * /api/v1/snooker/matches
@@ -185,11 +186,14 @@ function readOddsportalData(): OddsportalFile | null {
 
 async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<SnookerMatch> {
   let scheduledAt: string | null = null;
+  const baseDate = new Date(scrapedAt);
   if (m.time && m.time !== "-" && m.time !== "") {
-    const today = new Date(scrapedAt);
     const [hours, minutes] = m.time.split(":").map(Number);
     if (!isNaN(hours) && !isNaN(minutes)) {
-      scheduledAt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes).toISOString();
+      scheduledAt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hours, minutes).toISOString();
+    } else if (m.isLive || (m.scoreHome !== "-" && m.scoreAway !== "-" && m.scoreHome && m.scoreAway)) {
+      // Live ou finished avec heure non parsable (ex: "LiveFrame 2") → utiliser scraped_at
+      scheduledAt = baseDate.toISOString();
     }
   }
 
@@ -226,14 +230,19 @@ async function transformMatch(m: FlashScoreMatch, scrapedAt: string): Promise<Sn
 }
 
 async function transformOddsportalMatch(m: OddsportalMatch, tournament: string, scrapedAt: string): Promise<SnookerMatch> {
-  // Construire scheduled_at depuis le champ time (ex: "14:00")
+  // Construire scheduled_at depuis le champ time (ex: "14:00", "LI", "Finished")
   let scheduledAt: string | null = null;
+  const baseDate = new Date(scrapedAt);
   if (m.time && /^\d{1,2}:\d{2}$/.test(m.time)) {
-    const today = new Date(scrapedAt);
     const [hours, minutes] = m.time.split(":").map(Number);
     if (!isNaN(hours) && !isNaN(minutes)) {
-      scheduledAt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, minutes).toISOString();
+      scheduledAt = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), hours, minutes).toISOString();
     }
+  } else if (m.status === "scheduled" && /^\d{1,2}:\d{2}$.test(m.time)) {
+    // Heure non parsée mais match programmé → garder null
+  } else {
+    // Live ou finished → utiliser scraped_at comme date de référence
+    scheduledAt = baseDate.toISOString();
   }
 
   let odds: { player1: number; player2: number } | undefined;
@@ -328,11 +337,19 @@ export async function GET(req: Request) {
   const tournaments = [...new Set(matches.map((m) => m.tournament).filter(Boolean))];
   const scrapedAt = nioData?.scraped_at || data?.scraped_at || null;
 
-  return NextResponse.json({
-    matches,
-    total: matches.length,
-    scraped_at: scrapedAt,
-    source: "flashscore+oddsportal",
-    tournaments,
-  });
+  return NextResponse.json(
+    {
+      matches,
+      total: matches.length,
+      scraped_at: scrapedAt,
+      source: "flashscore+oddsportal",
+      tournaments,
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+        "X-Scraped-At": scrapedAt ?? "",
+      },
+    },
+  );
 }

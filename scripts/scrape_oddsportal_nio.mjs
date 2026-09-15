@@ -12,7 +12,7 @@
  * Sortie: data/oddsportal_nio.json
  */
 
-import { chromium } from "file:///C:/Users/David/ZCodeProject/pariscore/node_modules/.bun/playwright@1.61.1/node_modules/playwright/index.mjs";
+import { chromium } from "playwright";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -59,7 +59,7 @@ async function scrapeMatches(page, url, liveOnly) {
           time = statusText;
         } else if (/fin/i.test(statusText)) {
           status = "finished";
-        } else if (/\d+\s*['']/.test(row.textContent || "") || /\bFrame\b/i.test(row.textContent || "")) {
+        } else if (/^li$/i.test(statusText) || /\d+\s*['']/.test(row.textContent || "") || /\bFrame\b/i.test(row.textContent || "")) {
           status = "live";
         }
 

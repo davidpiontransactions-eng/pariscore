@@ -4,6 +4,7 @@ import { join } from "path";
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * /api/v1/snooker/players

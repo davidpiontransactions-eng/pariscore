@@ -5,6 +5,7 @@ import { expectedScore, calculateEdge, kellyStake } from "../../../../../lib/sno
 import { fetchPlayerPhoto } from "@/lib/snooker/player-photos";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * /api/v1/snooker/predictions
