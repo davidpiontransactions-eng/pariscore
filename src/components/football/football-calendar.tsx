@@ -75,7 +75,7 @@ function FotMobLeagueHeader({
         {leagueLink ? (
           <Link
             href={leagueLink}
-            className="text-xs font-medium md:text-sm text-slate-200 truncate hover:text-white hover:underline transition-colors"
+            className="text-xs font-medium md:text-sm text-slate-200 truncate hover:text-emerald-400 hover:underline underline-offset-2 transition-colors cursor-pointer"
           >
             {leagueName}
           </Link>
