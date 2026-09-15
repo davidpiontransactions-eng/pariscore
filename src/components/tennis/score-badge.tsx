@@ -14,8 +14,8 @@ type ScoreBadgeProps = {
 
 const SIZE_CLASSES: Record<"sm" | "md" | "lg", string> = {
   sm: "px-1.5 py-0.5 text-[10px] gap-1",
-  md: "px-2 py-0.5 text-[11px] gap-1.5",
-  lg: "px-2.5 py-1 text-xs gap-2",
+  md: "px-2.5 py-1 text-[11px] gap-1.5",
+  lg: "px-3 py-1.5 text-xs gap-2",
 };
 
 /**
@@ -42,11 +42,11 @@ export function ScoreBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-full font-semibold leading-none uppercase tracking-wide",
+        "inline-flex items-center justify-center rounded-full font-semibold leading-none uppercase tracking-wide border border-transparent",
         SIZE_CLASSES[size],
         labelBg,
         labelColor,
-        isTop && "ring-1 ring-emerald-500/30",
+        isTop && "ring-1 ring-emerald-500/30 border-emerald-500/20",
         className,
       )}
     >
