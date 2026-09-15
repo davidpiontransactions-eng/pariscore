@@ -49,15 +49,17 @@ export interface LlmResult {
   latencyMs: number;
 }
 
-export class LlmError extends Error {
-  readonly status: number;
-  readonly code: string;
+import { AppError } from "./api-error";
 
+export class LlmError extends AppError {
   constructor(message: string, status: number, code: string) {
-    super(message);
+    super(message, code, status);
     this.name = "LlmError";
-    this.status = status;
-    this.code = code;
+  }
+
+  /** Compat: ancien code utilisait err.status, AppError utilise statusCode */
+  get status(): number {
+    return this.statusCode;
   }
 }
 
