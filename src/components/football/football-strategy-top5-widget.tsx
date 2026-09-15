@@ -44,6 +44,7 @@ export const STRATEGIES: StrategyDef[] = [
   { key: "bttsYes", label: "BTTS yes", emoji: "🥅", isProb: true, format: (v) => `${v.toFixed(0)}%` },
   { key: "over65Corners", label: "Over 6,5 corners", emoji: "🚩", isProb: false, format: (v) => `${v.toFixed(1)} cor` },
   { key: "gagnant", label: "Gagnant prédit (Dixon-Coles)", emoji: "🏆", isProb: true, format: (v) => `${v.toFixed(0)}%` },
+  { key: "dnb", label: "Draw No Bet", emoji: "🔄", isProb: true, format: (v) => `${v.toFixed(0)}%` },
 ];
 
 export type WindowKey = "l5" | "l10";

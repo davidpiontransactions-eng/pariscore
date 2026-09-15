@@ -24,6 +24,7 @@ import { dixonColesMarkets } from "@/lib/prediction/football/dixon-coles";
  *   - under35      → P(≤ 3 buts) via Poisson sur λ                    (plus haut = mieux)
  *   - bttsYes      → P(les 2 marquent) via Poisson sur λH, λA         (plus haut = mieux)
  *   - over65Corners→ λ corners attendus du match                    (plus haut = mieux)
+ *   - dnb          → P(pas de nul) via Dixon-Coles ou cotes 1X2     (plus haut = mieux)
  */
 
 export type StrategyTop5Key =
@@ -38,7 +39,8 @@ export type StrategyTop5Key =
   | "over15"
   | "under35"
   | "bttsYes"
-  | "over65Corners";
+  | "over65Corners"
+  | "dnb";
 
 export type Side = "home" | "away";
 
@@ -97,6 +99,8 @@ export type StrategyMatchEntry = {
     under35: number | null;
     bttsYes: number | null;
     bttsNo: number | null;
+    dnbHome: number | null;
+    dnbAway: number | null;
   } | null;
   /** Source de la valeur : forme L5 (« form ») ou cotes dé-vigées (« odds »). */
   source?: "form" | "odds";
@@ -128,6 +132,7 @@ const HIGHER_BETTER: Record<StrategyTop5Key, boolean> = {
   under35: true,
   bttsYes: true,
   over65Corners: true,
+  dnb: true,
 };
 
 /** Garde en mémoire la liste des stratégies (ordre stable de rendu). */
@@ -322,6 +327,12 @@ function tiebreakOdds(key: StrategyTop5Key, m: BSDFootballMatch): number | null 
       return valid(m.odds_under_35);
     case "bttsYes":
       return valid(m.odds_btts_yes);
+    case "dnb": {
+      // Côté du pick pour départage — cote home si home favored, away sinon.
+      const fp = fairProbs(m);
+      if (!fp) return valid(m.odds_home);
+      return fp.home >= fp.away ? valid(m.odds_home) : valid(m.odds_away);
+    }
     default:
       return null;
   }
@@ -397,6 +408,12 @@ function scoreMatchByOdds(key: StrategyTop5Key, m: BSDFootballMatch): { value: n
       const prob = impliedProb(m.odds_btts_yes, m.odds_btts_no);
       return prob != null ? { value: prob, pick: null } : null;
     }
+    case "dnb": {
+      // P(DNB) = P(home) + P(away) = 1 - P(draw), pick = côté favori.
+      if (!p) return null;
+      const prob = (p.home + p.away) * 100;
+      return { value: prob, pick: p.home >= p.away ? "home" : "away" };
+    }
     case "over65Corners":
       // Pas de cotes corners exposées sur les fixtures → indisponible.
       return null;
@@ -462,6 +479,12 @@ function scoreMatch(key: StrategyTop5Key, m: { home: TeamFormAgg; away: TeamForm
       return { value: (1 - poissonTailAt(lambdaTotal, 4)) * 100, pick: null };
     case "bttsYes":
       return { value: poissonAtLeastOne(lambdaHome) * poissonAtLeastOne(lambdaAway) * 100, pick: null };
+    case "dnb": {
+      // P(DNB) = 1 - P(draw) via Dixon-Coles, pick = côté favori.
+      const mk = dixonColesMarkets(lambdaHome, lambdaAway);
+      const prob = 100 - mk.draw;
+      return { value: prob, pick: mk.homeWin >= mk.awayWin ? "home" : "away" };
+    }
     case "over65Corners":
       return { value: poissonTailAt(lambdaCorners, 7) * 100, pick: null };
   }
@@ -607,6 +630,7 @@ export function computeStrategyTop5Matches(
     "over15",
     "under35",
     "bttsYes",
+    "dnb",
   ]);
   for (const key of STRATEGY_TOP5_KEYS) {
     if (!PROBABILISTIC_KEYS.has(key)) continue;
@@ -658,6 +682,19 @@ export function computeStrategyTop5Matches(
         under35: s.fixture.odds_under_35 ?? null,
         bttsYes: s.fixture.odds_btts_yes ?? null,
         bttsNo: s.fixture.odds_btts_no ?? null,
+        // Cotes DNB calculées depuis 1X2 : 1 / (1/odds_side - 1/odds_draw)
+        dnbHome: (() => {
+          const h = s.fixture.odds_home, d = s.fixture.odds_draw;
+          if (h == null || d == null || h <= 1 || d <= 1) return null;
+          const v = 1 / (1 / h - 1 / d);
+          return Number.isFinite(v) && v > 1 ? Math.round(v * 100) / 100 : null;
+        })(),
+        dnbAway: (() => {
+          const a = s.fixture.odds_away, d = s.fixture.odds_draw;
+          if (a == null || d == null || a <= 1 || d <= 1) return null;
+          const v = 1 / (1 / a - 1 / d);
+          return Number.isFinite(v) && v > 1 ? Math.round(v * 100) / 100 : null;
+        })(),
       },
       source: s.viaOdds ? "odds" : "form",
       ...(drawModal ? { drawModal: true as const } : {}),

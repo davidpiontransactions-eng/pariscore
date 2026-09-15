@@ -135,6 +135,13 @@ function filterForStrategy(
         .sort((a, b) => b.expectedValue - a.expectedValue)
         .slice(0, 10);
 
+    case "dnb":
+      // Draw No Bet : favoris > 50% proba, tri par EV
+      return picks
+        .filter((p) => p.winProbability >= 0.50)
+        .sort((a, b) => b.expectedValue - a.expectedValue)
+        .slice(0, 10);
+
     case "edge1x2Home":
     case "edgeOU25":
       // Edge : positif uniquement

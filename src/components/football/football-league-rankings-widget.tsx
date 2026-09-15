@@ -32,6 +32,7 @@ const LEAGUES: { slug: string; label: string; cc: string }[] = [
   { slug: "jupiler", label: "Pro League", cc: "BE" },
   { slug: "super_lig", label: "Süper Lig", cc: "TR" },
   { slug: "superleague_greece", label: "Super League GR", cc: "GR" },
+  { slug: "national_league", label: "National League", cc: "GB-ENG" },
   { slug: "scot_prem", label: "Écosse", cc: "GB-SCT" },
 ];
 

@@ -62,6 +62,11 @@ function strategyOdds(
       return { odds: o.under35, oddsLabel: o.under35 != null ? "Under 3,5" : null };
     case "bttsYes":
       return { odds: o.bttsYes, oddsLabel: o.bttsYes != null ? "BTTS" : null };
+    case "dnb": {
+      if (entry.pick === "home") return { odds: o.dnbHome, oddsLabel: o.dnbHome != null ? "DNB 1" : null };
+      if (entry.pick === "away") return { odds: o.dnbAway, oddsLabel: o.dnbAway != null ? "DNB 2" : null };
+      return { odds: o.dnbHome ?? o.dnbAway, oddsLabel: o.dnbHome != null ? "DNB 1" : "DNB 2" };
+    }
     default:
       return { odds: null, oddsLabel: null };
   }

@@ -18,6 +18,7 @@ const ODDALERTS_TO_SLUG: Record<string, string> = {
   "england/championship": "championship",
   "england/league-one": "league_one",
   "england/league-two": "league_two",
+  "england/national-league": "national_league",
   "spain/la-liga": "laliga",
   "spain/la-liga-2": "laliga2",
   "germany/bundesliga": "bundesliga",

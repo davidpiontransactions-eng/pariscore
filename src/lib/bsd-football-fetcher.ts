@@ -188,6 +188,8 @@ export type BSDFootballMatch = {
   odds_under_35?: number | null;
   odds_btts_yes?: number | null;
   odds_btts_no?: number | null;
+  odds_dnb_home?: number | null;
+  odds_dnb_away?: number | null;
   actual_home_xg?: number | null;
   actual_away_xg?: number | null;
   home_xg_live?: number | null;
