@@ -434,7 +434,7 @@ export function TopMultiSport({ activeSport = "all", mode = "prematch" }: { acti
   useEffect(() => {
     setLoading(true);
     fetchData();
-    if (activeSport === "football") fetchCal(calDate);
+    fetchCal(calDate); // Toujours charger le calendrier foot au mount
     const pollMs = timeFilter === "live" ? POLL_LIVE_MS : POLL_NORMAL_MS;
     pollRef.current = setInterval(() => {
       fetchData();
