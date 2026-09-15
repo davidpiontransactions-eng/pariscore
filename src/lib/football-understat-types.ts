@@ -16,6 +16,7 @@ export type UnderstatPlayer = {
   yellow: number | null;
   red: number | null;
   team_title: string | null;
+  team?: string | null;
   position: string | null;
   apps: number | null;
   time: number | null;

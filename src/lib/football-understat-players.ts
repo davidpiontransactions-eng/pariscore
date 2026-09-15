@@ -22,11 +22,12 @@ function readUnderstat(slug: string): UnderstatFile | null {
     const file = join(XG_DIR, `${slug}.json`);
     if (existsSync(file)) {
       data = JSON.parse(readFileSync(file, "utf-8")) as UnderstatFile;
-      // Générer les URLs photos depuis l'ID Understat
+      // Générer les URLs photos + mapper team_title → team
       if (data?.players) {
         data.players = data.players.map((p) => ({
           ...p,
-          photo: p.id ? `https://understat.com/players/${p.id}` : null,
+          team: p.team_title ?? null,
+          photo: p.id ? `https://understat.com/player/${p.id}.jpg` : null,
         }));
       }
     }

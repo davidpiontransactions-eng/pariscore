@@ -154,8 +154,8 @@ export function PlayerStatsTable({
                 className={cn(
                   "px-2 py-2",
                   col.key === "#" && "w-8 text-center",
-                  col.key === "Team" && "text-left",
-                  col.key !== "#" && col.key !== "Team" && "text-center",
+                  (col.key === "Player" || col.key === "Team") && "text-left",
+                  col.key !== "#" && col.key !== "Player" && col.key !== "Team" && "text-center",
                 )}
               >
                 {col.label}
@@ -172,7 +172,7 @@ export function PlayerStatsTable({
               {columns.map((col) => {
                 const val = col.key === "#" ? (row.rank ?? (page - 1) * ROWS_PER_PAGE + i + 1) : row[col.key];
                 const numVal = Number(val);
-                const isHeatmap = col.key !== "#" && col.key !== "Team" && col.key !== "Player" && col.key !== "Pos" && Number.isFinite(numVal);
+                const isHeatmap = col.key !== "#" && col.key !== "Player" && col.key !== "Team" && col.key !== "Pos" && Number.isFinite(numVal);
 
                 return (
                   <td
@@ -180,15 +180,28 @@ export function PlayerStatsTable({
                     className={cn(
                       "px-2 py-1.5 text-xs tabular-nums",
                       col.key === "#" && "text-center text-zinc-400",
-                      col.key === "Team" && "text-left font-medium text-white",
-                      col.key !== "#" && col.key !== "Team" && "text-center text-zinc-300",
+                      col.key === "Player" && "text-left font-medium text-white",
+                      col.key === "Team" && "text-left text-zinc-400",
+                      col.key !== "#" && col.key !== "Player" && col.key !== "Team" && "text-center text-zinc-300",
                     )}
                     style={isHeatmap ? heatmapStyle(numVal, computedMax[col.key] ?? 1) : undefined}
                   >
-                    {col.key === "Team" ? (
-                      <div className="flex items-center gap-2">
-                        {row.photo && (
-                          <img src={row.photo} alt="" className="h-5 w-5 rounded-full" loading="lazy" />
+                    {col.key === "Player" ? (
+                      <div className="flex items-center gap-2.5">
+                        {row.photo ? (
+                          <img
+                            src={row.photo}
+                            alt=""
+                            className="h-7 w-7 rounded-full object-cover ring-1 ring-zinc-700"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-[10px] font-bold text-zinc-500">
+                            {String(val ?? "?").slice(0, 2).toUpperCase()}
+                          </div>
                         )}
                         <span className="truncate">{String(val ?? "")}</span>
                       </div>
