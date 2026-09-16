@@ -169,6 +169,15 @@ else
   echo "  cron snooker-refresh déjà présent"
 fi
 
+# Refresh hebdo stats joueurs (tous les lundis 06:00 UTC)
+CRON_WEEKLY="0 6 * * 1 cd $OPT_DIR && bash scripts/cron_weekly_player_stats.sh >> logs/weekly-stats.log 2>&1"
+if ! crontab -l 2>/dev/null | grep -q "cron_weekly_player_stats"; then
+  (crontab -l 2>/dev/null; echo "$CRON_WEEKLY") | crontab -
+  echo "  ✅ cron weekly-stats ajouté (lundi 06:00)"
+else
+  echo "  cron weekly-stats déjà présent"
+fi
+
 echo "[6/6] Health check..."
 HEALTH_OK=0
 # Legacy-only = 4 checks (fast restart), Full build = 8 checks (slower boot)
